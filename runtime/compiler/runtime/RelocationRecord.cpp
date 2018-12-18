@@ -2231,7 +2231,10 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
 
          // currentMethod is guaranteed to not be NULL because of the SVM
          currentMethod = (J9Method *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(methodID);
-         reloPrivateData->_receiverClass = (TR_OpaqueClassBlock *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(receiverClassID);
+         if (needsReceiverClassFromID())
+            reloPrivateData->_receiverClass = (TR_OpaqueClassBlock *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(receiverClassID);
+         else
+            reloPrivateData->_receiverClass = NULL;
 
          if (reloFlags(reloTarget) != inlinedMethodIsStatic && reloFlags(reloTarget) != inlinedMethodIsSpecial)
             {

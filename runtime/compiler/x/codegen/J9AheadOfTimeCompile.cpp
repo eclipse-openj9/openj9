@@ -261,7 +261,12 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
             TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
             TR_OpaqueClassBlock *thisClass = guard->getThisClass();
             uint16_t methodID = symValManager->getIDFromSymbol(static_cast<void *>(method));
-            uint16_t receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
+            uint16_t receiverClassID = 0;
+            if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
+                relocation->getTargetKind() == TR_InlinedAbstractMethodWithNopGuard)
+               {
+               receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
+               }
 
             uintptrj_t data = 0;
             data = (((uintptrj_t)receiverClassID << 16) | (uintptrj_t)methodID);

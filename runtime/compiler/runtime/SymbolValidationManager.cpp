@@ -106,8 +106,16 @@ void *
 TR::SymbolValidationManager::getSymbolFromID(uint16_t id)
    {
    IdToSymbolMap::iterator it = _idToSymbolsMap.find(id);
-   if (it == _idToSymbolsMap.end())
-      return NULL;
+   SVM_ASSERT(it != _idToSymbolsMap.end(), "Unknown ID %d", id);
+   return it->second;
+   }
+
+uint16_t
+TR::SymbolValidationManager::tryGetIDFromSymbol(void *symbol)
+   {
+   SymbolToIdMap::iterator it = _symbolToIdMap.find(symbol);
+   if (it == _symbolToIdMap.end())
+      return NO_ID;
    else
       return it->second;
    }
@@ -115,11 +123,9 @@ TR::SymbolValidationManager::getSymbolFromID(uint16_t id)
 uint16_t
 TR::SymbolValidationManager::getIDFromSymbol(void *symbol)
    {
-   SymbolToIdMap::iterator it = _symbolToIdMap.find(symbol);
-   if (it == _symbolToIdMap.end())
-      return NO_ID;
-   else
-      return it->second;
+   uint16_t id = tryGetIDFromSymbol(symbol);
+   SVM_ASSERT(id != NO_ID, "Unknown symbol %p\n", symbol);
+   return id;
    }
 
 TR_OpaqueClassBlock *
@@ -886,11 +892,11 @@ bool
 TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validSymbol)
    {
    bool valid = false;
-   void *symbol = getSymbolFromID(idToBeValidated);
+   IdToSymbolMap::iterator it = _idToSymbolsMap.find(idToBeValidated);
 
    if (validSymbol)
       {
-      if (symbol == NULL)
+      if (it == _idToSymbolsMap.end())
          {
          if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
             {
@@ -901,7 +907,7 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
          }
       else
          {
-         valid = (symbol == validSymbol);
+         valid = (it->second == validSymbol);
          }
       }
 
@@ -911,12 +917,6 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
 bool
 TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -926,11 +926,7 @@ TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_
 
    if (primitiveType != '\0')
       {
-      if (getSymbolFromID(classID) == NULL)
-         {
-         TR_ASSERT(false, "primitive classID %u should exist\n", classID);
-         return false;
-         }
+      getSymbolFromID(classID); // just to assert that it exists
       return true;
       }
 
@@ -956,11 +952,7 @@ TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char 
 
    if (primitiveType != '\0')
       {
-      if (getSymbolFromID(classID) == NULL)
-         {
-         TR_ASSERT(false, "primitive classID %u should exist\n", classID);
-         return false;
-         }
+      getSymbolFromID(classID); // just to assert that it exists
       return true;
       }
 
@@ -985,12 +977,6 @@ TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char 
 bool
 TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16_t beholderID, uint32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1008,12 +994,6 @@ TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16
 bool
 TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1039,12 +1019,6 @@ TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID,
 bool
 TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1062,12 +1036,6 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
 bool
 TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uint16_t methodID)
    {
-   if (getSymbolFromID(methodID) == NULL)
-      {
-      TR_ASSERT(false, "methodID %u should exist\n", methodID);
-      return false;
-      }
-
    J9Method *method = static_cast<J9Method *>(getSymbolFromID(methodID));
    TR_OpaqueClassBlock *classFromMethod = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_METHOD(method));
 
@@ -1080,12 +1048,6 @@ TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uin
 bool
 TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
    {
-   if (getSymbolFromID(arrayClassID) == NULL)
-      {
-      TR_ASSERT(false, "arrayClassID %u should exist\n", arrayClassID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1099,12 +1061,6 @@ TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
-   if (getSymbolFromID(componentClassID) == NULL)
-      {
-      TR_ASSERT(false, "componentClassID %u should exist\n", componentClassID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1118,12 +1074,6 @@ TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID)
    {
-   if (getSymbolFromID(childClassID) == NULL)
-      {
-      TR_ASSERT(false, "childClassID %u should exist\n", childClassID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1140,13 +1090,6 @@ TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superCla
 bool
 TR::SymbolValidationManager::validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf)
    {
-   if (getSymbolFromID(classOneID) == NULL || getSymbolFromID(classTwoID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(classOneID) != 0, "classOneID %u should exist\n", classOneID);
-      TR_ASSERT(getSymbolFromID(classTwoID) != 0, "classTwoID %u should exist\n", classTwoID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1179,12 +1122,6 @@ TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClas
 bool
 TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1203,12 +1140,6 @@ TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t class
 bool
 TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1260,12 +1191,6 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
 bool
 TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID)
    {
-   if (getSymbolFromID(objectClassID) == NULL)
-      {
-      TR_ASSERT(false, "objectClassID %u should exist\n", objectClassID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1279,12 +1204,6 @@ TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uin
 bool
 TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID)
    {
-   if (getSymbolFromID(superClassID) == NULL)
-      {
-      TR_ASSERT(false, "superClassID %u should exist\n", superClassID);
-      return false;
-      }
-
    TR_OpaqueClassBlock *superClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(superClassID));
 
    TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
@@ -1299,12 +1218,6 @@ TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t ch
 bool
 TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *classChain)
    {
-   if (getSymbolFromID(classID) == NULL)
-      {
-      TR_ASSERT(false, "classID %u should exist\n", classID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    TR_OpaqueClassBlock *definingClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));
 
@@ -1314,12 +1227,6 @@ TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *cl
 bool
 TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread));
@@ -1350,12 +1257,6 @@ TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint1
 bool
 TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1377,12 +1278,6 @@ TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, ui
 bool
 TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1402,12 +1297,6 @@ TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID,
 bool
 TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1427,12 +1316,6 @@ TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID
 bool
 TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1450,12 +1333,6 @@ TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID
 bool
 TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1470,13 +1347,6 @@ TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t meth
 bool
 TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL || getSymbolFromID(lookupID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
-      TR_ASSERT(getSymbolFromID(lookupID) != 0, "lookupID %u should exist\n", lookupID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1494,12 +1364,6 @@ TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t method
 bool
 TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   if (getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1519,13 +1383,6 @@ TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_
 bool
 TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t methodClassID, uint16_t beholderID, J9ROMMethod *romMethod)
    {
-   if (getSymbolFromID(methodClassID) == NULL || getSymbolFromID(beholderID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(methodClassID) != 0, "methodClassID %u should exist\n", methodClassID);
-      TR_ASSERT(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1555,13 +1412,6 @@ TR::SymbolValidationManager::validateMethodFromSingleImplementerRecord(uint16_t 
                                                                        uint16_t callerMethodID,
                                                                        TR_YesNoMaybe useGetResolvedInterfaceMethod)
    {
-   if (getSymbolFromID(thisClassID) == NULL || getSymbolFromID(callerMethodID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
-      TR_ASSERT(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1588,13 +1438,6 @@ TR::SymbolValidationManager::validateMethodFromSingleInterfaceImplementerRecord(
                                                                                 int32_t cpIndex,
                                                                                 uint16_t callerMethodID)
    {
-   if (getSymbolFromID(thisClassID) == NULL || getSymbolFromID(callerMethodID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
-      TR_ASSERT(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1621,13 +1464,6 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
                                                                                int32_t vftSlot,
                                                                                uint16_t callerMethodID)
    {
-   if (getSymbolFromID(thisClassID) == NULL || getSymbolFromID(callerMethodID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
-      TR_ASSERT(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1651,13 +1487,6 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
 bool
 TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames)
    {
-   if (getSymbolFromID(methodID) == NULL || getSymbolFromID(methodClassID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(methodID) != 0, "methodID %u should exist\n", methodID);
-      TR_ASSERT(getSymbolFromID(methodClassID) != 0, "methodClassID %u should exist\n", methodClassID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -1673,12 +1502,6 @@ TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t met
 bool
 TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized)
    {
-   if (getSymbolFromID(classID) == NULL)
-      {
-      TR_ASSERT(getSymbolFromID(classID) != 0, "classID %u should exist\n", classID);
-      return false;
-      }
-
    TR::Compilation* comp = TR::comp();
    TR_OpaqueClassBlock *clazz = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));
 
