@@ -156,11 +156,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (relocation->getTargetKind())
       {
-      case TR_HelperAddress:
-         {
-         *flagsCursor |= EIP_RELATIVE;
-         }
-         // deliberate fall-through
       case TR_AbsoluteHelperAddress:
          {
          //let the eip relative relocation bit for references to code addresses
@@ -177,16 +172,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_RelativeMethodAddress:
-         {
-         // set the relative relocation bit for references to code addresses
-         *flagsCursor |= EIP_RELATIVE;
-         }
-         // deliberate fall-through
-     // case TR_DataAddress:
-      case TR_ClassObject:
       case TR_MethodObject:
-      case TR_InterfaceObject:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
 
@@ -218,6 +204,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
             }
          }
          break;
+
       case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
       case TR_JNIVirtualTargetAddress:
@@ -327,7 +314,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_AbsoluteMethodAddress:
       case TR_AbsoluteMethodAddressOrderedPair:
       case TR_BodyInfoAddress:
          break;
@@ -339,7 +325,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_ConstantPool:
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
       case TR_Thunks:
@@ -721,9 +706,10 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          break;
 
       default:
-         // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
-         // relocation records are consolidated, it will become the canonical place
-         // to initialize the platform agnostic relocation headers
+         // initializeCommonAOTRelocationHeader is currently in the process
+         // of becoming the canonical place to initialize the platform agnostic
+         // relocation headers; new relocation records' header should be
+         // initialized here.
          cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
 
       }

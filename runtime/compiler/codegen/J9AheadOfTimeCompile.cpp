@@ -164,11 +164,45 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
    TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
 
-   // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
-   // relocation records are consolidated, it will become the canonical place
-   // to initialize the platform agnostic relocation headers
+   // initializeCommonAOTRelocationHeader is currently in the process
+   // of becoming the canonical place to initialize the platform agnostic
+   // relocation headers; new relocation records' header should be
+   // initialized here.
    switch (kind)
       {
+      case TR_ConstantPool:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
+         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2()));
+         }
+         break;
+
+      case TR_HelperAddress:
+         {
+         TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+
+         haRecord->setEipRelative(reloTarget);
+         haRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
+         }
+         break;
+
+      case TR_RelativeMethodAddress:
+         {
+         TR_RelocationRecordMethodAddress *rmaRecord = reinterpret_cast<TR_RelocationRecordMethodAddress *>(reloRecord);
+
+         rmaRecord->setEipRelative(reloTarget);
+         }
+         break;
+
+      case TR_AbsoluteMethodAddress:
+         {
+         // Nothing to do
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -203,11 +237,48 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
    bool orderedPair = isOrderedPair(kind);
 
-   // dumpRelocationHeaderData currently doesn't do anything; however, as more
-   // relocation records are consolidated, it will become the canonical place
-   // to dump the relocation header data
+   // dumpRelocationHeaderData is currently in the process of becoming the
+   // the canonical place to dump the relocation header data; new relocation
+   // records' header data should be printed here.
    switch (kind)
       {
+      case TR_ConstantPool:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x",
+                                     cpRecord->inlinedSiteIndex(reloTarget),
+                                     cpRecord->constantPool(reloTarget));
+            }
+         }
+         break;
+
+      case TR_HelperAddress:
+         {
+         TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
+
+         uint32_t helperID = haRecord->helperID(reloTarget);
+
+         traceMsg(self()->comp(), "%-6d", helperID);
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
+            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            }
+         }
+         break;
+
+      case TR_RelativeMethodAddress:
+      case TR_AbsoluteMethodAddress:
+         {
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -321,9 +392,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       cursor++;
 
-      // dumpRelocationHeaderData currently doesn't do anything; however, as more
-      // relocation records are consolidated, it will become the canonical place
-      // to dump the relocation header data
+      // dumpRelocationHeaderData is currently in the process of becoming the
+      // the canonical place to dump the relocation header data; new relocation
+      // records' header data should be printed here.
       uint8_t *newCursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
       if (origCursor != newCursor)
          {
@@ -333,7 +404,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       switch (kind)
          {
-         case TR_ConstantPool:
          case TR_ConstantPoolOrderedPair:
             // constant pool address is placed as the last word of the header
             //traceMsg(self()->comp(), "\nConstant pool %x\n", *(uint32_t *)++cursor);
@@ -364,7 +434,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
          case TR_AbsoluteHelperAddress:
-         case TR_HelperAddress:
             // final byte of header is the index which indicates the particular helper being relocated to
             cursor++;
             ep1 = cursor;
@@ -377,36 +446,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(tempSR), *(int32_t*)ep1);
                }
             break;
-         case TR_RelativeMethodAddress:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nRelative Method Address: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nRelative Method Address: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
-               }
-            break;
-         case TR_AbsoluteMethodAddress:
          case TR_AbsoluteMethodAddressOrderedPair:
             // Reference to the current method, no other information
             cursor++;
@@ -440,35 +479,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             }
-            break;
-         case TR_ClassObject:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        //unused field
-            if (is64BitTarget)
-               {
-               cursor += 4;     // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nClass Object: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nClass Object: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
-               }
             break;
          case TR_ClassAddress:
             {
@@ -523,35 +533,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                if (isVerbose)
                   {
                   traceMsg(self()->comp(), "\nMethod Object: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
-               }
-            break;
-         case TR_InterfaceObject:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor += 4;     // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(),"Interface Object: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(),"Interface Object: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
                   }
                }
             break;

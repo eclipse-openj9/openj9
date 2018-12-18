@@ -127,11 +127,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (relocation->getTargetKind())
       {
-      case TR_HelperAddress:
-         {
-         *flagsCursor |= RELOCATION_TYPE_EIP_OFFSET; // set the eip relative relocation bit for references to code addresses
-         }
-         // deliberate fall-through
       case TR_AbsoluteHelperAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
@@ -358,12 +353,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_RelativeMethodAddress:
-         {
-         *flagsCursor |= RELOCATION_TYPE_EIP_OFFSET;  // set the relative relocation bit for references to code addresses
-         }
-         // deliberate fall-through
-      case TR_ClassObject:
       case TR_MethodObject:
       //case TR_InterfaceObject: Shouldn't have branch that create inteface object for X86.
          {
@@ -511,13 +500,11 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_AbsoluteMethodAddress:
       case TR_AbsoluteMethodAddressOrderedPair:
          break;
       case TR_BodyInfoAddress:
          break;
 
-      case TR_ConstantPool:
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
       case TR_Thunks:
@@ -1265,9 +1252,10 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       default:
-         // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
-         // relocation records are consolidated, it will become the canonical place
-         // to initialize the platform agnostic relocation headers
+         // initializeCommonAOTRelocationHeader is currently in the process
+         // of becoming the canonical place to initialize the platform agnostic
+         // relocation headers; new relocation records' header should be
+         // initialized here.
          cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
    return cursor;

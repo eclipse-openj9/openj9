@@ -2107,7 +2107,6 @@ bool isOrderedPair(U_8 recordType)
       case TR_ConstantPoolOrderedPair:
 #if defined(TR_HOST_POWER) || defined(TR_HOST_ARM)
       case TR_ClassAddress:
-      case TR_ClassObject:
       case TR_MethodObject:
       //case TR_DataAddress:
 #endif

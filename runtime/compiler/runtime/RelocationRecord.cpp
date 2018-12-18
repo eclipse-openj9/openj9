@@ -259,7 +259,7 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          reloRecord = new (storage) TR_RelocationRecordDirectJNISpecialMethodCall(reloRuntime, record);
          break;
       case TR_ClassAddress:
-         reloRecord = new (storage) TR_RelocationRecordClassObject(reloRuntime, record);
+         reloRecord = new (storage) TR_RelocationRecordClassAddress(reloRuntime, record);
          break;
       case TR_MethodObject:
          reloRecord = new (storage) TR_RelocationRecordMethodObject(reloRuntime, record);
@@ -1581,13 +1581,13 @@ TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntim
 
 // Class Object Relocations
 char *
-TR_RelocationRecordClassObject::name()
+TR_RelocationRecordClassAddress::name()
    {
-   return "TR_ClassObject";
+   return "TR_ClassAddress";
    }
 
 TR_OpaqueClassBlock *
-TR_RelocationRecordClassObject::computeNewClassObject(TR_RelocationRuntime *reloRuntime, uintptrj_t newConstantPool, uintptrj_t inlinedSiteIndex, uintptrj_t cpIndex)
+TR_RelocationRecordClassAddress::computeNewClassAddress(TR_RelocationRuntime *reloRuntime, uintptrj_t newConstantPool, uintptrj_t inlinedSiteIndex, uintptrj_t cpIndex)
    {
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
 
@@ -1627,12 +1627,12 @@ TR_RelocationRecordClassObject::computeNewClassObject(TR_RelocationRuntime *relo
    }
 
 int32_t
-TR_RelocationRecordClassObject::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uintptrj_t oldAddress = (uintptrj_t) reloTarget->loadAddress(reloLocation);
 
    uintptrj_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
-   TR_OpaqueClassBlock *newAddress = computeNewClassObject(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
+   TR_OpaqueClassBlock *newAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
 
    if (!newAddress) return compilationAotClassReloFailure;
 
@@ -1648,11 +1648,11 @@ TR_RelocationRecordClassObject::applyRelocation(TR_RelocationRuntime *reloRuntim
    }
 
 int32_t
-TR_RelocationRecordClassObject::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
    {
    uintptrj_t oldValue = (uintptrj_t) reloTarget->loadAddress(reloLocationHigh, reloLocationLow);
    uintptrj_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, oldValue);
-   TR_OpaqueClassBlock *newAddress = computeNewClassObject(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
+   TR_OpaqueClassBlock *newAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
 
    if (!newAddress) return compilationAotClassReloFailure;
 
@@ -4470,12 +4470,12 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    {
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPool                                 = 0
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_HelperAddress                                = 1
-   24,                                                                               // TR_RelativeMethodAddress                        = 2
+   sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_RelativeMethodAddress                        = 2
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_AbsoluteMethodAddress                        = 3
    sizeof(TR_RelocationRecordDataAddressBinaryTemplate),                             // TR_DataAddress                                  = 4
-   24,                                                                               // TR_ClassObject                                  = 5
+   0,                                                                                // TR_ClassObject                                  = 5
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_MethodObject                                 = 6
-   24,                                                                               // TR_InterfaceObject                              = 7
+   0,                                                                                // TR_InterfaceObject                              = 7
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_AbsoluteHelperAddress                        = 8
    16,                                                                               // TR_FixedSeqAddress                              = 9
    16,                                                                               // TR_FixedSeq2Address                             = 10

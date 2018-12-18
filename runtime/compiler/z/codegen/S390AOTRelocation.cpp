@@ -50,21 +50,12 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   if (_reloType==TR_ClassObject || _reloType==TR_ClassAddress)
+   if (_reloType==TR_ClassAddress)
       {
-
-      bool classAddressRelo=_reloType==TR_ClassAddress;
-      if (classAddressRelo)
-         {
-         AOTcgDiag2(  comp, "TR_ClassAddress cursor=%x symbolReference=%x\n", cursor, _symbolReference);
-         }
-      else
-         {
-         AOTcgDiag2(  comp, "TR_ClassObject cursor=%x symbolReference=%x\n", cursor, _symbolReference);
-         }
+      AOTcgDiag2(  comp, "TR_ClassAddress cursor=%x symbolReference=%x\n", cursor, _symbolReference);
 
       *((uintptrj_t*)cursor)=fej9->getPersistentClassPointerFromClassPointer((TR_OpaqueClassBlock*)(*((uintptrj_t*)cursor)));
-      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, (TR_ExternalRelocationTargetKind)_reloType, cg),
+      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_ClassAddress, cg),
                               file, line, node);
       }
    else if (_reloType==TR_RamMethod)
