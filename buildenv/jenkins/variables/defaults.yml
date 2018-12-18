@@ -39,6 +39,10 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
       branch: 'openj9'
+  12:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk12.git'
+      branch: 'openj9'
   next:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
@@ -51,6 +55,7 @@ jdk_image_dir:
   9: 'jdk'
   10: 'jdk'
   11: 'jdk'
+  12: 'jdk'
   next: 'jdk'
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
@@ -80,12 +85,14 @@ linux_ppc-64_cmprssptrs_le:
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
+    12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-ppc64le-normal-server-release'
     9: 'linux-ppc64le-normal-server-release'
     10: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
+    12: 'linux-ppc64le-server-release'
     next: 'linux-ppc64le-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
@@ -95,12 +102,14 @@ linux_ppc-64_cmprssptrs_le:
       9: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       10: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
     test:
       8: 'hw.arch.ppc64le && sw.os.ubuntu'
       9: 'hw.arch.ppc64le && sw.os.ubuntu'
       10: 'hw.arch.ppc64le && sw.os.ubuntu'
       11: 'hw.arch.ppc64le && sw.os.ubuntu'
+      12: 'hw.arch.ppc64le && sw.os.ubuntu'
       next: 'hw.arch.ppc64le && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
@@ -108,6 +117,7 @@ linux_ppc-64_cmprssptrs_le:
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
+      12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux S390 64bits Compressed Pointers
@@ -120,12 +130,14 @@ linux_390-64_cmprssptrs:
     9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
+    12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-s390x-normal-server-release'
     9: 'linux-s390x-normal-server-release'
     10: 'linux-s390x-normal-server-release'
     11: 'linux-s390x-normal-server-release'
+    12: 'linux-s390x-server-release'
     next: 'linux-s390x-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
@@ -135,16 +147,19 @@ linux_390-64_cmprssptrs:
       9: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       10: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+      12: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
     test:
       8: 'hw.arch.s390x && sw.os.ubuntu'
       9: 'hw.arch.s390x && sw.os.ubuntu'
       10: 'hw.arch.s390x && sw.os.ubuntu'
       11: 'hw.arch.s390x && sw.os.ubuntu'
+      12: 'hw.arch.s390x && sw.os.ubuntu'
       next: 'hw.arch.s390x && sw.os.ubuntu'
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
+      12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   extra_configure_options:
     8: '--with-openssl=/home/jenkins/openssl-1.1.1 --enable-openssl-bundling'
@@ -158,12 +173,14 @@ aix_ppc-64_cmprssptrs:
     9: '/usr/java8_64'
     10: '/usr/java9_64'
     11: '/usr/java11_64'
+    12: '/usr/java11_64'
     next: '/usr/java11_64'
   release:
     8: 'aix-ppc64-normal-server-release'
     9: 'aix-ppc64-normal-server-release'
     10: 'aix-ppc64-normal-server-release'
     11: 'aix-ppc64-normal-server-release'
+    12: 'aix-ppc64-server-release'
     next: 'aix-ppc64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
@@ -173,18 +190,21 @@ aix_ppc-64_cmprssptrs:
       9: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       10: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+      12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
     test:
       8: 'hw.arch.ppc64 && sw.os.aix'
       9: 'hw.arch.ppc64 && sw.os.aix'
       10: 'hw.arch.ppc64 && sw.os.aix'
       11: 'hw.arch.ppc64 && sw.os.aix'
+      12: 'hw.arch.ppc64 && sw.os.aix'
       next: 'hw.arch.ppc64 && sw.os.aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
 #========================================#
 # Linux x86 64bits Compressed Pointers
@@ -195,12 +215,14 @@ linux_x86-64_cmprssptrs:
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
+    12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
+    12: 'linux-x86_64-server-release'
     next: 'linux-x86_64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
@@ -210,12 +232,14 @@ linux_x86-64_cmprssptrs:
       9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
       8: 'hw.arch.x86 && sw.os.ubuntu'
       9: 'hw.arch.x86 && sw.os.ubuntu'
       10: 'hw.arch.x86 && sw.os.ubuntu'
       11: 'hw.arch.x86 && sw.os.ubuntu'
+      12: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
@@ -223,6 +247,7 @@ linux_x86-64_cmprssptrs:
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
+      12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
@@ -233,12 +258,14 @@ linux_x86-64_cmprssptrs_cmake:
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
+    12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
+    12: 'linux-x86_64-server-release'
     next: 'linux-x86_64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
@@ -248,28 +275,33 @@ linux_x86-64_cmprssptrs_cmake:
       9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
       8: 'hw.arch.x86 && sw.os.ubuntu'
       9: 'hw.arch.x86 && sw.os.ubuntu'
       10: 'hw.arch.x86 && sw.os.ubuntu'
       11: 'hw.arch.x86 && sw.os.ubuntu'
+      12: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-cmake --disable-ddr'
     10: '--with-cmake --disable-ddr'
     11: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
+    12: '--with-cmake --disable-ddr'
     next: '--with-cmake --disable-ddr'
   extra_make_options:
     8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     9: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     10: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    12: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
+      12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux x86 64bits Large Heap
@@ -280,12 +312,14 @@ linux_x86-64:
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
+    12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
+    12: 'linux-x86_64-server-release'
     next: 'linux-x86_64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
@@ -295,22 +329,26 @@ linux_x86-64:
       9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
       8: 'hw.arch.x86 && sw.os.ubuntu'
       9: 'hw.arch.x86 && sw.os.ubuntu'
       10: 'hw.arch.x86 && sw.os.ubuntu'
       11: 'hw.arch.x86 && sw.os.ubuntu'
+      12: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-noncompressedrefs'
     10: '--with-noncompressedrefs'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
+    12: '--with-noncompressedrefs'
     next: '--with-noncompressedrefs'
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
+      12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Windows x86 64bits Compressed Pointers
@@ -321,12 +359,14 @@ win_x86-64_cmprssptrs:
     9: '/cygdrive/c/openjdk/jdk8'
     10: '/cygdrive/c/openjdk/jdk9'
     11: '/cygdrive/c/openjdk/jdk11'
+    12: '/cygdrive/c/openjdk/jdk11'
     next: '/cygdrive/c/openjdk/jdk11'
   release:
     8: 'windows-x86_64-normal-server-release'
     9: 'windows-x86_64-normal-server-release'
     10: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
+    12: 'windows-x86_64-server-release'
     next: 'windows-x86_64-server-release'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
@@ -335,6 +375,7 @@ win_x86-64_cmprssptrs:
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    12: '--with-toolchain-version=2017 --disable-ccache'
     next: '--with-toolchain-version=2017 --disable-ccache'
   node_labels:
     build:
@@ -342,17 +383,20 @@ win_x86-64_cmprssptrs:
       9: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       10: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
       9: 'hw.arch.x86 && sw.os.windows'
       10: 'hw.arch.x86 && sw.os.windows'
       11: 'hw.arch.x86 && sw.os.windows'
+      12: 'hw.arch.x86 && sw.os.windows'
       next: 'hw.arch.x86 && sw.os.windows'
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       11: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+      12: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
 #========================================#
 # Windows x86 32bits
@@ -381,10 +425,12 @@ osx_x86-64_cmprssptrs:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
+    12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     next: '/Users/jenkins/bootjdks/adoptojdk-java-11'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
+    12: 'macosx-x86_64-server-release'
     next: 'macosx-x86_64-server-release'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
@@ -395,10 +441,12 @@ osx_x86-64_cmprssptrs:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
       11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+      12: 'hw.arch.x86 && sw.os.osx'
       next: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
@@ -410,25 +458,29 @@ osx_x86-64:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
+    12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     next: '/Users/jenkins/bootjdks/adoptojdk-java-11'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
+    12: 'macosx-x86_64-server-release'
     next: 'macosx-x86_64-server-release'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    next: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
+    12: '--with-noncompressedrefs'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
       11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+      12: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
