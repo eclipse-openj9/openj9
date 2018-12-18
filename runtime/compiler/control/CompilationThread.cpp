@@ -155,7 +155,8 @@ TR_RelocationRuntime*
 TR::CompilationInfoPerThreadBase::reloRuntime()
    {
    if (_methodBeingCompiled->isAotLoad() ||
-       _compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE) // We do not allow AOT in SERVER_MODE yet
+       _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE ||
+       (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && TR::Options::sharedClassCache())) // Enable local AOT compilations at client
       return static_cast<TR_RelocationRuntime*>(&_sharedCacheReloRuntime);
    return static_cast<TR_RelocationRuntime*>(&_remoteCompileReloRuntime);
    }
