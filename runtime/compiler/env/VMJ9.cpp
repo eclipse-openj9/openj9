@@ -1156,7 +1156,6 @@ UDATA TR_J9VMBase::thisThreadGetSystemSPOffset()
 UDATA TR_J9VMBase::thisThreadGetJavaLiteralsOffset()                {return offsetof(J9VMThread, literals);}
 UDATA TR_J9VMBase::thisThreadGetJavaFrameFlagsOffset()              {return offsetof(J9VMThread, jitStackFrameFlags);}
 UDATA TR_J9VMBase::thisThreadGetMachineSPOffset()                   {return sizeof(J9VMThread);}
-UDATA TR_J9VMBase::thisThreadGetMachineBPOffset(TR::Compilation * comp) {return TR::Compiler->om.sizeofReferenceAddress();}  // DANGER: this is offset from *(machineSP)
 UDATA TR_J9VMBase::thisThreadGetCurrentThreadOffset()               {return offsetof(J9VMThread, threadObject);}
 UDATA TR_J9VMBase::thisThreadGetFloatTemp1Offset()                  {return offsetof(J9VMThread, floatTemp1);}
 UDATA TR_J9VMBase::thisThreadGetFloatTemp2Offset()                  {return offsetof(J9VMThread, floatTemp2);}

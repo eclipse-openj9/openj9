@@ -5659,7 +5659,7 @@ typedef struct J9CInterpreterStackFrame {
 #endif /* J9VM_ENV_DATA64 */
 #elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_ARM */
 	UDATA vmStruct;
-	UDATA machineBP; /* JIT has this offset hard-coded - do not move this field */
+	UDATA machineBP;
 #if defined(J9VM_ENV_DATA64)
 	union {
 		UDATA numbered[16];

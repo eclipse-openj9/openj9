@@ -827,12 +827,12 @@ TR::AMD64JNILinkage::generateMethodDispatch(
       fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
       }
 
-   // Load machine bp esp + thisThreadGetMachineBPOffset() + argSize
+   // Load machine bp esp + offsetof(J9CInterpreterStackFrame, machineBP) + argSize
    //
    generateRegMemInstruction(LRegMem(),
                              callNode,
                              vmThreadReg,
-                             generateX86MemoryReference(espReal, fej9->thisThreadGetMachineBPOffset(comp()) + argSize, cg()),
+                             generateX86MemoryReference(espReal, offsetof(J9CInterpreterStackFrame, machineBP) + argSize, cg()),
                              cg());
 
    // Dispatch JNI method directly.

@@ -452,7 +452,6 @@ public:
    virtual uintptrj_t         thisThreadGetSystemSPOffset();
 
    virtual uintptrj_t         thisThreadGetMachineSPOffset();
-   virtual uintptrj_t         thisThreadGetMachineBPOffset( TR::Compilation *);
    virtual uintptrj_t         thisThreadGetJavaFrameFlagsOffset();
    virtual uintptrj_t         thisThreadGetCurrentThreadOffset();
    virtual uintptrj_t         thisThreadGetFloatTemp1Offset();
