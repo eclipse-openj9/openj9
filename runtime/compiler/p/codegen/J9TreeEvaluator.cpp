@@ -12482,6 +12482,17 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
 
    if (!cg->inlineDirectCall(node, returnRegister))
       {
+      TR::SymbolReference *symRef = node->getSymbolReference();
+      TR::SymbolReferenceTable *symRefTab = cg->comp()->getSymRefTab();
+
+      // Non-helpers supported by code gen. are expected to be inlined
+      if (symRefTab->isNonHelper(symRef))
+         {
+         TR_ASSERT(!cg->supportsNonHelper(symRefTab->getNonHelperSymbol(symRef)),
+                   "Non-helper %d was not inlined, but was expected to be.\n",
+                   symRefTab->getNonHelperSymbol(symRef));
+         }
+
       linkage = cg->getLinkage(callee->getLinkageConvention());
       returnRegister = linkage->buildDirectDispatch(node);
       }
