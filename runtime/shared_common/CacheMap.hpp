@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -471,6 +471,8 @@ private:
 	const IDATA fillMethodSpecTable(MethodSpecTable* specTable, char* inputOption);
 
 	const bool parseWildcardMethodSpecTable(MethodSpecTable* specTable, IDATA numSpecs);
+
+	static void updateLocalHintsData(J9VMThread* currentThread, J9SharedLocalStartupHints* localHints, const J9SharedStartupHintsDataDescriptor* hintsDataInCache, bool overwrite);
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 	IDATA startupCacheletForStats(J9VMThread* currentThread, SH_CompositeCache* cachelet);
