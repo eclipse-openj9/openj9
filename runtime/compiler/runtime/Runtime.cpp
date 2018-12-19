@@ -1044,17 +1044,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_flushGPU,                   (void *)flushGPU,                  TR_Helper);
    SET(TR_callGPU,                    (void *)callGPU,                   TR_Helper);
 
-   SET(TR_MTUnresolvedInt32Load,      (void *)MTUnresolvedInt32Load,     TR_Helper);
-   SET(TR_MTUnresolvedInt64Load,      (void *)MTUnresolvedInt64Load,     TR_Helper);
-   SET(TR_MTUnresolvedFloatLoad,      (void *)MTUnresolvedFloatLoad,     TR_Helper);
-   SET(TR_MTUnresolvedDoubleLoad,     (void *)MTUnresolvedDoubleLoad,    TR_Helper);
-   SET(TR_MTUnresolvedAddressLoad,    (void *)MTUnresolvedAddressLoad,   TR_Helper);
-
-   SET(TR_MTUnresolvedInt32Store,     (void *)MTUnresolvedInt32Store,    TR_Helper);
-   SET(TR_MTUnresolvedInt64Store,     (void *)MTUnresolvedInt64Store,    TR_Helper);
-   SET(TR_MTUnresolvedFloatStore,     (void *)MTUnresolvedFloatStore,    TR_Helper);
-   SET(TR_MTUnresolvedDoubleStore,    (void *)MTUnresolvedDoubleStore,   TR_Helper);
-   SET(TR_MTUnresolvedAddressStore,   (void *)MTUnresolvedAddressStore,  TR_Helper);
 #if defined(TR_HOST_X86)
    SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);
 #endif
