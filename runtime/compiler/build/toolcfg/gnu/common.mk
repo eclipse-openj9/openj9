@@ -125,7 +125,7 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
 ifeq ($(HOST_ARCH),x)
-    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-math-errno -fno-trapping-math
 
     ifeq ($(HOST_BITS),32)
         CX_FLAGS+=-m32 -fpic
@@ -178,6 +178,8 @@ endif
 
 ifeq ($(C_COMPILER),clang)
     CX_FLAGS+=-Wno-parentheses -Werror=header-guard
+else
+    CX_FLAGS+=-fno-rounding-math -fno-signaling-nans
 endif
 
 ifeq ($(BUILD_CONFIG),debug)
