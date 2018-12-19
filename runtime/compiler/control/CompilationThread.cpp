@@ -498,7 +498,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
                  getMethodQueueSize() >= TR::Options::_qszThresholdToDowngradeOptLevelDuringStartup) ||
                  // Downgrade if AOT and startup, 
                 (TR::Options::getCmdLineOptions()->sharedClassCache() &&
-                 _jitConfig->javaVM->phase == J9VM_PHASE_STARTUP &&
+                 _jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDowngradeToColdOnVMPhaseStartup))
                )
                {
@@ -6411,23 +6411,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    else
       _vm = TR_J9VMBase::get(_jitConfig, vmThread); // This is used for JIT compilations and AOT loads
 
-   // For AOT compilation generate method cookie to pass into compiler
-   //
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
-      {
       entry->_useAotCompilation = true;
-      // In some circumstances AOT compilations are performed at warm
-      if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
-           getCompilationInfo()->importantMethodForStartup(method)) &&
-          entry->_optimizationPlan->isOptLevelDowngraded() &&
-          entry->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
-         {
-         entry->_optimizationPlan->setOptLevel(warm);
-         entry->_optimizationPlan->setOptLevelDowngraded(false);
-         }
-      }
-#endif /* J9VM_INTERP_AOT_COMPILE_SUPPORT && J9VM_OPT_SHARED_CLASSES && TR_HOST_X86 */
    }
 
 /**
@@ -7058,6 +7043,22 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
+         bool aotCompilationReUpgradedToWarm = false;
+         if (that->_methodBeingCompiled->_useAotCompilation)
+            {
+            // In some circumstances AOT compilations are performed at warm
+            if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
+               that->getCompilationInfo()->importantMethodForStartup((J9Method*)method) ||
+               !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm)) &&
+               p->_optimizationPlan->isOptLevelDowngraded() &&
+               p->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
+               {
+               p->_optimizationPlan->setOptLevel(warm);
+               p->_optimizationPlan->setOptLevelDowngraded(false);
+               aotCompilationReUpgradedToWarm = true;
+               }
+            }
+
          // Set up options for this compilation. An option subset might apply
          // to the method, either via an option set index in the limitfile or
          // via a regular expression that matches the method.
@@ -7126,6 +7127,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             options->setOption(TR_DisableHierarchyInlining);
             if (options->getInitialBCount() == 0 || options->getInitialCount() == 0)
                options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
+
+            // Perform less inlining if we artificially upgraded this AOT compilation to warm
+            if (aotCompilationReUpgradedToWarm)
+               options->setInlinerOptionsForAggressiveAOT();
 
             TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
             }
