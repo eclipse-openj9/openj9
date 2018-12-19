@@ -2252,8 +2252,7 @@ TR_J9VMBase::allocateRelocationData(TR::Compilation * comp, uint32_t numBytes)
          }
       comp->failCompilation<J9::DataCacheError>("Failed to allocate relocation data");
       }
-   if (debug("metaDataStats"))
-      metaDataStats._relocationSize += size;
+
    return relocationData;
    }
 
@@ -2334,12 +2333,6 @@ TR_J9VMBase::resizeCodeMemory(TR::Compilation * comp, U_8 *bufferStart, uint32_t
    TR::VMAccessCriticalSection resizeCodeMemory(this);
    TR::CodeCache * codeCache = comp->getCurrentCodeCache();
    codeCache->resizeCodeMemory(bufferStart, numBytes);
-
-   if (debug("metaDataStats"))
-      {
-      metaDataStats._codeSize += numBytes;
-      if (numBytes > metaDataStats._maxCodeSize) metaDataStats._maxCodeSize = numBytes;
-      }
    }
 
 bool
@@ -3860,7 +3853,7 @@ TR_J9VMBase::lowerMultiANewArray(TR::Compilation * comp, TR::Node * root, TR::Tr
    TR::Node * tempRef = TR::Node::createWithSymRef(root, TR::loadaddr,0,new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), temp));
    root->setAndIncChild(0,tempRef);
    root->setNumChildren(3);
-   
+
    static bool recreateRoot = feGetEnv("TR_LowerMultiANewArrayRecreateRoot") ? true : false;
    if (!TR::Compiler->target.is64Bit() || recreateRoot || dims > 2 || secondDimConstNonZero)
       TR::Node::recreate(root, TR::acall);

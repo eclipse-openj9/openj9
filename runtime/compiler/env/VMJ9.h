@@ -1219,25 +1219,6 @@ TR_MethodMetaData * createMethodMetaData(TR_J9VMBase &, TR_ResolvedMethod *, TR:
 
 extern J9JITConfig * jitConfig;
 
-struct TR_MetaDataStats
-   {
-#if defined(DEBUG)
-   ~TR_MetaDataStats();
-#endif
-
-   uint32_t _counter;
-   uint32_t _codeSize;
-   uint32_t _maxCodeSize;
-   uint32_t _exceptionDataSize;
-   uint32_t _tableSize;
-   uint32_t _inlinedCallDataSize;
-   uint32_t _gcDataSize;
-   uint32_t _relocationSize;
-
-   };
-
-extern struct TR_MetaDataStats metaDataStats;
-
 static inline char * utf8Data(J9UTF8 * name)
    {
    return (char *)J9UTF8_DATA(name);
