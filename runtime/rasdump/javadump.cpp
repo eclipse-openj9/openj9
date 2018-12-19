@@ -2981,6 +2981,11 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"\n2SCLTEXTZCB        Zip cache bytes                           = "
 		);
 		_OutputStream.writeInteger(javacoreData.zipCacheDataBytes, "%zu");
+		
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTSHB        Startup hint bytes                        = "
+		);
+		_OutputStream.writeInteger(javacoreData.startupHintBytes, "%zu");
 
 		_OutputStream.writeCharacters(
 			"\n2SCLTEXTRWB        ReadWrite bytes                           = "
@@ -3095,6 +3100,11 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"\n2SCLTEXTNZC        Number Zip Caches                         = "
 		);
 		_OutputStream.writeInteger(javacoreData.numZipCaches, "%zu");
+
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTNSH        Number Startup Hint Entries               = "
+		);
+		_OutputStream.writeInteger(javacoreData.numStartupHints, "%zu");
 
 		_OutputStream.writeCharacters(
 			"\n2SCLTEXTNJC        Number JCL Entries                        = "

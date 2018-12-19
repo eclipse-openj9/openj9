@@ -66,6 +66,9 @@ void j9shr_freeClasspathData(J9JavaVM *vm, void *cpData);
 IDATA j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName);
 const U_8* j9shr_findCompiledMethodEx1(J9VMThread* currentThread, const J9ROMMethod* romMethod, UDATA* flags);
 void j9shr_jvmPhaseChange(J9VMThread* currentThread, UDATA phase);
+void j9shr_storeGCHints(J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, BOOLEAN forceReplace);
+IDATA j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2);
+const U_8* storeStartupHintsToSharedCache(J9VMThread* currentThread);
 
 typedef struct J9SharedClassesHelpText {
 	const char* option;
@@ -193,6 +196,7 @@ typedef struct J9SharedClassesOptions {
 #define SUB_OPTION_PRINTSTATS_ZIPCACHE "zipcache"
 #define SUB_OPTION_PRINTSTATS_JITHINT "jithint"
 #define SUB_OPTION_PRINTSTATS_STALE "stale"
+#define SUB_OPTION_PRINTSTATS_STARTUPHINT "startuphint"
 /* private options for printallstats= and printstats= */
 #define SUB_OPTION_PRINTSTATS_EXTRA "extra"
 #define SUB_OPTION_PRINTSTATS_ORPHAN "orphan"

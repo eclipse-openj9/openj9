@@ -48,6 +48,7 @@ add_executable(shrtest
 	SCStringTransactionTests.cpp
 	SCTestCommon.cpp
 	SharedCacheAPITest.cpp
+	StartupHintsTest.cpp
 	main.c
 )
 

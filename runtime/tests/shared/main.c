@@ -69,6 +69,7 @@ IDATA testProtectNewROMClassData(J9JavaVM* vm);
 IDATA testCacheDirPerm(J9JavaVM *vm);
 IDATA testCacheFull(J9JavaVM *vm);
 IDATA testProtectSharedCacheData(J9JavaVM *vm);
+IDATA testStartupHints(J9JavaVM *vm);
 
 UDATA
 buildChildCmdlineOption(int argc, char **argv, const char *options, char * newargv[SHRTEST_MAX_CMD_OPTS]) {
@@ -355,6 +356,9 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 
 	HEADING(PORTLIB, "OSCacheMisc Test");
 	rc |= testOSCacheMisc(vm, args, argv[i]);
+
+	HEADING(PORTLIB, "Startup Hints Test");
+	rc |= testStartupHints(vm);
 
 	if ( (*((JavaVM*)vm))->DestroyJavaVM((JavaVM*)vm) != JNI_OK ) {
 		args->shutdownPortLib = FALSE;
