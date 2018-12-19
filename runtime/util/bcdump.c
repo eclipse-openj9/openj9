@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -387,6 +387,9 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 		case JBputstatic:
 		case JBgetfield:
 		case JBputfield:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case JBwithfield:
+#endif
 			_GETNEXT_U16(index, bcIndex);
 			info = &constantPool[index];
 			outputFunction(userData, "%i ", index);
@@ -468,6 +471,9 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 		case JBanewarray:
 		case JBcheckcast:
 		case JBinstanceof:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case JBdefaultvalue:
+#endif
 			_GETNEXT_U16(index, bcIndex);
 			info = &constantPool[index];
 			outputFunction(userData, "%i ", index);
