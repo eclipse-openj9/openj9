@@ -36,6 +36,7 @@ D=/
 ifneq (,$(findstring Win,$(OS)))
 CURRENT_DIR := $(subst \,/,$(CURRENT_DIR))
 endif
+include $(CURRENT_DIR)$(D)featureSettings.mk
 
 ifndef SPEC
 $(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
@@ -67,7 +68,7 @@ autoconfig:
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)
