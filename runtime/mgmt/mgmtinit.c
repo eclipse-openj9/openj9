@@ -123,3 +123,11 @@ Java_sun_management_FileSystemImpl_isAccessUserOnly0(JNIEnv *env, jclass c, jstr
 
 	return result;
 }
+
+#if defined(WIN32) || defined(WIN64)
+JNIEXPORT void JNICALL 
+Java_sun_management_FileSystemImpl_init0(JNIEnv *env, jclass c)
+{
+	/* stub method, no implementation required */ 
+}
+#endif /* defined(WIN32) || defined(WIN64) */

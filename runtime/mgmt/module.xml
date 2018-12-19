@@ -25,6 +25,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<exports group="all">
 		<export name="JNI_OnLoad" />
 		<export name="Java_sun_management_FileSystemImpl_isAccessUserOnly0" />
+		<export name="Java_sun_management_FileSystemImpl_init0">
+			<include-if condition="spec.win_x86.*" />
+		</export>
 	</exports>
 
 	<artifact type="shared" name="management" loadgroup="" appendrelease="false">
