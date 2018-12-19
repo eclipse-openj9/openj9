@@ -51,9 +51,10 @@ my $modes_hs = '';
 my $sp_hs = '';
 my %targetGroup = ();
 my $buildList = '';
+my $iterations = 1;
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -412,9 +413,9 @@ sub writeTargets {
 			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
 			if ($jvmoptions) {
-				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(AOT_OPTIONS) \$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
 			} else {
-				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(AOT_OPTIONS) \$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
 			my $levelStr = '';
@@ -452,7 +453,15 @@ sub writeTargets {
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;
 
-			print $fhOut "$indent\{ \$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n$indent$command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\{ ";
+			for (my $i = 1; $i <= $iterations; $i++) {
+				print $fhOut "itercnt=$i; \\\n$indent\$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n";
+				print $fhOut "$indent$command;";
+				if ($i ne $iterations) {
+					print $fhOut " \\\n";
+				}
+			}
+			print $fhOut " \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 
 			print $fhOut "$indent\$(TEST_TEARDOWN);\n";
 
