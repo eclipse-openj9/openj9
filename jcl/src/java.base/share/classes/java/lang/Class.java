@@ -4561,20 +4561,77 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 /*[ENDIF] Java11 */
 
 /*[IF Java12]*/
+	/**
+	 * Create class of an array. The component type will be this Class instance.
+	 * 
+	 * @return array class where the component type is this Class instance
+	 */
 	public Class<?> arrayType() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+		if (this == void.class) {
+			throw new IllegalArgumentException();
+		}
+		return arrayTypeImpl();
 	}
 
+	private native Class<?> arrayTypeImpl();
+
+	/**
+	 * Answers a Class object which represents the receiver's component type if the receiver 
+	 * represents an array type. The component type of an array type is the type of the elements 
+	 * of the array.
+	 *
+	 * @return the component type of the receiver. Returns null if the receiver does 
+	 * not represent an array.
+	 */
 	public Class<?> componentType() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+		return getComponentType();
 	}
 
+	/**
+	 * Returns the nominal descriptor of this Class instance, or an empty Optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with a nominal descriptor of Class instance
+	 */
 	public Optional<ClassDesc> describeConstable() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+		ClassDesc classDescriptor = ClassDesc.ofDescriptor(this.descriptorString());
+		return Optional.of(classDescriptor);
 	}
 
+	/**
+	 * Return field descriptor of Class instance.
+	 * 
+	 * @return field descriptor of Class instance
+	 */
 	public String descriptorString() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+		/* see MethodType.getBytecodeStringName */
+
+		if (this.isPrimitive()) {
+			if (this == int.class) {
+				return "I"; //$NON-NLS-1$
+			} else if (this == long.class) {
+				return "J"; //$NON-NLS-1$
+			} else if (this == byte.class) {
+				return "B"; //$NON-NLS-1$
+			} else if (this == boolean.class) {
+				return "Z"; //$NON-NLS-1$
+			} else if (this == void.class) {
+				return "V"; //$NON-NLS-1$
+			} else if (this == char.class) {
+				return "C"; //$NON-NLS-1$
+			} else if (this == double.class) {
+				return "D"; //$NON-NLS-1$
+			} else if (this == float.class) {
+				return "F"; //$NON-NLS-1$
+			} else if (this == short.class) {
+				return "S"; //$NON-NLS-1$
+			}
+		}
+		String name = this.getName().replace('.', '/');
+		if (this.isArray()) {
+			return name;
+		}
+		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 /*[ENDIF] Java12 */
 }
