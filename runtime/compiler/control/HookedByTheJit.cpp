@@ -891,7 +891,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
             }
          }
       }
-       
+
    if (doPerformDLT)
       {
       int32_t bcIndex = walkState.bytecodePCOffset;
@@ -4444,107 +4444,6 @@ static void jitHookAboutToRunMain(J9HookInterface * * hook, UDATA eventNum, void
       compileClasses(vmThread, "");
    }
 
-static void dumpStats(J9JITConfig * jitConfig)
-   {
-#ifdef DEBUG
-   UDATA gcOverhead = 0, atlasOverhead = 0, debugOverhead = 0;
-
-   /* Avoid the divide by zero case */
-   if (jitConfig->totalCodeBytesUsed)
-      {
-      gcOverhead = (UDATA)
-         (((SYS_FLOAT) jitConfig->totalGCDataBytesUsed / (SYS_FLOAT) jitConfig->totalCodeBytesUsed) * 100.0);
-      atlasOverhead = (UDATA)
-         (((SYS_FLOAT) jitConfig->totalAtlasDataBytesUsed / (SYS_FLOAT) jitConfig->totalCodeBytesUsed) * 100.0);
-      debugOverhead = (UDATA)
-         (((SYS_FLOAT) jitConfig->totalDebugDataBytesUsed / (SYS_FLOAT) jitConfig->totalCodeBytesUsed) * 100.0);
-      }
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"JIT Statistics:");
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d methods translated", jitConfig->totalMethodsTranslated);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d methods NOT translated", jitConfig->totalMethodsNotTranslated);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d code bytes", jitConfig->totalCodeBytesUsed);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d gcMap bytes (~%3d%% of code size)", jitConfig->totalGCDataBytesUsed,
-                (UDATA) gcOverhead);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d atlas bytes (~%3d%% of code size)", jitConfig->totalAtlasDataBytesUsed,
-                (UDATA) atlasOverhead);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d debug bytes (~%3d%% of code size)", jitConfig->totalDebugDataBytesUsed,
-                (UDATA) debugOverhead);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d code + data bytes",
-                (jitConfig->totalCodeBytesUsed + jitConfig->totalGCDataBytesUsed +
-                 jitConfig->totalAtlasDataBytesUsed + jitConfig->totalDebugDataBytesUsed));
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  Unresolved References:");
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d classes            (~%3d%%)", jitConfig->unresolvedClassRefs,
-                jitConfig->totalClassRefs,
-                (jitConfig->totalClassRefs ?
-                 (UDATA) (((SYS_FLOAT) jitConfig->unresolvedClassRefs / (SYS_FLOAT) jitConfig->totalClassRefs) *
-                          100.0) : 0));
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d static methods     (~%3d%%)",
-                jitConfig->unresolvedStaticMethodRefs, jitConfig->totalStaticMethodRefs,
-                (jitConfig->totalStaticMethodRefs ? (UDATA) (
-                                                             ((SYS_FLOAT) jitConfig->unresolvedStaticMethodRefs /
-                                                              (SYS_FLOAT) jitConfig->totalStaticMethodRefs) *
-                                                             100.0) : 0));
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d special methods    (~%3d%%)", jitConfig->unresolvedSpecialMethodRefs,
-                jitConfig->totalSpecialMethodRefs,
-                (jitConfig->totalSpecialMethodRefs ?
-                 (UDATA) (
-                          ((SYS_FLOAT) jitConfig->unresolvedSpecialMethodRefs /
-                           (SYS_FLOAT) jitConfig->totalSpecialMethodRefs) * 100.0) : 0));
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d interface methods  (~%3d%%)", jitConfig->unresolvedInterfaceMethodRefs,
-                jitConfig->totalInterfaceMethodRefs,
-                (jitConfig->totalInterfaceMethodRefs ?
-                 (UDATA) (
-                          ((SYS_FLOAT) jitConfig->unresolvedInterfaceMethodRefs /
-                           (SYS_FLOAT) jitConfig->totalInterfaceMethodRefs) * 100.0) : 0));
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d virtual methods    (~%3d%%)", jitConfig->unresolvedVirtualMethodRefs,
-                jitConfig->totalVirtualMethodRefs,
-                (jitConfig->totalVirtualMethodRefs ?
-                 (UDATA) (
-                          ((SYS_FLOAT) jitConfig->unresolvedVirtualMethodRefs /
-                           (SYS_FLOAT) jitConfig->totalVirtualMethodRefs) * 100.0) : 0));
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d static variables   (~%3d%%)", jitConfig->unresolvedStaticVariableRefs,
-                jitConfig->totalStaticVariableRefs,
-                (jitConfig->totalStaticVariableRefs ?
-                 (UDATA) (
-                          ((SYS_FLOAT) jitConfig->unresolvedStaticVariableRefs /
-                           (SYS_FLOAT) jitConfig->totalStaticVariableRefs) * 100.0) : 0));
-
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d instance variables (~%3d%%)", jitConfig->unresolvedInstanceFieldRefs,
-                jitConfig->totalInstanceFieldRefs,
-                (jitConfig->totalInstanceFieldRefs ?
-                 (UDATA) (
-                          ((SYS_FLOAT) jitConfig->unresolvedInstanceFieldRefs /
-                           (SYS_FLOAT) jitConfig->totalInstanceFieldRefs) * 100.0) : 0));
-
-#if defined(DEBUG) && defined(TR_HOST_X86) && defined(TR_TARGET_X86) && defined(TR_TARGET_32BIT)
-   extern uint32_t totalMonEnters;
-   extern uint32_t totalNestedMonEnters;
-   extern uint32_t totalUncontendedMonEnters;
-   if (debug("monenterstats"))
-      {
-      TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
-      TR_VerboseLog::writeLine(TR_Vlog_INFO,"Total number of monenters executed inline = %d", totalMonEnters);
-      TR_VerboseLog::writeLine(TR_Vlog_INFO,"Total number of nested monenters executed inline = %d", totalNestedMonEnters);
-      TR_VerboseLog::writeLine(TR_Vlog_INFO,"Total number of uncontended monenters executed inline = %d", totalUncontendedMonEnters);
-      TR_VerboseLog::writeLine(TR_Vlog_INFO,"Total number of contended monenters executed out of line = %d", totalMonEnters - totalNestedMonEnters - totalUncontendedMonEnters);
-      }
-#endif
-
-   if (debug ("spillStats"))
-      {
-      TR_FrontEnd * vm = TR_J9VMBase::get(jitConfig, 0);
-      TR::CodeGenerator::dumpSpillStats(vm);
-      }
-
-#endif
-   }
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
 // Below, options and jitConfig are guaranteed to be not null
@@ -4726,10 +4625,6 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
       stopSamplingThread(jitConfig);
-
-   if (jitConfig->runtimeFlags & J9JIT_DUMP_STATS)
-      dumpStats(jitConfig);
-
 
    TR_DebuggingCounters::report();
    accumulateAndPrintDebugCounters(jitConfig);
@@ -5169,7 +5064,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       }
 #endif // defined(J9VM_INTERP_PROFILING_BYTECODES)
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) && 
+   if (TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
        TR::Options::getCmdLineOptions()->getOption(TR_EarlyLPQ))
       {
       if (!compInfo->getLowPriorityCompQueue().isTrackingEnabled() && timeToAllocateTrackingHT == 0xffffffffffffffff)
@@ -5468,7 +5363,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    if (crtElapsedTime >= timeToAllocateTrackingHT)
       {
       compInfo->getLowPriorityCompQueue().startTrackingIProfiledCalls(TR::Options::_numIProfiledCallsToTriggerLowPriComp);
-      timeToAllocateTrackingHT = 0xfffffffffffffff0; // never again 
+      timeToAllocateTrackingHT = 0xfffffffffffffff0; // never again
       }
 
    // Reset stats for next interval
