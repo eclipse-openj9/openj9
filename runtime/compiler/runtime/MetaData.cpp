@@ -69,8 +69,6 @@
 #include "control/CompilationRuntime.hpp"
 #include "runtime/HWProfiler.hpp"
 
-TR_MetaDataStats metaDataStats;
-
 typedef std::set<TR_GCStackMap*, std::less<TR_GCStackMap*>, TR::typed_allocator<TR_GCStackMap*, TR::Region&>> GCStackMapSet;
 
 struct TR_StackAtlasStats
@@ -101,8 +99,6 @@ static uint8_t * allocateGCData(TR_J9VMBase * vm, uint32_t numBytes, TR::Compila
          }
       comp->failCompilation<J9::DataCacheError>("Failed to allocate GC Data");
       }
-   if (debug("metaDataStats"))
-      metaDataStats._gcDataSize += size;
 
    return gcData;
    }
@@ -110,31 +106,6 @@ static uint8_t * allocateGCData(TR_J9VMBase * vm, uint32_t numBytes, TR::Compila
 ///////////////////////////////////////////////////////////////////////////
 //  Meta Data Creation
 ///////////////////////////////////////////////////////////////////////////
-
-#if defined(DEBUG)
-   // HACK 1GAN1V9 :: OSE Runtime cannot link with destructors defined
-TR_MetaDataStats::~TR_MetaDataStats()
-   {
-   if (!debug("metaDataStats"))
-      return;
-
-   uint32_t totalMetaData = _exceptionDataSize + _tableSize + _inlinedCallDataSize + _gcDataSize + _relocationSize;
-
-   printf("\nMetaDataStats\n");
-   printf("number of methods jitted:      %10d\n", _counter);
-   printf("tot code size:                 %10d\n", _codeSize);
-   printf("av. code size:                 %10d\n", _codeSize / _counter);
-   printf("max code size:                 %10d\n", _maxCodeSize);
-   printf("tot meta size:                 %10d\n", totalMetaData);
-   printf("av. meta data size:            %10d\n", totalMetaData / _counter);
-   printf("   av. exception data size:    %10d\n", _exceptionDataSize / _counter);
-   printf("   av. table size:             %10d\n", _tableSize / _counter);
-   printf("   av. inlined call data size: %10d\n", _inlinedCallDataSize / _counter);
-   printf("   av. gc data size:           %10d\n", _gcDataSize / _counter);
-   printf("   av. relocation size:        %10d\n", _relocationSize / _counter);
-   fflush(stdout);
-   }
-#endif
 
 #if defined(DEBUG)
 TR_StackAtlasStats::~TR_StackAtlasStats()
@@ -1378,14 +1349,6 @@ createMethodMetaData(
    //
    uint32_t inlinedCallSize = comp->getNumInlinedCallSites() * (sizeof(TR_InlinedCallSite) + numberOfMapBytes);
    tableSize += inlinedCallSize;
-
-   if (debug("metaDataStats"))
-      {
-      ++metaDataStats._counter;
-      metaDataStats._exceptionDataSize += exceptionsSize;
-      metaDataStats._tableSize += sizeof(TR_MethodMetaData);
-      metaDataStats._inlinedCallDataSize += inlinedCallSize;
-      }
 
    // Add size of stack atlas to allocate
    //
