@@ -1219,11 +1219,11 @@ j9sysinfo_testProcessorInfo(J9PortLibrary* portLibrary)
 	outputComment(PORTLIB, "   User time:   %lld.\n", currInfo.procInfoArray[0].userTime);
 	outputComment(PORTLIB, "   System time: %lld.\n", currInfo.procInfoArray[0].systemTime);
 	outputComment(PORTLIB, "   Idle time:   %lld.\n", currInfo.procInfoArray[0].idleTime);
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 	outputComment(PORTLIB, "   Wait time:   <undefined>.\n");
-#else /* Non-windows platforms */
+#else /* defined(WIN32) || defined(OSX) */
 	outputComment(PORTLIB, "   Wait time:   %lld.\n", currInfo.procInfoArray[0].waitTime);
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 	outputComment(PORTLIB, "   Busy time:   %lld.\n", currInfo.procInfoArray[0].busyTime);
 
 	/* Start iterating from 1 since 0^th entry represents Totals - already accounted for above. */
@@ -1236,12 +1236,12 @@ j9sysinfo_testProcessorInfo(J9PortLibrary* portLibrary)
 			if ((J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].userTime) &&
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].systemTime) &&
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].idleTime) &&
-#if defined(WIN32)
-				/* Windows does not have the notion of Wait times. */
+#if defined(WIN32) || defined(OSX)
+				/* Windows and OSX don't have the notion of Wait times. */
 				(J9PORT_PROCINFO_NOT_AVAILABLE == currInfo.procInfoArray[cntr].waitTime) &&
-#else /* Non-windows platforms */
+#else /* defined(WIN32) || defined(OSX) */
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].waitTime) &&
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].busyTime)) {
 
 				/* Print out processor times in each mode for each CPU that is online. */
@@ -1249,11 +1249,11 @@ j9sysinfo_testProcessorInfo(J9PortLibrary* portLibrary)
 				outputComment(PORTLIB, "   User time:   %lld.\n", currInfo.procInfoArray[cntr].userTime);
 				outputComment(PORTLIB, "   System time: %lld.\n", currInfo.procInfoArray[cntr].systemTime);
 				outputComment(PORTLIB, "   Idle time:   %lld.\n", currInfo.procInfoArray[cntr].idleTime);
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 				outputComment(PORTLIB, "   Wait time:   <undefined>.\n");
-#else /* Non-windows platforms */
+#else /* defined(WIN32) || defined(OSX) */
 				outputComment(PORTLIB, "   Wait time:   %lld.\n", currInfo.procInfoArray[cntr].waitTime);
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 				outputComment(PORTLIB, "   Busy time:   %lld.\n", currInfo.procInfoArray[cntr].busyTime);
 			} else {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "Invalid processor usage statistics retrieved.\n");
