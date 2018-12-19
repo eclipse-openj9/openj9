@@ -137,29 +137,37 @@ inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Regis
    {
    bool needsNULLCHK = false;
    TR::ILOpCodes opValue = node->getOpCodeValue();
-   switch (opValue)
+
+   if (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar())
+      needsNULLCHK = true;
+   else
       {
-      case TR::checkcastAndNULLCHK:
-         needsNULLCHK = true;
-         break;
-      case TR::icall: // TR_checkAssignable
-         return; // j9class register already holds j9class
-      default:
-         TR_ASSERT(node->getOpCode().isReadBar() ||
-                   node->getOpCode().isWrtBar() ||
-                   opValue == TR::checkcast ||
-                   opValue == TR::instanceof,
-                   "Unexpected opCode for generateLoadJ9Class %s.", node->getOpCode().getName());
-         break;
+      switch (opValue)
+         {
+         case TR::checkcastAndNULLCHK:
+            needsNULLCHK = true;
+            break;
+         case TR::icall: // TR_checkAssignable
+            return; // j9class register already holds j9class
+         default:
+            TR_ASSERT(opValue == TR::checkcast ||
+                      opValue == TR::instanceof,
+                     "Unexpected opCode for generateLoadJ9Class %s.", node->getOpCode().getName());
+            break;
+         }
       }
+
    auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
    auto instr = generateRegMemInstruction(LRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
    if (needsNULLCHK)
       {
       cg->setImplicitExceptionPoint(instr);
       instr->setNeedsGCMap(0xFF00FFFF);
-      instr->setNode(cg->comp()->findNullChkInfo(node));
+      if (opValue == TR::checkcastAndNULLCHK)
+         instr->setNode(cg->comp()->findNullChkInfo(node));
       }
+
+
    auto mask = TR::Compiler->om.maskOfObjectVftField();
    if (~mask != 0)
       {
