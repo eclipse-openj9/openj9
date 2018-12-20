@@ -400,9 +400,16 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                   prevTree->join(dupTree);
                   dupTree->join(currTree);
 
-                  TR::SymbolReference *symRef = dupNode->getSymbolReference();
+                  TR::SymbolReference *symRef = node->getSymbolReference();
                   TR::SymbolReference *vecSymRef = pSPMDInfo->getVectorSymRef(symRef);
-                  TR_ASSERT(vecSymRef != NULL, "Vector PIV SymRef is NULL during SIMD transformation");
+                  if (vecSymRef == NULL)
+                     {
+                     vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector()); // need to handle alignment?
+                     pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
+
+                     if (trace)
+                         traceMsg(comp, "   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+                     }
 
                   TR::ILOpCode scalarOp = node->getOpCode();
                   TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOp.getOpCodeValue());
