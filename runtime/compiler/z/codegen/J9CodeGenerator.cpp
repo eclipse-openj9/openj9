@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -204,7 +204,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    const bool accessStaticsIndirectly = !cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10) ||
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
-         comp->compileRelocatableCode();
+         (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
    cg->setAccessStaticsIndirectly(accessStaticsIndirectly);
 
@@ -3756,9 +3756,8 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    const int32_t offsetFromEPRegisterValueToJ9MethodAddress = CalcCodeSize(basrInstruction->getNext(), cursor);
 
    j9MethodAddressMemRef->setOffset(offsetFromEPRegisterValueToJ9MethodAddress);
-
-   // Symbol reference is NULL as we don't use it when adding ExternalRelocation for J9Method
-   encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_RamMethod, NULL);
+   TR::SymbolReference *methodSymRef = new (self()->trHeapMemory()) TR::SymbolReference(self()->symRefTab(), methodSymbol);
+   encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_RamMethod, methodSymRef);
 
    AOTcgDiag2(comp, "Add encodingRelocation = %p reloType = %p\n", encodingRelocation, encodingRelocation->getReloType());
 
