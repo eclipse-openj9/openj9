@@ -5684,6 +5684,9 @@ typedef struct J9CInterpreterStackFrame {
 	U_8 jitFPRs[16 * 8]; /* fpr0-15 */
 #endif /* J9VM_ENV_DATA64 */
 #elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_ARM */
+#if defined(J9VM_ENV_DATA64) && defined(WIN32)
+	UDATA arguments[4]; /* outgoing arguments shadow */
+#endif /*J9VM_ENV_DATA64 && WIN32*/
 	UDATA vmStruct;
 	UDATA machineBP;
 #if defined(J9VM_ENV_DATA64)
@@ -5709,7 +5712,7 @@ typedef struct J9CInterpreterStackFrame {
 		} named;
 	} jitGPRs;
 	U_64 jitFPRs[16];
-	#if defined(WIN32)
+#if defined(WIN32)
 	/* Windows x86-64
 	 *
 	 * Stack must be 16-byte aligned.
