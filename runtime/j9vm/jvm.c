@@ -1246,11 +1246,7 @@ jio_snprintf(char * str, int n, const char * format, ...)
 	Trc_SC_snprintf_Entry();
 
 	va_start(args, format);
-#if defined(WIN32) && !defined(WIN32_IBMC)
-	result = _vsnprintf( str, n, format, args );
-#else
-	result = vsprintf( str, format, args );
-#endif
+	result = vsnprintf( str, n, format, args );
 	va_end(args);
 
 	Trc_SC_snprintf_Exit(result);
@@ -1283,11 +1279,7 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 
 	Trc_SC_vsnprintf_Entry(str, n, format);
 
-#if defined(WIN32) && !defined(WIN32_IBMC)
-	result = _vsnprintf( str, n, format, args );
-#else 
-	result = vsprintf( str, format, args );
-#endif
+	result = vsnprintf( str, n, format, args );
 
 	Trc_SC_vsnprintf_Exit(result);
 
