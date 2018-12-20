@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,8 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			break;
 		
 		case ABOUT_TO_BOOTSTRAP :
+			/* Expand heap based on hints stored by previous runs into Shared Cache */
+			gcExpandHeapOnStartup(vm);
 		case JCL_INITIALIZED :
 		case LIBRARIES_ONUNLOAD :
 			break;
