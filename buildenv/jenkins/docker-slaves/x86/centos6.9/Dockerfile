@@ -231,6 +231,33 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
   && git fetch --all
 
+# Install OpenSSL v1.1.0
+RUN cd /tmp \
+  && wget https://www.openssl.org/source/old/1.1.0/openssl-1.1.0g.tar.gz \
+  && tar -xzf openssl-1.1.0g.tar.gz \
+  && rm -f openssl-1.1.0g.tar.gz \
+  && cd /tmp/openssl-1.1.0g \
+  && ./config -Wl,-rpath,/usr/local/lib64 \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf openssl-1.1.0g
+
+# Install Protobuf v3.5.1
+RUN cd /tmp \
+  && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+  && tar -xzf protobuf-cpp-3.5.1.tar.gz \
+  && rm -f protobuf-cpp-3.5.1.tar.gz \
+  && cd /tmp/protobuf-3.5.1 \
+  && ./configure \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf protobuf-3.5.1
+
+# Run ldconfig to create necessary links and cache to shared libraries
+RUN ldconfig
+
 # Expose SSH port and run SSHD
 EXPOSE 22
 
