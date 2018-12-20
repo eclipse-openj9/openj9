@@ -26,6 +26,7 @@
 #include <algorithm>                       // for std::max, etc
 #include <map>
 #include <set>
+#include <vector>
 #include <stddef.h>                        // for NULL
 #include <stdint.h>                        // for int32_t, uint8_t, etc
 #include "env/jittypes.h"                  // for uintptrj_t
@@ -1203,6 +1204,7 @@ private:
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol);
 
+   void setSymbolOfID(uint16_t id, void *symbol);
    void defineGuaranteedID(void *symbol);
 
    /* Monotonically increasing IDs */
@@ -1219,9 +1221,8 @@ private:
    typedef std::less<void*> SymbolToIdComparator;
    typedef std::map<void*, uint16_t, SymbolToIdComparator, SymbolToIdAllocator> SymbolToIdMap;
 
-   typedef TR::typed_allocator<std::pair<uint16_t const, void*>, TR::Region&> IdToSymbolAllocator;
-   typedef std::less<uint16_t> IdToSymbolComparator;
-   typedef std::map<uint16_t, void*, IdToSymbolComparator, IdToSymbolAllocator> IdToSymbolMap;
+   typedef TR::typed_allocator<void*, TR::Region&> IdToSymbolAllocator;
+   typedef std::vector<void*, IdToSymbolAllocator> IdToSymbolTable;
 
    typedef TR::typed_allocator<void*, TR::Region&> SeenSymbolsAlloc;
    typedef std::less<void*> SeenSymbolsComparator;
@@ -1231,7 +1232,7 @@ private:
    SymbolToIdMap _symbolToIdMap;
 
    /* Used for AOT Load */
-   IdToSymbolMap _idToSymbolsMap;
+   IdToSymbolTable _idToSymbolTable;
 
    SeenSymbolsSet _seenSymbolsSet;
    };

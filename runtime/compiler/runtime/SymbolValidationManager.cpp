@@ -65,7 +65,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _region(region),
      _symbolValidationRecords(_region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
-     _idToSymbolsMap((IdToSymbolComparator()), _region),
+     _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region)
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
@@ -92,7 +92,17 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol)
    {
    uint16_t id = getNewSymbolID();
    _symbolToIdMap.insert(std::make_pair(symbol, id));
-   _idToSymbolsMap.insert(std::make_pair(id, symbol));
+   setSymbolOfID(id, symbol);
+   }
+
+void
+TR::SymbolValidationManager::setSymbolOfID(uint16_t id, void *symbol)
+   {
+   if (id >= _idToSymbolTable.size())
+      _idToSymbolTable.resize(id + 1, NULL);
+
+   SVM_ASSERT(_idToSymbolTable[id] == NULL, "multiple definitions of ID %d", id);
+   _idToSymbolTable[id] = symbol;
    }
 
 uint16_t
@@ -105,9 +115,12 @@ TR::SymbolValidationManager::getNewSymbolID()
 void *
 TR::SymbolValidationManager::getSymbolFromID(uint16_t id)
    {
-   IdToSymbolMap::iterator it = _idToSymbolsMap.find(id);
-   SVM_ASSERT(it != _idToSymbolsMap.end(), "Unknown ID %d", id);
-   return it->second;
+   void *symbol = NULL;
+   if (id < _idToSymbolTable.size())
+      symbol = _idToSymbolTable[id];
+
+   SVM_ASSERT(symbol != NULL, "Unknown ID %d", id);
+   return symbol;
    }
 
 uint16_t
@@ -892,22 +905,24 @@ bool
 TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *validSymbol)
    {
    bool valid = false;
-   IdToSymbolMap::iterator it = _idToSymbolsMap.find(idToBeValidated);
+   void *existingSymbol = NULL;
+   if (idToBeValidated < _idToSymbolTable.size())
+      existingSymbol = _idToSymbolTable[idToBeValidated];
 
    if (validSymbol)
       {
-      if (it == _idToSymbolsMap.end())
+      if (existingSymbol == NULL)
          {
          if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
             {
-            _idToSymbolsMap.insert(std::make_pair(idToBeValidated, validSymbol));
+            setSymbolOfID(idToBeValidated, validSymbol);
             _seenSymbolsSet.insert(validSymbol);
             valid = true;
             }
          }
       else
          {
-         valid = (it->second == validSymbol);
+         valid = (existingSymbol == validSymbol);
          }
       }
 
