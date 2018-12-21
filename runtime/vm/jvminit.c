@@ -1603,6 +1603,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 	BOOLEAN lockwordWhat = FALSE;
 	UDATA rc = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	switch(stage) {
 		case PORT_LIBRARY_GUARANTEED :
@@ -1823,19 +1824,40 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				IDATA argIndexCompactOnIdleDisable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGCOMPACTONIDLEDISABLE, NULL);
 				IDATA argIndexIgnoreUnrecognizedOptionsEnable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSENABLE, NULL);
 				IDATA argIndexIgnoreUnrecognizedOptionsDisable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSDISABLE, NULL);
+				BOOLEAN enableGcOnIdle = FALSE;
+				BOOLEAN inContainer = FALSE;
+				int32_t errorCode = 0;
+				
+				inContainer = omrsysinfo_is_running_in_container(&errorCode);
 
 				/* 
-				 * idle heap tuning is enabled only if -XX:+IdleTuningGcOnIdle is set 
-				 * or if java version is 9 or above and -Xtune:virtualized is set as VM option
+				 * GcOnIdle is enabled only if:
+				 * 1. -XX:+IdleTuningGcOnIdle is set, or
+				 * 2. running in container, or
+				 * 3. if java version is 9 or above and -Xtune:virtualized is set as VM option
 				 */
-				if ((argIndexGcOnIdleEnable > argIndexGcOnIdleDisable) 
-				|| ((J2SE_VERSION(vm) >= J2SE_19) && (argIndexGcOnIdleDisable == -1) && J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_TUNE_VIRTUALIZED))
-				) {
+				if (argIndexGcOnIdleEnable > argIndexGcOnIdleDisable) {
+					enableGcOnIdle = TRUE;
+				} else if (-1 == argIndexGcOnIdleDisable) {
+					if (inContainer
+					|| ((J2SE_VERSION(vm) >= J2SE_19) && J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_TUNE_VIRTUALIZED))
+					) {
+						enableGcOnIdle = TRUE;
+					}
+				}
+				if (TRUE == enableGcOnIdle) {
 					vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_GC_ON_IDLE;
 				} else {
 					vm->vmRuntimeStateListener.idleTuningFlags &= ~(UDATA)J9_IDLE_TUNING_GC_ON_IDLE;
 				}
-				if (argIndexCompactOnIdleEnable > argIndexCompactOnIdleDisable) {
+				/*
+				 * CompactOnIdle is enabled only if:
+				 * 1. -XX:+IdleTuningCompactOnIdle is set, or
+				 * 2. running in container
+				 */
+				if ((argIndexCompactOnIdleEnable > argIndexCompactOnIdleDisable)
+				|| ((-1 == argIndexCompactOnIdleDisable) && inContainer)
+				) {
 					vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_COMPACT_ON_IDLE;
 				} else {
 					vm->vmRuntimeStateListener.idleTuningFlags &= ~(UDATA)J9_IDLE_TUNING_COMPACT_ON_IDLE;
@@ -1897,7 +1919,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 
 			/* Enable -XX:+UseContainerSupport by default */
 			if (argIndex >= argIndex2) {
-				OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 				uint64_t subsystemsEnabled = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_ALL);
 
 				if (OMR_CGROUP_SUBSYSTEM_ALL != subsystemsEnabled) {
