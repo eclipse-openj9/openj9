@@ -4017,16 +4017,6 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
    return node->getRegister();
    }
 
-
-#if defined(DEBUG)
-extern "C"
-{
-   uint32_t totalMonEnters            = 0;
-   uint32_t totalNestedMonEnters      = 0;
-   uint32_t totalUncontendedMonEnters = 0;
-}
-#endif
-
 static bool comesFromClassLib(TR::Node *node, TR::Compilation *comp)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -4407,13 +4397,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    generateLabelInstruction(LABEL, node, startLabel, cg);
 
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
-
-   #if defined(DEBUG)
-   if (debug("monenterstats"))
-      {
-      generateMemInstruction(INC4Mem, node, generateX86MemoryReference((intptr_t)&totalMonEnters, cg), cg);
-      }
-   #endif
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *monitorLookupCacheLabel = generateLabelSymbol(cg);
