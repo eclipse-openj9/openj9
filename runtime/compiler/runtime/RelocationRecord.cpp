@@ -1074,11 +1074,21 @@ TR_RelocationRecordConstantPoolWithIndex::bytesInHeaderAndPayload()
 TR_OpaqueMethodBlock *
 TR_RelocationRecordConstantPoolWithIndex::getSpecialMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex)
    {
-   TR::VMAccessCriticalSection getSpecialMethodFromCP(reloRuntime->fej9());
-   J9ConstantPool *cp = (J9ConstantPool *) void_cp;
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
-
    J9VMThread *vmThread = reloRuntime->currentThread();
+
+   TR::VMAccessCriticalSection getSpecialMethodFromCP(reloRuntime->fej9());
+
+   J9ConstantPool *cp = (J9ConstantPool *) void_cp;
+   J9ROMClass *romClass = cp->ramClass->romClass;
+   uint32_t constantPoolCount = romClass->romConstantPoolCount;
+   uint32_t * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+   if (cpIndex >= constantPoolCount)
+      return NULL;
+   if ((J9CPTYPE_INSTANCE_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex)) &&
+       (J9CPTYPE_INTERFACE_INSTANCE_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex)))
+      return NULL;
+
    TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) jitResolveSpecialMethodRef(vmThread, cp, cpIndex, J9_RESOLVE_FLAG_AOT_LOAD_TIME);
    RELO_LOG(reloLogger, 6, "\tgetMethodFromCP: found special method %p\n", method);
    return method;
