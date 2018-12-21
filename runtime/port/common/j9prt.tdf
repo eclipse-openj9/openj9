@@ -2133,3 +2133,4 @@ TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong Group=j9
 TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: getpwuid() returns NULL"
 TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: User's home directory %s is on a network file system"
 TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_cannotStat Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: omrfile_stat() failed on the user's home directory %s"
+TraceExit=Trc_PRT_shared_createDir_Exit8 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_createDir file_attr reported isDir, directory exists, cacheDirPerm is not present and it is not the default directory"
