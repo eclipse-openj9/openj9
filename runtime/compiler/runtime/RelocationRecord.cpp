@@ -1181,6 +1181,15 @@ TR_RelocationRecordConstantPoolWithIndex::getInterfaceMethodFromCP(TR_Relocation
 
       {
       TR::VMAccessCriticalSection getInterfaceMethodFromCP(reloRuntime->fej9());
+
+      J9ROMClass *romClass = cp->ramClass->romClass;
+      uint32_t constantPoolCount = romClass->romConstantPoolCount;
+      uint32_t * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+      if (cpIndex >= constantPoolCount)
+         return NULL;
+      if (J9CPTYPE_INTERFACE_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex))
+         return NULL;
+
       interfaceClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(reloRuntime->currentThread(),
                                                                                             cp,
                                                                                             romMethodRef->classRefCPIndex,
