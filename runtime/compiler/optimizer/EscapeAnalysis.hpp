@@ -479,9 +479,6 @@ class TR_EscapeAnalysis : public TR::Optimization
     * @param[in] allocNode The allocation node whose aliases are to be collected
     */
    void     collectAliasesOfAllocations(TR::Node *node, TR::Node *allocNode);
-
-   bool     checkAllNewsOnRHSInLoop(TR::Node *defNode, TR::Node *useNode, Candidate *candidate);
-   bool     checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR::Node *useNode, Candidate *candidate);
    bool     usesValueNumber(Candidate *candidate, int32_t valueNumber);
    Candidate *findCandidate(int32_t valueNumber);
 
@@ -640,7 +637,6 @@ class TR_EscapeAnalysis : public TR::Optimization
 #endif
    bool                       _repeatAnalysis;
    bool                       _somethingChanged;
-   bool                       _doLoopAllocationAliasChecking;
    TR_ScratchList<TR_DependentAllocations> _dependentAllocations;
    TR_BitVector *             _vnTemp;
    TR_BitVector *             _vnTemp2;
