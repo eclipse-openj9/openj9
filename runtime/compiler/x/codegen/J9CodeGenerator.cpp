@@ -460,7 +460,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
       }
    else
       {
-      comp->setNumReservedIPICTrampolines(comp->getNumReservedIPICTrampolines() + numTrampolines);
+      self()->setNumReservedIPICTrampolines(self()->getNumReservedIPICTrampolines() + numTrampolines);
       }
 
    TR_ASSERT(newCache->isReserved(), "New CodeCache is not reserved");
