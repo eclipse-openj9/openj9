@@ -140,7 +140,7 @@ TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
 #endif
 
    static char *disableLoopAliasAllocationChecking = feGetEnv("TR_disableEALoopAliasAllocationChecking");
-   _doLoopAllocationAliasChecking = (disableLoopAliasAllocationChecking == NULL);
+   _doLoopAllocationAliasChecking = disableLoopAliasAllocationChecking ? false : true;
    }
 
 char *TR_EscapeAnalysis::getClassName(TR::Node *classNode)
@@ -558,10 +558,10 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
       _visitedNodes = new (trStackMemory()) TR_BitVector(comp()->getNodeCount(), trMemory(), stackAlloc, growable);
       _aliasesOfAllocNode =
           _doLoopAllocationAliasChecking
-                 ? new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable) : NULL;
+                 ? new (trStackMemory()) TR_BitVector(comp()->getSymRefCount(), trMemory(), stackAlloc, growable) : NULL;
       _aliasesOfOtherAllocNode =
           _doLoopAllocationAliasChecking
-                 ? new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable) : NULL;
+                 ? new (trStackMemory()) TR_BitVector(comp()->getSymRefCount(), trMemory(), stackAlloc, growable) : NULL;
 
       if (!_useDefInfo)
          {
@@ -2437,14 +2437,8 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                      fieldName = underlyingArray->getSymbolReference()->getOwningMethod(comp())->staticName(underlyingArray->getSymbolReference()->getCPIndex(), fieldNameLen, comp()->trMemory());
                      }
 
-                  if (fieldName && (fieldNameLen > 10) &&
-                        !strncmp("java/lang/", fieldName, 10) &&
-                          (!strncmp("Integer$IntegerCache.cache", &fieldName[10], 26) ||
-                           !strncmp("Long$LongCache.cache", &fieldName[10], 20) ||
-                           !strncmp("Short$ShortCache.cache", &fieldName[10], 22) ||
-                           !strncmp("Byte$ByteCache.cache", &fieldName[10], 20) ||
-                           !strncmp("Character$CharacterCache.cache", &fieldName[10], 30)))
-
+                  if (fieldName && (fieldNameLen > 0) &&
+                      !strncmp(fieldName, "java/lang/Integer$IntegerCache.cache", 36))
                      {
                      if (trace())
                         {
