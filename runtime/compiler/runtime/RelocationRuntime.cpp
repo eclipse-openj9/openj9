@@ -1196,6 +1196,16 @@ TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9JavaVM *
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
    TR::VMAccessCriticalSection getClassFromCP(fe);
+
+   J9ROMClass *romClass = constantPool->ramClass->romClass;
+   uint32_t constantPoolCount = romClass->romConstantPoolCount;
+   uint32_t * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+   if (cpIndex >= constantPoolCount)
+      return NULL;
+   if ((J9CPTYPE_FIELD != J9_CP_TYPE(cpShapeDescription, cpIndex)) &&
+       (J9CPTYPE_CLASS != J9_CP_TYPE(cpShapeDescription, cpIndex)))
+      return NULL;
+
    /* Get the class.  Stop immediately if an exception occurs. */
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&constantPool->romConstantPool[cpIndex];
 
