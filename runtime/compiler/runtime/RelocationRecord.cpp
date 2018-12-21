@@ -3090,10 +3090,21 @@ TR_RelocationRecordValidateClass::getClassFromCP(TR_RelocationRuntime *reloRunti
    if (void_cp)
       {
       TR::VMAccessCriticalSection getClassFromCP(reloRuntime->fej9());
+
+      uint32_t constPoolIndex = cpIndex(reloTarget);
+      J9ConstantPool *cp = (J9ConstantPool *)void_cp;
+      J9ROMClass *romClass = cp->ramClass->romClass;
+      uint32_t constantPoolCount = romClass->romConstantPoolCount;
+      uint32_t * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+      if (constPoolIndex >= constantPoolCount)
+         return NULL;
+      if (J9CPTYPE_CLASS != J9_CP_TYPE(cpShapeDescription, constPoolIndex))
+         return NULL;
+
       J9JavaVM *javaVM = reloRuntime->javaVM();
       definingClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(javaVM->internalVMFunctions->currentVMThread(javaVM),
-                                                                                           (J9ConstantPool *) void_cp,
-                                                                                           cpIndex(reloTarget),
+                                                                                           cp,
+                                                                                           constPoolIndex,
                                                                                            J9_RESOLVE_FLAG_AOT_LOAD_TIME);
       }
 
