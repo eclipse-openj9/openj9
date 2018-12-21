@@ -2916,13 +2916,12 @@ TR::Node *pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    simplifyChildren(node, block, s);
    TR::Node *valueChild = node->setValueChild(removeOperandWidening(node->getValueChild(), node, block, s));
 
-   if ((!s->comp()->getOption(TR_EnableLateCleanFolding) || s->comp()->getOptLevel() == noOpt) && // setting CleanSignInPDStoreEvaluator at opt interferes with copyPropagation and valueNumbering as it means the store now has a side-effect
-            !s->comp()->getOption(TR_KeepBCDWidening) &&
-            valueChild->getOpCodeValue() == TR::pdclean &&
-            node->getDecimalPrecision() <= TR::DataType::getMaxPackedDecimalPrecision() &&
-            isFirstOrOnlyReference(valueChild) &&
-            performTransformation(s->comp(), "%sFold pdclean [" POINTER_PRINTF_FORMAT "] into pdstore by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",
-               s->optDetailString(), valueChild, node))
+   if (!s->comp()->getOption(TR_KeepBCDWidening) &&
+       valueChild->getOpCodeValue() == TR::pdclean &&
+       node->getDecimalPrecision() <= TR::DataType::getMaxPackedDecimalPrecision() &&
+       isFirstOrOnlyReference(valueChild) &&
+       performTransformation(s->comp(), "%sFold pdclean [" POINTER_PRINTF_FORMAT "] into pdstore by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",
+          s->optDetailString(), valueChild, node))
       {
       // this transformation is only done for first/only references to avoid a sub-optimality where an already clean sign is cleaned again on a subsequent reference
       // pdx
@@ -2960,21 +2959,10 @@ TR::Node *pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
          //    pdclean
          //
          // cheaper to do load/store/setSign0xc all as one op (i.e. with a ZAP)
-         if (!s->comp()->getOption(TR_EnableLateCleanFolding) || s->comp()->getOptLevel() == noOpt) // setting CleanSignInPDStoreEvaluator at opt interferes with copyPropagation and valueNumbering as it means the store now has a side-effect
-            {
-            dumpOptDetails(s->comp(), " by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",node);
-            node->setCleanSignInPDStoreEvaluator(true);
-            valueChild = node->setValueChild(s->replaceNodeWithChild(valueChild, valueChild->getFirstChild(), s->_curTree, block));
-            }
-         else
-            {
-            dumpOptDetails(s->comp(), " by changing pdSetSign [" POINTER_PRINTF_FORMAT "] to pdclean and removing %s [" POINTER_PRINTF_FORMAT "]\n",
-               valueChild,valueChild->getSecondChild());
-            valueChild->getSecondChild()->recursivelyDecReferenceCount();
-            TR::Node::recreate(valueChild, TR::pdclean);
-            valueChild->setFlags(0);
-            valueChild->setNumChildren(1);
-            }
+         //
+         dumpOptDetails(s->comp(), " by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",node);
+         node->setCleanSignInPDStoreEvaluator(true);
+         valueChild = node->setValueChild(s->replaceNodeWithChild(valueChild, valueChild->getFirstChild(), s->_curTree, block));
          }
 
    valueChild = node->setValueChild(removeOperandWidening(valueChild, node, block, s));
