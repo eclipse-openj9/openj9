@@ -498,7 +498,11 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
                  getMethodQueueSize() >= TR::Options::_qszThresholdToDowngradeOptLevelDuringStartup) ||
                  // Downgrade if AOT and startup, 
                 (TR::Options::getCmdLineOptions()->sharedClassCache() &&
+#if defined(TR_TARGET_POWER) // temporary hack until PPC AOT bug is found
+                 _jitConfig->javaVM->phase == J9VM_PHASE_STARTUP &&
+#else
                  _jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+#endif
                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDowngradeToColdOnVMPhaseStartup))
                )
                {
@@ -7049,7 +7053,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // In some circumstances AOT compilations are performed at warm
             if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
                that->getCompilationInfo()->importantMethodForStartup((J9Method*)method) ||
-               !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm)) &&
+               (!TR::Compiler->target.cpu.isPower() && // Temporary change until we figure out the AOT bug on PPC
+                !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))) &&
                p->_optimizationPlan->isOptLevelDowngraded() &&
                p->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
                {
