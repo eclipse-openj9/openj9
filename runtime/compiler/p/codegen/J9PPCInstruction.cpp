@@ -49,7 +49,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
       TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
       TR::LabelSymbol *label = getSymbolReference()->getSymbol()->getLabelSymbol();
 
-      if (comp->getCodeCacheSwitched())
+      if (cg()->hasCodeCacheSwitched())
          {
          TR::SymbolReference *calleeSymRef = NULL;
 
@@ -116,9 +116,9 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
             else if (refNum >= cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::firstPerCodeCacheHelperSymbol) &&
                      refNum <= cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::lastPerCodeCacheHelperSymbol))
                {
-               TR_ASSERT( comp->getCodeCacheSwitched(), "Expecting per-codecache helper to be unreachable only when codecache was switched");
+               TR_ASSERT(cg()->hasCodeCacheSwitched(), "Expecting per-codecache helper to be unreachable only when codecache was switched");
                TR_CCPreLoadedCode helper = (TR_CCPreLoadedCode)(refNum - cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::firstPerCodeCacheHelperSymbol));
-               _addrImmediate = (uintptrj_t)fej9->getCCPreLoadedCodeAddress(comp->getCurrentCodeCache(), helper, cg());
+               _addrImmediate = (uintptrj_t)fej9->getCCPreLoadedCodeAddress(cg()->getCodeCache(), helper, cg());
                distance = (intptrj_t)_addrImmediate - (intptrj_t)cursor;
                }
             else

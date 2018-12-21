@@ -6672,10 +6672,15 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    if (_compiler)
       {
       // Unreserve the code cache used for this compilation
-      if (_compiler->getCurrentCodeCache())
+      //
+      // NOTE: Although unintuitive, it is possible to reach here without an allocated
+      // CodeGenerator.  This can happen during AOT loads.  See the OMR::Compilation
+      // constructor for details.
+      //
+      if (_compiler->cg() && _compiler->cg()->getCodeCache())
          {
-         _compiler->getCurrentCodeCache()->unreserve();
-         _compiler->setCurrentCodeCache(0);
+         _compiler->cg()->getCodeCache()->unreserve();
+         _compiler->cg()->setCodeCache(0);
          }
       // Unreserve the data cache
       TR_DataCache *dataCache = (TR_DataCache*)_compiler->getReservedDataCache();
@@ -9179,9 +9184,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      {
                      J9JITDataCacheHeader *cacheEntry;
 
+                     TR_ASSERT_FATAL(comp->cg(), "CodeGenerator must be allocated");
+
                      // Use same code cache as AOT compile
                      //
-                     TR::CodeCache *aotMCCRuntimeCodeCache = comp->getCurrentCodeCache();
+                     TR::CodeCache *aotMCCRuntimeCodeCache = comp->cg()->getCodeCache();
                      TR_ASSERT(aotMCCRuntimeCodeCache, "Must have a reserved codeCache");
                      cacheEntry = (J9JITDataCacheHeader *)dataStart;
 
