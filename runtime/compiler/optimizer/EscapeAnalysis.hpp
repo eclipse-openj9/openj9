@@ -461,24 +461,6 @@ class TR_EscapeAnalysis : public TR::Optimization
    bool     checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candidate *candidate, bool isImmediateUse);
    bool     checkOverlappingLoopAllocation(TR::Node *useNode, Candidate *candidate);
    bool     checkOverlappingLoopAllocation(TR::Node *node, TR::Node *useNode, TR::Node *allocNode, rcount_t &numReferences);
-
-   /**
-    * Visit nodes in the subtree, keeping track of those visited in
-    * @ref _visitedNodes
-    * @param[in] node The subtree that is to be visited
-    */
-   void     visitTree(TR::Node *node);
-
-   /**
-    * Collect aliases of an allocation node in the specified subtree
-    * in @ref _aliasesOfOtherAllocNode
-    * Nodes in the subtree that are visited are tracked in
-    * @ref _visitedNodes, and those that have been marked as already visited
-    * are skipped.
-    * @param[in] node The subtree that is to be visited
-    * @param[in] allocNode The allocation node whose aliases are to be collected
-    */
-   void     collectAliasesOfAllocations(TR::Node *node, TR::Node *allocNode);
    bool     usesValueNumber(Candidate *candidate, int32_t valueNumber);
    Candidate *findCandidate(int32_t valueNumber);
 
@@ -586,28 +568,6 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_BitVector              *_notOptimizableLocalStringObjectsValueNumbers;
    TR_BitVector              *_blocksWithFlushOnEntry;
    TR_BitVector              *_visitedNodes;
-
-   /**
-    * Contains sym refs that are just aliases for a fresh allocation
-    * i.e., it is used to track allocations in cases such as
-    * ...
-    * a = new A()
-    * ...
-    * b = a
-    * ...
-    * c = b
-    *
-    * In this case a, b and c will all be considered aliases of an alloc node
-    * and so a load of any of those sym refs will be treated akin to how the
-    * fresh allocation would be treated
-    */
-   TR_BitVector              *_aliasesOfAllocNode;
-
-   /**
-    * Contains sym refs that are just aliases for a second fresh allocation
-    * that is under consideration, as with @ref _aliasesOfAllocNode
-    */
-   TR_BitVector              *_aliasesOfOtherAllocNode;
    TR_ValueNumberInfo        *_valueNumberInfo;
    TR_LinkHead<Candidate>     _candidates;
    TR_Array<TR::Node*>        *_parms;
