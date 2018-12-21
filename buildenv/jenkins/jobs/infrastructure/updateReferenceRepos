@@ -1,0 +1,259 @@
+/*******************************************************************************
+ * Copyright (c) 2018, 2018 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ 
+*******************************************************************************/
+
+import jenkins.model.Jenkins
+import hudson.model.Computer
+
+if(!env.VARIABLE_FILE_DEFAULT){
+    VARIABLE_FILE_DEFAULT = ''
+}
+if(!env.VENDOR_REPO_DEFAULT){
+    VENDOR_REPO_DEFAULT = ''
+}
+if(!env.VENDOR_BRANCH_DEFAULT){
+    VENDOR_BRANCH_DEFAULT = ''
+}
+if(!env.VENDOR_CREDENTIALS_ID_DEFAULT){
+    VENDOR_CREDENTIALS_ID_DEFAULT = ''
+}
+
+properties([parameters([string(defaultValue: "${VARIABLE_FILE_DEFAULT}", name: "VARIABLE_FILE"), string(defaultValue: "${VENDOR_REPO_DEFAULT}", name: "VENDOR_REPO"), string(defaultValue: "${VENDOR_BRANCH_DEFAULT}", name: "VENDOR_BRANCH"), string(defaultValue: "${VENDOR_CREDENTIALS_ID_DEFAULT}", name: "VENDOR_CREDENTIALS_ID"), booleanParam(defaultValue: false, name: 'WIPE_CACHE')]), pipelineTriggers([cron('@weekly')])])
+
+def refresh(NODE, DIR, REPOS) {
+    dir("${DIR}") {
+        stage("${NODE} - Config") {
+            sh 'git init --bare'
+            REPOS.each { REPO ->
+                config(REPO.name, REPO.url)
+            }
+        }
+        stage("${NODE} - Fetch") {
+            sshagent(credentials:['83181e25-eea4-4f55-8b3e-e79615733226'], ignoreMissing: true) {
+                sh 'git fetch --all'
+            }
+        }
+    }
+}
+
+def config(NAME, URL) {
+    sh "git config remote.${NAME}.url ${URL}"
+    sh "git config remote.${NAME}.fetch +refs/heads/*:refs/remotes/${NAME}/*"
+}
+
+def get_value(MAP, KEY) {
+    if(MAP != null) {
+        for(item in MAP) {
+            if("${item.key}" == "${KEY}") {
+                if((item.value instanceof Map) || (item.value instanceof java.util.List)) {
+                    return item.value
+                } else {
+                    return "${item.value}"
+                }
+            }
+        }
+    }
+}
+
+def boolean evaluateLabels(LABELS) {
+    def holdI = []
+    def holdJ = []
+    for(i = 0; i < LABELS.size(); i++) {
+        if(LABELS[i] == "(") {
+            openBrackets = 1
+            closedBrackets = 0
+            TEMP = []
+            for(j = i+1; j < LABELS.size(); j++) {
+                if(LABELS[j] == "(") {
+                    openBrackets++
+                } else if(LABELS[j] == ")") {
+                    closedBrackets++
+                }
+                if(openBrackets == closedBrackets) {
+                    holdI.add(i)
+                    holdJ.add(j)
+                    eval = evaluateLabels(TEMP)
+                    i = holdI[holdI.size()-1]
+                    j = holdJ[holdJ.size()-1]
+                    holdI.removeAt(holdI.size()-1)
+                    holdJ.removeAt(holdJ.size()-1)
+                    LABELS[i] = eval
+                    LABELS.removeAt(j)
+                    break
+                } else {
+                    TEMP.add(LABELS[j])
+                    LABELS.removeAt(j)
+                    j--
+                }
+            }
+        }
+    }
+    STATUS = LABELS[0]
+    for(i = 1; i < LABELS.size(); i++) {
+        if(LABELS[i] == "&&") {
+            STATUS = (STATUS && LABELS[i+1])
+        } else if(LABELS[i] == "||") {
+            STATUS = (STATUS || LABELS[i+1])
+        }
+    }
+    return STATUS
+}
+
+timeout(time: 6, unit: 'HOURS') {
+    timestamps {
+        node("master"){
+            def NODES = []
+            def JDKS = []
+            def PLATFORMS = ["linux_x86-64_cmprssptrs", "linux_390-64_cmprssptrs", "linux_ppc-64_cmprssptrs_le"]
+            def REPOS = []
+            def JOBS = [:]
+            def repoCache = ""
+            try{
+                checkout scm
+
+                //if(params.VARIABLE_FILE){
+                    //VARIABLE_FILE = params.VARIABLE_FILE
+                //}
+                //if(params.VENDOR_REPO){
+                    //VENDOR_REPO = params.VENDOR_REPO
+                //}
+                //if(params.VENDOR_BRANCH){
+                    //VENDOR_BRANCH = params.VENDOR_BRANCH
+                //}
+                //if(params.VENDOR_CREDENTIALS_ID){
+                    //VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
+                //}
+                if(!VARIABLE_FILE){
+                    VARIABLE_FILE = VARIABLE_FILE_DEFAULT
+                }
+                if(!VENDOR_REPO){
+                    VENDOR_REPO = VENDOR_REPO_DEFAULT
+                }
+                if(!VENDOR_BRANCH){
+                    VENDOR_BRANCH = VENDOR_BRANCH_DEFAULT
+                }
+                if(!VENDOR_CREDENTIALS_ID){
+                    VENDOR_CREDENTIALS_ID = VENDOR_CREDENTIALS_ID_DEFAULT
+                }
+                println "VARIABLE_FILE: " + VARIABLE_FILE
+                println "VENDOR_REPO: " + VENDOR_REPO
+                println "VENDOR_BRANCH: " + VENDOR_BRANCH
+                println "VENDOR_CREDENTIALS_ID: " + VENDOR_CREDENTIALS_ID
+                if(VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH){
+                    sshagent(credentials:[VENDOR_CREDENTIALS_ID], ignoreMissing: true){
+                        sh "git config remote.vendor.url ${VENDOR_REPO}"
+                        sh "git config remote.vendor.fetch +refs/heads/${VENDOR_BRANCH}:refs/remotes/vendor/${VENDOR_BRANCH}"
+                        sh "git fetch vendor"
+                        sh "git checkout vendor/${VENDOR_BRANCH} -- ${VARIABLE_FILE}"
+                    }
+                    if(!fileExists("${VARIABLE_FILE}")){
+                        error("Missing variable file: ${VARIABLE_FILE}")
+                    } else {
+                        variableFile = readYaml file: "${VARIABLE_FILE}"
+                    }
+                } else {
+                    variableFile = readYaml file: "buildenv/jenkins/variables/defaults.yml"
+                }
+
+                stage("Setup") {
+                    def currentInstance = Jenkins.get()
+                    def COMPUTERS = currentInstance.getComputers()
+                    variableFile.openjdk.each { version, value ->
+                        if("${version}" == "next"){
+                            REPOS.add([name: "jdk", url: get_value(value, "default").repoUrl])
+                        } else {
+                            REPOS.add([name: "jdk${version}", url: get_value(value, "default").repoUrl])
+                        }
+                    }
+                    if(variableFile.openj9_repo){
+                        REPOS.add([name: "openj9", url: variableFile.openj9_repo])
+                    }
+                    if(variableFile.omr_repo){
+                        REPOS.add([name: "omr", url: variableFile.omr_repo])
+                    }
+                    PLATFORMS.each { PLATFORM ->
+                        NODES = []
+                        repoCache = get_value(variableFile, PLATFORM).openjdk_reference_repo
+                        get_value(variableFile, PLATFORM).node_labels.build.each { version, value ->
+                            for(i = 0; i < value.length(); i++){
+                                if(value.getAt(i) == "(" || value.getAt(i) == ")"){
+                                    if(i != 0){
+                                        if(value.getAt(i-1) != " "){
+                                            value = value.substring(0, i) + " " + value.substring(i)
+                                            i++
+                                        }
+                                    }
+                                    if(i != value.length()-1){
+                                        if(value.getAt(i+1) != " "){
+                                            value = value.substring(0, i+1) + " " + value.substring(i+1)
+                                            i--
+                                        }
+                                    }
+                                }
+                            }
+                            PLATLABELS = value.split().toList()
+                            COMPUTERS.each { COMPUTER ->
+                                COMPLABELS = PLATLABELS.collect()
+                                for(i = 0; i < COMPLABELS.size(); i++) {
+                                    if(COMPLABELS[i] != "&&" && COMPLABELS[i] != "||" && COMPLABELS[i] != "(" && COMPLABELS[i] != ")") {
+                                        if(COMPUTER.getNode().getLabelString().contains(COMPLABELS[i])) {
+                                            COMPLABELS[i] = true
+                                        } else {
+                                            COMPLABELS[i] = false
+                                        }
+                                    }
+                                }
+                                if(evaluateLabels(COMPLABELS) && COMPUTER.isOnline() && !NODES.contains(COMPUTER.getName())) {
+                                    NODES.add(COMPUTER.getName())
+                                }
+                            }
+                        }
+                        //currenlty only runs on linux
+                        NODES.each { NODE ->
+                            JOBS["${NODE}"] = {
+                                node("${NODE}"){
+                                    try{
+                                        if("${WIPE_CACHE}" == "true"){
+                                            sh "rm -rf ${repoCache}"
+                                        }
+                                        if(NODE_LABELS.contains('win')){
+                                            sh 'bash ~/openjdk_cache_updater.sh'
+                                        } else {
+                                            refresh(NODE, "${repoCache}", REPOS)
+                                        }
+                                    } finally {
+                                        cleanWs()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                stage("Launch jobs") {
+                    parallel JOBS
+                }
+            } finally {
+                cleanWs()
+            }
+        }
+    }
+}
