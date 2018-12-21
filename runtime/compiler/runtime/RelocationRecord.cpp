@@ -1142,10 +1142,20 @@ TR_RelocationRecordConstantPoolWithIndex::getVirtualMethodFromCP(TR_RelocationRu
 TR_OpaqueMethodBlock *
 TR_RelocationRecordConstantPoolWithIndex::getStaticMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex)
    {
-   TR::VMAccessCriticalSection getStaticMethodFromCP(reloRuntime->fej9());
    J9JavaVM *javaVM = reloRuntime->javaVM();
-   J9ConstantPool *cp = (J9ConstantPool *) void_cp;
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+
+   TR::VMAccessCriticalSection getStaticMethodFromCP(reloRuntime->fej9());
+
+   J9ConstantPool *cp = (J9ConstantPool *) void_cp;
+   J9ROMClass *romClass = cp->ramClass->romClass;
+   uint32_t constantPoolCount = romClass->romConstantPoolCount;
+   uint32_t * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+   if (cpIndex >= constantPoolCount)
+      return NULL;
+   if ((J9CPTYPE_STATIC_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex)) &&
+       (J9CPTYPE_INTERFACE_STATIC_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex)))
+      return NULL;
 
    TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) jitResolveStaticMethodRef(javaVM->internalVMFunctions->currentVMThread(javaVM),
                                                                                      cp,
