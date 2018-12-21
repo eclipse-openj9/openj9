@@ -728,9 +728,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_cpuUtilThresholdForStarvation , 0, "F%d", NOT_IN_SUBSET},
    {"data=",                          "C<nnn>\tdata cache size, in KB",
         TR::Options::setJitConfigNumericValue, offsetof(J9JITConfig, dataCacheKB), 0, " %d (KB)"},
-   {"dataCacheMinQuanta=",            "I<nnn>\tMinimum number of quantums per data cache allocation", 
+   {"dataCacheMinQuanta=",            "I<nnn>\tMinimum number of quantums per data cache allocation",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_dataCacheMinQuanta, 0, " %d", NOT_IN_SUBSET},
-   {"dataCacheQuantumSize=",          "I<nnn>\tLargest guaranteed common byte multiple of data cache allocations.  This value will be rounded up for pointer alignment.", 
+   {"dataCacheQuantumSize=",          "I<nnn>\tLargest guaranteed common byte multiple of data cache allocations.  This value will be rounded up for pointer alignment.",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_dataCacheQuantumSize, 0, " %d", NOT_IN_SUBSET},
    {"datatotal=",              "C<nnn>\ttotal data memory limit, in KB",
         TR::Options::setJitConfigNumericValue, offsetof(J9JITConfig, dataCacheTotalKB), 0, " %d (KB)"},
@@ -861,12 +861,12 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_largeTranslationTime, 0, "F%d", NOT_IN_SUBSET},
    {"limit=",             "D<xxx>\tonly compile methods beginning with xxx", TR::Options::limitOption, 0, 0, "P%s"},
    {"limitfile=",         "D<filename>\tfilter method compilation as defined in filename.  "
-                          "Use limitfile=(filename,firstLine,lastLine) to limit lines considered from firstLine to lastLine", 
+                          "Use limitfile=(filename,firstLine,lastLine) to limit lines considered from firstLine to lastLine",
         TR::Options::limitfileOption, 0, 0, "F%s"},
    {"loadExclude=",           "D<xxx>\tdo not relocate AOT methods beginning with xxx", TR::Options::loadLimitOption, 1, 0, "P%s"},
    {"loadLimit=",             "D<xxx>\tonly relocate AOT methods beginning with xxx", TR::Options::loadLimitOption, 0, 0, "P%s"},
    {"loadLimitFile=",         "D<filename>\tfilter AOT method relocation as defined in filename.  "
-                          "Use loadLimitfile=(filename,firstLine,lastLine) to limit lines considered from firstLine to lastLine", 
+                          "Use loadLimitfile=(filename,firstLine,lastLine) to limit lines considered from firstLine to lastLine",
         TR::Options::loadLimitfileOption, 0, 0, "P%s"},
    {"localCSEFrequencyThreshold=", "O<nnn>\tBlocks with frequency lower than the threshold will not be considered by localCSE",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_localCSEFrequencyThreshold, 0, "F%d", NOT_IN_SUBSET },
@@ -945,11 +945,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"smallMethodBytecodeSizeThresholdForCold=", "O<nnn> Threshold for determining small methods at cold\t "
                                          "(measured in number of bytecodes)",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_smallMethodBytecodeSizeThresholdForCold, 0, "F%d", NOT_IN_SUBSET},
-   {"stack=",             "C<nnn>\tcompilation thread stack size in KB", 
+   {"stack=",             "C<nnn>\tcompilation thread stack size in KB",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_stackSize, 0, " %d", NOT_IN_SUBSET},
-#ifdef DEBUG
-   {"stats",              "L\tdump statistics at end of run", SET_JITCONFIG_RUNTIME_FLAG(J9JIT_DUMP_STATS) },
-#endif
    {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
    {"tlhPrefetchBoundaryLineCount=",    "O<nnn>\tallocation prefetch boundary line for allocation prefetch",
@@ -1885,7 +1882,7 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_InlineVeryLargeCompiledMethods);
       }
 #endif
- 
+
    // On big machines we can afford to spend more time compiling
    // (but not on zOS where customers care about CPU or on Xquickstart
    // which should be skimpy on compilation resources).
@@ -2329,7 +2326,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       self()->setOption(TR_DisableGuardedCountingRecompilations);
       self()->setOption(TR_EnableJProfiling, false);
       //might move around asyn checks and clone the OSRBlock which are not safe under the current OSR infrastructure
-      self()->setOption(TR_DisableProfiling); 
+      self()->setOption(TR_DisableProfiling);
       //the VM side doesn't support fsd for this event yet
       self()->setOption(TR_DisableNewInstanceImplOpt);
       //the following 2 opts might insert async checks at new bytecode index where the OSR infrastructures doesn't exist

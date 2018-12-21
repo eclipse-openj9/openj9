@@ -192,8 +192,8 @@ TR_J9VMBase::supportsFastNanoTime()
 }
 
 /*
- * VM sets a bit in the j9method->constantPool field to indicate 
- * if the method is breakpointed 
+ * VM sets a bit in the j9method->constantPool field to indicate
+ * if the method is breakpointed
  */
 U_32
 TR_J9VMBase::offsetOfMethodIsBreakpointedBit()
@@ -2347,8 +2347,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 	  // Check for user specified FastJNI override
 	  if (TR::Options::getJniAccelerator() != NULL && TR::SimpleRegex::match(TR::Options::getJniAccelerator(), signature(trMemory)))
          {
-		 _jniProperties |= 
-             J9_FAST_JNI_RETAIN_VM_ACCESS | 
+		 _jniProperties |=
+             J9_FAST_JNI_RETAIN_VM_ACCESS |
              J9_FAST_JNI_NOT_GC_POINT |
              J9_FAST_NO_NATIVE_METHOD_FRAME |
              J9_FAST_JNI_NO_EXCEPTION_THROW |
@@ -4990,7 +4990,7 @@ void
 TR_ResolvedJ9Method::setQuadClassSeen()
    {
    TR::Compilation* comp = ( fej9()->_compInfoPT ) ? fej9()->_compInfoPT->getCompilation() : NULL;
-   //TODO: 
+   //TODO:
    //This works but is too drastic because it disable the OSR
    //for the entire compilation. Further work needs to be done
    //to not attempt OSR only when the execution entered the code path
@@ -6035,7 +6035,7 @@ TR_ResolvedJ9Method::isUnresolvedConstantDynamic(I_32 cpIndex)
       return true;
       }
 
-   TR::VMAccessCriticalSection voidClassObjectCritSec(fej9()); 
+   TR::VMAccessCriticalSection voidClassObjectCritSec(fej9());
    J9JavaVM * javaVM = fej9()->_jitConfig->javaVM;
    j9object_t voidClassObject = javaVM->voidReflectClass->classObject;
    j9object_t slot2 = ((J9RAMConstantDynamicRef *) literals())[cpIndex].exception;
@@ -6171,7 +6171,6 @@ TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::C
    {
    TR::VMAccessCriticalSection getClassFromConstantPool(fej9);
    TR_OpaqueClassBlock *result = 0;
-   INCREMENT_COUNTER(fej9, totalClassRefs);
    J9Class * resolvedClass;
    if (cpIndex != -1 &&
        !((fej9->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
@@ -6181,10 +6180,7 @@ TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::C
       {
       result = fej9->convertClassPtrToClassOffset(resolvedClass);
       }
-   else
-      {
-      INCREMENT_COUNTER(fej9, unresolvedClassRefs);
-      }
+
    return result;
    }
 
@@ -6347,9 +6343,6 @@ TR_ResolvedJ9Method::getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_3
 TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, UDATA *pITableIndex)
    {
-   INCREMENT_COUNTER(fej9, totalInterfaceMethodRefs);
-   INCREMENT_COUNTER(fej9, unresolvedInterfaceMethodRefs);
-
    if (cpIndex == -1)
       return NULL;
 
@@ -6390,9 +6383,6 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
 #if TURN_OFF_INLINING
    return 0;
 #else
-   INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
-   INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
-
       {
       TR::VMAccessCriticalSection getResolvedInterfaceMethodOffset(fej9());
       vTableOffset = jitGetInterfaceVTableOffsetFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
@@ -6415,9 +6405,6 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
 #if TURN_OFF_INLINING
    return 0;
 #else
-   INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
-   INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
-
    J9Method *j9method = NULL;
    if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
       {
@@ -6479,8 +6466,6 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
 
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   INCREMENT_COUNTER(_fe, totalStaticMethodRefs);
-
 #if !TURN_OFF_INLINING
    // See if the constant pool entry is already resolved or not
    //
@@ -6530,7 +6515,6 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
 
    if (resolvedMethod == NULL)
       {
-      INCREMENT_COUNTER(_fe, unresolvedStaticMethodRefs);
       if (unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
       }
@@ -6548,8 +6532,6 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
 #if !TURN_OFF_INLINING
-
-   INCREMENT_COUNTER(_fe, totalSpecialMethodRefs);
 
    // See if the constant pool entry is already resolved or not
    //
@@ -6592,7 +6574,6 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
 
    if (resolvedMethod == NULL)
       {
-      INCREMENT_COUNTER(_fe, unresolvedSpecialMethodRefs);
       if (unresolvedInCP)
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
@@ -6609,8 +6590,6 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
 #if TURN_OFF_INLINING
    return 0;
 #else
-   INCREMENT_COUNTER(_fe, totalVirtualMethodRefs);
-
    TR_ResolvedMethod *resolvedMethod = NULL;
 
    // See if the constant pool entry is already resolved or not
@@ -6647,7 +6626,6 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
    if (resolvedMethod == NULL)
       {
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
-      INCREMENT_COUNTER(_fe, unresolvedVirtualMethodRefs);
       if (unresolvedInCP)
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
@@ -6931,8 +6909,6 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   INCREMENT_COUNTER(_fe, totalInstanceFieldRefs);
-
    // See if the constant pool entry is already resolved or not
    //
    bool isUnresolvedInCP = !J9RAMFIELDREF_IS_RESOLVED(((J9RAMFieldRef*)cp()) + cpIndex);
@@ -6983,7 +6959,6 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
    else
       {
       resolved = false;
-      INCREMENT_COUNTER(_fe, unresolvedInstanceFieldRefs);
 
          {
          TR::VMAccessCriticalSection getFieldType(fej9());
@@ -7004,8 +6979,6 @@ bool
 TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void * * address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-
-   INCREMENT_COUNTER(_fe, totalStaticVariableRefs);
 
    // See if the constant pool entry is already resolved or not
    //
@@ -7052,7 +7025,6 @@ TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void
       }
    else
       {
-      INCREMENT_COUNTER(_fe, unresolvedStaticVariableRefs);
       resolved = false;
       *volatileP = true;
       if (isFinal) *isFinal = false;
@@ -7098,8 +7070,6 @@ TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 vi
    if (isInterfaceClass(classObject))
       return 0;
 
-   INCREMENT_COUNTER(this, totalVirtualMethodRefs);
-
    J9Method * ramMethod = *(J9Method **)((char *)TR::Compiler->cls.convertClassOffsetToClassPtr(classObject) + virtualCallOffsetToVTableSlot(virtualCallOffset));
 
    TR_ASSERT(ramMethod, "getResolvedVirtualMethod should always find a ramMethod in the vtable slot");
@@ -7110,7 +7080,6 @@ TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 vi
        J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod))
       return (TR_OpaqueMethodBlock* ) ramMethod;
 
-   INCREMENT_COUNTER(this, unresolvedVirtualMethodRefs);
    return 0;
    }
 
@@ -7123,9 +7092,6 @@ TR_J9VMBase::getResolvedInterfaceMethod(J9ConstantPool *ownerCP, TR_OpaqueClassB
    // the classObject is the fixed type of the this pointer.  The result of this method is going to be
    // used to call the interface function directly.
    //
-   INCREMENT_COUNTER(this, unresolvedInterfaceMethodRefs);
-   INCREMENT_COUNTER(this, totalInterfaceMethodRefs);
-
    J9Method * ramMethod = jitGetInterfaceMethodFromCP(vmThread(),
                                                       ownerCP,
                                                       cpIndex,

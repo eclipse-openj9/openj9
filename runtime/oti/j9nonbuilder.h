@@ -2153,7 +2153,7 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_METHODHANDLE  14
 #define J9CPTYPE_ANNOTATION_UTF8  15
 #define J9CPTYPE_CONSTANT_DYNAMIC 17
-/* 
+/*
  * INTERFACE_STATIC and INTERFACE_INSTANCE cpType are used to track the classfile tag of a methodref [CFR_CONSTANT_InterfaceMethodref]
  * These types are need to support correct initializer for constantpool due to how cp entries are pre-initialized
  * These will be used to check for cp consistency during resolve time
@@ -3605,7 +3605,6 @@ typedef struct J9JITConfig {
 	UDATA messageThreshold;
 	void* outOfMemoryJumpBuffer;
 	UDATA translationFiltersFlags;
-	UDATA lastCodeAllocSize;
 	UDATA lastGCDataAllocSize;
 	UDATA lastExceptionTableAllocSize;
 	UDATA gcCount;
@@ -3620,30 +3619,10 @@ typedef struct J9JITConfig {
 	void* patchupVirtual;
 	void* jitSendTargetTable;
 	struct J9MemorySegment* scratchSegment;
-	UDATA totalCodeBytesUsed;
-	UDATA totalGCDataBytesUsed;
-	UDATA totalAtlasDataBytesUsed;
-	UDATA totalMethodsTranslated;
-	UDATA totalMethodsNotTranslated;
-	UDATA totalDebugDataBytesUsed;
 	void* jitToInterpreterThunks;
 	struct J9HashTable* thunkHashTable;
 	omrthread_monitor_t thunkHashTableMutex;
 	void*  ( *thunkLookUpNameAndSig)(void * jitConfig, void *parm) ;
-	UDATA unresolvedClassRefs;
-	UDATA unresolvedStaticVariableRefs;
-	UDATA unresolvedStaticMethodRefs;
-	UDATA unresolvedSpecialMethodRefs;
-	UDATA unresolvedInstanceFieldRefs;
-	UDATA unresolvedVirtualMethodRefs;
-	UDATA unresolvedInterfaceMethodRefs;
-	UDATA totalClassRefs;
-	UDATA totalStaticVariableRefs;
-	UDATA totalStaticMethodRefs;
-	UDATA totalSpecialMethodRefs;
-	UDATA totalInstanceFieldRefs;
-	UDATA totalVirtualMethodRefs;
-	UDATA totalInterfaceMethodRefs;
 	UDATA maxInlineDepth;
 	UDATA iprofilerBufferSize;
 	UDATA codeCacheKB;
@@ -3784,7 +3763,6 @@ typedef struct J9JITConfig {
 #define J9JIT_PATCHING_FENCE_REQUIRED  0x4000000
 #define J9JIT_CG_OPT_LEVEL_BEST_AVAILABLE  8
 #define J9JIT_CG_OPT_LEVEL_NONE  2
-#define J9JIT_DUMP_STATS  0x10000
 #define J9JIT_CG_REGISTER_MAPS  32
 #define J9JIT_JIT_ATTACHED  0x800000
 #define J9JIT_AOT_ATTACHED  0x1000000
@@ -3972,7 +3950,6 @@ typedef struct J9AOTConfig {
 	UDATA messageThreshold;
 	void* outOfMemoryJumpBuffer;
 	UDATA translationFiltersFlags;
-	UDATA lastCodeAllocSize;
 	UDATA lastGCDataAllocSize;
 	UDATA lastExceptionTableAllocSize;
 	UDATA gcCount;
@@ -3987,30 +3964,10 @@ typedef struct J9AOTConfig {
 	void* patchupVirtual;
 	void* jitSendTargetTable;
 	struct J9MemorySegment* scratchSegment;
-	UDATA totalCodeBytesUsed;
-	UDATA totalGCDataBytesUsed;
-	UDATA totalAtlasDataBytesUsed;
-	UDATA totalMethodsTranslated;
-	UDATA totalMethodsNotTranslated;
-	UDATA totalDebugDataBytesUsed;
 	void* jitToInterpreterThunks;
 	struct J9HashTable* thunkHashTable;
 	omrthread_monitor_t thunkHashTableMutex;
 	void*  ( *thunkLookUpNameAndSig)(void * jitConfig, void *parm) ;
-	UDATA unresolvedClassRefs;
-	UDATA unresolvedStaticVariableRefs;
-	UDATA unresolvedStaticMethodRefs;
-	UDATA unresolvedSpecialMethodRefs;
-	UDATA unresolvedInstanceFieldRefs;
-	UDATA unresolvedVirtualMethodRefs;
-	UDATA unresolvedInterfaceMethodRefs;
-	UDATA totalClassRefs;
-	UDATA totalStaticVariableRefs;
-	UDATA totalStaticMethodRefs;
-	UDATA totalSpecialMethodRefs;
-	UDATA totalInstanceFieldRefs;
-	UDATA totalVirtualMethodRefs;
-	UDATA totalInterfaceMethodRefs;
 	UDATA maxInlineDepth;
 	UDATA iprofilerBufferSize;
 	UDATA codeCacheKB;
