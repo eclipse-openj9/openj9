@@ -108,6 +108,11 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/env/JitConfig.cpp
 	${omr_SOURCE_DIR}/compiler/env/PersistentAllocator.cpp
 	${omr_SOURCE_DIR}/compiler/env/SystemSegmentProvider.cpp
+	${omr_SOURCE_DIR}/compiler/env/mem/DebugRawAllocator.cpp
+	${omr_SOURCE_DIR}/compiler/env/mem/OMRBackingMemoryAllocator.cpp
+	${omr_SOURCE_DIR}/compiler/env/mem/OMRCompilerEnv.cpp
+	${omr_SOURCE_DIR}/compiler/env/mem/OMRDebugSegmentAllocator.cpp
+	${omr_SOURCE_DIR}/compiler/env/mem/OMRSegmentAllocator.cpp
 	${omr_SOURCE_DIR}/compiler/infra/OMRMonitor.cpp
 	${omr_SOURCE_DIR}/compiler/runtime/Trampoline.cpp
 	${omr_SOURCE_DIR}/compiler/runtime/Runtime.cpp
@@ -133,6 +138,7 @@ set(REMOVED_OMR_FILES
 set(TARGET_DEFINES
 	J9_PROJECT_SPECIFIC
 	_LONG_LONG #?
+	OLD_MEMORY
 )
 
 # When VM is built with CMake, we should just use the
@@ -213,7 +219,7 @@ set(JIT_TARGET_LIBS
 create_omr_compiler_library(NAME j9jit
 	SHARED
 	OBJECTS ${J9_FILES} ${J9JIT_FILES} ${NOT_EXFRRED}
-	DEFINES J9_PROJECT_SPECIFIC ${TARGET_DEFINES}
+	DEFINES J9_PROJECT_SPECIFIC OLD_MEMORY ${TARGET_DEFINES}
 	INCLUDES ${J9_INCLUDES}
 	FILTER ${REMOVED_OMR_FILES}
 )
