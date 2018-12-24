@@ -173,8 +173,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    void examineNode(TR::Node *parent, TR::Node *node, TR::Node *&bestNode, int32_t &storeSize, TR::list<TR::Node*> &leftMostNodesList);
    void processNodeList(TR::Node *&bestNode, int32_t &storeSize, TR::list<TR::Node*> &leftMostNodesList);
 
-   TR::Register *evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode, TR_OpaquePseudoRegister *srcReg, TR::MemoryReference *srcMR);
-
    void correctBadSign(TR::Node *node, TR_PseudoRegister *reg, int32_t endByte, TR::MemoryReference *memRef);
 
    int32_t genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targetReg, int32_t endByte, TR::MemoryReference *signCodeMR, int32_t sign, TR_PseudoRegister *srcReg, int32_t digitsToClear, bool numericNibbleIsZero);
