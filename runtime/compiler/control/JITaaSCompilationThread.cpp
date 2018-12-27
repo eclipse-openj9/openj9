@@ -2242,7 +2242,21 @@ remoteCompile(
 
          TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
-         compiler->getOptions()->writeLogFileFromServer(logFileStr);
+         int compilationSequenceNumber = compiler->getOptions()->writeLogFileFromServer(logFileStr);
+         if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSDoLocalCompilesForRemoteCompiles) && compilationSequenceNumber)
+            {
+            // if compilationSequenceNumber is not 0, vlog from server is enabled
+            // double compile is also controlled by TR_EnableJITaaSDoubleCompile option
+            // try to perform an equivalent local compilation and generate vlog
+            // append the same compilationSequenceNumber in the filename
+            compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
+            if (compiler->compile() != COMPILATION_SUCCEEDED)
+               {
+               TR_ASSERT(false, "Compiler returned non zero return code %d\n", rtn);
+               compiler->failCompilation<TR::CompilationException>("Compilation Failure");
+               }
+            compiler->getOptions()->closeLogFileForClientOptions();
+            }
 
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
