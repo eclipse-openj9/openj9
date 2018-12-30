@@ -5570,49 +5570,70 @@ bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
 
 /// Sums up CPU utilization of all compilation thread and write this
 /// value in the compilation info (or -1 in case of error)
+void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, uint64_t crtTime, J9VMThread *currentThread, int32_t *cpuUtilizationValues)
+   {
+   // Sum up the CPU utilization of all the compilation threads
+   int32_t totalCompCPUUtilization = 0;
+   //TODO: Is getArrayOfCompilationInfoPerThread() called after setupCompilationThreads()
+   TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
+
+   for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+      {
+      const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
+      if (cpuUtil.isFunctional())
+         {
+         // If the last interval ended more than 1.5 second ago, do not include it
+         // in the calculations.
+         int32_t cpuUtilValue = cpuUtil.computeThreadCpuUtilOverLastNns(1500000000);
+         cpuUtilizationValues[i] = cpuUtilValue; // memorize for later
+         if (cpuUtilValue >= 0) // if first interval is not done, we read -1
+            totalCompCPUUtilization += cpuUtilValue;
+         }
+      else
+         {
+         totalCompCPUUtilization = -1; // error
+         break;
+         }
+      }
+   compInfo->setOverallCompCpuUtilization(totalCompCPUUtilization);
+   // Issue tracepoint indicating CPU usage percent (-1 on error)
+   Trc_JIT_OverallCompCPU(currentThread, totalCompCPUUtilization);
+   // Print the overall comp CPU utilization if the right verbose option is specified
+   if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerboseCompilationThreadsDetails))
+      {
+      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::writeLine(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", (uint32_t)crtTime, totalCompCPUUtilization);
+      TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
+      for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+         {
+         const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
+         TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[i], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreadsDetails))
+            TR_VerboseLog::write("(%dms, %dms, lastCheckpoint=%u) ", (int32_t)cpuUtil.getLastMeasurementInterval() / 1000000, (int32_t)cpuUtil.getSecondLastMeasurementInterval() / 1000000, cpuUtil.getLowResolutionClockAtLastUpdate());
+         }
+      TR_VerboseLog::vlogRelease();
+      }
+   }
+
 void CalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, uint64_t crtTime, J9VMThread *currentThread)
    {
    if (compInfo->getOverallCompCpuUtilization() >= 0) // No error so far
       {
-      // Sum up the CPU utilization of all the compilation threads
-      int32_t totalCompCPUUtilization = 0;
-      TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
-      int32_t cpuUtilizationValues[MAX_USABLE_COMP_THREADS];
-      for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+      if (compInfo->getNumUsableCompilationThreads() < 8)
          {
-         const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
-         if (cpuUtil.isFunctional())
-            {
-            // If the last interval ended more than 1.5 second ago, do not include it
-            // in the calculations.
-            int32_t cpuUtilValue = cpuUtil.computeThreadCpuUtilOverLastNns(1500000000);
-            cpuUtilizationValues[i] = cpuUtilValue; // memorize for later
-            if (cpuUtilValue >= 0) // if first interval is not done, we read -1
-               totalCompCPUUtilization += cpuUtilValue;
-            }
-         else
-            {
-            totalCompCPUUtilization = -1; // error
-            break;
-            }
+         int32_t cpuUtilizationValues[7];
+         DoCalculateOverallCompCPUUtilization(compInfo, crtTime, currentThread, cpuUtilizationValues);
          }
-      compInfo->setOverallCompCpuUtilization(totalCompCPUUtilization);
-      // Issue tracepoint indicating CPU usage percent (-1 on error)
-      Trc_JIT_OverallCompCPU(currentThread, totalCompCPUUtilization);
-      // Print the overall comp CPU utilization if the right verbose option is specified
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerboseCompilationThreadsDetails))
+      else
          {
-         TR_VerboseLog::vlogAcquire();
-         TR_VerboseLog::writeLine(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", (uint32_t)crtTime, totalCompCPUUtilization);
-         TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
-         for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+         PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+
+         int32_t *cpuUtilizationValues = static_cast<int32_t *>(j9mem_allocate_memory(compInfo->getNumUsableCompilationThreads() * sizeof(int32_t), J9MEM_CATEGORY_JIT));
+         if (cpuUtilizationValues)
             {
-            const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
-            TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[i], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreadsDetails))
-               TR_VerboseLog::write("(%dms, %dms, lastCheckpoint=%u) ", (int32_t)cpuUtil.getLastMeasurementInterval() / 1000000, (int32_t)cpuUtil.getSecondLastMeasurementInterval() / 1000000, cpuUtil.getLowResolutionClockAtLastUpdate());
+            DoCalculateOverallCompCPUUtilization(compInfo, crtTime, currentThread, cpuUtilizationValues);
+            j9mem_free_memory(cpuUtilizationValues);
             }
-         TR_VerboseLog::vlogRelease();
          }
       }
    }

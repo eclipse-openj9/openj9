@@ -1914,8 +1914,12 @@ J9::Options::fePreProcess(void * base)
       {
       UDATA numCompThreads;
       IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
-      if (ret == OPTION_OK && numCompThreads <= MAX_USABLE_COMP_THREADS)
+
+      if (ret == OPTION_OK)
+         {
          _numUsableCompilationThreads = numCompThreads;
+         compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
+         }
       }
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
@@ -2198,6 +2202,7 @@ J9::Options::fePostProcessJIT(void * base)
    J9JavaVM * javaVM = jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    // If user has not specified a value for compilation threads, do it now.
    // This code does not have to stay in the fePostProcessAOT because in an AOT only
    // scenario we don't need more than one compilation thread to load code.
@@ -2212,7 +2217,9 @@ J9::Options::fePostProcessJIT(void * base)
          //
          if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
             !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
-            _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
+            {
+            compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
+            }
          }
       if (_numUsableCompilationThreads <= 0)
          {
@@ -2220,7 +2227,8 @@ J9::Options::fePostProcessJIT(void * base)
          // Do not create more than numProc-1 compilation threads, but at least one
          //
          uint32_t numOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-         _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(MAX_USABLE_COMP_THREADS)) : 1;
+         compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
+         _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(_numUsableCompilationThreads)) : 1;
          }
       }
 
@@ -2276,7 +2284,6 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
-   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE ||
        compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {

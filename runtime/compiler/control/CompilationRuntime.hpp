@@ -93,17 +93,6 @@ struct TR_SignatureCountPair
    int32_t count;
 };
 
-// Must be less than 8 because in some parts of the code (CHTable) we keep flags on a byte variable
-// Also, if this increases past 10, we need to expand the _activeThreadName and _suspendedThreadName
-// fields in TR::CompilationInfoPerThread as currently they have 1 char available for the thread number.
-//
-#define MAX_USABLE_COMP_THREADS 7
-#define MAX_DIAGNOSTIC_COMP_THREADS 1
-#define MAX_TOTAL_COMP_THREADS (MAX_USABLE_COMP_THREADS + MAX_DIAGNOSTIC_COMP_THREADS)
-#if (MAX_TOTAL_COMP_THREADS > 8)
-#error "MAX_TOTAL_COMP_THREADS should be less than 8"
-#endif
-
 #ifndef J9_INVOCATION_COUNT_MASK
 #define J9_INVOCATION_COUNT_MASK                   0x00000000FFFFFFFF
 #endif
@@ -641,6 +630,14 @@ public:
    bool                   isQueuedForCompilation(J9Method *, void *oldStartPC);
    void *                 startPCIfAlreadyCompiled(J9VMThread *, TR::IlGeneratorMethodDetails & details, void *oldStartPC);
 
+   static int32_t getCompThreadSuspensionThreshold(int32_t threadID) { return _compThreadSuspensionThresholds[threadID]; }
+
+   // updateNumUsableCompThreads() is called before startCompilationThread() to update TR::Options::_numUsableCompilationThreads
+   // based on if it is on the JITaas client side or the server side.
+   void updateNumUsableCompThreads(int32_t &numUsableCompThreads);
+   bool allocateCompilationThreads(int32_t numUsableCompThreads);
+   void freeAllCompilationThreads();
+
    uintptr_t startCompilationThread(int32_t priority, int32_t id, bool isDiagnosticThread);
    bool initializeCompilationOnApplicationThread();
    bool  asynchronousCompilation();
@@ -786,8 +783,8 @@ public:
    TR::CompilationInfoPerThreadBase *getCompInfoForCompOnAppThread() const { return _compInfoForCompOnAppThread; }
    J9JITConfig *getJITConfig() { return _jitConfig; }
    TR::CompilationInfoPerThread *getCompInfoForThread(J9VMThread *vmThread);
-   int32_t getNumUsableCompilationThreads() const { return _compThreadIndex; }
-   int32_t getNumTotalCompilationThreads() const { return _compThreadIndex + _numDiagnosticThreads; }
+   int32_t getNumUsableCompilationThreads() const { return _numCompThreads; }
+   int32_t getNumTotalCompilationThreads() const { return _numCompThreads + _numDiagnosticThreads; }
    TR::CompilationInfoPerThreadBase *getCompInfoWithID(int32_t ID);
    TR::Compilation *getCompilationWithID(int32_t ID);
    TR::CompilationInfoPerThread *getFirstSuspendedCompilationThread();
@@ -981,6 +978,10 @@ public:
    struct CompilationStatsPerInterval _intervalStats;
    TR_PersistentArray<TR_SignatureCountPair *> *_persistedMethods;
 
+   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;
+   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63;
+   static const uint32_t MAX_DIAGNOSTIC_COMP_THREADS = 1;
+
 private:
 
    enum
@@ -1012,7 +1013,11 @@ private:
 
    static TR::CompilationInfo * _compilationRuntime;
 
-   TR::CompilationInfoPerThread *_arrayOfCompilationInfoPerThread[MAX_TOTAL_COMP_THREADS]; // first NULL entry means end of the array
+   static int32_t *_compThreadActivationThresholds;
+   static int32_t *_compThreadSuspensionThresholds;
+   static int32_t *_compThreadActivationThresholdsonStarvation;
+
+   TR::CompilationInfoPerThread **_arrayOfCompilationInfoPerThread; // first NULL entry means end of the array
    TR::CompilationInfoPerThread *_compInfoForDiagnosticCompilationThread; // compinfo for dump compilation thread
    TR::CompilationInfoPerThreadBase *_compInfoForCompOnAppThread; // This is NULL for separate compilation thread
    TR_MethodToBeCompiled *_methodQueue;
@@ -1114,7 +1119,7 @@ private:
 #ifdef DEBUG
    bool                   _traceCompiling;
 #endif
-   int32_t                _compThreadIndex;
+   int32_t                _numCompThreads;
    int32_t                _numDiagnosticThreads;
    int32_t                _iprofilerMaxCount;
    int32_t                _numGCRQueued; // how many GCR requests are in the queue

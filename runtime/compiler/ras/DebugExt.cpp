@@ -300,10 +300,10 @@ TR_DebugExt::compInfosPerThreadAvailable()
    {
    if (_localCompInfosPT == NULL)
       {
-      _localCompInfosPT = (TR::CompilationInfoPerThread **) dxMalloc(sizeof(TR::CompilationInfoPerThread *) * MAX_TOTAL_COMP_THREADS, NULL);
+      _localCompInfosPT = (TR::CompilationInfoPerThread **) dxMalloc(sizeof(TR::CompilationInfoPerThread *) * _localCompInfo->getNumTotalCompilationThreads(), NULL);
       if (_localCompInfosPT)
          {
-         for (size_t i = 0; i < MAX_TOTAL_COMP_THREADS; ++i)
+         for (size_t i = 0; i < _localCompInfo->getNumTotalCompilationThreads(); ++i)
             {
             _localCompInfosPT[i] = _localCompInfo->_arrayOfCompilationInfoPerThread[i] != NULL ?
                (TR::CompilationInfoPerThread *) dxMallocAndRead(sizeof(TR::CompilationInfoPerThread), _localCompInfo->_arrayOfCompilationInfoPerThread[i], true) :
@@ -320,10 +320,10 @@ TR_DebugExt::activeMethodsToBeCompiledAvailable()
    if (!compInfosPerThreadAvailable()) return false;
    if (_localActiveMethodsToBeCompiled == NULL)
       {
-      _localActiveMethodsToBeCompiled = (TR_MethodToBeCompiled **) dxMalloc(sizeof(TR_MethodToBeCompiled *) * MAX_TOTAL_COMP_THREADS, NULL);
+      _localActiveMethodsToBeCompiled = (TR_MethodToBeCompiled **) dxMalloc(sizeof(TR_MethodToBeCompiled *) * _localCompInfo->getNumTotalCompilationThreads(), NULL);
       if (_localActiveMethodsToBeCompiled)
          {
-         for (size_t i = 0; i < MAX_TOTAL_COMP_THREADS; ++i)
+         for (size_t i = 0; i < _localCompInfo->getNumTotalCompilationThreads(); ++i)
             {
             _localActiveMethodsToBeCompiled[i] = _localCompInfosPT[i] && _localCompInfosPT[i]->_methodBeingCompiled ?
                (TR_MethodToBeCompiled *) dxMallocAndRead(sizeof(TR_MethodToBeCompiled), _localCompInfosPT[i]->_methodBeingCompiled, true) :
@@ -340,7 +340,7 @@ TR_DebugExt::isAOTCompileRequested(TR::Compilation * remoteCompilation)
    if (!compInfosPerThreadAvailable()) return false;
    if (!activeMethodsToBeCompiledAvailable()) return false;
 
-   for (size_t i = 0; i < MAX_TOTAL_COMP_THREADS; ++i)
+   for (size_t i = 0; i < _localCompInfo->getNumTotalCompilationThreads(); ++i)
       {
       if (
          _localCompInfosPT[i]
@@ -1265,7 +1265,7 @@ TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, cons
    else if (stricmp_ignore_locale(className, "arrayofcompilationinfoperthread") == 0)
       {
       TR::CompilationInfoPerThread ** arrayOfCompInfoPT = NULL;
-      uint8_t numThreads = MAX_TOTAL_COMP_THREADS;
+      uint8_t numThreads = _localCompInfo->getNumTotalCompilationThreads();
       bool allocated = false;
 
       if (argCount == 2 && addr != 0)
@@ -2173,7 +2173,7 @@ TR_DebugExt::dxPrintMethodsBeingCompiled(TR::CompilationInfo *remoteCompInfo)
       }
 
    TR::CompilationInfoPerThread ** arrayOfCompInfoPT = NULL;
-   uint8_t numThreads = MAX_TOTAL_COMP_THREADS;
+   uint8_t numThreads = remoteCompInfo->getNumTotalCompilationThreads();
 
    arrayOfCompInfoPT = dxMallocAndGetArrayOfCompilationInfoPerThread(numThreads, remoteCompInfo->_arrayOfCompilationInfoPerThread);
 
@@ -2265,7 +2265,7 @@ void TR_DebugExt::dxPrintCompilationInfo(TR::CompilationInfo *remoteCompInfo)
       _dbgPrintf("int32_t                               _samplingThreadLifetimeState     = %d\n", localCompInfo->_samplingThreadLifetimeState);
       _dbgPrintf("int32_t                               _numMethodsFoundInSharedCache    = %d\n", localCompInfo->_numMethodsFoundInSharedCache);
       _dbgPrintf("int32_t                               _numInvRequestsInCompQueue       = %d\n", localCompInfo->_numInvRequestsInCompQueue);
-      _dbgPrintf("int32_t                               _compThreadIndex                 = %d\n", localCompInfo->_compThreadIndex);
+      _dbgPrintf("int32_t                               _numCompThreads                  = %d\n", localCompInfo->_numCompThreads);
       _dbgPrintf("int32_t                               _numDiagnosticThreads            = %d\n", localCompInfo->_numDiagnosticThreads);
       _dbgPrintf("int32_t                               _numSeriousFailures              = %d\n", localCompInfo->_numSeriousFailures);
       _dbgPrintf("int32_t[numHotnessLevels]             _statsOptLevels                  = 0x%p\n", localCompInfo->_statsOptLevels);
