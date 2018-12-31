@@ -243,6 +243,7 @@ class RealRegisterManager
          {
          TR::Register *reg = _cg->allocateRegister();
          deps->addPostCondition(reg, TR::RealRegister::KillVolHighRegs);
+         _cg->stopUsingRegister(reg);
          }
       return deps;
       }
