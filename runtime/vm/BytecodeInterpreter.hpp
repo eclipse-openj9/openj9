@@ -9993,6 +9993,9 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBmultianewarray):
 			SINGLE_STEP();
 			PERFORM_ACTION(multianewarray(REGISTER_ARGS));
+		JUMP_TARGET(JBiincw):
+			SINGLE_STEP();
+			PERFORM_ACTION(iinc(REGISTER_ARGS, 2));
 		JUMP_TARGET(JBaloadw):
 		JUMP_TARGET(JBiloadw):
 		JUMP_TARGET(JBfloadw):
@@ -10011,9 +10014,6 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBdstorew):
 			SINGLE_STEP();
 			PERFORM_ACTION(lstorew(REGISTER_ARGS));
-		JUMP_TARGET(JBiincw):
-			SINGLE_STEP();
-			PERFORM_ACTION(iinc(REGISTER_ARGS, 2));
 		JUMP_TARGET(JBreturnFromConstructor):
 			SINGLE_STEP();
 			PERFORM_ACTION(returnFromConstructor(REGISTER_ARGS));
