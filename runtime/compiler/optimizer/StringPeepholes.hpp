@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,6 +104,7 @@ class TR_StringPeepholes : public TR::Optimization
    bool skipNodeUnderOSR(TR::Node *node);
    bool invalidNodeUnderOSR(TR::Node *node);
    void removePendingPushOfResult(TR::TreeTop *callTreeTop);
+   void postProcessTreesForOSR(TR::TreeTop *startTree, TR::TreeTop *endTree);
 
    bool _stringClassesRedefined;
    bool classesRedefined();

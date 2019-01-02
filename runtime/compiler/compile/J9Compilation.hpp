@@ -315,6 +315,10 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
+   // Flag to record if any optimization has prohibited OSR over a range of trees
+   void setOSRProhibitedOverRangeOfTrees() { _osrProhibitedOverRangeOfTrees = true; }
+   bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
+
 private:
    enum CachedClassPointerId
       {
@@ -399,6 +403,7 @@ private:
    TR_RelocationRuntime *_reloRuntime;
 
    TR::SymbolValidationManager *_symbolValidationManager;
+   bool _osrProhibitedOverRangeOfTrees;
    };
 
 }
