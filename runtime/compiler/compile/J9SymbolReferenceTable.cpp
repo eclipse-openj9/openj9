@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,8 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _unsafeJavaStaticSymRefs(NULL),
      _unsafeJavaStaticVolatileSymRefs(NULL),
      _currentThreadDebugEventDataSymbol(0),
-     _currentThreadDebugEventDataSymbolRefs(c->trMemory())
+     _currentThreadDebugEventDataSymbolRefs(c->trMemory()),
+     _constantPoolAddressSymbolRefs(c->trMemory())
    {
    for (uint32_t i = 0; i < _numImmutableClasses; i++)
       _immutableSymRefNumbers[i] = new (trHeapMemory()) TR_BitVector(sizeHint, c->trMemory(), heapAlloc, growable);
@@ -246,6 +247,27 @@ J9::SymbolReferenceTable::createSystemRuntimeHelper(
    return symRef;
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateConstantPoolAddressSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   void *cpAddress = owningMethodSymbol->getResolvedMethod()->constantPool();
+   ListIterator<TR::SymbolReference> i(&_constantPoolAddressSymbolRefs);
+   TR::SymbolReference * symRef;
+   for (symRef = i.getFirst(); symRef; symRef = i.getNext())
+      if (symRef->getSymbol()->getStaticSymbol()->getStaticAddress() == cpAddress)
+         return symRef;
+
+   TR::StaticSymbol * sym = TR::StaticSymbol::create(trHeapMemory(),TR::Address);
+   sym->setStaticAddress(cpAddress);
+   sym->setConstantPoolAddress();
+   sym->setNotCollected();
+   sym->setNotDataAddress();
+
+   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
+   _constantPoolAddressSymbolRefs.add(symRef);
+   return symRef;
+   }
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateStaticMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
