@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,8 +114,9 @@ enum J9ServerMessageType
 //   VM_isAbstractClass = 207;
    VM_getStaticReferenceFieldAtAddress = 207;
    VM_getSystemClassFromClassName = 208;
-   VM_isMethodEnterTracingEnabled = 209;
-   VM_isMethodExitTracingEnabled = 210;
+   VM_isMethodTracingEnabled = 209;
+   // VM_isMethodEnterTracingEnabled = 209;
+   // VM_isMethodExitTracingEnabled = 210;
    VM_getClassClassPointer = 211;
    VM_setJ2IThunk = 212;
    VM_getClassOfMethod = 213;
