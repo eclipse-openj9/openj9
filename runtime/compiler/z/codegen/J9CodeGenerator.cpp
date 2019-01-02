@@ -1511,6 +1511,8 @@ J9::Z::CodeGenerator::getAddressLoadVar(TR::Node *node, bool trace)
       return NULL;
    }
 
+J9::Z::CodeGenerator::_dummyTempStorageRefNode(NULL)
+
 void
 J9::Z::CodeGenerator::addStorageReferenceHints(TR::Node *node)
    {

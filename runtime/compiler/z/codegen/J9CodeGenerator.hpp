@@ -167,6 +167,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
                                          bool mustCheckAllNodes);
 
    TR::Node *getAddressLoadVar(TR::Node *node, bool trace);
+   TR::Node *_dummyTempStorageRefNode;
 
    void markStoreAsAnAccumulator(TR::Node *node);
    void addStorageReferenceHints(TR::Node *node);
