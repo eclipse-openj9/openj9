@@ -171,6 +171,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    TR::list<TR::Node*> _nodesSpineCheckedList;
 
+   TR::list<TR_Pair<TR_ResolvedMethod, TR::Instruction> *> _jniCallSites;
+
    void markStoreAsAnAccumulator(TR::Node *node);
    void addStorageReferenceHints(TR::Node *node);
    void examineNode(TR::Node *parent, TR::Node *node, TR::Node *&bestNode, int32_t &storeSize, TR::list<TR::Node*> &leftMostNodesList);
