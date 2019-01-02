@@ -1495,6 +1495,9 @@ J9::Z::CodeGenerator::getAddressOneToAddressTwoOffset(bool *canGetOffset,
    return;
    }
 
+TR::list<TR::Node*> *
+J9::Z::CodeGenerator::_nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator()))
+
 TR::Node *
 J9::Z::CodeGenerator::getAddressLoadVar(TR::Node *node, bool trace)
    {
