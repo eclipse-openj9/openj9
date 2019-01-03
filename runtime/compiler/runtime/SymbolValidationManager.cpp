@@ -74,6 +74,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
+   defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
    defineGuaranteedID(compilee->classOfMethod(), TR::SymbolType::typeClass);
    defineGuaranteedID(compilee->getPersistentIdentifier(), TR::SymbolType::typeMethod);
 
@@ -119,43 +120,47 @@ TR::SymbolValidationManager::getNewSymbolID()
    }
 
 void *
-TR::SymbolValidationManager::getSymbolFromID(uint16_t id, TR::SymbolType type)
+TR::SymbolValidationManager::getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence)
    {
    TypedSymbol *entry = NULL;
    if (id < _idToSymbolTable.size())
       entry = &_idToSymbolTable[id];
 
    SVM_ASSERT(entry != NULL && entry->_hasValue, "Unknown ID %d", id);
-   SVM_ASSERT(entry->_type == type, "ID has type %d when %d was expected", entry->_type, type);
+   if (entry->_symbol == NULL)
+      SVM_ASSERT(presence != SymRequired, "ID must not map to null");
+   else
+      SVM_ASSERT(entry->_type == type, "ID has type %d when %d was expected", entry->_type, type);
+
    return entry->_symbol;
    }
 
 TR_OpaqueClassBlock *
-TR::SymbolValidationManager::getClassFromID(uint16_t id)
+TR::SymbolValidationManager::getClassFromID(uint16_t id, Presence presence)
    {
    return static_cast<TR_OpaqueClassBlock*>(
-      getSymbolFromID(id, TR::SymbolType::typeClass));
+      getSymbolFromID(id, TR::SymbolType::typeClass, presence));
    }
 
 J9Class *
-TR::SymbolValidationManager::getJ9ClassFromID(uint16_t id)
+TR::SymbolValidationManager::getJ9ClassFromID(uint16_t id, Presence presence)
    {
    return static_cast<J9Class*>(
-      getSymbolFromID(id, TR::SymbolType::typeClass));
+      getSymbolFromID(id, TR::SymbolType::typeClass, presence));
    }
 
 TR_OpaqueMethodBlock *
-TR::SymbolValidationManager::getMethodFromID(uint16_t id)
+TR::SymbolValidationManager::getMethodFromID(uint16_t id, Presence presence)
    {
    return static_cast<TR_OpaqueMethodBlock*>(
-      getSymbolFromID(id, TR::SymbolType::typeMethod));
+      getSymbolFromID(id, TR::SymbolType::typeMethod, presence));
    }
 
 J9Method *
-TR::SymbolValidationManager::getJ9MethodFromID(uint16_t id)
+TR::SymbolValidationManager::getJ9MethodFromID(uint16_t id, Presence presence)
    {
    return static_cast<J9Method*>(
-      getSymbolFromID(id, TR::SymbolType::typeMethod));
+      getSymbolFromID(id, TR::SymbolType::typeMethod, presence));
    }
 
 uint16_t
@@ -944,21 +949,19 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
    if (idToBeValidated < _idToSymbolTable.size())
       entry = &_idToSymbolTable[idToBeValidated];
 
-   if (validSymbol)
+   if (entry == NULL || !entry->_hasValue)
       {
-      if (entry == NULL || !entry->_hasValue)
+      if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
          {
-         if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
-            {
-            setSymbolOfID(idToBeValidated, validSymbol, type);
-            _seenSymbolsSet.insert(validSymbol);
-            valid = true;
-            }
+         setSymbolOfID(idToBeValidated, validSymbol, type);
+         _seenSymbolsSet.insert(validSymbol);
+         valid = true;
          }
-      else
-         {
-         valid = (entry->_symbol == validSymbol && entry->_type == type);
-         }
+      }
+   else
+      {
+      valid = validSymbol == entry->_symbol
+         && (validSymbol == NULL || entry->_type == type);
       }
 
    return valid;
