@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1075,7 +1075,12 @@ public:
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
-   void* getSymbolFromID(uint16_t id);
+   void* getSymbolFromID(uint16_t id, TR::SymbolType type);
+   TR_OpaqueClassBlock *getClassFromID(uint16_t id);
+   J9Class *getJ9ClassFromID(uint16_t id);
+   TR_OpaqueMethodBlock *getMethodFromID(uint16_t id);
+   J9Method *getJ9MethodFromID(uint16_t id);
+
    uint16_t tryGetIDFromSymbol(void *symbol);
    uint16_t getIDFromSymbol(void *symbol);
 
@@ -1202,10 +1207,14 @@ private:
    bool storeValidationRecordIfNecessary(void *symbol, SymbolValidationRecord *record, int32_t arrayDimsToValidate = 0);
    void *storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
 
-   bool validateSymbol(uint16_t idToBeValidated, void *validSymbol);
+   bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
+   bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
+   bool validateSymbol(uint16_t idToBeValidated, J9Class *clazz);
+   bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueMethodBlock *method);
+   bool validateSymbol(uint16_t idToBeValidated, J9Method *method);
 
-   void setSymbolOfID(uint16_t id, void *symbol);
-   void defineGuaranteedID(void *symbol);
+   void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
+   void defineGuaranteedID(void *symbol, TR::SymbolType type);
 
    /* Monotonically increasing IDs */
    uint16_t _symbolID;
@@ -1221,8 +1230,15 @@ private:
    typedef std::less<void*> SymbolToIdComparator;
    typedef std::map<void*, uint16_t, SymbolToIdComparator, SymbolToIdAllocator> SymbolToIdMap;
 
-   typedef TR::typed_allocator<void*, TR::Region&> IdToSymbolAllocator;
-   typedef std::vector<void*, IdToSymbolAllocator> IdToSymbolTable;
+   struct TypedSymbol
+      {
+      void *_symbol;
+      TR::SymbolType _type;
+      bool _hasValue;
+      };
+
+   typedef TR::typed_allocator<TypedSymbol, TR::Region&> IdToSymbolAllocator;
+   typedef std::vector<TypedSymbol, IdToSymbolAllocator> IdToSymbolTable;
 
    typedef TR::typed_allocator<void*, TR::Region&> SeenSymbolsAlloc;
    typedef std::less<void*> SeenSymbolsComparator;
