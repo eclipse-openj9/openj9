@@ -93,6 +93,7 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    uint16_t id = getNewSymbolID();
    _symbolToIdMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
+   _seenSymbolsSet.insert(symbol);
    }
 
 void
