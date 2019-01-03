@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -274,12 +274,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isGeneratedReflectionMethod(TR_ResolvedMethod *method);
 
    // cache J9 VM pointers
-   TR_OpaqueClassBlock *getObjectClassPointer() { return _ObjectClassPointer; }
-   TR_OpaqueClassBlock *getRunnableClassPointer() { return _RunnableClassPointer; }
-   TR_OpaqueClassBlock *getStringClassPointer() { return _StringClassPointer; }
-   TR_OpaqueClassBlock *getSystemClassPointer() { return _SystemClassPointer; }
-   TR_OpaqueClassBlock *getReferenceClassPointer() { return _ReferenceClassPointer; }
-   TR_OpaqueClassBlock *getJITHelpersClassPointer() { return _JITHelpersClassPointer; }
+   TR_OpaqueClassBlock *getObjectClassPointer();
+   TR_OpaqueClassBlock *getRunnableClassPointer();
+   TR_OpaqueClassBlock *getStringClassPointer();
+   TR_OpaqueClassBlock *getSystemClassPointer();
+   TR_OpaqueClassBlock *getReferenceClassPointer();
+   TR_OpaqueClassBlock *getJITHelpersClassPointer();
    TR_OpaqueClassBlock *getClassClassPointer(bool isVettedForAOT = false);
 
    // Monitors
@@ -314,6 +314,18 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
 private:
+   enum CachedClassPointerId
+      {
+      OBJECT_CLASS_POINTER,
+      RUNNABLE_CLASS_POINTER,
+      STRING_CLASS_POINTER,
+      SYSTEM_CLASS_POINTER,
+      REFERENCE_CLASS_POINTER,
+      JITHELPERS_CLASS_POINTER,
+      CACHED_CLASS_POINTER_COUNT,
+      };
+
+   TR_OpaqueClassBlock *getCachedClassPointer(CachedClassPointerId which);
 
    J9VMThread *_j9VMThread;
 
@@ -365,12 +377,7 @@ private:
    TR::list<TR_VirtualGuardSite*>     _sideEffectGuardPatchSites;
 
    // cache VM pointers
-   TR_OpaqueClassBlock               *_ObjectClassPointer;
-   TR_OpaqueClassBlock               *_RunnableClassPointer;
-   TR_OpaqueClassBlock               *_StringClassPointer;
-   TR_OpaqueClassBlock               *_SystemClassPointer;
-   TR_OpaqueClassBlock               *_ReferenceClassPointer;
-   TR_OpaqueClassBlock               *_JITHelpersClassPointer;
+   TR_OpaqueClassBlock               *_cachedClassPointers[CACHED_CLASS_POINTER_COUNT];
 
    TR_OpaqueClassBlock               *_aotClassClassPointer;
    bool                               _aotClassClassPointerInitialized;

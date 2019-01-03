@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2540,10 +2540,12 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tTR_Debug *_debug = 0x%p\n",localCompiler->_debug);
    _dbgPrintf("\tTR::SymbolReferenceTable *_currentSymRefTab = 0x%p\n",localCompiler->_currentSymRefTab);
    _dbgPrintf("\tTR::Recompilation *_recompilationInfo = 0x%p\n",localCompiler->_recompilationInfo);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_ObjectClassPointer = 0x%p\n",localCompiler->_ObjectClassPointer);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_RunnableClassPointer = 0x%p\n",localCompiler->_RunnableClassPointer);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_StringClassPointer = 0x%p\n",localCompiler->_StringClassPointer);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_SystemClassPointer = 0x%p\n",localCompiler->_SystemClassPointer);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[OBJECT_CLASS_POINTER]     = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::OBJECT_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[RUNNABLE_CLASS_POINTER]   = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::RUNNABLE_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[STRING_CLASS_POINTER]     = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::STRING_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[SYSTEM_CLASS_POINTER]     = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::SYSTEM_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[REFERENCE_CLASS_POINTER]  = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::REFERENCE_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[JITHELPERS_CLASS_POINTER] = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::JITHELPERS_CLASS_POINTER]);
 
    _dbgPrintf("\tTR_OptimizationPlan *_optimizationPlan = !trprint optimizationplan 0x%p\n",localCompiler->_optimizationPlan);
    _dbgPrintf("\tTR_Array<TR::ResolvedMethodSymbol*> _methodSymbols = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_methodSymbols) - (char*)localCompiler) );
