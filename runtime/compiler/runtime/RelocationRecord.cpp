@@ -2311,6 +2311,13 @@ TR_RelocationRecordInlinedMethod::applyRelocation(TR_RelocationRuntime *reloRunt
    TR_RelocationRecordInlinedMethodPrivateData *reloPrivateData = &(privateData()->inlinedMethod);
    if (reloPrivateData->_failValidation)
       {
+      // When not using the SVM, the safest thing to do is to fail the AOT Load
+      if (!reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+         {
+         RELO_LOG(reloRuntime->reloLogger(), 6,"\t\tapplyRelocation: Failing AOT Load\n");
+         return compilationAotClassReloFailure;
+         }
+
       RELO_LOG(reloRuntime->reloLogger(), 6,"\t\tapplyRelocation: invalidating guard\n");
 
       invalidateGuard(reloRuntime, reloTarget, reloLocation);
