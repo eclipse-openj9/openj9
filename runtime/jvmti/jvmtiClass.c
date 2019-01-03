@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -667,8 +667,14 @@ jvmtiGetClassFields(jvmtiEnv* env,
 
 			i = 0;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			result = vmFuncs->fieldOffsetsStartDo(vm, romClass, GET_SUPERCLASS(clazz), &state,
+					J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE, clazz->flattenedClassCache);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			result = vmFuncs->fieldOffsetsStartDo(vm, romClass, GET_SUPERCLASS(clazz), &state,
 					J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE );
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 			while (NULL != result->field) {
 				UDATA inconsistentData = 0;
 				J9JNIFieldID * fieldID = vmFuncs->getJNIFieldID(currentThread, clazz, result->field, result->offset, &inconsistentData);

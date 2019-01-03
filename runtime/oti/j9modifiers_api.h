@@ -72,6 +72,11 @@
  */
 #define J9ROMCLASS_IS_CONTENDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsContended)
 
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+/* Will need to modify this if ValObject/RefObject proposal goes through */
+#define J9ROMCLASS_IS_VALUE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccValueType)
+#endif/* #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 #define J9ROMMETHOD_IS_GETTER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccGetterMethod)
 #define J9ROMMETHOD_IS_FORWARDER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccForwarderMethod)
 #define J9ROMMETHOD_IS_EMPTY(romMethod)					_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccEmptyMethod)
