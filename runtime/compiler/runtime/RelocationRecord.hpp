@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -298,14 +298,6 @@ struct TR_RelocationRecordValidateClassChainBinaryTemplate : public TR_Relocatio
    {
    uint16_t _classID;
    UDATA _classChainOffsetInSCC;
-   };
-
-struct TR_RelocationRecordValidateMethodByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _methodID;
-   uint16_t _beholderID;
-   UDATA _romClassOffsetInSCC;
-   UDATA _romMethodOffsetInSCC;
    };
 
 struct TR_RelocationRecordValidateMethodFromClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -1584,18 +1576,6 @@ class TR_RelocationRecordValidateClassChain : public TR_RelocationRecord
       virtual bool isValidationRecord() { return true; }
       virtual char *name() { return "TR_RelocationRecordValidateClassChain"; }
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidateMethodByName : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateMethodByName() {}
-      TR_RelocationRecordValidateMethodByName(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateMethodByName"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };

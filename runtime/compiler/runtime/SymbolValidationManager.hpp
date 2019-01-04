@@ -594,34 +594,6 @@ struct ClassChainRecord : public SymbolValidationRecord
    void *_classChain;
    };
 
-struct MethodByNameRecord : public SymbolValidationRecord
-   {
-   MethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder)
-      : SymbolValidationRecord(TR_ValidateMethodByName),
-        _method(method),
-        _beholder(beholder)
-      {}
-
-   bool operator ==( const MethodByNameRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodByNameRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueMethodBlock *_method;
-   TR_OpaqueClassBlock *_beholder;
-   };
-
 struct MethodFromClassRecord : public SymbolValidationRecord
    {
    MethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index)
@@ -1113,7 +1085,6 @@ public:
 
    bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
 
-   bool addMethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder);
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
    bool addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
    bool addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
@@ -1159,7 +1130,6 @@ public:
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
 
-   bool validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod);
    bool validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index);
    bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
    bool validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);

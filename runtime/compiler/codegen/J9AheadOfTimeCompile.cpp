@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1455,27 +1455,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_classChainOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodByName:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodByNameBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodByNameBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method By Name: methodID=%d, beholderID=%d, romClassOffsetInSCC=%p romMethodOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_romClassOffsetInSCC,
-                        binaryTemplate->_romMethodOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;

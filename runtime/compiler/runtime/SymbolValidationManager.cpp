@@ -622,28 +622,6 @@ TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, voi
    }
 
 bool
-TR::SymbolValidationManager::addMethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder)
-   {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) MethodByNameRecord(method, beholder);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
-   }
-
-bool
 TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index)
    {
    if (!method)
@@ -1302,36 +1280,6 @@ TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *cl
    }
 
 bool
-TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod)
-   {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread));
-
-   J9Class *beholder = getJ9ClassFromID(beholderID);
-   J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-
-   J9UTF8 *methodNameData = J9ROMMETHOD_NAME(romMethod);
-   char *methodName = (char *)alloca(J9UTF8_LENGTH(methodNameData)+1);
-   strncpy(methodName, reinterpret_cast<const char *>(J9UTF8_DATA(methodNameData)), J9UTF8_LENGTH(methodNameData));
-   methodName[J9UTF8_LENGTH(methodNameData)] = '\0';
-
-   J9UTF8 *methodSigData = J9ROMMETHOD_SIGNATURE(romMethod);
-   char *methodSig = (char *)alloca(J9UTF8_LENGTH(methodSigData)+1);
-   strncpy(methodSig, reinterpret_cast<const char *>(J9UTF8_DATA(methodSigData)), J9UTF8_LENGTH(methodSigData));
-   methodSig[J9UTF8_LENGTH(methodSigData)] = '\0';
-
-   J9UTF8 * classNameData = J9ROMCLASS_CLASSNAME(romClass);
-   char *className = (char *)alloca(J9UTF8_LENGTH(classNameData)+1);
-   strncpy(className, reinterpret_cast<const char *>(J9UTF8_DATA(classNameData)), J9UTF8_LENGTH(classNameData));
-   className[J9UTF8_LENGTH(classNameData)] = '\0';
-
-   TR_OpaqueMethodBlock *method = fej9->getMethodFromName(className, methodName, methodSig, beholderCP);
-
-   return validateSymbol(methodID, method);
-   }
-
-bool
 TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index)
    {
    TR::Compilation* comp = TR::comp();
@@ -1465,7 +1413,7 @@ TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t 
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
    TR_OpaqueClassBlock *methodClass = getClassFromID(methodClassID);
-   TR_OpaqueClassBlock *beholder = getClassFromID(beholderID);
+   TR_OpaqueClassBlock *beholder = getClassFromID(beholderID, SymOptional);
 
    J9UTF8 *methodNameData = J9ROMMETHOD_NAME(romMethod);
    char *methodName = (char *)alloca(J9UTF8_LENGTH(methodNameData)+1);
@@ -1609,8 +1557,11 @@ TR::SymbolValidationManager::assertionsAreFatal()
 
 static void printClass(TR_OpaqueClassBlock *clazz)
    {
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
-   traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+   if (clazz != NULL)
+      {
+      J9UTF8 *className = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
+      traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      }
    }
 
 void TR::ClassValidationRecord::printFields()
@@ -1777,14 +1728,6 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
-   }
-
-void TR::MethodByNameRecord::printFields()
-   {
-   traceMsg(TR::comp(), "MethodByNameRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
-   printClass(_beholder);
    }
 
 void TR::MethodFromClassRecord::printFields()
