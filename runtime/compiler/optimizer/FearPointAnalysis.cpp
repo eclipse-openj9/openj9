@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,20 +38,6 @@ bool TR_FearPointAnalysis::virtualGuardsKillFear()
    {
    static bool kill = (feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear") == NULL);
    return kill;
-   }
-
-static bool containsPrepareForOSR(TR::Block *block)
-   {
-   for (TR::TreeTop *tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextTreeTop())
-       {
-       if (tt->getNode()->getOpCode().isCheck() || tt->getNode()->getOpCodeValue() == TR::treetop)
-          {
-          if (tt->getNode()->getFirstChild()->getOpCode().isCall()
-              && tt->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
-             return true;
-          }
-       }
-   return false;
    }
 
 int32_t TR_FearPointAnalysis::getNumberOfBits() { return 1; }
@@ -106,7 +92,7 @@ TR_FearPointAnalysis::TR_FearPointAnalysis(
       if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
          {
          TR::Block *currentBlock = treeTop->getEnclosingBlock();
-         if (shouldSkipBlock(currentBlock))
+         if (currentBlock->isOSRCatchBlock() || currentBlock->isOSRCodeBlock())
             {
             treeTop = currentBlock->getExit();
             continue;
@@ -197,7 +183,7 @@ void TR_FearPointAnalysis::computeFearFromBitVector(TR::Compilation *comp)
       if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
          {
          TR::Block *currentBlock = treeTop->getEnclosingBlock();
-         if (shouldSkipBlock(currentBlock))
+         if (currentBlock->isOSRCatchBlock() || currentBlock->isOSRCodeBlock())
             {
             treeTop = currentBlock->getExit();
             continue;
@@ -219,11 +205,6 @@ TR_SingleBitContainer *TR_FearPointAnalysis::generatedFear(TR::Node *node)
    return returnValue;
    }
 
-bool TR_FearPointAnalysis::shouldSkipBlock(TR::Block *block)
-   {
-   return block->isOSRCatchBlock() || block->isOSRCodeBlock() || containsPrepareForOSR(block);
-   }
-
 void TR_FearPointAnalysis::initializeGenAndKillSetInfo()
    {
    for (int32_t i = 0; i < comp()->getFlowGraph()->getNextNodeNumber(); ++i)
@@ -242,7 +223,7 @@ void TR_FearPointAnalysis::initializeGenAndKillSetInfo()
          {
          exceptingTTSeen = false;
          currentBlock = treeTop->getEnclosingBlock();
-         if (shouldSkipBlock(currentBlock))
+         if (currentBlock->isOSRCatchBlock() || currentBlock->isOSRCodeBlock())
             {
             _regularKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
             _exceptionKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
