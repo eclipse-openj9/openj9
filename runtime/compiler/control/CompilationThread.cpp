@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1797,6 +1797,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotClassChainPersistenceFailure:
             case compilationAotValidateStringCompressionFailure:
             case compilationSymbolValidationManagerFailure:
+            case compilationAOTNoSupportForAOTFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
@@ -10081,6 +10082,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTSymbolValidationManagerFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationSymbolValidationManagerFailure;
+      }
+   catch (const J9::AOTNoSupportForAOTFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAOTNoSupportForAOTFailure;
       }
    catch (const J9::ClassChainPersistenceFailure &e)
       {
