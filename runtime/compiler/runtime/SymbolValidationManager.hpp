@@ -82,7 +82,7 @@
          #symbol,                                        \
          _0symbol);                                      \
       }                                                  \
-   while (false);
+   while (false)
 
 namespace TR {
 
