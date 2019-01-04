@@ -1156,7 +1156,7 @@ public:
    bool validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized);
 
 
-   static TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t & numDims);
+   TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t & numDims);
 
    typedef TR::list<SymbolValidationRecord *, TR::Region&> SymbolValidationRecordList;
 
@@ -1181,7 +1181,7 @@ private:
                          int32_t arrayDimsToValidate,
                          bool storeCurrentRecord);
    bool storeValidationRecordIfNecessary(void *symbol, SymbolValidationRecord *record, int32_t arrayDimsToValidate = 0);
-   void *storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
+   void *storeClassChain(TR_OpaqueClassBlock *clazz);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
@@ -1198,6 +1198,12 @@ private:
    uint32_t _heuristicRegion;
 
    TR::Region &_region;
+
+   TR::Compilation * const _comp;
+   J9VMThread * const _vmThread;
+   TR_J9VM * const _fej9; // DEFAULT_VM
+   TR_Memory * const _trMemory;
+   TR_PersistentCHTable * const _chTable;
 
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;
