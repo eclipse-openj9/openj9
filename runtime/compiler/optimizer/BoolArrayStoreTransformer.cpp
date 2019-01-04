@@ -20,6 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#ifdef J9ZTPF
+#define __TPF_DO_NOT_MAP_ATOE_REMOVE
+#endif
+
 #include "optimizer/BoolArrayStoreTransformer.hpp"
 #include "compiler/il/OMRTreeTop_inlines.hpp"
 #include "il/Block.hpp"
