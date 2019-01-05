@@ -490,25 +490,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateStaticField:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress(); // Inlined site index
-         cursor += SIZEPOINTER;
-
-         TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_constantPool;
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_cpIndex;
-         cursor += SIZEPOINTER;
-
-         void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz);
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-         *(uintptr_t *)cursor = romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_ValidateArbitraryClass:
          {
          TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*) relocation->getTargetAddress2();

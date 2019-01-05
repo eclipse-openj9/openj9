@@ -399,6 +399,23 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateStaticField:
+         {
+         TR_RelocationRecordValidateStaticField *vsfRecord = reinterpret_cast<TR_RelocationRecordValidateStaticField *>(reloRecord);
+
+         uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
+         TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
+
+         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz));
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
+
+         vsfRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         vsfRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
+         vsfRecord->setCpIndex(reloTarget, aotCI->_cpIndex);
+         vsfRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -599,6 +616,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                      inlinedMethod->cpIndex(reloTarget),
                                      inlinedMethod->romClassOffsetInSharedCache(reloTarget),
                                      inlinedMethod->destinationAddress(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateStaticField:
+         {
+         TR_RelocationRecordValidateStaticField *vsfRecord = reinterpret_cast<TR_RelocationRecordValidateStaticField *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, ROM Class offset = %x",
+                                       vsfRecord->inlinedSiteIndex(reloTarget),
+                                       vsfRecord->constantPool(reloTarget),
+                                       vsfRecord->cpIndex(reloTarget),
+                                       vsfRecord->romClassOffsetInSharedCache(reloTarget));
             }
          }
          break;
@@ -1140,7 +1173,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
          case TR_ValidateClass:
-         case TR_ValidateStaticField:
             {
             cursor++;        //unused field
             if (is64BitTarget)
