@@ -897,24 +897,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          cursor += SIZEPOINTER;
          break;
 
-      case TR_ValidateClass:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress(); // Inlined site index
-         cursor += SIZEPOINTER;
-
-         TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_constantPool;
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_cpIndex;
-         cursor += SIZEPOINTER;
-
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_ValidateArbitraryClass:
          {
          TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*) relocation->getTargetAddress2();
