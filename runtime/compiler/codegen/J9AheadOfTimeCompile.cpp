@@ -442,8 +442,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
       case TR_ProfiledMethodGuardRelocation:
       case TR_ProfiledClassGuardRelocation:
+      case TR_ProfiledInlinedMethodRelocation:
          {
-         TR_RelocationRecordProfiledGuard *pgRecord = reinterpret_cast<TR_RelocationRecordProfiledGuard *>(reloRecord);
+         TR_RelocationRecordProfiledInlinedMethod *pRecord = reinterpret_cast<TR_RelocationRecordProfiledInlinedMethod *>(reloRecord);
 
          TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(relocation->getTargetAddress2());
 
@@ -478,13 +479,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             cpIndexOrData = static_cast<uintptr_t>(callSymRef->getCPIndex());
             }
 
-         pgRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         pgRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(owningMethod->constantPool()));
-         pgRecord->setCpIndex(reloTarget, cpIndexOrData);
-         pgRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
-         pgRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
-         pgRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
-         pgRecord->setMethodIndex(reloTarget, methodIndex);
+         pRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         pRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(owningMethod->constantPool()));
+         pRecord->setCpIndex(reloTarget, cpIndexOrData);
+         pRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
+         pRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
+         pRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
+         pRecord->setMethodIndex(reloTarget, methodIndex);
          }
          break;
 
@@ -726,19 +727,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_ProfiledMethodGuardRelocation:
       case TR_ProfiledClassGuardRelocation:
+      case TR_ProfiledInlinedMethodRelocation:
          {
-         TR_RelocationRecordProfiledGuard *pgRecord = reinterpret_cast<TR_RelocationRecordProfiledGuard *>(reloRecord);
+         TR_RelocationRecordProfiledInlinedMethod *pRecord = reinterpret_cast<TR_RelocationRecordProfiledInlinedMethod *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
             traceMsg(self()->comp(), "\nProfiled Class Guard: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, methodIndex %d",
-                                       pgRecord->inlinedSiteIndex(reloTarget),
-                                       pgRecord->constantPool(reloTarget),
-                                       pgRecord->romClassOffsetInSharedCache(reloTarget),
-                                       pgRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
-                                       pgRecord->classChainForInlinedMethod(reloTarget),
-                                       pgRecord->methodIndex(reloTarget));
+                                       pRecord->inlinedSiteIndex(reloTarget),
+                                       pRecord->constantPool(reloTarget),
+                                       pRecord->romClassOffsetInSharedCache(reloTarget),
+                                       pRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
+                                       pRecord->classChainForInlinedMethod(reloTarget),
+                                       pRecord->methodIndex(reloTarget));
             }
          }
          break;
@@ -1222,43 +1224,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                else
                   traceMsg(self()->comp(), "\nMethod Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, vTableOffset %x",
                                   *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3, *(uint32_t *)ep4);
-               }
-            break;
-
-         case TR_ProfiledInlinedMethodRelocation:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor += 4;     // padding
-               ep1 = cursor;    // inlinedSiteIndex
-               ep2 = cursor+8;  // constantPool
-               ep3 = cursor+16; // cpIndex
-               ep4 = cursor+24; // romClassOffsetInSharedCache
-               ep5 = cursor+32; // classChainIdentifyingLoaderOffsetInSharedCache
-               ep6 = cursor+40; // classChainForInlinedMethod
-               ep7 = cursor+48; // vTableSlot
-               cursor +=56;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  traceMsg(self()->comp(), "\nProfiled Class Guard: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, methodIndex %d",
-                                  *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3, *(uint64_t *)ep4, *(uint64_t *)ep5, *(uint64_t *)ep6, *(uint64_t *)ep7);
-               }
-            else
-               {
-               ep1 = cursor;    // inlinedSiteIndex
-               ep2 = cursor+4;  // constantPool
-               ep3 = cursor+8;  // cpIndex
-               ep4 = cursor+12; // romClassOffsetInSharedCache
-               ep5 = cursor+16; // classChainIdentifyingLoaderOffsetInSharedCache
-               ep6 = cursor+20; // classChainForInlinedMethod
-               ep7 = cursor+24; // vTableSlot
-               cursor += 28;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined Interface Method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, vTableSlot %d",
-                                  *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3, *(uint32_t *)ep4, *(uint32_t *)ep5, *(uint32_t *)ep6, *(uint32_t *)ep7);
-                  }
                }
             break;
 

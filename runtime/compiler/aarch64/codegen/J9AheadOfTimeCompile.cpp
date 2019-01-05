@@ -429,54 +429,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_ProfiledInlinedMethodRelocation:
-         {
-         guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
-
-         int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptr_t *) cursor = (uintptr_t) inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         TR::SymbolReference *callSymRef = guard->getSymbolReference();
-         TR_ResolvedMethod *owningMethod = callSymRef->getOwningMethod(comp);
-
-         TR_InlinedCallSite & ics = comp->getInlinedCallSite(inlinedSiteIndex);
-         TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
-         TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
-
-         *(uintptr_t *) cursor = (uintptr_t) owningMethod->constantPool(); // record constant pool
-         cursor += SIZEPOINTER;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            {
-            uint16_t inlinedCodeClassID = symValManager->getIDFromSymbol(static_cast<void *>(inlinedCodeClass));
-            uintptr_t data = (uintptr_t)inlinedCodeClassID;
-            *(uintptr_t*)cursor = data;
-            }
-         else
-            {
-            *(uintptr_t*)cursor = (uintptr_t)callSymRef->getCPIndex(); // record cpIndex
-            }
-         cursor += SIZEPOINTER;
-
-         void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-         traceMsg(comp, "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
-         *(uintptr_t *) cursor = romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
-         *(uintptr_t *) cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, inlinedCodeClass);
-
-         uintptr_t methodIndex = fej9->getMethodIndexInClass(inlinedCodeClass, inlinedMethod->getNonPersistentIdentifier());
-         *(uintptr_t *)cursor = methodIndex;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_GlobalValue:
          {
          *(uintptr_t*)cursor = (uintptr_t) relocation->getTargetAddress();
