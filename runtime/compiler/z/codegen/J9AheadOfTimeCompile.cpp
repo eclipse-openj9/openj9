@@ -844,7 +844,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
       case TR_ProfiledInlinedMethodRelocation:
       case TR_ProfiledClassGuardRelocation:
-      case TR_ProfiledMethodGuardRelocation :
          {
          guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
 
