@@ -59,46 +59,8 @@
 #include <poll.h>
 #if defined(LINUX)
 #define IPV6_FLOWINFO_SEND      33
-#define HAS_RTNETLINK 1
 #endif /* defined(LINUX) */
 #endif /* defined(LINUX) || defined(OSX) */
-
-#if defined(HAS_RTNETLINK)
-#include <asm/types.h>
-#include <linux/netlink.h> 
-#include <linux/rtnetlink.h> 
-typedef struct linkReq_struct{
-               struct nlmsghdr 	netlinkHeader;
-               struct ifinfomsg	msg;
-	} linkReq_struct ;
-
-typedef struct addrReq_struct{
-               struct nlmsghdr 	netlinkHeader;
-               struct ifaddrmsg   msg;
-	} addrReq_struct ;
-
-#define NETLINK_DATA_BUFFER_SIZE 4096
-#define NETLINK_READTIMEOUT_SECS 20
-
-typedef struct netlinkContext_struct {
-			int 						netlinkSocketHandle;
-			char 						buffer[NETLINK_DATA_BUFFER_SIZE];
-			struct nlmsghdr*    	netlinkHeader;
-			uint32_t 					remainingLength;
-			uint32_t						done;
-	} netlinkContext_struct;
-
-#else /* HAS_RTNETLINK */
-
-/* need something so that functions still compile */
-typedef struct netlinkContext_struct {
-			int 						netlinkSocketHandle;
-	} netlinkContext_struct;
-
-typedef struct nlmsghdr {
-			int length;
-	} nlmsghdr;
-#endif
 
 #define INVALID_SOCKET (j9socket_t) -1
 
