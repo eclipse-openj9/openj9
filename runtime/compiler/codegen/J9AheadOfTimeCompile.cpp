@@ -441,8 +441,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_ProfiledMethodGuardRelocation:
+      case TR_ProfiledClassGuardRelocation:
          {
-         TR_RelocationRecordProfiledMethodGuard *pmgRecord = reinterpret_cast<TR_RelocationRecordProfiledMethodGuard *>(reloRecord);
+         TR_RelocationRecordProfiledGuard *pgRecord = reinterpret_cast<TR_RelocationRecordProfiledGuard *>(reloRecord);
 
          TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(relocation->getTargetAddress2());
 
@@ -477,13 +478,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             cpIndexOrData = static_cast<uintptr_t>(callSymRef->getCPIndex());
             }
 
-         pmgRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         pmgRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(owningMethod->constantPool()));
-         pmgRecord->setCpIndex(reloTarget, cpIndexOrData);
-         pmgRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
-         pmgRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
-         pmgRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
-         pmgRecord->setMethodIndex(reloTarget, methodIndex);
+         pgRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         pgRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(owningMethod->constantPool()));
+         pgRecord->setCpIndex(reloTarget, cpIndexOrData);
+         pgRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
+         pgRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
+         pgRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
+         pgRecord->setMethodIndex(reloTarget, methodIndex);
          }
          break;
 
@@ -724,19 +725,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_ProfiledMethodGuardRelocation:
+      case TR_ProfiledClassGuardRelocation:
          {
-         TR_RelocationRecordProfiledMethodGuard *pmgRecord = reinterpret_cast<TR_RelocationRecordProfiledMethodGuard *>(reloRecord);
+         TR_RelocationRecordProfiledGuard *pgRecord = reinterpret_cast<TR_RelocationRecordProfiledGuard *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
             traceMsg(self()->comp(), "\nProfiled Class Guard: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, methodIndex %d",
-                                       pmgRecord->inlinedSiteIndex(reloTarget),
-                                       pmgRecord->constantPool(reloTarget),
-                                       pmgRecord->romClassOffsetInSharedCache(reloTarget),
-                                       pmgRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
-                                       pmgRecord->classChainForInlinedMethod(reloTarget),
-                                       pmgRecord->methodIndex(reloTarget));
+                                       pgRecord->inlinedSiteIndex(reloTarget),
+                                       pgRecord->constantPool(reloTarget),
+                                       pgRecord->romClassOffsetInSharedCache(reloTarget),
+                                       pgRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
+                                       pgRecord->classChainForInlinedMethod(reloTarget),
+                                       pgRecord->methodIndex(reloTarget));
             }
          }
          break;
@@ -1224,7 +1226,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             break;
 
          case TR_ProfiledInlinedMethodRelocation:
-         case TR_ProfiledClassGuardRelocation:
             cursor++;        // unused field
             if (is64BitTarget)
                {
