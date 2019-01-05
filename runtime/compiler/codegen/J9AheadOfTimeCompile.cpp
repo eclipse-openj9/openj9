@@ -33,15 +33,21 @@
 
 extern bool isOrderedPair(uint8_t reloType);
 
-uint8_t *
-J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember)
+uintptr_t
+J9::AheadOfTimeCompile::getClassChainOffset(TR_OpaqueClassBlock *classToRemember)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
-   TR_SharedCache * sharedCache(fej9->sharedCache());
+   TR_SharedCache * sharedCache = fej9->sharedCache();
    void *classChainForInlinedMethod = sharedCache->rememberClass(classToRemember);
    if (!classChainForInlinedMethod)
       self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainForInlinedMethod == NULL");
-   uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForInlinedMethod);
+   return self()->offsetInSharedCacheFromPointer(sharedCache, classChainForInlinedMethod);
+   }
+
+uint8_t *
+J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember)
+   {
+   uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->getClassChainOffset(classToRemember);
    *pointer_cast<uintptr_t *>(cursor) = classChainForInlinedMethodOffsetInSharedCache;
    return cursor + SIZEPOINTER;
    }
