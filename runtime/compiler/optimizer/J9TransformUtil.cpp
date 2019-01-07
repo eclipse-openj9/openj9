@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1077,6 +1077,16 @@ J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node
    return TR_maybe;
    }
 
+/*
+ * Load const node should have zero children
+ */
+static void prepareNodeToBeLoadConst(TR::Node *node)
+   {
+   for (int i=0; i < node->getNumChildren(); i++)
+      node->getAndDecChild(i);
+   node->setNumChildren(0);
+   }
+
 bool
 J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *node)
    {
@@ -1143,6 +1153,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
       if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
          {
          TR::VMAccessCriticalSection isConsitble(comp->fej9());
+         prepareNodeToBeLoadConst(node);
          switch (loadType)
             {
             case TR::Int8:
@@ -1191,6 +1202,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
          default:
             if (performTransformation(comp, "O^O transformDirectLoad: [%p] field is null - change to aconst NULL\n", node))
                {
+               prepareNodeToBeLoadConst(node);
                TR::Node::recreate(node, TR::aconst);
                node->setAddress(0);
                node->setIsNull(true);

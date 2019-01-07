@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2302,6 +2302,10 @@ TR_CISCNode *
 TR_CISCTransformer::addAllSubNodes(TR_CISCGraph *const graph, TR::Block *const block, TR::TreeTop *const top,
                                    TR::Node *const parent, TR::Node *const node, const int32_t dagId)
    {
+   //IdiomRecognition doesn't know how to handle rdbar/wrtbar for now
+   if (comp()->incompleteOptimizerSupportForReadWriteBarriers() &&
+       (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar()))
+      return 0;
    int32_t i;
    int32_t numChildren = node->getNumChildren();
    TR_ScratchList<TR_CISCNode> childList(trMemory());

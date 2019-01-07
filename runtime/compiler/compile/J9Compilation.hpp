@@ -311,6 +311,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR_RelocationRuntime *reloRuntime() { return _reloRuntime; }
 
+   bool incompleteOptimizerSupportForReadWriteBarriers();
+
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
 private:
