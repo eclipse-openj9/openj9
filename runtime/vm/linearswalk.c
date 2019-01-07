@@ -373,11 +373,7 @@ lswRecordSlot(J9StackWalkState * walkState, const void * slotAddress, UDATA slot
 	slot->type = slotType;
 
 	va_start(args, format);
-#if defined(WIN32)
-	_vsnprintf(buf, LSW_STRING_MAX, format, args);
-#else
 	vsnprintf(buf, LSW_STRING_MAX, format, args);
-#endif
 	va_end(args);
 
 	slot->name = lswStrDup(slotWalker, buf);
@@ -746,11 +742,7 @@ lswPrintf(struct J9PortLibrary *privatePortLibrary, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-#if defined(WIN32)
-	_vsnprintf(buf, LSW_STRING_MAX, format, args);
-#else
 	vsnprintf(buf, LSW_STRING_MAX, format, args);
-#endif
 	va_end(args);
 
 	j9tty_printf(privatePortLibrary, buf);
