@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,15 +83,16 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
 
          if ((statisticsThread->getStatisticsFrequency() != 0) && ((crtTime - lastStatistics) > statisticsThread->getStatisticsFrequency()))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Number of clients : %u", compInfo->getClientSessionHT()->size());
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
+            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Number of clients : %u", compInfo->getClientSessionHT()->size());
+            TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
+            TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
             CpuUtilization *cpuUtil = compInfo->getCpuUtil();
             if (cpuUtil->isFunctional())
                {
-
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUtil->getCpuUsage(), cpuUtil->getAvgCpuUsage(), cpuUtil->getVmCpuUsage());
+               TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUtil->getCpuUsage(), cpuUtil->getAvgCpuUsage(), cpuUtil->getVmCpuUsage());
                }
+            TR_VerboseLog::vlogRelease();
             lastStatistics = crtTime;
             }
          }
