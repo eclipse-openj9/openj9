@@ -1826,9 +1826,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				IDATA argIndexIgnoreUnrecognizedOptionsDisable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSDISABLE, NULL);
 				BOOLEAN enableGcOnIdle = FALSE;
 				BOOLEAN inContainer = FALSE;
-				int32_t errorCode = 0;
 				
-				inContainer = omrsysinfo_is_running_in_container(&errorCode);
+				inContainer = omrsysinfo_is_running_in_container();
 
 				/* 
 				 * GcOnIdle is enabled only if:
