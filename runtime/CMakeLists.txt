@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -365,6 +365,8 @@ if(J9VM_MODULE_J9VM)
 	add_subdirectory(j9vm)
 	add_subdirectory(j9vm_b150)
 	add_subdirectory(j9vm_b156)
+	add_subdirectory(j9vm_jdk11)
+	add_subdirectory(j9vm_jdk12)
 endif()
 #NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jcl)
