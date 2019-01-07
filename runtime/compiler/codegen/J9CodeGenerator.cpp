@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -351,7 +351,7 @@ J9::CodeGenerator::lowerCompressedRefs(
 
       // base object
       address = loadOrStoreNode->getFirstChild();
-      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
+      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || loadOrStoreNode->getOpCode().isReadBar() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
                                                                                    self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
    else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
@@ -2926,13 +2926,19 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
    static bool disableRematforCP = feGetEnv("TR_DisableWrtBarOpt") != NULL;
 
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   // The compressedrefs remat opt removes decompression/compression sequences from
+   // loads/stores where there doesn't exist a gc point between the load and the store,
+   // and the load doesn't need to be dereferenced.
+   // The opt needs to be disabled for the following cases:
+   // 1. In Guarded Storage, we can't not do a guarded load because the object that is loaded may
+   // not be in the root set, and as a consequence, may get moved.
+   // 2. For read barriers in field watch, the vmhelpers are GC points and therefore the object might be moved
+   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || self()->comp()->getOption(TR_EnableFieldWatch))
       {
-      // We need this restriction because the compressedrefs remat opt
-      // removes decompression/compression sequences from loads/stores where there doesn't exist
-      // a gc point between the load and the store, and the load doesn't need to be dereferenced.
-      // In Guarded Storage, we can't not do a guarded load because the object that is loaded may
-      // not be in the root set, and as a consequence, may get moved.
+      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+         traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because Concurrent Scavenger is enabled\n");
+      if (self()->comp()->getOption(TR_EnableFieldWatch))
+         traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because field watch is enabled\n");
       disableRematforCP = true;
       }
 
