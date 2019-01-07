@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1298,7 +1298,7 @@ TR_J9ByteCodeIlGenerator::genJNIIL()
       return false;
 
    // A JNI thunk method cannot call back to the slow path, as would occur in the following case
-   if (method()->numberOfParameterSlots() > 32 && comp()->cg()->hasFixedFrameC_CallingConvention())
+   if (method()->numberOfParameterSlots() > J9_INLINE_JNI_MAX_ARG_COUNT && comp()->cg()->hasFixedFrameC_CallingConvention())
       return false;
 
    if (_methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_ensureClassInitialized)

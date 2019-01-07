@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2136,7 +2136,7 @@ public class MethodHandles {
 	/**
 	 * Produce a MethodHandle that implements a try-catch block.
 	 * 
-	 * This adapter acts as though the <i>tryHandle</i> where run inside a try block.  If <i>tryHandle</i>
+	 * This adapter acts as though the <i>tryHandle</i> were run inside a try block.  If <i>tryHandle</i>
 	 * throws an exception of type <i>throwableClass</i>, the <i>catchHandle</i> is invoked with the 
 	 * exception instance and the original arguments.
 	 * <p>
@@ -2158,6 +2158,9 @@ public class MethodHandles {
 	public static MethodHandle catchException(MethodHandle tryHandle, Class<? extends Throwable> throwableClass, MethodHandle catchHandle) throws NullPointerException, IllegalArgumentException{
 		if ((tryHandle == null) || (throwableClass == null) || (catchHandle == null)) {
 			throw new NullPointerException();
+		}
+		if (!Throwable.class.isAssignableFrom(throwableClass)) {
+			throw new ClassCastException(throwableClass.getName());
 		}
 		MethodType tryType = tryHandle.type;
 		MethodType catchType = catchHandle.type;
