@@ -214,11 +214,7 @@ error(agentEnv * env, jvmtiError err, char * format, ...)
 
 	va_start(args, format);
 
-#if defined(WIN32_IBMC) || defined(J9ZOS390)
 	vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#else
-	_vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#endif
 
 	va_end(args);
 
@@ -241,11 +237,7 @@ softError(agentEnv * env, jvmtiError err, char * format, ...)
 
 	va_start(args, format);
 
-#if defined(WIN32_IBMC) || defined(J9ZOS390)
 	vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#else
-	_vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#endif
 
 	va_end(args);
 
