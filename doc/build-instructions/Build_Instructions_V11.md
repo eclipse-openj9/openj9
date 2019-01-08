@@ -38,8 +38,7 @@ A more complete set of build instructions are included here for multiple platfor
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V11** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual
-machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V11** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
@@ -157,6 +156,8 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 bash get_source.sh
 ```
 
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must specify `--openssl-version=<version>` where `<version>` is an OpenSSL level like 1.1.0 or 1.1.1. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+
 ### 3. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -165,7 +166,17 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar
 ```
 :warning: You must give an absolute path to freemarker.jar
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
+
+  where:
+
+  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
+  - `system` uses the package installed OpenSSL library in the system.
+  - `path_to_library` uses a custom OpenSSL library that's already built.
+
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
 ### 4. Build
 :penguin:
@@ -207,6 +218,13 @@ OpenJ9   - ee517c1
 OMR      - f29d158
 JCL      - 98f2038 based on jdk-11+28)
 ```
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+
 :penguin: *Congratulations!* :tada:
 
 ----------------------------------
@@ -262,6 +280,9 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash get_source.sh
 ```
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must specify `--openssl-version=<version>` where `<version>` is an OpenSSL level like 1.1.0 or 1.1.1. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+
 ### 3. Configure
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -272,7 +293,17 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example `/opt/freeware/include`.
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
+
+where:
+
+- `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
+- `system` uses the package installed OpenSSL library in the system.
+- `path_to_library` uses a custom OpenSSL library that's already built.
+
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
 ### 4. build
 :blue_book:
@@ -310,6 +341,13 @@ OpenJ9   - 06905e2
 OMR      - 28139f2
 JCL      - e5c64f5 based on jdk-11+21)
 ```
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+
 :blue_book: *Congratulations!* :tada:
 
 ----------------------------------
@@ -393,6 +431,9 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash get_source.sh
 ```
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must obtain a prebuilt OpenSSL v1.1.x binary.
+
 ### 3. Configure
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -405,7 +446,10 @@ Note: there is no need to specify --with-toolchain-version for 2017 as it will b
 
 :pencil: Modify the paths for freemarker if you manually downloaded and unpacked these dependencies into different directories. If Java 10 is not available on the path, add the `--with-boot-jdk=<path_to_jdk10>` configuration option.
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
+
 
 ### 4. build
 :ledger:
@@ -443,6 +487,12 @@ OMR      - e2e4b67c
 JCL      - a786f96b13 based on jdk-11+21)
 ```
 
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+
 :ledger: *Congratulations!* :tada:
 
 ----------------------------------
@@ -457,16 +507,46 @@ You must install a number of software dependencies to create a suitable build en
 
 - [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
 - [macOS OpenJDK 10](https://adoptopenjdk.net/archive.html?variant=openjdk10&jvmVariant=hotspot), which is used as the boot JDK.
-- [nasm 2.13.03](https://formulae.brew.sh/formula/nasm), which can be installed by using [Homebrew](https://brew.sh/).
-- [bash 4.4.23](https://formulae.brew.sh/formula/bash), which can be installed by using [Homebrew](https://brew.sh/).
-- [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar), which can be installed by using [Homebrew](https://brew.sh/).
-- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download), which can be obtained and installed with the following commands:
+
+The following dependencies can be installed by using [Homebrew](https://brew.sh/):
+
+- [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
+- [bash 4.4.23](https://formulae.brew.sh/formula/bash)
+- [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
+- [git 2.19.2](https://formulae.brew.sh/formula/git)
+- [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
+- [gnu-sed 4.5](https://formulae.brew.sh/formula/gnu-sed)
+- [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
+- [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
+- [wget 1.19.5 ](https://formulae.brew.sh/formula/wget)
+
+[Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
 
 ```
 cd /<my_home_dir>
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
+tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 rm -f freemarker.tgz
+```
+
+Bash version 4 is required by the `./get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
+
+```
+# Find the <CURRENT_SHELL> for <USERNAME>
+dscl . -read <USERNAME> UserShell
+
+# Change the shell to Bash version 4 for <USERNAME>
+dscl . -change <USERNAME> UserShell <CURRENT_SHELL> /usr/local/bin/bash
+
+# Verify that the shell has been changed
+dscl . -read <USERNAME> UserShell
+```
+
+Set the following environment variables:
+
+```
+export SED=/usr/local/bin/gsed
+export TAR=/usr/local/bin/gtar
 ```
 
 ### 2. Get the source
@@ -486,6 +566,9 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash ./get_source.sh
 ```
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must obtain a prebuilt OpenSSL v1.1.x binary.
+
 ### 3. Configure
 :apple:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -496,9 +579,11 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
                --disable-warnings-as-errors
 ```
 
-:pencil: Modify the paths for freemarker and the macOS boot JDK that you installed in step 1.
+:pencil: Modify the paths for freemarker and the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
 ### 4. build
 :apple:
@@ -508,9 +593,12 @@ Now you're ready to build OpenJDK with OpenJ9:
 make all
 ```
 
-A binary for the full developer kit (jdk) is built and stored in the following directory:
+Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following directories:
 
 - **build/macos-x86_64-normal-server-release/images/jdk**
+- **build/macos-x86_64-normal-server-release/images/jdk-bundle**
+
+    :pencil: For running applications such as Eclipse, use the **-bundle** version.
 
     :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macos-x86_64-normal-server-release/images/jre** directory.
 
@@ -537,6 +625,11 @@ OMR      - d4cd7c31
 JCL      - 9da99f8b97 based on jdk-11+28)
 ```
 
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+- *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+- *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
 :ledger: *Congratulations!* :tada:
 
 ----------------------------------
@@ -544,5 +637,4 @@ JCL      - 9da99f8b97 based on jdk-11+28)
 ## ARM
 :iphone:
 
-:construction:
-We haven't created a full build process for ARM yet? Watch this space!
+:construction: We haven't created a full build process for ARM yet? Watch this space!
