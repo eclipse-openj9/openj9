@@ -55,6 +55,19 @@ extern "C" {
 #define JIT_HELPER(x) extern "C" void x()
 #endif
 
+/**
+ * Many X86 helpers have been named with leading underscores.
+ * With the move to using the NASM Assembler across X86, a more consistent
+ * naming is being adopted, where there would be no leading
+ * underscores in any of the X86 helper names for making a single
+ * version of the NASM files cross-compatible across X86. NASM_ASSEMBLER
+ * is set for OS variants that currently use NASM and is used to
+ * decide the version of helper names to use.
+ */
+#if defined(OSX) || (defined(LINUX) && defined(TR_HOST_64BIT))
+#define NASM_ASSEMBLER
+#endif
+
 /* #include "VM.hpp" */
 
 JIT_HELPER(jitAcquireVMAccess);  // asm calling-convention helper

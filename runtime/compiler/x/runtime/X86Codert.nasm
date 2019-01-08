@@ -127,30 +127,31 @@ ONEHALF:
 segment .text
 
 %ifdef TR_HOST_32BIT
-        global _doubleToLong
-        global _doubleToInt
-        global _floatToLong
-        global _floatToInt
+        DECLARE_GLOBAL doubleToLong
+        DECLARE_GLOBAL doubleToInt
+        DECLARE_GLOBAL floatToLong
+        DECLARE_GLOBAL floatToInt
 %endif
-        global _X87floatRemainder
-        global _X87doubleRemainder
 
-        global _SSEfloatRemainder
-        global _SSEdoubleRemainder
-        global _SSEfloatRemainderIA32Thunk
-        global _SSEdoubleRemainderIA32Thunk
+        DECLARE_GLOBAL X87floatRemainder
+        DECLARE_GLOBAL X87doubleRemainder
+
+        DECLARE_GLOBAL SSEfloatRemainder
+        DECLARE_GLOBAL SSEdoubleRemainder
+        DECLARE_GLOBAL SSEfloatRemainderIA32Thunk
+        DECLARE_GLOBAL SSEdoubleRemainderIA32Thunk
 %ifdef TR_HOST_32BIT
-        global _SSEdouble2LongIA32
+        DECLARE_GLOBAL SSEdouble2LongIA32
 %endif
-        global _jitFPHelpersBegin
-        global _jitFPHelpersEnd
+        DECLARE_GLOBAL jitFPHelpersBegin
+        DECLARE_GLOBAL jitFPHelpersEnd
 
         align 16
-_jitFPHelpersBegin:
+jitFPHelpersBegin:
 
 %ifdef TR_HOST_32BIT
 
-; _doubleToInt
+; doubleToInt
 ;
 ; Convert doubles to ints when it has already been determined that the
 ; double cannot be represented in an int OR if it appears that the
@@ -165,7 +166,7 @@ _jitFPHelpersBegin:
 ;   eax - equivalent integer: either 0, MAX_INT, or MIN_INT
 ;
         align       16
-_doubleToInt:
+doubleToInt:
         push        edx
         mov         eax, dword  [esp + 12]         ; binary representation of high dword of double
         mov         edx, eax
@@ -195,7 +196,7 @@ d2i_done:
         retn
 
 
-; _doubleToLong
+; doubleToLong
 ;
 ; Convert doubles to longs when it has already been determined that the
 ; double cannot be represented in a long OR if it appears that the
@@ -211,7 +212,7 @@ d2i_done:
 ;   ST0     - unchanged
 ;
         align       16
-_doubleToLong:
+doubleToLong:
         push        ecx
         sub         esp, 8
         fst         qword  [esp]
@@ -247,7 +248,7 @@ d2l_done:
         retn
 
 
-; _floatToInt
+; floatToInt
 ;
 ; Convert floats to ints when it has already been determined that the
 ; float cannot be represented in an int OR if it appears that the float
@@ -262,7 +263,7 @@ d2l_done:
 ;   eax - equivalent integer: either 0, MAX_INT, or MIN_INT
 ;
         align       16
-_floatToInt:
+floatToInt:
         push        edx
         mov         eax, dword [esp+8]             ; binary representation of float
         mov         edx, eax
@@ -285,7 +286,7 @@ f2i_done:
         retn
 
 
-; _floatToLong
+; floatToLong
 ;
 ; Convert floats to longs when it has already been determined that the
 ; float cannot be represented in a long OR if it appears that the
@@ -301,7 +302,7 @@ f2i_done:
 ;   ST0     - unchanged
 ;
         align       16
-_floatToLong:; proc near
+floatToLong:; proc near
         push        ecx
         sub         esp, 4
         fst         dword [esp]
@@ -334,7 +335,7 @@ f2l_done:
 %endif ; TR_HOST_32BIT
 
 
-; _X87floatRemainder, _X87doubleRemainder
+; X87floatRemainder, X87doubleRemainder
 ;
 ; Compute the remainder from the division of two floats, or two doubles,
 ; respectively, using the Intel floating-point partial remainder instruction
@@ -352,7 +353,7 @@ f2l_done:
 ;
         align       16
 
-_X87floatRemainder:
+X87floatRemainder:
 %ifdef NO_X87_UNDER_WIN64
         int 3
 %else
@@ -370,7 +371,7 @@ fremloop:
 %endif
 
         align 16
-_X87doubleRemainder:
+X87doubleRemainder:
 %ifdef NO_X87_UNDER_WIN64
         int 3
 %else
@@ -393,7 +394,7 @@ dremloop:
 ; address.
 ;
         align 16
-_SSEfloatRemainderIA32Thunk:
+SSEfloatRemainderIA32Thunk:
         sub         rsp, 8
         movq        qword [rsp], xmm1
         cvtss2sd    xmm1, dword [rsp +16]     ; dividend
@@ -410,7 +411,7 @@ _SSEfloatRemainderIA32Thunk:
 ; address.
 ;
         align 16
-_SSEdoubleRemainderIA32Thunk:
+SSEdoubleRemainderIA32Thunk:
         sub         rsp, 8
         movq        qword [rsp], xmm1
         movq        xmm1, qword [rsp +20]     ; dividend
@@ -422,7 +423,7 @@ _SSEdoubleRemainderIA32Thunk:
 
 
         align 16
-_SSEfloatRemainder:
+SSEfloatRemainder:
         cvtss2sd    xmm0, xmm0
         cvtss2sd    xmm1, xmm1
         call        doSSEdoubleRemainder
@@ -430,7 +431,7 @@ _SSEfloatRemainder:
         ret
 
         align 16
-_SSEdoubleRemainder:
+SSEdoubleRemainder:
 
 doSSEdoubleRemainder:
 %ifdef ASM_J9VM_USE_GOT
@@ -718,7 +719,7 @@ LARGE_NUMS:
 ; Note that the double is assumed to have an exponent >= 32.
 
         align 16
-_SSEdouble2LongIA32:
+SSEdouble2LongIA32:
         mov edx, dword [rsp+8]      ; load the double into edx:eax
         mov eax, dword [rsp+4]
 
@@ -833,20 +834,20 @@ SSEd2l_NaN:                         ; if the number is a NaN, return 0 (note: no
 
 %endif
 
-_jitFPHelpersEnd:
+jitFPHelpersEnd:
 
 
 eq_J9VMThread_heapAlloc      equ J9TR_VMThread_heapAlloc
 eq_J9VMThread_heapTop        equ J9TR_VMThread_heapTop
 eq_J9VMThread_PrefetchCursor equ J9TR_VMThread_tlhPrefetchFTA
 
-        global _prefetchTLH
-        global _newPrefetchTLH
+        DECLARE_GLOBAL prefetchTLH
+        DECLARE_GLOBAL newPrefetchTLH
 
 %ifdef ASM_J9VM_GC_TLH_PREFETCH_FTA
 
         align 16
-_prefetchTLH:
+prefetchTLH:
         push  rcx
 
 %ifdef TR_HOST_64BIT
@@ -890,7 +891,7 @@ eq_prefetchWindow           equ 64*4
 eq_prefetchTriggerDistance  equ 64*8
 
         align 16
-_newPrefetchTLH:
+newPrefetchTLH:
 
         push        rcx        ; preserve
         push        rdx        ; preserve
@@ -997,16 +998,16 @@ ret
 %else  ; ASM_J9VM_GC_TLH_PREFETCH_FTA
 
       align 16
-_prefetchTLH:
+prefetchTLH:
         ret
 
       align 16
-_newPrefetchTLH:
+newPrefetchTLH:
         ret
 
 %endif  ; REALTIME
 
-      global   _jitReleaseVMAccess
+      DECLARE_GLOBAL   jitReleaseVMAccess
 
 %ifndef TR_HOST_64BIT
 
@@ -1016,9 +1017,9 @@ _newPrefetchTLH:
 ;
 ; --------------------------------------------------------------------------------
 
-      global   _clearFPStack
+      DECLARE_GLOBAL   clearFPStack
 
-_jitReleaseVMAccess:
+jitReleaseVMAccess:
                 pusha
                 push       ebp
                 mov        eax, [ebp+J9TR_VMThread_javaVM]
@@ -1035,7 +1036,7 @@ _jitReleaseVMAccess:
 	; Wipe the entire FP stack without raising any exceptions.
 	;
 		align 16
-_clearFPStack:
+clearFPStack:
 		ffree     st0
 		ffree     st1
 		ffree     st2
@@ -1054,7 +1055,7 @@ _clearFPStack:
 ;
 ; --------------------------------------------------------------------------------
 
-_jitReleaseVMAccess:
+jitReleaseVMAccess:
         ; Save system-linkage volatile regs
         ; GPRs
         push    r11     ; Lin Win

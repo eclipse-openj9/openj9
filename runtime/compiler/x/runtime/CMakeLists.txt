@@ -23,13 +23,12 @@
 j9jit_files(
 	${omr_SOURCE_DIR}/compiler/x/runtime/VirtualGuardRuntime.cpp
 	x/runtime/Recomp.cpp
-	x/runtime/X86ArrayTranslate.asm 
-	x/runtime/X86Codert.asm 
-	#x/runtime/X86Crypto.asm 
-	x/runtime/X86EncodeUTF16.asm 
-	x/runtime/X86LockReservation.asm 
+	x/runtime/X86ArrayTranslate.nasm
+	x/runtime/X86Codert.nasm
+	x/runtime/X86EncodeUTF16.nasm
+	x/runtime/X86LockReservation.nasm
 	x/runtime/X86PicBuilderC.cpp 
-	x/runtime/X86PicBuilder.pasm
+	x/runtime/X86PicBuilder.nasm
 	x/runtime/X86RelocationTarget.cpp 
-	x/runtime/X86Unresolveds.pasm
+	x/runtime/X86Unresolveds.nasm
 )

@@ -21,31 +21,29 @@
 JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/x/runtime/VirtualGuardRuntime.cpp
 
-ifeq ($(OS),osx)
-    JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/x/runtime/Recomp.cpp \
-    compiler/x/runtime/X86ArrayTranslate.nasm \
-    compiler/x/runtime/X86Codert.nasm \
-    compiler/x/runtime/X86EncodeUTF16.nasm \
-    compiler/x/runtime/X86LockReservation.nasm \
-    compiler/x/runtime/X86PicBuilder.nasm \
-    compiler/x/runtime/X86PicBuilderC.cpp \
-    compiler/x/runtime/X86RelocationTarget.cpp \
-    compiler/x/runtime/X86Unresolveds.nasm
-
-else
-
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/runtime/Recomp.cpp \
-    compiler/x/runtime/X86ArrayTranslate.asm \
-    compiler/x/runtime/X86Codert.asm \
-    compiler/x/runtime/X86EncodeUTF16.asm \
-    compiler/x/runtime/X86LockReservation.asm \
-    compiler/x/runtime/X86PicBuilder.pasm \
     compiler/x/runtime/X86PicBuilderC.cpp \
-    compiler/x/runtime/X86RelocationTarget.cpp \
-    compiler/x/runtime/X86Unresolveds.pasm
+    compiler/x/runtime/X86RelocationTarget.cpp
 
-endif # OS == osx
+ifeq ($(NASM_ASSEMBLER),yes)
+    JIT_PRODUCT_SOURCE_FILES+=\
+        compiler/x/runtime/X86ArrayTranslate.nasm \
+        compiler/x/runtime/X86Codert.nasm \
+        compiler/x/runtime/X86EncodeUTF16.nasm \
+        compiler/x/runtime/X86LockReservation.nasm \
+        compiler/x/runtime/X86PicBuilder.nasm \
+        compiler/x/runtime/X86Unresolveds.nasm
+    
+else
+    JIT_PRODUCT_SOURCE_FILES+=\
+        compiler/x/runtime/X86ArrayTranslate.asm \
+        compiler/x/runtime/X86Codert.asm \
+        compiler/x/runtime/X86EncodeUTF16.asm \
+        compiler/x/runtime/X86LockReservation.asm \
+        compiler/x/runtime/X86PicBuilder.pasm \
+        compiler/x/runtime/X86Unresolveds.pasm
+
+endif # NASM_ASSEMBLER == yes
 
 include $(JIT_MAKE_DIR)/files/host/$(HOST_SUBARCH).mk

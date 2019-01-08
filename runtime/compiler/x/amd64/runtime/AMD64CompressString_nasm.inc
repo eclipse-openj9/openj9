@@ -20,16 +20,16 @@
 
 segment .text
 
-        global  _compressString
-        global  _compressStringJ
-        global  _compressStringNoCheck
-        global  _compressStringNoCheckJ
-        global  _andORString
+        DECLARE_GLOBAL  compressString
+        DECLARE_GLOBAL  compressStringJ
+        DECLARE_GLOBAL  compressStringNoCheck
+        DECLARE_GLOBAL  compressStringNoCheckJ
+        DECLARE_GLOBAL  andORString
 
         align 16
 
 
-_compressString:
+compressString:
         shr  rcx, 4
         add  rsi, rax
         add  rsi, rax
@@ -89,7 +89,7 @@ ret
 ; ecx has length of copy in bytes
 ; esi has source address
 ; edi has destination address
-_compressStringJ:
+compressStringJ:
         shr  rcx, 4
         add  rsi, rax
         add  rsi, rax
@@ -120,7 +120,7 @@ eightcharsJ:
         shr  rax, 32
 ret
 
-_andORString:
+andORString:
         shr  rcx, 4
         add  rsi, rax
         add  rsi, rax
@@ -159,7 +159,7 @@ eightchars2:
 ret
 
 
-_compressStringNoCheckJ:
+compressStringNoCheckJ:
         shr  rcx, 4
         add  rsi, rax
         add  rsi, rax
@@ -181,7 +181,7 @@ eightcharsNoCheckJ:
         loop eightcharsNoCheckJ
 ret
 
-_compressStringNoCheck:
+compressStringNoCheck:
         shr  rcx, 4
         add  rsi, rax
         add  rsi, rax
