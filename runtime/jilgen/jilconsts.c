@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,11 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 	return omrstr_printf(line, sizeof(line), "#define %s %zu\n", name, value);
 #elif defined(LINUX) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
 	#if defined(J9VM_ENV_DATA64)
-		return omrstr_printf(line, sizeof(line), "%%define %s %zu\n", name, value);
+		#if defined(J9VM_ARCH_X86)
+			return omrstr_printf(line, sizeof(line), "%%define %s %zu\n", name, value);
+		#else /* J9VM_ARCH_X86 */
+			return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
+		#endif /* J9VM_ARCH_X86 */
 	#else /* J9VM_ENV_DATA64 */
 		return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
 	#endif
