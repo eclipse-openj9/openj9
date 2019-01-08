@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ extern "C" {
  * is set for OS variants that currently use NASM and is used to
  * decide the version of helper names to use.
  */
-#if defined(OSX) || (defined(LINUX) && defined(TR_HOST_64BIT))
+#if defined(OSX) || (defined(LINUX) && defined(TR_HOST_X86) && defined(TR_HOST_64BIT))
 #define NASM_ASSEMBLER
 #endif
 
