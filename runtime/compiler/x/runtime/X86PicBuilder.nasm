@@ -33,33 +33,33 @@
 
       segment .text
 
-      extern _jitLookupInterfaceMethod
-      extern _jitResolveInterfaceMethod
-      extern _jitResolveVirtualMethod
-      extern _jitCallJitAddPicToPatchOnClassUnload
-      extern _jitInstanceOf
-      extern _j2iVirtual
+      DECLARE_EXTERN jitLookupInterfaceMethod
+      DECLARE_EXTERN jitResolveInterfaceMethod
+      DECLARE_EXTERN jitResolveVirtualMethod
+      DECLARE_EXTERN jitCallJitAddPicToPatchOnClassUnload
+      DECLARE_EXTERN jitInstanceOf
+      DECLARE_EXTERN j2iVirtual
 
-      global _resolveIPicClass
-      global _populateIPicSlotClass
-      global _populateIPicSlotCall
-      global _dispatchInterpretedFromIPicSlot
-      global _IPicLookupDispatch
+      DECLARE_GLOBAL resolveIPicClass
+      DECLARE_GLOBAL populateIPicSlotClass
+      DECLARE_GLOBAL populateIPicSlotCall
+      DECLARE_GLOBAL dispatchInterpretedFromIPicSlot
+      DECLARE_GLOBAL IPicLookupDispatch
 
-      global _resolveVPicClass
-      global _populateVPicSlotClass
-      global _populateVPicSlotCall
-      global _dispatchInterpretedFromVPicSlot
-      global _populateVPicVTableDispatch
-      global _resolveAndPopulateVTableDispatch
-      global _memoryFence
+      DECLARE_GLOBAL resolveVPicClass
+      DECLARE_GLOBAL populateVPicSlotClass
+      DECLARE_GLOBAL populateVPicSlotCall
+      DECLARE_GLOBAL dispatchInterpretedFromVPicSlot
+      DECLARE_GLOBAL populateVPicVTableDispatch
+      DECLARE_GLOBAL resolveAndPopulateVTableDispatch
+      DECLARE_GLOBAL memoryFence
 
 
 ; Perform a memory fence. The capabilities of the target architecture must be inspected at runtime
 ; to determine the appropriate fence instruction to use.
 ;
       align 16
-_memoryFence:
+memoryFence:
 
       push        ecx                                       ; preserve
       mov         ecx, [ebp + J9TR_VMThread_javaVM]
@@ -108,7 +108,7 @@ dispatchDirectMethod:
 
 dispatchDirectMethodInterpreted:
       lea         edx, [eax+J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG]              ; low-tagged J9Method
-      MoveHelper  edi, _j2iVirtual
+      MoveHelper  edi, j2iVirtual
 
 mergeDispatchDirectMethod:
       pop         eax                                          ; restore
@@ -126,7 +126,7 @@ ret
 ; across the call to the resolution helper.
 ;
       align 16
-_resolveIPicClass: ; proc near
+resolveIPicClass: ; proc near
       push        edx                                                   ; preserve
       push        edi                                                   ; preserve
       mov         edi, dword [esp+8]                                    ; RA in code cache
@@ -163,9 +163,9 @@ mergeFindDataBlockForResolveIPicClass:
 callResolveInterfaceMethod:
       push        edi                                                   ; p) jit valid EIP
       push        edx                                                   ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg _jitResolveInterfaceMethod,eax                   ; returns interpreter vtable index
+      CallHelperUseReg jitResolveInterfaceMethod,eax                   ; returns interpreter vtable index
 
-      call        _memoryFence                                          ; Ensure IPIC data area drains to memory before proceeding.
+      call        memoryFence                                          ; Ensure IPIC data area drains to memory before proceeding.
 
       test        dword [edx+eq_IPicData_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
       jnz         typeCheckAndDirectDispatchIPic
@@ -187,8 +187,8 @@ callResolveInterfaceMethod:
       ; Construct the call instruction in edx:eax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  eax, _resolveIPicClass
-      MoveHelper  ebx, _populateIPicSlotClass
+      MoveHelper  eax, resolveIPicClass
+      MoveHelper  ebx, populateIPicSlotClass
       mov         edi, dword [esp+20]                                   ; edi = RA in mainline (call to helper)
       mov         edx, dword [edi-1]                                    ; edx = 3 bytes after the call to helper + high byte of disp32
       sub         eax, edi                                              ; Expected disp32 for call to helper
@@ -197,7 +197,7 @@ callResolveInterfaceMethod:
       mov         al, 0e8h                                              ; add CALL opcode
 
       ; Construct the byte sequence in ecx:ebx to re-route the call
-      ; to _populateIPicSlotClass.
+      ; to populateIPicSlotClass.
       ;
       sub         ebx, edi                                              ; disp32 to populate snippet
       mov         ecx, edx
@@ -262,7 +262,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateIPicSlotClass: ; proc near
+populateIPicSlotClass: ; proc near
       push        edx                                       ; preserve
       push        edi                                       ; preserve
       mov         edi, dword [esp+8]                        ; RA in code cache
@@ -298,7 +298,7 @@ mergePopulateIPicClass:
       push        edx                                       ; p) EA of resolved interface class
       LoadClassPointerFromObjectHeader eax, eax, eax
       push        eax                                       ; p) receiver class
-      CallHelperUseReg _jitLookupInterfaceMethod,eax        ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,eax        ; returns interpreter vtable offset
 
       ; Lookup succeeded--attempt to grab the PIC slot for this receivers class.
       ;
@@ -323,7 +323,7 @@ mergePopulateIPicClass:
       ;
       lea         esi, [edx-eq_IPicData_interfaceClass]     ; esi = EA of IClass in data block
 
-      MoveHelper  eax, _populateIPicSlotClass
+      MoveHelper  eax, populateIPicSlotClass
       mov         edi, dword  [esp+24]                      ; edi = RA in mainline (call to helper)
       mov         edx, dword  [edi-1]                       ; edx = 3 bytes after the call to helper + high byte of disp32
       sub         eax, edi                                  ; Expected disp32 for call to snippet
@@ -370,7 +370,7 @@ mergePopulateIPicClass:
       lea         edi, [edi-3]                                    ; EA of immediate
       push        edi                                             ; p) address to patch
       push        edx                                             ; p) receivers class
-      CallHelper _jitCallJitAddPicToPatchOnClassUnload
+      CallHelper jitCallJitAddPicToPatchOnClassUnload
 IPicClassSlotUpdateFailed:
 %endif
 
@@ -400,7 +400,7 @@ ret
 ; getJitVirtualMethodResolvePushes() across the call to the lookup helper.
 ;
       align 16
-_populateIPicSlotCall:
+populateIPicSlotCall:
       push        edx                                       ; preserve
       push        edi                                       ; preserve
       mov         edi, dword  [esp+8]                       ; RA in code cache
@@ -439,7 +439,7 @@ mergeIPicSlotCall:
       push        edi                                             ; p) jit EIP
       push        edx                                             ; p) EA of resolved interface class
       push        eax                                             ; p) receiver class
-      CallHelperUseReg _jitLookupInterfaceMethod,eax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,eax              ; returns interpreter vtable offset
       mov         edx, eax
       pop         eax                                             ; restore receiver
       push        ecx                                             ; preserve
@@ -469,7 +469,7 @@ populateLastIPicSlot:
       jmp         mergeIPicSlotCall
 
 IPicSlotMethodInterpreted:
-      MoveHelper  ecx, _dispatchInterpretedFromIPicSlot
+      MoveHelper  ecx, dispatchInterpretedFromIPicSlot
       jmp         short mergeUpdateIPicSlotCall
 
 ret
@@ -481,7 +481,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_dispatchInterpretedFromIPicSlot:
+dispatchInterpretedFromIPicSlot:
       push        edx                                             ; preserve
       push        edi                                             ; preserve
       mov         edi, dword  [esp+8]                             ; RA in code cache
@@ -518,7 +518,7 @@ mergeIPicInterpretedDispatch:
       push        edi                                             ; p) jit EIP
       push        edx                                             ; p) EA of resolved interface class
       push        eax                                             ; p) receiver class
-      CallHelperUseReg _jitLookupInterfaceMethod,eax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,eax              ; returns interpreter vtable offset
       mov         edx, eax
       pop         eax                                             ; restore receiver
       push        ecx                                             ; preserve
@@ -561,7 +561,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_IPicLookupDispatch:
+IPicLookupDispatch:
       push        edx                                             ; preserve
       push        edi                                             ; preserve
       mov         edi, dword  [esp+8]                             ; RA in code cache
@@ -587,7 +587,7 @@ _IPicLookupDispatch:
       push        edi                                             ; p) jit EIP
       push        edi                                             ; p) EA of resolved interface class in IPic
       push        edx                                             ; p) receiver class
-      CallHelperUseReg _jitLookupInterfaceMethod,eax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,eax              ; returns interpreter vtable offset
       sub         eax, J9TR_InterpVTableOffset
       neg         eax                                             ; JIT vtable offset
       mov         edi, [edx+eax]                                  ; target in JIT side vtable
@@ -608,14 +608,14 @@ ret
 ; across the call to the resolution helper.
 ;
       align 16
-_resolveVPicClass: 
+resolveVPicClass: 
 
       push        edx                                             ; preserve
       push        edi                                             ; preserve
       mov         edi, dword  [esp+8]                             ; RA in code cache
 
       cmp         byte  [edi+1], 075h                             ; is it a short branch?
-      jnz         _resolveVPicClassLongBranch                     ; no
+      jnz         resolveVPicClassLongBranch                     ; no
 
       lea         edi, [edi+9]                                    ; EA of disp8 in JMP
                                                                   ; 9 = 1 + 2 (JNE) + 5 (CALL) + 1 (JMP)
@@ -643,7 +643,7 @@ mergeFindDataBlockForResolveVPicClass:
 
       push        edi                                             ; p) jit valid EIP
       push        edx                                             ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg _jitResolveVirtualMethod,eax               ; returns compiler vtable index
+      CallHelperUseReg jitResolveVirtualMethod,eax               ; returns compiler vtable index
 
       test        eax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
       jnz         resolvedToDirectMethodVPic
@@ -665,8 +665,8 @@ mergeFindDataBlockForResolveVPicClass:
       ; Construct the call instruction in edx:eax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  eax, _resolveVPicClass
-      MoveHelper  ebx, _populateVPicSlotClass
+      MoveHelper  eax, resolveVPicClass
+      MoveHelper  ebx, populateVPicSlotClass
       mov         edi, dword  [esp+20]                            ; edi = RA in mainline (call to helper)
       mov         edx, dword  [edi-1]                             ; edx = 3 bytes after the call to helper + high byte of disp32
       sub         eax, edi                                        ; Expected disp32 for call to helper
@@ -675,7 +675,7 @@ mergeFindDataBlockForResolveVPicClass:
       mov         al, 0e8h                                        ; add CALL opcode
 
       ; Construct the byte sequence in ecx:ebx to re-route the call
-      ; to _populateVPicSlotClass.
+      ; to populateVPicSlotClass.
       ;
       sub         ebx, edi                                        ; disp32 to populate snippet
       mov         ecx, edx
@@ -731,7 +731,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateVPicSlotClass:
+populateVPicSlotClass:
 
       push        edx                                             ; preserve
       push        edi                                             ; preserve
@@ -771,7 +771,7 @@ mergePopulateVPicClass:
       ;
       mov         esi, edx                                        ; esi = EA of VPic data block
 
-      MoveHelper eax, _populateVPicSlotClass
+      MoveHelper eax, populateVPicSlotClass
       mov         edi, dword [esp+24]                             ; edi = RA in mainline (call to helper)
       mov         edx, dword [edi-1]                              ; edx = 3 bytes after the call to helper + high byte of disp32
       sub         eax, edi                                        ; Expected disp32 for call to snippet
@@ -811,7 +811,7 @@ mergePopulateVPicClass:
       lea         edi, [edi-3]                                    ; EA of immediate
       push        edi                                             ; p) address to patch
       push        edx                                             ; p) receivers class
-      CallHelper  _jitCallJitAddPicToPatchOnClassUnload
+      CallHelper  jitCallJitAddPicToPatchOnClassUnload
 VPicClassSlotUpdateFailed:
 %endif
 
@@ -838,7 +838,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateVPicSlotCall:
+populateVPicSlotCall:
 
       push        edx                                             ; preserve
       push        edi                                             ; preserve
@@ -869,7 +869,7 @@ mergeVPicSlotCall:
       ;
       push        edi                                             ; p) jit valid EIP
       push        edx                                             ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg _jitResolveVirtualMethod,eax               ; returns compiler vtable index
+      CallHelperUseReg jitResolveVirtualMethod,eax               ; returns compiler vtable index
 
       mov         edx, dword [esp]                                ; edx = receiver
 
@@ -907,7 +907,7 @@ populateLastVPicSlot:
       jmp         mergeVPicSlotCall
 
 VPicSlotMethodInterpreted:
-      MoveHelper  edx, _dispatchInterpretedFromVPicSlot
+      MoveHelper  edx, dispatchInterpretedFromVPicSlot
       jmp         short mergeUpdateVPicSlotCall
 
 ret
@@ -921,7 +921,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_dispatchInterpretedFromVPicSlot:
+dispatchInterpretedFromVPicSlot:
 
       push        edx                                             ; preserve
       push        edi                                             ; preserve
@@ -984,7 +984,7 @@ vtableCallNotPatched:
       lea         edx, [edx-eq_VPicData_size]                     ; edx = EA of VPic data
       push        dword  [esp+12]                                 ; p) jit valid EIP
       push        edx                                             ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg _jitResolveVirtualMethod,eax               ; eax = compiler vtable index
+      CallHelperUseReg jitResolveVirtualMethod,eax               ; eax = compiler vtable index
       lea         edx, [edx+eq_VPicData_size]                     ; restore edx = EA of vtable dispatch
       jmp         short mergeCheckIfMethodCompiled
 
@@ -998,7 +998,7 @@ ret
 ; across the call to the resolution helper.
 ;
       align 16
-_populateVPicVTableDispatch:
+populateVPicVTableDispatch:
 
       push        edx                                             ; preserve
       push        edi                                             ; preserve
@@ -1017,7 +1017,7 @@ _populateVPicVTableDispatch:
       ;
       push        edi                                             ; p) jit valid EIP
       push        edx                                             ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg  _jitResolveVirtualMethod,eax              ; returns compiler vtable index
+      CallHelperUseReg  jitResolveVirtualMethod,eax              ; returns compiler vtable index
 
       push        ebx                                             ; preserve
       push        ecx                                             ; preserve
@@ -1046,7 +1046,7 @@ _populateVPicVTableDispatch:
       ; Construct the call instruction in edx:eax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  eax, _populateVPicVTableDispatch
+      MoveHelper  eax, populateVPicVTableDispatch
       mov         edx, dword  [edi-1]                             ; edx = 3 bytes after the call to helper + high byte of disp32
       mov         esi, edx                                        ; copy to preserve 3 bytes
       sub         eax, edi                                        ; Expected disp32 for call to helper
@@ -1097,7 +1097,7 @@ ret                                                               ; branch will 
 ;
 ; vtableDispatchSnippet:
 ;     push edx
-;     call _resolveAndPopulateVTableDispatch
+;     call resolveAndPopulateVTableDispatch
 ;     dd cpAddr
 ;     dd cpIndex
 ;     dw CALL opcode + modRM
@@ -1107,7 +1107,7 @@ ret                                                               ; branch will 
 ;
 
       align 16
-_resolveAndPopulateVTableDispatch:
+resolveAndPopulateVTableDispatch:
 
       ; edx was preserved prior to the call and is available as a scratch register
       ;
@@ -1125,7 +1125,7 @@ _resolveAndPopulateVTableDispatch:
       ;
       push        edx                                 ; p) jit valid EIP
       push        edx                                 ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg _jitResolveVirtualMethod,eax   ; returns compiler vtable index
+      CallHelperUseReg jitResolveVirtualMethod,eax   ; returns compiler vtable index
 
       push        ebx                                 ; preserve
       push        ecx                                 ; preserve
@@ -1210,37 +1210,37 @@ ret                                                   ; branch will mispredict s
 
 segment .text
 
-      global _resolveIPicClass
-      global _populateIPicSlotClass
-      global _populateIPicSlotCall
-      global _dispatchInterpretedFromIPicSlot
-      global _IPicLookupDispatch
+      DECLARE_GLOBAL resolveIPicClass
+      DECLARE_GLOBAL populateIPicSlotClass
+      DECLARE_GLOBAL populateIPicSlotCall
+      DECLARE_GLOBAL dispatchInterpretedFromIPicSlot
+      DECLARE_GLOBAL IPicLookupDispatch
 
-      global _resolveVPicClass
-      global _populateVPicSlotClass
-      global _populateVPicSlotCall
-      global _dispatchInterpretedFromVPicSlot
-      global _populateVPicVTableDispatch
+      DECLARE_GLOBAL resolveVPicClass
+      DECLARE_GLOBAL populateVPicSlotClass
+      DECLARE_GLOBAL populateVPicSlotCall
+      DECLARE_GLOBAL dispatchInterpretedFromVPicSlot
+      DECLARE_GLOBAL populateVPicVTableDispatch
 
-      extern _jitResolveInterfaceMethod
-      extern _jitLookupInterfaceMethod
-      extern _jitResolveVirtualMethod
-      extern _jitCallCFunction
-      extern _jitCallJitAddPicToPatchOnClassUnload
-      extern _jitMethodIsNative
-      extern _jitInstanceOf
+      DECLARE_EXTERN jitResolveInterfaceMethod
+      DECLARE_EXTERN jitLookupInterfaceMethod
+      DECLARE_EXTERN jitResolveVirtualMethod
+      DECLARE_EXTERN jitCallCFunction
+      DECLARE_EXTERN jitCallJitAddPicToPatchOnClassUnload
+      DECLARE_EXTERN jitMethodIsNative
+      DECLARE_EXTERN jitInstanceOf
 
-      extern _resolveIPicClassHelperIndex
-      extern _populateIPicSlotClassHelperIndex
-      extern _dispatchInterpretedFromIPicSlotHelperIndex
-      extern _resolveVPicClassHelperIndex
-      extern _populateVPicSlotClassHelperIndex
-      extern _dispatchInterpretedFromVPicSlotHelperIndex
-      extern _populateVPicVTableDispatchHelperIndex
+      DECLARE_EXTERN resolveIPicClassHelperIndex
+      DECLARE_EXTERN populateIPicSlotClassHelperIndex
+      DECLARE_EXTERN dispatchInterpretedFromIPicSlotHelperIndex
+      DECLARE_EXTERN resolveVPicClassHelperIndex
+      DECLARE_EXTERN populateVPicSlotClassHelperIndex
+      DECLARE_EXTERN dispatchInterpretedFromVPicSlotHelperIndex
+      DECLARE_EXTERN populateVPicVTableDispatchHelperIndex
 
-      extern _mcc_lookupHelperTrampoline_unwrapper
-      extern _mcc_reservationInterfaceCache_unwrapper
-      extern _mcc_callPointPatching_unwrapper
+      DECLARE_EXTERN mcc_lookupHelperTrampoline_unwrapper
+      DECLARE_EXTERN mcc_reservationInterfaceCache_unwrapper
+      DECLARE_EXTERN mcc_callPointPatching_unwrapper
 
 
 
@@ -1286,10 +1286,10 @@ selectHelperOrTrampolineDisp32:
       ; Call MCC service
       ;
 
-      MoveHelper  rax, _mcc_lookupHelperTrampoline_unwrapper      ; p1) helper address
+      MoveHelper  rax, mcc_lookupHelperTrampoline_unwrapper      ; p1) helper address
       lea         rsi, [rsp]                                      ; p2) EA parms in TLS area
       lea         rdx, [rsp+32]                                   ; p3) EA of return value in TLS area
-      call        _jitCallCFunction
+      call        jitCallCFunction
       add         rsp, 32
       pop         rax                                             ; trampoline address from return area
       mov         rdx, rcx                                        ; restore RA in code cache
@@ -1303,20 +1303,20 @@ helperIsReachable:
 ret
 
 %if 0
-(10) mov rdi, 0x0000ffffffffffff call _resolveIPicClass -> _populateIPicSlotClass
+(10) mov rdi, 0x0000ffffffffffff call resolveIPicClass -> populateIPicSlotClass
 (3) cmp rdx, rdi
 (2) jne checkNextSlot
-(5) call devirtualizedTarget call _populateIPicSlotCall
+(5) call devirtualizedTarget call populateIPicSlotCall
 (2) jmp done
 
 (2) .align 8
 
          .align 8
 checkLastSlot:
-(10) mov rdi, 0x0000ffffffffffff call _populateIPicSlotClass
+(10) mov rdi, 0x0000ffffffffffff call populateIPicSlotClass
 (3) cmp rdx, rdi
 (6) jne lookupDispatchSnippet
-(5) call devirtualizedTarget call _populateIPicSlotCall
+(5) call devirtualizedTarget call populateIPicSlotCall
 
       0: ret addr to picbuilder
       1: arg3
@@ -1379,7 +1379,7 @@ ret
 ; across the call to the resolution helper.
 ;
          align 16
-_resolveIPicClass:
+resolveIPicClass:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -1420,7 +1420,7 @@ mergeResolveIPicClass:
 callResolveInterfaceMethod:
       mov         rsi, rdi                                        ; p2) jit valid EIP
       mov         rax, rdx                                        ; p1) address of the constant pool and cpIndex
-      CallHelperUseReg  _jitResolveInterfaceMethod,rax            ; returns interpreter vtable index
+      CallHelperUseReg  jitResolveInterfaceMethod,rax            ; returns interpreter vtable index
 
       mfence                                                      ; Ensure IPIC data area drains to memory before proceeding.
 
@@ -1431,16 +1431,16 @@ callResolveInterfaceMethod:
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  rax, _populateIPicSlotClass                     ; p1) rax = helper address
-      LoadHelperIndex   esi, _populateIPicSlotClassHelperIndex    ; p2) rsi = helper index
+      MoveHelper  rax, populateIPicSlotClass                     ; p1) rax = helper address
+      LoadHelperIndex   esi, populateIPicSlotClassHelperIndex    ; p2) rsi = helper index
       mov         rdx, rdi                                        ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       mov         rcx, rax
       shl         rcx, 8
       mov         cl, 0e8h
 
-      MoveHelper  rax, _resolveIPicClass                          ; p1) rax = helper address
-      LoadHelperIndex   esi, _resolveIPicClassHelperIndex         ; p2) rsi = helper index
+      MoveHelper  rax, resolveIPicClass                          ; p1) rax = helper address
+      LoadHelperIndex   esi, resolveIPicClassHelperIndex         ; p2) rsi = helper index
                                                                   ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       shl         rax, 8
@@ -1467,7 +1467,7 @@ resolveIPicClassLongBranch:
 typeCheckAndDirectDispatchIPic:
       mov         rax, qword [rdx+eq_IPicData_interfaceClass]     ; p1) interface class
       mov         rsi, qword [rsp+24]                             ; p2) receiver (saved rax)
-      CallHelperUseReg _jitInstanceOf, rax
+      CallHelperUseReg jitInstanceOf, rax
       test        rax, rax
       jz          throwOnFailedTypeCheckIPic
 
@@ -1485,7 +1485,7 @@ throwOnFailedTypeCheckIPic:
       lea         rsi, [rdx+eq_IPicData_interfaceClass]           ; p2) rsi = resolved interface class EA
       mov         rcx, rdx                                        ; p4) rcx = address of constant pool and cpIndex
       mov         rdx, qword [rsp+40]                             ; p3) rdx = jit RIP (saved RA in code cache)
-      CallHelperUseReg _jitLookupInterfaceMethod, rax             ; guaranteed to throw
+      CallHelperUseReg jitLookupInterfaceMethod, rax             ; guaranteed to throw
       int         3
 
 ret
@@ -1497,7 +1497,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateIPicSlotClass:
+populateIPicSlotClass:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -1536,7 +1536,7 @@ mergePopulateIPicClass:
                                                                   ; p2) rsi = resolved interface class EA
                                                                   ; p3) rdx = jit RIP
                                                                   ; p4) rcx = address of constant pool and cpIndex
-      CallHelperUseReg _jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
 
       mov         rdi, rcx                                        ; start of IPIC data
 
@@ -1545,8 +1545,8 @@ mergePopulateIPicClass:
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper rax, _populateIPicSlotClass                      ; p1) rax = helper address
-      LoadHelperIndex esi, _populateIPicSlotClassHelperIndex      ; p2) rsi = helper index
+      MoveHelper rax, populateIPicSlotClass                      ; p1) rax = helper address
+      LoadHelperIndex esi, populateIPicSlotClassHelperIndex      ; p2) rsi = helper index
                                                                   ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       shl         rax, 8
@@ -1578,7 +1578,7 @@ mergePopulateIPicClass:
 
                                                                   ; p1) rax = receivers class
       lea         rsi, [rdx-3]                                    ; p2) rsi = EA of Imm64 to patch
-      CallHelper  _jitCallJitAddPicToPatchOnClassUnload
+      CallHelper  jitCallJitAddPicToPatchOnClassUnload
 IPicClassSlotUpdateFailed:
 %endif
 
@@ -1609,7 +1609,7 @@ ret
 ; getJitVirtualMethodResolvePushes() across the call to the lookup helper.
 ;
          align 16
-_populateIPicSlotCall:
+populateIPicSlotCall:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -1653,7 +1653,7 @@ mergeIPicSlotCall:
                                                                   ; p2) rsi = resolved interface class EA
                                                                   ; p3) rdx = jit RIP
                                                                   ; p4) rcx = address of constant pool and cpIndex
-      CallHelperUseReg _jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
 
       mov         rax, qword  [rdi+rax]                           ; rax = J9Method from interpreter vtable
       test        byte  [rax + J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit ; method compiled?
@@ -1666,10 +1666,10 @@ mergeIPicSlotCall:
 mergeUpdateIPicSlotCallWithCompiledMethod:
       push        rax                                             ; build descriptor : J9Method
       push        rdx                                             ; build descriptor : call site
-      MoveHelper  rax, _mcc_reservationInterfaceCache_unwrapper   ; p1) helper
+      MoveHelper  rax, mcc_reservationInterfaceCache_unwrapper   ; p1) helper
       lea         rsi, [rsp]                                      ; p2) pointer to args
       lea         rdx, [rsp]                                      ; p3) pointer to return
-      call        _jitCallCFunction
+      call        jitCallCFunction
       pop         rdx                                             ; tear down descriptor
       pop         rax                                             ; tear down descriptor
 
@@ -1702,8 +1702,8 @@ populateIPicSlotCallExit:
       ret                                                         ; branch will mispredict so single-byte RET is ok
 
 IPicSlotMethodInterpreted:
-      MoveHelper rax, _dispatchInterpretedFromIPicSlot            ; p1) rax = helper address
-      LoadHelperIndex esi, _dispatchInterpretedFromIPicSlotHelperIndex  ; p2) rsi = helper index
+      MoveHelper rax, dispatchInterpretedFromIPicSlot            ; p1) rax = helper address
+      LoadHelperIndex esi, dispatchInterpretedFromIPicSlotHelperIndex  ; p2) rsi = helper index
                                                                   ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       mov         ecx, eax                                        ; 32-bit copy because disp32
@@ -1721,10 +1721,10 @@ populateIPicSlotCallWithTrampoline:
       push        rsi                                             ; argsPtr[1] : call site (EA of CALL instruction)
       push        rax                                             ; argsPtr[0] : J9Method
 
-      MoveHelper  rax, _mcc_callPointPatching_unwrapper           ; p1) rax = helper address
+      MoveHelper  rax, mcc_callPointPatching_unwrapper           ; p1) rax = helper address
       lea         rsi, [rsp]                                      ; p2) rsi = descriptor EA (args)
       lea         rdx, [rsp]                                      ; p3) rdx = return value (meaningless because call is void)
-      call        _jitCallCFunction
+      call        jitCallCFunction
       add         rsp, 32
       jmp         populateIPicSlotCallExit
 
@@ -1737,7 +1737,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_dispatchInterpretedFromIPicSlot:
+dispatchInterpretedFromIPicSlot:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -1783,7 +1783,7 @@ mergeIPicInterpretedDispatch:
                                                                   ; p2) rsi = resolved interface class EA
                                                                   ; p3) rdx = jit RIP
                                                                   ; p4) rcx = address of constant pool and cpIndex
-      CallHelperUseReg _jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
 
       mov         r8, rax
       mov         rax, qword  [rdi+rax]                           ; rax = J9Method from interpreter vtable
@@ -1808,7 +1808,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_IPicLookupDispatch:
+IPicLookupDispatch:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -1840,7 +1840,7 @@ _IPicLookupDispatch:
                                                                   ; p2) rsi = resolved interface class EA
                                                                   ; p3) rdx = jit RIP
                                                                   ; p4) rcx = address of constant pool and cpIndex
-      CallHelperUseReg _jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
+      CallHelperUseReg jitLookupInterfaceMethod,rax              ; returns interpreter vtable offset
       mov         r8, rax
 
 mergeIPicLookupDispatch:
@@ -1866,7 +1866,7 @@ ret
 ; across the call to the resolution helper.
 ;
       align 16
-_resolveVPicClass:
+resolveVPicClass:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -1905,7 +1905,7 @@ mergeResolveVPicClass:
 
       mov         rax, rdx                                        ; p1) address of the constant pool and cpIndex
       mov         rsi, rdi                                        ; p2) jit valid EIP
-      CallHelperUseReg _jitResolveVirtualMethod,rax               ; returns compiler vtable index, , or (low-tagged) direct J9Method pointer
+      CallHelperUseReg jitResolveVirtualMethod,rax               ; returns compiler vtable index, , or (low-tagged) direct J9Method pointer
 
       test        rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
       jnz         resolvedToDirectMethodVPic
@@ -1913,16 +1913,16 @@ mergeResolveVPicClass:
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  rax, _populateVPicSlotClass                     ; p1) rax = helper address
-      LoadHelperIndex esi, _populateVPicSlotClassHelperIndex      ; p2) rsi = helper index
+      MoveHelper  rax, populateVPicSlotClass                     ; p1) rax = helper address
+      LoadHelperIndex esi, populateVPicSlotClassHelperIndex      ; p2) rsi = helper index
       mov         rdx, rdi                                        ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       mov         rcx, rax
       shl         rcx, 8
       mov         cl, 0e8h
 
-      MoveHelper rax, _resolveVPicClass                           ; p1) rax = helper address
-      LoadHelperIndex esi, _resolveVPicClassHelperIndex           ; p2) rsi = helper index
+      MoveHelper rax, resolveVPicClass                           ; p1) rax = helper address
+      LoadHelperIndex esi, resolveVPicClassHelperIndex           ; p2) rsi = helper index
                                                                   ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       shl         rax, 8
@@ -1980,7 +1980,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateVPicSlotClass:  ;proc
+populateVPicSlotClass:  ;proc
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -2017,8 +2017,8 @@ mergePopulateVPicClass:
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  rax, _populateVPicSlotClass                     ; p1) rax = helper address
-      LoadHelperIndex esi, _populateVPicSlotClassHelperIndex      ; p2) rsi = helper index
+      MoveHelper  rax, populateVPicSlotClass                     ; p1) rax = helper address
+      LoadHelperIndex esi, populateVPicSlotClassHelperIndex      ; p2) rsi = helper index
                                                                   ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       shl         rax, 8
@@ -2042,7 +2042,7 @@ mergePopulateVPicClass:
       ;
       mov         rax, rsi                                        ; p1) rax = receivers class
       lea         rsi, [rdx-3]                                    ; p2) rsi = EA of Imm64 to patch
-      CallHelper  _jitCallJitAddPicToPatchOnClassUnload
+      CallHelper  jitCallJitAddPicToPatchOnClassUnload
 VPicClassSlotUpdateFailed:
 %endif
 
@@ -2071,7 +2071,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateVPicSlotCall:
+populateVPicSlotCall:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -2112,7 +2112,7 @@ mergeVPicSlotCall:
       ;
                                                                   ; p1) rax = address of constant pool and cpIndex
       mov         rsi, rdx                                        ; p2) rsi = jit valid EIP
-      CallHelperUseReg _jitResolveVirtualMethod,rax               ; returns compiler vtable index
+      CallHelperUseReg jitResolveVirtualMethod,rax               ; returns compiler vtable index
 
       ; Check the RAM method to see if the target is compiled.
       ;
@@ -2124,7 +2124,7 @@ mergeVPicSlotCall:
       ; Now check if the target is a native because they need special handling.
       ;
       mov         rcx, rax                                        ; rcx = RAM method
-      CallHelperUseReg _jitMethodIsNative,rax
+      CallHelperUseReg jitMethodIsNative,rax
       test        rax, rax
       mov         rax, rcx                                        ; restore rax
       jnz         short VPicSlotMethodIsNative
@@ -2136,10 +2136,10 @@ mergeVPicSlotCall:
 mergeUpdateVPicSlotCallWithCompiledMethod:
       push        rax                                             ; build descriptor : J9Method
       push        rdx                                             ; build descriptor : call site
-      MoveHelper rax, _mcc_reservationInterfaceCache_unwrapper    ; p1) helper
+      MoveHelper rax, mcc_reservationInterfaceCache_unwrapper    ; p1) helper
       lea         rsi, [rsp]                                      ; p2) pointer to args
       lea         rdx, [rsp]                                      ; p3) pointer to return
-      call        _jitCallCFunction
+      call        jitCallCFunction
       pop         rdx                                             ; tear down descriptor
       pop         rax                                             ; tear down descriptor
 
@@ -2172,8 +2172,8 @@ populateVPicSlotCallExit:
       ret                                                         ; branch will mispredict so single-byte RET is ok
 
 VPicSlotMethodInterpreted:
-      MoveHelper        rax, _dispatchInterpretedFromVPicSlot                 ; p1) rax = helper address
-      LoadHelperIndex   esi, _dispatchInterpretedFromVPicSlotHelperIndex      ; p2) rsi = helper index
+      MoveHelper        rax, dispatchInterpretedFromVPicSlot                 ; p1) rax = helper address
+      LoadHelperIndex   esi, dispatchInterpretedFromVPicSlotHelperIndex      ; p2) rsi = helper index
                                                                               ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       mov         ecx, eax                                                    ; 32-bit copy because disp32
@@ -2221,10 +2221,10 @@ populateVPicSlotCallWithTrampoline:
       push        rsi                                                         ; argsPtr[1] : call site (EA of CALL instruction)
       push        rax                                                         ; argsPtr[0] : J9Method
 
-      MoveHelper rax, _mcc_callPointPatching_unwrapper                        ; p1) rax = helper address
+      MoveHelper rax, mcc_callPointPatching_unwrapper                        ; p1) rax = helper address
       lea         rsi, [rsp]                                                  ; p2) rsi = descriptor EA (args)
       lea         rdx, [rsp]                                                  ; p3) rdx = return value (meaningless because call is void)
-      call        _jitCallCFunction
+      call        jitCallCFunction
       add         rsp, 32
       jmp         populateVPicSlotCallExit
 
@@ -2239,7 +2239,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_dispatchInterpretedFromVPicSlot:  ;proc
+dispatchInterpretedFromVPicSlot:  ;proc
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -2303,7 +2303,7 @@ mergeCheckIfMethodCompiled:
       ; they may need special handling.
       ;
       mov         rcx, rax                                                          ; rcx = RAM method
-      CallHelperUseReg _jitMethodIsNative,rax
+      CallHelperUseReg jitMethodIsNative,rax
       test        rax, rax
       mov         rax, rcx                                                          ; restore rax
       jz          mergeUpdateVPicSlotCallWithCompiledMethod                         ; branch if not native
@@ -2360,7 +2360,7 @@ vtableCallNotPatched:
       lea         rax, [rax-eq_VPicData_size]                                       ; p1) rax = address of constant pool and cpIndex
                                                                                     ; -20 = -4 (instr data) - 16 (cpAddr,cpIndex)
       mov         rsi, rdx                                                          ; p2) rsi = jit valid EIP
-      CallHelperUseReg  _jitResolveVirtualMethod,rax                                ; returns compiler vtable index
+      CallHelperUseReg  jitResolveVirtualMethod,rax                                ; returns compiler vtable index
       jmp         mergeCheckIfMethodCompiled
 
 ret
@@ -2373,7 +2373,7 @@ ret
 ; across the call to the lookup helper.
 ;
       align 16
-_populateVPicVTableDispatch:
+populateVPicVTableDispatch:
 
 %ifdef ENABLE_PIC_INT3
       int 3
@@ -2404,7 +2404,7 @@ _populateVPicVTableDispatch:
       mov         rdi, rax
                                                                                     ; p1) rax = address of constant pool and cpIndex
       mov         rsi, rdx                                                          ; p2) rsi = jit valid EIP
-      CallHelperUseReg  _jitResolveVirtualMethod,rax                                ; returns compiler vtable index
+      CallHelperUseReg  jitResolveVirtualMethod,rax                                ; returns compiler vtable index
 
       ; Construct the indirect call instruction in rcx plus the first
       ; byte of the direct long jump.
@@ -2427,8 +2427,8 @@ mergePopulateVPicVTableDispatch:
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      MoveHelper  rax, _populateVPicVTableDispatch                                  ; p1) rax = helper address
-      LoadHelperIndex esi, _populateVPicVTableDispatchHelperIndex                   ; p2) rsi = helper index
+      MoveHelper  rax, populateVPicVTableDispatch                                  ; p1) rax = helper address
+      LoadHelperIndex esi, populateVPicVTableDispatchHelperIndex                   ; p2) rsi = helper index
                                                                                     ; p3) rdx = JIT RA
       call        selectHelperOrTrampolineDisp32
       shl         rax, 8
