@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4255,6 +4255,7 @@ typedef struct J9MemoryManagerFunctions {
 
 	int  ( *gcStartupHeapManagement)(struct J9JavaVM * vm) ;
 	void  ( *gcShutdownHeapManagement)(struct J9JavaVM * vm) ;
+	void ( *jvmPhaseChange)(struct J9VMThread *currentThread, UDATA phase);
 	IDATA  ( *initializeMutatorModelJava)(struct J9VMThread* vmThread) ;
 	void  ( *cleanupMutatorModelJava)(struct J9VMThread* vmThread) ;
 #if defined(J9VM_GC_FINALIZATION)
