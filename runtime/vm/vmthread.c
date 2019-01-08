@@ -48,7 +48,7 @@
 
 #include "HeapIteratorAPI.h"
 #include "j2sever.h"
-
+#include <stdio.h>
 
 #define SIGQUIT_FILE_NAME "sigquit"
 #define SIGQUIT_FILE_EXT ".trc"
@@ -1130,6 +1130,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			**(UDATA**)omrthread_global("yieldUsleepMultiplier") = yieldUsleepMultiplier;
 			continue;
 		}
+
+		printf("hello world\n");
 
 		/* scan for -Xthr:cfsYield again so the argument is consumed */
 		if (try_scan(&scan_start, "cfsYield")) {
