@@ -171,7 +171,6 @@ set(J9_SHAREDFLAGS
 	-Wno-write-strings
 	-fomit-frame-pointer
 	-fasynchronous-unwind-tables
-	-fno-dollars-in-identifiers
 	-Wreturn-type
 	-pthread
 )
