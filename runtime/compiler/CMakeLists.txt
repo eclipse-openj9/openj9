@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,6 +163,8 @@ set(J9_INCLUDES
 # Platform specific list of flags, derived directly from the
 # Makefiles
 set(J9_SHAREDFLAGS
+	${OMR_PLATFORM_COMPILE_OPTIONS}
+	${OMR_PLATFORM_C_COMPILE_OPTIONS}
 	-fno-strict-aliasing
 	-Wno-deprecated
 	-Wno-enum-compare
@@ -177,6 +179,8 @@ set(J9_SHAREDFLAGS
 # Platform specific CXX flags, also derived from the
 # Makefiles
 set(J9_CXXFLAGS
+	${OMR_PLATFORM_COMPILE_OPTIONS}
+	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 	${J9_SHAREDFLAGS}
 	-fno-rtti
 	-fno-threadsafe-statics
