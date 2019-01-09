@@ -1304,12 +1304,6 @@ J9NLS_VM_DEFAULT_METHOD_CONFLICT.system_action=
 J9NLS_VM_DEFAULT_METHOD_CONFLICT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED=-Xdiagnosticscollector \u30aa\u30d7\u30b7\u30e7\u30f3\u306f\u3001\u3053\u306e JVM \u3067\u306f\u30b5\u30dd\u30fc\u30c8\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002
-# START NON-TRANSLATABLE
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.explanation=The JVM has been started with the -Xdiagnosticscollector option, which is no longer supported
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.system_action=The JVM continues to run
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.user_response=Refer to the IBM SDK documentation
-# END NON-TRANSLATABLE
 
 # retVal, errno and errno2 should not be translated. They refer to internal variables.
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2=\u30b9\u30ec\u30c3\u30c9\u306e\u4f5c\u6210\u306b\u5931\u6557\u3057\u307e\u3057\u305f: retVal %1$zd\u3001errno %2$zd (0x%3$zx)\u3001errno2 %4$zd (0x%5$zx)

@@ -412,8 +412,6 @@ enum INIT_STAGE {
 #define VMOPT_XLP_CODECACHE "-Xlp:codecache:"
 #define VMOPT_XTLHPREFETCH "-XtlhPrefetch"
 
-#define VMOPT_XDIAGNOSTICSCOLLECTOR "-Xdiagnosticscollector"
-
 #define VMOPT_XXALLOWNONVIRTUALCALLS "-XX:+AllowNonVirtualCalls"
 #define VMOPT_XXDONTALLOWNONVIRTUALCALLS "-XX:-AllowNonVirtualCalls"
 
@@ -460,8 +458,6 @@ enum INIT_STAGE {
 #define MAPOPT_XP "-Xp"
 #define MAPOPT_XHEALTHCENTER "-Xhealthcenter"
 #define MAPOPT_XHEALTHCENTER_COLON "-Xhealthcenter:"
-#define MAPOPT_XDIAGNOSTICSCOLLECTOR "-Xdiagnosticscollector"
-#define MAPOPT_XDIAGNOSTICSCOLLECTOR_COLON "-Xdiagnosticscollector:"
 #define MAPOPT_XSOFTREFTHRESHOLD "-Xsoftrefthreshold"
 #define MAPOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
 #define MAPOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"

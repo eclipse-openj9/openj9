@@ -819,15 +819,6 @@ J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.user_response=
 # END NON-TRANSLATABLE
 
-# diagnostic collector help
-
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=\n\
-\  -Xdiagnosticscollector habilita el col\u00b7lector de diagn\u00f2stics
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.explanation=NOTAG
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
-# END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      estableix la mida de l'\u00e0rea d'atributs de depuraci\u00f3 de la mem\u00f2ria cau de classes compartides en <x>
 # START NON-TRANSLATABLE

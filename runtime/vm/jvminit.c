@@ -1811,10 +1811,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 			}
 
-			/* Consume and issue warning for -Xdiagnosticscollector */
-			if (FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XDIAGNOSTICSCOLLECTOR, NULL) >= 0) {
-				j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED);
-			}
 
 			/* Parse options related to idle tuning */
 			{
