@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,7 @@
 #include "bcutil.h"
 #include "ute_module.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "omr.h"
 #include "temp.h"
 #include "j9thread.h"
@@ -120,9 +121,9 @@ typedef struct J9ClassLoaderWalkState {
 
 /* RAM class shape flags - valid to use these when the underlying ROM class has been unloaded */
 
-#define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9_JAVA_CLASS_RAM_SHAPE_SHIFT) & OBJECT_HEADER_SHAPE_MASK)
-#define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9_JAVA_CLASS_RAM_ARRAY) != 0)
-#define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9_JAVA_CLASS_RAM_SHAPE_SHIFT) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
+#define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK)
+#define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9AccClassRAMArray) != 0)
+#define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
 
 #define IS_STRING_COMPRESSION_ENABLED(vmThread) (FALSE != ((vmThread)->javaVM)->strCompEnabled)
 

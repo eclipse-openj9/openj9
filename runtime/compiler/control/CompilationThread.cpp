@@ -41,6 +41,7 @@
 #include <time.h>
 #include "j9.h"
 #include "j9cfg.h"
+#include "j9nonbuilder.h"
 #include "j9protos.h"
 #include "vmaccess.h"
 #include "objhelp.h"
@@ -2561,7 +2562,7 @@ void printAllCounts(J9JavaVM *javaVM)
             {
             J9Method * method = &ramMethods[m];
             J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            if (!(romMethod->modifiers & (J9_JAVA_NATIVE | J9_JAVA_ABSTRACT)) &&
+            if (!(romMethod->modifiers & (J9AccNative | J9AccAbstract)) &&
                 method != newInstanceThunk &&
                 !TR::CompilationInfo::isCompiled(method))
                {

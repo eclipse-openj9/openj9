@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 
 #include "j9.h"
+#include "j9nonbuilder.h"
 #include "j9cfg.h"
 #include "j9port.h"
 #include "modron.h"
@@ -750,7 +751,7 @@ iterateRegionObjects(
 	J9Object* object = NULL;
 	while(NULL != (object = objectHeapIterator.nextObject())) {
 		J9MM_IterateObjectDescriptor objectDescriptor;
-		if ((extensions->objectModel.isDeadObject(object)) || (0 != (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object)) & J9_JAVA_CLASS_DYING))) {
+		if ((extensions->objectModel.isDeadObject(object)) || (0 != (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object)) & J9AccClassDying))) {
 			if (0 != (flags & j9mm_iterator_flag_include_holes)) {
 				if (extensions->objectModel.isDeadObject(object)) {
 					objectDescriptor.id = (UDATA)object;

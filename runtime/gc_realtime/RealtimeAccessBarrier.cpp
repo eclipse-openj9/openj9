@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "RealtimeAccessBarrier.hpp"
 #include "RealtimeGC.hpp"
 #include "RealtimeMarkingScheme.hpp"
+#include "j9nonbuilder.h"
 
 #if defined(J9VM_GC_REALTIME)
 
@@ -285,7 +286,7 @@ MM_RealtimeAccessBarrier::printClass(J9JavaVM *javaVM, J9Class* clazz)
 
 	/* TODO: In Sov, if the class is char[], the string is printed instead of the class name */
 	romClass = clazz->romClass;
-	if(romClass->modifiers & J9_JAVA_CLASS_ARRAY) {
+	if(romClass->modifiers & J9AccClassArray) {
 		J9ArrayClass* arrayClass = (J9ArrayClass*) clazz;
 		UDATA arity = arrayClass->arity;
 		utf = J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass);
@@ -596,7 +597,7 @@ MM_RealtimeAccessBarrier::checkClassLive(J9JavaVM *javaVM, J9Class *classPtr)
 	J9ClassLoader *classLoader = classPtr->classLoader;
 	bool result = false;
 
-	if ((0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) && (0 == (J9CLASS_FLAGS(classPtr) & J9_JAVA_CLASS_DYING))) {
+	if ((0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) && (0 == (J9CLASS_FLAGS(classPtr) & J9AccClassDying))) {
 		/*
 		 *  this class has not been discovered dead yet
 		 *  so mark it if necessary to force it to be alive

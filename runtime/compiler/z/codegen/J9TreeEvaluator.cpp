@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "omrmodroncore.h"
 #include "thrdsup.h"
 #include "thrtypes.h"
@@ -4032,7 +4033,7 @@ VMarrayStoreCHKEvaluator(
       "VMarrayStoreCHKEvaluator::J9Class->classDepthAndFlags is wrong size\n");
 
    // Check super class values
-   static_assert(J9_JAVA_CLASS_DEPTH_MASK == 0xffff, "VMarrayStoreCHKEvaluator::J9_JAVA_CLASS_DEPTH_MASK should have be 16 bit of ones");
+   static_assert(J9AccClassDepthMask == 0xffff, "VMarrayStoreCHKEvaluator::J9AccClassDepthMask should have be 16 bit of ones");
 
    // Compare depths and makes sure depth(src) >= depth(array-type)
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, owningObjectRegVal, t2Reg, TR::InstOpCode::COND_BH, helperCallLabel, false, false);
@@ -9231,13 +9232,13 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
       TR::Register * class1Reg = cg->allocateRegister();
       TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, class1Reg, generateS390MemoryReference(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-      // TODO: Can we check the value of J9_JAVA_CLASS_RAM_ARRAY and use NILF here?
+      // TODO: Can we check the value of J9AccClassRAMArray and use NILF here?
 #ifdef TR_HOST_64BIT
-      genLoadLongConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, NULL, deps, NULL);
+      genLoadLongConstant(cg, node, J9AccClassRAMArray, tempReg, NULL, deps, NULL);
       generateRXInstruction(cg, TR::InstOpCode::NG, node, tempReg,
       new (cg->trHeapMemory()) TR::MemoryReference(class1Reg, offsetof(J9Class, classDepthAndFlags), cg));
 #else
-      generateLoad32BitConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, true, NULL, deps, NULL);
+      generateLoad32BitConstant(cg, node, J9AccClassRAMArray, tempReg, true, NULL, deps, NULL);
       generateRXInstruction(cg, TR::InstOpCode::N, node, tempReg,
       new (cg->trHeapMemory()) TR::MemoryReference(class1Reg, offsetof(J9Class, classDepthAndFlags), cg));
 #endif
@@ -9315,8 +9316,8 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
          generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
 
-         // X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
-         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+         // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
+         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9AccClassRAMShapeShift);
 
          // X & OBJECT_HEADER_SHAPE_MASK
          generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, tempClassReg, tempClassReg);
@@ -9343,16 +9344,16 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
          // Check that object 2 is an array. If not, throw exception.
          TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, tempClassReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-         // TODO: Can we check the value of J9_JAVA_CLASS_RAM_ARRAY and use NILF here?
+         // TODO: Can we check the value of J9AccClassRAMArray and use NILF here?
 #ifdef TR_HOST_64BIT
          {
-         genLoadLongConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, NULL, deps, NULL);
+         genLoadLongConstant(cg, node, J9AccClassRAMArray, tempReg, NULL, deps, NULL);
          generateRXInstruction(cg, TR::InstOpCode::NG, node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
          }
 #else
          {
-         generateLoad32BitConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, true, NULL, deps, NULL);
+         generateLoad32BitConstant(cg, node, J9AccClassRAMArray, tempReg, true, NULL, deps, NULL);
          generateRXInstruction(cg, TR::InstOpCode::N, node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
          }
@@ -9377,8 +9378,8 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
          generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
 
-         // X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
-         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+         // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
+         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9AccClassRAMShapeShift);
 
          // X & OBJECT_HEADER_SHAPE_MASK
          generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, tempClassReg, tempClassReg);

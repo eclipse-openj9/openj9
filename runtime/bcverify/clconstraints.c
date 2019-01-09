@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "j9cfg.h"
 #include "j9protos.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "rommeth.h"
 #include "j9cp.h"
 #include "j9modron.h"
@@ -350,7 +351,7 @@ unlinkClassLoadingConstraints (J9JavaVM* jvm)
 				/* mark the constraint as unsatisfied if it refers to a dying loader */
 				J9Class* clazz = constraint->clazz;
 
-				if ((NULL != clazz) && (J9_JAVA_CLASS_DYING == (J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_DYING))) {
+				if ((NULL != clazz) && (J9AccClassDying == (J9CLASS_FLAGS(clazz) & J9AccClassDying))) {
 					constraint->clazz = NULL;
 				}
 			}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 
 #include "jcl.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "omrgcconsts.h"
 #include "jni.h"
 #include "j9protos.h"
@@ -453,7 +454,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_METRONOME, J9_GC_POLICY_METRONOME },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_NOGC, J9_GC_POLICY_NOGC },
 
-		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT, J9_JAVA_CLASS_RAM_SHAPE_SHIFT },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT, J9AccClassRAMShapeShift },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_SHAPE_MASK, OBJECT_HEADER_SHAPE_MASK },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INSTANCESIZE_OFFSET, offsetof(J9Class, totalInstanceSize) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INSTANCE_DESCRIPTION_OFFSET, offsetof(J9Class, instanceDescription) },
@@ -469,7 +470,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_SUPERCLASSES_OFFSET, offsetof(J9Class, superclasses) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_ROMCLASS_OFFSET, offsetof(J9Class, romClass) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9ROMCLASS_MODIFIERS_OFFSET, offsetof(J9ROMClass, modifiers) },
-		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_DEPTH_MASK, J9_JAVA_CLASS_DEPTH_MASK },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_DEPTH_MASK, J9AccClassDepthMask },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_MASK, ~(J9_REQUIRED_CLASS_ALIGNMENT - 1) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE, J9AccClassInternalPrimitiveType },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_ARRAY, J9AccClassArray },

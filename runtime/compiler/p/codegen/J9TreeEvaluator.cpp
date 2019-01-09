@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "omrmodroncore.h"
 #include "thrdsup.h"
 #include "thrtypes.h"
@@ -2686,7 +2687,7 @@ static TR::Instruction *genTestIsSuper(TR::Node *node, TR::Register *objClassReg
       {
       cursor = loadConstant(cg, node, castClassDepth, scratch2Reg, cursor);
       }
-   cursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, scratch1Reg, scratch1Reg, 0, J9_JAVA_CLASS_DEPTH_MASK, cursor);
+   cursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, scratch1Reg, scratch1Reg, 0, J9AccClassDepthMask, cursor);
 
    if (outOfBound || depthInReg2)
       {
@@ -2801,10 +2802,10 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t4Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(t1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress(), cg));
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, t3Reg, new (cg->trHeapMemory()) TR::MemoryReference(t3Reg, (int32_t) offsetof(J9ROMClass, modifiers), 4, cg));
-   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, t4Reg, t4Reg, 0, J9_JAVA_CLASS_DEPTH_MASK);
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, t4Reg, t4Reg, 0, J9AccClassDepthMask);
    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, t3Reg, t3Reg, 31, 0xFFFFFFFF);
-   TR_ASSERT(J9_JAVA_CLASS_ARRAY == (1 << 16) && J9_JAVA_INTERFACE == (1 << 9), "Verify code sequence is still right ...");
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, t3Reg, t3Reg, cndReg, (J9_JAVA_CLASS_ARRAY | J9_JAVA_INTERFACE) >> 1);
+   TR_ASSERT(J9AccClassArray == (1 << 16) && J9AccInterface == (1 << 9), "Verify code sequence is still right ...");
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, t3Reg, t3Reg, cndReg, (J9AccClassArray | J9AccInterface) >> 1);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, fLabel, cndReg);
    genTestIsSuper(node, t2Reg, t1Reg, cndReg, t3Reg, t4Reg, 0, fLabel, cg->getAppendInstruction(), cg, 1);
 
@@ -3350,8 +3351,8 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *condRe
    TR::Register *castClassDepthReg = NULL;
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, instanceClassDepthReg,
                               new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress(), cg));
-   static_assert(J9_JAVA_CLASS_DEPTH_MASK < UINT_MAX, "Class depth is not containable in 32 bits");
-   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, instanceClassDepthReg, instanceClassDepthReg, 0, J9_JAVA_CLASS_DEPTH_MASK);
+   static_assert(J9AccClassDepthMask < UINT_MAX, "Class depth is not containable in 32 bits");
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, instanceClassDepthReg, instanceClassDepthReg, 0, J9AccClassDepthMask);
    if (castClassDepth <= UPPER_IMMED && castClassDepth >= LOWER_IMMED)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, instanceClassDepthReg, castClassDepth);
    else
@@ -7984,7 +7985,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
       TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), 4, cg));
 
-      loadConstant(cg, node, (int32_t) J9_JAVA_CLASS_RAM_ARRAY, tmp2Reg);
+      loadConstant(cg, node, (int32_t) J9AccClassRAMArray, tmp2Reg);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tmp2Reg, tmp1Reg, tmp2Reg);
 
       generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpi, node, cndReg, tmp2Reg, NULLVALUE);
@@ -8047,8 +8048,8 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
          TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), 4, cg));
 
-         // We already have classDepth&Flags in tmp1Reg.  X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
-         generateShiftRightLogicalImmediate(cg, node, tmp1Reg, tmp1Reg, J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+         // We already have classDepth&Flags in tmp1Reg.  X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
+         generateShiftRightLogicalImmediate(cg, node, tmp1Reg, tmp1Reg, J9AccClassRAMShapeShift);
 
          // We need to perform a X & OBJECT_HEADER_SHAPE_MASK
 
@@ -8079,7 +8080,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
          TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), 4, cg));
 
-         loadConstant(cg, node, (int32_t) J9_JAVA_CLASS_RAM_ARRAY, tmp2Reg);
+         loadConstant(cg, node, (int32_t) J9AccClassRAMArray, tmp2Reg);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tmp2Reg, tmp1Reg, tmp2Reg);
 
          TR::Instruction * i = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpi, node, cndReg, tmp2Reg, NULLVALUE);
@@ -8094,8 +8095,8 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
          else
             generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, snippetLabel, cndReg);
 
-         // We already have classDepth&Flags in tmp1Reg.  X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
-         generateShiftRightLogicalImmediate(cg, node, tmp1Reg, tmp1Reg, J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+         // We already have classDepth&Flags in tmp1Reg.  X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
+         generateShiftRightLogicalImmediate(cg, node, tmp1Reg, tmp1Reg, J9AccClassRAMShapeShift);
 
          // We need to perform a X & OBJECT_HEADER_SHAPE_MASK
 

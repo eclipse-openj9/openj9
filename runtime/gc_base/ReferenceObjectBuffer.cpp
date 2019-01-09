@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 
 #include "j9.h"
+#include "j9nonbuilder.h"
 #include "j9cfg.h"
 #include "ModronAssertions.h"
 
@@ -72,7 +73,7 @@ MM_ReferenceObjectBuffer::flush(MM_EnvironmentBase* env)
 UDATA
 MM_ReferenceObjectBuffer::getReferenceObjectType(j9object_t object) 
 { 
-	return J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object)) & J9_JAVA_CLASS_REFERENCE_MASK;
+	return J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object)) & J9AccClassReferenceMask;
 }
 
 void

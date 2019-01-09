@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "j9.h"
 #include "j9protos.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "rommeth.h"
 #include "j9vmconstantpool.h"
 #include "j9modifiers_api.h"
@@ -1147,7 +1148,7 @@ done:
 				currentThread->javaOffloadState = 0;
 				/* check if the class requires lazy switching (for JDBC) or normal switching */
 				J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
-				if (J9_ARE_ANY_BITS_SET(J9CLASS_FLAGS(methodClass), J9_JAVA_CLASS_HAS_JDBC_NATIVES)) {
+				if (J9_ARE_ANY_BITS_SET(J9CLASS_FLAGS(methodClass), J9AccClassHasJDBCNatives)) {
 					vm->javaOffloadSwitchJDBCWithMethodFunc(currentThread, method);
 				} else {
 					vm->javaOffloadSwitchOffWithMethodFunc(currentThread, method);

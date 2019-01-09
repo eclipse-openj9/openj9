@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "j9protos.h"
+#include "j9nonbuilder.h"
 #include "j9cp.h"
 #include "rommeth.h"
 #include "ute.h"
@@ -564,7 +565,7 @@ jitMethodIsBreakpointed(J9VMThread *currentThread, J9Method *method)
 		if (J9_STARTPC_METHOD_BREAKPOINTED == ((UDATA)method->constantPool & J9_STARTPC_METHOD_BREAKPOINTED)) {
 			/* Breakpoint bit is re-used in Z/OS JNI natives for offload.  Native methods can never be breakpointed.*/
 			const U_32 modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
-			if (J9_JAVA_NATIVE != (modifiers & J9_JAVA_NATIVE)) {
+			if (J9AccNative != (modifiers & J9AccNative)) {
 				result = 1;
 			}
 		}

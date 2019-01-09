@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9protos.h"
+#include "j9nonbuilder.h"
 #include "j9consts.h"
 #include "modronopt.h"
 #include "gcutils.h"
@@ -511,7 +512,7 @@ MM_RealtimeGC::addDyingClassesToList(MM_EnvironmentRealtime *env, J9ClassLoader 
 					/* Remove the class from the subclass traversal list */
 					_extensions->classLoaderManager->removeFromSubclassHierarchy(env, clazz);
 					/* Mark class as dying */
-					clazz->classDepthAndFlags |= J9_JAVA_CLASS_DYING;
+					clazz->classDepthAndFlags |= J9AccClassDying;
 
 					/* Call class unload hook */
 					Trc_MM_cleanUpClassLoadersStart_triggerClassUnload(env->getLanguageVMThread(),clazz,
@@ -552,7 +553,7 @@ MM_RealtimeGC::processUnlinkedClassLoaders(MM_EnvironmentBase *envModron, J9Clas
 	J9Class *previousClass = jlObject;
 	J9Class *nextClass = (NULL != jlObject) ? jlObject->subclassTraversalLink : jlObject;
 	while ((NULL != nextClass) && (jlObject != nextClass)) {
-		if (J9CLASS_FLAGS(nextClass) & J9_JAVA_CLASS_DYING) {
+		if (J9CLASS_FLAGS(nextClass) & J9AccClassDying) {
 			while ((NULL != nextClass->subclassTraversalLink) && (jlObject != nextClass) && (J9CLASS_FLAGS(nextClass) & 0x08000000)) {
 				nextClass = nextClass->subclassTraversalLink;
 			}
