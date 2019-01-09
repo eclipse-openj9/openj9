@@ -947,7 +947,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->heapSizeStatupHintConservativeFactor = ((float)percentage) / 100.0;
+			extensions->heapSizeStatupHintConservativeFactor = ((float)percentage) / 100.0f;
 			continue ;
 		}
 
@@ -961,7 +961,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->heapSizeStatupHintWeightNewValue = ((float)percentage) / 100.0;
+			extensions->heapSizeStatupHintWeightNewValue = ((float)percentage) / 100.0f;
 			continue ;
 		}
 
