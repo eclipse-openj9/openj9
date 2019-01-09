@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,5 +46,9 @@ public class StaticHelper {
 		l2 = String.class;
 		s = 1;
 		z = true;
+	}
+	
+	static final class StaticNoInitializationHelper {
+		static final int finalI = 1;
 	}
 }
