@@ -634,8 +634,8 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 				}
 
 				/* Gradually learn, by averaging new values with old values - it may take a few restarts before hint converge to stable values */
-				hintDefault = (uintptr_t)MM_Math::weightedAverage(hintDefaultOld, hintDefault, (1.0 - extensions->heapSizeStatupHintWeightNewValue));
-				hintTenure = (uintptr_t)MM_Math::weightedAverage(hintTenureOld, hintTenure, (1.0 - extensions->heapSizeStatupHintWeightNewValue));
+				hintDefault = (uintptr_t)MM_Math::weightedAverage((float)hintDefaultOld, (float)hintDefault, (1.0f - extensions->heapSizeStatupHintWeightNewValue));
+				hintTenure = (uintptr_t)MM_Math::weightedAverage((float)hintTenureOld, (float)hintTenure, (1.0f - extensions->heapSizeStatupHintWeightNewValue));
 
 				vm->sharedClassConfig->storeGCHints(currentThread, hintDefault, hintTenure, true);
 				/* Nothing to do if store fails, storeGCHints already issues a trace point */
