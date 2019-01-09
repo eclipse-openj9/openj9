@@ -2182,7 +2182,7 @@ public class MethodHandles {
 			}
 		}
 		
-		MethodHandle result = buildTransformHandle(new CatchHelper(tryHandle, catchHandle, throwableClass), tryType);
+		MethodHandle result = buildTransformHandle(new CatchHelper(tryHandle.asFixedArity(), catchHandle.asFixedArity(), throwableClass), tryType);
 		if (true) {
 			MethodHandle thunkable = CatchHandle.get(tryHandle, throwableClass, catchHandle, result);
 			assert(thunkable.type() == result.type());
