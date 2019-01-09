@@ -589,7 +589,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
          binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_primitiveType = record->_primitiveType;
          binaryTemplate->_romClassOffsetInSCC = reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache);
 
          cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
@@ -606,30 +605,17 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
                reinterpret_cast<TR_RelocationRecordValidateProfiledClassBinaryTemplate *>(cursor);
 
          TR_OpaqueClassBlock *classToValidate = record->_class;
-         char primitiveType = record->_primitiveType;
-         uintptrj_t classChainOffsetInSharedCacheForCL;
-         void* classChainOffsetInSharedCache;
+         void *classChainForClassToValidate = record->_classChain;
 
-         if (primitiveType != '\0')
-            {
-            classChainOffsetInSharedCacheForCL = 0;
-            classChainOffsetInSharedCache = NULL;
-            }
-         else
-            {
-            void *classChainForClassToValidate = record->_classChain;
+         //store the classchain's offset for the classloader for the class
+         void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
+         void *classChainIdentifyingLoaderForClazzToValidate = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazzToValidate);
+         uintptrj_t classChainOffsetInSharedCacheForCL = reinterpret_cast<uintptrj_t>(sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazzToValidate));
 
-            //store the classchain's offset for the classloader for the class
-            void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
-            void *classChainIdentifyingLoaderForClazzToValidate = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazzToValidate);
-            classChainOffsetInSharedCacheForCL = reinterpret_cast<uintptrj_t>(sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazzToValidate));
-
-            //store the classchain's offset for the class that needs to be validated in the second run
-            classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
-            }
+         //store the classchain's offset for the class that needs to be validated in the second run
+         void* classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
 
          binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
-         binaryTemplate->_primitiveType = record->_primitiveType;
          binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
          binaryTemplate->_classChainOffsetForCLInScc = classChainOffsetInSharedCacheForCL;
 

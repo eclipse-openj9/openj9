@@ -205,14 +205,12 @@ struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_Relocati
    {
    uint16_t _classID;
    uint16_t _beholderID;
-   char _primitiveType;
    UDATA _romClassOffsetInSCC;
    };
 
 struct TR_RelocationRecordValidateProfiledClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _classID;
-   char _primitiveType;
    UDATA _classChainOffsetInSCC;
    UDATA _classChainOffsetForCLInScc;
    };
