@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -935,6 +935,34 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		if (try_scan(&scan_start, "verboseOldFormat")) {
 			extensions->verboseNewFormat = false;
 			continue;
+		}
+
+		if (try_scan(&scan_start, "heapSizeStatupHintConservativeFactor=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStatupHintConservativeFactor=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->heapSizeStatupHintConservativeFactor = ((float)percentage) / 100.0;
+			continue ;
+		}
+
+		if (try_scan(&scan_start, "heapSizeStatupHintWeightNewValue=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStatupHintWeightNewValue=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->heapSizeStatupHintWeightNewValue = ((float)percentage) / 100.0;
+			continue ;
 		}
 
 #if defined (J9VM_GC_VLHGC)
