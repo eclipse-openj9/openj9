@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5082,12 +5082,13 @@ void
 j9shr_storeGCHints(J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, BOOLEAN forceReplace)
 {
 	J9JavaVM* vm = currentThread->javaVM;
-	bool heapSizesSet = J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->localStartupHints.hintsData.flags, J9SHR_STARTUPHINTS_HEAPSIZES_SET);
+	J9SharedStartupHintsDataDescriptor* hintsData = &vm->sharedClassConfig->localStartupHints.hintsData;
+	bool heapSizesSet = J9_ARE_ALL_BITS_SET(hintsData->flags, J9SHR_STARTUPHINTS_HEAPSIZES_SET);
 
-	if (forceReplace || !heapSizesSet) {
-		vm->sharedClassConfig->localStartupHints.hintsData.heapSize1 = heapSize1;
-		vm->sharedClassConfig->localStartupHints.hintsData.heapSize2 = heapSize2;
-		vm->sharedClassConfig->localStartupHints.hintsData.flags |= J9SHR_STARTUPHINTS_HEAPSIZES_SET;
+	if (!heapSizesSet || (forceReplace && ((heapSize1 != hintsData->heapSize1) || (heapSize2 != hintsData->heapSize2)))) {
+		hintsData->heapSize1 = heapSize1;
+		hintsData->heapSize2 = heapSize2;
+		hintsData->flags |= J9SHR_STARTUPHINTS_HEAPSIZES_SET;
 		if (forceReplace) {
 			vm->sharedClassConfig->localStartupHints.localStartupHintFlags |= J9SHR_LOCAL_STARTUPHINTS_FLAG_OVERWRITE_HEAPSIZES;
 			Trc_SHR_INIT_j9shr_storeGCHints_Overwrite_LocalHints(currentThread, heapSize1, heapSize2);
