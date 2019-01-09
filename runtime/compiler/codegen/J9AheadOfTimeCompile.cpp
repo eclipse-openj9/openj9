@@ -1152,10 +1152,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateClassByNameBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d primitiveType=%c romClassOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d romClassOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_classID,
                         (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_primitiveType,
                         binaryTemplate->_romClassOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
@@ -1173,9 +1172,8 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateProfiledClassBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d primitiveType=%c classChainOffsetInSCC=%d classChainOffsetForCLInScc=%p ",
+               traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d classChainOffsetInSCC=%d classChainOffsetForCLInScc=%p ",
                         (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_primitiveType,
                         binaryTemplate->_classChainOffsetInSCC,
                         binaryTemplate->_classChainOffsetForCLInScc);
                }
