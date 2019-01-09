@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,11 @@
 %ifdef TR_HOST_64BIT
 %include "jilconsts.inc"
 
+%ifdef WINDOWS
+%include "x\amd64\runtime\AMD64CompressString_nasm.inc"
+%else
 %include "x/amd64/runtime/AMD64CompressString_nasm.inc"
-
-
+%endif
 
 J9TR_ObjectColorBlack equ 03h
 

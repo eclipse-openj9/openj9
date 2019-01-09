@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,12 @@
       CPU PPRO
 
       %include "jilconsts.inc"
+      
+%ifdef WINDOWS
+      %include "x\runtime\X86PicBuilder_nasm.inc"
+%else
       %include "x/runtime/X86PicBuilder_nasm.inc"
+%endif
 
       segment .text
 
@@ -1206,7 +1211,12 @@ ret                                                   ; branch will mispredict s
 ; --------------------------------------------------------------------------------
 
 %include "jilconsts.inc"
-%include "x/runtime/X86PicBuilder_nasm.inc"
+
+%ifdef WINDOWS
+      %include "x\runtime\X86PicBuilder_nasm.inc"
+%else
+      %include "x/runtime/X86PicBuilder_nasm.inc"
+%endif
 
 segment .text
 
