@@ -819,15 +819,15 @@ J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.user_response=
 # END NON-TRANSLATABLE
 
-# diagnostic collector help
 
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=\n\
-\  -Xdiagnosticscollector habilita el recopilador de diagn\u00f3stico
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.explanation=NOTAG
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
-# END NON-TRANSLATABLE
+
+
+
+
+
+
+
+
 
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      establecer el tama\u00f1o del \u00e1rea de atributo de depuraci\u00f3n de memoria cach\u00e9 compartida en <x>
 # START NON-TRANSLATABLE

@@ -819,15 +819,15 @@ J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.user_response=
 # END NON-TRANSLATABLE
 
-# diagnostic collector help
 
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=\n\
-\  -Xdiagnosticscollector Diagnostics Collector aktivieren
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.explanation=NOTAG
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
-# END NON-TRANSLATABLE
+
+
+
+
+
+
+
+
 
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      Gr\u00f6\u00dfe des Bereichs des Attributs 'debug' f\u00fcr den Cache f\u00fcr gemeinsam genutzte Klasse auf <x> festlegen
 # START NON-TRANSLATABLE
