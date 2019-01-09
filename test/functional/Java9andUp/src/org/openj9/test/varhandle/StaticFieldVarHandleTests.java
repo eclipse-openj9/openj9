@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,7 @@ public class StaticFieldVarHandleTests {
 	private final static VarHandle VH_STRING;
 	private final static VarHandle VH_CLASS;
 	private final static VarHandle VH_FINAL_INT;
+	private final static VarHandle VH_FINAL_NOINIT_INT;
 	
 	static {
 		StaticHelper.reset();
@@ -60,6 +61,7 @@ public class StaticFieldVarHandleTests {
 			VH_STRING = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "l1", String.class);
 			VH_CLASS = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "l2", Class.class);
 			VH_FINAL_INT = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "finalI", int.class);
+			VH_FINAL_NOINIT_INT = MethodHandles.lookup().findStaticVarHandle(StaticHelper.StaticNoInitializationHelper.class, "finalI", int.class);
 		} catch (Throwable t) {
 			throw new Error(t);
 		}
@@ -2447,6 +2449,18 @@ public class StaticFieldVarHandleTests {
 			VH_FINAL_INT.getAndBitwiseXorRelease(3);
 			Assert.fail("Expected UnsupportedOperationException");
 		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a <b>final</b> {@link int} field.
+	 * Note: The static field StaticHelper.StaticNoInitializationHelper.finalI hasn't been initialized implicitly
+	 * by StaticHelper.reset() before VarHandle.get() is invoked.
+	 */
+	@Test
+	public void testFinalFieldInClassNotInitialized() {
+		// Getting value of final static field
+		int result = (int) VH_FINAL_NOINIT_INT.get();
+		Assert.assertEquals(result, StaticHelper.StaticNoInitializationHelper.finalI);
 	}
 	
 	/**
