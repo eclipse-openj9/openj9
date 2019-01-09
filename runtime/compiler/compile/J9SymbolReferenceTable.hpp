@@ -264,6 +264,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    bool isFieldClassObject(TR::SymbolReference *symRef);
    bool isFieldTypeBool(TR::SymbolReference *symRef);
    bool isStaticTypeBool(TR::SymbolReference *symRef);
+   bool isReturnTypeBool(TR::SymbolReference *symRef);
    void addParameters(TR::ResolvedMethodSymbol * owningMethodSymbol);
 
    // NO LONGER NEEDED?  Disabled since inception (2009)
