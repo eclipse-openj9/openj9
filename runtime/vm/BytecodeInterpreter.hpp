@@ -8320,7 +8320,7 @@ public:
 #define EXECUTE_SEND_TARGET(number) goto *(sendTargetTable[number])
 #define EXECUTE_CURRENT_BYTECODE() EXECUTE_BYTECODE_NUMBER(*_pc)
 	static JUMP_TABLE_TYPE bytecodeTable[] = {
-		JUMP_TABLE_ENTRY(JBnop), /* 0 */
+		JUMP_TABLE_ENTRY(JBnop),/* 0 */
 		JUMP_TABLE_ENTRY(JBaconstnull), /* 1 */
 		JUMP_TABLE_ENTRY(JBiconstm1), /* 2 */
 		JUMP_TABLE_ENTRY(JBiconst0), /* 3 */
