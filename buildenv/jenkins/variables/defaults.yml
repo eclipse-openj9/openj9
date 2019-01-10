@@ -206,7 +206,7 @@ s390x_linux:
 #========================================#
 ppc64_aix:
   boot_jdk:
-    8: '/usr/java7'
+    8: '/usr/java8_64'
     11: '/usr/java11_64'
     12: '/usr/java11_64'
     13: '/usr/java12_64'
