@@ -206,6 +206,8 @@ aix_ppc-64_cmprssptrs:
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+  extra_make_options:
+    8: 'LOG=debug'
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
