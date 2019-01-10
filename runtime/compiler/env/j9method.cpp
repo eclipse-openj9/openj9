@@ -4585,10 +4585,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
                          !strncmp(m->_name, name, nameLen) &&
                          (m->_sigLen == (int16_t)-1 || !strncmp(m->_sig,  sig,  sigLen)))
                         {
-
-                        if ((classNameLen == 30) && !strncmp(className, "com/ibm/Compiler/Internal/Quad", 30))
-                           setQuadClassSeen();
-
                         setRecognizedMethodInfo(m->_enum);
                         break;
                         }
@@ -4984,19 +4980,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
          setRecognizedMethod(rm);
          }
       }
-   }
-
-void
-TR_ResolvedJ9Method::setQuadClassSeen()
-   {
-   TR::Compilation* comp = ( fej9()->_compInfoPT ) ? fej9()->_compInfoPT->getCompilation() : NULL;
-   //TODO:
-   //This works but is too drastic because it disable the OSR
-   //for the entire compilation. Further work needs to be done
-   //to not attempt OSR only when the execution entered the code path
-   //that's different from the interpreter.
-   if (comp && comp->supportsQuadOptimization())
-     comp->setSeenClassPreventingInducedOSR();
    }
 
 J9RAMConstantPoolItem *
