@@ -83,14 +83,24 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
 
          if ((statisticsThread->getStatisticsFrequency() != 0) && ((crtTime - lastStatistics) > statisticsThread->getStatisticsFrequency()))
             {
+            int32_t cpuUsage = 0, avgCpuUsage = 0, vmCpuUsage = 0;
+            bool isFunctional = false;
+            CpuUtilization *cpuUtil = compInfo->getCpuUtil();
+            if (cpuUtil->isFunctional())
+               {
+               cpuUtil->updateCpuUtil(jitConfig);
+               cpuUsage = cpuUtil->getCpuUsage();
+               avgCpuUsage = cpuUtil->getAvgCpuUsage();
+               vmCpuUsage = cpuUtil->getVmCpuUsage();
+               isFunctional = true;
+               }
             TR_VerboseLog::vlogAcquire();
             TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Number of clients : %u", compInfo->getClientSessionHT()->size());
             TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
             TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
-            CpuUtilization *cpuUtil = compInfo->getCpuUtil();
-            if (cpuUtil->isFunctional())
+            if (isFunctional)
                {
-               TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUtil->getCpuUsage(), cpuUtil->getAvgCpuUsage(), cpuUtil->getVmCpuUsage());
+               TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUsage, avgCpuUsage, vmCpuUsage);
                }
             TR_VerboseLog::vlogRelease();
             lastStatistics = crtTime;
