@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,8 +56,7 @@ public:
 //   virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
 //   virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT) override;
-   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
-   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer) override;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,16 +256,10 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
          }
          break;
-      case J9ServerMessageType::VM_isMethodEnterTracingEnabled:
+      case J9ServerMessageType::VM_isMethodTracingEnabled:
          {
          auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
-         client->write(fe->isMethodEnterTracingEnabled(method));
-         }
-         break;
-      case J9ServerMessageType::VM_isMethodExitTracingEnabled:
-         {
-         auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
-         client->write(fe->isMethodExitTracingEnabled(method));
+         client->write(fe->isMethodTracingEnabled(method));
          }
          break;
       case J9ServerMessageType::VM_getClassClassPointer:
@@ -2899,7 +2893,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    for (uint32_t i = 0; i < numMethods; i++)
       {
       clientSessionData->getJ9MethodMap().insert({ &methods[i], 
-            {romMethod, nullptr, std::get<0>(methodTracingInfo[i]), std::get<1>(methodTracingInfo[i])} });
+            {romMethod, nullptr, static_cast<bool>(methodTracingInfo[i])} });
       romMethod = nextROMMethod(romMethod);
       }
    }
@@ -2921,14 +2915,11 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
    TR_OpaqueClassBlock *parentClass = fe->getSuperClass((TR_OpaqueClassBlock *) clazz);
 
    uint32_t numMethods = clazz->romClass->romMethodCount;
-   std::vector<std::tuple<bool, bool>> methodTracingInfo;
+   std::vector<uint8_t> methodTracingInfo;
    methodTracingInfo.reserve(numMethods);
    for(uint32_t i = 0; i < numMethods; ++i)
       {
-      methodTracingInfo.push_back(std::make_tuple(
-         fe->isMethodEnterTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i]),
-         fe->isMethodExitTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i])
-         ));
+      methodTracingInfo.push_back(static_cast<uint8_t>(fe->isMethodTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i])));
       }
    bool classHasFinalFields = fe->hasFinalFieldsInClass((TR_OpaqueClassBlock *)clazz);
    uintptrj_t classDepthAndFlags = fe->getClassDepthAndFlagsValue((TR_OpaqueClassBlock *)clazz);

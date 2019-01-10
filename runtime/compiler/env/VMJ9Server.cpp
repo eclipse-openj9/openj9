@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -160,36 +160,19 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    }
 
 bool
-TR_J9ServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
+TR_J9ServerVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
       {
       OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
       auto it = _compInfoPT->getClientData()->getJ9MethodMap().find((J9Method*) method);
       if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
          {
-         return it->second._isMethodEnterTracingEnabled;
+         return it->second._isMethodTracingEnabled;
          }
       }
 
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isMethodEnterTracingEnabled, method);
-   return std::get<0>(stream->read<bool>());
-   }
-
-bool
-TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-      {
-      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
-      auto it = _compInfoPT->getClientData()->getJ9MethodMap().find((J9Method*) method);
-      if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
-         {
-         return it->second._isMethodExitTracingEnabled;
-         }
-      }
-
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isMethodExitTracingEnabled, method);
+   stream->write(JITaaS::J9ServerMessageType::VM_isMethodTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
    }
 
