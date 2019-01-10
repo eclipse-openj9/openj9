@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -206,6 +206,9 @@ aix_ppc-64_cmprssptrs:
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+  build_env:
+    vars:
+      8: 'LDR_CNTRL=MAXDATA=0x80000000'
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
