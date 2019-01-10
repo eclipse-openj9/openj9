@@ -620,10 +620,7 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 				MM_MemorySubSpace *defaultMemorySubSpace = extensions->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
 				MM_MemorySubSpace *tenureMemorySubspace = extensions->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
 
-				/* Default MSS is either OLD or NEW at a time (flat or generational), but we can safely ask for both. We cannot just use plain
-				 * getActiveMemorySize() without arguments since it would return just Allocate size for Nursery, but we need total Nursery size.
-				 */
-				uintptr_t hintDefault = defaultMemorySubSpace->getActiveMemorySize(MEMORY_TYPE_OLD | MEMORY_TYPE_NEW);
+				uintptr_t hintDefault = defaultMemorySubSpace->getActiveMemorySize();
 				uintptr_t hintTenure = 0;
 
 				/* Standard GCs always have Default MSS (which is equal to Tenure for flat heap configuration).
@@ -674,7 +671,7 @@ gcExpandHeapOnStartup(J9JavaVM *javaVM)
 				 * We are a bit conservative and aim for slightly lower values that historically recorded by hints.
 				 */
 				uintptr_t hintDefaultAdjusted = (uintptr_t)(hintDefault * extensions->heapSizeStartupHintConservativeFactor);
-				uintptr_t defaultCurrent = defaultMemorySubSpace->getActiveMemorySize(MEMORY_TYPE_OLD | MEMORY_TYPE_NEW);
+				uintptr_t defaultCurrent = defaultMemorySubSpace->getActiveMemorySize();
 
 				if (hintDefaultAdjusted > defaultCurrent) {
 					extensions->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
