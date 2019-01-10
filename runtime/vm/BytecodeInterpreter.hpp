@@ -8321,209 +8321,209 @@ public:
 #define EXECUTE_CURRENT_BYTECODE() EXECUTE_BYTECODE_NUMBER(*_pc)
 	static JUMP_TABLE_TYPE bytecodeTable[] = {
 		JUMP_TABLE_ENTRY(JBnop), /* 0 */
-		JUMP_TABLE_ENTRY(JBaconstnull),
-		JUMP_TABLE_ENTRY(JBiconstm1),
-		JUMP_TABLE_ENTRY(JBiconst0),
-		JUMP_TABLE_ENTRY(JBiconst1),
-		JUMP_TABLE_ENTRY(JBiconst2),
-		JUMP_TABLE_ENTRY(JBiconst3),
-		JUMP_TABLE_ENTRY(JBiconst4),
-		JUMP_TABLE_ENTRY(JBiconst5),
-		JUMP_TABLE_ENTRY(JBlconst0),
-		JUMP_TABLE_ENTRY(JBlconst1),
-		JUMP_TABLE_ENTRY(JBfconst0),
-		JUMP_TABLE_ENTRY(JBfconst1),
-		JUMP_TABLE_ENTRY(JBfconst2),
-		JUMP_TABLE_ENTRY(JBdconst0),
-		JUMP_TABLE_ENTRY(JBdconst1),
-		JUMP_TABLE_ENTRY(JBbipush),
-		JUMP_TABLE_ENTRY(JBsipush),
-		JUMP_TABLE_ENTRY(JBldc),
-		JUMP_TABLE_ENTRY(JBldcw),
-		JUMP_TABLE_ENTRY(JBldc2lw),
-		JUMP_TABLE_ENTRY(JBiload),
-		JUMP_TABLE_ENTRY(JBlload),
-		JUMP_TABLE_ENTRY(JBfload),
-		JUMP_TABLE_ENTRY(JBdload),
-		JUMP_TABLE_ENTRY(JBaload),
-		JUMP_TABLE_ENTRY(JBiload0),
-		JUMP_TABLE_ENTRY(JBiload1),
-		JUMP_TABLE_ENTRY(JBiload2),
-		JUMP_TABLE_ENTRY(JBiload3),
-		JUMP_TABLE_ENTRY(JBlload0),
-		JUMP_TABLE_ENTRY(JBlload1),
-		JUMP_TABLE_ENTRY(JBlload2),
-		JUMP_TABLE_ENTRY(JBlload3),
-		JUMP_TABLE_ENTRY(JBfload0),
-		JUMP_TABLE_ENTRY(JBfload1),
-		JUMP_TABLE_ENTRY(JBfload2),
-		JUMP_TABLE_ENTRY(JBfload3),
-		JUMP_TABLE_ENTRY(JBdload0),
-		JUMP_TABLE_ENTRY(JBdload1),
-		JUMP_TABLE_ENTRY(JBdload2),
-		JUMP_TABLE_ENTRY(JBdload3),
-		JUMP_TABLE_ENTRY(JBaload0),
-		JUMP_TABLE_ENTRY(JBaload1),
-		JUMP_TABLE_ENTRY(JBaload2),
-		JUMP_TABLE_ENTRY(JBaload3),
-		JUMP_TABLE_ENTRY(JBiaload),
-		JUMP_TABLE_ENTRY(JBlaload),
-		JUMP_TABLE_ENTRY(JBfaload),
-		JUMP_TABLE_ENTRY(JBdaload),
-		JUMP_TABLE_ENTRY(JBaaload),
-		JUMP_TABLE_ENTRY(JBbaload),
-		JUMP_TABLE_ENTRY(JBcaload),
-		JUMP_TABLE_ENTRY(JBsaload),
-		JUMP_TABLE_ENTRY(JBistore),
-		JUMP_TABLE_ENTRY(JBlstore),
-		JUMP_TABLE_ENTRY(JBfstore),
-		JUMP_TABLE_ENTRY(JBdstore),
-		JUMP_TABLE_ENTRY(JBastore),
-		JUMP_TABLE_ENTRY(JBistore0),
-		JUMP_TABLE_ENTRY(JBistore1),
-		JUMP_TABLE_ENTRY(JBistore2),
-		JUMP_TABLE_ENTRY(JBistore3),
-		JUMP_TABLE_ENTRY(JBlstore0),
-		JUMP_TABLE_ENTRY(JBlstore1),
-		JUMP_TABLE_ENTRY(JBlstore2),
-		JUMP_TABLE_ENTRY(JBlstore3),
-		JUMP_TABLE_ENTRY(JBfstore0),
-		JUMP_TABLE_ENTRY(JBfstore1),
-		JUMP_TABLE_ENTRY(JBfstore2),
-		JUMP_TABLE_ENTRY(JBfstore3),
-		JUMP_TABLE_ENTRY(JBdstore0),
-		JUMP_TABLE_ENTRY(JBdstore1),
-		JUMP_TABLE_ENTRY(JBdstore2),
-		JUMP_TABLE_ENTRY(JBdstore3),
-		JUMP_TABLE_ENTRY(JBastore0),
-		JUMP_TABLE_ENTRY(JBastore1),
-		JUMP_TABLE_ENTRY(JBastore2),
-		JUMP_TABLE_ENTRY(JBastore3),
-		JUMP_TABLE_ENTRY(JBiastore),
-		JUMP_TABLE_ENTRY(JBlastore),
-		JUMP_TABLE_ENTRY(JBfastore),
-		JUMP_TABLE_ENTRY(JBdastore),
-		JUMP_TABLE_ENTRY(JBaastore),
-		JUMP_TABLE_ENTRY(JBbastore),
-		JUMP_TABLE_ENTRY(JBcastore),
-		JUMP_TABLE_ENTRY(JBsastore),
-		JUMP_TABLE_ENTRY(JBpop),
-		JUMP_TABLE_ENTRY(JBpop2),
-		JUMP_TABLE_ENTRY(JBdup),
-		JUMP_TABLE_ENTRY(JBdupx1),
-		JUMP_TABLE_ENTRY(JBdupx2),
-		JUMP_TABLE_ENTRY(JBdup2),
-		JUMP_TABLE_ENTRY(JBdup2x1),
-		JUMP_TABLE_ENTRY(JBdup2x2),
-		JUMP_TABLE_ENTRY(JBswap),
-		JUMP_TABLE_ENTRY(JBiadd),
-		JUMP_TABLE_ENTRY(JBladd),
-		JUMP_TABLE_ENTRY(JBfadd),
-		JUMP_TABLE_ENTRY(JBdadd),
-		JUMP_TABLE_ENTRY(JBisub),
-		JUMP_TABLE_ENTRY(JBlsub),
-		JUMP_TABLE_ENTRY(JBfsub),
-		JUMP_TABLE_ENTRY(JBdsub),
-		JUMP_TABLE_ENTRY(JBimul),
-		JUMP_TABLE_ENTRY(JBlmul),
-		JUMP_TABLE_ENTRY(JBfmul),
-		JUMP_TABLE_ENTRY(JBdmul),
-		JUMP_TABLE_ENTRY(JBidiv),
-		JUMP_TABLE_ENTRY(JBldiv),
-		JUMP_TABLE_ENTRY(JBfdiv),
-		JUMP_TABLE_ENTRY(JBddiv),
-		JUMP_TABLE_ENTRY(JBirem),
-		JUMP_TABLE_ENTRY(JBlrem),
-		JUMP_TABLE_ENTRY(JBfrem),
-		JUMP_TABLE_ENTRY(JBdrem),
-		JUMP_TABLE_ENTRY(JBineg),
-		JUMP_TABLE_ENTRY(JBlneg),
-		JUMP_TABLE_ENTRY(JBfneg),
-		JUMP_TABLE_ENTRY(JBdneg),
-		JUMP_TABLE_ENTRY(JBishl),
-		JUMP_TABLE_ENTRY(JBlshl),
-		JUMP_TABLE_ENTRY(JBishr),
-		JUMP_TABLE_ENTRY(JBlshr),
-		JUMP_TABLE_ENTRY(JBiushr),
-		JUMP_TABLE_ENTRY(JBlushr),
-		JUMP_TABLE_ENTRY(JBiand),
-		JUMP_TABLE_ENTRY(JBland),
-		JUMP_TABLE_ENTRY(JBior),
-		JUMP_TABLE_ENTRY(JBlor),
-		JUMP_TABLE_ENTRY(JBixor),
-		JUMP_TABLE_ENTRY(JBlxor),
-		JUMP_TABLE_ENTRY(JBiinc),
-		JUMP_TABLE_ENTRY(JBi2l),
-		JUMP_TABLE_ENTRY(JBi2f),
-		JUMP_TABLE_ENTRY(JBi2d),
-		JUMP_TABLE_ENTRY(JBl2i),
-		JUMP_TABLE_ENTRY(JBl2f),
-		JUMP_TABLE_ENTRY(JBl2d),
-		JUMP_TABLE_ENTRY(JBf2i),
-		JUMP_TABLE_ENTRY(JBf2l),
-		JUMP_TABLE_ENTRY(JBf2d),
-		JUMP_TABLE_ENTRY(JBd2i),
-		JUMP_TABLE_ENTRY(JBd2l),
-		JUMP_TABLE_ENTRY(JBd2f),
-		JUMP_TABLE_ENTRY(JBi2b),
-		JUMP_TABLE_ENTRY(JBi2c),
-		JUMP_TABLE_ENTRY(JBi2s),
-		JUMP_TABLE_ENTRY(JBlcmp),
-		JUMP_TABLE_ENTRY(JBfcmpl),
-		JUMP_TABLE_ENTRY(JBfcmpg),
-		JUMP_TABLE_ENTRY(JBdcmpl),
-		JUMP_TABLE_ENTRY(JBdcmpg),
-		JUMP_TABLE_ENTRY(JBifeq),
-		JUMP_TABLE_ENTRY(JBifne),
-		JUMP_TABLE_ENTRY(JBiflt),
-		JUMP_TABLE_ENTRY(JBifge),
-		JUMP_TABLE_ENTRY(JBifgt),
-		JUMP_TABLE_ENTRY(JBifle),
-		JUMP_TABLE_ENTRY(JBificmpeq),
-		JUMP_TABLE_ENTRY(JBificmpne),
-		JUMP_TABLE_ENTRY(JBificmplt),
-		JUMP_TABLE_ENTRY(JBificmpge),
-		JUMP_TABLE_ENTRY(JBificmpgt),
-		JUMP_TABLE_ENTRY(JBificmple),
-		JUMP_TABLE_ENTRY(JBifacmpeq),
-		JUMP_TABLE_ENTRY(JBifacmpne),
-		JUMP_TABLE_ENTRY(JBgoto),
+		JUMP_TABLE_ENTRY(JBaconstnull), /* 1 */
+		JUMP_TABLE_ENTRY(JBiconstm1), /* 2 */
+		JUMP_TABLE_ENTRY(JBiconst0), /* 3 */
+		JUMP_TABLE_ENTRY(JBiconst1), /* 4 */
+		JUMP_TABLE_ENTRY(JBiconst2), /* 5 */
+		JUMP_TABLE_ENTRY(JBiconst3), /* 6 */
+		JUMP_TABLE_ENTRY(JBiconst4), /* 7 */
+		JUMP_TABLE_ENTRY(JBiconst5), /* 8 */
+		JUMP_TABLE_ENTRY(JBlconst0), /* 9 */
+		JUMP_TABLE_ENTRY(JBlconst1), /* 10 */
+		JUMP_TABLE_ENTRY(JBfconst0), /* 11 */
+		JUMP_TABLE_ENTRY(JBfconst1), /* 12 */
+		JUMP_TABLE_ENTRY(JBfconst2), /* 13 */
+		JUMP_TABLE_ENTRY(JBdconst0), /* 14 */
+		JUMP_TABLE_ENTRY(JBdconst1), /* 15 */
+		JUMP_TABLE_ENTRY(JBbipush), /* 16 */
+		JUMP_TABLE_ENTRY(JBsipush), /* 17 */
+		JUMP_TABLE_ENTRY(JBldc), /* 18 */
+		JUMP_TABLE_ENTRY(JBldcw), /* 19 */
+		JUMP_TABLE_ENTRY(JBldc2lw), /* 20 */
+		JUMP_TABLE_ENTRY(JBiload), /* 21 */
+		JUMP_TABLE_ENTRY(JBlload), /* 22 */
+		JUMP_TABLE_ENTRY(JBfload), /* 23 */
+		JUMP_TABLE_ENTRY(JBdload), /* 24 */
+		JUMP_TABLE_ENTRY(JBaload), /* 25 */
+		JUMP_TABLE_ENTRY(JBiload0), /* 26 */
+		JUMP_TABLE_ENTRY(JBiload1), /* 27 */
+		JUMP_TABLE_ENTRY(JBiload2), /* 28 */
+		JUMP_TABLE_ENTRY(JBiload3), /* 29 */
+		JUMP_TABLE_ENTRY(JBlload0), /* 30 */
+		JUMP_TABLE_ENTRY(JBlload1), /* 31 */
+		JUMP_TABLE_ENTRY(JBlload2), /* 32 */
+		JUMP_TABLE_ENTRY(JBlload3), /* 33 */
+		JUMP_TABLE_ENTRY(JBfload0), /* 34 */
+		JUMP_TABLE_ENTRY(JBfload1), /* 35 */
+		JUMP_TABLE_ENTRY(JBfload2), /* 36 */
+		JUMP_TABLE_ENTRY(JBfload3), /* 37 */
+		JUMP_TABLE_ENTRY(JBdload0), /* 38 */
+		JUMP_TABLE_ENTRY(JBdload1), /* 39 */
+		JUMP_TABLE_ENTRY(JBdload2), /* 40 */
+		JUMP_TABLE_ENTRY(JBdload3), /* 41 */
+		JUMP_TABLE_ENTRY(JBaload0), /* 42 */
+		JUMP_TABLE_ENTRY(JBaload1), /* 43 */
+		JUMP_TABLE_ENTRY(JBaload2), /* 44 */
+		JUMP_TABLE_ENTRY(JBaload3), /* 45 */
+		JUMP_TABLE_ENTRY(JBiaload), /* 46 */
+		JUMP_TABLE_ENTRY(JBlaload), /* 47 */
+		JUMP_TABLE_ENTRY(JBfaload), /* 48 */
+		JUMP_TABLE_ENTRY(JBdaload), /* 49 */
+		JUMP_TABLE_ENTRY(JBaaload), /* 50 */
+		JUMP_TABLE_ENTRY(JBbaload), /* 51 */
+		JUMP_TABLE_ENTRY(JBcaload), /* 52 */
+		JUMP_TABLE_ENTRY(JBsaload), /* 53 */
+		JUMP_TABLE_ENTRY(JBistore), /* 54 */
+		JUMP_TABLE_ENTRY(JBlstore), /* 55 */
+		JUMP_TABLE_ENTRY(JBfstore), /* 56 */
+		JUMP_TABLE_ENTRY(JBdstore), /* 57 */
+		JUMP_TABLE_ENTRY(JBastore), /* 58 */
+		JUMP_TABLE_ENTRY(JBistore0), /* 59 */
+		JUMP_TABLE_ENTRY(JBistore1), /* 60 */
+		JUMP_TABLE_ENTRY(JBistore2), /* 61 */
+		JUMP_TABLE_ENTRY(JBistore3), /* 62 */
+		JUMP_TABLE_ENTRY(JBlstore0), /* 63 */
+		JUMP_TABLE_ENTRY(JBlstore1), /* 64 */
+		JUMP_TABLE_ENTRY(JBlstore2), /* 65 */
+		JUMP_TABLE_ENTRY(JBlstore3), /* 66 */
+		JUMP_TABLE_ENTRY(JBfstore0), /* 67 */
+		JUMP_TABLE_ENTRY(JBfstore1), /* 68 */
+		JUMP_TABLE_ENTRY(JBfstore2), /* 69 */
+		JUMP_TABLE_ENTRY(JBfstore3), /* 70 */
+		JUMP_TABLE_ENTRY(JBdstore0), /* 71 */
+		JUMP_TABLE_ENTRY(JBdstore1), /* 72 */
+		JUMP_TABLE_ENTRY(JBdstore2), /* 73 */
+		JUMP_TABLE_ENTRY(JBdstore3), /* 74 */
+		JUMP_TABLE_ENTRY(JBastore0), /* 75 */
+		JUMP_TABLE_ENTRY(JBastore1), /* 76 */
+		JUMP_TABLE_ENTRY(JBastore2), /* 77 */
+		JUMP_TABLE_ENTRY(JBastore3), /* 78 */
+		JUMP_TABLE_ENTRY(JBiastore), /* 79 */
+		JUMP_TABLE_ENTRY(JBlastore), /* 80 */
+		JUMP_TABLE_ENTRY(JBfastore), /* 81 */
+		JUMP_TABLE_ENTRY(JBdastore), /* 82 */
+		JUMP_TABLE_ENTRY(JBaastore), /* 83 */
+		JUMP_TABLE_ENTRY(JBbastore), /* 84 */
+		JUMP_TABLE_ENTRY(JBcastore), /* 85 */
+		JUMP_TABLE_ENTRY(JBsastore), /* 86 */
+		JUMP_TABLE_ENTRY(JBpop), /* 87 */
+		JUMP_TABLE_ENTRY(JBpop2), /* 88 */
+		JUMP_TABLE_ENTRY(JBdup), /* 89 */
+		JUMP_TABLE_ENTRY(JBdupx1), /* 90 */
+		JUMP_TABLE_ENTRY(JBdupx2), /* 91 */
+		JUMP_TABLE_ENTRY(JBdup2), /* 92 */
+		JUMP_TABLE_ENTRY(JBdup2x1), /* 93 */
+		JUMP_TABLE_ENTRY(JBdup2x2), /* 94 */
+		JUMP_TABLE_ENTRY(JBswap), /* 95 */
+		JUMP_TABLE_ENTRY(JBiadd), /* 96 */
+		JUMP_TABLE_ENTRY(JBladd), /* 97 */
+		JUMP_TABLE_ENTRY(JBfadd), /* 98 */
+		JUMP_TABLE_ENTRY(JBdadd), /* 99 */
+		JUMP_TABLE_ENTRY(JBisub), /* 100 */
+		JUMP_TABLE_ENTRY(JBlsub), /* 101 */
+		JUMP_TABLE_ENTRY(JBfsub), /* 102 */
+		JUMP_TABLE_ENTRY(JBdsub), /* 103 */
+		JUMP_TABLE_ENTRY(JBimul), /* 104 */
+		JUMP_TABLE_ENTRY(JBlmul), /* 105 */
+		JUMP_TABLE_ENTRY(JBfmul), /* 106 */
+		JUMP_TABLE_ENTRY(JBdmul), /* 107 */
+		JUMP_TABLE_ENTRY(JBidiv), /* 108 */
+		JUMP_TABLE_ENTRY(JBldiv), /* 109 */
+		JUMP_TABLE_ENTRY(JBfdiv), /* 110 */
+		JUMP_TABLE_ENTRY(JBddiv), /* 111 */
+		JUMP_TABLE_ENTRY(JBirem), /* 112 */
+		JUMP_TABLE_ENTRY(JBlrem), /* 113 */
+		JUMP_TABLE_ENTRY(JBfrem), /* 114 */
+		JUMP_TABLE_ENTRY(JBdrem), /* 115 */
+		JUMP_TABLE_ENTRY(JBineg), /* 116 */
+		JUMP_TABLE_ENTRY(JBlneg), /* 117 */
+		JUMP_TABLE_ENTRY(JBfneg), /* 118 */
+		JUMP_TABLE_ENTRY(JBdneg), /* 119 */
+		JUMP_TABLE_ENTRY(JBishl), /* 120 */
+		JUMP_TABLE_ENTRY(JBlshl), /* 121 */
+		JUMP_TABLE_ENTRY(JBishr), /* 122 */
+		JUMP_TABLE_ENTRY(JBlshr), /* 123 */
+		JUMP_TABLE_ENTRY(JBiushr), /* 124 */
+		JUMP_TABLE_ENTRY(JBlushr), /* 125 */
+		JUMP_TABLE_ENTRY(JBiand), /* 126 */
+		JUMP_TABLE_ENTRY(JBland), /* 127 */
+		JUMP_TABLE_ENTRY(JBior), /* 128 */
+		JUMP_TABLE_ENTRY(JBlor), /* 129 */
+		JUMP_TABLE_ENTRY(JBixor), /* 130 */
+		JUMP_TABLE_ENTRY(JBlxor), /* 131 */
+		JUMP_TABLE_ENTRY(JBiinc), /* 132 */
+		JUMP_TABLE_ENTRY(JBi2l), /* 133 */
+		JUMP_TABLE_ENTRY(JBi2f), /* 134 */
+		JUMP_TABLE_ENTRY(JBi2d), /* 135 */
+		JUMP_TABLE_ENTRY(JBl2i), /* 136 */
+		JUMP_TABLE_ENTRY(JBl2f), /* 137 */
+		JUMP_TABLE_ENTRY(JBl2d), /* 138 */
+		JUMP_TABLE_ENTRY(JBf2i), /* 139 */
+		JUMP_TABLE_ENTRY(JBf2l), /* 140 */
+		JUMP_TABLE_ENTRY(JBf2d), /* 141 */
+		JUMP_TABLE_ENTRY(JBd2i), /* 142 */
+		JUMP_TABLE_ENTRY(JBd2l), /* 143 */
+		JUMP_TABLE_ENTRY(JBd2f), /* 144 */
+		JUMP_TABLE_ENTRY(JBi2b), /* 145 */
+		JUMP_TABLE_ENTRY(JBi2c), /* 146 */
+		JUMP_TABLE_ENTRY(JBi2s), /* 147 */
+		JUMP_TABLE_ENTRY(JBlcmp), /* 148 */
+		JUMP_TABLE_ENTRY(JBfcmpl), /* 149 */
+		JUMP_TABLE_ENTRY(JBfcmpg), /* 150 */
+		JUMP_TABLE_ENTRY(JBdcmpl), /* 151 */
+		JUMP_TABLE_ENTRY(JBdcmpg), /* 152 */
+		JUMP_TABLE_ENTRY(JBifeq), /* 153 */
+		JUMP_TABLE_ENTRY(JBifne), /* 154 */
+		JUMP_TABLE_ENTRY(JBiflt), /* 155 */
+		JUMP_TABLE_ENTRY(JBifge), /* 156 */
+		JUMP_TABLE_ENTRY(JBifgt), /* 157 */
+		JUMP_TABLE_ENTRY(JBifle), /* 158 */
+		JUMP_TABLE_ENTRY(JBificmpeq), /* 159 */
+		JUMP_TABLE_ENTRY(JBificmpne), /* 160 */
+		JUMP_TABLE_ENTRY(JBificmplt), /* 161 */
+		JUMP_TABLE_ENTRY(JBificmpge), /* 162 */
+		JUMP_TABLE_ENTRY(JBificmpgt), /* 163 */
+		JUMP_TABLE_ENTRY(JBificmple), /* 164 */
+		JUMP_TABLE_ENTRY(JBifacmpeq), /* 165 */
+		JUMP_TABLE_ENTRY(JBifacmpne), /* 166 */
+		JUMP_TABLE_ENTRY(JBgoto), /* 167 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBtableswitch),
-		JUMP_TABLE_ENTRY(JBlookupswitch),
-		JUMP_TABLE_ENTRY(JBreturn0),
-		JUMP_TABLE_ENTRY(JBreturn1),
-		JUMP_TABLE_ENTRY(JBreturn2),
-		JUMP_TABLE_ENTRY(JBsyncReturn0),
-		JUMP_TABLE_ENTRY(JBsyncReturn1),
-		JUMP_TABLE_ENTRY(JBsyncReturn2),
-		JUMP_TABLE_ENTRY(JBgetstatic),
-		JUMP_TABLE_ENTRY(JBputstatic),
-		JUMP_TABLE_ENTRY(JBgetfield),
-		JUMP_TABLE_ENTRY(JBputfield),
-		JUMP_TABLE_ENTRY(JBinvokevirtual),
-		JUMP_TABLE_ENTRY(JBinvokespecial),
-		JUMP_TABLE_ENTRY(JBinvokestatic),
-		JUMP_TABLE_ENTRY(JBinvokeinterface),
-		JUMP_TABLE_ENTRY(JBinvokedynamic),
-		JUMP_TABLE_ENTRY(JBnew),
-		JUMP_TABLE_ENTRY(JBnewarray),
-		JUMP_TABLE_ENTRY(JBanewarray),
-		JUMP_TABLE_ENTRY(JBarraylength),
-		JUMP_TABLE_ENTRY(JBathrow),
-		JUMP_TABLE_ENTRY(JBcheckcast),
-		JUMP_TABLE_ENTRY(JBinstanceof),
-		JUMP_TABLE_ENTRY(JBmonitorenter),
-		JUMP_TABLE_ENTRY(JBmonitorexit),
+		JUMP_TABLE_ENTRY(JBtableswitch), /* 170 */
+		JUMP_TABLE_ENTRY(JBlookupswitch), /* 171 */
+		JUMP_TABLE_ENTRY(JBreturn0), /* 172 */
+		JUMP_TABLE_ENTRY(JBreturn1), /* 173 */
+		JUMP_TABLE_ENTRY(JBreturn2), /* 174 */
+		JUMP_TABLE_ENTRY(JBsyncReturn0), /* 175 */
+		JUMP_TABLE_ENTRY(JBsyncReturn1), /* 176 */
+		JUMP_TABLE_ENTRY(JBsyncReturn2), /* 177 */
+		JUMP_TABLE_ENTRY(JBgetstatic), /* 178 */
+		JUMP_TABLE_ENTRY(JBputstatic), /* 179 */
+		JUMP_TABLE_ENTRY(JBgetfield), /* 180 */
+		JUMP_TABLE_ENTRY(JBputfield), /* 181 */
+		JUMP_TABLE_ENTRY(JBinvokevirtual), /* 182 */
+		JUMP_TABLE_ENTRY(JBinvokespecial), /* 183 */
+		JUMP_TABLE_ENTRY(JBinvokestatic), /* 184 */
+		JUMP_TABLE_ENTRY(JBinvokeinterface), /* 185 */
+		JUMP_TABLE_ENTRY(JBinvokedynamic), /* 186 */
+		JUMP_TABLE_ENTRY(JBnew), /* 187 */
+		JUMP_TABLE_ENTRY(JBnewarray), /* 188 */
+		JUMP_TABLE_ENTRY(JBanewarray), /* 189 */
+		JUMP_TABLE_ENTRY(JBarraylength), /* 190 */
+		JUMP_TABLE_ENTRY(JBathrow), /* 191 */
+		JUMP_TABLE_ENTRY(JBcheckcast), /* 192 */
+		JUMP_TABLE_ENTRY(JBinstanceof), /* 193 */
+		JUMP_TABLE_ENTRY(JBmonitorenter), /* 194 */
+		JUMP_TABLE_ENTRY(JBmonitorexit), /* 195 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBmultianewarray),
-		JUMP_TABLE_ENTRY(JBifnull),
-		JUMP_TABLE_ENTRY(JBifnonnull),
-		JUMP_TABLE_ENTRY(JBgotow),
+		JUMP_TABLE_ENTRY(JBmultianewarray), /* 197 */
+		JUMP_TABLE_ENTRY(JBifnull), /* 198 */
+		JUMP_TABLE_ENTRY(JBifnonnull), /* 199 */
+		JUMP_TABLE_ENTRY(JBgotow), /* 200 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 #if defined(DEBUG_VERSION)
-		JUMP_TABLE_ENTRY(JBbreakpoint),
+		JUMP_TABLE_ENTRY(JBbreakpoint), /* 202 */
 #else /* DEBUG_VERSION */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 #endif /* DEBUG_VERSION */
@@ -8557,34 +8557,34 @@ public:
 		JUMP_TABLE_ENTRY(JBdstorew), /* 225 */
 		JUMP_TABLE_ENTRY(JBastorew), /* 226 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBreturnFromConstructor),
-		JUMP_TABLE_ENTRY(JBgenericReturn),
+		JUMP_TABLE_ENTRY(JBreturnFromConstructor), /* 228 */
+		JUMP_TABLE_ENTRY(JBgenericReturn), /* 229 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBinvokeinterface2),
-		JUMP_TABLE_ENTRY(JBinvokehandle),
-		JUMP_TABLE_ENTRY(JBinvokehandlegeneric),
-		JUMP_TABLE_ENTRY(JBinvokestaticsplit),
-		JUMP_TABLE_ENTRY(JBinvokespecialsplit),
-		JUMP_TABLE_ENTRY(JBreturnC),
-		JUMP_TABLE_ENTRY(JBreturnS),
-		JUMP_TABLE_ENTRY(JBreturnB),
-		JUMP_TABLE_ENTRY(JBreturnZ),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBinvokeinterface2), /* 231 */
+		JUMP_TABLE_ENTRY(JBinvokehandle), /* 232 */
+		JUMP_TABLE_ENTRY(JBinvokehandlegeneric), /* 233 */
+		JUMP_TABLE_ENTRY(JBinvokestaticsplit), /* 234 */
+		JUMP_TABLE_ENTRY(JBinvokespecialsplit), /* 235 */
+		JUMP_TABLE_ENTRY(JBreturnC), /* 236 */
+		JUMP_TABLE_ENTRY(JBreturnS), /* 237 */
+		JUMP_TABLE_ENTRY(JBreturnB), /* 238 */
+		JUMP_TABLE_ENTRY(JBreturnZ), /* 239 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBretFromNative0),
-		JUMP_TABLE_ENTRY(JBretFromNative1),
-		JUMP_TABLE_ENTRY(JBretFromNativeF),
-		JUMP_TABLE_ENTRY(JBretFromNativeD),
-		JUMP_TABLE_ENTRY(JBretFromNativeJ),
-		JUMP_TABLE_ENTRY(JBldc2dw),
-		JUMP_TABLE_ENTRY(JBasyncCheck),
-		JUMP_TABLE_ENTRY(JBreturnFromJ2I),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBimpdep1),
-		JUMP_TABLE_ENTRY(JBimpdep2),
+		JUMP_TABLE_ENTRY(JBretFromNative0), /* 244 */
+		JUMP_TABLE_ENTRY(JBretFromNative1), /* 245 */
+		JUMP_TABLE_ENTRY(JBretFromNativeF), /* 246 */
+		JUMP_TABLE_ENTRY(JBretFromNativeD), /* 247 */
+		JUMP_TABLE_ENTRY(JBretFromNativeJ), /* 248 */
+		JUMP_TABLE_ENTRY(JBldc2dw), /* 249 */
+		JUMP_TABLE_ENTRY(JBasyncCheck), /* 250 */
+		JUMP_TABLE_ENTRY(JBreturnFromJ2I), /* 251 */
+		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBimpdep1), /* 254 */
+		JUMP_TABLE_ENTRY(JBimpdep2), /* 255 */
 	};
 	static JUMP_TABLE_TYPE sendTargetTable[] = {
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
