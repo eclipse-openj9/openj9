@@ -70,9 +70,6 @@ build_discarder:
     build: 10
     pipeline: 0
     pullRequest: 0
-extra_getsource_options:
-  8: '--openssl-version=1.1.1a'
-  11: '--openssl-version=1.1.1a'
 restart_timeout:
   time: '5'
   units: 'HOURS'
@@ -104,6 +101,9 @@ linux_ppc-64_cmprssptrs_le:
       11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -149,6 +149,9 @@ linux_390-64_cmprssptrs:
       11: 'CC=gcc-7 CXX=g++-7'
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -215,6 +218,9 @@ linux_x86-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -252,6 +258,10 @@ linux_x86-64_cmprssptrs_cmake:
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-cmake --disable-ddr'
@@ -300,6 +310,9 @@ linux_x86-64:
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-noncompressedrefs'
@@ -386,6 +399,9 @@ osx_x86-64_cmprssptrs:
     11: 'macosx-x86_64-normal-server-release'
     12: 'macosx-x86_64-server-release'
     next: 'macosx-x86_64-server-release'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -414,6 +430,9 @@ osx_x86-64:
     11: 'macosx-x86_64-normal-server-release'
     12: 'macosx-x86_64-server-release'
     next: 'macosx-x86_64-server-release'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
