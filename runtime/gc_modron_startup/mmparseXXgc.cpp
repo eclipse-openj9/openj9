@@ -1151,6 +1151,32 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+		if (try_scan(&scan_start, "fvtest_enableReadBarrierVerification=")) {
+			extensions->fvtest_enableReadBarrierVerification = 0;
+
+			char * pattern = scan_to_delim(PORTLIB, &scan_start, ',');
+
+			if (true == ('0' != pattern[4])) {
+				extensions->fvtest_enableHeapReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			if (true == ('0' !=  pattern[3])) {
+				extensions->fvtest_enableClassStaticsReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			if (true == ('0' != pattern[2])){
+				extensions->fvtest_enableMonitorObjectsReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			if (true == ('0' != pattern[1])) {
+				extensions->fvtest_enableJNIGlobalWeakReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			continue;
+		}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+
 		if (try_scan(&scan_start, "fvtest_forceReferenceChainWalkerMarkMapCommitFailure=")) {
 			if(!scan_udata_helper(vm, &scan_start, &(extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailure), "fvtest_forceReferenceChainWalkerMarkMapCommitFailure=")) {
 				returnValue = JNI_EINVAL;

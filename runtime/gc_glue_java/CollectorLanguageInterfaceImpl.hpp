@@ -94,6 +94,11 @@ public:
 	static MM_CollectorLanguageInterfaceImpl *newInstance(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);
 
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+	virtual void scavenger_poisonSlots(MM_EnvironmentBase *env);
+	virtual void scavenger_healSlots(MM_EnvironmentBase *env);
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+
 	static MM_CollectorLanguageInterfaceImpl *getInterface(MM_CollectorLanguageInterface *cli) { return (MM_CollectorLanguageInterfaceImpl *)cli; }
 
 
