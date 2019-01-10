@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3351,23 +3351,31 @@ void TR::CompilationInfo::stopCompilationThreads()
    releaseCompMonitor(vmThread);
    if (getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
-      getSequencingMonitor()->enter();
-      uint32_t seqNo = getCompReqSeqNo();
-      incCompReqSeqNo();
-      getSequencingMonitor()->exit();
-      JITaaSHelpers::ClassInfoTuple classTuple;
-      std::vector<TR_OpaqueClassBlock*> unloadedClasses;
-      std::string optionsStr;
-      std::string recompMethodInfoStr;
-      std::string detailsStr;
-      J9Class *clazz = NULL;
-      J9Method *ramMethod = NULL;
-      uint32_t romMethodOffset = 0;
-      JITaaS::J9ClientStream client(getPersistentInfo());
-      client.buildCompileRequest(getPersistentInfo()->getJITaaSId(), romMethodOffset,
+      try
+         {
+         getSequencingMonitor()->enter();
+         uint32_t seqNo = getCompReqSeqNo();
+         incCompReqSeqNo();
+         getSequencingMonitor()->exit();
+         JITaaSHelpers::ClassInfoTuple classTuple;
+         std::vector<TR_OpaqueClassBlock*> unloadedClasses;
+         std::string optionsStr;
+         std::string recompMethodInfoStr;
+         std::string detailsStr;
+         J9Class *clazz = NULL;
+         J9Method *ramMethod = NULL;
+         uint32_t romMethodOffset = 0;
+         JITaaS::J9ClientStream client(getPersistentInfo());
+         client.buildCompileRequest(getPersistentInfo()->getJITaaSId(), romMethodOffset,
                      ramMethod, clazz, cold, detailsStr, J9::EMPTY,
                      unloadedClasses, classTuple, optionsStr, recompMethodInfoStr, seqNo);
-
+         }
+      catch (const JITaaS::StreamFailure &e)
+         {
+         // catch the stream failure exception if the server dies before the dummy message is send for termination.
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure (server died before the termination message send): %s", e.what());
+         }
       }
    }
 
