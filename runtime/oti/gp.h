@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,13 +24,8 @@
 #define gp_h
 
 struct J9SigContext;
-#ifdef WIN32_IBMC
-typedef uintptr_t (* protected_fn)(void *);
-typedef void (* handler_fn)(uintptr_t gpType, void *gpInfo, void *userData, struct J9SigContext *gpContext);
-#else
 typedef uintptr_t (*protected_fn)(void *);
 typedef void (*handler_fn)(uintptr_t gpType, void *gpInfo, void *userData, struct J9SigContext *gpContext);
-#endif
 
 #define J9PrimErrGPF 0
 #define J9PrimErrGPFInvalidRead 1
