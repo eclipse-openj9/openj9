@@ -32,6 +32,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "modron.h"
 
 #include "Bits.hpp"
@@ -93,7 +94,7 @@ public:
 	 */
 	MMINLINE static bool usesSharedITable(J9JavaVM *javaVM, J9Class *clazzPtr)
 	{
-		return (clazzPtr->romClass->modifiers & J9_JAVA_CLASS_ARRAY) && (clazzPtr != javaVM->booleanArrayClass);
+		return (clazzPtr->romClass->modifiers & J9AccClassArray) && (clazzPtr != javaVM->booleanArrayClass);
 	}
 
 	/**

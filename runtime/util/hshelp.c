@@ -31,6 +31,7 @@
 #include "j9comp.h"
 #include "vmaccess.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "rommeth.h"
 #include "j9port.h"
 #include "j9cp.h"
@@ -942,7 +943,7 @@ findMethodInVTable(J9Method *method, UDATA *vTable)
 		J9Method *vTableMethod = vTableMethods[searchIndex];
 		J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableMethod);
 
-		if (vTableRomMethod->modifiers & J9_JAVA_PUBLIC) {
+		if (vTableRomMethod->modifiers & J9AccPublic) {
 			if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(J9_CLASS_FROM_METHOD(method)->romClass, J9_CLASS_FROM_METHOD(vTableRomMethod)->romClass, romMethod, vTableRomMethod)) {
 				return searchIndex;
 			}
@@ -1643,7 +1644,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 				case J9CPTYPE_CLASS:
 					if (((J9RAMClassRef *) ramConstantPool)[i].value != NULL) {
 						J9Class * klass = ((J9RAMClassRef *) ramConstantPool)[i].value;
-						if (J9CLASS_FLAGS(klass) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) {
+						if (J9CLASS_FLAGS(klass) & J9AccClassHotSwappedOut) {
 							J9JVMTIClassPair exemplar;
 							J9JVMTIClassPair * result;
 							exemplar.originalRAMClass = ((J9RAMClassRef *) ramConstantPool)[i].value;
@@ -2421,8 +2422,8 @@ outOfMemory:
 		replacementRAMClass->replacedClass = originalRAMClass;
 
 		/* Preserve externally set class flag (by the jit) */
-		if (J9CLASS_FLAGS(originalRAMClass) & J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN) {
-			replacementRAMClass->classDepthAndFlags |= J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
+		if (J9CLASS_FLAGS(originalRAMClass) & J9AccClassHasBeenOverridden) {
+			replacementRAMClass->classDepthAndFlags |= J9AccClassHasBeenOverridden;
 		}
 
 		/* Replace the class in all classloaders */

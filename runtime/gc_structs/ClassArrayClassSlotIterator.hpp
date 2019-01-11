@@ -32,6 +32,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "modron.h"
 
 /** 
@@ -54,7 +55,7 @@ class GC_ClassArrayClassSlotIterator
 public:
 	GC_ClassArrayClassSlotIterator(J9Class *clazz) :
 		_iterateClazz(clazz),
-		_isArrayClass((clazz->romClass->modifiers & J9_JAVA_CLASS_ARRAY) != 0),
+		_isArrayClass((clazz->romClass->modifiers & J9AccClassArray) != 0),
 		_state(classArrayClassSlotIterator_state_arrayClass)
 	{};
 

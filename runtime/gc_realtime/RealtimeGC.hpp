@@ -30,6 +30,7 @@
 #define REALTIMEGC_HPP_
 
 #include "j9.h"
+#include "j9nonbuilder.h"
 #include "j9cfg.h"
 #include "modronopt.h"
 
@@ -138,7 +139,7 @@ protected:
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	/**
 	 * Perform initial cleanup for classloader unloading.  The current thread has exclusive access.
-	 * The J9_JAVA_CLASS_DYING bit is set and J9HOOK_VM_CLASS_UNLOAD is triggered for each class that will be unloaded.
+	 * The J9AccClassDying bit is set and J9HOOK_VM_CLASS_UNLOAD is triggered for each class that will be unloaded.
 	 * The J9_GC_CLASS_LOADER_DEAD bit is set for each class loader that will be unloaded.
 	 * J9HOOK_VM_CLASSES_UNLOAD is triggered if any classes will be unloaded.
 	 * 

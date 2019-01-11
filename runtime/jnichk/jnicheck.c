@@ -26,6 +26,7 @@
 #include "vmaccess.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "j9protos.h"
 #include "rommeth.h"
 #include "j9cp.h"
@@ -1492,7 +1493,7 @@ static void jniCheckValidClass(JNIEnv* env, const char* function, UDATA argNum, 
 		exitVM(vmThread);
 	}
 
-	if (classDepthAndFlags & J9_JAVA_CLASS_HOT_SWAPPED_OUT) {
+	if (classDepthAndFlags & J9AccClassHotSwappedOut) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_OBSOLETE_CLASS, function, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 	}
@@ -2255,7 +2256,7 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 		}
 	}
 
-	if ( ((romMethod->modifiers & J9_JAVA_STATIC) == J9_JAVA_STATIC) != (methodType == METHOD_STATIC) ) {
+	if ( ((romMethod->modifiers & J9AccStatic) == J9AccStatic) != (methodType == METHOD_STATIC) ) {
 		if (methodType == METHOD_STATIC) {
 			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_IS_NOT_STATIC, function);
 		} else {

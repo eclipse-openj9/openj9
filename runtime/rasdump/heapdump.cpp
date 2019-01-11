@@ -23,6 +23,7 @@
 /* Includes */
 #include <string.h>
 #include "j9protos.h"
+#include "j9nonbuilder.h"
 #include "j2sever.h"
 #include "HeapIteratorAPI.h"
 #include "j9dmpnls.h"
@@ -1905,12 +1906,12 @@ BinaryHeapDumpWriter::writeArrayObjectRecord(J9MM_IterateObjectDescriptor* objec
 void
 BinaryHeapDumpWriter::writeClassRecord(J9Class *currentClass)
 {
-	if (J9CLASS_FLAGS(currentClass) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) {
+	if (J9CLASS_FLAGS(currentClass) & J9AccClassHotSwappedOut) {
 		/* Skip classes which have been redefined */
 		return;
 	}
 	
-	if (J9CLASS_FLAGS(currentClass) & J9_JAVA_CLASS_DYING) {
+	if (J9CLASS_FLAGS(currentClass) & J9AccClassDying) {
 		/* Skip classes which are dying */
 		return;
 	}

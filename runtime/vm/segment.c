@@ -28,6 +28,7 @@
 #include "j9cfg.h"
 #include "j9port.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "segment.h"
@@ -536,7 +537,7 @@ allLiveClassesNextDo(J9ClassWalkState* state)
 		if (clazzPtr != NULL) {
 			J9ClassLoader *classLoader = clazzPtr->classLoader;
 			if ((J9_GC_CLASS_LOADER_DEAD == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD))
-					|| (J9_JAVA_CLASS_DYING == (J9CLASS_FLAGS(clazzPtr) & J9_JAVA_CLASS_DYING))
+					|| (J9AccClassDying == (J9CLASS_FLAGS(clazzPtr) & J9AccClassDying))
 					|| (needCheckInGC && (0 == vm->memoryManagerFunctions->j9gc_objaccess_checkClassLive(vm, clazzPtr))))
 			{
 				/* class is not alive */

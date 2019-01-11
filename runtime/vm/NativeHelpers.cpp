@@ -22,6 +22,7 @@
 
 #include "j9protos.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "j9port.h"
 #include "vm_internal.h"
 #include "ut_j9vm.h"
@@ -90,7 +91,7 @@ cInterpGetStackClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState 
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) == J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) {
+	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
@@ -99,7 +100,7 @@ cInterpGetStackClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState 
 	case 1:
 		/* Caller must be annotated with @sun.reflect.CallerSensitive annotation */
 		if (((vm->systemClassLoader != currentClass->classLoader) && (vm->extensionClassLoader != currentClass->classLoader))
-				|| J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9_JAVA_METHOD_CALLER_SENSITIVE)
+				|| J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodCallerSensitive)
 		) {
 			walkState->userData3 = (void *) TRUE;
 			return J9_STACKWALK_STOP_ITERATING;

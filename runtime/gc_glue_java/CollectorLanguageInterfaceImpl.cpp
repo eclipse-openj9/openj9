@@ -24,6 +24,7 @@
 #include "CollectorLanguageInterfaceImpl.hpp"
 
 #include "j9nongenerated.h"
+#include "j9nonbuilder.h"
 #include "mmhook.h"
 #include "mmomrhook_internal.h"
 #include "mmprivatehook.h"
@@ -307,15 +308,15 @@ MM_CollectorLanguageInterfaceImpl::scavenger_getObjectScanner(MM_EnvironmentStan
 
 			J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr);
 			UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-			UDATA referenceObjectType = J9CLASS_FLAGS(clazzPtr) & J9_JAVA_CLASS_REFERENCE_MASK;
+			UDATA referenceObjectType = J9CLASS_FLAGS(clazzPtr) & J9AccClassReferenceMask;
 			switch (referenceObjectType) {
-			case J9_JAVA_CLASS_REFERENCE_WEAK:
+			case J9AccClassReferenceWeak:
 				referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
 				if (!referentMustBeCleared && shouldScavengeReferenceObject && !_scavenger_shouldScavengeWeakReferenceObjects) {
 					_scavenger_shouldScavengeWeakReferenceObjects = true;
 				}
 				break;
-			case J9_JAVA_CLASS_REFERENCE_SOFT:
+			case J9AccClassReferenceSoft:
 				referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 				referentMustBeMarked = referentMustBeMarked || ((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
 					&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())
@@ -324,7 +325,7 @@ MM_CollectorLanguageInterfaceImpl::scavenger_getObjectScanner(MM_EnvironmentStan
 					_scavenger_shouldScavengeSoftReferenceObjects = true;
 				}
 				break;
-			case J9_JAVA_CLASS_REFERENCE_PHANTOM:
+			case J9AccClassReferencePhantom:
 				referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
 				if (!referentMustBeCleared && shouldScavengeReferenceObject && !_scavenger_shouldScavengePhantomReferenceObjects) {
 					_scavenger_shouldScavengePhantomReferenceObjects = true;
@@ -550,7 +551,7 @@ MM_CollectorLanguageInterfaceImpl::scavenger_reverseForwardedObject(MM_Environme
 		/* If the object states are mismatched, the reference object was removed from the reference list.
 		 * This is a non-reversable operation. Adjust the state of the original object and its referent field.
 		 */
-		if ((J9CLASS_FLAGS(forwardedClass) & J9_JAVA_CLASS_REFERENCE_MASK)) {
+		if ((J9CLASS_FLAGS(forwardedClass) & J9AccClassReferenceMask)) {
 			I_32 forwadedReferenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, fwdObjectPtr);
 			J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr) = forwadedReferenceState;
 			GC_SlotObject referentSlotObject(_omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, fwdObjectPtr));

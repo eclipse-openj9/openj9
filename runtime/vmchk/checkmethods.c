@@ -28,6 +28,7 @@
 #include "j9.h"
 #include "j9port.h"
 #include "rommeth.h"
+#include "j9nonbuilder.h"
 #include "vmcheck.h"
 
 /*
@@ -78,7 +79,7 @@ verifyClassMethods(J9JavaVM *vm, J9Class *clazz)
 {
 	J9ROMClass *romClass = (J9ROMClass *)DBG_ARROW(clazz, romClass);
 	UDATA romClassModifiers = (UDATA)DBG_ARROW(romClass, modifiers);
-	BOOLEAN isInterfaceClass = (J9_JAVA_INTERFACE == (romClassModifiers & J9_JAVA_INTERFACE));
+	BOOLEAN isInterfaceClass = (J9AccInterface == (romClassModifiers & J9AccInterface));
 	J9ConstantPool *ramConstantPool = (J9ConstantPool *)DBG_ARROW(clazz, ramConstantPool);
 	U_32 methodCount = (U_32)DBG_ARROW(romClass, romMethodCount);
 	J9Method *methods = (J9Method *)DBG_ARROW(clazz, ramMethods);

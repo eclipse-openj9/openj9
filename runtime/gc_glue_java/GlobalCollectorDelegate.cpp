@@ -24,6 +24,7 @@
 #include "j9cfg.h"
 #include "j9consts.h"
 #include "j9nonbuilder.h"
+#include "j9nonbuilder.h"
 #include "j9nongenerated.h"
 #include "mmprivatehook.h"
 #include "ModronAssertions.h"
@@ -71,7 +72,7 @@ fixObjectIfClassDying(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region
 {
 	/* Check to see if the object's class is being unloaded. If so, it can't be left as dark matter so abandon it */
 	uintptr_t classFlags = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object));
-	if (0 != (classFlags & J9_JAVA_CLASS_DYING)) {
+	if (0 != (classFlags & J9AccClassDying)) {
 		MM_MemorySubSpace *memorySubSpace = region->getSubSpace();
 		uintptr_t deadObjectByteSize = MM_GCExtensions::getExtensions(omrVMThread)->objectModel.getConsumedSizeInBytesWithHeader(object);
 		memorySubSpace->abandonHeapChunk(object, ((U_8*)object) + deadObjectByteSize);

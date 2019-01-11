@@ -23,6 +23,7 @@
 
 #include "j9cfg.h"
 #include "j9.h"
+#include "j9nonbuilder.h"
 #include "modronopt.h"
 
 #include "RegionBasedOverflowVLHGC.hpp"
@@ -195,15 +196,15 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 
 				bool referentMustBeCleared = false;
 				UDATA referenceObjectOptions = envVLHGC->_cycleState->_referenceObjectOptions;
-				UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK;
+				UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
 				switch (referenceObjectType) {
-				case J9_JAVA_CLASS_REFERENCE_WEAK:
+				case J9AccClassReferenceWeak:
 					referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak)) ;
 					break;
-				case J9_JAVA_CLASS_REFERENCE_SOFT:
+				case J9AccClassReferenceSoft:
 					referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 					break;
-				case J9_JAVA_CLASS_REFERENCE_PHANTOM:
+				case J9AccClassReferencePhantom:
 					referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
 					break;
 				default:

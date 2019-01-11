@@ -25,6 +25,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "thrdsup.h"
 #include "thrtypes.h"
 #include "arm/codegen/ARMInstruction.hpp"
@@ -151,7 +152,7 @@ static TR::Instruction *genTestIsSuper(TR::CodeGenerator *cg,
                                       TR::LabelSymbol    *doneLabel)
    {
    uint32_t base, rotate;
-   uint32_t shiftAmount      = leadingZeroes(J9_JAVA_CLASS_DEPTH_MASK);
+   uint32_t shiftAmount      = leadingZeroes(J9AccClassDepthMask);
    int32_t  superClassOffset = castClassDepth << 2;
    bool     outOfBound       = (superClassOffset > UPPER_IMMED12 || superClassOffset < LOWER_IMMED12);
    bool     regDepth         = !constantIsImmed8r(castClassDepth, &base, &rotate);

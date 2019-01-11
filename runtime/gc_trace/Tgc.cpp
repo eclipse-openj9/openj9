@@ -30,6 +30,7 @@
 #include "TgcExtensions.hpp"
 
 #include "j9consts.h"
+#include "j9nonbuilder.h"
 #include "j9port.h"
 #include "j9protos.h"
 #include "modronopt.h"
@@ -468,7 +469,7 @@ tgcPrintClass(J9JavaVM *javaVM, J9Class* clazz)
 
 	/* TODO: In Sov, if the class is char[], the string is printed instead of the class name */
 	romClass = clazz->romClass;
-	if(romClass->modifiers & J9_JAVA_CLASS_ARRAY) {
+	if(romClass->modifiers & J9AccClassArray) {
 		J9ArrayClass* arrayClass = (J9ArrayClass*) clazz;
 		UDATA arity = arrayClass->arity;
 		utf = J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass);

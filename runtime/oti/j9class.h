@@ -33,7 +33,7 @@ typedef struct J9ClassLoadingConstraint {
 } J9ClassLoadingConstraint;
 
 #define J9CLASS_FLAGS(clazz) ((UDATA)(clazz)->classDepthAndFlags)
-#define J9CLASS_DEPTH(clazz) (((UDATA)(clazz)->classDepthAndFlags) & J9_JAVA_CLASS_DEPTH_MASK)
+#define J9CLASS_DEPTH(clazz) (((UDATA)(clazz)->classDepthAndFlags) & J9AccClassDepthMask)
 #define J9CLASS_EXTENDED_FLAGS(clazz) ((clazz)->classFlags)
 #define J9CLASS_EXTENDED_FLAGS_SET(clazz, bits) ((clazz)->classFlags |= (bits))
 #define J9CLASS_EXTENDED_FLAGS_CLEAR(clazz, bits) ((clazz)->classFlags &= ~(bits))

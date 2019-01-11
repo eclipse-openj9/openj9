@@ -25,6 +25,7 @@
 #include "j9protos.h"
 #include "j9consts.h"
 #include "j9cp.h"
+#include "j9nonbuilder.h"
 #include "rommeth.h"
 #include "jilconsts.h"
 #include "jitprotos.h"
@@ -1000,7 +1001,7 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 		UDATA resolveFrameType = walkState->resolveFrameFlags & J9_STACK_FLAGS_JIT_FRAME_SUB_TYPE_MASK;
 		switch(resolveFrameType) {
 		case J9_STACK_FLAGS_JIT_STACK_OVERFLOW_RESOLVE_FRAME:
-			if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9_JAVA_SYNC)) {
+			if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccNative)) {
 				Trc_Decomp_addDecompilation_beforeSyncMonitorEnter(currentThread);
 				*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileBeforeMethodMonitorEnter);
 				break;

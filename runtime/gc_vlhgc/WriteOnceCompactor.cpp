@@ -28,6 +28,7 @@
 
 #include "j9cfg.h"
 #include "j9.h"
+#include "j9nonbuilder.h"
 #include "ModronAssertions.h"
 #include "AllocateDescription.hpp"
 #include "AllocationContextTarok.hpp"
@@ -1224,7 +1225,7 @@ MM_WriteOnceCompactor::fixupClassObject(MM_EnvironmentVLHGC* env, J9Object *clas
 
 		do {
 			Assert_MM_mustBeClass(classPtr);
-			Assert_MM_true(0 == (J9CLASS_FLAGS(classPtr) & J9_JAVA_CLASS_DYING));
+			Assert_MM_true(0 == (J9CLASS_FLAGS(classPtr) & J9AccClassDying));
 
 			/*
 			 * Scan J9Class internals using general iterator
@@ -2743,7 +2744,7 @@ MM_WriteOnceCompactor::rememberClassLoaders(MM_EnvironmentVLHGC *env)
 					GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 					J9Class *clazz = NULL;
 					while(NULL != (clazz = classHeapIterator.nextClass())) {
-						Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9_JAVA_CLASS_DYING));
+						Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9AccClassDying));
 						Assert_MM_true(!J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassGCScanned));
 						J9Object* classObject = clazz->classObject;
 						Assert_MM_true(NULL != classObject);
@@ -2784,7 +2785,7 @@ MM_WriteOnceCompactor::rebuildNextMarkMapFromClassLoaders(MM_EnvironmentVLHGC *e
 					GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 					J9Class *clazz = NULL;
 					while(NULL != (clazz = classHeapIterator.nextClass())) {
-						Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9_JAVA_CLASS_DYING));
+						Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9AccClassDying));
 						if(J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassGCScanned)) {
 							J9Object* classObject = clazz->classObject;
 							Assert_MM_true(NULL != classObject);

@@ -26,6 +26,7 @@
 
 #include "j9.h"
 #include "j9cfg.h"
+#include "j9nonbuilder.h"
 
 #include "BaseVirtual.hpp"
 
@@ -59,7 +60,7 @@ private:
 	/**
 	 * Determine the type (weak/soft/phantom) of the specified reference object.
 	 * @param object[in] the object to examine
-	 * @return one of J9_JAVA_CLASS_REFERENCE_WEAK, J9_JAVA_CLASS_REFERENCE_SOFT or J9_JAVA_CLASS_REFERENCE_PHANTOM
+	 * @return one of J9AccClassReferenceWeak, J9AccClassReferenceSoft or J9AccClassReferencePhantom
 	 */
 	UDATA getReferenceObjectType(j9object_t object);
 	

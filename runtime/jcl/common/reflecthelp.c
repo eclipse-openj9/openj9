@@ -23,6 +23,7 @@
 
 #include "j2sever.h"
 #include "j9.h"
+#include "j9nonbuilder.h"
 #include "j9comp.h"
 #include "omrgcconsts.h"
 #include "j9port.h"
@@ -68,7 +69,7 @@ static UDATA
 isConstructor(J9Method *ramMethod)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	return (0 == (romMethod->modifiers & J9_JAVA_STATIC)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod))[0]);
+	return (0 == (romMethod->modifiers & J9AccStatic)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod))[0]);
 }
 
 /*

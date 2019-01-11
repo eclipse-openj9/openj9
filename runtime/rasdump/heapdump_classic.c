@@ -25,6 +25,7 @@
 #include "j9dmpnls.h"
 #include "j2sever.h"
 #include "HeapIteratorAPI.h"
+#include "j9nonbuilder.h"
 
 struct J9RASDumpdumpStats {
 	J9MM_IterateRegionDescriptor *regionDescriptor;
@@ -289,8 +290,8 @@ writeClasses(J9RASHeapdumpContext *ctx)
 	
 	while (clazz) {
 		/* Ignore redefined and dying classes */
-		if (!(J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_HOT_SWAPPED_OUT)
-		 && !(J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_DYING)) {
+		if (!(J9CLASS_FLAGS(clazz) & J9AccClassHotSwappedOut)
+		 && !(J9CLASS_FLAGS(clazz) & J9AccClassDying)) {
 			j9object_t currentObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 			
 			if (J9VM_IS_INITIALIZED_HEAPCLASS_VM(vm, currentObject)) {

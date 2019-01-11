@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
+#include "j9nonbuilder.h"
 #include "bcnames.h"
 #include "pcstack.h"
 #include "cfr.h"
@@ -902,7 +903,7 @@ jvmtiIsMethodObsolete(jvmtiEnv* env,
 	ENSURE_JMETHODID_NON_NULL(method);
 	ENSURE_NON_NULL(is_obsolete_ptr);
 
-	rv_is_obsolete = (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method)) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) ? JNI_TRUE : JNI_FALSE;
+	rv_is_obsolete = (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method)) & J9AccClassHotSwappedOut) ? JNI_TRUE : JNI_FALSE;
 	rc = JVMTI_ERROR_NONE;
 
 done:
