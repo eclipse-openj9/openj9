@@ -36,6 +36,7 @@ com.ibm.jvmti.tests
 
 # Visual Studio
 /.vs
+/.vscode
 
 # IntelliJ CLion
 /.idea
