@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1241,29 +1241,26 @@ interpreterUnresolvedStaticGlue:
       ;
       mov         rax, qword [rsp]                          ; p1) rax = RA in mainline code
       mov         rsi, qword [rdi+12]                       ; p2) rsi = cpAddr
-                                                            ; 12 = 5 + 5 (call update) + 2 (DW)
+                                                            ;        12 = 5 + 5 (call update) + 2 (DW)
       mov         edx, dword [rdi+20]                       ; p3) rdx = cpIndex
-                                                            ; 20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
-      CallHelperUseReg jitResolveStaticMethod,rax
+                                                            ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
+      call        jitResolveStaticMethod
+      lea         rsi, [rdi+5]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
+      push        rsi                                       ; The RET will mispredict anyway so we can get away with pushing 
+                                                            ; the adjusted RA back on the stack.
 
       ; The interpreter may low-tag the result to avoid populating the constant pool--whack it.
       ;
       and         rax, -2
 
-mergeInterpreterUnresolvedDispatch:
+      ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
+      mov         rdi, rax
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
       ;
-      lea         rdi, [rdi-5]                              ; Adjust the return address to re-run the patched
-      push        rdi                                       ; instruction. The RET will mispredict anyway so we
-                                                            ; can get away with pushing the adjusted RA back on
-                                                            ; the stack.
-      rol         rax, 16
-      mov         ax, 0bf48h                                ; REX+MOV bytes
-
-      mov         qword [rdi], rax
-      ret
-
+      shl         rax, 16
+      xor         rax, 0bf48h                               ; REX+MOV bytes
+      mov         qword [rsi-10], rax
 ret
 
 
@@ -1275,12 +1272,22 @@ interpreterUnresolvedSpecialGlue:
       ;
       mov         rax, qword [rsp]                          ; p1) rax = RA in mainline code
       mov         rsi, qword [rdi+12]                       ; p2) rsi = cpAddr
-                                                            ; 12 = 5 + 5 (call update) + 2 (DW)
+                                                            ;        12 = 5 + 5 (call update) + 2 (DW)
       mov         edx, dword [rdi+20]                       ; p3) rdx = cpIndex
-                                                            ; 20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
-      CallHelperUseReg jitResolveSpecialMethod,rax
-      jmp         mergeInterpreterUnresolvedDispatch
+                                                            ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
+      call        jitResolveSpecialMethod
+      lea         rsi, [rdi+5]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
+      push        rsi                                       ; The RET will mispredict anyway so we can get away with pushing 
+                                                            ; the adjusted RA back on the stack.
 
+      ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
+      mov         rdi, rax
+
+      ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
+      ;
+      shl         rax, 16
+      xor         rax, 0bf48h                               ; REX+MOV bytes
+      mov         qword [rsi-10], rax
 ret
 
 
