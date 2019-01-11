@@ -1283,35 +1283,35 @@ extern J9_CFUNC UDATA  dropPendingSendPushes (J9VMThread *currentThread);
 /* J9VMJavaInterpreterStartup*/
 #ifndef _J9VMJAVAINTERPRETERSTARTUP_
 #define _J9VMJAVAINTERPRETERSTARTUP_
-extern J9_CFUNC void  JNICALL cleanUpAttachedThread (J9VMThread *vmContext, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4);
-extern J9_CFUNC void  JNICALL handleUncaughtException (J9VMThread *vmContext, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4);
-extern J9_CFUNC void  JNICALL sidecarInvokeReflectMethod (J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef, void *unused);
-extern J9_CFUNC void  JNICALL sidecarInvokeReflectMethodImpl (J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef, void *unused);
-extern J9_CFUNC void  JNICALL sendInit (J9VMThread *vmContext, j9object_t object, J9Class *senderClass, UDATA lookupOptions, UDATA reserved0);
-extern J9_CFUNC void  JNICALL printStackTrace (J9VMThread *vmContext, j9object_t exception, UDATA reserved1, UDATA reserved2, UDATA reserved3);
-extern J9_CFUNC void  JNICALL sendLoadClass (J9VMThread *vmContext, j9object_t classLoaderObject, j9object_t classNameObject, UDATA reserved1, UDATA reserved2);
-extern J9_CFUNC void  JNICALL runJavaThread (J9VMThread *vmContext, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4);
-extern J9_CFUNC void  JNICALL sendCompleteInitialization (J9VMThread *vmContext, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4);
-extern J9_CFUNC void  JNICALL sendClinit (J9VMThread *vmContext, J9Class *clazz, UDATA reserved1, UDATA reserved2, UDATA reserved3);
-extern J9_CFUNC void  JNICALL sendInitializationAlreadyFailed (J9VMThread *vmContext, J9Class *clazz, UDATA reserved1, UDATA reserved2, UDATA reserved3);
-extern J9_CFUNC void  JNICALL sendRecordInitializationFailure (J9VMThread *vmContext, J9Class *clazz, j9object_t throwable, UDATA reserved2, UDATA reserved3);
+extern J9_CFUNC void  JNICALL cleanUpAttachedThread (J9VMThread *vmContext);
+extern J9_CFUNC void  JNICALL handleUncaughtException (J9VMThread *vmContext);
+extern J9_CFUNC void  JNICALL sidecarInvokeReflectMethod (J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef);
+extern J9_CFUNC void  JNICALL sidecarInvokeReflectMethodImpl (J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef);
+extern J9_CFUNC void  JNICALL sendInit (J9VMThread *vmContext, j9object_t object, J9Class *senderClass, UDATA lookupOptions);
+extern J9_CFUNC void  JNICALL printStackTrace (J9VMThread *vmContext, j9object_t exception);
+extern J9_CFUNC void  JNICALL sendLoadClass (J9VMThread *vmContext, j9object_t classLoaderObject, j9object_t classNameObject);
+extern J9_CFUNC void  JNICALL runJavaThread (J9VMThread *vmContext);
+extern J9_CFUNC void  JNICALL sendCompleteInitialization (J9VMThread *vmContext);
+extern J9_CFUNC void  JNICALL sendClinit (J9VMThread *vmContext, J9Class *clazz);
+extern J9_CFUNC void  JNICALL sendInitializationAlreadyFailed (J9VMThread *vmContext, J9Class *clazz);
+extern J9_CFUNC void  JNICALL sendRecordInitializationFailure (J9VMThread *vmContext, J9Class *clazz, j9object_t throwable);
 extern J9_CFUNC void  JNICALL runCallInMethod (JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID, void* args);
 extern J9_CFUNC void  JNICALL internalSendExceptionConstructor (J9VMThread *vmContext, J9Class *exceptionClass, j9object_t exception, j9object_t detailMessage, UDATA constructorIndex);
-extern J9_CFUNC void  JNICALL sendInitCause (J9VMThread *vmContext, j9object_t receiver, j9object_t cause, UDATA reserved4, UDATA reserved5);
+extern J9_CFUNC void  JNICALL sendInitCause (J9VMThread *vmContext, j9object_t receiver, j9object_t cause);
 extern J9_CFUNC void  JNICALL initializeAttachedThread (J9VMThread *vmContext, const char *name, j9object_t *group, UDATA daemon, J9VMThread *initializee);
 extern J9_CFUNC void  JNICALL initializeAttachedThreadImpl (J9VMThread *vmContext, const char *name, j9object_t *group, UDATA daemon, J9VMThread *initializee);
 extern J9_CFUNC void  JNICALL runStaticMethod (J9VMThread *vmContext, U_8* className, J9NameAndSignature* selector, UDATA argCount, UDATA* arguments);
 extern J9_CFUNC void  JNICALL internalRunStaticMethod (J9VMThread *vmContext, J9Method *method, BOOLEAN returnsObject, UDATA argCount, UDATA* arguments);
-extern J9_CFUNC void  JNICALL sendCheckPackageAccess (J9VMThread *vmContext, J9Class * clazz, j9object_t protectionDomain, UDATA reserved1, UDATA reserved2);
-extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructor (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef, void *unused);
-extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructorImpl (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef, void *unused);
-extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4);
+extern J9_CFUNC void  JNICALL sendCheckPackageAccess (J9VMThread *vmContext, J9Class * clazz, j9object_t protectionDomain);
+extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructor (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef);
+extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructorImpl (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef);
+extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType);
 extern J9_CFUNC void  JNICALL sendResolveMethodHandle (J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig);
-extern J9_CFUNC void  JNICALL sendForGenericInvoke (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4);
+extern J9_CFUNC void  JNICALL sendForGenericInvoke (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg);
 extern J9_CFUNC void  JNICALL sendResolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL sendResolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
-extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock, UDATA reserved1, UDATA reserved2, UDATA reserved3);
-extern J9_CFUNC void  JNICALL sendRunThread(J9VMThread *vmContext, j9object_t tenantContext, UDATA reserved1, UDATA reserved2, UDATA reserved3);
+extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock);
+extern J9_CFUNC void  JNICALL sendRunThread(J9VMThread *vmContext, j9object_t tenantContext);
 #endif /* _J9VMJAVAINTERPRETERSTARTUP_ */
 
 /* J9VMNativeHelpersLarge*/

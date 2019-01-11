@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -649,7 +649,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 		J9JavaVM * vm = vmThread->javaVM;
 
 		Trc_VM_internalFindClass_sendLoadClass(vmThread, classNameLength, className, classNameString, classLoader->classLoaderObject);
-		sendLoadClass(vmThread, classLoader->classLoaderObject, classNameString, 0, 0);
+		sendLoadClass(vmThread, classLoader->classLoaderObject, classNameString);
 		sendLoadClassResult = (j9object_t) vmThread->returnValue;
 		if (NULL == sendLoadClassResult) {
 			j9object_t exception;
