@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,7 @@ extern "C" UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void* sigIn
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
 extern "C" void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList);
+extern "C" void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason);
 #endif
 
 extern "C" void jitMethodBreakpointed(J9VMThread * currentThread, J9Method *j9method);
@@ -479,6 +480,7 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    jitConfig->jitClassesRedefined = jitClassesRedefined;
+   jitConfig->jitFlushCompilationQueue = jitFlushCompilationQueue;
 #endif
    jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
    jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;

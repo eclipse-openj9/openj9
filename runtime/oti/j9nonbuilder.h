@@ -337,6 +337,11 @@
 #define J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR -5
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
+typedef enum {
+	J9FlushCompQueueDataBreakpoint
+} J9JITFlushCompilationQueueReason;
+
+
 /* Forward struct declarations. */
 struct DgRasInterface;
 struct J9AnnotationInfo;
@@ -3618,6 +3623,7 @@ typedef struct J9JITConfig {
 	struct J9JITDecompilationInfo*  ( *jitAddDecompilationForFramePop)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
 	void  ( *jitHotswapOccurred)(struct J9VMThread * currentThread) ;
 	void  ( *jitClassesRedefined)(struct J9VMThread * currentThread, UDATA classCount, struct J9JITRedefinedClass * classList) ;
+	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
 	void  ( *j9jit_printf)(void *voidConfig, char *format, ...) ;
@@ -3963,6 +3969,7 @@ typedef struct J9AOTConfig {
 	struct J9JITDecompilationInfo*  ( *jitAddDecompilationForFramePop)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
 	void  ( *jitHotswapOccurred)(struct J9VMThread * currentThread) ;
 	void  ( *jitClassesRedefined)(struct J9VMThread * currentThread, UDATA classCount, struct J9JITRedefinedClass * classList) ;
+	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
 	void  ( *j9jit_printf)(void *voidConfig, char *format, ...) ;
