@@ -1928,30 +1928,29 @@ J9::TransformUtil::createDiamondForCall(TR::Optimization* opt, TR::TreeTop *call
 void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
    {
    TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
+   TR_ASSERT(comp->supportsInduceOSR() && comp->isOSRTransitionTarget(TR::postExecutionOSR) && comp->getOSRMode() == TR::voluntaryOSR,
+             "removePotentialOSRPointHelperCalls only works in certain modes");
 
    TR::TreeTop* ttAfterEnd = end->getNextTreeTop();
+   TR::TreeTop *tt = start;
 
-   if (comp->getOption(TR_EnableOSR) &&
-       comp->isOSRTransitionTarget(TR::postExecutionOSR) &&
-       comp->getOSRMode() == TR::voluntaryOSR)
+   do
       {
-      TR::TreeTop *tt = start;
-      do
+      TR::Node *osrNode = NULL;
+      if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
          {
-         TR::Node *osrNode = NULL;
-         if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
+         if (osrNode->isPotentialOSRPointHelperCall())
             {
-            if (osrNode->isPotentialOSRPointHelperCall())
-               {
-               dumpOptDetails(comp, "Remove tt n%dn with potential osr point %p n%dn\n", tt->getNode()->getGlobalIndex(), osrNode, osrNode->getGlobalIndex());
-               TR::TreeTop* prevTT = tt->getPrevTreeTop();
-               TR::TransformUtil::removeTree(comp, tt);
-               tt = prevTT;
-               }
+            dumpOptDetails(comp, "Remove tt n%dn with potential osr point %p n%dn\n", tt->getNode()->getGlobalIndex(), osrNode, osrNode->getGlobalIndex());
+            TR::TreeTop* prevTT = tt->getPrevTreeTop();
+            TR::TransformUtil::removeTree(comp, tt);
+            tt = prevTT;
             }
-         tt = tt->getNextTreeTop();
-         } while (tt != ttAfterEnd);
+         }
+      tt = tt->getNextTreeTop();
       }
+   while (tt != ttAfterEnd);
+
    }
 
 /** \brief
@@ -1973,24 +1972,24 @@ void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp
 void J9::TransformUtil::prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
    {
    TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
+   TR_ASSERT(comp->supportsInduceOSR() && comp->isOSRTransitionTarget(TR::postExecutionOSR) && comp->getOSRMode() == TR::voluntaryOSR,
+             "prohibitOSROverRange only works in certain modes");
 
    TR::TreeTop* ttAfterEnd = end->getNextTreeTop();
+   TR::TreeTop *tt = start;
 
-   if (comp->getOption(TR_EnableOSR) &&
-       comp->isOSRTransitionTarget(TR::postExecutionOSR) &&
-       comp->getOSRMode() == TR::voluntaryOSR)
+   do
       {
-      TR::TreeTop *tt = start;
-      do
+      TR::Node *osrNode = NULL;
+      if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
          {
-         TR::Node *osrNode = NULL;
-         if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
-            {
-            dumpOptDetails(comp, "Can no longer OSR at [%p] n%dn\n", osrNode, osrNode->getGlobalIndex());
-            osrNode->getByteCodeInfo().setDoNotProfile(true);
-            }
-         tt = tt->getNextTreeTop();
-         } while (tt != ttAfterEnd);
+         dumpOptDetails(comp, "Can no longer OSR at [%p] n%dn\n", osrNode, osrNode->getGlobalIndex());
+         // Record the prohibition so other opts are aware of the existence of dangerous region
+         comp->setOSRProhibitedOverRangeOfTrees();
+         osrNode->getByteCodeInfo().setDoNotProfile(true);
+         }
+      tt = tt->getNextTreeTop();
       }
-   }
+   while (tt != ttAfterEnd);
 
+   }

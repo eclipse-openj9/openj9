@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,8 @@ class ValuePropagation : public OMR::ValuePropagation
  #endif
 
    virtual void constrainRecognizedMethod(TR::Node *node);
+   virtual bool transformDirectLoad(TR::Node *node);
+   bool tryFoldStaticFinalFieldAt(TR::TreeTop* tree, TR::Node* fieldNode);
    virtual void doDelayedTransformations();
    void transformCallToIconstWithHCRGuard(TR::TreeTop *callTree, int32_t result);
    void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true);
@@ -59,6 +61,8 @@ class ValuePropagation : public OMR::ValuePropagation
    virtual void getParmValues();
 
    private:
+
+   TR_YesNoMaybe safeToAddFearPointAt(TR::TreeTop* tt);
 
    struct TreeIntResultPair {
       TR_ALLOC(TR_Memory::ValuePropagation)
