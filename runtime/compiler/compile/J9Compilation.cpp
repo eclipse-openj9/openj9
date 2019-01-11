@@ -169,7 +169,8 @@ J9::Compilation::Compilation(int32_t id,
    _classForStaticFinalFieldModification(m),
    _profileInfo(NULL),
    _skippedJProfilingBlock(false),
-   _reloRuntime(reloRuntime)
+   _reloRuntime(reloRuntime),
+   _osrProhibitedOverRangeOfTrees(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 

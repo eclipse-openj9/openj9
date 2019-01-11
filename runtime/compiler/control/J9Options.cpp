@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1068,8 +1068,6 @@ J9::Options::fePreProcess(void * base)
    #if defined(J9ZOS390)
       self()->setOption(TR_DisableTraps);
    #endif
-
-   self()->setOption(TR_DisableGuardedStaticFinalFieldFolding);
 
    if (self()->getOption(TR_AggressiveOpts))
       self()->setOption(TR_DontDowngradeToCold, true);

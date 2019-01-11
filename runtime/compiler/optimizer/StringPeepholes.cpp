@@ -332,8 +332,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
             TR::TreeTop *newTree = detectPattern(block, tt, true);
             if (newTree)
                {
-               TR::TransformUtil::removePotentialOSRPointHelperCalls(comp(), prevTree->getNextTreeTop(), newTree);
-               TR::TransformUtil::prohibitOSROverRange(comp(), prevTree->getNextTreeTop(), newTree);
+               postProcessTreesForOSR(prevTree->getNextTreeTop(), newTree);
                tt = newTree;
                }
             }
@@ -346,8 +345,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
             TR::TreeTop *newTree = detectPattern(block, tt, false);
             if (newTree)
                {
-               TR::TransformUtil::removePotentialOSRPointHelperCalls(comp(), prevTree->getNextTreeTop(), newTree);
-               TR::TransformUtil::prohibitOSROverRange(comp(), prevTree->getNextTreeTop(), newTree);
+               postProcessTreesForOSR(prevTree->getNextTreeTop(), newTree);
                tt = newTree;
                }
             }
@@ -449,8 +447,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
             TR::TreeTop *newTree = detectBDPattern(tt, exit, node);
             if (newTree)
                {
-               TR::TransformUtil::removePotentialOSRPointHelperCalls(comp(), prevTree->getNextTreeTop(), newTree);
-               TR::TransformUtil::prohibitOSROverRange(comp(), prevTree->getNextTreeTop(), newTree);
+               postProcessTreesForOSR(prevTree->getNextTreeTop(), newTree);
                tt = newTree;
                }
             }
@@ -471,8 +468,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
             TR::TreeTop *newTree = detectSubMulSetScalePattern(tt, exit, callNode);
             if (newTree)
                {
-               TR::TransformUtil::removePotentialOSRPointHelperCalls(comp(), prevTree->getNextTreeTop(), newTree);
-               TR::TransformUtil::prohibitOSROverRange(comp(), prevTree->getNextTreeTop(), newTree);
+               postProcessTreesForOSR(prevTree->getNextTreeTop(), newTree);
                tt = newTree;
                }
             }
@@ -2328,3 +2324,20 @@ TR::TreeTop *TR_StringPeepholes::searchForToStringCall(TR::TreeTop *tt, TR::Tree
    return tt;
    }
 
+void TR_StringPeepholes::postProcessTreesForOSR(TR::TreeTop *startTree, TR::TreeTop *endTree)
+   {
+   if (comp()->supportsInduceOSR() &&
+       comp()->isOSRTransitionTarget(TR::postExecutionOSR) &&
+       comp()->getOSRMode() == TR::voluntaryOSR)
+      {
+      if (trace())
+         {
+         TR::Node* startNode = startTree->getNode();
+         TR::Node* endNode = endTree->getNode();
+         traceMsg(comp(), "Post process Trees from %p n%dn to %p n%dn for OSR\n", startNode, startNode->getGlobalIndex(), endNode, endNode->getGlobalIndex());
+         }
+
+      TR::TransformUtil::removePotentialOSRPointHelperCalls(comp(), startTree, endTree);
+      TR::TransformUtil::prohibitOSROverRange(comp(), startTree, endTree);
+      }
+   }

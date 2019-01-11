@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,21 @@ static bool hasHCRGuard(TR::Compilation *comp)
       {
       if ((*itr)->getKind() == TR_HCRGuard || (*itr)->mergedWithHCRGuard())
          return true;
+      }
+
+   return false;
+   }
+
+static bool hasOSRFearPoint(TR::Compilation *comp)
+   {
+   for (TR::TreeTop *treeTop = comp->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
+      {
+      TR::Node *ttNode = treeTop->getNode();
+      if (ttNode->getNumChildren() == 1 &&
+          ttNode->getFirstChild()->isOSRFearPointHelperCall())
+         {
+         return true;
+         }
       }
 
    return false;
@@ -156,6 +171,11 @@ void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGua
          continue;
          }
       }
+
+   if (trace())
+      {
+      comp()->dumpMethodTrees("Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
+      }
    }
 
 static bool skipOSRGuardInsertion(TR::Compilation* comp)
@@ -183,9 +203,12 @@ static bool skipOSRGuardInsertion(TR::Compilation* comp)
 int32_t TR_OSRGuardInsertion::perform()
    {
    bool needHCRGuardRemoval = hasHCRGuard(comp());
+   bool hasFearPoint = hasOSRFearPoint(comp());
    bool canInsertOSRGuards = !skipOSRGuardInsertion(comp());
 
-   if (canInsertOSRGuards && needHCRGuardRemoval)
+   TR_ASSERT_FATAL(!hasFearPoint || canInsertOSRGuards, "Fear point exists without OSR protection");
+
+   if (canInsertOSRGuards && (needHCRGuardRemoval || hasFearPoint))
       {
       bool hasPotentialOSRPointWithoutSupport = hasUnsupportedPotentialOSRPoint(comp(), trace());
       bool requiresAnalysis = hasPotentialOSRPointWithoutSupport;
@@ -205,31 +228,31 @@ int32_t TR_OSRGuardInsertion::perform()
       TR_HCRGuardAnalysis *guardAnalysis = requiresAnalysis ? new (comp()->allocator()) TR_HCRGuardAnalysis(comp(), optimizer(), structure) : NULL;
       TR_BitVector fearGeneratingNodes(comp()->getNodeCount(), trMemory(), stackAlloc);
 
+      if (hasPotentialOSRPointWithoutSupport)
+         {
+         // Redudant potentialOSRPointHelper calls may result in more OSR guards than needed
+         //
+         removeRedundantPotentialOSRPointHelperCalls(guardAnalysis);
+         }
+      else
+         {
+         // There is no gen, all helper calls are redundant.
+         //
+         cleanUpPotentialOSRPointHelperCalls();
+         }
+
       // Handle fear nodes for HCR guards, branch to slow path might be removed
       //
-      removeHCRGuards(fearGeneratingNodes, guardAnalysis);
+      if (needHCRGuardRemoval)
+         removeHCRGuards(fearGeneratingNodes, guardAnalysis);
 
+      if (hasFearPoint)
+         collectFearFromOSRFearPointHelperCalls(fearGeneratingNodes, guardAnalysis);
 
       // Future fear generating optimizations
       //
       if (!fearGeneratingNodes.isEmpty())
          {
-         // Redudant potentialOSRPointHelper calls may result in more OSR guards than needed
-         //
-         if (hasPotentialOSRPointWithoutSupport)
-            removeRedundantPotentialOSRPointHelperCalls(guardAnalysis);
-         else
-            {
-            // There is no gen, all helper calls are redundant.
-            //
-            cleanUpPotentialOSRPointHelperCalls();
-            }
-
-         if (trace())
-            {
-            comp()->dumpMethodTrees("Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
-            }
-
          insertOSRGuards(fearGeneratingNodes);
          }
       else
@@ -243,6 +266,7 @@ int32_t TR_OSRGuardInsertion::perform()
    // Must be done
    //
    cleanUpPotentialOSRPointHelperCalls();
+   cleanUpOSRFearPoints();
 
    return 0;
    }
@@ -418,7 +442,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
       if (cursor->getNode()->getOpCodeValue() == TR::BBEnd)
          {
          block = cursor->getNode()->getBlock();
-         if (fearAnalysis.shouldSkipBlock(block))
+         if (block->isOSRCatchBlock() || block->isOSRCodeBlock())
             {
             cursor = block->getEntry();
             continue;
@@ -840,6 +864,83 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
             store->getFirstChild()->getOpCode().getName()));
          TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardRemat/Failed/(%s)",
             store->getFirstChild()->getOpCode().getName()), storeTree, 1, TR::DebugCounter::Expensive);
+         }
+      }
+   }
+
+void TR_OSRGuardInsertion::collectFearFromOSRFearPointHelperCalls(TR_BitVector &fearGeneratingNodes, TR_HCRGuardAnalysis* guardAnalysis)
+   {
+   bool protectedByOSRPoints = false;
+   TR::NodeChecklist visited(comp());
+
+   for (TR::TreeTop *treeTop = comp()->getStartTree();
+        treeTop;
+        treeTop = treeTop->getNextRealTreeTop())
+      {
+      TR::Node *ttNode = treeTop->getNode();
+
+      if (ttNode->getOpCodeValue() == TR::BBStart)
+         {
+         TR::Block* block = treeTop->getEnclosingBlock();
+         protectedByOSRPoints = !guardAnalysis || guardAnalysis->_blockAnalysisInfo[block->getNumber()]->isEmpty();
+         continue;
+         }
+
+      TR::Node *osrNode = NULL;
+      if (comp()->isPotentialOSRPoint(ttNode, &osrNode))
+         {
+         if (visited.contains(osrNode))
+            continue;
+
+         if (comp()->isPotentialOSRPointWithSupport(treeTop))
+            {
+            if (!protectedByOSRPoints && trace())
+               traceMsg(comp(), "treetop n%dn is an OSR point with support\n", ttNode->getGlobalIndex());
+            protectedByOSRPoints = true;
+            }
+         else
+            {
+            if (protectedByOSRPoints && trace())
+               traceMsg(comp(), "treetop n%dn is an OSR point without support\n", ttNode->getGlobalIndex());
+            protectedByOSRPoints = false;
+            }
+         visited.add(osrNode);
+         continue;
+         }
+
+      if (ttNode->getNumChildren() == 0)
+         continue;
+
+      TR::Node *node = ttNode->getFirstChild();
+      if (node &&
+          node->isOSRFearPointHelperCall())
+         {
+         static char *assertOnFearPointWithoutProtection = feGetEnv("TR_AssertOnFearPointWithoutProtection");
+         if (assertOnFearPointWithoutProtection)
+            {
+            TR_ASSERT_FATAL(protectedByOSRPoints, "A fear point node %p n%dn [%d,%d] is reached by unsupported potential OSR point\n",
+               node, node->getGlobalIndex(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeIndex());
+            }
+
+         fearGeneratingNodes.set(ttNode->getGlobalIndex());
+         }
+      }
+   }
+
+void TR_OSRGuardInsertion::cleanUpOSRFearPoints()
+   {
+   for (TR::TreeTop *treeTop = comp()->getStartTree();
+        treeTop;
+        treeTop = treeTop->getNextRealTreeTop())
+      {
+      TR::Node *ttNode = treeTop->getNode();
+      if (ttNode->getNumChildren() == 1 &&
+          ttNode->getFirstChild()->isOSRFearPointHelperCall())
+         {
+         dumpOptDetails(comp(), "Remove osrFearPointHelper call n%dn %p\n", ttNode->getGlobalIndex(), ttNode);
+         TR::TreeTop* prevTree = treeTop->getPrevTreeTop();
+         TR::TransformUtil::removeTree(comp(), treeTop);
+         treeTop = prevTree;
          }
       }
    }
