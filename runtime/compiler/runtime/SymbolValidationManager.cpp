@@ -44,6 +44,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _symbolValidationRecords(_region),
+     _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region)
@@ -184,13 +185,7 @@ TR::SymbolValidationManager::abandonRecord(TR::SymbolValidationRecord *record)
 bool
 TR::SymbolValidationManager::recordExists(TR::SymbolValidationRecord *record)
    {
-   for (auto it = _symbolValidationRecords.begin(); it != _symbolValidationRecords.end(); it++)
-      {
-      if ((*it)->_kind == record->_kind && record->isEqual(*it))
-         return true;
-      }
-
-   return false;
+   return _alreadyGeneratedRecords.find(record) != _alreadyGeneratedRecords.end();
    }
 
 void
@@ -204,6 +199,7 @@ TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationR
       _symbolToIdMap.insert(std::make_pair(symbol, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
+   _alreadyGeneratedRecords.insert(record);
 
    record->printFields();
    traceMsg(_comp, "\tkind=%d\n", record->_kind);
@@ -353,6 +349,7 @@ TR::SymbolValidationManager::addMethodRecord(TR_OpaqueMethodBlock *method, Symbo
 
    traceMsg(TR::comp(), "Forget the most recent record\n");
    _symbolValidationRecords.pop_front();
+   _alreadyGeneratedRecords.erase(record);
    _region.deallocate(record);
 
    if (_symbolID != oldNextID)
@@ -465,6 +462,16 @@ TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *
    // can pass either class as the symbol because neither will get a fresh ID
    SVM_ASSERT_ALREADY_VALIDATED(this, classOne);
    SVM_ASSERT_ALREADY_VALIDATED(this, classTwo);
+
+   // Skip creating a record when the subtyping relationship between the two
+   // classes is known in advance.
+   if (classOne == classTwo // classOne <: classTwo
+      || _fej9->isJavaLangObject(classTwo) // classOne <: classTwo
+      || _fej9->isJavaLangObject(classOne)) // !(classOne <: classTwo)
+      return true;
+
+   // Not using addClassRecord() because this doesn't define a class symbol. We
+   // can pass either class as the symbol because neither will get a fresh ID
    return addVanillaRecord(classOne, new (_region) ClassInstanceOfClassRecord(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed, isInstanceOf));
    }
 
@@ -1129,6 +1136,52 @@ static void printClass(TR_OpaqueClassBlock *clazz)
       }
    }
 
+namespace // file-local
+   {
+   class LexicalOrder
+      {
+      enum Result
+         {
+         LESS,
+         EQUAL,
+         GREATER,
+         };
+
+      public:
+      LexicalOrder() : _result(EQUAL) { }
+      LexicalOrder(const LexicalOrder &other) : _result(other._result) { }
+
+      static LexicalOrder by(void *a, void *b) { return LexicalOrder().thenBy(a, b); }
+      static LexicalOrder by(uintptr_t a, uintptr_t b) { return LexicalOrder().thenBy(a, b); }
+
+      LexicalOrder &thenBy(void *a, void *b)
+         {
+         if (_result == EQUAL)
+            _result = a == b ? EQUAL : ::std::less<void*>()(a, b) ? LESS : GREATER;
+         return *this;
+         }
+
+      LexicalOrder &thenBy(uintptr_t a, uintptr_t b)
+         {
+         if (_result == EQUAL)
+            _result = a == b ? EQUAL : a < b ? LESS : GREATER;
+         return *this;
+         }
+
+      bool less() const { return _result == LESS; }
+
+      private:
+      Result _result;
+      };
+   }
+
+bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassByNameRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder).less();
+   }
+
 void TR::ClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassByNameRecord\n");
@@ -1136,6 +1189,13 @@ void TR::ClassByNameRecord::printFields()
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
+   }
+
+bool TR::ProfiledClassRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ProfiledClassRecord *rhs = downcast(this, other);
+   // Don't compare _classChain - it's determined by _class
+   return LexicalOrder::by(_class, rhs->_class).less();
    }
 
 void TR::ProfiledClassRecord::printFields()
@@ -1146,6 +1206,14 @@ void TR::ProfiledClassRecord::printFields()
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
    }
 
+bool TR::ClassFromCPRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::ClassFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassFromCPRecord\n");
@@ -1154,6 +1222,16 @@ void TR::ClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::DefiningClassFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::DefiningClassFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex)
+      .thenBy(_isStatic, rhs->_isStatic).less();
    }
 
 void TR::DefiningClassFromCPRecord::printFields()
@@ -1167,6 +1245,15 @@ void TR::DefiningClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_isStatic=%s\n", (_isStatic ? "true" : "false"));
    }
 
+bool TR::StaticClassFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::StaticClassFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::StaticClassFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "StaticClassFromCPRecord\n");
@@ -1177,12 +1264,28 @@ void TR::StaticClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::ClassFromMethodRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassFromMethodRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_method, rhs->_method).less();
+   }
+
 void TR::ClassFromMethodRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassFromMethodRecord\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
+   }
+
+bool TR::ComponentClassFromArrayClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ComponentClassFromArrayClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_componentClass, rhs->_componentClass)
+      .thenBy(_arrayClass, rhs->_arrayClass).less();
    }
 
 void TR::ComponentClassFromArrayClassRecord::printFields()
@@ -1194,6 +1297,14 @@ void TR::ComponentClassFromArrayClassRecord::printFields()
    printClass(_arrayClass);
    }
 
+bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ArrayClassFromComponentClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_arrayClass, rhs->_arrayClass)
+      .thenBy(_componentClass, rhs->_componentClass).less();
+   }
+
 void TR::ArrayClassFromComponentClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ArrayClassFromComponentClassRecord\n");
@@ -1203,6 +1314,14 @@ void TR::ArrayClassFromComponentClassRecord::printFields()
    printClass(_componentClass);
    }
 
+bool TR::SuperClassFromClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::SuperClassFromClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_superClass, rhs->_superClass)
+      .thenBy(_childClass, rhs->_childClass).less();
+   }
+
 void TR::SuperClassFromClassRecord::printFields()
    {
    traceMsg(TR::comp(), "SuperClassFromClassRecord\n");
@@ -1210,6 +1329,17 @@ void TR::SuperClassFromClassRecord::printFields()
    printClass(_superClass);
    traceMsg(TR::comp(), "\t_childClass=0x%p\n", _childClass);
    printClass(_childClass);
+   }
+
+bool TR::ClassInstanceOfClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassInstanceOfClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_classOne, rhs->_classOne)
+      .thenBy(_classTwo, rhs->_classTwo)
+      .thenBy(_objectTypeIsFixed, rhs->_objectTypeIsFixed)
+      .thenBy(_castTypeIsFixed, rhs->_castTypeIsFixed)
+      .thenBy(_isInstanceOf, rhs->_isInstanceOf).less();
    }
 
 void TR::ClassInstanceOfClassRecord::printFields()
@@ -1224,11 +1354,26 @@ void TR::ClassInstanceOfClassRecord::printFields()
    traceMsg(TR::comp(), "\t_isInstanceOf=%s\n", _isInstanceOf ? "true" : "false");
    }
 
+bool TR::SystemClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::SystemClassByNameRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_systemClass, rhs->_systemClass).less();
+   }
+
 void TR::SystemClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "SystemClassByNameRecord\n");
    traceMsg(TR::comp(), "\t_systemClass=0x%p\n", _systemClass);
    printClass(_systemClass);
+   }
+
+bool TR::ClassFromITableIndexCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassFromITableIndexCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::ClassFromITableIndexCPRecord::printFields()
@@ -1241,6 +1386,15 @@ void TR::ClassFromITableIndexCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::DeclaringClassFromFieldOrStaticRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::DeclaringClassFromFieldOrStaticRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    {
    traceMsg(TR::comp(), "DeclaringClassFromFieldOrStaticRecord\n");
@@ -1249,6 +1403,13 @@ void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::ClassClassRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_classClass, rhs->_classClass)
+      .thenBy(_objectClass, rhs->_objectClass).less();
    }
 
 void TR::ClassClassRecord::printFields()
@@ -1260,11 +1421,26 @@ void TR::ClassClassRecord::printFields()
    printClass(_objectClass);
    }
 
+bool TR::ConcreteSubClassFromClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ConcreteSubClassFromClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_childClass, rhs->_childClass)
+      .thenBy(_superClass, rhs->_superClass).less();
+   }
+
 void TR::ConcreteSubClassFromClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ConcreteSubClassFromClassRecord\n");
    traceMsg(TR::comp(), "\t_childClass=0x%p\n", _childClass);
    traceMsg(TR::comp(), "\t_superClass=0x%p\n", _superClass);
+   }
+
+bool TR::ClassChainRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassChainRecord *rhs = downcast(this, other);
+   // Don't compare _classChain - it's determined by _class
+   return LexicalOrder::by(_class, rhs->_class).less();
    }
 
 void TR::ClassChainRecord::printFields()
@@ -1273,6 +1449,15 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   }
+
+bool TR::MethodFromClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_index, rhs->_index).less();
    }
 
 void TR::MethodFromClassRecord::printFields()
@@ -1284,6 +1469,15 @@ void TR::MethodFromClassRecord::printFields()
    traceMsg(TR::comp(), "\t_index=%u\n", _index);
    }
 
+bool TR::StaticMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::StaticMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::StaticMethodFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "StaticMethodFromCPRecord\n");
@@ -1291,6 +1485,15 @@ void TR::StaticMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::SpecialMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::SpecialMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::SpecialMethodFromCPRecord::printFields()
@@ -1302,6 +1505,15 @@ void TR::SpecialMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::VirtualMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::VirtualMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::VirtualMethodFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "VirtualMethodFromCPRecord\n");
@@ -1309,6 +1521,16 @@ void TR::VirtualMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::VirtualMethodFromOffsetRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::VirtualMethodFromOffsetRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_virtualCallOffset, rhs->_virtualCallOffset)
+      .thenBy(_ignoreRtResolve, rhs->_ignoreRtResolve).less();
    }
 
 void TR::VirtualMethodFromOffsetRecord::printFields()
@@ -1319,6 +1541,16 @@ void TR::VirtualMethodFromOffsetRecord::printFields()
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_virtualCallOffset=%d\n", _virtualCallOffset);
    traceMsg(TR::comp(), "\t_ignoreRtResolve=%s\n", _ignoreRtResolve ? "true" : "false");
+   }
+
+bool TR::InterfaceMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::InterfaceMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_lookup, rhs->_lookup)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::InterfaceMethodFromCPRecord::printFields()
@@ -1332,6 +1564,15 @@ void TR::InterfaceMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::MethodFromClassAndSigRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromClassAndSigRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_methodClass, rhs->_methodClass)
+      .thenBy(_beholder, rhs->_beholder).less();
+   }
+
 void TR::MethodFromClassAndSigRecord::printFields()
    {
    traceMsg(TR::comp(), "MethodFromClassAndSigRecord\n");
@@ -1340,6 +1581,15 @@ void TR::MethodFromClassAndSigRecord::printFields()
    printClass(_methodClass);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
+   }
+
+bool TR::StackWalkerMaySkipFramesRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::StackWalkerMaySkipFramesRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_methodClass, rhs->_methodClass)
+      .thenBy(_skipFrames, rhs->_skipFrames).less();
    }
 
 void TR::StackWalkerMaySkipFramesRecord::printFields()
@@ -1351,12 +1601,32 @@ void TR::StackWalkerMaySkipFramesRecord::printFields()
    traceMsg(TR::comp(), "\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
    }
 
+bool TR::ClassInfoIsInitialized::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassInfoIsInitialized *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_isInitialized, rhs->_isInitialized).less();
+   }
+
 void TR::ClassInfoIsInitialized::printFields()
    {
    traceMsg(TR::comp(), "ClassInfoIsInitialized\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_isInitialized=%sp\n", _isInitialized ? "true" : "false");
+   }
+
+bool TR::MethodFromSingleImplementer::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromSingleImplementer *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_thisClass, rhs->_thisClass)
+      .thenBy(_cpIndexOrVftSlot, rhs->_cpIndexOrVftSlot)
+      .thenBy(_callerMethod, rhs->_callerMethod)
+      .thenBy(_useGetResolvedInterfaceMethod, rhs->_useGetResolvedInterfaceMethod)
+      .less();
    }
 
 void TR::MethodFromSingleImplementer::printFields()
@@ -1370,6 +1640,16 @@ void TR::MethodFromSingleImplementer::printFields()
    traceMsg(TR::comp(), "\t_useGetResolvedInterfaceMethod=%d\n", _useGetResolvedInterfaceMethod);
    }
 
+bool TR::MethodFromSingleInterfaceImplementer::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromSingleInterfaceImplementer *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_thisClass, rhs->_thisClass)
+      .thenBy(_cpIndex, rhs->_cpIndex)
+      .thenBy(_callerMethod, rhs->_callerMethod).less();
+   }
+
 void TR::MethodFromSingleInterfaceImplementer::printFields()
    {
    traceMsg(TR::comp(), "MethodFromSingleInterfaceImplementer\n");
@@ -1380,6 +1660,16 @@ void TR::MethodFromSingleInterfaceImplementer::printFields()
    traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
    }
 
+bool TR::MethodFromSingleAbstractImplementer::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromSingleAbstractImplementer *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_thisClass, rhs->_thisClass)
+      .thenBy(_vftSlot, rhs->_vftSlot)
+      .thenBy(_callerMethod, rhs->_callerMethod).less();
+   }
+
 void TR::MethodFromSingleAbstractImplementer::printFields()
    {
    traceMsg(TR::comp(), "MethodFromSingleAbstractImplementer\n");
@@ -1388,6 +1678,15 @@ void TR::MethodFromSingleAbstractImplementer::printFields()
    printClass(_thisClass);
    traceMsg(TR::comp(), "\t_vftSlot=%d\n", _vftSlot);
    traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
+   }
+
+bool TR::ImproperInterfaceMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ImproperInterfaceMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::ImproperInterfaceMethodFromCPRecord::printFields()
