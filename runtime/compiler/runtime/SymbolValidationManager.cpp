@@ -465,6 +465,16 @@ TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *
    // can pass either class as the symbol because neither will get a fresh ID
    SVM_ASSERT_ALREADY_VALIDATED(this, classOne);
    SVM_ASSERT_ALREADY_VALIDATED(this, classTwo);
+
+   // Skip creating a record when the subtyping relationship between the two
+   // classes is known in advance.
+   if (classOne == classTwo // classOne <: classTwo
+      || _fej9->isJavaLangObject(classTwo) // classOne <: classTwo
+      || _fej9->isJavaLangObject(classOne)) // !(classOne <: classTwo)
+      return true;
+
+   // Not using addClassRecord() because this doesn't define a class symbol. We
+   // can pass either class as the symbol because neither will get a fresh ID
    return addVanillaRecord(classOne, new (_region) ClassInstanceOfClassRecord(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed, isInstanceOf));
    }
 
