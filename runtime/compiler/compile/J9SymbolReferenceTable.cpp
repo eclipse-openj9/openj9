@@ -1417,7 +1417,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
          TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
          if (declaringClass && fej9->isClassInitialized(declaringClass))
             {
-            static const char *dontFoldVarHandle = feGetEnv("TR_DontFoldVarHandle");
+            static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
             int32_t clazzNameLength = 0;
             char *clazzName = fej9->getClassNameChars(declaringClass, clazzNameLength);
             bool createKnownObject = false;
@@ -1426,7 +1426,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
                {
                createKnownObject = true;
                }
-            else if (!dontFoldVarHandle
+            else if (foldVarHandle
                      && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
                {
                TR_OpaqueClassBlock *varHandleClass =  fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
