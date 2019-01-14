@@ -109,6 +109,8 @@ TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
    TR_RelocationRecordBinaryTemplate *recordPointer = firstRecord(reloTarget);
    TR_RelocationRecordBinaryTemplate *endOfRecords = pastLastRecord(reloTarget);
 
+   TR_AOTStats *aotStats = reloRuntime->aotStats();
+
    while (recordPointer < endOfRecords)
       {
       TR_RelocationRecord storage;
@@ -117,7 +119,11 @@ TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
       TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, recordPointer);
       int32_t rc = handleRelocation(reloRuntime, reloTarget, reloRecord, reloOrigin);
       if (rc != 0)
+         {
+         uint8_t reloType = recordPointer->type(reloTarget);
+         aotStats->numRelocationsFailedByType[reloType]++;
          return rc;
+         }
 
       recordPointer = reloRecord->nextBinaryRecord(reloTarget);
       }
