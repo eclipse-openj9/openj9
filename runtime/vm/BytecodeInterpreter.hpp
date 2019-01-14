@@ -8584,7 +8584,7 @@ public:
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 252 */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 253 */
 		JUMP_TABLE_ENTRY(JBimpdep1), /* 254 */
-		JUMP_TABLE_ENTRY(JBimpdep2), /* 255 */
+		JUMP_TABLE_ENTRY(JBimpdep2),/* 255 */
 	};
 	static JUMP_TABLE_TYPE sendTargetTable[] = {
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
