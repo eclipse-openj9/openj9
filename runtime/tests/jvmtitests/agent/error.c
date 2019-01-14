@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -188,11 +188,7 @@ _error(agentEnv * env, jvmtiError err, agentErrorType errType, char *file, const
 	char errorMsg[JVMTI_TEST_ERROR_MSG_MAX];
 
 	va_start(args, format);
-#ifdef WIN32
-	_vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#else
 	vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#endif
 	va_end(args);
 
 	agentErr = __error(env, err, errType, file, fnname, line, errorMsg);
@@ -214,11 +210,7 @@ error(agentEnv * env, jvmtiError err, char * format, ...)
 
 	va_start(args, format);
 
-#if defined(WIN32_IBMC) || defined(J9ZOS390)
 	vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#else
-	_vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#endif
 
 	va_end(args);
 
@@ -241,11 +233,7 @@ softError(agentEnv * env, jvmtiError err, char * format, ...)
 
 	va_start(args, format);
 
-#if defined(WIN32_IBMC) || defined(J9ZOS390)
 	vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#else
-	_vsnprintf(errorMsg, JVMTI_TEST_ERROR_MSG_MAX, format, args);
-#endif
 
 	va_end(args);
 
