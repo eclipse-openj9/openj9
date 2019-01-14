@@ -36,7 +36,7 @@ $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 ifdef j9vm_uma_gnuDebugSymbols
 	cp $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
 endif
-	strip -X32_64 -r $(UMA_DLLTARGET)
+	strip -X32_64 $(UMA_DLLTARGET)
 </#assign>
 
 <#assign exe_target_rule>
