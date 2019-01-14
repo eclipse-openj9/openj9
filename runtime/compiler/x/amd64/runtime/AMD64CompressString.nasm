@@ -20,12 +20,7 @@
 
 %ifdef TR_HOST_64BIT
 %include "jilconsts.inc"
-
-%ifdef WINDOWS
-%include "x\amd64\runtime\AMD64CompressString_nasm.inc"
-%else
-%include "x/amd64/runtime/AMD64CompressString_nasm.inc"
-%endif
+%include "AMD64CompressString_nasm.inc"
 
 J9TR_ObjectColorBlack equ 03h
 

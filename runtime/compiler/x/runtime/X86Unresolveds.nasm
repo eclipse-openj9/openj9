@@ -32,12 +32,7 @@
       eq_offsetof_J9Object_clazz equ 8                            ; offset of class pointer in a J9Object
 
       %include "jilconsts.inc"
-
-%ifdef WINDOWS
-      %include "x\runtime\X86PicBuilder_nasm.inc"
-%else
-      %include "x/runtime/X86PicBuilder_nasm.inc"
-%endif
+      %include "X86PicBuilder_nasm.inc"
 
       segment .text
 
@@ -1118,12 +1113,7 @@ retn
 
 
       %include "jilconsts.inc"
-      
-%ifdef WINDOWS
-      %include "x\runtime\X86PicBuilder_nasm.inc"
-%else
-      %include "x/runtime/X86PicBuilder_nasm.inc"
-%endif
+      %include "X86PicBuilder_nasm.inc"
 
 %ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Object

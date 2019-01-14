@@ -29,12 +29,7 @@
       CPU PPRO
 
       %include "jilconsts.inc"
-      
-%ifdef WINDOWS
-      %include "x\runtime\X86PicBuilder_nasm.inc"
-%else
-      %include "x/runtime/X86PicBuilder_nasm.inc"
-%endif
+      %include "X86PicBuilder_nasm.inc"
 
       segment .text
 
@@ -1210,13 +1205,8 @@ ret                                                   ; branch will mispredict s
 ;
 ; --------------------------------------------------------------------------------
 
-%include "jilconsts.inc"
-
-%ifdef WINDOWS
-      %include "x\runtime\X86PicBuilder_nasm.inc"
-%else
-      %include "x/runtime/X86PicBuilder_nasm.inc"
-%endif
+      %include "jilconsts.inc"
+      %include "X86PicBuilder_nasm.inc"
 
 segment .text
 
