@@ -383,8 +383,8 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 			
-			final Class<?> definingClass = handle.getDefiningClass();
-			checkAccess(definingClass, definingClass, handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
+			/* VarHandles have no reference class */
+			checkAccess(handle.getDefiningClass(), null, handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
 		}
 		
 		void checkAccess(Class<?> clazz) throws IllegalAccessException {
@@ -406,7 +406,8 @@ public class MethodHandles {
 		 * Equivalent of visible.c checkVisibility();
 		 * 
 		 * @param definingClass The {@link Class} that defines the member being accessed.
-		 * @param referenceClass The {@link Class} class through which the the member is accessed, which may be a subtype of the defining class.
+		 * @param referenceClass The {@link Class} class through which the the member is accessed, 
+		 * which must be the defining class or a subtype.  May be null.
 		 * @param name The name of member being accessed.
 		 * @param memberModifiers The modifiers of the member being accessed.
 		 * @param handle A handle object (e.g. {@link MethodHandle} or {@link VarHandle}), if applicable.
@@ -418,6 +419,9 @@ public class MethodHandles {
 		 * @throws IllegalAccessError If a handle argument or return type is not accessible.
 		 */
 		private void checkAccess(Class<?> definingClass, Class<?> referenceClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
+			if (null == referenceClass) {
+				referenceClass = definingClass;
+			}
 			checkClassAccess(referenceClass);
 
 			/*[IF Sidecar19-SE]*/
