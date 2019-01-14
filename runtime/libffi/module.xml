@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2014, 2018 IBM Corp. and others
+Copyright (c) 2014, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 			<!-- override makefile default rule for building .S files on zLinux 31 bit-->
 			<makefilestub data="sysv.o : ASFLAGS=-z noexecstack -mzarch -march=z9-109 -m31">
-				<include-if condition="spec.linux_390" />
+				<include-if condition="spec.linux_390.* and not spec.flags.J9VM_ENV_DATA64" />
 			</makefilestub>
 
 			<!-- Build .S files on AIX -->
