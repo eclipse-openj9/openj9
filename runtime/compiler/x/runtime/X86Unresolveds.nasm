@@ -185,9 +185,12 @@ interpreterUnresolvedStaticGlue:
       push        edi                                       ; The RET will mispredict anyway so we can get away with pushing
                                                             ; the adjusted RA back on the stack.
 
-      ; The interpreter may low-tag the result to avoid populating the constant pool--whack it.
+      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
       ;
-      and         eax, -2
+      btr         eax, 0
+
+      ; Skip code patching if the interpreter low-tag the RAM mathod
+      jc          .fin
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
       ;
@@ -201,6 +204,7 @@ interpreterUnresolvedStaticGlue:
       movdqu      xmm0, [esp+8]
       add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
 
+   .fin:
       ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
       mov         edi, eax
       ret
