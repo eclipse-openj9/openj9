@@ -180,56 +180,29 @@ interpreterUnresolvedStaticGlue:
       push        dword  [edi+10]                           ; p2) cpAddr
                                                             ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
       push        dword  [esp+8]                            ; p1) RA in mainline code
-      CallHelperUseReg  jitResolveStaticMethod,eax
+      call        jitResolveStaticMethod
+      lea         edi, [edi+3]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
+      push        edi                                       ; The RET will mispredict anyway so we can get away with pushing
+                                                            ; the adjusted RA back on the stack.
 
       ; The interpreter may low-tag the result to avoid populating the constant pool--whack it.
       ;
       and         eax, -2
 
-      push        ebx                                       ; preserve
-      push        ecx                                       ; preserve
-
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
       ;
-      mov ebx, eax
-      MoveHelper eax, interpreterUnresolvedStaticGlue
+      sub         esp, 16
+      movdqu      [esp], xmm0
+      push        001f0f00h                                 ; NOP
+      push        000000bfh                                 ; 1st byte of MOV edi, 0xaabbccdd
+      mov         dword [esp+1], eax
+      movsd       xmm0, qword [esp]
+      movsd       qword [edi-8], xmm0
+      movdqu      xmm0, [esp+8]
+      add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
 
-mergeInterpreterUnresolvedDispatch:
-
-      ; Construct the call instruction in edx:eax that should have brought
-      ; us to this helper + the following 3 bytes.
-      ;
-      mov         edx, dword  [edi-1]                       ; edx = 3 bytes after the call to helper + high byte of disp32
-      mov         ecx, edx
-      sub         eax, edi                                  ; Expected disp32 for call to helper
-      rol         eax, 8
-      mov         dl, al                                    ; Copy high byte of calculated disp32 to expected word
-      mov         al, 0e8h                                  ; add CALL opcode
-
-      ; Construct the byte sequence in ecx:ebx to load the RAM method into edi
-      ;
-      rol         ebx, 8
-      mov         cl, bl
-      mov         bl, 0bfh
-
-      lea         edi, [edi-5]
-
-      ; Attempt to patch the code.
-      ;
-%ifdef WINDOWS
-      lock cmpxchg8b qword  [edi]
-%else
-      lock cmpxchg8b [edi]
-%endif
-
-      pop         ecx                                       ; restore
-      pop         ebx                                       ; restore
-
-      ; Adjust the return address to re-run the patched instruction.
-      ; The RET will mispredict anyway so we can get away with pushing
-      ; the adjusted RA back on the stack.
-      ;
-      push        edi
+      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      mov         edi, eax
       ret
 
 
@@ -242,17 +215,26 @@ interpreterUnresolvedSpecialGlue:
       push        dword  [edi+10]                           ; p2) cpAddr
                                                             ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
       push        dword  [esp+8]                            ; p1) RA in mainline code
-      CallHelperUseReg  jitResolveSpecialMethod,eax
+      call        jitResolveSpecialMethod
+      lea         edi, [edi+3]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
+      push        edi                                       ; The RET will mispredict anyway so we can get away with pushing
+                                                            ; the adjusted RA back on the stack.
 
-      push        ebx                                       ; preserve
-      push        ecx                                       ; preserve
+      ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
+      ;
+      sub         esp, 16
+      movdqu      [esp], xmm0
+      push        001f0f00h                                 ; NOP
+      push        000000bfh                                 ; 1st byte of MOV edi, 0xaabbccdd
+      mov         dword [esp+1], eax
+      movsd       xmm0, qword [esp]
+      movsd       qword [edi-8], xmm0
+      movdqu      xmm0, [esp+8]
+      add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
 
-      mov         ebx, eax
-      MoveHelper  eax, interpreterUnresolvedSpecialGlue
-
-      jmp         mergeInterpreterUnresolvedDispatch
-
-retn
+      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      mov         edi, eax
+      ret
 
 
 ; updateInterpreterDispatchGlueSite
