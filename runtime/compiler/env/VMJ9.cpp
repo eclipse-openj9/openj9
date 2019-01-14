@@ -1197,7 +1197,7 @@ UDATA TR_J9VMBase::getOffsetOfJ9IdentityHashDataHashSaltTable()     {return offs
 UDATA TR_J9VMBase::getJ9IdentityHashSaltPolicyStandard()            {return J9_IDENTITY_HASH_SALT_POLICY_STANDARD;}
 UDATA TR_J9VMBase::getJ9IdentityHashSaltPolicyRegion()              {return J9_IDENTITY_HASH_SALT_POLICY_REGION;}
 UDATA TR_J9VMBase::getJ9IdentityHashSaltPolicyNone()                {return J9_IDENTITY_HASH_SALT_POLICY_NONE;}
-UDATA TR_J9VMBase::getJ9JavaClassRamShapeShift()                    {return J9_JAVA_CLASS_RAM_SHAPE_SHIFT; }
+UDATA TR_J9VMBase::getJ9JavaClassRamShapeShift()                    {return J9AccClassRAMShapeShift; }
 UDATA TR_J9VMBase::getObjectHeaderShapeMask()                       {return OBJECT_HEADER_SHAPE_MASK; }
 
 UDATA TR_J9VMBase::getIdentityHashSaltPolicy()
@@ -1645,14 +1645,14 @@ UDATA TR_J9VMBase::constJNICallOutFrameFlagsOffset()                {return offs
 
 UDATA TR_J9VMBase::constJNIReferenceFrameAllocatedFlags()       {return J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS;}
 
-UDATA TR_J9VMBase::constClassFlagsPrimitive()   {return J9_JAVA_CLASS_PRIMITIVE_TYPE;}
-UDATA TR_J9VMBase::constClassFlagsAbstract()    {return J9_JAVA_ABSTRACT;}
-UDATA TR_J9VMBase::constClassFlagsFinal()       {return J9_JAVA_FINAL;}
-UDATA TR_J9VMBase::constClassFlagsPublic()      {return J9_JAVA_PUBLIC;}
+UDATA TR_J9VMBase::constClassFlagsPrimitive()   {return J9AccClassInternalPrimitiveType;}
+UDATA TR_J9VMBase::constClassFlagsAbstract()    {return J9AccAbstract;}
+UDATA TR_J9VMBase::constClassFlagsFinal()       {return J9AccFinal;}
+UDATA TR_J9VMBase::constClassFlagsPublic()      {return J9AccPublic;}
 
 int32_t TR_J9VMBase::getFlagValueForPrimitiveTypeCheck()        {return J9AccClassInternalPrimitiveType;}
 int32_t TR_J9VMBase::getFlagValueForArrayCheck()                {return J9AccClassArray;}
-int32_t TR_J9VMBase::getFlagValueForFinalizerCheck()            {return J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER;}
+int32_t TR_J9VMBase::getFlagValueForFinalizerCheck()            {return J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer;}
 
 
 UDATA TR_J9VMBase::getGCForwardingPointerOffset()               {
@@ -2340,7 +2340,7 @@ bool
 TR_J9VMBase::hasFinalFieldsInClass(TR_OpaqueClassBlock * clazz)
    {
    J9Class *clazzPtr = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-   return (clazzPtr->classDepthAndFlags & J9_JAVA_CLASS_HAS_FINAL_FIELDS)!=0;
+   return (clazzPtr->classDepthAndFlags & J9AccClassHasFinalFields)!=0;
    }
 
 static uint32_t offsetOfHotFields() { return offsetof(J9Class, instanceHotFieldDescription); }
@@ -4064,7 +4064,7 @@ TR_J9VMBase::compileMethods(TR::OptionSet *optionSet, void *config)
             {
             J9Method * method = &ramMethods[m];
 
-            if (!(romMethod->modifiers & (J9_JAVA_NATIVE | J9_JAVA_ABSTRACT))
+            if (!(romMethod->modifiers & (J9AccNative | J9AccAbstract))
                  && method != newInstanceThunk &&
                  !TR::CompilationInfo::isCompiled(method))
                {
@@ -6365,7 +6365,7 @@ bool
 TR_J9VMBase::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
    {
    J9Class* j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-   return ((J9CLASS_FLAGS(j9class) & J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER) != 0);
+   return ((J9CLASS_FLAGS(j9class) & J9AccClassOwnableSynchronizer) != 0);
    }
 
 const char *
@@ -6535,13 +6535,13 @@ TR_J9VM::isUnloadAssumptionRequired(TR_OpaqueClassBlock * clazzPointer, TR_Resol
 bool
 TR_J9VM::classHasBeenExtended(TR_OpaqueClassBlock * clazzPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9AccClassHasBeenOverridden) != 0;
    }
 
 bool
 TR_J9VM::classHasBeenReplaced(TR_OpaqueClassBlock * clazzPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9AccClassHotSwappedOut) != 0;
    }
 
 bool
@@ -6671,7 +6671,7 @@ TR_J9VM::isPublicClass(TR_OpaqueClassBlock * clazz)
 bool
 TR_J9VMBase::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER)) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)) != 0;
    }
 
 uintptrj_t

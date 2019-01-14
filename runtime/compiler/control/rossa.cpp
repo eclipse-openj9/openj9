@@ -792,7 +792,7 @@ internalCompileClass(J9VMThread * vmThread, J9Class * clazz)
    for (uint32_t m = 0; m < clazz->romClass->romMethodCount; m++)
       {
       J9Method * method = &ramMethods[m];
-      if (!(romMethod->modifiers & (J9_JAVA_NATIVE | J9_JAVA_ABSTRACT))
+      if (!(romMethod->modifiers & (J9AccNative | J9AccAbstract))
          && method != newInstanceThunk
          && !TR::CompilationInfo::isCompiled(method)
          && !fe->isThunkArchetype(method))
