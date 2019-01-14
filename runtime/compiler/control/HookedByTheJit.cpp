@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3019,6 +3019,43 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       TR::Options::getCmdLineOptions()->setOption(TR_MimicInterpreterFrameShape);
 
    reportHookFinished(currentThread, "jitClassesRedefined");
+   }
+
+void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason)
+   {
+   char *buffer = "unknown reason";
+   if (reason == J9FlushCompQueueDataBreakpoint)
+      buffer = "DataBreakpoint";
+   else
+      TR_ASSERT(0, "unexpected use of jitFlushCompilationQueue");
+
+   reportHook(currentThread, "jitFlushCompilationQueue ", buffer);
+
+   J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
+
+   // JIT compilation thread could be running without exclusive access so we need to explicitly stop it
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
+      {
+      TR::MonitorTable::get()->getClassUnloadMonitor()->enter_write();
+      }
+
+   // need to get the compilation lock before updating the queue
+   fe->acquireCompilationLock();
+   compInfo->setAllCompilationsShouldBeInterrupted();
+   reportHookDetail(currentThread, "jitFlushCompilationQueue", "  Invalidate all all compilation requests");
+   fe->invalidateCompilationRequestsForUnloadedMethods(NULL, true);
+   //clean up the trampolines
+   TR::CodeCacheManager::instance()->onFSDDecompile();
+   fe->releaseCompilationLock();
+
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
+      {
+      TR::MonitorTable::get()->getClassUnloadMonitor()->exit_write();
+      }
+
+   reportHookFinished(currentThread, "jitFlushCompilationQueue ", buffer);
    }
 
 #endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
