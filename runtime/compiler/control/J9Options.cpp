@@ -2312,6 +2312,12 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       self()->setOption(TR_DisableNextGenHCR);
       }
 
+#if !defined(TR_HOST_X86)
+   //The bit is set when -XX:+JITInlineWatches is specified
+   if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES))
+      TR_ASSERT_FATAL(false, "this platform doesn't support JIT inline field watch");
+#endif
+
    // GCR and JProfiling are disabled under FSD for a number of reasons
    // First, there is confusion between the VM and the JIT as to whether a call to jitRetranslateCallerWithPreparation is a decompilation point.
    // Having the JIT agree with the VM could not be done by simply marking the symbol canGCandReturn, as this would affect other parts of the JIT

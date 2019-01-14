@@ -7909,6 +7909,14 @@ TR::CompilationInfoPerThreadBase::compile(
          // GC can go ahead now.
          }
 
+      // The inlineFieldWatches flag is set when Field Watch is actually triggered at runtime.
+      // When it happens, all the methods on stack are decompiled and those in
+      // the compilation queue are invalidated. Set the option here to guarantee the
+      // mode is detected at the right moment so that all methods compiled after respect the
+      // data watch point.
+      if (_jitConfig->inlineFieldWatches)
+         compiler->setOption(TR_EnableFieldWatch);
+
       // Compile the method
       //
 
