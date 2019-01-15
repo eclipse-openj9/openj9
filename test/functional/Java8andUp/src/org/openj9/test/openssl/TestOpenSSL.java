@@ -24,7 +24,7 @@ package org.openj9.test.openssl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups={ "level.extended" })
+@Test(groups={ "level.sanity" })
 public class TestOpenSSL {	
 
 
