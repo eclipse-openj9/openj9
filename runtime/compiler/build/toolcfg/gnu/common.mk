@@ -178,8 +178,6 @@ endif
 
 ifeq ($(C_COMPILER),clang)
     CX_FLAGS+=-Wno-parentheses -Werror=header-guard
-else
-    CX_FLAGS+=-fno-rounding-math -fno-signaling-nans
 endif
 
 ifeq ($(BUILD_CONFIG),debug)
