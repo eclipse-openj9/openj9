@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -457,7 +457,7 @@ internalExceptionDescribe(J9VMThread * vmThread)
 
 		if (vm->runtimeFlags & J9_RUNTIME_INITIALIZED) {
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, exception);
-			printStackTrace(vmThread, exception, 0, 0, 0);
+			printStackTrace(vmThread, exception);
 			exception = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 			if (vmThread->currentException == NULL) {
 				goto done;

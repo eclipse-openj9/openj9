@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3035,7 +3035,7 @@ done:
 		} else {
 			pushObjectInSpecialFrame(REGISTER_ARGS, instance);
 			updateVMStruct(REGISTER_ARGS);
-			sendInit(_currentThread, instance, senderClass, J9_LOOK_NEW_INSTANCE|J9_LOOK_REFLECT_CALL, 0);
+			sendInit(_currentThread, instance, senderClass, J9_LOOK_NEW_INSTANCE|J9_LOOK_REFLECT_CALL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
@@ -7904,7 +7904,7 @@ retry:
 				} else {
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvoke (_currentThread, mhReceiver, type, FALSE /* dropFirstArg */, 0 /* reserved */);
+					sendForGenericInvoke (_currentThread, mhReceiver, type, FALSE /* dropFirstArg */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					mhReceiver = (j9object_t) _currentThread->returnValue;
 					if (VM_VMHelpers::exceptionPending(_currentThread)) {
@@ -8027,7 +8027,7 @@ done:
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					pushObjectInSpecialFrame(REGISTER_ARGS, varHandle);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */, 0 /* reserved */);
+					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					varHandle = popObjectInSpecialFrame(REGISTER_ARGS);
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
