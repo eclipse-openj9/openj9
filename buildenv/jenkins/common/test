@@ -84,7 +84,9 @@ def test() {
         timestamps {
             dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
-                    sh "make ${TEST_TARGET}"
+                    ansiColor('xterm') {
+                        sh "make ${TEST_TARGET}"
+                    }
                 }
             }
         }
