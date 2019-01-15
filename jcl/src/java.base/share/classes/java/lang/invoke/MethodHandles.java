@@ -549,12 +549,19 @@ public class MethodHandles {
 			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0680", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
 		
-		private void checkSpecialAccess(Class<?> callerClass) throws IllegalAccessException {
+		private void checkSpecialAccess(Class<?> declaringClass, Class<?> callerClass) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
 				return;
 			}
-			if (isWeakenedLookup() || accessClass != callerClass) {
+			/* Given that findSpecial emulates the behavior of invokespecial,
+			 * calling interface methods of declaringClass should be allowed as long as 
+			 * declaringClass is an interface and callerClass can be assigned to it when
+			 * callerClass is not the same as the lookup class.
+			 */
+			if (isWeakenedLookup() 
+			|| ((accessClass != callerClass) && !(declaringClass.isInterface() && declaringClass.isAssignableFrom(callerClass)))
+			) {
 				/*[MSG "K0585", "{0} could not access {1} - private access required"]*/
 				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0585", accessClass.getName(), callerClass.getName())); //$NON-NLS-1$
 			}
@@ -580,12 +587,15 @@ public class MethodHandles {
 		 */
 		public MethodHandle findSpecial(Class<?> clazz, String methodName, MethodType type, Class<?> specialToken) throws IllegalAccessException, NoSuchMethodException, SecurityException, NullPointerException {
 			nullCheck(clazz, methodName, type, specialToken);
-			checkSpecialAccess(specialToken);	/* Must happen before method resolution */
+			checkSpecialAccess(clazz, specialToken);	/* Must happen before method resolution */
 			MethodHandle handle = null;
 			try {
 				handle = findSpecialImpl(clazz, methodName, type, specialToken);
 				Class<?> handleDefc = handle.getDefc();
-				if ((handleDefc != accessClass) && !handleDefc.isAssignableFrom(accessClass)) {
+				/* Check the relationship between the lookup class and the current class
+				 * only when the requested caller class is the same as or subclass of the lookup class.
+				 */
+				if (accessClass.isAssignableFrom(specialToken) && !handleDefc.isAssignableFrom(accessClass)) {
 					/*[MSG "K0586", "Lookup class ({0}) must be the same as or subclass of the current class ({1})"]*/
 					throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0586", accessClass, handleDefc)); //$NON-NLS-1$
 				}
@@ -1401,9 +1411,10 @@ public class MethodHandles {
 		 */
 		public MethodHandle unreflectSpecial(Method method, Class<?> specialToken) throws IllegalAccessException {
 			nullCheck(method, specialToken);
-			checkSpecialAccess(specialToken);	/* Must happen before method resolution */
+			Class<?> clazz = method.getDeclaringClass();
+			checkSpecialAccess(clazz, specialToken);	/* Must happen before method resolution */
 			String methodName = method.getName();
-			Map<CacheKey, WeakReference<MethodHandle>> cache = HandleCache.getSpecialCache(method.getDeclaringClass());
+			Map<CacheKey, WeakReference<MethodHandle>> cache = HandleCache.getSpecialCache(clazz);
 			MethodType type = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
 			MethodHandle handle = HandleCache.getMethodWithSpecialCallerFromPerClassCache(cache, methodName, type, specialToken);
 			if (handle == null) {
@@ -1420,7 +1431,7 @@ public class MethodHandles {
 			}
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
-									
+			
 			return handle;
 		}
 		
