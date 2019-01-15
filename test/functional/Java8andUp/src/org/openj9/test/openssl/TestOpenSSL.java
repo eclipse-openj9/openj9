@@ -27,13 +27,9 @@ import org.testng.annotations.Test;
 @Test(groups={ "level.sanity" })
 public class TestOpenSSL {	
 
-
+    @Test(expectedExceptions = UnsatisfiedLinkError.class)
 	public final void loadJnCrypto() {
-        try {
-            System.loadLibrary("jncrypto");
-        } catch (Exception exception){
-            Assert.fail("jncrypto library not loaded " + exception);
-        }
-        
+        // Test should throw UnsatisfiedLinkError, as lib should already be loaded
+        System.loadLibrary("jncrypto");
     }
 }
