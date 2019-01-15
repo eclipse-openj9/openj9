@@ -30,7 +30,6 @@
 	<test name="generalTest">
 		<classes>
 			<class name="org.openj9.test.gpu.SortTest" />
-			<class name="org.openj9.test.openssl.TestOpenSSL"/>
 		</classes>
 	</test>
 	<test name="truncatedReturn">
@@ -114,6 +113,11 @@
 	<test name="ConstructorVerifierTests">
 		<classes>
 			<class name="org.openj9.test.constructorverify.TryInCtor"/>
+		</classes>
+	</test>
+	<test name="OpenSSL">
+		<classes>
+			<class name="org.openj9.test.openssl.TestOpenSSL"/>
 		</classes>
 	</test>
 

@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 @Test(groups={ "level.extended" })
 public class TestOpenSSL {	
 
-@Test (priority=1)
+
 	public final void loadJnCrypto() {
         try {
             System.loadLibrary("jncrypto");
