@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -540,7 +540,17 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
                }
             break;
          case TR::Int8:
-            if (resolvedMethod->returnTypeIsUnsigned())
+            if (comp()->getSymRefTab()->isReturnTypeBool(callSymRef))
+            {
+                // For bool return type, must check whether value return by
+                // JNI is zero (false) or non-zero (true) to yield Java result
+                generateTrg1Src1ImmInstruction(cg(),TR::InstOpCode::Op_cmpi, callNode, cr0Reg, returnRegister, 0);
+                generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, returnRegister, 1);
+                generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, tempLabel, cr0Reg);
+                generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, returnRegister, 0);
+                generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, tempLabel);
+            }
+            else if (resolvedMethod->returnTypeIsUnsigned())
                generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, returnRegister, returnRegister, 0xff);
             else
                generateTrg1Src1Instruction(cg(), TR::InstOpCode::extsb, callNode, returnRegister, returnRegister);
