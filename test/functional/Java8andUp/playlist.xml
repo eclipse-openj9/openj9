@@ -761,6 +761,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
