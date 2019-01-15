@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,7 @@ initializeImpl(J9VMThread *currentThread, J9Class *clazz)
 	}
 
 	if (J9ROMCLASS_HAS_CLINIT(clazz->romClass)) {
-		sendClinit(currentThread, clazz, 0, 0, 0);
+		sendClinit(currentThread, clazz);
 		clazz = VM_VMHelpers::currentClass(clazz);
 		if (VM_VMHelpers::exceptionPending(currentThread)) {
 			TRIGGER_J9HOOK_VM_CLASS_INITIALIZE_FAILED(vm->hookInterface, currentThread, clazz);
@@ -470,7 +470,7 @@ doVerify:
 				if (desiredState < J9_CLASS_INIT_INITIALIZED) {
 					Trc_VM_classInitStateMachine_desiredStateReached(currentThread);
 				} else {
-					sendInitializationAlreadyFailed(currentThread, clazz, 0, 0, 0);
+					sendInitializationAlreadyFailed(currentThread, clazz);
 				}
 				goto done;
 			}
@@ -551,7 +551,7 @@ initFailed:
 					j9object_t throwable = currentThread->currentException;
 					currentThread->currentException = NULL;
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-					sendRecordInitializationFailure(currentThread, clazz, throwable, 0, 0);
+					sendRecordInitializationFailure(currentThread, clazz, throwable);
 					initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 					clazz = VM_VMHelpers::currentClass(clazz);
 					initializationLock = setInitStatus(currentThread, clazz, J9ClassInitFailed, initializationLock);

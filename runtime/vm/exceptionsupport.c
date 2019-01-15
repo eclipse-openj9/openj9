@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -691,7 +691,7 @@ sendConstructor:
 	cause = POP_OBJECT_IN_SPECIAL_FRAME(currentThread); /* cause */
 	if (currentThread->currentException == NULL) {
 		if (cause != NULL) {
-			sendInitCause(currentThread, (j9object_t) exception, cause, 0, 0);
+			sendInitCause(currentThread, (j9object_t) exception, cause);
 			exception = (j9object_t) currentThread->returnValue; /* initCause returns the receiver */
 		}
 	} else {

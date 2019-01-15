@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -382,7 +382,7 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	enterVMFromJNI(vmThread);
 	/* Inform ThreadGroup about any uncaught exception.  Tiny VMs do not have ThreadGroup, so they just dump the exception. */
 	if (vmThread->currentException) {
-		handleUncaughtException(vmThread, 0, 0, 0, 0);
+		handleUncaughtException(vmThread);
 		/* Safe to call this whether handleUncaughtException clears the exception or not */
 		internalExceptionDescribe(vmThread);
 	}
@@ -413,7 +413,7 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	/* Do the java dance to indicate thread death */
 
 	acquireVMAccess(vmThread);
-	cleanUpAttachedThread(vmThread, 0, 0, 0, 0);
+	cleanUpAttachedThread(vmThread);
 	releaseVMAccess(vmThread);
 	
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
@@ -2055,7 +2055,7 @@ javaProtectedThreadProc(J9PortLibrary* portLibrary, void * entryarg)
 
 		{
 			/* Start running the thread */
-			runJavaThread(vmThread, 0, 0, 0, 0);
+			runJavaThread(vmThread);
 		}
 
 #ifdef J9VM_OPT_DEPRECATED_METHODS

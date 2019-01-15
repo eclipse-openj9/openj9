@@ -1887,7 +1887,7 @@ performOSR(J9VMThread *currentThread, J9StackWalkState *walkState, J9OSRBuffer *
 	currentThread->osrJittedFrameCopy = osrJittedFrameCopy;
 	currentThread->osrFrameIndex = sizeof(J9OSRBuffer);
 	currentThread->privateFlags |= J9_PRIVATE_FLAGS_OSR_IN_PROGRESS;
-	currentThread->javaVM->internalVMFunctions->jitFillOSRBuffer(currentThread, osrBlock, 0, 0, 0);
+	currentThread->javaVM->internalVMFunctions->jitFillOSRBuffer(currentThread, osrBlock);
 	currentThread->privateFlags &= ~J9_PRIVATE_FLAGS_OSR_IN_PROGRESS;
 	currentThread->osrBuffer = NULL;
 	currentThread->osrJittedFrameCopy = NULL;

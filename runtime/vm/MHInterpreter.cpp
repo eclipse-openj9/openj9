@@ -554,7 +554,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				IDATA spOffset = spPriorToFrameBuild - _currentThread->arg0EA;
 				IDATA frameOffset = (UDATA*)currentTypeFrame - _currentThread->arg0EA;
 
-				sendForGenericInvoke(_currentThread, methodHandleFromTable, accessModeType, FALSE /* dropFirstArg */, 0 /* reserved */);
+				sendForGenericInvoke(_currentThread, methodHandleFromTable, accessModeType, FALSE /* dropFirstArg */);
 				methodHandle = (j9object_t)_currentThread->returnValue;
 
 				if (VM_VMHelpers::exceptionPending(_currentThread)) {
@@ -1003,7 +1003,7 @@ VM_MHInterpreter::doInvokeGeneric(j9object_t methodHandle)
 		spOffset = spPriorToFrameBuild - _currentThread->arg0EA;
 		frameOffset = (UDATA*)currentTypeFrame - _currentThread->arg0EA;
 
-		sendForGenericInvoke(_currentThread, targetHandle, castType, FALSE, 0);
+		sendForGenericInvoke(_currentThread, targetHandle, castType, FALSE);
 		targetHandle = (j9object_t)_currentThread->returnValue;
 
 		/* If there's an exception, don't do anything and return the old handle */
