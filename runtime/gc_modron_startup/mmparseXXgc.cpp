@@ -937,9 +937,9 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-		if (try_scan(&scan_start, "heapSizeStatupHintConservativeFactor=")) {
+		if (try_scan(&scan_start, "heapSizeStartupHintConservativeFactor=")) {
 			UDATA percentage = 0;
-			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStatupHintConservativeFactor=")) {
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStartupHintConservativeFactor=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -947,13 +947,13 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->heapSizeStatupHintConservativeFactor = ((float)percentage) / 100.0f;
+			extensions->heapSizeStartupHintConservativeFactor = ((float)percentage) / 100.0f;
 			continue ;
 		}
 
-		if (try_scan(&scan_start, "heapSizeStatupHintWeightNewValue=")) {
+		if (try_scan(&scan_start, "heapSizeStartupHintWeightNewValue=")) {
 			UDATA percentage = 0;
-			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStatupHintWeightNewValue=")) {
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStartupHintWeightNewValue=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -961,7 +961,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->heapSizeStatupHintWeightNewValue = ((float)percentage) / 100.0f;
+			extensions->heapSizeStartupHintWeightNewValue = ((float)percentage) / 100.0f;
 			continue ;
 		}
 
