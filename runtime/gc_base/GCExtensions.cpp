@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,11 +93,6 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 	/* only ref slots, size in bytes: 2 * minObjectSize - header size) - 1 * sizeof(arraylet pointer) */
 	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - sizeof(J9IndexableObjectDiscontiguous) - sizeof(fj9object_t*);
 #endif /* J9VM_GC_HYBRID_ARRAYLETS */
-
-	getJavaVM()->gcCycleOn = 0;
-	if (omrthread_monitor_init_with_name(&getJavaVM()->gcCycleOnMonitor, 0, "gcCycleOn")) {
-		goto failed;
-	}
 #endif /* J9VM_GC_REALTIME */
 
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)
@@ -160,13 +155,6 @@ MM_GCExtensions::tearDown(MM_EnvironmentBase *env)
 	_TLHAsyncCallbackKey = -1;
 	vmFuncs->J9UnregisterAsyncEvent(getJavaVM(), _asyncCallbackKey);
 	_asyncCallbackKey = -1;
-
-#if defined(J9VM_GC_REALTIME)
-	if (getJavaVM()->gcCycleOnMonitor) {
-		omrthread_monitor_destroy(getJavaVM()->gcCycleOnMonitor);
-		getJavaVM()->gcCycleOnMonitor = (omrthread_monitor_t) NULL;
-	}
-#endif
 
 #if defined(J9VM_GC_MODRON_TRACE) && !defined(J9VM_GC_REALTIME)
 	tgcTearDownExtensions(getJavaVM());
