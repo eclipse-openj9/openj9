@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,6 +207,42 @@ ifeq ($(BUILD_CONFIG),prod)
 endif
 
 PASM_FLAGS+=$(PASM_FLAGS_EXTRA)
+
+#
+# Setup NASM
+#
+
+NASM_CMD?=nasm
+
+NASM_DEFINES=\
+    TR_HOST_X86 \
+    TR_TARGET_X86 \
+    WINDOWS
+
+NASM_INCLUDES=\
+    ../oti \
+    ../compiler \
+    ../compiler/x/runtime
+
+ifeq ($(HOST_BITS),32)
+    NASM_OBJ_FORMAT=-fwin32
+    
+    NASM_DEFINES+=\
+        TR_HOST_32BIT \
+        TR_TARGET_32BIT
+    
+    NASM_INCLUDES+=\
+        ../compiler/x/i386/runtime
+else
+    NASM_OBJ_FORMAT=-fwin64
+    
+    NASM_DEFINES+=\
+        TR_HOST_64BIT \
+        TR_TARGET_64BIT
+
+    NASM_INCLUDES+=\
+        ../compiler/x/amd64/runtime
+endif
 
 #
 # Setup RC
