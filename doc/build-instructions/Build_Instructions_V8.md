@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2018 IBM Corp. and others
+Copyright (c) 2017, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,12 +356,18 @@ OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` ca
 - [Freetype2 V2.3 or newer](https://www.freetype.org/)
 - [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
+- [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
 ```
 export PATH="/cygdrive/c/LLVM/bin:$PATH" (in Cygwin for 64bit)
 or
 export PATH="/cygdrive/c/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
+```
+
+Add the path to `nasm.exe` to the `PATH` environment variable to override the older version of NASM installed in Cygwin. e.g.
+```
+export PATH="/cygdrive/c/NASM:$PATH" (in Cygwin)
 ```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:

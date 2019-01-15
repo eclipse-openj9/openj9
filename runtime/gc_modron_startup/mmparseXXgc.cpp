@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -937,6 +937,34 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "heapSizeStartupHintConservativeFactor=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStartupHintConservativeFactor=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->heapSizeStartupHintConservativeFactor = ((float)percentage) / 100.0f;
+			continue ;
+		}
+
+		if (try_scan(&scan_start, "heapSizeStartupHintWeightNewValue=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "heapSizeStartupHintWeightNewValue=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->heapSizeStartupHintWeightNewValue = ((float)percentage) / 100.0f;
+			continue ;
+		}
+
 #if defined (J9VM_GC_VLHGC)
 		if (try_scan(&scan_start, "fvtest_tarokSimulateNUMA=")) {
 			UDATA simulatedNodeCount = 0;
@@ -1122,6 +1150,32 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->fvtest_forceMarkMapDecommitFailureCounter = 0;
 			continue;
 		}
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+		if (try_scan(&scan_start, "fvtest_enableReadBarrierVerification=")) {
+			extensions->fvtest_enableReadBarrierVerification = 0;
+
+			char * pattern = scan_to_delim(PORTLIB, &scan_start, ',');
+
+			if (true == ('0' != pattern[4])) {
+				extensions->fvtest_enableHeapReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			if (true == ('0' !=  pattern[3])) {
+				extensions->fvtest_enableClassStaticsReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			if (true == ('0' != pattern[2])){
+				extensions->fvtest_enableMonitorObjectsReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			if (true == ('0' != pattern[1])) {
+				extensions->fvtest_enableJNIGlobalWeakReadBarrierVerification = 1;
+				extensions->fvtest_enableReadBarrierVerification = 1;
+			}
+			continue;
+		}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 		if (try_scan(&scan_start, "fvtest_forceReferenceChainWalkerMarkMapCommitFailure=")) {
 			if(!scan_udata_helper(vm, &scan_start, &(extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailure), "fvtest_forceReferenceChainWalkerMarkMapCommitFailure=")) {

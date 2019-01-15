@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,26 +126,12 @@ endef # DEF_RULE.pasm
 
 RULE.pasm=$(eval $(DEF_RULE.pasm))
 
-### NASM-specific rules
-
-ifeq ($(OS),linux)
-	ifeq ($(HOST_BITS),32)
-		OBJ_FORMAT=-felf32
-	else
-		OBJ_FORMAT=-felf64
-	endif
-endif #(OS = linux)
-
-ifeq ($(OS),osx)
-	OBJ_FORMAT=-fmacho64
-endif #(OS = osx)
-
 #
 # Compile .nasm file into .o file
 #
 define DEF_RULE.nasm
 $(1): $(2) | jit_createdirs
-	nasm $(OBJ_FORMAT) $$(patsubst %,-D%=1,$$(S_DEFINES)) $$(patsubst %,-I'%/',$$(S_INCLUDES)) -o $$@ $$<
+	$$(NASM_CMD) $$(NASM_OBJ_FORMAT) $$(patsubst %,-D%=1,$$(NASM_DEFINES)) $$(patsubst %,-I'%/',$$(NASM_INCLUDES)) -o $$@ $$<
 
 JIT_DIR_LIST+=$(dir $(1))
 

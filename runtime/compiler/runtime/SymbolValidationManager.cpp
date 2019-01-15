@@ -34,31 +34,6 @@
 
 #include "j9protos.h"
 
-static char getPrimitiveChar(J9UTF8 * primitiveClassName)
-   {
-   const char *name = reinterpret_cast<const char *>(J9UTF8_DATA(primitiveClassName));
-   int32_t length = J9UTF8_LENGTH(primitiveClassName);
-
-   if (0 == strncmp(name,"int", length))
-      return 'I';
-   if (0 == strncmp(name,"boolean", length))
-      return 'Z';
-   if (0 == strncmp(name,"long", length))
-      return 'J';
-   if (0 == strncmp(name,"double", length))
-      return 'D';
-   if (0 == strncmp(name,"float", length))
-      return 'F';
-   if (0 == strncmp(name,"char", length))
-      return 'C';
-   if (0 == strncmp(name,"byte", length))
-      return 'B';
-   if (0 == strncmp(name,"short", length))
-      return 'S';
-
-   return '\0';
-   }
-
 TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee)
    : _symbolID(FIRST_ID),
      _heuristicRegion(0),
@@ -69,6 +44,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _symbolValidationRecords(_region),
+     _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region)
@@ -199,32 +175,31 @@ TR::SymbolValidationManager::getBaseComponentClass(TR_OpaqueClassBlock *clazz, i
    return clazz;
    }
 
-
-void *
-TR::SymbolValidationManager::storeClassChain(TR_OpaqueClassBlock *clazz)
+bool
+TR::SymbolValidationManager::abandonRecord(TR::SymbolValidationRecord *record)
    {
-   void *classChain = NULL;
-   bool validated = false;
+   _region.deallocate(record);
+   return inHeuristicRegion();
+   }
 
-   classChain = _fej9->sharedCache()->rememberClass(clazz);
-   if (classChain)
-      validated = addClassChainRecord(clazz, classChain);
-
-   if (validated)
-      return classChain;
-   else
-      return NULL;
+bool
+TR::SymbolValidationManager::recordExists(TR::SymbolValidationRecord *record)
+   {
+   return _alreadyGeneratedRecords.find(record) != _alreadyGeneratedRecords.end();
    }
 
 void
-TR::SymbolValidationManager::storeRecord(void *symbol, TR::SymbolValidationRecord *record)
+TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationRecord *record)
    {
-   SVM_ASSERT(!inHeuristicRegion(), "Attempted to storeRecord in a heuristic region");
+   SVM_ASSERT(!inHeuristicRegion(), "Attempted to appendNewRecord in a heuristic region");
+   TR_ASSERT(!recordExists(record), "record is not new");
+
    if (!isAlreadyValidated(symbol))
       {
       _symbolToIdMap.insert(std::make_pair(symbol, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
+   _alreadyGeneratedRecords.insert(record);
 
    record->printFields();
    traceMsg(_comp, "\tkind=%d\n", record->_kind);
@@ -232,388 +207,319 @@ TR::SymbolValidationManager::storeRecord(void *symbol, TR::SymbolValidationRecor
    traceMsg(_comp, "\n");
    }
 
-bool
-TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
-                                              TR::ClassValidationRecord *record,
-                                              int32_t arrayDimsToValidate,
-                                              bool storeCurrentRecord)
+void
+TR::SymbolValidationManager::appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record)
    {
-   bool validated = false;
-
-   TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)_fej9->_jitConfig->privateConfig)->aotStats;
-
-   if (storeCurrentRecord)
-      storeRecord(static_cast<void *>(clazz), record);
-
-   if (_fej9->isClassArray(clazz))
-      {
-      validated = true;
-      }
+   if (recordExists(record))
+      _region.deallocate(record);
    else
-      {
-      if (_fej9->isPrimitiveClass(clazz))
-         {
-         validated = true; // primitive types have guaranteed IDs
-         }
-      else
-         {
-         record->_classChain = storeClassChain(clazz);
-         validated = (record->_classChain != NULL);
-         }
-
-      if (validated)
-         {
-         int32_t arrayDims = 0;
-         TR_OpaqueClassBlock *componentClass = clazz;
-         while (validated && componentClass && arrayDims < arrayDimsToValidate)
-            {
-            TR_OpaqueClassBlock *arrayClass = _fej9->getArrayClassFromComponentClass(componentClass);
-
-            validated = addArrayClassFromComponentClassRecord(arrayClass, componentClass);
-
-            componentClass = arrayClass;
-            arrayDims++;
-            }
-
-         SVM_ASSERT(
-            validated && arrayDims == arrayDimsToValidate,
-            "Failed to validate class %p",
-            clazz);
-         }
-      }
-
-   /* If we failed to store the class chain
-    * then it is because we failed to rememberClass;
-    * therefore, the last element in the list
-    * will be the one we added in this method and not
-    * the ClassChainRecord
-    */
-   if (!validated)
-      _symbolValidationRecords.pop_front();
-
-   return validated;
+      appendNewRecord(symbol, record);
    }
 
 bool
-TR::SymbolValidationManager::storeValidationRecordIfNecessary(void *symbol,
-                                                              TR::SymbolValidationRecord *record,
-                                                              int32_t arrayDimsToValidate)
+TR::SymbolValidationManager::addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record)
    {
-   bool existsInList = false;
-   bool validated = false;
+   if (shouldNotDefineSymbol(symbol))
+      return abandonRecord(record);
 
-   for (auto it = _symbolValidationRecords.begin(); it != _symbolValidationRecords.end(); it++)
-      {
-      if ((*it)->_kind == record->_kind && record->isEqual(*it))
-         {
-         existsInList = true;
-         break;
-         }
-      }
+   appendRecordIfNew(symbol, record);
+   return true;
+   }
 
-   if (!existsInList || arrayDimsToValidate)
-      {
-      if (record->isClassValidationRecord())
-         {
-         validated = storeClassRecord(static_cast<TR_OpaqueClassBlock *>(symbol),
-                                      reinterpret_cast<TR::ClassValidationRecord *>(record),
-                                      arrayDimsToValidate,
-                                      !existsInList);
-         }
-      else
-         {
-         storeRecord(symbol, record);
-         validated = true;
-         }
-      }
+bool
+TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record)
+   {
+   if (shouldNotDefineSymbol(clazz))
+      return abandonRecord(record);
 
-   if (existsInList || !validated)
+   if (recordExists(record))
       {
       _region.deallocate(record);
+      return true;
       }
 
-   return (existsInList || validated);
+   TR_OpaqueClassBlock *baseComponent = NULL;
+   void *baseComponentClassChain = NULL;
+   int32_t arrayDims = 0;
+   if (!isAlreadyValidated(clazz))
+      {
+      // clazz is fresh, so a class chain validation may be necessary
+      baseComponent = getBaseComponentClass(clazz, arrayDims);
+      if (arrayDims == 0 || !isAlreadyValidated(baseComponent))
+         {
+         // baseComponent is a non-array reference type. It can't be a
+         // primitive because primitives always satisfy isAlreadyValidated().
+         baseComponentClassChain = _fej9->sharedCache()->rememberClass(baseComponent);
+         if (baseComponentClassChain == NULL)
+            {
+            _region.deallocate(record);
+            return false;
+            }
+         }
+      }
+
+   // From this point on, success is guaranteed (short of OOM, which throws)
+
+   // The class is defined by the original record
+   appendNewRecord(clazz, record);
+
+   // If clazz is a fresh array class, relate it to each component type.
+   // Note that if clazz is not fresh, arrayDims is 0, which is fine because
+   // this part has already been done for an earlier record.
+   for (int i = 0; i < arrayDims; i++)
+      {
+      TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(clazz);
+      appendRecordIfNew(
+         component,
+         new (_region) ComponentClassFromArrayClassRecord(component, clazz));
+      clazz = component;
+      }
+
+   // If necessary, remember to validate the class chain of the base component type
+   if (baseComponentClassChain != NULL)
+      {
+      appendNewRecord(
+         baseComponent,
+         new (_region) ClassChainRecord(baseComponent, baseComponentClassChain));
+      }
+
+   return true;
+   }
+
+bool
+TR::SymbolValidationManager::addClassRecordWithRomClass(TR_OpaqueClassBlock *component, TR::ClassValidationRecord *record, int arrayDims)
+   {
+   if (shouldNotDefineSymbol(component))
+      return abandonRecord(record);
+
+   SVM_ASSERT(!_fej9->isClassArray(component), "expected base component type");
+
+   if (!_fej9->isPrimitiveClass(component))
+      {
+      if (!addClassRecord(component, record))
+         return false;
+      }
+
+   addMultipleArrayRecords(component, arrayDims);
+   return true;
+   }
+
+void
+TR::SymbolValidationManager::addMultipleArrayRecords(TR_OpaqueClassBlock *component, int arrayDims)
+   {
+   for (int i = 0; i < arrayDims; i++)
+      {
+      TR_OpaqueClassBlock *array = _fej9->getArrayClassFromComponentClass(component);
+      appendRecordIfNew(
+         array,
+         new (_region) ArrayClassFromComponentClassRecord(array, component));
+      component = array;
+      }
+   }
+
+bool
+TR::SymbolValidationManager::addMethodRecord(TR_OpaqueMethodBlock *method, SymbolValidationRecord *record)
+   {
+   if (shouldNotDefineSymbol(method))
+      return abandonRecord(record);
+
+   if (recordExists(record))
+      {
+      _region.deallocate(record);
+      return true;
+      }
+
+   uint16_t oldNextID = _symbolID;
+   appendNewRecord(method, record);
+
+   TR_OpaqueClassBlock *methodClass =
+      reinterpret_cast<TR_OpaqueClassBlock *>(
+         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method)));
+
+   if (addClassFromMethodRecord(methodClass, method))
+      return true;
+
+   // Failed. Clean up the method record.
+   // addClassFromMethodRecord() shouldn't have added anything.
+   SVM_ASSERT(
+      _symbolValidationRecords.front() == record,
+      "added an unexpected record %p instead of %p\n",
+      _symbolValidationRecords.front(),
+      record);
+
+   traceMsg(TR::comp(), "Forget the most recent record\n");
+   _symbolValidationRecords.pop_front();
+   _alreadyGeneratedRecords.erase(record);
+   _region.deallocate(record);
+
+   if (_symbolID != oldNextID)
+      {
+      // Since addClassFromMethodRecord() failed, it should not have modified
+      // _symbolID, so there should be only one new ID (for method).
+      SVM_ASSERT(_symbolID == oldNextID + 1, "unexpected increase in _symbolID");
+
+      auto it = _symbolToIdMap.find(method);
+      SVM_ASSERT(it != _symbolToIdMap.end(), "expected method %p to have an ID", method);
+      SVM_ASSERT(it->second == oldNextID, "expected method %p to have ID %d", method, oldNextID);
+
+      _symbolToIdMap.erase(it);
+      _symbolID = oldNextID;
+      }
+
+   return false;
    }
 
 bool
 TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
-   char primitiveType = '\0';
-
-   if (_fej9->isPrimitiveClass(clazz))
-      {
-      J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(_fej9->getPersistentClassPointerFromClassPointer(clazz));
-      J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-      primitiveType = getPrimitiveChar(className);
-      }
-
-   SymbolValidationRecord *record = new (_region) ClassByNameRecord(clazz, beholder, primitiveType);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
+   TR::ClassValidationRecord *record = new (_region) ClassByNameRecord(clazz, beholder);
+   return addClassRecordWithRomClass(clazz, record, arrayDims);
    }
 
 bool
 TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
+   // check that clazz is non-null before trying to rememberClass
+   if (shouldNotDefineSymbol(clazz))
+      return inHeuristicRegion();
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
-   char primitiveType = '\0';
 
-   if (_fej9->isPrimitiveClass(clazz))
-      {
-      J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(_fej9->getPersistentClassPointerFromClassPointer(clazz));
-      J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-      primitiveType = getPrimitiveChar(className);
-      }
+   void *classChain = _fej9->sharedCache()->rememberClass(clazz);
+   if (classChain == NULL)
+      return false;
 
-   SymbolValidationRecord *record = new (_region) ProfiledClassRecord(clazz, primitiveType);
-   bool validated = storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
-   return validated;
+   if (!isAlreadyValidated(clazz))
+      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain));
+
+   addMultipleArrayRecords(clazz, arrayDims);
+   return true;
    }
 
 bool
 TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) ClassFromCPRecord(clazz, beholder, cpIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
+   return addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex, bool isStatic)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
+   return addClassRecord(clazz, new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic));
    }
 
 bool
 TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
+   return addClassRecord(clazz, new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
    SVM_ASSERT_ALREADY_VALIDATED(this, method);
-
-   SymbolValidationRecord *record = new (_region) ClassFromMethodRecord(clazz, method);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
+   return addClassRecord(clazz, new (_region) ClassFromMethodRecord(clazz, method));
    }
 
 bool
 TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass)
    {
-   if (!componentClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
+   // Class chain validation for the base component type is already taken care of
    SVM_ASSERT_ALREADY_VALIDATED(this, arrayClass);
-
-   SymbolValidationRecord *record = new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass);
-   return storeValidationRecordIfNecessary(static_cast<void *>(componentClass), record);
+   return addVanillaRecord(componentClass, new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass));
    }
 
 bool
 TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
    {
-   if (!arrayClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
+   // Class chain validation for the base component type is already taken care of
    SVM_ASSERT_ALREADY_VALIDATED(this, componentClass);
-
-   SymbolValidationRecord *record = new (_region) ArrayClassFromComponentClassRecord(arrayClass, componentClass);
-   return storeValidationRecordIfNecessary(static_cast<void *>(arrayClass), record);
+   return addVanillaRecord(arrayClass, new (_region) ArrayClassFromComponentClassRecord(arrayClass, componentClass));
    }
 
 bool
 TR::SymbolValidationManager::addSuperClassFromClassRecord(TR_OpaqueClassBlock *superClass, TR_OpaqueClassBlock *childClass)
    {
-   if (!superClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   superClass = getBaseComponentClass(superClass, arrayDims);
-
    SVM_ASSERT_ALREADY_VALIDATED(this, childClass);
-
-   SymbolValidationRecord *record = new (_region) SuperClassFromClassRecord(superClass, childClass);
-   return storeValidationRecordIfNecessary(static_cast<void *>(superClass), record, arrayDims);
+   return addClassRecord(superClass, new (_region) SuperClassFromClassRecord(superClass, childClass));
    }
 
 bool
 TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *classOne, TR_OpaqueClassBlock *classTwo, bool objectTypeIsFixed, bool castTypeIsFixed, bool isInstanceOf)
    {
-   if (inHeuristicRegion())
-      return true;
-
+   // Not using addClassRecord() because this doesn't define a class symbol. We
+   // can pass either class as the symbol because neither will get a fresh ID
    SVM_ASSERT_ALREADY_VALIDATED(this, classOne);
    SVM_ASSERT_ALREADY_VALIDATED(this, classTwo);
 
-   SymbolValidationRecord *record = new (_region) ClassInstanceOfClassRecord(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed, isInstanceOf);
-   return storeValidationRecordIfNecessary(static_cast<void *>(classOne), record);
+   // Skip creating a record when the subtyping relationship between the two
+   // classes is known in advance.
+   if (classOne == classTwo // classOne <: classTwo
+      || _fej9->isJavaLangObject(classTwo) // classOne <: classTwo
+      || _fej9->isJavaLangObject(classOne)) // !(classOne <: classTwo)
+      return true;
+
+   // Not using addClassRecord() because this doesn't define a class symbol. We
+   // can pass either class as the symbol because neither will get a fresh ID
+   return addVanillaRecord(classOne, new (_region) ClassInstanceOfClassRecord(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed, isInstanceOf));
    }
 
 bool
 TR::SymbolValidationManager::addSystemClassByNameRecord(TR_OpaqueClassBlock *systemClass)
    {
-   if (!systemClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    int32_t arrayDims = 0;
    systemClass = getBaseComponentClass(systemClass, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) SystemClassByNameRecord(systemClass);
-   return storeValidationRecordIfNecessary(static_cast<void *>(systemClass), record, arrayDims);
+   TR::ClassValidationRecord *record = new (_region) SystemClassByNameRecord(systemClass);
+   return addClassRecordWithRomClass(systemClass, record, arrayDims);
    }
 
 bool
 TR::SymbolValidationManager::addClassFromITableIndexCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) ClassFromITableIndexCPRecord(clazz, beholder, cpIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
+   return addClassRecord(clazz, new (_region) ClassFromITableIndexCPRecord(clazz, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) DeclaringClassFromFieldOrStaticRecord(clazz, beholder, cpIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
+   return addClassRecord(clazz, new (_region) DeclaringClassFromFieldOrStaticRecord(clazz, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass)
    {
-   if (!classClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, objectClass);
-
-   SymbolValidationRecord *record = new (_region) ClassClassRecord(classClass, objectClass);
-   return storeValidationRecordIfNecessary(static_cast<void *>(classClass), record);
+   return addClassRecord(classClass, new (_region) ClassClassRecord(classClass, objectClass));
    }
 
 bool
 TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass)
    {
-   if (!superClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   childClass = getBaseComponentClass(childClass, arrayDims);
-
    SVM_ASSERT_ALREADY_VALIDATED(this, superClass);
-
-   SymbolValidationRecord *record = new (_region) ConcreteSubClassFromClassRecord(childClass, superClass);
-   return storeValidationRecordIfNecessary(static_cast<void *>(childClass), record, arrayDims);
-   }
-
-bool
-TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   SymbolValidationRecord *record = new (_region) ClassChainRecord(clazz, classChain);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
+   return addClassRecord(childClass, new (_region) ConcreteSubClassFromClassRecord(childClass, superClass));
    }
 
 bool
 TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
+   // In case index == -1, check that method is non-null up front, before searching.
+   if (shouldNotDefineSymbol(method))
+      return inHeuristicRegion();
 
    if (index == static_cast<uint32_t>(-1))
       {
@@ -632,162 +538,88 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
          beholder);
       }
 
+   // Not using addMethodRecord() because this record itself relates the method
+   // to its defining class, and the class chain has already been stored.
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) MethodFromClassRecord(method, beholder, index);
-   return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
+   return addVanillaRecord(method, new (_region) MethodFromClassRecord(method, beholder, index));
    }
 
 bool
 TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve));
    }
 
 bool
 TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, TR_OpaqueClassBlock *lookup, int32_t cpIndex)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, lookup);
-
-   SymbolValidationRecord *record = new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   SymbolValidationRecord *record = new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, TR_OpaqueClassBlock *beholder)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
+   // Check that method is non-null up front, since we need its class.
+   if (shouldNotDefineSymbol(method))
+      return inHeuristicRegion();
 
    SVM_ASSERT_ALREADY_VALIDATED(this, methodClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) MethodFromClassAndSigRecord(method, methodClass, beholder);
-   return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
+
+   // getMethodFromClass() includes inherited methods, and so method could have
+   // been found on a superclass. If so, use addMethodRecord() in order to pin
+   // down the identity of that superclass.
+   //
+   // OTOH, if the method was not inherited, then then the class chain
+   // validation for methodClass should guarantee that on load the method also
+   // won't have been inherited, so that this record itself is enough to
+   // associate the method with its defining class.
+
+   TR_OpaqueClassBlock *definingClass =
+      reinterpret_cast<TR_OpaqueClassBlock *>(
+         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method*>(method)));
+
+   if (definingClass == methodClass)
+      return addVanillaRecord(method, record);
+   else
+      return addMethodRecord(method, record);
    }
 
 bool
@@ -797,24 +629,9 @@ TR::SymbolValidationManager::addMethodFromSingleImplementerRecord(TR_OpaqueMetho
                                                                   TR_OpaqueMethodBlock *callerMethod,
                                                                   TR_YesNoMaybe useGetResolvedInterfaceMethod)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
-
-   SymbolValidationRecord *record = new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod));
    }
 
 bool
@@ -823,24 +640,9 @@ TR::SymbolValidationManager::addMethodFromSingleInterfaceImplementerRecord(TR_Op
                                                                            int32_t cpIndex,
                                                                            TR_OpaqueMethodBlock *callerMethod)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
-
-   SymbolValidationRecord *record = new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod));
    }
 
 bool
@@ -849,24 +651,9 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
                                                                           int32_t vftSlot,
                                                                           TR_OpaqueMethodBlock *callerMethod)
    {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
-
-   SymbolValidationRecord *record = new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod);
-   bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-
-   if (valid)
-      {
-      J9Class *methodClass = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
-      valid = addClassFromMethodRecord(reinterpret_cast<TR_OpaqueClassBlock *>(methodClass), method);
-      }
-
-   return valid;
+   return addMethodRecord(method, new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod));
    }
 
 bool
@@ -874,28 +661,17 @@ TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBl
    {
    if (!method || !methodClass)
       return false;
-   if (inHeuristicRegion())
-      return true;
 
    SVM_ASSERT_ALREADY_VALIDATED(this, method);
    SVM_ASSERT_ALREADY_VALIDATED(this, methodClass);
-
-   SymbolValidationRecord *record = new (_region) StackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
-   return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
+   return addVanillaRecord(method, new (_region) StackWalkerMaySkipFramesRecord(method, methodClass, skipFrames));
    }
 
 bool
 TR::SymbolValidationManager::addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized)
    {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
    SVM_ASSERT_ALREADY_VALIDATED(this, clazz);
-
-   SymbolValidationRecord *record = new (_region) ClassInfoIsInitialized(clazz, isInitialized);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
+   return addVanillaRecord(clazz, new (_region) ClassInfoIsInitialized(clazz, isInitialized));
    }
 
 
@@ -951,57 +727,26 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, J9Method *
    }
 
 bool
-TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType)
+TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass)
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
 
-   if (primitiveType != '\0')
-      {
-      getClassFromID(classID); // just to assert that it exists
-      return true;
-      }
-
    J9UTF8 * classNameData = J9ROMCLASS_CLASSNAME(romClass);
    char *className = reinterpret_cast<char *>(J9UTF8_DATA(classNameData));
    uint32_t classNameLength = J9UTF8_LENGTH(classNameData);
-
-   TR_OpaqueClassBlock *classByName = _fej9->getClassFromSignature(className, classNameLength, beholderCP);
-
-   if (!classByName)
-      return false;
-
-   int32_t arrayDims = 0;
-   classByName = getBaseComponentClass(classByName, arrayDims);
-
-   return validateSymbol(classID, classByName);
+   return validateSymbol(classID, _fej9->getClassFromSignature(className, classNameLength, beholderCP));
    }
 
 bool
-TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char primitiveType, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated)
+TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated)
    {
-   if (primitiveType != '\0')
-      {
-      getClassFromID(classID); // just to assert that it exists
-      return true;
-      }
-
    J9ClassLoader *classLoader = (J9ClassLoader *) _fej9->sharedCache()->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+   if (classLoader == NULL)
+      return false;
 
-   if (classLoader)
-      {
-      TR_OpaqueClassBlock *clazz = _fej9->sharedCache()->lookupClassFromChainAndLoader(static_cast<uintptrj_t *>(classChainForClassBeingValidated), classLoader);
-
-      if (clazz)
-         {
-         int32_t arrayDims = 0;
-         clazz = getBaseComponentClass(clazz, arrayDims);
-
-         return validateSymbol(classID, clazz);
-         }
-      }
-
-   return false;
+   TR_OpaqueClassBlock *clazz = _fej9->sharedCache()->lookupClassFromChainAndLoader(static_cast<uintptrj_t *>(classChainForClassBeingValidated), classLoader);
+   return validateSymbol(classID, clazz);
    }
 
 bool
@@ -1009,12 +754,7 @@ TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   TR_OpaqueClassBlock *classFromCP = TR_ResolvedJ9Method::getClassFromCP(_fej9, beholderCP, _comp, cpIndex);
-
-   int32_t arrayDims = 0;
-   classFromCP = getBaseComponentClass(classFromCP, arrayDims);
-
-   return validateSymbol(classID, classFromCP);
+   return validateSymbol(classID, TR_ResolvedJ9Method::getClassFromCP(_fej9, beholderCP, _comp, cpIndex));
    }
 
 bool
@@ -1030,12 +770,7 @@ TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID,
 
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   TR_OpaqueClassBlock *classFromCP = reloRuntime->getClassFromCP(_vmThread, _fej9->_jitConfig->javaVM, beholderCP, cpIndex, isStatic);
-
-   int32_t arrayDims = 0;
-   classFromCP = getBaseComponentClass(classFromCP, arrayDims);
-
-   return validateSymbol(classID, classFromCP);
+   return validateSymbol(classID, reloRuntime->getClassFromCP(_vmThread, _fej9->_jitConfig->javaVM, beholderCP, cpIndex, isStatic));
    }
 
 bool
@@ -1043,54 +778,35 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   TR_OpaqueClassBlock *classFromCP = TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex);
-
-   int32_t arrayDims = 0;
-   classFromCP = getBaseComponentClass(classFromCP, arrayDims);
-
-   return validateSymbol(classID, classFromCP);
+   return validateSymbol(classID, TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uint16_t methodID)
    {
    J9Method *method = getJ9MethodFromID(methodID);
-   TR_OpaqueClassBlock *classFromMethod = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_METHOD(method));
-
-   int32_t arrayDims = 0;
-   classFromMethod = getBaseComponentClass(classFromMethod, arrayDims);
-
-   return validateSymbol(classID, classFromMethod);
+   return validateSymbol(classID, J9_CLASS_FROM_METHOD(method));
    }
 
 bool
 TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
    {
    TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
-   TR_OpaqueClassBlock *componentClass = _fej9->getComponentClassFromArrayClass(arrayClass);
-
-   return validateSymbol(componentClassID, componentClass);
+   return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
    }
 
 bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
    TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
-   TR_OpaqueClassBlock *arrayClass = _fej9->getArrayClassFromComponentClass(componentClass);
-
-   return validateSymbol(arrayClassID, arrayClass);
+   return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
    }
 
 bool
 TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID)
    {
    TR_OpaqueClassBlock *childClass = getClassFromID(childClassID);
-   TR_OpaqueClassBlock *superClass = _fej9->getSuperClass(childClass);
-
-   int32_t arrayDims = 0;
-   superClass = getBaseComponentClass(superClass, arrayDims);
-
-   return validateSymbol(superClassID, superClass);
+   return validateSymbol(superClassID, _fej9->getSuperClass(childClass));
    }
 
 bool
@@ -1110,10 +826,6 @@ TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClas
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    TR_OpaqueClassBlock *systemClassByName = _fej9->getSystemClassFromClassName(reinterpret_cast<const char *>(J9UTF8_DATA(className)),
                                                                               J9UTF8_LENGTH(className));
-
-   int32_t arrayDims = 0;
-   systemClassByName = getBaseComponentClass(systemClassByName, arrayDims);
-
    return validateSymbol(systemClassID, systemClassByName);
    }
 
@@ -1123,12 +835,7 @@ TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t class
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    uintptr_t pITableIndex;
-   TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(_fej9, beholderCP, cpIndex, &pITableIndex);
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
-   return validateSymbol(classID, clazz);
+   return validateSymbol(classID, TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(_fej9, beholderCP, cpIndex, &pITableIndex));
    }
 
 bool
@@ -1172,11 +879,7 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       return false;
       }
 
-   TR_OpaqueClassBlock *opaqueDefiningClass = reinterpret_cast<TR_OpaqueClassBlock*>(definingClass);
-   int32_t arrayDims = 0;
-   opaqueDefiningClass = getBaseComponentClass(opaqueDefiningClass, arrayDims);
-
-   return validateSymbol(definingClassID, opaqueDefiningClass);
+   return validateSymbol(definingClassID, definingClass);
    }
 
 bool
@@ -1193,10 +896,6 @@ TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t ch
    {
    TR_OpaqueClassBlock *superClass = getClassFromID(superClassID);
    TR_OpaqueClassBlock *childClass = _chTable->findSingleConcreteSubClass(superClass, _comp, false);
-
-   int32_t arrayDims = 0;
-   childClass = getBaseComponentClass(childClass, arrayDims);
-
    return validateSymbol(childClassID, childClass);
    }
 
@@ -1437,35 +1136,87 @@ static void printClass(TR_OpaqueClassBlock *clazz)
       }
    }
 
-void TR::ClassValidationRecord::printFields()
+namespace // file-local
    {
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   class LexicalOrder
+      {
+      enum Result
+         {
+         LESS,
+         EQUAL,
+         GREATER,
+         };
+
+      public:
+      LexicalOrder() : _result(EQUAL) { }
+      LexicalOrder(const LexicalOrder &other) : _result(other._result) { }
+
+      static LexicalOrder by(void *a, void *b) { return LexicalOrder().thenBy(a, b); }
+      static LexicalOrder by(uintptr_t a, uintptr_t b) { return LexicalOrder().thenBy(a, b); }
+
+      LexicalOrder &thenBy(void *a, void *b)
+         {
+         if (_result == EQUAL)
+            _result = a == b ? EQUAL : ::std::less<void*>()(a, b) ? LESS : GREATER;
+         return *this;
+         }
+
+      LexicalOrder &thenBy(uintptr_t a, uintptr_t b)
+         {
+         if (_result == EQUAL)
+            _result = a == b ? EQUAL : a < b ? LESS : GREATER;
+         return *this;
+         }
+
+      bool less() const { return _result == LESS; }
+
+      private:
+      Result _result;
+      };
+   }
+
+bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassByNameRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder).less();
    }
 
 void TR::ClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassByNameRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_primitiveType=%c\n", _primitiveType);
+   }
+
+bool TR::ProfiledClassRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ProfiledClassRecord *rhs = downcast(this, other);
+   // Don't compare _classChain - it's determined by _class
+   return LexicalOrder::by(_class, rhs->_class).less();
    }
 
 void TR::ProfiledClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ProfiledClassRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_primitiveType=%c\n", _primitiveType);
+   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   }
+
+bool TR::ClassFromCPRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::ClassFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassFromCPRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
@@ -1473,10 +1224,19 @@ void TR::ClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::DefiningClassFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::DefiningClassFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex)
+      .thenBy(_isStatic, rhs->_isStatic).less();
+   }
+
 void TR::DefiningClassFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "DefiningClassFromCPRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
@@ -1485,10 +1245,18 @@ void TR::DefiningClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_isStatic=%s\n", (_isStatic ? "true" : "false"));
    }
 
+bool TR::StaticClassFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::StaticClassFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::StaticClassFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "StaticClassFromCPRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
@@ -1496,43 +1264,82 @@ void TR::StaticClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::ClassFromMethodRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassFromMethodRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_method, rhs->_method).less();
+   }
+
 void TR::ClassFromMethodRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassFromMethodRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
    }
 
+bool TR::ComponentClassFromArrayClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ComponentClassFromArrayClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_componentClass, rhs->_componentClass)
+      .thenBy(_arrayClass, rhs->_arrayClass).less();
+   }
+
 void TR::ComponentClassFromArrayClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ComponentClassFromArrayClassRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_componentClass=0x%p\n", _componentClass);
    printClass(_componentClass);
    traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
    printClass(_arrayClass);
+   }
+
+bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ArrayClassFromComponentClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_arrayClass, rhs->_arrayClass)
+      .thenBy(_componentClass, rhs->_componentClass).less();
    }
 
 void TR::ArrayClassFromComponentClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ArrayClassFromComponentClassRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
    printClass(_arrayClass);
    traceMsg(TR::comp(), "\t_componentClass=0x%p\n", _componentClass);
    printClass(_componentClass);
    }
 
+bool TR::SuperClassFromClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::SuperClassFromClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_superClass, rhs->_superClass)
+      .thenBy(_childClass, rhs->_childClass).less();
+   }
+
 void TR::SuperClassFromClassRecord::printFields()
    {
    traceMsg(TR::comp(), "SuperClassFromClassRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_superClass=0x%p\n", _superClass);
    printClass(_superClass);
    traceMsg(TR::comp(), "\t_childClass=0x%p\n", _childClass);
    printClass(_childClass);
+   }
+
+bool TR::ClassInstanceOfClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassInstanceOfClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_classOne, rhs->_classOne)
+      .thenBy(_classTwo, rhs->_classTwo)
+      .thenBy(_objectTypeIsFixed, rhs->_objectTypeIsFixed)
+      .thenBy(_castTypeIsFixed, rhs->_castTypeIsFixed)
+      .thenBy(_isInstanceOf, rhs->_isInstanceOf).less();
    }
 
 void TR::ClassInstanceOfClassRecord::printFields()
@@ -1547,29 +1354,50 @@ void TR::ClassInstanceOfClassRecord::printFields()
    traceMsg(TR::comp(), "\t_isInstanceOf=%s\n", _isInstanceOf ? "true" : "false");
    }
 
+bool TR::SystemClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::SystemClassByNameRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_systemClass, rhs->_systemClass).less();
+   }
+
 void TR::SystemClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "SystemClassByNameRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_systemClass=0x%p\n", _systemClass);
    printClass(_systemClass);
+   }
+
+bool TR::ClassFromITableIndexCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassFromITableIndexCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::ClassFromITableIndexCPRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassFromITableIndexCPRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::DeclaringClassFromFieldOrStaticRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::DeclaringClassFromFieldOrStaticRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    {
    traceMsg(TR::comp(), "DeclaringClassFromFieldOrStaticRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
@@ -1577,22 +1405,42 @@ void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::ClassClassRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_classClass, rhs->_classClass)
+      .thenBy(_objectClass, rhs->_objectClass).less();
+   }
+
 void TR::ClassClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassClassRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_classClass=0x%p\n", _classClass);
    printClass(_classClass);
    traceMsg(TR::comp(), "\t_objectClass=0x%p\n", _objectClass);
    printClass(_objectClass);
    }
 
+bool TR::ConcreteSubClassFromClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ConcreteSubClassFromClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_childClass, rhs->_childClass)
+      .thenBy(_superClass, rhs->_superClass).less();
+   }
+
 void TR::ConcreteSubClassFromClassRecord::printFields()
    {
    traceMsg(TR::comp(), "ConcreteSubClassFromClassRecord\n");
-   TR::ClassValidationRecord::printFields();
    traceMsg(TR::comp(), "\t_childClass=0x%p\n", _childClass);
    traceMsg(TR::comp(), "\t_superClass=0x%p\n", _superClass);
+   }
+
+bool TR::ClassChainRecord::isLessThanWithinKind(SymbolValidationRecord *other)
+   {
+   TR::ClassChainRecord *rhs = downcast(this, other);
+   // Don't compare _classChain - it's determined by _class
+   return LexicalOrder::by(_class, rhs->_class).less();
    }
 
 void TR::ClassChainRecord::printFields()
@@ -1601,6 +1449,15 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   }
+
+bool TR::MethodFromClassRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromClassRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_index, rhs->_index).less();
    }
 
 void TR::MethodFromClassRecord::printFields()
@@ -1612,6 +1469,15 @@ void TR::MethodFromClassRecord::printFields()
    traceMsg(TR::comp(), "\t_index=%u\n", _index);
    }
 
+bool TR::StaticMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::StaticMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::StaticMethodFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "StaticMethodFromCPRecord\n");
@@ -1619,6 +1485,15 @@ void TR::StaticMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::SpecialMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::SpecialMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::SpecialMethodFromCPRecord::printFields()
@@ -1630,6 +1505,15 @@ void TR::SpecialMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::VirtualMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::VirtualMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
+   }
+
 void TR::VirtualMethodFromCPRecord::printFields()
    {
    traceMsg(TR::comp(), "VirtualMethodFromCPRecord\n");
@@ -1637,6 +1521,16 @@ void TR::VirtualMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   }
+
+bool TR::VirtualMethodFromOffsetRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::VirtualMethodFromOffsetRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_virtualCallOffset, rhs->_virtualCallOffset)
+      .thenBy(_ignoreRtResolve, rhs->_ignoreRtResolve).less();
    }
 
 void TR::VirtualMethodFromOffsetRecord::printFields()
@@ -1647,6 +1541,16 @@ void TR::VirtualMethodFromOffsetRecord::printFields()
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_virtualCallOffset=%d\n", _virtualCallOffset);
    traceMsg(TR::comp(), "\t_ignoreRtResolve=%s\n", _ignoreRtResolve ? "true" : "false");
+   }
+
+bool TR::InterfaceMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::InterfaceMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_lookup, rhs->_lookup)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::InterfaceMethodFromCPRecord::printFields()
@@ -1660,6 +1564,15 @@ void TR::InterfaceMethodFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    }
 
+bool TR::MethodFromClassAndSigRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromClassAndSigRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_methodClass, rhs->_methodClass)
+      .thenBy(_beholder, rhs->_beholder).less();
+   }
+
 void TR::MethodFromClassAndSigRecord::printFields()
    {
    traceMsg(TR::comp(), "MethodFromClassAndSigRecord\n");
@@ -1668,6 +1581,15 @@ void TR::MethodFromClassAndSigRecord::printFields()
    printClass(_methodClass);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
+   }
+
+bool TR::StackWalkerMaySkipFramesRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::StackWalkerMaySkipFramesRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_methodClass, rhs->_methodClass)
+      .thenBy(_skipFrames, rhs->_skipFrames).less();
    }
 
 void TR::StackWalkerMaySkipFramesRecord::printFields()
@@ -1679,12 +1601,32 @@ void TR::StackWalkerMaySkipFramesRecord::printFields()
    traceMsg(TR::comp(), "\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
    }
 
+bool TR::ClassInfoIsInitialized::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ClassInfoIsInitialized *rhs = downcast(this, other);
+   return LexicalOrder::by(_class, rhs->_class)
+      .thenBy(_isInitialized, rhs->_isInitialized).less();
+   }
+
 void TR::ClassInfoIsInitialized::printFields()
    {
    traceMsg(TR::comp(), "ClassInfoIsInitialized\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_isInitialized=%sp\n", _isInitialized ? "true" : "false");
+   }
+
+bool TR::MethodFromSingleImplementer::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromSingleImplementer *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_thisClass, rhs->_thisClass)
+      .thenBy(_cpIndexOrVftSlot, rhs->_cpIndexOrVftSlot)
+      .thenBy(_callerMethod, rhs->_callerMethod)
+      .thenBy(_useGetResolvedInterfaceMethod, rhs->_useGetResolvedInterfaceMethod)
+      .less();
    }
 
 void TR::MethodFromSingleImplementer::printFields()
@@ -1698,6 +1640,16 @@ void TR::MethodFromSingleImplementer::printFields()
    traceMsg(TR::comp(), "\t_useGetResolvedInterfaceMethod=%d\n", _useGetResolvedInterfaceMethod);
    }
 
+bool TR::MethodFromSingleInterfaceImplementer::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromSingleInterfaceImplementer *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_thisClass, rhs->_thisClass)
+      .thenBy(_cpIndex, rhs->_cpIndex)
+      .thenBy(_callerMethod, rhs->_callerMethod).less();
+   }
+
 void TR::MethodFromSingleInterfaceImplementer::printFields()
    {
    traceMsg(TR::comp(), "MethodFromSingleInterfaceImplementer\n");
@@ -1708,6 +1660,16 @@ void TR::MethodFromSingleInterfaceImplementer::printFields()
    traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
    }
 
+bool TR::MethodFromSingleAbstractImplementer::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::MethodFromSingleAbstractImplementer *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_thisClass, rhs->_thisClass)
+      .thenBy(_vftSlot, rhs->_vftSlot)
+      .thenBy(_callerMethod, rhs->_callerMethod).less();
+   }
+
 void TR::MethodFromSingleAbstractImplementer::printFields()
    {
    traceMsg(TR::comp(), "MethodFromSingleAbstractImplementer\n");
@@ -1716,6 +1678,15 @@ void TR::MethodFromSingleAbstractImplementer::printFields()
    printClass(_thisClass);
    traceMsg(TR::comp(), "\t_vftSlot=%d\n", _vftSlot);
    traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
+   }
+
+bool TR::ImproperInterfaceMethodFromCPRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::ImproperInterfaceMethodFromCPRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_cpIndex, rhs->_cpIndex).less();
    }
 
 void TR::ImproperInterfaceMethodFromCPRecord::printFields()

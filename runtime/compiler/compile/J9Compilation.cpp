@@ -169,7 +169,8 @@ J9::Compilation::Compilation(int32_t id,
    _classForStaticFinalFieldModification(m),
    _profileInfo(NULL),
    _skippedJProfilingBlock(false),
-   _reloRuntime(reloRuntime)
+   _reloRuntime(reloRuntime),
+   _osrProhibitedOverRangeOfTrees(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
@@ -644,8 +645,15 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
    else if (node->getOpCodeValue() == TR::anewarray)
       {
       classRef      = node->getSecondChild();
-      classSymRef   = classRef->getSymbolReference();
 
+      // In the case of dynamic array allocation, return 0 indicating variable dynamic array allocation
+      if (classRef->getOpCodeValue() != TR::loadaddr)
+         {
+         classInfo = NULL;
+         return 0;
+         }
+
+      classSymRef   = classRef->getSymbolReference();
       // Can't skip the allocation if the class is unresolved
       //
       clazz = self()->fej9vm()->getClassForAllocationInlining(self(), classSymRef);

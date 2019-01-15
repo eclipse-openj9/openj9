@@ -6740,6 +6740,22 @@ TR_J9VMBase::isInterfaceClass(TR_OpaqueClassBlock * clazzPointer)
    }
 
 bool
+TR_J9VMBase::isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method)
+   {
+   int32_t modifiersForClass = 0;
+   if (isClassArray(clazzPointer))
+      return false;
+   bool success = javaLangClassGetModifiersImpl(clazzPointer, modifiersForClass);
+   if (!success)
+      return false;
+   bool isModFlagSet = (modifiersForClass & J9AccEnum) ? true : false;
+   TR_OpaqueClassBlock *enumClass = getClassFromSignature("java/lang/Enum", 14, method);
+   TR_OpaqueClassBlock *superClass = getSuperClass(clazzPointer);
+   return (isModFlagSet && (enumClass == superClass));
+   }
+
+
+bool
 TR_J9VMBase::isAbstractClass(TR_OpaqueClassBlock * clazzPointer)
    {
    if (isInterfaceClass(clazzPointer))
@@ -9374,7 +9390,7 @@ TR_J9VMBase::classNameChars(TR::Compilation *comp, TR::SymbolReference * symRef,
 
 // Native method bodies
 //
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -9387,7 +9403,7 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
    return (jlong)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
    return (jlong)(*(void **)_initialInvokeExactThunkGlue);
-#elif defined(OSX)
+#elif defined(NASM_ASSEMBLER)
    return (jlong)initialInvokeExactThunkGlue;
 #else
    return (jlong)_initialInvokeExactThunkGlue;

@@ -71,8 +71,8 @@ build_discarder:
     pipeline: 0
     pullRequest: 0
 extra_getsource_options:
-  8: '--openssl-version=1.1.1'
-  11: '--openssl-version=1.1.1'
+  8: '--openssl-version=1.1.1a'
+  11: '--openssl-version=1.1.1a'
 restart_timeout:
   time: '5'
   units: 'HOURS'
@@ -162,7 +162,7 @@ linux_390-64_cmprssptrs:
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   extra_configure_options:
-    8: '--with-openssl=/home/jenkins/openssl-1.1.1 --enable-openssl-bundling'
+    8: '--with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
 #========================================#
 # AIX PPC 64bits Compressed Pointers

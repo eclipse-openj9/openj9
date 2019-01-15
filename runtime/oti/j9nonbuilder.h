@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,34 +202,6 @@
 #define J9ArraySizeLongs 0x2
 #define J9ArraySizeWords 0x1
 
-/* @ddr_namespace: map_to_type=J9NonbuilderConstants */
-
-/* Constants from J9PreInitInstructions */
-#define J9InitCopyDoubles 0x5
-#define J9InitCopyDoublesW 0x6
-#define J9InitCopyFloats 0xF
-#define J9InitCopyFloatsW 0x10
-#define J9InitCopyIntegers 0xD
-#define J9InitCopyIntegersW 0xE
-#define J9InitCopyLongs 0x11
-#define J9InitCopyLongsW 0x12
-#define J9InitCopySingles 0x3
-#define J9InitCopySinglesW 0x4
-#define J9InitEnd 0x-1
-#define J9InitInstanceFields 0x13
-#define J9InitInstanceFieldsW 0x14
-#define J9InitInterfaces 0xB
-#define J9InitInterfacesW 0xC
-#define J9InitNOP 0x0
-#define J9InitSpecials 0x9
-#define J9InitSpecialsW 0xA
-#define J9InitStaticFields 0x15
-#define J9InitStaticFieldsW 0x16
-#define J9InitStatics 0x1
-#define J9InitStaticsW 0x2
-#define J9InitVirtuals 0x7
-#define J9InitVirtualsW 0x8
-
 /* @ddr_namespace: map_to_type=J9ClassInitFlags */
 
 /* Constants from J9ClassInitFlags */
@@ -364,6 +336,11 @@
 #define J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR -4
 #define J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR -5
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+
+typedef enum {
+	J9FlushCompQueueDataBreakpoint
+} J9JITFlushCompilationQueueReason;
+
 
 /* Forward struct declarations. */
 struct DgRasInterface;
@@ -537,7 +514,6 @@ typedef struct J9JSRICodeBlock {
 	struct J9JSRIJSRData* jsrData;
 } J9JSRICodeBlock;
 
-
 /* Jazz 82615: we use verboseErrorType in the error message framework to store the specific error type
  * in the case of errorCode = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID.
  */
@@ -677,7 +653,6 @@ typedef struct J9JITExceptionTable {
 #define JIT_METADATA_FLAGS_USED_FOR_SIZE 1
 #define JIT_METADATA_GC_MAP_32_BIT_OFFSETS 2
 #define JIT_METADATA_IS_STUB 4
-
 
 typedef struct J9JIT16BitExceptionTableEntry {
 	U_16 startPC;
@@ -1478,8 +1453,6 @@ typedef struct J9ShrCompositeCacheCommonInfo {
 
 #endif /* J9VM_OPT_SHARED_CLASSES */
 
-
-
 typedef struct J9RASSystemInfo {
 	struct J9RASSystemInfo* linkPrevious;
 	struct J9RASSystemInfo* linkNext;
@@ -1535,7 +1508,6 @@ typedef struct J9RAS {
 #define J9RASMinorVersion  0
 #define J9RASVersion ((J9RASMajorVersion << 16) + J9RASMinorVersion)
 #define J9RASCompatible(target)  ((((target)->j9ras.ras.version & 0xffff0000) >> 16 == J9RASMajorVersion) && (((target)->j9ras.ras.version & 0xffff) >= J9RASMinorVersion))
-
 
 #if defined(J9VM_OPT_VM_LOCAL_STORAGE)
 
@@ -2161,13 +2133,10 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_INTERFACE_STATIC_METHOD 18
 #define J9CPTYPE_INTERFACE_INSTANCE_METHOD 19
 
-
 #define J9_CP_BITS_PER_DESCRIPTION  8
 #define J9_CP_DESCRIPTIONS_PER_U32  4
 #define J9_CP_DESCRIPTION_MASK  255
 #define J9CPTYPE_UNUSED8  8
-
-
 
 typedef struct J9RAMConstantPoolItem {
 	UDATA slot1;
@@ -3654,6 +3623,7 @@ typedef struct J9JITConfig {
 	struct J9JITDecompilationInfo*  ( *jitAddDecompilationForFramePop)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
 	void  ( *jitHotswapOccurred)(struct J9VMThread * currentThread) ;
 	void  ( *jitClassesRedefined)(struct J9VMThread * currentThread, UDATA classCount, struct J9JITRedefinedClass * classList) ;
+	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
 	void  ( *j9jit_printf)(void *voidConfig, char *format, ...) ;
@@ -3999,6 +3969,7 @@ typedef struct J9AOTConfig {
 	struct J9JITDecompilationInfo*  ( *jitAddDecompilationForFramePop)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
 	void  ( *jitHotswapOccurred)(struct J9VMThread * currentThread) ;
 	void  ( *jitClassesRedefined)(struct J9VMThread * currentThread, UDATA classCount, struct J9JITRedefinedClass * classList) ;
+	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
 	void  ( *j9jit_printf)(void *voidConfig, char *format, ...) ;
@@ -4255,6 +4226,7 @@ typedef struct J9MemoryManagerFunctions {
 
 	int  ( *gcStartupHeapManagement)(struct J9JavaVM * vm) ;
 	void  ( *gcShutdownHeapManagement)(struct J9JavaVM * vm) ;
+	void ( *jvmPhaseChange)(struct J9VMThread *currentThread, UDATA phase);
 	IDATA  ( *initializeMutatorModelJava)(struct J9VMThread* vmThread) ;
 	void  ( *cleanupMutatorModelJava)(struct J9VMThread* vmThread) ;
 #if defined(J9VM_GC_FINALIZATION)
@@ -4800,7 +4772,6 @@ typedef struct J9InternalVMFunctions {
 	void ( *setNestmatesError)(struct J9VMThread *vmThread, struct J9Class *nestMember, struct J9Class *nestHost, IDATA errorCode);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9InternalVMFunctions;
-
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
 typedef struct J9InvocationJavaVM {

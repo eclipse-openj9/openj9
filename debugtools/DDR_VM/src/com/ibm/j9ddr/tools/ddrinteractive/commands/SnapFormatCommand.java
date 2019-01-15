@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@ import java.io.PrintStream;
 import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import com.ibm.j9ddr.CorruptDataException;
@@ -42,32 +43,29 @@ import com.ibm.jvm.trace.format.api.TracePoint;
 import com.ibm.jvm.trace.format.api.TracePointImpl;
 import com.ibm.jvm.trace.format.api.TraceThread;
 
-public class SnapFormatCommand extends SnapBaseCommand 
-{
-	private TraceContext traceContext = null;
-	private InputStream[] messageFiles = new InputStream[2];
-	private boolean outputHeader = true;
-	
-	private static final String[] MESSAGEFILENAMES = {"TraceFormat.dat","J9TraceFormat.dat"};
-	private static final String[] DEFAULTMESSAGEFILEPATHS = new String[] {System.getProperty("user.dir"), System.getProperty("java.home") + File.separator + "lib"} ;
-	private static final PrintStream dummyOut = new PrintStream(new OutputStream() {
-		@Override
-		public void write(int b) throws IOException 
-		{
-			// do nothing
-		}
-	});
-	
-	private static abstract class TraceFilterExpression
-	{
-		public abstract boolean matches(TracePoint tp);
-		
-		public static TraceFilterExpression parseExpression(String expression)
-		{
-			TraceFilterExpression result = null;
+public class SnapFormatCommand extends SnapBaseCommand {
 
+	private TraceContext traceContext;
+	private final List<InputStream> messageFiles;
+	private boolean outputHeader;
+
+	private static final String[] MESSAGEFILENAMES = { "TraceFormat.dat", "J9TraceFormat.dat", "OMRTraceFormat.dat" };
+	private static final String[] DEFAULTMESSAGEFILEPATHS = {
+			System.getProperty("user.dir"),
+			System.getProperty("java.home") + File.separator + "lib"
+	};
+
+	private static abstract class TraceFilterExpression {
+
+		TraceFilterExpression() {
+			super();
+		}
+
+		public abstract boolean matches(TracePoint tp);
+
+		public static TraceFilterExpression parseExpression(String expression) {
 			StringTokenizer toker = new StringTokenizer(expression, "()&|!,", true);
-			ArrayList<String> tokens = new ArrayList<String>();
+			List<String> tokens = new ArrayList<>();
 			while (toker.hasMoreTokens()) {
 				String token = toker.nextToken().trim();
 				if (0 != token.length()) {
@@ -79,76 +77,56 @@ public class SnapFormatCommand extends SnapBaseCommand
 					}
 				}
 			}
-			result = parseExpression(tokens);
-			if (null == result) {
-				throw new IllegalArgumentException("Failed to parse filter expression: no result");
-			}
+			TraceFilterExpression result = parseExpression(tokens);
 			if (!tokens.isEmpty()) {
 				throw new IllegalArgumentException("Failed to parse filter expression: unparsed text");
 			}
 			return result;
 		}
 
-		private static TraceFilterExpression parseExpression(ArrayList<String> tokens)
-		{
-			TraceFilterExpression result = null;
+		private static TraceFilterExpression parseExpression(List<String> tokens) {
+			TraceFilterExpression result = parseTerm(tokens);
 
-			result = parseTerm(tokens);
 			while (!tokens.isEmpty()) {
 				String token = tokens.get(0);
 				if (token.equals("|") || token.equals(",")) {
 					tokens.remove(0);
 					TraceFilterExpression lhs = result;
 					TraceFilterExpression rhs = parseTerm(tokens);
-					if (null == rhs) {
-						throw new IllegalArgumentException("Failed to parse filter expression: missing operand to OR");
-					}
 					result = new TraceFilterOrExpression(lhs, rhs);
 				} else {
 					break;
 				}
 			}
-			
-			if (null == result) { 
-				throw new IllegalArgumentException("Failed to parse filter expression: expected expression");
-			}
+
 			return result;
 		}
-		
-		private static TraceFilterExpression parseTerm(ArrayList<String> tokens)
-		{
-			TraceFilterExpression result = null;
 
-			result = parsePrimary(tokens);
+		private static TraceFilterExpression parseTerm(List<String> tokens) {
+			TraceFilterExpression result = parsePrimary(tokens);
+
 			while (!tokens.isEmpty()) {
 				String token = tokens.get(0);
 				if (token.equals("&")) {
 					tokens.remove(0);
 					TraceFilterExpression lhs = result;
 					TraceFilterExpression rhs = parsePrimary(tokens);
-					if (null == rhs) {
-						throw new IllegalArgumentException("Failed to parse filter expression: missing operand to AND");
-					}
 					result = new TraceFilterAndExpression(lhs, rhs);
 				} else {
 					break;
 				}
 			}
-			
-			if (null == result) { 
-				throw new IllegalArgumentException("Failed to parse filter expression: expected expression");
-			}
+
 			return result;
 		}
-		
-		private static TraceFilterExpression parsePrimary(ArrayList<String> tokens)
-		{
+
+		private static TraceFilterExpression parsePrimary(List<String> tokens) {
 			TraceFilterExpression result = null;
 
-			if (tokens.isEmpty()) { 
+			if (tokens.isEmpty()) {
 				throw new IllegalArgumentException("Failed to parse filter expression: expected expression");
 			}
-			
+
 			String token = tokens.get(0);
 			if (token.equals("(")) {
 				// subexpression
@@ -158,19 +136,13 @@ public class SnapFormatCommand extends SnapBaseCommand
 					throw new IllegalArgumentException("Failed to parse filter expression: expected closing parenthesis");
 				}
 				tokens.remove(0);
-
 			} else if (token.equals("!")) {
 				// not expression
 				tokens.remove(0);
 				result = parsePrimary(tokens);
-				if (null == result) {
-					throw new IllegalArgumentException("Failed to parse filter expression: missing operand to NOT");
-				}
 				result = new TraceFilterNotExpression(result);
-				
 			} else if (token.equals(")") || token.equals("&") || token.equals("|") || token.equals(",")) {
 				throw new IllegalArgumentException("Failed to parse filter expression: expected expression, found " + token);
-				
 			} else {
 				// anything else
 				tokens.remove(0);
@@ -180,91 +152,87 @@ public class SnapFormatCommand extends SnapBaseCommand
 			return result;
 		}
 	}
-	
-	private static class TraceFilterOrExpression extends TraceFilterExpression
-	{
-		private TraceFilterExpression lhs;
-		private TraceFilterExpression rhs;
 
-		public TraceFilterOrExpression(TraceFilterExpression lhs, TraceFilterExpression rhs)
-		{
+	private static final class TraceFilterOrExpression extends TraceFilterExpression {
+
+		private final TraceFilterExpression lhs;
+		private final TraceFilterExpression rhs;
+
+		public TraceFilterOrExpression(TraceFilterExpression lhs, TraceFilterExpression rhs) {
 			this.lhs = lhs;
 			this.rhs = rhs;
 		}
-		
-		public boolean matches(TracePoint tp)
-		{
+
+		@Override
+		public boolean matches(TracePoint tp) {
 			return lhs.matches(tp) || rhs.matches(tp);
 		}
-		
-		public String toString()
-		{
+
+		@Override
+		public String toString() {
 			return "(" + lhs + "|" + rhs + ")";
 		}
 	}
 
-	private static class TraceFilterAndExpression extends TraceFilterExpression
-	{
-		private TraceFilterExpression lhs;
-		private TraceFilterExpression rhs;
-		
-		public TraceFilterAndExpression(TraceFilterExpression lhs, TraceFilterExpression rhs)
-		{
+	private static final class TraceFilterAndExpression extends TraceFilterExpression {
+
+		private final TraceFilterExpression lhs;
+		private final TraceFilterExpression rhs;
+
+		public TraceFilterAndExpression(TraceFilterExpression lhs, TraceFilterExpression rhs) {
 			this.lhs = lhs;
 			this.rhs = rhs;
 		}
-		
-		public boolean matches(TracePoint tp)
-		{
+
+		@Override
+		public boolean matches(TracePoint tp) {
 			if (lhs.matches(tp)) {
 				return rhs.matches(tp);
 			}
 			return false;
 		}
-		
-		public String toString()
-		{
+
+		@Override
+		public String toString() {
 			return "(" + lhs + "&" + rhs + ")";
 		}
 	}
 
-	private static class TraceFilterNotExpression extends TraceFilterExpression
-	{
-		protected TraceFilterExpression expression;
-		
-		public TraceFilterNotExpression(TraceFilterExpression expression)
-		{
+	private static final class TraceFilterNotExpression extends TraceFilterExpression {
+
+		private final TraceFilterExpression expression;
+
+		public TraceFilterNotExpression(TraceFilterExpression expression) {
 			this.expression = expression;
 		}
-		
-		public boolean matches(TracePoint tp)
-		{
+
+		@Override
+		public boolean matches(TracePoint tp) {
 			return !expression.matches(tp);
 		}
-		
-		public String toString()
-		{
+
+		@Override
+		public String toString() {
 			return "!" + expression;
 		}
 	}
 
-	private static class TraceFilter extends TraceFilterExpression
-	{
+	private static final class TraceFilter extends TraceFilterExpression {
+
 		private String component = null;
 		private String type = null;
 		private int idLow = -1;
 		private int idHigh = -1;
 
 		/* Format of a tracepoint specification:
-		 * 	<component>[{<type>}]
+		 *  <component>[{<type>}]
 		 * or
-		 * 	<component>.<id>
+		 *  <component>.<id>
 		 * or
-		 * 	<component>.<id-range>
+		 *  <component>.<id-range>
 		 */
-		public TraceFilter(String spec)
-		{
-			int index = 0;	
+		public TraceFilter(String spec) {
+			int index = 0;
 			int typeIndex = spec.indexOf('{', index);
 			if (-1 == typeIndex) {
 				// no type, maybe an id?
@@ -286,15 +254,15 @@ public class SnapFormatCommand extends SnapBaseCommand
 				component = spec.substring(index, typeIndex);
 				type = spec.substring(typeIndex + 1, spec.length() - 1);
 			}
-			
+
 			if ((null != component && ((0 == component.length()) || component.equalsIgnoreCase("all")))) {
 				// "all" is the default
 				component = null;
 			}
 		}
-		
-		public boolean matches(TracePoint tp)
-		{
+
+		@Override
+		public boolean matches(TracePoint tp) {
 			boolean result = true;
 			if (null != component) {
 				if (component.equals(tp.getComponent())) {
@@ -328,9 +296,9 @@ public class SnapFormatCommand extends SnapBaseCommand
 
 			return result;
 		}
-		
-		public String toString()
-		{
+
+		@Override
+		public String toString() {
 			StringBuilder builder = new StringBuilder();
 			if (null != component) {
 				builder.append(component);
@@ -353,140 +321,163 @@ public class SnapFormatCommand extends SnapBaseCommand
 			return builder.toString();
 		}
 	}
-	
-	
-	public SnapFormatCommand()
-	{
-	}	
+
+	public SnapFormatCommand() {
+		super();
+		traceContext = null;
+		messageFiles = new ArrayList<>();
+		outputHeader = true;
+	}
 
 	/**
 	 * Options should be:
-	 * 	-f ouputFile
-	 * 	-t vmthread
-	 * 	-d .dat file path
+	 *  -f ouputFile
+	 *  -t vmthread
+	 *  -d .dat file path
 	 */
 	public void run(String command, String[] args, Context context,
 			PrintStream out) throws DDRInteractiveCommandException {
-		
 		String fileName = null;
 		String userDatPath = null;
 		String userThreadId = null;
 		String messageFilePath = null;
+		List<String> messageFileStrings = new ArrayList<>();
 		TraceFilterExpression specFilter = null;
-		
+
 		/* Usage:
-		 * 	!snapformat [<filename>]
-		 * 		- format trace buffers to a specified file or stdout
-		 * 	!snapformat [-f <filename>] [-d <datfile_directory>] [-t <j9vmthread id>] 
-		 * 		- format trace buffers for all threads or just the specified thread to a file or
-		 * 		  stdout using the .dat files in the specified dir
-		 * 
+		 *  !snapformat [<filename>]
+		 *      - format trace buffers to a specified file or stdout
+		 *  !snapformat [-f <filename>] [-d <datfile_directory>] [-t <j9vmthread id>]
+		 *      - format trace buffers for all threads or just the specified thread to a file or
+		 *        stdout using the .dat files in the specified dir
 		 */
-		
-		if (args.length == 0 ){
+
+		if (args.length == 0) {
 			fileName = null; // Write formatted trace to the console.
-		} else if( args.length == 1 ) {
+		} else if (args.length == 1) {
 			fileName = args[0];
 		} else {
 			/* Walk the arguments and look for flag/value pairs. */
-			for( int i = 0; i < args.length - 1; ) {
+			for (int i = 0; i < args.length - 1;) {
 				String flag = args[i++];
 				String value = args[i++];
-				if( "-f".equals(flag)) {
+				if ("-f".equals(flag)) {
 					fileName = value;
-				} else if( "-d".equals(flag)) {
+				} else if ("-d".equals(flag)) {
 					userDatPath = value;
-				} else if( "-t".equals(flag)) {
+				} else if ("-t".equals(flag)) {
 					userThreadId = value;
 					outputHeader = false;
-				} else if( "-s".equals(flag)) {
+				} else if ("-s".equals(flag)) {
 					specFilter = TraceFilterExpression.parseExpression(value);
 					outputHeader = false;
 				}
 			}
 		}
-	
+
 		/* Look for message files, search order is:
-		 * - User specified location to this command.
+		 * - user specified location to this command
 		 * - as resources located under same class loader as TraceContext
 		 * - current working directory
-		 * - jre/lib for the current jre 
+		 * - jre/lib for the current jre
 		 */
-		boolean foundDatFiles = false;
-		if( userDatPath != null ) {
-			int i = 0;
-			for( String name : MESSAGEFILENAMES ) {
-				File f = new File(userDatPath + File.separator + name);
-				if( !f.exists() ) {
-					out.printf("Error locating .dat file %s on user path %s\n", name, userDatPath);
-					return;
-				} else {
+		if (userDatPath != null) {
+			messageFilePath = userDatPath;
+			for (String name : MESSAGEFILENAMES) {
+				File f = new File(userDatPath, name);
+				if (f.exists()) {
 					try {
-						messageFiles[i++] = new FileInputStream(f);
-						foundDatFiles = true;
+						messageFiles.add(new FileInputStream(f));
+						messageFileStrings.add(name);
 					} catch (FileNotFoundException e) {
 						// We've done f.exists(), this should be fine.
-						// foundDatFiles will be false if not.
 					}
 				}
 			}
 		} else {
-			int i = 0;
-			String[] messageFileStrings = new String[MESSAGEFILENAMES.length];
-			for( String name : MESSAGEFILENAMES ) {
+			for (String name : MESSAGEFILENAMES) {
 				InputStream s = TraceContext.class.getResourceAsStream('/' + name);
-				if ( null != s ) {
-					messageFileStrings[i] = TraceContext.class.getResource('/' + name).toString();
-					messageFiles[i++] = s;
-					foundDatFiles = true;
+				if (s != null) {
+					messageFiles.add(s);
+					messageFileStrings.add(TraceContext.class.getResource('/' + name).toString());
 				}
 			}
-			if( foundDatFiles ) {
-				out.printf("Formatting trace using format dat files from %s and %s\n", messageFileStrings[0], messageFileStrings[1]);
-			} else {
-				for( String path: DEFAULTMESSAGEFILEPATHS ) {
-					for( String name : MESSAGEFILENAMES ) {
-						File f = new File(path + File.separator + name);
-						if( f.exists() ) {
+			if (messageFiles.isEmpty()) {
+				for (String path : DEFAULTMESSAGEFILEPATHS) {
+					for (String name : MESSAGEFILENAMES) {
+						File f = new File(path, name);
+						if (f.exists()) {
 							try {
-								messageFiles[i++] = new FileInputStream(f);
-								foundDatFiles = true;
+								messageFiles.add(new FileInputStream(f));
+								messageFileStrings.add(name);
 							} catch (FileNotFoundException e) {
 								// We've done f.exists(), this should be fine.
-								// foundDatFiles will be false if not.
 							}
 						}
 					}
-					if( foundDatFiles ) {
+
+					if (!messageFiles.isEmpty()) {
 						messageFilePath = path;
-						out.printf("Formatting trace using format dat files from %s and %s from %s\n", MESSAGEFILENAMES[0], MESSAGEFILENAMES[1], messageFilePath);
 						break;
 					}
 				}
 			}
-			if( !foundDatFiles ) {
-				out.printf("Unable to find %s and %s in %s or %s\n", MESSAGEFILENAMES[0], MESSAGEFILENAMES[1], DEFAULTMESSAGEFILEPATHS[0], DEFAULTMESSAGEFILEPATHS[1]);
-				return;
+		}
+
+		if (messageFiles.isEmpty()) {
+			String leader = "Unable to find any of";
+
+			for (String name : MESSAGEFILENAMES) {
+				out.printf("%s %s", leader, name);
+				leader = ",";
+			}
+
+			if (messageFilePath != null) {
+				out.printf(" in %s%n", messageFilePath);
+			} else {
+				out.printf(" in %s or %s%n", DEFAULTMESSAGEFILEPATHS[0], DEFAULTMESSAGEFILEPATHS[1]);
+			}
+
+			return;
+		} else {
+			String leader = "Formatting trace using format dat files";
+
+			for (String name : messageFileStrings) {
+				out.printf("%s %s", leader, name);
+				leader = ",";
+			}
+
+			if (messageFilePath != null) {
+				out.printf(" from %s%n", messageFilePath);
+			} else {
+				out.println();
 			}
 		}
-		
+
 		if (outputHeader) {
 			extractTraceData(context, out);
 		} else {
+			final PrintStream dummyOut = new PrintStream(new OutputStream() {
+				@Override
+				public void write(int octet) {
+					// do nothing
+				}
+			});
+
 			extractTraceData(context, dummyOut);
 		}
-		
-		if( traceContext == null ) {
+
+		if (traceContext == null) {
 			out.println("Unable to create trace context, command failed.");
 			return;
 		}
-		
+
 		long threadId = 0;
-		if( userThreadId != null ) {
-			boolean is64BitPlatform = (context.process.bytesPerPointer() == 8) ? true : false;
+		if (userThreadId != null) {
+			boolean is64BitPlatform = context.process.bytesPerPointer() == 8;
 			threadId = CommandUtils.parsePointer(userThreadId, is64BitPlatform);
 		}
-		
+
 		/* Create the stream to write the trace to.
 		 * The specified output file or "out" if we
 		 * are writing to the console.
@@ -495,7 +486,7 @@ public class SnapFormatCommand extends SnapBaseCommand
 		 */
 		PrintStream traceOut = out;
 		PrintStream filePrintStream = null;
-		if( fileName != null ) {
+		if (fileName != null) {
 			try {
 				filePrintStream = new PrintStream(fileName);
 				traceOut = filePrintStream;
@@ -503,43 +494,42 @@ public class SnapFormatCommand extends SnapBaseCommand
 				out.printf("Unable to write formatted trace to file %s\n", fileName);
 			}
 		}
-	
+
 		if (outputHeader) {
 			traceOut.println(traceContext.summary());
 		}
-		
+
 		try {
 			Iterator<TracePoint> tpIterator = null;
-			if( userThreadId != null ) {
-				Iterator<TraceThread> threadsIterator = (Iterator<TraceThread>)traceContext.getThreads();
+			if (userThreadId != null) {
+				Iterator<TraceThread> threadsIterator = (Iterator<TraceThread>) traceContext.getThreads();
 				boolean foundThread = false;
 				while (threadsIterator.hasNext()) {
 					TraceThread thread = threadsIterator.next();
-					if( thread.getThreadID() == threadId ) {
+					if (thread.getThreadID() == threadId) {
 						foundThread = true;
-						tpIterator = (Iterator<TracePoint>)thread.getIterator();
+						tpIterator = (Iterator<TracePoint>) thread.getIterator();
 					}
 				}
-				if( !foundThread ) {
+				if (!foundThread) {
 					out.printf("Unable to find thread %s in trace data\n", userThreadId);
 				}
 			} else {
-				tpIterator = (Iterator<TracePoint>)traceContext.getTracepoints();	
+				tpIterator = (Iterator<TracePoint>) traceContext.getTracepoints();
 			}
-			
-			if( tpIterator != null ) {
+
+			if (tpIterator != null) {
 				int tpCount = printTracePoints(traceOut, tpIterator, specFilter);
-				out.printf("Completed processing of %d tracepoints with %d warnings and %d errors\n", traceContext.getTotalTracePoints(), traceContext.getWarningCount(), traceContext.getErrorCount() );
+				out.printf("Completed processing of %d tracepoints with %d warnings and %d errors\n", traceContext.getTotalTracePoints(), traceContext.getWarningCount(), traceContext.getErrorCount());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		if( filePrintStream != null ) {
+
+		if (filePrintStream != null) {
 			out.println("Snap trace written to: " + fileName);
 			filePrintStream.close();
 		}
-		
 	}
 
 	private int printTracePoints(PrintStream traceOut, Iterator<TracePoint> tpIterator, TraceFilterExpression specFilter) {
@@ -548,7 +538,7 @@ public class SnapFormatCommand extends SnapBaseCommand
 		while (tpIterator.hasNext()) {
 			TracePoint tp = tpIterator.next();
 			TracePointImpl tracepoint = null;
-			if( tp instanceof TracePointImpl ) {
+			if (tp instanceof TracePointImpl) {
 				tracepoint = (TracePointImpl) tp;
 			}
 			if ((tracepoint != null) && ((specFilter == null) || specFilter.matches(tracepoint))) {
@@ -562,19 +552,18 @@ public class SnapFormatCommand extends SnapBaseCommand
 				try {
 					parameters = tracepoint.getFormattedParameters();
 					if (parameters == null || parameters.length() == 0) {
-					traceContext.error(traceContext, "null parameter data for trace point "+component+"."+tpID);
+						traceContext.error(traceContext, "null parameter data for trace point " + component + "." + tpID);
 					}
 				} catch (BufferUnderflowException e) {
 					/* This may be thrown, but there's essentially nothing we can do about it at this level so
 					 * just report it
 					 */
-					traceContext.error(traceContext, "Underflow accessing parameter data for trace point "+component+"."+tpID);
+					traceContext.error(traceContext, "Underflow accessing parameter data for trace point " + component + "." + tpID);
 				}
-				
+
 				StringBuilder formatted = new StringBuilder();
-				
+
 				formatted.append(tracepoint.getFormattedTime());
-				
 
 				/* append thread id */
 				formatted.append(" ").append((current != thread ? "*" : " "));
@@ -584,7 +573,7 @@ public class SnapFormatCommand extends SnapBaseCommand
 				/* append component and padding */
 				StringBuilder fullTracepointID = new StringBuilder(component);
 				fullTracepointID.append(container != null ? "(" + container + ")" : "").append(".").append(tpID);
-				formatted.append(String.format("%-20s",fullTracepointID.toString()));
+				formatted.append(String.format("%-20s", fullTracepointID.toString()));
 				formatted.append(" ");
 
 				formatted.append(tracepoint.getType());
@@ -597,30 +586,28 @@ public class SnapFormatCommand extends SnapBaseCommand
 		}
 		return tpCount;
 	}
-	
-	@Override
-	protected void writeHeaderBytesToTrace(Context context, byte[] headerBytes, PrintStream out) 
-	{
 
+	@Override
+	protected void writeHeaderBytesToTrace(Context context, byte[] headerBytes, PrintStream out) {
 		try {
-			traceContext = TraceContext.getContext(headerBytes, headerBytes.length, messageFiles[0] );
-			traceContext.addMessageData(messageFiles[1]);
+			traceContext = TraceContext.getContext(headerBytes, headerBytes.length, messageFiles.get(0));
+
+			for (int i = 1, n = messageFiles.size(); i < n; ++i) {
+				traceContext.addMessageData(messageFiles.get(i));
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override
-	protected void writeBytesToTrace(Context context, long address,
-			int bufferSize, PrintStream out) {
-		
-		if( traceContext == null ) {
+	protected void writeBytesToTrace(Context context, long address, int bufferSize, PrintStream out) {
+		if (traceContext == null) {
 			out.println("Error - trace buffer passed before context created.");
 			return;
 		}
-		
+
 		byte[] data = new byte[bufferSize];
 		try {
 			context.process.getBytesAt(address, data);
@@ -632,7 +619,6 @@ public class SnapFormatCommand extends SnapBaseCommand
 			out.println("Problem reading " + bufferSize + " bytes from 0x" +  Long.toHexString(address) + ". Trace file may contain partial or damaged data.");
 		}
 		traceContext.addData(data);
-
 	}
 
 }

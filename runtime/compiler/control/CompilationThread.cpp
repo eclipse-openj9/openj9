@@ -4713,7 +4713,7 @@ bool TR::CompilationInfo::isQueuedForCompilation(J9Method * method, void *oldSta
    return linkageInfo->isBeingCompiled();
    }
 
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -4747,7 +4747,7 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
          initialInvokeExactThunkGlueAddress = (void*)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
          initialInvokeExactThunkGlueAddress = (*(void **)_initialInvokeExactThunkGlue);
-#elif defined(OSX)
+#elif defined(NASM_ASSEMBLER)
          initialInvokeExactThunkGlueAddress = (void*)initialInvokeExactThunkGlue;
 #else
          initialInvokeExactThunkGlueAddress = (void*)_initialInvokeExactThunkGlue;
@@ -7908,6 +7908,14 @@ TR::CompilationInfoPerThreadBase::compile(
          releaseVMAccess(vmThread);
          // GC can go ahead now.
          }
+
+      // The inlineFieldWatches flag is set when Field Watch is actually triggered at runtime.
+      // When it happens, all the methods on stack are decompiled and those in
+      // the compilation queue are invalidated. Set the option here to guarantee the
+      // mode is detected at the right moment so that all methods compiled after respect the
+      // data watch point.
+      if (_jitConfig->inlineFieldWatches)
+         compiler->setOption(TR_EnableFieldWatch);
 
       // Compile the method
       //

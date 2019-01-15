@@ -83,6 +83,9 @@
 #include "ParallelHeapWalker.hpp"
 #include "ParallelSweepScheme.hpp"
 #include "PointerArrayObjectScanner.hpp"
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#include "ReadBarrierVerifier.hpp"
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 #include "ReferenceChainWalkerMarkMap.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "ReferenceObjectList.hpp"
@@ -743,4 +746,16 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+void
+MM_CollectorLanguageInterfaceImpl::scavenger_poisonSlots(MM_EnvironmentBase *env)
+{
+	((MM_ReadBarrierVerifier *)_extensions->accessBarrier)->poisonSlots(env);
+}
 
+void
+MM_CollectorLanguageInterfaceImpl::scavenger_healSlots(MM_EnvironmentBase *env)
+{
+	((MM_ReadBarrierVerifier *)_extensions->accessBarrier)->healSlots(env);
+}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */

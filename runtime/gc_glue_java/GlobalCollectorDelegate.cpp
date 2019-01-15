@@ -51,6 +51,9 @@
 #include "ObjectModel.hpp"
 #include "ParallelGlobalGC.hpp"
 #include "ParallelHeapWalker.hpp"
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#include "ReadBarrierVerifier.hpp"
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 #include "ReferenceChainWalkerMarkMap.hpp"
 #include "ReferenceObjectList.hpp"
 #include "ScavengerJavaStats.hpp"
@@ -97,7 +100,16 @@ MM_GlobalCollectorDelegate::initialize(MM_EnvironmentBase *env, MM_GlobalCollect
 
 	/* Balanced and realtime polices will instantiate their own access barrier */
 	if (_extensions->isStandardGC()) {
-		_extensions->accessBarrier = MM_StandardAccessBarrier::newInstance(env);
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+		if (1 == _extensions->fvtest_enableReadBarrierVerification) {
+			_extensions->accessBarrier = MM_ReadBarrierVerifier::newInstance(env);
+		} else
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+		{
+			_extensions->accessBarrier = MM_StandardAccessBarrier::newInstance(env);
+		}
+
 		if (NULL == _extensions->accessBarrier) {
 			return false;
 		}
@@ -298,6 +310,20 @@ MM_GlobalCollectorDelegate::prepareHeapForWalk(MM_EnvironmentBase *env)
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 }
+
+#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+void
+MM_GlobalCollectorDelegate::poisonSlots(MM_EnvironmentBase *env)
+{
+	((MM_ReadBarrierVerifier *)_extensions->accessBarrier)->poisonSlots(env);
+}
+
+void
+MM_GlobalCollectorDelegate::healSlots(MM_EnvironmentBase *env)
+{
+	((MM_ReadBarrierVerifier *)_extensions->accessBarrier)->healSlots(env);
+}
+#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
 
 bool
 MM_GlobalCollectorDelegate::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress)

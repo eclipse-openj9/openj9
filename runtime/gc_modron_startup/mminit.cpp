@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -596,6 +596,108 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 
 	return result;
 }
+
+void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+	MM_EnvironmentBase env(currentThread->omrVMThread);
+	if (J9VM_PHASE_NOT_STARTUP == phase) {
+
+		if (NULL != vm->sharedClassConfig) {
+			if (extensions->isStandardGC()) {
+				/* read old values from SC */
+				uintptr_t hintDefaultOld = 0;
+				uintptr_t hintTenureOld = 0;
+				vm->sharedClassConfig->findGCHints(currentThread, &hintDefaultOld, &hintTenureOld);
+				/* Nothing to do if read fails, we'll just assume the old values are 0 */
+
+				/* Get the current heap size values.
+				 * Default/Tenure MemorySubSpace is of type Generic (which is MemoryPool owner, while the parents are of type Flat/SemiSpace).
+				 * For SemiSpace the latter (parent) ones are what we want to deal with (expand), since it's what includes both Allocate And Survivor children.
+				 * For Flat it would probably make no difference if we used parent or child, but let's be consistent and use parent, too.
+				 */
+				MM_MemorySubSpace *defaultMemorySubSpace = extensions->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
+				MM_MemorySubSpace *tenureMemorySubspace = extensions->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
+
+				/* Default MSS is either OLD or NEW at a time (flat or generational), but we can safely ask for both. We cannot just use plain
+				 * getActiveMemorySize() without arguments since it would return just Allocate size for Nursery, but we need total Nursery size.
+				 */
+				uintptr_t hintDefault = defaultMemorySubSpace->getActiveMemorySize(MEMORY_TYPE_OLD | MEMORY_TYPE_NEW);
+				uintptr_t hintTenure = 0;
+
+				/* Standard GCs always have Default MSS (which is equal to Tenure for flat heap configuration).
+				 * So the simplest is always fetch Default, regardless if's generational haep configuration or not.
+				 * We fetch Tenure only if only not equal to Default (which implies it's generational) */
+				if (defaultMemorySubSpace != tenureMemorySubspace) {
+					hintTenure = tenureMemorySubspace->getActiveMemorySize();
+				}
+
+				/* Gradually learn, by averaging new values with old values - it may take a few restarts before hint converge to stable values */
+				hintDefault = (uintptr_t)MM_Math::weightedAverage((float)hintDefaultOld, (float)hintDefault, (1.0f - extensions->heapSizeStartupHintWeightNewValue));
+				hintTenure = (uintptr_t)MM_Math::weightedAverage((float)hintTenureOld, (float)hintTenure, (1.0f - extensions->heapSizeStartupHintWeightNewValue));
+
+				vm->sharedClassConfig->storeGCHints(currentThread, hintDefault, hintTenure, true);
+				/* Nothing to do if store fails, storeGCHints already issues a trace point */
+			}
+		}
+	}
+}
+
+
+void
+gcExpandHeapOnStartup(J9JavaVM *javaVM)
+{
+	J9SharedClassConfig *sharedClassConfig = javaVM->sharedClassConfig;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	J9VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+	MM_EnvironmentBase env(currentThread->omrVMThread);
+
+	if (NULL != sharedClassConfig) {
+		if (extensions->isStandardGC()) {
+			uintptr_t hintDefault = 0;
+			uintptr_t hintTenure = 0;
+
+			if (0 == sharedClassConfig->findGCHints(currentThread, &hintDefault, &hintTenure)) {
+
+				/* Default/Tenure MemorySubSpace is of type Generic (which is MemoryPool owner, while the parents are of type Flat/SemiSpace).
+				 * For SemiSpace the latter (parent) ones are what we want to deal with (expand), since it's what includes both Allocate And Survivor children.
+				 * For Flat it would probably make no difference if we used parent or child, but let's be consistent and use parent, too.
+				 */
+				MM_MemorySubSpace *defaultMemorySubSpace = extensions->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
+				MM_MemorySubSpace *tenureMemorySubspace = extensions->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
+
+
+				/* Standard GCs always have Default MSS (which is equal to Tenure for flat heap configuration).
+				 * So the simplest is always deal with Default, regardless if's generational heap configuration or not.
+				 * We deal with Tenure only if only not equal to Default (which implies it's generational)
+				 * We are a bit conservative and aim for slightly lower values that historically recorded by hints.
+				 */
+				uintptr_t hintDefaultAdjusted = (uintptr_t)(hintDefault * extensions->heapSizeStartupHintConservativeFactor);
+				uintptr_t defaultCurrent = defaultMemorySubSpace->getActiveMemorySize(MEMORY_TYPE_OLD | MEMORY_TYPE_NEW);
+
+				if (hintDefaultAdjusted > defaultCurrent) {
+					extensions->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
+					defaultMemorySubSpace->expand(&env, hintDefaultAdjusted - defaultCurrent);
+				}
+
+				if (defaultMemorySubSpace != tenureMemorySubspace) {
+					uintptr_t hintTenureAdjusted = (uintptr_t)(hintTenure * extensions->heapSizeStartupHintConservativeFactor);
+					uintptr_t tenureCurrent = tenureMemorySubspace->getActiveMemorySize();
+
+					if (hintTenureAdjusted > tenureCurrent) {
+						extensions->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
+						tenureMemorySubspace->expand(&env, hintTenureAdjusted - tenureCurrent);
+					}
+				}
+
+			}
+			/* Nothing to do if findGCHints failed. It already issues a trace point - no need to duplicate it here */
+		}
+		/* todo: Balanced GC */
+	}
+}
+
 
 /**
  * Cleanup Finalizer and Heap components

@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,40 +19,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package examples;
 
 /**
- * @file
- * @ingroup GC_Modron_Startup
+ * Cross-package default method interface example used by LookupAPITests_Find 
+ * @author jincheng
+ *
  */
+public interface CrossPackageDefaultMethodInterface {
 
-#if !defined(MMINIT_H_)
-#define MMINIT_H_
-
-#include "j9lib.h"
-#include "jniport.h"
-
-struct J9JavaVM;
-struct J9VMThread;
-
-#define THIS_DLL_NAME J9_GC_DLL_NAME
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-jint gcInitializeDefaults(J9JavaVM* vm);
-void gcCleanupInitializeDefaults(OMR_VM* omrVM);
-
-jint gcInitializeHeapStructures(J9JavaVM* vm);
-void gcCleanupHeapStructures(J9JavaVM* vm);
-
-jint triggerGCInitialized(J9VMThread* vmThread);
-
-void gcExpandHeapOnStartup(J9JavaVM *javaVM);
-
-
-#ifdef __cplusplus
-} /* extern "C" { */
-#endif
-
-#endif /* MMINIT_H_ */
+	default int addDefault(int a, int b) {
+		return (a + b);
+	}
+	
+}

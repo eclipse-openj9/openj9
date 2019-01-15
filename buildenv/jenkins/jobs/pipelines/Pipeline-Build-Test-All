@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,7 +126,7 @@ timeout(time: 12, unit: 'HOURS') {
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
-                BUILD_SPECS.putAll(get_specs(SPECS))
+                BUILD_SPECS.putAll(variableFile.get_specs(SPECS))
 
                 // parse variables file and initialize variables
                 variableFile.set_job_variables('wrapper')
@@ -212,61 +212,6 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)]
         return JOB
     }
-}
-
-/**
- * Parses the build parameters to identify the specs and the releases to build
- * and test. Returns a map of releases by specs.
- */
-def get_specs(SUPPORTED_SPECS) {
-    def RELEASES = []
-    def PLATFORMS = []
-    def SPECS = [:]
-
-    // get releases 
-    params.each { key, value  ->
-        if ((key.indexOf('Java') != -1) && (value == true)) {
-            RELEASES.add(key.substring(4))
-        }
-    }
-
-    // get specs
-    if (!params.PLATFORMS || (params.PLATFORMS.trim() == 'all')) {
-        // build and test all supported specs
-        PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
-    } else {
-        PLATFORMS.addAll(params.PLATFORMS.split(","))
-    }
-
-    def RELEASES_STR = RELEASES.join(',')
-
-    PLATFORMS.each { SPEC ->
-        SPEC = SPEC.trim()
-        if (!SUPPORTED_SPECS.keySet().contains(SPEC)) {
-            echo "Warning: Unknown or unsupported platform: ${SPEC}"
-            continue
-        }
-
-        if (RELEASES) {
-            // personal build
-            SPEC_RELEASES = SUPPORTED_SPECS[SPEC].intersect(RELEASES)
-         } else {
-            SPEC_RELEASES = SUPPORTED_SPECS[SPEC]
-         }
-
-        if (SPEC_RELEASES) {
-            // populate the releases by specs map
-            SPECS[SPEC] = SPEC_RELEASES
-        } else {
-            echo "Warning: Selected Java versions (${RELEASES_STR}) for ${SPEC} is not supported(nothing to do)!"
-        }
-    }
-
-    if (!SPECS) {
-        error("Invalid PLATFORMS (${params.PLATFORMS}) and/or Java versions selections(${RELEASES_STR})!")
-    }
-
-    return SPECS
 }
 
 /**

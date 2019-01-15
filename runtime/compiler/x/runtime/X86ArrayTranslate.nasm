@@ -22,9 +22,10 @@
 
 segment .text
 
-   global  _arrayTranslateTRTO
-   global  _arrayTranslateTROTNoBreak
-   global  _arrayTranslateTROT
+   DECLARE_GLOBAL  arrayTranslateTRTO
+   DECLARE_GLOBAL  arrayTranslateTROTNoBreak
+   DECLARE_GLOBAL  arrayTranslateTROT
+
    align 16
 
    ; pseudocode:
@@ -33,7 +34,7 @@ segment .text
    ;   if (chararray[i] && DX != 0) break; //DX is the register
    ;   else bytearray[i] = (byte) chararray[i])
    ; return i
-   _arrayTranslateTRTO:                      ;TO stands for Two bytes to One byte
+   arrayTranslateTRTO:                      ;TO stands for Two bytes to One byte
    %ifdef TR_HOST_64BIT
       mov ecx, ecx
    %endif
@@ -85,7 +86,7 @@ segment .text
    ; int i;
    ; for (i = 0; i < N; i++)
    ;   chararray[i] = (char) bytearray[i];
-   _arrayTranslateTROTNoBreak:               ;OT stands for One byte to Two bytes
+   arrayTranslateTROTNoBreak:               ;OT stands for One byte to Two bytes
    %ifdef TR_HOST_64BIT
       mov ecx, ecx
    %endif
@@ -156,7 +157,7 @@ segment .text
    ;   if (bytearray[i] < 0) break;
    ;   else chararray[i] = (char) bytearray[i];
    ; return i;
-   _arrayTranslateTROT:                      ;OT stands for One byte to Two bytes
+   arrayTranslateTROT:                      ;OT stands for One byte to Two bytes
    %ifdef TR_HOST_64BIT
       mov ecx, ecx
    %endif

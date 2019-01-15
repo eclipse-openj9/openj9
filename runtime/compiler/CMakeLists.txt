@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,19 @@
 # Relies on a few pieces of OMR, and a few pieces of the VM CMakeLists.
 #
 # Longer term, this will of course have to collapse into the VM builds.
+
+if(OMR_ARCH_X86)
+	enable_language(ASM_NASM)
+	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths
+	set(asm_inc_dirs
+		"-I${j9vm_SOURCE_DIR}/oti/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/runtime/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/amd64/runtime/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
+	)
+	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
+endif()
 
 omr_add_tracegen(env/j9jit.tdf)
 
@@ -153,6 +166,8 @@ set(J9_INCLUDES
 # Platform specific list of flags, derived directly from the
 # Makefiles
 set(J9_SHAREDFLAGS
+	${OMR_PLATFORM_COMPILE_OPTIONS}
+	${OMR_PLATFORM_C_COMPILE_OPTIONS}
 	-fno-strict-aliasing
 	-Wno-deprecated
 	-Wno-enum-compare
@@ -167,6 +182,8 @@ set(J9_SHAREDFLAGS
 # Platform specific CXX flags, also derived from the
 # Makefiles
 set(J9_CXXFLAGS
+	${OMR_PLATFORM_COMPILE_OPTIONS}
+	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 	${J9_SHAREDFLAGS}
 	-fno-rtti
 	-fno-threadsafe-statics

@@ -92,89 +92,84 @@ struct SymbolValidationRecord
       : _kind(kind)
       {}
 
-   virtual bool isEqual(SymbolValidationRecord *other) = 0;
+   bool isEqual(SymbolValidationRecord *other)
+      {
+      return !isLessThan(other) && !other->isLessThan(this);
+      }
+
+   bool isLessThan(SymbolValidationRecord *other)
+      {
+      if (_kind < other->_kind)
+         return true;
+      else if (_kind > other->_kind)
+         return false;
+      else
+         return isLessThanWithinKind(other);
+      }
+
    virtual void printFields() = 0;
 
    virtual bool isClassValidationRecord() { return false; }
 
    TR_ExternalRelocationTargetKind _kind;
+
+protected:
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other) = 0;
+
+   template <typename T>
+   static T *downcast(T *that, SymbolValidationRecord *record)
+      {
+      TR_ASSERT(record->_kind == that->_kind, "unexpected SVM record comparison");
+      return static_cast<T*>(record);
+      }
+   };
+
+// Comparison for STL
+struct LessSymbolValidationRecord
+   {
+   bool operator()(SymbolValidationRecord *a, SymbolValidationRecord *b) const
+      {
+      return a->isLessThan(b);
+      }
    };
 
 struct ClassValidationRecord : public SymbolValidationRecord
    {
    ClassValidationRecord(TR_ExternalRelocationTargetKind kind)
-      : SymbolValidationRecord(kind),
-        _classChain(NULL)
+      : SymbolValidationRecord(kind)
       {}
 
-   virtual bool isEqual(SymbolValidationRecord *other) = 0;
-   virtual void printFields();
-
    virtual bool isClassValidationRecord() { return true; }
-
-   void * _classChain;
    };
 
 struct ClassByNameRecord : public ClassValidationRecord
    {
    ClassByNameRecord(TR_OpaqueClassBlock *clazz,
-                     TR_OpaqueClassBlock *beholder,
-                     char primitiveType)
+                     TR_OpaqueClassBlock *beholder)
       : ClassValidationRecord(TR_ValidateClassByName),
         _class(clazz),
-        _beholder(beholder),
-        _primitiveType(primitiveType)
+        _beholder(beholder)
       {}
 
-   bool operator ==(const ClassByNameRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _primitiveType == rhs._primitiveType)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassByNameRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
    TR_OpaqueClassBlock * _beholder;
-   char _primitiveType;
    };
 
 struct ProfiledClassRecord : public ClassValidationRecord
    {
-   ProfiledClassRecord(TR_OpaqueClassBlock *clazz,
-                       char primitiveType)
+   ProfiledClassRecord(TR_OpaqueClassBlock *clazz, void *classChain)
       : ClassValidationRecord(TR_ValidateProfiledClass),
-        _class(clazz),
-        _primitiveType(primitiveType)
+        _class(clazz), _classChain(classChain)
       {}
 
-   bool operator ==(const ProfiledClassRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _primitiveType == rhs._primitiveType)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ProfiledClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
-   char _primitiveType;
+   void * _classChain;
    };
 
 struct ClassFromCPRecord : public ClassValidationRecord
@@ -186,21 +181,7 @@ struct ClassFromCPRecord : public ClassValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==(const ClassFromCPRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
@@ -218,22 +199,7 @@ struct DefiningClassFromCPRecord : public ClassValidationRecord
         _isStatic(isStatic)
       {}
 
-   bool operator ==(const DefiningClassFromCPRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex &&
-          _isStatic == rhs._isStatic)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<DefiningClassFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
@@ -251,21 +217,7 @@ struct StaticClassFromCPRecord : public ClassValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==(const StaticClassFromCPRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<StaticClassFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
@@ -281,20 +233,7 @@ struct ClassFromMethodRecord : public ClassValidationRecord
         _method(method)
       {}
 
-   bool operator ==(const ClassFromMethodRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _method == rhs._method)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassFromMethodRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
@@ -309,20 +248,7 @@ struct ComponentClassFromArrayClassRecord : public ClassValidationRecord
         _arrayClass(arrayClass)
       {}
 
-   bool operator ==(const ComponentClassFromArrayClassRecord &rhs)
-      {
-      if (_componentClass == rhs._componentClass &&
-          _arrayClass == rhs._arrayClass)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ComponentClassFromArrayClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _componentClass;
@@ -337,20 +263,7 @@ struct ArrayClassFromComponentClassRecord : public ClassValidationRecord
         _componentClass(componentClass)
       {}
 
-   bool operator ==(const ArrayClassFromComponentClassRecord &rhs)
-      {
-      if (_arrayClass == rhs._arrayClass &&
-          _componentClass == rhs._componentClass)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ArrayClassFromComponentClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _arrayClass;
@@ -365,20 +278,7 @@ struct SuperClassFromClassRecord : public ClassValidationRecord
         _childClass(childClass)
       {}
 
-   bool operator ==(const SuperClassFromClassRecord &rhs)
-      {
-      if (_superClass == rhs._superClass &&
-          _childClass == rhs._childClass)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<SuperClassFromClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_superClass;
@@ -396,23 +296,7 @@ struct ClassInstanceOfClassRecord : public SymbolValidationRecord
         _isInstanceOf(isInstanceOf)
       {}
 
-   bool operator ==(const ClassInstanceOfClassRecord &rhs)
-      {
-      if (_classOne == rhs._classOne &&
-          _classTwo == rhs._classTwo &&
-          _objectTypeIsFixed == rhs._objectTypeIsFixed &&
-          _castTypeIsFixed == rhs._castTypeIsFixed &&
-          _isInstanceOf == rhs._isInstanceOf)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassInstanceOfClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_classOne;
@@ -429,19 +313,7 @@ struct SystemClassByNameRecord : public ClassValidationRecord
         _systemClass(systemClass)
       {}
 
-   bool operator ==(const SystemClassByNameRecord &rhs)
-      {
-      if (_systemClass == rhs._systemClass)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<SystemClassByNameRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_systemClass;
@@ -456,21 +328,7 @@ struct ClassFromITableIndexCPRecord : public ClassValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==(const ClassFromITableIndexCPRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassFromITableIndexCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
@@ -488,21 +346,7 @@ struct DeclaringClassFromFieldOrStaticRecord : public ClassValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==(const DeclaringClassFromFieldOrStaticRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<DeclaringClassFromFieldOrStaticRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
@@ -518,20 +362,7 @@ struct ClassClassRecord : public ClassValidationRecord
         _objectClass(objectClass)
       {}
 
-   bool operator ==(const ClassClassRecord &rhs)
-      {
-      if (_classClass == rhs._classClass &&
-          _objectClass == rhs._objectClass)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_classClass;
@@ -546,20 +377,7 @@ struct ConcreteSubClassFromClassRecord : public ClassValidationRecord
         _superClass(superClass)
       {}
 
-   bool operator ==(const ConcreteSubClassFromClassRecord &rhs)
-      {
-      if (_childClass == rhs._childClass &&
-          _superClass == rhs._superClass)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ConcreteSubClassFromClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_childClass;
@@ -574,20 +392,7 @@ struct ClassChainRecord : public SymbolValidationRecord
         _classChain(classChain)
       {}
 
-   bool operator ==(const ClassChainRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _classChain == rhs._classChain)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassChainRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_class;
@@ -603,21 +408,7 @@ struct MethodFromClassRecord : public SymbolValidationRecord
         _index(index)
       {}
 
-   bool operator ==( const MethodFromClassRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _index == rhs._index)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromClassRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -636,21 +427,7 @@ struct StaticMethodFromCPRecord : public SymbolValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==( const StaticMethodFromCPRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<StaticMethodFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -669,21 +446,7 @@ struct SpecialMethodFromCPRecord : public SymbolValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==( const SpecialMethodFromCPRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<SpecialMethodFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -702,21 +465,7 @@ struct VirtualMethodFromCPRecord : public SymbolValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==( const VirtualMethodFromCPRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<VirtualMethodFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -737,22 +486,7 @@ struct VirtualMethodFromOffsetRecord : public SymbolValidationRecord
         _ignoreRtResolve(ignoreRtResolve)
       {}
 
-   bool operator ==( const VirtualMethodFromOffsetRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _virtualCallOffset == rhs._virtualCallOffset &&
-          _ignoreRtResolve == rhs._ignoreRtResolve)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<VirtualMethodFromOffsetRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -774,22 +508,7 @@ struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==( const InterfaceMethodFromCPRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _lookup == rhs._lookup &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<InterfaceMethodFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -809,21 +528,7 @@ struct MethodFromClassAndSigRecord : public SymbolValidationRecord
         _beholder(beholder)
       {}
 
-   bool operator ==( const MethodFromClassAndSigRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _methodClass == rhs._methodClass &&
-          _beholder == rhs._beholder)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromClassAndSigRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -842,21 +547,7 @@ struct StackWalkerMaySkipFramesRecord : public SymbolValidationRecord
         _skipFrames(skipFrames)
       {}
 
-   bool operator ==( const StackWalkerMaySkipFramesRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _methodClass == rhs._methodClass &&
-          _skipFrames == rhs._skipFrames)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<StackWalkerMaySkipFramesRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -872,20 +563,7 @@ struct ClassInfoIsInitialized : public SymbolValidationRecord
         _isInitialized(isInitialized)
       {}
 
-   bool operator ==(const ClassInfoIsInitialized &rhs)
-      {
-      if (_class == rhs._class &&
-          _isInitialized == rhs._isInitialized)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ClassInfoIsInitialized *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueClassBlock *_class;
@@ -907,23 +585,7 @@ struct MethodFromSingleImplementer : public SymbolValidationRecord
         _useGetResolvedInterfaceMethod(useGetResolvedInterfaceMethod)
       {}
 
-   bool operator ==( const MethodFromSingleImplementer &rhs)
-      {
-      if (_method == rhs._method &&
-          _thisClass == rhs._thisClass &&
-          _cpIndexOrVftSlot == rhs._cpIndexOrVftSlot &&
-          _callerMethod == rhs._callerMethod &&
-          _useGetResolvedInterfaceMethod == rhs._useGetResolvedInterfaceMethod)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromSingleImplementer *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -946,22 +608,7 @@ struct MethodFromSingleInterfaceImplementer : public SymbolValidationRecord
         _callerMethod(callerMethod)
       {}
 
-   bool operator ==( const MethodFromSingleInterfaceImplementer &rhs)
-      {
-      if (_method == rhs._method &&
-          _thisClass == rhs._thisClass &&
-          _cpIndex == rhs._cpIndex &&
-          _callerMethod == rhs._callerMethod)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromSingleInterfaceImplementer *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -983,22 +630,7 @@ struct MethodFromSingleAbstractImplementer : public SymbolValidationRecord
         _callerMethod(callerMethod)
       {}
 
-   bool operator ==( const MethodFromSingleAbstractImplementer &rhs)
-      {
-      if (_method == rhs._method &&
-          _thisClass == rhs._thisClass &&
-          _vftSlot == rhs._vftSlot &&
-          _callerMethod == rhs._callerMethod)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromSingleAbstractImplementer *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -1018,21 +650,7 @@ struct ImproperInterfaceMethodFromCPRecord : public SymbolValidationRecord
         _cpIndex(cpIndex)
       {}
 
-   bool operator ==( const ImproperInterfaceMethodFromCPRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _beholder == rhs._beholder &&
-          _cpIndex == rhs._cpIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ImproperInterfaceMethodFromCPRecord *>(other));
-      }
-
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
    TR_OpaqueMethodBlock *_method;
@@ -1083,8 +701,6 @@ public:
    bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
 
-   bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
-
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
    bool addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
    bool addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
@@ -1112,8 +728,8 @@ public:
 
 
 
-   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType);
-   bool validateProfiledClassRecord(uint16_t classID, char primitiveType, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
+   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass);
+   bool validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic);
    bool validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
@@ -1175,13 +791,18 @@ private:
 
    uint16_t getNewSymbolID();
 
-   void storeRecord(void *symbol, SymbolValidationRecord *record);
-   bool storeClassRecord(TR_OpaqueClassBlock *clazz,
-                         ClassValidationRecord *record,
-                         int32_t arrayDimsToValidate,
-                         bool storeCurrentRecord);
-   bool storeValidationRecordIfNecessary(void *symbol, SymbolValidationRecord *record, int32_t arrayDimsToValidate = 0);
-   void *storeClassChain(TR_OpaqueClassBlock *clazz);
+   bool shouldNotDefineSymbol(void *symbol) { return symbol == NULL || inHeuristicRegion(); }
+   bool abandonRecord(TR::SymbolValidationRecord *record);
+
+   bool recordExists(TR::SymbolValidationRecord *record);
+   void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
+   void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
+
+   bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
+   bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
+   bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);
+   void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
+   bool addMethodRecord(TR_OpaqueMethodBlock *method, TR::SymbolValidationRecord *record);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
@@ -1207,6 +828,10 @@ private:
 
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;
+
+   typedef TR::typed_allocator<SymbolValidationRecord*, TR::Region&> RecordPtrAlloc;
+   typedef std::set<SymbolValidationRecord*, LessSymbolValidationRecord, RecordPtrAlloc> RecordSet;
+   RecordSet _alreadyGeneratedRecords;
 
    typedef TR::typed_allocator<std::pair<void* const, uint16_t>, TR::Region&> SymbolToIdAllocator;
    typedef std::less<void*> SymbolToIdComparator;

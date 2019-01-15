@@ -4585,10 +4585,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
                          !strncmp(m->_name, name, nameLen) &&
                          (m->_sigLen == (int16_t)-1 || !strncmp(m->_sig,  sig,  sigLen)))
                         {
-
-                        if ((classNameLen == 30) && !strncmp(className, "com/ibm/Compiler/Internal/Quad", 30))
-                           setQuadClassSeen();
-
                         setRecognizedMethodInfo(m->_enum);
                         break;
                         }
@@ -4984,19 +4980,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
          setRecognizedMethod(rm);
          }
       }
-   }
-
-void
-TR_ResolvedJ9Method::setQuadClassSeen()
-   {
-   TR::Compilation* comp = ( fej9()->_compInfoPT ) ? fej9()->_compInfoPT->getCompilation() : NULL;
-   //TODO:
-   //This works but is too drastic because it disable the OSR
-   //for the entire compilation. Further work needs to be done
-   //to not attempt OSR only when the execution entered the code path
-   //that's different from the interpreter.
-   if (comp && comp->supportsQuadOptimization())
-     comp->setSeenClassPreventingInducedOSR();
    }
 
 J9RAMConstantPoolItem *
@@ -8516,31 +8499,29 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
    uintptrj_t result = 0;
-   switch (node->getOpCodeValue())
+   if (node->getOpCode().isLoadDirect() && node->getType() == TR::Address)
       {
-      case TR::aload:
-         TR_ASSERT(node->getSymbolReference()->getCPIndex() == 0, "walkReferenceChain expecting aload of 'this'; found aload of %s", comp()->getDebug()->getName(node->getSymbolReference()));
-         result = receiver;
-         break;
-      case TR::aloadi:
+      TR_ASSERT(node->getSymbolReference()->getCPIndex() == 0, "walkReferenceChain expecting aload of 'this'; found aload of %s", comp()->getDebug()->getName(node->getSymbolReference()));
+      result = receiver;
+      }
+   else if (node->getOpCode().isLoadIndirect() && node->getType() == TR::Address)
+      {
+      TR::SymbolReference *symRef = node->getSymbolReference();
+      if (symRef->isUnresolved())
          {
-         TR::SymbolReference *symRef = node->getSymbolReference();
-         if (symRef->isUnresolved())
-            {
-            if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
-            comp()->failCompilation<TR::ILGenFailure>("Symbol reference is unresolved");
-            }
-         TR::Symbol *sym = symRef->getSymbol();
-         TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-         uintptrj_t fieldOffset = symRef->getOffset() - sizeof(J9Object); // blah
-         result = fej9->getReferenceFieldAt(walkReferenceChain(node->getFirstChild(), receiver), fieldOffset);
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
+         comp()->failCompilation<TR::ILGenFailure>("Symbol reference is unresolved");
          }
-         break;
-      default:
-         TR_ASSERT(0, "Unexpected opcode in walkReferenceChain: %s", node->getOpCode().getName());
-         comp()->failCompilation<TR::ILGenFailure>("Unexpected opcode in walkReferenceChain");
-         break;
+      TR::Symbol *sym = symRef->getSymbol();
+      TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
+      uintptrj_t fieldOffset = symRef->getOffset() - sizeof(J9Object); // blah
+      result = fej9->getReferenceFieldAt(walkReferenceChain(node->getFirstChild(), receiver), fieldOffset);
+      }
+   else
+      {
+      TR_ASSERT(0, "Unexpected opcode in walkReferenceChain: %s", node->getOpCode().getName());
+      comp()->failCompilation<TR::ILGenFailure>("Unexpected opcode in walkReferenceChain");
       }
 
    if (comp()->getOption(TR_TraceILGen))

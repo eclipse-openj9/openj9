@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,7 +155,7 @@ I_32 numCodeSets (void);
 
 /* X86 for MS compilers, __i386__ for GNU compilers */
 
-#if !defined(J9_SOFT_FLOAT) && (defined(_X86_) || defined (WIN32_IBMC) || defined (__i386__) || defined(J9HAMMER) || defined(OSX))
+#if !defined(J9_SOFT_FLOAT) && (defined(_X86_) || defined (__i386__) || defined(J9HAMMER) || defined(OSX))
 
 #define 	J9_SETUP_FPU_STATE() helperInitializeFPU()
 

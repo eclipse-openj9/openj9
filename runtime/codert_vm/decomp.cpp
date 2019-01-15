@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1374,7 +1374,7 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 
 		/* Toss the compilation queue */
 
-		jitConfig->jitClassesRedefined(currentThread, 0, NULL);
+		jitConfig->jitFlushCompilationQueue(currentThread, J9FlushCompQueueDataBreakpoint);
 
 		/* Find every method which has been translated and mark it for retranslation */
 
