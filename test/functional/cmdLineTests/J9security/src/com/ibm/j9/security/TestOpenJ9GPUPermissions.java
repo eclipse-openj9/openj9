@@ -1,6 +1,5 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,26 +19,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package java.util;
+package com.ibm.j9.security;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import com.ibm.gpu.spi.GPUAssist;
+import java.util.Arrays;
 
-final class GPUAssistHolder {
-	static final GPUAssist instance = AccessController.doPrivileged((PrivilegedAction<GPUAssist>) GPUAssistHolder::gpuAssist);
-
-	private static GPUAssist gpuAssist() {
-		ServiceLoader<GPUAssist.Provider> loaded = ServiceLoader.load(GPUAssist.Provider.class);
-
-		for (GPUAssist.Provider provider : loaded) {
-			GPUAssist assist = provider.getGPUAssist();
-
-			if (assist != null) {
-				return assist;
-			}
-		}
-
-		return GPUAssist.NONE;
+public class TestOpenJ9GPUPermissions {
+	public static void main(String[] args) {
+		Arrays.sort(new int[] {2, 5, 7, 3});
+		System.out.println("ALL TESTS COMPLETED AND PASSED");
 	}
 }
