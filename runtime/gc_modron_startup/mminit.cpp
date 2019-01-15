@@ -634,8 +634,8 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 				}
 
 				/* Gradually learn, by averaging new values with old values - it may take a few restarts before hint converge to stable values */
-				hintDefault = (uintptr_t)MM_Math::weightedAverage((float)hintDefaultOld, (float)hintDefault, (1.0f - extensions->heapSizeStatupHintWeightNewValue));
-				hintTenure = (uintptr_t)MM_Math::weightedAverage((float)hintTenureOld, (float)hintTenure, (1.0f - extensions->heapSizeStatupHintWeightNewValue));
+				hintDefault = (uintptr_t)MM_Math::weightedAverage((float)hintDefaultOld, (float)hintDefault, (1.0f - extensions->heapSizeStartupHintWeightNewValue));
+				hintTenure = (uintptr_t)MM_Math::weightedAverage((float)hintTenureOld, (float)hintTenure, (1.0f - extensions->heapSizeStartupHintWeightNewValue));
 
 				vm->sharedClassConfig->storeGCHints(currentThread, hintDefault, hintTenure, true);
 				/* Nothing to do if store fails, storeGCHints already issues a trace point */
@@ -673,16 +673,16 @@ gcExpandHeapOnStartup(J9JavaVM *javaVM)
 				 * We deal with Tenure only if only not equal to Default (which implies it's generational)
 				 * We are a bit conservative and aim for slightly lower values that historically recorded by hints.
 				 */
-				uintptr_t hintDefaultAdjusted = (uintptr_t)(hintDefault * extensions->heapSizeStatupHintConservativeFactor);
+				uintptr_t hintDefaultAdjusted = (uintptr_t)(hintDefault * extensions->heapSizeStartupHintConservativeFactor);
 				uintptr_t defaultCurrent = defaultMemorySubSpace->getActiveMemorySize(MEMORY_TYPE_OLD | MEMORY_TYPE_NEW);
+
 				if (hintDefaultAdjusted > defaultCurrent) {
 					extensions->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
 					defaultMemorySubSpace->expand(&env, hintDefaultAdjusted - defaultCurrent);
 				}
 
-
 				if (defaultMemorySubSpace != tenureMemorySubspace) {
-					uintptr_t hintTenureAdjusted = (uintptr_t)(hintTenure * extensions->heapSizeStatupHintConservativeFactor);
+					uintptr_t hintTenureAdjusted = (uintptr_t)(hintTenure * extensions->heapSizeStartupHintConservativeFactor);
 					uintptr_t tenureCurrent = tenureMemorySubspace->getActiveMemorySize();
 
 					if (hintTenureAdjusted > tenureCurrent) {

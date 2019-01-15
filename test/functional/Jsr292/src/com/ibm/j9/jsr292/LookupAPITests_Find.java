@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ import com.ibm.j9.jsr292.SamePackageExample.SamePackageInnerClass;
 import com.ibm.j9.jsr292.SamePackageExample.SamePackageInnerClass.SamePackageInnerClass_Nested_Level2;
 
 import examples.PackageExamples;
+import examples.CrossPackageDefaultMethodInterface;
 import examples.PackageExamples.CrossPackageInnerClass;
 
 /**
@@ -2096,6 +2097,33 @@ public class LookupAPITests_Find {
 		System.out.println(example);
 		int out = ( int )example.invokeExact( g, 1, 2 ); 
 		AssertJUnit.assertEquals( 3, out );
+	}
+	
+	/**
+	 * findSpecial test using a default method of an interface where the class (the resultant 
+	 * method handle will be bound to) is in a different package.
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" })
+	public void test_FindSpecial_Default_CrossPackage_Interface() throws Throwable {
+		MethodHandle example = MethodHandles.lookup().findSpecial(CrossPackageDefaultMethodInterface.class, "addDefault", MethodType.methodType(int.class, int.class, int.class), CrossPackageDefaultMethodInterface.class);
+	}
+	
+	/**
+	 * Negative findSpecial test using a public method of a class where the class (the resultant 
+	 * method handle will be bound to) is in a different package.
+	 * Note: when the lookup class is not equal to the caller class, the declaring class
+	 * must be an interface which the caller class can be assigned to.
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" })
+	public void test_FindSpecial_Public_CrossPackage_Not_Interface() throws Throwable {
+		try {
+			MethodHandles.lookup().findSpecial(PackageExamples.class, "addPublic", MethodType.methodType(int.class, int.class, int.class), PackageExamples.class);
+			Assert.fail("No exception thrown finding a public method of a class in a different package");
+		} catch(IllegalAccessException e) {
+			// Exception expected, test passed
+		}
 	}
 	
 	/**
