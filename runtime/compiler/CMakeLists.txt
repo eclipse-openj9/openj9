@@ -33,6 +33,9 @@ if(OMR_ARCH_X86)
 	set(asm_inc_dirs
 		"-I${j9vm_SOURCE_DIR}/oti/"
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/runtime/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/amd64/runtime/"
+		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
 	)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
 endif()

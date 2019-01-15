@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,6 +88,22 @@ $(call RULE.asm,$(1),$(1).asm)
 endef # DEF_RULE.pasm
 
 RULE.pasm=$(eval $(DEF_RULE.pasm))
+
+#
+# Compile .nasm file into .obj file
+#
+define DEF_RULE.nasm
+$(1): $(2) | jit_createdirs
+	$$(NASM_CMD) $$(NASM_OBJ_FORMAT) $$(patsubst %,-D%=1,$$(NASM_DEFINES)) $$(patsubst %,-I%/,$$(subst \,/,$$(NASM_INCLUDES))) -o $$(subst \,/,"$$@") $$(subst \,/,"$$<")
+
+JIT_DIR_LIST+=$(dir $(1))
+
+jit_cleanobjs::
+	$$(call RM,$(1))
+
+endef # DEF_RULE.nasm
+
+RULE.nasm=$(eval $(DEF_RULE.nasm))
 
 #
 # Compile .rc file into .res file
