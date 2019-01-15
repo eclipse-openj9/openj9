@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -34,19 +36,19 @@ import org.w3c.dom.NodeList;
 public abstract class PrimaryItem {
 	protected final Alias primary;
 	private final Alias[] aliases;
-	
+
 	protected abstract String cMacroName();
-	
+
 	protected PrimaryItem(Element e, String nodeName, Alias.Factory factory) {
 		primary = factory.alias(e, null);
 		aliases = aliases(e, nodeName, primary, factory);
 	}
-	
+
 	private static String[] attribute(Element e, String name) {
 		StringTokenizer tok = new StringTokenizer(e.getAttribute(name), ",");
 		if (tok.hasMoreTokens()) {
 			String[] attributes = new String[tok.countTokens()];
-			for (int i = 0; tok.hasMoreTokens(); i++) {
+			for (int i = 0; tok.hasMoreTokens(); ++i) {
 				attributes[i] = tok.nextToken();
 			}
 			return attributes;
@@ -54,38 +56,102 @@ public abstract class PrimaryItem {
 			return null;
 		}
 	}
-	
-	protected static String[] jcl(Element e, Alias proto) {
-		String[] jcls = attribute(e, "jcl");
-		if (jcls == null) {
-			jcls = proto != null ? proto.jcl : new String[0];
+
+	protected static VersionRange[] versions(Element e, Alias proto) {
+		VersionRange[] ranges;
+		String[] versions = attribute(e, "versions");
+
+		if (versions != null) {
+			int length = versions.length;
+
+			ranges = new VersionRange[length];
+
+			for (int i = 0; i < length; ++i) {
+				ranges[i] = VersionRange.parse(versions[i]);
+			}
+		} else if (proto != null) {
+			ranges = proto.versions;
+		} else {
+			ranges = VersionRange.ALL;
 		}
-		return jcls;
+
+		return ranges;
 	}
-	
+
+	private static final String[] NO_FLAGS = new String[0];
+
 	protected static String[] flags(Element e, Alias proto) {
 		String[] flags = attribute(e, "flags");
 		if (flags == null) {
-			flags = proto != null ? proto.flags : new String[0];
+			flags = proto != null ? proto.flags : NO_FLAGS;
 		}
 		return flags;
 	}
-	
+
 	protected static String attribute(Element e, String name, String ifAbsent) {
 		return e.hasAttribute(name) ? e.getAttribute(name) : ifAbsent;
 	}
-	
+
+	protected static final class VersionRange {
+
+		protected static final VersionRange[] ALL = new VersionRange[] { new VersionRange(0, Integer.MAX_VALUE) };
+
+		private static final Pattern PATTERN = Pattern.compile("(\\d+)(-(\\d*))?");
+
+		protected static VersionRange parse(String rangeText) {
+			Matcher matcher = PATTERN.matcher(rangeText);
+
+			if (matcher.matches()) {
+				try {
+					int min = Integer.parseInt(matcher.group(1));
+					String maxText = matcher.group(3);
+					int max;
+
+					if (maxText == null) {
+						max = min;
+					} else if (maxText.isEmpty()) {
+						max = Integer.MAX_VALUE;
+					} else {
+						max = Integer.parseInt(maxText);
+					}
+
+					return new VersionRange(min, max);
+				} catch (NumberFormatException e) {
+					// throw IllegalArgumentException below
+				}
+			}
+
+			throw new IllegalArgumentException();
+		}
+
+		private final int min;
+
+		private final int max;
+
+		private VersionRange(int min, int max) {
+			super();
+			this.min = min;
+			this.max = max;
+		}
+
+		protected boolean includes(int version) {
+			return min <= version && version <= max;
+		}
+
+	}
+
 	protected static class Alias {
+
 		static interface Factory {
 			Alias alias(Element e, Alias proto);
 		}
-		
-		final String[] jcl;
+
+		final VersionRange[] versions;
 		final String[] flags;
 		static final Alias DEFAULT = new Alias(null, null);
-		
-		Alias(String[] jcl, String[] flags) {
-			this.jcl = jcl;
+
+		Alias(VersionRange[] versions, String[] flags) {
+			this.versions = versions;
 			this.flags = flags;
 		}
 
@@ -93,16 +159,18 @@ public abstract class PrimaryItem {
 			return false;
 		}
 
-		void writeSecondaryItems(ConstantPoolStream ds) {}
-		
+		void writeSecondaryItems(ConstantPoolStream ds) {
+			// do nothing
+		}
+
 		void write(ConstantPoolStream ds) {
 			ds.writeInt(0);
 			ds.writeInt(0);
 		}
 
-		private boolean hasJCL(String jcl) {
-			for (String s : this.jcl) {
-				if (s.equals(jcl)) {
+		private boolean matchesVersion(int version) {
+			for (VersionRange range : this.versions) {
+				if (range.includes(version)) {
 					return true;
 				}
 			}
@@ -123,8 +191,8 @@ public abstract class PrimaryItem {
 		final ClassRef classRef;
 		private boolean classIncluded;
 		
-		AliasWithClass(String[] jcl, String[] flags, ClassRef classRef) {
-			super(jcl, flags);
+		AliasWithClass(VersionRange[] versions, String[] flags, ClassRef classRef) {
+			super(versions, flags);
 			this.classRef = classRef;
 		}
 		
@@ -157,37 +225,37 @@ public abstract class PrimaryItem {
 	}
 	
 	Alias alias(ConstantPoolStream ds) {
-		// Look for an alias that explicitly supports the JCL and a flag
+		// Look for an alias that explicitly supports the version and a flag
 		for (Alias alias : aliases) {
-			if (alias.hasJCL(ds.jcl) && alias.hasFlag(ds.flags)) {
+			if (alias.matchesVersion(ds.version) && alias.hasFlag(ds.flags)) {
 				return alias;
 			}
 		}
-		
-		// Look for an alias that explicitly supports either the JCL or a flag
+
+		// Look for an alias that explicitly supports either the version or a flag
 		for (Alias alias : aliases) {
-			// Check if the alias explicitly supports the JCL and has no flags
-			if (alias.hasJCL(ds.jcl) && alias.flags.length == 0) {
+			// Check if the alias explicitly supports the version and has no flags
+			if (alias.matchesVersion(ds.version) && alias.flags.length == 0) {
 				// Check that the primary alias supports a flag
 				if (primary.hasFlag(ds.flags) || primary.flags.length == 0) {
 					return alias;
 				}
 			}
-			// Check if the alias implicitly supports the JCL and has a flag
-			if (alias.jcl.length == 0 && alias.hasFlag(ds.flags)) {
-				// Check that the primary alias supports the JCL
-				if (primary.hasJCL(ds.jcl) || primary.jcl.length == 0) {
+			// Check if the alias implicitly supports the version and has a flag
+			if (alias.versions.length == 0 && alias.hasFlag(ds.flags)) {
+				// Check that the primary alias supports the version
+				if (primary.matchesVersion(ds.version) || primary.versions.length == 0) {
 					return alias;
 				}
 			}
 		}
-		
-		// Check that the primary alias supports the JCL and flags
-		if (primary.hasJCL(ds.jcl) || primary.jcl.length == 0) {
+
+		// Check that the primary alias supports the version and flags
+		if (primary.matchesVersion(ds.version) || primary.versions.length == 0) {
 			if (primary.hasFlag(ds.flags) || primary.flags.length == 0) {
-				// Look for an alias that implicitly supports the JCL and flags
+				// Look for an alias that implicitly supports the version and flags
 				for (Alias alias : aliases) {
-					if (alias.jcl.length == 0 && alias.flags.length == 0) {
+					if (alias.versions.length == 0 && alias.flags.length == 0) {
 						return alias;
 					}
 				}
@@ -199,20 +267,20 @@ public abstract class PrimaryItem {
 		// Return a default alias
 		return Alias.DEFAULT;
 	}
-	
+
 	public void write(ConstantPoolStream ds) {
 		alias(ds).write(ds);
 	}
-	
+
 	public void writeSecondaryItems(ConstantPoolStream ds) {
 		alias(ds).writeSecondaryItems(ds);
 	}
 
 	public void writeMacros(ConstantPool pool, PrintWriter out) {
 		out.println();
-		out.println("#define J9VMCONSTANTPOOL_"	+ cMacroName() + " " + pool.getIndex(this));
+		out.println("#define J9VMCONSTANTPOOL_" + cMacroName() + " " + pool.getIndex(this));
 	}
-	
+
 	public String commentText() {
 		return getClass().getName();
 	}
