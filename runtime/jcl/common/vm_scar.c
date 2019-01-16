@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,12 +202,6 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 	}
 #endif
 
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.util.prefs.PreferencesFactory", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.util.prefs.PreferencesFactory", "java.util.prefs.FileSystemPreferencesFactory", 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			return rc;
-		}
-	}
 	if (fontPathSize >= 0) {
 		if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "sun.java2d.fontpath", NULL)) {
 			rc = vmfunc->addSystemProperty(javaVM, "sun.java2d.fontpath", fontPathBuffer, 0);
