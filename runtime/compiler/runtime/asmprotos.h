@@ -64,7 +64,7 @@ extern "C" {
  * is set for OS variants that currently use NASM and is used to
  * decide the version of helper names to use.
  */
-#if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
+#if (defined(TR_HOST_X86) && defined(TR_HOST_64BIT)) || defined (WINDOWS) // enable across x86-64 and 32bit Windows
 #define NASM_ASSEMBLER
 #endif
 
