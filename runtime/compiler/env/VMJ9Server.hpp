@@ -165,6 +165,8 @@ public:
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) override;
    virtual TR_IProfiler *getIProfiler() override;
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType) override;
+   virtual int32_t getStringLength(uintptrj_t objectPointer) override;
+   virtual uint16_t getStringCharacter(uintptrj_t objectPointer, int32_t index) override;
    };
 
 #endif // VMJ9SERVER_H

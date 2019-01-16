@@ -1417,3 +1417,18 @@ TR_J9ServerVM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType a
    return it->second;
    }
 
+int32_t
+TR_J9ServerVM::getStringLength(uintptrj_t objectPointer)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getStringLength, objectPointer);
+   return std::get<0>(stream->read<int32_t>());
+   }
+
+uint16_t
+TR_J9ServerVM::getStringCharacter(uintptrj_t objectPointer, int32_t index)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getStringCharacter, objectPointer, index);
+   return std::get<0>(stream->read<uint16_t>());
+   }

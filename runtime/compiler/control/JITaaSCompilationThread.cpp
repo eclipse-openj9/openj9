@@ -975,6 +975,20 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->dereferenceStaticFinalAddress(address, addressType));
          }
          break;
+      case J9ServerMessageType::VM_getStringLength:
+         {
+         auto recv = client->getRecvData<uintptrj_t>();
+         client->write(fe->getStringLength(std::get<0>(recv)));
+         }
+         break;
+      case J9ServerMessageType::VM_getStringCharacter:
+         {
+         auto recv = client->getRecvData<uintptrj_t, int32_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         int32_t index = std::get<1>(recv);
+         client->write(fe->getStringCharacter(objectPointer, index));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
