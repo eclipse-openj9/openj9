@@ -85,11 +85,7 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 		return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
 	#endif
 #elif defined(WIN32) /* LINUX */
-	#if defined(J9VM_ENV_DATA64)
 		return omrstr_printf(line, sizeof(line), "%%define %s %zu\n", name, value);
-	#else /* J9VM_ENV_DATA64 */
-		return omrstr_printf(line, sizeof(line), "%s equ %zu\n", name, value);
-	#endif
 #elif defined(J9ZOS390) /* WIN32 */
 	return omrstr_printf(line, sizeof(line), "%s EQU %zu\n", name, value);
 #elif defined(OSX) /* J9ZOS390 */
@@ -132,7 +128,7 @@ static char const *macroString = "\n\
 %define _rdi rdi\n\
 %define _rsp rsp\n\
 %define _rbp rbp\n\
-%define _rip\n\
+%define _rel rel\n\
 \n";
 #else /* J9VM_ENV_DATA64 */
 static char const *macroString = "\n\
@@ -238,7 +234,7 @@ static char const *macroString = "\n\
 %define _rdi rdi\n\
 %define _rsp rsp\n\
 %define _rbp rbp\n\
-%define _rip\n\
+%define _rel rel\n\
 \n";
 #else /* LINUX */
 #if defined(J9VM_ENV_DATA64)
@@ -271,59 +267,42 @@ static char const *macroString = "\n\
 %define _rdi rdi\n\
 %define _rsp rsp\n\
 %define _rbp rbp\n\
-%define _rip\n\
+%define _rel rel\n\
 \n";
 #else /* J9VM_ENV_DATA64 */
 static char const *macroString = "\n\
-MoveHelper MACRO register,helperName\n\
-	mov &register,offset flat:&helperName\n\
-ENDM\n\
+%macro MoveHelper 2 ; MACRO register,helperName\n\
+	lea %1, [%2]\n\
+%endmacro\n\
 \n\
-CompareHelper MACRO source,helperName\n\
-	cmp &source,offset flat:&helperName\n\
-ENDM\n\
+%macro CallHelper 1 ; MACRO helperName\n\
+	call %1\n\
+%endmacro\n\
 \n\
-CompareHelperUseReg MACRO source,helperName,register\n\
-	cmp &source,offset flat:&helperName\n\
-ENDM\n\
+%macro CallHelperUseReg 2 ; MACRO helperName,register\n\
+	call %1\n\
+%endmacro\n\
 \n\
-CallHelper MACRO helperName\n\
-	call &helperName\n\
-ENDM\n\
+%macro DECLARE_EXTERN 1 ; helperName\n\
+	extern _%1\n\
+	%define %1 _%1\n\
+%endmacro\n\
 \n\
-CallHelperUseReg MACRO helperName,register\n\
-	call &helperName\n\
-ENDM\n\
+%macro DECLARE_GLOBAL 1 ; helperName\n\
+	global _%1\n\
+	%define %1 _%1\n\
+%endmacro\n\
 \n\
-JumpTableHelper MACRO temp,index,table\n\
-	jmp dword ptr [&index&*4 + &table&]\n\
-ENDM\n\
-\n\
-JumpTableStart MACRO table\n\
-		_CONST32 SEGMENT PARA USE32 PUBLIC 'CONST'\n\
-		_CONST32 ends\n\
-		_CONST32 SEGMENT PARA USE32 PUBLIC 'CONST'\n\
-		align   04h\n\
-table&:\n\
-ENDM\n\
-\n\
-JumpTableEnd MACRO table\n\
-	_CONST32 ends\n\
-ENDM\n\
-\n\
-JumpHelper MACRO helperName\n\
-		jmp       &helperName\n\
-ENDM\n\
-\n\
-ExternHelper MACRO helperName\n\
-	extrn &helperName&:near\n\
-ENDM\n\
-\n\
-GlueHelper MACRO	helperName\n\
-		test      byte ptr[edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit\n\
-		jnz         &helperName\n\
-		jmp      mergedStaticGlueCallFixer\n\
-ENDM\n";
+%define _rax eax\n\
+%define _rbx ebx\n\
+%define _rcx ecx\n\
+%define _rdx edx\n\
+%define _rsi esi\n\
+%define _rdi edi\n\
+%define _rsp esp\n\
+%define _rbp ebp\n\
+%define _rel\n\
+\n";
 #endif /* J9VM_ENV_DATA64 */
 #endif /* LINUX */
 
