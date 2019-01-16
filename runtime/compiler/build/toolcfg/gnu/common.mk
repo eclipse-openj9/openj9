@@ -162,13 +162,14 @@ ifeq ($(HOST_ARCH),z)
     ifeq ($(HOST_BITS),32)
         CX_DEFINES+=J9VM_TIERED_CODE_CACHE MAXMOVE S390 FULL_ANSI
         CX_FLAGS+=-m31 -fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
-        CX_FLAGS_DEBUG+=-gdwarf-2
     endif
 
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
         CX_FLAGS+=-fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
     endif
+
+    CX_FLAGS_DEBUG+=-gdwarf-2
 endif
 
 ifeq ($(HOST_ARCH),arm)
