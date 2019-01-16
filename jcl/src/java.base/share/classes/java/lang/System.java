@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,11 +39,7 @@ import jdk.internal.misc.SharedSecrets;
 /*[ENDIF]*/
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
-/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
-/*[ELSE]
-import java.lang.reflect.Module;
-/*[ENDIF]*/
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import java.util.*;
@@ -106,11 +102,7 @@ public final class System {
 	private static String osEncoding;
 
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-OpenJ9]
 	static java.lang.ModuleLayer	bootLayer;
-/*[ELSE]*/
-	static java.lang.reflect.Layer	bootLayer;
-/*[ENDIF]*/
 /*[ENDIF]*/
 	
 	// Initialize all the slots in System on first use.
@@ -189,7 +181,7 @@ public final class System {
 		/*[ELSE]*/
 		StringCoding.encode(new char[1], 0, 1);
 		/*[ENDIF]*/
-		/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
+		/*[IF Sidecar19-SE]*/
 		setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
 		setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
 		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
