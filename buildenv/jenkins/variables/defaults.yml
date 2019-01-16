@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,6 +116,7 @@ linux_ppc-64_cmprssptrs_le:
     11: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
+      8: 'CC=gcc-7 CXX=g++-7'
       11: 'CC=gcc-7 CXX=g++-7'
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
@@ -158,6 +159,7 @@ linux_390-64_cmprssptrs:
       next: 'hw.arch.s390x && sw.os.ubuntu'
   build_env:
     vars:
+      8: 'CC=gcc-7 CXX=g++-7'
       11: 'CC=gcc-7 CXX=g++-7'
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
@@ -246,6 +248,7 @@ linux_x86-64_cmprssptrs:
     11: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
+      8: 'CC=gcc-7 CXX=g++-7'
       11: 'CC=gcc-7 CXX=g++-7'
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
@@ -300,6 +303,7 @@ linux_x86-64_cmprssptrs_cmake:
     next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   build_env:
     vars:
+      8: 'CC=gcc-7 CXX=g++-7'
       11: 'CC=gcc-7 CXX=g++-7'
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
@@ -347,6 +351,7 @@ linux_x86-64:
     next: '--with-noncompressedrefs'
   build_env:
     vars:
+      8: 'CC=gcc-7 CXX=g++-7'
       11: 'CC=gcc-7 CXX=g++-7'
       12: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
