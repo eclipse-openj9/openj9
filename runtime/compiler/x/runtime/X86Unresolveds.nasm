@@ -1231,18 +1231,22 @@ interpreterUnresolvedStaticGlue:
       push        rsi                                       ; The RET will mispredict anyway so we can get away with pushing 
                                                             ; the adjusted RA back on the stack.
 
-      ; The interpreter may low-tag the result to avoid populating the constant pool--whack it.
+      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
       ;
-      and         rax, -2
+      btr         rax, 0
 
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
       mov         rdi, rax
+
+      ; Skip code patching if the interpreter low-tag the RAM mathod
+      jc          .fin
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
       ;
       shl         rax, 16
       xor         rax, 0bf48h                               ; REX+MOV bytes
       mov         qword [rsi-10], rax
+   .fin:
 ret
 
 
