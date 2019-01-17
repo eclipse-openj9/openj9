@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,13 @@ extern "C" {
 #include "j9comp.h"
 extern J9_CDATA char * const JavaBCNames[];
 extern J9_CDATA char * const sunJavaBCNames[];
+
+/* ************* Important Note: *************
+ * Any time these bytecode indices are changed, corresponding
+ * changes MUST be made to the JIT's `TR_J9ByteCode` bytecode
+ * enum in openj9/runtime/compiler/ilgen/J9ByteCode.hpp or the
+ * JIT will miscompile code!
+ */
 
 #define JBnop 0
 #define JBaconstnull 1
