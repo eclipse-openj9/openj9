@@ -356,7 +356,7 @@ const TR_J9ByteCode TR_J9ByteCodeIterator::_opCodeToByteCodeEnum[] =
    /* 197 */ J9BCmultianewarray,
    /* 198 */ J9BCifnull, J9BCifnonnull,
    /* 200 */ J9BCgotow, J9BCunknown,
-   /* 202 */ J9BCunknown,
+   /* 202 */ J9BCbreakpoint,
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
    /* 203 */ J9BCdefaultvalue,
