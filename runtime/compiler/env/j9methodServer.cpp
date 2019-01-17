@@ -146,8 +146,31 @@ TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 c
 TR_OpaqueClassBlock *
 TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
    {
+   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+      {
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+      auto &constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
+      if (!constantClassPoolCache)
+         {
+         // initialize cache, called once per ram class
+         constantClassPoolCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>(PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
+         }
+      else
+         {
+         auto it = constantClassPoolCache->find(cpIndex);
+         if (it != constantClassPoolCache->end())
+            return it->second;
+         }
+      }
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex);
-   return std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   if (resolvedClass)
+      {
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+      auto constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
+      constantClassPoolCache->insert({cpIndex, resolvedClass});
+      }
+   return resolvedClass;
    }
 
 TR_OpaqueClassBlock *

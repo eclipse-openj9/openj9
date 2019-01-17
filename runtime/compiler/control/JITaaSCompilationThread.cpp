@@ -2630,6 +2630,13 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _classOfStaticCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
       jitPersistentFree(_classOfStaticCache);
       }
+
+   if (_constantClassPoolCache)
+      {
+      _constantClassPoolCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
+      jitPersistentFree(_constantClassPoolCache);
+      }
+
    }
 
 ClientSessionData::VMInfo *
@@ -2885,6 +2892,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct.arrayClass = std::get<15>(classInfo);
    classInfoStruct.totalInstanceSize = std::get<16>(classInfo);
    classInfoStruct._classOfStaticCache = nullptr;
+   classInfoStruct._constantClassPoolCache = nullptr;
 
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
