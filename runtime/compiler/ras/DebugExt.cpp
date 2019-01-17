@@ -2289,9 +2289,6 @@ void TR_DebugExt::dxPrintCompilationInfo(TR::CompilationInfo *remoteCompInfo)
       _dbgPrintf("bool                                  _compBudgetSupport               = %s\n", localCompInfo->_compBudgetSupport ? "true" : "false");
       _dbgPrintf("bool                                  _rampDownMCT                     = %s\n", localCompInfo->_rampDownMCT ? "true" : "false");
       _dbgPrintf("flags32_t                             _flags                           = %u\n", localCompInfo->_flags.getValue());
-#ifdef TR_TARGET_S390
-      _dbgPrintf("TR_S390MachineType                    _s390MachineType                 = %d\n", TR::Compiler->target.cpu.getS390MachineType());
-#endif
    #ifdef DEBUG
       _dbgPrintf("bool                                  _traceCompiling                  = %s\n", localCompInfo->_traceCompiling ? "true" : "false");
    #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,22 +178,15 @@ public:
    void setS390SupportsGuardedStorageFacility() { _flags.set(S390SupportsGuardedStorageFacility);
                                                   _flags.set(S390SupportsSideEffectAccessFacility);}
 
-   static TR_S390MachineType TO_PORTLIB_get390zLinuxMachineType();
-   static TR_S390MachineType TO_PORTLIB_get390zOSMachineType();
+   static int32_t TO_PORTLIB_get390MachineId();
    static bool TO_PORTLIB_get390_supportsZNext();
    static bool TO_PORTLIB_get390_supportsZ14();
    static bool TO_PORTLIB_get390_supportsZ13();
    static bool TO_PORTLIB_get390_supportsZ6();
    static bool TO_PORTLIB_get390_supportsZGryphon();
    static bool TO_PORTLIB_get390_supportsZHelix();
-   static bool TO_PORTLIB_get390zOS_N3Support();
-   static bool TO_PORTLIB_get390zOS_ZArchSupport();
-   static bool TO_PORTLIB_get390zOS_TrexSupport();
-   static bool TO_PORTLIB_get390zOS_GoldenEagleSupport();
-   static bool TO_PORTLIB_get390zOS_supportsStoreExtendedFacilityList();
 
-   void initializeS390zLinuxProcessorFeatures();
-   void initializeS390zOSProcessorFeatures();
+   void initializeS390ProcessorFeatures();
 
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);

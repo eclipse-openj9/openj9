@@ -228,8 +228,7 @@ public:
    virtual bool canUseSymbolValidationManager() { return false; }
 
 #if defined(TR_TARGET_S390)
-   virtual void initializeS390zLinuxProcessorFeatures();
-   virtual void initializeS390zOSProcessorFeatures();
+   virtual void initializeS390ProcessorFeatures();
 #endif
 
 /////
@@ -1005,11 +1004,6 @@ public:
    virtual void *getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *classPointer);
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
-   protected:
-#if defined(TR_TARGET_S390)
-   int32_t getS390MachineName(TR_S390MachineType machine, char* processorName, int32_t stringLength);
-#endif
-
    private:
 #if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
    uint32_t     getSharedCacheHint(J9VMThread * vmThread, J9Method *romMethod, J9SharedClassConfig * scConfig);
@@ -1149,8 +1143,7 @@ public:
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
 
 #if defined(TR_TARGET_S390)
-   virtual void               initializeS390zLinuxProcessorFeatures();
-   virtual void               initializeS390zOSProcessorFeatures();
+   virtual void               initializeS390ProcessorFeatures();
 #endif
 
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);
