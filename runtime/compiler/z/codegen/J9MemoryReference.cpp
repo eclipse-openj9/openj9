@@ -304,17 +304,11 @@ J9::Z::MemoryReference::createUnresolvedSnippetWithNodeRegister(TR::Node * node,
    TR::Register * tempReg = node->getRegister();
    if (tempReg == NULL)
       {
-      if (TR::Compiler->target.is64Bit())
-         tempReg = node->setRegister(cg->allocate64bitRegister());
-      else
-         tempReg = node->setRegister(cg->allocateRegister());
+      tempReg = node->setRegister(cg->allocateRegister());
       }
    else if (tempReg->getKind() == TR_FPR)
       {
-      if (TR::Compiler->target.is64Bit())
-         tempReg = cg->allocate64bitRegister();
-      else
-         tempReg = cg->allocateRegister();
+      tempReg = cg->allocateRegister(TR_FPR);
       }
    else if (tempReg->getKind() == TR_VRF)
       {

@@ -10320,13 +10320,13 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
 
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
-      targetRegister = cg->allocate64bitRegister();
+      targetRegister = cg->allocateRegister();
 
 #if defined(TR_HOST_S390) && defined(J9ZOS390)
       int32_t offsets[3];
       _getSTCKLSOOffset(offsets);
 
-      TR::Register* tempRegister = cg->allocate64bitRegister();
+      TR::Register* tempRegister = cg->allocateRegister();
 
       // z/OS requires time correction to account for leap seconds. The number of leap seconds is stored in the LSO
       // field of the MVS data area.

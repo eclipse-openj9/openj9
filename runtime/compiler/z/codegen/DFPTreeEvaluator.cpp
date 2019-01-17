@@ -362,7 +362,7 @@ inlineBigDecimalConstructor(
          {
          valRegister = cg->evaluate(node->getSecondChild());
          cg->decReferenceCount(node->getSecondChild());
-         valRegister2 = cg->allocate64bitRegister();
+         valRegister2 = cg->allocateRegister();
          generateRRInstruction(cg, TR::InstOpCode::LGFR, node, valRegister2, valRegister);
 
          // don't need valRegister anymore
@@ -778,7 +778,7 @@ inlineBigDecimalBinaryOp(
       if (node->getChild(2)->getReferenceCount() == 0 && !cg->use64BitRegsOn32Bit())
          desiredBiasedExponent2 = desiredBiasedExponent;
       else
-         desiredBiasedExponent2 = cg->allocate64bitRegister();
+         desiredBiasedExponent2 = cg->allocateRegister();
 
       generateRRInstruction(cg, TR::InstOpCode::LGFR, node, desiredBiasedExponent2, desiredBiasedExponent);
       desiredBiasedExponent = desiredBiasedExponent2;
@@ -927,7 +927,7 @@ inlineBigDecimalScaledDivide(
    if (node->getChild(2)->getReferenceCount() == 0 && !cg->use64BitRegsOn32Bit())
       desiredBiasedExponent2 = desiredBiasedExponent;
    else
-      desiredBiasedExponent2 = cg->allocate64bitRegister();
+      desiredBiasedExponent2 = cg->allocateRegister();
 
    generateRRInstruction(cg, TR::InstOpCode::LGFR, node, desiredBiasedExponent2, desiredBiasedExponent);
    desiredBiasedExponent = desiredBiasedExponent2;
@@ -1298,7 +1298,7 @@ inlineBigDecimalUnaryOp(
 
    if (op == TR::InstOpCode::CUDTR && (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()))
       {
-      resRegister = cg->allocate64bitRegister();
+      resRegister = cg->allocateRegister();
       }
    else
       {
@@ -1460,7 +1460,7 @@ inlineBigDecimalUnscaledValue(
    {
    //printf("\t390-DFPower::inlineBDUnscaledValue\n");
    // will store the returned digits
-   TR::Register * retRegister = cg->allocate64bitRegister();
+   TR::Register * retRegister = cg->allocateRegister();
 
    // 32-bit mode requires a register pair as return
    TR::Register * highRegister = NULL;
@@ -1483,7 +1483,7 @@ inlineBigDecimalUnscaledValue(
    generateRRInstruction(cg, TR::InstOpCode::LDR, node, dfpDummyFPRegister, dfpFPRegister);
 
    // load and sign extend biased exponent 0 (398)
-   TR::Register * expRegister = cg->allocate64bitRegister();
+   TR::Register * expRegister = cg->allocateRegister();
    generateLoad32BitConstant(cg, node, 398, expRegister, true);
    generateRRInstruction(cg, TR::InstOpCode::LGFR, node, expRegister, expRegister);
 
@@ -1910,7 +1910,7 @@ dfp2l(TR::Node * node, TR::CodeGenerator * cg)
 
    TR::RegisterDependencyConditions * deps = NULL;
    deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   TR::Register * tempReg = cg->allocate64bitRegister();
+   TR::Register * tempReg = cg->allocateRegister();
    deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
 
    generateRRFInstruction(cg, convertOpCode, node, tempReg, tempDDReg, 0x9, true);
@@ -1938,7 +1938,7 @@ dfp2l64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = cg->evaluate(firstChild);
    TR::Register * tempDDReg = NULL;
-   TR::Register * targetReg = cg->allocate64bitRegister();
+   TR::Register * targetReg = cg->allocateRegister();
 
    TR::InstOpCode::Mnemonic convertOpCode;
    switch (firstChild->getDataType())
@@ -2031,7 +2031,7 @@ dfp2lu(TR::Node * node, TR::CodeGenerator * cg)
    // now convert from Decimal128 to long long
    TR::RegisterDependencyConditions * deps = NULL;
    deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   TR::Register * tempLReg = cg->allocate64bitRegister();
+   TR::Register * tempLReg = cg->allocateRegister();
    deps->addPostCondition(tempLReg, TR::RealRegister::GPR0);
 
    generateRRFInstruction(cg, TR::InstOpCode::CGXTR, node, tempLReg, tempDEReg, 0xB, true);
@@ -2065,7 +2065,7 @@ dfp2lu64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = cg->evaluate(firstChild);
    TR::Register * tempDDReg = NULL;
-   TR::Register * targetReg = cg->allocate64bitRegister();
+   TR::Register * targetReg = cg->allocateRegister();
 
    TR::InstOpCode::Mnemonic convertOpCode;
    switch (firstChild->getDataType())
@@ -2120,7 +2120,7 @@ l2dfp(TR::Node * node, TR::CodeGenerator * cg)
    else
       targetReg = cg->allocateFPRegisterPair();
 
-   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::Register *tempReg = cg->allocateRegister();
    TR::RegisterDependencyConditions * deps = NULL;
    deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
    deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
@@ -2198,7 +2198,7 @@ lu2dfp(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * tempDEReg = NULL;
    TR::Compilation *comp = cg->comp();
 
-   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::Register *tempReg = cg->allocateRegister();
    TR::RegisterDependencyConditions * deps = NULL;
    deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
    deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
@@ -2393,7 +2393,7 @@ fixedToDFP(TR::Node * node, TR::CodeGenerator * cg)
       targetRegister = cg->allocateFPRegisterPair(lowReg, highReg);
       }
 
-   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::Register *tempReg = cg->allocateRegister();
    TR::RegisterDependencyConditions * deps = NULL;
    if (TR::Compiler->target.is32Bit())
       {
@@ -2804,7 +2804,7 @@ J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::LabelSymbol * cflowRegionStart   = generateLabelSymbol(cg);
       TR::LabelSymbol * cflowRegionEnd     = generateLabelSymbol(cg);
 
-      TR::Register *IMzMaskReg = cg->allocate64bitRegister();
+      TR::Register *IMzMaskReg = cg->allocateRegister();
 
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
       deps->addPostCondition(IMzMaskReg, TR::RealRegister::AssignAny);
@@ -3079,12 +3079,12 @@ J9::Z::TreeEvaluator::ddInsExpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          int64_t biasedExpValue = biasedExpNode->get64bitIntegralValue();
          if (biasedExpValue >= MIN_IMMEDIATE_VAL && biasedExpValue <= MAX_IMMEDIATE_VAL)
             {
-            biasedExpReg = cg->allocate64bitRegister();
+            biasedExpReg = cg->allocateRegister();
             generateRIInstruction(cg, TR::InstOpCode::LGHI, node, biasedExpReg, (int32_t)biasedExpValue);
             }
          else if (biasedExpValue >= GE_MIN_IMMEDIATE_VAL && biasedExpValue <= GE_MAX_IMMEDIATE_VAL)
             {
-            biasedExpReg = cg->allocate64bitRegister();
+            biasedExpReg = cg->allocateRegister();
             generateRILInstruction(cg, TR::InstOpCode::LGFI, node, biasedExpReg, static_cast<int32_t>(biasedExpValue));
             }
          }
@@ -3092,7 +3092,7 @@ J9::Z::TreeEvaluator::ddInsExpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       if (biasedExpReg == NULL)
          {
          TR::Register *biasedExpReg32 = cg->evaluate(biasedExpNode);
-         biasedExpReg = cg->allocate64bitRegister();
+         biasedExpReg = cg->allocateRegister();
          generateRRInstruction(cg, TR::InstOpCode::LGFR, node, biasedExpReg, biasedExpReg32);
          }
       // the 64 bit registers biasedExpReg is going to be clobbered and R0 is safe to clobber regardless of the hgpr (use64BitRegsOn32Bit) setting
@@ -3406,7 +3406,7 @@ J9::Z::TreeEvaluator::ddshrRoundedEvaluator(TR::Node * node, TR::CodeGenerator *
    else
       shift = TR_DECIMAL_DOUBLE_BIAS - shift;
 
-   TR::Register *biasedExpReg = cg->allocate64bitRegister();
+   TR::Register *biasedExpReg = cg->allocateRegister();
    generateRIInstruction(cg, TR::InstOpCode::LGHI, node, biasedExpReg, shift);
 
    // Float to double
@@ -3541,7 +3541,7 @@ J9::Z::TreeEvaluator::dd2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = cg->evaluate(firstChild);
    TR::Register * tempDDReg = NULL;
-   TR::Register * targetReg = cg->allocate64bitRegister();
+   TR::Register * targetReg = cg->allocateRegister();
 
    TR::InstOpCode::Mnemonic convertOpCode;
    switch (firstChild->getDataType())

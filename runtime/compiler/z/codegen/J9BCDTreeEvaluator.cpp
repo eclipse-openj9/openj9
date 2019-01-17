@@ -2899,13 +2899,13 @@ setupPackedDFPConversionGPRs(TR::Register *&gpr64, TR::Register *&gpr64Hi,
    TR::RegisterDependencyConditions *deps = NULL;
    if (isLongDouble)
       {
-      gpr64 = cg->allocateConsecutiveRegisterPair(cg->allocate64bitRegister(), cg->allocate64bitRegister());
+      gpr64 = cg->allocateConsecutiveRegisterPair(cg->allocateRegister(), cg->allocateRegister());
       gpr64Hi = gpr64->getHighOrder(); // 0-63
       gpr64Lo = gpr64->getLowOrder();  // 64-127
       }
    else
       {
-      gpr64Hi = cg->allocate64bitRegister();
+      gpr64Hi = cg->allocateRegister();
       gpr64 = gpr64Hi;
       }
 
@@ -3780,7 +3780,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
    // This function handles PD2I and PD2L
    bool PD2I = pdOpNode->getOpCode().getOpCodeValue() == TR::icall;
 
-   TR::Register* returnReg = PD2I ? cg->allocateRegister() : cg->allocate64bitRegister();
+   TR::Register* returnReg = PD2I ? cg->allocateRegister() : cg->allocateRegister();
 
    TR::Register* LReg = NULL;
    TR::Register* HReg = NULL;
@@ -3957,7 +3957,7 @@ J9::Z::TreeEvaluator::generateVectorPackedToBinaryConversion(TR::Node * node, TR
    bool isPDToLong = (op == TR::InstOpCode::VCVBG);
    bool isUseRegPair = isPDToLong && !(TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit());
 
-   TR::Register *rResultReg = (isPDToLong) ? cg->allocate64bitRegister() : cg->allocateRegister();
+   TR::Register *rResultReg = (isPDToLong) ? cg->allocateRegister() : cg->allocateRegister();
    TR::Register *lowReg = NULL;
    TR::Register *highReg = NULL;
    TR::RegisterPair *rResultRegPair = NULL;
@@ -4001,7 +4001,7 @@ TR::Register *
 J9::Z::TreeEvaluator::generatePackedToBinaryConversion(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator * cg)
    {
    TR_ASSERT( op == TR::InstOpCode::CVB || op == TR::InstOpCode::CVBG,"unexpected opcode in generatePackedToBinaryFixedConversion\n");
-   TR::Register *targetReg = (op == TR::InstOpCode::CVBG) ? cg->allocate64bitRegister() : cg->allocateRegister();
+   TR::Register *targetReg = (op == TR::InstOpCode::CVBG) ? cg->allocateRegister() : cg->allocateRegister();
    TR::RegisterPair *targetRegPair = NULL;
    TR::Register *lowReg = NULL;
    TR::Register *highReg = NULL;
@@ -4133,7 +4133,7 @@ J9::Z::TreeEvaluator::generateBinaryToPackedConversion(TR::Node * node,
    if (isUseRegPair)
       {
       traceMsg(comp, "Using regPair on l2pd\n");
-      TR::Register *tempReg = cg->allocate64bitRegister();
+      TR::Register *tempReg = cg->allocateRegister();
       generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, firstReg->getRegisterPair()->getHighOrder(), 32);
       generateRRInstruction(cg, TR::InstOpCode::LR, node, tempReg, firstReg->getRegisterPair()->getLowOrder());
       firstReg = tempReg;
@@ -4240,7 +4240,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR::Register *tempSign = cg->allocateRegister();
       TR::Register *targetSign = cg->allocateRegister();
-      TR::Register *targetData = cg->allocate64bitRegister();
+      TR::Register *targetData = cg->allocateRegister();
 
       generateRXInstruction(cg, TR::InstOpCode::LB, node, tempSign, reuseS390LeftAlignedMemoryReference(sourceMR, srcNode, srcReg->getStorageReference(), cg, 1));
 
@@ -7521,7 +7521,7 @@ J9::Z::TreeEvaluator::generateVectorBinaryToPackedConversion(TR::Node * node, TR
 
    if (isUseRegPair)
       {
-      TR::Register *tempReg = cg->allocate64bitRegister();
+      TR::Register *tempReg = cg->allocateRegister();
       generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, sourceReg->getRegisterPair()->getHighOrder(), 32);
       generateRRInstruction(cg, TR::InstOpCode::LR, node, tempReg, sourceReg->getRegisterPair()->getLowOrder());
       sourceReg = tempReg;
