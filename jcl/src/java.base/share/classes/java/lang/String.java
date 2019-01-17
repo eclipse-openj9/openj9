@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1830,7 +1830,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *				when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
 			getCharsNoBoundChecks(start, end, data, index);
 		} else {
 			throw new StringIndexOutOfBoundsException();
@@ -1849,7 +1849,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	}
 
 	void getChars(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= ((data.length / 2) - index))) {
 			getCharsNoBoundChecks(start, end, data, index);
 		} else {
 			throw new StringIndexOutOfBoundsException();
@@ -5906,7 +5906,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *				when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
 			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				decompress(value, start, data, index, end - start);
 			} else {
