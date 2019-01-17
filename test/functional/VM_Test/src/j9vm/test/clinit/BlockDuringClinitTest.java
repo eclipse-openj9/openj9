@@ -25,7 +25,7 @@ package j9vm.test.clinit;
 public class BlockDuringClinitTest {
 
 	public void run() throws RuntimeException {
-		
+
 		System.out.println("<clinit> vs. new...");
 		NewDuringClinit.test();
 
