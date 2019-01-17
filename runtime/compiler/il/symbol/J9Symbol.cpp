@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,6 +163,8 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
        {r(TR::Symbol::Java_lang_Character_value,                      "java/lang/Character", "value", "C")},
        {r(TR::Symbol::Java_lang_Short_value,                          "java/lang/Short", "value", "S")},
        {r(TR::Symbol::Java_lang_Boolean_value,                        "java/lang/Boolean", "value", "Z")},
+       {r(TR::Symbol::Java_lang_Class_enumVars,                       "java/lang/Class", "enumVars", "Ljava/lang/Class$EnumVars;")},
+       {r(TR::Symbol::Java_lang_ClassEnumVars_cachedEnumConstants,    "java/lang/Class$EnumVars", "cachedEnumConstants", "[Ljava/lang/Object;")},
        {TR::Symbol::UnknownField}
       };
 
@@ -180,7 +182,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
         */
        {recognizedFieldName_c, 17, 22},
        {0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},
-       {recognizedFieldName_j, 16, 52}
+       {recognizedFieldName_j, 14, 52}
       };
    const char minClassPrefix = 'c';
    const char maxClassPrefix = 'j';
@@ -310,6 +312,8 @@ J9::Symbol::createRecognizedShadow(AllocatorType m, TR::DataType d, RecognizedFi
    auto * sym = createShadow(m, d);
    sym->_recognizedField = f;
    sym->_flags.set(RecognizedShadow);
+   if ((f == TR::Symbol::Java_lang_Class_enumVars) || (f == TR::Symbol::Java_lang_ClassEnumVars_cachedEnumConstants))
+      sym->_flags.set(RecognizedKnownObjectShadow);
    return sym;
    }
 
@@ -320,6 +324,8 @@ J9::Symbol::createRecognizedShadow(AllocatorType m, TR::DataType d, uint32_t s, 
    auto * sym = createShadow(m,d,s);
    sym->_recognizedField = f;
    sym->_flags.set(RecognizedShadow);
+   if ((f == TR::Symbol::Java_lang_Class_enumVars) || (f == TR::Symbol::Java_lang_ClassEnumVars_cachedEnumConstants))
+      sym->_flags.set(RecognizedKnownObjectShadow);
    return sym;
    }
 
