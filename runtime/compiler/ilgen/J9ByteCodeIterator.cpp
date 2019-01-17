@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -357,14 +357,22 @@ const TR_J9ByteCode TR_J9ByteCodeIterator::_opCodeToByteCodeEnum[] =
    /* 198 */ J9BCifnull, J9BCifnonnull,
    /* 200 */ J9BCgotow, J9BCunknown,
    /* 202 */ J9BCunknown,
-   /* 203 */ J9BCiloadw, J9BClloadw, J9BCfloadw, J9BCdloadw, J9BCaloadw,
-   /* 208 */ J9BCistorew, J9BClstorew, J9BCfstorew, J9BCdstorew, J9BCastorew,
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+   /* 203 */ J9BCdefaultvalue,
+   /* 204 */ J9BCwithfield,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+   /* 203 */ J9BCunknown,
+   /* 204 */ J9BCunknown,
+#endif
+   /* 205 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
+   /* 209 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
    /* 213 */ J9BCiincw, J9BCunknown,
    /* 215 - JBaload0getfield */ J9BCaload0,
    /* 216 - JBnewdup */ J9BCnew,
-   /* 217 */ J9BCunknown, J9BCunknown,
-   /* 219 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
-   /* 224 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
+   /* 217 */ J9BCiloadw, J9BClloadw, J9BCfloadw, J9BCdloadw, J9BCaloadw,
+   /* 222 */ J9BCistorew, J9BClstorew, J9BCfstorew, J9BCdstorew, J9BCastorew,
+   /* 227 */ J9BCunknown,
    /* 228 */ J9BCgenericReturn, J9BCgenericReturn, J9BCunknown, J9BCinvokeinterface2,
    /* 232 */ J9BCinvokehandle, J9BCinvokehandlegeneric,
    /* 234 */ J9BCinvokestaticsplit, J9BCinvokespecialsplit,
