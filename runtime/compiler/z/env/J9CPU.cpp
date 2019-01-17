@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,83 +49,27 @@ namespace J9
 namespace Z
 {
 
-////////////////////////////////////////////////////////////////////////////////
-// The following are the 2 versions of the /proc/cpuinfo file for Linux/390.
-//
-// When Gallileo (TREX) comes out, we will need to update this routine to support
-// TREX and not end up generating default 9672 code!
-// vendor_id       : IBM/S390
-// # processors    : 2
-// bogomips per cpu: 838.86
-// processor 0: version = FF,  identification = 100003,  machine = 2064
-// processor 1: version = FF,  identification = 200003,  machine = 2064
-//
-// vs.
-//
-// vendor_id       : IBM/S390
-// # processors    : 3
-// bogomips per cpu: 493.15
-// processor 0: version = FF,  identification = 100003,  machine = 9672
-// processor 1: version = FF,  identification = 200003,  machine = 9672
-// processor 2: version = FF,  identification = 300003,  machine = 9672
-////////////////////////////////////////////////////////////////////////////////
+int32_t
+CPU::TO_PORTLIB_get390MachineId()
+  {
+#if defined(J9ZTPF) || defined(J9ZOS390)
+   // Note we cannot use utsname on Linux as it simply returns "s390x" in info.machine. On z/OS we can indeed use it [1].
+   //
+   // [1] https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.bpxbd00/rtuna.htm
+   struct utsname info;
 
-/* Keep in sync with enum TR_S390MachineType in env/ProcessorInfo.hpp */
-static const int S390MachineTypes[] =
-   {
-   TR_FREEWAY, TR_Z800, TR_MIRAGE, TR_MIRAGE2, TR_TREX, TR_Z890, TR_GOLDEN_EAGLE, TR_DANU_GA2, TR_Z9BC,
-   TR_Z10, TR_Z10BC, TR_ZG, TR_ZGMR, TR_ZEC12, TR_ZEC12MR, TR_ZG_RESERVE, TR_ZEC12_RESERVE,
-   TR_Z13, TR_Z13s, TR_Z14, TR_Z14s, TR_ZNEXT, TR_ZNEXTs,
-   TR_ZH, TR_DATAPOWER, TR_ZH_RESERVE1, TR_ZH_RESERVE2
-   };
+   if (::uname(&info) >= 0)
+      {
+      return atoi(info.machine);
+      }
 
-static const int S390UnsupportedMachineTypes[] =
-   {
-   TR_G5, TR_MULTIPRISE7000
-   };
-
-TR_S390MachineType
-CPU::TO_PORTLIB_get390zLinuxMachineType()
-   {
+   return TR_Z10;
+#else
    char line[80];
    const int LINE_SIZE = sizeof(line) - 1;
    const char procHeader[] = "processor ";
    const int PROC_LINE_SIZE = 69;
    const int PROC_HEADER_SIZE = sizeof(procHeader) - 1;
-
-#if defined(J9ZTPF)
-   TR_S390MachineType ret_machine = TR_Z10;  /* return value, z/TPF default */
-
-   struct utsname info;
-   if (::uname(&info))
-      {
-      return ret_machine;
-      }
-
-   uint32_t machine = atoi(info.machine);
-
-   // Scan list of unsupported machines - We do not initialize the JIT for such hardware.
-   for (int i = 0; i < sizeof(S390UnsupportedMachineTypes) / sizeof(int); ++i)
-      {
-      if (machine == S390UnsupportedMachineTypes[i])
-         {
-         PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-         j9nls_printf(jitConfig->javaVM->portLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, machine);
-         TR_ASSERT_FATAL(0,"Hardware is not supported.");
-         }
-      }
-
-   // Scan list of supported machines.
-   for (int i = 0; i < sizeof(S390MachineTypes) / sizeof(int); ++i)
-      {
-      if (machine == S390MachineTypes[i])
-         {
-         ret_machine = (TR_S390MachineType)machine;
-         }
-      }
-
-#else
-   TR_S390MachineType ret_machine = TR_UNDEFINED_S390_MACHINE;  /* return value */
 
    FILE * fp = fopen("/proc/cpuinfo", "r");
    if (fp)
@@ -137,60 +81,22 @@ CPU::TO_PORTLIB_get390zLinuxMachineType()
             {
             if (len == PROC_LINE_SIZE)
                {
-               int i;
-               int machine;
-               sscanf(line, "%*s %*d%*c %*s %*c %*s %*s %*c %*s %*s %*c %d", &machine);
+               int32_t id;
 
-               // Scan list of unsupported machines - We do not initialize the JIT for such hardware.
-               for (i = 0; i < sizeof(S390UnsupportedMachineTypes) / sizeof(int); ++i)
-                  {
-                  if (machine == S390UnsupportedMachineTypes[i])
-                     {
-                     PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-                     j9nls_printf(jitConfig->javaVM->portLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, machine);
-                     TR_ASSERT_FATAL(0,"Hardware is not supported.");
-                     }
-                  }
+               // Match the following pattern to extract the machine id:
+               //
+               // processor 0: version = FF,  identification = 100003,  machine = 9672
+               sscanf(line, "%*s %*d%*c %*s %*c %*s %*s %*c %*s %*s %*c %d", &id);
 
-               // Scan list of supported machines.
-               for (i = 0; i < sizeof(S390MachineTypes) / sizeof(int); ++i)
-                  {
-                  if (machine == S390MachineTypes[i])
-                     {
-                     ret_machine = (TR_S390MachineType)machine;
-                     }
-                  }
+               return id;
                }
             }
          }
       fclose(fp);
       }
+
+   return TR_UNDEFINED_S390_MACHINE;
 #endif
-   return ret_machine;
-  }
-
-
-TR_S390MachineType
-CPU::TO_PORTLIB_get390zOSMachineType()
-   {
-   TR_S390MachineType ret_machine = TR_UNDEFINED_S390_MACHINE;
-#if defined(J9ZOS390)
-   struct utsname info;
-   if (::uname(&info))
-      return ret_machine;
-
-   uint32_t type = atoi(info.machine);
-   // Scan list of supported machines.
-   for (int32_t i = 0; i < sizeof(S390MachineTypes) / sizeof(int); ++i)
-      {
-      if (type == S390MachineTypes[i])
-         {
-         ret_machine = (TR_S390MachineType)type;
-         break;
-         }
-      }
-#endif
-   return ret_machine;
    }
 
 bool
@@ -264,105 +170,6 @@ CPU::TO_PORTLIB_get390_supportsZHelix()
    return false;
    }
 
-/**
- zOS hardware detection checks a word at byte 200 of PSA.
-
- The following is a map of the bits in this word (zOS V1.6):
-     200     (C8)    BITSTRING        1    FLCFACL0     Byte 0 of FLCFACL
-                      1...  ....           FLCFN3       "X'80'" - N3
-                                                        installed
-                      .1..  ....           FLCFZARI     "X'40'" -
-                                                        z/Architecture
-                                                        installed
-                      ..1.  ....           FLCFZARA     "X'20'" -
-                                                        z/Architecture
-                                                        activce
-                      ....  ..1.           FLCFASLX     "X'02'" - ASN & LX
-                                                        reuse facility
-                                                        installed
-     201     (C9)    BITSTRING        1    FLCFACL1     Byte 1 of FLCFACL
-     202     (CA)    BITSTRING        1    FLCFACL2     Byte 2 of FLCFACL
-                      1...  ....           FLCFETF2     "X'80'" Extended
-                                                        Translation facility
-                                                        2
-                      .1..  ....           FLCFCRYA     "X'40'" Cryptographic
-                                                        assist
-                      ..1.  ....           FLCFLD       "X'20'" Long
-                                                        Displacement facility
-                      ...1  ....           FLCFLDHP     "X'10'" Long
-                                                        Displacement High
-                                                        Performance
-                      ....  1...           FLCFHMAS     "X'08'" HFP Multiply
-                                                        Add/Subtract
-                      ....  .1..           FLCFEIMM     "X'04'" Extended
-                                                        immediate when z/Arch
-                      ....  .1..           FLCFETF3     "X'04'" Extended
-                                                        Translation Facility
-                                                        3 when z/Arch
-                      ....  ...1           FLCFHUN      "X'01'" HFP
-                                                        unnormalized
-                                                        extension
-     203     (CB)    BITSTRING        1    FLCFACL3     Byte 3 of FLCFACL
- */
-
-bool
-CPU::TO_PORTLIB_get390zOS_N3Support()
-   {
-   //  Location 200 is architected such that bit 0 is ON if N3 instructions
-   //  are available
-   return (((*(int*) 200) & 0x80000000) != 0);
-   }
-
-
-bool
-CPU::TO_PORTLIB_get390zOS_ZArchSupport()
-   {
-   // Location 200 is architected such that
-   //    bit 1 is ON if z/Architecture is installed
-   //    bit 2 is ON if z/Architecture is active
-   // We check both bits to ensure that z/Architecture is available.
-   //
-   // Alternative solution - Test if FLCARCH is not 0.
-   //    2 FLCARCH     CHAR(1),               /* Architecture info    @LSA*/
-   //      4 *        BIT(7),                 /*                      @LSA*/
-   //      4 PSAZARCH BIT(1),                 /* z/Architecture       @LSA*/
-   //        5 PSAESAME BIT(1),               /* z/Architecture       @LSA*/
-   // FLCARCH is at offset x'A3'
-   //
-   return (((*(int*) 200) & 0x60000000) == 0x60000000);
-   }
-
-
-bool
-CPU::TO_PORTLIB_get390zOS_TrexSupport()
-   {
-   // Location 200 is architected such that bit 0x00001000 is ON if Trex
-   // instructons are available
-   // The 0x'10' bit at byte 202 is the long displacement high performance bit
-   // supported on TRex or higher hardware.
-   return (((*(int*) 200) & 0x00001000) != 0);
-   }
-
-
-bool
-CPU::TO_PORTLIB_get390zOS_GoldenEagleSupport()
-   {
-   // Location 200 is architected such that bit 21 is ON if Golden Eagle
-   // instructons are available
-   //  Location 202  - 0x4 (bit 21) - Extended Immediate
-   //  Location 202  - 0x2 (bit 22) - Translation Facility 3
-   return (((*(int*) 200) & 0x00000400) != 0) &&
-          (((*(int*) 200) & 0x00000200) != 0);
-   }
-
-
-bool
-CPU::TO_PORTLIB_get390zOS_supportsStoreExtendedFacilityList()
-   {
-   // Location 200 is architected such that bit 7 is ON if STFLE
-   // instruction is installed
-   return (((*(int*) 200) & (0x80000000 >> 7)) != 0);
-   }
 
 /////////////////////////////////////////
 
@@ -415,215 +222,78 @@ CPU::getS390SupportsGuardedStorageFacility()
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-CPU::initializeS390zLinuxProcessorFeatures()
+CPU::initializeS390ProcessorFeatures()
    {
    J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
    J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
 
    // The following conditionals are dependent on each other and must occur in this order
+   TR::Compiler->target.cpu.setS390SupportsZ9();
 
-   TR::Compiler->target.cpu.setS390SupportsZ900();
-
-   // Check for Facility bits, which can detect z6/z10 or higher.
-   // If STFLE is supported, we must rely on these bits.
-   // zVM can spoof as a newer machine model, without really providing the support.
-   // However, the facility bits don't lie.
-   //
-   if (TR::Compiler->target.cpu.getS390SupportsZ900() &&
-       j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
+   // On z10 or higher architectures, we should check for facility bits.
+   if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
+      TR::Compiler->target.cpu.setS390SupportsZNext();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
+      TR::Compiler->target.cpu.setS390SupportsZ14();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
+      TR::Compiler->target.cpu.setS390SupportsZ13();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
+      TR::Compiler->target.cpu.setS390SupportsZEC12();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
+      TR::Compiler->target.cpu.setS390SupportsZ196();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
+      TR::Compiler->target.cpu.setS390SupportsZ10();
+   
+   if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
       {
-      // Check facility bits for support of hardware
-
-      if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
-         TR::Compiler->target.cpu.setS390SupportsZNext();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
-         TR::Compiler->target.cpu.setS390SupportsZ14();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
-         TR::Compiler->target.cpu.setS390SupportsZ13();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
-         TR::Compiler->target.cpu.setS390SupportsZEC12();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
-         TR::Compiler->target.cpu.setS390SupportsZ196();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
-         TR::Compiler->target.cpu.setS390SupportsZ10();
-
-      // z9 (DANU) supports DFP in millicode - so do not check
-      // for DFP support unless z10 or higher.
-      if (TR::Compiler->target.cpu.getS390SupportsZ10() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
-         TR::Compiler->target.cpu.setS390SupportsDFP();
-
-      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
-         TR::Compiler->target.cpu.setS390SupportsFPE();
+      TR::Compiler->target.cpu.setS390SupportsFPE();
       }
 
-   // Either z6/z10 wasn't detected or STFLE is not supported.
-   // Use machine model.
-   if (!TR::Compiler->target.cpu.getS390SupportsZ10() || !j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
+   // z9 supports DFP in millicode so do not check for DFP support unless we are z10+
+   if (TR::Compiler->target.cpu.getS390SupportsZ10() &&
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
       {
-      TR_S390MachineType machineType = TR::Compiler->target.cpu.getS390MachineType();
-
-      if (machineType == TR_GOLDEN_EAGLE || machineType == TR_DANU_GA2 || machineType == TR_Z9BC)
-         {
-         TR::Compiler->target.cpu.setS390SupportsZ9();
-         }
-      else if (machineType == TR_TREX || machineType == TR_MIRAGE || machineType == TR_MIRAGE2 || machineType == TR_Z890)
-         {
-         TR::Compiler->target.cpu.setS390SupportsZ990();
-         }
-
-      // For z10+ only use machine model if STFLE is not supported. Otherwise, we should have detected it above.
-      if (!j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
-         {
-         if (machineType == TR_ZNEXT || machineType == TR_ZNEXTs)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZNext();
-            }
-         else if (machineType == TR_Z14 || machineType == TR_Z14s)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ14();
-            }
-         else if (machineType == TR_Z13 || machineType == TR_Z13s)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ13();
-            }
-         else if (machineType == TR_ZEC12 || machineType == TR_ZEC12MR || machineType == TR_ZEC12_RESERVE)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZEC12();
-            }
-         else if (machineType == TR_ZG || machineType == TR_ZGMR || machineType == TR_ZG_RESERVE)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ196();
-            }
-         else if (machineType == TR_Z10 || machineType == TR_Z10BC)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ10();
-            }
-         }
+      TR::Compiler->target.cpu.setS390SupportsDFP();
       }
 
-   // Only SLES11 SP1 supports HPR debugging facilities, which is
-   // required for RAS support for HPR (ZGryphon or higher).
-   if (TR::Compiler->target.cpu.getS390SupportsZ196() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_GPRS))
+   if (TR::Compiler->target.cpu.getS390SupportsZ196() && 
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_GPRS))
+      {
       TR::Compiler->target.cpu.setS390SupportsHPRDebug();
+      }
 
-   // Check for OS support of TM.
-   if (TR::Compiler->target.cpu.getS390SupportsZEC12() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
-      TR::Compiler->target.cpu.setS390SupportsTM();
+   if (TR::Compiler->target.cpu.getS390SupportsZEC12())
+      {
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
+         {
+         TR::Compiler->target.cpu.setS390SupportsTM();
+         }
 
-
-   if (TR::Compiler->target.cpu.getS390SupportsZEC12() && (0 == j9ri_enableRISupport()))
-      TR::Compiler->target.cpu.setS390SupportsRI();
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_RI))
+         {
+#if defined(LINUX)
+         if (0 == j9ri_enableRISupport())
+#endif
+         TR::Compiler->target.cpu.setS390SupportsRI();
+         }
+      }
 
    if (TR::Compiler->target.cpu.getS390SupportsZ13() &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
+      {
       TR::Compiler->target.cpu.setS390SupportsVectorFacility();
+      }
 
    if (TR::Compiler->target.cpu.getS390SupportsZ14())
       {
-      // Check for vector packed decimal facility as indicated by bit 129 and 134.
-      if (TR::Compiler->target.cpu.getS390SupportsVectorFacility() &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
          {
          TR::Compiler->target.cpu.setS390SupportsVectorPackedDecimalFacility();
          }
 
-      // Check for guarded storage facility as indicated by bit 131 and 133
-      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE))
          {
          TR::Compiler->target.cpu.setS390SupportsGuardedStorageFacility();
-         }
-      }
-   }
-
-
-void
-CPU::initializeS390zOSProcessorFeatures()
-   {
-   J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
-
-   if (!TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_N3Support() || !TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_ZArchSupport())
-      {
-      j9nls_printf(privatePortLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, TR_G5);
-      TR_ASSERT_FATAL(0,"Hardware is not supported.");
-      }
-
-    // JIT pre-req's zArchitecture (and N3).
-    TR::Compiler->target.cpu.setS390SupportsZ900();
-
-   if (TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_GoldenEagleSupport())
-      TR::Compiler->target.cpu.setS390SupportsZ9();
-   else if(TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_TrexSupport())
-      TR::Compiler->target.cpu.setS390SupportsZ990();
-
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-
-   // On z10 or higher architectures, we should check for facility bits.
-   if (TR::Compiler->target.cpu.getS390SupportsZ900() &&
-       TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_supportsStoreExtendedFacilityList())
-      {
-      if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
-          TR::Compiler->target.cpu.setS390SupportsZNext();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
-         TR::Compiler->target.cpu.setS390SupportsZ14();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
-         TR::Compiler->target.cpu.setS390SupportsZ13();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
-         TR::Compiler->target.cpu.setS390SupportsZEC12();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
-         TR::Compiler->target.cpu.setS390SupportsZ196();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
-         TR::Compiler->target.cpu.setS390SupportsZ10();
-
-      // z9 (DANU) supports DFP in millicode - so do not check
-      // for DFP support unless z10 or higher.
-      if (TR::Compiler->target.cpu.getS390SupportsZ10() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
-         TR::Compiler->target.cpu.setS390SupportsDFP();
-
-      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
-         TR::Compiler->target.cpu.setS390SupportsFPE();
-
-      // zOS supports HPR debugging facilities on ZGryphon or higher.
-      if (TR::Compiler->target.cpu.getS390SupportsZ196())
-         TR::Compiler->target.cpu.setS390SupportsHPRDebug();
-
-      if (TR::Compiler->target.cpu.getS390SupportsZEC12())
-         {
-         // check for zOS TM support
-         U_8 * cvtptr = (U_8 *)(*(uint32_t *)16);   // pointer to CVT is at offset +16 of PSA (at address 0)
-         U_8 cvttxj = *(cvtptr+0x17b);              // CVTTX and CVTTXC are at offset +0x17B of CVT, bits 8 and 4, indicating full support
-         if ((cvttxj & 0xc) == 0xc)
-            {
-            TR::Compiler->target.cpu.setS390SupportsTM();
-            }
-         // check for zOS RI support
-         if ((cvttxj & 0x2) == 0x2)                  // CVTRI bit is X'02' bit at byte X'17B' off CVT
-            {
-            TR::Compiler->target.cpu.setS390SupportsRI();
-            }
-         }
-
-      if (TR::Compiler->target.cpu.getS390SupportsZ13() &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
-         {
-         TR::Compiler->target.cpu.setS390SupportsVectorFacility();
-         }
-
-      if (TR::Compiler->target.cpu.getS390SupportsZ14())
-         {
-         // Check for vector packed decimal facility as indicated by bit 129 and 134.
-         if(TR::Compiler->target.cpu.getS390SupportsVectorFacility() &&
-                 j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
-            {
-            TR::Compiler->target.cpu.setS390SupportsVectorPackedDecimalFacility();
-            }
-
-         // Check for guarded storage facility as indicated by bit 131 and 133
-         if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-                 j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
-            {
-            TR::Compiler->target.cpu.setS390SupportsGuardedStorageFacility();
-            }
          }
       }
    }
