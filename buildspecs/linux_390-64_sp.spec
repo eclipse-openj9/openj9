@@ -41,7 +41,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-zLinux.datamine,use.local.datamine"/>
-		<property name="graph_enable_gcc7_cmd" value=""/>
+		<property name="graph_enable_gcc7_cmd" value="source {$buildinfo.fsroot.linux390Bin$}/set_gcc7_env &amp;&amp;"/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxz6424"/>
 		<property name="graph_label.java6" value="pxz6460"/>
@@ -98,6 +98,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="uma_make_cmd_exe_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_ranlib" value="ranlib"/>
 		<property name="uma_processor" value="s390"/>
+		<property name="uma_sp_cflags" value="-mindirect-branch=thunk -mfunction-return=thunk -mindirect-branch-jump=thunk-inline"/>
 		<property name="uma_type" value="unix,linux"/>
 	</properties>
 	<features>
