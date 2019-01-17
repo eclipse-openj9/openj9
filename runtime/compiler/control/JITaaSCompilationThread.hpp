@@ -63,6 +63,7 @@ class ClientSessionData
       TR_OpaqueClassBlock * arrayClass;
       uintptrj_t totalInstanceSize;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_classOfStaticCache;
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_constantClassPoolCache;
       };
 
    struct J9MethodInfo
