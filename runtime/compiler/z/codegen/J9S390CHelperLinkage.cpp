@@ -57,9 +57,7 @@
 TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    : TR::Linkage(codeGen,elc,lc)
    {
-   //Preserved Registers
-
-   static const bool enableVectorLinkage = codeGen->getSupportsVectorRegisters();
+   // Common Linux on Z and z/OS linkage settings
    setRegisterFlag(TR::RealRegister::GPR8, Preserved);
    setRegisterFlag(TR::RealRegister::GPR9, Preserved);
    setRegisterFlag(TR::RealRegister::GPR10, Preserved);
@@ -69,19 +67,18 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
 
    if (TR::Compiler->target.is64Bit())
       {
-      setRegisterFlag(TR::RealRegister::HPR6, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR7, Preserved);
       setRegisterFlag(TR::RealRegister::HPR8, Preserved);
       setRegisterFlag(TR::RealRegister::HPR9, Preserved);
       setRegisterFlag(TR::RealRegister::HPR10, Preserved);
       setRegisterFlag(TR::RealRegister::HPR11, Preserved);
       setRegisterFlag(TR::RealRegister::HPR12, Preserved);
+      setRegisterFlag(TR::RealRegister::HPR13, Preserved);
       setRegisterFlag(TR::RealRegister::HPR15, Preserved);
       }
 
-
 #if defined(ENABLE_PRESERVED_FPRS)
-   // In case of 32 Bit Linux on Z, System Linkage only preserves FPR4 and FPR6, for all other target, FPR8-FPR15 is preserved. 
+   // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
+   // preserved. 
    if (TR::Compiler->target.isLinux() && TR::Compiler->target.is32Bit())
       {
       setRegisterFlag(TR::RealRegister::FPR4, Preserved);
@@ -100,43 +97,58 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       }
 #endif
 
+   // Platform specifc linkage settings
    if (TR::Compiler->target.isLinux())
       {
-      
-      // For Linux on Z, GPR6 and GPR7 is preserved by System Linkage but on zOS they are clobbered.
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
       setRegisterFlag(TR::RealRegister::GPR12, Preserved);
 
-      setReturnAddressRegister (TR::RealRegister::GPR14 );
-      setIntegerReturnRegister (TR::RealRegister::GPR2 );
-      setLongReturnRegister    (TR::RealRegister::GPR2 );
+      if (TR::Compiler->target.is64Bit())
+         {
+         setRegisterFlag(TR::RealRegister::HPR6, Preserved);
+         setRegisterFlag(TR::RealRegister::HPR7, Preserved);
+         setRegisterFlag(TR::RealRegister::HPR12, Preserved);
+         }
+
+      setReturnAddressRegister(TR::RealRegister::GPR14);
+      setIntegerReturnRegister(TR::RealRegister::GPR2);
+      setLongReturnRegister(TR::RealRegister::GPR2);
       setIntegerArgumentRegister(0, TR::RealRegister::GPR2);
       setIntegerArgumentRegister(1, TR::RealRegister::GPR3);
       setIntegerArgumentRegister(2, TR::RealRegister::GPR4);
       setIntegerArgumentRegister(3, TR::RealRegister::GPR5);
       setIntegerArgumentRegister(4, TR::RealRegister::GPR6);
+
       // Hardcoding register map for GC can lead to subtle bugs if linkage is changed and we did not change register map for GC.
       // TODO We should write a function that goes through the list of preserved registers and prepare register map for GC.
       setPreservedRegisterMapForGC(0x0000BFC0);
+
       // GPR5 needs to be stored before using it as argument register.
       // Right now setting number of integer argument registers to 3.
       // TODO When we add support for more than 3 arguments, we should change this number to 5.
       setNumIntegerArgumentRegisters(3);
       }
-   else 
+   
+   if (TR::Compiler->target.isZOS())
       {
-      // 31-Bit zOS will need GPR12 for CAA register so it won't be preserved. For all other variant it is preserved
+      setRegisterFlag(TR::RealRegister::GPR14, Preserved);
+
       if (TR::Compiler->target.is64Bit())
          {
-         setPreservedRegisterMapForGC(0x0000FF00); 
          setRegisterFlag(TR::RealRegister::GPR12, Preserved);
+         setRegisterFlag(TR::RealRegister::HPR12, Preserved);
+         setRegisterFlag(TR::RealRegister::HPR14, Preserved);
+
+         setPreservedRegisterMapForGC(0x0000FF00); 
          }
       else
          {
+         // 31-Bit zOS will need GPR12 for CAA register so it won't be preserved. For all other variant it is preserved
          setPreservedRegisterMapForGC(0x0000EF00); 
          }
-      if (enableVectorLinkage)
+
+      if (codeGen->getSupportsVectorRegisters())
          {
          setRegisterFlag(TR::RealRegister::VRF16, Preserved);
          setRegisterFlag(TR::RealRegister::VRF17, Preserved);
@@ -148,35 +160,32 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
          setRegisterFlag(TR::RealRegister::VRF23, Preserved);
          }
 
-      setRegisterFlag(TR::RealRegister::GPR14, Preserved);
-
-      setReturnAddressRegister (TR::RealRegister::GPR7 );
-      setIntegerReturnRegister (TR::RealRegister::GPR3 );
-      setLongReturnRegister    (TR::RealRegister::GPR3 );
+      setReturnAddressRegister(TR::RealRegister::GPR7);
+      setIntegerReturnRegister(TR::RealRegister::GPR3);
+      setLongReturnRegister(TR::RealRegister::GPR3);
       setIntegerArgumentRegister(0, TR::RealRegister::GPR1);
       setIntegerArgumentRegister(1, TR::RealRegister::GPR2);
       setIntegerArgumentRegister(2, TR::RealRegister::GPR3);
       setNumIntegerArgumentRegisters(3);
+
+#if defined(J9ZOS390)
+	   setDSAPointerRegister(TR::RealRegister::GPR4);
+#if defined(TR_HOST_32BIT)
+	   setCAAPointerRegister(TR::RealRegister::GPR12);
+#endif
+#endif
       }
 
-   
-   setLongLowReturnRegister (TR::RealRegister::GPR3 );
-   setLongHighReturnRegister(TR::RealRegister::GPR2 );
-   setFloatReturnRegister   (TR::RealRegister::FPR0 );
-   setDoubleReturnRegister  (TR::RealRegister::FPR0 );
-   setLongDoubleReturnRegister0  (TR::RealRegister::FPR0 );
-   setLongDoubleReturnRegister2  (TR::RealRegister::FPR2 );
-   setLongDoubleReturnRegister4  (TR::RealRegister::FPR4 );
-   setLongDoubleReturnRegister6  (TR::RealRegister::FPR6 );
-   setStackPointerRegister  (TR::RealRegister::GPR5 );
-   setMethodMetaDataRegister(TR::RealRegister::GPR13 );
-#if defined(J9ZOS390)
-	setDSAPointerRegister (TR::RealRegister::GPR4 );
-#if defined(TR_HOST_32BIT)
-	setCAAPointerRegister (TR::RealRegister::GPR12 );
-#endif
-#endif
- 
+   setLongLowReturnRegister(TR::RealRegister::GPR3);
+   setLongHighReturnRegister(TR::RealRegister::GPR2);
+   setFloatReturnRegister(TR::RealRegister::FPR0);
+   setDoubleReturnRegister(TR::RealRegister::FPR0);
+   setLongDoubleReturnRegister0(TR::RealRegister::FPR0);
+   setLongDoubleReturnRegister2(TR::RealRegister::FPR2);
+   setLongDoubleReturnRegister4(TR::RealRegister::FPR4);
+   setLongDoubleReturnRegister6(TR::RealRegister::FPR6);
+   setStackPointerRegister(TR::RealRegister::GPR5);
+   setMethodMetaDataRegister(TR::RealRegister::GPR13); 
    }
 
 
