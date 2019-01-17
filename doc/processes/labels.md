@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,7 @@ Indicate if this issue is specific for a given JDK level, such as JDK8.
 * `jdk9`
 * `jdk10`
 * `jdk11`
+* `jdk12`
 
 
 Component
@@ -58,6 +59,7 @@ contributors for a particular area to the relevant items.
 * `comp:gc`
 * `comp:build`
 * `comp:port`
+* `comp:infra`
 
 
 Dependencies
@@ -68,7 +70,7 @@ identify dependent changes to ensure they are merged together or in the
 correct order:
 
 * `depends:omr`
-* `depends:openjdk(8, 9, 10, 11)`
+* `depends:openjdk(8, 9, 10, 11, 12)`
 * `depends:EclipseCQ`: Indicate a change needs a Contributor Questionnaire
 
 OpenJDK projects
