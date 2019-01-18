@@ -1848,14 +1848,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-	void getChars(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= ((data.length / 2) - index))) {
-			getCharsNoBoundChecks(start, end, data, index);
-		} else {
-			throw new StringIndexOutOfBoundsException();
-		}
-	}
-
 	// This is a package protected method that performs the getChars operation without explicit bound checks.
 	// Caller of this method must validate bound safety for String indexing and array copying.
 	void getCharsNoBoundChecks(int start, int end, byte[] data, int index) {
