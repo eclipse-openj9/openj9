@@ -33,6 +33,7 @@ A more complete set of build instructions are included here for multiple platfor
 - [Windows :ledger:](#windows)
 - [macOS :apple:](#macos)
 - [ARM :iphone:](#arm)
+- [AArch64](#aarch64)
 
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
@@ -648,3 +649,9 @@ JCL      - 9da99f8b97 based on jdk-11+28)
 :iphone:
 
 :construction: We haven't created a full build process for ARM yet? Watch this space!
+
+----------------------------------
+
+## AArch64
+
+:construction: Build process for AArch64 (ARMv8 64-bit) Linux is under preparation.

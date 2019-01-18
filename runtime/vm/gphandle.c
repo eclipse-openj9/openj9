@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,6 +154,9 @@ static void printBacktrace(struct J9JavaVM *vm, void* gpInfo);
 /* The target register is GPR1 */
 #define UNSAFE_TARGET_REGISTER 1
 #elif defined(J9VM_ARCH_ARM) && defined(LINUX)
+/* The target register is GPR0 */
+#define UNSAFE_TARGET_REGISTER 0
+#elif defined(J9VM_ARCH_AARCH64)
 /* The target register is GPR0 */
 #define UNSAFE_TARGET_REGISTER 0
 #endif /* defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64) */
