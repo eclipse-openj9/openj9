@@ -98,6 +98,12 @@ configure_file(include/j9cfg.h.in j9cfg.h)
 configure_file(include/j9lib.h.in j9lib.h)
 configure_file(include/j9version.h.in j9version.h)
 
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/jvmti.h"
+	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > jvmti.h
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include"
+)
+
+
 # Definition of add_hookgen pulled in from omr/cmake/modules/OmrHookgen.cmake
 # Here we handle all the .hdf files which dont have a more logical home.
 # ie. they live in directories where we dont need to build anything
