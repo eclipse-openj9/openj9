@@ -24,5 +24,12 @@
 
 <module>
 	<artifact type="reference" name="j9include">
-	</artifact>
+  </artifact>
+
+  <artifact type="target" name="jvmti.h" all="true">
+    <commands>
+      <command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti jvmti.h.m4 > jvmti.h"/> 
+      <command type="clean" line="$(RM) jvmti.h"/>
+    </commands>
+  </artifact>
 </module>
