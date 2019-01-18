@@ -50,12 +50,6 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests1_openj9</testCaseName>
@@ -84,12 +78,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests2</testCaseName>
@@ -115,12 +103,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests3</testCaseName>
@@ -161,12 +143,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests4</testCaseName>
@@ -193,12 +169,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests5</testCaseName>
@@ -225,12 +195,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests6</testCaseName>
@@ -254,12 +218,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSnapshot</testCaseName>
@@ -282,12 +240,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSoftmx</testCaseName>
@@ -314,12 +266,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLAotMethodOperation</testCaseName>
@@ -342,12 +288,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLModularity</testCaseName>
@@ -374,9 +314,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 	<test>
