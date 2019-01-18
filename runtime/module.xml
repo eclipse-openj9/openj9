@@ -30,10 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</dependencies>
 	</artifact>
 
-  <artifact type="target" name="uma" all="false">
-    <dependencies>
-      <dependency name="$(UMA_PATH_TO_ROOT)include/jvmti.h/">
-    </dependencies>
+	<artifact type="target" name="uma" all="false">
 		<commands>
 			<command line='$(MAKE) -f buildtools.mk uma'/>
 		</commands>
