@@ -117,6 +117,10 @@ RUN cd /usr/local \
   && tar -xJf gcc-7.tar.xz --strip-components=1 \
   && rm -rf gcc-7.tar.xz
 
+# Edit ldconfig to connect this library
+RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
+  && ldconfig
+
 #Building and setting up git version 2.5.3
 RUN yum -y update \
   && yum -y install \
