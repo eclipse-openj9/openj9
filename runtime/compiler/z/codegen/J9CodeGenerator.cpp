@@ -3950,9 +3950,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
          if (cg->checkFieldAlignmentForAtomicLong() &&
-             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
-             (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()  ||
-              (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))))
+             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
             {
             resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
             return true;
@@ -3966,9 +3964,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
          if (cg->checkFieldAlignmentForAtomicLong() &&
-             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
-             (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()  ||
-              (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))))
+             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
             {
             resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
             return true;

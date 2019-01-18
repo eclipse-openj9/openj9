@@ -3243,7 +3243,11 @@ TR::S390PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
       case TR::lcall:
       case TR::lucall:
             {
-            if (cg()->use64BitRegsOn32Bit())
+            if (TR::Compiler->target.is64Bit())
+               {
+               returnRegister = dependencies->searchPostConditionRegister(getLongReturnRegister());
+               }
+            else
                {
                TR::Instruction *cursor = NULL;
                lowReg = dependencies->searchPostConditionRegister(getLongLowReturnRegister());
@@ -3261,17 +3265,6 @@ TR::S390PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
 
                cg()->stopUsingRegister(lowReg);
                returnRegister = highReg;
-               }
-            else if (TR::Compiler->target.is64Bit())
-               {
-               returnRegister = dependencies->searchPostConditionRegister(getLongReturnRegister());
-               }
-            else
-               {
-               lowReg = dependencies->searchPostConditionRegister(getLongLowReturnRegister());
-               highReg = dependencies->searchPostConditionRegister(getLongHighReturnRegister());
-
-               returnRegister = cg()->allocateConsecutiveRegisterPair(lowReg, highReg);
                }
             }
          break;
@@ -3337,7 +3330,11 @@ TR::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
       case TR::lcalli:
       case TR::lucalli:
             {
-            if (cg()->use64BitRegsOn32Bit())
+            if (TR::Compiler->target.is64Bit())
+               {
+               returnRegister = dependencies->searchPostConditionRegister(getLongReturnRegister());
+               }
+            else
                {
                TR::Instruction *cursor = NULL;
                lowReg = dependencies->searchPostConditionRegister(getLongLowReturnRegister());
@@ -3355,17 +3352,6 @@ TR::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
 
                cg()->stopUsingRegister(lowReg);
                returnRegister = highReg;
-               }
-            else if (TR::Compiler->target.is64Bit())
-               {
-               returnRegister = dependencies->searchPostConditionRegister(getLongReturnRegister());
-               }
-            else
-               {
-               lowReg = dependencies->searchPostConditionRegister(getLongLowReturnRegister());
-               highReg = dependencies->searchPostConditionRegister(getLongHighReturnRegister());
-
-               returnRegister = cg()->allocateConsecutiveRegisterPair(lowReg, highReg);
                }
             }
          break;
