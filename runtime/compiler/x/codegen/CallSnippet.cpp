@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -924,9 +924,9 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       // CALL updateInterpreterDispatchGlueSite
       //
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86updateInterpreterDispatchGlueSite, false, false, false);
+      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue, false, false, false);
 
-      *cursor++ = 0xe8;    // CALL
+      *cursor++ = 0xe9;    // JMP
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helperSymRef);
       *(int32_t *)cursor = disp32;
 
