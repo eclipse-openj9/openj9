@@ -35,29 +35,16 @@ timeout(time: 10, unit: 'HOURS') {
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions'
 
-                // identify the pipeline type: build, test or pull request and
-                // initialize required variables
-                if (run_tests()) {
-                    if (!params.ghprbPullId) {
-                        // test pipeline
-                        variableFile.set_job_variables('test')
-                    } else {
-                        // pull request pipeline
-                        variableFile.set_job_variables('pullRequest')
-                    }
+                // identify the pipeline type: build or pull request and initialize required variables
+                if (params.ghprbPullId) {
+                    variableFile.set_job_variables('pullRequest')
                 } else {
-                    // build or pull request compile only pipeline 
                     variableFile.set_job_variables('build')
                 }
 
-                if (!params.UPSTREAM_JOB_NAME && !params.UPSTREAM_JOB_NUMBER) {
-                    // the test pipeline requires resources(e.g. a jdk) from an
-                    // upstream build pipeline identified by the UPSTREAM_JOB_NAME,
-                    // UPSTREAM_JOB_NAME parameters
-                    // if they are not set then it is not a test pipeline, could be
-                    // a build or a pull request pipeline, thus load resource here
-                    // to avoid another source checkout on the slave
-                    buildFile = load 'buildenv/jenkins/common/build'
+                buildFile = load 'buildenv/jenkins/common/build'
+                if (run_tests()) {
+                    testFile = load 'buildenv/jenkins/common/test'
                 }
             } finally {
                 // Temporarily turn off disableDeferredWipeout. See https://issues.jenkins-ci.org/browse/JENKINS-54225
@@ -72,19 +59,8 @@ timeout(time: 10, unit: 'HOURS') {
                 // clean up
                 buildFile.build_all()
             } else {
-                checkout scm
-                testFile = load 'buildenv/jenkins/common/test'
-                cleanWs()
-                if (params.UPSTREAM_JOB_NAME && params.UPSTREAM_JOB_NUMBER) {
-                    // test pipeline: fetch resources from upstream job, run tests,
-                    // archive results, clean up
-                    testFile.test_all_with_fetch()
-                } else {
-                    // pull request pipeline: compile, run tests, archive results,
-                    // clean up
-                    buildFile.build_pr()
-                    testFile.test_all()
-                }
+                buildFile.build_pr()
+                testFile.test_all()
             }
         }
     }
