@@ -729,17 +729,11 @@ def set_job_variables(job_type) {
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
-            set_node('build')
+            set_node(job_type)
             // set variables for a build job
             set_build_variables()
             set_sdk_variables()
             set_artifactory_config()
-            break
-        case "test":
-            // set the node the tests would run on
-            set_node('test')
-            // set variables for a test job
-            set_test_variables()
             break
         case "pullRequest":
             // set the node the pull request job would run on

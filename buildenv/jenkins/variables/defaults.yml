@@ -104,13 +104,6 @@ linux_ppc-64_cmprssptrs_le:
       11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-    test:
-      8: 'hw.arch.ppc64le && sw.os.ubuntu'
-      9: 'hw.arch.ppc64le && sw.os.ubuntu'
-      10: 'hw.arch.ppc64le && sw.os.ubuntu'
-      11: 'hw.arch.ppc64le && sw.os.ubuntu'
-      12: 'hw.arch.ppc64le && sw.os.ubuntu'
-      next: 'hw.arch.ppc64le && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -150,13 +143,6 @@ linux_390-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-    test:
-      8: 'hw.arch.s390x && sw.os.ubuntu'
-      9: 'hw.arch.s390x && sw.os.ubuntu'
-      10: 'hw.arch.s390x && sw.os.ubuntu'
-      11: 'hw.arch.s390x && sw.os.ubuntu'
-      12: 'hw.arch.s390x && sw.os.ubuntu'
-      next: 'hw.arch.s390x && sw.os.ubuntu'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -194,13 +180,6 @@ aix_ppc-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-    test:
-      8: 'hw.arch.ppc64 && sw.os.aix'
-      9: 'hw.arch.ppc64 && sw.os.aix'
-      10: 'hw.arch.ppc64 && sw.os.aix'
-      11: 'hw.arch.ppc64 && sw.os.aix'
-      12: 'hw.arch.ppc64 && sw.os.aix'
-      next: 'hw.arch.ppc64 && sw.os.aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
@@ -236,13 +215,6 @@ linux_x86-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-    test:
-      8: 'hw.arch.x86 && sw.os.ubuntu'
-      9: 'hw.arch.x86 && sw.os.ubuntu'
-      10: 'hw.arch.x86 && sw.os.ubuntu'
-      11: 'hw.arch.x86 && sw.os.ubuntu'
-      12: 'hw.arch.x86 && sw.os.ubuntu'
-      next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -280,13 +252,6 @@ linux_x86-64_cmprssptrs_cmake:
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-    test:
-      8: 'hw.arch.x86 && sw.os.ubuntu'
-      9: 'hw.arch.x86 && sw.os.ubuntu'
-      10: 'hw.arch.x86 && sw.os.ubuntu'
-      11: 'hw.arch.x86 && sw.os.ubuntu'
-      12: 'hw.arch.x86 && sw.os.ubuntu'
-      next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-cmake --disable-ddr'
@@ -335,13 +300,6 @@ linux_x86-64:
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-    test:
-      8: 'hw.arch.x86 && sw.os.ubuntu'
-      9: 'hw.arch.x86 && sw.os.ubuntu'
-      10: 'hw.arch.x86 && sw.os.ubuntu'
-      11: 'hw.arch.x86 && sw.os.ubuntu'
-      12: 'hw.arch.x86 && sw.os.ubuntu'
-      next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-noncompressedrefs'
@@ -390,13 +348,6 @@ win_x86-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       12: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-    test:
-      8: 'hw.arch.x86 && sw.os.windows'
-      9: 'hw.arch.x86 && sw.os.windows'
-      10: 'hw.arch.x86 && sw.os.windows'
-      11: 'hw.arch.x86 && sw.os.windows'
-      12: 'hw.arch.x86 && sw.os.windows'
-      next: 'hw.arch.x86 && sw.os.windows'
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
@@ -418,8 +369,6 @@ win_x86:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-    test:
-      8: 'hw.arch.x86 && sw.os.windows'
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
@@ -448,11 +397,6 @@ osx_x86-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       12: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-    test:
-      8: 'hw.arch.x86 && sw.os.osx'
-      11: 'hw.arch.x86 && sw.os.osx'
-      12: 'hw.arch.x86 && sw.os.osx'
-      next: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
@@ -482,10 +426,6 @@ osx_x86-64:
       11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       12: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-    test:
-      8: 'hw.arch.x86 && sw.os.osx'
-      11: 'hw.arch.x86 && sw.os.osx'
-      12: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
