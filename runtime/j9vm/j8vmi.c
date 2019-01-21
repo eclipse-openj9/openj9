@@ -121,8 +121,8 @@ JVM_GetTemporaryDirectory(JNIEnv *env)
 void JNICALL
 JVM_CopySwapMemory(JNIEnv *env, jobject srcObj, jlong srcOffset, jobject dstObj, jlong dstOffset, jlong size, jlong elemSize)
 {
-	void *srcBytes = NULL;
-	void *dstBytes = NULL;
+	U_8 *srcBytes = NULL;
+	U_8 *dstBytes = NULL;
 	U_8 *dstAddr = NULL;
 	if (NULL != srcObj) {
 		srcBytes = (*env)->GetPrimitiveArrayCritical(env, srcObj, NULL);
