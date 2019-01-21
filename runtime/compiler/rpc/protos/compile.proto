@@ -115,8 +115,6 @@ enum J9ServerMessageType
    VM_getStaticReferenceFieldAtAddress = 207;
    VM_getSystemClassFromClassName = 208;
    VM_isMethodTracingEnabled = 209;
-   // VM_isMethodEnterTracingEnabled = 209;
-   // VM_isMethodExitTracingEnabled = 210;
    VM_getClassClassPointer = 211;
    VM_setJ2IThunk = 212;
    VM_getClassOfMethod = 213;
