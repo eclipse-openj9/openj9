@@ -2572,7 +2572,6 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tbool _needsClassLookahead = %s\n",localCompiler->_needsClassLookahead?"TRUE":"FALSE");
    _dbgPrintf("\tbool _usesPreexistence = %s\n",localCompiler->_usesPreexistence?"TRUE":"FALSE");
    _dbgPrintf("\tbool _loopVersionedWrtAsyncChecks = %s\n",localCompiler->_loopVersionedWrtAsyncChecks?"TRUE":"FALSE");
-   _dbgPrintf("\tbool _codeCacheSwitched = %s\n",localCompiler->_codeCacheSwitched?"TRUE":"FALSE");
    _dbgPrintf("\tbool _commitedCallSiteInfo = %s\n",localCompiler->_commitedCallSiteInfo?"TRUE":"FALSE");
    _dbgPrintf("\tint32_t _errorCode = 0x%x\n",localCompiler->_errorCode);
    _dbgPrintf("\tTR_Stack<TR_PeekingArgInfo *> _peekingArgInfo = 0x%p\n",(char *)_remoteCompiler + ((char*)&(localCompiler->_peekingArgInfo) - (char*)localCompiler));

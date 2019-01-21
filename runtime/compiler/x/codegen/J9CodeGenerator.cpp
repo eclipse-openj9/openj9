@@ -84,8 +84,8 @@ J9::X86::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
    cg->setSupportsNewInstanceImplOpt();
-   if (cg->getX86ProcessorInfo().supportsSSE4_1() && 
-       !comp->getOption(TR_DisableSIMDStringCaseConv) && 
+   if (cg->getX86ProcessorInfo().supportsSSE4_1() &&
+       !comp->getOption(TR_DisableSIMDStringCaseConv) &&
        !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringCaseConversion();
 
@@ -416,7 +416,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
    bool hadClassUnloadMonitor;
    bool hadVMAccess = fej9->releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   TR::CodeCache *curCache = comp->getCurrentCodeCache();
+   TR::CodeCache *curCache = self()->getCodeCache();
    TR::CodeCache *newCache = curCache;
    OMR::CodeCacheErrorCode::ErrorCode status = OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS;
 
@@ -453,20 +453,14 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
       {
       // We keep track of number of IPIC trampolines that are present in the current code cache
       // If the code caches have been switched we have to reset this number, the setCodeCacheSwitched helper called
-      // in switchCodeCache resets the count
+      // in switchCodeCacheTo resets the count
       // If we are in binaryEncoding we will kill this compilation anyway
-
-      comp->switchCodeCache(newCache);
-
-      // If the old CC had pre-loaded code, the current compilation may have initialized it and will therefore depend on it
-      // so we should initialize it in the new CC as well
-      // XXX: We could avoid this if we knew for sure that this compile wasn't the one who initialized it
-      if (newCache && curCache->isCCPreLoadedCodeInitialized())
-         newCache->getCCPreLoadedCodeAddress(TR_numCCPreLoadedCode, self());
+      //
+      self()->switchCodeCacheTo(newCache);
       }
    else
       {
-      comp->setNumReservedIPICTrampolines(comp->getNumReservedIPICTrampolines() + numTrampolines);
+      self()->setNumReservedIPICTrampolines(self()->getNumReservedIPICTrampolines() + numTrampolines);
       }
 
    TR_ASSERT(newCache->isReserved(), "New CodeCache is not reserved");

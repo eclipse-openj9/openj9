@@ -839,7 +839,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       cursor = linkage->storeArguments(getNode(), cursor, false, NULL);
       needToSetCodeLocation = false;
 
-      if (comp->getCodeCacheSwitched() &&
+      if (cg()->hasCodeCacheSwitched() &&
           (methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers))
          {
          fej9->reserveTrampolineIfNecessary(comp, methodSymRef, true);

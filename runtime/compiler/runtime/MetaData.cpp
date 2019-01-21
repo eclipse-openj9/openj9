@@ -1486,7 +1486,7 @@ createMethodMetaData(
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // MCT
+      TR::CodeCache * codeCache = comp->cg()->getCodeCache(); // MCT
 
       /* Align code caches */
       codeCache->alignWarmCodeAlloc(3);
