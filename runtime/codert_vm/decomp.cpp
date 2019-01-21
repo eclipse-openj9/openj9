@@ -1374,7 +1374,13 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 
 		/* Toss the compilation queue */
 
-		jitConfig->jitFlushCompilationQueue(currentThread, J9FlushCompQueueDataBreakpoint);
+		if (inlineWatches) {
+			jitConfig->jitFlushCompilationQueue(currentThread, J9FlushCompQueueDataBreakpoint);
+			/* Make all future compilations inline the field watch code */
+			jitConfig->inlineFieldWatches = TRUE;
+		} else {
+			jitConfig->jitClassesRedefined(currentThread, 0, NULL);			
+		}
 
 		/* Find every method which has been translated and mark it for retranslation */
 
@@ -1387,11 +1393,6 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 		/* Mark every JIT method in every stack for decompilation */
 
 		decompileAllMethodsInAllStacks(currentThread, JITDECOMP_DATA_BREAKPOINT);
-
-		if (inlineWatches) {
-			/* Make all future compilations inline the field watch code */
-			jitConfig->inlineFieldWatches = TRUE;
-		}
 	}
 
 	Trc_Decomp_jitDataBreakpointAdded_Exit(currentThread);

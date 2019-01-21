@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,10 @@ int32_t TR_DataAccessAccelerator::perform()
        !comp()->getOption(TR_MimicInterpreterFrameShape) &&
 
        // We cannot handle arraylets because hardware intrinsics act on contiguous memory
-       !comp()->generateArraylets()&& !TR::Compiler->om.useHybridArraylets())
+       !comp()->generateArraylets()&& !TR::Compiler->om.useHybridArraylets() &&
+       // TODO (#4363): AOT can not relocate direct calls in the DAA OOL paths. If AOT is on and DAA makes
+       // a call in the OOL path, the target won't be reached and it seg-faults. Disable DAA for now.
+       !(comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
      {
 
      // A vector to keep track of variable packed decimal calls
