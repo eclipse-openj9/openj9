@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -406,14 +406,14 @@ TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
 
    // If we want to trace this method but the AOT body is not prepared to handle it
    // we must fail this AOT load with an error code that will force retrial
-   if ((fej9->isMethodExitTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
+   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
       {
       setReturnCode(compilationAotValidateMethodExitFailure);
       return NULL; // fail
       }
-   if ((fej9->isMethodEnterTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
+   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
       {
