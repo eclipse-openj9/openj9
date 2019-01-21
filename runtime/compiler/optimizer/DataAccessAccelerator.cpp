@@ -95,10 +95,7 @@ int32_t TR_DataAccessAccelerator::perform()
        !comp()->getOption(TR_MimicInterpreterFrameShape) &&
 
        // We cannot handle arraylets because hardware intrinsics act on contiguous memory
-       !comp()->generateArraylets()&& !TR::Compiler->om.useHybridArraylets() &&
-       // TODO (#4363): AOT can not relocate direct calls in the DAA OOL paths. If AOT is on and DAA makes
-       // a call in the OOL path, the target won't be reached and it seg-faults. Disable DAA for now.
-       !(comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
+       !comp()->generateArraylets()&& !TR::Compiler->om.useHybridArraylets())
      {
 
      // A vector to keep track of variable packed decimal calls
@@ -1088,6 +1085,10 @@ bool TR_DataAccessAccelerator::genComparisionIntrinsic(TR::TreeTop* treeTop, TR:
    pdOpNode->setAndIncChild(1, pdload2);
    pdOpNode->setSymbolReference(NULL);
 
+   // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+   // correctly compute a new CP to relocate DAA OOL calls.
+   bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
+
    //instead of creating comparison operation, re use the callNode:
    TR::Node::recreate(pdOpNode, ops);
 
@@ -1265,6 +1266,10 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
                                                     callNode->getChild(4),
                                                     bcdChkSymRef);
             }
+
+         // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+         // correctly compute a new CP to relocate DAA OOL calls.
+         bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
 
          if (errorCheckingNode->getInt())
             bcdchkNode->setBCDNodeOverflow();
@@ -1623,6 +1628,10 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
           */
          }
 
+      // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+      // correctly compute a new CP to relocate DAA OOL calls.
+      bcdchk->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
+
       TR::DataType dataType = callNode->getDataType();
       if (isByteBuffer)
          {
@@ -1968,6 +1977,10 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
                                                      callNode->getChild(8), callNode->getChild(9),
                                                      bcdChkSymRef);
 
+      // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+      // correctly compute a new CP to relocate DAA OOL calls.
+      bcdchk->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
+
       pdstore->setSymbolReference(symRefPdstore);
       pdstore->setDecimalPrecision(resPrecNode->getInt());
 
@@ -2075,6 +2088,10 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
                                            callNode->getChild(6), callNode->getChild(7),
                                            callNode->getChild(8),
                                            bcdChkSymRef);
+
+   // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+   // correctly compute a new CP to relocate DAA OOL calls.
+   bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
 
    if (isCheckOverflow)
       bcdchkNode->setBCDNodeOverflow();
@@ -2184,6 +2201,9 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
                                        callNode->getChild(6), callNode->getChild(7),
                                        bcdChkSymRef);
 
+   // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+   // correctly compute a new CP to relocate DAA OOL calls.
+   bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
    bcdchkNode->setBCDNodeOverflow();
 
    //following pdstore
