@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -416,6 +416,21 @@ public:
     *    transforming a monitored region with transactional lock elision.
     */
    int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
+
+   /**
+    * \brief This is just a J9 override of this function and simply redirects
+    *        to the newly named function `trimCodeMemoryToActualSize`.  It exists
+    *        solely to coordinate refactoring with OMR and will be very transient.
+    */
+   void resizeCodeMemory();
+
+   /**
+    * \brief Trim the size of code memory required by this method to match the
+    *        actual code length required, allowing the reclaimed memory to be
+    *        reused.  This is needed when the conservative length estimate
+    *        exceeds the actual memory requirement.
+    */
+   void trimCodeMemoryToActualSize();
 
 private:
 
