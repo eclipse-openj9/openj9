@@ -119,12 +119,6 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
    bool usePersistentCache = isCompiled || isInProgress;
    bool wholeMethodInfo = data == 0;
 
-   if (!iProfiler)
-      {
-      // iProfiler is enabled on the server if we got here, but not enabled here on the client
-      client->write(std::string(), wholeMethodInfo, usePersistentCache);
-      return;
-      }
    if (wholeMethodInfo)
       {
       // Serialize all the information related to this method
@@ -2034,12 +2028,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_OpaqueMethodBlock*>();
          auto method = std::get<0>(recv);
          TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *) fe->getIProfiler();
-         if (!iProfiler)
-            {
-            // iProfiler is enabled on the server if we got here, but not enabled here on the client
-            client->write(std::string());
-            break;
-            }
          client->write(iProfiler->serializeIProfilerMethodEntry(method));
          }
          break;
