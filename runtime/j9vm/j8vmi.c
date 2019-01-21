@@ -103,6 +103,9 @@ JVM_GetTemporaryDirectory(JNIEnv *env)
 /**
  * Copies memory from one place to another, endian flipping the data.
  *
+ * Implementation of native java.nio.Bits.copySwapMemory0(). The single java caller
+ * has ensured all of the parameters are valid.
+ *
  * @param [in] env Pointer to JNI environment
  * @param [in] srcObj Source primitive array (NULL means srcOffset represents native memory)
  * @param [in] srcOffset Offset in source array / address in native memory
@@ -111,7 +114,6 @@ JVM_GetTemporaryDirectory(JNIEnv *env)
  * @param [in] size Number of bytes to copy
  * @param [in] elemSize Size of elements to copy and flip
  *
- * elemSize = 1 means a straight byte copy
  * elemSize = 2 means byte order 1,2 becomes 2,1
  * elemSize = 4 means byte order 1,2,3,4 becomes 4,3,2,1
  * elemSize = 8 means byte order 1,2,3,4,5,6,7,8 becomes 8,7,6,5,4,3,2,1
@@ -121,49 +123,33 @@ JVM_CopySwapMemory(JNIEnv *env, jobject srcObj, jlong srcOffset, jobject dstObj,
 {
 	void *srcBytes = NULL;
 	void *dstBytes = NULL;
-	U_8 *srcAddr = NULL;
 	U_8 *dstAddr = NULL;
-	/* Ensure that size is a non-negative multiple of elemSize */
-	Assert_SC_true(size >= 0);
-	Assert_SC_true(0 == (size % elemSize));
 	if (NULL != srcObj) {
-		/* Disallow negative object offsets */
-		Assert_SC_true(srcOffset >= 0);
 		srcBytes = (*env)->GetPrimitiveArrayCritical(env, srcObj, NULL);
-		srcAddr = srcBytes;
+		/* The java caller has added Unsafe.arrayBaseOffset() to the offset. Remove it
+		 * here as GetPrimitiveArrayCritical returns a pointer to the first element.
+		 */
+		srcOffset -= sizeof(J9IndexableObjectContiguous);
 	}
 	if (NULL != dstObj) {
-		/* Disallow negative object offsets */
-		Assert_SC_true(dstOffset >= 0);
 		dstBytes = (*env)->GetPrimitiveArrayCritical(env, dstObj, NULL);
 		dstAddr = dstBytes;
+		/* The java caller has added Unsafe.arrayBaseOffset() to the offset. Remove it
+		 * here as GetPrimitiveArrayCritical returns a pointer to the first element.
+		 */
+		dstOffset -= sizeof(J9IndexableObjectContiguous);
 	}
-	srcAddr += (UDATA)srcOffset;
 	dstAddr += (UDATA)dstOffset;
-/*
-	Generic code would be:
-
-		jlong elemCount = size / elemSize;
-		for (jlong i = 0; i < elemCount; ++i) {
-			for (UDATA j = 0; j < elemSize; ++j) {
-				dstAddr[j] = srcAddr[elemSize - j - 1];
-			}
-			srcAddr += elemSize;
-			dstAddr += elemSize;
-		}
-		break;
-	}
- */
+	/* First copy the bytes unmodified to the new location (memmove handles the overlap case) */
+	memmove(dstAddr, srcBytes + (UDATA)srcOffset, (size_t)size);
+	/* Now flip each element in the destination */
 	switch(elemSize) {
-	case 1:
-		memcpy(dstAddr, srcAddr, (size_t)size);
-		break;
 	case 2: {
 		jlong elemCount = size / 2;
 		while (0 != elemCount) {
-			dstAddr[0] = srcAddr[1];
-			dstAddr[1] = srcAddr[0];
-			srcAddr += 2;
+			U_8 temp = dstAddr[0];
+			dstAddr[0] = dstAddr[1];
+			dstAddr[1] = temp;
 			dstAddr += 2;
 			elemCount -= 1;
 		}
@@ -172,39 +158,40 @@ JVM_CopySwapMemory(JNIEnv *env, jobject srcObj, jlong srcOffset, jobject dstObj,
 	case 4: {
 		jlong elemCount = size / 4;
 		while (0 != elemCount) {
-			dstAddr[0] = srcAddr[3];
-			dstAddr[1] = srcAddr[2];
-			dstAddr[2] = srcAddr[1];
-			dstAddr[3] = srcAddr[0];
-			srcAddr += 4;
+			U_8 temp = dstAddr[0];
+			dstAddr[0] = dstAddr[3];
+			dstAddr[3] = temp;
+			temp = dstAddr[1];
+			dstAddr[1] = dstAddr[2];
+			dstAddr[2] = temp;
 			dstAddr += 4;
 			elemCount -= 1;
 		}
 		break;
 	}
-	case 8: {
+	default /* 8 */: {
 		jlong elemCount = size / 8;
 		while (0 != elemCount) {
-			dstAddr[0] = srcAddr[7];
-			dstAddr[1] = srcAddr[6];
-			dstAddr[2] = srcAddr[5];
-			dstAddr[3] = srcAddr[4];
-			dstAddr[4] = srcAddr[3];
-			dstAddr[5] = srcAddr[2];
-			dstAddr[6] = srcAddr[1];
-			dstAddr[7] = srcAddr[0];
-			srcAddr += 8;
+			U_8 temp = dstAddr[0];
+			dstAddr[0] = dstAddr[7];
+			dstAddr[7] = temp;
+			temp = dstAddr[1];
+			dstAddr[1] = dstAddr[6];
+			dstAddr[6] = temp;
+			temp = dstAddr[2];
+			dstAddr[2] = dstAddr[5];
+			dstAddr[5] = temp;
+			temp = dstAddr[3];
+			dstAddr[3] = dstAddr[4];
+			dstAddr[4] = temp;
 			dstAddr += 8;
 			elemCount -= 1;
 		}
 		break;
 	}
-	default:
-		Assert_SC_unreachable();
-		break;
 	}
 	if (NULL != srcObj) {
-		(*env)->ReleasePrimitiveArrayCritical(env, srcObj, srcBytes, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, srcObj, srcBytes, JNI_ABORT);
 	}
 	if (NULL != dstObj) {
 		(*env)->ReleasePrimitiveArrayCritical(env, dstObj, dstBytes, 0);
