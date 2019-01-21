@@ -5384,29 +5384,6 @@ break
       }
 
    if (resolvedMethodSymbol &&
-       resolvedMethodSymbol->getRecognizedMethod() == TR::java_lang_String_indexOf_String &&
-       !isPeekingMethod() &&
-       !comp()->getOption(TR_DisableInliningOfNatives) &&
-       !comp()->getOption(TR_DisableFastStringIndexOf))
-      {
-      resultNode = TR::TransformUtil::transformStringIndexOfCall(comp(), callNode);
-      if (resultNode != callNode)
-         {
-         if (treeTopNode->getOpCode().isCheck())
-            {
-            // the orignal 'this' of the indexOf was being nullchk'd (note: it cannot be a resolv check)
-            // nullchk the original nullchk reference, and create the static call nestled under a treetop
-            //
-            TR::Node *passThrough = TR::Node::create(TR::PassThrough, 1, callNode->getFirstChild());
-            callNodeTreeTop->getNode()->setAndIncChild(0, passThrough);
-            callNodeTreeTop = genTreeTop(callNode = resultNode);
-            callNode->decReferenceCount();
-            }
-         else
-            callNodeTreeTop->getNode()->setChild(0, callNode = resultNode);
-         }
-      }
-   else if (resolvedMethodSymbol &&
        !isPeekingMethod() &&
        (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32 ||
         resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64))
