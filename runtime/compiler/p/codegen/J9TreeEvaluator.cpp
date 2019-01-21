@@ -344,7 +344,7 @@ VMoutlinedHelperWrtbarEvaluator(
 
    const bool doCardMark = !node->isNonHeapObjectWrtBar() && (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental);
 
-   TR::CodeCache *codeCache = comp->getCurrentCodeCache();
+   TR::CodeCache *codeCache = cg->getCodeCache();
    TR::LabelSymbol *doneWrtbarLabel = generateLabelSymbol(cg);
    TR::Register *srcNullCondReg;
 
@@ -2345,7 +2345,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
       TR::Register *gr11 = cg->allocateRegister();
       mainlineDeps->addPostCondition(gr11, TR::RealRegister::gr11);
       cg->stopUsingRegister(gr11);
-      
+
       generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
       TR::LabelSymbol *doneMainlineLabel = generateLabelSymbol(cg);
       generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneMainlineLabel, mainlineDeps);
@@ -2567,7 +2567,7 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR::CodeCache *codeCache = comp->getCurrentCodeCache();
+   TR::CodeCache *codeCache = cg->getCodeCache();
    TR::LabelSymbol *doneArrayStoreCHKLabel = generateLabelSymbol(cg);
    TR::Register *rootClassReg = cg->allocateRegister();
    TR::Register *scratchReg = cg->allocateRegister();
@@ -3795,7 +3795,7 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator2(TR::Node *node, T
          case DynamicCacheObjectClassTest:
             TR_ASSERT_FATAL(false, "%s: DynamicCacheObjectClassTest is not implemented on P\n", node->getOpCode().getName());
             break;
-         case DynamicCacheDynamicCastClassTest: 
+         case DynamicCacheDynamicCastClassTest:
             TR_ASSERT_FATAL(false, "%s: DynamicCacheDynamicCastClassTest is not implemented on P\n", node->getOpCode().getName());
             break;
          case HelperCall:
@@ -5734,7 +5734,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                if (elementSize >= 2)
                   {
                   if (TR::Compiler->target.is64Bit())
-                     iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, dataSizeReg, enumReg, trailingZeroes(elementSize), CONSTANT64(0x00000000FFFFFFFF) << trailingZeroes(elementSize)); 
+                     iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, dataSizeReg, enumReg, trailingZeroes(elementSize), CONSTANT64(0x00000000FFFFFFFF) << trailingZeroes(elementSize));
                   else
                      iCursor = generateShiftLeftImmediate(cg, node, dataSizeReg, enumReg, trailingZeroes(elementSize), iCursor);
 
@@ -5743,7 +5743,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                   {
                   // the zero initialization code uses a loop of stwu's, and
                   // so dataSizeReg must be rounded up to a multiple of 4
-                  if (elementSize == 2) 
+                  if (elementSize == 2)
                      iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dataSizeReg, dataSizeReg, 3, iCursor);
                   else  //elementSize == 1
                      iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dataSizeReg, enumReg, 3, iCursor);
@@ -6444,7 +6444,7 @@ TR::Register *outlinedHelperNewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *classReg = cg->gprClobberEvaluate(node->getLastChild());
    TR::Register *objectReg = cg->allocateCollectedReferenceRegister();
    TR::Register *gr11 = cg->allocateRegister();
-   TR::CodeCache *codeCache = comp->getCurrentCodeCache();
+   TR::CodeCache *codeCache = cg->getCodeCache();
    uintptrj_t helperAddr;
    TR::Instruction *gcPoint;
 
@@ -9578,7 +9578,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       rsvFailLabel = isWeak ? failLabel : startLabel;
 
       startLabel->setStartInternalControlFlow();
-      
+
       if (fieldOffsetReg == NULL)
          {
          numDeps++;
