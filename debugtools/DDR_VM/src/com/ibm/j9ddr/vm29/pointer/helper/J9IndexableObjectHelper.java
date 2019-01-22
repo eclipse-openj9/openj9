@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@ import java.io.StringWriter;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
+import com.ibm.j9ddr.vm29.pointer.I16Pointer;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
 import com.ibm.j9ddr.vm29.pointer.I64Pointer;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
@@ -212,7 +213,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 			throw new ArrayIndexOutOfBoundsException("Supplied destination array too small. Requires: " + destStart + length + ", was " + dst.length);
 		}
 		for (int i = 0; i < length; i++) {
-			dst[destStart + i] = (byte)U8Pointer.cast(ObjectModel.getElementAddress(objPointer, start + i, 1)).at(0).intValue();
+			dst[destStart + i] = U8Pointer.cast(ObjectModel.getElementAddress(objPointer, start + i, 1)).at(0).byteValue();
 		}
 	}
 	
@@ -274,7 +275,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 			throw new ArrayIndexOutOfBoundsException("Supplied destination array too small. Requires: " + destStart + length + ", was " + dst.length);
 		}
 		for (int i = 0; i < length; i++) {
-			dst[destStart + i] = (short)U16Pointer.cast(ObjectModel.getElementAddress(objPointer, start + i, 2)).at(0).intValue();
+			dst[destStart + i] = I16Pointer.cast(ObjectModel.getElementAddress(objPointer, start + i, 2)).at(0).shortValue();
 		}
 	}
 	

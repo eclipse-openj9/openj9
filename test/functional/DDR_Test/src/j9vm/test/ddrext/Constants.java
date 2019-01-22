@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,13 +98,8 @@ public class Constants {
 	public static final String STACKSLOTS_FAILURE_KEY = "";
 
 	public static final String J9VMTHREAD_CMD = "j9vmthread";
-	public static final String J9VMTHREAD_SUCCESS_KEYS = "J9VMThread,J9Method,!j9javavm 0x0*[1-9a-fA-F][0-9a-fA-F]*";// make
-																														// sure
-																														// j9javavm's
-																														// address
-																														// is
-																														// not
-																														// 0
+	// make sure j9javavm's address is not 0
+	public static final String J9VMTHREAD_SUCCESS_KEYS = "J9VMThread,J9Method,!j9javavm 0x0*[1-9a-fA-F][0-9a-fA-F]*";
 	public static final String J9VMTHREAD_FAILURE_KEY = "";
 	
 	public static final String J9POOL_CMD = "j9pool";
@@ -157,60 +152,16 @@ public class Constants {
 	public static final String SHRC_AOTSTATS_FAILURE_KEY = "no shared cache";
 
 	public static final String SHRC_ORPHANSTATS = "orphanstats";
-	public static final String SHRC_ORPHANSTATS_SUCCESS_KEY = "ORPHAN,j9romclass"; // may
-																					// needs
-																					// expansion
-																					// -
-																					// seems
-																					// like
-																					// the
-																					// orphan
-																					// output
-																					// is
-																					// very
-																					// much
-																					// tied
-																					// with
-																					// the
-																					// dump
-																					// produced
+	// may need expansion - seems like the orphan output is very much tied with the dump produced
+	public static final String SHRC_ORPHANSTATS_SUCCESS_KEY = "ORPHAN,j9romclass";
+
 	public static final String SHRC_ORPHANSTATS_FAILURE_KEY = "no shared cache";
 
 	public static final String SHRC_SCOPESTATS = "scopestats";
-	public static final String SHRC_SCOPESTATS_SUCCESS_KEY = "SCOPE,vm.jar,j9utf8,BYTEDATA Summary,ROMClass"; // may
-																												// needs
-																												// expansion
-																												// -
-																												// seems
-																												// like
-																												// the
-																												// orphan
-																												// output
-																												// is
-																												// very
-																												// much
-																												// tied
-																												// with
-																												// the
-																												// dump
-																												// produced
-	public static final String SHRC_SCOPESTATS_SUCCESS_KEY_JAVA9 = "SCOPE,lib[[/\\\\]]modules,j9utf8,BYTEDATA Summary,ROMClass"; // may
-	// needs
-	// expansion
-	// -
-	// seems
-	// like
-	// the
-	// orphan
-	// output
-	// is
-	// very
-	// much
-	// tied
-	// with
-	// the
-	// dump
-	// produced
+	// may need expansion - seems like the orphan output is very much tied with the dump produced
+	public static final String SHRC_SCOPESTATS_SUCCESS_KEY = "SCOPE,vm.jar,j9utf8,BYTEDATA Summary,ROMClass";
+	// may need expansion - seems like the orphan output is very much tied with the dump produced
+	public static final String SHRC_SCOPESTATS_SUCCESS_KEY_JAVA9 = "SCOPE,lib[[/\\\\]]modules,j9utf8,BYTEDATA Summary,ROMClass";
 	public static final String SHRC_SCOPESTATS_FAILURE_KEY = "no shared cache";
 
 	public static final String SHRC_BYTESTATS = "bytestats";
@@ -219,42 +170,17 @@ public class Constants {
 	public static final String SHRC_BYTESTATS_FAILURE_KEY = "UNKNOWN\\(,no shared cache";
 
 	public static final String SHRC_UBYTESTATS = "ubytestats";
-	public static final String SHRC_UBYTESTATS_SUCCESS_KEY = "UNINDEXEDBYTE"; // currently
-																				// our
-																				// dump
-																				// does
-																				// not
-																				// contain
-																				// any
-																				// data
-																				// for
-																				// this
+
+	// currently our dump does not contain any data for this
+	public static final String SHRC_UBYTESTATS_SUCCESS_KEY = "UNINDEXEDBYTE";
 	public static final String SHRC_UBYTESTATS_FAILURE_KEY = "no shared cache";
 
 	public static final String SHRC_CLSTATS = "clstats";
-	public static final String SHRC_CLSTATS_SUCCESS_KEY_NONRTP = "No entry found in the cache"; // In
-																								// case
-																								// of
-																								// non-real-time
-																								// platforms
-																								// we
-																								// should
-																								// not
-																								// see
-																								// any
-																								// cachelet
-																								// info
+	// In case of non-real-time platforms we should not see any cachelet info
+	public static final String SHRC_CLSTATS_SUCCESS_KEY_NONRTP = "No entry found in the cache";
 	public static final String SHRC_CLSTATS_FAILURE_KEY_NONRTP = "no shared cache";
-	public static final String SHRC_CLSTATS_SUCCESS_KEY_RTP = "CACHELET count,CACHELET,!shrc cachelet"; // In
-																										// case
-																										// of
-																										// real-time
-																										// platforms
-																										// we
-																										// should
-																										// see
-																										// cachelet
-																										// info
+	// In case of real-time platforms we should see cachelet info
+	public static final String SHRC_CLSTATS_SUCCESS_KEY_RTP = "CACHELET count,CACHELET,!shrc cachelet";
 	public static final String SHRC_CLSTATS_FAILURE_KEY_RTP = "No entry found in the cache,no shared cache";
 
 	public static final String SHRC_CACHELET = "cachelet";
@@ -367,7 +293,7 @@ public class Constants {
 	public static final String J9VTABLES_SUCCESS_KEY = "j9class,j9method,"+J9CLASSSHAPE_TEST_CLASS;
 
 	public static final String J9STATICS_CMD = "j9statics";
-	public static final String J9STATICS_SUCCESS_KEY = "j9romstaticsinglefieldshape,"+J9CLASSSHAPE_TEST_CLASS;
+	public static final String J9STATICS_SUCCESS_KEY = "j9romstaticfieldshape," + J9CLASSSHAPE_TEST_CLASS;
 
 	public static final String CL_FOR_NAME_CMD = "classforname";
 	public static final String CL_FOR_NAME_CLASS = "java/lang/Object";
@@ -428,12 +354,8 @@ public class Constants {
 	public static final String DUMP_ROM_CLASS_INVALID_NAME_FAILURE_KEY = "";
 
 	public static final String QUERY_ROM_CLASS_CMD = "queryromclass";
-	public static final String QUERY_ROM_CLASS_QUERY = "/romHeader"; // may add
-																		// more
-																		// queries
-																		// later
-																		// like
-																		// /romHeader/className,/methods,
+	// may add more queries later like /romHeader/className,/methods,
+	public static final String QUERY_ROM_CLASS_QUERY = "/romHeader";
 	public static final String QUERY_ROM_CLASS_SUCCESS_KEY = "romSize,className,Section Start: romHeader,Section End: romHeader,optionalInfo";
 	public static final String QUERY_ROM_CLASS_FAILURE_KEY = "matched nothing";
 
@@ -458,7 +380,7 @@ public class Constants {
 	public static final String DUMP_ALL_SEGMENTS_COMMON_SUCCESS_KEY = "memorySegments.+!j9memorysegmentlist 0x[0-9a-f]+,segment.+start.+alloc.+end.+type.+size.+,([0-9a-f]+ +){5}[0-9a-f]+,classMemorySegments,jit code segments,jit data segments,";
 	public static final String DUMP_ALL_SEGMENTS_64BITCORE_SUCCESS_KEY = "segment.+start.+warmAlloc.+coldAlloc.+end.+size.+";
 	public static final String DUMP_ALL_SEGMENTS_32BITCORE_SUCCESS_KEY = "segment.+start.+warm.+cold.+end.+size.+";
-																																													// dump
+	// dump
 	public static final String DUMP_ALL_SEGMENTS_FAILURE_KEY = "";
 
 	public static final String DUMP_SEGMENTS_IN_LIST_CMD = "dumpsegmentsinlist";
@@ -659,8 +581,7 @@ public class Constants {
 	public static final String SHOWDUMPAGENTS_CMD = "showdumpagents";
 	// create dump with option:
 	// -Xdump:system:defaults:file=${system.dump},request=exclusive+compact+prepwalk,
-	// expect to see the info in showdumpagents. refer to tck_ddrext.xml for
-	// detail.
+	// expect to see the info in showdumpagents. refer to tck_ddrext.xml for detail.
 	public static final String SHOWDUMPAGENTS_SUCCESS_KEYS = "-Xdump,request=exclusive\\+compact\\+prepwalk,events=systhrow,"
 			+ "filter=java/lang/OutOfMemoryError";
 	public static final String SHOWDUMPAGENTS_FAILURE_KEYS = "No dump agent";
