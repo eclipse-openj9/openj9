@@ -4721,7 +4721,7 @@ bool TR::CompilationInfo::isQueuedForCompilation(J9Method * method, void *oldSta
    return linkageInfo->isBeingCompiled();
    }
 
-#if defined(NASM_ASSEMBLER)
+#if defined(TR_HOST_X86)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -4755,7 +4755,7 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
          initialInvokeExactThunkGlueAddress = (void*)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
          initialInvokeExactThunkGlueAddress = (*(void **)_initialInvokeExactThunkGlue);
-#elif defined(NASM_ASSEMBLER)
+#elif defined(TR_HOST_X86)
          initialInvokeExactThunkGlueAddress = (void*)initialInvokeExactThunkGlue;
 #else
          initialInvokeExactThunkGlueAddress = (void*)_initialInvokeExactThunkGlue;
