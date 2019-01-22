@@ -22,6 +22,10 @@
 
 #define J9_EXTERNAL_TO_VM
 
+#if defined (_MSC_VER) && (_MSC_VER < 1900)
+#define snprintf _snprintf
+#endif
+
 #include "env/VMJ9.h"
 
 #include <algorithm>
@@ -4713,11 +4717,21 @@ TR_J9VMBase::getOverflowSafeAllocSize()
    }
 
 void
+TR_J9VMBase::unsupportedByteCode(TR::Compilation * comp, U_8 opcode)
+   {
+   char errMsg[40];
+   snprintf(errMsg, 40, "bytecode %d not supported by JIT", opcode);
+   comp->failCompilation<TR::CompilationException>(errMsg);
+   }
+
+void
 TR_J9VMBase::unknownByteCode(TR::Compilation * comp, U_8 opcode)
    {
    // an unknown bytecode may be seen if the method contains a breakpoint, in that case we should abort the compile
    //
-   comp->failCompilation<TR::CompilationException>("Unknown bytecode");
+   char errMsg[40];
+   snprintf(errMsg, 40, "Unknown bytecode %d to JIT", opcode);
+   comp->failCompilation<TR::CompilationException>(errMsg);
    }
 
 char*

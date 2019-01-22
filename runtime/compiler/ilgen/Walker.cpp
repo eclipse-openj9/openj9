@@ -1527,6 +1527,9 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
             break;
 
+         case J9BCdefaultvalue:
+         case J9BCwithfield:
+            fej9()->unsupportedByteCode(comp(), opcode);
          case J9BCunknown:
             fej9()->unknownByteCode(comp(), opcode);
             break;
