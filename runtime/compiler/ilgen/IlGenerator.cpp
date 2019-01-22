@@ -3032,8 +3032,6 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandle(TR::TreeTop *tree)
    TR::Node * receiverHandle = callNode->getArgument(0);
    callNode->getByteCodeInfo().setDoNotProfile(true);
 
-   separateNullCheck(tree);
-
    TR::SymbolReference *getTypeSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_getType, JSR292_getTypeSig, TR::MethodSymbol::Special); // TODO:JSR292: Too bad I can't do a more general lookup and let it optimize itself.  Virtual call doesn't seem to work
    TR::Node* handleType = TR::Node::createWithSymRef(callNode, TR::acall, 1, receiverHandle, getTypeSymRef);
    handleType->getByteCodeInfo().setDoNotProfile(true);
@@ -3116,7 +3114,6 @@ void TR_J9ByteCodeIlGenerator::expandInvokeDynamic(TR::TreeTop *tree)
    TR::Node * receiverHandle = callNode->getArgument(0);
    callNode->getByteCodeInfo().setDoNotProfile(true);
 
-   separateNullCheck(tree);
    insertCustomizationLogicTreeIfEnabled(tree, receiverHandle);
    expandInvokeExact(tree);
    }
@@ -3171,8 +3168,6 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandleGeneric(TR::TreeTop *tree)
    TR::Node * callNode = tree->getNode()->getChild(0);
    TR::Node * receiverHandle = callNode->getArgument(0);
    callNode->getByteCodeInfo().setDoNotProfile(true);
-
-   separateNullCheck(tree);
 
    TR::Node* callSiteMethodType = loadCallSiteMethodType(callNode);
    if (callSiteMethodType->getSymbolReference()->isUnresolved())
@@ -3245,8 +3240,6 @@ void TR_J9ByteCodeIlGenerator::expandInvokeExact(TR::TreeTop *tree)
    TR::Node * receiverHandle = callNode->getArgument(0);
    callNode->getByteCodeInfo().setDoNotProfile(true);
 
-   separateNullCheck(tree);
-
    // Get the method address
    TR::SymbolReference *invokeExactTargetAddrSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExactTargetAddress, JSR292_invokeExactTargetAddressSig, TR::MethodSymbol::Special);
    TR::Node *invokeExactTargetAddr = TR::Node::createWithSymRef(callNode, TR::lcall, 1, receiverHandle, invokeExactTargetAddrSymRef);
@@ -3287,6 +3280,22 @@ void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
 
    int32_t oldBCIndex = _bcIndex;
    _bcIndex = callNode->getByteCodeIndex();
+
+   // Preserve the NULLCHK
+   //
+   separateNullCheck(tree);
+   // Anchor all children
+   //
+   for (int i = callNode->getFirstArgumentIndex(); i < callNode->getNumChildren(); i++)
+      {
+      TR::Node* child = callNode->getChild(i);
+      TR::TreeTop *anchorTT = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, child));
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp(), "TreeTop n%dn is created to anchor node n%dn\n", anchorTT->getNode()->getGlobalIndex(), child->getGlobalIndex());
+         }
+       tree->insertBefore(anchorTT);
+      }
 
    if (_invokeHandleCalls &&
        _invokeHandleCalls->isSet(_bcIndex))
