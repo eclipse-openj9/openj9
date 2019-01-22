@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,17 @@ set -x
 # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container
 # builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make
 MAKE_JOBS=4
+
+# download bootstrap jdk
+SRCDIR=$PWD
+cd ~
+wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+tar -xzf bootjdk11.tar.gz
+rm -f bootjdk11.tar.gz
+mv $(ls | grep -i jdk) bootjdk11
+export JAVA_HOME="$PWD/bootjdk11"
+export PATH="${JAVA_HOME}/bin:${PATH}"
+cd $SRCDIR
 
 # Note Currently enabling RUN_LINT and RUN_BUILD simultaneously is not supported
 if test "x$RUN_LINT" = "xyes"; then
@@ -69,7 +80,7 @@ if test "x$RUN_BUILD" = "xyes"; then
   fi
   cd ..
   # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load.
-  git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
+  git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
 
   # Clear this option so it doesn't interfere with configure detecting the bootjdk.
   unset _JAVA_OPTIONS
@@ -81,7 +92,7 @@ if test "x$RUN_BUILD" = "xyes"; then
       echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT."
   fi
 
-  cd openj9-openjdk-jdk9 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
+  cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
 
   # Limit number of jobs to work around g++ internal compiler error.
   bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=$MAKE_JOBS --with-num-cores=$MAKE_JOBS --enable-ccache --with-cmake --disable-ddr
