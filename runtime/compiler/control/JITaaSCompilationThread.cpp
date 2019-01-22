@@ -2442,7 +2442,8 @@ ClientSessionData::~ClientSessionData()
       jitPersistentFree(_unloadedClassAddresses);
       }
    _staticMapMonitor->destroy();
-   jitPersistentFree(_vmInfo);
+   if (_vmInfo)
+      jitPersistentFree(_vmInfo);
    }
 
 void
