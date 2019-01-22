@@ -55,7 +55,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
        && _cg->getPicSlotCount())
       {
       _cg->addExternalRelocation(new (_cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                                 (uint8_t *)_cg->getPicSlotCount(),
+                                                                                 (uint8_t *)(uintptr_t)_cg->getPicSlotCount(),
                                                                                  TR_PicTrampolines, _cg),
                             __FILE__,
                             __LINE__,

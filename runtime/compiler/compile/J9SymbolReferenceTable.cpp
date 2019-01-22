@@ -1411,7 +1411,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
        && !comp()->compileRelocatableCode())
       {
       TR::VMAccessCriticalSection getObjectReferenceLocation(comp());
-      if (*((uintptrj_t*)dataAddress) != NULL)
+      if (*((uintptrj_t*)dataAddress) != 0)
          {
          TR_J9VMBase *fej9 = comp()->fej9();
          TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,7 +131,7 @@ extern "C" void adjustTrampolineInterpretedDispatchGlueDisp32_unwrapper(void **a
 (int32_t)(uintptr_t)argsPtr[2],  // cpIndex
          (uint8_t *)argsPtr[3]); // call site
 
-   *resPtr = (void *)disp32;
+   *resPtr = (void *)(uintptr_t)disp32;
    }
 
 
@@ -141,5 +141,5 @@ extern "C" void interpretedDispatchGlueDisp32_unwrapper(void **argsPtr, void **r
       (J9Method *)argsPtr[0],  // ramMethod
        (uint8_t *)argsPtr[1]); // call site
 
-   *resPtr = (void *)disp32;
+   *resPtr = (void *)(uintptr_t)disp32;
    }
