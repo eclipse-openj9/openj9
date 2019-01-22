@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2018 IBM Corp. and others
+* Copyright (c) 2017, 2019 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,9 +271,9 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       if (enableTrace)
          traceMsg(comp(), "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n", isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
-      static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
+      static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
       // Test if the call is a write to a static final field
-      if (!disableIllegalWriteReport
+      if (enableIllegalWriteReport
           && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding)
           && TR_J9MethodBase::isUnsafePut(unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod()))
          {
