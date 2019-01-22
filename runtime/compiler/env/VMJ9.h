@@ -393,6 +393,7 @@ public:
 
    virtual TR::PersistentInfo * getPersistentInfo()  { return ((TR_PersistentMemory *)_jitConfig->scratchSegment)->getPersistentInfo(); }
    void                       unknownByteCode( TR::Compilation *, uint8_t opcode);
+   void                       unsupportedByteCode( TR::Compilation *, uint8_t opcode);
 
    virtual bool isBenefitInliningCheckIfFinalizeObject() { return false; }
 
