@@ -174,6 +174,33 @@ public:
 //      :TR_J9ServerVM(jitConfig, compInfo, vmContext)
 //      {}
 
+ // in process of removing this query in favour of more meaningful queries below
+   virtual bool       isAOT_DEPRECATED_DO_NOT_USE()  override                 { return true; }
+
+   // replacing calls to isAOT
+   virtual bool       canUseSymbolValidationManager() override                { return true; }
+   virtual bool       supportsCodeCacheSnippets() override                    { return false; }
+   virtual bool       canRelocateDirectNativeCalls() override                 { return false; }
+   virtual bool       needClassAndMethodPointerRelocations() override         { return true; }
+   virtual bool       inlinedAllocationsMustBeVerified() override             { return true; }
+   virtual bool       helpersNeedRelocation() override                        { return true; }
+   virtual bool       supportsEmbeddedHeapBounds() override                   { return false; }
+   virtual bool       supportsFastNanoTime() override                         { return false; }
+   virtual bool       needRelocationsForStatics() override                    { return true; }
+   virtual bool       needRelocationsForBodyInfoData() override               { return true; }
+   virtual bool       needRelocationsForPersistentInfoData() override         { return true; }
+   virtual bool       forceUnresolvedDispatch() override                      { return true; }
+   virtual bool       nopsAlsoProcessedByRelocations() override               { return true; }
+   virtual bool       supportsGuardMerging() override                         { return false; }
+   virtual bool       canDevirtualizeDispatch() override                      { return false; }
+   virtual bool       storeOffsetToArgumentsInVirtualIndirectThunks() override { return true; }
+   virtual bool       callTargetsNeedRelocations() override                   { return true; }
+   virtual bool       doStringPeepholing() override                           { return false; }
+   virtual bool       hardwareProfilingInstructionsNeedRelocation() override  { return true; }
+   virtual bool       supportsMethodEntryPadding() override                   { return false; }
+   virtual bool       isBenefitInliningCheckIfFinalizeObject() override       { return true; }
+   virtual bool       needsContiguousAllocation() override                    { return true; }
+
    virtual bool shouldDelayAotLoad() override;
    virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
