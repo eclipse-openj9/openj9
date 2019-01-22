@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1106,10 +1106,10 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
          traceMsg(comp(),"\t Duplicate Tree for ordered call, orderedCallNode = %p\n",orderedCallNode);
       }
 
-   static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
+   static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
    TR::TreeTop* callTreeForIllegalWriteReport = NULL;
    // Keep the call for illegal write report
-   if (!disableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+   if (enableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
       callTreeForIllegalWriteReport = callNodeTreeTop->duplicateTree();
 
    TR::Node * unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
