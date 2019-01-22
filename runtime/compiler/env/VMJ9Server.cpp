@@ -31,6 +31,7 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 #include "env/PersistentCHTable.hpp"
+#include "exceptions/AOTFailure.hpp"
 
 bool
 TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
@@ -1429,3 +1430,118 @@ TR_J9ServerVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference
     // Not necessary in JITaaS server mode, return the call's PC so that the call will not appear to require a trampoline
     return (intptrj_t)callSite;
 }
+bool
+TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
+   {
+   TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"
+                                          "Please consider whether you call is vetted for AOT!");
+
+   if (getSupportsRecognizedMethods())
+      return TR_J9ServerVM::isClassLibraryMethod(method, vettedForAOT);
+
+   return false;
+   }
+
+bool
+TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
+   {
+   bool skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames))
+         {
+         TR_ASSERT(false, "Failed to validate addStackWalkerMaySkipFramesRecord\n");
+         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in stackWalkerMaySkipFrames");
+         }
+      }
+   return skipFrames;
+   }
+
+bool
+TR_J9SharedCacheServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   TR::Compilation *comp = TR::comp();
+   bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
+
+   // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
+   return TR_J9ServerVM::isMethodEnterTracingEnabled(method) || option;
+   }
+
+bool
+TR_J9SharedCacheServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   TR::Compilation *comp = TR::comp();
+   bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
+
+   return TR_J9ServerVM::isMethodExitTracingEnabled(method) || option;
+   }
+
+bool
+TR_J9SharedCacheServerVM::traceableMethodsCanBeInlined()
+   {
+   return true;
+   }
+
+bool
+TR_J9SharedCacheServerVM::canMethodEnterEventBeHooked()
+   {
+   TR::Compilation *comp = TR::comp();
+   bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
+
+   // We want to return the same answer as TR_J9ServerVM unless we want to force it to allow tracing
+   return TR_J9ServerVM::canMethodEnterEventBeHooked() || option;
+   }
+
+bool
+TR_J9SharedCacheServerVM::canMethodExitEventBeHooked()
+   {
+   TR::Compilation *comp = TR::comp();
+   bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
+   // We want to return the same answer as TR_J9ServerVM unless we want to force it to allow tracing
+   return TR_J9ServerVM::canMethodExitEventBeHooked() || option;
+   }
+
+bool
+TR_J9SharedCacheServerVM::methodsCanBeInlinedEvenIfEventHooksEnabled()
+   {
+   return true;
+   }
+
+int32_t
+TR_J9SharedCacheServerVM::getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed)
+   {
+   hashCodeComputed = false;
+   return 0;
+   }
+
+bool
+TR_J9SharedCacheServerVM::javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result)
+   {
+   return false;
+   }
+
+uint32_t
+TR_J9SharedCacheServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen,
+                                    char * sig, uint32_t sigLen, UDATA options)
+   {
+   TR::Compilation* comp = TR::comp();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer);
+      }
+
+   if (validated)
+      return TR_J9ServerVM::getInstanceFieldOffset (classPointer, fieldName, fieldLen, sig, sigLen, options);
+
+   return ~0;
+   }
