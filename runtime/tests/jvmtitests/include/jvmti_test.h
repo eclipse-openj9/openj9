@@ -24,7 +24,7 @@
 
 #include "j9comp.h"
 #include "jvmti.h"
-
+#include "j9cfg.h"
 
 /* TODO: remove */
 #define BUFFER_SIZE 65536

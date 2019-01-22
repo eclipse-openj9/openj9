@@ -188,7 +188,12 @@ ifeq (true,$(OPENJ9_ENABLE_CMAKE))
 configure : constantpool nls
 	mkdir -p build && cd build && $(CMAKE) -C ../cmake/caches/$(SPEC).cmake  $(CMAKE_ARGS) $(EXTRA_CMAKE_ARGS) ..
 else
-configure : uma
+.PHONY : j9includegen
+
+j9includegen : uma
+	$(MAKE) -C include j9include_generate
+
+configure : j9includegen
 	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
 endif
 
