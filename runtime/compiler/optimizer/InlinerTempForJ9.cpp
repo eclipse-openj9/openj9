@@ -1061,6 +1061,9 @@ Unsafe.getShort.
 bool
 TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck, bool isOrdered)
    {
+   if (callNodeTreeTop->getEnclosingBlock()->isCold())
+      return false;
+
    if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
@@ -1251,6 +1254,14 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
          traceMsg(comp(), "Created isFinal test node n%dn whose branch target is Block_%d to report illegal write to static final field\n",
                   isFinalStaticNode->getGlobalIndex(), callTreeForIllegalWriteReport->getEnclosingBlock()->getNumber());
          }
+
+      TR::DebugCounter::prependDebugCounter(comp(),
+                                            TR::DebugCounter::debugCounterName(comp(),
+                                                                              "illegalWriteReport/put/(%s %s)",
+                                                                               comp()->signature(),
+                                                                               comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                               callTreeForIllegalWriteReport->getNextTreeTop());
+
       }
 
    unsafeCall->recursivelyDecReferenceCount();
