@@ -412,10 +412,6 @@ public:
    virtual uint8_t *          allocateCodeMemory( TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
    virtual void               resizeCodeMemory( TR::Compilation *, uint8_t *, uint32_t numBytes);
 
-   virtual uint8_t *          getCodeCacheBase();
-   virtual uint8_t *          getCodeCacheBase(TR::CodeCache *);
-   virtual uint8_t *          getCodeCacheTop();
-   virtual uint8_t *          getCodeCacheTop(TR::CodeCache *);
    virtual void               releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart);
    virtual uint8_t *          allocateRelocationData( TR::Compilation *, uint32_t numBytes);
 
