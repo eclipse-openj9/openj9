@@ -34,6 +34,10 @@ A more complete set of build instructions are included here for multiple platfor
 - [macOS :apple:](#macos)
 - [ARM :iphone:](#arm)
 
+User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
+If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
+documentation for the next release of OpenJ9 can be found [here](https://eclipse.github.io/openj9-docs/).
+
 ----------------------------------
 
 ## Linux
