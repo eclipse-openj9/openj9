@@ -38,6 +38,7 @@
 
       DECLARE_GLOBAL interpreterUnresolvedStaticGlue
       DECLARE_GLOBAL interpreterUnresolvedSpecialGlue
+      DECLARE_GLOBAL interpreterStaticAndSpecialGlue
       DECLARE_GLOBAL updateInterpreterDispatchGlueSite
       DECLARE_GLOBAL interpreterVoidStaticGlue
       DECLARE_GLOBAL interpreterSyncVoidStaticGlue
@@ -75,6 +76,7 @@
       DECLARE_GLOBAL MTUnresolvedDoubleStore
       DECLARE_GLOBAL MTUnresolvedAddressStore
 
+      DECLARE_EXTERN j2iTransition
       DECLARE_EXTERN jitResolveStaticMethod
       DECLARE_EXTERN jitResolveSpecialMethod
       DECLARE_EXTERN jitCallCFunction
@@ -181,16 +183,14 @@ interpreterUnresolvedStaticGlue:
                                                             ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
       push        dword  [esp+8]                            ; p1) RA in mainline code
       call        jitResolveStaticMethod
-      lea         edi, [edi+3]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
-      push        edi                                       ; The RET will mispredict anyway so we can get away with pushing
-                                                            ; the adjusted RA back on the stack.
 
       ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
       ;
       btr         eax, 0
-
+      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      xchg        edi, eax
       ; Skip code patching if the interpreter low-tag the RAM mathod
-      jc          .fin
+      jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
       ;
@@ -198,15 +198,17 @@ interpreterUnresolvedStaticGlue:
       movdqu      [esp], xmm0
       push        001f0f00h                                 ; NOP
       push        000000bfh                                 ; 1st byte of MOV edi, 0xaabbccdd
-      mov         dword [esp+1], eax
+      mov         dword [esp+1], edi
       movsd       xmm0, qword [esp]
-      movsd       qword [edi-8], xmm0
+      movsd       qword [eax-5], xmm0
       movdqu      xmm0, [esp+8]
       add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
-
-   .fin:
-      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
-      mov         edi, eax
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+                                                            ; jump to its target directly.
+   .skippatching:
+      test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+      jmp         dword [edi+J9TR_MethodPCStartOffset]
       ret
 
 
@@ -220,9 +222,9 @@ interpreterUnresolvedSpecialGlue:
                                                             ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
       push        dword  [esp+8]                            ; p1) RA in mainline code
       call        jitResolveSpecialMethod
-      lea         edi, [edi+3]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
-      push        edi                                       ; The RET will mispredict anyway so we can get away with pushing
-                                                            ; the adjusted RA back on the stack.
+
+      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      xchg        edi, eax
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
       ;
@@ -235,10 +237,37 @@ interpreterUnresolvedSpecialGlue:
       movsd       qword [edi-8], xmm0
       movdqu      xmm0, [esp+8]
       add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
-
-      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
-      mov         edi, eax
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+                                                            ; jump to its target directly.
       ret
+
+
+; interpreterStaticAndSpecialGlue
+;
+; This function is a back-patching routine for interpreter calls to static
+; methods that have recently been compiled. It patches the call site (in the
+; code cache) of an interpreter call snippet, so that future executions will
+; invoke the compiled method instead.
+;
+; NOTES:
+;
+; [1] The RAM method is in RDI on entry. It was loaded by the preceding instruction.
+;
+; [2] This runtime code uses the JIT linkage registers as volatile registers and hence
+; does not preserve them. This is because the eventual dispatch path will be through
+; the interpreter which reads the parameters from the stack. The backspilling has
+; already occured at this point.
+;
+interpreterStaticAndSpecialGlue proc near
+      test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+      mov         edi, dword [edi+J9TR_MethodPCStartOffset]
+      mov         edx, dword [esp]
+      sub         edi, edx
+      mov         dword [edx-4], edi
+      add         edi, edx
+      jmp         edi
+interpreterStaticAndSpecialGlue endp
 
 
 ; updateInterpreterDispatchGlueSite
@@ -1113,6 +1142,7 @@ segment .text
 
       DECLARE_GLOBAL interpreterUnresolvedStaticGlue
       DECLARE_GLOBAL interpreterUnresolvedSpecialGlue
+      DECLARE_GLOBAL interpreterStaticAndSpecialGlue
       DECLARE_GLOBAL updateInterpreterDispatchGlueSite
       DECLARE_GLOBAL interpreterVoidStaticGlue
       DECLARE_GLOBAL interpreterEAXStaticGlue
@@ -1150,6 +1180,7 @@ segment .text
       DECLARE_GLOBAL MTUnresolvedDoubleStore
       DECLARE_GLOBAL MTUnresolvedAddressStore
 
+      DECLARE_EXTERN j2iTransition
       DECLARE_EXTERN jitResolveStaticMethod
       DECLARE_EXTERN jitResolveSpecialMethod
       DECLARE_EXTERN jitCallCFunction
@@ -1231,26 +1262,28 @@ interpreterUnresolvedStaticGlue:
       mov         edx, dword [rdi+20]                       ; p3) rdx = cpIndex
                                                             ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
       call        jitResolveStaticMethod
-      lea         rsi, [rdi+5]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
-      push        rsi                                       ; The RET will mispredict anyway so we can get away with pushing 
-                                                            ; the adjusted RA back on the stack.
+      mov         rsi, rdi                                  ; Save the return address
 
-      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
+      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF. 
       ;
       btr         rax, 0
-
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
       mov         rdi, rax
-
-      ; Skip code patching if the interpreter low-tag the RAM mathod
-      jc          .fin
+      ; Skip code patching if the interpreter low-tag the RAM mathod 
+      jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
       ;
       shl         rax, 16
       xor         rax, 0bf48h                               ; REX+MOV bytes
-      mov         qword [rsi-10], rax
-   .fin:
+      mov         qword [rsi-5], rax                        ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+                                                            ; jump to its target directly.
+   .skippatching:
+      mov         rcx, qword [rdi+J9TR_MethodPCStartOffset] ; rcx = interpreter entry point of the compiled method
+      test        cl, J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+      jmp         rcx
 ret
 
 
@@ -1266,9 +1299,7 @@ interpreterUnresolvedSpecialGlue:
       mov         edx, dword [rdi+20]                       ; p3) rdx = cpIndex
                                                             ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
       call        jitResolveSpecialMethod
-      lea         rsi, [rdi+5]                              ; Adjust the return address to "call updateInterpreterDispatchGlueSite"
-      push        rsi                                       ; The RET will mispredict anyway so we can get away with pushing 
-                                                            ; the adjusted RA back on the stack.
+      mov         rsi, rdi                                  ; Save the return address
 
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
       mov         rdi, rax
@@ -1277,7 +1308,48 @@ interpreterUnresolvedSpecialGlue:
       ;
       shl         rax, 16
       xor         rax, 0bf48h                               ; REX+MOV bytes
-      mov         qword [rsi-10], rax
+      mov         qword [rsi-5], rax                        ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+                                                            ; jump to its target directly.
+ret
+
+
+; interpreterStaticAndSpecialGlue
+;
+; This function is a back-patching routine for interpreter calls to static
+; methods that have recently been compiled. It patches the call site (in the
+; code cache) of an interpreter call snippet, so that future executions will
+; invoke the compiled method instead.
+;
+; NOTES:
+;
+; [1] The RAM method is in RDI on entry. It was loaded by the preceding instruction.
+;
+; [2] This runtime code uses the JIT linkage registers as volatile registers and hence
+; does not preserve them. This is because the eventual dispatch path will be through
+; the interpreter which reads the parameters from the stack. The backspilling has
+; already occured at this point.
+;
+      align 16
+interpreterStaticAndSpecialGlue:
+      mov         rcx, qword [rdi + J9TR_MethodPCStartOffset]     ; rcx = interpreter entry point of the compiled method
+      test        cl, J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+
+      mov         rsi, qword [rsp]                                ; rsi = RA in mainline code
+      sub         rsi, 5
+      push        0                                               ; descriptor+24: 0
+      push        rcx                                             ; descriptor+16: compiled method PC
+      push        rsi                                             ; descriptor+8: call site
+      push        rdi                                             ; descriptor+0: RAM method
+      MoveHelper  rax, mcc_callPointPatching_unwrapper            ; p1) rax = helper
+      lea         rsi, [rsp]                                      ; p2) rsi = EA of descriptor
+      lea         rdx, [rsp]                                      ; p3) rdx = EA of return value
+      call        jitCallCFunction
+      add         rsp, 32                                         ; tear down descriptor
+      jmp         rcx                                             ; Dispatch compiled method through the interpreted entry
+                                                                  ; point. This is because the linkage registers may not be
+                                                                  ; set up any longer.
 ret
 
 
