@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ ifdef ENABLE_GPU
     ifeq (,$(CUDA_HOME))
         $(error You must set CUDA_HOME if ENABLE_GPU is set)
     endif
-    
+
     ifeq (,$(GDK_HOME))
         $(error You must set GDK_HOME if ENABLE_GPU is set)
     endif
@@ -91,6 +91,9 @@ include $(JIT_MAKE_DIR)/toolcfg/host/$(HOST_BITS).mk
 include $(JIT_MAKE_DIR)/toolcfg/host/$(OS).mk
 include $(JIT_MAKE_DIR)/toolcfg/target/$(TARGET_ARCH).mk
 include $(JIT_MAKE_DIR)/toolcfg/target/$(TARGET_BITS).mk
+
+# The script used to generate TRBuildName.cpp.
+GENERATE_VERSION_SCRIPT ?= $(OMR_DIR)/tools/compiler/scripts/generateVersion.pl
 
 #
 # Now this is the big tool config file. This is where all the includes and defines

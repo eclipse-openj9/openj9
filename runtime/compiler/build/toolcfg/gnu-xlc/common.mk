@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,11 +52,8 @@ ifeq (default,$(origin CXX))
     CXX=xlC_r
 endif
 
-# This is the script that's used to generate TRBuildName.cpp
-GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
-
 #
-# First setup C and C++ compilers. 
+# First setup C and C++ compilers.
 #
 #     Note: "CX" means both C and C++
 #
