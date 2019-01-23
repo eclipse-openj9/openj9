@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,8 +50,6 @@ UDATA invalidMemory;
 #include "atoe.h"
 #endif
 
-#undef MARUSA_TEST
-
 /* Avoid error in static analysis */
 int gpTestGlobalZero = 0;
 UDATA * gpTestGlobalInvalidPointer = (UDATA*)-1;
@@ -75,13 +73,6 @@ void JNICALL Java_VMBench_GPTests_GPTest_callInAndTriggerGPReadThenResumeAndRetu
 
 void callinAndTriggerGPRead(JNIEnv *env, jobject rec);
 void callInAndTriggerGPReadResumeCallinImpl(JNIEnv *env, jobject rec, jobject arg1);
-
-
-#if defined(MARUSA_TEST)
-#define ROUNDING_GRANULARITY	8
-#define ROUNDED_FOOTER_OFFSET(number)	(((number) + (ROUNDING_GRANULARITY - 1) + sizeof(J9MemTag)) & ~(UDATA)(ROUNDING_GRANULARITY - 1))
-#define ROUNDED_BYTE_AMOUNT(number)		(ROUNDED_FOOTER_OFFSET(number) + sizeof(J9MemTag))
-#endif /* defined(MARUSA_TEST) */
 
 
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
@@ -318,11 +309,9 @@ Java_VMBench_GPTests_GPTest_gpHardwareFloat(JNIEnv *env, jclass clazz, jobject a
 	printf ("%f / %f = %f\n", one, zero, error);
 #else
 
-	int a = 1;
+	int a = 10; /* clang optimizes the case of dividend==1 */
 	int b = gpTestGlobalZero; /* Avoid error in static analysis */
-	int c;
-
-	c = a/b;
+	int c = a/b;
 	printf ("%i / %i = %i\n", a, b, c);	 /* here to stop compiler from optimizing out the div-by-zero */
 
 #endif
@@ -414,41 +403,6 @@ Java_VMBench_GPTests_GPTest_gpFloat(JNIEnv *env, jclass clazz, jobject arg1)
 	float one, zero, error;
 #endif
 
-#if defined(MARUSA_TEST)
-	PORT_ACCESS_FROM_ENV(env);
-	J9MemTag *headerTag, *footerTag;
-	U_8 *padding;
-	U_8 *dummy;
-	UDATA allocSize = 4096;
-	char z='Z';
-	
-	/* allocate 3 blocks: 
-	 * 	1. Corrupt the header tag
-	 *  2. Corrupt the footer tag
-	 *  3. Corrupt the footer padding */
-	
-	/* Corrupt a headerTag eyecatcher */
-	dummy = (U_8 *)j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
-	headerTag = (J9MemTag *)(dummy - sizeof(J9MemTag));
-	printf("Corrupting headerTag for eyecatcher: %p\n", headerTag);
-	memset(&(headerTag->callSite), 'Z', 4);
-
-	/* Corrupt a footer eyecatcher */
-	dummy = (U_8 *)j9mem_allocate_memory(allocSize+1 /* to force padding */, OMRMEM_CATEGORY_VM);
-	headerTag = (J9MemTag *)(dummy - sizeof(J9MemTag));
-	footerTag = (J9MemTag *) ((U_8 *)headerTag + ROUNDED_FOOTER_OFFSET (headerTag->allocSize));
-	printf("Corrupting footerTag %p for eyecatcher: %p\n", footerTag, headerTag);
-	memset(&(footerTag->callSite), 'Z', 4);
-	
-	/* Corrupt some padding */
-	dummy = (U_8 *)j9mem_allocate_memory(4097, OMRMEM_CATEGORY_VM);
-	headerTag = (J9MemTag *)(dummy - sizeof(J9MemTag));
-	footerTag = (J9MemTag *) ((U_8 *)headerTag + ROUNDED_FOOTER_OFFSET (headerTag->allocSize));
-	padding = (U_8 *) (((UDATA) headerTag) + sizeof(J9MemTag) + ((UDATA) headerTag->allocSize));
-	printf("Corrupting padding %p for eyecatcher: %p\n", padding, headerTag);
-	memset(padding, 'Z', 1);
-#endif	/* #if defined(MARUSA_TEST) */
-	
 #if defined(WIN32)
 	_fpreset();
 	_controlfp(EM_INEXACT | EM_DENORMAL , MCW_EM);
