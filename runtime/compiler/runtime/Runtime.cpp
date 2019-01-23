@@ -268,6 +268,7 @@ JIT_HELPER(interpreterUnresolvedStaticFieldSetterGlue);
 JIT_HELPER(interpreterUnresolvedFieldGlue);
 JIT_HELPER(interpreterUnresolvedFieldSetterGlue);
 JIT_HELPER(interpreterUnresolvedConstantDynamicGlue);
+JIT_HELPER(interpreterStaticAndSpecialGlue);
 
 #if defined(NASM_ASSEMBLER)
 JIT_HELPER(SMPinterpreterUnresolvedStaticGlue);
@@ -1193,6 +1194,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterUnresolvedFieldGlue,                (void *)interpreterUnresolvedFieldGlue,                TR_Helper);
    SET(TR_X86interpreterUnresolvedFieldSetterGlue,          (void *)interpreterUnresolvedFieldSetterGlue,          TR_Helper);
    SET(TR_X86interpreterUnresolvedConstantDynamicGlue,      (void *)interpreterUnresolvedConstantDynamicGlue,      TR_Helper);
+   SET(TR_X86interpreterStaticAndSpecialGlue,               (void *)interpreterStaticAndSpecialGlue,               TR_Helper);
 
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
    SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
