@@ -233,7 +233,7 @@ linux_x86-64_cmprssptrs:
       8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      11: 'ub16x64j92'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
