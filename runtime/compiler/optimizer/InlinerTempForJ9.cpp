@@ -1074,16 +1074,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
        traceMsg(comp(),"\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n", callNodeTreeTop, type.getDataType(),isVolatile,needNullCheck,isOrdered);
 
    // Preserve null check on the unsafe object
-   if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
-      {
-      TR::Node *passthrough = TR::Node::create(unsafeCall, TR::PassThrough, 1);
-      passthrough->setAndIncChild(0, unsafeCall->getFirstChild());
-      TR::Node * checkNode = TR::Node::createWithSymRef(callNodeTreeTop->getNode(), TR::NULLCHK, 1, passthrough, callNodeTreeTop->getNode()->getSymbolReference());
-      callNodeTreeTop->insertBefore(TR::TreeTop::create(comp(), checkNode));
-      TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
-      if(comp()->getOption(TR_TraceUnsafeInlining))
-         traceMsg(comp(), "Created node %p to preserve NULLCHK on unsafe call %p\n", checkNode, unsafeCall);
-      }
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
 
    // Since the block has to be split, we need to create temps for the arguments to the call
    for (int i = 0; i < unsafeCall->getNumChildren(); i++)
@@ -1421,6 +1412,9 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (debug("traceUnsafe"))
       printf("createUnsafeGetWithOffset %s in %s\n", type.toString(), comp()->signature());
 
+   // Preserve null check on the unsafe object
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
+
    TR::Node *unsafeAddress = unsafeCall->getChild(1);
    TR::Node *offset = unsafeCall->getChild(2);
 
@@ -1554,6 +1548,9 @@ TR_J9InlinerPolicy::createUnsafePut(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    if (debug("traceUnsafe"))
       printf("createUnsafePut %s in %s\n", type.toString(), comp()->signature());
 
+   // Preserve null check on the unsafe object
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
+
    TR::Node * address = createUnsafeAddress(unsafeCall);
 
    TR::Node * value = unsafeCall->getChild(2);
@@ -1605,6 +1602,9 @@ TR_J9InlinerPolicy::createUnsafeGet(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    {
    if (debug("traceUnsafe"))
       printf("createUnsafeGet %s in %s\n", type.toString(), comp()->signature());
+
+   // Preserve null check on the unsafe object
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
 
    TR::Node * unsafeAddress = createUnsafeAddress(unsafeCall);
 
