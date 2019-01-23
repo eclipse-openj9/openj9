@@ -296,6 +296,13 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
             traceMsg(comp(), "Created isFinal test node n%dn, non-final-static field will fall through to Block_%d, final field goes to Block_%d\n",
                      isFinalNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber(), ifTree->getEnclosingBlock()->getNumber());
             }
+         TR::DebugCounter::prependDebugCounter(comp(),
+                                               TR::DebugCounter::debugCounterName(comp(),
+                                                                                  "illegalWriteReport/atomic/(%s %s)",
+                                                                                  comp()->signature(),
+                                                                                  comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                                  ifTree->getNextTreeTop());
+
          }
 
       // Calculate static address
