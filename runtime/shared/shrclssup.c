@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,8 +225,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 			vm->sharedCacheAPI->xShareClassesPresent = FALSE;
 			if (J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) {
-				I_32 errorCode = 0;
-				BOOLEAN inContainer = omrsysinfo_is_running_in_container(&errorCode);;
+				BOOLEAN inContainer = omrsysinfo_is_running_in_container();
 				/* Do not enable shared classes by default if running in Container */
 
 				if (FALSE == inContainer) {
