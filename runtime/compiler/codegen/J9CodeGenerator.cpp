@@ -39,6 +39,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "il/Block.hpp"
@@ -56,6 +57,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Delimiter.hpp"                   // for Delimiter
 #include "ras/DebugCounter.hpp"
+#include "runtime/CodeCache.hpp"
 #include "env/CHTable.hpp"
 #include "env/PersistentCHTable.hpp"
 
@@ -4633,3 +4635,20 @@ J9::CodeGenerator::isMethodInAtomicLongGroup(TR::RecognizedMethod rm)
       }
    }
 
+
+void
+J9::CodeGenerator::trimCodeMemoryToActualSize()
+   {
+   uint8_t *bufferStart = self()->getBinaryBufferStart();
+   size_t actualCodeLengthInBytes = self()->getCodeEnd() - bufferStart;
+
+   TR::VMAccessCriticalSection trimCodeMemoryAllocation(self()->comp());
+   self()->getCodeCache()->trimCodeMemoryAllocation(bufferStart, actualCodeLengthInBytes);
+   }
+
+
+void
+J9::CodeGenerator::resizeCodeMemory()
+   {
+   self()->trimCodeMemoryToActualSize();
+   }
