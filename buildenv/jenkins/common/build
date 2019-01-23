@@ -278,6 +278,8 @@ def build() {
     stage('Java Version') {
         timestamps {
             sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -version"
+            sh "build/$RELEASE/images/$JDK_FOLDER/bin/javac -version"
+            sh "ls -al build/$RELEASE/images/$JDK_FOLDER/bin/"
         }
     }
 }
