@@ -1993,3 +1993,42 @@ void J9::TransformUtil::prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop*
    while (tt != ttAfterEnd);
 
    }
+
+void J9::TransformUtil::separateNullCheck(TR::Compilation* comp, TR::TreeTop* tree, bool trace)
+   {
+   TR::Node *nullCheck = tree->getNode();
+   if (!nullCheck->getOpCode().isNullCheck())
+      return;
+
+   TR::Node *checkedRef = nullCheck->getNullCheckReference();
+   if (trace)
+      {
+      traceMsg(comp,
+         "separating null check on n%un from n%un\n",
+         checkedRef->getGlobalIndex(),
+         nullCheck->getGlobalIndex());
+      }
+
+   TR::Node * const passthrough = TR::Node::create(nullCheck, TR::PassThrough, 1, checkedRef);
+
+   TR::SymbolReference * const nullCheckSR =
+      comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol());
+   TR::Node * const separatedNullCheck =
+      TR::Node::createWithSymRef(nullCheck, TR::NULLCHK, 1, passthrough, nullCheckSR);
+
+   tree->insertBefore(TR::TreeTop::create(comp, separatedNullCheck));
+
+   switch (nullCheck->getOpCodeValue())
+      {
+      case TR::NULLCHK:
+         nullCheck->setSymbolReference(NULL);
+         TR::Node::recreate(nullCheck, TR::treetop);
+         break;
+
+      case TR::ResolveAndNULLCHK:
+         nullCheck->setSymbolReference(
+            comp->getSymRefTab()->findOrCreateResolveCheckSymbolRef(comp->getMethodSymbol()));
+         TR::Node::recreate(nullCheck, TR::ResolveCHK);
+         break;
+      }
+   }

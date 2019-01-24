@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,6 +132,15 @@ public:
 
    static void prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end);
    static void removePotentialOSRPointHelperCalls(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end);
+   /**
+    *   \brief
+    *       Move NULLCHK to a separate tree
+    *
+    *   \param comp  The compilation Object
+    *   \param tree  The tree containing the null check
+    *   \param trace Bool to enable tracing
+    */
+   static void separateNullCheck(TR::Compilation* comp, TR::TreeTop* tree, bool trace = false);
 
 protected:
    /**

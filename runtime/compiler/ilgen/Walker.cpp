@@ -3994,7 +3994,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
 
       TR_ASSERT_FATAL(callTree != bbExit, "invokeinterface call tree not found\n");
 
-      separateNullCheck(callTree);
+      TR::TransformUtil::separateNullCheck(comp(), callTree, comp()->getOption(TR_TraceILGen));
 
       uint32_t interfaceCPIndex = owningMethod->classCPIndexOfMethod(cpIndex);
       push(callNode->getArgument(0));
