@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,7 +146,7 @@ public:
 	{
 		reportScanningStarted(RootScannerEntity_FinalizableObjects);
 		/* synchronization can be expensive so skip it if there's no work to do */
-		if (_clij->scavenger_getShouldScavengeFinalizableObjects()) {
+		if (_scavenger->getDelegate()->getShouldScavengeFinalizableObjects()) {
 			if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 				scavengeFinalizableObjects(MM_EnvironmentStandard::getEnvironment(env));
 				env->_currentTask->releaseSynchronizedGCThreads(env);
