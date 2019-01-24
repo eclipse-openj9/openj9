@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@
 
 class MM_EnvironmentBase;
 class MM_ProcessorInfo;
-class MM_OSInterface;
 class MM_MetronomeAlarmThread;
 
 #include "j9.h"
@@ -62,14 +61,13 @@ class MM_Alarm : protected MM_BaseVirtual
 {	
 private:
 protected:
-	MM_Alarm(MM_OSInterface* osInterface)
+	MM_Alarm()
 	{
 		_typeId = __FUNCTION__;
-		_osInterface = osInterface;
 	}
 	virtual void tearDown(MM_EnvironmentBase *env);
 
-	MM_OSInterface* _osInterface;
+	MM_GCExtensions *_extensions;
 
 public:
 	virtual void kill(MM_EnvironmentBase *envModron);
@@ -85,9 +83,9 @@ public:
 class MM_HRTAlarm : public MM_Alarm
 {
 public:
-	static MM_HRTAlarm * newInstance(MM_EnvironmentBase *env, MM_OSInterface* osInterface);
+	static MM_HRTAlarm * newInstance(MM_EnvironmentBase *env);
 
-	MM_HRTAlarm(MM_OSInterface * osInterface) : MM_Alarm(osInterface)
+	MM_HRTAlarm() : MM_Alarm()
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -104,9 +102,9 @@ private:
 #endif /* defined(LINUX) && !defined(J9ZTPF) */
 
 public:
-	static MM_RTCAlarm * newInstance(MM_EnvironmentBase *env, MM_OSInterface* osInterface);
+	static MM_RTCAlarm * newInstance(MM_EnvironmentBase *env);
 
-	MM_RTCAlarm(MM_OSInterface * osInterface) : MM_Alarm(osInterface)
+	MM_RTCAlarm() : MM_Alarm()
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -125,9 +123,9 @@ protected:
 	virtual void tearDown(MM_EnvironmentBase *env);
 
 public:
-	static MM_ITAlarm * newInstance(MM_EnvironmentBase *env, MM_OSInterface* osInterface);
+	static MM_ITAlarm * newInstance(MM_EnvironmentBase *env);
 
-	MM_ITAlarm(MM_OSInterface * osInterface) : MM_Alarm(osInterface)
+	MM_ITAlarm() : MM_Alarm()
 	{
 		_typeId = __FUNCTION__;
 	}

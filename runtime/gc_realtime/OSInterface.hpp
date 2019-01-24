@@ -1,6 +1,6 @@
  
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,17 +75,12 @@ public:
 	virtual void kill(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
 	void startup();
-	bool changePriority(IDATA policy, IDATA priority);
-	IDATA minPriority();
-	IDATA maxPriority();
-	static UDATA getTid();
 	U_64 nanoTime();
 	void maskSignals();
 	bool hiresTimerAvailable();
 	bool rtcTimerAvailable();
 	bool itTimerAvailable();
 	UDATA getNumbersOfProcessors() {return _numProcessors;}
-	UDATA getParameter(UDATA which, char *keyBuffer, I_32 keyBufferSize, char *valueBuffer, I_32 valueBufferSize);
 	
 	MM_OSInterface() :
 		_processorInfo(NULL),
