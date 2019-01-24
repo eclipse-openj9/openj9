@@ -271,6 +271,7 @@ def build() {
             // 'all' target dependencies broken for zos, use 'images'
             def make_target = SPEC.startsWith('zos') ? 'images' : 'all'
             withEnv(BUILD_ENV_VARS_LIST) {
+                sh "printenv"
                 sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
             }
         }

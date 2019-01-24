@@ -37,13 +37,16 @@ timeout(time: 10, unit: 'HOURS') {
 
                 // identify the pipeline type: build or pull request and initialize required variables
                 if (params.ghprbPullId) {
+                    echo "set vars PR"
                     variableFile.set_job_variables('pullRequest')
                 } else {
+                    echo "set vars build"
                     variableFile.set_job_variables('build')
                 }
 
                 buildFile = load 'buildenv/jenkins/common/build'
                 if (run_tests()) {
+                    echo "load test file"
                     testFile = load 'buildenv/jenkins/common/test'
                 }
             } finally {
@@ -57,8 +60,10 @@ timeout(time: 10, unit: 'HOURS') {
             if (!run_tests()) {
                 // build or pull request compile only pipeline: compile, archive,
                 // clean up
+                echo "Build_all"
                 buildFile.build_all()
             } else {
+                echo "build_pr & test_all"
                 buildFile.build_pr()
                 testFile.test_all()
             }
