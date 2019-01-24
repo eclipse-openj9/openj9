@@ -615,8 +615,8 @@ TR::CompilationInfoPerThread::waitForGCCycleMonitor(bool threadHasVMAccess)
 #if defined (J9VM_GC_REALTIME)
    J9JavaVM *vm = _jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(vm);
-   j9thread_monitor_enter(vm->gcCycleOnMonitor);
-   while (vm->gcCycleOn)
+   j9thread_monitor_enter(vm->omrVM->_gcCycleOnMonitor);
+   while (vm->omrVM->_gcCycleOn)
       {
       uint64_t waitTime = 0;
       _compInfo.debugPrint(_compilationThread, "GC cycle is on, waiting for the cycle to finish\n");
@@ -636,7 +636,7 @@ TR::CompilationInfoPerThread::waitForGCCycleMonitor(bool threadHasVMAccess)
          _compInfo.debugPrint(_compilationThread, "-VMacc\n");
          }
 
-      j9thread_monitor_wait(vm->gcCycleOnMonitor);
+      j9thread_monitor_wait(vm->omrVM->_gcCycleOnMonitor);
       _compInfo.debugPrint(_compilationThread, "GC cycle is finished, resuming compilation\n");
 
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseGCcycle))
@@ -650,13 +650,13 @@ TR::CompilationInfoPerThread::waitForGCCycleMonitor(bool threadHasVMAccess)
       //
       if (threadHasVMAccess)
          {
-         j9thread_monitor_exit(vm->gcCycleOnMonitor);
+         j9thread_monitor_exit(vm->omrVM->_gcCycleOnMonitor);
          acquireVMAccessNoSuspend(_compilationThread);
          _compInfo.debugPrint(_compilationThread, "+VMacc\n");
-         j9thread_monitor_enter(vm->gcCycleOnMonitor);
+         j9thread_monitor_enter(vm->omrVM->_gcCycleOnMonitor);
          }
       } // end while
-   j9thread_monitor_exit(vm->gcCycleOnMonitor);
+   j9thread_monitor_exit(vm->omrVM->_gcCycleOnMonitor);
 #endif
    }
 

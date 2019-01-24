@@ -2725,19 +2725,9 @@ typedef struct J9VMGCSegregatedAllocationCacheEntry {
 
 #if defined(J9VM_GC_STACCATO)
 
-typedef struct J9VMGCRememberedSet {
-	UDATA globalFragmentIndex;
-	UDATA preservedGlobalFragmentIndex;
-} J9VMGCRememberedSet;
+typedef MM_GCRememberedSet J9VMGCRememberedSet;
 
-typedef struct J9VMGCRememberedSetFragment {
-	UDATA** fragmentAlloc;
-	UDATA** fragmentTop;
-	void* fragmentStorage;
-	UDATA localFragmentIndex;
-	UDATA preservedLocalFragmentIndex;
-	struct J9VMGCRememberedSet* fragmentParent;
-} J9VMGCRememberedSetFragment;
+typedef MM_GCRememberedSetFragment J9VMGCRememberedSetFragment;
 
 #endif /* J9VM_GC_STACCATO */
 
@@ -4836,8 +4826,8 @@ typedef struct J9VMThread {
 	struct J9StackWalkState* stackWalkState;
 	struct J9VMEntryLocalStorage* entryLocalStorage;
 	UDATA gpProtected;
-	struct J9VMGCSublistFragment gcRememberedSet;
-	struct J9VMGCRememberedSetFragment sATBBarrierRememberedSetFragment;
+	J9VMGCSublistFragment gcRememberedSet;
+	J9VMGCRememberedSetFragment sATBBarrierRememberedSetFragment;
 	void* gcTaskListPtr;
 	UDATA* dropBP;
 	UDATA dropFlags;
@@ -5192,8 +5182,6 @@ typedef struct J9JavaVM {
 	UDATA gcWriteBarrierType;
 	UDATA gcReadBarrierType;
 	UDATA gcPolicy;
-	UDATA gcCycleOn;
-	omrthread_monitor_t gcCycleOnMonitor;
 	void  ( *J9SigQuitShutdown)(struct J9JavaVM *vm) ;
 	U_32 globalEventFlags;
 	void  ( *sidecarInterruptFunction)(struct J9VMThread * vmThread) ;

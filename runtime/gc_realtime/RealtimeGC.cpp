@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1152,8 +1151,8 @@ MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 	/* Let VM know that GC cycle is about to start. JIT, in particular uses it,
 	 * to not compile while GC cycle is on.
 	 */
-	omrthread_monitor_enter(((J9JavaVM *)env->getLanguageVM())->gcCycleOnMonitor);
-	((J9JavaVM *)env->getLanguageVM())->gcCycleOn = 1;
+	omrthread_monitor_enter(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
+	((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOn = 1;
 
 	UDATA approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
 
@@ -1169,8 +1168,8 @@ MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type
 	);
-	
-	omrthread_monitor_exit(((J9JavaVM *)env->getLanguageVM())->gcCycleOnMonitor);
+
+	omrthread_monitor_exit(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
 }
 
 /**
@@ -1181,8 +1180,8 @@ void
 MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	omrthread_monitor_enter(((J9JavaVM *)env->getLanguageVM())->gcCycleOnMonitor);
-	
+	omrthread_monitor_enter(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
+
 
 	UDATA approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
 
@@ -1222,10 +1221,10 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	/* Let VM (JIT, in particular) GC cycle is finished. Do a monitor notify, to
 	 * unblock parties that waited for the cycle to complete
 	 */
-	((J9JavaVM *)env->getLanguageVM())->gcCycleOn = 0;
-	omrthread_monitor_notify_all(((J9JavaVM *)env->getLanguageVM())->gcCycleOnMonitor);
-	
-	omrthread_monitor_exit(((J9JavaVM *)env->getLanguageVM())->gcCycleOnMonitor);
+	((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOn = 0;
+	omrthread_monitor_notify_all(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
+
+	omrthread_monitor_exit(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
 }
 
 /**

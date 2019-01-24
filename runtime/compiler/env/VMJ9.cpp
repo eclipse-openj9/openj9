@@ -3985,7 +3985,7 @@ TR_J9VMBase::compilationShouldBeInterrupted(TR::Compilation * comp, TR_CallingCo
          {
 #if defined (J9VM_GC_REALTIME)
          J9JavaVM *vm = _jitConfig->javaVM;
-         exitClassUnloadMonitor = exitClassUnloadMonitor || vm->gcCycleOn;
+         exitClassUnloadMonitor = exitClassUnloadMonitor || vm->omrVM->_gcCycleOn;
 #endif
          }
       if (exitClassUnloadMonitor)
