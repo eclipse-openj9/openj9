@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +41,7 @@
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config  $(Q)$(TEST_RESROOT)$(D)gptests.xml$(Q) -verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)cmdlineopttest_exclude.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}	</command>
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3686 -->
-		<platformRequirements>^os.win,^os.osx</platformRequirements>
+		<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
