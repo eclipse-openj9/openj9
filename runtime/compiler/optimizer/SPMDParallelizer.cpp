@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3425,7 +3425,13 @@ TR_SPMDKernelParallelizer::perform()
    ListIterator<TR_RegionStructure> sit(&simdLoops);
    for (TR_RegionStructure *loop = sit.getFirst(); loop; loop = sit.getNext())
       {
-      if (loop->getPrimaryInductionVariable())
+      /*
+       * The GPU transformation might make the block we are trying to vectorize unreachable due
+       * to creating and using a new GPU path. We check for this case by checking if the loop's
+       * parent is NULL or not. If it is NULL, vectorization of the unreachable block is not
+       * necessary and can be skipped.
+       */
+      if (loop->getPrimaryInductionVariable() && (NULL != loop->getParent()))
          {
          if (reductionOperationsHashTab->locate(loop, id))
             {
