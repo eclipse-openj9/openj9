@@ -1816,6 +1816,19 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED);
 			}
 
+#if !defined(WIN32) && !defined(J9ZTPF)
+			/* Override the soft limit on the number of open file descriptors for
+			 * compatibility with reference implementation.
+			 */
+			{
+				uint64_t limit = 0;
+				uint32_t rc = omrsysinfo_get_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | J9PORT_LIMIT_HARD, &limit);
+				if (OMRPORT_LIMIT_UNKNOWN != rc ) {
+					omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | OMRPORT_LIMIT_SOFT, limit);
+				}
+			}
+#endif /* !defined(WIN32) && !defined(J9ZTPF) */
+
 			/* Parse options related to idle tuning */
 			{
 				IDATA argIndexGcOnIdleEnable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGGCONIDLEENABLE, NULL);
