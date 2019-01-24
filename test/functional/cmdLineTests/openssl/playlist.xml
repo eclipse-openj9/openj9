@@ -44,6 +44,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -70,6 +73,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 		<subsets>
 			<subset>11</subset>
 		</subsets>
