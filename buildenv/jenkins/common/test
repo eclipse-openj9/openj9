@@ -72,6 +72,7 @@ def compile() {
         timestamps {
             dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                    sh 'printenv'
                     sh 'make compile'
                 }
             }
