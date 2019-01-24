@@ -768,6 +768,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 	</test>
 
 	<test>
