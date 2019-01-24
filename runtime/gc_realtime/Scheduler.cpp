@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -917,15 +917,15 @@ MM_Scheduler::masterEntryPoint(MM_EnvironmentBase *envModron)
 void
 MM_Scheduler::completeCurrentGCSynchronously(MM_EnvironmentRealtime *env)
 {
-	omrthread_monitor_enter(_vm->gcCycleOnMonitor);	
-	if (_vm->gcCycleOn || isGCOn()) {
+	omrthread_monitor_enter(_vm->omrVM->_gcCycleOnMonitor);	
+	if (_vm->omrVM->_gcCycleOn || isGCOn()) {
 		_completeCurrentGCSynchronously = true;
 		_completeCurrentGCSynchronouslyReason = VM_SHUTDOWN;
 		
 		/* wait till get notified by master that the cycle is finished */
-		omrthread_monitor_wait(_vm->gcCycleOnMonitor);	
+		omrthread_monitor_wait(_vm->omrVM->_gcCycleOnMonitor);	
 	}	
-	omrthread_monitor_exit(_vm->gcCycleOnMonitor);	
+	omrthread_monitor_exit(_vm->omrVM->_gcCycleOnMonitor);	
 }
 
 /**
