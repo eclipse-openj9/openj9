@@ -133,15 +133,15 @@ tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
 ```
 
-4. Download and setup the boot JDK using the latest AdoptOpenJDK v9 build.
+4. Download and setup the boot JDK using the latest AdoptOpenJDK v11 build.
 ```
 cd /<my_home_dir>
-wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk"
-tar -xzf bootjdk10.tar.gz
-rm -f bootjdk10.tar.gz
-mv $(ls | grep -i jdk) bootjdk10
+wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+tar -xzf bootjdk11.tar.gz
+rm -f bootjdk11.tar.gz
+mv $(ls | grep -i jdk) bootjdk11
 
-export JAVA_HOME="/<my_home_dir>/bootjdk10"
+export JAVA_HOME="/<my_home_dir>/bootjdk11"
 export PATH="${JAVA_HOME}/bin:${PATH}"
 ```
 
