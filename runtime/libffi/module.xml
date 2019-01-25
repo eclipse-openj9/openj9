@@ -73,6 +73,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="FFI_TARGET_DIR := arm">
 				<include-if condition="spec.linux_arm.*" />
 			</makefilestub>
+			<makefilestub data="FFI_TARGET_DIR := aarch64">
+				<include-if condition="spec.linux_aarch64.*" />
+			</makefilestub>
 			<makefilestub data="FFI_TARGET_DIR := powerpc">
 				<include-if condition="spec.flags.arch_power" />
 			</makefilestub>
@@ -97,6 +100,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 			<makefilestub data="FFI_PRECONF_DIR := arm">
 				<include-if condition="spec.linux_arm.*" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := xr64">
+				<include-if condition="spec.linux_aarch64.*" />
 			</makefilestub>
 
 			<makefilestub data="FFI_PRECONF_DIR := mz31">
@@ -193,6 +200,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</vpath>
 			<vpath pattern="trampoline.S" path="arm" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_arm.*" />
+			</vpath>
+
+			<!-- vpaths for aarch64 -->
+			<vpath pattern="ffi.c" path="aarch64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_aarch64.*" />
+			</vpath>
+			<vpath pattern="sysv.S" path="aarch64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_aarch64.*" />
 			</vpath>
 
 			<!-- vpaths for x86 -->
