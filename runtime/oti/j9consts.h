@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -770,6 +770,7 @@ extern "C" {
 #define J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_START					0x3E
 #define J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_FINISH					0x3F
 #define J9_JNI_OFFLOAD_SWITCH_TRACE_SUBSCRIBER_THREAD					0x40
+#define J9_JNI_OFFLOAD_SWITCH_JVMTI_SAMPLED_OBJECT_ALLOC				0x41
 
 #define J9_JNI_OFFLOAD_SWITCH_THRESHOLD 0x4000
 

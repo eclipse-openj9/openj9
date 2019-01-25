@@ -186,7 +186,7 @@ jvmtiGetVersionNumber(jvmtiEnv* env,
 	ENSURE_NON_NULL(version_ptr);
 
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		rv_version = JVMTI_VERSION_9_0;
+		rv_version = JVMTI_VERSION_11;
 	}
 
 	rc = JVMTI_ERROR_NONE;
