@@ -30,6 +30,7 @@ import java.io.ObjectStreamField;
 import java.io.Serializable;
 /*[IF Java12]*/
 import java.lang.constant.Constable;
+import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 /*[ENDIF]*/
 import java.lang.ref.Reference;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 /*[IF Java12]*/
+import java.util.NoSuchElementException;
 import java.util.Optional;
 /*[ENDIF]*/
 import java.util.Set;
@@ -1271,14 +1273,38 @@ public final class MethodType implements Serializable
 /*[ENDIF]*/
 
 /*[IF Java12]*/
+	/**
+	 * Return field descriptor of MethodType instance.
+	 * 
+	 * @return field descriptor of MethodType instance
+	 */
 	public String descriptorString() {
-		/* Jep334 */
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		return methodDescriptor;
 	}
 
+	/**
+	 * Returns the nominal descriptor of this MethodType instance, or an empty Optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with a nominal descriptor of MethodType instance
+	 */
 	public Optional<MethodTypeDesc> describeConstable() {
-		/* Jep334 */
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		try {
+			ClassDesc returnDesc = returnType.describeConstable().orElseThrow();
+
+			/* convert parameter classes to ClassDesc */
+			final int argumentsLength = arguments.length;
+			ClassDesc[] paramDescs = new ClassDesc[argumentsLength];
+			for (int i = 0; i < argumentsLength; i++) {
+				paramDescs[i] = arguments[i].describeConstable().orElseThrow();
+			}
+
+			/* create MethodTypeDesc */
+			MethodTypeDesc typeDesc = MethodTypeDesc.of(returnDesc, paramDescs);
+			return Optional.of(typeDesc);
+		} catch(NoSuchElementException e) {
+			return Optional.empty();
+		}
 	}
 /*[ENDIF]*/
 }
