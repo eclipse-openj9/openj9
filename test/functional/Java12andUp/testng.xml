@@ -27,7 +27,7 @@
 
 	<test name="Jep334Tests">
 		<classes>
-			<!-- empty for now -->
+			<class name="org.openj9.test.java_lang.Test_String" />
 		</classes>
 	</test>
 
