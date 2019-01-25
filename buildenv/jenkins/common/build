@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -268,8 +268,8 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
         timestamps {
-            // 'all' target dependencies broken for zos, use 'images'
-            def make_target = SPEC.startsWith('zos') ? 'images' : 'all'
+            // 'all' target dependencies broken for zos, use 'images test-image-openj9'
+            def make_target = SPEC.startsWith('zos') ? 'images test-image-openj9' : 'all'
             withEnv(BUILD_ENV_VARS_LIST) {
                 sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
             }
@@ -291,7 +291,14 @@ def archive() {
             sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
             // test if the test natives directory is present, only in JDK11+
             if (fileExists("${buildDir}${testDir}")) {
-               sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+                if (SPEC.startsWith('zos')) {
+                    // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
+                    dir ("${buildDir}") {
+                        sh "pax  -wv -s#${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${testDir}"
+                    }
+                } else {
+                    sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+                }
             }
             if (ARTIFACTORY_SERVER) {
                 def server = Artifactory.server ARTIFACTORY_SERVER
