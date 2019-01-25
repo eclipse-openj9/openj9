@@ -264,9 +264,9 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       if (enableTrace)
          traceMsg(comp(), "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n", isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
-      static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
+      static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
       // Test if the call is a write to a static final field
-      if (enableIllegalWriteReport
+      if (!disableIllegalWriteReport
           && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding)
           && TR_J9MethodBase::isUnsafePut(unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod()))
          {

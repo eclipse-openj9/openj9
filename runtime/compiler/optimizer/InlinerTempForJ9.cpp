@@ -1097,9 +1097,9 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
          traceMsg(comp(),"\t Duplicate Tree for ordered call, orderedCallNode = %p\n",orderedCallNode);
       }
 
-   static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
+   static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
    TR::TreeTop* reportFinalFieldModification = NULL;
-   if (enableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+   if (!disableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
       {
       reportFinalFieldModification = TR::TransformUtil::generateReportFinalFieldModificationCallTree(comp(), unsafeCall->getArgument(1)->duplicateTree());
       }
