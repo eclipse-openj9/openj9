@@ -385,6 +385,10 @@ struct TR_RelocationRecordSymbolFromManagerBinaryTemplate : public TR_Relocation
    uint16_t _symbolType;
    };
 
+struct TR_RelocationRecordMethodCallAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   UDATA _methodAddress;
+   };
 
 extern char* AOTcgDiagOn;
 
@@ -1881,6 +1885,23 @@ class TR_RelocationRecordClassUnloadAssumption : public TR_RelocationRecord
       virtual int32_t bytesInHeaderAndPayload();
 
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
+class TR_RelocationRecordMethodCallAddress : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordMethodCallAddress() {}
+      TR_RelocationRecordMethodCallAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual char *name() { return "TR_MethodCallAddress"; }
+      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordMethodCallAddressBinaryTemplate); }
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      uint8_t* address(TR_RelocationTarget *reloTarget);
+      void setAddress(TR_RelocationTarget *reloTarget, uint8_t* callTargetAddress);
+
+   private:
+      uint8_t *computeTargetMethodAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *baseLocation);
    };
 
 #endif   // RELOCATION_RECORD_INCL
