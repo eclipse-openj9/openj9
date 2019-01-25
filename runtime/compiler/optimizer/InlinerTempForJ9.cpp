@@ -1061,9 +1061,6 @@ Unsafe.getShort.
 bool
 TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck, bool isOrdered)
    {
-   if (callNodeTreeTop->getEnclosingBlock()->isCold())
-      return false;
-
    if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
@@ -1101,10 +1098,11 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       }
 
    static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
-   TR::TreeTop* callTreeForIllegalWriteReport = NULL;
-   // Keep the call for illegal write report
+   TR::TreeTop* reportFinalFieldModification = NULL;
    if (enableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
-      callTreeForIllegalWriteReport = callNodeTreeTop->duplicateTree();
+      {
+      reportFinalFieldModification = TR::TransformUtil::generateReportFinalFieldModificationCallTree(comp(), unsafeCall->getArgument(1)->duplicateTree());
+      }
 
    TR::Node * unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
    if(comp()->getOption(TR_TraceUnsafeInlining))
@@ -1226,24 +1224,21 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
 
    // Test for static final field
-   if (callTreeForIllegalWriteReport)
+   if (reportFinalFieldModification)
       {
-      TR::Node* duplicatedCallNode = callTreeForIllegalWriteReport->getNode()->getFirstChild();
       TR::Block* storeToStaticFieldBlock = indirectAccessTreeTop->getEnclosingBlock();
       auto isFinalStaticNode = TR::Node::createif(TR::iflcmpeq,
-                                                     TR::Node::create(TR::land, 2, duplicatedCallNode->getChild(2)->duplicateTree(), TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG)),
-                                                     TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG),
-                                                     NULL /*branchTarget*/);
+                                                  TR::Node::create(TR::land, 2, offset->duplicateTree(), TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG)),
+                                                  TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG),
+                                                  NULL /*branchTarget*/);
       auto isFinalStaticTreeTop = TR::TreeTop::create(comp(), isFinalStaticNode);
 
-      TR_ASSERT(storeToStaticFieldBlock->getSuccessors().size() == 1, "storeToStaticFieldBlock should have only one successor");
-      TR::Block* mergeBlock = toBlock(storeToStaticFieldBlock->getSuccessors().front()->getTo());
-      TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalStaticTreeTop, callTreeForIllegalWriteReport, storeToStaticFieldBlock, mergeBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
+      TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalStaticTreeTop, reportFinalFieldModification, storeToStaticFieldBlock, storeToStaticFieldBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
 
       if (comp()->getOption(TR_TraceUnsafeInlining))
          {
          traceMsg(comp(), "Created isFinal test node n%dn whose branch target is Block_%d to report illegal write to static final field\n",
-                  isFinalStaticNode->getGlobalIndex(), callTreeForIllegalWriteReport->getEnclosingBlock()->getNumber());
+                  isFinalStaticNode->getGlobalIndex(), reportFinalFieldModification->getEnclosingBlock()->getNumber());
          }
 
       TR::DebugCounter::prependDebugCounter(comp(),
@@ -1251,7 +1246,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
                                                                               "illegalWriteReport/put/(%s %s)",
                                                                                comp()->signature(),
                                                                                comp()->getHotnessName(comp()->getMethodHotness())),
-                                                                               callTreeForIllegalWriteReport->getNextTreeTop());
+                                            reportFinalFieldModification->getNextTreeTop());
 
       }
 

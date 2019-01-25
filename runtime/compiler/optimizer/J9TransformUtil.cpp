@@ -1931,3 +1931,14 @@ void J9::TransformUtil::separateNullCheck(TR::Compilation* comp, TR::TreeTop* tr
          break;
       }
    }
+
+TR::TreeTop *
+J9::TransformUtil::generateReportFinalFieldModificationCallTree(TR::Compilation *comp, TR::Node *node)
+   {
+   TR::Node* j9class = TR::Node::createWithSymRef(node, TR::aloadi, 1, node, comp->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+   // If this is the first modification on static final field for this class, the notification is a stop-the-world event, gc may happen.
+   TR::SymbolReference* symRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_reportFinalFieldModified, true /*canGCandReturn*/, false /*canGCandExcept*/, true);
+   TR::Node *callNode = TR::Node::createWithSymRef(node, TR::call, 1, j9class, symRef);
+   TR::TreeTop *tt = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, callNode));
+   return tt;
+   }

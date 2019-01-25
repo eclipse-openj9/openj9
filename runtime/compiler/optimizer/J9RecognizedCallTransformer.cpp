@@ -158,7 +158,7 @@ iflcmpne -> <Block_E>
 end Block_B
 
 start Block_C
-iflcmpeq -> <Block_G>
+iflcmpeq -> <Block_F>
   land
     lload <offset>
     lconst J9_SUN_FINAL_FIELD_OFFSET_TAG
@@ -181,21 +181,14 @@ xcall atomic method helper
     aload <object>
     lload <offset>
   xload value
-xstore <result>  ---> optional
 end Block_E
-
-start Block_F
-xload <result>   ---> optional
-trees after the original call tree
-end Block_F
 
 ...
 
-start Block_G
-xcall Unsafe.xxx  ---> the original call
-xstore <result> ---> optional
-go to <Block_F>
-end Block_G
+start Block_F
+call jitReportFinalFieldModified
+go to <Block_E>
+end Block_F
 */
 void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck)
    {
@@ -283,25 +276,20 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                   TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG),
                                                   NULL /*branchTarget*/);
          auto isFinalTreeTop = TR::TreeTop::create(comp(), isFinalNode);
-         auto ifTree = treetop->duplicateTree(); // Duplicate the call tree at the if block
-         auto elseTree = treetop->duplicateTree();
-         // Mark the block containing ifTree to be cold such that it won't be processed again
-         TR::TransformUtil::createDiamondForCall(this, treetop, isFinalTreeTop, ifTree, elseTree, false /*changeBlockExtensions*/, true /*markCold*/);
-         // elseTree contains the unsafe call on fields that are not static final
-         // The rest of the code will be working on the elseTree
-         treetop = elseTree;
-         unsafeCall = treetop->getNode()->getChild(0);
+         auto reportFinalFieldModification = TR::TransformUtil::generateReportFinalFieldModificationCallTree(comp(), objectNode->duplicateTree());
+         auto elseBlock = treetop->getEnclosingBlock();
+         TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalTreeTop, reportFinalFieldModification, elseBlock, elseBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
          if (enableTrace)
             {
             traceMsg(comp(), "Created isFinal test node n%dn, non-final-static field will fall through to Block_%d, final field goes to Block_%d\n",
-                     isFinalNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber(), ifTree->getEnclosingBlock()->getNumber());
+                     isFinalNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber(), reportFinalFieldModification->getEnclosingBlock()->getNumber());
             }
          TR::DebugCounter::prependDebugCounter(comp(),
                                                TR::DebugCounter::debugCounterName(comp(),
                                                                                   "illegalWriteReport/atomic/(%s %s)",
                                                                                   comp()->signature(),
                                                                                   comp()->getHotnessName(comp()->getMethodHotness())),
-                                                                                  ifTree->getNextTreeTop());
+                                                                                  reportFinalFieldModification->getNextTreeTop());
 
          }
 
@@ -352,16 +340,16 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
-         return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetInt:
-         return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::sun_misc_Unsafe_getAndAddLong:
-         return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetLong:
-         return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
