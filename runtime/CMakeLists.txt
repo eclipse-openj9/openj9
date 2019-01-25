@@ -103,20 +103,20 @@ configure_file(include/j9version.h.in j9version.h)
 # ie. they live in directories where we dont need to build anything
 # and/or its hard to track down exactly who depends on them
 
-omr_add_hookgen(INPUT oti/j9jit.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
-omr_add_hookgen(INPUT oti/j9vm.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
-omr_add_hookgen(INPUT oti/zipCachePool.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
-omr_add_hookgen(INPUT gc_include/j9mm.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
+omr_add_hookgen(INPUT oti/j9jit.hdf)
+omr_add_hookgen(INPUT oti/j9vm.hdf)
+omr_add_hookgen(INPUT oti/zipCachePool.hdf)
+omr_add_hookgen(INPUT gc_include/j9mm.hdf)
 
 # Wrap up the hookgen'd files in a named target
 # This is to work arround the fact that CMake does not do proper dependency tracking
 # for generated files across different directories
 add_custom_target(j9vm_hookgen
 	DEPENDS
-		${CMAKE_CURRENT_SOURCE_DIR}/oti/jithook.h
-		${CMAKE_CURRENT_SOURCE_DIR}/oti/vmhook.h
-		${CMAKE_CURRENT_SOURCE_DIR}/oti/vmzipcachehook.h
-		${CMAKE_CURRENT_SOURCE_DIR}/include/mmhook.h
+		${CMAKE_CURRENT_BINARY_DIR}/jithook.h
+		${CMAKE_CURRENT_BINARY_DIR}/vmhook.h
+		${CMAKE_CURRENT_BINARY_DIR}/vmzipcachehook.h
+		${CMAKE_CURRENT_BINARY_DIR}/mmhook.h
 )
 
 # Generate NLS headers
