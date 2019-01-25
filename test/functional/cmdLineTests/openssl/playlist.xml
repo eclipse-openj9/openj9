@@ -64,9 +64,9 @@
 		-verbose -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<!-- Temporarily exclude on aix until OpenSSL is enabled on aix -->
-		<!-- Temporarily exclude on osx, win on jdk11 until https://github.com/ibmruntimes/openj9-openjdk-jdk11/issues/98 
-			is fixed. If the issue is fixed, cmdLineTester_CryptoTest and cmdLineTester_CryptoTest_11 can be merged into one. -->
-		<platformRequirements>^os.aix,^os.osx,^os.win</platformRequirements>
+		<!-- Once https://github.com/ibmruntimes/openj9-openjdk-jdk11/issues/98 
+			is fixed for jdk8, cmdLineTester_CryptoTest and cmdLineTester_CryptoTest_11 can be merged into one. -->
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

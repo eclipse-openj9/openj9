@@ -2859,6 +2859,14 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numProfiledMethodGuardsValidationFailed: %d\n", aotStats->profiledMethodGuards.numFailedValidations);
       fprintf(stderr, "numProfiledMethodGuardsValidationSucceeded: %d\n", aotStats->profiledMethodGuards.numSucceededValidations);
       fprintf(stderr, "-------------------------\n");
+
+      fprintf(stderr, "RELO FAILURES BY TYPE ------\n");
+      for (uint32_t i = 0; i < TR_NumExternalRelocationKinds; i++)
+         {
+         fprintf(stderr, "%s: %d\n", TR::ExternalRelocation::getName((TR_ExternalRelocationTargetKind)i), aotStats->numRelocationsFailedByType[i]);
+         }
+      fprintf(stderr, "-------------------------\n");
+
       } // AOT stats
 
 
