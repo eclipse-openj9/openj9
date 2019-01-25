@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2015, 2018 IBM Corp. and others
+// Copyright (c) 2015, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,7 +96,7 @@ TraceExit=Trc_PRT_shmem_j9shmem_open_Exit Group=j9shmem Overhead=1 Level=1 NoEnv
 
 TraceEntry=Trc_PRT_shmem_j9shmem_stat_Entry Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat entered, name = %s"
 TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit1 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - controlFile %s is a directory not a file"
-TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit2 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - contents of controlFile %s is corrupted"
+TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit2 Obsolete Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - contents of controlFile %s is corrupted"
 TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit3 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit shmctl fails, portable error=%d"
 TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - return success"
 
@@ -2134,3 +2134,5 @@ TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed Group=j9sh
 TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: User's home directory %s is on a network file system"
 TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_cannotStat Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: omrfile_stat() failed on the user's home directory %s"
 TraceExit=Trc_PRT_shared_createDir_Exit8 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_createDir file_attr reported isDir, directory exists, cacheDirPerm is not present and it is not the default directory"
+
+TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit2_V2 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - contents of controlFile %s is corrupted, error code is %u"
