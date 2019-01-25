@@ -3484,6 +3484,12 @@ typedef struct TR_RelocationClassAddress
    uintptr_t cpIndex;
    } TR_RelocationClassAddress;
 
+typedef struct TR_RelocationRecordMethodCallAddress
+   {
+   TR_RelocationRecordHeaderPadded hdr;
+   uintptr_t methodAddress;
+   } TR_RelocationRecordMethodCallAddress;
+
 typedef TR_RelocationRecordMethodEnterExitCheck TR_RelocationRecordUnresolvedAddressMaterializationHCR;
 
 typedef TR_RelocationRecordConstantPool TR_RelocationRecordThunks;
@@ -3658,6 +3664,13 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
             {
             TR_RelocationClassAddress *record = (TR_RelocationClassAddress *) reloRecord;
             _dbgPrintf("0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool);
+            ptr = (U_8*) (record+1);
+            }
+         break;
+         case TR_MethodCallAddress:
+            {
+            TR_RelocationRecordMethodCallAddress *record = (TR_RelocationRecordMethodCallAddress *)reloRecord;
+            _dbgPrintf("0x%-16x", record->methodAddress);
             ptr = (U_8*) (record+1);
             }
          break;

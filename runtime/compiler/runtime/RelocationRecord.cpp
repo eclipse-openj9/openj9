@@ -406,6 +406,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_SymbolFromManager:
          reloRecord = new (storage) TR_RelocationRecordSymbolFromManager(reloRuntime, record);
          break;
+      case TR_MethodCallAddress:
+         reloRecord = new (storage) TR_RelocationRecordMethodCallAddress(reloRuntime, record);
+         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -4433,7 +4436,62 @@ TR_RelocationRecordClassUnloadAssumption::applyRelocation(TR_RelocationRuntime *
    return 0;
    }
 
+uint8_t *
+TR_RelocationRecordMethodCallAddress::computeTargetMethodAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *baseLocation)
+   {
+   uint8_t *callTargetAddress = address(reloTarget);
 
+   if (reloRuntime->options()->getOption(TR_StressTrampolines) || reloTarget->useTrampoline(callTargetAddress, baseLocation))
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tredirecting call to " POINTER_PRINTF_FORMAT " through trampoline\n", callTargetAddress);
+      auto metadata = jitGetExceptionTableFromPC(reloRuntime->currentThread(), (UDATA)callTargetAddress);
+      auto j9method = metadata->ramMethod;
+      TR::VMAccessCriticalSection computeTargetMethodAddress(reloRuntime->fej9());
+      // getResolvedTrampoline will create the trampoline if it doesn't exist, but we pass inBinaryEncoding=true because we want the compilation to fail
+      // if the trampoline can't be allocated in the current code cache rather than switching to a new code cache, which can't be done during relocation.
+      auto codeCache = reloRuntime->fej9()->getResolvedTrampoline(reloRuntime->comp(), reloRuntime->codeCache(), j9method, /* inBinaryEncoding */ true);
+      callTargetAddress = reinterpret_cast<uint8_t *>(codeCache->findTrampoline((TR_OpaqueMethodBlock *)j9method));
+      }
+
+   return callTargetAddress;
+   }
+
+uint8_t*
+TR_RelocationRecordMethodCallAddress::address(TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordMethodCallAddressBinaryTemplate *reloData = (TR_RelocationRecordMethodCallAddressBinaryTemplate *)_record;
+   return reloTarget->loadAddress(reinterpret_cast<uint8_t *>(&reloData->_methodAddress));
+   }
+
+void
+TR_RelocationRecordMethodCallAddress::setAddress(TR_RelocationTarget *reloTarget, uint8_t *callTargetAddress)
+   {
+   TR_RelocationRecordMethodCallAddressBinaryTemplate *reloData = (TR_RelocationRecordMethodCallAddressBinaryTemplate *)_record;
+   reloTarget->storeAddress(callTargetAddress, reinterpret_cast<uint8_t *>(&reloData->_methodAddress));
+   }
+
+int32_t TR_RelocationRecordMethodCallAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   uint8_t *baseLocation = 0;
+   if (eipRelative(reloTarget))
+      {
+      baseLocation = reloTarget->eipBaseForCallOffset(reloLocation);
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\teip-relative, adjusted location to " POINTER_PRINTF_FORMAT "\n", baseLocation);
+      }
+
+   uint8_t *callTargetAddress = computeTargetMethodAddress(reloRuntime, reloTarget, baseLocation);
+   uint8_t *callTargetOffset = reinterpret_cast<uint8_t *>(callTargetAddress - baseLocation);
+   RELO_LOG(reloRuntime->reloLogger(), 6,
+            "\t\tapplyRelocation: reloLocation " POINTER_PRINTF_FORMAT " baseLocation " POINTER_PRINTF_FORMAT " callTargetAddress " POINTER_PRINTF_FORMAT " callTargetOffset %x\n",
+            reloLocation, baseLocation, callTargetAddress, callTargetOffset);
+
+   if (eipRelative(reloTarget))
+      reloTarget->storeRelativeTarget(reinterpret_cast<uintptr_t>(callTargetOffset), reloLocation);
+   else
+      reloTarget->storeAddress(callTargetOffset, reloLocation);
+
+   return 0;
+   }
 
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -4536,5 +4594,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate),    // TR_ValidateMethodFromSingleAbstractImplementer  = 96
    sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate),   // TR_ValidateImproperInterfaceMethodFromCP        = 97
    sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),                       // TR_SymbolFromManager                            = 98
+   sizeof(TR_RelocationRecordMethodCallAddressBinaryTemplate),                       // TR_MethodCallAddress                            = 99
    };
 
