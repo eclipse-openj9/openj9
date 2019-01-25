@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2018 IBM Corp. and others
+Copyright (c) 2006, 2019 IBM Corp. and others
  
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,21 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 
 <flags xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/flags" xsi:schemaLocation="http://www.ibm.com/j9/builder/flags flags-v1.xsd">
+	<flag id="arch_aarch64">
+		<description>This spec targets AArch64 processors.</description>
+		<ifRemoved></ifRemoved>
+		<precludes>
+			<preclude flag="arch_arm"/>
+			<preclude flag="arch_power"/>
+			<preclude flag="arch_s390"/>
+			<preclude flag="arch_x86"/>
+		</precludes>
+	</flag>
 	<flag id="arch_arm">
 		<description>This spec targets ARM processors.</description>
 		<ifRemoved></ifRemoved>
 		<precludes>
+			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_power"/>
 			<preclude flag="arch_s390"/>
 			<preclude flag="arch_x86"/>
@@ -35,6 +46,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<description>This spec targets PPC processors.</description>
 		<ifRemoved></ifRemoved>
 		<precludes>
+			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_arm"/>
 			<preclude flag="arch_s390"/>
 			<preclude flag="arch_x86"/>
@@ -44,6 +56,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<description>This spec targets S390 processors.</description>
 		<ifRemoved></ifRemoved>
 		<precludes>
+			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_arm"/>
 			<preclude flag="arch_power"/>
 			<preclude flag="arch_x86"/>
@@ -53,6 +66,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<description>This spec targets x86 processors.</description>
 		<ifRemoved></ifRemoved>
 		<precludes>
+			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_arm"/>
 			<preclude flag="arch_power"/>
 			<preclude flag="arch_s390"/>
@@ -1225,6 +1239,10 @@ Only available on zOS</description>
 		<description>Enables compilation of the codegen module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
+	<flag id="module_codegen_aarch64">
+		<description>Enables compilation of the codegen_aarch64 module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
 	<flag id="module_codegen_arm">
 		<description>Enables compilation of the codegen_arm module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1267,6 +1285,10 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_codegen_wcode">
 		<description>Enables compilation of the codegen_wcode module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
+	<flag id="module_codert_aarch64">
+		<description>Enables compilation of the codert_aarch64 module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_codert_arm">
@@ -1443,8 +1465,16 @@ Only available on zOS</description>
 		<description>Enables compilation of the jextractnatives module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
+	<flag id="module_jit_aarch64">
+		<description>Enables compilation of the jit_aarch64 module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
 	<flag id="module_jit_arm">
 		<description>Enables compilation of the jit_arm module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
+	<flag id="module_jit_aarch64aot">
+		<description>Enables compilation of the jit_aarch64aot module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_jit_armaot">
@@ -1485,6 +1515,10 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_jit_vm">
 		<description>Enables compilation of the jit_vm module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
+	<flag id="module_jitrt_aarch64">
+		<description>Enables compilation of the jitrt_aarch64 module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_jitrt_arm">

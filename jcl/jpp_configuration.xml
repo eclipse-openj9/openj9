@@ -2,7 +2,7 @@
 <!DOCTYPE configurationreg SYSTEM "http://home.ottawa.ibm.com/teams/bluebird/web/eclipse_site/jpp.dtd">
 <!--
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@
 	<!-- These flags identify the target platform. -->
 	<set
 		label="platforms"
-		flags="PLATFORM-ap64,PLATFORM-mz31,PLATFORM-mz64,PLATFORM-oa64,PLATFORM-wa64,PLATFORM-xa64,PLATFORM-xi32,PLATFORM-xl64,PLATFORM-xr32,PLATFORM-xs32,PLATFORM-xz31,PLATFORM-xz64"/>
+		flags="PLATFORM-ap64,PLATFORM-mz31,PLATFORM-mz64,PLATFORM-oa64,PLATFORM-wa64,PLATFORM-xa64,PLATFORM-xi32,PLATFORM-xl64,PLATFORM-xr32,PLATFORM-xr64,PLATFORM-xs32,PLATFORM-xz31,PLATFORM-xz64"/>
 
 	<configuration
 		  label="SIDECAR18-SE"

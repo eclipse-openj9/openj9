@@ -112,6 +112,7 @@
 		<builder id="InterMetrics"/>
 		<builder id="Linux386"/>
 		<builder id="Linux386PIC"/>
+		<builder id="LinuxAArch64"/>
 		<builder id="LinuxHammer"/>
 		<builder id="LinuxPPC"/>
 		<builder id="LinuxPPC64"/>
