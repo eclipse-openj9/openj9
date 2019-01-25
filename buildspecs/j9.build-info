@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2018 IBM Corp. and others
+  Copyright (c) 2006, 2019 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 	<sourceControl>
 		<repositoryBranch id="fips.repo" name="git@github.ibm.com:runtimes/fips.git"/>
 		<repositoryBranch id="fips.branch" name="master"/>
-		<repositoryBranch id="fips.sha" name="57c8532"/>
+		<repositoryBranch id="fips.sha" name="88888db"/>
 		<repositoryBranch id="jit_release" name="tr.dev"/>
 		<repositoryBranch id="rtc_product_stream" name="jvm.29"/>
 		<repositoryBranch id="san_hursley" name="foreman@java-bin.hursley.ibm.com"/>
