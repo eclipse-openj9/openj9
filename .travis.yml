@@ -51,7 +51,6 @@ addons:
       - libxtst-dev
       - make
       - nasm
-      - openjdk-8-jdk
       - pkg-config
       - realpath
       - ssh
