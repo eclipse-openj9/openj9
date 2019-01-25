@@ -8298,14 +8298,6 @@ written authorization of the copyright holder.
 /*[ENDIF] Sidecar19-SE*/
 
 /*[IF Java12]*/
-	public Optional<String> describeConstable() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
-	}
-
-	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
-	}
-	
 	/**
 	 * Apply a function to this string. The function expects a single String input and returns an R.
 	 * 
@@ -8314,6 +8306,27 @@ written authorization of the copyright holder.
 	 */
 	public <R> R transform(Function<? super String, ? extends R> f) {
 		return f.apply(this);
+	}
+
+	/**
+	 * Returns the nominal descriptor of this String instance, or an empty optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with nominal descriptor of String instance
+	 */
+	public Optional<String> describeConstable() {
+		return Optional.of(this);
+	}
+
+	/**
+	 * Resolves this ConstantDesc instance
+	 * 
+	 * @param lookup parameter is ignored
+	 * 
+	 * @return the resolved Constable value
+	 */
+	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
+		return this;
 	}
 /*[ENDIF] Java12 */
 }
