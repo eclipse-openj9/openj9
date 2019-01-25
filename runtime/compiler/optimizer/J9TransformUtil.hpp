@@ -53,8 +53,6 @@ public:
    static TR::Node *generateArrayElementShiftAmountTrees(
          TR::Compilation *comp,
          TR::Node *object);
-
-   static TR::Node *transformStringIndexOfCall( TR::Compilation *, TR::Node *callNode);
    
    static TR::Node *transformIndirectLoad(TR::Compilation *, TR::Node *node);
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
