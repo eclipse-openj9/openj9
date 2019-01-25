@@ -432,6 +432,12 @@ public:
     */
    void trimCodeMemoryToActualSize();
 
+   /**
+    * \brief Request and reserve a CodeCache for use by this compilation.  Fail
+    *        the compilation appropriately if a CodeCache cannot be allocated.
+    */
+   void reserveCodeCache();
+
 private:
 
    enum // Flags
