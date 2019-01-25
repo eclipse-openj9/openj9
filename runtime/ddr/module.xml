@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2010, 2018 IBM Corp. and others
+Copyright (c) 2010, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -277,6 +277,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<makefilestubs>
 			<makefilestub data="UMA_EXE_POSTFIX_FLAGS+=-static">
 				<include-if condition="spec.linux_arm.*"/>
+				<include-if condition="spec.linux_aarch64.*" />
 			</makefilestub>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 			<makefilestub data="include ddr_cpp_headers.mk"/>
@@ -294,9 +295,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 			<library name="j9thrstatic" type="external">
 				<include-if condition="spec.linux_arm.*"/>
+				<include-if condition="spec.linux_aarch64.*" />
 			</library>
 			<library name="j9thr">
 				<exclude-if condition="spec.linux_arm.*"/>
+				<exclude-if condition="spec.linux_aarch64.*" />
 			</library>
 			<library name="j9portautoblob"/>
 			<library name="j9ddr_cppewautoblob"/>
@@ -345,10 +348,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<commands>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; ./j9ddrgen" type="all">
 				<exclude-if condition="spec.linux_arm.*"/>
+				<exclude-if condition="spec.linux_aarch64.*"/>
 				<exclude-if condition="spec.linux_ztpf.*"/>
 			</command>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-arm -r '9' ./j9ddrgen" type="all">
 				<include-if condition="spec.linux_arm.*"/>
+			</command>
+			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-aarch64 -r '9' ./j9ddrgen" type="all">
+				<include-if condition="spec.linux_aarch64.*"/>
 			</command>
 			<command line="cd $(UMA_PATH_TO_ROOT); if [ -x ../build_j9ddrgen.sh ] &amp;&amp; [ ! -e ../j9ddrgen.completed ] ; then ../build_j9ddrgen.sh ; fi" type="all">
 				<include-if condition="spec.linux_ztpf.*"/>

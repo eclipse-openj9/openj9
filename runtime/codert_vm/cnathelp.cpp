@@ -247,6 +247,13 @@ J9_EXTERN_BUILDER_SYMBOL(icallVMprJavaSendStatic1);
 #define JIT_LO_U64_RETURN_REGISTER gpr.numbered[0]
 #define JIT_HI_U64_RETURN_REGISTER gpr.numbered[1]
 
+#elif defined(J9VM_ARCH_AARCH64)
+
+#define JIT_STACK_OVERFLOW_SIZE_REGISTER gpr.numbered[18] // TODO: determine which register to use
+#define JIT_UDATA_RETURN_VALUE_REGISTER gpr.numbered[0]
+#define JIT_RETURN_ADDRESS_REGISTER gpr.numbered[30]
+#define JIT_J2I_METHOD_REGISTER gpr.numbered[0]
+
 #else
 #error UNKNOWN PROCESSOR
 #endif
