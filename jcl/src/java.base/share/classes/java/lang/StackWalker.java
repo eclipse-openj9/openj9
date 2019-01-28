@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,12 +27,8 @@ import java.lang.invoke.MethodType;
 /*[ENDIF]*/
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
-/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.IllegalCallerException;
 import java.lang.Module;
-/*[ELSE]
-import java.lang.reflect.Module;
-/*[ENDIF]*/
 import java.security.Permission;
 import java.util.Collections;
 import java.util.HashSet;
@@ -185,7 +181,7 @@ public final class StackWalker {
 				s -> s.limit(2).collect(Collectors.toList()));
 		if (result.size() < 2) {
 			/*[MSG "K0640", "getCallerClass() called from method with no caller"]*/
-			/*[IF Sidecar19-SE-OpenJ9]
+			/*[IF Sidecar19-SE]
 			throw new IllegalCallerException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$
 			/*[ELSE]*/
 			throw new IllegalStateException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$
