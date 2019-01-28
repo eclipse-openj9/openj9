@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  Copyright (c) 2010, 2018 IBM Corp. and others
- 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
- 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
- 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+Copyright (c) 2010, 2019 IBM Corp. and others
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <project name="DDR_Tools" default="generate">
 
 	<!-- To be used via AXXON only -->
@@ -100,7 +98,7 @@
 	</target>
 
 	<!-- Take the provided blob and add it to the latest superset.
-	     End result is a superset containing latest blob data for that spec _only_ -->
+		 End result is a superset containing latest blob data for that spec _only_ -->
 
 	<target name="add_structure_blob">
 		<tstamp>
@@ -123,7 +121,7 @@
 
 	<target name="generate_stubs">
 		<java classname="com.ibm.j9ddr.tools.StructureStubGenerator">
-			<arg line="-o ${DDR_VM}/src -p ${STUBS_PACKAGE_NAME}  -f ${superset.dir} -l true" />
+			<arg line="-o ${DDR_VM}/src -p ${STUBS_PACKAGE_NAME} -f ${superset.dir} -l true" />
 			<classpath>
 				<pathelement location="${DDR_TOOLS_LIB}" />
 				<pathelement location="${DDR_CORE_LIB}" />
@@ -136,7 +134,7 @@
 
 	<target name="generate_pointer_classes">
 		<java classname="com.ibm.j9ddr.tools.PointerGenerator">
-			<arg line="-o ${DDR_VM}/src -p ${POINTERS_PACKAGE_NAME} -f ${superset.dir}  -v ${VM_VERSION} -u false -c ${basedir}/generate.properties -l true" />
+			<arg line="-o ${DDR_VM}/src -p ${POINTERS_PACKAGE_NAME} -f ${superset.dir} -v ${VM_VERSION} -u false -c ${basedir}/generate.properties -l true" />
 			<classpath>
 				<pathelement location="${DDR_TOOLS_LIB}" />
 				<pathelement location="${DDR_CORE_LIB}" />
@@ -148,7 +146,7 @@
 	</target>
 
 	<!-- Copy everything DDR to temp prior to any generation which is done on a per spec basis and
-	     once we promote; for all blobs -->
+		 once we promote; for all blobs -->
 
 	<target name="stage">
 		<fail unless="BUILD_ID" message="Missing BUILD_ID." />
@@ -169,12 +167,12 @@
 				</shellscript>
 			</then>
 			<else>
-		        <shellscript shell="bash" dir="${TMP_DIR}">
+				<shellscript shell="bash" dir="${TMP_DIR}">
 					cp -af ${WORKSPACE}/DDR_* ${TMP_DIR}
 					cp -af ${WORKSPACE}/DTFJ* ${TMP_DIR}
 					cp -af ${WORKSPACE}/RAS_Binaries ${TMP_DIR}
 					cp -af ${WORKSPACE}/Trace* ${TMP_DIR}
-		        </shellscript>
+				</shellscript>
 				<if>
 					<or>
 						<equals arg1="${VM_VERSION}" arg2="26" />
@@ -186,7 +184,6 @@
 						</shellscript>
 					</then>
 				</if>
-		        <ant antfile="${TMP_DIR}/RAS_Binaries/build.xml" dir="${TMP_DIR}/RAS_Binaries" inheritall="false" />
 			</else>
 		</if>
 
@@ -251,7 +248,7 @@
 		<echo>   to: ${BUILD_ROOT}/build/${SPEC_ID}/source.zip</echo>
 
 		<shellscript shell="bash" dir="${BUILD_ROOT}/build/${SPEC_ID}/" failonerror="true">
-			cd ${BUILD_ROOT}/build/${SPEC_ID}/  &amp;&amp;\
+			cd ${BUILD_ROOT}/build/${SPEC_ID}/ &amp;&amp;\
 			mkdir bld_${SPEC_ID}/ &amp;&amp;\
 			cp -f j9ddr.jar bld_${SPEC_ID}/ &amp;&amp;\
 			zip source.zip bld_${SPEC_ID}/j9ddr.jar &amp;&amp;\
@@ -262,7 +259,7 @@
 		<echo>   to: ${BUILD_ROOT}/build/${SPEC_ID}/intrel.zip</echo>
 
 		<shellscript shell="bash" dir="${BUILD_ROOT}/build/${SPEC_ID}/" failonerror="true">
-			cd ${BUILD_ROOT}/build/${SPEC_ID}/  &amp;&amp;\
+			cd ${BUILD_ROOT}/build/${SPEC_ID}/ &amp;&amp;\
 			zip intrel.zip j9ddr.jar
 		</shellscript>
 	</target>
@@ -434,11 +431,11 @@
 				<echo>Generating Stubs in ${DDR_VM}</echo>
 				<echo />
 
-				<echo>com.ibm.j9ddr.tools.StructureStubGenerator -o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME}  -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}</echo>
+				<echo>com.ibm.j9ddr.tools.StructureStubGenerator -o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME} -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}</echo>
 				<echo>classpath: ${DDR_AUTOBLOB_LIB}</echo>
 				<echo>classpath: ${java.class.path}</echo>
 				<java classname="com.ibm.j9ddr.tools.StructureStubGenerator">
-					<arg line="-o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME}  -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}" />
+					<arg line="-o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME} -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}" />
 					<classpath>
 						<pathelement location="${DDR_AUTOBLOB_LIB}" />
 						<pathelement path="${java.class.path}" />
@@ -505,9 +502,9 @@
 
 	<target name="cleanup" >
 		<echo message="Deleting directory ${java.io.tmpdir}${file.separator}bld_${BUILD_ID}" />
-        <shellscript shell="bash" >
-                rm -rf ${java.io.tmpdir}${file.separator}bld_${BUILD_ID}
-        </shellscript>
+		<shellscript shell="bash" >
+				rm -rf ${java.io.tmpdir}${file.separator}bld_${BUILD_ID}
+		</shellscript>
 	</target>
 
 	<target name="sync_superset">
@@ -526,7 +523,7 @@
 			</sequential>
 		</for>
 
-		<copy file="${superset.dir}/superset.base.dat"  tofile="${J9_ROOT}/workspace/debugtools/DDR_Artifacts/supersets/${VM_VERSION}/superset.ibuild.dat" verbose="true" overwrite="true" failonerror="true" />
+		<copy file="${superset.dir}/superset.base.dat" tofile="${J9_ROOT}/workspace/debugtools/DDR_Artifacts/supersets/${VM_VERSION}/superset.ibuild.dat" verbose="true" overwrite="true" failonerror="true" />
 	</target>
 
 	<target name="stage_ddr_jar">
