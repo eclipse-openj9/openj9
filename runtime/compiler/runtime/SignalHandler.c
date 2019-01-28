@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -920,7 +920,6 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
       const char* infoName;
       UDATA *controlPC;
       UDATA controlPCValue;
-      UDATA *controlFPC;
       UDATA *entryPointRegister;
       U_8 DXC;
       U_8 ILC;
@@ -941,13 +940,12 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
       controlPCValue = *controlPC;
 
       infoType = j9sig_info(sigInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_S390_FPC, &infoName, &infoValue);
-      if (infoType != J9PORT_SIG_VALUE_ADDRESS)
+      if (infoType != J9PORT_SIG_VALUE_32)
          return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
 
-      controlFPC = (UDATA *) infoValue;
-      DXC = *(U_8 *)(((U_8 *)controlFPC)+2);
+      DXC = *(U_8 *)(((U_8 *)infoValue) + 2);
 
-      if (J9PORT_SIG_FLAG_SIGFPE  == sigType && DXC == (U_8)0xFF)
+      if (J9PORT_SIG_FLAG_SIGFPE == sigType && DXC == (U_8)0xFF)
          {
          trapType = jit390IdentifyCodeCacheTrapType(vmThread, (U_8 *) controlPCValue, &ILC, sigInfo);
          controlPCValue = controlPCValue - ILC;
