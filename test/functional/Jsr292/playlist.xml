@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<include>variables.mk</include>
 	<test>
-		<testCaseName>jsr292Test_SE80</testCaseName>
+		<testCaseName>jsr292Test_jdk8</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
@@ -50,7 +50,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr292Test</testCaseName>
+		<testCaseName>jsr292Test_jdk9_jdk10</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
@@ -76,34 +76,34 @@
 		</subsets>
 	</test>
 
-        <test>
-                <testCaseName>jsr292Test_SE110</testCaseName>
-                <variations>
-                        <variation>NoOptions</variation>
-                        <variation>Mode195</variation>
-                </variations>
-                <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-        --add-opens=java.base/java.lang=ALL-UNNAMED \
-        -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-        -cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-        org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-        -testnames jsr292Test,jsr292Test_B95up,jsr292Test_Java11up,jsr292Test_optional \
-        -groups $(TEST_GROUP) \
-        -excludegroups $(DEFAULT_EXCLUDE); \
-        $(TEST_STATUS)</command>
-                <levels>
-                        <level>extended</level>
-                </levels>
-                <groups>
-                        <group>functional</group>
-                </groups>
-                <subsets>
-                        <subset>11</subset>
-                </subsets>
-        </test>
+    <test>
+		<testCaseName>jsr292Test</testCaseName>
+		<variations>
+				<variation>NoOptions</variation>
+				<variation>Mode195</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test,jsr292Test_B95up,jsr292Test_Java11up,jsr292Test_optional \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+	</test>
 
 	<test>
-		<testCaseName>jsr292Test_JitCount0_SE80</testCaseName>
+		<testCaseName>jsr292Test_JitCount0_jdk8</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>
@@ -149,14 +149,12 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
 	<test>
-		<testCaseName>jsr292BootstrapTest_SE80</testCaseName>
+		<testCaseName>jsr292BootstrapTest_jdk8</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
@@ -202,9 +200,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -226,9 +222,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -251,9 +245,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -276,12 +268,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 </playlist>

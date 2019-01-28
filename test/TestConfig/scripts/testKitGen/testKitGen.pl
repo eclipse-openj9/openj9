@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,6 @@ my $buildList      = '';
 my $iterations     = 1;
 my @allLevels      = ( "sanity", "extended", "special" );
 my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
-my @allSubsets     = ( '8', '9', '10', '11', "Panama", "Valhalla" );
 my @allImpls       = ( "openj9", "ibm", "hotspot", "sap" );
 
 foreach my $argv (@ARGV) {
@@ -111,6 +110,6 @@ if ( !$impl ) {
 }
 
 # run make file generator
-runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList, $iterations );
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList, $iterations );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";

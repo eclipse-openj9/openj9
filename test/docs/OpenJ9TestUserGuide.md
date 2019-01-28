@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,9 +94,12 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
       - impl:    [openj9|hotspot] (filter test based on exported JDK_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
-      - subset:  [8|9|10|11|Panama|Valhalla] (filter test based on 
+      - subset:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on 
                  exported JDK_VERSION value; a test can be tagged with 
-                 multiple subsets at the same time; default to all subsets)
+                 multiple subsets at the same time; if a test tagged with 
+                 a number (e.g., 8), it will used to match JDK_VERSION; if
+                 a test tagged with a number followed by + sign, any JDK_VERSION
+                 after the number will be a match; default to always match)
 
     - Most OpenJ9 FV tests are written with TestNG. We leverage
     TestNG groups to create test make targets. This means that
