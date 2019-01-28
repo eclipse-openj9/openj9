@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,9 +225,7 @@ protected:
 	reportScanningEnded(RootScannerEntity scannedEntity)
 	{
 		/* Ensures scanning ended for the currently scanned entity. */
-		assume0(_scanningEntity == scannedEntity);
-		_lastScannedEntity = _scanningEntity;
-		_scanningEntity = RootScannerEntity_None;
+		Assert_MM_true(_scanningEntity == scannedEntity);
 		
 		if (_extensions->rootScannerStatsEnabled) {
  			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
@@ -241,6 +239,9 @@ protected:
  			_entityStartScanTime = 0;
 			_entityIncrementStartTime = 0;
  		}
+
+		_lastScannedEntity = _scanningEntity;
+ 		_scanningEntity = RootScannerEntity_None;
 	}
 
 	/**
