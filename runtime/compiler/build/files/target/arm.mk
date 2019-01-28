@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/codegen/StackCheckFailureSnippet.cpp \
     omr/compiler/arm/codegen/SubtractAnalyser.cpp \
     omr/compiler/arm/codegen/UnaryEvaluator.cpp \
-    omr/compiler/arm/env/OMRCompilerEnv.cpp
+    omr/compiler/arm/env/OMRCompilerEnv.cpp \
+    omr/compiler/arm/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/arm/codegen/ARMAOTRelocation.cpp \
