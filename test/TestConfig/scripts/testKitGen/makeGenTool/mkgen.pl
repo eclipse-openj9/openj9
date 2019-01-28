@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,6 @@ my $projectRootDir = '';
 my $testRoot = '';
 my $allLevels = '';
 my $allGroups = '';
-my $allSubsets = '';
 my $output = '';
 my $graphSpecs = '';
 my $jdkVersion = '';
@@ -54,7 +53,7 @@ my $buildList = '';
 my $iterations = 1;
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations  ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -294,25 +293,28 @@ sub parseXML {
 				next;
 			}
 
+			my $isSubsetValid = 0;
 			my $subsets = getElementsByTag( $testlines, 'subset' );
-			# temporarily support SE version, convert it to JDK_VERSION
-			foreach (my $i=0; $i < @{$subsets}; $i++) {
-				$subsets->[$i] =~ s/^SE(.*)0$/$1/;
-			}
-
-			# defaults to all subsets
-			if (!@{$subsets}) {
-				$subsets = $allSubsets;
-			}
-			foreach my $subset ( @{$subsets} ) {
-				if ( !grep(/^$subset$/, @{$allSubsets}) ) {
-					die "The subset: " . $subset . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are " . join(",", @{$allSubsets}) . ".";
+			# if subset is not specified, it defaults to match all jdk version
+			if ( !@{$subsets} ) {
+				$isSubsetValid = 1;
+			} else {
+				foreach my $eachSubset ( @{$subsets} ) {
+					if ( $eachSubset =~ /^(.*)\+$/ ) {
+						if ( $1 <=  $jdkVersion ) {
+							$isSubsetValid = 1;
+							last;
+						}
+					} elsif ( $eachSubset eq $jdkVersion) {
+						$isSubsetValid = 1;
+						last;
+					}
 				}
 			}
-			# do not generate make taget if subset doesn't match jdkVersion
-			if ( !grep(/^$jdkVersion$/, @{$subsets}) ) {
+			if ( $isSubsetValid == 0 ) {
 				next;
 			}
+
 			push( @tests, \%test );
 		}
 	}
