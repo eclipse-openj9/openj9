@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,5 +99,12 @@
 #define J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass) _J9ROMCLASS_SUNMODIFIER_IS_ANY_SET((romClass), J9AccClassArray | J9AccClassInternalPrimitiveType)
 #define J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod) \
 	((((romMethod)->modifiers) & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor)
+
+#define J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(romClass) \
+	J9_ARE_ANY_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface)
+
+/* Only public vTable methods go into the iTable */
+#define J9ROMMETHOD_IN_ITABLE(romMethod) \
+	J9_ARE_ALL_BITS_SET((romMethod)->modifiers, J9AccMethodVTable | J9AccPublic)
 
 #endif	/* _J9MODIFIERS_API_H */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,8 +99,9 @@ lookupInterfaceMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *n
 			method = NULL;
 		} else {
 			if (J9_ARE_ANY_BITS_SET(J9_CLASS_FROM_METHOD(method)->romClass->modifiers, J9_JAVA_INTERFACE)) {
-				*methodIndex = getITableIndexForMethod(method, lookupClass);
-				if (-1  == *methodIndex) {
+				if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(method))) {
+					*methodIndex = getITableIndexForMethod(method, lookupClass);
+				} else {
 					PORT_ACCESS_FROM_VMC(currentThread);
 					J9Class *clazz = J9_CLASS_FROM_METHOD(method);
 					J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);

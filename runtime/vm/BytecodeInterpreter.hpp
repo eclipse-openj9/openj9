@@ -7221,7 +7221,7 @@ retry:
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
 		J9Class* volatile resolvedClass = ramCPEntry->value;
-		if ((NULL != resolvedClass) && (resolvedClass->romClass->modifiers & (J9AccAbstract | J9AccInterface)) == 0) {
+		if ((NULL != resolvedClass) && !J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(resolvedClass->romClass)) {
 			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
 				j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
 				if (NULL == instance) {

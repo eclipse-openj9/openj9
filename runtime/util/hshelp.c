@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1739,7 +1739,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 						J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
 						for(;;) {
 							J9Class *interfaceClass = allInterfaces->interfaceClass;
-							UDATA methodCount = interfaceClass->romClass->romMethodCount;
+							UDATA methodCount = J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceClass);
 							if (methodIndex < methodCount) {
 								classPair.originalRAMClass = interfaceClass;
 								classResult = hashTableFind(classHashTable, &classPair);
@@ -1748,7 +1748,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 									J9Class *obsoleteClass = classResult->replacementClass.ramClass;
 									if (NULL != obsoleteClass) {
 										/* If the referenced method was not reordered, no need to update the constant pool */
-										methodPair.oldMethod = obsoleteClass->ramMethods + methodIndex;
+										methodPair.oldMethod = iTableMethodAtIndex(obsoleteClass, methodIndex);
 										methodResult = hashTableFind(methodHashTable, &methodPair);
 										if (NULL != methodResult) {
 											UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
@@ -2029,8 +2029,13 @@ copyPreservedValues(J9VMThread * currentThread, J9HashTable * classPairs, UDATA 
 			/* Set the totalInstanceSize in the replaced class to a value so large that it
 			 * can never be allocated (but not so large as to overflow the arithmetic when
 			 * the header size addition and rounding are done).
+			 *
+			 * Do not do this for abstract or interface classes, which can not be
+			 * instantiated (and hence may reuse the totalInstanceSize field as something else).
 			 */
-			originalRAMClass->totalInstanceSize = (UDATA)-256;
+			if (!J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(originalRAMClass->romClass)) {
+				originalRAMClass->totalInstanceSize = (UDATA)-256;
+			}
 		}
 		classPair = hashTableNextDo(&hashTableState);
 	}
