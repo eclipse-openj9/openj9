@@ -35,9 +35,7 @@
 		-verbose -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<!-- Temporarily exclude on aix until OpenSSL is enabled on aix -->
-		<!-- Temporarily exclude on osx on jdk8 until https://github.com/ibmruntimes/openj9-openjdk-jdk11/issues/98 
-			is fixed. If the issue is fixed, cmdLineTester_CryptoTest and cmdLineTester_CryptoTest_11 can be merged into one. -->
-		<platformRequirements>^os.aix,^os.osx</platformRequirements>
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -51,32 +49,6 @@
 			<subset>8</subset>
 			<subset>9</subset>
 			<subset>10</subset>
-		</subsets>
-	</test>
-	<test>
-		<testCaseName>cmdLineTester_CryptoTest_11</testCaseName>
-		<variations>
-			<variation>NoOptions</variation>
-		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-DTEST_RESROOT=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
-		-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)openssl.xml$(Q) \
-		-verbose -explainExcludes -nonZeroExitWhenError; \
-		$(TEST_STATUS)</command>
-		<!-- Temporarily exclude on aix until OpenSSL is enabled on aix -->
-		<!-- Once https://github.com/ibmruntimes/openj9-openjdk-jdk11/issues/98 
-			is fixed for jdk8, cmdLineTester_CryptoTest and cmdLineTester_CryptoTest_11 can be merged into one. -->
-		<platformRequirements>^os.aix</platformRequirements>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-		</impls>
-		<subsets>
 			<subset>11</subset>
 		</subsets>
 	</test>
