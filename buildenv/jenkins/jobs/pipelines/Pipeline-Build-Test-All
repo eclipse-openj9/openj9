@@ -45,7 +45,9 @@
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
  *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse/openj9-omr.git (default)
  *   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
- *   OMR_SHA: the last commit SHA of the OMR repository
+ *   OMR_SHA: String - the last commit SHA of the OMR repository
+ *   ADOPTOPENJDK_REPO: String - the AdoptOpenJDK testing repository URL: e.g. https://github.com/AdoptOpenJDK/openjdk-tests.git
+ *   ADOPTOPENJDK_BRANCH: String - the AdoptOpenJDK testing branch: e.g. master
  *   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
  *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
  *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
@@ -161,7 +163,14 @@ timeout(time: 12, unit: 'HOURS') {
                         def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
                         def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
 
-                        builds["build_test_JDK${SDK_VERSION}_${SPEC}"] = { build(REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR) }
+                        def ADOPTOPENJDK_REPO = ''
+                        def ADOPTOPENJDK_BRANCH = ''
+                        if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
+                            ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
+                            ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
+                        }
+
+                        builds["build_test_JDK${SDK_VERSION}_${SPEC}"] = { build(REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH) }
                     }
                 }
             } finally {
@@ -186,7 +195,7 @@ timeout(time: 12, unit: 'HOURS') {
     }
 }
 
-def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR) {
+def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH) {
     def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
     stage ("${JOB_NAME}") {
@@ -201,6 +210,8 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'OMR_REPO', value: OMR_REPO),
                     string(name: 'OMR_BRANCH', value: OMR_BRANCH),
                     string(name: 'OMR_SHA', value: SHAS['OMR']),
+                    string(name: 'ADOPTOPENJDK_REPO', value: ADOPTOPENJDK_REPO),
+                    string(name: 'ADOPTOPENJDK_BRANCH', value: ADOPTOPENJDK_BRANCH),
                     string(name: 'TESTS_TARGETS', value: TESTS_TARGETS),
                     string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
                     string(name: 'VENDOR_REPO', value: VENDOR_REPO),
