@@ -45,11 +45,5 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 </playlist>
