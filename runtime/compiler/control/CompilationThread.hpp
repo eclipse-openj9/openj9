@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -397,6 +397,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    // JITaaS
    TR_J9ServerVM         *getServerVM() { return _serverVM; }
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
+   TR_J9SharedCacheServerVM *getSharedCacheServerVM() { return _sharedCacheServerVM; }
+   void                   setSharedCacheServerVM(TR_J9SharedCacheServerVM *vm) { _sharedCacheServerVM = vm; }
    JITaaS::J9ServerStream  *getStream();
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
@@ -412,6 +414,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
 
    TR_J9ServerVM         *_serverVM;
+   TR_J9SharedCacheServerVM *_sharedCacheServerVM;
    j9thread_t             _osThread;
    J9VMThread            *_compilationThread;
    int32_t                _compThreadPriority; // to reduce number of checks

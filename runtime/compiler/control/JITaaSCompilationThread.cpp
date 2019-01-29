@@ -2098,7 +2098,7 @@ remoteCompile(
    uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
-
+   bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
 
    if (compiler->isOptServer())
       compiler->setOption(TR_Server);
@@ -2141,8 +2141,8 @@ remoteCompile(
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset, 
-                                 method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr, seqNo);
+                                 method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), unloadedClasses,
+                                 classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -3278,7 +3278,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
-         JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t>();
+         JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t, bool>();
 
       clientId                  = std::get<0>(req);
       uint32_t romMethodOffset  = std::get<1>(req);
@@ -3292,6 +3292,12 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       std::string clientOptStr  = std::get<9>(req);
       std::string recompInfoStr = std::get<10>(req);
       uint32_t seqNo            = std::get<11>(req); // sequence number at the client
+      entry._useAotCompilation  = std::get<12>(req);
+
+      if (entry._useAotCompilation)
+         {
+         _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SHARED_CACHE_SERVER_VM);
+         }
 
       if (!ramMethod)
          {

@@ -898,6 +898,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _lastTimeThreadWasSuspended = 0;
    _lastTimeThreadWentToSleep = 0;
    _serverVM = nullptr;
+   _sharedCacheServerVM = nullptr;
 
    if (compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
@@ -3366,9 +3367,10 @@ void TR::CompilationInfo::stopCompilationThreads()
          J9Method *ramMethod = NULL;
          uint32_t romMethodOffset = 0;
          JITaaS::J9ClientStream client(getPersistentInfo());
+         bool useAotCompilation = false;
          client.buildCompileRequest(getPersistentInfo()->getJITaaSId(), romMethodOffset,
-                     ramMethod, clazz, cold, detailsStr, J9::EMPTY,
-                     unloadedClasses, classTuple, optionsStr, recompMethodInfoStr, seqNo);
+                     ramMethod, clazz, cold, detailsStr, J9::EMPTY, unloadedClasses,
+                     classTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
          }
       catch (const JITaaS::StreamFailure &e)
          {
@@ -6682,6 +6684,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       bool &eligibleForRelocatableCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
+   static bool enableJITaaSRemoteAOT = feGetEnv("TR_EnableJITaaSRemoteAOT") ? true : false;
    // Check to see if we find an AOT version in the shared cache
    //
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
@@ -6772,7 +6775,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
       eligibleForRelocatableCompile =
-            _compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE && // we do not allow AOT compilations in JITaaS Server Mode yet
+            enableJITaaSRemoteAOT && // disable remote JITaaS AOT until it's working
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
@@ -6824,13 +6827,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       {
       _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
       entry->_useAotCompilation = true;
+
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && enableJITaaSRemoteAOT)
+         {
+         entry->setRemoteCompReq();
+         }
       }
-   else if (entry->isOutOfProcessCompReq())
-      {
-      _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
-      entry->_useAotCompilation = false;
-      }
-   else
+   else if (!entry->isOutOfProcessCompReq())
       {
       if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
          {
@@ -6871,9 +6874,12 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       _vm = TR_J9VMBase::get(_jitConfig, vmThread); // This is used for JIT compilations and AOT loads
       entry->_useAotCompilation = false;
       }
+   // else if (entry->isOutOfProcessCompReq()) is the only case left
+   // its _vm has been set in TR::CompilationInfoPerThreadRemote::processEntry
+   // entry->_useAotCompilation is also set in TR::CompilationInfoPerThreadRemote::processEntry
   
 
-   if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
+   if (_vm->isAOT_DEPRECATED_DO_NOT_USE() && !entry->isOutOfProcessCompReq())
       {
       // In some circumstances AOT compilations are performed at warm
       if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
@@ -8379,7 +8385,7 @@ TR::CompilationInfoPerThreadBase::compile(
             ((TR_CreateDebug_t)_jitConfig->tracingHook)(compiler)
          );
 
-      if (! _methodBeingCompiled->isRemoteCompReq()) // remote compilations are performed elsewhere
+      if (!_methodBeingCompiled->isRemoteCompReq()) // remote compilations are performed elsewhere
          {
          // Print compiling method
          //
@@ -12214,7 +12220,7 @@ TR::CompilationInfoPerThread::updateLastLocalGCCounter()
    }
 
 // This method is executed by the JITaaS server to queue a placeholder for
-// a compilation request received form the client. At the time the new
+// a compilation request received from the client. At the time the new
 // entry is queued we do not know any details about the compilation request.
 // The method needs to be executed with compilation monitor in hand
 TR_MethodToBeCompiled *
