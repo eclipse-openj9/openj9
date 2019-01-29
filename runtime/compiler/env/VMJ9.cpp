@@ -588,7 +588,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       if (vmType==J9_SERVER_VM || vmType==J9_SHARED_CACHE_SERVER_VM)
          {
-         TR_ASSERT(vmWithThreadInfo->_compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITaaS SERVER_MODE");
+         TR_ASSERT(vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITaaS SERVER_MODE");
          TR::CompilationInfoPerThread *compInfoPT = nullptr;
          // Get the compInfoPT from the cached J9_VM with thread info
          // or search using the compInfo from the J9_VM without thread info
