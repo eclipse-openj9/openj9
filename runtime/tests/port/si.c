@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2269,9 +2269,9 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	rc |= j9sysinfo_test_get_groups(portLibrary);
 #endif /* !(defined(WIN32) || defined(WIN64)) */
 	rc |= j9sysinfo_test_get_l1dcache_line_size(portLibrary);
-#if !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM))
+#if !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(OSX))
 	rc |= j9sysinfo_test_get_levels_and_types(portLibrary);
-#endif
+#endif /* !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(OSX)) */
 #if defined(LINUX) || defined(AIXPPC)
 	/* Not supported on Z & OSX (and Windows, of course).  Enable, when available. */
 	rc |= j9sysinfo_test_get_open_file_count(portLibrary);
