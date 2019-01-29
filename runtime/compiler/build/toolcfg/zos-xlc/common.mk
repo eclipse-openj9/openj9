@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,11 +55,8 @@ ifeq (default,$(origin CXX))
     CXX=xlC
 endif
 
-# This is the script that's used to generate TRBuildName.cpp
-GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
-
 #
-# First setup C and C++ compilers. 
+# First setup C and C++ compilers.
 #
 #     Note: "CX" means both C and C++
 #
@@ -105,7 +102,7 @@ CX_FLAGS+=\
     -qsearch=$(J9SRC)/a2e/headers \
     -qsearch=/usr/include \
     -qsearch=$(A2E_INCLUDE_PATH)
-    
+
 CXX_FLAGS+=\
     -+ \
     -Wc,SUPPRESS\(CCN6281,CCN6090\) \
@@ -189,7 +186,7 @@ endif
 
 ifeq ($(HOST_BITS),64)
     M4_DEFINES+=TR_64Bit
-    
+
     ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
         M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
     endif
