@@ -953,7 +953,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       relocation = new (cg()->trHeapMemory()) TR::ExternalRelocation(
             cursor,
             *(uint8_t **)cursor,
-             getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+             getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
             TR_ConstantPool,
             cg());
 
@@ -1137,7 +1137,7 @@ uint8_t *TR::X86UnresolvedVirtualCallSnippet::emitSnippetBody()
    cg()->addExternalRelocation(
       new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                             (uint8_t *)cpAddr,
-                                                            getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                            getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                             TR_ConstantPool,
                                                             cg()),
                  __FILE__, __LINE__, getNode());

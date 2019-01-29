@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,7 +230,7 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
                                 TR::Compilation *comp, uintptrj_t cacheStartAddress, uintptrj_t cacheSize)
    {
    if (high < low)
-      return NULL;
+      return 0;
 
    TR_IPBCDataStorageHeader * storage = (TR_IPBCDataStorageHeader *) memChunk;
    int32_t middle = (high+low)/2;
@@ -4306,7 +4306,7 @@ uintptrj_t CallSiteProfileInfo::getClazz(int index)
    {
 #if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
    //support for convert code, when it is implemented, "uncompress"
-   return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)_clazz[index]);
+   return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)(uintptrj_t)_clazz[index]);
 #else
    return (uintptrj_t)_clazz[index]; //things are just stored as regular pointers otherwise
 #endif //J9VM_GC_COMPRESSED_POINTERS
