@@ -220,23 +220,21 @@ public:
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override { TR_ASSERT(0, "called");  return; }
    virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueMethodBlock * getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod=0) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT=false) override { TR_ASSERT(0, "called");  return TR_no; }
-   virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool hasFinalizer(TR_OpaqueClassBlock * classPointer) override { TR_ASSERT(0, "called");  return 0; }
-   virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
+   virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
+   virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override;
+   virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT=false) override;
+   virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT=false) override;
+   virtual TR_OpaqueClassBlock * getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo) override;
+   virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override;
+   virtual bool hasFinalizer(TR_OpaqueClassBlock * classPointer) override;
+   virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override;
+   virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override;
+   virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
+   virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
+   virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
+   virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override;
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isReferenceArray(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
@@ -244,7 +242,7 @@ public:
    virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isGetImplInliningSupported() override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool isGetImplInliningSupported() override;
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { TR_ASSERT(0, "called");  return 0; }
    virtual intptrj_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT(0, "called");  return 0; }

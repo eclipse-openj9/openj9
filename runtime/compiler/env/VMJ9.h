@@ -45,6 +45,7 @@
 #include "infra/Array.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/PersistentCollections.hpp"
+#include "exceptions/AOTFailure.hpp"
 
 class TR_CallStack;
 namespace TR { class CompilationInfo; }
