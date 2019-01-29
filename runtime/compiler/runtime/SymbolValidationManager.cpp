@@ -62,6 +62,13 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
       TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(arrayClass);
       defineGuaranteedID(arrayClass, TR::SymbolType::typeClass);
       defineGuaranteedID(component, TR::SymbolType::typeClass);
+
+      // Records relating the arrayClass and componentClass here would be
+      // redundant.
+      _alreadyGeneratedRecords.insert(
+         new (_region) ArrayClassFromComponentClassRecord(arrayClass, component));
+      _alreadyGeneratedRecords.insert(
+         new (_region) ComponentClassFromArrayClassRecord(component, arrayClass));
       }
    }
 
