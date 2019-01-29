@@ -66,11 +66,8 @@ ifeq (default,$(origin CXX))
     CXX=cl
 endif
 
-# This is the script that's used to generate TRBuildName.cpp
-GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
-
 #
-# First setup C and C++ compilers. 
+# First setup C and C++ compilers.
 #
 #     Note: "CX" means both C and C++
 #
@@ -162,7 +159,7 @@ ASM_DEFINES+=\
     $(PRODUCT_DEFINES) \
     $(HOST_DEFINES) \
     $(TARGET_DEFINES)
-    
+
 ASM_FLAGS+=-nologo -c -Cp
 
 ASM_DEFINES_DEBUG+=DEBUG
@@ -226,16 +223,16 @@ NASM_INCLUDES=\
 
 ifeq ($(HOST_BITS),32)
     NASM_OBJ_FORMAT=-fwin32
-    
+
     NASM_DEFINES+=\
         TR_HOST_32BIT \
         TR_TARGET_32BIT
-    
+
     NASM_INCLUDES+=\
         ../compiler/x/i386/runtime
 else
     NASM_OBJ_FORMAT=-fwin64
-    
+
     NASM_DEFINES+=\
         TR_HOST_64BIT \
         TR_TARGET_64BIT

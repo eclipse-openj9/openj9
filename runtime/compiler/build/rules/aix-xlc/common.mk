@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,18 +42,18 @@ JIT_PRODUCT_OBJECTS+=$(JIT_PRODUCT_BUILDNAME_OBJ)
 jit: $(JIT_PRODUCT_SONAME)
 
 $(JIT_PRODUCT_SONAME): $(JIT_PRODUCT_OBJECTS) | jit_createdirs
-	$(SOLINK_CMD) $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(patsubst %,-l%,$(SOLINK_SLINK)) $(SOLINK_EXTRA_ARGS) 
+	$(SOLINK_CMD) $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(patsubst %,-l%,$(SOLINK_SLINK)) $(SOLINK_EXTRA_ARGS)
 
 JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_SONAME))
 
 jit_cleandll::
 	rm -f $(JIT_PRODUCT_SONAME)
 
-$(call RULE.cpp,$(JIT_PRODUCT_BUILDNAME_OBJ),$(JIT_PRODUCT_BUILDNAME_SRC))    
-    
-.PHONY: $(JIT_PRODUCT_BUILDNAME_SRC)
-$(JIT_PRODUCT_BUILDNAME_SRC): | jit_createdirs
-	$(PERL) $(GENERATE_VERSION_SCRIPT) $(PRODUCT_RELEASE) > $@
+$(call RULE.cpp,$(JIT_PRODUCT_BUILDNAME_OBJ),$(JIT_PRODUCT_BUILDNAME_SRC))
+
+# If this target is marked 'phony', make will recompile the generated source, even if it doesn't change.
+$(JIT_PRODUCT_BUILDNAME_SRC): jit_createdirs
+	$(PERL) $(GENERATE_VERSION_SCRIPT) $(PRODUCT_RELEASE) $@
 
 JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_BUILDNAME_SRC))
 
