@@ -58,6 +58,7 @@
 #include "ras/Delimiter.hpp"                   // for Delimiter
 #include "ras/DebugCounter.hpp"
 #include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
 #include "env/CHTable.hpp"
 #include "env/PersistentCHTable.hpp"
 
@@ -4651,4 +4652,24 @@ void
 J9::CodeGenerator::resizeCodeMemory()
    {
    self()->trimCodeMemoryToActualSize();
+   }
+
+
+void
+J9::CodeGenerator::reserveCodeCache()
+   {
+   self()->setCodeCache(self()->fej9()->getDesignatedCodeCache(self()->comp()));
+   if (!self()->getCodeCache()) // Cannot reserve a cache; all are used
+      {
+      // We may reach this point if all code caches have been used up
+      // If some code caches have some space but cannot be used because they are reserved
+      // we will throw an exception in the call to getDesignatedCodeCache
+
+      if (self()->comp()->compileRelocatableCode())
+         {
+         self()->comp()->failCompilation<TR::RecoverableCodeCacheError>("Cannot reserve code cache");
+         }
+
+      self()->comp()->failCompilation<TR::CodeCacheError>("Cannot reserve code cache");
+      }
    }

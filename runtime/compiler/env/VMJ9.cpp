@@ -2354,33 +2354,6 @@ TR_J9VMBase::getAllocationNoZeroPrefetchCodeSnippetAddress(TR::Compilation * com
    }
 #endif
 
-
-U_8 *
-TR_J9VMBase::getCodeCacheBase()
-   {
-   return _jitConfig->codeCache->heapBase;
-   }
-
-U_8 *
-TR_J9VMBase::getCodeCacheBase(TR::CodeCache * codeCache)
-   {
-   // Used by S390 canUseRelativeLongInstructions to get code cache base.
-   return codeCache->getCodeBase();
-   }
-
-U_8 *
-TR_J9VMBase::getCodeCacheTop()
-   {
-   return _jitConfig->codeCache->heapTop;
-   }
-
-U_8 *
-TR_J9VMBase::getCodeCacheTop(TR::CodeCache * codeCache)
-   {
-   // Used by S390 canUseRelativeLongInstructions to get code cache top.
-   return codeCache->getCodeTop();
-   }
-
 // This routine may be called on the compilation thread or from a runtime hook
 //
 void
