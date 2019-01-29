@@ -2263,60 +2263,7 @@ TR_J9VMBase::allocateRelocationData(TR::Compilation * comp, uint32_t numBytes)
 uint8_t *
 TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded)
    {
-   TR::CodeCache * codeCache = comp->cg()->getCodeCache(); // This is the reserved code cache
-   if (NULL == codeCache)
-      {
-      if (isAOT_DEPRECATED_DO_NOT_USE())
-         {
-         comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to get current code cache");
-         }
-#ifdef MCT_DEBUG
-      fprintf(stderr, "Aborting compilation %p\n", comp);
-#endif
-      comp->failCompilation<TR::CodeCacheError>("Failed to get current code cache");
-      }
-
-#ifdef MCT_DEBUG
-   fprintf(stderr, "comp %p ID=%d codeCache=%p wants to allocate %u bytes of code memory. cache has %d available\n",
-           comp, comp->getCompThreadID(), codeCache, warmCodeSize+coldCodeSize, codeCache->getFreeContiguousSpace());
-   if (!codeCache->reserved)
-      {
-      fprintf(stderr, "Code cache %p belonging to comp %p is not reserved\n", codeCache, comp);
-      }
-#endif
-   TR_ASSERT(codeCache->isReserved(), "Code cache should have been reserved.");
-   bool hadClassUnloadMonitor;
-   bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-
-   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, isAOT_DEPRECATED_DO_NOT_USE(), isMethodHeaderNeeded);
-
-   acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
-
-   if (codeCache != comp->cg()->getCodeCache())
-      {
-#ifdef MCT_DEBUG
-      fprintf(stderr, "comp %p ID=%d switched cache to %p\n", comp, comp->getCompThreadID(), codeCache);
-#endif
-      TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");  // Either we didn't get a code cache, or the one we should get is
-      comp->setRelocatableMethodCodeStart(warmCode);
-      comp->cg()->switchCodeCacheTo(codeCache);
-      }
-
-   if (NULL == warmCode)
-      {
-      if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
-         {
-         comp->failCompilation<TR::CodeCacheError>("Failed to allocate code memory");
-         }
-
-#ifdef MCT_DEBUG
-      fprintf(stderr, "Aborting compilation %p\n", comp);
-#endif
-      comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to allocate code memory");
-      }
-
-   TR_ASSERT( !((warmCodeSize && !warmCode) || (coldCodeSize && !coldCode)), "Allocation failed but didn't throw an exception");
-   return warmCode;
+   return comp->cg()->allocateCodeMemoryInner(warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
    }
 
 bool
