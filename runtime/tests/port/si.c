@@ -1854,8 +1854,12 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 	if (0 != rc) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to change current directory rc: %d\n", rc);
 	}
-#else
+#else /* defined(WIN32) */
+#if defined(OSX)
+	const char *utf8 = "/private/tmp/j9sysinfo_test_get_cwd3/";
+#else /* defined(OSX) */
 	const char *utf8 = "/tmp/j9sysinfo_test_get_cwd3/";
+#endif /* defined(OSX) */
 
 	reportTestEntry(portLibrary, testName);
 
@@ -1870,9 +1874,9 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 	}
 #if defined(J9ZOS390)
 	rc = atoe_chdir(utf8);
-#else
+#else /* defined(J9ZOS390) */
 	rc = chdir(utf8);
-#endif
+#endif /* defined(J9ZOS390) */
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", utf8, rc);
 	} else {
