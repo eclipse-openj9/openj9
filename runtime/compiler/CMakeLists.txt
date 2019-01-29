@@ -32,6 +32,7 @@ if(OMR_ARCH_X86)
 	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths
 	set(asm_inc_dirs
 		"-I${j9vm_SOURCE_DIR}/oti/"
+		"-I${j9vm_BINARY_DIR}/oti/"
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/"
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/runtime/"
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/amd64/runtime/"

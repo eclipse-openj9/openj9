@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,10 +34,11 @@ target_link_libraries(constgen
 
 # Add target to generate jilconsts.inc/jilvalues.m4 from the constgen program
 add_custom_command(
-	OUTPUT ${j9vm_SOURCE_DIR}/oti/jilconsts.inc ${j9vm_SOURCE_DIR}/oti/jilvalues.m4
+	OUTPUT ${j9vm_BINARY_DIR}/oti/jilconsts.inc ${j9vm_BINARY_DIR}/oti/jilvalues.m4
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${j9vm_BINARY_DIR}/oti
 	COMMAND  constgen
-	WORKING_DIRECTORY ${j9vm_SOURCE_DIR}
+	WORKING_DIRECTORY ${j9vm_BINARY_DIR}
 )
 add_custom_target(run_constgen
-	DEPENDS ${j9vm_SOURCE_DIR}/oti/jilconsts.inc ${j9vm_SOURCE_DIR}/oti/jilvalues.m4
+	DEPENDS ${j9vm_BINARY_DIR}/oti/jilconsts.inc ${j9vm_BINARY_DIR}/oti/jilvalues.m4
 )
