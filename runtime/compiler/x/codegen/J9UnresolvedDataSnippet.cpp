@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,7 +294,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolAddress(uint8_t *cursor)
          }
 
       cg()->addProjectSpecializedRelocation(cursor,(uint8_t *)getDataSymbolReference()->getOwningMethod(comp)->constantPool(),
-            node ? (uint8_t *)node->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
+            node ? (uint8_t *)(uintptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
                              __FILE__, __LINE__, node);
       }
 
@@ -528,7 +528,7 @@ J9::X86::UnresolvedDataSnippet::fixupDataReferenceInstruction(uint8_t *cursor)
          uint8_t *stringConstantPtr = (cursor - bytesToCopy) + getDataReferenceInstruction()->getBinaryLength() - TR::Compiler->om.sizeofReferenceAddress();
 
          cg()->addProjectSpecializedRelocation(stringConstantPtr, (uint8_t *)getDataSymbolReference()->getOwningMethod(TR::comp())->constantPool(),
-               getDataReferenceInstruction()->getNode() ? (uint8_t *)getDataReferenceInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
+               getDataReferenceInstruction()->getNode() ? (uint8_t *)(uintptr_t)getDataReferenceInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
                     __FILE__, __LINE__, getDataReferenceInstruction()->getNode());
          }
       }

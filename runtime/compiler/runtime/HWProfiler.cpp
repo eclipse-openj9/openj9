@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -791,7 +791,7 @@ TR_HWProfiler::registerRecords(J9JITExceptionTable *metaData, TR::Compilation *c
 
       // Initialize the special first element
       cursor->_bytecodePC = (void *)METADATA_MAPPING_EYECATCHER;
-      cursor->_instructionAddr = (void *)arraySize;
+      cursor->_instructionAddr = (void *)(uintptrj_t)arraySize;
       cursor++;
 
       for (uint32_t i = 0; i < arraySize; i++, cursor++)

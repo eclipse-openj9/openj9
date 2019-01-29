@@ -8290,7 +8290,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                {
                // copy filters in a list, so that we don't have to use filterIndexList
                // to determine if a filter is null later on
-               haveFilter[i] = fej9->getReferenceElement(filters, i) != NULL;
+               haveFilter[i] = fej9->getReferenceElement(filters, i) != 0;
                if (knotEnabled)
                   filterIndexList[i] = knot->getIndex(fej9->getReferenceElement(filters, i));
                }

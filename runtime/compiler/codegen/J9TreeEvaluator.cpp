@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,13 +109,13 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
 
    if (!valueProfileInfo)
       {
-      return NULL;
+      return 0;
       }
 
    TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues() == 0)
       {
-      return NULL;
+      return 0;
       }
 
    if (topClassWasCastClass)

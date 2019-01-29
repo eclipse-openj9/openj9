@@ -117,9 +117,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java8" value="false"/>
 		<flag id="build_vmContinuous" value="true"/>
+		<flag id="env_data64" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
-		<flag id="gc_alignObjects" value="true"/>
 		<flag id="gc_batchClearTLH" value="true"/>
 		<flag id="gc_debugAsserts" value="true"/>
 		<flag id="gc_inlinedAllocFields" value="true"/>
