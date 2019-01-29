@@ -469,7 +469,7 @@ prepareToResumeBackInJava(struct J9PortLibrary* portLibrary, J9VMThread *vmThrea
 	}
 
 	infoType = j9sig_info(sigInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_S390_FPC, &infoName, &infoValue);
-	if (infoType != J9PORT_SIG_VALUE_ADDRESS) {
+	if (infoType != J9PORT_SIG_VALUE_32) {
 		return K8ZOS_GO_DOWN;
 	}
 	*(U_32 *)infoValue = *((U_32 *)vmThread->entryLocalStorage->ceehdlrFPCLocation);
