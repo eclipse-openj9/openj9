@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,31 +22,31 @@
 
 #include "optimizer/IdiomRecognitionUtils.hpp"
 
-#include <algorithm>                       // for std::max, etc
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for int32_t, etc
-#include "codegen/CodeGenerator.hpp"       // for CodeGenerator
-#include "codegen/FrontEnd.hpp"            // for TR_FrontEnd
-#include "compile/Compilation.hpp"         // for Compilation
+#include <algorithm>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                // for PERSISTENT_NEW, etc
-#include "il/Block.hpp"                    // for Block, toBlock
-#include "il/DataTypes.hpp"                // for TR::DataType
-#include "il/ILOpCodes.hpp"                // for ILOpCodes::iconst, etc
-#include "il/ILOps.hpp"                    // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                     // for Node
-#include "il/Node_inlines.hpp"             // for Node::getInt, etc
-#include "il/Symbol.hpp"                   // for Symbol
-#include "il/SymbolReference.hpp"          // for SymbolReference
-#include "il/TreeTop.hpp"                  // for TreeTop
-#include "il/TreeTop_inlines.hpp"          // for TreeTop::getNextTreeTop
-#include "infra/Assert.hpp"                // for TR_ASSERT
-#include "infra/BitVector.hpp"             // for TR_BitVector
-#include "infra/List.hpp"                  // for ListIterator, List, etc
-#include "infra/TRCfgEdge.hpp"             // for CFGEdge
-#include "optimizer/IdiomRecognition.hpp"  // for TR_PCISCNode, etc
-#include "optimizer/Structure.hpp"         // for TR_BlockStructure
-#include "optimizer/TranslateTable.hpp"    // for TR_SetTranslateTable, etc
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "optimizer/IdiomRecognition.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/TranslateTable.hpp"
 
 /************************************/
 /************ Utilities *************/

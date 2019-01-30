@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,30 +22,30 @@
 
 #include "optimizer/LiveVariablesForGC.hpp"
 
-#include <stddef.h>                                 // for NULL
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator
-#include "compile/Compilation.hpp"                  // for Compilation
-#include "compile/OSRData.hpp"                      // for HCRMode
+#include <stddef.h>
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/OSRData.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                         // for TR_Memory, etc
-#include "il/Block.hpp"                             // for Block, toBlock
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/Node.hpp"                              // for Node
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "il/TreeTop.hpp"                           // for TreeTop
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"            // for AutomaticSymbol
+#include "il/symbol/AutomaticSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/BitVector.hpp"                      // for TR_BitVector
-#include "infra/Cfg.hpp"                            // for CFG
-#include "infra/List.hpp"                           // for ListIterator, etc
-#include "infra/TRCfgEdge.hpp"                      // for CFGEdge
-#include "infra/TRCfgNode.hpp"                      // for CFGNode
-#include "optimizer/Optimization.hpp"               // for Optimization
-#include "optimizer/DataFlowAnalysis.hpp"  // for TR_Liveness
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/DataFlowAnalysis.hpp"
 
 // Local live variables for GC
 //

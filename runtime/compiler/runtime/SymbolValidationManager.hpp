@@ -23,13 +23,13 @@
 #ifndef SYMBOL_VALIDATION_MANAGER_INCL
 #define SYMBOL_VALIDATION_MANAGER_INCL
 
-#include <algorithm>                       // for std::max, etc
+#include <algorithm>
 #include <map>
 #include <set>
 #include <vector>
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for int32_t, uint8_t, etc
-#include "env/jittypes.h"                  // for uintptrj_t
+#include <stddef.h>
+#include <stdint.h>
+#include "env/jittypes.h"
 #include "j9.h"
 #include "j9nonbuilder.h"
 #include "infra/TRlist.hpp"

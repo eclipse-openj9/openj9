@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,34 +27,34 @@
 
 #include "codegen/UnresolvedDataSnippet.hpp"
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t, int16_t, etc
-#include "codegen/CodeGenerator.hpp"          // for CodeGenerator, etc
-#include "codegen/InstOpCode.hpp"             // for InstOpCode, etc
-#include "codegen/Instruction.hpp"            // for Instruction
-#include "codegen/MemoryReference.hpp"        // for MemoryReference
-#include "codegen/RealRegister.hpp"           // for RealRegister, etc
-#include "codegen/Register.hpp"               // for Register
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/InstOpCode.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
-#include "codegen/RegisterPair.hpp"           // for RegisterPair
-#include "codegen/Relocation.hpp"             // for AOTcgDiag1, etc
-#include "compile/Compilation.hpp"            // for Compilation
-#include "compile/ResolvedMethod.hpp"         // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"   // for SymbolReferenceTable
+#include "codegen/RegisterPair.hpp"
+#include "codegen/Relocation.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"        // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                     // for uintptrj_t, intptrj_t
-#include "il/DataTypes.hpp"                   // for DataTypes::Address, etc
-#include "il/Node.hpp"                        // for Node
-#include "il/Symbol.hpp"                      // for Symbol
-#include "il/SymbolReference.hpp"             // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"          // for LabelSymbol
-#include "il/symbol/StaticSymbol.hpp"         // for StaticSymbol
-#include "il/symbol/StaticSymbol_inlines.hpp" // for StaticSymbol
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "ras/Debug.hpp"                      // for TR_Debug
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "il/symbol/StaticSymbol_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/CompilerEnv.hpp"
 

@@ -35,15 +35,15 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 
 #include "codegen/OMRCodeGenerator.hpp"
 
-#include <stdint.h>        // for int32_t
-#include "env/IO.hpp"      // for POINTER_PRINTF_FORMAT
-#include "env/jittypes.h"  // for uintptr_t
-#include "infra/List.hpp"  // for List, etc
+#include <stdint.h>
+#include "env/IO.hpp"
+#include "env/jittypes.h"
+#include "infra/List.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "optimizer/Dominators.hpp"
-#include "cs2/arrayof.h"   // for ArrayOf
+#include "cs2/arrayof.h"
 
 class NVVMIRBuffer;
 class TR_BitVector;

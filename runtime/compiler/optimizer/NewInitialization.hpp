@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,11 @@
 #ifndef NEWINITIALIZATION_INCL
 #define NEWINITIALIZATION_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t
-#include "infra/Link.hpp"                     // for TR_LinkHead, TR_Link, etc
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stddef.h>
+#include <stdint.h>
+#include "infra/Link.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_BitVector;
 namespace TR { class Node; }

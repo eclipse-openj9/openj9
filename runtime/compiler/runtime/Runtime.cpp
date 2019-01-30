@@ -22,7 +22,7 @@
 
 #ifdef TR_HOST_X86
 #if defined(LINUX)
-#include <time.h>       // for clock_gettime
+#include <time.h>
 #endif
 #endif   // TR_HOST_X86
 

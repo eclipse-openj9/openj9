@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,26 +22,26 @@
 
 #include "optimizer/SwitchAnalyzer.hpp"
 
-#include <stdint.h>                            // for int8_t, int64_t, uint16_t
-#include <string.h>                            // for NULL, memset
-#include "codegen/FrontEnd.hpp"                // for TR::IO::fprintf, etc
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
-#include "env/IO.hpp"                          // for IO
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes::Int16, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node
-#include "il/Node_inlines.hpp"                 // for Node::getBranchDestination, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG
-#include "infra/List.hpp"                      // for ListIterator, List
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "env/IO.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgEdge.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/TransformUtil.hpp"         // for calculateElementAddress
+#include "optimizer/TransformUtil.hpp"
 
 #define MIN_SIZE_FOR_BIN_SEARCH 4
 #define MIN_CASES_FOR_OPT 4

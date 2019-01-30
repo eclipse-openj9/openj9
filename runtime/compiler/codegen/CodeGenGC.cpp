@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,36 +31,36 @@
 
 #include "codegen/J9CodeGenerator.hpp" // IWYU pragma: keep
 
-#include <stdint.h>                            // for int32_t, uint32_t, etc
-#include <string.h>                            // for memset, NULL
+#include <stdint.h>
+#include <string.h>
 #include "env/StackMemoryRegion.hpp"
-#include "codegen/BackingStore.hpp"            // for TR_BackingStore
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
+#include "codegen/BackingStore.hpp"
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/GCStackAtlas.hpp"            // for GCStackAtlas
-#include "codegen/GCStackMap.hpp"              // for TR_GCStackMap, etc
-#include "codegen/Instruction.hpp"             // for Instruction
-#include "codegen/Linkage.hpp"                 // for Linkage
-#include "codegen/Snippet.hpp"                 // for Snippet
-#include "compile/Compilation.hpp"             // for Compilation
+#include "codegen/GCStackAtlas.hpp"
+#include "codegen/GCStackMap.hpp"
+#include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Snippet.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "env/jittypes.h"                      // for TR_ByteCodeInfo
-#include "il/Node.hpp"                         // for Node
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector
-#include "infra/IGNode.hpp"                    // for IGNodeColour, etc
-#include "infra/InterferenceGraph.hpp"         // for TR_InterferenceGraph
-#include "infra/List.hpp"                      // for ListIterator, List
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/IGNode.hpp"
+#include "infra/InterferenceGraph.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 
 void
 J9::CodeGenerator::createStackAtlas()

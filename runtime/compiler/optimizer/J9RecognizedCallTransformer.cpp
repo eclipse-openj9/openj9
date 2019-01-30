@@ -33,16 +33,16 @@
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                   // for ILOpCode, etc
+#include "il/ILOps.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/Structure.hpp"
-#include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
+#include "codegen/CodeGenerator.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "env/j9method.h"     // for TR_J9MethodBase::isUnsafePut
-#include "optimizer/Optimization_inlines.hpp"  // for trace()
+#include "env/j9method.h"
+#include "optimizer/Optimization_inlines.hpp"
 
 void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode)
    {

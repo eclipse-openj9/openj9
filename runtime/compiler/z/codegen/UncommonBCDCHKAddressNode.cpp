@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,18 +22,18 @@
 
 #include "codegen/UncommonBCDCHKAddressNode.hpp"
 
-#include <stddef.h>                    // for NULL
-#include <stdint.h>                    // for int64_t
-#include <string.h>                    // for strcmp
-#include "compile/Compilation.hpp"     // for LexicalTimer, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
 #include "env/VMJ9.h"
-#include "il/ILOpCodes.hpp"            // for ILOpCodes::pdSetSign, etc
-#include "il/ILOps.hpp"                // for ILOpCode
-#include "il/Node.hpp"                 // for Node
-#include "il/Node_inlines.hpp"         // for Node::getType, etc
-#include "il/TreeTop.hpp"              // for TreeTop
-#include "il/TreeTop_inlines.hpp"      // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"            // for TR_ASSERT
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
 
 
 #define OPT_DETAILS "O^O UNCOMMON BCDCHK ADDRESS NODE: "

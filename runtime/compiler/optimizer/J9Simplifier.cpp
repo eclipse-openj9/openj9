@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,11 +26,11 @@
 #include "optimizer/J9SimplifierHelpers.hpp"
 #include "optimizer/J9SimplifierHandlers.hpp"
 
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "compile/Compilation.hpp"             // for Compilation, comp
-#include "il/Block.hpp"                        // for Block
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "il/Block.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 
 bool

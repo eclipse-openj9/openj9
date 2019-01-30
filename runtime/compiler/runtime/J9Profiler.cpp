@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,46 +21,46 @@
  *******************************************************************************/
 
 #include "runtime/J9Profiler.hpp"
-#include <string.h>                               // for memset, strncmp, etc
+#include <string.h>
 #include "AtomicSupport.hpp"
-#include "codegen/CodeGenerator.hpp"              // for CodeGenerator
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "compile/Compilation.hpp"                // for Compilation
-#include "compile/Method.hpp"                     // for TR_AOTMethodInfo, etc
-#include "compile/ResolvedMethod.hpp"             // for TR_ResolvedMethod
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsUtil.hpp"
-#include "control/Options_inlines.hpp"            // for TR::Options, etc
-#include "control/Recompilation.hpp"              // for TR_Recompilation, etc
-#include "control/RecompilationInfo.hpp"          // for TR_Recompilation, etc
+#include "control/Options_inlines.hpp"
+#include "control/Recompilation.hpp"
+#include "control/RecompilationInfo.hpp"
 #include "env/IO.hpp"
 #include "env/PersistentCHTable.hpp"
-#include "env/PersistentInfo.hpp"                 // for PersistentInfo
+#include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/jittypes.h"                         // for TR_ByteCodeInfo, etc
+#include "env/jittypes.h"
 #include "env/VMJ9.h"
-#include "il/Block.hpp"                           // for Block, toBlock
-#include "il/DataTypes.hpp"                       // for CONSTANT64, etc
-#include "il/ILOpCodes.hpp"                       // for ILOpCodes::iconst, etc
-#include "il/ILOps.hpp"                           // for ILOpCode, etc
-#include "il/Node.hpp"                            // for Node
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                          // for Symbol, etc
-#include "il/SymbolReference.hpp"                 // for SymbolReference, etc
-#include "il/TreeTop.hpp"                         // for TreeTop
-#include "il/TreeTop_inlines.hpp"                 // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"             // for MethodSymbol, etc
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Assert.hpp"                       // for TR_ASSERT
-#include "infra/BitVector.hpp"                    // for TR_BitVector
-#include "infra/Cfg.hpp"                          // for CFG, LOW_FREQ
-#include "infra/List.hpp"                         // for List, ListIterator
-#include "infra/TRCfgNode.hpp"                    // for CFGNode
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgNode.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Structure.hpp"                // for TR_RegionStructure, etc
-#include "optimizer/TransformUtil.hpp"            // for TransformUtil
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/JProfilingValue.hpp"
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9Runtime.hpp"

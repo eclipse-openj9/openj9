@@ -24,7 +24,7 @@
 #define J9_VALUEPROPAGATION_INCL
 
 #include "optimizer/OMRValuePropagation.hpp"
-#include "infra/List.hpp"                       // for ListIterator, List, etc
+#include "infra/List.hpp"
 
 namespace TR { class VP_BCDSign; }
 

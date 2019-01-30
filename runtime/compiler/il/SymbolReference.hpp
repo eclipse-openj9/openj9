@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,11 +25,11 @@
 
 #include "il/J9SymbolReference.hpp"
 
-#include <stdint.h>                          // for int32_t
-#include "env/KnownObjectTable.hpp"      // for KnownObjectTable, etc
-#include "compile/SymbolReferenceTable.hpp"  // for SymbolReferenceTable, etc
-#include "env/jittypes.h"                    // for intptrj_t
-#include "infra/Annotations.hpp"             // for OMR_EXTENSIBLE
+#include <stdint.h>
+#include "env/KnownObjectTable.hpp"
+#include "compile/SymbolReferenceTable.hpp"
+#include "env/jittypes.h"
+#include "infra/Annotations.hpp"
 
 class mcount_t;
 namespace TR { class Symbol; }

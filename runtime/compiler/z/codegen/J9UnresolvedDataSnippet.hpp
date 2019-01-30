@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,9 @@ namespace J9 { typedef J9::Z::UnresolvedDataSnippet UnresolvedDataSnippetConnect
 
 #include "compiler/codegen/J9UnresolvedDataSnippet.hpp"
 
-#include <stdint.h>                // for uint8_t, uint32_t, int32_t
+#include <stdint.h>
 #include "codegen/Snippet.hpp"
-#include "il/SymbolReference.hpp"  // for SymbolReference
+#include "il/SymbolReference.hpp"
 
 namespace TR { class S390WritableDataSnippet; }
 namespace TR { class CodeGenerator; }
