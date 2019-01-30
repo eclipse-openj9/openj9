@@ -418,13 +418,6 @@ public:
    int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
 
    /**
-    * \brief This is just a J9 override of this function and simply redirects
-    *        to the newly named function `trimCodeMemoryToActualSize`.  It exists
-    *        solely to coordinate refactoring with OMR and will be very transient.
-    */
-   void resizeCodeMemory();
-
-   /**
     * \brief Trim the size of code memory required by this method to match the
     *        actual code length required, allowing the reclaimed memory to be
     *        reused.  This is needed when the conservative length estimate

@@ -2319,15 +2319,6 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
    return warmCode;
    }
 
-void
-TR_J9VMBase::resizeCodeMemory(TR::Compilation * comp, U_8 *bufferStart, uint32_t numBytes)
-   {
-   // I don't see a reason to acquire VM access for this call
-   TR::VMAccessCriticalSection resizeCodeMemory(this);
-   TR::CodeCache * codeCache = comp->cg()->getCodeCache();
-   codeCache->resizeCodeMemory(bufferStart, numBytes);
-   }
-
 bool
 TR_J9VMBase::supportsCodeCacheSnippets()
    {
