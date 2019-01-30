@@ -39,7 +39,7 @@ import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 /**
  * Dynamically typed reference to a field, allowing read and write operations, 
@@ -962,5 +962,5 @@ public abstract class VarHandle extends VarHandleInternal {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 	}
-/*[ENDIF]*/ 
+/*[ENDIF] Java12 */ 
 }

@@ -36,7 +36,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
 import java.lang.Module;
@@ -366,7 +366,7 @@ private static void ensureProperties(boolean isInitialization) {
 	Map<String, String> initializedProperties = new Hashtable<String, String>();
 /*[ELSE]
 	Properties initializedProperties = new Properties();
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	if (osEncoding != null) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
@@ -399,8 +399,8 @@ private static void ensureProperties(boolean isInitialization) {
 /*[IF Java12]*/
 	java.lang.VersionProps.init(initializedProperties);
 	/* VersionProps.init(systemProperties) above sets java.specification.version value which is used to set java.vm.specification.version. */
-	systemProperties.put("java.vm.specification.version", systemProperties.getProperty("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
-	systemProperties.put("java.vm.vendor", systemProperties.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
+	initializedProperties.put("java.vm.specification.version", initializedProperties.get("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
+	initializedProperties.put("java.vm.vendor", initializedProperties.get("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
 /*[ELSE]
 	/* VersionProps.init requires systemProperties to be set */
 	systemProperties = initializedProperties;
@@ -419,13 +419,13 @@ private static void ensureProperties(boolean isInitialization) {
 	String javaRuntimeVersion = initializedProperties.get("java.runtime.version"); //$NON-NLS-1$
 /*[ELSE]
 	String javaRuntimeVersion = initializedProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 	if (null != javaRuntimeVersion) {
 	/*[IF Java12]*/
 		String fullVersion = initializedProperties.get("java.fullversion"); //$NON-NLS-1$
 	/*[ELSE]
 		String fullVersion = initializedProperties.getProperty("java.fullversion"); //$NON-NLS-1$
-	/*[ENDIF]*/
+	/*[ENDIF] Java12 */
 		if (null != fullVersion) {
 			initializedProperties.put("java.fullversion", (javaRuntimeVersion + "\n" + fullVersion)); //$NON-NLS-1$ //$NON-NLS-2$
 		}
@@ -436,21 +436,18 @@ private static void ensureProperties(boolean isInitialization) {
 	lineSeparator = initializedProperties.getOrDefault("line.separator", "\n"); //$NON-NLS-1$
 /*[ELSE]
 	lineSeparator = initializedProperties.getProperty("line.separator", "\n"); //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 	/*[IF Sidecar19-SE]*/
 	useLegacyVerPresents = initializedProperties.containsKey("use.legacy.version");
 	/*[ENDIF]*/
 
 	if (isInitialization) {
 		/*[PR CMVC 179976] System.setProperties(null) throws IllegalStateException */
-		try {
 		/*[IF Java12]*/
-			VM.saveProperties(initializedProperties);
+		VM.saveProperties(initializedProperties);
 		/*[ELSE]
-			VM.saveAndRemoveProperties(initializedProperties);
-		/*[ENDIF]*/
-		} catch (NoSuchMethodError e) {
-		}
+		VM.saveAndRemoveProperties(initializedProperties);
+		/*[ENDIF] Java12 */
 	}
 
 	/* create systemProperties from properties Map */
@@ -458,7 +455,7 @@ private static void ensureProperties(boolean isInitialization) {
 	initializeSystemProperties(initializedProperties);
 /*[ELSE]
 	systemProperties = initializedProperties;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 }
 
 /* Converts a Map<String, String> to a properties object.

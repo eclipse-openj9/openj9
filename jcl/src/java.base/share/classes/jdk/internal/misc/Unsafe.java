@@ -32,7 +32,7 @@ import java.security.ProtectionDomain;
 import java.util.Objects;
 /*[IF Java12]*/
 import java.nio.ByteBuffer;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 public final class Unsafe {
 
@@ -424,7 +424,7 @@ public final class Unsafe {
 	 * @param value Object to store in obj
 	 */
 	public native void putReference(Object obj, long offset, Object value);
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 	
 	/**
 	 * Gets the value of the Object in memory referenced by address.
@@ -625,7 +625,7 @@ public final class Unsafe {
 	 */
 	public final native Object compareAndExchangeReference(Object obj, long offset, Object compareValue,
 			Object exchangeValue);
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Atomically gets the value of the byte in the obj parameter referenced by offset.
@@ -807,7 +807,7 @@ public final class Unsafe {
 	 * @param value Object to store in obj
 	 */
 	public native void putReferenceVolatile(Object obj, long offset, Object value);
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Makes permit available for thread parameter.
@@ -2878,7 +2878,7 @@ public final class Unsafe {
 	public final boolean weakCompareAndSetReference(Object obj, long offset, Object compareValue, Object setValue) {
 		return compareAndSetReference(obj, offset, compareValue, setValue);
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Gets the value of the byte in the obj parameter referenced by offset using acquire semantics.
@@ -3000,7 +3000,7 @@ public final class Unsafe {
 	public final Object getReferenceAcquire(Object obj, long offset) {
 		return getReferenceVolatile(obj, offset);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] Java12 */
 
 	/**
 	 * Sets the value of the byte in the obj parameter at memory offset using acquire semantics.
@@ -3122,7 +3122,7 @@ public final class Unsafe {
 	public final void putReferenceRelease(Object obj, long offset, Object value) {
 		putReferenceVolatile(obj, offset, value);
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 	
 	/**
 	 * Gets the value of the byte in the obj parameter referenced by offset.
@@ -3244,7 +3244,7 @@ public final class Unsafe {
 	public final Object getReferenceOpaque(Object obj, long offset) {
 		return getReferenceVolatile(obj, offset);
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Sets the value of the byte in the obj parameter at memory offset.
@@ -3366,7 +3366,7 @@ public final class Unsafe {
 	public final void putReferenceOpaque(Object obj, long offset, Object value) {
 		putReferenceVolatile(obj, offset, value);
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Get the load average in the system.
@@ -4339,7 +4339,7 @@ public final class Unsafe {
 	public final Object getAndSetReference(Object obj, long offset, Object value) {
 		for (;;) {
 			Object objectAtOffset = getReferenceVolatile(obj, offset);
-			if (weakCompareAndSetReference(obj, offset, objectAtOffset, value)) {
+			if (compareAndSetReference(obj, offset, objectAtOffset, value)) {
 				return objectAtOffset;
 			}
 		}
@@ -4384,7 +4384,7 @@ public final class Unsafe {
 			}
 		}
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Atomically OR's the given value to the current value of the 
@@ -5837,7 +5837,7 @@ public final class Unsafe {
 	public void invokeCleaner(ByteBuffer arg) {
 		throw new UnsupportedOperationException("Stub for Java 12 compilation"); //$NON-NLS-1$
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/* 
 	 * Private methods 

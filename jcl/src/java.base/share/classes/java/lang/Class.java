@@ -27,6 +27,9 @@ import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.AllPermission;
 import java.security.Permissions;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+/*[ENDIF] Java12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
@@ -40,16 +43,13 @@ import java.util.Map;
 import java.util.Set;
 /*[IF Java12]*/
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.lang.ref.*;
-/*[IF Java12]*/
-import java.lang.constant.ClassDesc;
-/*[ENDIF]*/
 
 import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -4560,5 +4560,5 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	public Optional<ClassDesc> describeConstable() {
 		throw new UnsupportedOperationException("Stub for Java 12 compilation");
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 }

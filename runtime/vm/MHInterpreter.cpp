@@ -63,6 +63,8 @@ static const char * names[] = {
 	"J9_METHOD_HANDLE_KIND_VARHANDLE_INVOKE_GENERIC",
 /* #ifdef J9VM_OPT_PANAMA */
 	"J9_METHOD_HANDLE_KIND_NATIVE",
+/* #else */
+	"",
 /* #endif J9VM_OPT_PANAMA */
 	"J9_METHOD_HANDLE_KIND_FILTER_ARGUMENTS_WITH_COMBINER",
 };
@@ -1377,23 +1379,18 @@ VM_MHInterpreter::filterArgumentsWithCombiner(j9object_t methodHandle)
 	UDATA *spFirstFilterArgSlot = _currentThread->sp + filterArgSlots;
 
 	/* [... filterHandle args descriptionBytes MethodTypeFrame] */
-	UDATA *spPriorToFrameBuild = _currentThread->sp;
 	(void)buildMethodTypeFrame(_currentThread, filterHandleType);
 
-	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle args] */
-	_currentThread->sp -= (filterArgSlots  + 1);
-	memcpy(_currentThread->sp, spPriorToFrameBuild, sizeof(UDATA) * (filterArgSlots+1));
-
-	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame filterHandle args] */
-	insertPlaceHolderFrame(filterArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FILTERARGUMENTSWITHCOMBINERPLACEHOLDER_METHOD(_vm));
-
-	/* Get combinerHandle */
+	/* Get combinerHandle, combinerHandle.type and combinerHandle.type.argSlots */
 	j9object_t combinerHandle = getCombinerHandleForFilter(methodHandle);
+	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
+	U_32 combinerArgSlots = getMethodTypeArgSlots(combinerType);
 
-	/* Replace filterHandle with combinerHandle and adjust sp according to combinerHandle.type.argSlots */
-	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame combinerHandle filterArgs] */
-	((j9object_t *)_currentThread->sp)[filterArgSlots] = combinerHandle;
-	UDATA *spCombinerSlot = _currentThread->sp + filterArgSlots;
+	/* Add combinerHandle to top of stack and adjust sp to make room for combinerHandle.type.argSlots */
+	/* [... filterHandle args descriptionBytes MethodTypeFrame combinerHandle combinerArgs] */
+	_currentThread->sp -= (combinerArgSlots + 1);
+	((j9object_t *)_currentThread->sp)[combinerArgSlots] = combinerHandle;
+	UDATA *spCombinerSlot = _currentThread->sp + combinerArgSlots;
 
 	/* Copy all arguments specified by argumentIndices from filterHandle to the stack slots used by combinerHandler */
 	U_32 arrayIndex = 0;
@@ -1423,7 +1420,16 @@ VM_MHInterpreter::filterArgumentsWithCombiner(j9object_t methodHandle)
 			*spCombinerSlot = *(spFirstFilterArgSlot - argumentTypeSlots - 1);
 		}
 	}
-	_currentThread->sp = spCombinerSlot; /* after loop spCombinerSlot is at the top of the combiner arguments */
+	/* after loop spCombinerSlot is at the top of the combiner arguments */
+	Assert_VM_true(spCombinerSlot == _currentThread->sp);
+
+	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame filterHandle combinerArgs] */
+	insertPlaceHolderFrame(combinerArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FILTERARGUMENTSWITHCOMBINERPLACEHOLDER_METHOD(_vm));
+
+	/* insertPlaceHolderFrame will replace combinerHandle with methodHandle. This should be undone so the stack is correctly 
+	 * prepared to call the combiner handle */
+	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame combinerHandle combinerArgs] */
+	((j9object_t *)_currentThread->sp)[combinerArgSlots] = combinerHandle;
 
 	return combinerHandle;
 }
@@ -1434,7 +1440,7 @@ VM_MHInterpreter::replaceReturnValueForFilterArgumentsWithCombiner()
 	UDATA *bp = _currentThread->arg0EA - (sizeof(J9SFStackFrame)/sizeof(UDATA*));
 	J9SFStackFrame *frame = (J9SFStackFrame*)(bp);
 
-	/* [... filterHandle args descriptionBytes MethodTypeFrame args filterHandle PlaceHolderFrame combinerReturnValue] */
+	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame combinerReturnValue] */
 	j9object_t filterHandle = *(j9object_t*)_currentThread->arg0EA;
 	j9object_t filterType = getMethodHandleMethodType(filterHandle);
 	j9object_t argumentTypes = getMethodTypeArguments(filterType);
@@ -1472,8 +1478,8 @@ VM_MHInterpreter::replaceReturnValueForFilterArgumentsWithCombiner()
 	_currentThread->arg0EA = UNTAGGED_A0(mtFrame);
 	_currentThread->sp = mhPtr - filterArgSlots;
 
-	/* Overwrite initial filterHandle with fitlerHandle.handle */
-	j9object_t nextHandle = J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_HANDLE(_currentThread, filterHandle);
+	/* Overwrite initial filterHandle with filterHandle.next */
+	j9object_t nextHandle = J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_NEXT(_currentThread, filterHandle);
 	*(j9object_t*)(mhPtr) = nextHandle;
 
 	/* Add the combinerReturnValue at filterPosition */

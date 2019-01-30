@@ -275,7 +275,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/ConvertHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="handle" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" jcl="se12"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" jcl="se12"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" jcl="se12"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="startPos" signature="I" flags="opt_methodHandle"/>

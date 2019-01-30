@@ -63,7 +63,7 @@ import jdk.internal.access.JavaLangAccess;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
 /*[ELSE] Sidecar19-SE-OpenJ9
@@ -2794,15 +2794,28 @@ public class MethodHandles {
 
 /*[IF Java12]*/
 	/**
-	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
+	 * Modifies a MethodHandle by applying a preprocessor handle as a filter to one of the arguments.
 	 * The preprocessor's return type must be the same as the argument in <i>handle</i> at the <i>filterPosition</i>.
-	 * In all cases, the preprocessor handle accepts a subset of the arguments for the handle.
+	 * The preprocessor handle accepts a subset of the original methods arguments, the subset and their order are 
+	 * dictated by the array <i>argumentIndices</i>.
+	 * 
+	 * Pseudocode example:
+	 * handle: D original(A, B, C)
+	 * filterPosition: 1
+	 * preprocessor:  B filter(B, A)
+	 * argumentIndices: {1, 0}
+	 * 
+	 * resulting handle:
+	 * D result(A a, B b, C c) {
+	 * 	B e = filter(b, a)
+	 * 	return original(a, e, c)
+	 * }
 	 *
   	 * @param handle - the handle to call after preprocessing
  	 * @param filterPosition - the starting position to filter arguments
 	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
-	 * @param argumentIndices - an array of indices of incoming arguments from the handle
-	 * @return a MethodHandle that preprocesses some of the arguments to the handle before calling the next handle
+	 * @param argumentIndices - an array of indices mapping the handle's arguments to the preprocessors inputs
+	 * @return a MethodHandle that preprocesses some of the arguments to the handle
 	 * @throws NullPointerException - if any of the arguments are null
 	 * @throws IllegalArgumentException - if the preprocessor's return type differs from the first argument type of the handle,
 	 *                      or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
@@ -2811,12 +2824,18 @@ public class MethodHandles {
 	 */
 	static MethodHandle filterArgumentsWithCombiner(MethodHandle handle, int filterPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 
+		/* create defensive copy of argument indices */
+		int[] passedInargumentIndices = EMPTY_ARG_POSITIONS;
+		if (0 != argumentIndices.length) {
+			passedInargumentIndices = argumentIndices.clone();
+		}
+
 		MethodType handleType = handle.type; // implicit nullcheck
 		MethodType preprocessorType = preprocessor.type; // implicit nullcheck
 		Class<?> preprocessorReturnClass = preprocessorType.returnType;
 		final int handleTypeParamCount = handleType.parameterCount();
 		final int preprocessorTypeParamCount = preprocessorType.parameterCount();
-		final int argIndexCount = argumentIndices.length;
+		final int argIndexCount = passedInargumentIndices.length;
 		
 		if ((filterPosition < 0) || (filterPosition >= handleTypeParamCount)) {
 			/*[MSG "K0637", "The value of {0}: {1} must be in a range from 0 to {2}"]*/
@@ -2833,10 +2852,10 @@ public class MethodHandles {
 		}
 		
 		for (int i = 0; i < argIndexCount; i++) {
-			if ((argumentIndices[i] < 0) || (argumentIndices[i] >= handleTypeParamCount)) {
+			if ((passedInargumentIndices[i] < 0) || (passedInargumentIndices[i] >= handleTypeParamCount)) {
 				/*[MSG "K0637", "The value of {0}: {1} must be in a range from 0 to {2}"]*/
 				throw new IllegalArgumentException(Msg.getString("K0637", new Object[] { //$NON-NLS-1$
-								"argument index", Integer.toString(argumentIndices[i]),  //$NON-NLS-1$
+								"argument index", Integer.toString(passedInargumentIndices[i]),  //$NON-NLS-1$
 								Integer.toString(handleTypeParamCount)}));
 			}
 		}
@@ -2854,9 +2873,9 @@ public class MethodHandles {
 							Integer.toString(filterPosition)}));
 		}
 		
-		validateParametersOfCombiner(argIndexCount, preprocessorTypeParamCount, preprocessorType, handleType, argumentIndices, filterPosition, 1);
+		validateParametersOfCombiner(argIndexCount, preprocessorTypeParamCount, preprocessorType, handleType, passedInargumentIndices, filterPosition, 1);
 
-		MethodHandle result = FilterArgumentsWithCombinerHandle.get(handle, filterPosition, preprocessor, argumentIndices);
+		MethodHandle result = FilterArgumentsWithCombinerHandle.get(handle, filterPosition, preprocessor, passedInargumentIndices);
 
 		return result;
 	}
@@ -2882,7 +2901,7 @@ public class MethodHandles {
 	static MethodHandle foldArgumentsWithCombiner(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 		return foldArguments(handle, foldPosition, preprocessor, argumentIndices);
 	}
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 
 	/**
 	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.

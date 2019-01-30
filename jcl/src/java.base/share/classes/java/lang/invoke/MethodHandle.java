@@ -44,7 +44,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
@@ -121,7 +121,7 @@ public abstract class MethodHandle {
 	/*[ENDIF]*/
 	/*[IF Java12]*/
 	static final byte KIND_FILTERARGUMENTS_WITHCOMBINER = 33;
-	/*[ENDIF]*/
+	/*[ENDIF] Java12 */
 
 /*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
@@ -1379,7 +1379,7 @@ public abstract class MethodHandle {
 	private MethodHandle filterArgumentsWithCombinerPlaceHolder() {
 		return this;
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] Java12 */
 
 	/*[IF ]*/
 	/*
