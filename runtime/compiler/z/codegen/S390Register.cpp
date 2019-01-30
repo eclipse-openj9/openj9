@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,26 +22,26 @@
 
 #include "z/codegen/S390Register.hpp"
 
-#include <algorithm>                      // for std::max
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for int32_t, uint16_t
-#include "codegen/CodeGenerator.hpp"      // for CodeGenerator
-#include "codegen/FrontEnd.hpp"           // for TR_FrontEnd
-#include "codegen/Register.hpp"           // for Register
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterKinds::TR_SSR
-#include "compile/Compilation.hpp"        // for Compilation
+#include <algorithm>
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"               // for DataType, etc
-#include "il/ILOps.hpp"                   // for ILOpCode
-#include "il/Node.hpp"                    // for Node, rcount_t
-#include "il/Node_inlines.hpp"            // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                  // for Symbol
-#include "il/SymbolReference.hpp"         // for SymbolReference
-#include "il/symbol/AutomaticSymbol.hpp"  // for AutomaticSymbol
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "infra/Flags.hpp"                // for flags8_t
-#include "infra/List.hpp"                 // for List, ListIterator
-#include "ras/Debug.hpp"                  // for TR_DebugBase
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/List.hpp"
+#include "ras/Debug.hpp"
 
 TR_StorageReference::TR_StorageReference(TR::SymbolReference *t, TR::Compilation *c) : _temporary(t),
                                                                                      _node(NULL),

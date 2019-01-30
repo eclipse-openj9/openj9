@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,49 +22,49 @@
 
 #include "optimizer/SequentialStoreSimplifier.hpp"
 
-#include <limits.h>                             // for INT_MAX
-#include <stddef.h>                             // for NULL, size_t
-#include <stdint.h>                             // for intptr_t, int64_t, etc
-#include <stdio.h>                              // for printf, fprintf, etc
-#include <string.h>                             // for memmove, memset
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                 // for feGetEnv
-#include "codegen/Linkage.hpp"                  // for Linkage
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Linkage.hpp"
 #include "codegen/StorageInfo.hpp"
-#include "compile/Compilation.hpp"              // for Compilation, etc
-#include "compile/SymbolReferenceTable.hpp"     // for SymbolReferenceTable
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"          // for TR::Options, etc
-#include "cs2/bitvectr.h"                       // for ABitVector
-#include "cs2/sparsrbit.h"                      // for ASparseBitVector, etc
+#include "control/Options_inlines.hpp"
+#include "cs2/bitvectr.h"
+#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                     // for TR_Memory, etc
+#include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                         // for Block, toBlock
-#include "il/DataTypes.hpp"                     // for DataTypes::Int8, etc
-#include "il/ILOpCodes.hpp"                     // for ILOpCodes::treetop, etc
-#include "il/ILOps.hpp"                         // for ILOpCode, etc
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Node_inlines.hpp"                  // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference
-#include "il/TreeTop.hpp"                       // for TreeTop
-#include "il/TreeTop_inlines.hpp"               // for TreeTop::getNode, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"   // for ResolvedMethodSymbol
-#include "infra/Array.hpp"                      // for TR_Array
-#include "infra/Assert.hpp"                     // for TR_ASSERT
-#include "infra/Cfg.hpp"                        // for CFG
-#include "infra/Link.hpp"                       // for TR_Pair
-#include "infra/List.hpp"                       // for TR_ScratchList, List, etc
-#include "infra/TRCfgEdge.hpp"                  // for CFGEdge
-#include "infra/TreeServices.hpp"               // for TR_AddressTree
-#include "optimizer/Optimization.hpp"           // for Optimization
-#include "optimizer/OptimizationManager.hpp"    // for OptimizationManager
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TreeServices.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"              // for Optimizer
-#include "optimizer/Structure.hpp"              // for TR_BlockStructure, etc
-#include "ras/Debug.hpp"                        // for TR_DebugBase
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "ras/Debug.hpp"
 
 
 #define OPT_DETAILS "O^O SEQUENTIAL STORE TRANSFORMATION: "

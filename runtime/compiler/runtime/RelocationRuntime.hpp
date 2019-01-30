@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 #include "env/j9method.h"
 #include "runtime/HWProfiler.hpp"
 #include "env/VMJ9.h"
-#include "env/J9CPU.hpp" // for TR_ProcessorFeatureFlags
+#include "env/J9CPU.hpp"
 
 namespace TR { class CompilationInfo; }
 class TR_RelocationRecord;

@@ -32,7 +32,7 @@
 #include "optimizer/RematTools.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/DebugCounter.hpp"
-#include "infra/Checklist.hpp"             // for TR::NodeChecklist
+#include "infra/Checklist.hpp"
 
 TR_Structure* fakeRegion(TR::Compilation *comp);
 

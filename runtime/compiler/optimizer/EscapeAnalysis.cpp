@@ -26,69 +26,69 @@
 
 #include "optimizer/EscapeAnalysis.hpp"
 
-#include <algorithm>                           // for std::max, etc
-#include <stdint.h>                            // for int32_t, etc
-#include <stdio.h>                             // for NULL, printf, etc
-#include <string.h>                            // for strncmp, memset, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, etc
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
-#include "compile/Compilation.hpp"             // for Compilation, etc
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/Method.hpp"                  // for TR_Method
+#include <algorithm>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/RecognizedMethods.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
+#include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "control/Recompilation.hpp"           // for TR_Recompilation
-#include "control/RecompilationInfo.hpp"           // for TR_Recompilation
+#include "control/Options_inlines.hpp"
+#include "control/Recompilation.hpp"
+#include "control/RecompilationInfo.hpp"
 #include "cs2/bitvectr.h"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "env/VMAccessCriticalSection.hpp"     // for VMAccessCriticalSection
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block, toBlock
-#include "il/DataTypes.hpp"                    // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::New, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, etc
-#include "il/Node.hpp"                         // for Node, etc
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                       // for Symbol, etc
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/AutomaticSymbol.hpp"       // for AutomaticSymbol
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                       // for CFG, etc
-#include "infra/Checklist.hpp"                 // for NodeChecklist, etc
-#include "infra/Link.hpp"                      // for TR_LinkHead
-#include "infra/List.hpp"                      // for TR_ScratchList, etc
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Checklist.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
-#include "optimizer/Inliner.hpp"               // for TR_InlineCall
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
+#include "optimizer/Inliner.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
-#include "optimizer/TransformUtil.hpp"         // for TransformUtil
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
-#include "optimizer/UseDefInfo.hpp"            // for TR_UseDefInfo, etc
+#include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "optimizer/LocalOpts.hpp"
 #include "optimizer/MonitorElimination.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase, etc
+#include "ras/Debug.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9Runtime.hpp"
 

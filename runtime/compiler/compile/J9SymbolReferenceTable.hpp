@@ -34,9 +34,9 @@ namespace J9 { typedef J9::SymbolReferenceTable SymbolReferenceTableConnector; }
 
 #include "compile/OMRSymbolReferenceTable.hpp"
 
-#include <stddef.h>         // for size_t
-#include <stdint.h>         // for int32_t, uint32_t
-#include "env/jittypes.h"   // for intptrj_t, uintptrj_t
+#include <stddef.h>
+#include <stdint.h>
+#include "env/jittypes.h"
 
 class TR_BitVector;
 class TR_PersistentClassInfo;

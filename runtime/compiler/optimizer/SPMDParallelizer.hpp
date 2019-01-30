@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #ifndef SPMDPARALLELIZER_INCL
 #define SPMDPARALLELIZER_INCL
 
-#include "optimizer/GeneralLoopUnroller.hpp"     // for OptimizationManager
+#include "optimizer/GeneralLoopUnroller.hpp"
 
 class TR_SPMDKernelParallelizer : public TR_LoopTransformer
    {

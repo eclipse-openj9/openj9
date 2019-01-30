@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,32 +22,32 @@
 
 #include "env/CHTable.hpp"
 
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, etc
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/KnownObjectTable.hpp"        // for KnownObjectTable, etc
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
+#include "env/KnownObjectTable.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentCHTable.hpp"           // for TR_PersistentCHTable
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
-#include "env/VMAccessCriticalSection.hpp"     // for VMAccessCriticalSection
+#include "env/PersistentCHTable.hpp"
+#include "env/PersistentInfo.hpp"
+#include "env/jittypes.h"
+#include "env/ClassTableCriticalSection.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Array.hpp"                     // for TR_Array
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/List.hpp"                      // for ListIterator, etc
-#include "optimizer/PreExistence.hpp"          // for TR_InnerAssumption
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "optimizer/PreExistence.hpp"
 
 void
 TR_PreXRecompile::dumpInfo()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "ras/HashTable.hpp"  // for TR_HashTable, TR_HashTableEntry, etc
+#include "ras/HashTable.hpp"
 
-#include <stddef.h>             // for size_t
-#include <stdint.h>             // for uint32_t
-#include <string.h>             // for memcpy
-#include "env/TRMemory.hpp"     // for TR_AllocationKind::heapAlloc, etc
-#include "infra/Assert.hpp"     // for TR_ASSERT
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "env/TRMemory.hpp"
+#include "infra/Assert.hpp"
 
 void *
 TR_HashTableEntry::operator new[] (size_t s, TR_Memory *mem)

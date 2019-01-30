@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,20 +19,20 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for int32_t
+#include <stddef.h>
+#include <stdint.h>
 #include "optimizer/HCRGuardAnalysis.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "compile/Compilation.hpp"         // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"                // for TR_Memory, etc
-#include "il/Node.hpp"                     // for Node, vcount_t
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "infra/Assert.hpp"                // for TR_ASSERT
-#include "infra/BitVector.hpp"             // for TR_BitVector
-#include "infra/Checklist.hpp"             // for TR::NodeChecklist
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Checklist.hpp"
 #include "optimizer/FearPointAnalysis.hpp"
 
 static bool containsPrepareForOSR(TR::Block *block)

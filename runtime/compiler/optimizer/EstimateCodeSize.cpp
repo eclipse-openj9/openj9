@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,12 +23,12 @@
 #include "env/StackMemoryRegion.hpp"
 #include "optimizer/EstimateCodeSize.hpp"
 
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "compile/Compilation.hpp"             // for Compilation
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "optimizer/CallInfo.hpp"              // for TR_CallSite, etc
-#include "ras/LogTracer.hpp"                   // for heuristicTrace
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "optimizer/CallInfo.hpp"
+#include "ras/LogTracer.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,24 +23,24 @@
 #ifndef IDIOMRECOGNITION_INCL
 #define IDIOMRECOGNITION_INCL
 
-#include <stdint.h>                           // for uint16_t, uint8_t, etc
-#include <string.h>                           // for NULL, memset
-#include "compile/Compilation.hpp"            // for Compilation
-#include "compile/CompilationTypes.hpp"       // for TR_Hotness
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/DataTypes.hpp"                   // for DataTypes, etc
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes::NumIlOps, etc
-#include "il/ILOps.hpp"                       // for TR::ILOpCode
-#include "il/ILProps.hpp"                     // for ILTypeProp::Size_1
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/Flags.hpp"                    // for flags32_t, etc
-#include "infra/HashTab.hpp"                  // for TR_HashTabInt
-#include "infra/Link.hpp"                     // for TR_Pair, TR_Link
-#include "infra/List.hpp"                     // for List, etc
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/ILProps.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
+#include "infra/HashTab.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "infra/TRlist.hpp"
-#include "optimizer/LoopCanonicalizer.hpp"    // for TR_LoopTransformer
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "optimizer/LoopCanonicalizer.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_CISCTransformer;
 class TR_RegionStructure;

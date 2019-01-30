@@ -21,33 +21,33 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
-#include "env/KnownObjectTable.hpp"        // for KnownObjectTable, etc
+#include "env/KnownObjectTable.hpp"
 #include "compile/AliasBuilder.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/Method.hpp"                  // for mcount_t
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#include "cs2/hashtab.h"                       // for HashTable<>::Cursor, etc
+#include "cs2/hashtab.h"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_HeapMemory, etc
+#include "env/TRMemory.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "env/jittypes.h"
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol, etc
-#include "il/symbol/StaticSymbol_inlines.hpp"  // for StaticSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
+#include "il/SymbolReference.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "il/symbol/StaticSymbol_inlines.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "ilgen/IlGen.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/List.hpp"                      // for List, ListIterator, etc
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/J9TransformUtil.hpp"

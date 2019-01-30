@@ -22,14 +22,14 @@
 
 #include "codegen/TreeEvaluator.hpp"
 
-#include "util_api.h"                           // for instanceOfOrCheckCast, instanceOfOrCheckCastNoCacheUpdate
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
+#include "util_api.h"
+#include "codegen/CodeGenerator.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                           // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/VMJ9.h"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/Node.hpp"
-#include "il/Node_inlines.hpp"                  // for getFirstChild, etc
+#include "il/Node_inlines.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"

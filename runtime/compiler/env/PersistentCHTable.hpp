@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,11 @@
 #ifndef TR_PERSISTENTCHTABLE_INCL
 #define TR_PERSISTENTCHTABLE_INCL
 
-#include <stdint.h>                      // for int32_t, uint8_t
-#include "compile/CompilationTypes.hpp"  // for TR_Hotness
-#include "env/TRMemory.hpp"              // for TR_Memory, etc
-#include "il/DataTypes.hpp"              // for TR_YesNoMaybe
-#include "infra/Link.hpp"                // for TR_LinkHead
+#include <stdint.h>
+#include "compile/CompilationTypes.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "infra/Link.hpp"
 
 #define CLASSHASHTABLE_SIZE  (4001) // close to 8000 classes will be loaded in WebSphere
 

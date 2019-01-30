@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,16 +23,16 @@
 #ifndef LOOPALIASREFINER_INCL
 #define LOOPALIASREFINER_INCL
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "il/Node.hpp"                        // for Node, vcount_t
-#include "il/SymbolReference.hpp"             // for SymbolReference
-#include "infra/Assert.hpp"                   // for TR_ASSERT
-#include "infra/BitVector.hpp"                // for TR_BitVector
-#include "infra/List.hpp"                     // for List (ptr only), etc
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
 #include "optimizer/LoopVersioner.hpp"
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_InductionVariable;
 class TR_RegionStructure;

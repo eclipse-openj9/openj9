@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,18 +24,18 @@
 #define J9_PROFILER_INCL
 
 #include <map>
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for int32_t, uint32_t, etc
-#include "codegen/FrontEnd.hpp"               // for TR_FrontEnd
-#include "compile/Compilation.hpp"            // for Compilation
-#include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "env/jittypes.h"                     // for uintptrj_t
-#include "il/DataTypes.hpp"                   // for DataTypes
-#include "il/Node.hpp"                        // for vcount_t
-#include "infra/Flags.hpp"                    // for flags32_t
-#include "infra/Link.hpp"                     // for TR_Link
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 #include "env/VMJ9.h"
 #include "infra/TRlist.hpp"
 #include "runtime/J9ValueProfiler.hpp"

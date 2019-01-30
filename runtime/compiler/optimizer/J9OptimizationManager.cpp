@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,20 +21,20 @@
  *******************************************************************************/
 
 #include "optimizer/OptimizationManager.hpp"
-#include "optimizer/OptimizationManager_inlines.hpp"        // for OptimizationManager::self, etc
+#include "optimizer/OptimizationManager_inlines.hpp"
 
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for feGetEnv
-#include "compile/Compilation.hpp"               // for Compilation
-#include "compile/CompilationTypes.hpp"          // for TR_Hotness
-#include "compile/Method.hpp"                    // for TR_Method
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/DataTypes.hpp"                      // for etc
+#include "il/DataTypes.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "infra/Flags.hpp"                       // for flags32_t
-#include "optimizer/Optimizations.hpp"           // for Optimizations, etc
+#include "infra/Flags.hpp"
+#include "optimizer/Optimizations.hpp"
 
 
 namespace TR { class Optimizer; }
