@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -987,55 +987,57 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 	/* try to remove older generation cache snapshot first */
 	for (UDATA i = generationStart; i <= lastGeneration; i++) {
 		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, i, false);
-		/* No check for the return value of getCachePathName() as it always returns 0 */
-		SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
-		if (EsIsFile == j9file_attr(pathFileName)) {
-			IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
+		if (0 == SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen)) {
+			if (EsIsFile == j9file_attr(pathFileName)) {
+				IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
 
-			if (0 == rc) {
-				noSnapshotExists = false;
-				snapshotStatus = J9SH_DESTROYED_OLDER_GEN_SNAPSHOT;
-				CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN, snapshotName);
-			} else if (-2 == rc) {
-				noSnapshotExists = false;
-				snapshotStatus = J9SH_DESTROY_FAILED_OLDER_GEN_SNAPSHOT;
-				returnVal = snapshotStatus;
-				CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN, snapshotName);
+				if (0 == rc) {
+					noSnapshotExists = false;
+					snapshotStatus = J9SH_DESTROYED_OLDER_GEN_SNAPSHOT;
+					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN, snapshotName);
+				} else if (-2 == rc) {
+					noSnapshotExists = false;
+					snapshotStatus = J9SH_DESTROY_FAILED_OLDER_GEN_SNAPSHOT;
+					returnVal = snapshotStatus;
+					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN, snapshotName);
+				}
+				/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
 			}
-			/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
 		}
+		/* silently ignore if getCachePathName() does not return 0 */
 	}
 
 	/* try to remove current generation cache snapshot */
 	if (OSCACHE_CURRENT_CACHE_GEN == generationEnd) {
 		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, OSCACHE_CURRENT_CACHE_GEN, false);
-		/* No check for the return value of getCachePathName() as it always returns 0 */
-		SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
-		if (EsIsFile == j9file_attr(pathFileName)) {
-			IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
+		if (0 == SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen)) {
+			if (EsIsFile == j9file_attr(pathFileName)) {
+				IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
 
-			if (0 == rc) {
-				/* Destroy the snapshot successfully */
-				J9PortShcVersion versionData;
+				if (0 == rc) {
+					/* Destroy the snapshot successfully */
+					J9PortShcVersion versionData;
 
-				noSnapshotExists = false;
-				memset(&versionData, 0, sizeof(J9PortShcVersion));
-				/* Do not care about the getValuesFromShcFilePrefix() return value */
-				getValuesFromShcFilePrefix(PORTLIB, nameWithVGen, &versionData);
-				if (J9SH_FEATURE_COMPRESSED_POINTERS == versionData.feature) {
-					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR, snapshotName);
-				} else if (J9SH_FEATURE_NON_COMPRESSED_POINTERS == versionData.feature) {
-					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR, snapshotName);
-				} else {
-					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED, snapshotName);
+					noSnapshotExists = false;
+					memset(&versionData, 0, sizeof(J9PortShcVersion));
+					/* Do not care about the getValuesFromShcFilePrefix() return value */
+					getValuesFromShcFilePrefix(PORTLIB, nameWithVGen, &versionData);
+					if (J9SH_FEATURE_COMPRESSED_POINTERS == versionData.feature) {
+						CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR, snapshotName);
+					} else if (J9SH_FEATURE_NON_COMPRESSED_POINTERS == versionData.feature) {
+						CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR, snapshotName);
+					} else {
+						CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED, snapshotName);
+					}
+				} else if (-2 == rc) {
+					noSnapshotExists = false;
+					returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_SNAPSHOT;
+					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN, snapshotName);
 				}
-			} else if (-2 == rc) {
-				noSnapshotExists = false;
-				returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_SNAPSHOT;
-				CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN, snapshotName);
 			}
 			/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
 		}
+		/* silently ignore if getCachePathName() does not return 0 */
 	}
 	if (true == noSnapshotExists) {
 		CLM_ERR_TRACE(J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST);

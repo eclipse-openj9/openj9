@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,12 @@
  */
 
 extern "C" {
+
+#if defined(WIN32)
+/* include stdlib.h for _MAX_PATH on Windows */
+#include <stdlib.h>
+#endif /* defined(WIN32) */
+
 #include "j9user.h"
 #include "j9.h"
 #include "j9protos.h"
@@ -87,6 +93,8 @@ extern "C" {
 #define SHARED_STRING_PUDDLE_KEY_LENGTH 19 /* pool key + 5 */
 
 #define SHR_MODULE_UPGRADE_PATH_SYS_PROP	SYSPROP_JDK_MODULE_UPGRADE_PATH
+/* The mutex name for nonpersistent cache on WIN is cache file name appeneded with string "_mutex_set0", "_mutex_set1", or "_mutex_set2"  */
+#define J9SH_WIN_MUTEX_EXTRA_LEN (strlen(J9SH_MUTEX_STR) + strlen(J9SH_SET_STR) + 1)
 
 #define SHRINIT_TRACE(verbose, var) if (verbose) j9nls_printf(PORTLIB, J9NLS_INFO, var)
 #define SHRINIT_TRACE1(verbose, var, p1) if (verbose) j9nls_printf(PORTLIB, J9NLS_INFO, var, p1)
@@ -388,6 +396,7 @@ static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA className
 static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize);
 static char* generateStartupHintsKey(J9JavaVM *vm);
 static void fetchStartupHintsFromSharedCache(J9VMThread* vmThread);
+static IDATA checkCacheFilePath(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_32 cacheType);
 
 typedef struct J9SharedVerifyStringTable {
 	void *romClassAreaStart;
@@ -3164,6 +3173,21 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		*/
 		exitAfterBuildingTempConfig = true;
 	}
+	
+	cacheType = getCacheTypeFromRuntimeFlags(runtimeFlags);
+
+	if (-1 == checkCacheFilePath(vm, ctrlDirName, modifiedCacheNamePtr, cacheType)) {
+#if defined(WIN32)
+		if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == cacheType) {
+			SHRINIT_ERR_TRACE1(verboseFlags, J9NLS_SHRC_SHRINIT_CACHEFILEPATH_BUFFER_OVERFLOW, J9SH_MAXPATH - 1);
+		} else {
+			SHRINIT_ERR_TRACE1(verboseFlags, J9NLS_SHRC_SHRINIT_CACHEFILEPATH_BUFFER_OVERFLOW, _MAX_PATH - J9SH_WIN_MUTEX_EXTRA_LEN);
+		}
+#else
+		SHRINIT_ERR_TRACE1(verboseFlags, J9NLS_SHRC_SHRINIT_CACHEFILEPATH_BUFFER_OVERFLOW, J9SH_MAXPATH - 1);
+#endif /* defined(WIN32) */
+		goto _error;
+	}
 
 	if (parseResult==RESULT_DO_PRINTSTATS || 
 		parseResult==RESULT_DO_PRINTALLSTATS || 
@@ -4370,8 +4394,11 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
 		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false);
-		/* No check for the return value of getCachePathName() as it always returns 0 */
-		SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
+		if (0 != SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen)) {
+			Trc_SHR_Assert_ShouldNeverHappen();
+			rc = -1;
+			goto exit;
+		}
 
 		fd = j9file_open(pathFileName, EsOpenCreate | EsOpenWrite, mode);
 		if (-1 == fd) {
@@ -4579,6 +4606,7 @@ done:
 			j9file_close(fd);
 		}
 	}
+exit:
 	Trc_SHR_INIT_j9shr_createCacheSnapshot_Exit(cacheName, rc);
 #endif /* !defined(WIN32) */
 	return rc;
@@ -5126,6 +5154,64 @@ j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2)
 		returnVal = 0;
 	}
 	return returnVal;
+}
+
+
+/**
+ * Check if the length of the cache file path is greater than the maximum limit.
+ *
+ * @param [in] vm Pointer to the VM structure
+ * @param [in] ctrlDirName The cache control directory
+ * @param [in] cacheName The shared cache name
+ * @param [in] cacheType The type of the shared cache
+
+ *
+ * @return 0 if the length of the cache file path is not greater than maximum limit, -1 otherwise.
+ */
+static IDATA
+checkCacheFilePath(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_32 cacheType)
+{
+
+	char cacheDirName[J9SH_MAXPATH];
+	IDATA rc = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);	
+	J9PortShcVersion versionData;
+	
+	memset(cacheDirName, 0, sizeof(cacheDirName));
+	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	
+	versionData.cacheType = cacheType;
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, sizeof(cacheDirName), versionData.cacheType)) {
+		rc = -1;
+	} else {
+		char cacheNameWithVGen[J9SH_MAXPATH];
+		char cacheFilePath[J9SH_MAXPATH];
+
+		memset(cacheFilePath, 0, sizeof(cacheFilePath));
+		memset(cacheNameWithVGen, 0, sizeof(cacheNameWithVGen));
+		/* Check for the shared memory file if it is persistent cache. Otherwise check the semaphore file as the name of semaphore file is longer than the shared memory/cache snapshot file */
+		SH_OSCache::getCacheVersionAndGen(
+				PORTLIB,
+				vm,
+				cacheNameWithVGen,
+				sizeof(cacheNameWithVGen),
+				cacheName,
+				&versionData,
+				SH_OSCache::getCurrentCacheGen(),
+				J9PORT_SHR_CACHE_TYPE_PERSISTENT == versionData.cacheType);
+		rc = SH_OSCache::getCachePathName(PORTLIB, cacheDirName, cacheFilePath, sizeof(cacheFilePath), cacheNameWithVGen);
+#if defined(WIN32)
+		if ((0 == rc)
+			&&(J9PORT_SHR_CACHE_TYPE_PERSISTENT != versionData.cacheType)
+		) {
+			/* make sure length of mutex name is < _MAX_PATH on Windows because of CreateMutexExW() */
+			if (strlen(cacheFilePath) + J9SH_WIN_MUTEX_EXTRA_LEN >= _MAX_PATH ) {
+				rc = -1;
+			}
+		}
+#endif /* defined(WIN32) */
+	}
+	return rc;
 }
 
 } /* extern "C" */
