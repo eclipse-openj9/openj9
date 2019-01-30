@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -263,7 +263,8 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       // Now tell the VM that the method has been uncommitted - and the code memory
       // allocated can be reused
       //
-      fe->releaseCodeMemory(oldStartPC, bytesToSaveAtStart);
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+      fej9->releaseCodeMemory(oldStartPC, bytesToSaveAtStart);
       }
    }
 
