@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -859,17 +859,6 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 #endif /* defined(S390) && defined(LINUX) */
 
-	/* HIGH_GPRS support */
-#if defined(OMR_ENV_DATA64)
-#if (defined(S390) && defined(LINUX))
-	/* OS Support for Linux on Z */
-	if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_HIGH_GPRS))
-#endif /* defined(S390) && defined(LINUX)*/
-	{
-		setFeature(desc, J9PORT_S390_FEATURE_HIGH_GPRS);
-	}
-#endif /* defined(OMR_ENV_DATA64) */
-
 	/* Miscellaneous facility detection */
 
 	if (testSTFLE(portLibrary, 0)) {
@@ -1012,6 +1001,18 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 
 	/* z196 facility and processor detection */
+
+	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_HIGH_WORD)) {
+#if (defined(S390) && defined(LINUX))
+		/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_HIGH_GPRS))
+#endif /* defined(S390) && defined(LINUX)*/
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_HIGH_WORD);
+		}
+
+		desc->processor = PROCESSOR_S390_GP9;
+	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_LOAD_STORE_ON_CONDITION_1)) {
 		setFeature(desc, J9PORT_S390_FEATURE_LOAD_STORE_ON_CONDITION_1);

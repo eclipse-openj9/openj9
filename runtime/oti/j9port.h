@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -448,7 +448,6 @@ typedef struct J9ProcessorDesc {
 #define J9PORT_S390_FEATURE_MSA        3 /* STFLE bit 17 */
 #define J9PORT_S390_FEATURE_DFP        6 /* STFLE bit 42 & 44 */
 #define J9PORT_S390_FEATURE_HPAGE      7
-#define J9PORT_S390_FEATURE_HIGH_GPRS  9 /* set if 64 bit */
 #define J9PORT_S390_FEATURE_TE        10 /* STFLE bit 50 & 73 */
 #define J9PORT_S390_FEATURE_MSA_EXTENSION3                      11 /* STFLE bit 76 */
 #define J9PORT_S390_FEATURE_MSA_EXTENSION4                      12 /* STFLE bit 77 */
@@ -482,6 +481,9 @@ typedef struct J9ProcessorDesc {
 #define J9PORT_S390_FEATURE_GENERAL_INSTRUCTIONS_EXTENSIONS 34
 
 /* z196 facilities */
+
+/* STFLE bit 45 - High-word facility */
+#define J9PORT_S390_FEATURE_HIGH_WORD 45
 
 /* STFLE bit 45 - Load/store-on-condition facility 1 */
 #define J9PORT_S390_FEATURE_LOAD_STORE_ON_CONDITION_1 45
