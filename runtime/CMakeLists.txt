@@ -22,7 +22,6 @@
 
 cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
-
 ###
 ### Basic housekeeeping stuff
 ### IE things which need to be set up before including J9vmPlatform
@@ -62,7 +61,7 @@ include(cmake/J9vmGenAsm.cmake)
 # Build everything with -fPIC (or equivilent).
 # We do this to ensure that our static libraries get built with -fPIC
 # (cmake automatically builds shared libraries with -fPIC)
-# TODO  this has the side effect that we also build executables with -fPIE which we dont want.
+# TODO this has the side effect that we also build executables with -fPIE which we dont want.
 # Need to investigate if it's possible to get one without the other. If it's not we need
 # to explicitly tag individual targets which seem tedious
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -83,12 +82,10 @@ set(OMR_INSTALL_ARCHIVE_DIR "${j9vm_SOURCE_DIR}/lib" CACHE PATH "")
 # Generic configuration for omr
 include(cmake/omr_config.cmake)
 
-
 #clean up the variables we used
 set(versionStr)
 set(checkCondition)
 set(conditionalVersionString)
-
 
 ###
 ### Handle Generated files
@@ -139,12 +136,12 @@ endif()
 # issues in cmake. If we did it there each target which consumed generated.c has
 # its own rule to create it. Which causes a race condition when building in parallel
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
-	DEPENDS  oti/helpers.m4 redirector/generated.c.m4
+	DEPENDS oti/helpers.m4 redirector/generated.c.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/redirector/generated.c.m4" > generated.c
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/redirector"
 )
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
-	DEPENDS oti/helpers.m4  redirector/forwarders.m4 j9vm/generated.h.m4
+	DEPENDS oti/helpers.m4 redirector/forwarders.m4 j9vm/generated.h.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/j9vm/generated.h.m4" > generated.h
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/j9vm"
 )
@@ -206,7 +203,6 @@ target_link_libraries(j9vm_main_wrapper
 		j9prt
 )
 
-
 ###
 ### OMR configuration stuff
 ###
@@ -231,7 +227,6 @@ add_subdirectory(gc_glue_java)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory("${J9VM_OMR_DIR}" omr)
 
-
 ###
 ### Share library version suffixing
 ###
@@ -244,13 +239,13 @@ set(versionStr "29")
 # Save the old shared library suffix val (eg. '.so' or '.dll', so we can use it later if needed)
 set(J9VM_OLD_SHARED_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 set(J9VM_SHARED_LIBRARY_SUFFIX ${versionStr}${CMAKE_SHARED_LIBRARY_SUFFIX})
-# Prepend the version string  so eg. '29.so' gets tacked onto the end of library names if they are built into shared libs
+# Prepend the version string so eg. '29.so' gets tacked onto the end of library names if they are built into shared libs
 set(CMAKE_SHARED_LIBRARY_SUFFIX "${J9VM_SHARED_LIBRARY_SUFFIX}")
 
 ###
 ### Begin the definitions of our modules
 ###
-# TODO: a few  subdirectories still neeed to be implemented (currently commented out)
+# TODO: a few subdirectories still neeed to be implemented (currently commented out)
 # TODO: most libriaries still need to be gated with if() statements
 
 if(J9VM_MODULE_BCUTIL)
@@ -363,10 +358,6 @@ if(J9VM_MODULE_HOOKABLE)
 endif()
 if(J9VM_MODULE_J9VM)
 	add_subdirectory(j9vm)
-	add_subdirectory(j9vm_b150)
-	add_subdirectory(j9vm_b156)
-	add_subdirectory(j9vm_jdk11)
-	add_subdirectory(j9vm_jdk12)
 endif()
 #NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jcl)
