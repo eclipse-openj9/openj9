@@ -121,6 +121,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "env/J9JitMemory.hpp"
 #include "infra/Bit.hpp"               //for trailingZeroes
+#include "VMHelpers.hpp"
 
 #ifdef LINUX
 #include <signal.h>
@@ -3461,23 +3462,22 @@ TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    return treeTop;
    }
 
+bool
+ TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
+    {
+    return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
+    }
 
 bool
 TR_J9VMBase::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   J9JavaVM * javaVM = _jitConfig->javaVM;
-   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
-
-   return jitMethodEnterTracingEnabled(getCurrentVMThread(), (J9Method *)method);
+   return isMethodTracingEnabled(method);
    }
 
 bool
 TR_J9VMBase::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   J9JavaVM * javaVM = _jitConfig->javaVM;
-   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
-
-   return jitMethodExitTracingEnabled(getCurrentVMThread(), (J9Method *)method);
+   return isMethodTracingEnabled(method);
    }
 
 bool
