@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-	Copyright (c) 2016, 2018 IBM Corp. and others
+	Copyright (c) 2016, 2019 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,12 +41,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -66,12 +60,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -116,12 +104,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -167,12 +149,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<!-- jit.test.jar tests start here -->
@@ -195,12 +171,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<!-- jit.test.tr start here -->
@@ -240,12 +210,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -268,12 +232,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<!-- jit.test.hw tests start here -->
@@ -299,12 +257,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -327,12 +279,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<!-- jit.test.ra tests start here -->
@@ -402,11 +348,5 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 </playlist>
