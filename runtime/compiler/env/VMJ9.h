@@ -410,7 +410,6 @@ public:
    uint32_t                   getNumMethods(TR_OpaqueClassBlock *classPointer);
 
    virtual uint8_t *          allocateCodeMemory( TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
-   virtual void               resizeCodeMemory( TR::Compilation *, uint8_t *, uint32_t numBytes);
 
    virtual void               releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart);
    virtual uint8_t *          allocateRelocationData( TR::Compilation *, uint32_t numBytes);

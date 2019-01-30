@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,8 +75,6 @@ public:
                                          size_t allocatedCodeCacheSizeInBytes);
 
    static TR::CodeCache *     allocate(TR::CodeCacheManager *cacheManager, size_t segmentSize, int32_t reservingCompThreadID);
-
-   bool                       resizeCodeMemory(void *memoryBlock, size_t newSize);
 
    // Code Cache Reclamation
    void                       addFreeBlock(OMR::FaintCacheBlock *block);

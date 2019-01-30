@@ -4649,13 +4649,6 @@ J9::CodeGenerator::trimCodeMemoryToActualSize()
 
 
 void
-J9::CodeGenerator::resizeCodeMemory()
-   {
-   self()->trimCodeMemoryToActualSize();
-   }
-
-
-void
 J9::CodeGenerator::reserveCodeCache()
    {
    self()->setCodeCache(self()->fej9()->getDesignatedCodeCache(self()->comp()));
