@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2683,8 +2683,8 @@ private:
 	internalPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		J9VMGCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
-		J9VMGCRememberedSet *parent = fragment->fragmentParent;
+		MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
+		MM_GCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
 		if (0 != parent->globalFragmentIndex) {
 			/* if the double barrier is enabled call OOL */
@@ -2714,8 +2714,8 @@ private:
 	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		J9VMGCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
-		J9VMGCRememberedSet *parent = fragment->fragmentParent;
+		MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
+		MM_GCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
 		if (0 != parent->globalFragmentIndex) {
 			/* if the double barrier is enabled call OOL */

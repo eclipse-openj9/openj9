@@ -257,7 +257,7 @@ CPU::initializeS390ProcessorFeatures()
       }
 
    if (TR::Compiler->target.cpu.getS390SupportsZ196() && 
-         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_GPRS))
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_WORD))
       {
       TR::Compiler->target.cpu.setS390SupportsHPRDebug();
       }

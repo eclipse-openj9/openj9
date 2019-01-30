@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1946,133 +1946,6 @@ bool nodeMightClobberAccumulatorBeforeUse(TR::Node *node)
       return false;
 
    return true;
-   }
-
-TR::Register *
-J9::Z::CodeGenerator::evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode, TR_OpaquePseudoRegister *srcReg, TR::MemoryReference *srcMR)
-   {
-   TR::CodeGenerator *cg = self();
-   TR_ASSERT(srcReg,"srcReg is NULL for srcNode %p\n",srcNode);
-   size_t srcSize = srcReg->getSize();
-
-   srcMR = reuseS390MemRefFromStorageRef(srcMR, 0, srcNode, srcReg->getStorageReference(), cg);
-
-   if (cg->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\tevaluateAggregateToGPR : %s (%p) srcReg->aggrSize = %d, destSize = %d\n",srcNode->getOpCode().getName(),srcNode,srcSize,destSize);
-
-   size_t loadSize = srcSize;
-   if (srcSize > destSize)
-      {
-      loadSize = destSize;
-      srcMR->addToOffset(srcSize - destSize);
-      if (cg->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tisTruncation=true : set loadSize = %d and add %d to sourceMR offset (srcAggrSize %d > destIntSize %d)\n",destSize,srcSize - destSize,srcSize,destSize);
-      }
-
-   bool is64BitTarget = TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit();
-   TR::Register *targetReg = NULL;
-   if (destSize > 8)
-      {
-      TR_ASSERT(destSize <= 16,"invalid destSize %d\n",destSize);
-      targetReg = cg->allocateConsecutiveRegisterPair(cg->allocate64bitRegister(),cg->allocate64bitRegister());
-      }
-   else if (destSize > 4)
-      {
-      if (is64BitTarget)
-         targetReg = cg->allocateRegister(TR_GPR64);
-      else
-         targetReg = cg->allocateConsecutiveRegisterPair();
-      }
-   else
-      {
-      targetReg = cg->allocateRegister();
-      }
-
-   bool useICM = false;
-   // currently cannot have loadSize <= 4 and is64Bit true but keep the cases in the switch below in case there is a need to use 64 bit registers for smaller sizes
-   switch (loadSize)
-      {
-      case 1:
-      case 2:
-         if (targetReg->getKind() == TR_GPR64)
-            {
-            generateRXInstruction(cg, loadSize == 1 ? TR::InstOpCode::LLGC : TR::InstOpCode::LLGH, srcNode, targetReg, srcMR);
-            }
-         else
-            {
-            generateRXInstruction(cg, loadSize == 1 ? TR::InstOpCode::LLC : TR::InstOpCode::LLH, srcNode, targetReg, srcMR);
-            }
-         break;
-      case 3:
-         useICM = true;
-         break;
-      case 4:
-         if (targetReg->getKind() == TR_GPR64)
-            generateRXInstruction(cg, TR::InstOpCode::LLGF, srcNode, targetReg, srcMR);
-         else
-            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg, srcMR);
-         break;
-      case 5:
-      case 6:
-      case 7:
-         {
-         uint32_t mask = (1 << (loadSize-4)) - 1;  // 5->mask=1, 6->mask=3, 7->mask=7
-         int32_t mrOffset = loadSize-4;
-         if (targetReg->getRegisterPair())
-            {
-            generateRRInstruction(cg, TR::InstOpCode::XR, srcNode, targetReg->getHighOrder(), targetReg->getHighOrder());
-            generateRSInstruction(cg, TR::InstOpCode::ICM, srcNode, targetReg->getHighOrder(), mask, srcMR);
-            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg->getLowOrder(), generateS390MemoryReference(*srcMR, mrOffset, cg));
-            }
-         else
-            {
-            TR_ASSERT(targetReg->getKind() == TR_GPR64,"targetReg should be 64 bit on node %p\n",srcNode);
-            generateRRInstruction(cg, TR::InstOpCode::XGR, srcNode, targetReg, targetReg);
-            generateRSInstruction(cg, TR::InstOpCode::ICMH, srcNode, targetReg, mask, srcMR);
-            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg, generateS390MemoryReference(*srcMR, mrOffset, cg));
-            }
-         }
-         break;
-      case 8:
-         if (targetReg->getRegisterPair())
-            {
-            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg->getHighOrder(), srcMR);
-            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg->getLowOrder(), generateS390MemoryReference(*srcMR, 4, cg));
-            }
-         else
-            {
-            generateRXInstruction(cg, TR::InstOpCode::LG, srcNode, targetReg, srcMR);
-            }
-         break;
-      case 9:
-      case 10:
-      case 11:
-      case 12:
-      case 13:
-      case 14:
-      case 15:
-         {
-         TR_ASSERT(false,"loadSize %d on node %p not implemented\n",loadSize,srcNode);
-         }
-      case 16:
-         {
-         generateRXInstruction(cg, TR::InstOpCode::LG, srcNode, targetReg->getHighOrder(), srcMR);
-         generateRXInstruction(cg, TR::InstOpCode::LG, srcNode, targetReg->getLowOrder(), generateS390MemoryReference(*srcMR, 8, cg));
-         //generateRSInstruction(cg, TR::InstOpCode::LMG, srcNode,targetReg, srcMR);
-         }
-         break;
-      default:
-         TR_ASSERT(false,"unexpected loadSize %d on node %p\n",loadSize,srcNode);
-      }
-
-   if (useICM)
-      {
-      TR_ASSERT(targetReg->getRegisterPair() == NULL,"targetReg must not be a regPair in the useICM case for node %p\n",srcNode);
-      generateRRInstruction(cg, targetReg->getKind() == TR_GPR64 ? TR::InstOpCode::XGR : TR::InstOpCode::XR, srcNode, targetReg, targetReg);
-      generateRSInstruction(cg, TR::InstOpCode::ICM, srcNode, targetReg, (uint32_t)((1 << (loadSize)) - 1), srcMR);  // 1->mask=1, 2->mask=3, 3->mask=7
-      }
-
-   return targetReg;
    }
 
 void
@@ -4077,9 +3950,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
          if (cg->checkFieldAlignmentForAtomicLong() &&
-             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
-             (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()  ||
-              (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))))
+             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
             {
             resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
             return true;
@@ -4093,9 +3964,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
          if (cg->checkFieldAlignmentForAtomicLong() &&
-             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
-             (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()  ||
-              (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))))
+             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
             {
             resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
             return true;

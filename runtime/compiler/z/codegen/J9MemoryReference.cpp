@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -304,17 +304,11 @@ J9::Z::MemoryReference::createUnresolvedSnippetWithNodeRegister(TR::Node * node,
    TR::Register * tempReg = node->getRegister();
    if (tempReg == NULL)
       {
-      if (TR::Compiler->target.is64Bit())
-         tempReg = node->setRegister(cg->allocate64bitRegister());
-      else
-         tempReg = node->setRegister(cg->allocateRegister());
+      tempReg = node->setRegister(cg->allocateRegister());
       }
    else if (tempReg->getKind() == TR_FPR)
       {
-      if (TR::Compiler->target.is64Bit())
-         tempReg = cg->allocate64bitRegister();
-      else
-         tempReg = cg->allocateRegister();
+      tempReg = cg->allocateRegister(TR_FPR);
       }
    else if (tempReg->getKind() == TR_VRF)
       {

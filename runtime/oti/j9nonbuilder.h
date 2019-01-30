@@ -2723,14 +2723,6 @@ typedef struct J9VMGCSegregatedAllocationCacheEntry {
 
 #endif /* J9VM_GC_REALTIME */
 
-#if defined(J9VM_GC_STACCATO)
-
-typedef MM_GCRememberedSet J9VMGCRememberedSet;
-
-typedef MM_GCRememberedSetFragment J9VMGCRememberedSetFragment;
-
-#endif /* J9VM_GC_STACCATO */
-
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 
 typedef struct J9GCVMInfo {
@@ -4826,8 +4818,8 @@ typedef struct J9VMThread {
 	struct J9StackWalkState* stackWalkState;
 	struct J9VMEntryLocalStorage* entryLocalStorage;
 	UDATA gpProtected;
-	J9VMGCSublistFragment gcRememberedSet;
-	J9VMGCRememberedSetFragment sATBBarrierRememberedSetFragment;
+	struct J9VMGCSublistFragment gcRememberedSet;
+	struct MM_GCRememberedSetFragment sATBBarrierRememberedSetFragment;
 	void* gcTaskListPtr;
 	UDATA* dropBP;
 	UDATA dropFlags;
