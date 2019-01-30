@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,10 @@
 #ifndef GUARDEDDEVIRTUALSNIPPET_INCL
 #define GUARDEDDEVIRTUALSNIPPET_INCL
 
-#include <stddef.h>                      // for NULL
-#include <stdint.h>                      // for int32_t, uint32_t, uint8_t
-#include "codegen/Snippet.hpp"           // for TR::X86Snippet::Kind, etc
-#include "x/codegen/RestartSnippet.hpp"  // for TR::X86RestartSnippet
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Snippet.hpp"
+#include "x/codegen/RestartSnippet.hpp"
 
 namespace TR { class Block; }
 namespace TR { class CodeGenerator; }

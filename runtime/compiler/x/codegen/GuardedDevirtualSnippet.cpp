@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,24 +22,24 @@
 
 #include "x/codegen/GuardedDevirtualSnippet.hpp"
 
-#include <stddef.h>                               // for NULL
-#include <stdint.h>                               // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"              // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                   // for TR_FrontEnd
-#include "codegen/MemoryReference.hpp"            // for IA32SIBNoIndex, etc
-#include "codegen/RealRegister.hpp"               // for RealRegister, etc
-#include "codegen/RegisterConstants.hpp"          // for TR_RegisterSizes, etc
-#include "codegen/Snippet.hpp"                    // for commentString
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "codegen/Snippet.hpp"
 #include "codegen/SnippetGCMap.hpp"
-#include "compile/Compilation.hpp"                // for Compilation, comp
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
-#include "env/jittypes.h"                         // for uintptrj_t
-#include "il/Node.hpp"                            // for Node
-#include "il/Symbol.hpp"                          // for Symbol
-#include "il/SymbolReference.hpp"                 // for SymbolReference
-#include "il/symbol/LabelSymbol.hpp"              // for LabelSymbol
-#include "ras/Debug.hpp"                          // for TR_Debug
+#include "env/jittypes.h"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "ras/Debug.hpp"
 #include "x/codegen/RestartSnippet.hpp"
 
 namespace TR { class Block; }

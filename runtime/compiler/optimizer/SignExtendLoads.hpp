@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,14 +23,14 @@
 #ifndef SIGN_EXTEND_LOADS_INCL
 #define SIGN_EXTEND_LOADS_INCL
 
-#include "optimizer/Optimization.hpp"         // for Optimization
+#include "optimizer/Optimization.hpp"
 
-#include <stdint.h>                           // for int32_t
-#include "compile/Compilation.hpp"            // for Compilation
+#include <stdint.h>
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/jittypes.h"                     // for uintptrj_t
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "env/jittypes.h"
+#include "optimizer/OptimizationManager.hpp"
 
 namespace TR { class Node; }
 template <class T> class TR_ScratchList;

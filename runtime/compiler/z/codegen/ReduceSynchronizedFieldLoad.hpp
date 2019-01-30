@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,11 @@
 #ifndef REDUCE_SYNCHRONIZED_FIELD_LOAD_NODE
 #define REDUCE_SYNCHRONIZED_FIELD_LOAD_NODE
 
-#include "codegen/CodeGenerator.hpp"  // for CodeGenerator
-#include "compile/Compilation.hpp"    // for Compilation
-#include "env/TRMemory.hpp"           // for TR_Memory, etc
-#include "il/Node.hpp"                // for vcount_t
-#include "infra/List.hpp"             // for List
+#include "codegen/CodeGenerator.hpp"
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/List.hpp"
 #include "infra/ILWalk.hpp"
 
 /** \brief

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,10 +30,10 @@
 
 #include "optimizer/Optimizer.hpp"
 
-#include <stddef.h>                                       // for NULL
-#include <stdint.h>                                       // for uint16_t
+#include <stddef.h>
+#include <stdint.h>
 #include "compile/Compilation.hpp"
-#include "compile/Method.hpp"                             // for TR_Method
+#include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
@@ -41,8 +41,8 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "optimizer/AllocationSinking.hpp"
 #include "optimizer/IdiomRecognition.hpp"
-#include "optimizer/Inliner.hpp"                          // for TR_Inliner, etc
-#include "optimizer/J9Inliner.hpp"                          // for TR_Inliner, etc
+#include "optimizer/Inliner.hpp"
+#include "optimizer/J9Inliner.hpp"
 #include "optimizer/JitProfiler.hpp"
 #include "optimizer/LiveVariablesForGC.hpp"
 #include "optimizer/OptimizationManager.hpp"

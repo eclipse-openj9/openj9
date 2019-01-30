@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,11 @@
 #ifndef ESTIMATECS_INCL
 #define ESTIMATECS_INCL
 
-#include <stddef.h>               // for size_t
-#include <stdint.h>               // for int32_t
-#include "env/TRMemory.hpp"       // for Allocator
-#include "infra/Flags.hpp"        // for flags8_t
-#include "optimizer/Inliner.hpp"  // for TR_InlinerTracer (ptr only), etc
+#include <stddef.h>
+#include <stdint.h>
+#include "env/TRMemory.hpp"
+#include "infra/Flags.hpp"
+#include "optimizer/Inliner.hpp"
 
 class TR_CallStack;
 namespace TR { class Compilation; }

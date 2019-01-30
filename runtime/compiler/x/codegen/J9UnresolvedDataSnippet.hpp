@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,11 +37,11 @@ namespace J9 { typedef J9::X86::UnresolvedDataSnippet UnresolvedDataSnippetConne
 
 #include "compiler/codegen/J9UnresolvedDataSnippet.hpp"
 
-#include <stdint.h>                                 // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"                // for CodeGenerator
-#include "il/Symbol.hpp"                            // for Symbol
-#include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "runtime/J9Runtime.hpp"                    // for TR_RuntimeHelper
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "infra/Flags.hpp"
 #include "env/CompilerEnv.hpp"
 

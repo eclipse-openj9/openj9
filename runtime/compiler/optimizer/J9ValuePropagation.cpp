@@ -22,25 +22,25 @@
 
 #include "optimizer/J9ValuePropagation.hpp"
 #include "optimizer/VPBCDConstraint.hpp"
-#include "compile/Compilation.hpp"              // for Compilation, comp
+#include "compile/Compilation.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Node_inlines.hpp"                  // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                        // for Symbol, etc
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "env/CHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
-#include "optimizer/Optimization_inlines.hpp"   // for trace()
+#include "optimizer/Optimization_inlines.hpp"
 #include "env/j9method.h"
-#include "env/TRMemory.hpp"                        // for Allocator, etc
-#include "il/Block.hpp"                        // for Block
-#include "infra/Cfg.hpp"                       // for CFG
-#include "compile/VirtualGuard.hpp"            // for VirtualGuard::createHCRGuard
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "infra/Cfg.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "env/CompilerEnv.hpp"
-#include "optimizer/TransformUtil.hpp"       // for calculateElementAddress
-#include "il/symbol/StaticSymbol.hpp"           // for StaticSymbol
-#include "env/VMAccessCriticalSection.hpp"      // for VMAccessCriticalSection
+#include "optimizer/TransformUtil.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/J9JitMemory.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"

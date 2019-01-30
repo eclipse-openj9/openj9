@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,15 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stddef.h>                           // for NULL
-#include <stdint.h>                           // for uint8_t, int32_t, etc
-#include "codegen/CodeGenerator.hpp"          // for CodeGenerator
-#include "codegen/FrontEnd.hpp"               // for TR_FrontEnd
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"        // for TR::Options
-#include "env/jittypes.h"                     // for uintptrj_t
+#include "control/Options_inlines.hpp"
+#include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
-#include "p/codegen/PPCTableOfConstants.hpp"  // for TR_PPCTableOfConstants
+#include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/VMJ9.h"
 

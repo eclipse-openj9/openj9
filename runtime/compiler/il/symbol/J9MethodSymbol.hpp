@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,11 +34,11 @@ namespace J9 { typedef J9::MethodSymbol MethodSymbolConnector; }
 
 #include "il/symbol/OMRMethodSymbol.hpp"
 
-#include <stdint.h>                            // for uint16_t, uint8_t, etc
-#include "codegen/LinkageConventionsEnum.hpp"  // for TR_LinkageConventions, etc
-#include "compile/Method.hpp"                  // for TR_Method
-#include "il/DataTypes.hpp"                    // for DataTypes
-#include "runtime/J9Runtime.hpp"               // for TR_RuntimeHelper
+#include <stdint.h>
+#include "codegen/LinkageConventionsEnum.hpp"
+#include "compile/Method.hpp"
+#include "il/DataTypes.hpp"
+#include "runtime/J9Runtime.hpp"
 
 namespace TR { class Compilation; }
 

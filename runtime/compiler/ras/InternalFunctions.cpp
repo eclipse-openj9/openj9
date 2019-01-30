@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,16 +22,16 @@
 
 #include "ras/InternalFunctions.hpp"
 
-#include <stdarg.h>                            // for va_list
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for int32_t, uint16_t
-#include <stdio.h>                             // for NULL, printf, etc
-#include "codegen/FrontEnd.hpp"                // for feDebugBreak, etc
-#include "compile/Compilation.hpp"             // for Compilation
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
-#include "env/defines.h"                       // for TR_HOST_X86
+#include "env/defines.h"
 #include "env/IO.hpp"
-#include "infra/Assert.hpp"                    // for TR_ASSERT
+#include "infra/Assert.hpp"
 #include "ras/Debug.hpp"
 
 

@@ -43,10 +43,10 @@
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/Structure.hpp"
-#include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                   // for ILOpCode, etc
+#include "il/ILOps.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
@@ -56,7 +56,7 @@
 #include "control/Recompilation.hpp"                      //TR_PersistentJittedBodyInfo
 #include "control/RecompilationInfo.hpp"                  //TR_PersistentJittedBodyInfo
 #include "optimizer/EstimateCodeSize.hpp"
-#include "env/SharedCache.hpp"                            // for TR_SharedCache
+#include "env/SharedCache.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "ras/DebugCounter.hpp"

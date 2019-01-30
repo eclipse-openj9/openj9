@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,8 @@
 
 #include "optimizer/J9Optimizer.hpp"
 
-#include <stddef.h>                    // for NULL
-#include <stdint.h>                    // for uint16_t
+#include <stddef.h>
+#include <stdint.h>
 
 namespace TR { class Compilation; }
 namespace TR { class ResolvedMethodSymbol; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,28 +22,28 @@
 
 #include "codegen/InMemoryLoadStoreMarking.hpp"
 
-#include <stddef.h>                    // for NULL
-#include <stdint.h>                    // for int64_t
-#include <string.h>                    // for strcmp
-#include "codegen/FrontEnd.hpp"        // for TR_FrontEnd
-#include "compile/Compilation.hpp"     // for LexicalTimer, etc
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/VMJ9.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                // for Block
-#include "il/DataTypes.hpp"            // for TR::DataType::getMaxLongDFPPrecision(), etc
-#include "il/ILOpCodes.hpp"            // for ILOpCodes::pdSetSign, etc
-#include "il/ILOps.hpp"                // for ILOpCode
-#include "il/Node.hpp"                 // for Node
-#include "il/Node_inlines.hpp"         // for Node::getType, etc
-#include "il/Symbol.hpp"               // for Symbol
-#include "il/SymbolReference.hpp"      // for SymbolReference
-#include "il/TreeTop.hpp"              // for TreeTop
-#include "il/TreeTop_inlines.hpp"      // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"  // for MethodSymbol
-#include "infra/Assert.hpp"            // for TR_ASSERT
-#include "infra/Bit.hpp"               // for isOdd
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
 
 
 #define OPT_DETAILS "O^O IN MEMORY LOAD/STORE MARKING: "

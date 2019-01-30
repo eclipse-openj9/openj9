@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,42 +20,42 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>                             // for int32_t, uint32_t, etc
-#include <stdio.h>                              // for sprintf, printf
-#include <stdlib.h>                             // for NULL, atoi
-#include <string.h>                             // for memset
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                 // for feGetEnv, etc
-#include "compile/Compilation.hpp"              // for Compilation
-#include "compile/SymbolReferenceTable.hpp"     // for SymbolReferenceTable
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/bitvectr.h"                       // for ABitVector<>::Cursor
+#include "cs2/bitvectr.h"
 #include "env/CompilerEnv.hpp"
-#include "env/TRMemory.hpp"                     // for PERSISTENT_NEW, etc
-#include "env/jittypes.h"                       // for uintptrj_t
-#include "il/Block.hpp"                         // for Block
-#include "il/DataTypes.hpp"                     // for DataType, etc
-#include "il/ILOpCodes.hpp"                     // for ILOpCodes::iconst, etc
-#include "il/ILOps.hpp"                         // for ILOpCode, etc
-#include "il/ILProps.hpp"                       // for ILTypeProp::Size_1, etc
-#include "il/Node.hpp"                          // for Node, vcount_t
-#include "il/Node_inlines.hpp"                  // for Node::getChild, etc
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference
-#include "il/TreeTop.hpp"                       // for TreeTop
-#include "il/TreeTop_inlines.hpp"               // for TreeTop::join, etc
-#include "il/symbol/AutomaticSymbol.hpp"        // for AutomaticSymbol
-#include "infra/Assert.hpp"                     // for TR_ASSERT
-#include "infra/BitVector.hpp"                  // for TR_BitVector
-#include "infra/Cfg.hpp"                        // for CFG
-#include "infra/List.hpp"                       // for List, ListIterator, etc
-#include "optimizer/IdiomRecognition.hpp"       // for TR_PCISCGraph, etc
-#include "optimizer/IdiomRecognitionUtils.hpp"  // for createOP2, etc
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/ILProps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/List.hpp"
+#include "optimizer/IdiomRecognition.hpp"
+#include "optimizer/IdiomRecognitionUtils.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/Optimizer.hpp"              // for Optimizer
-#include "optimizer/UseDefInfo.hpp"             // for TR_UseDefInfo, etc
-#include "ras/Debug.hpp"                        // for TR_DebugBase
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/UseDefInfo.hpp"
+#include "ras/Debug.hpp"
 
 #define OPT_DETAILS "O^O NEWLOOPREDUCER: "
 #define DISPTRACE(OBJ) ((OBJ)->trace())

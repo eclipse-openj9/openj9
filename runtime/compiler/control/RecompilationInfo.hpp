@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,20 +24,20 @@
 #define TR_RECOMPILATION_INFO_INCL
 
 
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for int32_t, uint32_t, etc
-#include "compile/Compilation.hpp"        // for Compilation
-#include "compile/CompilationTypes.hpp"   // for TR_Hotness
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"    // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/CHTable.hpp"
-#include "env/TRMemory.hpp"               // for TR_Memory, etc
-#include "env/defines.h"                  // for TR_HOST_X86
-#include "env/jittypes.h"                 // for uintptrj_t
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "infra/Flags.hpp"                // for flags32_t, flags16_t
-#include "infra/Link.hpp"                 // for TR_LinkHead
-#include "infra/Timer.hpp"                // for TR_SingleTimer
+#include "env/TRMemory.hpp"
+#include "env/defines.h"
+#include "env/jittypes.h"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/Timer.hpp"
 #include "runtime/J9Profiler.hpp"
 
 class TR_FrontEnd;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,30 +22,30 @@
 
 #include "env/PersistentCHTable.hpp"
 
-#include <stdint.h>                            // for int32_t
-#include <stdio.h>                             // for printf, fflush, NULL, etc
-#include <string.h>                            // for memcpy, memset, etc
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, feGetEnv
-#include "compile/Compilation.hpp"             // for Compilation, etc
-#include "compile/CompilationTypes.hpp"        // for TR_Hotness
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
+#include "env/PersistentInfo.hpp"
 #include "env/RuntimeAssumptionTable.hpp"
 #include "env/TRMemory.hpp"
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
+#include "env/jittypes.h"
+#include "env/ClassTableCriticalSection.hpp"
 #include "env/VMJ9.h"
-#include "il/DataTypes.hpp"                    // for etc
-#include "il/SymbolReference.hpp"              // for classNameToSignature, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Link.hpp"                      // for TR_LinkHead
-#include "infra/List.hpp"                      // for ListIterator, etc
+#include "il/DataTypes.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 
 class TR_OpaqueClassBlock;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,17 +23,17 @@
 #ifndef DEBUGEXT_INCL
 #define DEBUGEXT_INCL
 
-#include <stddef.h>                      // for NULL, size_t
-#include <stdint.h>                      // for int32_t, uint32_t, uint8_t
-#include "compile/Compilation.hpp"       // for Compilation
-#include "env/jittypes.h"                // for uintptrj_t
-#include "infra/Assert.hpp"              // for TR_ASSERT
-#include "ras/HashTable.hpp"             // for TR_HashTable
-#include "optimizer/Optimizations.hpp"   // for Optimizations
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/jittypes.h"
+#include "infra/Assert.hpp"
+#include "ras/HashTable.hpp"
+#include "optimizer/Optimizations.hpp"
 #include "ras/Debug.hpp"
-#include "ras/InternalFunctionsExt.hpp"  // for TR_Malloc_t
-#include "env/VMJ9.h"               // for TR_J9VM
-#include "ras/DebugExtSegmentProvider.hpp"  // for J9::DebugSegmentProvider
+#include "ras/InternalFunctionsExt.hpp"
+#include "env/VMJ9.h"
+#include "ras/DebugExtSegmentProvider.hpp"
 #include "env/Region.hpp"
 
 class TR_CHTable;

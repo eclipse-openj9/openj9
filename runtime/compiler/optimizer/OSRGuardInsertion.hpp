@@ -22,9 +22,9 @@
 #ifndef OSRGUARDINSERTION_INCL
 #define OSRGUARDINSERTION_INCL
 
-#include <stdint.h>                           // for int32_t
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include <stdint.h>
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
 

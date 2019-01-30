@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,44 +20,44 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>                              // for std::find, etc
-#include <limits.h>                               // for SHRT_MAX, UCHAR_MAX
-#include <stdio.h>                                // for NULL, sprintf
-#include <stdint.h>                               // for int32_t, uint32_t
-#include <string.h>                               // for NULL, memset
-#include "compile/Compilation.hpp"                // for Compilation
+#include <algorithm>
+#include <limits.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
-#include "cs2/arrayof.h"                          // for ArrayOf
+#include "cs2/arrayof.h"
 #include "cs2/bitvectr.h"
-#include "cs2/listof.h"                           // for ListOf
-#include "env/TRMemory.hpp"                       // for Allocator, etc
-#include "env/PersistentInfo.hpp"                 // for PersistentInfo
+#include "cs2/listof.h"
+#include "env/TRMemory.hpp"
+#include "env/PersistentInfo.hpp"
 #include "env/VMJ9.h"
-#include "il/Block.hpp"                           // for Block
-#include "il/ILOpCodes.hpp"                       // for ILOpCodes::athrow, etc
-#include "il/ILOps.hpp"                           // for ILOpCode
-#include "il/Node.hpp"                            // for Node, vcount_t
-#include "il/Node_inlines.hpp"                    // for Node::getBranchDestination
-#include "il/Symbol.hpp"                          // for Symbol
+#include "il/Block.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"              // for LabelSymbol
+#include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/TreeTop.hpp"                         // for TreeTop
-#include "il/TreeTop_inlines.hpp"                 // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"                       // for TR_ASSERT
-#include "infra/Cfg.hpp"                          // for CFG
-#include "infra/Link.hpp"                         // for TR_LinkHead1
-#include "infra/List.hpp"                         // for ListIterator, List
-#include "infra/Stack.hpp"                        // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                    // for CFGEdge
-#include "infra/TRCfgNode.hpp"                    // for CFGNode
-#include "optimizer/Optimizer.hpp"                // for Optimizer
-#include "optimizer/Structure.hpp"                // for TR_StructureSubGraphNode, etc
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/StructuralAnalysis.hpp"
-#include "ras/Debug.hpp"                          // for TR_DebugBase
+#include "ras/Debug.hpp"
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
 

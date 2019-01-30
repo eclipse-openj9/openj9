@@ -24,13 +24,13 @@
 #pragma csect(STATIC,"TRJ9CGBase#S")
 #pragma csect(TEST,"TRJ9CGBase#T")
 
-#include <algorithm>                            // for std::find
+#include <algorithm>
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/PicHelpers.hpp"
 #include "codegen/Relocation.hpp"
-#include "codegen/Instruction.hpp"              // for Instruction
+#include "codegen/Instruction.hpp"
 #include "codegen/MonitorState.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"
@@ -45,18 +45,18 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/NodePool.hpp"                // for NodePool
-#include "il/Symbol.hpp"                  // for Symbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/AutomaticSymbol.hpp"  // for AutomaticSymbol
-#include "il/symbol/StaticSymbol.hpp"     // for StaticSymbol
-#include "il/symbol/LabelSymbol.hpp"      // for LabelSymbol
+#include "il/NodePool.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
-#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
+#include "infra/BitVector.hpp"
 #include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "ras/Delimiter.hpp"                   // for Delimiter
+#include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheExceptions.hpp"

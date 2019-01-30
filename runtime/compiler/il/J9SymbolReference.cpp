@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 
 #include "il/J9SymbolReference.hpp"
 
-#include <stdint.h>                    // for uint32_t
-#include "compile/Compilation.hpp"     // for Compilation
+#include <stdint.h>
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/VMAccessCriticalSection.hpp" // for VMAccessCriticalSection
-#include "il/Symbol.hpp"               // for Symbol
-#include "il/SymbolReference.hpp"      // for SymbolReference
-#include "il/symbol/StaticSymbol.hpp"  // for StaticSymbol
+#include "env/VMAccessCriticalSection.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/StaticSymbol.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
