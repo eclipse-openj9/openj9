@@ -425,11 +425,31 @@ public:
     */
    void trimCodeMemoryToActualSize();
 
+
    /**
     * \brief Request and reserve a CodeCache for use by this compilation.  Fail
     *        the compilation appropriately if a CodeCache cannot be allocated.
     */
    void reserveCodeCache();
+
+
+   /**
+    * \brief Allocates code memory of the specified size in the specified area of
+    *        the code cache.  Fail the compilation on failure.
+    *
+    * \param[in]  warmCodeSizeInBytes : the number of bytes to allocate in the warm area
+    * \param[in]  coldCodeSizeInBytes : the number of bytes to allocate in the cold area
+    * \param[out] coldCode : address of the cold code (if allocated)
+    * \param[in]  isMethodHeaderNeeded : boolean indicating whether space for a
+    *                method header must be allocated
+    *
+    * \return address of the allocated warm code (if allocated)
+    */
+   uint8_t *allocateCodeMemoryInner(
+      uint32_t warmCodeSizeInBytes,
+      uint32_t coldCodeSizeInBytes,
+      uint8_t **coldCode,
+      bool isMethodHeaderNeeded);
 
 private:
 
