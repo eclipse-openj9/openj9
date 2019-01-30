@@ -293,9 +293,7 @@ def archive() {
             if (fileExists("${buildDir}${testDir}")) {
                 if (SPEC.startsWith('zos')) {
                     // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-                    dir ("${buildDir}") {
-                        sh "pax  -wv -s#${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${testDir}"
-                    }
+                    sh "pax  -wv -s#${buildDir}${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
                 } else {
                     sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
                 }
