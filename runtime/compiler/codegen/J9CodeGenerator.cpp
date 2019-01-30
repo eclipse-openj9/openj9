@@ -51,6 +51,7 @@
 #include "il/symbol/AutomaticSymbol.hpp"  // for AutomaticSymbol
 #include "il/symbol/StaticSymbol.hpp"     // for StaticSymbol
 #include "il/symbol/LabelSymbol.hpp"      // for LabelSymbol
+#include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"                      // for TR_BitVector, etc
 #include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
@@ -59,6 +60,7 @@
 #include "ras/DebugCounter.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "env/CHTable.hpp"
 #include "env/PersistentCHTable.hpp"
 
@@ -4665,4 +4667,62 @@ J9::CodeGenerator::reserveCodeCache()
 
       self()->comp()->failCompilation<TR::CodeCacheError>("Cannot reserve code cache");
       }
+   }
+
+
+uint8_t *
+J9::CodeGenerator::allocateCodeMemoryInner(
+      uint32_t warmCodeSizeInBytes,
+      uint32_t coldCodeSizeInBytes,
+      uint8_t **coldCode,
+      bool isMethodHeaderNeeded)
+   {
+   TR::Compilation *comp = self()->comp();
+
+   TR::CodeCache * codeCache = self()->getCodeCache();
+   if (!codeCache)
+      {
+      if (comp->compileRelocatableCode())
+         {
+         comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to get current code cache");
+         }
+
+      comp->failCompilation<TR::CodeCacheError>("Failed to get current code cache");
+      }
+
+   TR_ASSERT(codeCache->isReserved(), "Code cache should have been reserved.");
+
+   bool hadClassUnloadMonitor;
+   bool hadVMAccess = self()->fej9()->releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
+
+   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(
+         warmCodeSizeInBytes,
+         coldCodeSizeInBytes,
+         &codeCache,
+         coldCode,
+         comp->compileRelocatableCode(),
+         isMethodHeaderNeeded);
+
+   self()->fej9()->acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
+
+   if (codeCache != self()->getCodeCache())
+      {
+      TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");
+      comp->setRelocatableMethodCodeStart(warmCode);
+      self()->switchCodeCacheTo(codeCache);
+      }
+
+   if (!warmCode)
+      {
+      if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
+         {
+         comp->failCompilation<TR::CodeCacheError>("Failed to allocate code memory");
+         }
+
+      comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to allocate code memory");
+      }
+
+   TR_ASSERT_FATAL( !((warmCodeSizeInBytes && !warmCode) || (coldCodeSizeInBytes && !coldCode)), "Allocation failed but didn't throw an exception");
+
+   return warmCode;
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -184,7 +184,10 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
    // without counting method bodies.  _countingPatchCallSite still refers
    // to the methodInfo poitner in the snippet area.
    if (linkageInfo->isSamplingMethodBody() && !codeMemoryWasAlreadyReleased)
-      fe->releaseCodeMemory(oldStartPC, bytesToSaveAtStart);
+      {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+      fej9->releaseCodeMemory(oldStartPC, bytesToSaveAtStart);
+      }
    }
 
 void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *fe)
