@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -238,4 +238,76 @@ private:
    bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP);
    };
 
+class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSServerMethod
+   {
+   public:
+   TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+
+   virtual TR_Method *           convertToMethod() override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual void *                constantPool() override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual bool                  isStatic() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isAbstract() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isNative() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isSynchronized() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isPrivate() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isProtected() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isPublic() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isFinal() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isStrictFP() override { TR_ASSERT(0, "called");  return 0; }
+
+   virtual bool                  isInterpreted() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isInterpretedForHeuristics() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  hasBackwardBranches() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isObjectConstructor() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isNonEmptyObjectConstructor() override { TR_ASSERT(0, "called");  return false; }
+
+   virtual void *                startAddressForJittedMethod() override { TR_ASSERT(0, "called");  return NULL; }
+   virtual void *                startAddressForJNIMethod( TR::Compilation *) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual void *                startAddressForJITInternalNativeMethod() override { TR_ASSERT(0, "called");  return NULL; }
+   virtual void *                startAddressForInterpreterOfJittedMethod() override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz) override { TR_ASSERT(0, "called");  return false; }
+
+   virtual void *                stringConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override { TR_ASSERT(0, "called");  return false; }
+   virtual void *                methodTypeConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual bool                  isUnresolvedMethodType(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+   virtual void *                methodHandleConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+
+   virtual bool                  fieldAttributes ( TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override { TR_ASSERT(0, "called");  return false; }
+
+   virtual bool                  staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override { TR_ASSERT(0, "called");  return false; }
+
+   virtual int32_t               virtualCallSelector(uint32_t cpIndex) override { TR_ASSERT(0, "called");  return 0; }
+   virtual char *                fieldSignatureChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual char *                staticSignatureChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual bool                  getUnresolvedFieldInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  getUnresolvedSpecialMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+
+   virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override { TR_ASSERT(0, "called");  return NULL; }
+   virtual uint8_t *             allocateException(uint32_t, TR::Compilation*) override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
+
+protected:
+   virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override { TR_ASSERT(0, "called");  return NULL; }
+
+   virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return; }
+   virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return; }
+   virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return; }
+   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
+   };
 #endif // J9METHODSERVER_H
