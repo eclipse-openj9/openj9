@@ -583,13 +583,12 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          TR_RelocationRecordValidateClassByNameBinaryTemplate *binaryTemplate =
                reinterpret_cast<TR_RelocationRecordValidateClassByNameBinaryTemplate *>(cursor);
 
-         // Store rom class to get name of class
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(record->_class));
-         void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_romClassOffsetInSCC = reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache);
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(record->_classChain);
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(record->_class);
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(record->_beholder);
+         binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
 
          cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
          }
@@ -751,12 +750,11 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *binaryTemplate =
                reinterpret_cast<TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *>(cursor);
 
-         // Store rom class to get name of class
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(record->_systemClass));
-         void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-
-         binaryTemplate->_systemClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_systemClass));
-         binaryTemplate->_romClassOffsetInSCC = reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache);
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(record->_classChain);
+         binaryTemplate->_systemClassID = symValManager->getIDFromSymbol(record->_class);
+         binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
 
          cursor += sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate);
          }
