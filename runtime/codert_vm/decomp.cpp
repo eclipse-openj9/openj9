@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1374,7 +1374,13 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 
 		/* Toss the compilation queue */
 
-		jitConfig->jitClassesRedefined(currentThread, 0, NULL);
+		if (inlineWatches) {
+			jitConfig->jitFlushCompilationQueue(currentThread, J9FlushCompQueueDataBreakpoint);
+			/* Make all future compilations inline the field watch code */
+			jitConfig->inlineFieldWatches = TRUE;
+		} else {
+			jitConfig->jitClassesRedefined(currentThread, 0, NULL);			
+		}
 
 		/* Find every method which has been translated and mark it for retranslation */
 
@@ -1387,11 +1393,6 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 		/* Mark every JIT method in every stack for decompilation */
 
 		decompileAllMethodsInAllStacks(currentThread, JITDECOMP_DATA_BREAKPOINT);
-
-		if (inlineWatches) {
-			/* Make all future compilations inline the field watch code */
-			jitConfig->inlineFieldWatches = TRUE;
-		}
 	}
 
 	Trc_Decomp_jitDataBreakpointAdded_Exit(currentThread);
@@ -1887,7 +1888,7 @@ performOSR(J9VMThread *currentThread, J9StackWalkState *walkState, J9OSRBuffer *
 	currentThread->osrJittedFrameCopy = osrJittedFrameCopy;
 	currentThread->osrFrameIndex = sizeof(J9OSRBuffer);
 	currentThread->privateFlags |= J9_PRIVATE_FLAGS_OSR_IN_PROGRESS;
-	currentThread->javaVM->internalVMFunctions->jitFillOSRBuffer(currentThread, osrBlock, 0, 0, 0);
+	currentThread->javaVM->internalVMFunctions->jitFillOSRBuffer(currentThread, osrBlock);
 	currentThread->privateFlags &= ~J9_PRIVATE_FLAGS_OSR_IN_PROGRESS;
 	currentThread->osrBuffer = NULL;
 	currentThread->osrJittedFrameCopy = NULL;

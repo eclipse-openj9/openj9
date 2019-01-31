@@ -43,6 +43,7 @@ PROPS_DIR=props_unix
 
 include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
+include $(TEST_ROOT)$(D)TestConfig$(D)featureSettings.mk
 
 ifndef JAVA_BIN
 $(error Please provide JAVA_BIN value.)
@@ -201,7 +202,11 @@ ifndef UNIQUEID
 	export UNIQUEID := $(shell perl $(GETID) -v)
 endif
 TESTOUTPUT := $(TEST_ROOT)$(D)TestConfig$(D)test_output_$(UNIQUEID)
-REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
+ifeq ($(TEST_ITERATIONS), 1)
+	REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
+else
+	REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@_ITER_$$itercnt$(Q)
+endif
 
 #######################################
 # TEST_STATUS
@@ -211,11 +216,32 @@ KEEP_REPORTDIR?=true
 ifeq ($(KEEP_REPORTDIR), false)
 	RM_REPORTDIR=$(RM) -r $(REPORTDIR);
 endif
-TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM_REPORTDIR) else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
+ifeq ($(TEST_ITERATIONS), 1) 
+	TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM_REPORTDIR) else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
+else
+	TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED(ITER_$$itercnt)$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM_REPORTDIR) if [ $$itercnt -eq $(TEST_ITERATIONS) ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); fi else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED(ITER_$$itercnt)$(Q); $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); exit 1; fi
+endif
+
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
 TEST_SKIP_STATUS=$@_SKIPPED
+
+#######################################
+# TEST_SETUP
+#######################################
+TEST_SETUP=@echo "Nothing to be done for setup."
+ifeq ($(JDK_IMPL), $(filter $(JDK_IMPL),openj9 ibm))
+	TEST_SETUP=$(JAVA_COMMAND) -Xshareclasses:destroyAll; $(JAVA_COMMAND) -Xshareclasses:groupAccess,destroyAll; echo "cache cleanup done"
+endif
+
+#######################################
+# TEST_TEARDOWN
+#######################################
+TEST_TEARDOWN=@echo "Nothing to be done for teardown."
+ifeq ($(JDK_IMPL), $(filter $(JDK_IMPL),openj9 ibm))
+	TEST_TEARDOWN=$(JAVA_COMMAND) -Xshareclasses:destroyAll; $(JAVA_COMMAND) -Xshareclasses:groupAccess,destroyAll; echo "cache cleanup done"
+endif
 
 #######################################
 # include configure makefile

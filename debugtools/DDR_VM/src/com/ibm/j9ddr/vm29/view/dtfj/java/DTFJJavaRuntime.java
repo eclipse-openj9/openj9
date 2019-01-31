@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -660,21 +660,18 @@ public class DTFJJavaRuntime implements JavaRuntime {
 				}
 			}
 		}
-
 	}
 
-
 	@SuppressWarnings("rawtypes")
-
-	public Iterator getHeaps() throws UnsupportedOperationException {		
+	public Iterator getHeaps() throws UnsupportedOperationException {
 		try {
 			LinkedList<Object> heaps = new LinkedList<Object>();
-			
+
 			VoidPointer memorySpace = DTFJContext.getVm().defaultMemorySpace();
 			MM_MemorySpacePointer defaultMemorySpace = MM_MemorySpacePointer.cast(memorySpace);
 			U8Pointer namePtr = defaultMemorySpace._name();
 			String name = "No name"; //MEMORY_SPACE_NAME_UNDEFINED
-			if( namePtr != null && namePtr != U8Pointer.NULL ) {
+			if (namePtr != null && !namePtr.isNull()) {
 				try {
 					name = namePtr.getCStringAtOffset(0);
 				} catch (com.ibm.j9ddr.CorruptDataException e) {
@@ -682,7 +679,7 @@ public class DTFJJavaRuntime implements JavaRuntime {
 				}
 			}
 			heaps.add(new DTFJJavaHeap(defaultMemorySpace, name, DTFJContext.getImagePointer(memorySpace.getAddress())));
-			
+
 			return heaps.iterator();
 		} catch (Throwable t) {
 			CorruptData cd = J9DDRDTFJUtils.handleAsCorruptData(DTFJContext.getProcess(), t);

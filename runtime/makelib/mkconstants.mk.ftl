@@ -1,4 +1,4 @@
-# Copyright (c) 1998, 2018 IBM Corp. and others
+# Copyright (c) 1998, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -157,6 +157,8 @@ endif
 TR_HOST=TR_HOST_X86
 <#elseif uma.spec.processor.arm>
 TR_HOST=TR_HOST_ARM
+<#elseif uma.spec.processor.aarch64>
+TR_HOST=TR_HOST_ARM64
 <#elseif uma.spec.processor.ppc>
 TR_HOST=TR_HOST_POWER
 <#elseif uma.spec.processor.s390>

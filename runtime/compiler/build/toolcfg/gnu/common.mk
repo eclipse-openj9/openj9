@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,9 +73,6 @@ ifeq ($(C_COMPILER),clang)
     endif
 endif
 
-# This is the script that's used to generate TRBuildName.cpp
-GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
-
 # This is the script to preprocess ARM assembly files
 ARMASM_SCRIPT?=$(JIT_SCRIPT_DIR)/armasm2gas.sed
 
@@ -105,7 +102,8 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-dollars-in-identifiers
+    -fno-dollars-in-identifiers \
+    -fno-strict-aliasing
 
 CXX_FLAGS+=\
     -std=c++11 \
@@ -124,7 +122,7 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
 ifeq ($(HOST_ARCH),x)
-    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-strict-aliasing -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-math-errno -fno-trapping-math
 
     ifeq ($(HOST_BITS),32)
         CX_FLAGS+=-m32 -fpic
@@ -160,14 +158,15 @@ endif
 ifeq ($(HOST_ARCH),z)
     ifeq ($(HOST_BITS),32)
         CX_DEFINES+=J9VM_TIERED_CODE_CACHE MAXMOVE S390 FULL_ANSI
-        CX_FLAGS+=-m31 -fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
-        CX_FLAGS_DEBUG+=-gdwarf-2
+        CX_FLAGS+=-m31 -fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
     endif
 
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
-        CX_FLAGS+=-fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+        CX_FLAGS+=-fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
     endif
+
+    CX_FLAGS_DEBUG+=-gdwarf-2
 endif
 
 ifeq ($(HOST_ARCH),arm)
@@ -299,6 +298,56 @@ ifeq ($(HOST_ARCH),x)
 
     PASM_FLAGS+=$(PASM_FLAGS_EXTRA)
 endif
+
+ifeq ($(HOST_ARCH),x)
+#
+# Setup NASM
+#
+
+    NASM_CMD?=nasm
+
+    NASM_DEFINES=\
+        TR_HOST_X86 \
+        TR_TARGET_X86
+
+    ifeq ($(OS),osx)
+        NASM_DEFINES+=\
+            OSX
+    else
+        NASM_DEFINES+=\
+            LINUX
+    endif
+
+    NASM_INCLUDES=\
+        $(J9SRC)/oti \
+        $(J9SRC)/compiler \
+        $(J9SRC)/compiler/x/runtime
+
+    ifeq ($(HOST_BITS),32)
+        NASM_OBJ_FORMAT=-felf32
+
+        NASM_DEFINES+=\
+            TR_HOST_32BIT \
+            TR_TARGET_32BIT
+
+        NASM_INCLUDES+=\
+            $(J9SRC)/compiler/x/i386/runtime
+    else
+        ifeq ($(OS),osx)
+            NASM_OBJ_FORMAT=-fmacho64
+        else
+            NASM_OBJ_FORMAT=-felf64
+        endif
+
+        NASM_DEFINES+=\
+            TR_HOST_64BIT \
+            TR_TARGET_64BIT
+
+        NASM_INCLUDES+=\
+            $(J9SRC)/compiler/x/amd64/runtime
+    endif
+
+endif # HOST_ARCH == x
 
 #
 # Setup CPP and SED to preprocess PowerPC Assembly Files

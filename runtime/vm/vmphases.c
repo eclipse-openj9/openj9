@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,9 @@ void jvmPhaseChange(J9JavaVM* vm, UDATA phase) {
 		if (tempRasGbl != NULL && tempRasGbl->utIntf != NULL) {
 			((J9UtServerInterface *)((UtInterface *)tempRasGbl->utIntf)->server)->StartupComplete(currentThread);
 		}
+	}
+	if (NULL != vm->memoryManagerFunctions) {
+		vm->memoryManagerFunctions->jvmPhaseChange(currentThread, phase);
 	}
 	if (NULL != vm->sharedClassConfig) {
 		vm->sharedClassConfig->jvmPhaseChange(currentThread, phase);

@@ -153,7 +153,7 @@ public:
 			scanPermanentClasses(env);
 		}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-		condYield(_realtimeGC->_sched->beatNanos);
+
 		CompletePhaseCode status = scanClassesComplete(env);
 
 		if (complete_phase_ABORT == status) {
@@ -593,10 +593,12 @@ MM_RealtimeMarkingScheme::markLiveObjects(MM_EnvironmentRealtime *env)
 	}
 	
 	MM_RealtimeMarkingSchemeRootMarker rootMarker(env, _realtimeGC);
+	env->setRootScanner(&rootMarker);
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	rootMarker.setClassDataAsRoots(!_realtimeGC->isDynamicClassUnloadingEnabled());
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	markRoots(env, &rootMarker);
+	env->setRootScanner(NULL);
 	_scheduler->condYieldFromGC(env);
 	/* Heap Marking and barrier processing.Cannot delay barrier processing until the end.*/	
 	_realtimeGC->doTracing(env);
@@ -609,7 +611,9 @@ MM_RealtimeMarkingScheme::markLiveObjects(MM_EnvironmentRealtime *env)
 
 	/* Process reference objects and finalizable objects. */
 	MM_RealtimeMarkingSchemeRootClearer rootScanner(env, _realtimeGC);
+	env->setRootScanner(&rootScanner);
 	rootScanner.scanClearable(env);
+	env->setRootScanner(NULL);
 
 	Assert_MM_true(env->getGCEnvironment()->_referenceObjectBuffer->isEmpty());
 	_scheduler->condYieldFromGC(env);

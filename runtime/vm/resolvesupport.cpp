@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,7 +134,7 @@ packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t
 	} else if (canRunJavaCode) {
 		if (J9_ARE_NO_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS)) {
 			currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS;
-			sendCheckPackageAccess(currentThread, targetClass, protectionDomain, 0, 0);
+			sendCheckPackageAccess(currentThread, targetClass, protectionDomain);
 			currentThread->privateFlags2 &= ~J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS;
 		}
 		if (!threadEventsPending(currentThread)) {
@@ -1043,8 +1043,8 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
 			j9object_t detailMessage = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_STR_XLAT);
 			setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)detailMessage);
-			goto done;
 		}
+		goto done;
 	}
 	
 	nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
@@ -1381,7 +1381,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				/* Call VM Entry point to create the MethodType - Result is put into the
 				 * vmThread->returnValue as entry points don't "return" in the expected way
 				 */
-				sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL, 0);
+				sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL);
 				methodType = (j9object_t) vmStruct->returnValue;
 
 				/* check if an exception is already pending */
@@ -1553,7 +1553,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					 * E.g. the MethodType for "(I)I" will have the following descriptor string:
 					 *     "(Ijava/lang/invoke/VarHandle;)I"
 					 */
-					sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, J9VMJAVALANGINVOKEVARHANDLE_OR_NULL(vm), 0);
+					sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, J9VMJAVALANGINVOKEVARHANDLE_OR_NULL(vm));
 					methodType = (j9object_t)vmStruct->returnValue;
 
 					/* Check if an exception is already pending */
@@ -1686,7 +1686,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	 */
 	romMethodTypeRef = ((J9ROMMethodTypeRef *) &(J9_ROM_CP_FROM_CP(ramCP)[cpIndex]));
 	lookupSig = J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef);
-	sendFromMethodDescriptorString(vmThread, lookupSig, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL, 0);
+	sendFromMethodDescriptorString(vmThread, lookupSig, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL);
 	methodType = (j9object_t) vmThread->returnValue;
 
 	/* check if an exception is already pending */

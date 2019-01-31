@@ -27,6 +27,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "compile/Compilation.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "codegen/CodeGenerator.hpp"
 #include "runtime/CodeCache.hpp"
 #include "env/JITaaSPersistentCHTable.hpp"
 #include "env/JITaaSCHTable.hpp"
@@ -2186,7 +2187,7 @@ remoteCompile(
          TR_ASSERT(dataCacheStr.size(), "must have data cache");
 
          metaData = compInfoPT->reloRuntime()->prepareRelocateJITCodeAndData(vmThread, compiler->fej9vm(),
-               compiler->getCurrentCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0],
+               compiler->cg()->getCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0],
                method, false, TR::comp()->getOptions(), TR::comp(), compilee);
 
          TR::compInfoPT->setMetadata(metaData);
@@ -2287,7 +2288,7 @@ remoteCompilationEnd(
    {
    entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
 
-   TR::CodeCache *codeCache = comp->getCurrentCodeCache();
+   TR::CodeCache *codeCache = comp->cg()->getCodeCache();
 #if 0
    OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*) (comp->getOptimizationPlan()->_mandatoryCodeAddress);
 #else

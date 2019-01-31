@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,60 +23,60 @@
 #include "optimizer/DataAccessAccelerator.hpp"
 
 #include <algorithm>
-#include <limits.h>                            // for INT_MAX, UINT_MAX, etc
-#include <math.h>                              // for exp
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for int32_t, uint32_t, etc
-#include <stdio.h>                             // for printf, fflush, etc
-#include <stdlib.h>                            // for atoi
-#include <string.h>                            // for NULL, strncmp, strcmp, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator, etc
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, feGetEnv, etc
-#include "codegen/Linkage.hpp"                 // for Linkage
-#include "codegen/RecognizedMethods.hpp"       // for RecognizedMethod, etc
+#include <limits.h>
+#include <math.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "compile/Compilation.hpp"             // for Compilation, comp, etc
-#include "compile/Method.hpp"                  // for TR_Method
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable, etc
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for SparseBitVector, etc
-#include "env/jittypes.h"                      // for TR_ByteCodeInfo, etc
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "env/VMJ9.h"
-#include "il/Block.hpp"                        // for Block, toBlock, etc
-#include "il/DataTypes.hpp"                    // for DataType, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::treetop, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/NodePool.hpp"                     // for TR_NodePool
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol, etc
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Cfg.hpp"                       // for CFG, etc
-#include "infra/Stack.hpp"                     // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "infra/TRCfgNode.hpp"                 // for CFGNode
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/NodePool.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Stack.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
+#include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/OSRGuardRemoval.hpp"       // for OSRGuardRemoval
-#include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/OSRGuardRemoval.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 #define IS_VARIABLE_PD2I(callNode) (!isChildConst(callNode, 2) || !isChildConst(callNode, 3))
 
@@ -1085,6 +1085,10 @@ bool TR_DataAccessAccelerator::genComparisionIntrinsic(TR::TreeTop* treeTop, TR:
    pdOpNode->setAndIncChild(1, pdload2);
    pdOpNode->setSymbolReference(NULL);
 
+   // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+   // correctly compute a new CP to relocate DAA OOL calls.
+   bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
+
    //instead of creating comparison operation, re use the callNode:
    TR::Node::recreate(pdOpNode, ops);
 
@@ -1262,6 +1266,10 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
                                                     callNode->getChild(4),
                                                     bcdChkSymRef);
             }
+
+         // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+         // correctly compute a new CP to relocate DAA OOL calls.
+         bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
 
          if (errorCheckingNode->getInt())
             bcdchkNode->setBCDNodeOverflow();
@@ -1620,6 +1628,10 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
           */
          }
 
+      // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+      // correctly compute a new CP to relocate DAA OOL calls.
+      bcdchk->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
+
       TR::DataType dataType = callNode->getDataType();
       if (isByteBuffer)
          {
@@ -1965,6 +1977,10 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
                                                      callNode->getChild(8), callNode->getChild(9),
                                                      bcdChkSymRef);
 
+      // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+      // correctly compute a new CP to relocate DAA OOL calls.
+      bcdchk->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
+
       pdstore->setSymbolReference(symRefPdstore);
       pdstore->setDecimalPrecision(resPrecNode->getInt());
 
@@ -2072,6 +2088,10 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
                                            callNode->getChild(6), callNode->getChild(7),
                                            callNode->getChild(8),
                                            bcdChkSymRef);
+
+   // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+   // correctly compute a new CP to relocate DAA OOL calls.
+   bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
 
    if (isCheckOverflow)
       bcdchkNode->setBCDNodeOverflow();
@@ -2181,6 +2201,9 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
                                        callNode->getChild(6), callNode->getChild(7),
                                        bcdChkSymRef);
 
+   // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
+   // correctly compute a new CP to relocate DAA OOL calls.
+   bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
    bcdchkNode->setBCDNodeOverflow();
 
    //following pdstore

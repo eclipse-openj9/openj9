@@ -78,7 +78,7 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
       }
 #endif
 
-   TR::RealRegister    *espReal      = machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister    *espReal      = machine()->getRealRegister(TR::RealRegister::esp);
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
    uint8_t numXmmRegs = 0;

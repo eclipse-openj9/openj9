@@ -366,9 +366,9 @@ void TR::PPCPrivateLinkage::initPPCRealRegisterLinkage()
       {
       if (linkage.getReserved((TR::RealRegister::RegNum)icount))
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
          ++lockedGPRs;
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
          }
       else
          {
@@ -388,7 +388,7 @@ void TR::PPCPrivateLinkage::initPPCRealRegisterLinkage()
                weight = icount;
                }
             }
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(weight);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(weight);
          }
       }
 
@@ -397,11 +397,11 @@ void TR::PPCPrivateLinkage::initPPCRealRegisterLinkage()
       {
       if (linkage.getReserved((TR::RealRegister::RegNum)icount))
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setState(TR::RealRegister::Locked);
          ++lockedGPRs;
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getPPCRealRegister((TR::RealRegister::RegNum)icount));
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setAssignedRegister(machine->getRealRegister((TR::RealRegister::RegNum)icount));
          }
-      machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
       }
 
    int lowestFPRWeight = TR::RealRegister::FirstFPR;
@@ -411,11 +411,11 @@ void TR::PPCPrivateLinkage::initPPCRealRegisterLinkage()
       {
       if (linkage.getPreserved((TR::RealRegister::RegNum)icount))
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
          }
       else
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(lowestFPRWeight);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(lowestFPRWeight);
          }
       }
 
@@ -424,11 +424,11 @@ void TR::PPCPrivateLinkage::initPPCRealRegisterLinkage()
       {
       if (linkage.getPreserved((TR::RealRegister::RegNum)icount))
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
          }
       else
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
          }
       }
 
@@ -437,11 +437,11 @@ void TR::PPCPrivateLinkage::initPPCRealRegisterLinkage()
       {
       if (linkage.getPreserved((TR::RealRegister::RegNum)icount))
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
          }
       else
          {
-         machine->getPPCRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+         machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
          }
       }
 
@@ -733,7 +733,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
       int32_t wordsUnrolledPerIteration = (128 * 4) / (TR::Compiler->om.sizeofReferenceAddress() * 8); // (number of bits cleared by one iteration using 4 stxvw4x) / (number of bits per word i.e. bits in a java pointer)
       if (wordsToUnroll >= wordsUnrolledPerIteration)
          {
-         TR::RealRegister *vectorNullReg = cg->machine()->getPPCRealRegister(TR::RealRegister::vr0);
+         TR::RealRegister *vectorNullReg = cg->machine()->getRealRegister(TR::RealRegister::vr0);
          cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::xxlxor, node, vectorNullReg, vectorNullReg, vectorNullReg, cursor);
 
          int32_t loopIterations = wordsToUnroll / wordsUnrolledPerIteration;
@@ -886,7 +886,7 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
       argSize = cg->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm();
       }
 
-   while (intSavedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(intSavedFirst)->getHasBeenAssignedInMethod())
+   while (intSavedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(intSavedFirst)->getHasBeenAssignedInMethod())
       intSavedFirst=(TR::RealRegister::RegNum)((uint32_t)intSavedFirst+1);
 
    // the registerSaveDescription is emitted as follows:
@@ -949,10 +949,10 @@ void TR::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
    TR::ResolvedMethodSymbol      *bodySymbol = comp()->getJittedMethodSymbol();
    TR::RealRegister        *stackPtr = cg()->getStackPointerRegister();
    TR::RealRegister        *metaBase = cg()->getMethodMetaDataRegister();
-   TR::RealRegister        *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister        *gr11 = machine->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister        *gr12 = machine->getPPCRealRegister(TR::RealRegister::gr12);
-   TR::RealRegister        *cr0 = machine->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister        *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister        *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister        *gr12 = machine->getRealRegister(TR::RealRegister::gr12);
+   TR::RealRegister        *cr0 = machine->getRealRegister(TR::RealRegister::cr0);
    TR::Node                   *firstNode = comp()->getStartTree()->getNode();
    int32_t                    size = -(bodySymbol->getLocalMappingCursor());
    int32_t                    residualSize, saveSize=0, argSize;
@@ -1079,14 +1079,14 @@ void TR::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
          {
          for (regIndex=intSavedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getPPCRealRegister(regIndex), cursor);
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getRealRegister(regIndex), cursor);
 
             argSize = argSize + TR::Compiler->om.sizeofReferenceAddress();
             }
          }
       else
          {
-         cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1), cg()), machine->getPPCRealRegister(intSavedFirst), cursor);
+         cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1), cg()), machine->getRealRegister(intSavedFirst), cursor);
          
          argSize += (TR::RealRegister::LastGPR - intSavedFirst + 1) * 4;
          }
@@ -1323,8 +1323,8 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
    const TR::PPCLinkageProperties& properties = getProperties();
    TR::ResolvedMethodSymbol      *bodySymbol = comp()->getJittedMethodSymbol();
    TR::RealRegister        *stackPtr = cg()->getStackPointerRegister();
-   TR::RealRegister        *gr12 = machine->getPPCRealRegister(TR::RealRegister::gr12);
-   TR::RealRegister        *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister        *gr12 = machine->getRealRegister(TR::RealRegister::gr12);
+   TR::RealRegister        *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
    TR::Node                   *currentNode = cursor->getNode();
    int32_t                   saveSize;
    int32_t                   frameSize = cg()->getFrameSizeInBytes();
@@ -1354,7 +1354,7 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
       saveSize = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm();
       }
 
-   while (savedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(savedFirst)->getHasBeenAssignedInMethod())
+   while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
       savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
 
    if (savedFirst <= TR::RealRegister::LastGPR)
@@ -1365,14 +1365,14 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
          {
          for (regIndex=savedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
 
             saveSize = saveSize + TR::Compiler->om.sizeofReferenceAddress();
             }
          }
       else
          {
-         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getPPCRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
+         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
          
          saveSize += (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
          }
@@ -1478,7 +1478,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
          {
          traceMsg(comp(), "Special arg %s in %s\n",
             comp()->getDebug()->getName(callNode->getChild(from)),
-            comp()->getDebug()->getName(cg()->machine()->getPPCRealRegister(specialArgReg)));
+            comp()->getDebug()->getName(cg()->machine()->getRealRegister(specialArgReg)));
          }
       // Skip the special arg in the first loop
       from += step;
@@ -2881,7 +2881,7 @@ TR::MemoryReference *TR::PPCPrivateLinkage::getOutgoingArgumentMemRef(int32_t ar
    {
    TR::Machine *machine = cg()->machine();
 
-   TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(machine->getPPCRealRegister(properties.getNormalStackPointerRegister()),
+   TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(machine->getRealRegister(properties.getNormalStackPointerRegister()),
                                         argSize+properties.getOffsetToFirstParm(), length, cg());
    memArg.argRegister = argReg;
    memArg.argMemory = result;

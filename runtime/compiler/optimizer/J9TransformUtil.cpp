@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -494,107 +494,6 @@ static bool changeIndirectLoadIntoConst(TR::Node *node, TR::ILOpCodes opCode, TR
    }
 
 TR::Node *
-J9::TransformUtil::transformStringIndexOfCall(TR::Compilation * comp, TR::Node * callNode)
-   {
-   TR_J9VMBase *fej9 = comp->fej9();
-   TR_ASSERT(callNode->getNumChildren() == 2, "unexpected numChildren on String.indexOf(String) call");
-   TR::ResolvedMethodSymbol * resolvedMethodSymbol =
-      callNode->getSymbolReference()->getSymbol()->castToResolvedMethodSymbol();
-
-   TR::Node * needle = callNode->getChild(1);
-
-   if (needle->getOpCodeValue() != TR::aload)
-      return callNode;
-   if (!needle->getSymbolReference()->getSymbol()->isConstObjectRef())
-      return callNode;
-   if (needle->getSymbolReference()->isUnresolved())
-      return callNode;
-
-   // Everything below will be run with VM Access in hand
-   TR::VMAccessCriticalSection transformStringIndexCriticalSection(fej9,
-                                                                    TR::VMAccessCriticalSection::tryToAcquireVMAccess,
-                                                                    comp);
-
-   if (!transformStringIndexCriticalSection.hasVMAccess())
-      return callNode;
-
-   uintptrj_t stringStaticAddr = (uintptrj_t)needle->getSymbol()->castToStaticSymbol()->getStaticAddress();
-   uintptrj_t string = comp->fej9()->getStaticReferenceFieldAtAddress(stringStaticAddr);
-   int32_t len = fej9->getStringLength(string);
-   if (len < 3)
-      return callNode;
-
-   TR_OpaqueClassBlock * stringClass = comp->getStringClassPointer();
-   TR_ScratchList<TR_ResolvedMethod> stringMethods(comp->trMemory());
-   fej9->getResolvedMethods(comp->trMemory(), stringClass, &stringMethods);
-   ListIterator<TR_ResolvedMethod> it(&stringMethods);
-   TR_ResolvedMethod * method;
-   for (method = it.getCurrent(); method; method = it.getNext())
-      {
-      char name[] = "indexOf";
-      char sig[]  = "(Ljava/lang/String;Ljava/lang/String;IIC)I";
-      if (!strncmp(method->nameChars(), name, strlen(name)) &&
-          !strncmp(method->signatureChars(), sig, strlen(sig)))
-         break;
-      }
-
-   if (!method)
-      return callNode; // fast String.indexOf not supported by the class libraries
-
-   // HACK: if this is first time we are doing this transformation, change the invocation
-   // count of the method - otherwise the optimizer will think that no one is calling this
-   // method is that this method is cold
-   //
-   intptrj_t count = fej9->getInvocationCount((TR_OpaqueMethodBlock *) method->getPersistentIdentifier());
-   if (count == comp->getOptions()->getCmdLineOptions()->getInitialBCount())
-      fej9->setInvocationCount((TR_OpaqueMethodBlock *) method->getPersistentIdentifier(), count, count / 2);
-
-   // Pattern Matched !
-
-   TR::SymbolReferenceTable * symRefTab = comp->getSymRefTab();
-   TR::SymbolReference * newSymRef =
-      symRefTab->findOrCreateMethodSymbol(callNode->getSymbolReference()->getOwningMethodIndex(), -1, method, TR::MethodSymbol::Static);
-
-   uint16_t lastChar = fej9->getStringCharacter(string, len-1);
-
-   int32_t  cache    = 0;
-   int32_t  md2      = len-1;
-
-   int32_t  i;
-   for (i = len-1; i >= 0; --i)
-      {
-      uint16_t thisChar = fej9->getStringCharacter(string, i);
-      cache |= (1 << (thisChar & 31));
-      }
-
-   for (i = len-2; i >= 0; --i)
-      {
-      uint16_t thisChar = fej9->getStringCharacter(string, i);
-      if (lastChar == thisChar)
-         {
-         md2 -= i;
-         break;
-         }
-      }
-
-   TR::Node * haystack = callNode->getChild(0);
-   haystack->decReferenceCount();
-   needle->decReferenceCount();
-
-   TR::Node * node = TR::Node::createWithSymRef(TR::icall, 5, newSymRef);
-   node->setAndIncChild(0, haystack);
-   node->setAndIncChild(1, needle);
-   node->setAndIncChild(2, TR::Node::create(TR::iconst, 0, cache));
-   node->setAndIncChild(3, TR::Node::create(TR::iconst, 0, md2));
-   node->setAndIncChild(4, TR::Node::create(TR::iconst, 0, lastChar));
-
-   node->incReferenceCount();
-
-   return node;
-   }
-
-
-TR::Node *
 J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
    {
    // TODO: This code does lots of refcount decrementing, which is not
@@ -1079,6 +978,16 @@ J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node
    return TR_maybe;
    }
 
+/*
+ * Load const node should have zero children
+ */
+static void prepareNodeToBeLoadConst(TR::Node *node)
+   {
+   for (int i=0; i < node->getNumChildren(); i++)
+      node->getAndDecChild(i);
+   node->setNumChildren(0);
+   }
+
 bool
 J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *node)
    {
@@ -1146,6 +1055,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
       if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
          {
          TR::VMAccessCriticalSection isConsitble(comp->fej9());
+         prepareNodeToBeLoadConst(node);
          switch (loadType)
             {
             case TR::Int8:
@@ -1194,6 +1104,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
          default:
             if (performTransformation(comp, "O^O transformDirectLoad: [%p] field is null - change to aconst NULL\n", node))
                {
+               prepareNodeToBeLoadConst(node);
                TR::Node::recreate(node, TR::aconst);
                node->setAddress(0);
                node->setIsNull(true);
@@ -1928,30 +1839,29 @@ J9::TransformUtil::createDiamondForCall(TR::Optimization* opt, TR::TreeTop *call
 void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
    {
    TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
+   TR_ASSERT(comp->supportsInduceOSR() && comp->isOSRTransitionTarget(TR::postExecutionOSR) && comp->getOSRMode() == TR::voluntaryOSR,
+             "removePotentialOSRPointHelperCalls only works in certain modes");
 
    TR::TreeTop* ttAfterEnd = end->getNextTreeTop();
+   TR::TreeTop *tt = start;
 
-   if (comp->getOption(TR_EnableOSR) &&
-       comp->isOSRTransitionTarget(TR::postExecutionOSR) &&
-       comp->getOSRMode() == TR::voluntaryOSR)
+   do
       {
-      TR::TreeTop *tt = start;
-      do
+      TR::Node *osrNode = NULL;
+      if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
          {
-         TR::Node *osrNode = NULL;
-         if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
+         if (osrNode->isPotentialOSRPointHelperCall())
             {
-            if (osrNode->isPotentialOSRPointHelperCall())
-               {
-               dumpOptDetails(comp, "Remove tt n%dn with potential osr point %p n%dn\n", tt->getNode()->getGlobalIndex(), osrNode, osrNode->getGlobalIndex());
-               TR::TreeTop* prevTT = tt->getPrevTreeTop();
-               TR::TransformUtil::removeTree(comp, tt);
-               tt = prevTT;
-               }
+            dumpOptDetails(comp, "Remove tt n%dn with potential osr point %p n%dn\n", tt->getNode()->getGlobalIndex(), osrNode, osrNode->getGlobalIndex());
+            TR::TreeTop* prevTT = tt->getPrevTreeTop();
+            TR::TransformUtil::removeTree(comp, tt);
+            tt = prevTT;
             }
-         tt = tt->getNextTreeTop();
-         } while (tt != ttAfterEnd);
+         }
+      tt = tt->getNextTreeTop();
       }
+   while (tt != ttAfterEnd);
+
    }
 
 /** \brief
@@ -1973,24 +1883,63 @@ void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp
 void J9::TransformUtil::prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
    {
    TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
+   TR_ASSERT(comp->supportsInduceOSR() && comp->isOSRTransitionTarget(TR::postExecutionOSR) && comp->getOSRMode() == TR::voluntaryOSR,
+             "prohibitOSROverRange only works in certain modes");
 
    TR::TreeTop* ttAfterEnd = end->getNextTreeTop();
+   TR::TreeTop *tt = start;
 
-   if (comp->getOption(TR_EnableOSR) &&
-       comp->isOSRTransitionTarget(TR::postExecutionOSR) &&
-       comp->getOSRMode() == TR::voluntaryOSR)
+   do
       {
-      TR::TreeTop *tt = start;
-      do
+      TR::Node *osrNode = NULL;
+      if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
          {
-         TR::Node *osrNode = NULL;
-         if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
-            {
-            dumpOptDetails(comp, "Can no longer OSR at [%p] n%dn\n", osrNode, osrNode->getGlobalIndex());
-            osrNode->getByteCodeInfo().setDoNotProfile(true);
-            }
-         tt = tt->getNextTreeTop();
-         } while (tt != ttAfterEnd);
+         dumpOptDetails(comp, "Can no longer OSR at [%p] n%dn\n", osrNode, osrNode->getGlobalIndex());
+         // Record the prohibition so other opts are aware of the existence of dangerous region
+         comp->setOSRProhibitedOverRangeOfTrees();
+         osrNode->getByteCodeInfo().setDoNotProfile(true);
+         }
+      tt = tt->getNextTreeTop();
       }
+   while (tt != ttAfterEnd);
+
    }
 
+void J9::TransformUtil::separateNullCheck(TR::Compilation* comp, TR::TreeTop* tree, bool trace)
+   {
+   TR::Node *nullCheck = tree->getNode();
+   if (!nullCheck->getOpCode().isNullCheck())
+      return;
+
+   TR::Node *checkedRef = nullCheck->getNullCheckReference();
+   if (trace)
+      {
+      traceMsg(comp,
+         "separating null check on n%un from n%un\n",
+         checkedRef->getGlobalIndex(),
+         nullCheck->getGlobalIndex());
+      }
+
+   TR::Node * const passthrough = TR::Node::create(nullCheck, TR::PassThrough, 1, checkedRef);
+
+   TR::SymbolReference * const nullCheckSR =
+      comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol());
+   TR::Node * const separatedNullCheck =
+      TR::Node::createWithSymRef(nullCheck, TR::NULLCHK, 1, passthrough, nullCheckSR);
+
+   tree->insertBefore(TR::TreeTop::create(comp, separatedNullCheck));
+
+   switch (nullCheck->getOpCodeValue())
+      {
+      case TR::NULLCHK:
+         nullCheck->setSymbolReference(NULL);
+         TR::Node::recreate(nullCheck, TR::treetop);
+         break;
+
+      case TR::ResolveAndNULLCHK:
+         nullCheck->setSymbolReference(
+            comp->getSymRefTab()->findOrCreateResolveCheckSymbolRef(comp->getMethodSymbol()));
+         TR::Node::recreate(nullCheck, TR::ResolveCHK);
+         break;
+      }
+   }

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,9 +70,6 @@ ifeq (default,$(origin CXX))
     CXX=tpf-g++
 endif
 
-# This is the script that's used to generate TRBuildName.cpp
-GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
-
 # This is the command to check Z assembly files
 ZASM_SCRIPT?=$(JIT_SCRIPT_DIR)/s390m4check.pl
 
@@ -93,7 +90,7 @@ TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
 TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unused-but-set-variable -Wno-write-strings
 
 #
-# First setup C and C++ compilers. 
+# First setup C and C++ compilers.
 #
 #     Note: "CX" means both C and C++
 #
@@ -115,7 +112,8 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-dollars-in-identifiers
+    -fno-dollars-in-identifiers \
+    -fno-strict-aliasing
 
 CXX_FLAGS+=\
     -std=c++0x \
@@ -136,7 +134,7 @@ ifeq ($(HOST_ARCH),z)
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
         CX_DEFINES+=_GNU_SOURCE IBM_ATOE _TPF_SOURCE ZTPF_POSIX_SOCKET J9ZTPF OMRZTPF
-        CX_FLAGS+=-fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+        CX_FLAGS+=-fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
     endif
 endif
 
@@ -199,18 +197,18 @@ ifeq ($(HOST_ARCH),z)
     M4_CMD?=$(M4)
 
     M4_INCLUDES=$(PRODUCT_INCLUDES)
-    
+
     M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
     M4_DEFINES+=J9VM_TIERED_CODE_CACHE
     M4_DEFINES+=OMRZTPF
     M4_DEFINES+=J9ZTPF
-    
+
     ifeq ($(HOST_BITS),64)
         ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
             M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         endif
     endif
-    
+
     ifeq ($(BUILD_CONFIG),debug)
         M4_DEFINES+=$(M4_DEFINES_DEBUG)
         M4_FLAGS+=$(M4_FLAGS_DEBUG)
@@ -220,7 +218,7 @@ ifeq ($(HOST_ARCH),z)
         M4_DEFINES+=$(M4_DEFINES_PROD)
         M4_FLAGS+=$(M4_FLAGS_PROD)
     endif
-    
+
     M4_DEFINES+=$(M4_DEFINES_EXTRA)
     M4_FLAGS+=$(M4_FLAGS_EXTRA)
 endif

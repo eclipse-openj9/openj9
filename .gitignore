@@ -74,9 +74,14 @@ runtime/tr.source/trj9/rpc/gen
 
 # Root level .project should be ignored as Eclipse automatically creates this file when new repositories are added as Projects for C/C++ indexing
 /.project
+/.cproject
 
 # Visual Studio
 /.vs
 
+# IntelliJ CLion
+/.idea
+
 # Default test directory (BUILD_ROOT)
 /jvmtest/
+/build/

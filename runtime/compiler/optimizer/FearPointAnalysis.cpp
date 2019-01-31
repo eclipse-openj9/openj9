@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,39 +19,25 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for int32_t
+#include <stddef.h>
+#include <stdint.h>
 #include "optimizer/FearPointAnalysis.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "compile/Compilation.hpp"         // for Compilation
+#include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/TRMemory.hpp"                // for TR_Memory, etc
-#include "il/Node.hpp"                     // for Node, vcount_t
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "infra/Assert.hpp"                // for TR_ASSERT
-#include "infra/BitVector.hpp"             // for TR_BitVector
-#include "infra/Checklist.hpp"             // for TR::NodeChecklist
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Checklist.hpp"
 
 bool TR_FearPointAnalysis::virtualGuardsKillFear()
    {
    static bool kill = (feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear") == NULL);
    return kill;
-   }
-
-static bool containsPrepareForOSR(TR::Block *block)
-   {
-   for (TR::TreeTop *tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextTreeTop())
-       {
-       if (tt->getNode()->getOpCode().isCheck() || tt->getNode()->getOpCodeValue() == TR::treetop)
-          {
-          if (tt->getNode()->getFirstChild()->getOpCode().isCall()
-              && tt->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
-             return true;
-          }
-       }
-   return false;
    }
 
 int32_t TR_FearPointAnalysis::getNumberOfBits() { return 1; }
@@ -106,7 +92,7 @@ TR_FearPointAnalysis::TR_FearPointAnalysis(
       if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
          {
          TR::Block *currentBlock = treeTop->getEnclosingBlock();
-         if (shouldSkipBlock(currentBlock))
+         if (currentBlock->isOSRCatchBlock() || currentBlock->isOSRCodeBlock())
             {
             treeTop = currentBlock->getExit();
             continue;
@@ -197,7 +183,7 @@ void TR_FearPointAnalysis::computeFearFromBitVector(TR::Compilation *comp)
       if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
          {
          TR::Block *currentBlock = treeTop->getEnclosingBlock();
-         if (shouldSkipBlock(currentBlock))
+         if (currentBlock->isOSRCatchBlock() || currentBlock->isOSRCodeBlock())
             {
             treeTop = currentBlock->getExit();
             continue;
@@ -219,11 +205,6 @@ TR_SingleBitContainer *TR_FearPointAnalysis::generatedFear(TR::Node *node)
    return returnValue;
    }
 
-bool TR_FearPointAnalysis::shouldSkipBlock(TR::Block *block)
-   {
-   return block->isOSRCatchBlock() || block->isOSRCodeBlock() || containsPrepareForOSR(block);
-   }
-
 void TR_FearPointAnalysis::initializeGenAndKillSetInfo()
    {
    for (int32_t i = 0; i < comp()->getFlowGraph()->getNextNodeNumber(); ++i)
@@ -242,7 +223,7 @@ void TR_FearPointAnalysis::initializeGenAndKillSetInfo()
          {
          exceptingTTSeen = false;
          currentBlock = treeTop->getEnclosingBlock();
-         if (shouldSkipBlock(currentBlock))
+         if (currentBlock->isOSRCatchBlock() || currentBlock->isOSRCodeBlock())
             {
             _regularKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
             _exceptionKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());

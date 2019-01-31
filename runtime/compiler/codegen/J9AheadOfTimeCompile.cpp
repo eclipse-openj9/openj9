@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -164,11 +164,54 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
    TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
 
-   // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
-   // relocation records are consolidated, it will become the canonical place
-   // to initialize the platform agnostic relocation headers
+   // initializeCommonAOTRelocationHeader is currently in the process
+   // of becoming the canonical place to initialize the platform agnostic
+   // relocation headers; new relocation records' header should be
+   // initialized here.
    switch (kind)
       {
+      case TR_ConstantPool:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
+         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2()));
+         }
+         break;
+
+      case TR_HelperAddress:
+         {
+         TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+
+         haRecord->setEipRelative(reloTarget);
+         haRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
+         }
+         break;
+
+      case TR_RelativeMethodAddress:
+         {
+         TR_RelocationRecordMethodAddress *rmaRecord = reinterpret_cast<TR_RelocationRecordMethodAddress *>(reloRecord);
+
+         rmaRecord->setEipRelative(reloTarget);
+         }
+         break;
+
+      case TR_AbsoluteMethodAddress:
+         {
+         // Nothing to do
+         }
+         break;
+
+      case TR_MethodCallAddress:
+         {
+         TR_RelocationRecordMethodCallAddress *mcaRecord = reinterpret_cast<TR_RelocationRecordMethodCallAddress *>(reloRecord);
+
+         mcaRecord->setEipRelative(reloTarget);
+         mcaRecord->setAddress(reloTarget, relocation->getTargetAddress());
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -203,11 +246,56 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
    bool orderedPair = isOrderedPair(kind);
 
-   // dumpRelocationHeaderData currently doesn't do anything; however, as more
-   // relocation records are consolidated, it will become the canonical place
-   // to dump the relocation header data
+   // dumpRelocationHeaderData is currently in the process of becoming the
+   // the canonical place to dump the relocation header data; new relocation
+   // records' header data should be printed here.
    switch (kind)
       {
+      case TR_ConstantPool:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x",
+                                     cpRecord->inlinedSiteIndex(reloTarget),
+                                     cpRecord->constantPool(reloTarget));
+            }
+         }
+         break;
+
+      case TR_HelperAddress:
+         {
+         TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
+
+         uint32_t helperID = haRecord->helperID(reloTarget);
+
+         traceMsg(self()->comp(), "%-6d", helperID);
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
+            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            }
+         }
+         break;
+
+      case TR_RelativeMethodAddress:
+      case TR_AbsoluteMethodAddress:
+         {
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         }
+         break;
+
+      case TR_MethodCallAddress:
+         {
+         TR_RelocationRecordMethodCallAddress *mcaRecord = reinterpret_cast<TR_RelocationRecordMethodCallAddress *>(reloRecord);
+         traceMsg(self()->comp(), "\n Method Call Address: address=" POINTER_PRINTF_FORMAT, mcaRecord->address(reloTarget));
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -321,9 +409,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       cursor++;
 
-      // dumpRelocationHeaderData currently doesn't do anything; however, as more
-      // relocation records are consolidated, it will become the canonical place
-      // to dump the relocation header data
+      // dumpRelocationHeaderData is currently in the process of becoming the
+      // the canonical place to dump the relocation header data; new relocation
+      // records' header data should be printed here.
       uint8_t *newCursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
       if (origCursor != newCursor)
          {
@@ -333,7 +421,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       switch (kind)
          {
-         case TR_ConstantPool:
          case TR_ConstantPoolOrderedPair:
             // constant pool address is placed as the last word of the header
             //traceMsg(self()->comp(), "\nConstant pool %x\n", *(uint32_t *)++cursor);
@@ -364,7 +451,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
          case TR_AbsoluteHelperAddress:
-         case TR_HelperAddress:
             // final byte of header is the index which indicates the particular helper being relocated to
             cursor++;
             ep1 = cursor;
@@ -377,36 +463,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(tempSR), *(int32_t*)ep1);
                }
             break;
-         case TR_RelativeMethodAddress:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nRelative Method Address: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nRelative Method Address: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
-               }
-            break;
-         case TR_AbsoluteMethodAddress:
          case TR_AbsoluteMethodAddressOrderedPair:
             // Reference to the current method, no other information
             cursor++;
@@ -440,35 +496,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             }
-            break;
-         case TR_ClassObject:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        //unused field
-            if (is64BitTarget)
-               {
-               cursor += 4;     // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nClass Object: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nClass Object: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
-               }
             break;
          case TR_ClassAddress:
             {
@@ -523,35 +550,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                if (isVerbose)
                   {
                   traceMsg(self()->comp(), "\nMethod Object: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
-               }
-            break;
-         case TR_InterfaceObject:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor += 4;     // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(),"Interface Object: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(),"Interface Object: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
                   }
                }
             break;
@@ -1161,23 +1159,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
 
-         case TR_ValidateRootClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateRootClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateRootClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Root Class: classID=%d ", (uint32_t)binaryTemplate->_classID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateClassByName:
             {
             cursor++;
@@ -1188,10 +1169,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateClassByNameBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d primitiveType=%c romClassOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d romClassOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_classID,
                         (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_primitiveType,
                         binaryTemplate->_romClassOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
@@ -1209,9 +1189,8 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateProfiledClassBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d primitiveType=%c classChainOffsetInSCC=%d classChainOffsetForCLInScc=%p ",
+               traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d classChainOffsetInSCC=%d classChainOffsetForCLInScc=%p ",
                         (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_primitiveType,
                         binaryTemplate->_classChainOffsetInSCC,
                         binaryTemplate->_classChainOffsetForCLInScc);
                }
@@ -1495,84 +1474,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateRomClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateRomClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateRomClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate RomClass: classID=%d romClassOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_romClassOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidatePrimitiveClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Primitive Class: classID=%d, primitiveType=%c ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_primitiveType);
-               }
-            cursor += sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodFromInlinedSite:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method From Inlined Site: methodID=%d, inlinedSiteIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (int32_t)binaryTemplate->_inlinedSiteIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodByName:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodByNameBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodByNameBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method By Name: methodID=%d, beholderID=%d, romClassOffsetInSCC=%p romMethodOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_romClassOffsetInSCC,
-                        binaryTemplate->_romMethodOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateMethodFromClass:
             {
             cursor++;
@@ -1752,25 +1653,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_skipFrames ? "true" : "false");
                }
             cursor += sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateArrayClassFromJavaVM:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Array Class From JavaVM: arrayClassID=%d, arrayClassIndex=%d ",
-                        (uint32_t)binaryTemplate->_arrayClassID,
-                        binaryTemplate->_arrayClassIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;

@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,6 @@ my $projectRootDir = '';
 my $testRoot = '';
 my $allLevels = '';
 my $allGroups = '';
-my $allSubsets = '';
 my $output = '';
 my $graphSpecs = '';
 my $jdkVersion = '';
@@ -51,9 +50,10 @@ my $modes_hs = '';
 my $sp_hs = '';
 my %targetGroup = ();
 my $buildList = '';
+my $iterations = 1;
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations  ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -61,8 +61,7 @@ sub runmkgen {
 		$testRoot = $output;
 	}
 
-	# temporarily turn off mode service, as it is out of sync
-	my $includeModesService = 0;
+	my $includeModesService = 1;
 	eval qq{require "modesService.pl"; 1;} or $includeModesService = 0;
 	my $serviceResponse;
 	if ($includeModesService) {
@@ -73,11 +72,13 @@ sub runmkgen {
 	}
 
 	if (!(($serviceResponse) && (%{$modes_hs}) && (%{$sp_hs}))) {
-#		print "Cannot get data from modes service! Getting data from modes.xml and ottawa.csv...\n";
+		print "Getting modes data from modes.xml and ottawa.csv...\n";
 		require "parseFiles.pl";
 		my $data = getFileData($modesxml, $ottawacsv);
 		$modes_hs = $data->{'modes'};
 		$sp_hs = $data->{'specPlatMapping'};
+	} else {
+		print "Getting modes data from modes services...\n";
 	}
 
 	$targetGroup{"all"} = 0;
@@ -293,25 +294,28 @@ sub parseXML {
 				next;
 			}
 
+			my $isSubsetValid = 0;
 			my $subsets = getElementsByTag( $testlines, 'subset' );
-			# temporarily support SE version, convert it to JDK_VERSION
-			foreach (my $i=0; $i < @{$subsets}; $i++) {
-				$subsets->[$i] =~ s/^SE(.*)0$/$1/;
-			}
-
-			# defaults to all subsets
-			if (!@{$subsets}) {
-				$subsets = $allSubsets;
-			}
-			foreach my $subset ( @{$subsets} ) {
-				if ( !grep(/^$subset$/, @{$allSubsets}) ) {
-					die "The subset: " . $subset . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are " . join(",", @{$allSubsets}) . ".";
+			# if subset is not specified, it defaults to match all jdk version
+			if ( !@{$subsets} ) {
+				$isSubsetValid = 1;
+			} else {
+				foreach my $eachSubset ( @{$subsets} ) {
+					if ( $eachSubset =~ /^(.*)\+$/ ) {
+						if ( $1 <=  $jdkVersion ) {
+							$isSubsetValid = 1;
+							last;
+						}
+					} elsif ( $eachSubset eq $jdkVersion) {
+						$isSubsetValid = 1;
+						last;
+					}
 				}
 			}
-			# do not generate make taget if subset doesn't match jdkVersion
-			if ( !grep(/^$jdkVersion$/, @{$subsets}) ) {
+			if ( $isSubsetValid == 0 ) {
 				next;
 			}
+
 			push( @tests, \%test );
 		}
 	}
@@ -412,9 +416,9 @@ sub writeTargets {
 			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
 			if ($jvmoptions) {
-				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(AOT_OPTIONS) \$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
 			} else {
-				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(AOT_OPTIONS) \$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
 			my $levelStr = '';
@@ -443,6 +447,8 @@ sub writeTargets {
 				}
 			}
 
+			print $fhOut "$indent\$(TEST_SETUP);\n";
+
 			print $fhOut "$indent\@echo \"variation: $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"JVM_OPTIONS: \$(JVM_OPTIONS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 
@@ -450,7 +456,17 @@ sub writeTargets {
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;
 
-			print $fhOut "$indent\{ \$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n$indent$command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\{ ";
+			for (my $i = 1; $i <= $iterations; $i++) {
+				print $fhOut "itercnt=$i; \\\n$indent\$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n";
+				print $fhOut "$indent$command;";
+				if ($i ne $iterations) {
+					print $fhOut " \\\n";
+				}
+			}
+			print $fhOut " \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+
+			print $fhOut "$indent\$(TEST_TEARDOWN);\n";
 
 			if (defined($capabilityReqs)) {
 				foreach my $key (keys %capabilityReqs_Hash) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,10 +62,9 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 /**
  * Class that calculates offsets into an Object of fields.
  * Based on:
- * resolvefield.c 1.48
- * description.c 1.25
+ * resolvefield.cpp
+ * description.c
  */
-
 public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator {
 
 	private J9JavaVMPointer vm;
@@ -73,7 +72,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private J9ClassPointer superClazz;
 	private Iterator romFieldsShapeIterator;
 	private J9ClassPointer instanceClass;
-	
+
 	private U32 doubleSeen = new U32(0);
 	private U32 doubleStaticsSeen = new U32(0);
 	private UDATA firstDoubleOffset = new UDATA(0);
@@ -93,7 +92,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private UDATA lockOffset = new UDATA(0);
 
 	private boolean isHidden;
-	
+
 	@SuppressWarnings("unused")
 	private UDATA finalizeLinkOffset = new UDATA(0);
 	private int hiddenInstanceFieldWalkIndex = -1;
@@ -112,12 +111,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		this.walkFlags = flags;
 		// Can't call init or set romClass in the constructor because they can throw a CorruptDataException
 	}
-	
+
 	private void init() throws CorruptDataException {
 		calculateInstanceSize(romClass, superClazz); //initInstanceSize(romClass, superClazz);
 		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 	}
-	
+
 	private void nextField() throws CorruptDataException {
 		boolean walkHiddenFields = false;
 		isHidden = false;
@@ -133,7 +132,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				walkHiddenFields = true;
 				/* Start the walk over the hidden fields array in reverse order. */
 				hiddenInstanceFieldWalkIndex = hiddenInstanceFieldList.size();
-			} 
+			}
 		} else {
 			walkHiddenFields = true;
 		}
@@ -197,7 +196,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE)) {
 					if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 						if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD)) {
-//							Assert_VM_true(state->backfillOffsetToUse >= 0);
+							// Assert_VM_true(state->backfillOffsetToUse >= 0);
 							offset = new UDATA(backfillOffsetToUse);
 							walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD).bitNot()));
 						} else {
@@ -212,7 +211,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 							doubleSeen = doubleSeen.add(1);
 						} else {
 							if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD)) {
-//								Assert_VM_true(state->backfillOffsetToUse >= 0);
+								// Assert_VM_true(state->backfillOffsetToUse >= 0);
 								offset = new UDATA(backfillOffsetToUse);
 								walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD).bitNot()));
 							} else {
@@ -249,7 +248,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		if (!walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE)) {
 			return;
 		}
-		ObjectFieldInfo fieldInfo  = new ObjectFieldInfo(romClass);
+		ObjectFieldInfo fieldInfo = new ObjectFieldInfo(romClass);
 
 		/*
 		 * Step 1: Calculate the size of the superclass and backfill offset.
@@ -280,7 +279,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				 * superClazz is java.lang.Object: subtract off non-inherited monitor field.
 				 * Note that java.lang.Object's backfill slot can be only at the end.
 				 */
-				/* this may  have been rounded to 8 bytes so also get rid of the padding */
+				/* this may have been rounded to 8 bytes so also get rid of the padding */
 				if (fieldInfo.isSuperclassBackfillSlotAvailable()) { /* j.l.Object was not end aligned */
 					newSuperSize -= BACKFILL_SIZE;
 					fieldInfo.setSuperclassBackfillOffset(NO_BACKFILL_AVAILABLE);
@@ -301,9 +300,9 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		} else {
 			/*
 			 * Superclass is not finalizable.
-			 * We add the field if the class marked as needing finalization.  In addition when HCR is enabled we also add the field if the
+			 * We add the field if the class marked as needing finalization. In addition when HCR is enabled we also add the field if the
 			 * the class is not the class for java.lang.Object (superclass name in java.lang.object isnull) and the class has a finalize
-			 * method regardless of whether this method is empty or not.  We need to do this because when HCR is enabled it is possible
+			 * method regardless of whether this method is empty or not. We need to do this because when HCR is enabled it is possible
 			 * that the method will be re-transformed such that there finalization is needed and in that case
 			 * we need the field to be in the shape of the existing objects
 			 */
@@ -342,14 +341,14 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		}
 
 		/*
-		 * Calculate offsets (from the object header) for hidden fields.  Hidden fields follow immediately the instance fields of the same type.
+		 * Calculate offsets (from the object header) for hidden fields. Hidden fields follow immediately the instance fields of the same type.
 		 * Give instance fields priority for backfill slots.
 		 * Note that the hidden fields remember their offsets, so this need be done once only.
 		 */
 		if (!hiddenInstanceFieldList.isEmpty()) {
 			UDATA hiddenSingleOffset = firstSingleOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceSingleCount() * U32.SIZEOF));
 			UDATA hiddenDoubleOffset = firstDoubleOffset.add(J9Object.SIZEOF + (fieldInfo.getInstanceDoubleCount() * U64.SIZEOF));
-			UDATA hiddenObjectOffset =  firstObjectOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
+			UDATA hiddenObjectOffset = firstObjectOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
 			boolean useBackfillForObject = false;
 			boolean useBackfillForSingle = false;
 
@@ -391,7 +390,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		}
 		backfillOffsetToUse = new IDATA(fieldInfo.getMyBackfillOffset()); /* backfill offset for this class's fields */
 	}
-	
+
 	static PrintStream err = System.err;
 
 	/**
@@ -401,7 +400,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	 * @param romClass
 	 * @param ramSuperClass
 	 * @param instanceClass
-	 * @return NO_LOCKWORD_NEEDED if no lockword, lockword offset if it inherits a lockword, 
+	 * @return NO_LOCKWORD_NEEDED if no lockword, lockword offset if it inherits a lockword,
 	 * LOCKWORD_NEEDED if lockword needed and superclass does not have a lockword
 	 * @throws CorruptDataException
 	 */
@@ -409,37 +408,35 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		if (!J9BuildFlags.thr_lockNursery) {
 			return NO_LOCKWORD_NEEDED;
 		}
-		
+
 		J9ClassPointer ramClassForRomClass = instanceClass;
-		while (!ramClassForRomClass.isNull() &&(!romClass.equals(ramClassForRomClass.romClass()))) {
+		while (!ramClassForRomClass.isNull() && (!romClass.equals(ramClassForRomClass.romClass()))) {
 			ramClassForRomClass = J9ClassHelper.superclass(ramClassForRomClass);
 		}
-		// if the class does not have a lock offset then one was not needed 
-		if (ramClassForRomClass.lockOffset().eq(NO_LOCKWORD_NEEDED)){
+		// if the class does not have a lock offset then one was not needed
+		if (ramClassForRomClass.lockOffset().eq(NO_LOCKWORD_NEEDED)) {
 			return NO_LOCKWORD_NEEDED;
 		}
 
-		
-		// if class inherited its lockword from its parent then we return the offset 
-		if ((ramSuperClass != null)&&(! ramSuperClass.isNull())&&(ramClassForRomClass.lockOffset().eq(ramSuperClass.lockOffset()))){
+		// if class inherited its lockword from its parent then we return the offset
+		if ((ramSuperClass != null) && (!ramSuperClass.isNull()) && ramClassForRomClass.lockOffset().eq(ramSuperClass.lockOffset())) {
 			return ramSuperClass.lockOffset();
-		} 
+		}
 
 		// class has lockword and did not get it from its parent so a lockword was needed
 		return LOCKWORD_NEEDED;
 	}
 
 	public boolean hasNext() {
-		
 		if (next != null) {
 			return true;
 		}
-		
+
 		next = getNext();
-		
+
 		return next != null;
-		
-//		
+
+//
 //		if (romFieldsShapeIterator.hasNext()) {
 //			return true;
 //		}
@@ -449,18 +446,18 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 //		return false;
 	}
 
-	private J9ObjectFieldOffset getNext() 
+	private J9ObjectFieldOffset getNext()
 	{
 		if (romFieldsShapeIterator == null) {
 			try {
 				init();
 			} catch (CorruptDataException e) {
 				// Tell anyone listening there was corrupt data.
-				raiseCorruptDataEvent("CorruptDataException in  com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()", e, false);
+				raiseCorruptDataEvent("CorruptDataException in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()", e, false);
 				return null;
 			}
 		}
-		
+
 		try {
 			nextField();
 			if (field == null) {
@@ -481,9 +478,9 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 
 	public J9ObjectFieldOffset next() {
 		if (!hasNext()) {
-			throw new NoSuchElementException();	
+			throw new NoSuchElementException();
 		}
-		
+
 		J9ObjectFieldOffset toReturn = next;
 		next = null;
 		return toReturn;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,11 +52,11 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
    if (_checkCast)
       {
       TR::RegisterDependencyConditions *deps = _doneLabel->getInstruction()->getDependencyConditions();
-      TR::RealRegister *objReg       = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
-      TR::RealRegister *castClassReg = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-      TR::RealRegister *objClassReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
-      TR::RealRegister *cndReg       = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
-      TR::RealRegister *scratch1Reg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+      TR::RealRegister *objReg       = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+      TR::RealRegister *castClassReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+      TR::RealRegister *objClassReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+      TR::RealRegister *cndReg       = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+      TR::RealRegister *scratch1Reg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
       // checkcast
 
@@ -155,12 +155,12 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
       {
       auto firstArgReg = getNode()->getSymbol()->castToMethodSymbol()->getLinkageConvention() == TR_CHelper ? TR::RealRegister::gr4 : TR::RealRegister::gr3;
       TR::RegisterDependencyConditions *deps = _doneLabel->getInstruction()->getDependencyConditions();
-      TR::RealRegister *castClassReg = cg()->machine()->getPPCRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg));
-      TR::RealRegister *objClassReg = cg()->machine()->getPPCRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 3));
-      TR::RealRegister *resultReg = cg()->machine()->getPPCRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 5));
-      TR::RealRegister *cndReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-      TR::RealRegister *scratch1Reg = cg()->machine()->getPPCRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 2));
-      TR::RealRegister *scratch2Reg = cg()->machine()->getPPCRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 4));
+      TR::RealRegister *castClassReg = cg()->machine()->getRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg));
+      TR::RealRegister *objClassReg = cg()->machine()->getRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 3));
+      TR::RealRegister *resultReg = cg()->machine()->getRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 5));
+      TR::RealRegister *cndReg = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+      TR::RealRegister *scratch1Reg = cg()->machine()->getRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 2));
+      TR::RealRegister *scratch2Reg = cg()->machine()->getRealRegister(static_cast<TR::RealRegister::RegNum>(firstArgReg + 4));
 
       // instanceof
 
@@ -400,11 +400,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
       printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for Checkcast");
 
       TR::RegisterDependencyConditions *deps = snippet->getDoneLabel()->getInstruction()->getDependencyConditions();
-      TR::RealRegister *objReg       = _cg->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
-      TR::RealRegister *castClassReg = _cg->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-      TR::RealRegister *objClassReg  = _cg->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
-      TR::RealRegister *cndReg       = _cg->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
-      TR::RealRegister *scratch1Reg  = _cg->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+      TR::RealRegister *objReg       = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+      TR::RealRegister *castClassReg = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+      TR::RealRegister *objClassReg  = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+      TR::RealRegister *cndReg       = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+      TR::RealRegister *scratch1Reg  = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
       int32_t value;
 
@@ -480,12 +480,12 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
          printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Cast Snippet for ifInstanceOf");
 
       TR::RegisterDependencyConditions *deps = snippet->getDoneLabel()->getInstruction()->getDependencyConditions();
-      TR::RealRegister *castClassReg = _cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-      TR::RealRegister *objClassReg = _cg->machine()->getPPCRealRegister(TR::RealRegister::gr6);
-      TR::RealRegister *resultReg = _cg->machine()->getPPCRealRegister(TR::RealRegister::gr8);
-      TR::RealRegister *cndReg = _cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-      TR::RealRegister *scratch1Reg = _cg->machine()->getPPCRealRegister(TR::RealRegister::gr5);
-      TR::RealRegister *scratch2Reg = _cg->machine()->getPPCRealRegister(TR::RealRegister::gr7);
+      TR::RealRegister *castClassReg = _cg->machine()->getRealRegister(TR::RealRegister::gr3);
+      TR::RealRegister *objClassReg = _cg->machine()->getRealRegister(TR::RealRegister::gr6);
+      TR::RealRegister *resultReg = _cg->machine()->getRealRegister(TR::RealRegister::gr8);
+      TR::RealRegister *cndReg = _cg->machine()->getRealRegister(TR::RealRegister::cr0);
+      TR::RealRegister *scratch1Reg = _cg->machine()->getRealRegister(TR::RealRegister::gr5);
+      TR::RealRegister *scratch2Reg = _cg->machine()->getRealRegister(TR::RealRegister::gr7);
 
       int32_t value;
 

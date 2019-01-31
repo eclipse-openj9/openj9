@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +27,9 @@
 #include <math.h>
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/jittypes.h"
-#include "il/DataTypes.hpp"                    // for getMaxSigned, etc
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"

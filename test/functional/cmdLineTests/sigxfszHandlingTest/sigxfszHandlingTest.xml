@@ -32,7 +32,7 @@
 <!-- Add -Xshareclasses:none to the command lines of this test suite to ensure that signal SIGXFSZ is triggered on test.txt creation rather than 
 	on shared cache file creation (if shared classes is enabled by default). See issue: https://github.com/eclipse/openj9/issues/3333 -->
  <test id="Default">
-	<command>$EXE$ -Xshareclasses:none $CP$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="success">Failed to write the file</output>
 	<output regex="no" type="required">java.io.IOException</output>
@@ -45,7 +45,7 @@
  </test>
 
  <test id="-XX:+HandleSIGXFSZ">
-	<command>$EXE$ -Xshareclasses:none $CP$ $HANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $HANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="success">Failed to write the file</output>
 	<output regex="no" type="required">java.io.IOException</output>
@@ -58,7 +58,7 @@
  </test>
 
 <test id="-XX:-HandleSIGXFSZ -XX:+HandleSIGXFSZ">
-	<command>$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ $HANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ $HANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="success">Failed to write the file</output>
 	<output regex="no" type="required">java.io.IOException</output>
@@ -71,7 +71,7 @@
  </test>
 
 <test id=" -Xrs">
-	<command>$EXE$ -Xshareclasses:none $CP$ -Xrs j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ -Xrs j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="success">Failed to write the file</output>
 	<output regex="no" type="required">java.io.IOException</output>
@@ -84,7 +84,7 @@
  </test>
 
  <test id="-XX:+HandleSIGXFSZ -Xrs">
-	<command>$EXE$ -Xshareclasses:none $CP$ $HANDLE$ -Xrs j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $HANDLE$ -Xrs j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="success">Failed to write the file</output>
 	<output regex="no" type="required">java.io.IOException</output>
@@ -98,7 +98,7 @@
 
  <!-- Linux can not handle sigxfsz without special handling in VM. JVM should exit with exit code 153 -->
  <test id="-XX:-HandleSIGXFSZ (Linux)" platforms="linux.*">
-	<command>$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">Failed to write the file:</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">File is written successfully</output>
@@ -111,7 +111,7 @@
 
 <!-- Linux can not handle sigxfsz without special handling in VM. JVM should exit with exit code 153 -->
  <test id="-XX:+HandleSIGXFSZ -XX:-HandleSIGXFSZ (Linux)" platforms="linux.*">
-	<command>$EXE$ -Xshareclasses:none $CP$ $HANDLE$ $NOHANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $HANDLE$ $NOHANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">Failed to write the file:</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">File is written successfully</output>
@@ -124,7 +124,7 @@
 
 <!-- Linux can not handle sigxfsz without special handling in VM. JVM should exit with exit code 153 -->
  <test id="-XX:-HandleSIGXFSZ -Xrs (Linux)" platforms="linux.*">
-	<command>$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ -Xrs j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ -Xrs j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">Failed to write the file:</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">File is written successfully</output>
@@ -137,7 +137,7 @@
 
  <!-- AIX and ZOS handles this by default. No need for special handling in JVM -->
  <test id="-XX:-HandleSIGXFSZ (AIX)" platforms="aix.*">
-	<command>$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
+	<command>$RUN_SCRIPT$ $TESTDIR$$PATHSEP$runSIGXFSZTest$SCRIPT_SUFFIX$ "$EXE$ -Xshareclasses:none $CP$ $NOHANDLE$ j9vm.test.sigxfsz.SignalXfszTest test.txt"</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
 	<output regex="no" type="success">Failed to write the file</output>
 	<output regex="no" type="failure" caseSensitive="no" regex="no">File is written successfully</output>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,12 +50,6 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests1_openj9</testCaseName>
@@ -84,12 +78,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests2</testCaseName>
@@ -115,12 +103,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests3</testCaseName>
@@ -161,12 +143,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests4</testCaseName>
@@ -193,12 +169,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests5</testCaseName>
@@ -225,12 +195,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests6</testCaseName>
@@ -254,12 +218,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSnapshot</testCaseName>
@@ -282,12 +240,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSoftmx</testCaseName>
@@ -314,12 +266,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLAotMethodOperation</testCaseName>
@@ -342,12 +288,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testSCCMLModularity</testCaseName>
@@ -374,13 +314,16 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 	<test>
 		<testCaseName>ShareClassesCMLOpenJ9</testCaseName>
+		<disabled>
+			SharedClasses by default is disabled from the 0.12.0 release while we
+			work through some performance issues related to lost iprofiler data.
+			See issue: https://github.com/eclipse/openj9/issues/4222
+		</disabled>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -396,8 +339,6 @@
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
-	<!-- temporarily disable this test on OSX, see https://github.com/eclipse/openj9/issues/3333 -->
-	<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -405,7 +346,8 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE110</subset>
+			<subset>11</subset>
+			<subset>8</subset>
 		</subsets>
 		<impls>
 			<impl>openj9</impl>

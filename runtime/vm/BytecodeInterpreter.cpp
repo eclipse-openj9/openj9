@@ -39,7 +39,7 @@
  * USE_COMPUTED_GOTO is enabled on Linux s390 when compiling with gcc7+.
  * USE_COMPUTED_GOTO improves startup performance by ~10% on Linux s390.
  */
-#if (defined(WIN32) && defined(__GNUC__))
+#if (defined(WIN32) && defined(__clang__))
 #define USE_COMPUTED_GOTO
 #elif (defined(LINUX) && defined(J9HAMMER))
 #define USE_COMPUTED_GOTO

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -439,7 +439,7 @@ j9shmem_stat(struct J9PortLibrary *portLibrary, const char* cacheDirName, uintpt
 	}
 		
 	if ((NULL == memHandle) || (INVALID_HANDLE_VALUE==memHandle)) {
-		Trc_PRT_shmem_j9shmem_stat_Exit2(sharedMemoryFullPath);
+		Trc_PRT_shmem_j9shmem_stat_Exit2_V2(sharedMemoryFullPath, GetLastError());
 		omrmem_free_memory(sharedMemoryFullPath);
 		return -1;
 	}

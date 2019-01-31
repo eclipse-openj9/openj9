@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,15 +23,15 @@
 #ifndef SWITCHANALYZER_HPP
 #define SWITCHANALYZER_HPP
 
-#include <limits.h>                           // for INT_MAX, INT_MIN
-#include <stdint.h>                           // for int32_t
-#include "env/FilePointerDecl.hpp"            // for FILE
+#include <limits.h>
+#include <stdint.h>
+#include "env/FilePointerDecl.hpp"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"                   // for CASECONST_TYPE
-#include "il/ILOpCodes.hpp"                   // for ILOpCodes
-#include "infra/Link.hpp"                     // for TR_Link, TR_LinkHead
-#include "optimizer/Optimization.hpp"         // for Optimization
-#include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "infra/Link.hpp"
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_BitVector;
 class TR_FrontEnd;

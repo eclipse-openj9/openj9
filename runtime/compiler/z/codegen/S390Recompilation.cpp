@@ -157,7 +157,7 @@ TR_S390Recompilation::generatePrePrologue()
       cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->getStackPointerRealRegister(), -2 * cg->machine()->getGPRSize(), cursor);
 
       // Save the return address
-      cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);
+      cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);
 
       TR::MemoryReference * epSaveAreaMemRef = generateS390MemoryReference(cg->getStackPointerRealRegister(), 0, cg);
 
@@ -165,7 +165,7 @@ TR_S390Recompilation::generatePrePrologue()
       cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->getEntryPointRealRegister(), epSaveAreaMemRef, cursor);
 
       // Load the EP register with the address of the next instruction
-      cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->getEntryPointRealRegister(), cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cursor);
+      cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->getEntryPointRealRegister(), cg->machine()->getRealRegister(TR::RealRegister::GPR0), cursor);
 
       basrInstruction = cursor;
 
@@ -345,15 +345,15 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    TR::MemoryReference* spillSlotMemRef = generateS390MemoryReference(cg->getStackPointerRealRegister(), cg->machine()->getGPRSize(), cg);
 
    // Spill GPR1 and GPR2
-   cursor = generateRSInstruction(cg, TR::InstOpCode::getStoreMultipleOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR1), cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), spillSlotMemRef, cursor);
+   cursor = generateRSInstruction(cg, TR::InstOpCode::getStoreMultipleOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR1), cg->machine()->getRealRegister(TR::RealRegister::GPR2), spillSlotMemRef, cursor);
 
    // Load the EP register with the address of the next instruction
-   cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->getEntryPointRealRegister(), cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->getEntryPointRealRegister(), cg->machine()->getRealRegister(TR::RealRegister::GPR0), cursor);
 
    TR::Instruction* basrInstruction = cursor;
 
    // Copy EP register into GPR1
-   cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR1), cg->getEntryPointRealRegister(), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR1), cg->getEntryPointRealRegister(), cursor);
 
    // Use a negative offset since pre-prologue is generated before the prologue
    int32_t offsetToIntEP = -CalcCodeSize(startOfPrologueLabel->getInstruction(), basrInstruction) - _loadArgumentSize;
@@ -364,19 +364,19 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    // Use a negative offset since pre-prologue is generated before the prologue
    int32_t offsetToBodyInfo = -CalcCodeSize(bodyInfoDataConstant, basrInstruction);
 
-   TR::MemoryReference* bodyInfoAddressMemRef = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR1), offsetToBodyInfo, cg);
+   TR::MemoryReference* bodyInfoAddressMemRef = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR1), offsetToBodyInfo, cg);
 
    // Load the body info address. Note the use of getExtendedLoadOpCode because our offset is negative. This means on
    // a 31-bit target we will generate an LY instruction (6-byte) vs. and L instruction (4-byte).
-   cursor = generateRXInstruction(cg, TR::InstOpCode::getExtendedLoadOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR1), bodyInfoAddressMemRef, cursor);
+   cursor = generateRXInstruction(cg, TR::InstOpCode::getExtendedLoadOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR1), bodyInfoAddressMemRef, cursor);
 
-   TR::MemoryReference* counterFieldMemRef = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR1), offsetof(TR_PersistentJittedBodyInfo, _counter), cg);
+   TR::MemoryReference* counterFieldMemRef = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR1), offsetof(TR_PersistentJittedBodyInfo, _counter), cg);
 
    // Load the counter field value from the body info pointer
-   cursor = generateRXInstruction(cg, TR::InstOpCode::L, node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), counterFieldMemRef, cursor);
+   cursor = generateRXInstruction(cg, TR::InstOpCode::L, node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), counterFieldMemRef, cursor);
 
    // Compare the counter value to zero
-   cursor = generateRRInstruction(cg, TR::InstOpCode::LTR, node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::LTR, node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), cg->machine()->getRealRegister(TR::RealRegister::GPR2), cursor);
 
    TR::LabelSymbol* resumeMethodExecutionLabel = generateLabelSymbol(cg);
 
@@ -384,35 +384,35 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNL, node, resumeMethodExecutionLabel, cursor);
 
    // Load GPR2 with the address of the next instruction
-   cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), cg->machine()->getRealRegister(TR::RealRegister::GPR0), cursor);
 
    TR::Instruction* basrForCountingRecompileInstruction = cursor;
 
    // Adjust GPR2 to point to the end of the prologue. Displacement will be updated later once we know the offset.
-   cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), 0, cursor);
+   cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), 0, cursor);
 
    TR::S390RIInstruction* addImmediateToEndOfPrologueInstruction = static_cast<TR::S390RIInstruction*>(cursor);
 
    TR::MemoryReference* endOfPrologueSlotMemRef = generateS390MemoryReference(cg->getStackPointerRealRegister(), 0, cg);
 
    // Store GPR2 off to the stack so countingRecompileMethod can access it
-   cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), endOfPrologueSlotMemRef, cursor);
+   cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), endOfPrologueSlotMemRef, cursor);
 
    // Adjust GPR2 to point to the countingRecompileMethod address
-   cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), 0, cursor);
+   cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), 0, cursor);
 
    TR::S390RIInstruction* addImmediateToCountingRecompileMethodAddressInstruction = static_cast<TR::S390RIInstruction*>(cursor);
 
-   TR::MemoryReference* countingRecompileMethodAddressMemRef = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), 0, cg);
+   TR::MemoryReference* countingRecompileMethodAddressMemRef = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR2), 0, cg);
 
    // Load the countingRecompileMethod address
-   cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), countingRecompileMethodAddressMemRef, cursor);
+   cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR2), countingRecompileMethodAddressMemRef, cursor);
 
    // Save the return address in GPR0 so countingRecompileMethod can access it
-   cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);
 
    // Call countingRecompileMethod
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BCR, node, TR::InstOpCode::COND_BCR, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), cursor);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BCR, node, TR::InstOpCode::COND_BCR, cg->machine()->getRealRegister(TR::RealRegister::GPR2), cursor);
 
    TR::Instruction* countingRecompileMethodAddressDataConstant = NULL;
 
@@ -460,10 +460,10 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->getEntryPointRealRegister(), epRegisterSlotMemRef, cursor);
 
    // Save the return address in GPR0 so the patching assembly stub can access it
-   cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);
 
    // Load GPR14 with the address of the next instruction
-   cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->getReturnAddressRealRegister(), cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cursor);
+   cursor = generateRRInstruction(cg, TR::InstOpCode::BASR, node, cg->getReturnAddressRealRegister(), cg->machine()->getRealRegister(TR::RealRegister::GPR0), cursor);
 
    basrInstruction = cursor;
 
@@ -532,7 +532,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    spillSlotMemRef = generateS390MemoryReference(*spillSlotMemRef, 0, cg);
 
    // Fill GPR1 and GPR2
-   cursor = generateRSInstruction(cg, TR::InstOpCode::getLoadMultipleOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR1), cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), spillSlotMemRef, cursor);
+   cursor = generateRSInstruction(cg, TR::InstOpCode::getLoadMultipleOpCode(), node, cg->machine()->getRealRegister(TR::RealRegister::GPR1), cg->machine()->getRealRegister(TR::RealRegister::GPR2), spillSlotMemRef, cursor);
 
    // Free space on stack for four register sized spill slots
    cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->getStackPointerRealRegister(), 4 * cg->machine()->getGPRSize(), cursor);

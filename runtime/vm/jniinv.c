@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -338,7 +338,7 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	/* Do the java cleanup */
 	enterVMFromJNI(vmThread);
-	cleanUpAttachedThread(vmThread, 0, 0, 0, 0);
+	cleanUpAttachedThread(vmThread);
 	releaseVMAccess(vmThread);
 
 	TRIGGER_J9HOOK_VM_SHUTTING_DOWN(vm->hookInterface, vmThread, 0);

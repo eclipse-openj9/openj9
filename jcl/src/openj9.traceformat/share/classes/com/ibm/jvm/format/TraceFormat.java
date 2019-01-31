@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -448,6 +448,16 @@ final public class TraceFormat
 			TraceFormat.outStream.println("*** Could not find a J9TraceFormat.dat file. JVM trace points may be formatted incorrectly.");
 		}
 		
+		/*
+		 * Now load OMRTraceFormat.dat if available.
+		 */
+		String omrFormatFilePath = findDatFile(dirsToSearch, "OMRTraceFormat.dat");
+
+		if (omrFormatFilePath != null) {
+			/* we found a suitable dat file */
+			tryMessageFileInstantiation(omrFormatFilePath);
+		}
+
 		/*
 		 * Also load TraceFormat.dat as it contains the trace points for the class libraries.
 		 */

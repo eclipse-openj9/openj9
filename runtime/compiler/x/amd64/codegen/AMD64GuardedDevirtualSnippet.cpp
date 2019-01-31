@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,13 @@
 
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
 
-#include <stddef.h>                         // for NULL
+#include <stddef.h>
 #include "codegen/GuardedDevirtualSnippet.hpp"
-#include "codegen/CodeGenerator.hpp"        // for CodeGenerator
-#include "codegen/Linkage.hpp"              // for Linkage
-#include "il/Symbol.hpp"                    // for Symbol
-#include "il/symbol/LabelSymbol.hpp"        // for LabelSymbol
-#include "il/symbol/MethodSymbol.hpp"       // for MethodSymbol
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/MethodSymbol.hpp"
 
 uint8_t *TR::AMD64GuardedDevirtualSnippet::loadArgumentsIfNecessary(TR::Node *callNode, uint8_t *cursor, bool calculateSizeOnly, int32_t *sizeOfFlushArea)
    {

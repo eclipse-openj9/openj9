@@ -24,7 +24,8 @@ testEnvSetup:
 
 testEnvTeardown:
 
-ifeq ($(TEST_FLAG), JITAAS)
+
+ifneq (,$(findstring JITAAS,$(TEST_FLAG)))
 testEnvSetup:
 	$(JAVA_BIN)$(D)java -XX:JITaaSServer &
 

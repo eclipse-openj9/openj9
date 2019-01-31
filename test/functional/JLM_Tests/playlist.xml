@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,8 +45,7 @@
 	TestMemoryPoolMXBean \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -80,8 +79,7 @@
 	TestMemoryPoolMXBean \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -89,9 +87,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -108,8 +104,7 @@
 	-testnames JLM_Tests_class \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -135,8 +130,7 @@
 	-testnames JLM_Tests_class \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -144,9 +138,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -163,8 +155,7 @@
 	-testnames JLM_Tests_IBMinternal \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -190,8 +181,7 @@
 	-testnames JLM_Tests_IBMinternal \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -199,9 +189,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -215,7 +203,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxLocal \
@@ -229,12 +217,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -247,7 +229,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxLocal \
@@ -261,12 +243,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -279,7 +255,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx768m -Xsoftmx512m -Xmn1m \
+	-Xmx768m -Xsoftmx512m -Xmn1m -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxLocal \
@@ -293,12 +269,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -310,7 +280,7 @@
 			<variation>Mode501</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS)  -Xdump:none \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(LIB_DIR)$(D)commons-exec.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames SoftmxRASTest2 \
@@ -324,12 +294,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -341,7 +305,7 @@
 			<variation>Mode501</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(LIB_DIR)$(D)commons-exec.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames SoftmxRASTest1 \
@@ -355,12 +319,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -373,7 +331,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -Xlp:objectheap:pagesize=4k \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -Xlp:objectheap:pagesize=4k -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxLocal \
@@ -387,12 +345,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -405,7 +357,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -Xlp:objectheap:pagesize=64k \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -Xlp:objectheap:pagesize=64k -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxLocal \
@@ -422,12 +374,6 @@
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -440,7 +386,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Xdump:none -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option="$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxRemote \
@@ -454,12 +401,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
@@ -473,7 +414,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Xdump:none -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option="$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxRemote \
@@ -487,12 +429,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
@@ -506,7 +442,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xmx768m -Xsoftmx512m -Xmn1m -Xdump:none -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option="$(JVM_OPTIONS) -Xmx768m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxRemote \
@@ -520,12 +457,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
@@ -539,7 +470,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xlp:objectheap:pagesize=4k -Xmx1024m -Xsoftmx512m -Xmn1m -Xdump:none -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option="$(JVM_OPTIONS) -Xlp:objectheap:pagesize=4k -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxRemote \
@@ -553,12 +485,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
@@ -572,7 +498,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xlp:objectheap:pagesize=64k -Xmx1024m -Xsoftmx512m -Xmn1m -Xdump:none -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option="$(JVM_OPTIONS) -Xlp:objectheap:pagesize=64k -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxRemote \
@@ -589,12 +516,6 @@
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
@@ -608,26 +529,20 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.390</platformRequirements>
+		<platformRequirements>^arch.390,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -640,7 +555,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
@@ -654,12 +569,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -672,7 +581,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx768m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory \
+	-Xmx768m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
@@ -686,12 +595,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -704,26 +607,21 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -Xlp:objectheap:pagesize=4k \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -Xlp:objectheap:pagesize=4k \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.ppc,^arch.390</platformRequirements>
+		<platformRequirements>^arch.ppc,^arch.390,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -736,7 +634,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -Xlp:objectheap:pagesize=64k \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -Xlp:objectheap:pagesize=64k \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
@@ -753,12 +652,6 @@
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -771,26 +664,21 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:-DisclaimVirtualMemory \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:-DisclaimVirtualMemory \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.390</platformRequirements>
+		<platformRequirements>^arch.390,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -803,7 +691,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:-DisclaimVirtualMemory \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:-DisclaimVirtualMemory \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
@@ -817,12 +706,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -835,7 +718,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx768m -Xsoftmx512m -Xmn1m -XX:-DisclaimVirtualMemory \
+	-Xmx768m -Xsoftmx512m -Xmn1m -XX:-DisclaimVirtualMemory \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
@@ -849,12 +733,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -867,26 +745,20 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xsoftmx512m -Xmx1024m -Xmn1m \
+	-Xsoftmx512m -Xmx1024m -Xmn1m -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^os.zos,^os.linux_390</platformRequirements>
+		<platformRequirements>^os.zos,^os.linux_390,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testDefaultDisclaimMemory_zlinux</testCaseName>
@@ -898,7 +770,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xsoftmx512m -Xmx1024m -Xmn1m \
+	-Xsoftmx512m -Xmx1024m -Xmn1m -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory \
@@ -912,12 +784,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -930,7 +796,8 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
+	-Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory \
+	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory_GC \
@@ -944,12 +811,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -973,12 +834,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1003,12 +858,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1059,9 +908,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -1115,9 +962,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -1145,12 +990,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse/openj9/issues/2213-->
@@ -1177,12 +1016,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1206,12 +1039,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1236,12 +1063,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1263,12 +1084,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1290,12 +1105,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1307,7 +1116,7 @@
 			<variation>Mode501</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmn1m -Xdump:none \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmn1m -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(LIB_DIR)$(D)commons-exec.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxUserScenario \
@@ -1321,12 +1130,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 </playlist>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2018 IBM Corp. and others
+Copyright (c) 2006, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="j9dt.make" value="gmake"/>
 		<property name="j9dt.toolsTarget" value="buildtools.mk"/>
 		<property name="javatestPlatform" value="zos_390-64_cr"/>
-		<property name="jclMaxSecurityPolicyDefine" value=" &quot;-Djava.security.policy=file://$(J9_L390_ROOT)/testing/java.policy&quot; "/>
 		<property name="jclMemoryMax" value="-Xmx64m"/>
 		<property name="jclOSStackSizeMax" value=""/>
 		<property name="jgrinderTestingSupported" value="true"/>
@@ -123,7 +122,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java6proxy" value="true"/>
 		<flag id="build_java8" value="true"/>
-		<flag id="build_java9" value="true"/>
+		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="true"/>
 		<flag id="danger_memleaksBroken" value="true"/>
 		<flag id="env_callViaTable" value="true"/>
@@ -138,8 +137,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="graph_copyJ2SEToToronto" value="true"/>
 		<flag id="graph_copyJ2SEViaNovell" value="true"/>
 		<flag id="graph_ebcdicConversion" value="true"/>
-		<flag id="graph_enableModularityTesting" value="true"/>
-		<flag id="graph_enableTesting" value="true"/>
+		<flag id="graph_enableModularityTesting" value="false"/>
+		<flag id="graph_enableTesting" value="false"/>
 		<flag id="graph_enableTesting_Java8" value="true"/>
 		<flag id="graph_excludeAllocFib" value="true"/>
 		<flag id="graph_excludeJavaHMinimal" value="true"/>

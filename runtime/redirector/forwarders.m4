@@ -1,4 +1,4 @@
-dnl Copyright (c) 2001, 2018 IBM Corp. and others
+dnl Copyright (c) 2001, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,6 +256,7 @@ _X(JVM_GetMethodParameters,JNICALL,true,jobjectArray ,JNIEnv *env, jobject metho
 _X(JVM_GetMethodTypeAnnotations,JNICALL,true,jbyteArray ,JNIEnv *env, jobject method)
 _X(JVM_IsVMGeneratedMethodIx,JNICALL,true,jboolean ,JNIEnv *env, jclass cb, jint index)
 _X(JVM_GetTemporaryDirectory,JNICALL,false,jstring ,JNIEnv *env)
+_X(JVM_CopySwapMemory,JNICALL,true,void ,JNIEnv *env, jobject srcObj, jlong srcOffset, jobject dstObj, jlong dstOffset, jlong size, jlong elemSize)
 _X(JVM_GetPrimitiveField,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2, jint arg3)
 _X(JVM_InitializeCompiler,JNICALL,true,jobject ,jint arg0, jint arg1)
 _X(JVM_IsSilentCompiler,JNICALL,true,jobject ,jint arg0, jint arg1)

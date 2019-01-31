@@ -32,7 +32,6 @@
 
     InliningReportPhase,
     LateSequentialConstantStoreSimplificationPhase,
-    FoldSignCleaningIntoStorePhase,
 
     PopulateOSRBufferPhase,
     MoveUpArrayLengthStoresPhase,

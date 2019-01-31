@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -839,7 +839,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       cursor = linkage->storeArguments(getNode(), cursor, false, NULL);
       needToSetCodeLocation = false;
 
-      if (comp->getCodeCacheSwitched() &&
+      if (cg()->hasCodeCacheSwitched() &&
           (methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers))
          {
          fej9->reserveTrampolineIfNecessary(comp, methodSymRef, true);
@@ -924,9 +924,9 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       // CALL updateInterpreterDispatchGlueSite
       //
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86updateInterpreterDispatchGlueSite, false, false, false);
+      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue, false, false, false);
 
-      *cursor++ = 0xe8;    // CALL
+      *cursor++ = 0xe9;    // JMP
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helperSymRef);
       *(int32_t *)cursor = disp32;
 
@@ -953,7 +953,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       relocation = new (cg()->trHeapMemory()) TR::ExternalRelocation(
             cursor,
             *(uint8_t **)cursor,
-             getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+             getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
             TR_ConstantPool,
             cg());
 
@@ -1142,7 +1142,7 @@ uint8_t *TR::X86UnresolvedVirtualCallSnippet::emitSnippetBody()
    cg()->addExternalRelocation(
       new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                             (uint8_t *)cpAddr,
-                                                            getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                            getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                             TR_ConstantPool,
                                                             cg()),
                  __FILE__, __LINE__, getNode());

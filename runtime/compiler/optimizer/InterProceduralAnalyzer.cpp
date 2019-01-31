@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,38 +22,38 @@
 
 #include "optimizer/InterProceduralAnalyzer.hpp"
 
-#include <stdint.h>                            // for int32_t, uint32_t
-#include <string.h>                            // for NULL, memset, memcmp, etc
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
-#include "compile/Compilation.hpp"             // for Compilation, etc
-#include "compile/Method.hpp"                  // for TR_Method
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include <stdint.h>
+#include <string.h>
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/CHTable.hpp"                     // for TR_ClassQueries
+#include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentCHTable.hpp"           // for CLASSHASHTABLE_SIZE, etc
-#include "env/PersistentInfo.hpp"              // for PersistentInfo
-#include "env/TRMemory.hpp"                    // for TR_Link::operator new, etc
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes::Address, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::New, etc
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/Node.hpp"                         // for Node, vcount_t
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/TreeTop.hpp"                      // for TreeTop
+#include "env/PersistentCHTable.hpp"
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "env/ClassTableCriticalSection.hpp"
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "infra/Link.hpp"                      // for TR_LinkHead
-#include "infra/List.hpp"                      // for TR_ScratchList, etc
-#include "infra/Stack.hpp"                     // for TR_Stack
-#include "ras/Debug.hpp"                       // for TR_DebugBase
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "ras/Debug.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 
 #define MAX_SNIFF_BYTECODE_SIZE             1000

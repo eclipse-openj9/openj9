@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,21 +103,37 @@ configure_file(include/j9version.h.in j9version.h)
 # ie. they live in directories where we dont need to build anything
 # and/or its hard to track down exactly who depends on them
 
-omr_add_hookgen(INPUT oti/j9jit.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
-omr_add_hookgen(INPUT oti/j9vm.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
-omr_add_hookgen(INPUT oti/zipCachePool.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
-omr_add_hookgen(INPUT gc_include/j9mm.hdf PUBLIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/oti )
+omr_add_hookgen(INPUT oti/j9jit.hdf)
+omr_add_hookgen(INPUT oti/j9vm.hdf)
+omr_add_hookgen(INPUT oti/zipCachePool.hdf)
+omr_add_hookgen(INPUT gc_include/j9mm.hdf)
 
 # Wrap up the hookgen'd files in a named target
 # This is to work arround the fact that CMake does not do proper dependency tracking
 # for generated files across different directories
 add_custom_target(j9vm_hookgen
 	DEPENDS
-		${CMAKE_CURRENT_SOURCE_DIR}/oti/jithook.h
-		${CMAKE_CURRENT_SOURCE_DIR}/oti/vmhook.h
-		${CMAKE_CURRENT_SOURCE_DIR}/oti/vmzipcachehook.h
-		${CMAKE_CURRENT_SOURCE_DIR}/include/mmhook.h
+		${CMAKE_CURRENT_BINARY_DIR}/jithook.h
+		${CMAKE_CURRENT_BINARY_DIR}/vmhook.h
+		${CMAKE_CURRENT_BINARY_DIR}/vmzipcachehook.h
+		${CMAKE_CURRENT_BINARY_DIR}/mmhook.h
 )
+
+# Generate NLS headers
+if(J9VM_GEN_NLS)
+	add_custom_command(
+		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/java.properties"
+		DEPENDS j9nls
+		COMMAND "${Java_JAVA_EXECUTABLE}" -cp "$<TARGET_PROPERTY:j9nls,JAR_FILE>" com.ibm.oti.NLSTool.J9NLS -source "${CMAKE_CURRENT_SOURCE_DIR}"
+	)
+	add_custom_target(j9vm_nlsgen
+		DEPENDS
+			"${CMAKE_CURRENT_BINARY_DIR}/java.properties"
+	)
+else()
+	# if we aren't generating nls headers, just create a dummy target
+	add_custom_target(j9vm_nlsgen)
+endif()
 
 # Note we do this here rather than in the redirector directory to work arround
 # issues in cmake. If we did it there each target which consumed generated.c has
@@ -152,12 +168,19 @@ target_include_directories(j9vm_interface
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${J9VM_OMR_DIR}/include_core
 		${CMAKE_CURRENT_BINARY_DIR}/omr
-		nls
 		${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if(J9VM_GEN_NLS)
+	target_include_directories(j9vm_interface INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/nls)
+else()
+	target_include_directories(j9vm_interface INTERFACE nls)
+endif()
+
 add_dependencies(j9vm_interface
 	j9vm_hookgen
 	j9vm_m4gen
+	j9vm_nlsgen
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components
@@ -342,6 +365,8 @@ if(J9VM_MODULE_J9VM)
 	add_subdirectory(j9vm)
 	add_subdirectory(j9vm_b150)
 	add_subdirectory(j9vm_b156)
+	add_subdirectory(j9vm_jdk11)
+	add_subdirectory(j9vm_jdk12)
 endif()
 #NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jcl)

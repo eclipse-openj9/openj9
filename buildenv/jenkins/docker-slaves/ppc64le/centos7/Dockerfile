@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,8 @@ RUN yum -y update \
     libstdc++-static \
     libX11-devel \
     libXext-devel \
+    libXi-devel \
+    libXrandr-devel \
     libXrender-devel \
     libXt-devel \
     libXtst-devel \
@@ -81,6 +83,7 @@ RUN yum -y update \
     unzip \
     vim \
     wget\
+    xorg-x11-server-Xvfb \
     xz \
     zip \
     libdwarf-devel \
@@ -111,7 +114,7 @@ RUN rm /usr/bin/c++ /usr/bin/cc \
 # Install GCC-7.3.1
 RUN cd /usr/local \
   && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
-  && tar -xJf gcc-7.tar.xz \
+  && tar -xJf gcc-7.tar.xz --strip-components=1 \
   && rm -rf gcc-7.tar.xz
 
 #Building and setting up git version 2.5.3

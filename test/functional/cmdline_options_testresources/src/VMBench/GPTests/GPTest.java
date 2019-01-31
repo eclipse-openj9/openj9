@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,48 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/**
- * Source Control Header
- * 
- * $Author: fengj $ 
- * $Date: 2012/11/23 21:12:02 $
- * $Revision: 1.4 $
- * $Name:  $
- * $Log: GPTest.java,v $
- * Revision 1.4  2012/11/23 21:12:02  fengj
- * JAZZ 60879 : : fix copyright notices in HEAD for Java 8 beta 2012
- *
- * Revision 1.3  2012/05/24 19:39:34  grollest
- * JAZZ 54880 : GAC + Francis Bogsanyi : Percolate conditions corresponding to crashes (instead of throwing abend or java exception)
- * 	- commit gptests to head, JVM_26, Java626_SR3 and Java726_SR2
- *
- * Revision 1.2  2012/05/10 20:13:49  grollest
- * JAZZ 56233 : GAC + Francis Bogsanyi : implement in HEAD -31/64-bit z/OS - The Java signal handler should return from hardware signals and throw an abend for software signals
- * 	- port of Java 6 code to head
- * 	- GPTest.java only
- *
- * Revision 1.1  2012/03/21 14:33:07  lanxia
- * Jazz 54452:Jason Feng & Ronald Servant: move cmdline_options_testresources from javasvt to ottcvs1
- *
- * Revision 1.5  2011-01-15 16:13:29  grollest
- * JAZZ 41162 : : implement the design (testing only): z/OS Batch Runtime - convert LE Condition into Java Exception
- *
- * 	- cmdlinetester harness and resources support for new -XCEEHDLR tests
- *
- * Revision 1.4  2010/11/23 14:09:22  grollest
- * JAZZ 40190 : Francis Bogsanyi + Maciek Klimkowski : ensure LE condition handler is registered on each callin
- *
- * Revision 1.2  2010/11/19 15:34:44  grollest
- * JAZZ 40190 : Francis Bogsanyi : ensure LE condition handler is registered on each callin
- *
- * Revision 1.1  2007/11/06 16:51:00  vsebe
- * Created for new build system implementation (Hudson). Project contains old cmdline_options_tester/testresources module.
- *
- * Revision 1.1  2006/02/16 00:44:03  rajeev_rattehall
- * Initial check in
- *
- * 
- */
 
 package VMBench.GPTests;
 

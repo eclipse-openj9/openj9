@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,31 +22,31 @@
 
 #include "optimizer/VPBCDConstraint.hpp"
 
-#include <ctype.h>                              // for isdigit
-#include <stddef.h>                             // for size_t
-#include "codegen/FrontEnd.hpp"                 // for TR::IO::fprintf, etc
-#include "env/KnownObjectTable.hpp"         // for KnownObjectTable, etc
-#include "env/PersistentCHTable.hpp"            // for TR_PersistentCHTable
+#include <ctype.h>
+#include <stddef.h>
+#include "codegen/FrontEnd.hpp"
+#include "env/KnownObjectTable.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
-#include "compile/Compilation.hpp"              // for Compilation
-#include "compile/ResolvedMethod.hpp"           // for TR_ResolvedMethod
+#include "compile/Compilation.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/IO.hpp"
-#include "env/ObjectModel.hpp"                  // for ObjectModel
-#include "env/PersistentInfo.hpp"               // for PersistentInfo
+#include "env/ObjectModel.hpp"
+#include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
-#include "env/VMAccessCriticalSection.hpp"      // for VMAccessCriticalSection
-#include "il/DataTypes.hpp"                     // for getMaxSigned, etc
-#include "il/ILOps.hpp"                         // for ILOpCode
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Symbol.hpp"                        // for Symbol
-#include "il/SymbolReference.hpp"               // for SymbolReference, etc
-#include "il/symbol/StaticSymbol.hpp"           // for StaticSymbol
-#include "ilgen/IlGenRequest.hpp"               // for IlGenRequest
+#include "env/VMAccessCriticalSection.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/J9ValuePropagation.hpp"       // for J9::ValuePropagation, etc
+#include "optimizer/J9ValuePropagation.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 
 // ***************************************************************************

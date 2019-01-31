@@ -247,8 +247,7 @@ public:
    virtual bool canUseSymbolValidationManager() { return false; }
 
 #if defined(TR_TARGET_S390)
-   virtual void initializeS390zLinuxProcessorFeatures();
-   virtual void initializeS390zOSProcessorFeatures();
+   virtual void initializeS390ProcessorFeatures();
 #endif
 
 /////
@@ -264,6 +263,7 @@ public:
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
    virtual bool isInterfaceClass(TR_OpaqueClassBlock * clazzPointer);
+   virtual bool isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method);
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *);
    virtual bool isReferenceArray(TR_OpaqueClassBlock *);
@@ -414,6 +414,7 @@ public:
 
    virtual TR::PersistentInfo * getPersistentInfo()  { return ((TR_PersistentMemory *)_jitConfig->scratchSegment)->getPersistentInfo(); }
    void                       unknownByteCode( TR::Compilation *, uint8_t opcode);
+   void                       unsupportedByteCode( TR::Compilation *, uint8_t opcode);
 
    virtual bool isBenefitInliningCheckIfFinalizeObject() { return false; }
 
@@ -430,12 +431,7 @@ public:
    virtual uint32_t           getNumMethods(TR_OpaqueClassBlock *classPointer);
 
    virtual uint8_t *          allocateCodeMemory( TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
-   virtual void               resizeCodeMemory( TR::Compilation *, uint8_t *, uint32_t numBytes);
 
-   virtual uint8_t *          getCodeCacheBase();
-   virtual uint8_t *          getCodeCacheBase(TR::CodeCache *);
-   virtual uint8_t *          getCodeCacheTop();
-   virtual uint8_t *          getCodeCacheTop(TR::CodeCache *);
    virtual void               releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart);
    virtual uint8_t *          allocateRelocationData( TR::Compilation *, uint32_t numBytes);
 
@@ -474,7 +470,6 @@ public:
    virtual uintptrj_t         thisThreadGetSystemSPOffset();
 
    virtual uintptrj_t         thisThreadGetMachineSPOffset();
-   virtual uintptrj_t         thisThreadGetMachineBPOffset( TR::Compilation *);
    virtual uintptrj_t         thisThreadGetJavaFrameFlagsOffset();
    virtual uintptrj_t         thisThreadGetCurrentThreadOffset();
    virtual uintptrj_t         thisThreadGetFloatTemp1Offset();
@@ -1035,10 +1030,7 @@ public:
 
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass);
 
-   protected:
-#if defined(TR_TARGET_S390)
-   int32_t getS390MachineName(TR_S390MachineType machine, char* processorName, int32_t stringLength);
-#endif
+protected:
 
    enum // _flags
       {
@@ -1067,8 +1059,8 @@ public:
    virtual void               initializeHasFixedFrameC_CallingConvention();
 
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
-   TR_OpaqueMethodBlock *     getMethodFromName(char * className, char *methodName, char *signature, J9ConstantPool *constantPool);
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod=0);
+   virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod);
+   virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature);
    virtual uintptrj_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
@@ -1178,8 +1170,7 @@ public:
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
 
 #if defined(TR_TARGET_S390)
-   virtual void               initializeS390zLinuxProcessorFeatures();
-   virtual void               initializeS390zOSProcessorFeatures();
+   virtual void               initializeS390ProcessorFeatures();
 #endif
 
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);
@@ -1195,7 +1186,6 @@ public:
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
    virtual bool               hasFinalizer(TR_OpaqueClassBlock * classPointer);
    virtual uintptrj_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
-   virtual TR_OpaqueMethodBlock *             getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod=0);
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
    virtual bool               isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
@@ -1247,25 +1237,6 @@ typedef J9JITExceptionTable TR_MethodMetaData;
 TR_MethodMetaData * createMethodMetaData(TR_J9VMBase &, TR_ResolvedMethod *, TR::Compilation *);
 
 extern J9JITConfig * jitConfig;
-
-struct TR_MetaDataStats
-   {
-#if defined(DEBUG)
-   ~TR_MetaDataStats();
-#endif
-
-   uint32_t _counter;
-   uint32_t _codeSize;
-   uint32_t _maxCodeSize;
-   uint32_t _exceptionDataSize;
-   uint32_t _tableSize;
-   uint32_t _inlinedCallDataSize;
-   uint32_t _gcDataSize;
-   uint32_t _relocationSize;
-
-   };
-
-extern struct TR_MetaDataStats metaDataStats;
 
 static inline char * utf8Data(J9UTF8 * name)
    {

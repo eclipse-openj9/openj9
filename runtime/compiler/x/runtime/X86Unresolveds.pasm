@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,6 +46,7 @@ ifndef TR_HOST_64BIT
 
       public         interpreterUnresolvedStaticGlue
       public         interpreterUnresolvedSpecialGlue
+      public         interpreterStaticAndSpecialGlue
       public         updateInterpreterDispatchGlueSite
       public         interpreterVoidStaticGlue
       public         interpreterSyncVoidStaticGlue
@@ -83,6 +84,7 @@ ifndef TR_HOST_64BIT
       public         MTUnresolvedDoubleStore
       public         MTUnresolvedAddressStore
 
+      ExternHelper   j2iTransition
       ExternHelper   jitResolveStaticMethod
       ExternHelper   jitResolveSpecialMethod
       ExternHelper   jitCallCFunction
@@ -188,58 +190,41 @@ interpreterUnresolvedStaticGlue proc near
       push        dword ptr [edi+10]                           ; p2) cpAddr
                                                                ;    10 = 3 (NOP) + 5 (CALL) + 2 (DW)
       push        dword ptr [esp+8]                            ; p1) RA in mainline code
-      CallHelperUseReg jitResolveStaticMethod,eax
+      call        jitResolveStaticMethod
 
-      ; The interpreter may low-tag the result to avoid populating the constant pool--whack it.
+      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
       ;
-      and         eax, -2
-
-      push        ebx                                          ; preserve
-      push        ecx                                          ; preserve
+      btr         eax, 0
+      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      xchg        edi, eax
+      ; Skip code patching if the interpreter low-tag the RAM mathod
+ifdef WINDOWS
+      jc          @@skippatching
+else
+      jc          0f
+endif
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
       ;
-      mov         ebx, eax
-      MoveHelper  eax, interpreterUnresolvedStaticGlue
-
-mergeInterpreterUnresolvedDispatch:
-
-      ; Construct the call instruction in edx:eax that should have brought
-      ; us to this helper + the following 3 bytes.
-      ;
-      mov         edx, dword ptr [edi-1]                       ; edx = 3 bytes after the call to helper + high byte of disp32
-      mov         ecx, edx
-      sub         eax, edi                                     ; Expected disp32 for call to helper
-      rol         eax, 8
-      mov         dl, al                                       ; Copy high byte of calculated disp32 to expected word
-      mov         al, 0e8h                                     ; add CALL opcode
-
-      ; Construct the byte sequence in ecx:ebx to load the RAM method into edi
-      ;
-      rol         ebx, 8
-      mov         cl, bl
-      mov         bl, 0bfh
-
-      lea         edi, [edi-5]
-
-      ; Attempt to patch the code.
-      ;
+      sub         esp, 16
+      movdqu      [esp], xmm0
+      push        001f0f00h                                    ; NOP
+      push        000000bfh                                    ; 1st byte of MOV edi, 0xaabbccdd
+      mov         [esp+1], edi
+      movsd       xmm0, qword ptr [esp]
+      movsd       qword ptr [eax-5], xmm0
+      movdqu      xmm0, [esp+8]
+      add         esp, 24                                      ; 24 = 16 + 4*2 (for two pushes)
+      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+                                                               ; jump to its target directly.
 ifdef WINDOWS
-      lock cmpxchg8b   qword ptr [edi]
+   @@skippatching:
 else
-      lock cmpxchg8b   [edi]
+   0:
 endif
-
-      pop         ecx                                          ; restore
-      pop         ebx                                          ; restore
-
-      ; Adjust the return address to re-run the patched instruction.
-      ; The RET will mispredict anyway so we can get away with pushing
-      ; the adjusted RA back on the stack.
-      ;
-      push        edi
-      ret
-
+      test        byte ptr[edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+      jmp         dword ptr [edi+J9TR_MethodPCStartOffset]
 interpreterUnresolvedStaticGlue endp
 
 
@@ -252,17 +237,53 @@ interpreterUnresolvedSpecialGlue proc near
       push        dword ptr [edi+10]                           ; p2) cpAddr
                                                                ;    10 = 3 (NOP) + 5 (CALL) + 2 (DW)
       push        dword ptr [esp+8]                            ; p1) RA in mainline code
-      CallHelperUseReg jitResolveSpecialMethod,eax
+      call        jitResolveSpecialMethod
 
-      push        ebx                                          ; preserve
-      push        ecx                                          ; preserve
+      ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      xchg        edi, eax
 
-      mov         ebx, eax
-      MoveHelper  eax, interpreterUnresolvedSpecialGlue
-
-      jmp         mergeInterpreterUnresolvedDispatch
-
+      ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
+      ;
+      sub         esp, 16
+      movdqu      [esp], xmm0
+      push        001f0f00h                                    ; NOP
+      push        000000bfh                                    ; 1st byte of MOV edi, 0xaabbccdd
+      mov         dword ptr [esp+1], edi
+      movsd       xmm0, qword ptr [esp]
+      movsd       qword ptr [eax-5], xmm0
+      movdqu      xmm0, [esp+8]
+      add         esp, 24                                      ; 24 = 16 + 4*2 (for two pushes)
+      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+                                                               ; jump to its target directly.
 interpreterUnresolvedSpecialGlue endp
+
+
+; interpreterStaticAndSpecialGlue
+;
+; This function is a back-patching routine for interpreter calls to static
+; methods that have recently been compiled. It patches the call site (in the
+; code cache) of an interpreter call snippet, so that future executions will
+; invoke the compiled method instead.
+;
+; NOTES:
+;
+; [1] The RAM method is in RDI on entry. It was loaded by the preceding instruction.
+;
+; [2] This runtime code uses the JIT linkage registers as volatile registers and hence
+; does not preserve them. This is because the eventual dispatch path will be through
+; the interpreter which reads the parameters from the stack. The backspilling has
+; already occured at this point.
+;
+interpreterStaticAndSpecialGlue proc near
+      test        byte ptr[edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+      mov         edi, dword ptr [edi+J9TR_MethodPCStartOffset]
+      mov         edx, dword ptr [esp]
+      sub         edi, edx
+      mov         dword ptr [edx-4], edi
+      add         edi, edx
+      jmp         edi
+interpreterStaticAndSpecialGlue endp
 
 
 ; updateInterpreterDispatchGlueSite

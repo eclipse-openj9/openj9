@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,33 +21,33 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
-#include "env/KnownObjectTable.hpp"        // for KnownObjectTable, etc
+#include "env/KnownObjectTable.hpp"
 #include "compile/AliasBuilder.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/Method.hpp"                  // for mcount_t
-#include "compile/ResolvedMethod.hpp"          // for TR_ResolvedMethod
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#include "cs2/hashtab.h"                       // for HashTable<>::Cursor, etc
+#include "cs2/hashtab.h"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_HeapMemory, etc
+#include "env/TRMemory.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "env/jittypes.h"
-#include "il/SymbolReference.hpp"              // for SymbolReference, etc
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol, etc
-#include "il/symbol/StaticSymbol_inlines.hpp"  // for StaticSymbol, etc
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol, etc
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
+#include "il/SymbolReference.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "il/symbol/StaticSymbol_inlines.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "ilgen/IlGen.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/BitVector.hpp"                 // for TR_BitVector, etc
-#include "infra/List.hpp"                      // for List, ListIterator, etc
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/List.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/J9TransformUtil.hpp"
@@ -60,7 +60,8 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _unsafeJavaStaticSymRefs(NULL),
      _unsafeJavaStaticVolatileSymRefs(NULL),
      _currentThreadDebugEventDataSymbol(0),
-     _currentThreadDebugEventDataSymbolRefs(c->trMemory())
+     _currentThreadDebugEventDataSymbolRefs(c->trMemory()),
+     _constantPoolAddressSymbolRefs(c->trMemory())
    {
    for (uint32_t i = 0; i < _numImmutableClasses; i++)
       _immutableSymRefNumbers[i] = new (trHeapMemory()) TR_BitVector(sizeHint, c->trMemory(), heapAlloc, growable);
@@ -246,6 +247,27 @@ J9::SymbolReferenceTable::createSystemRuntimeHelper(
    return symRef;
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateConstantPoolAddressSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   void *cpAddress = owningMethodSymbol->getResolvedMethod()->constantPool();
+   ListIterator<TR::SymbolReference> i(&_constantPoolAddressSymbolRefs);
+   TR::SymbolReference * symRef;
+   for (symRef = i.getFirst(); symRef; symRef = i.getNext())
+      if (symRef->getSymbol()->getStaticSymbol()->getStaticAddress() == cpAddress)
+         return symRef;
+
+   TR::StaticSymbol * sym = TR::StaticSymbol::create(trHeapMemory(),TR::Address);
+   sym->setStaticAddress(cpAddress);
+   sym->setConstantPoolAddress();
+   sym->setNotCollected();
+   sym->setNotDataAddress();
+
+   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
+   _constantPoolAddressSymbolRefs.add(symRef);
+   return symRef;
+   }
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateStaticMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
@@ -1148,7 +1170,11 @@ J9::SymbolReferenceTable::findOrCreateClassStaticsSymbol(TR::ResolvedMethodSymbo
    sym->setStaticAddress(classStatics);
    if (!TR::Compiler->cls.classObjectsMayBeCollected())
       sym->setNotCollected();
-
+   // cpIndex for resolved Class statics symbol is unused. Furthermore having a cpIndex here might create illusion for cases where we
+   // care about cpIndex and also as Two or more (resolved) static field references belonging to same class will
+   // share the same information (inlined call site index, cpIndex) , using a cpIndex for these cases will 
+   // need further changes to prevent any sharing hence it is set to -1 for static resolved fields.
+   // For more detailed information take a look at PR#4322 in eclipse/openj9 repo
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
 
    aliasBuilder.addressStaticSymRefs().set(symRef->getReferenceNumber()); // add the symRef to the statics list to get correct aliasing info
@@ -1269,6 +1295,13 @@ static bool isSignatureTypeBool(const char *fieldSignature, int32_t len)
    return len == 1 && fieldSignature[0] == 'Z';
    }
 
+static bool isSignatureReturnTypeBool(const char *methodSignature, int32_t len)
+   {
+   TR_ASSERT(len > 1, "Method signature is unexpectedly short %d", len);
+   // Method signature must end with ")Z" to have a boolean result type
+   return len > 1 && (')' == methodSignature[len-2]) && ('Z' == methodSignature[len-1]);
+   }
+
 bool
 J9::SymbolReferenceTable::isFieldTypeBool(TR::SymbolReference *symRef)
    {
@@ -1285,6 +1318,16 @@ J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
    const char *fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(symRef->getCPIndex(), len);
    dumpOptDetails(comp(), "got static signature as %s\n", fieldSignature);
    return isSignatureTypeBool(fieldSignature, len);
+   }
+
+bool
+J9::SymbolReferenceTable::isReturnTypeBool(TR::SymbolReference *symRef)
+   {
+   TR_Method *method = symRef->getSymbol()->castToResolvedMethodSymbol()->getMethod();
+   char *methodSignature = method->signatureChars();
+   const int32_t len = method->signatureLength();
+   dumpOptDetails(comp(), "got method signature as %.*s\n", len, methodSignature);
+   return isSignatureReturnTypeBool(methodSignature, len);
    }
 
 static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym, TR_Memory *mem)
@@ -1376,14 +1419,13 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
        && !comp()->compileRelocatableCode())
       {
       TR::VMAccessCriticalSection getObjectReferenceLocation(comp());
-      
-      if (*((uintptrj_t*)dataAddress) != NULL)
+      if (*((uintptrj_t*)dataAddress) != 0)
          {
          TR_J9VMBase *fej9 = comp()->fej9();
          TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
          if (declaringClass && fej9->isClassInitialized(declaringClass))
             {
-            static const char *dontFoldVarHandle = feGetEnv("TR_DontFoldVarHandle");
+            static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
             int32_t clazzNameLength = 0;
             char *clazzName = fej9->getClassNameChars(declaringClass, clazzNameLength);
             bool createKnownObject = false;
@@ -1392,7 +1434,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
                {
                createKnownObject = true;
                }
-            else if (!dontFoldVarHandle
+            else if (foldVarHandle
                      && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
                {
                TR_OpaqueClassBlock *varHandleClass =  fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);

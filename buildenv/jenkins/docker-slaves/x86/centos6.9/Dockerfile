@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,8 @@ RUN yum -y update \
     libstdc++-static \
     libX11-devel \
     libXext-devel \
+    libXi-devel \
+    libXrandr-devel \
     libXrender-devel \
     libXt-devel \
     libXtst-devel \
@@ -82,6 +84,7 @@ RUN yum -y update \
     unzip \
     vim \
     wget\
+    xorg-x11-server-Xvfb \
     xz \
     zip \
   && yum clean all
@@ -228,6 +231,33 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
   && git fetch --all
+
+# Install OpenSSL v1.1.0
+RUN cd /tmp \
+  && wget https://www.openssl.org/source/old/1.1.0/openssl-1.1.0g.tar.gz \
+  && tar -xzf openssl-1.1.0g.tar.gz \
+  && rm -f openssl-1.1.0g.tar.gz \
+  && cd /tmp/openssl-1.1.0g \
+  && ./config -Wl,-rpath,/usr/local/lib64 \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf openssl-1.1.0g
+
+# Install Protobuf v3.5.1
+RUN cd /tmp \
+  && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+  && tar -xzf protobuf-cpp-3.5.1.tar.gz \
+  && rm -f protobuf-cpp-3.5.1.tar.gz \
+  && cd /tmp/protobuf-3.5.1 \
+  && ./configure \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf protobuf-3.5.1
+
+# Run ldconfig to create necessary links and cache to shared libraries
+RUN ldconfig
 
 # Expose SSH port and run SSHD
 EXPOSE 22

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,13 +39,14 @@ public class SelfAttacher {
 	static final int ATTACH_SELF_API_SUCCEEDED_CODE = 13;
 	public static void main(String[] args) {
 		/*
-		 * This is launched as a child process by thge test process.
+		 * This is launched as a child process by the test process.
 		 * It uses stderr to communicate its process ID to the test process
 		 * and its exit code to indicate the result of the late attach attempt.
 		 */
 		try {
-			String myId = VmIdGetter.getVmId();
-			System.err.println("myId="+myId);
+			long myPid = ProcessHandle.current().pid();
+			String myId = Long.toString(myPid);
+			System.err.println("myId="+myId);  /* This is required by the parent process */
 			boolean found = false;
 			for (int i = 0; i <10 && !found; ++i) {
 				Thread.sleep(100);

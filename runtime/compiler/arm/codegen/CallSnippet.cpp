@@ -62,7 +62,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 4;
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(ARMOp_str, buffer, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(ARMOp_str, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
             if (linkage.getRightToLeft())
@@ -76,10 +76,10 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 8;
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(ARMOp_str, buffer, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(ARMOp_str, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                if (intArgNum < linkage.getNumIntArgRegs()-1)
            	  {
-           	  buffer = storeArgumentItem(ARMOp_str, buffer, machine->getARMRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
+           	  buffer = storeArgumentItem(ARMOp_str, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
            	  }
                }
             intArgNum += 2;
@@ -93,7 +93,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 4;
                if (floatArgNum < linkage.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(ARMOp_stfs, buffer, machine->getARMRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(ARMOp_stfs, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
                floatArgNum++;
                if (linkage.getRightToLeft())
@@ -106,7 +106,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 8;
                if (floatArgNum < linkage.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(ARMOp_stfd, buffer, machine->getARMRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(ARMOp_stfd, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
                floatArgNum++;
                if (linkage.getRightToLeft())

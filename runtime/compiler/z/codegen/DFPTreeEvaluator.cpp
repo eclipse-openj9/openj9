@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,43 +207,19 @@ genLoadDFP(
       cg->decReferenceCount(fieldNode);
       fprRegister = cg->allocateRegister(TR_FPR);
 
-      if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
+      // move it from GPR to FPR
+      if (TR::Compiler->target.cpu.getS390SupportsFPE())
          {
-         // move it from GPR to FPR
-         if (TR::Compiler->target.cpu.getS390SupportsFPE())
-            {
-            generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister);
-            }
-         else
-            {
-            // OSC
-            TR::SymbolReference * tempSR = cg->allocateLocalTemp(TR::Int64);
-            TR::MemoryReference * tempMR = generateS390MemoryReference(node, tempSR, cg);
-            generateRXInstruction(cg, TR::InstOpCode::STG, node, newRegister, tempMR);
-            TR::MemoryReference * tempMR2 = generateS390MemoryReference(node, tempSR, cg);
-            generateRXInstruction(cg, TR::InstOpCode::LD, node, fprRegister, tempMR2);
-            }
+         generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister);
          }
       else
          {
-         // otherwise, we can get rid of the GPR reg-pair and use 1 reg
-         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, newRegister->getHighOrder(), newRegister->getHighOrder(), 32);
-         generateRRInstruction(cg, TR::InstOpCode::LR, node, newRegister->getHighOrder(), newRegister->getLowOrder());
-
-         // move it from GPR to FPR
-         if (TR::Compiler->target.cpu.getS390SupportsFPE())
-            {
-            generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister->getHighOrder());
-            }
-         else
-            {
-            // OSC
-            TR::SymbolReference * tempSR = cg->allocateLocalTemp(TR::Int64);
-            TR::MemoryReference * tempMR = generateS390MemoryReference(node, tempSR, cg);
-            generateRXInstruction(cg, TR::InstOpCode::STG, node, newRegister->getHighOrder(), tempMR);
-            TR::MemoryReference * tempMR2 = generateS390MemoryReference(node, tempSR, cg);
-            generateRXInstruction(cg, TR::InstOpCode::LD, node, fprRegister, tempMR2);
-            }
+         // OSC
+         TR::SymbolReference * tempSR = cg->allocateLocalTemp(TR::Int64);
+         TR::MemoryReference * tempMR = generateS390MemoryReference(node, tempSR, cg);
+         generateRXInstruction(cg, TR::InstOpCode::STG, node, newRegister, tempMR);
+         TR::MemoryReference * tempMR2 = generateS390MemoryReference(node, tempSR, cg);
+         generateRXInstruction(cg, TR::InstOpCode::LD, node, fprRegister, tempMR2);
          }
       }
    return fprRegister;
@@ -355,184 +331,67 @@ inlineBigDecimalConstructor(
    if (inBCDForm)
       OOLlabelEND = generateLabelSymbol(cg);
 
-   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
+   // need to sign-extend
+   if(!isLong)
       {
-      // need to sign-extend
-      if(!isLong)
-         {
-         valRegister = cg->evaluate(node->getSecondChild());
-         cg->decReferenceCount(node->getSecondChild());
-         valRegister2 = cg->allocate64bitRegister();
-         generateRRInstruction(cg, TR::InstOpCode::LGFR, node, valRegister2, valRegister);
+      valRegister = cg->evaluate(node->getSecondChild());
+      cg->decReferenceCount(node->getSecondChild());
+      valRegister2 = cg->allocateRegister();
+      generateRRInstruction(cg, TR::InstOpCode::LGFR, node, valRegister2, valRegister);
 
-         // don't need valRegister anymore
-         valRegister = valRegister2;
-         }
-      else
-         {
-         valRegister = cg->evaluate(node->getSecondChild());
-         cg->decReferenceCount(node->getSecondChild());
-         }
-
-      // convert to DFP
-      if (inBCDForm)
-         {
-         TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister);
-         bdInstr = instr;
-         TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
-
-         instr->setNeedsGCMap(0x0000FFFF);
-         //CDUTR only has 4byte length, so append 2bytes
-         TR::Instruction * nop = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
-
-         TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                         generateLabelSymbol(cg),
-                                                                                                         jump2callSymbol);
-         cg->addSnippet(restoreSnippet);
-         TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, jump2callSymbol);
-
-         //setting up OOL path
-         TR_S390OutOfLineCodeSection* outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(jump2callSymbol, OOLlabelEND, cg);
-         cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-
-         //switch to OOL generation
-         outlinedHelperCall->swapInstructionListsWithCompilation();
-         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, jump2callSymbol);
-
-         TR_Debug * debugObj = cg->getDebug();
-         if (debugObj)
-            debugObj->addInstructionComment(cursor, "Denotes start of DFP inlineBigDecimalConstructor OOL BCDCHK sequence");
-
-         generateLoad32BitConstant(cg, node, 0, retRegister, true);
-
-         if (debugObj)
-            debugObj->addInstructionComment(cursor, "Denotes end of DFP inlineBigDecimalBinaryOp OOL BCDCHK sequence");
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, OOLlabelEND);
-         outlinedHelperCall->swapInstructionListsWithCompilation();
-         }
-      else
-         generateRRInstruction(cg, TR::InstOpCode::CDGTR, node, dfpRegister, valRegister); //CDGTR does not throw decimal operand exception
-
-      if (!isLong)
-         cg->stopUsingRegister(valRegister2);
+      // don't need valRegister anymore
+      valRegister = valRegister2;
       }
-   else //32-bit target
+   else
       {
-      if(!isLong)
-         {
-         // need to sign-extend
-         valRegister = cg->evaluate(node->getSecondChild()); //32-bit sint
-         cg->decReferenceCount(node->getSecondChild());
-         valRegister2 = cg->allocateRegister();
-         generateRRInstruction(cg, TR::InstOpCode::LGFR, node, valRegister2, valRegister);
-
-         // don't need valRegister anymore
-         valRegister = valRegister2;
-
-         // convert to DFP
-         if (inBCDForm)
-            {
-            TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister);
-            bdInstr = instr;
-
-            TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
-
-            instr->setNeedsGCMap(0x0000FFFF);
-            TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                            generateLabelSymbol(cg),
-                                                                                                            jump2callSymbol);
-            cg->addSnippet(restoreSnippet);
-            TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
-
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, jump2callSymbol);
-
-            //setting up OOL path
-            TR_S390OutOfLineCodeSection* outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(jump2callSymbol, OOLlabelEND, cg);
-            cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-
-            //switch to OOL generation
-            outlinedHelperCall->swapInstructionListsWithCompilation();
-            cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, jump2callSymbol);
-
-            TR_Debug * debugObj = cg->getDebug();
-            if (debugObj)
-               debugObj->addInstructionComment(cursor, "Denotes start of DFP inlineBigDecimalConstructor OOL BCDCHK sequence");
-
-            generateLoad32BitConstant(cg, node, 0, retRegister, true);
-
-            if (debugObj)
-               debugObj->addInstructionComment(cursor, "Denotes end of DFP inlineBigDecimalBinaryOp OOL BCDCHK sequence");
-
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, OOLlabelEND);
-            outlinedHelperCall->swapInstructionListsWithCompilation();
-            }
-         else
-            generateRRInstruction(cg, TR::InstOpCode::CDGTR, node, dfpRegister, valRegister);
-         cg->stopUsingRegister(valRegister2);
-         }
-      else
-         {
-         // get rid of GPR reg-pair, and store in high-order
-         bool clobbered=false;
-         if (node->getSecondChild()->getReferenceCount() > 1)
-            {
-            clobbered=true;
-            valRegister = cg->gprClobberEvaluate(node->getSecondChild());  //64-bit slong
-            }
-         else
-            valRegister = cg->evaluate(node->getSecondChild());
-         cg->decReferenceCount(node->getSecondChild());
-
-         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, valRegister->getHighOrder(), valRegister->getHighOrder(), 32);
-         generateRRInstruction(cg, TR::InstOpCode::LR, node, valRegister->getHighOrder(), valRegister->getLowOrder());
-
-         // convert to DFP
-         if (inBCDForm)
-            {
-            TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister->getHighOrder());
-            bdInstr = instr;
-
-            TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
-
-            instr->setNeedsGCMap(0x0000FFFF);
-            TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                            generateLabelSymbol(cg),
-                                                                                                            jump2callSymbol);
-            cg->addSnippet(restoreSnippet);
-            TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
-
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, jump2callSymbol);
-
-            //setting up OOL path
-            TR_S390OutOfLineCodeSection* outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(jump2callSymbol, OOLlabelEND, cg);
-            cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-
-            //switch to OOL generation
-            outlinedHelperCall->swapInstructionListsWithCompilation();
-            cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, jump2callSymbol);
-
-            TR_Debug * debugObj = cg->getDebug();
-            if (debugObj)
-               debugObj->addInstructionComment(cursor, "Denotes start of DFP inlineBigDecimalConstructor OOL BCDCHK sequence");
-
-            generateLoad32BitConstant(cg, node, 0, retRegister, true);
-
-            if (debugObj)
-               debugObj->addInstructionComment(cursor, "Denotes end of DFP inlineBigDecimalBinaryOp OOL BCDCHK sequence");
-
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, OOLlabelEND);
-            outlinedHelperCall->swapInstructionListsWithCompilation();
-            }
-         else
-            generateRRInstruction(cg, TR::InstOpCode::CDGTR, node, dfpRegister, valRegister->getHighOrder());
-
-         if (clobbered)
-            cg->stopUsingRegister(valRegister);
-         }
+      valRegister = cg->evaluate(node->getSecondChild());
+      cg->decReferenceCount(node->getSecondChild());
       }
+
+   // convert to DFP
+   if (inBCDForm)
+      {
+      TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister);
+      bdInstr = instr;
+      TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
+
+      instr->setNeedsGCMap(0x0000FFFF);
+      //CDUTR only has 4byte length, so append 2bytes
+      TR::Instruction * nop = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
+
+      TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
+                                                                                                      generateLabelSymbol(cg),
+                                                                                                      jump2callSymbol);
+      cg->addSnippet(restoreSnippet);
+      TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
+
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, jump2callSymbol);
+
+      //setting up OOL path
+      TR_S390OutOfLineCodeSection* outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(jump2callSymbol, OOLlabelEND, cg);
+      cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+      //switch to OOL generation
+      outlinedHelperCall->swapInstructionListsWithCompilation();
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, jump2callSymbol);
+
+      TR_Debug * debugObj = cg->getDebug();
+      if (debugObj)
+         debugObj->addInstructionComment(cursor, "Denotes start of DFP inlineBigDecimalConstructor OOL BCDCHK sequence");
+
+      generateLoad32BitConstant(cg, node, 0, retRegister, true);
+
+      if (debugObj)
+         debugObj->addInstructionComment(cursor, "Denotes end of DFP inlineBigDecimalBinaryOp OOL BCDCHK sequence");
+
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, OOLlabelEND);
+      outlinedHelperCall->swapInstructionListsWithCompilation();
+      }
+   else
+      generateRRInstruction(cg, TR::InstOpCode::CDGTR, node, dfpRegister, valRegister); //CDGTR does not throw decimal operand exception
+
+   if (!isLong)
+      cg->stopUsingRegister(valRegister2);
 
    // store exponent
    if (exp)
@@ -775,10 +634,10 @@ inlineBigDecimalBinaryOp(
 
       // sign extend into 64-bits
       TR::Register * desiredBiasedExponent2 = NULL;
-      if (node->getChild(2)->getReferenceCount() == 0 && !cg->use64BitRegsOn32Bit())
+      if (node->getChild(2)->getReferenceCount() == 0)
          desiredBiasedExponent2 = desiredBiasedExponent;
       else
-         desiredBiasedExponent2 = cg->allocate64bitRegister();
+         desiredBiasedExponent2 = cg->allocateRegister();
 
       generateRRInstruction(cg, TR::InstOpCode::LGFR, node, desiredBiasedExponent2, desiredBiasedExponent);
       desiredBiasedExponent = desiredBiasedExponent2;
@@ -924,10 +783,10 @@ inlineBigDecimalScaledDivide(
 
    // sign extend into 64-bits
    TR::Register * desiredBiasedExponent2 = NULL;
-   if (node->getChild(2)->getReferenceCount() == 0 && !cg->use64BitRegsOn32Bit())
+   if (node->getChild(2)->getReferenceCount() == 0)
       desiredBiasedExponent2 = desiredBiasedExponent;
    else
-      desiredBiasedExponent2 = cg->allocate64bitRegister();
+      desiredBiasedExponent2 = cg->allocateRegister();
 
    generateRRInstruction(cg, TR::InstOpCode::LGFR, node, desiredBiasedExponent2, desiredBiasedExponent);
    desiredBiasedExponent = desiredBiasedExponent2;
@@ -1294,53 +1153,12 @@ inlineBigDecimalUnaryOp(
    TR::Register * dfpFPRegister = genLoadDFP(node, cg, node->getFirstChild());
 
    // perform the operation
-   TR::Register * resRegister = NULL;
-
-   if (op == TR::InstOpCode::CUDTR && (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()))
-      {
-      resRegister = cg->allocate64bitRegister();
-      }
-   else
-      {
-      resRegister = cg->allocateRegister();
-      }
-
-   TR::Register * highRegister = NULL;
-   TR::Register * lowRegister = NULL;
-   TR::Register *resRegisterPair = NULL;
-   if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit() && op == TR::InstOpCode::CUDTR)
-      {
-      // need to split returned 64-bit reg into 2 64-bit reg pair
-      highRegister = cg->allocateRegister();
-      lowRegister = cg->allocateRegister();
-      resRegisterPair = cg->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-      }
-
+   TR::Register * resRegister = cg->allocateRegister();
    TR::Instruction* cursor = generateRRInstruction(cg, op, node, resRegister, dfpFPRegister);
    cg->stopUsingRegister(dfpFPRegister);
 
-   /*
-      All these opcodes return 64-bit sign integers, but only API inlining
-      int CUDTR actually requires a long value.
-      d integer.  In 32-bit mode,
-      we need to return this in a register pair
-   */
-   if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit() && op == TR::InstOpCode::CUDTR)
-      {
-      // split the 64-bit reg into a reg-pair
-      cursor = generateRRInstruction(cg, TR::InstOpCode::LR, node, resRegisterPair->getLowOrder(), resRegister);
-
-      cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, resRegisterPair->getHighOrder(), resRegister, 32);
-
-      cg->stopUsingRegister(resRegister);
-      node->setRegister(resRegisterPair);
-      return resRegisterPair;
-      }
-   else
-      {
-      node->setRegister(resRegister);
-      return resRegister;
-      }
+   node->setRegister(resRegister);
+   return resRegister;
    }
 
 /*
@@ -1460,20 +1278,7 @@ inlineBigDecimalUnscaledValue(
    {
    //printf("\t390-DFPower::inlineBDUnscaledValue\n");
    // will store the returned digits
-   TR::Register * retRegister = cg->allocate64bitRegister();
-
-   // 32-bit mode requires a register pair as return
-   TR::Register * highRegister = NULL;
-   TR::Register * lowRegister = NULL;
-   TR::Register * retRegisterPair = NULL;
-
-   if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
-      {
-      // need to split returned 64-bit reg into 2 64-bit reg pair
-      highRegister = cg->allocateRegister();
-      lowRegister = cg->allocateRegister();
-      retRegisterPair = cg->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-      }
+   TR::Register * retRegister = cg->allocateRegister();
 
    // load DFP to be quantized
    TR::Register * dfpFPRegister = genLoadDFP(node, cg, node->getFirstChild());
@@ -1483,7 +1288,7 @@ inlineBigDecimalUnscaledValue(
    generateRRInstruction(cg, TR::InstOpCode::LDR, node, dfpDummyFPRegister, dfpFPRegister);
 
    // load and sign extend biased exponent 0 (398)
-   TR::Register * expRegister = cg->allocate64bitRegister();
+   TR::Register * expRegister = cg->allocateRegister();
    generateLoad32BitConstant(cg, node, 398, expRegister, true);
    generateRRInstruction(cg, TR::InstOpCode::LGFR, node, expRegister, expRegister);
 
@@ -1498,25 +1303,7 @@ inlineBigDecimalUnscaledValue(
    instr = generateRRInstruction(cg, TR::InstOpCode::CGDTR, node, retRegister, dfpDummyFPRegister);
 
    cg->stopUsingRegister(dfpDummyFPRegister);
-
-   if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
-      {
-      // split the 64-bit reg into a reg-pair
-      generateRRInstruction(cg, TR::InstOpCode::LR, node, retRegisterPair->getLowOrder(), retRegister);
-      generateRSInstruction(cg, TR::InstOpCode::SRLG, node, retRegisterPair->getHighOrder(), retRegister, 32);
-      cg->stopUsingRegister(retRegister);
-      }
-
-   // 32-bit mode requires a register pair
-   if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
-      {
-      node->setRegister(retRegisterPair);
-      retRegister = retRegisterPair;
-      }
-   else
-      {
-      node->setRegister(retRegister);
-      }
+   node->setRegister(retRegister);
 
    return retRegister;
    }
@@ -1534,25 +1321,7 @@ inlineBigDecimalFromPackedConverter(
 
    // load the packed decimal
    bool clobbered = false;
-   TR::Register * valRegister = NULL;
-   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
-      {
-      valRegister = cg->evaluate(node->getSecondChild());
-      }
-   else
-      {
-      if (node->getSecondChild()->getReferenceCount() > 1)
-         {
-         clobbered = true;
-         valRegister = cg->gprClobberEvaluate(node->getSecondChild());
-         }
-      else
-         {
-         valRegister = cg->evaluate(node->getSecondChild());
-         }
-      generateRSInstruction(cg, TR::InstOpCode::SLLG, node, valRegister->getHighOrder(), valRegister->getHighOrder(), 32);
-      generateRRInstruction(cg, TR::InstOpCode::LR, node, valRegister->getHighOrder(), valRegister->getLowOrder());
-      }
+   TR::Register * valRegister = cg->evaluate(node->getSecondChild());
 
    //move rv register here, so it can be accessed by both OOL path and fast path
    TR::Register * retRegister = cg->allocateRegister();
@@ -1687,19 +1456,7 @@ inlineBigDecimalToPackedConverter(
       generateRRInstruction(cg, TR::InstOpCode::CUDTR, node, retRegister, dfpRegister);
       }
 
-   cg->stopUsingRegister(dfpRegister);  // FIXME: investigate whether this is needed (Ivan)
-   // split into register pair if we are using 32 bit registers
-   if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
-      {
-      TR::Register * highRegister = cg->allocateRegister();
-      TR::Register * lowRegister = cg->allocateRegister();
-      TR::Register * resRegisterPair = cg->allocateConsecutiveRegisterPair(lowRegister, highRegister);
-      generateRRInstruction(cg, TR::InstOpCode::LR, node, resRegisterPair->getLowOrder(), retRegister);
-      generateRSInstruction(cg, TR::InstOpCode::SRLG, node, resRegisterPair->getHighOrder(), retRegister, 32);
-      cg->stopUsingRegister(retRegister);
-      node->setRegister(resRegisterPair);
-      return resRegisterPair;
-      }
+   cg->stopUsingRegister(dfpRegister);  // FIXME: investigate whether this is needed
 
    // return the long value in a register
    node->setRegister(retRegister);
@@ -1871,65 +1628,6 @@ J9::Z::TreeEvaluator::f2dfEvaluator( TR::Node * node, TR::CodeGenerator * cg)
    }
 
 /**
- * Convert Decimal float/Double/LongDouble to signed long int in 32 bit mode;
- */
-inline TR::Register *
-dfp2l(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * firstChild = node->getFirstChild();
-   TR::Register * srcReg = cg->evaluate(firstChild);
-   TR::Register * targetReg;
-   TR::Register * tempDDReg;
-   TR::Register * evenReg = cg->allocateRegister();
-   TR::Register * oddReg = cg->allocateRegister();
-   targetReg = cg->allocateConsecutiveRegisterPair(oddReg, evenReg);
-
-   TR::InstOpCode::Mnemonic convertOpCode;
-   switch (firstChild->getDataType())
-      {
-      case TR::DecimalFloat:
-         convertOpCode = TR::InstOpCode::CGDTR;
-         tempDDReg = cg->allocateRegister(TR_FPR);
-         break;
-      case TR::DecimalDouble:
-         convertOpCode = TR::InstOpCode::CGDTR;
-         tempDDReg = srcReg;
-         break;
-      case TR::DecimalLongDouble:
-         convertOpCode = TR::InstOpCode::CGXTR;
-         tempDDReg = srcReg;
-         break;
-      default:
-         TR_ASSERT( 0, "dfpToLong: unsupported opcode\n");
-         break;
-      }
-
-   // Float to double
-    if (firstChild->getDataType() == TR::DecimalFloat)
-        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, 0, false);
-
-   TR::RegisterDependencyConditions * deps = NULL;
-   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   TR::Register * tempReg = cg->allocate64bitRegister();
-   deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
-
-   generateRRFInstruction(cg, convertOpCode, node, tempReg, tempDDReg, 0x9, true);
-
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getLowOrder(), tempReg);
-   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 32);
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getHighOrder(), tempReg);
-
-   cg->decReferenceCount(firstChild);
-   cg->stopUsingRegister(tempReg);
-   if (firstChild->getDataType() == TR::DecimalFloat)
-     cg->stopUsingRegister(tempDDReg);
-
-   node->setRegister(targetReg);
-   return targetReg;
-
-   }
-
-/**
  * Convert Decimal float/Double/LongDouble to signed long int in 64 bit mode;
  */
 inline TR::Register *
@@ -1938,7 +1636,7 @@ dfp2l64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = cg->evaluate(firstChild);
    TR::Register * tempDDReg = NULL;
-   TR::Register * targetReg = cg->allocate64bitRegister();
+   TR::Register * targetReg = cg->allocateRegister();
 
    TR::InstOpCode::Mnemonic convertOpCode;
    switch (firstChild->getDataType())
@@ -1970,88 +1668,6 @@ dfp2l64(TR::Node * node, TR::CodeGenerator * cg)
    if (firstChild->getDataType() == TR::DecimalFloat)
      cg->stopUsingRegister(tempDDReg);
 
-   node->setRegister(targetReg);
-   return targetReg;
-   }
-
-/**
- * Convert Decimal float/Double/LongDouble to unsigned long int in 32 bit mode;
- */
-inline TR::Register *
-dfp2lu(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * firstChild = node->getFirstChild();
-   TR::Register * srcReg = cg->evaluate(firstChild);
-   TR::Register * tempDDReg;
-   TR::Register * tempDEReg = cg->allocateFPRegisterPair();
-   TR::Register * tempMaxReg = cg->allocateFPRegisterPair();
-   TR::Register * evenReg = cg->allocateRegister();
-   TR::Register * oddReg = cg->allocateRegister();
-   TR::Register * targetReg = cg->allocateConsecutiveRegisterPair(oddReg, evenReg);
-   TR::Compilation *comp = cg->comp();
-
-   uint8_t m4 =0x0;
-   TR::InstOpCode::Mnemonic convertOpCode;
-   switch (firstChild->getDataType())
-      {
-      case TR::DecimalFloat:
-         tempDDReg = cg->allocateRegister(TR_FPR);
-         generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, m4, false);
-         generateRRFInstruction(cg, TR::InstOpCode::LXDTR, node, tempDEReg, tempDDReg, m4, false);
-         break;
-      case TR::DecimalDouble:
-         generateRRFInstruction(cg, TR::InstOpCode::LXDTR, node, tempDEReg, srcReg, m4, false);
-         break;
-      case TR::DecimalLongDouble:
-         generateRRInstruction(cg, TR::InstOpCode::LXR, node, tempDEReg, srcReg);
-         break;
-      default:
-         TR_ASSERT( 0, "dfpTolu: unsupported opcode\n");
-         break;
-      }
-
-   // subtract (INTMAX + 1) from the decimal float operand
-   int64_t value1 = 0x2208000000000000LL;
-   int64_t value2 = 0x948DF20DA5CFD42ELL;
-
-   size_t offset1 = cg->findOrCreateLiteral(&value1, 8);
-   size_t offset2 = cg->findOrCreateLiteral(&value2, 8);
-
-   TR::Register * litReg = cg->allocateRegister();
-   generateLoadLiteralPoolAddress(cg, node, litReg);
-
-   TR::MemoryReference * mrHi = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset1, cg);
-   TR::MemoryReference * mrLo = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset2, cg);
-
-   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getHighOrder(), mrHi);
-   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getLowOrder(), mrLo);
-
-   generateRRRInstruction(cg, TR::InstOpCode::SXTR, node, tempDEReg, tempDEReg, tempMaxReg);
-
-   // now convert from Decimal128 to long long
-   TR::RegisterDependencyConditions * deps = NULL;
-   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   TR::Register * tempLReg = cg->allocate64bitRegister();
-   deps->addPostCondition(tempLReg, TR::RealRegister::GPR0);
-
-   generateRRFInstruction(cg, TR::InstOpCode::CGXTR, node, tempLReg, tempDEReg, 0xB, true);
-
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getLowOrder(), tempLReg);
-   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempLReg, tempLReg, 32);
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getHighOrder(), tempLReg);
-
-   // add back (INTMAX + 1)
-   generateRILInstruction(cg, TR::InstOpCode::XILF, node, targetReg->getHighOrder(), 0x80000000);
-
-   cg->decReferenceCount(firstChild);
-   if (firstChild->getDataType() == TR::DecimalFloat)
-     cg->stopUsingRegister(tempDDReg);
-
-   cg->stopUsingRegister(tempDEReg);
-   cg->stopUsingRegister(tempMaxReg);
-   cg->stopUsingRegister(tempLReg);
-   mrHi->stopUsingMemRefRegister(cg);
-   mrLo->stopUsingMemRefRegister(cg);
    node->setRegister(targetReg);
    return targetReg;
    }
@@ -2065,7 +1681,7 @@ dfp2lu64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = cg->evaluate(firstChild);
    TR::Register * tempDDReg = NULL;
-   TR::Register * targetReg = cg->allocate64bitRegister();
+   TR::Register * targetReg = cg->allocateRegister();
 
    TR::InstOpCode::Mnemonic convertOpCode;
    switch (firstChild->getDataType())
@@ -2100,54 +1716,6 @@ dfp2lu64(TR::Node * node, TR::CodeGenerator * cg)
    node->setRegister(targetReg);
    return targetReg;
 
-   }
-
-/**
- * Convert to signed long to Decimal float/Double/LongDouble in 32bit mode
- */
-inline TR::Register *
-l2dfp(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * firstChild = node->getFirstChild();
-   TR::Register * srcReg = cg->evaluate(firstChild);
-
-   TR::Register * targetReg;
-
-   TR::InstOpCode::Mnemonic convertOpCode;
-   bool isFloatTgt = false;
-   if( node->getDataType() != TR::DecimalLongDouble)
-      targetReg = cg->allocateRegister(TR_FPR);
-   else
-      targetReg = cg->allocateFPRegisterPair();
-
-   TR::Register *tempReg = cg->allocate64bitRegister();
-   TR::RegisterDependencyConditions * deps = NULL;
-   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
-
-   generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, srcReg->getHighOrder(), 32);
-   generateRRInstruction(cg, TR::InstOpCode::OR, node, tempReg, srcReg->getLowOrder());
-
-   switch (node->getDataType())
-      {
-      case TR::DecimalDouble  :
-         convertOpCode = TR::InstOpCode::CDGTR;
-         break;
-      case TR::DecimalLongDouble  :
-         convertOpCode = TR::InstOpCode::CXGTR;
-         break;
-      default         :
-         TR_ASSERT( 0,"l2dfp: unsupported data types");
-         return NULL;
-      }
-   //convert to DFP
-   generateRRInstruction(cg, convertOpCode, node, targetReg, tempReg);
-   //clear upper 32bit for r0
-   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 32);
-   cg->stopUsingRegister(tempReg);
-   node->setRegister(targetReg);
-   cg->decReferenceCount(firstChild);
-   return targetReg;
    }
 
 /**
@@ -2182,89 +1750,6 @@ l2dfp64(TR::Node * node, TR::CodeGenerator * cg)
       }
    //convert to DFP
    generateRRInstruction(cg, convertOpCode, node, targetReg, srcReg);
-   node->setRegister(targetReg);
-   cg->decReferenceCount(firstChild);
-   return targetReg;
-   }
-
-/**
- * Convert to unsigned long to Decimal float/Double/LongDouble in 32bit mode
- */
-inline TR::Register *
-lu2dfp(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * firstChild = node->getFirstChild();
-   TR::Register * srcReg = cg->evaluate(firstChild);
-   TR::Register * tempDEReg = NULL;
-   TR::Compilation *comp = cg->comp();
-
-   TR::Register *tempReg = cg->allocate64bitRegister();
-   TR::RegisterDependencyConditions * deps = NULL;
-   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
-
-   // subtract (INTMAX + 1) from the upper 32 bit register using x_or operation.
-   generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, srcReg->getHighOrder(), 32);
-   generateRILInstruction(cg, TR::InstOpCode::XIHF, node, tempReg, 0x80000000);
-   generateRRInstruction(cg, TR::InstOpCode::OR, node, tempReg, srcReg->getLowOrder());
-
-   TR::Register * targetReg;
-   if( node->getDataType() != TR::DecimalLongDouble)
-      {
-      targetReg = cg->allocateRegister(TR_FPR);
-      tempDEReg = cg->allocateFPRegisterPair();
-      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, tempDEReg, tempReg);
-      }
-   else
-      {
-      targetReg = cg->allocateFPRegisterPair();
-      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, targetReg, tempReg);
-      }
-
-   // add back (INTMAX + 1)
-   int64_t value1 = 0x2208000000000000LL;
-   int64_t value2 = 0x948DF20DA5CFD42ELL;
-
-   size_t offset1 = cg->findOrCreateLiteral(&value1, 8);
-   size_t offset2 = cg->findOrCreateLiteral(&value2, 8);
-
-   TR::Register * litReg = cg->allocateRegister();
-   generateLoadLiteralPoolAddress(cg, node, litReg);
-
-   TR::MemoryReference * mrHi = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset1, cg);
-   TR::MemoryReference * mrLo = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset2, cg);
-
-   TR::Register * tempMaxReg = cg->allocateFPRegisterPair();
-   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getHighOrder(), mrHi);
-   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getLowOrder(), mrLo);
-
-   TR::Register * tempTgtReg = NULL;
-
-   if( node->getDataType() != TR::DecimalLongDouble)
-      {
-      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, tempDEReg, tempDEReg, tempMaxReg);
-      uint8_t m3 = 0x0, m4 =0x0;
-
-      tempTgtReg = cg->allocateFPRegisterPair();
-      generateRRFInstruction(cg, TR::InstOpCode::LDXTR, node, tempTgtReg, tempDEReg, m3, m4);
-      generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetReg, tempTgtReg->getHighOrder());
-      }
-   else
-      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, targetReg, targetReg, tempMaxReg);
-
-   //clear upper 32bit
-   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 32);
-
-   cg->stopUsingRegister(tempReg);
-   cg->stopUsingRegister(tempMaxReg);
-   mrHi->stopUsingMemRefRegister(cg);
-   mrLo->stopUsingMemRefRegister(cg);
-   if( node->getDataType() != TR::DecimalLongDouble)
-      {
-      cg->stopUsingRegister(tempDEReg);
-      cg->stopUsingRegister(tempTgtReg);
-      }
-
    node->setRegister(targetReg);
    cg->decReferenceCount(firstChild);
    return targetReg;
@@ -2393,7 +1878,7 @@ fixedToDFP(TR::Node * node, TR::CodeGenerator * cg)
       targetRegister = cg->allocateFPRegisterPair(lowReg, highReg);
       }
 
-   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::Register *tempReg = cg->allocateRegister();
    TR::RegisterDependencyConditions * deps = NULL;
    if (TR::Compiler->target.is32Bit())
       {
@@ -2465,25 +1950,25 @@ J9::Z::TreeEvaluator::i2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::dd2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? dfp2l64(node,cg) : dfp2l(node,cg);
+   return dfp2l64(node, cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::dd2luEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? dfp2lu64(node,cg) : dfp2lu(node,cg);
+   return dfp2lu64(node, cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::l2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? l2dfp64(node,cg) : l2dfp(node,cg);
+   return l2dfp64(node,cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::lu2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? lu2dfp64(node,cg) : lu2dfp(node,cg);
+   return lu2dfp64(node, cg);
    }
 
 TR::Register *
@@ -2804,7 +2289,7 @@ J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::LabelSymbol * cflowRegionStart   = generateLabelSymbol(cg);
       TR::LabelSymbol * cflowRegionEnd     = generateLabelSymbol(cg);
 
-      TR::Register *IMzMaskReg = cg->allocate64bitRegister();
+      TR::Register *IMzMaskReg = cg->allocateRegister();
 
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
       deps->addPostCondition(IMzMaskReg, TR::RealRegister::AssignAny);
@@ -3063,42 +2548,8 @@ J9::Z::TreeEvaluator::ddInsExpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       targetReg = cg->allocateRegister(TR_FPR);
 
    TR::RegisterDependencyConditions *deps = NULL;
-   TR::Register *biasedExpReg = NULL;
-   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
-      {
-      TR_ASSERT(biasedExpNode->getOpCode().getSize() == 8,"expecting a biasedExpNode of size 8 and not size %d\n",biasedExpNode->getOpCode().getSize());
-      biasedExpReg = cg->evaluate(biasedExpNode);
-      }
-   else
-      {
-      TR_ASSERT(biasedExpNode->getOpCode().getSize() == 4,"expecting a biasedExpNode of size 4 and not size %d\n",biasedExpNode->getOpCode().getSize());
-      // need to ensure biasedExpReg is allocated as a 64 bit register so localRA will spill/reload all 64 bits if needed
-      if (biasedExpNode->getOpCode().isLoadConst())
-         {
-         // manually check for a constant so a single LGHI/LGFI can be used vs LHI+LGFR if evaluate is just called
-         int64_t biasedExpValue = biasedExpNode->get64bitIntegralValue();
-         if (biasedExpValue >= MIN_IMMEDIATE_VAL && biasedExpValue <= MAX_IMMEDIATE_VAL)
-            {
-            biasedExpReg = cg->allocate64bitRegister();
-            generateRIInstruction(cg, TR::InstOpCode::LGHI, node, biasedExpReg, (int32_t)biasedExpValue);
-            }
-         else if (biasedExpValue >= GE_MIN_IMMEDIATE_VAL && biasedExpValue <= GE_MAX_IMMEDIATE_VAL)
-            {
-            biasedExpReg = cg->allocate64bitRegister();
-            generateRILInstruction(cg, TR::InstOpCode::LGFI, node, biasedExpReg, static_cast<int32_t>(biasedExpValue));
-            }
-         }
-
-      if (biasedExpReg == NULL)
-         {
-         TR::Register *biasedExpReg32 = cg->evaluate(biasedExpNode);
-         biasedExpReg = cg->allocate64bitRegister();
-         generateRRInstruction(cg, TR::InstOpCode::LGFR, node, biasedExpReg, biasedExpReg32);
-         }
-      // the 64 bit registers biasedExpReg is going to be clobbered and R0 is safe to clobber regardless of the hgpr (use64BitRegsOn32Bit) setting
-      deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-      deps->addPostCondition(biasedExpReg, TR::RealRegister::GPR0);
-      }
+   TR::Register *biasedExpReg = cg->evaluate(biasedExpNode);
+   TR_ASSERT(biasedExpNode->getOpCode().getSize() == 8,"expecting a biasedExpNode of size 8 and not size %d\n",biasedExpNode->getOpCode().getSize());
 
    TR::Instruction *inst = generateRRFInstruction(cg, (node->getDataType() == TR::DecimalLongDouble ? TR::InstOpCode::IEXTR : TR::InstOpCode::IEDTR), node, targetReg, biasedExpReg, srcReg);
    if (deps)
@@ -3406,7 +2857,7 @@ J9::Z::TreeEvaluator::ddshrRoundedEvaluator(TR::Node * node, TR::CodeGenerator *
    else
       shift = TR_DECIMAL_DOUBLE_BIAS - shift;
 
-   TR::Register *biasedExpReg = cg->allocate64bitRegister();
+   TR::Register *biasedExpReg = cg->allocateRegister();
    generateRIInstruction(cg, TR::InstOpCode::LGHI, node, biasedExpReg, shift);
 
    // Float to double
@@ -3415,18 +2866,8 @@ J9::Z::TreeEvaluator::ddshrRoundedEvaluator(TR::Node * node, TR::CodeGenerator *
 
    if (node->getDataType()==TR::DecimalLongDouble)
       {
-      TR::RegisterDependencyConditions *deps = NULL;
-      if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
-         {
-         deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-         deps->addPostCondition(biasedExpReg, TR::RealRegister::GPR0);
-         }
-
       targetReg = cg->allocateFPRegisterPair();
       TR::Instruction *inst = generateRRFInstruction(cg, TR::InstOpCode::IEXTR, node, targetReg, biasedExpReg, numReg);
-
-      if (deps)
-         inst->setDependencyConditions(deps);
       }
    else
       {
@@ -3541,7 +2982,7 @@ J9::Z::TreeEvaluator::dd2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = cg->evaluate(firstChild);
    TR::Register * tempDDReg = NULL;
-   TR::Register * targetReg = cg->allocate64bitRegister();
+   TR::Register * targetReg = cg->allocateRegister();
 
    TR::InstOpCode::Mnemonic convertOpCode;
    switch (firstChild->getDataType())

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,8 @@ public:
 		MINMAX_TEST,
 		PROTECT_NEW_ROMCLASS_DATA_TEST,
 		CACHE_FULL_TEST,
-		PROTECTA_SHARED_CACHE_DATA_TEST
+		PROTECTA_SHARED_CACHE_DATA_TEST,
+		STARTUP_HINTS_TEST
 	};
 
 	static IDATA unitTest;

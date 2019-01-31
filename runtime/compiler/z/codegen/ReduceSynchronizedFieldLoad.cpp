@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,20 +22,20 @@
 
 #include "codegen/ReduceSynchronizedFieldLoad.hpp"
 
-#include <stddef.h>                    // for NULL
-#include <stdint.h>                    // for int64_t
+#include <stddef.h>
+#include <stdint.h>
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "env/VMJ9.h"
-#include "il/ILOps.hpp"                // for ILOpCode
-#include "il/ILOpCodes.hpp"            // for ILOpCodes::pdSetSign, etc
-#include "il/Node_inlines.hpp"         // for Node::getType, etc
-#include "il/TreeTop.hpp"              // for TreeTop
-#include "il/TreeTop_inlines.hpp"      // for TreeTop::getNode, etc
-#include "infra/Assert.hpp"            // for TR_ASSERT
+#include "il/ILOps.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "infra/Assert.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"

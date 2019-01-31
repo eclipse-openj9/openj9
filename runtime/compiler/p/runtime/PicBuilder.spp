@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2018 IBM Corp. and others
+!! Copyright (c) 2000, 2019 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -423,6 +423,7 @@
 	.extern   jitResolveSpecialMethod
 	.extern   jitMethodIsSync
 	.extern   jitMethodIsNative
+	.extern	  j2iTransition
 	.extern   icallVMprJavaSendNativeStatic
 	.extern   icallVMprJavaSendStatic0
 	.extern   icallVMprJavaSendStatic1
@@ -2289,6 +2290,36 @@ _interpreterUnresolvedStaticGlue:
 	rlwinm  r6, r5, 8, 0x000000ff					! Table offset in r6
 	rlwinm  r5, r5, 0, 0x007fffff					! Mask off the offset
 	bcctrl  BO_ALWAYS, CR0_LT					! Call to resolve: r3-5 can
+	andi.   r11, r3, in_clinit                                      ! Extract clinit tag from j9method returned
+	bc      BO_IF, CR0_EQ, .L22.common_code    						! If clinit is set then make call the method without patching
+#ifdef TR_HOST_64BIT
+	clrrdi r3, r3, 1                                                ! <clinit> clear up the last bit, which must be zero
+#else
+	rlwinm  r3, r3, 0, 0xfffffffe                                   ! <clinit> clear up the last bit, which must be zero
+#endif
+	laddr	r4, 0(r7)												! Load RA
+	mtspr   LR, r4                                                  ! Load RA into LR
+	laddr   r10, J9TR_MethodPCStartOffset(r3)                        ! Grab the J9Method extra/StartPC
+	andi.   r0, r10, J9TR_MethodNotCompiledBit                       ! Check if the method is jit compiled
+	bc      BO_IF_NOT, CR0_EQ, .L.IntCall    						! Call Interpreter if method is not jit compiled yet
+	mtspr   CTR, r10                                                ! Set up CTR to jump to jitted method
+	bcctr BO_ALWAYS, CR0_LT 										! Jump to the jitted code
+.L.IntCall:
+#ifdef AIXPPC
+	laddr   r11, TOCj2iTransition(RTOC)							! Load The j2iTransition Helper Addr
+	laddr 	r0, 0(r11)
+#elif defined(LINUXPPC64)
+#if defined(__LITTLE_ENDIAN__)
+	laddr 	r0, TOCj2iTransition@toc(RTOC)
+#else
+	laddr 	r11, TOCj2iTransition@toc(RTOC)
+	laddr 	r0, 0(r11)
+#endif
+#else
+	laddr 	r0, j2iTransition@got(RTOC)
+#endif
+	mtspr 	CTR, r0  											! Set up to call
+	bcctr BO_ALWAYS, CR0_LT 									! Dispatch 
 .L22.common_code:							!   be modified, r3 is result.
 #ifdef TR_HOST_64BIT
         clrrdi r3, r3, 1                                                ! <clinit> clear up the last bit, which must be zero
@@ -3225,6 +3256,8 @@ TOC_nativeStaticHelperForUnresolvedGlue:
 	.tc       _nativeStaticHelperForUnresolvedGlue[TC],_nativeStaticHelperForUnresolvedGlue
 TOC_nativeStaticHelper:
 	.tc       _nativeStaticHelper[TC],_nativeStaticHelper
+TOCj2iTransition:
+	.tc 	  j2iTransition[TC],j2iTransition
 TOCicallVMprJavaSendNativeStatic:
 	.tc       icallVMprJavaSendNativeStatic[TC],icallVMprJavaSendNativeStatic
 TOCicallVMprJavaSendStatic0:
@@ -3582,6 +3615,8 @@ TOC_nativeStaticHelperForUnresolvedGlue:
 	.tc       _nativeStaticHelperForUnresolvedGlue[TC],_nativeStaticHelperForUnresolvedGlue
 TOC_nativeStaticHelper:
 	.tc       _nativeStaticHelper[TC],_nativeStaticHelper
+TOCj2iTransition:
+	.tc 	  j2iTransition[TC],j2iTransition
 TOCicallVMprJavaSendNativeStatic:
 	.tc       icallVMprJavaSendNativeStatic[TC],icallVMprJavaSendNativeStatic
 TOCicallVMprJavaSendStatic0:

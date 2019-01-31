@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -287,7 +287,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
    *(int32_t *)buffer = (int32_t) (intptr_t) getDataSymbolReference()->getOwningMethod(cg()->comp())->constantPool();
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
                                                                            *(uint8_t **)buffer,
-                                                                           getCheckInstruction()->getNode() ? (uint8_t *)getCheckInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                           getCheckInstruction()->getNode() ? (uint8_t *)(uintptr_t)getCheckInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                            TR_ConstantPool, cg()),
                           __FILE__, __LINE__,
                           getCheckInstruction()->getNode());

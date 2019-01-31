@@ -67,7 +67,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::stw, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::stw, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
             if (linkage.getRightToLeft())
@@ -78,7 +78,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(storeGPROp, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(storeGPROp, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
             if (linkage.getRightToLeft())
@@ -89,12 +89,12 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(storeGPROp, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(storeGPROp, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                if (TR::Compiler->target.is32Bit())
                   {
                   if (intArgNum < linkage.getNumIntArgRegs()-1)
                      {
-                     buffer = storeArgumentItem(TR::InstOpCode::stw, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
+                     buffer = storeArgumentItem(TR::InstOpCode::stw, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
                      }
                   }
                }
@@ -107,7 +107,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (floatArgNum < linkage.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::stfs, buffer, machine->getPPCRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::stfs, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (linkage.getRightToLeft())
@@ -118,7 +118,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
             if (floatArgNum < linkage.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::stfd, buffer, machine->getPPCRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::stfd, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (linkage.getRightToLeft())
@@ -155,7 +155,7 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = loadArgumentItem(TR::InstOpCode::lwz, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = loadArgumentItem(TR::InstOpCode::lwz, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
             if (linkage.getRightToLeft())
@@ -166,7 +166,7 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = loadArgumentItem(loadGPROp, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = loadArgumentItem(loadGPROp, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
             if (linkage.getRightToLeft())
@@ -177,10 +177,10 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkage.getNumIntArgRegs())
                {
-               buffer = loadArgumentItem(loadGPROp, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = loadArgumentItem(loadGPROp, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
                if (TR::Compiler->target.is32Bit() && (intArgNum < linkage.getNumIntArgRegs()-1))
                      {
-                     buffer = loadArgumentItem(TR::InstOpCode::lwz, buffer, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
+                     buffer = loadArgumentItem(TR::InstOpCode::lwz, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
                      }
                }
             intArgNum += TR::Compiler->target.is64Bit() ? 1 : 2;
@@ -192,7 +192,7 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (floatArgNum < linkage.getNumFloatArgRegs())
                {
-               buffer = loadArgumentItem(TR::InstOpCode::lfs, buffer, machine->getPPCRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = loadArgumentItem(TR::InstOpCode::lfs, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (linkage.getRightToLeft())
@@ -203,7 +203,7 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
             if (floatArgNum < linkage.getNumFloatArgRegs())
                {
-               buffer = loadArgumentItem(TR::InstOpCode::lfd, buffer, machine->getPPCRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = loadArgumentItem(TR::InstOpCode::lfd, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
             if (linkage.getRightToLeft())
@@ -1174,7 +1174,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                trfprintf(pOutFile, "stw [");
                print(pOutFile, stackPtr, TR_WordReg);
                trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
                }
             intArgNum++;
@@ -1190,7 +1190,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                trfprintf(pOutFile, "%s [", storeGPROpName);
                print(pOutFile, stackPtr, TR_WordReg);
                trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
                }
             intArgNum++;
@@ -1206,7 +1206,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                trfprintf(pOutFile, "%s [", storeGPROpName);
                print(pOutFile, stackPtr, TR_WordReg);
                trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
+               print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
                if (TR::Compiler->target.is32Bit() && (intArgNum < linkage.getNumIntArgRegs() - 1))
                   {
@@ -1214,7 +1214,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                   trfprintf(pOutFile, "stw [");
                   print(pOutFile, stackPtr, TR_WordReg);
                   trfprintf(pOutFile, ", %d], ", offset + 4);
-                  print(pOutFile, machine->getPPCRealRegister(linkage.getIntegerArgumentRegister(intArgNum + 1)), TR_WordReg);
+                  print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum + 1)), TR_WordReg);
                   cursor += 4;
                   }
                }
@@ -1234,7 +1234,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                trfprintf(pOutFile, "stfs [");
                print(pOutFile, stackPtr, TR_WordReg);
                trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getPPCRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
+               print(pOutFile, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
                cursor += 4;
                }
             floatArgNum++;
@@ -1250,7 +1250,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                trfprintf(pOutFile, "stfd [");
                print(pOutFile, stackPtr, TR_WordReg);
                trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getPPCRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
+               print(pOutFile, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
                cursor += 4;
                }
             floatArgNum++;

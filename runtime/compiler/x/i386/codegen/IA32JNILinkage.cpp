@@ -100,7 +100,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       }
 
    TR::Register*     ebpReal = cg()->getVMThreadRegister();
-   TR::RealRegister* espReal = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister* espReal = cg()->machine()->getRealRegister(TR::RealRegister::esp);
    TR::LabelSymbol*           returnAddrLabel = NULL;
 
    // Build parameters
@@ -122,7 +122,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       {
       // Anchored frame pointer register.
       //
-      TR::RealRegister *ebxReal = cg()->machine()->getX86RealRegister(TR::RealRegister::ebx);
+      TR::RealRegister *ebxReal = cg()->machine()->getRealRegister(TR::RealRegister::ebx);
 
 
       // Begin: mask out the magic bit that indicates JIT frames below
@@ -335,10 +335,20 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
    // type so that we sign and zero extend the narrower integer return types properly.
    //
    bool isUnsigned = resolvedMethod->returnTypeIsUnsigned();
+   bool isBoolean;
    switch (resolvedMethod->returnType())
       {
       case TR::Int8:
-         generateRegRegInstruction(isUnsigned ? MOVZXReg4Reg1 : MOVSXReg4Reg1,
+         isBoolean = comp()->getSymRefTab()->isReturnTypeBool(callSymRef);
+         if (isBoolean)
+            {
+            // For bool return type, must check whether value returned by
+            // JNI is zero (false) or non-zero (true) to yield Java result
+            generateRegRegInstruction(TEST1RegReg, callNode, eaxReal, eaxReal, cg());
+            generateRegInstruction(SETNE1Reg, callNode, eaxReal, cg());
+            }
+         generateRegRegInstruction((isUnsigned || isBoolean)
+                                         ? MOVZXReg4Reg1 : MOVSXReg4Reg1,
                                    callNode, ecxReal, eaxReal, cg());
          break;
       case TR::Int16:

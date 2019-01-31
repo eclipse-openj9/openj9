@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 
 @Test(groups = { "level.extended" })
@@ -99,8 +101,12 @@ public class TestLoadingClassesFromJarfile {
 				while ((classNames.size() < MAX_CLASSES) && jarfileEntries.hasMoreElements()) {
 					JarEntry entry = jarfileEntries.nextElement();
 					String jarEntryName = entry.getName();
-					if (filterFileName(jarEntryName)) {
+					if (includeFile(jarEntryName)) {
 						String testClassName = convertFileNameToClassName(jarEntryName);
+						/* Prevent spurious macro expansion by the shell */
+						if (testClassName.contains("$")) { //$NON-NLS-1$
+							testClassName = "'"+testClassName+"'"; //$NON-NLS-1$ //$NON-NLS-2$
+						}
 						classNames.add(testClassName);
 					}
 				}
@@ -115,28 +121,41 @@ public class TestLoadingClassesFromJarfile {
 		}
 	}
 
-	private boolean filterFileName(String jarEntryName) {
-		if (!jarEntryName.endsWith(".class")) {
-			return false;
-		}
-		
-		/*
-		 * the AWT native libraries have known issues if loaded manually.
-		 * See CMVC 188841 and 188910
-		 */
-		if (jarEntryName.startsWith("sun/awt")
-				|| jarEntryName.startsWith("sun/java2d")
-				
-				/* sun.reflect.misc.Trampoline need to be excluded as per CMVC 197245 */
-				|| jarEntryName.startsWith("sun/reflect/misc/Trampoline")
-				
-				/* Classes that compile stubs will throw errors if loaded: OpenJ9 Issue #732 */
-				|| jarEntryName.equals("java/util/PropertyPermission.class")
-				|| jarEntryName.startsWith("java/lang/invoke"))
-		{
-			return false;
-		}
-		return true;
+	/**
+	 * Certain packages cannot be loaded via Class.forName()
+	 * as they may require certain machine setups or permissions,
+	 * e.g. access to a display.
+	 */
+	@SuppressWarnings("nls")
+	private static final HashSet<String> excludedPackages = 
+	new HashSet<String>(Arrays.asList(new String[] {
+			"com.apple.eawt",
+			"com.apple.laf",
+			"com.sun.beans.editors",
+			"com.sun.imageio.plugins",
+			"com.sun.java.swing",
+			"com.sun.naming.internal",
+			"com.sun.xml.internal",
+			"java.applet",
+			"java.awt",
+			"java.lang.invoke",
+			"java.util.PropertyPermission",
+			"javax.imageio.ImageIO",
+			"javax.swing",
+			"sun.applet",
+			"sun.awt",
+			"sun.font",
+			"sun.java2d",
+			"sun.lwawt",
+			"sun.print",
+			"sun.reflect.misc.Trampoline",
+			"sun.security.tools.policytool",
+			"sun.swing"
+	}).stream().map(s -> s.replace('.', '/')).collect(Collectors.toList()));
+
+	private static boolean includeFile(String jarEntryName) {
+		return jarEntryName.endsWith(".class")  //$NON-NLS-1$
+				&& !excludedPackages.stream().anyMatch(p -> jarEntryName.startsWith(p));
 	}
 
 	private void createAndRunNewClassloadingTester(String jarfilePath, ArrayList<String> classNames)

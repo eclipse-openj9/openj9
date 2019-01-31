@@ -22,16 +22,15 @@
 
 # TODO scope b165
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_library(jclse9_ SHARED
-	../j9vmconstantpool_se9_before_b165.c
-)
-target_include_directories(jclse9_
+add_jcl(se9_before_b165)
+
+target_include_directories(jclse9_before_b165_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
 		../
 )
 
-target_link_libraries(jclse9_
+target_link_libraries(jclse9_before_b165_
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
@@ -59,7 +58,8 @@ target_link_libraries(jclse9_
 		sunvmi
 )
 
+set_target_properties(jclse9_before_b165_ PROPERTIES LIBRARY_OUTPUT_NAME jclse9_)
 install(
-	TARGETS jclse9_
+	TARGETS jclse9_before_b165_
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 )

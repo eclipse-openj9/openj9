@@ -56,9 +56,9 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	char cacheDir[J9SH_MAXPATH];
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
@@ -186,9 +186,9 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /*  defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 	
@@ -322,9 +322,9 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /*  defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -406,9 +406,9 @@ SH_OSCacheTestSysv::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -499,9 +499,9 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 		goto cleanup;
 	}
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= (J9SHMEM_GETDIR_USE_USERHOME | J9SHMEM_GETDIR_APPEND_BASEDIR);
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= (J9SHMEM_GETDIR_USE_USERHOME | J9SHMEM_GETDIR_APPEND_BASEDIR);
+#endif /* defined(OPENJ9_BUILD) */
 
 	ret = j9shmem_getDir(ctrlDirName, flags, cacheDirName, J9SH_MAXPATH);
 	if (-1 == ret) {
@@ -509,9 +509,9 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 		goto cleanup;
 	}
 	
-	if (J2SE_VERSION(vm) < J2SE_V11) {
-		testDir = cacheDirName;
-	}
+#if !defined(OPENJ9_BUILD)
+	testDir = cacheDirName;
+#endif /* !defined(OPENJ9_BUILD) */
 
 	/* Before starting existing caches must be cleaned up in case previous test runs failed to clean up (CMVC 167936).
 	 * If any step fails the loop continues in order to 'get as much clean up as possible'.
@@ -615,9 +615,9 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	IDATA rc;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if	defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -710,9 +710,9 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -803,9 +803,9 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -959,9 +959,9 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 

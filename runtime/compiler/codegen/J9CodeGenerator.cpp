@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,13 +24,13 @@
 #pragma csect(STATIC,"TRJ9CGBase#S")
 #pragma csect(TEST,"TRJ9CGBase#T")
 
-#include <algorithm>                            // for std::find
+#include <algorithm>
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/PicHelpers.hpp"
 #include "codegen/Relocation.hpp"
-#include "codegen/Instruction.hpp"              // for Instruction
+#include "codegen/Instruction.hpp"
 #include "codegen/MonitorState.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"
@@ -39,23 +39,28 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/NodePool.hpp"                // for NodePool
-#include "il/Symbol.hpp"                  // for Symbol
-#include "il/symbol/ParameterSymbol.hpp"       // for ParameterSymbol
-#include "il/symbol/AutomaticSymbol.hpp"  // for AutomaticSymbol
-#include "il/symbol/StaticSymbol.hpp"     // for StaticSymbol
-#include "il/symbol/LabelSymbol.hpp"      // for LabelSymbol
-#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
+#include "il/NodePool.hpp"
+#include "il/Symbol.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
+#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "il/symbol/LabelSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
 #include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "ras/Delimiter.hpp"                   // for Delimiter
+#include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "env/CHTable.hpp"
 #include "env/PersistentCHTable.hpp"
 
@@ -351,7 +356,7 @@ J9::CodeGenerator::lowerCompressedRefs(
 
       // base object
       address = loadOrStoreNode->getFirstChild();
-      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
+      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || loadOrStoreNode->getOpCode().isReadBar() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
                                                                                    self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
    else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
@@ -2974,13 +2979,19 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
    static bool disableRematforCP = feGetEnv("TR_DisableWrtBarOpt") != NULL;
 
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   // The compressedrefs remat opt removes decompression/compression sequences from
+   // loads/stores where there doesn't exist a gc point between the load and the store,
+   // and the load doesn't need to be dereferenced.
+   // The opt needs to be disabled for the following cases:
+   // 1. In Guarded Storage, we can't not do a guarded load because the object that is loaded may
+   // not be in the root set, and as a consequence, may get moved.
+   // 2. For read barriers in field watch, the vmhelpers are GC points and therefore the object might be moved
+   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || self()->comp()->getOption(TR_EnableFieldWatch))
       {
-      // We need this restriction because the compressedrefs remat opt
-      // removes decompression/compression sequences from loads/stores where there doesn't exist
-      // a gc point between the load and the store, and the load doesn't need to be dereferenced.
-      // In Guarded Storage, we can't not do a guarded load because the object that is loaded may
-      // not be in the root set, and as a consequence, may get moved.
+      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+         traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because Concurrent Scavenger is enabled\n");
+      if (self()->comp()->getOption(TR_EnableFieldWatch))
+         traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because field watch is enabled\n");
       disableRematforCP = true;
       }
 
@@ -4076,37 +4087,6 @@ J9::CodeGenerator::allocateLinkageRegisters()
       }
    }
 
-#define OPT_DETAILS_CLEAN "O^O CLEAN FOLDING: "
-// Having the pdstore also do a clean results in better code as the sign cleaning instruction (on z at least) also moves data.
-// It is done late at > noOpt so a side-effect (the cleaning) is not added to the the store operation.
-// Having a side-effect like this means several optimizations, such as local and global copy propagation and value numbering,
-// need to handle this cleaning side-effect.
-// Cannot do this during lowerTrees because the pass in lowerTrees that adds skipCopyOnStore/skipCopyOnLoad flags is sensitive
-// to referenceCounts and foldSignCleaningIntoStore is changing the number of node references
-//
-void
-J9::CodeGenerator::foldSignCleaningIntoStore()
-   {
-   LexicalTimer foldTimer("foldSignCleaning", self()->comp()->phaseTimer());
-   for(TR::TreeTop * tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
-      {
-      TR::Node *node = tt->getNode();
-      if (node->getOpCode().isPackedStore() &&
-          node->getValueChild()->getOpCode().isSimpleBCDClean() &&
-          node->getValueChild()->getDecimalPrecision() >= node->getValueChild()->getFirstChild()->getDecimalPrecision() && // don't lose truncation side effect
-          node->getDecimalPrecision() <= TR::DataType::getMaxPackedDecimalPrecision() &&
-          performTransformation(self()->comp(), "%sFold %s [%s] into store by setting CleanSignInPDStoreEvaluator flag on %s [%s]\n",
-            OPT_DETAILS_CLEAN,node->getValueChild()->getOpCode().getName(),node->getValueChild()->getName(self()->comp()->getDebug()),node->getOpCode().getName(),node->getName(self()->comp()->getDebug())))
-         {
-         node->setCleanSignInPDStoreEvaluator(true);
-         TR::Node *valueChild = node->getValueChild();
-         valueChild->getFirstChild()->incReferenceCount();
-         valueChild->recursivelyDecReferenceCount();
-         valueChild = node->setValueChild(valueChild->getFirstChild());
-         self()->swapChildrenIfNeeded(node, OPT_DETAILS_CLEAN);
-         }
-      }
-   }
 
 void
 J9::CodeGenerator::swapChildrenIfNeeded(TR::Node *store, char *optDetails)
@@ -4718,3 +4698,96 @@ J9::CodeGenerator::isMethodInAtomicLongGroup(TR::RecognizedMethod rm)
       }
    }
 
+
+void
+J9::CodeGenerator::trimCodeMemoryToActualSize()
+   {
+   uint8_t *bufferStart = self()->getBinaryBufferStart();
+   size_t actualCodeLengthInBytes = self()->getCodeEnd() - bufferStart;
+
+   TR::VMAccessCriticalSection trimCodeMemoryAllocation(self()->comp());
+   self()->getCodeCache()->trimCodeMemoryAllocation(bufferStart, actualCodeLengthInBytes);
+   }
+
+
+void
+J9::CodeGenerator::reserveCodeCache()
+   {
+   self()->setCodeCache(self()->fej9()->getDesignatedCodeCache(self()->comp()));
+   if (!self()->getCodeCache()) // Cannot reserve a cache; all are used
+      {
+      // We may reach this point if all code caches have been used up
+      // If some code caches have some space but cannot be used because they are reserved
+      // we will throw an exception in the call to getDesignatedCodeCache
+
+      if (self()->comp()->compileRelocatableCode())
+         {
+         self()->comp()->failCompilation<TR::RecoverableCodeCacheError>("Cannot reserve code cache");
+         }
+
+      self()->comp()->failCompilation<TR::CodeCacheError>("Cannot reserve code cache");
+      }
+   }
+
+
+uint8_t *
+J9::CodeGenerator::allocateCodeMemoryInner(
+      uint32_t warmCodeSizeInBytes,
+      uint32_t coldCodeSizeInBytes,
+      uint8_t **coldCode,
+      bool isMethodHeaderNeeded)
+   {
+   TR::Compilation *comp = self()->comp();
+
+   TR::CodeCache * codeCache = self()->getCodeCache();
+   if (!codeCache)
+      {
+      if (comp->compileRelocatableCode())
+         {
+         comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to get current code cache");
+         }
+
+      comp->failCompilation<TR::CodeCacheError>("Failed to get current code cache");
+      }
+
+   TR_ASSERT(codeCache->isReserved(), "Code cache should have been reserved.");
+
+   bool hadClassUnloadMonitor;
+   bool hadVMAccess = self()->fej9()->releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
+
+   // Override contiguous allocation for the JITaaS client                                                                                                                                          
+   // JITaaS FIXME: why do we need contiguous allocation at the client?                                                                                                                             
+   bool useContiguousAllocation = self()->fej9()->needsContiguousAllocation();                                                                                                                                      
+   useContiguousAllocation |= comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE;
+
+   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(
+         warmCodeSizeInBytes,
+         coldCodeSizeInBytes,
+         &codeCache,
+         coldCode,
+         useContiguousAllocation,
+         isMethodHeaderNeeded);
+
+   self()->fej9()->acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
+
+   if (codeCache != self()->getCodeCache())
+      {
+      TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");
+      comp->setRelocatableMethodCodeStart(warmCode);
+      self()->switchCodeCacheTo(codeCache);
+      }
+
+   if (!warmCode)
+      {
+      if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
+         {
+         comp->failCompilation<TR::CodeCacheError>("Failed to allocate code memory");
+         }
+
+      comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to allocate code memory");
+      }
+
+   TR_ASSERT_FATAL( !((warmCodeSizeInBytes && !warmCode) || (coldCodeSizeInBytes && !coldCode)), "Allocation failed but didn't throw an exception");
+
+   return warmCode;
+   }

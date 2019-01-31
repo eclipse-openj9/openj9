@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,7 +207,6 @@ public class Main {
 			}
 			return result;
 		}
-
 
 		public Object buildSymbol(Object addressSpace, String functionName, long relocatedFunctionAddress) {
 			return new Object();
@@ -474,25 +473,30 @@ public class Main {
 		for (Iterator iter = _dump.getAdditionalFileNames(); iter.hasNext();) {
 			files.add(iter.next());
 		}
-		
-			
+
 		try {
-			// Add the trace formatting template files (Traceformat.dat and J9TraceFormat.dat) into the zip
+			// Add trace formatting template files (Traceformat.dat, J9TraceFormat.dat and OMRTraceFormat.dat) into the archive.
 			String lib_dir = System.getProperty("java.home") + File.separator + "lib" + File.separator;
 			String trace = lib_dir + "TraceFormat.dat";
-			if (new File(trace).exists())
+			if (new File(trace).exists()) {
 				files.add(trace);
+			}
 			String j9trace = lib_dir + "J9TraceFormat.dat";
-			if (new File(j9trace).exists())
+			if (new File(j9trace).exists()) {
 				files.add(j9trace);
-			
+			}
+			String omrtrace = lib_dir + "OMRTraceFormat.dat";
+			if (new File(omrtrace).exists()) {
+				files.add(omrtrace);
+			}
+
 			// Add the debugger extension library into the zip, available only on AIX
 			String osName = System.getProperty("os.name");
 			if (osName != null && osName.equalsIgnoreCase("AIX")) {
 				files.add("libdbx_j9.so");
 			}
 		} catch (Exception e) {
-				// Ignore
+			// Ignore
 		}
 
 		try {
@@ -635,7 +639,6 @@ public class Main {
 		}
 	}
 
-	
 	private native long getEnvironmentPointer(IAbstractAddressSpace dump) throws Exception;
 	private native void doCommand(IAbstractAddressSpace dump, String command) throws Exception;
 

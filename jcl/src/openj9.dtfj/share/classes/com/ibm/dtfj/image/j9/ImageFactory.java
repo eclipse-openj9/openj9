@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	private ClassLoader imageFactoryClassLoader;
 	private File tmpdir = null; // the directory which holds any extracted files
 
+	/*[IF Sidecar19-SE]*/
 	static {
 		/* 
 		 * Even though j9ddr.jar is a resource within the module openj9.dtfj,
@@ -99,9 +100,10 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 			exportToAll.invoke(null, thisModule, "com.ibm.java.diagnostics.utils"); //$NON-NLS-1$
 			exportToAll.invoke(null, thisModule, "com.ibm.java.diagnostics.utils.commands"); //$NON-NLS-1$
 		} catch (Exception e) {
-			// assume pre-Java 9 jvm
+			throw new InternalError("Failed to adjust module exports", e); //$NON-NLS-1$
 		}
 	}
+	/*[ENDIF] Sidecar19-SE*/
 	
 	/**
 	 * This public constructor is intended for use with Class.newInstance().

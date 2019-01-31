@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@
 
 class MM_AllocationContextRealtime;
 class MM_HeapRegionDescriptorRealtime;
+class MM_RealtimeRootScanner;
 class MM_Timer;
 
 class MM_EnvironmentRealtime : public MM_EnvironmentBase
@@ -49,7 +50,8 @@ public:
 
 protected:
 private:
-	MM_Scheduler *_scheduler;	
+	MM_Scheduler *_scheduler;
+	MM_RealtimeRootScanner *_rootScanner;
 	
 	MM_OSInterface *_osInterface;
 	
@@ -107,6 +109,11 @@ public:
 		return shouldSkipTimeCheck;
 	}
 	
+	void reportScanningSuspended();
+	void reportScanningResumed();
+	
+	void setRootScanner(MM_RealtimeRootScanner *rootScanner) { _rootScanner = rootScanner; }
+	
 	UDATA getScannedBytes() const { return 	_scannedBytes; }
 	void addScannedBytes(UDATA scannedBytes) { _scannedBytes += scannedBytes; }
 	UDATA getScannedObjects() const { return _scannedObjects; }
@@ -129,6 +136,7 @@ public:
 	MM_EnvironmentRealtime(OMR_VMThread *omrVMThread) :
 		MM_EnvironmentBase(omrVMThread),
 		_scheduler((MM_Scheduler *)MM_GCExtensions::getExtensions(omrVMThread)->dispatcher),
+		_rootScanner(NULL),
 		_osInterface(_scheduler->_osInterface),
 		_overflowCache(NULL),
 		_overflowCacheCount(0),
@@ -142,6 +150,7 @@ public:
 	MM_EnvironmentRealtime(J9JavaVM *vm) :
 		MM_EnvironmentBase(vm->omrVM),
 		_scheduler((MM_Scheduler *)MM_GCExtensions::getExtensions(vm)->dispatcher),
+		_rootScanner(NULL),
 		_osInterface(_scheduler->_osInterface),
 		_overflowCache(NULL),
 		_overflowCacheCount(0),

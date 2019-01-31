@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -327,11 +327,15 @@ static const struct { \
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
-#if defined(OSX)
-/* Temporarily disable default class sharing on OSX due to https://github.com/eclipse/openj9/issues/3333 */
+#if defined(OPENJ9_BUILD)
+/* Disable the sharedclasses by default feature due to performance regressions
+ * found prior to the 0.12.0 release.  Enabling the cache for bootstrap classes
+ * only interacts poorly with the JIT's logic to disable the iprofiler if a 
+ * warm cache is detected.  See https://github.com/eclipse/openj9/issues/4222
+ */
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
-#else /* defined(OSX) */
-#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) (J2SE_VERSION(vm) >= J2SE_V11)
-#endif /* defined(OSX) */
+#else /* defined(OPENJ9_BUILD) */
+#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
+#endif /* defined(OPENJ9_BUILD) */
 
 #endif /* J9_H */

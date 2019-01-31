@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,14 +23,14 @@
 #ifndef VALUEPROFILER_INCL
 #define VALUEPROFILER_INCL
 
-#include <stdint.h>          // for uint32_t, int32_t, uint64_t
-#include <stdio.h>           // for fwrite, NULL, FILE
-#include "env/TRMemory.hpp"  // for TR_Memory, etc
-#include "env/jittypes.h"    // for TR_ByteCodeInfo, etc
-#include "il/DataTypes.hpp"  // for DataTypes
-#include "infra/CriticalSection.hpp" // for OMR::CriticalSection
+#include <stdint.h>
+#include <stdio.h>
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/DataTypes.hpp"
+#include "infra/CriticalSection.hpp"
 #include "compile/Compilation.hpp"
-#include "infra/vector.hpp"         // for TR::vector
+#include "infra/vector.hpp"
 
 // Global lock used by Array & List profilers
 extern TR::Monitor *vpMonitor;

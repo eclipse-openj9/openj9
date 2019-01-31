@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,46 +22,46 @@
 
 #include "optimizer/NewInitialization.hpp"
 
-#include <stdint.h>                                // for int32_t, uint32_t, etc
-#include <string.h>                                // for NULL, memset
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                    // for TR_FrontEnd, etc
-#include "compile/Compilation.hpp"                 // for Compilation
-#include "compile/CompilationTypes.hpp"            // for TR_Hotness
-#include "compile/ResolvedMethod.hpp"              // for TR_ResolvedMethod
+#include <stdint.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"             // for TR::Options, etc
+#include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                     // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
-#include "il/Block.hpp"                            // for Block
-#include "il/DataTypes.hpp"                        // for DataType
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                            // for ILOpCode
-#include "il/Node.hpp"                             // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference, etc
-#include "il/TreeTop.hpp"                          // for TreeTop
-#include "il/TreeTop_inlines.hpp"                  // for TreeTop::getNode, etc
-#include "il/symbol/ParameterSymbol.hpp"           // for ParameterSymbol
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"              // for StaticSymbol
-#include "infra/Array.hpp"                         // for TR_Array
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/BitVector.hpp"                     // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                           // for CFG (ptr only), etc
-#include "infra/Link.hpp"                          // for TR_LinkHead, etc
-#include "infra/List.hpp"                          // for TR_ScratchList
-#include "optimizer/CallInfo.hpp"                  // for TR_CallSite
-#include "optimizer/Inliner.hpp"                   // for TR_InlineCall, etc
-#include "optimizer/Optimization.hpp"              // for Optimization
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "optimizer/CallInfo.hpp"
+#include "optimizer/Inliner.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/Optimizer.hpp"                 // for Optimizer
-#include "optimizer/TransformUtil.hpp"             // for TransformUtil
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
-#include "ras/Debug.hpp"                           // for TR_DebugBase
+#include "ras/Debug.hpp"
 
 class TR_OpaqueClassBlock;
 namespace TR { class MethodSymbol; }

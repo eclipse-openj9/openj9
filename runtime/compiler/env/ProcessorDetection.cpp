@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -448,114 +448,6 @@ portLibCall_getARMProcessorType()
    return tp;
    }
 
-// -----------------------------------------------------------------------------
-
-
-#if defined(TR_TARGET_S390)
-int32_t TR_J9VMBase::getS390MachineName(TR_S390MachineType machineType, char* processorName, int32_t stringLength)
-   {
-   int32_t returnValue = -1;
-   switch(machineType)
-      {
-      case TR_FREEWAY:
-         returnValue = snprintf(processorName, stringLength, "z900 (%d)", machineType);
-      break;
-
-      case TR_Z800:
-         returnValue = snprintf(processorName, stringLength, "z800 (%d)", machineType);
-      break;
-
-      // zPDT
-      case TR_MIRAGE:
-      case TR_MIRAGE2:
-         returnValue = snprintf(processorName, stringLength, "zPDT (%d)", machineType);
-      break;
-
-      case TR_TREX:
-         returnValue = snprintf(processorName, stringLength, "z990 (%d)", machineType);
-      break;
-
-      case TR_Z890:
-         returnValue = snprintf(processorName, stringLength, "z890 (%d)", machineType);
-      break;
-
-      case TR_GOLDEN_EAGLE:
-      //case TR_DANU_GA2:   // TR_DANU_GA2 has same model code as TR_GOLDEN_EAGLE
-         returnValue = snprintf(processorName, stringLength, "z9 (%d)", machineType);
-      break;
-
-      case TR_Z9BC:
-         returnValue = snprintf(processorName, stringLength, "z9BC (%d)", machineType);
-      break;
-
-      case TR_Z10:
-         returnValue = snprintf(processorName, stringLength, "z10 (%d)", machineType);
-      break;
-
-      case TR_Z10BC:
-         returnValue = snprintf(processorName, stringLength, "z10BC (%d)", machineType);
-      break;
-
-      case TR_ZG:
-         returnValue = snprintf(processorName, stringLength, "z196 (%d)", machineType);
-      break;
-
-      case TR_ZGMR:
-         returnValue = snprintf(processorName, stringLength, "z114 (%d)", machineType);
-      break;
-
-      case TR_ZEC12:
-         returnValue = snprintf(processorName, stringLength, "zEC12 (%d)", machineType);
-      break;
-
-      case TR_ZEC12MR:
-         returnValue = snprintf(processorName, stringLength, "zBC12 (%d)", machineType);
-      break;
-
-      case TR_Z13:
-         returnValue = snprintf(processorName, stringLength, "z13 (%d)", machineType);
-      break;
-
-      case TR_Z13s:
-         returnValue = snprintf(processorName, stringLength, "z13s (%d)", machineType);
-      break;
-
-      case TR_Z14:
-         returnValue = snprintf(processorName, stringLength, "z14 (%d)", machineType);
-      break;
-
-      case TR_Z14s:
-         returnValue = snprintf(processorName, stringLength, "z14s (%d)", machineType);
-      break;
-
-      case TR_ZNEXT:
-         returnValue = snprintf(processorName, stringLength, "zNext (%d)", machineType);
-      break;
-
-      case TR_ZNEXTs:
-         returnValue = snprintf(processorName, stringLength, "zNexts (%d)", machineType);
-      break;
-
-      // Miscellaneous machine codes we were given.  Simply print out the model number.
-      case TR_ZG_RESERVE:
-      case TR_ZEC12_RESERVE:
-      case TR_ZH:
-      case TR_DATAPOWER:
-      case TR_ZH_RESERVE1:
-      case TR_ZH_RESERVE2:
-      default:
-         returnValue = snprintf(processorName, stringLength, "(%d)", machineType);
-      break;
-      }
-
-   return returnValue;
-   }
-
-#endif // TR_TARGET_S390
-
-
-// -----------------------------------------------------------------------------
-
 TR_Processor
 TR_J9VMBase::getPPCProcessorType()
    {
@@ -771,14 +663,94 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 #if defined(TR_TARGET_S390)
    if (TR::Compiler->target.cpu.isZ())
       {
-      if(TR::Compiler->target.isZOS())
+      int32_t machineId = TR::Compiler->target.cpu.TO_PORTLIB_get390MachineId();
+
+      switch (machineId)
          {
-         returnValue = getS390MachineName(TR::Compiler->target.cpu.TO_PORTLIB_get390zOSMachineType(), processorName, stringLength);
+         case TR_FREEWAY:
+            returnValue = snprintf(processorName, stringLength, "z900 (%d)", machineId);
+         break;
+
+         case TR_Z800:
+            returnValue = snprintf(processorName, stringLength, "z800 (%d)", machineId);
+         break;
+
+         // zPDT
+         case TR_MIRAGE:
+         case TR_MIRAGE2:
+            returnValue = snprintf(processorName, stringLength, "zPDT (%d)", machineId);
+         break;
+
+         case TR_TREX:
+            returnValue = snprintf(processorName, stringLength, "z990 (%d)", machineId);
+         break;
+
+         case TR_Z890:
+            returnValue = snprintf(processorName, stringLength, "z890 (%d)", machineId);
+         break;
+
+         case TR_GOLDEN_EAGLE:
+            returnValue = snprintf(processorName, stringLength, "z9 (%d)", machineId);
+         break;
+
+         case TR_Z9BC:
+            returnValue = snprintf(processorName, stringLength, "z9BC (%d)", machineId);
+         break;
+
+         case TR_Z10:
+            returnValue = snprintf(processorName, stringLength, "z10 (%d)", machineId);
+         break;
+
+         case TR_Z10BC:
+            returnValue = snprintf(processorName, stringLength, "z10BC (%d)", machineId);
+         break;
+
+         case TR_ZG:
+            returnValue = snprintf(processorName, stringLength, "z196 (%d)", machineId);
+         break;
+
+         case TR_ZGMR:
+            returnValue = snprintf(processorName, stringLength, "z114 (%d)", machineId);
+         break;
+
+         case TR_ZEC12:
+            returnValue = snprintf(processorName, stringLength, "zEC12 (%d)", machineId);
+         break;
+
+         case TR_ZEC12MR:
+            returnValue = snprintf(processorName, stringLength, "zBC12 (%d)", machineId);
+         break;
+
+         case TR_Z13:
+            returnValue = snprintf(processorName, stringLength, "z13 (%d)", machineId);
+         break;
+
+         case TR_Z13s:
+            returnValue = snprintf(processorName, stringLength, "z13s (%d)", machineId);
+         break;
+
+         case TR_Z14:
+            returnValue = snprintf(processorName, stringLength, "z14 (%d)", machineId);
+         break;
+
+         case TR_Z14s:
+            returnValue = snprintf(processorName, stringLength, "z14s (%d)", machineId);
+         break;
+
+         case TR_ZNEXT:
+            returnValue = snprintf(processorName, stringLength, "zNext (%d)", machineId);
+         break;
+
+         case TR_ZNEXTs:
+            returnValue = snprintf(processorName, stringLength, "zNexts (%d)", machineId);
+         break;
+
+         default:
+            // Unknown machine id, simply print out the machine model number
+            returnValue = snprintf(processorName, stringLength, "(%d)", machineId);
+         break;
          }
-      else
-         {
-         returnValue = getS390MachineName(TR::Compiler->target.cpu.TO_PORTLIB_get390zLinuxMachineType(), processorName, stringLength);
-         }
+
       return returnValue;
       }
 #endif
@@ -842,23 +814,15 @@ TR_J9VM::initializeProcessorType()
 
    if (TR::Compiler->target.cpu.isZ())
       {
-      #if defined(TR_HOST_S390)
-      if (TR::Compiler->target.isLinux())
-         {
-         TR::Compiler->target.cpu.setS390MachineType(TR::Compiler->target.cpu.TO_PORTLIB_get390zLinuxMachineType());
-         initializeS390zLinuxProcessorFeatures();
-         }
-      else
-         {
-         TR::Compiler->target.cpu.setS390MachineType(TR::Compiler->target.cpu.TO_PORTLIB_get390zOSMachineType());
-         initializeS390zOSProcessorFeatures();
+#if defined(TR_HOST_S390)
+         initializeS390ProcessorFeatures();
+
 #if defined(J9ZOS390)
          // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
          if (!_isPSWInProblemState())
              _compInfo->setIsInZOSSupervisorState();
 #endif
-         }
-      #endif
+#endif
 
 #ifdef TR_TARGET_S390
       // For AOT shared classes cache processor compatibility purposes, the following
@@ -955,30 +919,13 @@ TR_J9VM::initializeProcessorType()
 
 #if defined(TR_TARGET_S390)
 void
-TR_J9VMBase::initializeS390zLinuxProcessorFeatures()
+TR_J9VMBase::initializeS390ProcessorFeatures()
    {
-   TR_ASSERT(TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux(), "Only valid for s390/zLinux\n");
-   TR::Compiler->target.cpu.initializeS390zLinuxProcessorFeatures();
+   TR::Compiler->target.cpu.initializeS390ProcessorFeatures();
    }
 
-
 void
-TR_J9VMBase::initializeS390zOSProcessorFeatures()
-   {
-   TR_ASSERT(TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isZOS(), "Only valid for s390/zOS\n");
-   TR::Compiler->target.cpu.initializeS390zOSProcessorFeatures();
-   }
-
-
-void
-TR_J9SharedCacheVM::initializeS390zLinuxProcessorFeatures()
-   {
-   return;
-   }
-
-
-void
-TR_J9SharedCacheVM::initializeS390zOSProcessorFeatures()
+TR_J9SharedCacheVM::initializeS390ProcessorFeatures()
    {
    return;
    }

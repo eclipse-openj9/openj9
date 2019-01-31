@@ -159,7 +159,6 @@ J9::CodeCacheManager::setCodeCacheFull()
    {
    self()->OMR::CodeCacheManager::setCodeCacheFull();
    _jitConfig->runtimeFlags |= J9JIT_CODE_CACHE_FULL;
-   _jitConfig->lastCodeAllocSize = 0;
    }
 
 
@@ -324,7 +323,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
          vmemParams.startAddress = (void *)0x0;
          vmemParams.endAddress =   (void *)0x7FFFFFFF;
          }
-      else 
+      else
          {
          vmemParams.startAddress = (void *)0x80000000;
          vmemParams.endAddress =   (void *)0x7FFFFFFFFFFFFFFF;
@@ -354,7 +353,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
        (vmemParams.options & J9PORT_VMEM_ADDRESS_HINT) &&
        !(self()->isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)))
       {
-      // allocated code cache is not in range to avoid trampoline 
+      // allocated code cache is not in range to avoid trampoline
       // try with full address range that avoids trampoline
       // free old segment
       javaVM->internalVMFunctions->freeMemorySegment(javaVM, codeCacheSegment, 1);
@@ -374,7 +373,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
          vmemParams.startAddress = (void *)align((uint8_t *)(someJitLibraryAddress + SAFE_DISTANCE_REPOSITORY_JITLIBRARY), alignment -1);
          vmemParams.endAddress = (void *)(someJitLibraryAddress + MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE);
          }
-      // unset STRICT_ADDRESS and ADDRESS_HINT 
+      // unset STRICT_ADDRESS and ADDRESS_HINT
       vmemParams.options &= ~(J9PORT_VMEM_STRICT_ADDRESS);
       vmemParams.options &= ~(J9PORT_VMEM_ADDRESS_HINT);
       // for Linux allocate using QUICK method based on smaps

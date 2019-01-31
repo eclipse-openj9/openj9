@@ -23,6 +23,11 @@
 #define J9_EXTERNAL_TO_VM
 
 #include "env/VMJ9Server.hpp"
+
+#if defined (_MSC_VER) && (_MSC_VER < 1900)
+#define snprintf _snprintf
+#endif
+
 #include "env/VMJ9.h"
 
 #include <algorithm>
@@ -966,7 +971,6 @@ UDATA TR_J9VMBase::thisThreadGetSystemSPOffset()
 UDATA TR_J9VMBase::thisThreadGetJavaLiteralsOffset()                {return offsetof(J9VMThread, literals);}
 UDATA TR_J9VMBase::thisThreadGetJavaFrameFlagsOffset()              {return offsetof(J9VMThread, jitStackFrameFlags);}
 UDATA TR_J9VMBase::thisThreadGetMachineSPOffset()                   {return sizeof(J9VMThread);}
-UDATA TR_J9VMBase::thisThreadGetMachineBPOffset(TR::Compilation * comp) {return TR::Compiler->om.sizeofReferenceAddress();}  // DANGER: this is offset from *(machineSP)
 UDATA TR_J9VMBase::thisThreadGetCurrentThreadOffset()               {return offsetof(J9VMThread, threadObject);}
 UDATA TR_J9VMBase::thisThreadGetFloatTemp1Offset()                  {return offsetof(J9VMThread, floatTemp1);}
 UDATA TR_J9VMBase::thisThreadGetFloatTemp2Offset()                  {return offsetof(J9VMThread, floatTemp2);}
@@ -1504,7 +1508,7 @@ TR_J9VMBase::getFragmentParentOffset()
    {
 
 #if defined(J9VM_GC_REALTIME)
-    return offsetof(J9VMGCRememberedSetFragment, fragmentParent);
+    return offsetof(MM_GCRememberedSetFragment, fragmentParent);
 #endif
    return 0;
    }
@@ -1513,7 +1517,7 @@ UDATA
 TR_J9VMBase::getRememberedSetGlobalFragmentOffset()
    {
 #if defined(J9VM_GC_REALTIME)
-      return offsetof(J9VMGCRememberedSet, globalFragmentIndex);
+      return offsetof(MM_GCRememberedSet, globalFragmentIndex);
 #endif
    return 0;
    }
@@ -1522,7 +1526,7 @@ UDATA
 TR_J9VMBase::getLocalFragmentOffset()
    {
 #if defined(J9VM_GC_REALTIME)
-       return offsetof(J9VMGCRememberedSetFragment, localFragmentIndex);
+       return offsetof(MM_GCRememberedSetFragment, localFragmentIndex);
 #endif
     return 0;
    }
@@ -2068,99 +2072,15 @@ TR_J9VMBase::allocateRelocationData(TR::Compilation * comp, uint32_t numBytes)
          }
       comp->failCompilation<J9::DataCacheError>("Failed to allocate relocation data");
       }
-   if (debug("metaDataStats"))
-      metaDataStats._relocationSize += size;
+
    return relocationData;
    }
 
 
-static void switchCodeCache(TR::Compilation *comp, TR::CodeCache *oldCache, TR::CodeCache *newCache)
-   {
-   comp->switchCodeCache(newCache);
-   // If the old CC had pre-loaded code, the current compilation may have initialized it and will therefore depend on it
-   // so we should initialize it in the new CC as well
-   // XXX: We could avoid this if we knew for sure that this compile wasn't the one who initialized it
-   if (newCache && oldCache->isCCPreLoadedCodeInitialized())
-      newCache->getCCPreLoadedCodeAddress(TR_numCCPreLoadedCode, comp->cg());
-   }
-
 uint8_t *
 TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded)
    {
-   TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // This is the reserved code cache
-   if (NULL == codeCache)
-      {
-      if (isAOT_DEPRECATED_DO_NOT_USE())
-         {
-         comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to get current code cache");
-         }
-#ifdef MCT_DEBUG
-      fprintf(stderr, "Aborting compilation %p\n", comp);
-#endif
-      comp->failCompilation<TR::CodeCacheError>("Failed to get current code cache");
-      }
-
-#ifdef MCT_DEBUG
-   fprintf(stderr, "comp %p ID=%d codeCache=%p wants to allocate %u bytes of code memory. cache has %d available\n",
-           comp, comp->getCompThreadID(), codeCache, warmCodeSize+coldCodeSize, codeCache->getFreeContiguousSpace());
-   if (!codeCache->reserved)
-      {
-      fprintf(stderr, "Code cache %p belonging to comp %p is not reserved\n", codeCache, comp);
-      }
-#endif
-   TR_ASSERT(codeCache->isReserved(), "Code cache should have been reserved.");
-   bool hadClassUnloadMonitor;
-   bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-
-   // Override contiguous allocation for the JITaaS client
-   // JITaaS FIXME: why do we need contiguous allocation at the client?
-   bool useContiguousAllocation = needsContiguousAllocation();
-   useContiguousAllocation |= comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE;
-
-   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, useContiguousAllocation, isMethodHeaderNeeded);
-
-   acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
-
-   if (codeCache != comp->getCurrentCodeCache())
-      {
-#ifdef MCT_DEBUG
-      fprintf(stderr, "comp %p ID=%d switched cache to %p\n", comp, comp->getCompThreadID(), codeCache);
-#endif
-      TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");  // Either we didn't get a code cache, or the one we should get is
-      comp->setRelocatableMethodCodeStart(warmCode);
-      switchCodeCache(comp, comp->getCurrentCodeCache(), codeCache);
-      }
-
-   if (NULL == warmCode)
-      {
-      if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
-         {
-         comp->failCompilation<TR::CodeCacheError>("Failed to allocate code memory");
-         }
-
-#ifdef MCT_DEBUG
-      fprintf(stderr, "Aborting compilation %p\n", comp);
-#endif
-      comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to allocate code memory");
-      }
-
-   TR_ASSERT( !((warmCodeSize && !warmCode) || (coldCodeSize && !coldCode)), "Allocation failed but didn't throw an exception");
-   return warmCode;
-   }
-
-void
-TR_J9VMBase::resizeCodeMemory(TR::Compilation * comp, U_8 *bufferStart, uint32_t numBytes)
-   {
-   // I don't see a reason to acquire VM access for this call
-   TR::VMAccessCriticalSection resizeCodeMemory(this);
-   TR::CodeCache * codeCache = comp->getCurrentCodeCache();
-   codeCache->resizeCodeMemory(bufferStart, numBytes);
-
-   if (debug("metaDataStats"))
-      {
-      metaDataStats._codeSize += numBytes;
-      if (numBytes > metaDataStats._maxCodeSize) metaDataStats._maxCodeSize = numBytes;
-      }
+   return comp->cg()->allocateCodeMemoryInner(warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
    }
 
 bool
@@ -2177,44 +2097,17 @@ TR_J9VMBase::supportsCodeCacheSnippets()
 void *
 TR_J9VMBase::getAllocationPrefetchCodeSnippetAddress(TR::Compilation * comp)
    {
-   TR::CodeCache * codeCache = comp->getCurrentCodeCache();
+   TR::CodeCache * codeCache = comp->cg()->getCodeCache();
    return codeCache->getCCPreLoadedCodeAddress(TR_AllocPrefetch, comp->cg());
    }
 
 void *
 TR_J9VMBase::getAllocationNoZeroPrefetchCodeSnippetAddress(TR::Compilation * comp)
    {
-   TR::CodeCache * codeCache = comp->getCurrentCodeCache();
+   TR::CodeCache * codeCache = comp->cg()->getCodeCache();
    return codeCache->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, comp->cg());
    }
 #endif
-
-
-U_8 *
-TR_J9VMBase::getCodeCacheBase()
-   {
-   return _jitConfig->codeCache->heapBase;
-   }
-
-U_8 *
-TR_J9VMBase::getCodeCacheBase(TR::CodeCache * codeCache)
-   {
-   // Used by S390 canUseRelativeLongInstructions to get code cache base.
-   return codeCache->getCodeBase();
-   }
-
-U_8 *
-TR_J9VMBase::getCodeCacheTop()
-   {
-   return _jitConfig->codeCache->heapTop;
-   }
-
-U_8 *
-TR_J9VMBase::getCodeCacheTop(TR::CodeCache * codeCache)
-   {
-   // Used by S390 canUseRelativeLongInstructions to get code cache top.
-   return codeCache->getCodeTop();
-   }
 
 // This routine may be called on the compilation thread or from a runtime hook
 //
@@ -3339,10 +3232,10 @@ TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    }
 
 bool
-TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
-   }
+ TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
+    {
+    return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
+    }
 
 bool
 TR_J9VMBase::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
@@ -3698,7 +3591,7 @@ TR_J9VMBase::lowerMultiANewArray(TR::Compilation * comp, TR::Node * root, TR::Tr
    TR::Node * tempRef = TR::Node::createWithSymRef(root, TR::loadaddr,0,new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), temp));
    root->setAndIncChild(0,tempRef);
    root->setNumChildren(3);
-   
+
    static bool recreateRoot = feGetEnv("TR_LowerMultiANewArrayRecreateRoot") ? true : false;
    if (!TR::Compiler->target.is64Bit() || recreateRoot || dims > 2 || secondDimConstNonZero)
       TR::Node::recreate(root, TR::acall);
@@ -3837,7 +3730,7 @@ TR_J9VMBase::compilationShouldBeInterrupted(TR::Compilation * comp, TR_CallingCo
          {
 #if defined (J9VM_GC_REALTIME)
          J9JavaVM *vm = _jitConfig->javaVM;
-         exitClassUnloadMonitor = exitClassUnloadMonitor || vm->gcCycleOn;
+         exitClassUnloadMonitor = exitClassUnloadMonitor || vm->omrVM->_gcCycleOn;
 #endif
          }
       if (exitClassUnloadMonitor)
@@ -4584,11 +4477,21 @@ TR_J9VMBase::getOverflowSafeAllocSize()
    }
 
 void
+TR_J9VMBase::unsupportedByteCode(TR::Compilation * comp, U_8 opcode)
+   {
+   char errMsg[40];
+   snprintf(errMsg, 40, "bytecode %d not supported by JIT", opcode);
+   comp->failCompilation<TR::CompilationException>(errMsg);
+   }
+
+void
 TR_J9VMBase::unknownByteCode(TR::Compilation * comp, U_8 opcode)
    {
    // an unknown bytecode may be seen if the method contains a breakpoint, in that case we should abort the compile
    //
-   comp->failCompilation<TR::CompilationException>("Unknown bytecode");
+   char errMsg[40];
+   snprintf(errMsg, 40, "Unknown bytecode %d to JIT", opcode);
+   comp->failCompilation<TR::CompilationException>(errMsg);
    }
 
 char*
@@ -5472,7 +5375,7 @@ void
 TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolReference * symRef, bool inBinaryEncoding)
    {
    TR::VMAccessCriticalSection reserveTrampolineIfNecessary(this);
-   TR::CodeCache *curCache = comp->getCurrentCodeCache();
+   TR::CodeCache *curCache = comp->cg()->getCodeCache();
    bool isRecursive = false;
 
    if (NULL == curCache)
@@ -5589,7 +5492,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
 
    if (newCache != curCache)
       {
-      switchCodeCache(comp, curCache, newCache);
+      comp->cg()->switchCodeCacheTo(newCache);
       }
    TR_ASSERT(newCache->isReserved(), "assertion failure"); // MCT
    }
@@ -6666,6 +6569,22 @@ TR_J9VMBase::isInterfaceClass(TR_OpaqueClassBlock * clazzPointer)
    }
 
 bool
+TR_J9VMBase::isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method)
+   {
+   int32_t modifiersForClass = 0;
+   if (isClassArray(clazzPointer))
+      return false;
+   bool success = javaLangClassGetModifiersImpl(clazzPointer, modifiersForClass);
+   if (!success)
+      return false;
+   bool isModFlagSet = (modifiersForClass & J9AccEnum) ? true : false;
+   TR_OpaqueClassBlock *enumClass = getClassFromSignature("java/lang/Enum", 14, method);
+   TR_OpaqueClassBlock *superClass = getSuperClass(clazzPointer);
+   return (isModFlagSet && (enumClass == superClass));
+   }
+
+
+bool
 TR_J9VMBase::isAbstractClass(TR_OpaqueClassBlock * clazzPointer)
    {
    if (isInterfaceClass(clazzPointer))
@@ -6696,40 +6615,21 @@ TR_J9VM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
 #define LOOKUP_OPTION_NO_THROW 8192
 
 TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, J9ConstantPool *constantPool)
+TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
    {
-   TR::VMAccessCriticalSection getMethodFromName(this);
-   J9Class *methodClass = 0;
-   if (constantPool)
-      {
-      methodClass = jitGetClassFromUTF8(vmThread(), constantPool, className, strlen(className));
-      }
-   if (!methodClass) // try the system class loader
-      {
-      methodClass = jitGetClassInClassloaderFromUTF8(vmThread(),
-         (J9ClassLoader *) vmThread()->javaVM->systemClassLoader,
-         className, strlen(className));
-      }
-   TR_OpaqueMethodBlock * result = NULL;
-   /*
-    * Call the TR_J9VM version of getMethodFromClass since at this point,
-    * the methodClass may have never been seen before; if we call the
-    * TR_J9SharedCacheVM version, the validation manager could assert.
-    */
-   if (methodClass)
-      result = (TR_OpaqueMethodBlock *)TR_J9VM::getMethodFromClass((TR_OpaqueClassBlock *)methodClass, methodName, signature);
-   return result;
+   return getMethodFromName(className, methodName, signature); // ignore callingMethod
    }
 
 TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature)
    {
-   J9ConstantPool *cp = NULL;
+   TR::VMAccessCriticalSection getMethodFromName(this);
+   TR_OpaqueClassBlock *methodClass = getSystemClassFromClassName(className, strlen(className), true);
+   TR_OpaqueMethodBlock * result = NULL;
+   if (methodClass)
+      result = (TR_OpaqueMethodBlock *)getMethodFromClass(methodClass, methodName, signature);
 
-   if (callingMethod)
-      cp = (J9ConstantPool *) (J9_CP_FROM_METHOD((J9Method*)callingMethod));
-
-   return getMethodFromName(className, methodName, signature, cp);
+   return result;
    }
 
 /** \brief
@@ -8337,7 +8237,7 @@ TR_J9VM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
 
       // j9class points to the J9Class corresponding to java/lang/Object
       if (TR::Compiler->om.generateCompressedObjectHeaders())
-         j9class = (J9Class *) *((uint32_t *) ((uintptrj_t) javaLangClass + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField()));
+         j9class = (J9Class *)(uintptrj_t) *((uint32_t *) ((uintptrj_t) javaLangClass + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField()));
       else
          j9class = (J9Class *)(*((J9Class **) ((uintptrj_t) javaLangClass + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField())));
       }
@@ -8474,16 +8374,10 @@ TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueC
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(sourceClass)) &&
-          comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(destClass)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Classes 0x%p and 0x%p should already be validated\n", sourceClass, destClass);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isClassVisible");
-         }
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+      SVM_ASSERT_ALREADY_VALIDATED(svm, sourceClass);
+      SVM_ASSERT_ALREADY_VALIDATED(svm, destClass);
+      validated = true;
       }
    else
       {
@@ -8501,11 +8395,8 @@ TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
    TR::Compilation *comp = TR::comp();
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (!comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames))
-         {
-         TR_ASSERT(false, "Failed to validate addStackWalkerMaySkipFramesRecord\n");
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in stackWalkerMaySkipFrames");
-         }
+      bool recordCreated = comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
+      SVM_ASSERT(recordCreated, "Failed to validate addStackWalkerMaySkipFramesRecord");
       }
 
    return skipFrames;
@@ -8575,15 +8466,8 @@ TR_J9SharedCacheVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, c
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getInstanceFieldOffset");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8655,15 +8539,8 @@ TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock 
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getResolvedMethods");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8706,9 +8583,7 @@ TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, T
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)((TR_ResolvedJ9Method *)resolvedMethod)->ramMethod();
       /*
        * TR_J9VM::getResolvedMethodForNameAndSignature will call getMatchingMethodFromNameAndSignature
-       * which adds a MethodFromClassRecord. Not sure if adding a MethodByNameRecord here will do the
-       * right validation, since the way TR_J9VM::getResolvedMethodForNameAndSignature gets the class
-       * by name and signature is different than TR_J9VM::getMethodFromName...
+       * which adds a MethodFromClassRecord.
        */
       validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(getClassFromMethodBlock(method), method);
       }
@@ -8721,41 +8596,6 @@ TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, T
       return resolvedMethod;
    else
       return NULL;
-   }
-
-
-TR_OpaqueMethodBlock *
-TR_J9SharedCacheVM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
-   {
-   TR_OpaqueMethodBlock *omb = this->TR_J9VM::getMethodFromName(className, methodName, signature, callingMethod);
-   if (omb)
-      {
-      TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
-      TR_ASSERT(comp, "Should be called only within a compilation");
-
-      if (comp->getOption(TR_UseSymbolValidationManager))
-         {
-         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         if (!svm->verifySymbolHasBeenValidated(static_cast<void *>(callingMethod)))
-            {
-            TR_ASSERT(false, "callingMethod %p should be valid\n", callingMethod);
-            comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getMethodFromName");
-            }
-         bool validated = svm->addMethodByNameRecord(omb, getClassFromMethodBlock(callingMethod)) &&
-                          svm->addClassFromMethodRecord(getClassFromMethodBlock(omb), omb);
-
-         if (!validated)
-            omb = NULL;
-         }
-      else
-         {
-         J9Class* methodClass = (J9Class*)getClassFromMethodBlock(omb);
-         if (!((TR_ResolvedRelocatableJ9Method*) comp->getCurrentMethod())->validateArbitraryClass(comp, methodClass))
-            omb = NULL;
-         }
-      }
-
-   return omb;
    }
 
 bool
@@ -8781,9 +8621,7 @@ TR_J9SharedCacheVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, char *
 
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
-         bool validated = callingClass &&
-                          comp->getSymbolValidationManager()->addMethodFromClassAndSignatureRecord(omb, methodClass, callingClass);
-
+         bool validated = comp->getSymbolValidationManager()->addMethodFromClassAndSignatureRecord(omb, methodClass, callingClass);
          if (!validated)
             omb = NULL;
          }
@@ -8854,13 +8692,9 @@ TR_J9SharedCacheVM::getClassFromSignature(const char * sig, int32_t sigLength, T
       {
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
-         if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(method)))
-            {
-            TR_ASSERT(false, "method %p should be valid\n", method);
-            comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getClassFromSignature");
-            }
-
-         validated = comp->getSymbolValidationManager()->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         SVM_ASSERT_ALREADY_VALIDATED(svm, method);
+         validated = svm->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
          }
       else
          {
@@ -8943,15 +8777,8 @@ TR_J9SharedCacheVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isPublicClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8976,15 +8803,8 @@ TR_J9SharedCacheVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in hasFinalizer");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9009,15 +8829,8 @@ TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointe
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getClassDepthAndFlagsValue");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9042,15 +8855,8 @@ TR_J9SharedCacheVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isPrimitiveClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9075,15 +8881,8 @@ TR_J9SharedCacheVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayC
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(componentClass)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", componentClass);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getComponentClassFromArrayClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), componentClass);
+      validated = true;
       }
    else
       {
@@ -9133,15 +8932,8 @@ TR_J9SharedCacheVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * ar
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(leafComponent)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", leafComponent);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getLeafComponentClassFromArrayClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), leafComponent);
+      validated = true;
       }
    else
       {
@@ -9166,15 +8958,8 @@ TR_J9SharedCacheVM::getBaseComponentClass(TR_OpaqueClassBlock * classPointer, in
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(baseComponent)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", baseComponent);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getBaseComponentClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), baseComponent);
+      validated = true;
       }
    else
       {
@@ -9214,15 +8999,8 @@ TR_J9SharedCacheVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isPrimitiveArray");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9247,15 +9025,8 @@ TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isReferenceArray");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9498,7 +9269,7 @@ TR_J9VMBase::classNameChars(TR::Compilation *comp, TR::SymbolReference * symRef,
 
 // Native method bodies
 //
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -9511,7 +9282,7 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
    return (jlong)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
    return (jlong)(*(void **)_initialInvokeExactThunkGlue);
-#elif defined(OSX)
+#elif defined(NASM_ASSEMBLER)
    return (jlong)initialInvokeExactThunkGlue;
 #else
    return (jlong)_initialInvokeExactThunkGlue;

@@ -1065,12 +1065,11 @@ done:
 	 *
 	 * @param flags[in] field from the ref
 	 * @param valueOffset[in] field from the ref
-	 * @param forPut[in] do extra checks specifically for putfield?
 	 *
 	 * @returns true if resolved, false if not
 	 */
 	static VMINLINE bool
-	instanceFieldRefIsResolved(UDATA flags, UDATA valueOffset, bool forPut)
+	instanceFieldRefIsResolved(UDATA flags, UDATA valueOffset)
 	{
 		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
 		 * having a higher value than any valid valueOffset.
@@ -1079,17 +1078,8 @@ done:
 		 * and valueOffset have both been updated. It is crucial that we do not treat
 		 * a field ref as resolved if only one of the two values has been set (by
 		 * another thread that is in the middle of a resolve).
-		 *
-		 * A put into a final field is always considered unresolved so that the resolve logic
-		 * can detect illegal final field setting.
 		 */
-		bool resolved = (flags > valueOffset);
-		if (forPut && resolved) {
-			if (J9FieldFlagPutResolved != (flags & (J9FieldFlagPutResolved | J9AccFinal))) {
-				resolved = false;
-			}
-		}
-		return resolved;
+		return (flags > valueOffset);
 	}
 
 	/**
@@ -1097,12 +1087,11 @@ done:
 	 *
 	 * @param flagsAndClass[in] field from the ref
 	 * @param valueOffset[in] field from the ref
-	 * @param forPut[in] do extra checks specifically for putstatic?
 	 *
 	 * @returns true if resolved, false if not
 	 */
 	static VMINLINE bool
-	staticFieldRefIsResolved(IDATA flagsAndClass, UDATA valueOffset, bool forPut)
+	staticFieldRefIsResolved(IDATA flagsAndClass, UDATA valueOffset)
 	{
 		/* In an unresolved static fieldref, the valueOffset will be -1 or flagsAndClass will be <= 0.
 		 * If the fieldref was resolved as an instance fieldref, the high bit of flagsAndClass will be
@@ -1112,45 +1101,24 @@ done:
 		 * a stale flagsAndClass, we check that both fields have been updated. It is crucial
 		 * that we do not use a stale flagsAndClass with non-zero value, as doing so may cause the
 		 * the StaticFieldRefDouble bit check to succeed when it shouldn't.
-		 *
-		 * It is also necessary to check if the fieldref has been resolved for putstatic, since the
-		 * fieldref could be shared with a getstatic. The math below checks the put-resolved flag
-		 * in the flags byte of "flags and class", instead of the "class and flags" order expected by
-		 * the J9StaticFieldRef* flag definitions.
-		 *
-		 * A put into a final field is always considered unresolved so that the resolve logic
-		 * can detect illegal final field setting.
 		 */
-		bool resolved = ((UDATA)-1 != valueOffset) && (flagsAndClass > 0);
-		if (forPut && resolved) {
-			UDATA const resolvedBit = (UDATA)J9StaticFieldRefPutResolved << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
-			UDATA const finalBit = (UDATA)J9StaticFieldRefFinal << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
-			if (resolvedBit != (flagsAndClass & (resolvedBit | finalBit))) {
-				resolved = false;
-			}
-		}
-		return resolved;
+		return ((UDATA)-1 != valueOffset) && (flagsAndClass > 0);
 	}
 
 	/**
-	 * Get the field address from a RAM static field ref.
+	 * Get the field address from a resolved RAM static field ref.
 	 *
-	 * @param ramRef[in] the ref
+	 * @param flagsAndClass[in] field from the ref
+	 * @param staticAddress[in] field from the ref
 	 *
-	 * @returns the field address, or NULL if the ref is unresolved
+	 * @returns the field address
 	 */
 	static VMINLINE void*
-	staticFieldAddressFromRef(J9RAMStaticFieldRef *ramRef, bool forPut)
+	staticFieldAddressFromResolvedRef(IDATA flagsAndClass, UDATA staticAddress)
 	{
-		IDATA flagsAndClass = ramRef->flagsAndClass;
-		UDATA staticAddress = ramRef->valueOffset;
-		if (staticFieldRefIsResolved(flagsAndClass, staticAddress, forPut)) {
-			J9Class *clazz = (J9Class*)((UDATA)flagsAndClass << J9_REQUIRED_CLASS_SHIFT);
-			staticAddress &= ~((UDATA)1 << ((8 * sizeof(UDATA)) - 1));
-			staticAddress += (UDATA)clazz->ramStatics;
-		} else  {
-			staticAddress = 0;
-		}
+		J9Class *clazz = (J9Class*)((UDATA)flagsAndClass << J9_REQUIRED_CLASS_SHIFT);
+		staticAddress &= ~((UDATA)1 << ((8 * sizeof(UDATA)) - 1));
+		staticAddress += (UDATA)clazz->ramStatics;
 		return (void*)staticAddress;
 	}
 

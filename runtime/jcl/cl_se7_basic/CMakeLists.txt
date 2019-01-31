@@ -21,16 +21,18 @@
 ################################################################################
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_library(jclse7b_ SHARED
-	../j9vmconstantpool_se7_basic.c
-)
-target_include_directories(jclse7b_ 
+
+# Note: we call this se7_basic, rather than the more obviouse se7b (which would
+# fall in line with the desired library name) so that add_jcl() can find the
+# constantpool file as "j9vmconstantpool_<NAME>.c"
+add_jcl(se7_basic)
+target_include_directories(jclse7_basic_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
 		../
 )
 
-target_link_libraries(jclse7b_
+target_link_libraries(jclse7_basic_
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
@@ -57,7 +59,9 @@ target_link_libraries(jclse7b_
 		sunvmi
 )
 
+set_target_properties(jclse7_basic_ PROPERTIES LIBRARY_OUTPUT_NAME jclse7b_)
+
 install(
-	TARGETS jclse7b_
+	TARGETS jclse7_basic_
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 )

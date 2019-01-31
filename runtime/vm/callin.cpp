@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -401,7 +401,7 @@ restoreCallInFrame(J9VMThread *currentThread)
 }
 
 void JNICALL
-sendClinit(J9VMThread *currentThread, J9Class *clazz, UDATA reserved1, UDATA reserved2, UDATA reserved3)
+sendClinit(J9VMThread *currentThread, J9Class *clazz)
 {
 	Trc_VM_sendClinit_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -424,7 +424,7 @@ sendClinit(J9VMThread *currentThread, J9Class *clazz, UDATA reserved1, UDATA res
 }
 
 void JNICALL
-sendLoadClass(J9VMThread *currentThread, j9object_t classLoaderObject, j9object_t classNameObject, UDATA reserved1, UDATA reserved2)
+sendLoadClass(J9VMThread *currentThread, j9object_t classLoaderObject, j9object_t classNameObject)
 {
 	Trc_VM_sendLoadClass_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -444,7 +444,7 @@ sendLoadClass(J9VMThread *currentThread, j9object_t classLoaderObject, j9object_
 }
 
 void JNICALL
-cleanUpAttachedThread(J9VMThread *currentThread, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4)
+cleanUpAttachedThread(J9VMThread *currentThread)
 {
 	Trc_VM_cleanUpAttachedThread_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -465,7 +465,7 @@ cleanUpAttachedThread(J9VMThread *currentThread, UDATA reserved1, UDATA reserved
 }
 
 void JNICALL
-handleUncaughtException(J9VMThread *currentThread, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4)
+handleUncaughtException(J9VMThread *currentThread)
 {
 	Trc_VM_handleUncaughtException_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -607,7 +607,7 @@ internalSendExceptionConstructor(J9VMThread *currentThread, J9Class *exceptionCl
 }
 
 void JNICALL
-printStackTrace(J9VMThread *currentThread, j9object_t exception, UDATA reserved1, UDATA reserved2, UDATA reserved3)
+printStackTrace(J9VMThread *currentThread, j9object_t exception)
 {
 	Trc_VM_printStackTrace_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -628,7 +628,7 @@ printStackTrace(J9VMThread *currentThread, j9object_t exception, UDATA reserved1
 }
 
 void JNICALL
-runJavaThread(J9VMThread *currentThread, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4)
+runJavaThread(J9VMThread *currentThread)
 {
 	Trc_VM_runJavaThread_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -706,7 +706,7 @@ internalRunStaticMethod(J9VMThread *currentThread, J9Method *method, BOOLEAN ret
 }
 
 void JNICALL
-sendCheckPackageAccess(J9VMThread *currentThread, J9Class *clazz, j9object_t protectionDomain, UDATA reserved3, UDATA reserved4)
+sendCheckPackageAccess(J9VMThread *currentThread, J9Class *clazz, j9object_t protectionDomain)
 {
 	Trc_VM_sendCheckPackageAccess_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -723,7 +723,7 @@ sendCheckPackageAccess(J9VMThread *currentThread, J9Class *clazz, j9object_t pro
 }
 
 void JNICALL
-sendCompleteInitialization(J9VMThread *currentThread, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4)
+sendCompleteInitialization(J9VMThread *currentThread)
 {
 	Trc_VM_sendCompleteInitialization_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -771,7 +771,7 @@ isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz,
 }
 
 void JNICALL
-sendInit(J9VMThread *currentThread, j9object_t object, J9Class *senderClass, UDATA lookupOptions, UDATA reserved4)
+sendInit(J9VMThread *currentThread, j9object_t object, J9Class *senderClass, UDATA lookupOptions)
 {
 	Trc_VM_sendInit_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -810,7 +810,7 @@ sendInit(J9VMThread *currentThread, j9object_t object, J9Class *senderClass, UDA
 }
 
 void JNICALL
-sendInitCause(J9VMThread *currentThread, j9object_t receiver, j9object_t cause, UDATA reserved3, UDATA reserved4)
+sendInitCause(J9VMThread *currentThread, j9object_t receiver, j9object_t cause)
 {
 	Trc_VM_sendInitCause_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -832,7 +832,7 @@ sendInitCause(J9VMThread *currentThread, j9object_t receiver, j9object_t cause, 
 }
 
 void JNICALL
-sendInitializationAlreadyFailed(J9VMThread *currentThread, J9Class *clazz, UDATA reserved2, UDATA reserved3, UDATA reserved4)
+sendInitializationAlreadyFailed(J9VMThread *currentThread, J9Class *clazz)
 {
 	Trc_VM_sendInitializationAlreadyFailed_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -848,7 +848,7 @@ sendInitializationAlreadyFailed(J9VMThread *currentThread, J9Class *clazz, UDATA
 }
 
 void JNICALL
-sendRecordInitializationFailure(J9VMThread *currentThread, J9Class *clazz, j9object_t throwable, UDATA reserved3, UDATA reserved4)
+sendRecordInitializationFailure(J9VMThread *currentThread, J9Class *clazz, j9object_t throwable)
 {
 	Trc_VM_sendRecordInitializationFailure_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -865,7 +865,7 @@ sendRecordInitializationFailure(J9VMThread *currentThread, J9Class *clazz, j9obj
 }
 
 void JNICALL
-sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4)
+sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType)
 {
 	Trc_VM_sendFromMethodDescriptorString_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -925,7 +925,7 @@ sendResolveMethodHandle(J9VMThread *currentThread, UDATA cpIndex, J9ConstantPool
 }
 
 void JNICALL
-sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4)
+sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg)
 {
 	Trc_VM_sendForGenericInvoke_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -1078,7 +1078,7 @@ runCallInMethod(JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID,
 }
 
 void JNICALL
-sidecarInvokeReflectMethodImpl(J9VMThread *currentThread, jobject methodRef, jobject recevierRef, jobjectArray argsRef, void *unused)
+sidecarInvokeReflectMethodImpl(J9VMThread *currentThread, jobject methodRef, jobject recevierRef, jobjectArray argsRef)
 {
 	Trc_VM_sidecarInvokeReflectMethod_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -1203,7 +1203,7 @@ done:
 }
 
 void JNICALL
-sidecarInvokeReflectConstructorImpl(J9VMThread *currentThread, jobject constructorRef, jobject recevierRef, jobjectArray argsRef, void *unused)
+sidecarInvokeReflectConstructorImpl(J9VMThread *currentThread, jobject constructorRef, jobject recevierRef, jobjectArray argsRef)
 {
 	Trc_VM_sidecarInvokeReflectConstructor_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -1255,7 +1255,7 @@ done:
 }
 
 void JNICALL
-jitFillOSRBuffer(struct J9VMThread *currentThread, void *osrBlock, UDATA reserved1, UDATA reserved2, UDATA reserved3)
+jitFillOSRBuffer(struct J9VMThread *currentThread, void *osrBlock)
 {
 	Trc_VM_jitFillOSRBuffer_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -1277,18 +1277,18 @@ initializeAttachedThread(J9VMThread *currentThread, const char *name, j9object_t
 }
 
 void JNICALL
-sidecarInvokeReflectMethod(J9VMThread *currentThread, jobject methodRef, jobject recevierRef, jobjectArray argsRef, void *unused)
+sidecarInvokeReflectMethod(J9VMThread *currentThread, jobject methodRef, jobject recevierRef, jobjectArray argsRef)
 {
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	sidecarInvokeReflectMethodImpl(currentThread, methodRef, recevierRef, argsRef, unused);
+	sidecarInvokeReflectMethodImpl(currentThread, methodRef, recevierRef, argsRef);
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 }
 
 void JNICALL
-sidecarInvokeReflectConstructor(J9VMThread *currentThread, jobject constructorRef, jobject recevierRef, jobjectArray argsRef, void *unused)
+sidecarInvokeReflectConstructor(J9VMThread *currentThread, jobject constructorRef, jobject recevierRef, jobjectArray argsRef)
 {
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	sidecarInvokeReflectConstructorImpl(currentThread, constructorRef, recevierRef, argsRef, unused);
+	sidecarInvokeReflectConstructorImpl(currentThread, constructorRef, recevierRef, argsRef);
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 }
 

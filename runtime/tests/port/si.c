@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1011,28 +1011,34 @@ j9sysinfo_testMemoryInfo(J9PortLibrary* portLibrary)
 			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.availPhysical) ||
 			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.totalSwap) ||
 			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.availSwap) ||
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.totalVirtual) ||
 			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.availVirtual) ||
-#else
+#else /* defined(WIN32) || defined(OSX) */
 			/* We do not check totalVirtual since it may be set to some value or -1, depending
 			 * on whether there is a limit set for this or not on the box.
 			 */
 			(J9PORT_MEMINFO_NOT_AVAILABLE != memInfo.availVirtual) ||
-#endif /* defined(WIN32) */
-#if defined(AIXPPC) || defined(WIN32)
-			/* Size of the file buffer area is not available on Windows and AIX. Therefore,
-			 * it must be set to J9PORT_MEMINFO_NOT_AVAILABLE.
+#endif /* defined(WIN32) || defined(OSX) */
+#if defined(AIXPPC) || defined(WIN32) || defined(OSX)
+			/* Size of the file buffer area is not available on Windows, AIX and OSX.
+			 * Therefore, it must be set to J9PORT_MEMINFO_NOT_AVAILABLE.
 			 */
 			(J9PORT_MEMINFO_NOT_AVAILABLE != memInfo.buffered) ||
-#else
+#else /* defined(AIXPPC) || defined(WIN32) || defined(OSX) */
 			/* On platforms where buffer area is defined, J9PORT_MEMINFO_NOT_AVAILABLE is
 			 * surely a failure!
 			 */
 			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.buffered) ||
-#endif /* defined(AIXPPC) || defined(WIN32) */
-			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.cached)) {
-
+#endif /* defined(AIXPPC) || defined(WIN32) || defined(OSX) */
+#if defined(OSX)
+			/* Size of cached area is not available on OSX. So, it is set to
+			 * J9PORT_MEMINFO_NOT_AVAILABLE on OSX. */
+			(J9PORT_MEMINFO_NOT_AVAILABLE != memInfo.cached))
+#else /* defined(OSX) */
+			(J9PORT_MEMINFO_NOT_AVAILABLE == memInfo.cached))
+#endif /* defined(OSX) */
+		{
 			/* Fail pltest if one of these memory usage parameters were found inconsistent. */
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "Invalid memory usage statistics retrieved.\n");
 			return reportTestExit(portLibrary, testName);
@@ -1041,13 +1047,13 @@ j9sysinfo_testMemoryInfo(J9PortLibrary* portLibrary)
 		/* Validate the statistics that we obtained. */
 		if ((memInfo.totalPhysical > 0) &&
 			(memInfo.availPhysical <= memInfo.totalPhysical) &&
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 			/* Again, it does not make sense to do checks and comparisons on Virtual Memory
-			 * on places other than Windows.
+			 * on places other than Windows and OSX.
 			 */
 			(memInfo.totalVirtual > 0) &&
 			(memInfo.availVirtual <= memInfo.totalVirtual) &&
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 			(memInfo.availSwap <= memInfo.totalSwap) &&
 			(memInfo.timestamp > 0)) {
 
@@ -1055,10 +1061,10 @@ j9sysinfo_testMemoryInfo(J9PortLibrary* portLibrary)
 			outputComment(PORTLIB, "Retrieved memory usage statistics.\n");
 			outputComment(PORTLIB, "Total physical memory: %llu bytes.\n", memInfo.totalPhysical);
 			outputComment(PORTLIB, "Available physical memory: %llu bytes.\n", memInfo.availPhysical);
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 			outputComment(PORTLIB, "Total virtual memory: %llu bytes.\n", memInfo.totalVirtual);
 			outputComment(PORTLIB, "Available virtual memory: %llu bytes.\n", memInfo.availVirtual);
-#else
+#else /* defined(WIN32) || defined(OSX) */
 			/* This may or may not be available depending on whether a limit is set. Print out if this
 			 * is available or else, call this parameter "undefined".
 			 */
@@ -1069,15 +1075,19 @@ j9sysinfo_testMemoryInfo(J9PortLibrary* portLibrary)
 			}
 			/* Leave Available Virtual memory parameter as it is on non-Windows Platforms. */
 			outputComment(PORTLIB, "Available virtual memory: <undefined>.\n");
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 			outputComment(PORTLIB, "Total swap memory: %llu bytes.\n", memInfo.totalSwap);
 			outputComment(PORTLIB, "Swap memory free: %llu bytes.\n", memInfo.availSwap);
+#if defined(OSX)
+			outputComment(PORTLIB, "Cache memory: <undefined>.\n");
+#else /* defined(OSX) */
 			outputComment(PORTLIB, "Cache memory: %llu bytes.\n", memInfo.cached);
-#if defined(AIXPPC) || defined(WIN32)
+#endif /* defined(OSX) */
+#if defined(AIXPPC) || defined(WIN32) || defined(OSX)
 			outputComment(PORTLIB, "Buffers memory: <undefined>.\n");
-#else
+#else /* defined(AIXPPC) || defined(WIN32) || defined(OSX) */
 			outputComment(PORTLIB, "Buffers memory: %llu bytes.\n", memInfo.buffered);
-#endif /* defined(AIXPPC) || defined(WIN32) */
+#endif /* defined(AIXPPC) || defined(WIN32) || defined(OSX) */
 			outputComment(PORTLIB, "Timestamp: %llu.\n", memInfo.timestamp);
 		} else {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "Invalid memory usage statistics retrieved.\n");
@@ -1209,11 +1219,11 @@ j9sysinfo_testProcessorInfo(J9PortLibrary* portLibrary)
 	outputComment(PORTLIB, "   User time:   %lld.\n", currInfo.procInfoArray[0].userTime);
 	outputComment(PORTLIB, "   System time: %lld.\n", currInfo.procInfoArray[0].systemTime);
 	outputComment(PORTLIB, "   Idle time:   %lld.\n", currInfo.procInfoArray[0].idleTime);
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 	outputComment(PORTLIB, "   Wait time:   <undefined>.\n");
-#else /* Non-windows platforms */
+#else /* defined(WIN32) || defined(OSX) */
 	outputComment(PORTLIB, "   Wait time:   %lld.\n", currInfo.procInfoArray[0].waitTime);
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 	outputComment(PORTLIB, "   Busy time:   %lld.\n", currInfo.procInfoArray[0].busyTime);
 
 	/* Start iterating from 1 since 0^th entry represents Totals - already accounted for above. */
@@ -1226,12 +1236,12 @@ j9sysinfo_testProcessorInfo(J9PortLibrary* portLibrary)
 			if ((J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].userTime) &&
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].systemTime) &&
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].idleTime) &&
-#if defined(WIN32)
-				/* Windows does not have the notion of Wait times. */
+#if defined(WIN32) || defined(OSX)
+				/* Windows and OSX don't have the notion of Wait times. */
 				(J9PORT_PROCINFO_NOT_AVAILABLE == currInfo.procInfoArray[cntr].waitTime) &&
-#else /* Non-windows platforms */
+#else /* defined(WIN32) || defined(OSX) */
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].waitTime) &&
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 				(J9PORT_PROCINFO_NOT_AVAILABLE != currInfo.procInfoArray[cntr].busyTime)) {
 
 				/* Print out processor times in each mode for each CPU that is online. */
@@ -1239,11 +1249,11 @@ j9sysinfo_testProcessorInfo(J9PortLibrary* portLibrary)
 				outputComment(PORTLIB, "   User time:   %lld.\n", currInfo.procInfoArray[cntr].userTime);
 				outputComment(PORTLIB, "   System time: %lld.\n", currInfo.procInfoArray[cntr].systemTime);
 				outputComment(PORTLIB, "   Idle time:   %lld.\n", currInfo.procInfoArray[cntr].idleTime);
-#if defined(WIN32)
+#if defined(WIN32) || defined(OSX)
 				outputComment(PORTLIB, "   Wait time:   <undefined>.\n");
-#else /* Non-windows platforms */
+#else /* defined(WIN32) || defined(OSX) */
 				outputComment(PORTLIB, "   Wait time:   %lld.\n", currInfo.procInfoArray[cntr].waitTime);
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) || defined(OSX) */
 				outputComment(PORTLIB, "   Busy time:   %lld.\n", currInfo.procInfoArray[cntr].busyTime);
 			} else {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "Invalid processor usage statistics retrieved.\n");

@@ -172,7 +172,7 @@ TR::Instruction *TR::X86PrivateLinkage::movLinkageRegisters(TR::Instruction *cur
    TR_ASSERT(cursor, "assertion failure");
 
    TR::Machine *machine = cg()->machine();
-   TR::RealRegister  *rspReal = machine->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister  *rspReal = machine->getRealRegister(TR::RealRegister::esp);
 
    TR::ResolvedMethodSymbol             *bodySymbol = comp()->getJittedMethodSymbol();
    ListIterator<TR::ParameterSymbol>  paramIterator(&(bodySymbol->getParameterList()));
@@ -189,7 +189,7 @@ TR::Instruction *TR::X86PrivateLinkage::movLinkageRegisters(TR::Instruction *cur
       if (lri != NOT_LINKAGE) // This param should be in a linkage reg
          {
          TR_MovDataTypes movDataType = paramMovType(paramCursor);
-         TR::RealRegister     *reg = machine->getX86RealRegister(getProperties().getArgumentRegister(lri, isFloat(movDataType)));
+         TR::RealRegister     *reg = machine->getRealRegister(getProperties().getArgumentRegister(lri, isFloat(movDataType)));
          TR::MemoryReference  *memRef = generateX86MemoryReference(rspReal, paramCursor->getParameterOffset(), cg());
 
          if (isStore)
@@ -216,7 +216,7 @@ TR::Instruction *TR::X86PrivateLinkage::movLinkageRegisters(TR::Instruction *cur
 TR::Instruction *TR::X86PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored)
    {
    TR::Machine *machine = cg()->machine();
-   TR::RealRegister  *framePointer = machine->getX86RealRegister(TR::RealRegister::vfp);
+   TR::RealRegister  *framePointer = machine->getRealRegister(TR::RealRegister::vfp);
 
    TR::ResolvedMethodSymbol             *bodySymbol = comp()->getJittedMethodSymbol();
    ListIterator<TR::ParameterSymbol>  paramIterator(&(bodySymbol->getParameterList()));
@@ -271,7 +271,7 @@ TR::Instruction *TR::X86PrivateLinkage::copyParametersToHomeLocation(TR::Instruc
             loadCursor = generateRegMemInstruction(
                loadCursor,
                TR::Linkage::movOpcodes(RegMem, movDataType),
-               machine->getX86RealRegister(ai),
+               machine->getRealRegister(ai),
                generateX86MemoryReference(framePointer, offset, cg()),
                cg()
                );
@@ -299,7 +299,7 @@ TR::Instruction *TR::X86PrivateLinkage::copyParametersToHomeLocation(TR::Instruc
                   cursor,
                   TR::Linkage::movOpcodes(MemReg, movDataType),
                   generateX86MemoryReference(framePointer, offset, cg()),
-                  machine->getX86RealRegister(sourceIndex),
+                  machine->getRealRegister(sourceIndex),
                   cg()
                   );
                }
@@ -391,8 +391,8 @@ TR::Instruction *TR::X86PrivateLinkage::copyParametersToHomeLocation(TR::Instruc
             cursor = generateRegRegInstruction(
                cursor,
                TR::Linkage::movOpcodes(RegReg, movStatus[source].outgoingDataType),
-               machine->getX86RealRegister(regCursor),
-               machine->getX86RealRegister(source),
+               machine->getRealRegister(regCursor),
+               machine->getRealRegister(source),
                cg()
                );
             // Update movStatus as we go so we don't generate redundant movs
@@ -568,9 +568,9 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 #endif
    bool trace = comp()->getOption(TR_TraceCG);
 
-   TR::RealRegister  *espReal      = machine()->getX86RealRegister(TR::RealRegister::esp);
-   TR::RealRegister  *scratchReg   = machine()->getX86RealRegister(getProperties().getIntegerScratchRegister(0));
-   TR::RealRegister  *metaDataReg  = machine()->getX86RealRegister(getProperties().getMethodMetaDataRegister());
+   TR::RealRegister  *espReal      = machine()->getRealRegister(TR::RealRegister::esp);
+   TR::RealRegister  *scratchReg   = machine()->getRealRegister(getProperties().getIntegerScratchRegister(0));
+   TR::RealRegister  *metaDataReg  = machine()->getRealRegister(getProperties().getMethodMetaDataRegister());
 
    TR::ResolvedMethodSymbol             *bodySymbol = comp()->getJittedMethodSymbol();
    ListIterator<TR::ParameterSymbol>  paramIterator(&(bodySymbol->getParameterList()));
@@ -606,7 +606,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // Preserved register index
    for (int32_t pindex = 0; pindex < properties.getMaxRegistersPreservedInPrologue(); pindex++)
       {
-      TR::RealRegister *reg = machine()->getX86RealRegister(properties.getPreservedRegister((uint32_t)pindex));
+      TR::RealRegister *reg = machine()->getRealRegister(properties.getPreservedRegister((uint32_t)pindex));
       if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked)
          {
          preservedRegsSize += properties.getPointerSize();
@@ -679,7 +679,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       debugFrameSlotInfo = new (trHeapMemory()) TR_DebugFrameSegmentInfo(comp(),
          paramCursor->getOffset(), paramCursor->getSize(), "Parameter",
          debugFrameSlotInfo,
-         (ai==NOT_ASSIGNED)? NULL : machine()->getX86RealRegister(ai)
+         (ai==NOT_ASSIGNED)? NULL : machine()->getRealRegister(ai)
          );
       }
 
@@ -765,7 +765,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
          // At this point, cg()->getAppendInstruction() is already in the cold code section.
          generateVFPRestoreInstruction(vfp, cursor->getNode(), cg());
          generateLabelInstruction(LABEL, cursor->getNode(), checkLabel, cg());
-         generateRegImmInstruction(MOV4RegImm4, cursor->getNode(), machine()->getX86RealRegister(TR::RealRegister::edi), allocSize, cg());
+         generateRegImmInstruction(MOV4RegImm4, cursor->getNode(), machine()->getRealRegister(TR::RealRegister::edi), allocSize, cg());
          if (doAllocateFrameSpeculatively)
             {
             generateRegImmInstruction(ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
@@ -849,7 +849,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       uint64_t paintValue64 = 0;
 
       TR::RealRegister *paintReg = NULL;
-      TR::RealRegister *frameSlotIndexReg = machine()->getX86RealRegister(TR::RealRegister::edi);
+      TR::RealRegister *frameSlotIndexReg = machine()->getRealRegister(TR::RealRegister::edi);
       uint32_t paintBound = 0;
       uint32_t paintSlotsOffset = 0;
       uint32_t paintSize = allocSize-sizeof(uintptrj_t);
@@ -881,7 +881,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       //Load the 64 bit paint value into a paint reg.
 #ifdef TR_TARGET_64BIT
-       paintReg = machine()->getX86RealRegister(TR::RealRegister::r8);
+       paintReg = machine()->getRealRegister(TR::RealRegister::r8);
        cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, MOV8RegImm64, paintReg, paintValue64, cg());
 #endif
 
@@ -909,11 +909,11 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    // Initialize any local pointers that could otherwise confuse the GC.
    //
-   TR::RealRegister *framePointer = machine()->getX86RealRegister(TR::RealRegister::vfp);
+   TR::RealRegister *framePointer = machine()->getRealRegister(TR::RealRegister::vfp);
    if (atlas)
       {
       TR_ASSERT(_properties.getNumScratchRegisters() >= 2, "Need two scratch registers to initialize reference locals");
-      TR::RealRegister *loopReg = machine()->getX86RealRegister(properties.getIntegerScratchRegister(1));
+      TR::RealRegister *loopReg = machine()->getRealRegister(properties.getIntegerScratchRegister(1));
 
       int32_t numReferenceLocalSlotsToInitialize = atlas->getNumberOfSlotsToBeInitialized();
       int32_t numInternalPointerSlotsToInitialize = 0;
@@ -1018,7 +1018,7 @@ TR::Instruction *TR::X86PrivateLinkage::deallocateFrameIfNeeded(TR::Instruction 
 
 void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   TR::RealRegister* espReal = machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister* espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
    cursor = cg()->generateDebugCounter(cursor, "cg.epilogues", 1, TR::DebugCounter::Expensive);
 
@@ -1032,8 +1032,8 @@ void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       {
       // Restore stack pointer from frame pointer
       //
-      cursor = generateRegRegInstruction(cursor, MOVRegReg(), espReal, machine()->getX86RealRegister(_properties.getFramePointerRegister()), cg());
-      cursor = generateRegInstruction(cursor, POPReg, machine()->getX86RealRegister(_properties.getFramePointerRegister()), cg());
+      cursor = generateRegRegInstruction(cursor, MOVRegReg(), espReal, machine()->getRealRegister(_properties.getFramePointerRegister()), cg());
+      cursor = generateRegInstruction(cursor, POPReg, machine()->getRealRegister(_properties.getFramePointerRegister()), cg());
       }
    else
       {
@@ -2326,7 +2326,7 @@ TR::Register *TR::X86PrivateLinkage::buildCallPostconditions(TR::X86CallSite &si
          {
          // Skip non-assignable registers
          //
-         if (machine()->getX86RealRegister(regIndex)->getState() == TR::RealRegister::Locked)
+         if (machine()->getRealRegister(regIndex)->getState() == TR::RealRegister::Locked)
             continue;
 
          // Skip registers already present

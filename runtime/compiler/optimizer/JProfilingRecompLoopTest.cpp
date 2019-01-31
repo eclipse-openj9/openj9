@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,12 +28,12 @@
 #include "infra/List.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "il/Node_inlines.hpp"
-#include "infra/Checklist.hpp"             // for TR::NodeChecklist
+#include "infra/Checklist.hpp"
 #include "ras/DebugCounter.hpp"
-#include "control/Recompilation.hpp"              // for TR_Recompilation, etc
-#include "control/RecompilationInfo.hpp"              // for TR_Recompilation, etc
+#include "control/Recompilation.hpp"
+#include "control/RecompilationInfo.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "optimizer/TransformUtil.hpp"            // for TransformUtil
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/JProfilingBlock.hpp"
 
 int32_t TR_JProfilingRecompLoopTest::maxLoopRecompilationThreshold = 10000;

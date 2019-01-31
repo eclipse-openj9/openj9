@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,8 @@
 
 #include "il/symbol/J9MethodSymbol.hpp"
 
-#include <stddef.h>                            // for NULL
-#include "codegen/LinkageConventionsEnum.hpp"  // for TR_LinkageConventions, etc
+#include <stddef.h>
+#include "codegen/LinkageConventionsEnum.hpp"
 
 class TR_Method;
 

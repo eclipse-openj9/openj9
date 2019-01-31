@@ -84,7 +84,6 @@ type:WSADATA
 
 # problem names on AIX
 type:Enum
-type:signed char
 
 # problem on OSX
 type:std

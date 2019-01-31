@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,9 +34,9 @@ namespace J9 { typedef J9::SymbolReferenceTable SymbolReferenceTableConnector; }
 
 #include "compile/OMRSymbolReferenceTable.hpp"
 
-#include <stddef.h>         // for size_t
-#include <stdint.h>         // for int32_t, uint32_t
-#include "env/jittypes.h"   // for intptrj_t, uintptrj_t
+#include <stddef.h>
+#include <stdint.h>
+#include "env/jittypes.h"
 
 class TR_BitVector;
 class TR_PersistentClassInfo;
@@ -83,6 +83,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateWriteBarrierStoreSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateWriteBarrierStoreGenerationalSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
+   TR::SymbolReference * findOrCreateConstantPoolAddressSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
 
    // FE
    TR::SymbolReference * findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
@@ -263,6 +264,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    bool isFieldClassObject(TR::SymbolReference *symRef);
    bool isFieldTypeBool(TR::SymbolReference *symRef);
    bool isStaticTypeBool(TR::SymbolReference *symRef);
+   bool isReturnTypeBool(TR::SymbolReference *symRef);
    void addParameters(TR::ResolvedMethodSymbol * owningMethodSymbol);
 
    // NO LONGER NEEDED?  Disabled since inception (2009)
@@ -291,6 +293,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::Symbol                           *_currentThreadDebugEventDataSymbol;
    List<TR::SymbolReference>            _currentThreadDebugEventDataSymbolRefs;
+   List<TR::SymbolReference>            _constantPoolAddressSymbolRefs;
 
    private:
 

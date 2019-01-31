@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -328,7 +328,7 @@ JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args)
 
 	obj = (*env)->AllocObject(env, classRef);
 	if (obj) {
-		vmFuncs->sidecarInvokeReflectConstructor(vmThread, c, obj, args, NULL);
+		vmFuncs->sidecarInvokeReflectConstructor(vmThread, c, obj, args);
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->DeleteLocalRef(env, obj);
 			obj = (jobject) NULL;
@@ -351,7 +351,7 @@ JVM_InvokeMethod_Impl(JNIEnv * env, jobject method, jobject obj, jobjectArray ar
 
 	Trc_SunVMI_InvokeMethod_Entry(vmThread, method, obj, args);
 
-	vmThread->javaVM->internalVMFunctions->sidecarInvokeReflectMethod(vmThread, method, obj, args, NULL);
+	vmThread->javaVM->internalVMFunctions->sidecarInvokeReflectMethod(vmThread, method, obj, args);
 
 	Trc_SunVMI_InvokeMethod_Exit(vmThread, vmThread->returnValue);
 

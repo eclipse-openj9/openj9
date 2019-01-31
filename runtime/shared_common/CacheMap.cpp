@@ -3773,6 +3773,8 @@ SH_CacheMap::addByteDataToCache(J9VMThread* currentThread, SH_Manager* localBDM,
  *      data must therefore be referenced by other data as it can never be retrieved by findSharedData
  *   J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE - only allow one store for a given key/type combination
  *      subsequent stores return the existing data regardless of whether it matches the input data
+ *   J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE_OVERWRITE - Similar to J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE, only one record of key/dataType combination is allowed in the shared cache.
+ *   	subsequent stores overwite the existing data. This flag is ignored if J9SHRDATA_NOT_INDEXED, J9SHRDATA_ALLOCATE_ZEROD_MEMORY or J9SHRDATA_USE_READWRITE presents
  * 
  * @param[in] currentThread  The current thread
  * @param[in] key  The UTF8 key to store the data against
@@ -3796,6 +3798,7 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 	UDATA dataNotIndexed = (data != NULL) ? (data->flags & J9SHRDATA_NOT_INDEXED) : 0;
 	SH_ByteDataManager* localBDM;
 	SH_ScopeManager* localSCM = NULL;
+	bool overwrite = false;
 
 	PORT_ACCESS_FROM_VMC(currentThread);
 
@@ -3810,8 +3813,16 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 
 	Trc_SHR_CM_storeSharedData_Entry(currentThread, keylen, key, data);
 	
+	if (J9_ARE_ALL_BITS_SET(data->flags, J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE_OVERWRITE)) {
+		if (J9_ARE_NO_BITS_SET(data->flags, J9SHRDATA_NOT_INDEXED | J9SHRDATA_ALLOCATE_ZEROD_MEMORY | J9SHRDATA_USE_READWRITE)
+			&& (data->length > 0)
+			&& (NULL != data->address)
+		) {
+			overwrite = true;
+		}
+	}
 
-	if (_ccHead->enterWriteMutex(currentThread, false, fnName) != 0) {
+	if (_ccHead->enterWriteMutex(currentThread, overwrite, fnName) != 0) {
 		Trc_SHR_CM_storeSharedData_Exit1(currentThread);
 		return NULL;
 	}
@@ -3850,7 +3861,22 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 						goto _done;
 					}
 				} else {
-					if (data->flags & J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE) {
+					if (J9_ARE_ANY_BITS_SET(data->flags, J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE | J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE_OVERWRITE)) {
+						if (J9SHR_DATA_TYPE_STARTUP_HINTS == data->type) {
+							Trc_SHR_Assert_True(&_sharedClassConfig->localStartupHints.hintsData == (J9SharedStartupHintsDataDescriptor*)data->address);
+							Trc_SHR_Assert_True(sizeof(J9SharedStartupHintsDataDescriptor) == data->length);
+							updateLocalHintsData(currentThread,&_sharedClassConfig->localStartupHints, (const J9SharedStartupHintsDataDescriptor*)result, overwrite);
+						}
+						if (overwrite) {
+							if (data->length == foundDatalen) {
+								if (memcmp(data->address, result, foundDatalen) != 0) {
+									memcpy((void *)result, data->address, foundDatalen);
+									Trc_SHR_CM_storeSharedData_OverwriteExisting(currentThread, result, data->address, foundDatalen);
+								}
+							} else {
+								Trc_SHR_Assert_ShouldNeverHappen();
+							}
+						}
 						/* We've already got the data for our key/type, so return it */
 						Trc_SHR_CM_storeSharedData_FoundExisting(currentThread);
 						goto _done;
@@ -4107,6 +4133,10 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 				descriptor->aotThunkDataBytes = _bdm->getDataBytesForType(type);
 				descriptor->numAotThunks = _bdm->getNumOfType(type);
 				break;
+			case J9SHR_DATA_TYPE_STARTUP_HINTS:
+				descriptor->numStartupHints = _bdm->getNumOfType(type);
+				descriptor->startupHintBytes = _bdm->getDataBytesForType(type);
+				break;
 			default:
 				descriptor->indexedDataBytes += _bdm->getDataBytesForType(type);
 			}
@@ -4120,6 +4150,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 		descriptor->aotDataBytes = 0;
 		descriptor->aotClassChainDataBytes = 0;
 		descriptor->aotThunkDataBytes = 0;
+		descriptor->startupHintBytes = 0;
 		descriptor->numJclEntries = 0;
 		descriptor->numZipCaches = 0;
 		descriptor->numJitHints = 0;
@@ -4127,6 +4158,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 		descriptor->numAotDataEntries = 0;
 		descriptor->numAotClassChains = 0;
 		descriptor->numAotThunks = 0;
+		descriptor->numStartupHints = 0;
 	}
 
 	descriptor->objectBytes = 0;
@@ -4158,6 +4190,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 	descriptor->otherBytes = descriptor->cacheSize - ((UDATA)descriptor->metadataStart - (UDATA)descriptor->romClassEnd) - descriptor->aotBytes -
 			descriptor->romClassBytes - descriptor->readWriteBytes - 
 			descriptor->zipCacheDataBytes -
+			descriptor->startupHintBytes-
 			descriptor->jclDataBytes -
 			descriptor->jitHintDataBytes -
 			descriptor->jitProfileDataBytes -
@@ -4558,14 +4591,17 @@ SH_CacheMap::printAllCacheStats(J9VMThread* currentThread, UDATA showFlags, SH_C
 							CACHEMAP_PRINT((J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE), J9NLS_SHRC_CM_PRINTSTATS_STALE);
 						}
 					}
-				} else if (J9SHR_DATA_TYPE_UNUSED1 == type) {
-					if ((PRINTSTATS_SHOW_BYTEDATA == (showFlags & PRINTSTATS_SHOW_BYTEDATA))
+				} else if (J9SHR_DATA_TYPE_STARTUP_HINTS == type) {
+					if ((J9_ARE_ANY_BITS_SET(showFlags, PRINTSTATS_SHOW_STARTUPHINT))
 						|| (isStale && showAllStaleFlag)
 					) {
-						CACHEMAP_PRINT6((J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY, ITEMJVMID(it), (UDATA)it, J9UTF8_LENGTH(pointer), J9UTF8_DATA(pointer), BDWDATA(bdw), BDWLEN(bdw));
+						J9SharedStartupHintsDataDescriptor* hints = (J9SharedStartupHintsDataDescriptor*)BDWDATA(bdw);
+						CACHEMAP_PRINT6((J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY, ITEMJVMID(it), (UDATA)it, J9UTF8_LENGTH(pointer), J9UTF8_DATA(pointer), BDWDATA(bdw), BDWLEN(bdw));
+						CACHEMAP_PRINT3((J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL, hints->flags, hints->heapSize1, hints->heapSize2);
 						if (isStale) {
 							CACHEMAP_PRINT((J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE), J9NLS_SHRC_CM_PRINTSTATS_STALE);
 						}
+						j9tty_printf(_portlib, "\n");
 					}
 				} else if ((PRINTSTATS_SHOW_BYTEDATA == (showFlags & PRINTSTATS_SHOW_BYTEDATA))
 					|| (isStale && showAllStaleFlag)
@@ -4936,6 +4972,7 @@ SH_CacheMap::printCacheStats(J9VMThread* currentThread, UDATA showFlags, U_64 ru
 			CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES, javacoreData.objectBytes);
 		}
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2, javacoreData.zipCacheDataBytes);
+		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES, javacoreData.startupHintBytes);
 
 		if (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS) {
 			CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES, javacoreData.readWriteBytes);
@@ -4988,6 +5025,7 @@ SH_CacheMap::printCacheStats(J9VMThread* currentThread, UDATA showFlags, U_64 ru
 			CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS, javacoreData.numObjects);
 		}
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2, javacoreData.numZipCaches);
+		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS, javacoreData.numStartupHints);
 		if (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS) {
 			CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES, javacoreData.numJclEntries);
 		}
@@ -7325,4 +7363,40 @@ void
 SH_CacheMap::getUnstoredBytes(U_32 *softmxUnstoredBytes, U_32 *maxAOTUnstoredBytes, U_32 *maxJITUnstoredBytes) const
 {
 	_ccHead->getUnstoredBytes(softmxUnstoredBytes, maxAOTUnstoredBytes, maxJITUnstoredBytes);
+}
+
+
+/**
+ * Update the local startup hints _sharedClassConfig->localStartupHints with the one in the shared cache
+ *
+ * @param [out] localHints pointer to _sharedClassConfig->localStartupHints
+ * @param [in] hintsDataInCache The start up hints in the shared cache
+ * @param [in] overwrite Whether local startup hints _sharedClassConfig->localStartupHints will overwrite the exiting one in the cache.
+ */
+void
+SH_CacheMap::updateLocalHintsData(J9VMThread* currentThread, J9SharedLocalStartupHints* localHints, const J9SharedStartupHintsDataDescriptor* hintsDataInCache, bool overwrite)
+{
+	J9SharedStartupHintsDataDescriptor updatedHintsData = {0};
+
+	Trc_SHR_Assert_True(J9_ARE_ANY_BITS_SET(localHints->localStartupHintFlags, J9SHR_LOCAL_STARTUPHINTS_FLAG_WRITE_HINTS));
+	memcpy(&updatedHintsData, hintsDataInCache, sizeof(J9SharedStartupHintsDataDescriptor));
+
+	if (J9_ARE_ALL_BITS_SET(localHints->localStartupHintFlags, J9SHR_LOCAL_STARTUPHINTS_FLAG_OVERWRITE_HEAPSIZES)) {
+		if (overwrite) {
+			/* check whether to overwrite again, as localHints->runtimeFlags might have been updated by another thread */
+			Trc_SHR_CM_updateLocalHintsData_OverwriteHeapSizes(currentThread, updatedHintsData.heapSize1, updatedHintsData.heapSize2, localHints->hintsData.heapSize1, localHints->hintsData.heapSize2);
+			updatedHintsData.heapSize1 = localHints->hintsData.heapSize1;
+			updatedHintsData.heapSize2 = localHints->hintsData.heapSize2;
+			updatedHintsData.flags |= J9SHR_STARTUPHINTS_HEAPSIZES_SET;
+		}
+	} else if (J9_ARE_ALL_BITS_SET(localHints->localStartupHintFlags, J9SHR_LOCAL_STARTUPHINTS_FLAG_STORE_HEAPSIZES)) {
+		if (J9_ARE_NO_BITS_SET(updatedHintsData.flags, J9SHR_STARTUPHINTS_HEAPSIZES_SET)) {
+			Trc_SHR_CM_updateLocalHintsData_WriteHeapSizes(currentThread, localHints->hintsData.heapSize1, localHints->hintsData.heapSize2);
+			/* heapSize1 and heapSize2 have not been set beofore */
+			updatedHintsData.heapSize1 = localHints->hintsData.heapSize1;
+			updatedHintsData.heapSize2 = localHints->hintsData.heapSize2;
+			updatedHintsData.flags |= J9SHR_STARTUPHINTS_HEAPSIZES_SET;
+		}
+	}
+	memcpy(&localHints->hintsData, &updatedHintsData, sizeof(J9SharedStartupHintsDataDescriptor));
 }

@@ -1338,9 +1338,15 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	intptr_t rc, rc2;
-	char pathCopy[J9SH_MAXPATH];
+	char pathBuffer[J9SH_MAXPATH];
+	BOOLEAN usingDefaultTmp = FALSE;
 
 	Trc_PRT_j9shmem_createDir_Entry();
+	if (0 == j9shmem_getDir(portLibrary, NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, pathBuffer, J9SH_MAXPATH)) {
+		if (0 == strcmp(cacheDirName, (const char*)pathBuffer)) {
+			usingDefaultTmp = TRUE;
+		}
+	}
 
 	rc = omrfile_attr(cacheDirName);
 	switch(rc) {
@@ -1349,14 +1355,19 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 		break;
 	case EsIsDir:
 #if !defined(J9ZOS390)
-		if (J9SH_DIRPERM_ABSENT == cacheDirPerm) {
-			/* cacheDirPerm option is not specified. Change permission to J9SH_DIRPERM. */
-			rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM);
-			if (J9SH_FILE_DOES_NOT_EXIST == rc2) {
-				Trc_PRT_shared_createDir_Exit3(errno);
-				return -1;
+		if ((J9SH_DIRPERM_ABSENT == cacheDirPerm) || (J9SH_DIRPERM_ABSENT_GROUPACCESS == cacheDirPerm)) {
+			if (usingDefaultTmp) {
+				/* cacheDirPerm option is not specified. Change permission to J9SH_DIRPERM_DEFAULT_TMP if it is the default dir under tmp. */
+				rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM_DEFAULT_TMP);
+				if (J9SH_FILE_DOES_NOT_EXIST == rc2) {
+					Trc_PRT_shared_createDir_Exit3(errno);
+					return -1;
+				} else {
+					Trc_PRT_shared_createDir_Exit4(errno);
+					return 0;
+				}
 			} else {
-				Trc_PRT_shared_createDir_Exit4(errno);
+				Trc_PRT_shared_createDir_Exit8();
 				return 0;
 			}
 		} else
@@ -1366,16 +1377,26 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 			return 0;
 		}
 	default: /* Directory is not there */
-		strncpy(pathCopy, cacheDirName, J9SH_MAXPATH);
+		strncpy(pathBuffer, cacheDirName, J9SH_MAXPATH);
 
 		if (cleanMemorySegments) {
 			cleanSharedMemorySegments(portLibrary);
 		}
-		/* Note that the createDirectory call may change pathCopy */
-		rc = createDirectory(portLibrary, (char*)pathCopy, cacheDirPerm);
+		/* Note that the createDirectory call may change pathBuffer */
+		rc = createDirectory(portLibrary, (char*)pathBuffer, cacheDirPerm);
 		if (J9SH_FAILED != rc) {
 			if (J9SH_DIRPERM_ABSENT == cacheDirPerm) {
-				rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM);
+				if (usingDefaultTmp) {
+					rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM_DEFAULT_TMP);
+				} else {
+					rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM);
+				}
+			} else if (J9SH_DIRPERM_ABSENT_GROUPACCESS == cacheDirPerm) {
+				if (usingDefaultTmp) {
+					rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM_DEFAULT_TMP);
+				} else {
+					rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM_GROUPACCESS);
+				}
 			} else {
 				rc2 = changeDirectoryPermission(portLibrary, cacheDirName, cacheDirPerm);
 			}

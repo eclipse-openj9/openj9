@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,53 +22,53 @@
 
 #include "optimizer/IdiomRecognition.hpp"
 
-#include <stdint.h>                              // for int32_t, uint32_t, etc
-#include <stdio.h>                               // for printf, NULL, etc
-#include <stdlib.h>                              // for atoi
-#include <string.h>                              // for memset
-#include "codegen/CodeGenerator.hpp"             // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                  // for feGetEnv, etc
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "compile/Compilation.hpp"               // for Compilation
-#include "compile/CompilationTypes.hpp"          // for TR_Hotness
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "control/Recompilation.hpp"             // for TR_Recompilation
-#include "control/RecompilationInfo.hpp"             // for TR_Recompilation
+#include "control/Recompilation.hpp"
+#include "control/RecompilationInfo.hpp"
 #include "cs2/bitvectr.h"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
-#include "il/Block.hpp"                          // for Block
-#include "il/DataTypes.hpp"                      // for DataTypes::NoType, etc
-#include "il/ILOpCodes.hpp"                      // for ILOpCodes::BBEnd, etc
-#include "il/ILOps.hpp"                          // for TR::ILOpCode, etc
-#include "il/Node.hpp"                           // for Node, vcount_t
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                         // for Symbol
-#include "il/SymbolReference.hpp"                // for SymbolReference
-#include "il/TreeTop.hpp"                        // for TreeTop
-#include "il/TreeTop_inlines.hpp"                // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"            // for MethodSymbol
-#include "infra/Assert.hpp"                      // for TR_ASSERT
-#include "infra/BitVector.hpp"                   // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                         // for CFG
-#include "infra/Flags.hpp"                       // for flags16_t, etc
-#include "infra/HashTab.hpp"                     // for TR_HashTabInt, etc
-#include "infra/Link.hpp"                        // for TR_LinkHead, etc
-#include "infra/List.hpp"                        // for List, ListIterator, etc
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Flags.hpp"
+#include "infra/HashTab.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
-#include "infra/TRCfgEdge.hpp"                   // for CFGEdge
-#include "infra/TRCfgNode.hpp"                   // for CFGNode
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
 #include "optimizer/IdiomRecognitionUtils.hpp"
-#include "optimizer/LoopCanonicalizer.hpp"       // for TR_LoopTransformer
+#include "optimizer/LoopCanonicalizer.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OptimizationManager.hpp"     // for OptimizationManager
-#include "optimizer/Optimizer.hpp"               // for Optimizer
-#include "optimizer/Structure.hpp"               // for TR_RegionStructure, etc
-#include "optimizer/TransformUtil.hpp"           // for TransformUtil
-#include "optimizer/UseDefInfo.hpp"              // for TR_UseDefInfo, etc
-#include "ras/Debug.hpp"                         // for TR_DebugBase
+#include "optimizer/OptimizationManager.hpp"
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
+#include "optimizer/UseDefInfo.hpp"
+#include "ras/Debug.hpp"
 
 #define OPT_DETAILS "O^O NEWLOOPREDUCER: "
 #define VERBOSE 0
@@ -2302,6 +2302,10 @@ TR_CISCNode *
 TR_CISCTransformer::addAllSubNodes(TR_CISCGraph *const graph, TR::Block *const block, TR::TreeTop *const top,
                                    TR::Node *const parent, TR::Node *const node, const int32_t dagId)
    {
+   //IdiomRecognition doesn't know how to handle rdbar/wrtbar for now
+   if (comp()->incompleteOptimizerSupportForReadWriteBarriers() &&
+       (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar()))
+      return 0;
    int32_t i;
    int32_t numChildren = node->getNumChildren();
    TR_ScratchList<TR_CISCNode> childList(trMemory());
