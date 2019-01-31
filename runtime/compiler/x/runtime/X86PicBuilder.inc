@@ -61,10 +61,10 @@ eq_ObjectClassMask                equ -J9TR_RequiredClassAlignment
 
 %ifndef TR_HOST_64BIT
 
-eq_VPicData_cpAddr             equ 00h
-eq_VPicData_cpIndex            equ 04h
-eq_VPicData_directMethod       equ 08h
-eq_VPicData_cmpRegImm4ModRM    equ 0ch
+eq_VPicData_cmpRegImm4ModRM    equ 00h
+eq_VPicData_cpAddr             equ 01h
+eq_VPicData_cpIndex            equ 05h
+eq_VPicData_directMethod       equ 09h
 eq_VPicData_size               equ 0dh
 
 eq_IPicData_cpAddr             equ 00h
@@ -87,13 +87,13 @@ J9PreservedFPRStackSize    equ   80
 ;                                    64-BIT
 ; --------------------------------------------------------------------------------
 
-eq_VPicData_cpAddr             equ 00h
-eq_VPicData_cpIndex            equ 08h
-eq_VPicData_directMethod       equ 10h
-eq_VPicData_j2iThunk           equ 18h
-eq_VPicData_movabsRexAndOpcode equ 20h
-eq_VPicData_callMemRex         equ 22h
-eq_VPicData_callMemModRM       equ 23h
+eq_VPicData_movabsRexAndOpcode equ 00h
+eq_VPicData_callMemRex         equ 02h
+eq_VPicData_callMemModRM       equ 03h
+eq_VPicData_cpAddr             equ 04h
+eq_VPicData_cpIndex            equ 0ch
+eq_VPicData_directMethod       equ 14h
+eq_VPicData_j2iThunk           equ 1ch
 eq_VPicData_size               equ 24h
 
 eq_IPicData_cpAddr             equ 00h

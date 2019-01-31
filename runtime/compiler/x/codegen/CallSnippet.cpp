@@ -270,20 +270,12 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
          cursor += (requiredEntryPoint - entryPoint);
 
-         // DD/DQ cpAddr
-         // DD/DQ cpIndex
-         //
-         cursor = encodeConstantPoolInfo(cursor);
-
-         // DD/DQ directMethod (initially null)
-         *(uintptrj_t *)cursor = 0;
-         cursor += sizeof(uintptrj_t);
-
+         // Put the narrow integers before the pointer-sized ones. This way,
+         // directMethod (which is mutable) will be aligned simply as a
+         // consequence of the alignment required for patching the code that
+         // immediately follows the VPIC data.
          if (TR::Compiler->target.is64Bit())
             {
-            // DD/DQ j2iThunk
-            cursor = encodeJ2IThunkPointer(cursor);
-
             // REX prefix of MOVRegImm64 instruction
             //
             uint8_t *slotPatchInstructionBytes = (uint8_t *)_slotPatchInstruction->getBinaryEncoding();
@@ -302,9 +294,6 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             slotPatchInstructionBytes += 11;
             callModRMByte = (*slotPatchInstructionBytes & 7) + 0x90;
             *cursor++ = callModRMByte;
-
-            // SIB  49ff9424feffffff call    qword ptr [r12-2]
-
             }
          else
             {
@@ -312,6 +301,28 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             //
             uint8_t *slotPatchInstructionBytes = (uint8_t *)_slotPatchInstruction->getBinaryEncoding();
             *cursor++ = *(slotPatchInstructionBytes+1);
+            }
+
+         // DD/DQ cpAddr
+         // DD/DQ cpIndex
+         //
+         cursor = encodeConstantPoolInfo(cursor);
+
+         // Because directMethod (immediately following) is written at runtime
+         // and might be read concurrently by another thread, it must be
+         // naturally aligned to ensure that all accesses to it are atomic.
+         TR_ASSERT_FATAL(
+            ((uintptr_t)cursor & (sizeof(uintptrj_t) - 1)) == 0,
+            "directMethod VPIC data slot is unaligned");
+
+         // DD/DQ directMethod (initially null)
+         *(uintptrj_t *)cursor = 0;
+         cursor += sizeof(uintptrj_t);
+
+         if (TR::Compiler->target.is64Bit())
+            {
+            // DD/DQ j2iThunk
+            cursor = encodeJ2IThunkPointer(cursor);
             }
          }
       else
@@ -575,43 +586,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
          {
          const char *op = (sizeof(uintptrj_t) == 4) ? "DD" : "DQ";
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
-         trfprintf(
-            pOutFile,
-            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
-            op,
-            (void*)*(uintptrj_t*)bufferPos,
-            commentString());
-         bufferPos += sizeof(uintptrj_t);
-
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
-         trfprintf(
-            pOutFile,
-            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex",
-            op,
-            (void*)*(uintptrj_t*)bufferPos,
-            commentString());
-         bufferPos += sizeof(uintptrj_t);
-
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
-         trfprintf(pOutFile,
-            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s direct J9Method (initially null)",
-            op,
-            (void*)*(uintptrj_t*)bufferPos,
-            commentString());
-         bufferPos += sizeof(uintptrj_t);
-
          if (TR::Compiler->target.is64Bit())
             {
-            printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
-            trfprintf(
-               pOutFile,
-               "%s\t" POINTER_PRINTF_FORMAT "\t\t%s j2i virtual thunk",
-               op,
-               (void*)*(uintptrj_t*)bufferPos,
-               commentString());
-            bufferPos += sizeof(uintptrj_t);
-
             printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
                           dbString(),
@@ -649,6 +625,44 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
                           *bufferPos,
                           commentString());
             bufferPos += 1;
+            }
+
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
+
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
+
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s direct J9Method (initially null)",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
+
+         if (TR::Compiler->target.is64Bit())
+            {
+            printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+            trfprintf(
+               pOutFile,
+               "%s\t" POINTER_PRINTF_FORMAT "\t\t%s j2i virtual thunk",
+               op,
+               (void*)*(uintptrj_t*)bufferPos,
+               commentString());
+            bufferPos += sizeof(uintptrj_t);
             }
          }
 
