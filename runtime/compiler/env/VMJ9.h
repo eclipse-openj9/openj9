@@ -240,6 +240,7 @@ public:
 /////
    virtual bool isGetImplInliningSupported();
 
+   virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
@@ -1036,7 +1037,6 @@ public:
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod);
    virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature);
-   virtual uintptrj_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
