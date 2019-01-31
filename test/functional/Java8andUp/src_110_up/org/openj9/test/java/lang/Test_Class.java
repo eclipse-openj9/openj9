@@ -70,7 +70,7 @@ import org.openj9.test.java.lang.specimens.InterfaceTestClasses;
 import org.openj9.test.java.lang.specimens.SuperA;
 import org.openj9.test.java.lang.specimens.SuperDuper;
 
-import jdk.internal.misc.SharedSecrets;
+import org.openj9.test.jdk.internal.InternalAccessor;
 
 /**
  *
@@ -2665,10 +2665,11 @@ public void test_getEnumConstantsShared(){
 	first_enum[] enum1SharedConstants_2;
 	second_enum[] enum2SharedConstants_2;
 
-	enum1SharedConstants = SharedSecrets.getJavaLangAccess().getEnumConstantsShared(first_enum.class);
-	enum2SharedConstants = SharedSecrets.getJavaLangAccess().getEnumConstantsShared(second_enum.class);
-	enum1SharedConstants_2 = SharedSecrets.getJavaLangAccess().getEnumConstantsShared(first_enum.class);
-	enum2SharedConstants_2 = SharedSecrets.getJavaLangAccess().getEnumConstantsShared(second_enum.class);
+	InternalAccessor accessor = new InternalAccessor();
+	enum1SharedConstants = accessor.getEnumConstantsShared(first_enum.class);
+	enum2SharedConstants = accessor.getEnumConstantsShared(second_enum.class);
+	enum1SharedConstants_2 = accessor.getEnumConstantsShared(first_enum.class);
+	enum2SharedConstants_2 = accessor.getEnumConstantsShared(second_enum.class);
 
 	/* Check the values of the first_enum */
 	AssertJUnit.assertTrue("Failed to get enum constants for the class : " + first_enum.class.getName(), enum1SharedConstants != null);

@@ -31,8 +31,7 @@ import java.lang.reflect.Method;
 
 import com.ibm.oti.reflect.TypeAnnotationParser;
 
-import jdk.internal.misc.SharedSecrets;
-import jdk.internal.misc.JavaLangAccess;
+import org.openj9.test.jdk.internal.InternalAccessor;
 
 /**
  * Sanity checking only; no checking of the returned data.
@@ -70,16 +69,16 @@ public class IbmTypeAnnotationsApiTest {
 
 	@Test
 	public void testGetRawClassTypeAnnotations() {
-		JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
-		byte attr[] = jlAccess.getRawClassTypeAnnotations(typeAnnotatedClass);
+		InternalAccessor accessor = new InternalAccessor();
+		byte attr[] = accessor.getRawClassTypeAnnotations(typeAnnotatedClass);
 		TypeAnnotationUtils.dumpTypeAnnotation("class", typeAnnotatedClass.getName(), typeAnnotatedClass, attr);
 	}
 
 	@Test
 	public void testGetRawMethodTypeAnnotations() {
-		JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+		InternalAccessor accessor = new InternalAccessor();
 		for (Method m: typeAnnotatedClass.getDeclaredMethods()) {
-			byte attr[] = jlAccess.getRawExecutableTypeAnnotations(m);
+			byte attr[] = accessor.getRawExecutableTypeAnnotations(m);
 			if (null != attr) {
 				TypeAnnotationUtils.dumpTypeAnnotation("class", typeAnnotatedClass.getName(), typeAnnotatedClass, attr);
 			}
@@ -88,9 +87,9 @@ public class IbmTypeAnnotationsApiTest {
 
 	@Test
 	public void testGetRawConstructorTypeAnnotations() {
-		JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+		InternalAccessor accessor = new InternalAccessor();
 		for (Constructor<?> c: typeAnnotatedClass.getDeclaredConstructors()) {
-			byte attr[] = jlAccess.getRawExecutableTypeAnnotations(c);
+			byte attr[] = accessor.getRawExecutableTypeAnnotations(c);
 			if (null != attr) {
 				TypeAnnotationUtils.dumpTypeAnnotation("class", typeAnnotatedClass.getName(), typeAnnotatedClass, attr);
 			}
@@ -99,8 +98,8 @@ public class IbmTypeAnnotationsApiTest {
 
 	@Test
 	public void testGetRawClassAnnotations() {
-		JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
-		byte attr[] = jlAccess.getRawClassAnnotations(typeAnnotatedClass);
+		InternalAccessor accessor = new InternalAccessor();
+		byte attr[] = accessor.getRawClassAnnotations(typeAnnotatedClass);
 		ByteArrayInputStream attrReader = new ByteArrayInputStream(attr);
 		TypeAnnotationUtils.dumpAnnotations(attrReader);
 	}
