@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,7 @@ target_sources(j9vm_jcl_se6_vm-side_natives
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmthypervisor.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtprocessor.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_jvm_Stats.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/orbvmhelpers.c
 
 		#TODO platform specific stuff here
 		${CMAKE_CURRENT_SOURCE_DIR}/unix/syshelp.c
@@ -81,7 +82,7 @@ target_sources(j9vm_jcl_se6_vm-side_natives
 
 target_include_directories(j9vm_jcl_se6_vm-side_natives
 INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/common
-    #TODO fix
-    ${CMAKE_CURRENT_SOURCE_DIR}/unix
+	${CMAKE_CURRENT_SOURCE_DIR}/common
+	#TODO fix
+	${CMAKE_CURRENT_SOURCE_DIR}/unix
 )

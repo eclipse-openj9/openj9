@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,4 +24,10 @@ add_library(j9vm_jcl_se8 INTERFACE)
 target_sources(j9vm_jcl_se8
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/common/gpu.c
+)
+
+add_library(j9vm_jcl_se8only INTERFACE)
+target_sources(j9vm_jcl_se8only
+	INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}/common/sun_misc_URLClassPath.c
 )
