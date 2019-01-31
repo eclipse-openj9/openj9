@@ -66,7 +66,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<!--temporarily disabled for 11, https://github.com/eclipse/openj9/issues/3221 -->
+			<subset>11+</subset>
 		</subsets>
 	</test>
 	<test>
