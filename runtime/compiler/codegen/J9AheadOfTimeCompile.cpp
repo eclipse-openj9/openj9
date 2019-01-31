@@ -1279,25 +1279,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateComponentClassFromArrayClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateCompFromArrayBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateCompFromArrayBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Component Class From Array: componentClassID=%d, arrayClassID=%d ",
-                        (uint32_t)binaryTemplate->_componentClassID,
-                        (uint32_t)binaryTemplate->_arrayClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateCompFromArrayBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateArrayClassFromComponentClass:
             {
             cursor++;

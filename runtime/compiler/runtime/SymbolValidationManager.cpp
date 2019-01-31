@@ -67,8 +67,6 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
       // redundant.
       _alreadyGeneratedRecords.insert(
          new (_region) ArrayClassFromComponentClassRecord(arrayClass, component));
-      _alreadyGeneratedRecords.insert(
-         new (_region) ComponentClassFromArrayClassRecord(component, arrayClass));
       }
    }
 
@@ -79,6 +77,12 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    _symbolToIdMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
    _seenSymbolsSet.insert(symbol);
+   }
+
+bool
+TR::SymbolValidationManager::isDefinedID(uint16_t id)
+   {
+   return id < _idToSymbolTable.size() && _idToSymbolTable[id]._hasValue;
    }
 
 void
@@ -278,7 +282,7 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
       TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(clazz);
       appendRecordIfNew(
          component,
-         new (_region) ComponentClassFromArrayClassRecord(component, clazz));
+         new (_region) ArrayClassFromComponentClassRecord(clazz, component));
       clazz = component;
       }
 
@@ -437,14 +441,6 @@ TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, method);
    return addClassRecord(clazz, new (_region) ClassFromMethodRecord(clazz, method));
-   }
-
-bool
-TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass)
-   {
-   // Class chain validation for the base component type is already taken care of
-   SVM_ASSERT_ALREADY_VALIDATED(this, arrayClass);
-   return addVanillaRecord(componentClass, new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass));
    }
 
 bool
@@ -796,17 +792,21 @@ TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uin
    }
 
 bool
-TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
-   {
-   TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
-   return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
-   }
-
-bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
-   TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
-   return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
+   if (isDefinedID(componentClassID))
+      {
+      TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
+      return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
+      }
+   else
+      {
+      TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
+      if (_fej9->isClassArray(arrayClass))
+         return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
+      else
+         return false;
+      }
    }
 
 bool
@@ -1285,23 +1285,6 @@ void TR::ClassFromMethodRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   }
-
-bool TR::ComponentClassFromArrayClassRecord::isLessThanWithinKind(
-   SymbolValidationRecord *other)
-   {
-   TR::ComponentClassFromArrayClassRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_componentClass, rhs->_componentClass)
-      .thenBy(_arrayClass, rhs->_arrayClass).less();
-   }
-
-void TR::ComponentClassFromArrayClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "ComponentClassFromArrayClassRecord\n");
-   traceMsg(TR::comp(), "\t_componentClass=0x%p\n", _componentClass);
-   printClass(_componentClass);
-   traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
-   printClass(_arrayClass);
    }
 
 bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(
