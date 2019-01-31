@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,7 @@ MM_MemorySubSpaceMetronome::collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCo
 	if (sched->isInitialized()) {
 		sched->startGC(envRealtime);
 		sched->setGCCode(gcCode);
-		sched->continueGC(envRealtime, OUT_OF_MEMORY_TRIGGER, allocDescription->getBytesRequested(), (J9VMThread *)env->getLanguageVMThread(), true);
+		sched->continueGC(envRealtime, OUT_OF_MEMORY_TRIGGER, allocDescription->getBytesRequested(), env->getOmrVMThread(), true);
 	}
 	/* TODO CRGTMP remove call to yieldWhenRequested since continueGC blocks */
 	yieldWhenRequested(envRealtime);
@@ -170,7 +170,7 @@ MM_MemorySubSpaceMetronome::systemGarbageCollect(MM_EnvironmentBase *env, U_32 g
 		sched->startGC(envRealtime);
 		sched->setGCCode(MM_GCCode(gcCode));
 		/* if we were triggered by rasdump, then the caller has already acquired exclusive VM access */
-		sched->continueGC(envRealtime, SYSTEM_GC_TRIGGER, 0, (J9VMThread *)envRealtime->getLanguageVMThread(), J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT != gcCode);
+		sched->continueGC(envRealtime, SYSTEM_GC_TRIGGER, 0, env->getOmrVMThread(), J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT != gcCode);
 		/* TODO CRGTMP remove this call since continueGC blocks */
 		yieldWhenRequested(envRealtime);
 	}

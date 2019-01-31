@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,12 +87,13 @@ MM_BarrierSynchronization::tearDown(MM_EnvironmentBase *env)
  * be requesting exclusive vm access.
  */
 void
-MM_BarrierSynchronization::preRequestExclusiveVMAccess(J9VMThread *threadRequestingExclusive)
+MM_BarrierSynchronization::preRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive)
 {
 	if (threadRequestingExclusive == NULL) {
 		return;
 	}
-	threadRequestingExclusive->javaVM->internalVMFunctions->internalReleaseVMAccess(threadRequestingExclusive);
+	J9VMThread *vmThread = (J9VMThread *)threadRequestingExclusive->_language_vmthread;
+	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
 }
 
 /**
@@ -103,12 +104,13 @@ MM_BarrierSynchronization::preRequestExclusiveVMAccess(J9VMThread *threadRequest
  * exclusive vm access.
  */
 void
-MM_BarrierSynchronization::postRequestExclusiveVMAccess(J9VMThread *threadRequestingExclusive)
+MM_BarrierSynchronization::postRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive)
 {
 	if (NULL == threadRequestingExclusive) {
 		return;
 	}
-	threadRequestingExclusive->javaVM->internalVMFunctions->internalAcquireVMAccess(threadRequestingExclusive);
+	J9VMThread *vmThread = (J9VMThread *)threadRequestingExclusive->_language_vmthread;
+	vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
 }
 
 

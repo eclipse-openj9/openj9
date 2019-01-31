@@ -268,19 +268,19 @@ MM_ITAlarm::sleep()
 	omrthread_suspend();
 }
 
-void MM_RTCAlarm::describe(J9PortLibrary* port, char *buffer, I_32 bufferSize) {
-	PORT_ACCESS_FROM_PORT(port);
- 	j9str_printf(PORTLIB, buffer, bufferSize, "RTC  (Period = %.2f us Frequency = %d Hz)", 1.0/_extensions->RTC_Frequency, _extensions->RTC_Frequency);
+void MM_RTCAlarm::describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize) {
+	OMRPORT_ACCESS_FROM_OMRPORT(port);
+ 	omrstr_printf(buffer, bufferSize, "RTC  (Period = %.2f us Frequency = %d Hz)", 1.0/_extensions->RTC_Frequency, _extensions->RTC_Frequency);
 }
 
-void MM_HRTAlarm::describe(J9PortLibrary* port, char *buffer, I_32 bufferSize) {
-	PORT_ACCESS_FROM_PORT(port);
-	 j9str_printf(PORTLIB, buffer, bufferSize, "High Resolution Timer (Period = %d us)", _extensions->hrtPeriodMicro);
+void MM_HRTAlarm::describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize) {
+	OMRPORT_ACCESS_FROM_OMRPORT(port);
+	omrstr_printf(buffer, bufferSize, "High Resolution Timer (Period = %d us)", _extensions->hrtPeriodMicro);
 }
 
-void MM_ITAlarm::describe(J9PortLibrary* port, char *buffer, I_32 bufferSize) {
-	PORT_ACCESS_FROM_PORT(port);
-	j9str_printf(PORTLIB, buffer, bufferSize, "Interval Timer (Period = %d us)", _extensions->itPeriodMicro);
+void MM_ITAlarm::describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize) {
+	OMRPORT_ACCESS_FROM_OMRPORT(port);
+	omrstr_printf(buffer, bufferSize, "Interval Timer (Period = %d us)", _extensions->itPeriodMicro);
 }
 
 /**

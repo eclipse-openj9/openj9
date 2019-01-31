@@ -74,7 +74,7 @@ public:
 
 	virtual bool initialize(MM_EnvironmentBase *env, MM_MetronomeAlarmThread* alarmThread)=0;
 	static MM_Alarm * factory(MM_EnvironmentBase *env, MM_OSInterface* osInterface);
-	virtual void describe(J9PortLibrary* port, char *buffer, I_32 bufferSize)=0;
+	virtual void describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize)=0;
 
 	virtual void sleep()=0;
 	virtual void wakeUp(MM_MetronomeAlarmThread *) {};
@@ -90,7 +90,7 @@ public:
 		_typeId = __FUNCTION__;
 	}
 	virtual void sleep();
-	virtual void describe(J9PortLibrary* port, char *buffer, I_32 bufferSize);
+	virtual void describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize);
 	virtual bool initialize(MM_EnvironmentBase *env, MM_MetronomeAlarmThread* alarmThread);
 };
 
@@ -109,7 +109,7 @@ public:
 		_typeId = __FUNCTION__;
 	}
 	virtual void sleep();
-	virtual void describe(J9PortLibrary* port, char *buffer, I_32 bufferSize);
+	virtual void describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize);
 	virtual bool initialize(MM_EnvironmentBase *env, MM_MetronomeAlarmThread* alarmThread);
 };
 
@@ -130,7 +130,7 @@ public:
 		_typeId = __FUNCTION__;
 	}
 	virtual void sleep();
-	virtual void describe(J9PortLibrary* port, char *buffer, I_32 bufferSize);
+	virtual void describe(OMRPortLibrary* port, char *buffer, I_32 bufferSize);
 	virtual bool initialize(MM_EnvironmentBase *env, MM_MetronomeAlarmThread* alarmThread);
 	static void alarm_handler(MM_MetronomeAlarmThread *);
 	virtual void wakeUp(MM_MetronomeAlarmThread *alarmThread) { alarm_handler(alarmThread); }
