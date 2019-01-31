@@ -631,6 +631,7 @@ mergeFindDataBlockForResolveVPicClass:
       jnz         callDirectMethodVPic
 
       push        edi                                             ; p) jit valid EIP
+      add         edx, eq_VPicData_cpAddr
       push        edx                                             ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg jitResolveVirtualMethod,eax               ; returns compiler vtable index
 
@@ -692,6 +693,8 @@ resolveVPicClassLongBranch:
       jmp mergeFindDataBlockForResolveVPicClass
 
 resolvedToDirectMethodVPic:
+      sub         edx, eq_VPicData_cpAddr                         ; restore edx = EA of VPIC data
+
       ; We'll return to the jump just after the position where the call through
       ; the VFT would be. In the j2i case, the VM assumes control was transferred
       ; via a call though the VFT *unless* RA-5 has 0e8h (direct call relative).
@@ -849,6 +852,7 @@ mergeVPicSlotCall:
       ; +0 saved eax (receiver)
       ;
       push        edi                                             ; p) jit valid EIP
+      add         edx, eq_VPicData_cpAddr
       push        edx                                             ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg jitResolveVirtualMethod,eax               ; returns compiler vtable index
 
@@ -962,11 +966,11 @@ interpretedLastVPicSlot:
       jmp         mergeVPicInterpretedDispatch
 
 vtableCallNotPatched:
-      lea         edx, [edx-eq_VPicData_size]                     ; edx = EA of VPic data
+      lea         edx, [edx-eq_VPicData_size+eq_VPicData_cpAddr]  ; edx = EA of VPic data cpAddr and cpIndex
       push        dword  [esp+12]                                 ; p) jit valid EIP
       push        edx                                             ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg jitResolveVirtualMethod,eax               ; eax = compiler vtable index
-      lea         edx, [edx+eq_VPicData_size]                     ; restore edx = EA of vtable dispatch
+      lea         edx, [edx+eq_VPicData_size-eq_VPicData_cpAddr] ; restore edx = EA of vtable dispatch
       jmp         short mergeCheckIfMethodCompiled
 
 ret
@@ -984,7 +988,7 @@ populateVPicVTableDispatch:
       push        edx                                             ; preserve
       push        edi                                             ; preserve
       mov         edi, dword  [esp+8]                             ; RA in code cache
-      lea         edx, [edi-5-eq_VPicData_size]                   ; EA of VPic data block
+      lea         edx, [edi-5-eq_VPicData_size+eq_VPicData_cpAddr]; EA of VPic data block cpAddr and cpIndex
                                                                   ; -5 (CALL)
       push        eax                                             ; push receiver
 
@@ -1044,7 +1048,7 @@ populateVPicVTableDispatch:
       or          ecx, esi
 
       and         ebx, 0ffff0000h                                 ; mask off low 2 bytes of vtable disp32
-      mov         bh, byte  [edi-6]                               ; ModRM of CMP instruction
+      mov         bh, byte [edi-5-eq_VPicData_size+eq_VPicData_cmpRegImm4ModRM]
       sub         bh, 068h                                        ; convert to ModRM for CALL instruction
       mov         bl, 0ffh                                        ; add CALL opcode
 
@@ -1770,7 +1774,7 @@ mergeResolveVPicClass:
       test        rax, rax
       jnz         callDirectMethodVPic
 
-      mov         rax, rdx                                        ; p1) address of the constant pool and cpIndex
+      lea         rax, [rdx+eq_VPicData_cpAddr]                   ; p1) address of the constant pool and cpIndex
       mov         rsi, rdi                                        ; p2) jit valid EIP
       CallHelperUseReg jitResolveVirtualMethod,rax               ; returns compiler vtable index, , or (low-tagged) direct J9Method pointer
 
@@ -1963,7 +1967,7 @@ populateVPicSlotCall:
 mergeVPicSlotCall:
       movsxd rsi, dword  [rdi-4]
       LoadClassPointerFromObjectHeader rax, rcx, ecx
-      lea rax, [rsi+rdi-eq_VPicData_size]                         ; EA of VPic data block
+      lea rax, [rsi+rdi-eq_VPicData_size+eq_VPicData_cpAddr]      ; EA of VPic data block cpAddr and cpIndex
                                                                   ; -20 = -4 (instr data) - 16 (cpAddr+cpIndex)
       ; Stack shape:
       ;
@@ -2224,7 +2228,7 @@ interpretedLastVPicSlot:
 vtableCallNotPatched:
       ; Get vtable offset again by resolving.
       ;
-      lea         rax, [rax-eq_VPicData_size]                                       ; p1) rax = address of constant pool and cpIndex
+      lea         rax, [rax-eq_VPicData_size+eq_VPicData_cpAddr]                    ; p1) rax = address of constant pool and cpIndex
                                                                                     ; -20 = -4 (instr data) - 16 (cpAddr,cpIndex)
       mov         rsi, rdx                                                          ; p2) rsi = jit valid EIP
       CallHelperUseReg  jitResolveVirtualMethod,rax                                ; returns compiler vtable index
@@ -2269,7 +2273,7 @@ populateVPicVTableDispatch:
       ; Get vtable offset again by resolving.
       ;
       mov         rdi, rax
-                                                                                    ; p1) rax = address of constant pool and cpIndex
+      add         rax, eq_VPicData_cpAddr                                           ; p1) rax = address of constant pool and cpIndex
       mov         rsi, rdx                                                          ; p2) rsi = jit valid EIP
       CallHelperUseReg  jitResolveVirtualMethod,rax                                ; returns compiler vtable index
 
