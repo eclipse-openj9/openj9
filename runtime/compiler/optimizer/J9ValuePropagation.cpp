@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,27 +22,28 @@
 
 #include "optimizer/J9ValuePropagation.hpp"
 #include "optimizer/VPBCDConstraint.hpp"
-#include "compile/Compilation.hpp"              // for Compilation, comp
+#include "compile/Compilation.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
-#include "il/Node.hpp"                          // for Node, etc
-#include "il/Node_inlines.hpp"                  // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                        // for Symbol, etc
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
 #include "env/CHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
-#include "optimizer/Optimization_inlines.hpp"   // for trace()
+#include "optimizer/Optimization_inlines.hpp"
 #include "env/j9method.h"
-#include "env/TRMemory.hpp"                        // for Allocator, etc
-#include "il/Block.hpp"                        // for Block
-#include "infra/Cfg.hpp"                       // for CFG
-#include "compile/VirtualGuard.hpp"            // for VirtualGuard::createHCRGuard
+#include "env/TRMemory.hpp"
+#include "il/Block.hpp"
+#include "infra/Cfg.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "env/CompilerEnv.hpp"
-#include "optimizer/TransformUtil.hpp"       // for calculateElementAddress
-#include "il/symbol/StaticSymbol.hpp"           // for StaticSymbol
-#include "env/VMAccessCriticalSection.hpp"      // for VMAccessCriticalSection
+#include "optimizer/TransformUtil.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/J9JitMemory.hpp"
+#include "optimizer/HCRGuardAnalysis.hpp"
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
 
@@ -1174,4 +1175,236 @@ J9::ValuePropagation::getParmValues()
       }
 
    TR_ASSERT(parmIterator->atEnd() && parmIndex == numParms, "Bad signature for owning method");
+   }
+
+static bool isTakenSideOfAVirtualGuard(TR::Compilation* comp, TR::Block* block)
+   {
+   // First block can never be taken side
+   if (block == comp->getMethodSymbol()->getFirstTreeTop()->getEnclosingBlock())
+      return false;
+
+   for (auto edge = block->getPredecessors().begin(); edge != block->getPredecessors().end(); ++edge)
+      {
+      TR::Block *pred = toBlock((*edge)->getFrom());
+      TR::Node* predLastRealNode = pred->getLastRealTreeTop()->getNode();
+
+      if (predLastRealNode
+          && predLastRealNode->isTheVirtualGuardForAGuardedInlinedCall()
+          && predLastRealNode->getBranchDestination()->getEnclosingBlock() == block)
+         return true;
+
+      }
+
+   return false;
+   }
+
+static bool skipFinalFieldFoldingInBlock(TR::Compilation* comp, TR::Block* block)
+   {
+   if (block->isCold()
+       || block->isOSRCatchBlock()
+       || block->isOSRCodeBlock()
+       || isTakenSideOfAVirtualGuard(comp, block))
+      return true;
+
+   return false;
+   }
+
+static bool isStaticFinalFieldWorthFolding(TR::Compilation* comp, TR_OpaqueClassBlock* declaringClass, char* fieldSignature, int32_t fieldSigLength)
+   {
+   if (comp->getMethodSymbol()->hasMethodHandleInvokes()
+       && !TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
+      {
+      if (fieldSigLength == 28 && !strncmp(fieldSignature, "Ljava/lang/invoke/VarHandle;", 28))
+         return true;
+      }
+
+   return false;
+   }
+
+
+// Do not add fear point in a frame that doesn't support OSR
+static bool cannotAttemptOSRDuring(TR::Compilation* comp, int32_t callerIndex)
+   {
+   TR::ResolvedMethodSymbol *method = callerIndex == -1 ?
+      comp->getJittedMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex);
+
+   return method->cannotAttemptOSRDuring(callerIndex, comp, false);
+   }
+
+bool J9::ValuePropagation::transformDirectLoad(TR::Node* node)
+   {
+   // Allow OMR to fold reliable static final field first
+   if (OMR::ValuePropagation::transformDirectLoad(node))
+      return true;
+
+   if (node->isLoadOfStaticFinalField() &&
+       tryFoldStaticFinalFieldAt(_curTree, node))
+      {
+      return true;
+      }
+
+   return false;
+   }
+
+
+static TR_HCRGuardAnalysis* runHCRGuardAnalysisIfPossible()
+   {
+   return NULL;
+   }
+
+TR_YesNoMaybe J9::ValuePropagation::safeToAddFearPointAt(TR::TreeTop* tt)
+   {
+   if (trace())
+      {
+      traceMsg(comp(), "Checking if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
+      }
+
+   int32_t callerIndex = tt->getNode()->getByteCodeInfo().getCallerIndex();
+   if (!cannotAttemptOSRDuring(comp(), callerIndex) && !comp()->isOSRProhibitedOverRangeOfTrees())
+      {
+      if (trace())
+         {
+         traceMsg(comp(), "Safe to add fear point because there is no OSR prohibition\n");
+         }
+      return TR_yes;
+      }
+
+   // Look for an OSR point dominating tt in block
+   TR::Block* block = tt->getEnclosingBlock();
+   TR::TreeTop* firstTT = block->getEntry();
+   while (tt != firstTT)
+      {
+      if (comp()->isPotentialOSRPoint(tt->getNode()))
+         {
+         TR_YesNoMaybe result = comp()->isPotentialOSRPointWithSupport(tt) ? TR_yes : TR_no;
+         if (trace())
+            {
+            traceMsg(comp(), "Found %s potential OSR point n%dn, %s to add fear point\n",
+                     result == TR_yes ? "supported" : "unsupported",
+                     tt->getNode()->getGlobalIndex(),
+                     result == TR_yes ? "Safe" : "Not safe");
+            }
+
+         return result;
+         }
+      tt = tt->getPrevTreeTop();
+      }
+
+   TR_HCRGuardAnalysis* guardAnalysis = runHCRGuardAnalysisIfPossible();
+   if (guardAnalysis)
+      {
+      TR_YesNoMaybe result = guardAnalysis->_blockAnalysisInfo[block->getNumber()]->isEmpty() ? TR_yes : TR_no;
+      if (trace())
+         {
+         traceMsg(comp(), "%s to add fear point based on HCRGuardAnalysis\n", result == TR_yes ? "Safe" : "Not safe");
+         }
+
+      return result;
+      }
+
+   if (trace())
+      {
+      traceMsg(comp(), "Cannot determine if it is safe\n");
+      }
+   return TR_maybe;
+   }
+
+/** \brief
+ *     Try to fold static final field
+ *
+ *  \param tree
+ *     The tree with the load of static final field.
+ *
+ *  \param fieldNode
+ *     The node which is a load of a static final field.
+ */
+bool J9::ValuePropagation::tryFoldStaticFinalFieldAt(TR::TreeTop* tree, TR::Node* fieldNode)
+   {
+   TR_ASSERT(fieldNode->isLoadOfStaticFinalField(), "Node n%dn %p has to be a load of a static final field", fieldNode->getGlobalIndex(), fieldNode);
+
+   if (comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+      {
+      return false;
+      }
+
+   if (!comp()->supportsInduceOSR()
+       || !comp()->isOSRTransitionTarget(TR::postExecutionOSR)
+       || comp()->getOSRMode() != TR::voluntaryOSR)
+      {
+      return false;
+      }
+
+   if (skipFinalFieldFoldingInBlock(comp(), tree->getEnclosingBlock())
+       || safeToAddFearPointAt(tree) != TR_yes
+       || TR::TransformUtil::canFoldStaticFinalField(comp(), fieldNode) != TR_maybe)
+      {
+      return false;
+      }
+
+   TR::SymbolReference* symRef = fieldNode->getSymbolReference();
+   if (symRef->hasKnownObjectIndex())
+      {
+      return false;
+      }
+
+   int32_t cpIndex = symRef->getCPIndex();
+   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp())->getClassFromFieldOrStatic(comp(), cpIndex);
+   int32_t fieldNameLen;
+   char* fieldName = symRef->getOwningMethod(comp())->fieldName(cpIndex, fieldNameLen, comp()->trMemory(), stackAlloc);
+   int32_t fieldSigLength;
+   char* fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(cpIndex, fieldSigLength);
+
+   if (trace())
+      {
+      traceMsg(comp(),
+              "Looking at static final field n%dn %.*s declared in class %p\n",
+              fieldNode->getGlobalIndex(), fieldNameLen, fieldName, declaringClass);
+      }
+
+   if (isStaticFinalFieldWorthFolding(comp(), declaringClass, fieldSignature, fieldSigLength))
+      {
+      if (TR::TransformUtil::foldStaticFinalFieldAssumingProtection(comp(), fieldNode))
+         {
+         // Add class to assumption table
+         comp()->addClassForStaticFinalFieldModification(declaringClass);
+         // Insert osrFearPointHelper call
+         TR::TreeTop* helperTree = TR::TreeTop::create(comp(),
+                                                       TR::Node::create(fieldNode,
+                                                                        TR::treetop,
+                                                                        1,
+                                                                        TR::Node::createOSRFearPointHelperCall(fieldNode)));
+         tree->insertBefore(helperTree);
+
+         if (trace())
+            {
+            traceMsg(comp(),
+                    "Static final field n%dn is folded with OSRFearPointHelper call tree n%dn  helper tree n%dn\n",
+                    fieldNode->getGlobalIndex(), tree->getNode()->getGlobalIndex(), helperTree->getNode()->getGlobalIndex());
+            }
+
+         TR::DebugCounter::prependDebugCounter(comp(),
+                                               TR::DebugCounter::debugCounterName(comp(),
+                                                                                  "staticFinalFieldFolding/success/(field %.*s)/(%s %s)",
+                                                                                  fieldNameLen,
+                                                                                  fieldName,
+                                                                                  comp()->signature(),
+                                                                                  comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                                  tree->getNextTreeTop());
+
+         return true;
+         }
+      }
+   else
+      {
+      TR::DebugCounter::prependDebugCounter(comp(),
+                                            TR::DebugCounter::debugCounterName(comp(),
+                                                                               "staticFinalFieldFolding/notWorthFolding/(field %.*s)/(%s %s)",
+                                                                               fieldNameLen,
+                                                                               fieldName,
+                                                                               comp()->signature(),
+                                                                               comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                               tree->getNextTreeTop());
+      }
+
+   return false;
    }

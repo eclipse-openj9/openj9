@@ -32,7 +32,6 @@ import com.ibm.j9ddr.vm29.j9.PackageHashTable;
 import com.ibm.j9ddr.vm29.j9.SlotIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
 import com.ibm.j9ddr.vm29.j9.walkers.ClassIterator;
-import com.ibm.j9ddr.vm29.j9.walkers.ClassSegmentIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9HashTablePointer;
@@ -43,7 +42,6 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
-
 
 public class ModularityHelper {
 	@FunctionalInterface
@@ -79,7 +77,7 @@ public class ModularityHelper {
 	/**
 	 * Matches all modules. Fits the
 	 * ModuleIteratorFilter functional interface.
-	 * 
+	 *
 	 * @param    modulePtr  unused
 	 * @param    arg        unused
 	 * @return   true
@@ -92,7 +90,7 @@ public class ModularityHelper {
 	 * Prints the name and hex address of a J9Module.
 	 * Example:
 	 * java.base    !j9module 0x00007FAC2008EAC8
-	 * 
+	 *
 	 * @param    modulePtr  The module which is to have its details
 	 *                      printed.
 	 * @param    out        The PrintStream that the details will
@@ -108,12 +106,12 @@ public class ModularityHelper {
 	 * Prints the details of the J9Module that owns a
 	 * J9Package. Uses printJ9Module to output the
 	 * module details.
-	 * 
+	 *
 	 * @param    packagePtr The package which is to have its
 	 *                      owner's details printed.
 	 * @param    out        The PrintStream that the details will
 	 *                      be outputted to.
-	 * 
+	 *
 	 * @see      printJ9Module(J9ModulePointer, PrintStream)
 	 */
 	public static void printPackageJ9Module(J9PackagePointer packagePtr, PrintStream out) throws CorruptDataException {
@@ -121,12 +119,11 @@ public class ModularityHelper {
 		printJ9Module(modulePtr, out);
 	}
 
-
 	/**
 	 * Prints the name and hex address of a J9Package.
 	 * Example:
 	 * moduleB/packageB    !j9package 0x00007F84903B5860
-	 * 
+	 *
 	 * @param    packagePtr The package which is to have its details
 	 *                      printed.
 	 * @param    out        The PrintStream that the details will
@@ -142,7 +139,7 @@ public class ModularityHelper {
 	 * Prints the name and hex address of a J9Class.
 	 * Example:
 	 * moduleA/packageA/classA        !j9class 0x00000000022CCD00
-	 * 
+	 *
 	 * @param    ClassPtr   The class which is to have its details
 	 *                      printed.
 	 * @param    out        The PrintStream that the details will
@@ -162,7 +159,7 @@ public class ModularityHelper {
 	 * Example:
 	 * Exports moduleA/packageA        !j9module 0x00000000022CCD00
 	 *      to moduleB    !j9module 0x00007FAC2008EAC8
-	 * 
+	 *
 	 * @param    packagePtr The package which is to have the
 	 *                      modules it is exported to printed.
 	 * @param    out        The PrintStream that the result will
@@ -176,25 +173,51 @@ public class ModularityHelper {
 		}
 	}
 
-	private static void printPackageExportTo(J9PackagePointer packagePtr, PrintStream out, String linePrefix) throws CorruptDataException {
+	/**
+	 * Prints the name and hex address of all
+	 * J9Modules the provided package is exported to.
+	 * Example:
+	 * moduleB    !j9module 0x00007FAC2008EAC8
+	 *
+	 * @param    packagePtr The package which is to have the
+	 *                      modules it is exported to printed.
+	 * @param    out        The PrintStream that the result will
+	 *                      be output to.
+	 */
+	public static void printPackageExports(J9PackagePointer packagePtr, PrintStream out) throws CorruptDataException {
+		if (packagePtr.exportToAll().isZero()) {
+			int exportCount = printPackageExportTo(packagePtr, out, "");
+			if (0 == exportCount) {
+				out.println("Package is not exported");
+			}
+		} else {
+			out.println("Package is exported to all");
+		}
+	}
+
+	private static int printPackageExportTo(J9PackagePointer packagePtr, PrintStream out, String linePrefix) throws CorruptDataException {
+		int count = 0;
 		J9HashTablePointer exportsHashTable = packagePtr.exportsHashTable();
 		HashTable<J9ModulePointer> exportsModuleHashTable = ModuleHashTable.fromJ9HashTable(exportsHashTable);
 		SlotIterator<J9ModulePointer> exportsSlotIterator = exportsModuleHashTable.iterator();
 		while (exportsSlotIterator.hasNext()) {
+			count++;
 			J9ModulePointer modulePtr = exportsSlotIterator.next();
 			out.print(linePrefix);
 			ModularityHelper.printJ9Module(modulePtr, out);
 		}
 		if (!packagePtr.exportToAllUnnamed().isZero()) {
+			count++;
 			out.printf("%sALL-UNNAMED%n", linePrefix);
 		}
+		return count;
 	}
 
 	/**
 	 * Traverses through all loaded modules. Uses
-	 * outtputter to print details about modules
+	 * outputter to print details about modules
 	 * matched by filter.
-	 * 
+	 *
 	 * @param    out        The printstream that will be provided to outputter.
 	 * @param    filter     Used to determine whether a module will be output.
 	 *                      Will be run on all loaded modules.
@@ -226,12 +249,11 @@ public class ModularityHelper {
 		return count;
 	}
 
-
 	/**
 	 * Traverses through all loaded packages.
-	 * Uses outtputter to print details about
+	 * Uses outputter to print details about
 	 * packages matched by filter.
-	 * 
+	 *
 	 * @param    out        The printstream that will be provided to outputter
 	 * @param    filter     Used to determine whether a package will be output.
 	 *                      Will be run on all loaded packages.
@@ -256,9 +278,9 @@ public class ModularityHelper {
 	/**
 	 * Traverses through all loaded packages that are
 	 * owned by the given class loader. Uses
-	 * outtputter to print details about packages
+	 * outputter to print details about packages
 	 * matched by filter.
-	 * 
+	 *
 	 * @param    out        The printstream that will be provided to outputter
 	 * @param    filter     Used to determine whether a packages will be output. Will
 	 *                      be run on all loaded packages owned by the class loader.
@@ -286,13 +308,12 @@ public class ModularityHelper {
 		return count;
 	}
 
-
 	/**
 	 * Traverses through all loaded classes in a
-	 * classloader. Uses outtputter to print details
+	 * classloader. Uses outputter to print details
 	 * about classes within the classloader that are
 	 * matched by filter.
-	 * 
+	 *
 	 * @param    out            The printstream that will be provided to outputter
 	 * @param    filter         Used to determine whether a class will be output.
 	 *                          Will be run on all loaaded classes owned by the module.
@@ -318,4 +339,5 @@ public class ModularityHelper {
 		}
 		return count;
 	}
+
 }

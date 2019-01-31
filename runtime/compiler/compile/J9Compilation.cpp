@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,6 +177,7 @@ J9::Compilation::Compilation(int32_t id,
    _profileInfo(NULL),
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime),
+   _osrProhibitedOverRangeOfTrees(false),
    _outOfProcessCompilation(false),
    _remoteCompilation(false)
    {
@@ -194,12 +195,8 @@ J9::Compilation::Compilation(int32_t id,
 
    _profileInfo = new (m->trHeapMemory()) TR_AccessedProfileInfo(heapMemoryRegion);
 
-   _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
-   _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
-   _StringClassPointer   = fe->getClassFromSignature("Ljava/lang/String;", 18, compilee);
-   _SystemClassPointer   = fe->getClassFromSignature("Ljava/lang/System;", 18, compilee);
-   _ReferenceClassPointer = fe->getClassFromSignature("Ljava/lang/ref/Reference;", 25, compilee);
-   _JITHelpersClassPointer = fe->getClassFromSignature("Lcom/ibm/jit/JITHelpers;", 24, compilee);
+   for (int i = 0; i < CACHED_CLASS_POINTER_COUNT; i++)
+      _cachedClassPointers[i] = NULL;
    }
 
 J9::Compilation::~Compilation()
@@ -652,8 +649,15 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
    else if (node->getOpCodeValue() == TR::anewarray)
       {
       classRef      = node->getSecondChild();
-      classSymRef   = classRef->getSymbolReference();
 
+      // In the case of dynamic array allocation, return 0 indicating variable dynamic array allocation
+      if (classRef->getOpCodeValue() != TR::loadaddr)
+         {
+         classInfo = NULL;
+         return 0;
+         }
+
+      classSymRef   = classRef->getSymbolReference();
       // Can't skip the allocation if the class is unresolved
       //
       clazz = self()->fej9vm()->getClassForAllocationInlining(self(), classSymRef);
@@ -1192,8 +1196,11 @@ J9::Compilation::addAsMonitorAuto(TR::SymbolReference* symRef, bool dontAddIfDLT
 TR_OpaqueClassBlock *
 J9::Compilation::getClassClassPointer(bool isVettedForAOT)
    {
-   if (!isVettedForAOT)
-      return _ObjectClassPointer ? self()->fe()->getClassClassPointer(_ObjectClassPointer) : 0;
+   if (!isVettedForAOT || self()->getOption(TR_UseSymbolValidationManager))
+      {
+      TR_OpaqueClassBlock *jlObject = self()->getObjectClassPointer();
+      return jlObject ? self()->fe()->getClassClassPointer(jlObject) : 0;
+      }
 
    if (_aotClassClassPointerInitialized)
       return _aotClassClassPointer;
@@ -1220,6 +1227,77 @@ J9::Compilation::getClassClassPointer(bool isVettedForAOT)
 
    _aotClassClassPointer = jlClass;
    return jlClass;
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getObjectClassPointer()
+   {
+   return self()->getCachedClassPointer(OBJECT_CLASS_POINTER);
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getRunnableClassPointer()
+   {
+   return self()->getCachedClassPointer(RUNNABLE_CLASS_POINTER);
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getStringClassPointer()
+   {
+   return self()->getCachedClassPointer(STRING_CLASS_POINTER);
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getSystemClassPointer()
+   {
+   return self()->getCachedClassPointer(SYSTEM_CLASS_POINTER);
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getReferenceClassPointer()
+   {
+   return self()->getCachedClassPointer(REFERENCE_CLASS_POINTER);
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getJITHelpersClassPointer()
+   {
+   return self()->getCachedClassPointer(JITHELPERS_CLASS_POINTER);
+   }
+
+TR_OpaqueClassBlock *
+J9::Compilation::getCachedClassPointer(CachedClassPointerId which)
+   {
+   TR_OpaqueClassBlock *clazz = _cachedClassPointers[which];
+   if (clazz != NULL)
+      return clazz;
+
+   if (self()->compileRelocatableCode()
+       && !self()->getOption(TR_UseSymbolValidationManager))
+      return NULL;
+
+   static const char * const names[] =
+      {
+      "Ljava/lang/Object;",
+      "Ljava/lang/Runnable;",
+      "Ljava/lang/String;",
+      "Ljava/lang/System;",
+      "Ljava/lang/ref/Reference;",
+      "Lcom/ibm/jit/JITHelpers;",
+      };
+
+   static_assert(
+      sizeof (names) / sizeof (names[0]) == CACHED_CLASS_POINTER_COUNT,
+      "wrong number of entries in J9::Compilation cached class names array");
+
+   const char *name = names[which];
+   clazz = self()->fej9()->getClassFromSignature(
+      name,
+      strlen(name),
+      self()->getCurrentMethod());
+
+   _cachedClassPointers[which] = clazz;
+   return clazz;
    }
 
 /*
@@ -1331,5 +1409,11 @@ J9::Compilation::notYetRunMeansCold()
       return false;
    else
       return true;
+   }
+
+bool
+J9::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
+   {
+   return self()->getOption(TR_EnableFieldWatch);
    }
 

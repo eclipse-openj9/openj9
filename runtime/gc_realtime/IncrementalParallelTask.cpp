@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,9 @@
 #include "ModronAssertions.h"
 
 void
-MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *env, const char *id)
+MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, const char *id)
 {
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
 	if(1 < _totalThreadCount) {
 		
 		if (env->isMasterThread()) {
@@ -74,8 +75,10 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *env, const 
 				 * (We may be overly cautious here, since we are not that sure that overlap between iterations may even happen)
 				 */				
 				do {
+					env->reportScanningSuspended();
 					omrthread_monitor_wait(_synchronizeMutex);
-				} while ((index == _synchronizeIndex) && !env->isMasterThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));				
+					env->reportScanningResumed();
+				} while ((index == _synchronizeIndex) && !env->isMasterThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));
 
 			} while(index == _synchronizeIndex);
 		}
@@ -146,7 +149,9 @@ MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentB
 			 * (We may be overly cautious here, since we are not that sure that overlap between iterations may even happen)
 			 */
 			do {
+				env->reportScanningSuspended();
 				omrthread_monitor_wait(_synchronizeMutex);
+				env->reportScanningResumed();
 			} while ((index == _synchronizeIndex) && !env->isMasterThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));
 		}
 		omrthread_monitor_exit(_synchronizeMutex);

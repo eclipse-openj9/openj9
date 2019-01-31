@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,6 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
-import java.util.logging.Formatter;
 import java.util.logging.Logger;
 
 import com.ibm.java.diagnostics.utils.IContext;
@@ -40,16 +38,16 @@ import com.ibm.java.diagnostics.utils.plugins.DTFJPlugin;
 /**
  * Command to display all the currently installed Java util loggers.
  * Allows you to selectively enable or disable them as well as set their logging levels.
- * @author adam
  *
+ * @author adam
  */
 @DTFJPlugin(version=".*", runtime=false, image=false)
 public class LogCommand extends BaseJdmpviewCommand {
 
 	{
-		addCommand("log", "[name level]", "display and control instances of java.util.logging.Logger");	
+		addCommand("log", "[name level]", "display and control instances of java.util.logging.Logger");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -66,7 +64,7 @@ public class LogCommand extends BaseJdmpviewCommand {
 				break;
 		}
 	}
-	
+
 	private void displayLoggers() {
 		LogManager lm = LogManager.getLogManager();
 		TreeSet<String> names = new TreeSet<String>();
@@ -87,7 +85,7 @@ public class LogCommand extends BaseJdmpviewCommand {
 				Level level = logger.getLevel();
 				if (level != null) {
 					String name = level.getName();
-					output.append(name);					
+					output.append(name);
 				}
 				output.append(") ");
 			}
@@ -99,11 +97,11 @@ public class LogCommand extends BaseJdmpviewCommand {
 			out.println(name);
 		}
 	}
-	
+
 	private void configureLogger(String name, String level) {
 		LogManager lm = LogManager.getLogManager();
 		Logger logger = lm.getLogger(name);
-		if(name == null) {
+		if (logger == null) {
 			out.println("The logger name " + name + " was not recognised");
 			return;
 		}
@@ -129,7 +127,6 @@ public class LogCommand extends BaseJdmpviewCommand {
 		handler.setLevel(lvl);
 		logger.addHandler(handler);
 	}
-	
 
 	@Override
 	public void printDetailedHelp(PrintStream out) {

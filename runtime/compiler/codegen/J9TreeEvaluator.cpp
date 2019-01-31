@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@
 
 #include "codegen/TreeEvaluator.hpp"
 
-#include "util_api.h"                           // for instanceOfOrCheckCast, instanceOfOrCheckCastNoCacheUpdate
-#include "codegen/CodeGenerator.hpp"            // for CodeGenerator
+#include "util_api.h"
+#include "codegen/CodeGenerator.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"                           // for POINTER_PRINTF_FORMAT
+#include "env/IO.hpp"
 #include "env/VMJ9.h"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/Node.hpp"
-#include "il/Node_inlines.hpp"                  // for getFirstChild, etc
+#include "il/Node_inlines.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -109,13 +109,13 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
 
    if (!valueProfileInfo)
       {
-      return NULL;
+      return 0;
       }
 
    TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues() == 0)
       {
-      return NULL;
+      return 0;
       }
 
    if (topClassWasCastClass)

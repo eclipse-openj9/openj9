@@ -24,13 +24,15 @@
                 SURROGATE_BITS32    equ 0d800d800h
                 SSE_MIN_CHARS       equ 32
 
+%include "jilconsts.inc"
+
 segment .text
 
-                global _encodeUTF16Big
-                global _encodeUTF16Little
+                DECLARE_GLOBAL encodeUTF16Big
+                DECLARE_GLOBAL encodeUTF16Little
 
                 align 16
-_encodeUTF16Big_shufmask:
+encodeUTF16Big_shufmask:
                 dq 0607040502030001h
                 dq 0e0f0c0d0a0b0809h
 
@@ -121,7 +123,7 @@ Laligned16_%1:                           ; helperName
 
 %if %2 ;&bigEndian
                 ; shuffle mask for PSHUFB
-                movdqa xmm4, oword [rel _encodeUTF16Big_shufmask]
+                movdqa xmm4, oword [rel encodeUTF16Big_shufmask]
 %endif
 
 L8_at_a_time_%1:                         ; helperName
@@ -179,5 +181,5 @@ Lend_%1: ;&helperName:
 
 ; Expand out the two helpers
 
-DefineUTF16EncodeHelper _encodeUTF16Big, 1
-DefineUTF16EncodeHelper _encodeUTF16Little, 0
+DefineUTF16EncodeHelper encodeUTF16Big, 1
+DefineUTF16EncodeHelper encodeUTF16Little, 0

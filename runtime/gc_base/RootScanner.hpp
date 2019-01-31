@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,6 +92,8 @@ protected:
 	bool _trackVisibleStackFrameDepth; /**< Should the stack walker be told to track the visible frame depth. Default false, should set to true when doing JVMTI walks that report stack slots */
 
 	U_64 _entityStartScanTime; /**< The start time of the scan of the current scanning entity, or 0 if no entity is being scanned.  Defaults to 0. */
+	U_64 _entityIncrementStartTime; /**< Start time of current increment with a scan entity (Metronome may have several increment for each entity) */
+	U_64 _entityIncrementEndTime; /**< End time of the current increment */
 	RootScannerEntity _scanningEntity; /**< The root scanner entity that is currently being scanned. Defaults to RootScannerEntity_None. */ 
 	RootScannerEntity _lastScannedEntity; /**< The root scanner entity that was last scanned. Defaults to RootScannerEntity_None. */
 
@@ -195,8 +197,24 @@ protected:
 		if (_extensions->rootScannerStatsEnabled) {
 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			_entityStartScanTime = omrtime_hires_clock();	
+			_entityIncrementStartTime = _entityStartScanTime;
 		}
 	}
+	
+	MMINLINE void updateScanStats(uint64_t endTime) {
+	
+		if (_entityIncrementStartTime >= endTime) {
+			/* overflow */
+ 			_env->_rootScannerStats._entityScanTime[_scanningEntity] += 1;
+ 		} else {
+			uint64_t duration = endTime - _entityIncrementStartTime;
+			_env->_rootScannerStats._entityScanTime[_scanningEntity] += duration;	
+			if ((duration > _env->_rootScannerStats._maxIncrementTime) && (RootScannerEntity_None != _scanningEntity)) {
+				_env->_rootScannerStats._maxIncrementTime = duration;
+				_env->_rootScannerStats._maxIncrementEntity = _scanningEntity;
+			}
+		}
+	}	
 	
 	/**
 	 * Sets the currently scanned root entity to None and sets the last scanned root
@@ -207,22 +225,23 @@ protected:
 	reportScanningEnded(RootScannerEntity scannedEntity)
 	{
 		/* Ensures scanning ended for the currently scanned entity. */
-		assume0(_scanningEntity == scannedEntity);
-		_lastScannedEntity = _scanningEntity;
-		_scanningEntity = RootScannerEntity_None;
+		Assert_MM_true(_scanningEntity == scannedEntity);
 		
 		if (_extensions->rootScannerStatsEnabled) {
-			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
-			U_64 entityEndScanTime = omrtime_hires_clock();
+ 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+ 			uint64_t entityEndScanTime = omrtime_hires_clock();
 			
-			if (_entityStartScanTime >= entityEndScanTime) {
-				_env->_rootScannerStats._entityScanTime[scannedEntity] += 1;
-			} else {
-				_env->_rootScannerStats._entityScanTime[scannedEntity] += entityEndScanTime - _entityStartScanTime;	
-			}
-			
-			_entityStartScanTime = 0;
-		}
+			_env->_rootScannerStats._statsUsed = true;
+			_extensions->rootScannerStatsUsed = true;
+							
+			updateScanStats(entityEndScanTime);
+ 			
+ 			_entityStartScanTime = 0;
+			_entityIncrementStartTime = 0;
+ 		}
+
+		_lastScannedEntity = _scanningEntity;
+ 		_scanningEntity = RootScannerEntity_None;
 	}
 
 	/**
@@ -232,6 +251,35 @@ protected:
 	void scanModularityObjects(J9ClassLoader * classLoader);
 
 public:
+
+	/** 
+	 * Maintain start/end increment times when scan is suspended. Add the diff (duration) to scan entity time. 
+	 * Also maintain max increment duration and its entity
+	 */	
+	MMINLINE void
+	reportScanningSuspended()
+	{
+		if (_extensions->rootScannerStatsEnabled) {
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			_entityIncrementEndTime = omrtime_hires_clock();
+			
+			updateScanStats(_entityIncrementEndTime);
+		}
+	}
+
+	/** 
+	 * Maintain start/end increment times, when scan is resumed.
+	 */	
+	MMINLINE void
+	reportScanningResumed()
+	{
+		if (_extensions->rootScannerStatsEnabled) {
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			_entityIncrementStartTime = omrtime_hires_clock();
+			_entityIncrementEndTime = 0;	
+		}
+	}
+
 	MM_RootScanner(MM_EnvironmentBase *env, bool singleThread = false)
 		: MM_BaseVirtual()
 		, _env(env)
@@ -251,6 +299,8 @@ public:
 		, _includeJVMTIObjectTagTables(true)
 		, _trackVisibleStackFrameDepth(false)
 		, _entityStartScanTime(0)
+		, _entityIncrementStartTime(0)
+		, _entityIncrementEndTime(0)		
 		, _scanningEntity(RootScannerEntity_None)
 		, _lastScannedEntity(RootScannerEntity_None)
 	{

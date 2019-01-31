@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2018 IBM Corp. and others
+* Copyright (c) 2017, 2019 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,16 +33,16 @@
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                   // for ILOpCode, etc
+#include "il/ILOps.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/Structure.hpp"
-#include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
+#include "codegen/CodeGenerator.hpp"
 #include "optimizer/TransformUtil.hpp"
-#include "env/j9method.h"     // for TR_J9MethodBase::isUnsafePut
-#include "optimizer/Optimization_inlines.hpp"  // for trace()
+#include "env/j9method.h"
+#include "optimizer/Optimization_inlines.hpp"
 
 void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode)
    {
@@ -271,9 +271,9 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       if (enableTrace)
          traceMsg(comp(), "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n", isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
-      static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
+      static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
       // Test if the call is a write to a static final field
-      if (!disableIllegalWriteReport
+      if (enableIllegalWriteReport
           && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding)
           && TR_J9MethodBase::isUnsafePut(unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod()))
          {
@@ -296,6 +296,13 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
             traceMsg(comp(), "Created isFinal test node n%dn, non-final-static field will fall through to Block_%d, final field goes to Block_%d\n",
                      isFinalNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber(), ifTree->getEnclosingBlock()->getNumber());
             }
+         TR::DebugCounter::prependDebugCounter(comp(),
+                                               TR::DebugCounter::debugCounterName(comp(),
+                                                                                  "illegalWriteReport/atomic/(%s %s)",
+                                                                                  comp()->signature(),
+                                                                                  comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                                  ifTree->getNextTreeTop());
+
          }
 
       // Calculate static address
@@ -345,13 +352,13 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
+         return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetInt:
          return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::sun_misc_Unsafe_getAndAddLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
+         return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetLong:
          return !treetop->getEnclosingBlock()->isCold() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 

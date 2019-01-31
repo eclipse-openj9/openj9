@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,10 @@ function(j9vm_gen_asm)
 		list(APPEND m4_defines "-D${define}")
 	endforeach()
 
-	set(m4_includes "-I${j9vm_SOURCE_DIR}/oti")
+	set(m4_includes
+		"-I${j9vm_SOURCE_DIR}/oti"
+		"-I${j9vm_BINARY_DIR}/oti"
+	)
 	foreach(inc_dir IN LISTS opt_INCLUDE_DIRECTORIES)
 		list(APPEND m4_includes "-I${inc_dir}")
 	endforeach()

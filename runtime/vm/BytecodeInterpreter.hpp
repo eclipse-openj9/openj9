@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3035,7 +3035,7 @@ done:
 		} else {
 			pushObjectInSpecialFrame(REGISTER_ARGS, instance);
 			updateVMStruct(REGISTER_ARGS);
-			sendInit(_currentThread, instance, senderClass, J9_LOOK_NEW_INSTANCE|J9_LOOK_REFLECT_CALL, 0);
+			sendInit(_currentThread, instance, senderClass, J9_LOOK_NEW_INSTANCE|J9_LOOK_REFLECT_CALL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
@@ -6188,7 +6188,7 @@ retry:
 		UDATA volatile classAndFlags = 0;
 		void* volatile valueAddress = NULL;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, false))) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset))) {
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6261,37 +6261,46 @@ done:
 		void* volatile valueAddress = NULL;
 		void *resolveResult = NULL;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, true))) {
-			/* The above test will fail if the ref has been resolved for put and the target
-			 * field is final. In this case, ensure that the current method is a constructor
-			 * if the class is enforcing the final field setting rules.
-			 *
-			 * If the check fails, run the resolve again to throw the exception.
-			 */
-			if (!J9_ARE_ALL_BITS_SET(flagsAndClass, (UDATA)(J9StaticFieldRefPutResolved | J9StaticFieldRefFinal) << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT))
-				|| (VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
-					&& !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), false)
-				   )
-			) {
-				/* Unresolved */
-				J9Method *method = _literals;
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
+		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset))) {
+			/* Unresolved */
+resolve:
+			J9Method *method = _literals;
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+				goto done;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			if ((void*)-1 == resolveResult) {
+				ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
+			}
+			valueOffset = ramStaticFieldRef->valueOffset;
+			flagsAndClass = ramStaticFieldRef->flagsAndClass;
+		} else {
+			/* Ref is resolved, see if it's fully resolved for put (put resolved and not a final field) */
+			UDATA const resolvedBit = (UDATA)J9StaticFieldRefPutResolved << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
+			UDATA const finalBit = (UDATA)J9StaticFieldRefFinal << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
+			UDATA const testBits = resolvedBit | finalBit;
+			UDATA const bits = flagsAndClass & testBits;
+			/* Put resolved for a non-final field means fully resolved */
+			if (J9_UNEXPECTED(resolvedBit != bits)) {
+				/* If not put resolved for a final field, resolve is necessary */
+				if (testBits != bits) {
+					goto resolve;
 				}
-				if ((void*)-1 == resolveResult) {
-					ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
+				/* Final field - ensure the running method is allowed to store */
+				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
+				)) {
+					/* Store not allowed - run the resolve code to throw the exception */
+					goto resolve;
 				}
-				valueOffset = ramStaticFieldRef->valueOffset;
-				flagsAndClass = ramStaticFieldRef->flagsAndClass;
 			}
 		}
 		/* Swap flags and class subfield order. */
@@ -6347,7 +6356,7 @@ retry:
 		UDATA const flags = ramFieldRef->flags;
 		UDATA const valueOffset = ramFieldRef->valueOffset;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, false))) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset))) {
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6429,34 +6438,43 @@ done:
 		UDATA flags = ramFieldRef->flags;
 		UDATA valueOffset = ramFieldRef->valueOffset;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, true))) {
-			/* The above test will fail if the ref has been resolved for put and the target
-			 * field is final. In this case, ensure that the current method is a constructor
-			 * if the class is enforcing the final field setting rules.
-			 *
-			 * If the check fails, run the resolve again to throw the exception.
-			 */
-			if (!J9_ARE_ALL_BITS_SET(flags, J9FieldFlagPutResolved | J9AccFinal)
-				|| (VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
-					&& !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
-				   )
-			) {
-				/* Unresolved */
-				J9Method *method = _literals;
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER, NULL);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
+		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset))) {
+			/* Unresolved */
+resolve:
+			J9Method *method = _literals;
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER, NULL);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+				goto done;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			flags = ramFieldRef->flags;
+			valueOffset = ramFieldRef->valueOffset;
+		} else {
+			/* Ref is resolved, see if it's fully resolved for put (put resolved and not a final field) */
+			UDATA const resolvedBit = J9FieldFlagPutResolved;
+			UDATA const finalBit = J9AccFinal;
+			UDATA const testBits = resolvedBit | finalBit;
+			UDATA const bits = flags & testBits;
+			/* Put resolved for a non-final field means fully resolved */
+			if (J9_UNEXPECTED(resolvedBit != bits)) {
+				/* If not put resolved for a final field, resolve is necessary */
+				if (testBits != bits) {
+					goto resolve;
 				}
-				flags = ramFieldRef->flags;
-				valueOffset = ramFieldRef->valueOffset;
+				/* Final field - ensure the running method is allowed to store */
+				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
+				)) {
+					/* Store not allowed - run the resolve code to throw the exception */
+					goto resolve;
+				}
 			}
 		}
 #if defined(DO_HOOKS)
@@ -7886,7 +7904,7 @@ retry:
 				} else {
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvoke (_currentThread, mhReceiver, type, FALSE /* dropFirstArg */, 0 /* reserved */);
+					sendForGenericInvoke (_currentThread, mhReceiver, type, FALSE /* dropFirstArg */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					mhReceiver = (j9object_t) _currentThread->returnValue;
 					if (VM_VMHelpers::exceptionPending(_currentThread)) {
@@ -8009,7 +8027,7 @@ done:
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					pushObjectInSpecialFrame(REGISTER_ARGS, varHandle);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */, 0 /* reserved */);
+					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					varHandle = popObjectInSpecialFrame(REGISTER_ARGS);
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
@@ -8231,7 +8249,7 @@ protected:
 
 public:
 
-#if (defined(J9VM_ARCH_X86) || defined(S390)) && defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 6)))
+#if ((defined(WIN32) && defined(__clang__)) || ((defined(J9VM_ARCH_X86) || defined(S390)) && defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 6)))))
 	/*
 	 * This method can't be 'VMINLINE' because it declares local static data
 	 * triggering a warning with GCC compilers newer than 4.6.
@@ -8302,271 +8320,271 @@ public:
 #define EXECUTE_SEND_TARGET(number) goto *(sendTargetTable[number])
 #define EXECUTE_CURRENT_BYTECODE() EXECUTE_BYTECODE_NUMBER(*_pc)
 	static JUMP_TABLE_TYPE bytecodeTable[] = {
-		JUMP_TABLE_ENTRY(JBnop),
-		JUMP_TABLE_ENTRY(JBaconstnull),
-		JUMP_TABLE_ENTRY(JBiconstm1),
-		JUMP_TABLE_ENTRY(JBiconst0),
-		JUMP_TABLE_ENTRY(JBiconst1),
-		JUMP_TABLE_ENTRY(JBiconst2),
-		JUMP_TABLE_ENTRY(JBiconst3),
-		JUMP_TABLE_ENTRY(JBiconst4),
-		JUMP_TABLE_ENTRY(JBiconst5),
-		JUMP_TABLE_ENTRY(JBlconst0),
-		JUMP_TABLE_ENTRY(JBlconst1),
-		JUMP_TABLE_ENTRY(JBfconst0),
-		JUMP_TABLE_ENTRY(JBfconst1),
-		JUMP_TABLE_ENTRY(JBfconst2),
-		JUMP_TABLE_ENTRY(JBdconst0),
-		JUMP_TABLE_ENTRY(JBdconst1),
-		JUMP_TABLE_ENTRY(JBbipush),
-		JUMP_TABLE_ENTRY(JBsipush),
-		JUMP_TABLE_ENTRY(JBldc),
-		JUMP_TABLE_ENTRY(JBldcw),
-		JUMP_TABLE_ENTRY(JBldc2lw),
-		JUMP_TABLE_ENTRY(JBiload),
-		JUMP_TABLE_ENTRY(JBlload),
-		JUMP_TABLE_ENTRY(JBfload),
-		JUMP_TABLE_ENTRY(JBdload),
-		JUMP_TABLE_ENTRY(JBaload),
-		JUMP_TABLE_ENTRY(JBiload0),
-		JUMP_TABLE_ENTRY(JBiload1),
-		JUMP_TABLE_ENTRY(JBiload2),
-		JUMP_TABLE_ENTRY(JBiload3),
-		JUMP_TABLE_ENTRY(JBlload0),
-		JUMP_TABLE_ENTRY(JBlload1),
-		JUMP_TABLE_ENTRY(JBlload2),
-		JUMP_TABLE_ENTRY(JBlload3),
-		JUMP_TABLE_ENTRY(JBfload0),
-		JUMP_TABLE_ENTRY(JBfload1),
-		JUMP_TABLE_ENTRY(JBfload2),
-		JUMP_TABLE_ENTRY(JBfload3),
-		JUMP_TABLE_ENTRY(JBdload0),
-		JUMP_TABLE_ENTRY(JBdload1),
-		JUMP_TABLE_ENTRY(JBdload2),
-		JUMP_TABLE_ENTRY(JBdload3),
-		JUMP_TABLE_ENTRY(JBaload0),
-		JUMP_TABLE_ENTRY(JBaload1),
-		JUMP_TABLE_ENTRY(JBaload2),
-		JUMP_TABLE_ENTRY(JBaload3),
-		JUMP_TABLE_ENTRY(JBiaload),
-		JUMP_TABLE_ENTRY(JBlaload),
-		JUMP_TABLE_ENTRY(JBfaload),
-		JUMP_TABLE_ENTRY(JBdaload),
-		JUMP_TABLE_ENTRY(JBaaload),
-		JUMP_TABLE_ENTRY(JBbaload),
-		JUMP_TABLE_ENTRY(JBcaload),
-		JUMP_TABLE_ENTRY(JBsaload),
-		JUMP_TABLE_ENTRY(JBistore),
-		JUMP_TABLE_ENTRY(JBlstore),
-		JUMP_TABLE_ENTRY(JBfstore),
-		JUMP_TABLE_ENTRY(JBdstore),
-		JUMP_TABLE_ENTRY(JBastore),
-		JUMP_TABLE_ENTRY(JBistore0),
-		JUMP_TABLE_ENTRY(JBistore1),
-		JUMP_TABLE_ENTRY(JBistore2),
-		JUMP_TABLE_ENTRY(JBistore3),
-		JUMP_TABLE_ENTRY(JBlstore0),
-		JUMP_TABLE_ENTRY(JBlstore1),
-		JUMP_TABLE_ENTRY(JBlstore2),
-		JUMP_TABLE_ENTRY(JBlstore3),
-		JUMP_TABLE_ENTRY(JBfstore0),
-		JUMP_TABLE_ENTRY(JBfstore1),
-		JUMP_TABLE_ENTRY(JBfstore2),
-		JUMP_TABLE_ENTRY(JBfstore3),
-		JUMP_TABLE_ENTRY(JBdstore0),
-		JUMP_TABLE_ENTRY(JBdstore1),
-		JUMP_TABLE_ENTRY(JBdstore2),
-		JUMP_TABLE_ENTRY(JBdstore3),
-		JUMP_TABLE_ENTRY(JBastore0),
-		JUMP_TABLE_ENTRY(JBastore1),
-		JUMP_TABLE_ENTRY(JBastore2),
-		JUMP_TABLE_ENTRY(JBastore3),
-		JUMP_TABLE_ENTRY(JBiastore),
-		JUMP_TABLE_ENTRY(JBlastore),
-		JUMP_TABLE_ENTRY(JBfastore),
-		JUMP_TABLE_ENTRY(JBdastore),
-		JUMP_TABLE_ENTRY(JBaastore),
-		JUMP_TABLE_ENTRY(JBbastore),
-		JUMP_TABLE_ENTRY(JBcastore),
-		JUMP_TABLE_ENTRY(JBsastore),
-		JUMP_TABLE_ENTRY(JBpop),
-		JUMP_TABLE_ENTRY(JBpop2),
-		JUMP_TABLE_ENTRY(JBdup),
-		JUMP_TABLE_ENTRY(JBdupx1),
-		JUMP_TABLE_ENTRY(JBdupx2),
-		JUMP_TABLE_ENTRY(JBdup2),
-		JUMP_TABLE_ENTRY(JBdup2x1),
-		JUMP_TABLE_ENTRY(JBdup2x2),
-		JUMP_TABLE_ENTRY(JBswap),
-		JUMP_TABLE_ENTRY(JBiadd),
-		JUMP_TABLE_ENTRY(JBladd),
-		JUMP_TABLE_ENTRY(JBfadd),
-		JUMP_TABLE_ENTRY(JBdadd),
-		JUMP_TABLE_ENTRY(JBisub),
-		JUMP_TABLE_ENTRY(JBlsub),
-		JUMP_TABLE_ENTRY(JBfsub),
-		JUMP_TABLE_ENTRY(JBdsub),
-		JUMP_TABLE_ENTRY(JBimul),
-		JUMP_TABLE_ENTRY(JBlmul),
-		JUMP_TABLE_ENTRY(JBfmul),
-		JUMP_TABLE_ENTRY(JBdmul),
-		JUMP_TABLE_ENTRY(JBidiv),
-		JUMP_TABLE_ENTRY(JBldiv),
-		JUMP_TABLE_ENTRY(JBfdiv),
-		JUMP_TABLE_ENTRY(JBddiv),
-		JUMP_TABLE_ENTRY(JBirem),
-		JUMP_TABLE_ENTRY(JBlrem),
-		JUMP_TABLE_ENTRY(JBfrem),
-		JUMP_TABLE_ENTRY(JBdrem),
-		JUMP_TABLE_ENTRY(JBineg),
-		JUMP_TABLE_ENTRY(JBlneg),
-		JUMP_TABLE_ENTRY(JBfneg),
-		JUMP_TABLE_ENTRY(JBdneg),
-		JUMP_TABLE_ENTRY(JBishl),
-		JUMP_TABLE_ENTRY(JBlshl),
-		JUMP_TABLE_ENTRY(JBishr),
-		JUMP_TABLE_ENTRY(JBlshr),
-		JUMP_TABLE_ENTRY(JBiushr),
-		JUMP_TABLE_ENTRY(JBlushr),
-		JUMP_TABLE_ENTRY(JBiand),
-		JUMP_TABLE_ENTRY(JBland),
-		JUMP_TABLE_ENTRY(JBior),
-		JUMP_TABLE_ENTRY(JBlor),
-		JUMP_TABLE_ENTRY(JBixor),
-		JUMP_TABLE_ENTRY(JBlxor),
-		JUMP_TABLE_ENTRY(JBiinc),
-		JUMP_TABLE_ENTRY(JBi2l),
-		JUMP_TABLE_ENTRY(JBi2f),
-		JUMP_TABLE_ENTRY(JBi2d),
-		JUMP_TABLE_ENTRY(JBl2i),
-		JUMP_TABLE_ENTRY(JBl2f),
-		JUMP_TABLE_ENTRY(JBl2d),
-		JUMP_TABLE_ENTRY(JBf2i),
-		JUMP_TABLE_ENTRY(JBf2l),
-		JUMP_TABLE_ENTRY(JBf2d),
-		JUMP_TABLE_ENTRY(JBd2i),
-		JUMP_TABLE_ENTRY(JBd2l),
-		JUMP_TABLE_ENTRY(JBd2f),
-		JUMP_TABLE_ENTRY(JBi2b),
-		JUMP_TABLE_ENTRY(JBi2c),
-		JUMP_TABLE_ENTRY(JBi2s),
-		JUMP_TABLE_ENTRY(JBlcmp),
-		JUMP_TABLE_ENTRY(JBfcmpl),
-		JUMP_TABLE_ENTRY(JBfcmpg),
-		JUMP_TABLE_ENTRY(JBdcmpl),
-		JUMP_TABLE_ENTRY(JBdcmpg),
-		JUMP_TABLE_ENTRY(JBifeq),
-		JUMP_TABLE_ENTRY(JBifne),
-		JUMP_TABLE_ENTRY(JBiflt),
-		JUMP_TABLE_ENTRY(JBifge),
-		JUMP_TABLE_ENTRY(JBifgt),
-		JUMP_TABLE_ENTRY(JBifle),
-		JUMP_TABLE_ENTRY(JBificmpeq),
-		JUMP_TABLE_ENTRY(JBificmpne),
-		JUMP_TABLE_ENTRY(JBificmplt),
-		JUMP_TABLE_ENTRY(JBificmpge),
-		JUMP_TABLE_ENTRY(JBificmpgt),
-		JUMP_TABLE_ENTRY(JBificmple),
-		JUMP_TABLE_ENTRY(JBifacmpeq),
-		JUMP_TABLE_ENTRY(JBifacmpne),
-		JUMP_TABLE_ENTRY(JBgoto),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBtableswitch),
-		JUMP_TABLE_ENTRY(JBlookupswitch),
-		JUMP_TABLE_ENTRY(JBreturn0),
-		JUMP_TABLE_ENTRY(JBreturn1),
-		JUMP_TABLE_ENTRY(JBreturn2),
-		JUMP_TABLE_ENTRY(JBsyncReturn0),
-		JUMP_TABLE_ENTRY(JBsyncReturn1),
-		JUMP_TABLE_ENTRY(JBsyncReturn2),
-		JUMP_TABLE_ENTRY(JBgetstatic),
-		JUMP_TABLE_ENTRY(JBputstatic),
-		JUMP_TABLE_ENTRY(JBgetfield),
-		JUMP_TABLE_ENTRY(JBputfield),
-		JUMP_TABLE_ENTRY(JBinvokevirtual),
-		JUMP_TABLE_ENTRY(JBinvokespecial),
-		JUMP_TABLE_ENTRY(JBinvokestatic),
-		JUMP_TABLE_ENTRY(JBinvokeinterface),
-		JUMP_TABLE_ENTRY(JBinvokedynamic),
-		JUMP_TABLE_ENTRY(JBnew),
-		JUMP_TABLE_ENTRY(JBnewarray),
-		JUMP_TABLE_ENTRY(JBanewarray),
-		JUMP_TABLE_ENTRY(JBarraylength),
-		JUMP_TABLE_ENTRY(JBathrow),
-		JUMP_TABLE_ENTRY(JBcheckcast),
-		JUMP_TABLE_ENTRY(JBinstanceof),
-		JUMP_TABLE_ENTRY(JBmonitorenter),
-		JUMP_TABLE_ENTRY(JBmonitorexit),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBmultianewarray),
-		JUMP_TABLE_ENTRY(JBifnull),
-		JUMP_TABLE_ENTRY(JBifnonnull),
-		JUMP_TABLE_ENTRY(JBgotow),
-		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBnop),/* 0x00(0) */
+		JUMP_TABLE_ENTRY(JBaconstnull), /* 0x01(1) */
+		JUMP_TABLE_ENTRY(JBiconstm1), /* 0x02(2) */
+		JUMP_TABLE_ENTRY(JBiconst0), /* 0x03(3) */
+		JUMP_TABLE_ENTRY(JBiconst1), /* 0x04(4) */
+		JUMP_TABLE_ENTRY(JBiconst2), /* 0x05(5) */
+		JUMP_TABLE_ENTRY(JBiconst3), /* 0x06(6) */
+		JUMP_TABLE_ENTRY(JBiconst4), /* 0x07(7) */
+		JUMP_TABLE_ENTRY(JBiconst5), /* 0x08(8) */
+		JUMP_TABLE_ENTRY(JBlconst0), /* 0x09(9) */
+		JUMP_TABLE_ENTRY(JBlconst1), /* 0x0A(10) */
+		JUMP_TABLE_ENTRY(JBfconst0), /* 0x0B(11) */
+		JUMP_TABLE_ENTRY(JBfconst1), /* 0x0C(12) */
+		JUMP_TABLE_ENTRY(JBfconst2), /* 0x0D(13) */
+		JUMP_TABLE_ENTRY(JBdconst0), /* 0x0E(14) */
+		JUMP_TABLE_ENTRY(JBdconst1), /* 0x0F(15) */
+		JUMP_TABLE_ENTRY(JBbipush), /* 0x10(16) */
+		JUMP_TABLE_ENTRY(JBsipush), /* 0x11(17) */
+		JUMP_TABLE_ENTRY(JBldc), /* 0x12(18) */
+		JUMP_TABLE_ENTRY(JBldcw), /* 0x13(19) */
+		JUMP_TABLE_ENTRY(JBldc2lw), /* 0x14(20) */
+		JUMP_TABLE_ENTRY(JBiload), /* 0x15(21) */
+		JUMP_TABLE_ENTRY(JBlload), /* 0x16(22) */
+		JUMP_TABLE_ENTRY(JBfload), /* 0x17(23) */
+		JUMP_TABLE_ENTRY(JBdload), /* 0x18(24) */
+		JUMP_TABLE_ENTRY(JBaload), /* 0x19(25) */
+		JUMP_TABLE_ENTRY(JBiload0), /* 0x1A(26) */
+		JUMP_TABLE_ENTRY(JBiload1), /* 0x1B(27) */
+		JUMP_TABLE_ENTRY(JBiload2), /* 0x1C(28) */
+		JUMP_TABLE_ENTRY(JBiload3), /* 0x1D(29) */
+		JUMP_TABLE_ENTRY(JBlload0), /* 0x1E(30) */
+		JUMP_TABLE_ENTRY(JBlload1), /* 0x1F(31) */
+		JUMP_TABLE_ENTRY(JBlload2), /* 0x20(32) */
+		JUMP_TABLE_ENTRY(JBlload3), /* 0x21(33) */
+		JUMP_TABLE_ENTRY(JBfload0), /* 0x22(34) */
+		JUMP_TABLE_ENTRY(JBfload1), /* 0x23(35) */
+		JUMP_TABLE_ENTRY(JBfload2), /* 0x24(36) */
+		JUMP_TABLE_ENTRY(JBfload3), /* 0x25(37) */
+		JUMP_TABLE_ENTRY(JBdload0), /* 0x26(38) */
+		JUMP_TABLE_ENTRY(JBdload1), /* 0x27(39) */
+		JUMP_TABLE_ENTRY(JBdload2), /* 0x28(40) */
+		JUMP_TABLE_ENTRY(JBdload3), /* 0x29(41) */
+		JUMP_TABLE_ENTRY(JBaload0), /* 0x2A(42) */
+		JUMP_TABLE_ENTRY(JBaload1), /* 0x2B(43) */
+		JUMP_TABLE_ENTRY(JBaload2), /* 0x2C(44) */
+		JUMP_TABLE_ENTRY(JBaload3), /* 0x2D(45) */
+		JUMP_TABLE_ENTRY(JBiaload), /* 0x2E(46) */
+		JUMP_TABLE_ENTRY(JBlaload), /* 0x2F(47) */
+		JUMP_TABLE_ENTRY(JBfaload), /* 0x30(48) */
+		JUMP_TABLE_ENTRY(JBdaload), /* 0x31(49) */
+		JUMP_TABLE_ENTRY(JBaaload), /* 0x32(50) */
+		JUMP_TABLE_ENTRY(JBbaload), /* 0x33(51) */
+		JUMP_TABLE_ENTRY(JBcaload), /* 0x34(52) */
+		JUMP_TABLE_ENTRY(JBsaload), /* 0x35(53) */
+		JUMP_TABLE_ENTRY(JBistore), /* 0x36(54) */
+		JUMP_TABLE_ENTRY(JBlstore), /* 0x37(55) */
+		JUMP_TABLE_ENTRY(JBfstore), /* 0x38(56) */
+		JUMP_TABLE_ENTRY(JBdstore), /* 0x39(57) */
+		JUMP_TABLE_ENTRY(JBastore), /* 0x3A(58) */
+		JUMP_TABLE_ENTRY(JBistore0), /* 0x3B(59) */
+		JUMP_TABLE_ENTRY(JBistore1), /* 0x3C(60) */
+		JUMP_TABLE_ENTRY(JBistore2), /* 0x3D(61) */
+		JUMP_TABLE_ENTRY(JBistore3), /* 0x3E(62) */
+		JUMP_TABLE_ENTRY(JBlstore0), /* 0x3F(63) */
+		JUMP_TABLE_ENTRY(JBlstore1), /* 0x40(64) */
+		JUMP_TABLE_ENTRY(JBlstore2), /* 0x41(65) */
+		JUMP_TABLE_ENTRY(JBlstore3), /* 0x42(66) */
+		JUMP_TABLE_ENTRY(JBfstore0), /* 0x43(67) */
+		JUMP_TABLE_ENTRY(JBfstore1), /* 0x44(68) */
+		JUMP_TABLE_ENTRY(JBfstore2), /* 0x45(69) */
+		JUMP_TABLE_ENTRY(JBfstore3), /* 0x46(70) */
+		JUMP_TABLE_ENTRY(JBdstore0), /* 0x47(71) */
+		JUMP_TABLE_ENTRY(JBdstore1), /* 0x48(72) */
+		JUMP_TABLE_ENTRY(JBdstore2), /* 0x49(73) */
+		JUMP_TABLE_ENTRY(JBdstore3), /* 0x4A(74) */
+		JUMP_TABLE_ENTRY(JBastore0), /* 0x4B(75) */
+		JUMP_TABLE_ENTRY(JBastore1), /* 0x4C(76) */
+		JUMP_TABLE_ENTRY(JBastore2), /* 0x4D(77) */
+		JUMP_TABLE_ENTRY(JBastore3), /* 0x4E(78) */
+		JUMP_TABLE_ENTRY(JBiastore), /* 0x4F(79) */
+		JUMP_TABLE_ENTRY(JBlastore), /* 0x50(80) */
+		JUMP_TABLE_ENTRY(JBfastore), /* 0x51(81) */
+		JUMP_TABLE_ENTRY(JBdastore), /* 0x52(82) */
+		JUMP_TABLE_ENTRY(JBaastore), /* 0x53(83) */
+		JUMP_TABLE_ENTRY(JBbastore), /* 0x54(84) */
+		JUMP_TABLE_ENTRY(JBcastore), /* 0x55(85) */
+		JUMP_TABLE_ENTRY(JBsastore), /* 0x56(86) */
+		JUMP_TABLE_ENTRY(JBpop), /* 0x57(87) */
+		JUMP_TABLE_ENTRY(JBpop2), /* 0x58(88) */
+		JUMP_TABLE_ENTRY(JBdup), /* 0x59(89) */
+		JUMP_TABLE_ENTRY(JBdupx1), /* 0x5A(90) */
+		JUMP_TABLE_ENTRY(JBdupx2), /* 0x5B(91) */
+		JUMP_TABLE_ENTRY(JBdup2), /* 0x5C(92) */
+		JUMP_TABLE_ENTRY(JBdup2x1), /* 0x5D(93) */
+		JUMP_TABLE_ENTRY(JBdup2x2), /* 0x5E(94) */
+		JUMP_TABLE_ENTRY(JBswap), /* 0x5F(95) */
+		JUMP_TABLE_ENTRY(JBiadd), /* 0x60(96) */
+		JUMP_TABLE_ENTRY(JBladd), /* 0x61(97) */
+		JUMP_TABLE_ENTRY(JBfadd), /* 0x62(98) */
+		JUMP_TABLE_ENTRY(JBdadd), /* 0x63(99) */
+		JUMP_TABLE_ENTRY(JBisub), /* 0x64(100) */
+		JUMP_TABLE_ENTRY(JBlsub), /* 0x65(101) */
+		JUMP_TABLE_ENTRY(JBfsub), /* 0x66(102) */
+		JUMP_TABLE_ENTRY(JBdsub), /* 0x67(103) */
+		JUMP_TABLE_ENTRY(JBimul), /* 0x68(104) */
+		JUMP_TABLE_ENTRY(JBlmul), /* 0x69(105) */
+		JUMP_TABLE_ENTRY(JBfmul), /* 0x6A(106) */
+		JUMP_TABLE_ENTRY(JBdmul), /* 0x6B(107) */
+		JUMP_TABLE_ENTRY(JBidiv), /* 0x6C(108) */
+		JUMP_TABLE_ENTRY(JBldiv), /* 0x6D(109) */
+		JUMP_TABLE_ENTRY(JBfdiv), /* 0x6E(110) */
+		JUMP_TABLE_ENTRY(JBddiv), /* 0x6F(111) */
+		JUMP_TABLE_ENTRY(JBirem), /* 0x70(112) */
+		JUMP_TABLE_ENTRY(JBlrem), /* 0x71(113) */
+		JUMP_TABLE_ENTRY(JBfrem), /* 0x72(114) */
+		JUMP_TABLE_ENTRY(JBdrem), /* 0x73(115) */
+		JUMP_TABLE_ENTRY(JBineg), /* 0x74(116) */
+		JUMP_TABLE_ENTRY(JBlneg), /* 0x75(117) */
+		JUMP_TABLE_ENTRY(JBfneg), /* 0x76(118) */
+		JUMP_TABLE_ENTRY(JBdneg), /* 0x77(119) */
+		JUMP_TABLE_ENTRY(JBishl), /* 0x78(120) */
+		JUMP_TABLE_ENTRY(JBlshl), /* 0x79(121) */
+		JUMP_TABLE_ENTRY(JBishr), /* 0x7A(122) */
+		JUMP_TABLE_ENTRY(JBlshr), /* 0x7B(123) */
+		JUMP_TABLE_ENTRY(JBiushr), /* 0x7C(124) */
+		JUMP_TABLE_ENTRY(JBlushr), /* 0x7D(125) */
+		JUMP_TABLE_ENTRY(JBiand), /* 0x7E(126) */
+		JUMP_TABLE_ENTRY(JBland), /* 0x7F(127) */
+		JUMP_TABLE_ENTRY(JBior), /* 0x80(128) */
+		JUMP_TABLE_ENTRY(JBlor), /* 0x81(129) */
+		JUMP_TABLE_ENTRY(JBixor), /* 0x82(130) */
+		JUMP_TABLE_ENTRY(JBlxor), /* 0x83(131) */
+		JUMP_TABLE_ENTRY(JBiinc), /* 0x84(132) */
+		JUMP_TABLE_ENTRY(JBi2l), /* 0x85(133) */
+		JUMP_TABLE_ENTRY(JBi2f), /* 0x86(134) */
+		JUMP_TABLE_ENTRY(JBi2d), /* 0x87(135) */
+		JUMP_TABLE_ENTRY(JBl2i), /* 0x88(136) */
+		JUMP_TABLE_ENTRY(JBl2f), /* 0x89(137) */
+		JUMP_TABLE_ENTRY(JBl2d), /* 0x8A(138) */
+		JUMP_TABLE_ENTRY(JBf2i), /* 0x8B(139) */
+		JUMP_TABLE_ENTRY(JBf2l), /* 0x8C(140) */
+		JUMP_TABLE_ENTRY(JBf2d), /* 0x8D(141) */
+		JUMP_TABLE_ENTRY(JBd2i), /* 0x8E(142) */
+		JUMP_TABLE_ENTRY(JBd2l), /* 0x8F(143) */
+		JUMP_TABLE_ENTRY(JBd2f), /* 0x90(144) */
+		JUMP_TABLE_ENTRY(JBi2b), /* 0x91(145) */
+		JUMP_TABLE_ENTRY(JBi2c), /* 0x92(146) */
+		JUMP_TABLE_ENTRY(JBi2s), /* 0x93(147) */
+		JUMP_TABLE_ENTRY(JBlcmp), /* 0x94(148) */
+		JUMP_TABLE_ENTRY(JBfcmpl), /* 0x95(149) */
+		JUMP_TABLE_ENTRY(JBfcmpg), /* 0x96(150) */
+		JUMP_TABLE_ENTRY(JBdcmpl), /* 0x97(151) */
+		JUMP_TABLE_ENTRY(JBdcmpg), /* 0x98(152) */
+		JUMP_TABLE_ENTRY(JBifeq), /* 0x99(153) */
+		JUMP_TABLE_ENTRY(JBifne), /* 0x9A(154) */
+		JUMP_TABLE_ENTRY(JBiflt), /* 0x9B(155) */
+		JUMP_TABLE_ENTRY(JBifge), /* 0x9C(156) */
+		JUMP_TABLE_ENTRY(JBifgt), /* 0x9D(157) */
+		JUMP_TABLE_ENTRY(JBifle), /* 0x9E(158) */
+		JUMP_TABLE_ENTRY(JBificmpeq), /* 0x9F(159) */
+		JUMP_TABLE_ENTRY(JBificmpne), /* 0xA0(160) */
+		JUMP_TABLE_ENTRY(JBificmplt), /* 0xA1(161) */
+		JUMP_TABLE_ENTRY(JBificmpge), /* 0xA2(162) */
+		JUMP_TABLE_ENTRY(JBificmpgt), /* 0xA3(163) */
+		JUMP_TABLE_ENTRY(JBificmple), /* 0xA4(164) */
+		JUMP_TABLE_ENTRY(JBifacmpeq), /* 0xA5(165) */
+		JUMP_TABLE_ENTRY(JBifacmpne), /* 0xA6(166) */
+		JUMP_TABLE_ENTRY(JBgoto), /* 0xA7(167) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xA8(168) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xA9(169) */
+		JUMP_TABLE_ENTRY(JBtableswitch), /* 0xAA(170) */
+		JUMP_TABLE_ENTRY(JBlookupswitch), /* 0xAB(171) */
+		JUMP_TABLE_ENTRY(JBreturn0), /* 0xAC(172) */
+		JUMP_TABLE_ENTRY(JBreturn1), /* 0xAD(173) */
+		JUMP_TABLE_ENTRY(JBreturn2), /* 0xAE(174) */
+		JUMP_TABLE_ENTRY(JBsyncReturn0), /* 0xAF(175) */
+		JUMP_TABLE_ENTRY(JBsyncReturn1), /* 0xB0(176) */
+		JUMP_TABLE_ENTRY(JBsyncReturn2), /* 0xB1(177) */
+		JUMP_TABLE_ENTRY(JBgetstatic), /* 0xB2(178) */
+		JUMP_TABLE_ENTRY(JBputstatic), /* 0xB3(179) */
+		JUMP_TABLE_ENTRY(JBgetfield), /* 0xB4(180) */
+		JUMP_TABLE_ENTRY(JBputfield), /* 0xB5(181) */
+		JUMP_TABLE_ENTRY(JBinvokevirtual), /* 0xB6(182) */
+		JUMP_TABLE_ENTRY(JBinvokespecial), /* 0xB7(183) */
+		JUMP_TABLE_ENTRY(JBinvokestatic), /* 0xB8(184) */
+		JUMP_TABLE_ENTRY(JBinvokeinterface), /* 0xB9(185) */
+		JUMP_TABLE_ENTRY(JBinvokedynamic), /* 0xBA(186) */
+		JUMP_TABLE_ENTRY(JBnew), /* 0xBB(187) */
+		JUMP_TABLE_ENTRY(JBnewarray), /* 0xBC(188) */
+		JUMP_TABLE_ENTRY(JBanewarray), /* 0xBD(189) */
+		JUMP_TABLE_ENTRY(JBarraylength), /* 0xBE(190) */
+		JUMP_TABLE_ENTRY(JBathrow), /* 0xBF(191) */
+		JUMP_TABLE_ENTRY(JBcheckcast), /* 0xC0(192) */
+		JUMP_TABLE_ENTRY(JBinstanceof), /* 0xC1(193) */
+		JUMP_TABLE_ENTRY(JBmonitorenter), /* 0xC2(194) */
+		JUMP_TABLE_ENTRY(JBmonitorexit), /* 0xC3(195) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xC4(196) */
+		JUMP_TABLE_ENTRY(JBmultianewarray), /* 0xC5(197) */
+		JUMP_TABLE_ENTRY(JBifnull), /* 0xC6(198) */
+		JUMP_TABLE_ENTRY(JBifnonnull), /* 0xC7(199) */
+		JUMP_TABLE_ENTRY(JBgotow), /* 0xC8(200) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xC9(201) */
 #if defined(DEBUG_VERSION)
-		JUMP_TABLE_ENTRY(JBbreakpoint),
+		JUMP_TABLE_ENTRY(JBbreakpoint), /* 0xCA(202) */
 #else /* DEBUG_VERSION */
-		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCA(202) */
 #endif /* DEBUG_VERSION */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(JBdefaultvalue), /* 203 */
-		JUMP_TABLE_ENTRY(JBwithfield), /* 204 */
+		JUMP_TABLE_ENTRY(JBdefaultvalue), /* 0xCB(203) */
+		JUMP_TABLE_ENTRY(JBwithfield), /* 0xCC(204) */
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 203 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 204 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCB(203) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCC(204) */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 205 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 206 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 207 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 208 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 209 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 210 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 211 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 212 */
-		JUMP_TABLE_ENTRY(JBiincw), /* 213 */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 214 */
-		JUMP_TABLE_ENTRY(JBaload0getfield), /* 215 */
-		JUMP_TABLE_ENTRY(JBnewdup), /* 216 */
-		JUMP_TABLE_ENTRY(JBiloadw), /* 217 */
-		JUMP_TABLE_ENTRY(JBlloadw), /* 218 */
-		JUMP_TABLE_ENTRY(JBfloadw), /* 219 */
-		JUMP_TABLE_ENTRY(JBdloadw), /* 220 */
-		JUMP_TABLE_ENTRY(JBaloadw), /* 221 */
-		JUMP_TABLE_ENTRY(JBistorew), /* 222 */
-		JUMP_TABLE_ENTRY(JBlstorew), /* 223 */
-		JUMP_TABLE_ENTRY(JBfstorew), /* 224 */
-		JUMP_TABLE_ENTRY(JBdstorew), /* 225 */
-		JUMP_TABLE_ENTRY(JBastorew), /* 226 */
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBreturnFromConstructor),
-		JUMP_TABLE_ENTRY(JBgenericReturn),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBinvokeinterface2),
-		JUMP_TABLE_ENTRY(JBinvokehandle),
-		JUMP_TABLE_ENTRY(JBinvokehandlegeneric),
-		JUMP_TABLE_ENTRY(JBinvokestaticsplit),
-		JUMP_TABLE_ENTRY(JBinvokespecialsplit),
-		JUMP_TABLE_ENTRY(JBreturnC),
-		JUMP_TABLE_ENTRY(JBreturnS),
-		JUMP_TABLE_ENTRY(JBreturnB),
-		JUMP_TABLE_ENTRY(JBreturnZ),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBretFromNative0),
-		JUMP_TABLE_ENTRY(JBretFromNative1),
-		JUMP_TABLE_ENTRY(JBretFromNativeF),
-		JUMP_TABLE_ENTRY(JBretFromNativeD),
-		JUMP_TABLE_ENTRY(JBretFromNativeJ),
-		JUMP_TABLE_ENTRY(JBldc2dw),
-		JUMP_TABLE_ENTRY(JBasyncCheck),
-		JUMP_TABLE_ENTRY(JBreturnFromJ2I),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBimpdep1),
-		JUMP_TABLE_ENTRY(JBimpdep2),
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCD(205) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCE(206) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCF(207) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xD0(208) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xD1(209) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xD2(210) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xD3(211) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xD4(212) */
+		JUMP_TABLE_ENTRY(JBiincw), /* 0xD5(213) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xD6(214) */
+		JUMP_TABLE_ENTRY(JBaload0getfield), /* 0xD7(215) */
+		JUMP_TABLE_ENTRY(JBnewdup), /* 0xD8(216) */
+		JUMP_TABLE_ENTRY(JBiloadw), /* 0xD9(217) */
+		JUMP_TABLE_ENTRY(JBlloadw), /* 0xDA(218) */
+		JUMP_TABLE_ENTRY(JBfloadw), /* 0xDB(219) */
+		JUMP_TABLE_ENTRY(JBdloadw), /* 0xDC(220) */
+		JUMP_TABLE_ENTRY(JBaloadw), /* 0xDD(221) */
+		JUMP_TABLE_ENTRY(JBistorew), /* 0xDE(222) */
+		JUMP_TABLE_ENTRY(JBlstorew), /* 0xDF(223) */
+		JUMP_TABLE_ENTRY(JBfstorew), /* 0xE0(224) */
+		JUMP_TABLE_ENTRY(JBdstorew), /* 0xE1(225) */
+		JUMP_TABLE_ENTRY(JBastorew), /* 0xE2(226) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xE3(227) */
+		JUMP_TABLE_ENTRY(JBreturnFromConstructor), /* 0xE4(228) */
+		JUMP_TABLE_ENTRY(JBgenericReturn), /* 0xE5(229) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xE6(230) */
+		JUMP_TABLE_ENTRY(JBinvokeinterface2), /* 0xE7(231) */
+		JUMP_TABLE_ENTRY(JBinvokehandle), /* 0xE8(232) */
+		JUMP_TABLE_ENTRY(JBinvokehandlegeneric), /* 0xE9(233) */
+		JUMP_TABLE_ENTRY(JBinvokestaticsplit), /* 0xEA(234) */
+		JUMP_TABLE_ENTRY(JBinvokespecialsplit), /* 0xEB(235) */
+		JUMP_TABLE_ENTRY(JBreturnC), /* 0xEC(236) */
+		JUMP_TABLE_ENTRY(JBreturnS), /* 0xED(237) */
+		JUMP_TABLE_ENTRY(JBreturnB), /* 0xEE(238) */
+		JUMP_TABLE_ENTRY(JBreturnZ), /* 0xEF(239) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xF0(240) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xF1(241) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xF2(242) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xF3(243) */
+		JUMP_TABLE_ENTRY(JBretFromNative0), /* 0xF4(244) */
+		JUMP_TABLE_ENTRY(JBretFromNative1), /* 0xF5(245) */
+		JUMP_TABLE_ENTRY(JBretFromNativeF), /* 0xF6(246) */
+		JUMP_TABLE_ENTRY(JBretFromNativeD), /* 0xF7(247) */
+		JUMP_TABLE_ENTRY(JBretFromNativeJ), /* 0xF8(248) */
+		JUMP_TABLE_ENTRY(JBldc2dw), /* 0xF9(249) */
+		JUMP_TABLE_ENTRY(JBasyncCheck), /* 0xFA(250) */
+		JUMP_TABLE_ENTRY(JBreturnFromJ2I), /* 0xFB(251) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xFC(252) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xFD(253) */
+		JUMP_TABLE_ENTRY(JBimpdep1), /* 0xFE(254) */
+		JUMP_TABLE_ENTRY(JBimpdep2),/* 0xFF(255) */
 	};
 	static JUMP_TABLE_TYPE sendTargetTable[] = {
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
@@ -9975,6 +9993,9 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBmultianewarray):
 			SINGLE_STEP();
 			PERFORM_ACTION(multianewarray(REGISTER_ARGS));
+		JUMP_TARGET(JBiincw):
+			SINGLE_STEP();
+			PERFORM_ACTION(iinc(REGISTER_ARGS, 2));
 		JUMP_TARGET(JBaloadw):
 		JUMP_TARGET(JBiloadw):
 		JUMP_TARGET(JBfloadw):
@@ -9993,9 +10014,6 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBdstorew):
 			SINGLE_STEP();
 			PERFORM_ACTION(lstorew(REGISTER_ARGS));
-		JUMP_TARGET(JBiincw):
-			SINGLE_STEP();
-			PERFORM_ACTION(iinc(REGISTER_ARGS, 2));
 		JUMP_TARGET(JBreturnFromConstructor):
 			SINGLE_STEP();
 			PERFORM_ACTION(returnFromConstructor(REGISTER_ARGS));

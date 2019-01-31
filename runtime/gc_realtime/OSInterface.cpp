@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,30 +115,7 @@ MM_OSInterface::initialize(MM_EnvironmentBase *env)
 
 	_j9time_hires_clock_nanoSecondMultiplyFactor = 1000000000 / j9time_hires_frequency();
 	_j9time_hires_clock_nanoSecondDivideFactor = j9time_hires_frequency() / 1000000000;
-	
-	struct j9NetworkInterfaceArray_struct networkInterfaceArray;
-	I_32 result = j9sock_get_network_interfaces(&networkInterfaceArray, TRUE);
-	if (result >= 0) {
-		/* now loop through the interfaces and extract the information to be returned */
-		for (UDATA i = 0;i < networkInterfaceArray.length;i++) {
-			for (UDATA j=0; j < networkInterfaceArray.elements[i].numberAddresses; j ++) {
-				if (0x7f000001 != j9sock_ntohl(networkInterfaceArray.elements[i].addresses[j].addr.inAddr.s_addr)) {
-					j9sock_inetntoa(&_ipAddrString, networkInterfaceArray.elements[i].addresses[j].addr.inAddr.s_addr);
-					break;
-				}
-			}
-			if (NULL != _ipAddrString) {
-				break;
-			}
-		}
-		/* free the memory for the interfaces struct and return the new NetworkInterface List */
-		j9sock_free_network_interface_struct(&networkInterfaceArray);
-	}
-	if (NULL == _ipAddrString) {
-		j9sock_inetntoa(&_ipAddrString, j9sock_htonl(0x7f000001));
-	}
-	j9sock_gethostname(_hostname, sizeof(_hostname));
-	
+
 	if (NULL == (_processorInfo = MM_ProcessorInfo::newInstance(env))) {
 		return false;
 	}
@@ -174,88 +151,6 @@ MM_OSInterface::tearDown(MM_EnvironmentBase *env)
 	if (NULL != _processorInfo) {
 		_processorInfo->kill(env);
 	}
-}
-
-UDATA
-MM_OSInterface::getTid()
-{
-#if defined(LINUX) && (defined(J9X86) || defined(J9HAMMER))
-	return syscall(SYS_gettid);
-#else
-	return 0;
-#endif
-}
-
-IDATA
-MM_OSInterface::maxPriority()
-{
-#if defined(LINUX)
-	return 99;
-#elif defined(AIXPPC)
-	return 127;
-#elif defined(WIN32)
-	return 3;
-#else
-	return 0;
-#endif
-}
-
-IDATA
-MM_OSInterface::minPriority()
-{
-	return 0;
-}
-
-bool
-MM_OSInterface::changePriority(IDATA policy, IDATA priority)
-{
-#if defined(LINUX)
-	PORT_ACCESS_FROM_JAVAVM(_vm);
-	pthread_t self = pthread_self();
-	struct sched_param schedParam;
-	schedParam.sched_priority = priority;
-	IDATA rc = pthread_setschedparam(self, policy, &schedParam);
-	if (rc) {
-		if (_extensions->verbose >= 1) {
-			j9tty_printf(PORTLIB, "Error code %d: Failed to change thread to %s mode with priority %d\n", 
-				rc, (policy == SCHED_RR) ? "SCHED_RR" : ((policy == SCHED_FIFO) ? "FIFO" : "UNKNOWN"), priority);
-		}
-		return false;
-	}
-	return true;
-	/* What about affinity????  No thread affinity - only process affinity. */
-#elif defined(WIN32)
-	PORT_ACCESS_FROM_JAVAVM(_vm);
-	HANDLE hThread = GetCurrentThread();
-	/* We ignore the policy, and just set priority. */
-	UINT uPriority;
-	switch(priority) {
-		case 0: 
-			uPriority = THREAD_PRIORITY_NORMAL;
-			break;
-		case 1:
-			uPriority = THREAD_PRIORITY_ABOVE_NORMAL;
-			break;
-		case 2:	
-			uPriority = THREAD_PRIORITY_HIGHEST;
-			break;
-		case 3:
-			uPriority = THREAD_PRIORITY_TIME_CRITICAL;
-			break;
-		default:
-			return false;
-	}
-	if (SetThreadPriority(hThread, uPriority) == 0) {
-		if (_extensions->verbose >= 1) {
-			j9tty_printf(PORTLIB, "Error code %d: Failed to change thread to priority %d\n", 
-				GetLastError(), priority);
-		}
-		return false;
-	}
-	return true;
-#else
-	return false;
-#endif
 }
 
 bool 
@@ -336,47 +231,3 @@ MM_OSInterface::maskSignals()
 #endif /* LINUX */
 }
 
-
-UDATA
-MM_OSInterface::getParameter(UDATA which, char *keyBuffer, I_32 keyBufferSize, char *valueBuffer, I_32 valueBufferSize)
-{
-	PORT_ACCESS_FROM_JAVAVM(_vm);
-	switch (which) {
-		case 0:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "Number of Processors");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "%d", _numProcessors);
-			return 1;
-		case 1:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "Physical Memory");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "%d Mb", _physicalMemoryBytes >> 20);
-			return 1;
-		case 2:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "IP Address");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, _ipAddrString);
-			return 1;
-		case 3:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "OS");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "%s", j9sysinfo_get_OS_type());
-			return 1;
-		case 4:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "OS Version");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "%s", j9sysinfo_get_OS_version());
-			return 1;
-		case 5:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "CPU");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "%s", j9sysinfo_get_CPU_architecture());
-			return 1;
-		case 6:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "Username");
-			j9sysinfo_get_username(valueBuffer, valueBufferSize);
-			return 1;
-		case 7:	j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "Hostname");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, _hostname);
-			return 1;
-		case 8: j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "Tick Frequency");
-			j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "1000000000");
-			return 1;
-	}
-	UDATA numFixedProps = 9;
-	UDATA whichProc = which - numFixedProps;
-	if (whichProc < _numProcessors) {
- 		j9str_printf(PORTLIB, keyBuffer, keyBufferSize, "Processor %d (GHz)", whichProc);
- 		j9str_printf(PORTLIB, valueBuffer, valueBufferSize, "%.9f", 
-			_processorInfo->secondToTick(1.0) / 1.0e9);
-		return 1;
-	}
-	return 0;
-}

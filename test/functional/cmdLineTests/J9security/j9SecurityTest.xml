@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2013, 2018 IBM Corp. and others
+  Copyright (c) 2013, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 	<variable name="CLASSPATH_JEP140" value="-cp $Q$$TESTJ9SECURITYJARPATH$$Q$j9JEP140Tests.jar" />
 	<variable name="BOOTCLASSPATH_CodeTrusted_JEP140" value="-Xbootclasspath/a:$Q$$TESTJ9SECURITYJARPATH$$Q$j9JEP140CodeTrusted.jar" />
 	<variable name="BOOTCLASSPATH_CodeTrusted_doPrivilegedWithCombiner" value="-Xbootclasspath/a:$Q$$TESTJ9SECURITYJARPATH$$Q$CodeTrusted.jar" />
-
+	<variable name="SECURITYMANAGER" value="-Djava.security.manager" />
 
 	<test id="testJ9Security">
 		<command>$EXE$ $CLASSPATH$ com.ibm.j9.security.TestImplies</command>
@@ -71,5 +71,13 @@
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 		<output type="failure" caseSensitive="yes" regex="no">FAILED:</output>
+	</test>
+	
+	<test id="testOpenJ9GPUPermissions">
+		<command>$EXE$ $SECURITYMANAGER$ -Dcom.ibm.gpu.enable=all $CLASSPATH$ com.ibm.j9.security.TestOpenJ9GPUPermissions</command>
+		<output regex="no" type="success">ALL TESTS COMPLETED AND PASSED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">AccessControlException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 </suite>

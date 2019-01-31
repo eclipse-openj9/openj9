@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,9 +90,10 @@ final class StaticFieldVarHandle extends FieldVarHandle {
 				
 		return populateMHs(operationsClass, lookupTypes, exactTypes);
 	}
-
+	
 	/**
 	 * Constructs a VarHandle to a static field.
+	 * Ensure that the class is initialized to match behaviour of the reference implementation.
 	 * 
 	 * @param lookupClass The class where we start the lookup of the field
 	 * @param fieldName The field name
@@ -101,6 +102,7 @@ final class StaticFieldVarHandle extends FieldVarHandle {
 	 */
 	StaticFieldVarHandle(Class<?> lookupClass, String fieldName, Class<?> fieldType, Class<?> accessClass) {
 		super(lookupClass, fieldName, fieldType, accessClass, true, COORDINATE_TYPES, populateMHs(fieldType));
+		_unsafe.ensureClassInitialized(lookupClass);
 	}
 	
 	/**

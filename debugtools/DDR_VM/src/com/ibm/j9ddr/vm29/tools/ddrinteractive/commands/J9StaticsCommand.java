@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,13 +31,10 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator;
-import com.ibm.j9ddr.vm29.pointer.BoolPointer;
 import com.ibm.j9ddr.vm29.pointer.DoublePointer;
 import com.ibm.j9ddr.vm29.pointer.FloatPointer;
-import com.ibm.j9ddr.vm29.pointer.I16Pointer;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
 import com.ibm.j9ddr.vm29.pointer.I64Pointer;
-import com.ibm.j9ddr.vm29.pointer.I8Pointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
@@ -51,28 +48,25 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
 import com.ibm.j9ddr.vm29.types.U32;
 
-public class J9StaticsCommand extends Command 
-{
-	public J9StaticsCommand()
-	{
+public class J9StaticsCommand extends Command {
+
+	public J9StaticsCommand() {
 		addCommand("j9statics", "<ramclass>", "Display static fields of a ram class");
 	}
 
-	long staticFieldAddress(J9VMThreadPointer vmStruct, J9ROMClassPointer romClass, String fieldName, String signature, long options) 
-	{
+	long staticFieldAddress(J9VMThreadPointer vmStruct, J9ROMClassPointer romClass, String fieldName, String signature, long options) {
 		return 0;
 	}
 
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
-	{
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {
 		try {
 			if (args.length != 1) {
 				CommandUtils.dbgPrint(out, "Usage: !j9statics <classAddress>\n");
 				return;
 			}
-			
+
 			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
-			
+
 			J9ClassPointer ramClass = J9ClassPointer.cast(address);
 			J9ROMClassPointer romClass = ramClass.romClass();
 			J9UTF8Pointer className = romClass.className();
@@ -91,40 +85,44 @@ public class J9StaticsCommand extends Command
 				switch (sig.charAt(0)) {
 				case 'L':
 				case '[':
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticstringfieldshape %s) = !j9object %s\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), fieldAddress.at(0).getHexValue());
+					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = !j9object %s\n",
+							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), fieldAddress.at(0).getHexValue());
 					break;
 				case 'D':
 					DoublePointer  doublePointer = DoublePointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticdoublefieldshape %s) = %s (%s)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), doublePointer.getHexValue(), new Double(doublePointer.doubleAt(0)).toString());
+					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = %s (%s)\n",
+							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), doublePointer.getHexValue(), Double.toString(doublePointer.doubleAt(0)));
 					break;
 				case 'F':
 					FloatPointer floatPointer = FloatPointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticsinglefieldshape %s) = %s (%s)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), floatPointer.getHexValue(), new Float(floatPointer.floatAt(0)).toString());
+					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = %s (%s)\n",
+							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), floatPointer.getHexValue(), Float.toString(floatPointer.floatAt(0)));
 					break;
 				case 'J':
 					I64Pointer longPointer = I64Pointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticdoublefieldshape %s) = %s (%d)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), longPointer.getHexValue(), longPointer.at(0).longValue());
+					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = %s (%d)\n",
+							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), longPointer.getHexValue(), longPointer.at(0).longValue());
 					break;
+				case 'B': // byte
+				case 'C': // char
+				case 'S': // short
+				case 'Z': // boolean
+					/*
+					 * All fields are allocated a minimum of 32-bits. Thus, we must read 32-bits
+					 * even for smaller primitive types to handle byte ordering properly.
+					 * See J9ObjectStructureFormatter, which does likewise for instance fields.
+					 */
+					// fall through
 				case 'I':
 					I32Pointer intPointer = I32Pointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticsinglefieldshape %s) = %s (%d)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), intPointer.getHexValue(), intPointer.at(0).intValue());
-					break;
-				case 'B':
-					I8Pointer bytePointer = I8Pointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticsinglefieldshape %s) = %s (%s)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), bytePointer.getHexValue(), bytePointer.at(0).byteValue());
-					break;
-				case 'S':	
-					I16Pointer shortPointer = I16Pointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticsinglefieldshape %s) = %s (%d)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), shortPointer.getHexValue(), shortPointer.at(0).shortValue());
-					break;
-				case 'Z':
-					BoolPointer booleanPointer = BoolPointer.cast(fieldAddress);
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticsinglefieldshape %s) = %s (%s)\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), booleanPointer.getHexValue(), booleanPointer.boolAt(0)? "true" : "false");
+					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = %s (%d)\n",
+							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), intPointer.getHexValue(), intPointer.at(0).intValue());
 					break;
 				default:
-					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticsinglefieldshape %s) = %s\n", fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), fieldAddress.at(0).getHexValue());
+					CommandUtils.dbgPrint(out, "\t%s %s %s (!j9romstaticfieldshape %s) = %s\n",
+							fieldAddress.getHexAddress(), name, sig, field.getHexAddress(), fieldAddress.at(0).getHexValue());
 					break;
-				}				
+				}
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);

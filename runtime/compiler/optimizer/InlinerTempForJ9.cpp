@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,10 +43,10 @@
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/Structure.hpp"
-#include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                                   // for ILOpCode, etc
+#include "il/ILOps.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
@@ -56,7 +56,7 @@
 #include "control/Recompilation.hpp"                      //TR_PersistentJittedBodyInfo
 #include "control/RecompilationInfo.hpp"                  //TR_PersistentJittedBodyInfo
 #include "optimizer/EstimateCodeSize.hpp"
-#include "env/SharedCache.hpp"                            // for TR_SharedCache
+#include "env/SharedCache.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "ras/DebugCounter.hpp"
@@ -1061,6 +1061,9 @@ Unsafe.getShort.
 bool
 TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck, bool isOrdered)
    {
+   if (callNodeTreeTop->getEnclosingBlock()->isCold())
+      return false;
+
    if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
@@ -1071,16 +1074,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
        traceMsg(comp(),"\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n", callNodeTreeTop, type.getDataType(),isVolatile,needNullCheck,isOrdered);
 
    // Preserve null check on the unsafe object
-   if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
-      {
-      TR::Node *passthrough = TR::Node::create(unsafeCall, TR::PassThrough, 1);
-      passthrough->setAndIncChild(0, unsafeCall->getFirstChild());
-      TR::Node * checkNode = TR::Node::createWithSymRef(callNodeTreeTop->getNode(), TR::NULLCHK, 1, passthrough, callNodeTreeTop->getNode()->getSymbolReference());
-      callNodeTreeTop->insertBefore(TR::TreeTop::create(comp(), checkNode));
-      TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
-      if(comp()->getOption(TR_TraceUnsafeInlining))
-         traceMsg(comp(), "Created node %p to preserve NULLCHK on unsafe call %p\n", checkNode, unsafeCall);
-      }
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
 
    // Since the block has to be split, we need to create temps for the arguments to the call
    for (int i = 0; i < unsafeCall->getNumChildren(); i++)
@@ -1106,10 +1100,10 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
          traceMsg(comp(),"\t Duplicate Tree for ordered call, orderedCallNode = %p\n",orderedCallNode);
       }
 
-   static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
+   static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
    TR::TreeTop* callTreeForIllegalWriteReport = NULL;
    // Keep the call for illegal write report
-   if (!disableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+   if (enableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
       callTreeForIllegalWriteReport = callNodeTreeTop->duplicateTree();
 
    TR::Node * unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
@@ -1251,6 +1245,14 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
          traceMsg(comp(), "Created isFinal test node n%dn whose branch target is Block_%d to report illegal write to static final field\n",
                   isFinalStaticNode->getGlobalIndex(), callTreeForIllegalWriteReport->getEnclosingBlock()->getNumber());
          }
+
+      TR::DebugCounter::prependDebugCounter(comp(),
+                                            TR::DebugCounter::debugCounterName(comp(),
+                                                                              "illegalWriteReport/put/(%s %s)",
+                                                                               comp()->signature(),
+                                                                               comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                               callTreeForIllegalWriteReport->getNextTreeTop());
+
       }
 
    unsafeCall->recursivelyDecReferenceCount();
@@ -1410,6 +1412,9 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (debug("traceUnsafe"))
       printf("createUnsafeGetWithOffset %s in %s\n", type.toString(), comp()->signature());
 
+   // Preserve null check on the unsafe object
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
+
    TR::Node *unsafeAddress = unsafeCall->getChild(1);
    TR::Node *offset = unsafeCall->getChild(2);
 
@@ -1543,6 +1548,9 @@ TR_J9InlinerPolicy::createUnsafePut(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    if (debug("traceUnsafe"))
       printf("createUnsafePut %s in %s\n", type.toString(), comp()->signature());
 
+   // Preserve null check on the unsafe object
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
+
    TR::Node * address = createUnsafeAddress(unsafeCall);
 
    TR::Node * value = unsafeCall->getChild(2);
@@ -1594,6 +1602,9 @@ TR_J9InlinerPolicy::createUnsafeGet(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    {
    if (debug("traceUnsafe"))
       printf("createUnsafeGet %s in %s\n", type.toString(), comp()->signature());
+
+   // Preserve null check on the unsafe object
+   TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
 
    TR::Node * unsafeAddress = createUnsafeAddress(unsafeCall);
 

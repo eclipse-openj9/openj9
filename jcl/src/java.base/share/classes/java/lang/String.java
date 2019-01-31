@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1830,7 +1830,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *				when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
 			getCharsNoBoundChecks(start, end, data, index);
 		} else {
 			throw new StringIndexOutOfBoundsException();
@@ -1845,14 +1845,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			decompress(value, start, data, index, end - start);
 		} else {
 			decompressedArrayCopy(value, start, data, index, end - start);
-		}
-	}
-
-	void getChars(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
-			getCharsNoBoundChecks(start, end, data, index);
-		} else {
-			throw new StringIndexOutOfBoundsException();
 		}
 	}
 
@@ -2844,7 +2836,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int end = last;
 
 		// Check if the String is compressed
-		if (enableCompression &&  (null == compressionFlag || coder == LATIN1)) {
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 			while ((start <= end) && (helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, start)) <= ' ')) {
 				start++;
 			}
@@ -3202,6 +3194,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return false;
 	}
 
+	private static final boolean isSingleEscapeLiteral(String s) {
+		if ((s != null) && (s.lengthInternal() == 2) && (s.charAtInternal(0) == '\\')) {
+			char literal = s.charAtInternal(1);
+			for (int j = 0; j < regexMetaChars.length; ++j) {
+				if (literal == regexMetaChars[j]) return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Splits this String using the given regular expression.
 	 *
@@ -3224,9 +3226,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @since 1.4
 	 */
 	public String[] split(String regex, int max) {
-		// it is faster to handle simple splits inline (i.e. no fancy regex matching)
+		// it is faster to handle simple splits inline (i.e. no fancy regex matching),
+		// including single escaped literal character (e.g. \. \{),
 		// so we test for a suitable string and handle this here if we can
-		if (regex != null && regex.lengthInternal() > 0 && !hasMetaChars(regex)) {
+		boolean singleEscapeLiteral = isSingleEscapeLiteral(regex);
+		if ((regex != null) && (regex.lengthInternal() > 0) && (!hasMetaChars(regex) || singleEscapeLiteral)) {
 			if (max == 1) {
 				return new String[] { this };
 			}
@@ -3235,11 +3239,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			byte[]
 			chars = this.value;
 
-			final boolean compressed = enableCompression &&  (null == compressionFlag || coder == LATIN1);
+			final boolean compressed = enableCompression && (null == compressionFlag || coder == LATIN1);
 
 			int start = 0, current = 0, end = lengthInternal();
-			if (regex.lengthInternal() == 1) {
-				char splitChar = regex.charAtInternal(0);
+			if (regex.lengthInternal() == 1 || singleEscapeLiteral) {
+				// if matching single escaped character, use the second char.
+				char splitChar = regex.charAtInternal(singleEscapeLiteral ? 1 : 0);
 				while (current < end) {
 					if (charAtInternal(current, chars) == splitChar) {
 						parts.add(new String(chars, start, current - start, compressed));
@@ -3384,16 +3389,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (index >= 0 && index < len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || coder == LATIN1)) {
+			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 			} else {
-				int high = charAtInternal(index);
+				char high = charAtInternal(index);
 
-				if ((index + 1) < len && high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-					int low = charAtInternal(index + 1);
+				if ((index < (len - 1)) && Character.isHighSurrogate(high)) {
+					char low = charAtInternal(index + 1);
 
-					if (low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-						return Character.MIN_SUPPLEMENTARY_CODE_POINT + ((high - Character.MIN_HIGH_SURROGATE) << 10) + (low - Character.MIN_LOW_SURROGATE);
+					if (Character.isLowSurrogate(low)) {
+						return Character.toCodePoint(high, low);
 					}
 				}
 
@@ -3418,16 +3423,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (index > 0 && index <= len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || coder == LATIN1)) {
+			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index - 1));
 			} else {
-				int low = charAtInternal(index - 1);
+				char low = charAtInternal(index - 1);
 
-				if (index > 1 && low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-					int high = charAtInternal(index - 2);
+				if ((index > 1) && Character.isLowSurrogate(low)) {
+					char high = charAtInternal(index - 2);
 
-					if (high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-						return Character.MIN_SUPPLEMENTARY_CODE_POINT + ((high - Character.MIN_HIGH_SURROGATE) << 10) + (low - Character.MIN_LOW_SURROGATE);
+					if (Character.isHighSurrogate(high)) {
+						return Character.toCodePoint(high, low);
 					}
 				}
 
@@ -3454,20 +3459,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (start >= 0 && start <= end && end <= len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || coder == LATIN1)) {
+			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 				return end - start;
 			} else {
 				int count = 0;
 
 				for (int i = start; i < end; ++i) {
-					int high = charAtInternal(i);
-
-					if (i + 1 < end && high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-						int low = charAtInternal(i + 1);
-
-						if (low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-							++i;
-						}
+					if ((i < (end - 1))
+							&& Character.isHighSurrogate(charAtInternal(i))
+							&& Character.isLowSurrogate(charAtInternal(i + 1))) {
+						++i;
 					}
 
 					++count;
@@ -3496,7 +3497,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (start >= 0 && start <= len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || coder == LATIN1)) {
+			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 				int index = start + codePointCount;
 
 				if (index > len) {
@@ -3515,14 +3516,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 							throw new IndexOutOfBoundsException();
 						}
 
-						int high = charAtInternal(index);
-
-						if ((index + 1) < len && high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-							int low = charAtInternal(index + 1);
-
-							if (low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-								index++;
-							}
+						if ((index < (len - 1))
+								&& Character.isHighSurrogate(charAtInternal(index))
+								&& Character.isLowSurrogate(charAtInternal(index + 1))) {
+							index++;
 						}
 
 						index++;
@@ -3533,14 +3530,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 							throw new IndexOutOfBoundsException();
 						}
 
-						int low = charAtInternal(index - 1);
-
-						if (index > 1 && low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-							int high = charAtInternal(index - 2);
-
-							if (high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-								index--;
-							}
+						if ((index > 1)
+								&& Character.isLowSurrogate(charAtInternal(index - 1))
+								&& Character.isHighSurrogate(charAtInternal(index - 2))) {
+							index--;
 						}
 
 						index--;
@@ -3878,61 +3871,31 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 		throw newStringIndexOutOfBoundsException(begin, end, length);
 	}
-	
-	private static final class StringSpliteratorOfInt implements Spliterator.OfInt {
-		private final int start; // index of first character in the array
-		private int end; // index after the final character
-		private int cursor; // next character to read
-		private final IntUnaryOperator func;
-		
-		StringSpliteratorOfInt(int start, int end, IntUnaryOperator func) {
-			this.start = start;
-			this.end = end;
-			this.func = func;
-			cursor = start;
-		}
 
-		@Override
-		public long estimateSize() {
-			return end - start;
-		}
-
-		@Override
-		public int characteristics() {
-			return IMMUTABLE | ORDERED | SIZED | SUBSIZED;
-		}
-
-		@Override
-		public OfInt trySplit() {
-			int newEnd = cursor + (end - cursor + 1) / 2;
-			StringSpliteratorOfInt newSpliterator = null;
-			if (newEnd < end) {
-				newSpliterator = new StringSpliteratorOfInt(newEnd, end, func);
-				end = newEnd;
-			}
-			return newSpliterator;
-		}
-
-		@Override
-		public boolean tryAdvance(IntConsumer action) {
-			boolean result = false;
-			if (cursor < end) {
-				action.accept(func.applyAsInt(cursor));
-				result = true;
-				++cursor;
-			}
-			return result;
-		}
-	}
-	
 	@Override
 	public IntStream chars() {
-		return StreamSupport.intStream(new StringSpliteratorOfInt(0, lengthInternal(), i -> charAt(i)), false);
+		Spliterator.OfInt spliterator;
+
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			spliterator = new StringLatin1.CharsSpliterator(value, Spliterator.IMMUTABLE);
+		} else {
+			spliterator = new StringUTF16.CharsSpliterator(value, Spliterator.IMMUTABLE);
+		}
+
+		return StreamSupport.intStream(spliterator, false);
 	}
-	
+
 	@Override
 	public IntStream codePoints() {
-		return StreamSupport.intStream(new StringSpliteratorOfInt(0, lengthInternal(), i -> codePointAt(i)), false);
+		Spliterator.OfInt spliterator;
+
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			spliterator = new StringLatin1.CharsSpliterator(value, Spliterator.IMMUTABLE);
+		} else {
+			spliterator = new StringUTF16.CodePointsSpliterator(value, Spliterator.IMMUTABLE);
+		}
+
+		return StreamSupport.intStream(spliterator, false);
 	}
 
 	/*
@@ -5893,7 +5856,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *				when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
 			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				decompress(value, start, data, index, end - start);
 			} else {
@@ -7227,7 +7190,7 @@ written authorization of the copyright holder.
 		int end = last;
 
 		// Check if the String is compressed
-		if (enableCompression &&  (null == compressionFlag || count >= 0)) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			while ((start <= end) && (helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, start)) <= ' ')) {
 				start++;
 			}
@@ -7553,6 +7516,16 @@ written authorization of the copyright holder.
 		return false;
 	}
 
+	private static final boolean isSingleEscapeLiteral(String s) {
+		if ((s != null) && (s.lengthInternal() == 2) && (s.charAtInternal(0) == '\\')) {
+			char literal = s.charAtInternal(1);
+			for (int j = 0; j < regexMetaChars.length; ++j) {
+				if (literal == regexMetaChars[j]) return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Splits this String using the given regular expression.
 	 *
@@ -7575,9 +7548,11 @@ written authorization of the copyright holder.
 	 * @since 1.4
 	 */
 	public String[] split(String regex, int max) {
-		// it is faster to handle simple splits inline (i.e. no fancy regex matching)
+		// it is faster to handle simple splits inline (i.e. no fancy regex matching),
+		// including single escaped literal character (e.g. \. \{),
 		// so we test for a suitable string and handle this here if we can
-		if (regex != null && regex.lengthInternal() > 0 && !hasMetaChars(regex)) {
+		boolean singleEscapeLiteral = isSingleEscapeLiteral(regex);
+		if ((regex != null) && (regex.lengthInternal() > 0) && (!hasMetaChars(regex) || singleEscapeLiteral)) {
 			if (max == 1) {
 				return new String[] { this };
 			}
@@ -7585,11 +7560,12 @@ written authorization of the copyright holder.
 
 			char[] chars = this.value;
 
-			final boolean compressed = enableCompression &&  (null == compressionFlag || count >= 0);
+			final boolean compressed = enableCompression && (null == compressionFlag || count >= 0);
 
 			int start = 0, current = 0, end = lengthInternal();
-			if (regex.lengthInternal() == 1) {
-				char splitChar = regex.charAtInternal(0);
+			if (regex.lengthInternal() == 1 || singleEscapeLiteral) {
+				// if matching single escaped character, use the second char.
+				char splitChar = regex.charAtInternal(singleEscapeLiteral ? 1 : 0);
 				while (current < end) {
 					if (charAtInternal(current, chars) == splitChar) {
 						parts.add(new String(chars, start, current - start, compressed));
@@ -7805,16 +7781,16 @@ written authorization of the copyright holder.
 
 		if (index >= 0 && index < len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 			} else {
-				int high = charAtInternal(index);
+				char high = charAtInternal(index);
 
-				if ((index + 1) < len && high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-					int low = charAtInternal(index + 1);
+				if ((index < (len - 1)) && Character.isHighSurrogate(high)) {
+					char low = charAtInternal(index + 1);
 
-					if (low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-						return Character.MIN_SUPPLEMENTARY_CODE_POINT + ((high - Character.MIN_HIGH_SURROGATE) << 10) + (low - Character.MIN_LOW_SURROGATE);
+					if (Character.isLowSurrogate(low)) {
+						return Character.toCodePoint(high, low);
 					}
 				}
 
@@ -7839,16 +7815,16 @@ written authorization of the copyright holder.
 
 		if (index > 0 && index <= len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index - 1));
 			} else {
-				int low = charAtInternal(index - 1);
+				char low = charAtInternal(index - 1);
 
-				if (index > 1 && low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-					int high = charAtInternal(index - 2);
+				if ((index > 1) && Character.isLowSurrogate(low)) {
+					char high = charAtInternal(index - 2);
 
-					if (high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-						return Character.MIN_SUPPLEMENTARY_CODE_POINT + ((high - Character.MIN_HIGH_SURROGATE) << 10) + (low - Character.MIN_LOW_SURROGATE);
+					if (Character.isHighSurrogate(high)) {
+						return Character.toCodePoint(high, low);
 					}
 				}
 
@@ -7875,20 +7851,16 @@ written authorization of the copyright holder.
 
 		if (start >= 0 && start <= end && end <= len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return end - start;
 			} else {
 				int count = 0;
 
 				for (int i = start; i < end; ++i) {
-					int high = charAtInternal(i);
-
-					if (i + 1 < end && high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-						int low = charAtInternal(i + 1);
-
-						if (low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-							++i;
-						}
+					if ((i < (end - 1))
+							&& Character.isHighSurrogate(charAtInternal(i))
+							&& Character.isLowSurrogate(charAtInternal(i + 1))) {
+						++i;
 					}
 
 					++count;
@@ -7917,7 +7889,7 @@ written authorization of the copyright holder.
 
 		if (start >= 0 && start <= len) {
 			// Check if the String is compressed
-			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				int index = start + codePointCount;
 
 				if (index > len) {
@@ -7936,14 +7908,10 @@ written authorization of the copyright holder.
 							throw new IndexOutOfBoundsException();
 						}
 
-						int high = charAtInternal(index);
-
-						if ((index + 1) < len && high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-							int low = charAtInternal(index + 1);
-
-							if (low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-								index++;
-							}
+						if ((index < (len - 1))
+								&& Character.isHighSurrogate(charAtInternal(index))
+								&& Character.isLowSurrogate(charAtInternal(index + 1))) {
+							index++;
 						}
 
 						index++;
@@ -7954,14 +7922,10 @@ written authorization of the copyright holder.
 							throw new IndexOutOfBoundsException();
 						}
 
-						int low = charAtInternal(index - 1);
-
-						if (index > 1 && low >= Character.MIN_LOW_SURROGATE && low <= Character.MAX_LOW_SURROGATE) {
-							int high = charAtInternal(index - 2);
-
-							if (high >= Character.MIN_HIGH_SURROGATE && high <= Character.MAX_HIGH_SURROGATE) {
-								index--;
-							}
+						if ((index > 1)
+								&& Character.isLowSurrogate(charAtInternal(index - 1))
+								&& Character.isHighSurrogate(charAtInternal(index - 2))) {
+							index--;
 						}
 
 						index--;

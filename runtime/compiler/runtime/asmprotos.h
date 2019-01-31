@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,6 +53,19 @@ extern "C" {
 #if defined(TR_HOST_POWER) && !defined(__LITTLE_ENDIAN__)
 #undef JIT_HELPER
 #define JIT_HELPER(x) extern "C" void x()
+#endif
+
+/**
+ * Many X86 helpers have been named with leading underscores.
+ * With the move to using the NASM Assembler across X86, a more consistent
+ * naming is being adopted, where there would be no leading
+ * underscores in any of the X86 helper names for making a single
+ * version of the NASM files cross-compatible across X86. NASM_ASSEMBLER
+ * is set for OS variants that currently use NASM and is used to
+ * decide the version of helper names to use.
+ */
+#if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
+#define NASM_ASSEMBLER
 #endif
 
 /* #include "VM.hpp" */

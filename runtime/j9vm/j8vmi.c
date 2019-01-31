@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,3 +99,101 @@ JVM_GetTemporaryDirectory(JNIEnv *env)
 	return result;
 }
 
+
+/**
+ * Copies memory from one place to another, endian flipping the data.
+ *
+ * Implementation of native java.nio.Bits.copySwapMemory0(). The single java caller
+ * has ensured all of the parameters are valid.
+ *
+ * @param [in] env Pointer to JNI environment
+ * @param [in] srcObj Source primitive array (NULL means srcOffset represents native memory)
+ * @param [in] srcOffset Offset in source array / address in native memory
+ * @param [in] dstObj Destination primitive array (NULL means dstOffset represents native memory)
+ * @param [in] dstOffset Offset in destination array / address in native memory
+ * @param [in] size Number of bytes to copy
+ * @param [in] elemSize Size of elements to copy and flip
+ *
+ * elemSize = 2 means byte order 1,2 becomes 2,1
+ * elemSize = 4 means byte order 1,2,3,4 becomes 4,3,2,1
+ * elemSize = 8 means byte order 1,2,3,4,5,6,7,8 becomes 8,7,6,5,4,3,2,1
+ */
+void JNICALL
+JVM_CopySwapMemory(JNIEnv *env, jobject srcObj, jlong srcOffset, jobject dstObj, jlong dstOffset, jlong size, jlong elemSize)
+{
+	U_8 *srcBytes = NULL;
+	U_8 *dstBytes = NULL;
+	U_8 *dstAddr = NULL;
+	if (NULL != srcObj) {
+		srcBytes = (*env)->GetPrimitiveArrayCritical(env, srcObj, NULL);
+		/* The java caller has added Unsafe.arrayBaseOffset() to the offset. Remove it
+		 * here as GetPrimitiveArrayCritical returns a pointer to the first element.
+		 */
+		srcOffset -= sizeof(J9IndexableObjectContiguous);
+	}
+	if (NULL != dstObj) {
+		dstBytes = (*env)->GetPrimitiveArrayCritical(env, dstObj, NULL);
+		dstAddr = dstBytes;
+		/* The java caller has added Unsafe.arrayBaseOffset() to the offset. Remove it
+		 * here as GetPrimitiveArrayCritical returns a pointer to the first element.
+		 */
+		dstOffset -= sizeof(J9IndexableObjectContiguous);
+	}
+	dstAddr += (UDATA)dstOffset;
+	/* First copy the bytes unmodified to the new location (memmove handles the overlap case) */
+	memmove(dstAddr, srcBytes + (UDATA)srcOffset, (size_t)size);
+	/* Now flip each element in the destination */
+	switch(elemSize) {
+	case 2: {
+		jlong elemCount = size / 2;
+		while (0 != elemCount) {
+			U_8 temp = dstAddr[0];
+			dstAddr[0] = dstAddr[1];
+			dstAddr[1] = temp;
+			dstAddr += 2;
+			elemCount -= 1;
+		}
+		break;
+	}
+	case 4: {
+		jlong elemCount = size / 4;
+		while (0 != elemCount) {
+			U_8 temp = dstAddr[0];
+			dstAddr[0] = dstAddr[3];
+			dstAddr[3] = temp;
+			temp = dstAddr[1];
+			dstAddr[1] = dstAddr[2];
+			dstAddr[2] = temp;
+			dstAddr += 4;
+			elemCount -= 1;
+		}
+		break;
+	}
+	default /* 8 */: {
+		jlong elemCount = size / 8;
+		while (0 != elemCount) {
+			U_8 temp = dstAddr[0];
+			dstAddr[0] = dstAddr[7];
+			dstAddr[7] = temp;
+			temp = dstAddr[1];
+			dstAddr[1] = dstAddr[6];
+			dstAddr[6] = temp;
+			temp = dstAddr[2];
+			dstAddr[2] = dstAddr[5];
+			dstAddr[5] = temp;
+			temp = dstAddr[3];
+			dstAddr[3] = dstAddr[4];
+			dstAddr[4] = temp;
+			dstAddr += 8;
+			elemCount -= 1;
+		}
+		break;
+	}
+	}
+	if (NULL != srcObj) {
+		(*env)->ReleasePrimitiveArrayCritical(env, srcObj, srcBytes, JNI_ABORT);
+	}
+	if (NULL != dstObj) {
+		(*env)->ReleasePrimitiveArrayCritical(env, dstObj, dstBytes, 0);
+	}
+}

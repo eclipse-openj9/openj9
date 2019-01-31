@@ -241,8 +241,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
 #if TURN_OFF_INLINING
    return 0;
 #else
-   INCREMENT_COUNTER(_fe, totalVirtualMethodRefs);
-
    TR_ResolvedMethod *resolvedMethod = nullptr;
    if (getCachedResolvedMethod({TR_ResolvedMethodType::Virtual, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
@@ -279,7 +277,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
    if (resolvedMethod == nullptr)
       {
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
-      INCREMENT_COUNTER(_fe, unresolvedVirtualMethodRefs);
       if (unresolvedInCP)
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
@@ -428,7 +425,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
    {
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   INCREMENT_COUNTER(_fe, totalStaticMethodRefs);
 
    TR_ResolvedMethod *resolvedMethod = nullptr;
    if (getCachedResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
@@ -469,7 +465,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
 
    if (resolvedMethod == NULL)
       {
-      INCREMENT_COUNTER(_fe, unresolvedStaticMethodRefs);
       if (unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
       }
@@ -483,8 +478,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
    {
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-
-   INCREMENT_COUNTER(_fe, totalSpecialMethodRefs);
    
    TR_ResolvedMethod *resolvedMethod = nullptr;
    if (getCachedResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
@@ -515,7 +508,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
 
    if (resolvedMethod == NULL)
       {
-      INCREMENT_COUNTER(_fe, unresolvedSpecialMethodRefs);
       if (unresolvedInCP)
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
@@ -644,9 +636,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilat
 #if TURN_OFF_INLINING
    return 0;
 #else
-   INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
-   INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
-
    if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
       {
       // query for resolved method and create its mirror at the same time

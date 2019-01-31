@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,12 @@
  *******************************************************************************/
 package java.util;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import com.ibm.gpu.spi.GPUAssist;
 
 final class GPUAssistHolder {
-
-	static final GPUAssist instance = gpuAssist();
+	static final GPUAssist instance = AccessController.doPrivileged((PrivilegedAction<GPUAssist>) GPUAssistHolder::gpuAssist);
 
 	private static GPUAssist gpuAssist() {
 		ServiceLoader<GPUAssist.Provider> loaded = ServiceLoader.load(GPUAssist.Provider.class);
@@ -41,5 +42,4 @@ final class GPUAssistHolder {
 
 		return GPUAssist.NONE;
 	}
-
 }

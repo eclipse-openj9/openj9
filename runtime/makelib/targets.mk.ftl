@@ -206,7 +206,6 @@ UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 <#if uma.spec.type.windows>
 ifdef USE_CLANG
   CLANG_CXXFLAGS+=$(UMA_C_INCLUDES)
-  CLANG_CXXFLAGS+=-I../oti/clang
   ifneq ($(OPENJ9_BUILD),true)
     CLANG_INCLUDES:="$(subst ;," -I",$(INCLUDE))"
     CLANG_CXXFLAGS+=$(UMA_C_INCLUDE_PREFIX)$(CLANG_INCLUDES)
@@ -354,7 +353,7 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 # over 1GB and reduces the workload of getmacros as it reads them.
 
 DDR_SED_COMMAND := \
-    sed -n -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/p'
+	sed -n -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/' -e '/^@./p'
 
 %.i : %.c
 	$(CC) $(CFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
@@ -549,10 +548,10 @@ SharedService$(UMA_DOT_O):SharedService.c
 <#if uma.spec.processor.ppc>
 ifndef USE_PPC_GCC
 # special handling BytecodeInterpreter.cpp and DebugBytecodeInterpreter.cpp
-FLAGS_TO_REMOVE=-O3
+FLAGS_TO_REMOVE += -O3
 NEW_OPTIMIZATION_FLAG=-O2 -qdebug=lincomm:ptranl:tfbagg
 <#if uma.spec.type.linux>
-FLAGS_TO_REMOVE+=-qpic=large
+FLAGS_TO_REMOVE += -qpic=large
 NEW_OPTIMIZATION_FLAG+=-qmaxmem=-1 -qpic
 </#if>
 SPECIALCXXFLAGS=$(filter-out $(FLAGS_TO_REMOVE),$(CXXFLAGS))

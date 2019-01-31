@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,20 +23,20 @@
 #ifndef ESCAPEANALYSIS_INCL
 #define ESCAPEANALYSIS_INCL
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for int32_t
-#include "compile/Compilation.hpp"             // for Compilation
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "il/DataTypes.hpp"                    // for DataTypes
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes
-#include "il/Node.hpp"                         // for Node, rcount_t
-#include "infra/BitVector.hpp"                 // for TR_BitVector
-#include "infra/Flags.hpp"                     // for flags32_t
-#include "infra/Link.hpp"                      // for TR_Link, TR_LinkHead
-#include "infra/List.hpp"                      // for TR_ScratchList, etc
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Flags.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
+#include "optimizer/OptimizationManager.hpp"
 
 class TR_EscapeAnalysis;
 class TR_OpaqueClassBlock;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,16 +35,16 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 
 #include "codegen/OMRCodeGenerator.hpp"
 
-#include <stdint.h>        // for int32_t
-#include "env/IO.hpp"      // for POINTER_PRINTF_FORMAT
-#include "env/jittypes.h"  // for uintptr_t
-#include "infra/List.hpp"  // for List, etc
+#include <stdint.h>
+#include "env/IO.hpp"
+#include "env/jittypes.h"
+#include "infra/List.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "optimizer/Dominators.hpp"
-#include "cs2/arrayof.h"   // for ArrayOf
+#include "cs2/arrayof.h"
 
 class NVVMIRBuffer;
 class TR_BitVector;
@@ -159,15 +159,10 @@ public:
    uint32_t getStackLimitOffset() {return _stackLimitOffsetInMetaData;}
    uint32_t setStackLimitOffset(uint32_t o) {return (_stackLimitOffsetInMetaData = o);}
 
-   // e.g. one or more pdclean nodes are present
-   bool hasSignCleans() { return _flags4.testAny(HasSignCleans);}
-   void setHasSignCleans() { _flags4.set(HasSignCleans);}
-
    bool alwaysGeneratesAKnownCleanSign(TR::Node *node) { return false; } // no virt
    bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node) { return false; } // no virt
    TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node) { return raw_bcd_sign_unknown; } // no virt
 
-   void foldSignCleaningIntoStore();
    void swapChildrenIfNeeded(TR::Node *store, char *optDetails);
 
    TR::AutomaticSymbol *allocateVariableSizeSymbol(int32_t size);
@@ -426,6 +421,40 @@ public:
     *    transforming a monitored region with transactional lock elision.
     */
    int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
+
+   /**
+    * \brief Trim the size of code memory required by this method to match the
+    *        actual code length required, allowing the reclaimed memory to be
+    *        reused.  This is needed when the conservative length estimate
+    *        exceeds the actual memory requirement.
+    */
+   void trimCodeMemoryToActualSize();
+
+
+   /**
+    * \brief Request and reserve a CodeCache for use by this compilation.  Fail
+    *        the compilation appropriately if a CodeCache cannot be allocated.
+    */
+   void reserveCodeCache();
+
+
+   /**
+    * \brief Allocates code memory of the specified size in the specified area of
+    *        the code cache.  Fail the compilation on failure.
+    *
+    * \param[in]  warmCodeSizeInBytes : the number of bytes to allocate in the warm area
+    * \param[in]  coldCodeSizeInBytes : the number of bytes to allocate in the cold area
+    * \param[out] coldCode : address of the cold code (if allocated)
+    * \param[in]  isMethodHeaderNeeded : boolean indicating whether space for a
+    *                method header must be allocated
+    *
+    * \return address of the allocated warm code (if allocated)
+    */
+   uint8_t *allocateCodeMemoryInner(
+      uint32_t warmCodeSizeInBytes,
+      uint32_t coldCodeSizeInBytes,
+      uint8_t **coldCode,
+      bool isMethodHeaderNeeded);
 
 private:
 

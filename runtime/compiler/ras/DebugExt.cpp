@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "runtime/DataCache.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "env/j9method.h"
@@ -2289,9 +2289,6 @@ void TR_DebugExt::dxPrintCompilationInfo(TR::CompilationInfo *remoteCompInfo)
       _dbgPrintf("bool                                  _compBudgetSupport               = %s\n", localCompInfo->_compBudgetSupport ? "true" : "false");
       _dbgPrintf("bool                                  _rampDownMCT                     = %s\n", localCompInfo->_rampDownMCT ? "true" : "false");
       _dbgPrintf("flags32_t                             _flags                           = %u\n", localCompInfo->_flags.getValue());
-#ifdef TR_TARGET_S390
-      _dbgPrintf("TR_S390MachineType                    _s390MachineType                 = %d\n", TR::Compiler->target.cpu.getS390MachineType());
-#endif
    #ifdef DEBUG
       _dbgPrintf("bool                                  _traceCompiling                  = %s\n", localCompInfo->_traceCompiling ? "true" : "false");
    #endif
@@ -2540,10 +2537,12 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tTR_Debug *_debug = 0x%p\n",localCompiler->_debug);
    _dbgPrintf("\tTR::SymbolReferenceTable *_currentSymRefTab = 0x%p\n",localCompiler->_currentSymRefTab);
    _dbgPrintf("\tTR::Recompilation *_recompilationInfo = 0x%p\n",localCompiler->_recompilationInfo);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_ObjectClassPointer = 0x%p\n",localCompiler->_ObjectClassPointer);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_RunnableClassPointer = 0x%p\n",localCompiler->_RunnableClassPointer);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_StringClassPointer = 0x%p\n",localCompiler->_StringClassPointer);
-   _dbgPrintf("\tTR_OpaqueClassBlock *_SystemClassPointer = 0x%p\n",localCompiler->_SystemClassPointer);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[OBJECT_CLASS_POINTER]     = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::OBJECT_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[RUNNABLE_CLASS_POINTER]   = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::RUNNABLE_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[STRING_CLASS_POINTER]     = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::STRING_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[SYSTEM_CLASS_POINTER]     = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::SYSTEM_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[REFERENCE_CLASS_POINTER]  = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::REFERENCE_CLASS_POINTER]);
+   _dbgPrintf("\tTR_OpaqueClassBlock *_cachedClassPointers[JITHELPERS_CLASS_POINTER] = 0x%p\n",localCompiler->_cachedClassPointers[J9::Compilation::JITHELPERS_CLASS_POINTER]);
 
    _dbgPrintf("\tTR_OptimizationPlan *_optimizationPlan = !trprint optimizationplan 0x%p\n",localCompiler->_optimizationPlan);
    _dbgPrintf("\tTR_Array<TR::ResolvedMethodSymbol*> _methodSymbols = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_methodSymbols) - (char*)localCompiler) );
@@ -2573,7 +2572,6 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tbool _needsClassLookahead = %s\n",localCompiler->_needsClassLookahead?"TRUE":"FALSE");
    _dbgPrintf("\tbool _usesPreexistence = %s\n",localCompiler->_usesPreexistence?"TRUE":"FALSE");
    _dbgPrintf("\tbool _loopVersionedWrtAsyncChecks = %s\n",localCompiler->_loopVersionedWrtAsyncChecks?"TRUE":"FALSE");
-   _dbgPrintf("\tbool _codeCacheSwitched = %s\n",localCompiler->_codeCacheSwitched?"TRUE":"FALSE");
    _dbgPrintf("\tbool _commitedCallSiteInfo = %s\n",localCompiler->_commitedCallSiteInfo?"TRUE":"FALSE");
    _dbgPrintf("\tint32_t _errorCode = 0x%x\n",localCompiler->_errorCode);
    _dbgPrintf("\tTR_Stack<TR_PeekingArgInfo *> _peekingArgInfo = 0x%p\n",(char *)_remoteCompiler + ((char*)&(localCompiler->_peekingArgInfo) - (char*)localCompiler));
@@ -3486,6 +3484,12 @@ typedef struct TR_RelocationClassAddress
    uintptr_t cpIndex;
    } TR_RelocationClassAddress;
 
+typedef struct TR_RelocationRecordMethodCallAddress
+   {
+   TR_RelocationRecordHeaderPadded hdr;
+   uintptr_t methodAddress;
+   } TR_RelocationRecordMethodCallAddress;
+
 typedef TR_RelocationRecordMethodEnterExitCheck TR_RelocationRecordUnresolvedAddressMaterializationHCR;
 
 typedef TR_RelocationRecordConstantPool TR_RelocationRecordThunks;
@@ -3583,13 +3587,6 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
             ptr = (U_8*) (record+1);
             }
             break;
-         case TR_ClassObject:
-            {
-            TR_RelocationClassAddress *record = (TR_RelocationClassAddress *) reloRecord;
-            _dbgPrintf("0x%-16x  0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool, record->cpIndex);
-            ptr = (U_8*) (record+1);
-            }
-            break;
          case TR_MethodObject:
          case TR_Thunks:
          case TR_Trampolines:
@@ -3670,8 +3667,14 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
             ptr = (U_8*) (record+1);
             }
          break;
+         case TR_MethodCallAddress:
+            {
+            TR_RelocationRecordMethodCallAddress *record = (TR_RelocationRecordMethodCallAddress *)reloRecord;
+            _dbgPrintf("0x%-16x", record->methodAddress);
+            ptr = (U_8*) (record+1);
+            }
+         break;
          case TR_RelativeMethodAddress:
-         case TR_InterfaceObject:
             // unsupported
          default:
             _dbgPrintf("Unrecognized relocation record\n");

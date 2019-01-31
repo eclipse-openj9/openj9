@@ -27,6 +27,6 @@
 JNIEXPORT void JNICALL
 JVM_InitializeFromArchive(JNIEnv *env, jclass clz)
 {
-	/* To be implemented via https://github.com/eclipse/openj9/issues/2452 */
+	/* A no-op implementation is ok. */
 }
 #endif /* JAVA_SPEC_VERSION >= 12 */

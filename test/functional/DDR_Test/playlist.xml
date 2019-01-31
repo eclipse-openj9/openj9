@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>testDDRExt_General_ibm</testCaseName>
@@ -39,12 +37,6 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -53,9 +45,9 @@
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
 		<!-- temporarily disable this test on osx; github.com/eclipse/openj9/issues/3366 -->
-		<platformRequirements>^os.aix,^os.zos,^os.win,^os.osx</platformRequirements>
+		<platformRequirements>^os.zos,^os.win,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -65,12 +57,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -90,12 +76,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 		<test>
@@ -114,12 +94,6 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -128,9 +102,9 @@
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
 		<!-- temporarily disable this test on osx; github.com/eclipse/openj9/issues/3366 -->
-		<platformRequirements>^os.aix,^os.zos,^os.win,^os.osx</platformRequirements>
+		<platformRequirements>^os.zos,^os.win,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -140,12 +114,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -165,11 +133,5 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 </playlist>

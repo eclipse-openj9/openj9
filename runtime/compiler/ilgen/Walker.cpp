@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,7 @@
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "infra/Bit.hpp"               //for trailingZeroes
+#include "env/JSR292Methods.h"
 
 #define BDCLASSLEN 20
 #define BDCLASS "java/math/BigDecimal"
@@ -1427,18 +1428,12 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          case J9BCinvokestatic:         genInvokeStatic(next2Bytes());         _bcIndex += 3; break;
          case J9BCinvokeinterface:      genInvokeInterface(next2Bytes());      _bcIndex += 3; break;
          case J9BCinvokedynamic:
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() && !comp()->getOption(TR_FullSpeedDebug))
-               _methodSymbol->setCannotAttemptOSR(_bcIndex);
             genInvokeDynamic(next2Bytes());
             _bcIndex += 3; break; // Could eventually need next3bytes
          case J9BCinvokehandle:
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() && !comp()->getOption(TR_FullSpeedDebug))
-               _methodSymbol->setCannotAttemptOSR(_bcIndex);
             genInvokeHandle(next2Bytes());
             _bcIndex += 3; break;
          case J9BCinvokehandlegeneric:
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() && !comp()->getOption(TR_FullSpeedDebug))
-               _methodSymbol->setCannotAttemptOSR(_bcIndex);
             genInvokeHandleGeneric(next2Bytes());
             _bcIndex += 3; break;
          case J9BCinvokespecialsplit:   genInvokeSpecial(next2Bytes() | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG);   _bcIndex += 3; break;
@@ -1532,6 +1527,9 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
             break;
 
+         case J9BCdefaultvalue:
+         case J9BCwithfield:
+            fej9()->unsupportedByteCode(comp(), opcode);
          case J9BCunknown:
             fej9()->unknownByteCode(comp(), opcode);
             break;
@@ -3994,7 +3992,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
 
       TR_ASSERT_FATAL(callTree != bbExit, "invokeinterface call tree not found\n");
 
-      separateNullCheck(callTree);
+      TR::TransformUtil::separateNullCheck(comp(), callTree, comp()->getOption(TR_TraceILGen));
 
       uint32_t interfaceCPIndex = owningMethod->classCPIndexOfMethod(cpIndex);
       push(callNode->getArgument(0));
@@ -4037,7 +4035,7 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    // Compute the receiver handle
    //
    loadFromCallSiteTable(callSiteIndex);
-   TR::Node *receiver = top();
+   TR::Node *receiver = pop();
 
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack after load from callsite table)");
@@ -4052,19 +4050,11 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
          symRef = symRefTab()->findOrCreateMethodSymbol(_methodSymbol->getResolvedMethodIndex(), -1, specimen, TR::MethodSymbol::ComputedVirtual);
       }
 
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genInvokeHandle)");
-
-   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
-      {
-      dup();
-      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
-      genInvokeDirect(doCustomizationLogic);
-      }
-
    // Emit the call
    //
-   genInvokeHandle(symRef, receiver);
+   TR::Node* callNode = genInvokeHandle(symRef, receiver);
+
+   _invokeDynamicCalls->set(_bcIndex);
    }
 
 TR::Node *
@@ -4077,32 +4067,16 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
 
    if (comp()->getOption(TR_FullSpeedDebug) && !isPeekingMethod())
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 1");
-   // Locate the receiver handle
-   //
+
    TR::SymbolReference * invokeExactSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-   TR::Node *receiverHandle = getReceiverFor(invokeExactSymRef);
-
-   // Emit the MethodType check
-   //
-   if (fej9()->hasMethodTypesSideTable())
-      loadFromMethodTypeTable(cpIndex);
-   else
-      loadFromCP(TR::NoType, cpIndex);
-
-   TR::Node *callSiteType = pop();
-   genHandleTypeCheck(receiverHandle, callSiteType);
-
-   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
-      {
-      push(receiverHandle);
-      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
-      genInvokeDirect(doCustomizationLogic);
-      }
 
    // Emit the call
    //
-   push(receiverHandle);
-   return genInvokeHandle(invokeExactSymRef);
+   TR::Node* callNode = genInvokeHandle(invokeExactSymRef);
+
+   _invokeHandleCalls->set(_bcIndex);
+
+   return callNode;
    }
 
 TR::Node *
@@ -4111,11 +4085,11 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack before genInvokeHandle)");
 
-   TR::SymbolReference *invokeExactTargetAddress = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExactTargetAddress, JSR292_invokeExactTargetAddressSig, TR::MethodSymbol::Special);
-   genInvokeDirect(invokeExactTargetAddress);
-   TR::Node *callNode = genInvoke(invokeExactSymRef, pop(), invokedynamicReceiver);
+   TR::Node* tmpTargetAddress = TR::Node::lconst(0);
+   TR::Node *callNode = genInvoke(invokeExactSymRef, tmpTargetAddress, invokedynamicReceiver);
    _methodSymbol->setMayHaveIndirectCalls(true);
    _methodSymbol->setHasMethodHandleInvokes(true);
+
    if (!isPeekingMethod())
       {
       if (!comp()->getHasMethodHandleInvoke())
@@ -4130,6 +4104,20 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "Call to invokeExact%.*s from %s", callee->signatureLength(), callee->signatureChars(), comp()->signature());
          }
       }
+
+   _methodHandleInvokeCalls->set(_bcIndex);
+   return callNode;
+   }
+
+TR::Node *
+TR_J9ByteCodeIlGenerator::genILGenMacroInvokeExact(TR::SymbolReference *invokeExactSymRef)
+   {
+   TR_ASSERT(!comp()->compileRelocatableCode(), "Does not support ILGenMacro under AOT bci %d", _bcIndex);
+   TR_ASSERT(!comp()->getOption(TR_FullSpeedDebug) || isPeekingMethod(), "Does not support ILGenMacro under FSD bci %d", _bcIndex);
+   TR::Node* callNode = genInvokeHandle(invokeExactSymRef);
+
+   _ilGenMacroInvokeExactCalls->set(_bcIndex);
+
    return callNode;
    }
 
@@ -4158,46 +4146,16 @@ TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 2");
 
    TR::SymbolReference * invokeGenericSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-   TR::SymbolReference * methodTypeSymRef;
-   if (fej9()->hasMethodTypesSideTable())
-      methodTypeSymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
-   else
-      methodTypeSymRef = symRefTab()->findOrCreateMethodTypeSymbol(_methodSymbol, cpIndex);
-
-   return genInvokeHandleGeneric(invokeGenericSymRef, methodTypeSymRef);
-   }
-
-TR::Node *
-TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(TR::SymbolReference *invokeGenericSymRef, TR::SymbolReference *methodTypeSymRef)
-   {
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genInvokeHandleGeneric)");
    TR_Method *invokeGeneric = invokeGenericSymRef->getSymbol()->castToMethodSymbol()->getMethod();
-
-   TR::Node *&receiver = _stack->element(_stack->topIndex() - invokeGeneric->numberOfExplicitParameters());
-   push(receiver);
-   loadSymbol(TR::aload, methodTypeSymRef);
-   genTreeTop(top());
-   TR::SymbolReference *typeConversion = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_asType, JSR292_asTypeSig, TR::MethodSymbol::Static);
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genTypeConversion in invokeHandleGeneric)");
-   genInvokeDirect(typeConversion);
-   receiver = _stack->top(); // put converted receiver where original receiver was
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack after genTypeConversion in invokeHandleGeneric)");
-
-   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
-      {
-      dup();
-      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
-      genInvokeDirect(doCustomizationLogic);
-      }
-
    TR::SymbolReference *invokeExactOriginal = symRefTab()->methodSymRefFromName(_methodSymbol,
       JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual, invokeGenericSymRef->getCPIndex());
    TR::SymbolReference *invokeExactSymRef = symRefTab()->methodSymRefWithSignature(
       invokeExactOriginal, invokeGeneric->signatureChars(), invokeGeneric->signatureLength());
-   return genInvokeHandle(invokeExactSymRef);
+
+   TR::Node* callNode = genInvokeHandle(invokeExactSymRef);
+
+   _invokeHandleGenericCalls->set(_bcIndex);
+   return callNode;
    }
 
 TR::Node*
@@ -5427,29 +5385,6 @@ break
       }
 
    if (resolvedMethodSymbol &&
-       resolvedMethodSymbol->getRecognizedMethod() == TR::java_lang_String_indexOf_String &&
-       !isPeekingMethod() &&
-       !comp()->getOption(TR_DisableInliningOfNatives) &&
-       !comp()->getOption(TR_DisableFastStringIndexOf))
-      {
-      resultNode = TR::TransformUtil::transformStringIndexOfCall(comp(), callNode);
-      if (resultNode != callNode)
-         {
-         if (treeTopNode->getOpCode().isCheck())
-            {
-            // the orignal 'this' of the indexOf was being nullchk'd (note: it cannot be a resolv check)
-            // nullchk the original nullchk reference, and create the static call nestled under a treetop
-            //
-            TR::Node *passThrough = TR::Node::create(TR::PassThrough, 1, callNode->getFirstChild());
-            callNodeTreeTop->getNode()->setAndIncChild(0, passThrough);
-            callNodeTreeTop = genTreeTop(callNode = resultNode);
-            callNode->decReferenceCount();
-            }
-         else
-            callNodeTreeTop->getNode()->setChild(0, callNode = resultNode);
-         }
-      }
-   else if (resolvedMethodSymbol &&
        !isPeekingMethod() &&
        (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32 ||
         resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64))
@@ -5771,14 +5706,13 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
          {
          if (!comp()->compileRelocatableCode())
             {
-            push(_stack->element(_stack->size() - archetypeParmCount)); // dup receiver
             TR_ResolvedMethod  *invokeExactMacro = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
             TR::SymbolReference *invokeExact = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual);
             TR::SymbolReference *invokeExactWithSig = symRefWithArtificialSignature(invokeExact,
                "(.*).$",
                invokeExactMacro->signatureChars(), 1, // skip explicit MethodHandle argument -- invokeExact has it as a receiver
                invokeExactMacro->signatureChars());
-            genInvokeHandle(invokeExactWithSig);
+            genILGenMacroInvokeExact(invokeExactWithSig);
             }
          return true;
          }
@@ -5899,6 +5833,9 @@ TR_J9ByteCodeIlGenerator::loadAuto(TR::DataType type, int32_t slot, bool isAdjun
 void
 TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    {
+   if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, false);
    TR::Symbol * symbol = symRef->getSymbol();
    TR::DataType type = symbol->getDataType();
@@ -5916,7 +5853,9 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       }
 
    TR::Node * load, *dummyLoad;
-   dummyLoad = load = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, address, symRef);
+
+   TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
+   dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
 
    // loading cleanroom BigDecimal long field?
    // performed only when DFP isn't disabled, and the target
@@ -5953,7 +5892,7 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       }
    else if (!address->isNonNull())
       treeTopNode = genNullCheck(load);
-   else if (symbol->isVolatile())
+   else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
       treeTopNode = load;
 
    if (treeTopNode)
@@ -5988,6 +5927,9 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    {
+   if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
    _staticFieldReferenceEncountered = true;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
    if (comp()->getOption(TR_TraceILGen))
@@ -6269,7 +6211,13 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    else
       {
       TR::Node * load;
-      if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
+      if (_generateReadBarriersForFieldWatch)
+         {
+         void * staticClass = method()->classOfStatic(cpIndex);
+         loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true /* cpIndexOfStatic */));
+         load = TR::Node::createWithSymRef(comp()->il.opCodeForDirectReadBarrier(type), 1, pop(), 0, symRef);
+         }
+      else if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
          {
          TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassStaticsSymbol(_methodSymbol, cpIndex));
          load = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, statics, symRef);
@@ -6280,7 +6228,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
       TR::Node * treeTopNode = 0;
       if (symRef->isUnresolved())
          treeTopNode = genResolveCheck(load);
-      else if (symbol->isVolatile())
+      else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
          treeTopNode = load;
 
       if (treeTopNode)
@@ -6659,20 +6607,6 @@ TR_J9ByteCodeIlGenerator::loadFromCallSiteTable(int32_t callSiteIndex)
    if (!symRef->isUnresolved())
       {
       if (_methodSymbol->getResolvedMethod()->callSiteTableEntryAddress(callSiteIndex))
-         load->setIsNonNull(true);
-      else
-         load->setIsNull(true);
-      }
-   }
-
-void
-TR_J9ByteCodeIlGenerator::loadFromMethodTypeTable(int32_t cpIndex)
-   {
-   TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
-   TR::Node *load = loadSymbol(TR::aload, symRef);
-   if (!symRef->isUnresolved())
-      {
-      if (_methodSymbol->getResolvedMethod()->methodTypeTableEntryAddress(cpIndex))
          load->setIsNonNull(true);
       else
          load->setIsNull(true);
@@ -7263,6 +7197,9 @@ static bool storeCanBeRemovedForUnreadField(TR_PersistentFieldInfo * fieldInfo, 
 void
 TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    {
+   if (_generateWriteBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, true);
    TR::Symbol * symbol = symRef->getSymbol();
    TR::DataType type = symbol->getDataType();
@@ -7276,9 +7213,9 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    // code to handle volatiles moved to CodeGenPrep
    //
    TR::Node * node;
-   if (type == TR::Address && _generateWriteBarriers)
+   if ((type == TR::Address && _generateWriteBarriersForGC) || _generateWriteBarriersForFieldWatch)
       {
-      node = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, addressNode, value, parentObject, symRef);
+      node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectWriteBarrier(type), 3, 3, addressNode, value, parentObject, symRef);
       }
    else
       {
@@ -7400,6 +7337,9 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    {
+   if (_generateWriteBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
    _staticFieldReferenceEncountered = true;
    TR::Node * value = pop();
 
@@ -7414,10 +7354,10 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    if (type == TR::Int8 && symRefTab()->isStaticTypeBool(symRef))
       value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
 
-   if (type == TR::Address && _generateWriteBarriers)
+   if ((type == TR::Address && _generateWriteBarriersForGC) || _generateWriteBarriersForFieldWatch)
       {
       void * staticClass = method()->classOfStatic(cpIndex);
-      loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true));
+      loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true /* cpIndexOfStatic */));
 
       if (TR::Compiler->cls.classesOnHeap())
          {
@@ -7426,7 +7366,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
          push(node);
          }
 
-      node = TR::Node::createWithSymRef(TR::awrtbar, 2, 2, value, pop(), symRef);
+      node = TR::Node::createWithSymRef(comp()->il.opCodeForDirectWriteBarrier(type), 2, 2, value, pop(), symRef);
       }
    else if (symbol->isVolatile() && type == TR::Int64 && !symRef->isUnresolved() && TR::Compiler->target.is32Bit() &&
             !comp()->cg()->getSupportsInlinedAtomicLongVolatiles() && 0)

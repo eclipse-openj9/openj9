@@ -1,12 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE]*/
-package com.ibm.jvm.traceformat;
-/*[ELSE]
-package com.ibm.jvm;
-/*[ENDIF]*/
-
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +20,11 @@ package com.ibm.jvm;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+/*[IF Sidecar19-SE]*/
+package com.ibm.jvm.traceformat;
+/*[ELSE]
+package com.ibm.jvm;
+/*[ENDIF]*/
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -55,7 +54,7 @@ import com.ibm.jvm.trace.format.api.TraceThread;
 
 /**
  * !!! WARNING !!!
- * Adding any new top level classes in this file requires modification to jcl\jcl_build.mk
+ * Adding any new top level classes in this file requires modification to jcl/jcl_build.mk
  * to ensure the new classes are included within traceformat.jar for Java 8.
  */
 public class TraceFormat
@@ -528,9 +527,11 @@ class MessageFile extends ProgramOption {
 	List messageFiles = new LinkedList();
 
 	String getDescription() {
-		return "A comma separated list of files containing the trace format strings. By default the following files are used:"+System.getProperty("line.separator")+
-			   "		$JAVA_HOME/lib/J9TraceFormat.dat"+System.getProperty("line.separator")+
-			   "		$JAVA_HOME/lib/TraceFormat.dat";
+		String eol = System.getProperty("line.separator", "\n");
+		return "A comma separated list of files containing the trace format strings. By default the following files are used:" + eol
+			 + "  $JAVA_HOME/lib/J9TraceFormat.dat" + eol
+			 + "  $JAVA_HOME/lib/OMRTraceFormat.dat" + eol
+			 + "  $JAVA_HOME/lib/TraceFormat.dat";
 	}
 
 	String getName() {
@@ -554,13 +555,11 @@ class MessageFile extends ProgramOption {
 				token = st.nextToken();
 				/* construct files from the tokens. These files must exist */
 				File datFile = new File(token);
-				if( !datFile.exists() ) {
-					throw new FileNotFoundException(token);
+				if (!datFile.exists()) {
+					throw new IllegalArgumentException("dat file \"" + token + "\" not found");
 				}
 				messageFiles.add(datFile);
 			}
-		} catch (FileNotFoundException e) {
-			throw new IllegalArgumentException("dat file \""+token+"\" not found");
 		} catch (SecurityException e) {
 			throw new IllegalArgumentException("The application does not have permission to access the specified dat file, \""+token+"\"");
 		}
@@ -571,6 +570,7 @@ class MessageFile extends ProgramOption {
 		dir = dir.concat(File.separator).concat("lib").concat(File.separator);
 		
 		setValue(dir + "J9TraceFormat.dat");
+		setValue(dir + "OMRTraceFormat.dat");
 		try {
 			setValue(dir + "TraceFormat.dat");
 		} catch (IllegalArgumentException e) {

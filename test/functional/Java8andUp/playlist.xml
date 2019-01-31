@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,12 +32,6 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -54,12 +48,6 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -79,12 +67,6 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -104,12 +86,6 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -137,12 +113,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -156,12 +126,6 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -212,9 +176,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -260,9 +222,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -305,9 +265,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -351,9 +309,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -400,9 +356,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -446,9 +400,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 	<!-- Attach API tests -->
@@ -491,9 +443,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -515,12 +465,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -541,12 +485,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -567,12 +505,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -593,12 +525,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -619,12 +545,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -690,8 +610,6 @@
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
 		$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3777 -->
-		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -720,8 +638,6 @@
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
 		$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3777 -->
-		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -729,9 +645,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -743,18 +657,32 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 		<levels>
 			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
+	</test>
+
+	<test>
+		<testCaseName>OpenSSL</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames OpenSSL \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -773,6 +701,7 @@
 	--add-exports java.base/jdk.internal.misc=ALL-UNNAMED $(ADD_EXPORTS_JDK_INTERNAL_REFLECT) \
 	--add-exports java.base/com.ibm.jit.crypto=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.reflect=ALL-UNNAMED \
+	--add-exports java.base/sun.net.www.protocol.jrt=ALL-UNNAMED \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-opens=java.base/java.security=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(JAXB_API_JAR)$(Q) \
@@ -804,9 +733,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -843,9 +770,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -941,9 +866,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -1040,9 +963,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 
@@ -1076,9 +997,7 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -1106,12 +1025,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1129,12 +1042,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1164,12 +1071,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1195,12 +1096,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1226,12 +1121,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1257,12 +1146,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1287,12 +1170,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1314,12 +1191,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1338,12 +1209,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1362,12 +1227,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	
 	<test>
@@ -1386,12 +1245,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1417,12 +1270,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1446,12 +1293,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1474,12 +1315,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1498,12 +1333,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1521,12 +1350,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1544,12 +1367,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1568,12 +1385,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1600,12 +1411,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1629,12 +1434,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1658,12 +1457,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1681,12 +1474,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1704,12 +1491,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1728,12 +1509,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1753,12 +1528,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1776,12 +1545,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<!--hanoiTM_* tests : This is the same regular hanoi test but we set JAVA_THREAD_MODEL
@@ -1804,12 +1567,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1829,12 +1586,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1854,12 +1605,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	
 	<!-- This test should fail, so a wrapper is used to wrap the return non-zero code -->
@@ -1881,12 +1626,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1905,12 +1644,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1928,12 +1661,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -1955,12 +1682,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	<test>
 		<testCaseName>testStringIndexOfString</testCaseName>
@@ -1981,12 +1702,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	
 	<test>
@@ -2029,12 +1744,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 
 	<test>
@@ -2052,12 +1761,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-		</subsets>
 	</test>
 	
 	<test>
@@ -2077,9 +1780,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<subset>9+</subset>
 		</subsets>
 	</test>
 	

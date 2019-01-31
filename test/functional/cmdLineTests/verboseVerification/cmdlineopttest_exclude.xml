@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2004, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+
+<suite id="CmdLineOptTest Tests">
+
+<exclude id="Block Overrun -Xint -Xcheck:memory:mprotect=bottom" platform="zos_390.*" shouldFix="false"><reason>mprotect unsupported on zOS</reason></exclude>
+<exclude id="Block Underrun -Xint -Xcheck:memory:mprotect=top" platform="zos_390.*" shouldFix="false"><reason>mprotect unsupported on zOS</reason></exclude>
+<exclude id="Xmrx" platform=".*_hrt.*" shouldFix="true"><reason>unsupported command line option</reason></exclude>
+<exclude id="Xms" platform=".*_hrt.*" shouldFix="true"><reason>Realtime and Tarok VMs silently default Xms to 64m when specified value is smaller</reason></exclude>
+<exclude id="Xnoclassgc" platform=".*_hrt.*" shouldFix="true"><reason>unsupported command line option</reason></exclude>
+<exclude id="-Xlockword bad mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword default mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword minimizeFootprint mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword all mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword bad option" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword bad option trailing separator" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword empty option" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword setting lockword" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword setting noLockword" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword setting what" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword with two instance on command line" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword with duplicates" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:noSecondarySpinForObjectMonitors on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:adaptSpin on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:noAdaptSpin on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:noSecondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
+<exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
+
+<include id="-Xpreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xpreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xpreloaduser32 -Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnopreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnopreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnopreloaduser32 -Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+
+<include id="user condition handler: float -XCEEHDLR  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: float -XCEEHDLR thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: float without -XCEEHDLR  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: float without -XCEEHDLR thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: read -XCEEHDLR  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: read -XCEEHDLR thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: callin -XCEEHDLR  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: callin -XCEEHDLR thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<include id="user condition handler: callin without -XCEEHDLR  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="user condition handler: callin without -XCEEHDLR thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<exclude id="-XCEEHDLR not supported on non 31-bit zOS" platform="zos_390-31.*" shouldFix="false"><reason>-XCEEHDLR only applies to 31-bit zOS</reason></include>
+
+<exclude id="ZipTester debuginfo without rt.jar" platform=".*_hrt.*" shouldFix="false"><reason>Not enough memory on hard realtime for testing</reason></exclude>
+<exclude id="ZipTester debuginfo with rt.jar" platform=".*_hrt.*" shouldFix="false"><reason>Not enough memory on hard realtime for testing</reason></exclude>
+
+<include id="-Xthr:cfsYield" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:noCfsYield" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:yieldAlgorithm=3" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:yieldUsleepMultiplier=60" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:cfsYield,noCfsYield" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:yieldAlgorithm=2,yieldUsleepMultiplier=10" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xaggressive" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="defaultBehaviourOfCFS" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+
+
+<include id="abort -Xsignal:posixSignalHandler=cooperativeShutdown  " platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+<include id="abort -Xsignal:posixSignalHandler=cooperativeShutdown thread" platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+
+<include id="softwareFloat  -Xsignal:posixSignalHandler=cooperativeShutdown  " platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+<include id="softwareFloat  -Xsignal:posixSignalHandler=cooperativeShutdown thread" platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+
+<include id="hardwareFloat -Xsignal:posixSignalHandler=cooperativeShutdown  " platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+<include id="hardwareFloat -Xsignal:posixSignalHandler=cooperativeShutdown thread" platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+
+<include id="softwareRead -Xsignal:posixSignalHandler=cooperativeShutdown  " platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+<include id="softwareRead -Xsignal:posixSignalHandler=cooperativeShutdown thread" platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+
+<include id="hardwareRead -Xsignal:posixSignalHandler=cooperativeShutdown  " platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+<include id="hardwareRead -Xsignal:posixSignalHandler=cooperativeShutdown thread" platform="do_not_include_anywhere_for_now" shouldFix="false"><reason>Only applies to zOS</reason></include>
+
+<exclude id="reject -Xsignal:posixSignalHandler=cooperativeShutdown on non-zOS" platform="zos_390.*" shouldFix="false"><reason>Only applies to zOS</reason></exclude>
+
+<exclude id="abort  " platform="win_x86.*" shouldFix="false"><reason>does not apply to windows</reason></exclude>
+<exclude id="abort thread" platform="win_x86.*" shouldFix="false"><reason>does not apply to windows</reason></exclude>
+
+<exclude id="softwareFloat  " platform="win_x86.*" shouldFix="false"><reason>does not apply to windows</reason></exclude>
+<exclude id="softwareFloat thread" platform="win_x86.*" shouldFix="false"><reason>does not apply to windows</reason></exclude>
+<exclude id="softwareRead  " platform="win_x86.*" shouldFix="false"><reason>does not apply to windows</reason></exclude>
+<exclude id="softwareRead thread" platform="win_x86.*" shouldFix="false"><reason>does not apply to windows</reason></exclude>
+
+<exclude id="hardwareFloat  " platform="(.*ppc.*)" shouldFix="true"><reason>mechanism to trigger hardware float does not work on PPC</reason></exclude>
+<exclude id="hardwareFloat thread" platform="(.*ppc.*)" shouldFix="true"><reason>mechanism to trigger hardware float dose not work on PPC</reason></exclude>
+
+<include id="hardware float -Xsignal:userConditionHandler=percolate  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="hardware float -Xsignal:userConditionHandler=percolate thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<include id="software float -Xsignal:userConditionHandler=percolate  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="software float -Xsignal:userConditionHandler=percolate thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<include id="callInAndTriggerGPReadThenResumeAndCallInAgain with -Xsignal:userConditionHandler=percolate  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="callInAndTriggerGPReadThenResumeAndCallInAgain with -Xsignal:userConditionHandler=percolate thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<include id="callInAndTriggerGPReadThenResumeAndReturnToJava with -Xsignal:userConditionHandler=percolate  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="callInAndTriggerGPReadThenResumeAndReturnToJava with -Xsignal:userConditionHandler=percolate thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<include id="callInAndTriggerGPReadThenResumeAndReturnToJIT with -Xsignal:userConditionHandler=percolate  " platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="callInAndTriggerGPReadThenResumeAndReturnToJIT with -Xsignal:userConditionHandler=percolate thread" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<include id="glaunch -Xsignal:userConditionHandler=percolate -GgpfBeforeVMInit" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+<include id="glaunch -Xsignal:userConditionHandler=percolate -GgpfAfterMain" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
+
+<exclude id="memorycheck" platform="aix.*" shouldFix="true"><reason>Problem Report 119051</reason></exclude>
+<exclude id="glaunch fib example" platform="all"><reason>glaunch cannot load VMBench/FibBench class in cmdLineTest_gpTest</reason></exclude>
+</suite>
+

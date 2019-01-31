@@ -158,13 +158,13 @@ TR::Instruction *TR::IA32PrivateLinkage::savePreservedRegisters(TR::Instruction 
          pindex--)
       {
       TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
+      TR::RealRegister *reg = machine()->getRealRegister(idx);
       if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked)
          {
          cursor = generateMemRegInstruction(
                      cursor,
                      S4MemReg,
-                     generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+                     generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
                      reg,
                      cg()
                      );
@@ -187,14 +187,14 @@ TR::Instruction *TR::IA32PrivateLinkage::restorePreservedRegisters(TR::Instructi
         pindex--)
       {
       TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
+      TR::RealRegister *reg = machine()->getRealRegister(idx);
       if (reg->getHasBeenAssignedInMethod())
          {
          cursor = generateRegMemInstruction(
                      cursor,
                      L4RegMem,
                      reg,
-                     generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+                     generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
                      cg()
                      );
          offsetCursor -= pointerSize;

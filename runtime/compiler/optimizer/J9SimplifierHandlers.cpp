@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,54 +26,54 @@
 #include "optimizer/J9SimplifierHandlers.hpp"
 #include "optimizer/Simplifier.hpp"
 
-#include <algorithm>                           // for std::max, etc
-#include <math.h>                              // for log10
-#include <stddef.h>                            // for size_t
-#include <stdint.h>                            // for int32_t, int64_t, etc
-#include <stdio.h>                             // for sprintf
-#include <stdlib.h>                            // for abs
-#include <string.h>                            // for NULL, strlen, strcat, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd, feGetEnv
+#include <algorithm>
+#include <math.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#include "codegen/TreeEvaluator.hpp"           // for TreeEvaluator
-#include "compile/Compilation.hpp"             // for Compilation, comp
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"         // for TR::Options, etc
-#include "cs2/bitvectr.h"                      // for ABitVector, etc
-#include "cs2/hashtab.h"                       // for HashTable, etc
-#include "env/IO.hpp"                          // for POINTER_PRINTF_FORMAT
-#include "env/ObjectModel.hpp"                 // for ObjectModel
-#include "env/TRMemory.hpp"                    // for Allocator, etc
+#include "control/Options_inlines.hpp"
+#include "cs2/bitvectr.h"
+#include "cs2/hashtab.h"
+#include "env/IO.hpp"
+#include "env/ObjectModel.hpp"
+#include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes::Int8, etc
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::iconst, etc
-#include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
-#include "il/Node.hpp"                         // for Node, etc
-#include "il/Node_inlines.hpp"                 // for Node::getFirstChild, etc
-#include "il/Symbol.hpp"                       // for Symbol, etc
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
-#include "il/TreeTop_inlines.hpp"              // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/ResolvedMethodSymbol.hpp"  // for ResolvedMethodSymbol
-#include "il/symbol/StaticSymbol.hpp"          // for StaticSymbol
-#include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "infra/Bit.hpp"                       // for isNonNegativePowerOf2, etc
-#include "infra/Cfg.hpp"                       // for CFG
-#include "infra/HashTab.hpp"                   // for TR_HashTabInt, etc
-#include "infra/List.hpp"                      // for ListIterator, List
-#include "infra/TRCfgEdge.hpp"                 // for CFGEdge
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Bit.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/HashTab.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "optimizer/OptimizationManager.hpp"   // for OptimizationManager
+#include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"             // for Optimizer
-#include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
-#include "optimizer/Simplifier.hpp"            // for TR::Simplifier, etc
+#include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
+#include "optimizer/Simplifier.hpp"
 #include "optimizer/TransformUtil.hpp"
 
 
@@ -2916,13 +2916,12 @@ TR::Node *pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    simplifyChildren(node, block, s);
    TR::Node *valueChild = node->setValueChild(removeOperandWidening(node->getValueChild(), node, block, s));
 
-   if ((!s->comp()->getOption(TR_EnableLateCleanFolding) || s->comp()->getOptLevel() == noOpt) && // setting CleanSignInPDStoreEvaluator at opt interferes with copyPropagation and valueNumbering as it means the store now has a side-effect
-            !s->comp()->getOption(TR_KeepBCDWidening) &&
-            valueChild->getOpCodeValue() == TR::pdclean &&
-            node->getDecimalPrecision() <= TR::DataType::getMaxPackedDecimalPrecision() &&
-            isFirstOrOnlyReference(valueChild) &&
-            performTransformation(s->comp(), "%sFold pdclean [" POINTER_PRINTF_FORMAT "] into pdstore by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",
-               s->optDetailString(), valueChild, node))
+   if (!s->comp()->getOption(TR_KeepBCDWidening) &&
+       valueChild->getOpCodeValue() == TR::pdclean &&
+       node->getDecimalPrecision() <= TR::DataType::getMaxPackedDecimalPrecision() &&
+       isFirstOrOnlyReference(valueChild) &&
+       performTransformation(s->comp(), "%sFold pdclean [" POINTER_PRINTF_FORMAT "] into pdstore by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",
+          s->optDetailString(), valueChild, node))
       {
       // this transformation is only done for first/only references to avoid a sub-optimality where an already clean sign is cleaned again on a subsequent reference
       // pdx
@@ -2960,21 +2959,10 @@ TR::Node *pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
          //    pdclean
          //
          // cheaper to do load/store/setSign0xc all as one op (i.e. with a ZAP)
-         if (!s->comp()->getOption(TR_EnableLateCleanFolding) || s->comp()->getOptLevel() == noOpt) // setting CleanSignInPDStoreEvaluator at opt interferes with copyPropagation and valueNumbering as it means the store now has a side-effect
-            {
-            dumpOptDetails(s->comp(), " by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",node);
-            node->setCleanSignInPDStoreEvaluator(true);
-            valueChild = node->setValueChild(s->replaceNodeWithChild(valueChild, valueChild->getFirstChild(), s->_curTree, block));
-            }
-         else
-            {
-            dumpOptDetails(s->comp(), " by changing pdSetSign [" POINTER_PRINTF_FORMAT "] to pdclean and removing %s [" POINTER_PRINTF_FORMAT "]\n",
-               valueChild,valueChild->getSecondChild());
-            valueChild->getSecondChild()->recursivelyDecReferenceCount();
-            TR::Node::recreate(valueChild, TR::pdclean);
-            valueChild->setFlags(0);
-            valueChild->setNumChildren(1);
-            }
+         //
+         dumpOptDetails(s->comp(), " by setting CleanSignInPDStoreEvaluator flag on pdstore [" POINTER_PRINTF_FORMAT "]\n",node);
+         node->setCleanSignInPDStoreEvaluator(true);
+         valueChild = node->setValueChild(s->replaceNodeWithChild(valueChild, valueChild->getFirstChild(), s->_curTree, block));
          }
 
    valueChild = node->setValueChild(removeOperandWidening(valueChild, node, block, s));

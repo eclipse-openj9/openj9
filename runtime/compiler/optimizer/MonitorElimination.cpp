@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,57 +22,57 @@
 
 #include "optimizer/MonitorElimination.hpp"
 
-#include <stdint.h>                                // for int32_t, uint32_t, etc
-#include <stdlib.h>                                // for atoi
-#include <string.h>                                // for NULL, memset, etc
-#include <algorithm>                               // for std::find
-#include "codegen/CodeGenerator.hpp"               // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                    // for feGetEnv, etc
-#include "compile/Compilation.hpp"                 // for Compilation, etc
-#include "compile/Method.hpp"                      // for TR_Method
-#include "compile/ResolvedMethod.hpp"              // for TR_ResolvedMethod
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <algorithm>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "control/Options_inlines.hpp"             // for TR::Options, etc
-#include "cs2/arrayof.h"                           // for ArrayOf
+#include "control/Options_inlines.hpp"
+#include "cs2/arrayof.h"
 #include "cs2/bitvectr.h"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                        // for Allocator, etc
+#include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "il/AliasSetInterface.hpp"
-#include "il/Block.hpp"                            // for Block, toBlock, etc
+#include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/ILOps.hpp"                            // for ILOpCode, etc
-#include "il/Node.hpp"                             // for Node, etc
+#include "il/ILOps.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/Symbol.hpp"                           // for Symbol
-#include "il/SymbolReference.hpp"                  // for SymbolReference, etc
-#include "il/TreeTop.hpp"                          // for TreeTop
-#include "il/TreeTop_inlines.hpp"                  // for TreeTop::getNode, etc
-#include "il/symbol/MethodSymbol.hpp"              // for MethodSymbol
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
+#include "il/symbol/MethodSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"              // for StaticSymbol
-#include "infra/Array.hpp"                         // for TR_Array
-#include "infra/Assert.hpp"                        // for TR_ASSERT
-#include "infra/BitVector.hpp"                     // for TR_BitVector, etc
-#include "infra/Cfg.hpp"                           // for CFG, etc
-#include "infra/Link.hpp"                          // for TR_LinkHead, etc
-#include "infra/List.hpp"                          // for ListIterator, etc
-#include "infra/Stack.hpp"                         // for TR_Stack
-#include "infra/TRCfgEdge.hpp"                     // for CFGEdge
-#include "infra/TRCfgNode.hpp"                     // for CFGNode
-#include "optimizer/InterProceduralAnalyzer.hpp"   // for TR::GlobalSymbol
-#include "optimizer/Optimization.hpp"              // for Optimization
+#include "il/symbol/StaticSymbol.hpp"
+#include "infra/Array.hpp"
+#include "infra/Assert.hpp"
+#include "infra/BitVector.hpp"
+#include "infra/Cfg.hpp"
+#include "infra/Link.hpp"
+#include "infra/List.hpp"
+#include "infra/Stack.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
+#include "optimizer/InterProceduralAnalyzer.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizations.hpp"
-#include "optimizer/Optimizer.hpp"                 // for Optimizer
+#include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
-#include "optimizer/TransformUtil.hpp"             // for TransformUtil
-#include "optimizer/UseDefInfo.hpp"                // for TR_UseDefInfo, etc
+#include "optimizer/TransformUtil.hpp"
+#include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
-#include "ras/LogTracer.hpp"                       // for debugTrace, etc
+#include "ras/LogTracer.hpp"
 
 class TR_OpaqueClassBlock;
 

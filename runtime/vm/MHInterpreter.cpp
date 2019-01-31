@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,6 @@
  *******************************************************************************/
 #include "clang_comp.h"
 
-#if defined(WIN32) && defined(__clang__)
-#include "../oti/clang/stddef.h"
-#endif /* defined(WIN32) && defined(__clang__) */
 #include "j9cfg.h"
 #include "VM_MethodHandleKinds.h"
 
@@ -557,7 +554,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				IDATA spOffset = spPriorToFrameBuild - _currentThread->arg0EA;
 				IDATA frameOffset = (UDATA*)currentTypeFrame - _currentThread->arg0EA;
 
-				sendForGenericInvoke(_currentThread, methodHandleFromTable, accessModeType, FALSE /* dropFirstArg */, 0 /* reserved */);
+				sendForGenericInvoke(_currentThread, methodHandleFromTable, accessModeType, FALSE /* dropFirstArg */);
 				methodHandle = (j9object_t)_currentThread->returnValue;
 
 				if (VM_VMHelpers::exceptionPending(_currentThread)) {
@@ -1006,7 +1003,7 @@ VM_MHInterpreter::doInvokeGeneric(j9object_t methodHandle)
 		spOffset = spPriorToFrameBuild - _currentThread->arg0EA;
 		frameOffset = (UDATA*)currentTypeFrame - _currentThread->arg0EA;
 
-		sendForGenericInvoke(_currentThread, targetHandle, castType, FALSE, 0);
+		sendForGenericInvoke(_currentThread, targetHandle, castType, FALSE);
 		targetHandle = (j9object_t)_currentThread->returnValue;
 
 		/* If there's an exception, don't do anything and return the old handle */
@@ -2063,7 +2060,7 @@ convertInt:
 					} else if (currentClass == byteWrapperClass) {
 						intValue = J9VMJAVALANGBYTE_VALUE(_currentThread, currentReference);
 						if (!explicitCast) {
-							if (nextClass == booleanReflectClass) {
+							if ((nextClass == booleanReflectClass) || (nextClass == charReflectClass)) {
 								goto classCastException;
 							}
 						}

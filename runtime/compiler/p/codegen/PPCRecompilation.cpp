@@ -81,7 +81,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
    // see PicBuilder.s and Recompilation.s
    TR::Instruction *cursor=NULL;
    TR::Machine *machine = cg()->machine();
-   TR::Register   *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
+   TR::Register   *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
    TR::Node       *firstNode = _compilation->getStartTree()->getNode();
    TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCsamplingRecompileMethod, false, false, false);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
@@ -123,9 +123,9 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       // gr12 may contain the vtable offset, and must be preserved here
       // see PicBuilder.s and Recompilation.s
       TR::Machine *machine = cg()->machine();
-      TR::Register   *gr0 = machine->getPPCRealRegister(TR::RealRegister::gr0);
-      TR::Register   *gr11 = machine->getPPCRealRegister(TR::RealRegister::gr11);
-      TR::Register   *cr0 = machine->getPPCRealRegister(TR::RealRegister::cr0);
+      TR::Register   *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
+      TR::Register   *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
+      TR::Register   *cr0 = machine->getRealRegister(TR::RealRegister::cr0);
       TR::Node       *firstNode = _compilation->getStartTree()->getNode();
       intptrj_t        addr = (intptrj_t)getCounterAddress();          // What is the RL category?
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());

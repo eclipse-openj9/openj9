@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,15 +23,15 @@
 #ifndef CHTABLE_INCL
 #define CHTABLE_INCL
 
-#include <stddef.h>                        // for NULL
-#include <stdint.h>                        // for uint8_t, int32_t, etc
-#include "compile/Compilation.hpp"         // for Compilation
-#include "compile/CompilationTypes.hpp"    // for TR_Hotness
-#include "compile/VirtualGuard.hpp"        // for TR_VirtualGuardKind
-#include "env/RuntimeAssumptionTable.hpp"  // for TR_RuntimeAssumptionKind, etc
-#include "env/TRMemory.hpp"                // for TR_Memory, etc
-#include "env/jittypes.h"                  // for uintptrj_t
-#include "infra/Link.hpp"                  // for TR_Link, TR_LinkHead
+#include <stddef.h>
+#include <stdint.h>
+#include "compile/Compilation.hpp"
+#include "compile/CompilationTypes.hpp"
+#include "compile/VirtualGuard.hpp"
+#include "env/RuntimeAssumptionTable.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "infra/Link.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/JITaaSCHTable.hpp"
 

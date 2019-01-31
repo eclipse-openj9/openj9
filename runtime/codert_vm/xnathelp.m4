@@ -970,6 +970,7 @@ END_PROC(jitDecompileOnReturnJ)
 
 START_PROC(jitReadBarrier)
 ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
+	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	SWITCH_TO_C_STACK
 	SAVE_C_VOLATILE_REGS
 	dnl currentThread->javaVM->memoryManagerFunctions->J9ReadBarrier(currentThread,(fj9object_t*)currentThread->floatTemp1);
@@ -980,6 +981,7 @@ ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
 	call uword ptr J9TR_J9MemoryManagerFunctions_J9ReadBarrier[_rax]
 	RESTORE_C_VOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
+	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	ret
 },{ dnl OMR_GC_CONCURRENT_SCAVENGER
 	dnl not supported
@@ -987,8 +989,9 @@ ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
 })	dnl OMR_GC_CONCURRENT_SCAVENGER
 END_PROC(jitReadBarrier)
 
-START_PROC(jitReferenceArrayCopy)
 	FASTCALL_EXTERN(impl_jitReferenceArrayCopy,2)
+START_PROC(jitReferenceArrayCopy)
+	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	SWITCH_TO_C_STACK
 	SAVE_C_VOLATILE_REGS
 	mov uword ptr J9TR_VMThread_floatTemp3[_rbp],_rsi
@@ -1000,6 +1003,7 @@ START_PROC(jitReferenceArrayCopy)
 	test _rax,_rax
 	RESTORE_C_VOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
+	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	ret
 END_PROC(jitReferenceArrayCopy)
 

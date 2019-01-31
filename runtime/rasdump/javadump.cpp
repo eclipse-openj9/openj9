@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2018 IBM Corp. and others
+ * Copyright (c) 2003, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1837,6 +1837,7 @@ JavaCoreDumpWriter::writeThreadSection(void)
 	_OutputStream.writeInteger(_VirtualMachine->daemonThreadCount, "%i");
 	_OutputStream.writeCharacters("\n");
 
+#if !defined(OSX)
 	/* if thread preempt is enabled, and we have the lock, then collect the native stacks */
 	if ((_Agent->requestMask & J9RAS_DUMP_DO_PREEMPT_THREADS) && _PreemptLocked
 #if defined(WIN32)
@@ -1845,7 +1846,7 @@ JavaCoreDumpWriter::writeThreadSection(void)
 		 */
 		&& !(_Context->eventFlags & J9RAS_DUMP_ON_THREAD_START)
 		&& !(_Context->eventFlags & J9RAS_DUMP_ON_THREAD_END)
-#endif
+#endif /* defined(WIN32) */
 	) {
 		struct walkClosure closure;
 		UDATA sink = 0;
@@ -1856,6 +1857,7 @@ JavaCoreDumpWriter::writeThreadSection(void)
 				J9PORT_SIG_FLAG_SIGALLSYNC|J9PORT_SIG_FLAG_MAY_RETURN,
 				&sink);
 	}
+#endif /* !defined(OSX) */
 
 	if( !_ThreadsWalkStarted ) {
 		struct walkClosure closure;
@@ -2981,6 +2983,11 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"\n2SCLTEXTZCB        Zip cache bytes                           = "
 		);
 		_OutputStream.writeInteger(javacoreData.zipCacheDataBytes, "%zu");
+		
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTSHB        Startup hint bytes                        = "
+		);
+		_OutputStream.writeInteger(javacoreData.startupHintBytes, "%zu");
 
 		_OutputStream.writeCharacters(
 			"\n2SCLTEXTRWB        ReadWrite bytes                           = "
@@ -3095,6 +3102,11 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"\n2SCLTEXTNZC        Number Zip Caches                         = "
 		);
 		_OutputStream.writeInteger(javacoreData.numZipCaches, "%zu");
+
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTNSH        Number Startup Hint Entries               = "
+		);
+		_OutputStream.writeInteger(javacoreData.numStartupHints, "%zu");
 
 		_OutputStream.writeCharacters(
 			"\n2SCLTEXTNJC        Number JCL Entries                        = "

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,6 @@ class TR_FearPointAnalysis : public TR_BackwardUnionSingleBitContainerAnalysis
    virtual void analyzeTreeTopsInBlockStructure(TR_BlockStructure *);
    virtual bool postInitializationProcessing();
    TR_SingleBitContainer *generatedFear(TR::Node *node);
-   bool shouldSkipBlock(TR::Block *block);
 
    static bool virtualGuardsKillFear();
 

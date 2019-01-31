@@ -3,7 +3,7 @@
 package com.ibm.oti.vm;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.io.*;
@@ -51,20 +49,12 @@ public abstract class AbstractClassLoader extends ClassLoader {
 	FilePermission permissions[];
 	volatile SoftReference<ConcurrentHashMap<String, Vector>> resourceCacheRef;
 
-	private static final class ManifestLock {}
-	private static Object manifestLock = new ManifestLock();
 	/*[PR JAZZ 88959] Use URLStreamHandler when creating bootstrap resource URLs */
 	private static URLStreamHandler	urlJarStreamHandler;
 	private static URLStreamHandler	urlFileStreamHandler;
-	private static URLStreamHandler	urlJrtStreamHandler;
 	
 public AbstractClassLoader(){
 }
-
-public AbstractClassLoader(ClassLoader p1){
-	super(p1);
-}
-
 
 void fillCache(final int i) {
 	setTypeElement(i, VM.getClassPathEntryType(this, i));
@@ -177,86 +167,12 @@ public static void setBootstrapClassLoader(ClassLoader bootstrapClassLoader) {
 	systemClassLoader = bootstrapClassLoader;
 	urlJarStreamHandler = new sun.net.www.protocol.jar.Handler();
 	urlFileStreamHandler = new sun.net.www.protocol.file.Handler();
-/*[IF Sidecar19-SE]*/
-	urlJrtStreamHandler = new sun.net.www.protocol.jrt.Handler();
-/*[ENDIF] Sidecar19-SE */
-}
-
-Package definePackage(String packageName, final int cacheIndex) {
-	if (cacheIndex >= 0 && cache[cacheIndex] == null) {
-		AccessController.doPrivileged(new PrivilegedAction() {
-		public Object run() {
-			fillCache(cacheIndex);
-			return null;
-		}});
-	}
-
-	if (cacheIndex >= 0 && types[cacheIndex] == VM.CPE_TYPE_JAR) {
-		Manifest manifest = null;
-		try {
-			JarFile jf = (JarFile)cache[cacheIndex];
-			manifest = jf.getManifest();
-		} catch (IOException e) {}
-		if (manifest != null) {
-			/*[PR CMVC 76124] Deadlock loading char converter classes */
-			synchronized(manifestLock) {
-				String specTitle = null, specVersion = null, specVendor = null;
-				String implTitle = null, implVersion = null, implVendor = null;
-				/*[PR CMVC 98059] do not recursively call BootstrapClassLoader.getPackage() */
-				Package result = super.getPackage(packageName);
-				if (result != null) return result;
-				Attributes mainAttributes = manifest.getMainAttributes();
-				String value = mainAttributes.getValue(Attributes.Name.SEALED);
-				boolean sealed = value != null &&
-					value.toLowerCase().equals ("true"); //$NON-NLS-1$
-				String dirName = packageName.replace('.', '/') + "/"; //$NON-NLS-1$
-				Attributes attributes = manifest.getAttributes(dirName);
-				if (attributes != null) {
-					value = attributes.getValue(Attributes.Name.SEALED);
-					if (value != null)
-						sealed = value.toLowerCase().equals("true"); //$NON-NLS-1$
-					/*[PR 122738] use package specific version information */
-					specTitle = attributes.getValue(Attributes.Name.SPECIFICATION_TITLE);
-					specVersion = attributes.getValue(Attributes.Name.SPECIFICATION_VERSION);
-					specVendor = attributes.getValue(Attributes.Name.SPECIFICATION_VENDOR);
-					implTitle = attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
-					implVersion = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-					implVendor = attributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
-				}
-				URL url = null;
-				try {
-					if (sealed) {
-						/*[PR CMVC 193930] Must use the saved context when creating new URLs */
-						url = new URL(null, toURLString(parsedPath[cacheIndex], VM.CPE_TYPE_DIRECTORY), urlFileStreamHandler);
-					}
-				} catch (MalformedURLException e) {}
-				if (specTitle == null) specTitle = mainAttributes.getValue(Attributes.Name.SPECIFICATION_TITLE);
-				if (specVersion == null) specVersion = mainAttributes.getValue(Attributes.Name.SPECIFICATION_VERSION);
-				if (specVendor == null) specVendor = mainAttributes.getValue(Attributes.Name.SPECIFICATION_VENDOR);
-				if (implTitle == null) implTitle = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
-				if (implVersion == null) implVersion = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-				if (implVendor == null) implVendor = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
-				
-				return definePackage(packageName, 
-					specTitle, specVersion, specVendor,
-					implTitle, implVersion, implVendor,
-					url);
-			}
-		}
-	}
-	/*[PR CMVC 76124] Deadlock loading char converter classes */
-	synchronized(manifestLock) {
-		/*[PR CMVC 98059] do not recursively call BootstrapClassLoader.getPackage() */
-		Package result = super.getPackage(packageName);
-		if (result != null) return result;
-		return definePackage(packageName, null, null, null, null, null, null, null);
-	}
 }
 
 /**
  * Answers the name of the package to which newClass belongs.
  */
-String getPackageName(Class theClass)
+static String getPackageName(Class<?> theClass)
 {
 	String name;
 	int index;
@@ -266,17 +182,6 @@ String getPackageName(Class theClass)
 	if((index = name.lastIndexOf('.')) == -1) return null;
 	return name.substring(0, index);
 }
-
-/*[IF Sidecar19-SE]*/
-/*[IF AnnotateOverride]*/
-@Override
-/*[ENDIF]*/
-protected URL findResource(String moduleName, final String res) throws IOException {
-	return jdk.internal.loader.BootLoader.findResource(moduleName, res);
-}
-/*[ENDIF] Sidecar19-SE*/
-
-/*[IF !Sidecar19-SE]*/
 
 /*[IF AnnotateOverride]*/
 @Override
@@ -334,6 +239,7 @@ private URL findResourceImpl(int i, String res) {
 				return null;
 		}
 	} catch (MalformedURLException e) {
+		/* EMPTY */
 	}
 	return null;
 }
@@ -367,8 +273,8 @@ protected Enumeration findResources(final String res) throws IOException {
 			try {
 				sm.checkPermission(url.openConnection().getPermission());
 				reduced.addElement(url);
-			} catch (IOException e) {
-			} catch (SecurityException e) {
+			} catch (IOException | SecurityException e) {
+				/* EMPTY */
 			}
 		}
 		result = reduced;
@@ -435,6 +341,7 @@ public InputStream getResourceAsStream(String resName) {
 						try {
 							return zf.getInputStream(entry);
 						} catch (IOException e) {
+							/* EMPTY */
 						}
 					}
 					break;
@@ -449,7 +356,9 @@ public InputStream getResourceAsStream(String resName) {
 					/* Do not find resource in jimage */
 					break;
 			}
-		} catch (SecurityException e) {}
+		} catch (SecurityException e) {
+			/* EMPTY */
+		}
 	}
 	return null;
 }
@@ -462,12 +371,14 @@ private void initalizePermissions() {
 	}
 }
 
-private InputStream openFile(String resourcePath) {
+private static InputStream openFile(String resourcePath) {
 	File f = new File(resourcePath);
 	if (f.exists()) {
 		try {
 			return new BufferedInputStream(new FileInputStream(f));
-		} catch (FileNotFoundException e) { }
+		} catch (FileNotFoundException e) {
+			/* EMPTY */
+		}
 	}
 	return null;
 }
@@ -477,7 +388,4 @@ private void setPermissionElement(int i, FilePermission value) {
 		permissions[i] = value;
 	}
 }
-
-/*[ENDIF]*/  /*  !Sidecar19-SE */
-
 }

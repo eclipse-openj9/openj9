@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,8 @@
 
 #include "x/codegen/GuardedDevirtualSnippet.hpp"
 
-#include <stdint.h>                               // for int32_t, uint8_t, etc
-#include "il/SymbolReference.hpp"                 // for SymbolReference
+#include <stdint.h>
+#include "il/SymbolReference.hpp"
 
 namespace TR { class Block; }
 namespace TR { class CodeGenerator; }

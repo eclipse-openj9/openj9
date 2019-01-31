@@ -52,7 +52,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/OSRGuardInsertion.cpp \
     compiler/optimizer/OSRGuardRemoval.cpp \
     compiler/optimizer/ProfileGenerator.cpp \
-    compiler/optimizer/RedundantBCDSignElimination.cpp \
     compiler/optimizer/SequentialStoreSimplifier.cpp \
     compiler/optimizer/SignExtendLoads.cpp \
     compiler/optimizer/SPMDParallelizer.cpp \
@@ -90,6 +89,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/OMRUnresolvedDataSnippet.cpp \
     omr/compiler/codegen/OutOfLineCodeSection.cpp \
     omr/compiler/codegen/PreInstructionSelection.cpp \
+    omr/compiler/codegen/RegisterIterator.cpp \
     omr/compiler/codegen/Relocation.cpp \
     omr/compiler/codegen/ScratchRegisterManager.cpp \
     omr/compiler/codegen/StorageInfo.cpp \

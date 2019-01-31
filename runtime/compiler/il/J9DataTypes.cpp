@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 
 #include "il/J9DataTypes.hpp"
 
-#include <stdint.h>          // for int32_t, uint8_t
-#include <string.h>          // for strlen
-#include <ctype.h>           // for isdigit
-#include "il/DataTypes.hpp"  // for TR::DataType
-#include "infra/Assert.hpp"  // for TR_ASSERT
+#include <stdint.h>
+#include <string.h>
+#include <ctype.h>
+#include "il/DataTypes.hpp"
+#include "infra/Assert.hpp"
 
 namespace J9 {
 

@@ -57,7 +57,6 @@ j9jit_files(
 	optimizer/OSRGuardInsertion.cpp
 	optimizer/OSRGuardRemoval.cpp
 	optimizer/ProfileGenerator.cpp
-	optimizer/RedundantBCDSignElimination.cpp
 	optimizer/SequentialStoreSimplifier.cpp
 	optimizer/SignExtendLoads.cpp
 	optimizer/SPMDParallelizer.cpp

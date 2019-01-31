@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,6 +101,7 @@ extern J9_CFUNC void j9gc_objaccess_copyObjectFields(J9VMThread *vmThread, J9Cla
 extern J9_CFUNC j9object_t j9gc_objaccess_asConstantPoolObject(J9VMThread *vmThread, j9object_t toConvert, UDATA allocationFlags);
 extern J9_CFUNC jvmtiIterationControl j9mm_iterate_heaps(J9JavaVM *vm, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl(*func)(J9JavaVM *vm, struct J9MM_IterateHeapDescriptor *heapDesc, void *userData), void *userData);
 extern J9_CFUNC int gcStartupHeapManagement(J9JavaVM * vm);
+extern J9_CFUNC void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase);
 extern J9_CFUNC void j9gc_ext_reachable_from_object_do(J9VMThread *vmThread, j9object_t objectPtr, jvmtiIterationControl(*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags);
 extern J9_CFUNC UDATA moveObjectToMemorySpace(J9VMThread *vmThread, void *destinationMemorySpace, j9object_t objectPtr);
 /* TODO: The signature of allocateMemoryForSublistFragment temporarily uses void* instead of OMR_VMThread* since the latter is a class */

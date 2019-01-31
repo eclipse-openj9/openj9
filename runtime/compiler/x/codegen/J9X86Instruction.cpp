@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>                            // for std::find
+#include <algorithm>
 #include "codegen/J9X86Instruction.hpp"
 #include "env/OMRMemory.hpp"
 #include "il/Node.hpp"
@@ -101,7 +101,7 @@ uint8_t *TR::X86MemImmSnippetInstruction::generateBinaryEncoding()
          {
          if (std::find(cg()->comp()->getStaticHCRPICSites()->begin(), cg()->comp()->getStaticHCRPICSites()->end(), this) != cg()->comp()->getStaticHCRPICSites()->end())
             {
-            cg()->jitAdd32BitPicToPatchOnClassRedefinition(((void *) getSourceImmediateAsAddress()), (void *) cursor);
+            cg()->jitAdd32BitPicToPatchOnClassRedefinition(((void *)(uintptr_t)getSourceImmediateAsAddress()), (void *) cursor);
             }
          *(int32_t *)cursor = (int32_t)getSourceImmediate();
          if (getUnresolvedSnippet() != NULL)

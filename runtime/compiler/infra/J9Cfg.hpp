@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,15 +34,15 @@ namespace J9 { typedef J9::CFG CFGConnector; }
 
 #include "infra/OMRCfg.hpp"
 
-#include <stddef.h>             // for NULL
-#include <stdint.h>             // for int32_t, uint32_t
-#include "cs2/listof.h"         // for ListOf
-#include "env/TRMemory.hpp"     // for TR_Memory, etc
-#include "il/Node.hpp"          // for vcount_t
-#include "infra/Assert.hpp"     // for TR_ASSERT
-#include "infra/List.hpp"       // for TR_TwoListIterator, List
-#include "infra/TRCfgEdge.hpp"  // for CFGEdge
-#include "infra/TRCfgNode.hpp"  // for CFGNode
+#include <stddef.h>
+#include <stdint.h>
+#include "cs2/listof.h"
+#include "env/TRMemory.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/List.hpp"
+#include "infra/TRCfgEdge.hpp"
+#include "infra/TRCfgNode.hpp"
 
 class TR_BitVector;
 class TR_BlockCloner;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 
 #ifdef TR_HOST_X86
 #if defined(LINUX)
-#include <time.h>       // for clock_gettime
+#include <time.h>
 #endif
 #endif   // TR_HOST_X86
 
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 #include <stdint.h>
 #include "j9.h"
@@ -244,7 +244,7 @@ JIT_HELPER(callGPU);
 // --------------------------------------------------------------------------------
 //                                  X86 COMMON
 // --------------------------------------------------------------------------------
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(doubleToLong);
 JIT_HELPER(doubleToInt);
 JIT_HELPER(floatToLong);
@@ -254,7 +254,7 @@ JIT_HELPER(_doubleToLong);
 JIT_HELPER(_doubleToInt);
 JIT_HELPER(_floatToLong);
 JIT_HELPER(_floatToInt);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 
 JIT_HELPER(interpreterUnresolvedClassGlue);
 JIT_HELPER(interpreterUnresolvedClassFromStaticFieldGlue);
@@ -268,8 +268,9 @@ JIT_HELPER(interpreterUnresolvedStaticFieldSetterGlue);
 JIT_HELPER(interpreterUnresolvedFieldGlue);
 JIT_HELPER(interpreterUnresolvedFieldSetterGlue);
 JIT_HELPER(interpreterUnresolvedConstantDynamicGlue);
+JIT_HELPER(interpreterStaticAndSpecialGlue);
 
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(SMPinterpreterUnresolvedStaticGlue);
 JIT_HELPER(SMPinterpreterUnresolvedSpecialGlue);
 JIT_HELPER(SMPinterpreterUnresolvedDirectVirtualGlue);
@@ -299,7 +300,7 @@ JIT_HELPER(_SMPinterpreterUnresolvedStaticDataGlue);
 JIT_HELPER(_SMPinterpreterUnresolvedStaticStoreDataGlue);
 JIT_HELPER(_SMPinterpreterUnresolvedInstanceDataGlue);
 JIT_HELPER(_SMPinterpreterUnresolvedInstanceStoreDataGlue);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 
 JIT_HELPER(resolveIPicClass);
 JIT_HELPER(populateIPicSlotClass);
@@ -338,7 +339,7 @@ JIT_HELPER(newPrefetchTLH);
 JIT_HELPER(outlinedNewObject);
 JIT_HELPER(outlinedNewArray);
 
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(arrayTranslateTRTO);
 JIT_HELPER(arrayTranslateTROTNoBreak);
 JIT_HELPER(arrayTranslateTROT);
@@ -346,20 +347,22 @@ JIT_HELPER(arrayTranslateTROT);
 JIT_HELPER(_arrayTranslateTRTO);
 JIT_HELPER(_arrayTranslateTROTNoBreak);
 JIT_HELPER(_arrayTranslateTROT);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 
 // --------------------------------------------------------------------------------
 //                                   AMD64
 // --------------------------------------------------------------------------------
 
 #ifdef TR_HOST_64BIT
-#if defined(OSX)
+
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(SSEdoubleRemainder);
 JIT_HELPER(SSEfloatRemainder);
 #else
 JIT_HELPER(_SSEdoubleRemainder);
 JIT_HELPER(_SSEfloatRemainder);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
+
 JIT_HELPER(icallVMprJavaSendVirtual0);
 JIT_HELPER(icallVMprJavaSendVirtual1);
 JIT_HELPER(icallVMprJavaSendVirtualJ);
@@ -367,7 +370,7 @@ JIT_HELPER(icallVMprJavaSendVirtualL);
 JIT_HELPER(icallVMprJavaSendVirtualF);
 JIT_HELPER(icallVMprJavaSendVirtualD);
 
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(compressString);
 JIT_HELPER(compressStringNoCheck);
 JIT_HELPER(compressStringJ);
@@ -383,16 +386,16 @@ JIT_HELPER(_compressStringNoCheckJ);
 JIT_HELPER(_andORString);
 JIT_HELPER(_encodeUTF16Big);
 JIT_HELPER(_encodeUTF16Little);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
-#if defined (OSX)
+#if defined (NASM_ASSEMBLER)
 JIT_HELPER(doAESENCEncrypt);
 JIT_HELPER(doAESENCDecrypt);
 #else
 JIT_HELPER(_doAESENCEncrypt);
 JIT_HELPER(_doAESENCDecrypt);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 #endif /* J9VM_OPT_JAVA_CRYPTO_ACCELERATION */
 
 JIT_HELPER(interpreterEAXStaticGlue);
@@ -473,6 +476,7 @@ JIT_HELPER(_interpreterUnresolvedInstanceDataGlue);
 JIT_HELPER(_interpreterUnresolvedInstanceDataStoreGlue);
 JIT_HELPER(_virtualUnresolvedHelper);
 JIT_HELPER(_interfaceCallHelper);
+JIT_HELPER(j2iTransition);
 JIT_HELPER(icallVMprJavaSendVirtual0);
 JIT_HELPER(icallVMprJavaSendVirtual1);
 JIT_HELPER(icallVMprJavaSendVirtualJ);
@@ -1044,17 +1048,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_flushGPU,                   (void *)flushGPU,                  TR_Helper);
    SET(TR_callGPU,                    (void *)callGPU,                   TR_Helper);
 
-   SET(TR_MTUnresolvedInt32Load,      (void *)MTUnresolvedInt32Load,     TR_Helper);
-   SET(TR_MTUnresolvedInt64Load,      (void *)MTUnresolvedInt64Load,     TR_Helper);
-   SET(TR_MTUnresolvedFloatLoad,      (void *)MTUnresolvedFloatLoad,     TR_Helper);
-   SET(TR_MTUnresolvedDoubleLoad,     (void *)MTUnresolvedDoubleLoad,    TR_Helper);
-   SET(TR_MTUnresolvedAddressLoad,    (void *)MTUnresolvedAddressLoad,   TR_Helper);
-
-   SET(TR_MTUnresolvedInt32Store,     (void *)MTUnresolvedInt32Store,    TR_Helper);
-   SET(TR_MTUnresolvedInt64Store,     (void *)MTUnresolvedInt64Store,    TR_Helper);
-   SET(TR_MTUnresolvedFloatStore,     (void *)MTUnresolvedFloatStore,    TR_Helper);
-   SET(TR_MTUnresolvedDoubleStore,    (void *)MTUnresolvedDoubleStore,   TR_Helper);
-   SET(TR_MTUnresolvedAddressStore,   (void *)MTUnresolvedAddressStore,  TR_Helper);
 #if defined(TR_HOST_X86)
    SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);
 #endif
@@ -1201,6 +1194,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterUnresolvedFieldGlue,                (void *)interpreterUnresolvedFieldGlue,                TR_Helper);
    SET(TR_X86interpreterUnresolvedFieldSetterGlue,          (void *)interpreterUnresolvedFieldSetterGlue,          TR_Helper);
    SET(TR_X86interpreterUnresolvedConstantDynamicGlue,      (void *)interpreterUnresolvedConstantDynamicGlue,      TR_Helper);
+   SET(TR_X86interpreterStaticAndSpecialGlue,               (void *)interpreterStaticAndSpecialGlue,               TR_Helper);
 
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
    SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
@@ -1222,13 +1216,13 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterSyncDoubleStaticGlue,         (void *)interpreterSyncXMM0DStaticGlue, TR_Helper);
    SET(TR_X86interpreterAddressStaticGlue,            (void *)interpreterRAXStaticGlue,       TR_Helper);
    SET(TR_X86interpreterSyncAddressStaticGlue,        (void *)interpreterSyncRAXStaticGlue,   TR_Helper);
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
    SET(TR_AMD64floatRemainder,                        (void *)SSEfloatRemainder,  TR_Helper);
    SET(TR_AMD64doubleRemainder,                       (void *)SSEdoubleRemainder, TR_Helper);
 #else
    SET(TR_AMD64floatRemainder,                        (void *)_SSEfloatRemainder,  TR_Helper);
    SET(TR_AMD64doubleRemainder,                       (void *)_SSEdoubleRemainder, TR_Helper);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 
    SET(TR_AMD64icallVMprJavaSendVirtual0,             (void *)icallVMprJavaSendVirtual0, TR_Helper);
    SET(TR_AMD64icallVMprJavaSendVirtual1,             (void *)icallVMprJavaSendVirtual1, TR_Helper);
@@ -1238,7 +1232,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64icallVMprJavaSendVirtualD,             (void *)icallVMprJavaSendVirtualD, TR_Helper);
 
    SET(TR_AMD64jitCollapseJNIReferenceFrame,          (void *)jitCollapseJNIReferenceFrame,   TR_Helper);
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
    SET(TR_AMD64compressString,                        (void *)compressString,            TR_Helper);
    SET(TR_AMD64compressStringNoCheck,                 (void *)compressStringNoCheck,     TR_Helper);
    SET(TR_AMD64compressStringJ,                       (void *)compressStringJ,           TR_Helper);
@@ -1253,7 +1247,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64doAESENCEncrypt,                       (void *)doAESENCEncrypt,           TR_Helper);
    SET(TR_AMD64doAESENCDecrypt,                       (void *)doAESENCDecrypt,           TR_Helper);
 #endif /* J9VM_OPT_JAVA_CRYPTO_ACCELERATION */
-#else /* OSX */
+#else /* NASM_ASSEMBLER */
    SET(TR_AMD64compressString,                        (void *)_compressString,            TR_Helper);
    SET(TR_AMD64compressStringNoCheck,                 (void *)_compressStringNoCheck,     TR_Helper);
    SET(TR_AMD64compressStringJ,                       (void *)_compressStringJ,           TR_Helper);
@@ -1268,7 +1262,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64doAESENCEncrypt,                       (void *)_doAESENCEncrypt,           TR_Helper);
    SET(TR_AMD64doAESENCDecrypt,                       (void *)_doAESENCDecrypt,           TR_Helper);
 #endif /* J9VM_OPT_JAVA_CRYPTO_ACCELERATION */
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 #if defined(LINUX)
    SET(TR_AMD64clockGetTime,                          (void *)clock_gettime, TR_System);
 #endif
@@ -2107,7 +2101,6 @@ bool isOrderedPair(U_8 recordType)
       case TR_ConstantPoolOrderedPair:
 #if defined(TR_HOST_POWER) || defined(TR_HOST_ARM)
       case TR_ClassAddress:
-      case TR_ClassObject:
       case TR_MethodObject:
       //case TR_DataAddress:
 #endif

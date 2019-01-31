@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,16 +23,16 @@
 #ifndef INTERNAL_FUNCTIONS_EXT_INCL
 #define INTERNAL_FUNCTIONS_EXT_INCL
 
-#include <stddef.h>                            // for size_t, NULL
-#include <stdint.h>                            // for int32_t
-#include <stdlib.h>                            // for malloc
-#include "env/FilePointerDecl.hpp"             // for FILE
-#include "env/TRMemory.hpp"                    // for TR_AllocationKind, etc
-#include "env/jittypes.h"                      // for uintptrj_t
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol
-#include "ras/Debug.hpp"                       // for TR_DebugBase
-#include "ras/InternalFunctions.hpp"           // for TR_InternalFunctions
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "env/FilePointerDecl.hpp"
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
+#include "il/Symbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "ras/Debug.hpp"
+#include "ras/InternalFunctions.hpp"
 
 class TR_FrontEnd;
 class TR_ResolvedMethod;

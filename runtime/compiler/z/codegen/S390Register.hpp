@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,15 +23,15 @@
 #ifndef S390REGISTER_INCL
 #define S390REGISTER_INCL
 
-#include <stddef.h>                       // for NULL
-#include <stdint.h>                       // for int32_t, uint32_t, etc
-#include "codegen/Register.hpp"           // for Register
-#include "codegen/RegisterConstants.hpp"  // for TR_RegisterKinds::TR_SSR
-#include "env/TRMemory.hpp"               // for TR_Memory, etc
-#include "il/DataTypes.hpp"               // for DataTypes, etc
-#include "il/Node.hpp"                    // for rcount_t
-#include "infra/Assert.hpp"               // for TR_ASSERT
-#include "infra/Flags.hpp"                // for flags16_t, flags8_t
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/Register.hpp"
+#include "codegen/RegisterConstants.hpp"
+#include "env/TRMemory.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "infra/Assert.hpp"
+#include "infra/Flags.hpp"
 
 class TR_OpaquePseudoRegister;
 class TR_PseudoRegister;

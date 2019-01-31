@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -164,7 +164,7 @@ printf("JNI: offset %d\n", offset); fflush(stdout);
 #endif
    const TR::ARMLinkageProperties &jniLinkageProperties = getProperties();
    int32_t                spOffset = offset + jniLinkageProperties.getOffsetToFirstParm();
-   TR::RealRegister    *sp       = cg()->machine()->getARMRealRegister(jniLinkageProperties.getStackPointerRegister());
+   TR::RealRegister    *sp       = cg()->machine()->getRealRegister(jniLinkageProperties.getStackPointerRegister());
    TR::MemoryReference *result   = new (trHeapMemory()) TR::MemoryReference(sp, spOffset, cg());
    memArg.argRegister = argReg;
    memArg.argMemory   = result;
@@ -362,7 +362,7 @@ int32_t TR::ARMJNILinkage::buildJNIArgs(TR::Node *callNode,
 #ifdef DEBUG_ARM_LINKAGE
 printf("subtracting %d slots from SP\n", numStackParmSlots); fflush(stdout);
 #endif
-      TR::RealRegister *sp = codeGen->machine()->getARMRealRegister(jniLinkageProperties.getStackPointerRegister());
+      TR::RealRegister *sp = codeGen->machine()->getRealRegister(jniLinkageProperties.getStackPointerRegister());
       uint32_t base, rotate;
       if (constantIsImmed8r(numStackParmSlots, &base, &rotate))
          {
@@ -843,9 +843,9 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    TR::Machine      *machine  = codeGen->machine();
    TR::RealRegister *metaReg  = codeGen->getMethodMetaDataRegister();
-   TR::RealRegister *stackPtr = machine->getARMRealRegister(privateLinkageProperties.getStackPointerRegister());//JavaSP
-   TR::RealRegister *instrPtr = machine->getARMRealRegister(TR::RealRegister::gr15);
-   TR::RealRegister *gr13Reg  = machine->getARMRealRegister(TR::RealRegister::gr13);
+   TR::RealRegister *stackPtr = machine->getRealRegister(privateLinkageProperties.getStackPointerRegister());//JavaSP
+   TR::RealRegister *instrPtr = machine->getRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr13Reg  = machine->getRealRegister(TR::RealRegister::gr13);
    TR::Register        *gr4Reg   = deps->searchPreConditionRegister(TR::RealRegister::gr4);
    TR::Register        *gr5Reg   = deps->searchPreConditionRegister(TR::RealRegister::gr5);
 
@@ -987,7 +987,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
          {
          case TR::Float:
             {
-            TR::RealRegister *fpReg   = machine->getARMRealRegister(jniLinkageProperties.getFloatReturnRegister());
+            TR::RealRegister *fpReg   = machine->getRealRegister(jniLinkageProperties.getFloatReturnRegister());
             fpReg->setAssignedRegister(fpReg);
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp1Offset(), codeGen);
             generateMemSrc1Instruction(codeGen, ARMOp_fsts, callNode, tempMR, fpReg);
@@ -996,7 +996,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
             }
          case TR::Double:
             {
-            TR::RealRegister *fdReg   = machine->getARMRealRegister(jniLinkageProperties.getDoubleReturnRegister());
+            TR::RealRegister *fdReg   = machine->getRealRegister(jniLinkageProperties.getDoubleReturnRegister());
             fdReg->setAssignedRegister(fdReg);
             TR_ASSERT(fej9->thisThreadGetFloatTemp2Offset() - fej9->thisThreadGetFloatTemp1Offset() == 4,"floatTemp1 and floatTemp2 not contiguous");
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp1Offset(), codeGen);
@@ -1013,7 +1013,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
    // restore the system stack pointer (r13)
    if (spSize > 0)
       {
-      TR::RealRegister *sp = machine->getARMRealRegister(jniLinkageProperties.getStackPointerRegister());
+      TR::RealRegister *sp = machine->getRealRegister(jniLinkageProperties.getStackPointerRegister());
       uint32_t base, rotate;
       if (constantIsImmed8r(spSize, &base, &rotate))
          {

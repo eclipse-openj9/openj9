@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -276,7 +276,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
                *hintCount = 10 * _initialHintSCount;
 
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8*)hintFlags;
+            descriptor.address = (U_8 *)(uintptrj_t)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -333,7 +333,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
          if (updateHint)
             {
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8*)hintFlags;
+            descriptor.address = (U_8 *)(uintptrj_t)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;

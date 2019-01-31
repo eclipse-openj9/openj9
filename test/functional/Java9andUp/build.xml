@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,8 +34,6 @@
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
-	<property name="src_current" location="./src_current"/>
-	<property name="src_latest" location="./src_latest"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
 	<property name="module_src_root" location="./modules"/>
 	<property name="module_bin_root" location="./module_bin"/>
@@ -59,99 +57,73 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 
-		<if>
-			<equals arg1="${JCL_VERSION}" arg2="current"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}"/>
-					<src path="${src_current}"/>
-					<src path="${TestUtilities}" />
-					<src path="${transformerListener}" />
-					<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
-					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}"/>
-					<src path="${src_latest}"/>
-					<src path="${TestUtilities}" />
-					<src path="${transformerListener}" />
-					<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
-					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
-					</classpath>
-				</javac>
-			</else>
-		</if>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<src path="${src}" />
+			<src path="${TestUtilities}" />
+			<src path="${transformerListener}" />
+			<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+			<classpath>
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+			</classpath>
+		</javac>
 	</target>
 
-	<property name="MODULE_NAME_ROOT" value="org.openj9test.modularity"/>
+	<property name="MODULE_NAME_ROOT" value="org.openj9test.modularity" />
 	<property name="MODULE_PATH_ROOT" value="org/openj9/test/modularity"/>
 	<target name="build_modules" depends="init" description="Create the base modules for the modularity tests ">
-		<if>
-			<!-- These tests are not supported for build 148 -->
-			<equals arg1="${JCL_VERSION}" arg2="latest" />
-			<then>
-				<mkdir dir="${module_bin_root}" />
-				<copy file="${TEST_ROOT}/TestConfig/lib/testng.jar" todir="${module_bin_root}" />
-				<copy file="${TEST_ROOT}/TestConfig/lib/jcommander.jar" todir="${module_bin_root}" />
-				<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule,dummy" param="mod">
-					<sequential>
-						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
-						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
-						<mkdir dir="${module_bin_dir}" />
-						<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
-						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-							<src path="${module_src_dir}" />
-							<compilerarg line="${modpath}" />
-						</javac>
-					</sequential>
-				</for>
-				<!-- compile unnamed module depending on module org.openj9test.modularity.dummy -->
-				<for list="unnamed" param="mod">
-					<sequential>
-						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
-						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
-						<mkdir dir="${module_bin_dir}" />
-						<var name="modpath" value="-cp ${TEST_ROOT}/TestConfig/lib/testng.jar --module-path ${module_bin_root} -d ${module_bin_dir} --add-modules org.openj9test.modularity.dummy --add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED" />
-						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-							<src path="${module_src_dir}" />
-							<compilerarg line="${modpath}" />
-						</javac>
-					</sequential>
-				</for>
-				<!-- compile module org.openj9test.modularity.testUnreflect depending on unnamed module above -->
-				<for list="testUnreflect" param="mod">
-					<sequential>
-						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
-						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
-						<mkdir dir="${module_bin_dir}" />
-						<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir} --add-reads org.openj9test.modularity.testUnreflect=ALL-UNNAMED" />
-						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-							<src path="${module_src_dir}" />
-							<classpath>
-								<pathelement location="${module_bin_root}/org.openj9test.modularity.unnamed" />
-								<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-							</classpath>
-							<compilerarg line="${modpath}" />
-						</javac>
-					</sequential>
-				</for>
-				<exec executable="${JAVA_BIN}/java" failonerror="true">
-					<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm -d ${module_bin_root}/${MODULE_NAME_ROOT}.testerModule ${module_src_root}/${MODULE_NAME_ROOT}.testerModule/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm" />
-				</exec>
-			</then>
-		</if>
+		<mkdir dir="${module_bin_root}" />
+		<copy file="${TEST_ROOT}/TestConfig/lib/testng.jar" todir="${module_bin_root}" />
+		<copy file="${TEST_ROOT}/TestConfig/lib/jcommander.jar" todir="${module_bin_root}" />
+		<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule,dummy" param="mod">
+			<sequential>
+				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<mkdir dir="${module_bin_dir}" />
+				<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
+				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${module_src_dir}" />
+					<compilerarg line="${modpath}" />
+				</javac>
+			</sequential>
+		</for>
+		<!-- compile unnamed module depending on module org.openj9test.modularity.dummy -->
+		<for list="unnamed" param="mod">
+			<sequential>
+				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<mkdir dir="${module_bin_dir}" />
+				<var name="modpath" value="-cp ${TEST_ROOT}/TestConfig/lib/testng.jar --module-path ${module_bin_root} -d ${module_bin_dir} --add-modules org.openj9test.modularity.dummy --add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED" />
+				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${module_src_dir}" />
+					<compilerarg line="${modpath}" />
+				</javac>
+			</sequential>
+		</for>
+		<!-- compile module org.openj9test.modularity.testUnreflect depending on unnamed module above -->
+		<for list="testUnreflect" param="mod">
+			<sequential>
+				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<mkdir dir="${module_bin_dir}" />
+				<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir} --add-reads org.openj9test.modularity.testUnreflect=ALL-UNNAMED" />
+				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${module_src_dir}" />
+					<classpath>
+						<pathelement location="${module_bin_root}/org.openj9test.modularity.unnamed" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+					</classpath>
+					<compilerarg line="${modpath}" />
+				</javac>
+			</sequential>
+		</for>
+		<exec executable="${JAVA_BIN}/java" failonerror="true">
+			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm -d ${module_bin_root}/${MODULE_NAME_ROOT}.testerModule ${module_src_root}/${MODULE_NAME_ROOT}.testerModule/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm" />
+		</exec>
 	</target>
 
-	<target name="dist" depends="compile,build_modules,dist_functional" description="generate the distribution" >
+	<target name="dist" depends="compile,build_modules,dist_functional" description="generate the distribution">
 		<mkdir dir="${DEST}"/>
 		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
 			<fileset dir="${build}"/>

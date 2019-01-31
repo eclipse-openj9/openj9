@@ -21,16 +21,15 @@
 ################################################################################
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_library(jclse9_156 SHARED
-	../j9vmconstantpool_se9.c
-)
-target_include_directories(jclse9_156
+
+add_jcl(se9)
+target_include_directories(jclse9_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
 		../
 )
 
-target_link_libraries(jclse9_156
+target_link_libraries(jclse9_
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
@@ -57,9 +56,8 @@ target_link_libraries(jclse9_156
 		j9vmi
 		sunvmi
 )
-set_target_properties(jclse9_156 PROPERTIES LIBRARY_OUTPUT_NAME jclse9_)
 
 install(
-	TARGETS jclse9_156
+	TARGETS jclse9_
 	LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
 )

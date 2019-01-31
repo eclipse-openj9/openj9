@@ -34,7 +34,7 @@
 #include "env/j9method.h"
 #include "runtime/HWProfiler.hpp"
 #include "env/VMJ9.h"
-#include "env/J9CPU.hpp" // for TR_ProcessorFeatureFlags
+#include "env/J9CPU.hpp"
 
 namespace TR { class CompilationInfo; }
 class TR_RelocationRecord;

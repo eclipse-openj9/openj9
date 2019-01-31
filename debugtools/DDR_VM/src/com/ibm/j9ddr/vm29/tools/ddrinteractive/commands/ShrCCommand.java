@@ -1002,7 +1002,7 @@ public class ShrCCommand extends Command
 			CommandUtils.dbgPrint(out, "CHARARRAY data %d metadata %d\n", chararrayDataLen, chararrayMetaLen);
 			CommandUtils.dbgPrint(out, "BYTEDATA Summary\n");
 			CommandUtils.dbgPrint(out, "\tUNKNOWN %d  HELPER %d  POOL %d  AOTHEADER %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_UNKNOWN], numByteOfType[(int) J9SHR_DATA_TYPE_HELPER], numByteOfType[(int) J9SHR_DATA_TYPE_POOL], numByteOfType[(int) J9SHR_DATA_TYPE_AOTHEADER]);
-			CommandUtils.dbgPrint(out, "\tJCL %d  VM %d  ROMSTRING %d  ZIPCACHE %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JCL], numByteOfType[(int) J9SHR_DATA_TYPE_VM], numByteOfType[(int) J9SHR_DATA_TYPE_ROMSTRING], numByteOfType[(int) J9SHR_DATA_TYPE_ZIPCACHE]);
+			CommandUtils.dbgPrint(out, "\tJCL %d  VM %d  ROMSTRING %d  ZIPCACHE %d  STARTUPHINTS %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JCL], numByteOfType[(int) J9SHR_DATA_TYPE_VM], numByteOfType[(int) J9SHR_DATA_TYPE_ROMSTRING], numByteOfType[(int) J9SHR_DATA_TYPE_ZIPCACHE], numByteOfType[(int) J9SHR_DATA_TYPE_STARTUP_HINTS]);
 			CommandUtils.dbgPrint(out, "\tJITHINT %d  AOTCLASSCHAIN %d AOTTHUNK %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JITHINT], numByteOfType[(int) J9SHR_DATA_TYPE_AOTCLASSCHAIN], numByteOfType[(int) J9SHR_DATA_TYPE_AOTTHUNK]);
 			if (cacheletMetaLen > 0) {
 				CommandUtils.dbgPrint(out, "CACHELET count %d (without segments %d) metadata %d\n", numCachelets, numCacheletsNoSegments, cacheletMetaLen);
@@ -1197,7 +1197,9 @@ public class ShrCCommand extends Command
 		} else if (type == J9SHR_DATA_TYPE_CACHELET) {
 			return "CACHELET";
 		} else if (type == J9SHR_DATA_TYPE_ZIPCACHE) {
-			return "ZIPCACHE";
+			return "ZIPCACHE"; 
+		} else if (type == J9SHR_DATA_TYPE_STARTUP_HINTS) {
+			return "STARTUPHINT";
 		} else if (type == J9SHR_DATA_TYPE_JITHINT) {
 			return "JITHINT";
 		} else if (type == J9SHR_DATA_TYPE_AOTCLASSCHAIN) {

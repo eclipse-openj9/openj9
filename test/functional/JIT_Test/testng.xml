@@ -448,6 +448,13 @@
     </classes>
   </test>
 
+  <!-- jit.test.ra tests start here -->
+  <test name="raTest">
+    <classes>
+      <class name="jit.test.ra.TestOOLSpill31Bit" />
+    </classes>
+  </test>
+
   <!-- jit.test.vich tests start here -->
   <test name="AllocationTest">
     <classes>

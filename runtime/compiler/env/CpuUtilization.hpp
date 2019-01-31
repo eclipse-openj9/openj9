@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,11 @@
 #ifndef CPUUTILIZATION_HPP
 #define CPUUTILIZATION_HPP
 
-#include <stdint.h>         // for int64_t
+#include <stdint.h>
 #include "jni.h"
 #include "j9.h"
 #include "j9port.h"
-#include "env/TRMemory.hpp" // for persistent alloc
+#include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
 
 namespace TR { class PersistentInfo; }

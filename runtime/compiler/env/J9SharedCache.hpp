@@ -29,7 +29,7 @@
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 class TR_J9VMBase;
 class TR_ResolvedMethod;

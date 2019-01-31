@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ public class ShcItemHdrHelper {
 	
 	// #define CCITEM(ih) (((U_8*)(ih)) - (CCITEMLEN(ih) - sizeof(ShcItemHdr)))
 	public static U8Pointer CCITEM(ShcItemHdrPointer ptr) throws CorruptDataException {
-		return U8Pointer.cast(ptr).sub(CCITEMLEN(ptr).sub((int)ShcItemHdr.SIZEOF));
+		return U8Pointer.cast(ptr).sub(CCITEMLEN(ptr).sub(ShcItemHdr.SIZEOF));
 	}
 
 	// #define CCITEMNEXT(ih) ((ShcItemHdr*)(CCITEM(ih) - sizeof(ShcItemHdr)))

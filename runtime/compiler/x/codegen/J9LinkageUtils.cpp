@@ -97,7 +97,7 @@ void J9LinkageUtils::cleanupReturnValue(
 void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::RealRegister *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
 
    // Squirrel Java SP away into VM thread.
@@ -120,7 +120,7 @@ void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator
 void J9LinkageUtils::switchToJavaStack(TR::Node *callNode, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::RealRegister *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
 
    //  Load up the java sp so we have the callout frame on top of the java stack.

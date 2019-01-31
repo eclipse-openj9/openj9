@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2018 IBM Corp. and others
+Copyright (c) 1998, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 ifdef j9vm_uma_gnuDebugSymbols
 	cp $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
 endif
+	strip -X32_64 -t $(UMA_DLLTARGET)
 </#assign>
 
 <#assign exe_target_rule>
@@ -76,6 +77,14 @@ ifdef j9vm_uma_supportsIpv6
   CFLAGS += -DIPv6_FUNCTION_SUPPORT
   CXXFLAGS += -DIPv6_FUNCTION_SUPPORT
   CPPFLAGS += -DIPv6_FUNCTION_SUPPORT
+endif
+
+ifdef j9vm_uma_gnuDebugSymbols
+  # compile most files with debug information
+  CFLAGS += -g
+  CXXFLAGS += -g
+  # except when compiling interpreters
+  FLAGS_TO_REMOVE += -g
 endif
 
 ifdef I5_VERSION

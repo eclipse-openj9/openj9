@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,8 +172,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    void addStorageReferenceHints(TR::Node *node);
    void examineNode(TR::Node *parent, TR::Node *node, TR::Node *&bestNode, int32_t &storeSize, TR::list<TR::Node*> &leftMostNodesList);
    void processNodeList(TR::Node *&bestNode, int32_t &storeSize, TR::list<TR::Node*> &leftMostNodesList);
-
-   TR::Register *evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode, TR_OpaquePseudoRegister *srcReg, TR::MemoryReference *srcMR);
 
    void correctBadSign(TR::Node *node, TR_PseudoRegister *reg, int32_t endByte, TR::MemoryReference *memRef);
 

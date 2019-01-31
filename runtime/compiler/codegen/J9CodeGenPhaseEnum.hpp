@@ -38,5 +38,4 @@
    SplitWarmAndColdBlocksPhase,
    IdentifyUnneededByteConvsPhase,
    LateSequentialConstantStoreSimplificationPhase,  // all
-   FoldSignCleaningIntoStorePhase,  // all
-   LastJ9Phase = FoldSignCleaningIntoStorePhase,
+   LastJ9Phase = LateSequentialConstantStoreSimplificationPhase,

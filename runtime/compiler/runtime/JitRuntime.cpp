@@ -40,35 +40,34 @@
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
 #include "control/CompilationController.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "env/IO.hpp"
-#include "env/TRMemory.hpp"
-#include "env/PersistentInfo.hpp"
-#include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
-#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "runtime/CodeCacheManager.hpp"
-#include "runtime/Runtime.hpp"
-#include "runtime/asmprotos.h"
-#include "control/CompilationRuntime.hpp"
+#include "env/IO.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/j9method.h"
+#include "env/jittypes.h"
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
 #include "env/ut_j9jit.h"
+#include "runtime/asmprotos.h"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/J9Runtime.hpp"
+#include "runtime/J9ValueProfiler.hpp"
 #include "runtime/IProfiler.hpp"
+#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)
 #include "codegen/PicHelpers.hpp"
 #include "control/Recompilation.hpp"
-#include "runtime/Runtime.hpp"
 #endif
 
 #if defined(TR_HOST_X86)
 #include "x/runtime/X86Runtime.hpp"
 #endif
 
-#include "runtime/J9ValueProfiler.hpp"
 
 #if defined(J9ZOS390)
 static UDATA sliphandle=0;
@@ -1106,26 +1105,26 @@ extern "C" void _patchJNICallSite(J9Method *method, uint8_t *pc, uint8_t *newAdd
    }
 #endif
 
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(prepareForOSR);
 #else
 JIT_HELPER(_prepareForOSR);
-#endif /* OSX */
+#endif
 
 #ifdef TR_HOST_X86
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(countingRecompileMethod);
 JIT_HELPER(samplingRecompileMethod);
 JIT_HELPER(countingPatchCallSite);
 JIT_HELPER(samplingPatchCallSite);
 JIT_HELPER(induceRecompilation);
-#else
+#else /* NASM_ASSEMBLER */
 JIT_HELPER(_countingRecompileMethod);
 JIT_HELPER(_samplingRecompileMethod);
 JIT_HELPER(_countingPatchCallSite);
 JIT_HELPER(_samplingPatchCallSite);
 JIT_HELPER(_induceRecompilation);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 
 #elif defined(TR_HOST_POWER)
 
@@ -1209,28 +1208,28 @@ void initializeJitRuntimeHelperTable(char isSMP)
 
 #if defined(J9ZOS390)
    SET_CONST(TR_prepareForOSR,                  (void *)_prepareForOSR);
-#elif defined(OSX)
+#elif defined(NASM_ASSEMBLER)
    SET(TR_prepareForOSR,                        (void *)prepareForOSR, TR_Helper);
 #else
    SET(TR_prepareForOSR,                        (void *)_prepareForOSR, TR_Helper);
-#endif
+#endif /* NASM_ASSEMBLER */
 
 #ifdef TR_HOST_X86
 
 #if defined(TR_HOST_64BIT)
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
    SET(TR_AMD64samplingRecompileMethod,         (void *)samplingRecompileMethod, TR_Helper);
    SET(TR_AMD64countingRecompileMethod,         (void *)countingRecompileMethod, TR_Helper);
    SET(TR_AMD64samplingPatchCallSite,           (void *)samplingPatchCallSite,   TR_Helper);
    SET(TR_AMD64countingPatchCallSite,           (void *)countingPatchCallSite,   TR_Helper);
    SET(TR_AMD64induceRecompilation,             (void *)induceRecompilation,     TR_Helper);
-#else /* OSX */
+#else /* NASM_ASSEMBLER */
    SET(TR_AMD64samplingRecompileMethod,         (void *)_samplingRecompileMethod, TR_Helper);
    SET(TR_AMD64countingRecompileMethod,         (void *)_countingRecompileMethod, TR_Helper);
    SET(TR_AMD64samplingPatchCallSite,           (void *)_samplingPatchCallSite,   TR_Helper);
    SET(TR_AMD64countingPatchCallSite,           (void *)_countingPatchCallSite,   TR_Helper);
    SET(TR_AMD64induceRecompilation,             (void *)_induceRecompilation,     TR_Helper);
-#endif /* OSX */
+#endif /* NASM_ASSEMBLER */
 #else /* TR_HOST_64BIT */
    SET(TR_IA32samplingRecompileMethod,          (void *)_samplingRecompileMethod, TR_Helper);
    SET(TR_IA32countingRecompileMethod,          (void *)_countingRecompileMethod, TR_Helper);
@@ -1623,7 +1622,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
    return startPC;
    }
 
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -1695,7 +1694,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
    else
       {
       uintptrj_t fieldOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(thunkTuple), "invokeExactThunk", "J");
-#if defined(OSX)
+#if defined(NASM_ASSEMBLER)
       bool success = fej9->compareAndSwapInt64Field(thunkTuple, "invokeExactThunk", (uint64_t)(uintptrj_t)initialInvokeExactThunkGlue, (uint64_t)(uintptrj_t)addressToDispatch);
       
       if (details)
@@ -1708,7 +1707,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
       if (details)
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   %s updating ThunkTuple %p field %+d from %p to %p",
             vmThread, success? "Succeeded" : "Failed", thunkTuple, (int)fieldOffset, _initialInvokeExactThunkGlue, addressToDispatch);
-#endif
+#endif /* NASM_ASSEMBLER */
       }
    return addressToDispatch;
    }

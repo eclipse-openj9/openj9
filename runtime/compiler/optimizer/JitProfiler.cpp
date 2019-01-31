@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,37 +22,37 @@
 
 #include "optimizer/JitProfiler.hpp"
 
-#include <stddef.h>                            // for NULL
-#include <stdint.h>                            // for int32_t, etc
-#include "codegen/CodeGenerator.hpp"           // for CodeGenerator
-#include "codegen/FrontEnd.hpp"                // for TR_FrontEnd
+#include <stddef.h>
+#include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
-#include "compile/Compilation.hpp"             // for Compilation
-#include "compile/SymbolReferenceTable.hpp"    // for SymbolReferenceTable
+#include "compile/Compilation.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/ObjectModel.hpp"                 // for ObjectModel
+#include "env/ObjectModel.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "env/TRMemory.hpp"                    // for TR_Memory, etc
-#include "env/jittypes.h"                      // for intptrj_t, uintptrj_t
+#include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "env/VMJ9.h"
-#include "il/Block.hpp"                        // for Block
-#include "il/DataTypes.hpp"                    // for DataTypes::Address
-#include "il/ILOps.hpp"                        // for ILOpCode
-#include "il/ILOpCodes.hpp"                    // for ILOpCodes::iconst, etc
-#include "il/Node.hpp"                         // for Node, vcount_t
-#include "il/Node_inlines.hpp"                 // for Node::getChild, etc
-#include "il/Symbol.hpp"                       // for Symbol
-#include "il/SymbolReference.hpp"              // for SymbolReference
-#include "il/TreeTop.hpp"                      // for TreeTop
+#include "il/Block.hpp"
+#include "il/DataTypes.hpp"
+#include "il/ILOps.hpp"
+#include "il/ILOpCodes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/Symbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol
-#include "il/symbol/RegisterMappedSymbol.hpp"  // for RegisterMappedSymbol
-#include "infra/Cfg.hpp"                       // for CFG
-#include "optimizer/Optimization.hpp"          // for Optimization
+#include "il/symbol/MethodSymbol.hpp"
+#include "il/symbol/RegisterMappedSymbol.hpp"
+#include "infra/Cfg.hpp"
+#include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 

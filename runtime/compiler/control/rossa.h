@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,8 +74,9 @@ typedef enum {
    compilationVirtualAddressExhaustion             = 48,
    compilationEnforceProfiling                     = 49,
    compilationSymbolValidationManagerFailure       = 50,
-   compilationStreamFailure                        = 51,
-   compilationStreamLostMessage                    = 52,
+   compilationAOTNoSupportForAOTFailure            = 51,
+   compilationStreamFailure                        = 52,
+   compilationStreamLostMessage                    = 53,
    /* please insert new codes before compilationMaxError which is used in jar2jxe to test the error codes range */
    /* If new codes are added then add the corresponding names in compilationErrorNames table in rossa.cpp */
    compilationMaxError /* must be the last one */
