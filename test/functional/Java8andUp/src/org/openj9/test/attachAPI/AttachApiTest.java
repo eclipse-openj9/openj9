@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,15 @@
  *******************************************************************************/
 package org.openj9.test.attachAPI;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.List;
 import java.util.Properties;
 
 import org.openj9.test.util.StringPrintStream;
@@ -40,6 +46,8 @@ abstract class AttachApiTest {
 	protected static Logger logger = Logger.getLogger(AttachApiTest.class);
 	protected String testName;
 	private ArrayList<String> vmArgs;
+	/* command for runCommand() */
+	protected String commandName;
 
 	protected void logExceptionInfoAndFail(Exception e) {
 		logStackTrace(e);
@@ -50,6 +58,10 @@ abstract class AttachApiTest {
 		PrintStream buff = StringPrintStream.factory();
 		e.printStackTrace(buff);
 		logger.error(buff.toString());
+	}
+
+	protected static void log(String outLine) {
+		logger.debug(outLine);
 	}
 
 	void setVmOptions(String option) {
@@ -155,4 +167,38 @@ abstract class AttachApiTest {
 			String testString) {
 		return errOutput.contains(testString);
 	}
+
+	/**
+	 * launch a target command with no arguments and collect its output into an array of output lines.
+	 * The command must exit on its own.
+	 * 
+	 * @return Output from command
+	 */
+	protected List<String> runCommand() throws IOException {
+		return runCommand(Collections.emptyList());
+	}
+
+	/**
+	 * launch a target command with arguments and collect its output into an array of output lines.
+	 * The command must exit on its own.
+	 * 
+	 * @param list of parameters
+	 * @return Output from command
+	 */
+	protected List<String> runCommand(List<String> args) throws IOException {
+		ArrayList<String> cmdLine = new ArrayList<>();
+		cmdLine.add(commandName);
+		cmdLine.addAll(args);
+		ProcessBuilder jpsProcess = new ProcessBuilder(cmdLine);
+		Process proc = jpsProcess.start();
+		List<String> outputLines = Collections.emptyList();
+		try (BufferedReader jpsOutReader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
+			outputLines = jpsOutReader.lines().collect(Collectors.toList());
+			proc.waitFor(1000, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			/* ignore */
+		}
+		return outputLines;
+	}
+	
 }

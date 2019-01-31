@@ -406,6 +406,57 @@
 	<!-- Attach API tests -->
 
 	<test>
+		<testCaseName>TestJps_SE80</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
+	-Dcom.ibm.tools.attach.timeout=15000 \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJps \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		 </impls>
+	</test>
+
+	<test>
+		<testCaseName>TestJps</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
+	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
+	-Dcom.ibm.tools.attach.timeout=15000 \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJps \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		 </impls>
+	</test>
+
+	<test>
 		<testCaseName>TestFileLocking_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
