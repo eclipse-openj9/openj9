@@ -340,9 +340,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateClassFromMethod:
          reloRecord = new (storage) TR_RelocationRecordValidateClassFromMethod(reloRuntime, record);
          break;
-      case TR_ValidateComponentClassFromArrayClass:
-         reloRecord = new (storage) TR_RelocationRecordValidateComponentClassFromArrayClass(reloRuntime, record);
-         break;
       case TR_ValidateArrayClassFromComponentClass:
          reloRecord = new (storage) TR_RelocationRecordValidateArrayClassFromComponentClass(reloRuntime, record);
          break;
@@ -3239,18 +3236,18 @@ TR_RelocationRecordValidateClassByName::applyRelocation(TR_RelocationRuntime *re
    {
    uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassByNameBinaryTemplate *)_record)->_classID);
    uint16_t beholderID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassByNameBinaryTemplate *)_record)->_beholderID);
-   void *romClassOffset = (void *)reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordValidateClassByNameBinaryTemplate *)_record)->_romClassOffsetInSCC);
-   void *romClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(romClassOffset);
+   void *classChainOffset = (void *)reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordValidateClassByNameBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   uintptrj_t *classChain = (uintptrj_t*)reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset);
 
    if (reloRuntime->reloLogger()->logEnabled())
       {
       reloRuntime->reloLogger()->printf("%s\n", name());
       reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
       reloRuntime->reloLogger()->printf("\tapplyRelocation: beholderID %d\n", beholderID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: romClass %p\n", romClass);
+      reloRuntime->reloLogger()->printf("\tapplyRelocation: classChain %p\n", classChain);
       }
 
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateClassByNameRecord(classID, beholderID, static_cast<J9ROMClass *>(romClass)))
+   if (reloRuntime->comp()->getSymbolValidationManager()->validateClassByNameRecord(classID, beholderID, classChain))
       return 0;
    else
       return compilationAotClassReloFailure;
@@ -3366,25 +3363,6 @@ TR_RelocationRecordValidateClassFromMethod::applyRelocation(TR_RelocationRuntime
    }
 
 int32_t
-TR_RelocationRecordValidateComponentClassFromArrayClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t componentClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateCompFromArrayBinaryTemplate *)_record)->_componentClassID);
-   uint16_t arrayClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateCompFromArrayBinaryTemplate *)_record)->_arrayClassID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: componentClassID %d\n", componentClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: arrayClassID %d\n", arrayClassID);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateComponentClassFromArrayClassRecord(componentClassID, arrayClassID))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateArrayClassFromComponentClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t arrayClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_arrayClassID);
@@ -3451,17 +3429,17 @@ int32_t
 TR_RelocationRecordValidateSystemClassByName::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t systemClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_systemClassID);
-   void *romClassOffset = (void *)reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_romClassOffsetInSCC);
-   void *romClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(romClassOffset);
+   void *classChainOffset = (void *)reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   uintptrj_t *classChain = (uintptrj_t*)reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset);
 
    if (reloRuntime->reloLogger()->logEnabled())
       {
       reloRuntime->reloLogger()->printf("%s\n", name());
       reloRuntime->reloLogger()->printf("\tapplyRelocation: systemClassID %d\n", systemClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: romClass %p\n", romClass);
+      reloRuntime->reloLogger()->printf("\tapplyRelocation: classChain %p\n", classChain);
       }
 
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateSystemClassByNameRecord(systemClassID, static_cast<J9ROMClass *>(romClass)))
+   if (reloRuntime->comp()->getSymbolValidationManager()->validateSystemClassByNameRecord(systemClassID, classChain))
       return 0;
    else
       return compilationAotClassReloFailure;
@@ -4571,7 +4549,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate),             // TR_ValidateDefiningClassFromCP                  = 67
    sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate),               // TR_ValidateStaticClassFromCP                    = 68
    sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate),                 // TR_ValidateClassFromMethod                      = 69
-   sizeof(TR_RelocationRecordValidateCompFromArrayBinaryTemplate),                   // TR_ValidateComponentClassFromArrayClass         = 70
+   0,                                                                                // TR_ValidateComponentClassFromArrayClass         = 70
    sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate),                   // TR_ValidateArrayClassFromComponentClass         = 71
    sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),             // TR_ValidateSuperClassFromClass                  = 72
    sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate),            // TR_ValidateClassInstanceOfClass                 = 73

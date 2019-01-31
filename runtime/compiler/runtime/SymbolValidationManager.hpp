@@ -142,19 +142,35 @@ struct ClassValidationRecord : public SymbolValidationRecord
    virtual bool isClassValidationRecord() { return true; }
    };
 
-struct ClassByNameRecord : public ClassValidationRecord
+// A class validation where the class chain provides data that is used to find
+// the class (e.g. its name). It can be advantageous to use a class chain even
+// when it is not required for the validation at hand, since each class needs a
+// class chain validation at some point. By including one in ClassByNameRecord
+// (for example), it's possible to eliminate the separate ClassChainRecord that
+// would otherwise be required.
+struct ClassValidationRecordWithChain : public ClassValidationRecord
+   {
+   ClassValidationRecordWithChain(TR_ExternalRelocationTargetKind kind, TR_OpaqueClassBlock *clazz)
+      : ClassValidationRecord(kind), _class(clazz), _classChain(NULL)
+      {}
+
+   virtual void printFields();
+
+   TR_OpaqueClassBlock * _class;
+   void * _classChain;
+   };
+
+struct ClassByNameRecord : public ClassValidationRecordWithChain
    {
    ClassByNameRecord(TR_OpaqueClassBlock *clazz,
                      TR_OpaqueClassBlock *beholder)
-      : ClassValidationRecord(TR_ValidateClassByName),
-        _class(clazz),
+      : ClassValidationRecordWithChain(TR_ValidateClassByName, clazz),
         _beholder(beholder)
       {}
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueClassBlock * _class;
    TR_OpaqueClassBlock * _beholder;
    };
 
@@ -240,21 +256,6 @@ struct ClassFromMethodRecord : public ClassValidationRecord
    TR_OpaqueMethodBlock *_method;
    };
 
-struct ComponentClassFromArrayClassRecord : public ClassValidationRecord
-   {
-   ComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass)
-      : ClassValidationRecord(TR_ValidateComponentClassFromArrayClass),
-        _componentClass(componentClass),
-        _arrayClass(arrayClass)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock * _componentClass;
-   TR_OpaqueClassBlock * _arrayClass;
-   };
-
 struct ArrayClassFromComponentClassRecord : public ClassValidationRecord
    {
    ArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
@@ -306,17 +307,14 @@ struct ClassInstanceOfClassRecord : public SymbolValidationRecord
    bool _isInstanceOf;
    };
 
-struct SystemClassByNameRecord : public ClassValidationRecord
+struct SystemClassByNameRecord : public ClassValidationRecordWithChain
    {
    SystemClassByNameRecord(TR_OpaqueClassBlock *systemClass)
-      : ClassValidationRecord(TR_ValidateSystemClassByName),
-        _systemClass(systemClass)
+      : ClassValidationRecordWithChain(TR_ValidateSystemClassByName, systemClass)
       {}
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
-
-   TR_OpaqueClassBlock *_systemClass;
    };
 
 struct ClassFromITableIndexCPRecord : public ClassValidationRecord
@@ -691,7 +689,6 @@ public:
    bool addDefiningClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex, bool isStatic = false);
    bool addStaticClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
    bool addClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method);
-   bool addComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass);
    bool addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass);
    bool addSuperClassFromClassRecord(TR_OpaqueClassBlock *superClass, TR_OpaqueClassBlock *childClass);
    bool addClassInstanceOfClassRecord(TR_OpaqueClassBlock *classOne, TR_OpaqueClassBlock *classTwo, bool objectTypeIsFixed, bool castTypeIsFixed, bool isInstanceOf);
@@ -728,17 +725,16 @@ public:
 
 
 
-   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass);
+   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, uintptrj_t *classChain);
    bool validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic);
    bool validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateClassFromMethodRecord(uint16_t classID, uint16_t methodID);
-   bool validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID);
    bool validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID);
    bool validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID);
    bool validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf);
-   bool validateSystemClassByNameRecord(uint16_t systemClassID, J9ROMClass *romClass);
+   bool validateSystemClassByNameRecord(uint16_t systemClassID, uintptrj_t *classChain);
    bool validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
    bool validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID);
@@ -800,7 +796,7 @@ private:
 
    bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
-   bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);
+   bool addClassRecordWithChain(TR::ClassValidationRecordWithChain *record);
    void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
    bool addMethodRecord(TR_OpaqueMethodBlock *method, TR::SymbolValidationRecord *record);
 
@@ -810,6 +806,7 @@ private:
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueMethodBlock *method);
    bool validateSymbol(uint16_t idToBeValidated, J9Method *method);
 
+   bool isDefinedID(uint16_t id);
    void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
    void defineGuaranteedID(void *symbol, TR::SymbolType type);
 

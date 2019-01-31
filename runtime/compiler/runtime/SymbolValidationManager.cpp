@@ -67,8 +67,6 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
       // redundant.
       _alreadyGeneratedRecords.insert(
          new (_region) ArrayClassFromComponentClassRecord(arrayClass, component));
-      _alreadyGeneratedRecords.insert(
-         new (_region) ComponentClassFromArrayClassRecord(component, arrayClass));
       }
    }
 
@@ -79,6 +77,12 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    _symbolToIdMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
    _seenSymbolsSet.insert(symbol);
+   }
+
+bool
+TR::SymbolValidationManager::isDefinedID(uint16_t id)
+   {
+   return id < _idToSymbolTable.size() && _idToSymbolTable[id]._hasValue;
    }
 
 void
@@ -278,7 +282,7 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
       TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(clazz);
       appendRecordIfNew(
          component,
-         new (_region) ComponentClassFromArrayClassRecord(component, clazz));
+         new (_region) ArrayClassFromComponentClassRecord(clazz, component));
       clazz = component;
       }
 
@@ -294,20 +298,27 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
    }
 
 bool
-TR::SymbolValidationManager::addClassRecordWithRomClass(TR_OpaqueClassBlock *component, TR::ClassValidationRecord *record, int arrayDims)
+TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWithChain *record)
    {
-   if (shouldNotDefineSymbol(component))
+   if (shouldNotDefineSymbol(record->_class))
       return abandonRecord(record);
 
-   SVM_ASSERT(!_fej9->isClassArray(component), "expected base component type");
+   int arrayDims = 0;
+   record->_class = getBaseComponentClass(record->_class, arrayDims);
 
-   if (!_fej9->isPrimitiveClass(component))
+   if (!_fej9->isPrimitiveClass(record->_class))
       {
-      if (!addClassRecord(component, record))
+      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class);
+      if (record->_classChain == NULL)
+         {
+         _region.deallocate(record);
          return false;
+         }
+
+      appendRecordIfNew(record->_class, record);
       }
 
-   addMultipleArrayRecords(component, arrayDims);
+   addMultipleArrayRecords(record->_class, arrayDims);
    return true;
    }
 
@@ -380,11 +391,7 @@ bool
 TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-   TR::ClassValidationRecord *record = new (_region) ClassByNameRecord(clazz, beholder);
-   return addClassRecordWithRomClass(clazz, record, arrayDims);
+   return addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
    }
 
 bool
@@ -440,14 +447,6 @@ TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz
    }
 
 bool
-TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass)
-   {
-   // Class chain validation for the base component type is already taken care of
-   SVM_ASSERT_ALREADY_VALIDATED(this, arrayClass);
-   return addVanillaRecord(componentClass, new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass));
-   }
-
-bool
 TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
    {
    // Class chain validation for the base component type is already taken care of
@@ -485,10 +484,7 @@ TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *
 bool
 TR::SymbolValidationManager::addSystemClassByNameRecord(TR_OpaqueClassBlock *systemClass)
    {
-   int32_t arrayDims = 0;
-   systemClass = getBaseComponentClass(systemClass, arrayDims);
-   TR::ClassValidationRecord *record = new (_region) SystemClassByNameRecord(systemClass);
-   return addClassRecordWithRomClass(systemClass, record, arrayDims);
+   return addClassRecordWithChain(new (_region) SystemClassByNameRecord(systemClass));
    }
 
 bool
@@ -734,15 +730,17 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, J9Method *
    }
 
 bool
-TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass)
+TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, uintptrj_t *classChain)
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-
+   J9ROMClass *romClass = _fej9->sharedCache()->startingROMClassOfClassChain(classChain);
    J9UTF8 * classNameData = J9ROMCLASS_CLASSNAME(romClass);
    char *className = reinterpret_cast<char *>(J9UTF8_DATA(classNameData));
    uint32_t classNameLength = J9UTF8_LENGTH(classNameData);
-   return validateSymbol(classID, _fej9->getClassFromSignature(className, classNameLength, beholderCP));
+   TR_OpaqueClassBlock *clazz = _fej9->getClassFromSignature(className, classNameLength, beholderCP);
+   return validateSymbol(classID, clazz)
+      && _fej9->sharedCache()->classMatchesCachedVersion(clazz, classChain);
    }
 
 bool
@@ -796,17 +794,21 @@ TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uin
    }
 
 bool
-TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
-   {
-   TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
-   return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
-   }
-
-bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
-   TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
-   return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
+   if (isDefinedID(componentClassID))
+      {
+      TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
+      return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
+      }
+   else
+      {
+      TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
+      if (_fej9->isClassArray(arrayClass))
+         return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
+      else
+         return false;
+      }
    }
 
 bool
@@ -828,12 +830,14 @@ TR::SymbolValidationManager::validateClassInstanceOfClassRecord(uint16_t classOn
    }
 
 bool
-TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClassID, J9ROMClass *romClass)
+TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClassID, uintptrj_t *classChain)
    {
+   J9ROMClass *romClass = _fej9->sharedCache()->startingROMClassOfClassChain(classChain);
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    TR_OpaqueClassBlock *systemClassByName = _fej9->getSystemClassFromClassName(reinterpret_cast<const char *>(J9UTF8_DATA(className)),
                                                                               J9UTF8_LENGTH(className));
-   return validateSymbol(systemClassID, systemClassByName);
+   return validateSymbol(systemClassID, systemClassByName)
+      && _fej9->sharedCache()->classMatchesCachedVersion(systemClassByName, classChain);
    }
 
 bool
@@ -1182,9 +1186,17 @@ namespace // file-local
       };
    }
 
+void TR::ClassValidationRecordWithChain::printFields()
+   {
+   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   printClass(_class);
+   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   }
+
 bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
    {
    TR::ClassByNameRecord *rhs = downcast(this, other);
+   // Don't compare _classChain - it's determined by _class
    return LexicalOrder::by(_class, rhs->_class)
       .thenBy(_beholder, rhs->_beholder).less();
    }
@@ -1192,8 +1204,7 @@ bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
 void TR::ClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassByNameRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   printClass(_class);
+   TR::ClassValidationRecordWithChain::printFields();
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    }
@@ -1287,23 +1298,6 @@ void TR::ClassFromMethodRecord::printFields()
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
    }
 
-bool TR::ComponentClassFromArrayClassRecord::isLessThanWithinKind(
-   SymbolValidationRecord *other)
-   {
-   TR::ComponentClassFromArrayClassRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_componentClass, rhs->_componentClass)
-      .thenBy(_arrayClass, rhs->_arrayClass).less();
-   }
-
-void TR::ComponentClassFromArrayClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "ComponentClassFromArrayClassRecord\n");
-   traceMsg(TR::comp(), "\t_componentClass=0x%p\n", _componentClass);
-   printClass(_componentClass);
-   traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
-   printClass(_arrayClass);
-   }
-
 bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(
    SymbolValidationRecord *other)
    {
@@ -1364,14 +1358,14 @@ void TR::ClassInstanceOfClassRecord::printFields()
 bool TR::SystemClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
    {
    TR::SystemClassByNameRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_systemClass, rhs->_systemClass).less();
+   // Don't compare _classChain - it's determined by _class
+   return LexicalOrder::by(_class, rhs->_class).less();
    }
 
 void TR::SystemClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "SystemClassByNameRecord\n");
-   traceMsg(TR::comp(), "\t_systemClass=0x%p\n", _systemClass);
-   printClass(_systemClass);
+   TR::ClassValidationRecordWithChain::printFields();
    }
 
 bool TR::ClassFromITableIndexCPRecord::isLessThanWithinKind(

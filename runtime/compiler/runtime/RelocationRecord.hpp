@@ -205,7 +205,7 @@ struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_Relocati
    {
    uint16_t _classID;
    uint16_t _beholderID;
-   UDATA _romClassOffsetInSCC;
+   UDATA _classChainOffsetInSCC;
    };
 
 struct TR_RelocationRecordValidateProfiledClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -238,12 +238,6 @@ struct TR_RelocationRecordValidateClassFromMethodBinaryTemplate : public TR_Relo
    uint16_t _methodID;
    };
 
-struct TR_RelocationRecordValidateCompFromArrayBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _componentClassID;
-   uint16_t _arrayClassID;
-   };
-
 struct TR_RelocationRecordValidateArrayFromCompBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _arrayClassID;
@@ -268,7 +262,7 @@ struct TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate : public TR
 struct TR_RelocationRecordValidateSystemClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _systemClassID;
-   UDATA _romClassOffsetInSCC;
+   UDATA _classChainOffsetInSCC;
    };
 
 struct TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -1458,18 +1452,6 @@ class TR_RelocationRecordValidateClassFromMethod : public TR_RelocationRecord
       virtual bool isValidationRecord() { return true; }
       virtual char *name() { return "TR_RelocationRecordValidateClassFromMethod"; }
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidateComponentClassFromArrayClass : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateComponentClassFromArrayClass() {}
-      TR_RelocationRecordValidateComponentClassFromArrayClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateComponentClassFromArrayClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateCompFromArrayBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
