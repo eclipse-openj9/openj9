@@ -2942,7 +2942,7 @@ TR_RelocationRecordMethodEnterCheck::name()
 bool
 TR_RelocationRecordMethodEnterCheck::ignore(TR_RelocationRuntime *reloRuntime)
    {
-   bool reportMethodEnter = reloRuntime->fej9()->isMethodEnterTracingEnabled((TR_OpaqueMethodBlock *) reloRuntime->method()) || reloRuntime->fej9()->canMethodEnterEventBeHooked();
+   bool reportMethodEnter = reloRuntime->fej9()->isMethodTracingEnabled((TR_OpaqueMethodBlock *) reloRuntime->method()) || reloRuntime->fej9()->canMethodEnterEventBeHooked();
    RELO_LOG(reloRuntime->reloLogger(), 6,"\tignore: reportMethodEnter %d\n", reportMethodEnter);
    return !reportMethodEnter;
    }
@@ -2958,7 +2958,7 @@ TR_RelocationRecordMethodExitCheck::name()
 bool
 TR_RelocationRecordMethodExitCheck::ignore(TR_RelocationRuntime *reloRuntime)
    {
-   bool reportMethodExit = reloRuntime->fej9()->isMethodExitTracingEnabled((TR_OpaqueMethodBlock *) reloRuntime->method()) || reloRuntime->fej9()->canMethodExitEventBeHooked();
+   bool reportMethodExit = reloRuntime->fej9()->isMethodTracingEnabled((TR_OpaqueMethodBlock *) reloRuntime->method()) || reloRuntime->fej9()->canMethodExitEventBeHooked();
    RELO_LOG(reloRuntime->reloLogger(), 6,"\tignore: reportMethodExit %d\n", reportMethodExit);
    return !reportMethodExit;
    }

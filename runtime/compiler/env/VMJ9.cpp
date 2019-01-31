@@ -391,7 +391,7 @@ void releaseVMaccessIfNeeded(J9VMThread *vmThread, bool haveAcquiredVMAccess)
 bool
 TR_J9VMBase::isAnyMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   return isMethodEnterTracingEnabled(method) || isMethodExitTracingEnabled(method);
+   return isMethodTracingEnabled(method);
    }
 
 
@@ -3465,8 +3465,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    TR::Node * ramMethod = TR::Node::aconst(root, (uintptrj_t)j9method);
    ramMethod->setIsMethodPointerConstant(true);
 
-   int32_t event = root->getOpCodeValue() == TR::MethodEnterHook ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
-   bool isTrace = (event == J9HOOK_VM_METHOD_ENTER) ? isMethodEnterTracingEnabled(j9method) : isMethodExitTracingEnabled(j9method);
+   bool isTrace = isMethodTracingEnabled(j9method);
 
    TR::Node * methodCall;
    if (root->getNumChildren() == 0)
@@ -3575,6 +3574,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
       //      buload &vmThread()->javaVM->hookInterface->flags[J9HOOK_VM_METHOD_ENTER/J9HOOK_VM_METHOD_RETURN];
       //    iconst J9HOOK_FLAG_HOOKED
       //
+      int32_t event = root->getOpCodeValue() == TR::MethodEnterHook ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
       TR::StaticSymbol * addressSym = TR::StaticSymbol::create(comp->trHeapMemory(),TR::Address);
       addressSym->setStaticAddress(&vmThread()->javaVM->hookInterface.flags[event]);
 
@@ -8444,16 +8444,23 @@ TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
    }
 
 bool
+TR_J9SharedCacheVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
+   return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
+   }
+
+bool
 TR_J9SharedCacheVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
    {
    // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
-   return TR_J9VMBase::isMethodEnterTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter);
+   return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter);
    }
 
 bool
 TR_J9SharedCacheVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   return TR_J9VMBase::isMethodExitTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
+   return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
    }
 
 bool
