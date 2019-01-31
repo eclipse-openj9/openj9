@@ -27,8 +27,8 @@
 #include "UnfinalizedObjectBufferRealtime.hpp"
 
 #include "GCExtensions.hpp"
+#include "MetronomeDelegate.hpp"
 #include "RealtimeGC.hpp"
-#include "RealtimeGCDelegate.hpp"
 #include "UnfinalizedObjectList.hpp"
 
 MM_UnfinalizedObjectBufferRealtime::MM_UnfinalizedObjectBufferRealtime(MM_GCExtensions *extensions, UDATA maxObjectCount)

@@ -20,20 +20,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if !defined(REALTIMEGCDELEGATE_HPP_)
-#define REALTIMEGCDELEGATE_HPP_
+#if !defined(METRONOMEDELEGATE_HPP_)
+#define METRONOMEDELEGATE_HPP_
 
 #include "j9.h"
 #include "j9cfg.h"
 
 #if defined(J9VM_GC_REALTIME)
 
-#include "omr.h"
 #include "BaseNonVirtual.hpp"
-#include "EnvironmentRealtime.hpp"
 #include "GCExtensions.hpp"
+#include "RealtimeAccessBarrier.hpp"
 
-class MM_RealtimeGCDelegate : public MM_BaseNonVirtual
+class MM_EnvironmentRealtime;
+
+class MM_MetronomeDelegate : public MM_BaseNonVirtual
 {
 private:
 	MM_GCExtensions *_extensions;
@@ -41,6 +42,15 @@ private:
 	J9JavaVM *_javaVM;
 
 public:
+	void yieldWhenRequested(MM_EnvironmentBase *env);
+	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void* userData);
+	static uintptr_t signalProtectedFunction(J9PortLibrary *privatePortLibrary, void* userData);	
+
+	MM_MetronomeDelegate(MM_EnvironmentBase *env) :
+		_extensions(MM_GCExtensions::getExtensions(env)),
+		_realtimeGC(NULL),
+		_javaVM((J9JavaVM*)env->getOmrVM()->_language_vm) {}
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
  	bool _unmarkedImpliesClasses; /**< if true the mark bit can be used to check is class alive or not */
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
@@ -51,11 +61,6 @@ public:
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	bool _dynamicClassUnloadingEnabled;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
-	MM_RealtimeGCDelegate(MM_EnvironmentBase *env) :
-		_extensions(MM_GCExtensions::getExtensions(env)),
-		_realtimeGC(NULL),
-		_javaVM((J9JavaVM*)env->getOmrVM()->_language_vm) {}
 
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
@@ -90,7 +95,7 @@ public:
 	 * The J9AccClassDying bit is set and J9HOOK_VM_CLASS_UNLOAD is triggered for each class that will be unloaded.
 	 * The J9_GC_CLASS_LOADER_DEAD bit is set for each class loader that will be unloaded.
 	 * J9HOOK_VM_CLASSES_UNLOAD is triggered if any classes will be unloaded.
-	 * 
+	 *
 	 * @param env[in] the master GC thread
 	 * @param classUnloadCountResult[out] returns the number of classes about to be unloaded
 	 * @param anonymousClassUnloadCount[out] returns the number of anonymous classes about to be unloaded
@@ -122,6 +127,16 @@ public:
 	UDATA getReferenceObjectListCount(MM_EnvironmentBase *env) { return _extensions->gcThreadCount; }
 
 	void defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void* defaultMemorySpace);
+	MM_RealtimeAccessBarrier* allocateAccessBarrier(MM_EnvironmentBase *env);
+	void enableDoubleBarrier(MM_EnvironmentBase* env);
+	void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread* vmThread);
+	void disableDoubleBarrier(MM_EnvironmentBase* env);
+
+	/* New methods */
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+	bool doClassTracing(MM_EnvironmentRealtime* env);
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+	bool doTracing(MM_EnvironmentRealtime* env);
 
 	/*
 	 * Friends
@@ -131,5 +146,5 @@ public:
 
 #endif /* defined(J9VM_GC_REALTIME) */
 
-#endif /* defined(REALTIMEGCDELEGATE_HPP_) */	
+#endif /* defined(METRONOMEDELEGATE_HPP_) */
 

@@ -28,7 +28,7 @@
 #include "omrutil.h"
 
 #include "MetronomeAlarmThread.hpp"
-#include "MetronomeAlarmThreadDelegate.hpp"
+#include "MetronomeDelegate.hpp"
 #include "OSInterface.hpp"
 #include "RealtimeGC.hpp"
 #include "Timer.hpp"
@@ -116,7 +116,7 @@ MM_MetronomeAlarmThread::initialize(MM_EnvironmentBase *env)
 int J9THREAD_PROC
 MM_MetronomeAlarmThread::metronomeAlarmThreadWrapper(void* userData)
 {
-	return MM_MetronomeAlarmThreadDelegate::metronomeAlarmThreadWrapper(userData);
+	return MM_MetronomeDelegate::metronomeAlarmThreadWrapper(userData);
 }
 
 /**

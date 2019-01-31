@@ -30,7 +30,7 @@
 #include "JNICriticalRegion.hpp"
 #include "MemoryPool.hpp"
 #include "MemorySubSpace.hpp"
-#include "MemorySubSpaceMetronomeDelegate.hpp"
+#include "MetronomeDelegate.hpp"
 #include "Scheduler.hpp"
 #include "RealtimeGC.hpp"
 
@@ -89,7 +89,7 @@ MM_MemorySubSpaceMetronome::collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCo
 		sched->continueGC(envRealtime, OUT_OF_MEMORY_TRIGGER, allocDescription->getBytesRequested(), env->getOmrVMThread(), true);
 	}
 	/* TODO CRGTMP remove call to yieldWhenRequested since continueGC blocks */
-	_delegate.yieldWhenRequested(envRealtime);
+	ext->realtimeGC->getRealtimeDelegate()->yieldWhenRequested(envRealtime);
 }
 
 /**
@@ -153,9 +153,9 @@ MM_MemorySubSpaceMetronome::systemGarbageCollect(MM_EnvironmentBase *env, U_32 g
 		sched->startGC(envRealtime);
 		sched->setGCCode(MM_GCCode(gcCode));
 		/* if we were triggered by rasdump, then the caller has already acquired exclusive VM access */
-		sched->continueGC(envRealtime, SYSTEM_GC_TRIGGER, 0, env->getOmrVMThread(), J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT != gcCode);
+		sched->continueGC(envRealtime, SYSTEM_GC_TRIGGER, 0, envRealtime->getOmrVMThread(), J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT != gcCode);
 		/* TODO CRGTMP remove this call since continueGC blocks */
-		_delegate.yieldWhenRequested(envRealtime);
+		ext->realtimeGC->getRealtimeDelegate()->yieldWhenRequested(envRealtime);
 	}
 }
 
