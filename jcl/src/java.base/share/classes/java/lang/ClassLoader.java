@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 import java.security.cert.Certificate;
 
 /*[IF Sidecar19-SE]
+import java.lang.reflect.Modifier;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
@@ -46,7 +47,7 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -259,6 +260,12 @@ public abstract class ClassLoader {
 		
 		/*[IF Sidecar19-SE]*/
 		jdk.internal.misc.VM.initLevel(1);
+		/* 
+		 * Following code ensures that the field jdk.internal.reflect.langReflectAccess 
+		 * is initialized before any usage references. This is a workaround.
+		 * More details are at https://github.com/eclipse/openj9/issues/3399#issuecomment-459004840.
+		 */
+		Modifier.isPublic(Modifier.PUBLIC);
 		/*[IF Java10]*/
 		try {
 		/*[ENDIF]*/
