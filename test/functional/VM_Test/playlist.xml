@@ -61,7 +61,7 @@
 		</groups>
 		<subsets>
 			<subset>8</subset>
-			<subset>11</subset>
+			<subset>11+</subset>
 		</subsets>
 	</test>
 

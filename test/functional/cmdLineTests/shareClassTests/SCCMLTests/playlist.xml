@@ -346,7 +346,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>11</subset>
+			<subset>11+</subset>
 			<subset>8</subset>
 		</subsets>
 		<impls>
