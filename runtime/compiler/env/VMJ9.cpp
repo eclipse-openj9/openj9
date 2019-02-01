@@ -6691,7 +6691,7 @@ TR_J9VMBase::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    }
 
 uintptrj_t
-TR_J9VM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
+TR_J9VMBase::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classDepthAndFlags);
    }
