@@ -325,6 +325,7 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ClassUnloadAssumption:
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
+         break;
       case TR_ValidateClassByName:
          reloRecord = new (storage) TR_RelocationRecordValidateClassByName(reloRuntime, record);
          break;
