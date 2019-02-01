@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -282,9 +282,13 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
       isJitInduceOSRCall = true;
       }
 
-   if (methodSymRef->isUnresolved() || comp->compileRelocatableCode()) // KEN
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      forceUnresolvedDispatch = false;
+
+   if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
-      TR_ASSERT(!isJitInduceOSRCall || !comp->compileRelocatableCode(), "calling jitInduceOSR is not supported yet under AOT\n");
+      TR_ASSERT(!isJitInduceOSRCall || !forceUnresolvedDispatch, "calling jitInduceOSR is not supported yet under AOT\n");
 
       if (methodSymbol->isSpecial())
          return TR_PPCinterpreterUnresolvedSpecialGlue;
@@ -396,8 +400,12 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
    if (!glueRef->isOSRInductionHelper())
       {
+      bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         forceUnresolvedDispatch = false;
+
       // Store the method pointer: it is NULL for unresolved
-      if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+      if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
          {
          *(intptrj_t *)cursor = 0;
          if (comp->getOption(TR_EnableHCR))
@@ -414,10 +422,18 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
 
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
-                                                                                 getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                 TR_MethodObject, cg()),
-                                      __FILE__, __LINE__, callNode);
+         if (comp->compileRelocatableCode())
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                  (uint8_t *)methodSymbol->getMethodAddress(),
+                                                                  (uint8_t *)TR::SymbolType::typeMethod,
+                                                                  TR_SymbolFromManager,
+                                                                  cg()),  __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                  (uint8_t *)methodSymbol->getMethodAddress(),
+                                                                  TR_ResolvedTrampolines,
+                                                                  cg()), __FILE__, __LINE__, getNode());
+            }
          }
       }
    cursor += TR::Compiler->om.sizeofReferenceAddress();
@@ -1276,13 +1292,17 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
    const char          *labelString = NULL;
    bool                 isNativeStatic = false;
 
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      forceUnresolvedDispatch = false;
+
    if (methodSymbol->isHelper() &&
        methodSymRef->isOSRInductionHelper())
       {
       labelString = "Induce OSR Call Snippet";
       glueRef = methodSymRef;
       }
-   else if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+   else if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       labelString = "Unresolved Direct Call Snippet";
       if (methodSymbol->isSpecial())
