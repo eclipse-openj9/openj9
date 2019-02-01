@@ -179,9 +179,21 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
       // Load the cached value in scratch1Reg
       // HCR in genInlineTest for checkcast and instanceof
       if (cg->wantToPatchClassPointer(guessClassArray[i], node))
+         {
          iCursor = loadAddressConstantInSnippet(cg, node, (intptrj_t) (guessClassArray[i]), scratch1Reg, scratch2Reg,TR::InstOpCode::Op_load, true, iCursor);
+         }
+      else if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR::StaticSymbol *sym = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
+         sym->setStaticAddress(guessClassArray[i]);
+         sym->setClassObject();
+
+         iCursor = loadAddressConstant(cg, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), scratch1Reg, iCursor, false, TR_ClassAddress);
+         }
       else
+         {
          iCursor = loadAddressConstant(cg, node, (intptrj_t) (guessClassArray[i]), scratch1Reg, iCursor);
+         }
       result_bool = instanceOfOrCheckCast((J9Class*) guessClassArray[i], (J9Class*) castClassAddr);
       int32_t result_value = result_bool ? 1 : 0;
       result_label = (falseLabel != trueLabel) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
@@ -193,9 +205,21 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
 
    // Load the cached value in scratch1Reg
    if (cg->wantToPatchClassPointer(guessClassArray[num_PICS - 1], node))
+      {
       iCursor = loadAddressConstantInSnippet(cg, node, (intptrj_t) (guessClassArray[num_PICS - 1]), scratch1Reg, scratch2Reg,TR::InstOpCode::Op_load, true, iCursor);
+      }
+   else if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR::StaticSymbol *sym = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
+      sym->setStaticAddress(guessClassArray[num_PICS - 1]);
+      sym->setClassObject();
+
+      iCursor = loadAddressConstant(cg, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), scratch1Reg, iCursor, false, TR_ClassAddress);
+      }
    else
+      {
       iCursor = loadAddressConstant(cg, node, (intptrj_t) (guessClassArray[num_PICS - 1]), scratch1Reg, iCursor);
+      }
    iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, objClassReg, scratch1Reg, iCursor);
    iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, snippetLabel, cndReg, iCursor);
    result_bool = instanceOfOrCheckCast((J9Class*) guessClassArray[num_PICS - 1], (J9Class*) castClassAddr);
@@ -3672,7 +3696,18 @@ static
 void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *condReg, TR::Register *instanceClassReg, TR_OpaqueClassBlock *arbitraryClass, TR_PPCScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
    TR::Register *arbitraryClassReg = srm->findOrCreateScratchRegister();
-   loadAddressConstant(cg, node, (intptr_t)arbitraryClass, arbitraryClassReg);
+   if (cg->comp()->compileRelocatableCode() && cg->comp()->getOption(TR_UseSymbolValidationManager))
+      {
+      TR::StaticSymbol *sym = TR::StaticSymbol::create(cg->comp()->trHeapMemory(), TR::Address);
+      sym->setStaticAddress(arbitraryClass);
+      sym->setClassObject();
+
+      loadAddressConstant(cg, node, (intptr_t) new (cg->comp()->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab(), sym), arbitraryClassReg, NULL, false, TR_ClassAddress);
+      }
+   else
+      {
+      loadAddressConstant(cg, node, (intptr_t)arbitraryClass, arbitraryClassReg);
+      }
    genInstanceOfOrCheckCastClassEqualityTest(node, condReg, instanceClassReg, arbitraryClassReg, cg);
    srm->reclaimScratchRegister(arbitraryClassReg);
 
@@ -4163,6 +4198,9 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
    if (newCheckCast)
       return VMcheckcastEvaluator2(node, cg);
 
+   TR_ASSERT_FATAL(!cg->comp()->compileRelocatableCode() || !cg->comp()->getOption(TR_UseSymbolValidationManager),
+      "Old checkcast and instanceof evaluators are not supported under AOT");
+
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    TR::Register *objReg, *castClassReg, *objClassReg, *scratch1Reg, *scratch2Reg, *cndReg;
    TR::LabelSymbol *doneLabel, *callLabel, *callForInlineLabel, *nextTestLabel;
@@ -4568,6 +4606,9 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
    if (newInstanceOf)
       return VMinstanceOfEvaluator2(node, cg);
 
+   TR_ASSERT_FATAL(!cg->comp()->compileRelocatableCode() || !cg->comp()->getOption(TR_UseSymbolValidationManager),
+      "Old checkcast and instanceof evaluators are not supported under AOT");
+
    TR::Compilation *comp = cg->comp();
    TR::Node *depNode;
    int32_t depIndex;
@@ -4846,7 +4887,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
          if (castClassIsReferenceArray)
             {
             TR_OpaqueClassBlock * jlobjectclassBlock = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-            J9Class* jlobjectarrayclassBlock = jlobjectclassBlock ? ((J9Class*) jlobjectclassBlock)->arrayClass : NULL;
+            J9Class* jlobjectarrayclassBlock = jlobjectclassBlock ? (J9Class*)fej9->getArrayClassFromComponentClass((TR_OpaqueClassBlock*)jlobjectclassBlock) : NULL;
             if (jlobjectarrayclassBlock != NULL)
                {
                iCursor = loadAddressConstant(cg, node, (intptrj_t) (jlobjectarrayclassBlock), scratch1Reg, iCursor);
