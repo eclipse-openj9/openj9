@@ -166,7 +166,17 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       //
       // Slow interface lookup dispatch.
       //
-      getSnippetLabel()->setCodeLocation(startOfSnippet);
+
+      // Align the IPIC data to a pointer-sized boundary to ensure that the
+      // interface class and itable offset are naturally aligned.
+      uintptr_t offsetToIpicData = 10;
+      uintptr_t unalignedIpicDataStart = (uintptr_t)cursor + offsetToIpicData;
+      uintptr_t alignMask = sizeof (uintptrj_t) - 1;
+      uintptr_t alignedIpicDataStart =
+         (unalignedIpicDataStart + alignMask) & ~alignMask;
+      cursor += alignedIpicDataStart - unalignedIpicDataStart;
+
+      getSnippetLabel()->setCodeLocation(cursor);
 
       // Slow path lookup dispatch
       //
@@ -205,6 +215,14 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          {
          TR_ASSERT_FATAL(0, "Can't handle resolved IPICs here yet!");
          }
+
+      // Because the interface class and itable offset (immediately following)
+      // are written at runtime and might be read concurrently by another
+      // thread, they must be naturally aligned to guarantee that all accesses
+      // to them are atomic.
+      TR_ASSERT_FATAL(
+         ((uintptr_t)cursor & (sizeof(uintptrj_t) - 1)) == 0,
+         "interface class and itable offset IPIC data slots are unaligned");
 
       // Reserve space for resolved interface class and itable offset.
       // These slots will be populated during interface class resolution.
@@ -710,7 +728,8 @@ uint32_t TR::X86PicDataSnippet::getLength(int32_t estimatedSnippetStart)
              + 5                                 // JMP done
              + (4 * sizeof(uintptrj_t))          // Resolve slots
              + (TR::Compiler->target.is64Bit() ? 2 : 1)   // ModRM or REX+MOV
-             + (_hasJ2IThunkInPicData ? sizeof(uintptrj_t) : 0); // j2i thunk pointer
+             + (_hasJ2IThunkInPicData ? sizeof(uintptrj_t) : 0) // j2i thunk pointer
+             + sizeof (uintptrj_t) - 1;          // alignment
       }
    else
       {
