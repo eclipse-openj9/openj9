@@ -167,38 +167,36 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
         // default values from variables file
         def repo = default_openjdk_info.get('default').get('repoUrl')
         def branch = default_openjdk_info.get('default').get('branch')
+        def sha = ''
 
         if (default_openjdk_info[build_spec]) {
             repo = default_openjdk_info.get(build_spec).get('repoUrl')
-
-            if (params."${param_name}_REPO_${build_spec}") {
-                // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
-                repo = params."${param_name}_REPO_${build_spec}"
-            }
-
             branch = default_openjdk_info.get(build_spec).get('branch')
-
-            if (params."${param_name}_BRANCH_${build_spec}") {
-                // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
-                branch = params."${param_name}_BRANCH_${build_spec}"
-            }
-
-            sha = params."${param_name}_SHA_${build_spec}"
-        } else {
-            // check build parameters
-            if (params."${param_name}_REPO") {
-                repo = params."${param_name}_REPO"
-            }
-
-            if (params."${param_name}_BRANCH") {
-                branch = params."${param_name}_BRANCH"
-            }
-
-            sha = params."${param_name}_SHA"
         }
 
-        if (!sha) {
-            sha = ''
+        // check build parameters
+        if (params."${param_name}_REPO_${build_spec}") {
+            // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
+            repo = params."${param_name}_REPO_${build_spec}"
+        } else if (params."${param_name}_REPO") {
+            // got OPENJDK*_REPO build parameter, overwrite repo
+            repo = params."${param_name}_REPO"
+        }
+
+        if (params."${param_name}_BRANCH_${build_spec}") {
+            // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
+            branch = params."${param_name}_BRANCH_${build_spec}"
+        } else if (params."${param_name}_BRANCH") {
+            // got OPENJDK*_BRANCH build parameter, overwrite branch
+            branch = params."${param_name}_BRANCH"
+        }
+
+        if (params."${param_name}_SHA_${build_spec}") {
+            // got OPENJDK*_SHA_<spec> build parameter, overwrite sha
+            sha = params."${param_name}_SHA_${build_spec}"
+        } else if (params."${param_name}_SHA") {
+            // got OPENJDK*_SHA build parameter, overwrite sha
+            sha = params."${param_name}_SHA"
         }
 
         // populate the map
@@ -386,12 +384,10 @@ def set_build_variables() {
     // fetch values per spec and Java version from the variables file
     BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
     FREEMARKER = VARIABLES."${SPEC}".freemarker
-    EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_getsource_options, SDK_VERSION)
-    EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
-    EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
     OPENJDK_REFERENCE_REPO = VARIABLES."${SPEC}".openjdk_reference_repo
     set_release()
     set_jdk_folder()
+    set_build_extra_options()
 
     // set variables for the build environment configuration
     // check job parameters, if not provided default to variables file
@@ -628,6 +624,10 @@ def set_job_properties(JOB_TYPE) {
                 'BUILD_IDENTIFIER':'',
                 'ghprbGhRepository':'',
                 'ghprbActualCommit':'',
+                'EXTRA_GETSOURCE_OPTIONS':'',
+                'EXTRA_CONFIGURE_OPTIONS':'',
+                'EXTRA_MAKE_OPTIONS':'',
+                'OPENJDK_CLONE_DIR':'',
                 'PERSONAL_BUILD':''])
         }
 
@@ -716,7 +716,7 @@ def set_job_variables(job_type) {
     // Setup Jenkins Job Parameters
     set_job_properties(job_type)
 
-    // Setup Build Identifier so we can determin whaere a build belongs
+    // Setup Build Identifier so we can determine where a build belongs
     set_build_identifier()
 
     // check mandatory parameters if any
@@ -747,6 +747,7 @@ def set_job_variables(job_type) {
             // set variables for a pipeline job
             set_repos_variables()
             set_vendor_variables()
+            set_build_extra_options()
             set_test_targets()
             set_slack_channel()
             set_restart_timeout()
@@ -754,6 +755,7 @@ def set_job_variables(job_type) {
         case "wrapper":
             //set variable for pipeline all/personal
             set_repos_variables(BUILD_SPECS)
+            set_build_extra_options(BUILD_SPECS)
             set_restart_timeout()
             break
         default:
@@ -1017,6 +1019,100 @@ def get_specs(SUPPORTED_SPECS) {
     }
 
     return SPECS
+}
+
+/*
+* Set build extra options
+*/
+def set_build_extra_options(build_specs=null) {
+    if (!build_specs) {
+        // single release
+        EXTRA_GETSOURCE_OPTIONS = params.EXTRA_GETSOURCE_OPTIONS
+        if (!EXTRA_GETSOURCE_OPTIONS) {
+            EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_getsource_options, SDK_VERSION)
+        }
+
+        EXTRA_CONFIGURE_OPTIONS = params.EXTRA_CONFIGURE_OPTIONS
+        if (!EXTRA_CONFIGURE_OPTIONS) {
+            EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
+        }
+
+        EXTRA_MAKE_OPTIONS = params.EXTRA_MAKE_OPTIONS
+        if (!EXTRA_MAKE_OPTIONS) {
+            EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
+        }
+
+        OPENJDK_CLONE_DIR = params.OPENJDK_CLONE_DIR
+        if (!OPENJDK_CLONE_DIR) {
+            OPENJDK_CLONE_DIR = ''
+        }
+    } else {
+        // multiple releases
+        EXTRA_GETSOURCE_OPTIONS_MAP = [:]
+        EXTRA_CONFIGURE_OPTIONS_MAP = [:]
+        EXTRA_MAKE_OPTIONS_MAP = [:]
+        OPENJDK_CLONE_DIR_MAP = [:]
+
+        def build_releases = get_build_releases(build_specs)
+        build_releases.each { release ->
+            def extra_getsource_options_by_specs = [:]
+            def extra_configure_options_by_specs = [:]
+            def extra_make_options_by_specs = [:]
+            def clone_dir_by_specs = [:]
+
+            build_specs.each { spec, releases ->
+                if (releases.contains(release)) {
+                    ['EXTRA_GETSOURCE_OPTIONS', 'EXTRA_CONFIGURE_OPTIONS', 'EXTRA_MAKE_OPTIONS'].each { it ->
+                        // look up extra options by release and spec/platform provided as build parameters:
+                        // e.g. EXTRA_GETSOURCE_OPTIONS_JDK<release>_<spec>
+                        //      EXTRA_CONFIGURE_OPTIONS_JDK<release>_<spec>
+                        //      EXTRA_MAKE_OPTIONS_JDK<release>_<spec>
+                        def extraOptions = params."${it}_JDK${release}_${spec}"
+                        if (!extraOptions) {
+                            extraOptions = get_value(VARIABLES."${spec}"."${it.toLowerCase()}", release)
+                        }
+
+                        if (extraOptions) {
+                            // populate maps by specs
+                            switch (it) {
+                                case 'EXTRA_GETSOURCE_OPTIONS':
+                                    extra_getsource_options_by_specs.put(spec, extraOptions)
+                                    break
+                                case 'EXTRA_CONFIGURE_OPTIONS':
+                                    extra_configure_options_by_specs.put(spec, extraOptions)
+                                    break
+                                case 'EXTRA_MAKE_OPTIONS':
+                                    extra_make_options_by_specs.put(spec, extraOptions)
+                                    break
+                            }
+                        }
+                    }
+
+                    def cloneDir = params."OPENJDK${release}_CLONE_DIR_${spec}"
+                    if (!cloneDir) {
+                        cloneDir = params."OPENJDK${release}_CLONE_DIR"
+                    }
+                    if (cloneDir) {
+                        clone_dir_by_specs.put(spec, cloneDir)
+                    }
+                }
+            }
+
+            // populate maps by releases and specs
+            if (extra_getsource_options_by_specs) {
+                EXTRA_GETSOURCE_OPTIONS_MAP.put(release, extra_getsource_options_by_specs)
+            }
+            if (extra_configure_options_by_specs) {
+                EXTRA_CONFIGURE_OPTIONS_MAP.put(release, extra_configure_options_by_specs)
+            }
+            if (extra_make_options_by_specs) {
+                EXTRA_MAKE_OPTIONS_MAP.put(release, extra_make_options_by_specs)
+            }
+            if (clone_dir_by_specs) {
+                OPENJDK_CLONE_DIR_MAP.put(release, clone_dir_by_specs)
+            }
+        }
+    }
 }
 
 return this
