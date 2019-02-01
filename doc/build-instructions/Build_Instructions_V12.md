@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Building OpenJDK Version 12 with OpenJ9 (Work in progress, only Linux x86_64 platform verified, depends on https://github.com/eclipse/openj9/pull/3980)
+Building OpenJDK Version 12 with OpenJ9 (Work in progress, only Linux x86_64/PPCLE platform verified, depends on https://github.com/eclipse/openj9/pull/3980)
 ======================================
 
 Our website describes a simple [build process](http://www.eclipse.org/openj9/oj9_build.html)
