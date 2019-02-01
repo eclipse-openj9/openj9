@@ -51,9 +51,10 @@ my $sp_hs = '';
 my %targetGroup = ();
 my $buildList = '';
 my $iterations = 1;
+my $testFlag = '';
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations  ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -316,6 +317,24 @@ sub parseXML {
 				next;
 			}
 
+
+			if ( $testFlag =~ /AOT/ ) {
+				my $aotTag = getElementByTag( $testlines, 'aot' );
+				if ( !$aotTag ) {
+					# default to aot applicable
+					$test{'aot'} = 'applicable';
+				} elsif ( $aotTag eq 'nonapplicable' ) {
+					# Do not generate make taget if the test is aot not applicable when test flag is set to AOT.
+					next;
+				} elsif ( $aotTag eq 'applicable' ) {
+					$test{'aot'} = 'applicable';
+				} elsif ( $aotTag eq 'explicit' ) {
+					$test{'aot'} = 'explicit';
+				} else {
+					die "The aot tag: " . $aotTag . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are nonapplicable, applicable and explicit.";
+				}
+			}
+
 			push( @tests, \%test );
 		}
 	}
@@ -415,10 +434,21 @@ sub writeTargets {
 			my $jvmtestroot = "\$(JVM_TEST_ROOT)\$(D)" . join("\$(D)", @{$currentdirs});
 			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
+			my $aotOptions = '';
+			# AOT_OPTIONS only needs to be apended when TEST_FLAG contains AOT and the test is aot applicable.
+			if ( defined $test->{'aot'} ) {
+				if ( $test->{'aot'} eq 'applicable' ) {
+					$aotOptions = '$(AOT_OPTIONS) ';
+				} elsif ( $test->{'aot'} eq 'explicit' ) {
+					# When test tagged with aot explicit, its test command has aot options and runs multiple times explictly.
+					$iterations = 1;
+				}
+			}
+
 			if ($jvmoptions) {
-				print $fhOut "$name: JVM_OPTIONS?=\$(AOT_OPTIONS) \$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=$aotOptions\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
 			} else {
-				print $fhOut "$name: JVM_OPTIONS?=\$(AOT_OPTIONS) \$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=$aotOptions\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
 			my $levelStr = '';
@@ -461,7 +491,7 @@ sub writeTargets {
 				print $fhOut "itercnt=$i; \\\n$indent\$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n";
 				print $fhOut "$indent$command;";
 				if ($i ne $iterations) {
-					print $fhOut " \\\n";
+					print $fhOut " \\\n$indent";
 				}
 			}
 			print $fhOut " \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
