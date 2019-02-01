@@ -3030,31 +3030,42 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
          new (cg->trHeapMemory()) TR::MemoryReference(dst, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, t2Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(src, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, t1Reg);
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, t2Reg);
-   // here we may need to convert from class offset contained in t1Reg to
-   // J9Class pointer
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t1Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(t1Reg, (int32_t)offsetof(J9ArrayClass, componentType), TR::Compiler->om.sizeofReferenceAddress(), cg));
-   // here we may need to convert from J9Class pointer contained in t1Reg
-   // into class offset (so that we can compare two classes)
 #else
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t1Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(dst, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t2Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(src, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
+#endif
    TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, t1Reg);
    TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, t2Reg);
+
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t1Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(t1Reg, (int32_t) offsetof(J9ArrayClass, componentType), TR::Compiler->om.sizeofReferenceAddress(), cg));
-#endif
+         new (cg->trHeapMemory()) TR::MemoryReference(t1Reg, (int32_t)offsetof(J9ArrayClass, componentType), TR::Compiler->om.sizeofReferenceAddress(), cg));
 
-   TR_OpaqueClassBlock *rootClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
+   if (!comp->compileRelocatableCode() || comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR_OpaqueClassBlock *rootClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
 
-   if (cg->wantToPatchClassPointer(rootClass, node))
-      loadAddressConstantInSnippet(cg, node, (intptrj_t) rootClass, t3Reg, t4Reg,TR::InstOpCode::Op_load, false, NULL);
-   else
-      loadAddressConstant(cg, node, (intptrj_t) rootClass, t3Reg);
+      if (cg->wantToPatchClassPointer(rootClass, node))
+         {
+         loadAddressConstantInSnippet(cg, node, (intptrj_t) rootClass, t3Reg, t4Reg, TR::InstOpCode::Op_load, false, NULL);
+         }
+      else if (comp->compileRelocatableCode())
+         {
+         TR::StaticSymbol *sym = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
+         sym->setStaticAddress(rootClass);
+         sym->setClassObject();
+
+         loadAddressConstant(cg, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), t3Reg, NULL, false, TR_ClassAddress);
+         }
+      else
+         {
+         loadAddressConstant(cg, node, (intptrj_t) rootClass, t3Reg);
+         }
+
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, cndReg, t1Reg, t3Reg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, toWB, cndReg);
+      }
 
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t4Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(t2Reg, (int32_t) offsetof(J9Class, castClassCache), TR::Compiler->om.sizeofReferenceAddress(), cg));
