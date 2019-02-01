@@ -6381,7 +6381,7 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
 
    TR::Register * clzReg = classReg;
 
-   if (comp->compileRelocatableCode())
+   if (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager))
       {
       if (node->getOpCodeValue() == TR::newarray)
          {
@@ -6981,6 +6981,17 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       allocateSize = (allocateSize + fej9->getObjectAlignmentInBytes() - 1) & (-fej9->getObjectAlignmentInBytes());
       }
 
+   if (comp->compileRelocatableCode())
+      {
+      switch (opCode)
+         {
+         case TR::New: break;
+         case TR::anewarray: break;
+         case TR::newarray: break;
+         default: doInline = false; break;
+         }
+      }
+
    static int count = 0;
    doInline = doInline && performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node);
 
@@ -7032,7 +7043,26 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
 
          insertType = (opCode == TR::newarray && secondChild->getDataType() == TR::Int32 && secondChild->getReferenceCount() == 1 && secondChild->getOpCode().isLoadConst());
 
-         if (insertType)
+         if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+            {
+            // IMPORTANT: secondChild actually references the J9Class of the array *elements* rather
+            // than the J9Class of the array itself; the new AOT infrastructure requires that
+            // classReg contain the J9Class of the array, so we have to actually construct a new
+            // loadaddr for that and then evaluate it instead of evaluating secondChild directly.
+            // Note that the original secondChild *must still be evaluated* as it will be used in
+            // the out-of-line code section.
+            TR::StaticSymbol *classSymbol = TR::StaticSymbol::create(comp->trHeapMemory(), TR::Address);
+            classSymbol->setStaticAddress(clazz);
+            classSymbol->setClassObject();
+
+            cg->evaluate(secondChild);
+            secondChild = TR::Node::createWithSymRef(TR::loadaddr, 0,
+               new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), classSymbol));
+            secondChild->incReferenceCount();
+
+            classReg = cg->evaluate(secondChild);
+            }
+         else if (insertType)
             {
             classReg = cg->allocateRegister();
             }
@@ -7113,7 +7143,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
          // Align the array if necessary.
          if (doublewordAlign && !comp->getOptions()->realTimeGC())
             genAlignArray(node, iCursor, isVariableLen, resReg, objectSize, dataBegin, dataSizeReg, condReg, tmp5Reg, tmp4Reg, cg);
-         if (cg->comp()->compileRelocatableCode() && opCode == TR::anewarray)
+         if (cg->comp()->compileRelocatableCode() && (opCode == TR::anewarray || comp->getOption(TR_UseSymbolValidationManager)))
             genInitArrayHeader(node, iCursor, isVariableLen, clazz, classReg, resReg, zeroReg, condReg, enumReg, dataSizeReg, tmp5Reg, tmp4Reg, conditions, needZeroInit, cg);
          else
             genInitArrayHeader(node, iCursor, isVariableLen, clazz, NULL, resReg, zeroReg, condReg, enumReg, dataSizeReg,
@@ -7426,11 +7456,14 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       if (cg->comp()->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray))
          {
          firstInstruction = firstInstruction->getNext();
+         TR_OpaqueClassBlock *classToValidate = clazz;
+
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
          recordInfo->data1 = allocateSize;
          recordInfo->data2 = node->getInlinedSiteIndex();
          recordInfo->data3 = (uintptr_t) callLabel;
          recordInfo->data4 = (uintptr_t) firstInstruction;
+
          TR::SymbolReference * classSymRef;
          TR_ExternalRelocationTargetKind reloKind;
 
@@ -7443,6 +7476,15 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             {
             classSymRef = node->getSecondChild()->getSymbolReference();
             reloKind = TR_VerifyRefArrayForAlloc;
+
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+            }
+
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_ASSERT_FATAL(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
+            recordInfo->data5 = (uintptr_t)classToValidate;
             }
 
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction, (uint8_t *) classSymRef, (uint8_t *) recordInfo, reloKind, cg),
@@ -7481,6 +7523,8 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       else
          {
          cg->decReferenceCount(secondChild);
+         if (node->getSecondChild() != secondChild)
+            cg->decReferenceCount(node->getSecondChild());
          if (classReg != secondChild->getRegister())
             cg->stopUsingRegister(classReg);
          }
