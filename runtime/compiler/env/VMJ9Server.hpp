@@ -165,6 +165,8 @@ public:
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) override;
    virtual TR_IProfiler *getIProfiler() override;
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType) override;
+   virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding) override;
+   virtual intptrj_t methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override;
    };
 
 class TR_J9SharedCacheServerVM: public TR_J9ServerVM

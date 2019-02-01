@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1941,7 +1941,7 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
       cg()->stopUsingRegister(nativeMethodReg);
       }
    else if (methodSymRef->isUnresolved() || methodSymbol->isInterpreted()
-            || ((cg()->comp()->compileRelocatableCode() || cg()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE) && !methodSymbol->isHelper()) )
+            || (cg()->comp()->compileRelocatableCode() && !methodSymbol->isHelper()) )
       {
       TR::LabelSymbol *label   = generateLabelSymbol(cg());
 
