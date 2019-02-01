@@ -40,6 +40,7 @@ my $impl           = '';
 my $output         = '';
 my $buildList      = '';
 my $iterations     = 1;
+my $testFlag       = '';
 my @allLevels      = ( "sanity", "extended", "special" );
 my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
 my @allImpls       = ( "openj9", "ibm", "hotspot", "sap" );
@@ -63,6 +64,8 @@ foreach my $argv (@ARGV) {
 		$buildList = $1;
 	} elsif ( $argv =~ /^--iterations=(.*)/ ) {
 		$iterations = $1;
+	} elsif ( $argv =~ /^--testFlag=(.*)/ ) {
+		$testFlag = $1;
 	} else {
 		print "This program will search projectRootDir provided and find/parse playlist.xml to generate\n"
 			. "makefile (per project)\n"
@@ -83,7 +86,8 @@ foreach my $argv (@ARGV) {
 			. "                            If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n"
 			. "  --buildList=<paths>       Comma separated project paths to search playlist.xml. The paths are relative to projectRootDir.\n"
 			. "                            If the buildList is not provided, the program will search all files under projectRootDir.\n"
-			. "  --iterations=<number>     Repeatedly generate test command based on iteration number. The default value is 1.\n";
+			. "  --iterations=<number>     Repeatedly generate test command based on iteration number. The default value is 1.\n"
+			. "  --testFlag=<string>       Comma separated string to specify different test flag. The default is empty.\n";
 			die "Please specify valid options!";
 	}
 }
@@ -110,6 +114,7 @@ if ( !$impl ) {
 }
 
 # run make file generator
-runmkgen( $projectRootDir, \@allLevels, \@allGroups, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList, $iterations );
+
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList, $iterations, $testFlag );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";
