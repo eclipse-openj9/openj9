@@ -37,7 +37,7 @@ public:
    virtual bool supportsEmbeddedHeapBounds() override                    { return false; }
    virtual bool supportsFastNanoTime() override                          { return false; }
    virtual bool helpersNeedRelocation() override                         { return true; }
-   virtual bool canDevirtualizeDispatch() override                       { return false; }
+   virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
 
