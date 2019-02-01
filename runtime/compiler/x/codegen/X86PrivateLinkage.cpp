@@ -1785,7 +1785,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
 
       TR::LabelSymbol *picMismatchLabel = NULL;
       TR_ScratchList<TR::X86PICSlot> *profiledTargets = site.getProfiledTargets();
-      if (comp()->getPersistentInfo()->getJITaaSMode() != SERVER_MODE && profiledTargets)
+      if (profiledTargets)
          {
          ListIterator<TR::X86PICSlot> i(profiledTargets);
          TR::X86PICSlot *picSlot = i.getFirst();
