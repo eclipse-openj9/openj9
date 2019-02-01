@@ -156,7 +156,12 @@ timeout(time: 12, unit: 'HOURS') {
                             TEST_NODE = TEST_NODES[SPEC]
                         }
 
-                        builds["build_test_JDK${SDK_VERSION}_${SPEC}"] = { build(REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) }
+                        def EXTRA_GETSOURCE_OPTIONS = get_value_by_spec(EXTRA_GETSOURCE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                        def EXTRA_CONFIGURE_OPTIONS = get_value_by_spec(EXTRA_CONFIGURE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                        def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                        def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
+
+                        builds["build_test_JDK${SDK_VERSION}_${SPEC}"] = { build(REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR) }
                     }
                 }
             } finally {
@@ -181,7 +186,7 @@ timeout(time: 12, unit: 'HOURS') {
     }
 }
 
-def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
+def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR) {
     def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
     stage ("${JOB_NAME}") {
@@ -209,7 +214,11 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'RESTART_TIMEOUT_UNITS', value: RESTART_TIMEOUT_UNITS),
                     string(name: 'SETUP_LABEL', value: SETUP_LABEL),
                     string(name: 'BUILD_LIST', value: BUILD_LIST),
-                    string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)]
+                    string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
+                    string(name: 'EXTRA_GETSOURCE_OPTIONS', value: EXTRA_GETSOURCE_OPTIONS),
+                    string(name: 'EXTRA_CONFIGURE_OPTIONS', value: EXTRA_CONFIGURE_OPTIONS),
+                    string(name: 'EXTRA_MAKE_OPTIONS', value: EXTRA_MAKE_OPTIONS),
+                    string(name: 'OPENJDK_CLONE_DIR', value: OPENJDK_CLONE_DIR)]
         return JOB
     }
 }
@@ -253,4 +262,11 @@ def get_node_labels(NODE_LABELS, SPECS) {
     }
 
     return LABELS
+}
+
+def get_value_by_spec(map, release, spec) {
+    if (map && map.containsKey(release) && map.get(release).containsKey(spec)) {
+        return map.get(release).get(spec)
+    }
+    return ''
 }
