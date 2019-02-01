@@ -20,12 +20,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Building OpenJDK Version 11 with OpenJ9
+Building OpenJDK Version 12 with OpenJ9 (Work in progress, only Linux x86_64 platform verified, depends on https://github.com/eclipse/openj9/pull/3980)
 ======================================
 
 Our website describes a simple [build process](http://www.eclipse.org/openj9/oj9_build.html)
 that uses Docker and Dockerfiles to create a build environment that contains everything
-you need to easily build a Linux binary of **OpenJDK V11** with the Eclipse OpenJ9 virtual machine.
+you need to easily build a Linux binary of **OpenJDK V12** with the Eclipse OpenJ9 virtual machine.
 A more complete set of build instructions are included here for multiple platforms:
 
 - [Linux :penguin:](#linux)
@@ -43,7 +43,7 @@ documentation for the next release of OpenJ9 can be found [here](https://eclipse
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V11** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V12** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
@@ -60,25 +60,25 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
 
-2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
+2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk12/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
 
-    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/s390x/ubuntu16/Dockerfile)
+    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk12/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk12/s390x/ubuntu16/Dockerfile)
 
     Either download one of these Dockerfiles to your local system or copy and paste one of the following commands:
 
   - For Linux on 64-bit x86 systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk11/x86_64/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk12/x86_64/ubuntu16/Dockerfile
 ```
 
   - For Linux on 64-bit Power systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk11/ppc64le/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk12/ppc64le/ubuntu16/Dockerfile
 ```
 
   - For Linux on 64-bit z Systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk11/s390x/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk12/s390x/ubuntu16/Dockerfile
 ```
 
 3. Next, run the following command to build a Docker image, called **openj9**:
@@ -98,12 +98,12 @@ Now that you have the Docker image running, you are ready to move to the next st
 
 #### Setting up your build environment without Docker
 
-If you don't want to user Docker, you can still build an **OpenJDK V11** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
-[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
+If you don't want to user Docker, you can still build an **OpenJDK V12** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
+[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk12/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
 that must be installed on the system, plus a few configuration steps.
 
 :pencil:
-Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/s390x/ubuntu16/Dockerfile).
+Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk12/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk12/s390x/ubuntu16/Dockerfile).
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
 ```
@@ -150,11 +150,11 @@ export PATH="${JAVA_HOME}/bin:${PATH}"
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk12.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk11
+cd openj9-openjdk-jdk12
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 ```
@@ -185,7 +185,7 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar
 
 ### 4. Build
 :penguin:
-Now you're ready to build **OpenJDK V11** with OpenJ9:
+Now you're ready to build **OpenJDK V12** with OpenJ9:
 ```
 make all
 ```
@@ -216,12 +216,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "11-internal" 2018-09-25
-OpenJDK Runtime Environment (build 11-internal+0-adhoc..jdk11)
-Eclipse OpenJ9 VM (build master-ee517c1, JRE 11 Linux amd64-64-Bit Compressed References 20180910_000000 (JIT enabled, AOT enabled)
-OpenJ9   - ee517c1
-OMR      - f29d158
-JCL      - 98f2038 based on jdk-11+28)
+openjdk version "12-internal" 2019-03-19
+OpenJDK Runtime Environment (build 12-internal+0-adhoc..openj9-openjdk-jdk12)
+Eclipse OpenJ9 VM (build tye-2e3d778, JRE 12 Linux amd64-64-Bit Compressed References 20190201_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 2e3d778
+OMR      - a5a028d
+JCL      - 9af014f based on jdk-12+29)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
@@ -240,7 +240,7 @@ JCL      - 98f2038 based on jdk-11+28)
 :construction:
 This section is still under construction. Further contributions expected.
 
-The following instructions guide you through the process of building an **OpenJDK V11** binary that contains Eclipse OpenJ9 on AIX 7.2.
+The following instructions guide you through the process of building an **OpenJDK V12** binary that contains Eclipse OpenJ9 on AIX 7.2.
 
 ### 1. Prepare your system
 :blue_book:
@@ -248,11 +248,11 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 13.1.3](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java10_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk10&jvmVariant=openj9#ppc64_aix).
+You must also install the boot JDK: [Java10_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9#ppc64_aix).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](aix/jdk10/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](aix/jdk11/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -274,11 +274,11 @@ rm -f freemarker.tgz
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk12.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk11
+cd openj9-openjdk-jdk12
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -360,15 +360,15 @@ JCL      - e5c64f5 based on jdk-11+21)
 ## Windows
 :ledger:
 
-The following instructions guide you through the process of building a Windows **OpenJDK V11** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
+The following instructions guide you through the process of building a Windows **OpenJDK V12** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
 
 ### 1. Prepare your system
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. Included in this package is mingw, a minimalist subset of GNU tools for Microsoft Windows. OpenJ9 uses the mingw/GCC compiler and is tested with version 6.4.0 of same. Other versions are expected to work also. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 10](https://adoptopenjdk.net/releases.html?variant=openjdk10#x64_win), which is used as the boot JDK.
-- [Microsoft Visual Studio 2017]( https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), which is the default compiler level used by OpenJDK11; or [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is chosen to compile if VS2017 isn't installed.
+- [Windows JDK 10](https://adoptopenjdk.net/releases.html?variant=openjdk11#x64_win), which is used as the boot JDK.
+- [Microsoft Visual Studio 2017]( https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), which is the default compiler level used by OpenJDK12; or [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is chosen to compile if VS2017 isn't installed.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -431,11 +431,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command in the Cygwin terminal:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk12.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk11
+cd openj9-openjdk-jdk12
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -455,7 +455,7 @@ bash configure --disable-warnings-as-errors \
 ```
 Note: there is no need to specify --with-toolchain-version for 2017 as it will be located automatically
 
-:pencil: Modify the paths for freemarker if you manually downloaded and unpacked these dependencies into different directories. If Java 10 is not available on the path, add the `--with-boot-jdk=<path_to_jdk10>` configuration option.
+:pencil: Modify the paths for freemarker if you manually downloaded and unpacked these dependencies into different directories. If Java 11 is not available on the path, add the `--with-boot-jdk=<path_to_jdk11>` configuration option.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
@@ -510,14 +510,14 @@ JCL      - a786f96b13 based on jdk-11+21)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V11** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 11.
+The following instructions guide you through the process of building a macOS **OpenJDK V12** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 12.
 
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 10](https://adoptopenjdk.net/archive.html?variant=openjdk10&jvmVariant=hotspot), which is used as the boot JDK.
+- [macOS OpenJDK 10](https://adoptopenjdk.net/archive.html?variant=openjdk11&jvmVariant=hotspot), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/):
 
@@ -566,11 +566,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk12.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk11
+cd openj9-openjdk-jdk12
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
