@@ -427,6 +427,23 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
+      case TR_ResolvedTrampolines:
+         {
+         uint8_t *symbol = relocation->getTargetAddress();
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+         TR_ASSERT_FATAL(symbolID, "symbolID should exist!\n");
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordResolvedTrampolinesBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordResolvedTrampolinesBinaryTemplate *>(cursor);
+
+         binaryTemplate->_symbolID = symbolID;
+
+         cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
+         }
+         break;
+
       case TR_J2IVirtualThunkPointer:
          {
          auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
@@ -1304,6 +1321,31 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
+      case TR_DiscontiguousSymbolFromManager:
+         {
+         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
+
+         uint8_t *symbol = (uint8_t *)recordInfo->data1;
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+
+         uint16_t symbolType = (uint16_t)recordInfo->data2;
+
+         uint8_t flags = (uint8_t) recordInfo->data3;
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
+
+         binaryTemplate->_flags |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+         binaryTemplate->_symbolID = symbolID;
+         binaryTemplate->_symbolType = symbolType;
+
+         cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
+         }
+         break;
+
       case TR_ValidateClass:
       case TR_ValidateInstanceField:
          {
@@ -1518,6 +1560,9 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate),//TR_ValidateMethodFromSingleAbstractImplementer= 96,
    sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate),//TR_ValidateImproperInterfaceMethodFromCP= 97,
    sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_SymbolFromManager = 98,
+   0,                                                                  // TR_MethodCallAddress = 99,
+   sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_DiscontiguousSymbolFromManager = 100,
+   sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),       // TR_ResolvedTrampolines = 101,
    };
 #else
 uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds] =
@@ -1621,6 +1666,9 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate),//TR_ValidateMethodFromSingleAbstractImplementer= 96,
    sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate),//TR_ValidateImproperInterfaceMethodFromCP= 97,
    sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_SymbolFromManager = 98,
+   0,                                                                  // TR_MethodCallAddress = 99,
+   sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_DiscontiguousSymbolFromManager = 100,
+   sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),       // TR_ResolvedTrampolines = 101,
    };
 
 #endif
