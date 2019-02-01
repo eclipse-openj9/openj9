@@ -774,7 +774,6 @@ public class MethodHandles {
 		 * @throws IllegalAccessException if the targetClass is not visible
 		 */
 
-		/*[IF Sidecar19-SE-OpenJ9]*/
 		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				Module targetModule = targetClass.getModule();
@@ -806,34 +805,6 @@ public class MethodHandles {
 			/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
 			throw new IllegalAccessException(Msg.getString(msgId, getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule)));
 		}
-		/*[ELSE] 
-		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
-
-			if (INTERNAL_PRIVILEGED != accessMode) {
-				Module targetModule = targetClass.getModule();
-				String targetClassPackageName = targetClass.getPackageName();
-				if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
-					/* publicLookup objects can see all unconditionally exported packages. */
-					if (!targetModule.isExported(targetClassPackageName)) {
-						/*[MSG "K0676", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}'"]*/
-						throw new IllegalAccessException(Msg.getString("K0587", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
-					}
-				} else if (!(
-					Objects.equals(accessModule, targetModule)
-					|| (targetModule.isExported(targetClassPackageName, accessModule) && accessModule.canRead(targetModule)))
-				) {
-					if (!targetModule.isExported(targetClassPackageName, accessModule)) {
-						/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
-						throw new IllegalAccessException(Msg.getString("K0677", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
-					}
-					// here accessModule.canRead(targetModule) must be false
-					/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
-					throw new IllegalAccessException(Msg.getString("K0679", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
-				}
-			}
-		}
-
-		/*[ENDIF]*/  /* Sidecar19-SE-OpenJ9 */
 		/*[ENDIF]*/
 
 		/*[IF Panama]*/
