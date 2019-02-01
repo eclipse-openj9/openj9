@@ -8153,7 +8153,9 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
 
       // a pointer to the virtual register that will actually hold the class pointer.
       TR::Register * clzReg = classReg;
-
+      // TODO: Following approach for initializing object header for array of objects in AOT is conservative.
+      // We need support for relocation in generating RIL type instruction. If we have support, we can use
+      // same sequence generated in JIT which saves us a load and store.
       if (comp->compileRelocatableCode())
          {
          if (node->getOpCodeValue() == TR::newarray)
@@ -8861,20 +8863,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       current = cg->getAppendInstruction();
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
-
-      if (comp->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray))
-         {
-         iCursor = firstInstruction = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_VGNOP, node, callLabel, current);
-         if(!firstBRCToOOL)
-            {
-            firstBRCToOOL = iCursor;
-            }
-         else
-            {
-            secondBRCToOOL = iCursor;
-            }
-         }
-
+      
       if (outlineNew)
          {
          if (isVariableLen)
@@ -9030,6 +9019,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (comp->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray) )
          {
+         firstInstruction = current->getNext();
          TR_RelocationRecordInformation *recordInfo =
          (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
          recordInfo->data1 = allocateSize;
@@ -9038,6 +9028,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          recordInfo->data4 = (uintptr_t) firstInstruction;
          TR::SymbolReference * classSymRef;
          TR_ExternalRelocationTargetKind reloKind;
+         TR_OpaqueClassBlock *classToValidate = classAddress;
 
          if (opCode == TR::New)
             {
@@ -9048,8 +9039,17 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             {
             classSymRef = node->getSecondChild()->getSymbolReference();
             reloKind = TR_VerifyRefArrayForAlloc;
+            // In AOT without SVM, we validate the class by pulling it from the constant pool which is not the array class as anewarray bytecode refers to the component class.
+            // In the evaluator we directly refer to the array class.  In AOT with SVM we need to remember to validate the component class since relocation infrastructure is
+            // expecting component class. 
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
             }
-
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_ASSERT_FATAL(classToValidate != NULL, "ClassToValidate Should not be NULL, clazz = %p\n", classAddress);
+            recordInfo->data5 = (uintptr_t)classToValidate;
+            }
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction,
                      (uint8_t *) classSymRef,
                      (uint8_t *) recordInfo,
