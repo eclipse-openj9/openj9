@@ -8008,7 +8008,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          // Construct the signature string for the array class
          //
          UDATA arity = arrayJ9Class->arity;
-         J9Class *leafClass = arrayJ9Class->leafComponentType;
+         J9Class *leafClass = (J9Class*)fej9->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock*)arrayJ9Class);
          int32_t leafClassNameLength;
          char *leafClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength); // eww, TR_FrontEnd downcast
 
