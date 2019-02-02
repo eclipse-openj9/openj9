@@ -49,7 +49,6 @@
       DECLARE_GLOBAL populateVPicSlotCall
       DECLARE_GLOBAL dispatchInterpretedFromVPicSlot
       DECLARE_GLOBAL populateVPicVTableDispatch
-      DECLARE_GLOBAL resolveAndPopulateVTableDispatch
       DECLARE_GLOBAL memoryFence
 
 
@@ -1064,113 +1063,6 @@ populateVPicVTableDispatch:
       pop         edi                                             ; restore
       pop         edx                                             ; restore
 ret                                                               ; branch will mispredict so single-byte RET is ok
-
-
-; Resolve and populate a vtable dispatch call at runtime.
-;
-; The invocation of this function is expected to occur in the following context:
-;
-; ...
-; call vtableDispatchSnippet --> call [classPtr + vtable slot]
-; ...
-;
-; vtableDispatchSnippet:
-;     push edx
-;     call resolveAndPopulateVTableDispatch
-;     dd cpAddr
-;     dd cpIndex
-;     dw CALL opcode + modRM
-;
-; STACK SHAPE: must maintain stack shape expected by call to getJitVirtualMethodResolvePushes()
-; across the call to the resolution helper.
-;
-
-      align 16
-resolveAndPopulateVTableDispatch:
-
-      ; edx was preserved prior to the call and is available as a scratch register
-      ;
-      pop         edx                                 ; edx = RA in snippet = EA of resolution data block
-      push        edi                                 ; preserve
-      push        eax                                 ; push receiver
-
-      ; Stack shape:
-      ;
-      ; +16 last parameter
-      ; +12 RA in code cache (call to snippet)
-      ; +8 saved edx
-      ; +4 saved edi
-      ; +0 saved eax (receiver)
-      ;
-      push        edx                                 ; p) jit valid EIP
-      push        edx                                 ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg jitResolveVirtualMethod,eax   ; returns compiler vtable index
-
-      push        ebx                                 ; preserve
-      push        ecx                                 ; preserve
-      push        esi                                 ; preserve
-      push        edx                                 ; preserve
-
-      ; Stack shape:
-      ;
-      ; +32 last parameter
-      ; +28 RA in code cache (call to snippet)
-      ; +24 saved edx
-      ; +20 saved edi
-      ; +16 saved eax (receiver)
-      ; +12 saved ebx
-      ; +8 saved ecx
-      ; +4 saved esi
-      ; +0 saved edx
-      ;
-      mov         ecx, eax                            ; ecx = compiler vtable index
-
-      ; An atomic CMPXCHG8B is not strictly necessary to patch this instruction.
-      ; However, it simplifies the code to have only a single path through here rather
-      ; than several based on the atomic 64-bit store capabilities on various
-      ; supported processors.
-      ;
-
-      ; Construct the call instruction in edx:eax that should have brought
-      ; us to this snippet + the following 3 bytes.
-      ;
-      lea         eax, [edx-6]                        ; eax = snippet entry point
-                                                      ; -6 = -5 (CALL) -1 (PUSH edx)
-      mov         edi, dword  [esp+28]                ; edi = RA in mainline
-      mov         edx, dword  [edi-1]                 ; edx = 3 bytes after the call to snippet + high byte of disp32
-      mov         esi, edx                            ; copy to preserve 3 bytes
-      sub         eax, edi                            ; Expected disp32 for call to snippet
-      rol         eax, 8
-      mov         dl, al                              ; Copy high byte of calculated disp32 to expected word
-      mov         al, 0e8h                            ; add CALL opcode
-
-      ; Construct the byte sequence in ecx:ebx to dispatch through vtable.
-      ;
-      rol         ecx, 16
-      mov         ebx, ecx
-      and         esi, 0ffff0000h                     ; mask off 2 bytes following CALL instruction
-      and         ecx, 0ffffh                         ; mask off high 2 bytes of vtable disp32
-      or          ecx, esi
-
-      and         ebx, 0ffff0000h                     ; mask off low 2 bytes of vtable disp32
-      pop         esi                                 ; esi = RA in snippet
-      mov         bx, word  [esi+8]                   ; add in CALL + modRM byte
-                                                      ; +8 = 4 (cpAddr) + 4 (cpIndex)
-      lea         edi, [edi-5]
-
-      ; Attempt to patch the code. No need to check for failure as we will always
-      ; back up and re-run the instruction in the mainline code.
-      ;
-      lock cmpxchg8b    [edi]                         ; EA of vtable dispatch
-
-      mov         dword  [esp+24], edi                ; fix RA to run the vtable call
-      pop         esi                                 ; restore
-      pop         ecx                                 ; restore
-      pop         ebx                                 ; restore
-      pop         eax                                 ; restore receiver
-      pop         edi                                 ; restore
-      pop         edx                                 ; restore
-ret                                                   ; branch will mispredict so single-byte RET is ok
 
 %else
 

@@ -387,7 +387,6 @@ JIT_HELPER(encodeUTF16Big);
 JIT_HELPER(encodeUTF16Little);
 
 JIT_HELPER(SMPVPicInit);
-JIT_HELPER(resolveAndPopulateVTableDispatch);
 JIT_HELPER(interpreterEAXStaticGlue);
 JIT_HELPER(interpreterEDXEAXStaticGlue);
 JIT_HELPER(interpreterST0FStaticGlue);
@@ -1258,7 +1257,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32encodeUTF16Little,                      (void *)encodeUTF16Little,         TR_Helper);
 
    SET(TR_jitAddPicToPatchOnClassUnload,              (void *)jitAddPicToPatchOnClassUnload, TR_Helper);
-   SET(TR_IA32interpreterUnresolvedVTableSlotGlue,    (void *)resolveAndPopulateVTableDispatch, TR_Helper);
 
    SET(TR_IA32JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
    SET(TR_IA32JitMonitorEnterReservedPrimitive,           (void *)jitMonitorEnterReservedPrimitive,           TR_CHelper);

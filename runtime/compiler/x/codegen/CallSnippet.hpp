@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,35 +101,6 @@ class X86PicDataSnippet : public TR::Snippet
    private:
    bool shouldEmitJ2IThunkPointer();
    };
-
-
-class X86UnresolvedVirtualCallSnippet : public TR::UnresolvedDataSnippet
-   {
-   TR::SymbolReference *_methodSymRef;
-   TR::Instruction  *_callInstruction;
-
-   public:
-
-   X86UnresolvedVirtualCallSnippet(
-      TR::Node             *node,
-      TR::SymbolReference  *methodSymRef,
-      TR::Instruction   *callInstruction,
-      TR::CodeGenerator *cg) :
-         TR::UnresolvedDataSnippet(cg, node, node->getSymbolReference(), false, true),
-         _methodSymRef(methodSymRef),
-         _callInstruction(callInstruction)
-      { setDataReferenceInstruction(callInstruction); }
-
-   TR::SymbolReference *getMethodSymRef() {return _methodSymRef;}
-
-   virtual Kind getKind() { return (IsUnresolvedVirtualCall); }
-
-   virtual uint8_t *emitSnippetBody();
-
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-
-   };
-
 
 class X86CallSnippet : public TR::Snippet
    {

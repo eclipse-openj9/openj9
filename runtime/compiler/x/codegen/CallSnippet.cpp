@@ -39,6 +39,10 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "x/codegen/X86PrivateLinkage.hpp"
 
+// TODO: Delete this forward declaration along with the corresponding
+// TR_Debug::print overload.
+namespace TR { class X86UnresolvedVirtualCallSnippet; }
+
 bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
    {
    if (!TR::Compiler->target.is64Bit())
@@ -1098,94 +1102,9 @@ uint32_t TR::X86CallSnippet::getLength(int32_t estimatedSnippetStart)
    return length;
    }
 
-
-uint8_t *TR::X86UnresolvedVirtualCallSnippet::emitSnippetBody()
-   {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "TR::X86UnresolvedVirtualCallSnippet only available on 32-bit");
-   TR::Compilation *comp = cg()->comp();
-   uint8_t *cursor = cg()->getBinaryBufferCursor();
-   getSnippetLabel()->setCodeLocation(cursor);
-
-   // Preserve edx
-   //
-   *cursor++ = 0x52;    // PUSH edx to preserve
-
-   // Call the runtime helper
-   //
-   *cursor++ = 0xe8;    // CALL resolveAndPopulateVTableDispatch
-
-   TR::SymbolReference *glueSymRef =
-      cg()->symRefTab()->findOrCreateRuntimeHelper(TR_IA32interpreterUnresolvedVTableSlotGlue, false, false, false);
-   uint8_t *glueAddress = (uint8_t *)glueSymRef->getMethodAddress();
-   cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                     (uint8_t *)glueSymRef,
-                                                                                     TR_HelperAddress,
-                                                                                     cg()),
-                             __FILE__, __LINE__, getNode());
-
-   *(int32_t *)cursor = (int32_t)((uint8_t *)glueAddress - cursor - 4);
-   cursor += 4;
-
-   // needs a stack map at this location because populateAndResolveVTableSlot provides this address as the return
-   // address in this frame
-   gcMap().registerStackMap(cursor, cg());
-
-   // Lay down constant pool and cpindex for jitResolveVirtualMethod helper to use
-   //
-   uintptrj_t cpAddr = (uintptrj_t)_methodSymRef->getOwningMethod(comp)->constantPool();
-   *(intptrj_t *)cursor = cpAddr;
-   cg()->addExternalRelocation(
-      new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                            (uint8_t *)cpAddr,
-                                                            getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                            TR_ConstantPool,
-                                                            cg()),
-                 __FILE__, __LINE__, getNode());
-
-
-   cursor += sizeof(intptrj_t);
-   *(uintptrj_t *)cursor = (uintptrj_t)_methodSymRef->getCPIndexForVM();
-   cursor += sizeof(intptrj_t);
-
-   // Squirrel away the first two encoded bytes of the original call instruction.
-   //
-   uint8_t *callInstruction = _callInstruction->getBinaryEncoding();
-   *cursor++ = *(callInstruction);
-   *cursor++ = *(callInstruction+1);
-
-   // Write a call to this snippet over the original call instruction.
-   //
-   *callInstruction = 0xe8;     // CALLImm4
-   *(uint32_t *)(callInstruction+1) = (uint32_t)(cg()->getBinaryBufferCursor() - (callInstruction + 5));
-
-   return cursor;
-   }
-
-
+// TODO: Delete this once the (dead) call site is deleted from omr.
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::X86UnresolvedVirtualCallSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
-
-   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
-   printPrefix(pOutFile, NULL, bufferPos, snippet->getLength(bufferPos - (uint8_t*)0));
-   trfprintf(pOutFile, "\t\t\t\t%s mysterious new unresolved virtual call snippet code",
-                 commentString());
-   return;
-
-   }
-
-
-
-uint32_t TR::X86UnresolvedVirtualCallSnippet::getLength(int32_t estimatedSnippetStart)
-   {
-   return
-        1   // push EDX
-      + 5   // CALL resolveAndPopulateVTableDispatch
-      + 4   // cpAddr
-      + 4   // cpIndex
-      + 2;  // CALL opcode + modRM
+   TR_ASSERT_FATAL(false, "stub for staged deletion");
    }
