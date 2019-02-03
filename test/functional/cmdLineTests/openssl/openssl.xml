@@ -30,7 +30,7 @@
 
 	<test id="CryptoTest">
 		<command>$EXE$ -Djdk.nativeCryptoTrace=true $CLASSPATH$ org.openj9.test.openssl.CryptoTest</command>
-		<output regex="no" type="success">using Native crypto library</output>
+		<output regex="no" type="success" caseSensitive="no">using native crypto library</output>
 		<output regex="no" type="required">Crypto test COMPLETED</output>
 		<output type="failure" caseSensitive="no" regex="no">Native crypto library load failed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Crypto test FAILED</output>
