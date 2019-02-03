@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -613,3 +613,16 @@ J9::CodeCacheManager::isInRange(uintptr_t address1, uintptr_t address2, uintptr_
       return (address2 - address1) <= range;
    }
 
+void
+J9::CodeCacheManager::reservationInterfaceCache(void *callSite, TR_OpaqueMethodBlock *method)
+   {
+   TR::CodeCacheConfig &config = self()->codeCacheConfig();
+   if (!config.needsMethodTrampolines())
+      return;
+
+   TR::CodeCache *codeCache = self()->findCodeCacheFromPC(callSite);
+   if (!codeCache)
+      return;
+
+   codeCache->findOrAddResolvedMethod(method);
+   }

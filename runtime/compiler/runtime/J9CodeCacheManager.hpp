@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,13 +107,21 @@ public:
    uintptr_t getSomeJitLibraryAddress();
    bool isInRange(uintptr_t address1, uintptr_t address2, uintptr_t range);
 
+   /**
+    * @brief Reserve a trampoline for an interface PIC slot.
+    *
+    * @param[in] callSite : address in the code cache of the call instruction
+    * @param[in] method : J9Method for the interface
+    */
+   void reservationInterfaceCache(void *callSite, TR_OpaqueMethodBlock *method);
+
 private :
    TR_FrontEnd *_fe;
    static TR::CodeCacheManager *_codeCacheManager;
    static J9JITConfig *_jitConfig;
    static J9JavaVM *_javaVM;
    };
-   
+
 } // namespace J9
 
 #endif // J9_CODECACHEMANAGER_INCL
