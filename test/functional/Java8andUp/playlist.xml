@@ -754,26 +754,6 @@
 	</test>
 
 	<test>
-		<testCaseName>OpenSSL</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames OpenSSL \
-	-groups $(TEST_GROUP) \
-	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS)</command>
-		<platformRequirements>^os.aix</platformRequirements>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-		</impls>
-	</test>
-
-	<test>
 		<testCaseName>JCL_Test</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>

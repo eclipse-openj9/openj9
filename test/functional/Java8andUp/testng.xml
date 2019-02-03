@@ -115,11 +115,6 @@
 			<class name="org.openj9.test.constructorverify.TryInCtor"/>
 		</classes>
 	</test>
-	<test name="OpenSSL">
-		<classes>
-			<class name="org.openj9.test.openssl.TestOpenSSL"/>
-		</classes>
-	</test>
 
 	<!-- ............................... J9 JCL tests start here .................................................. -->
 	<test name="JCL_TEST_Test-TypeAnnotation">
