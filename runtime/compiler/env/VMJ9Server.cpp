@@ -1493,6 +1493,28 @@ TR_J9SharedCacheServerVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
       return publicClass;
    else
       return true;
+
+TR_YesNoMaybe
+TR_J9SharedCacheServerVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT)
+   {
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   TR_YesNoMaybe isAnInstanceOf = TR_J9ServerVM::isInstanceOf(a, b, objectTypeIsFixed, castTypeIsFixed);
+   bool validated = false;
+
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (isAnInstanceOf != TR_maybe)
+         validated = comp->getSymbolValidationManager()->addClassInstanceOfClassRecord(a, b, objectTypeIsFixed, castTypeIsFixed, (isAnInstanceOf == TR_yes));
+      }
+   else
+      {
+      validated = optimizeForAOT;
+      }
+
+   if (validated)
+      return isAnInstanceOf;
+   else
+      return TR_maybe;
    }
 
 bool
