@@ -69,10 +69,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/codegen/J9TreeEvaluator.cpp \
     compiler/x/codegen/J9UnresolvedDataSnippet.cpp \
     compiler/x/codegen/J9X86Instruction.cpp \
-    compiler/x/codegen/JNIPauseSnippet.cpp \
-    compiler/x/codegen/PassJNINullSnippet.cpp \
     compiler/x/codegen/RecompilationSnippet.cpp \
-    compiler/x/codegen/WriteBarrierSnippet.cpp \
     compiler/x/codegen/X86HelperLinkage.cpp \
     compiler/x/codegen/X86PrivateLinkage.cpp \
     compiler/x/codegen/X86Recompilation.cpp \
