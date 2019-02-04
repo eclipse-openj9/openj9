@@ -4731,7 +4731,12 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
 
             if (fieldIsPresentInObject)
                {
-               if (candidate->escapesInColdBlock(_curBlock))
+               // Special case handling of non-contiguous immmutable object:
+               // if it escapes in a cold block, need to ensure the temporary
+               // that replaces it is correctly initialized
+               if (candidate->escapesInColdBlock(_curBlock)
+                      && (!isImmutableObject(candidate)
+                             || candidate->isContiguousAllocation()))
                   {
                   // Uh, why are we re-calculating the fieldOffset?  Didn't we just do that above?
                   //
@@ -4788,6 +4793,8 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                      }
                   }
                else // if (!candidate->escapesInColdBlock(_curBlock))
+                    //        || (isImmutableObject(candidate)
+                    //               && !candidate->isContiguousAllocation()))
                   {
                   if (candidate->isContiguousAllocation())
                      removeThisNode |= fixupFieldAccessForContiguousAllocation(node, candidate);
@@ -5507,12 +5514,32 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             valueChild = TR::Node::create(conversionOp, 1, node->getSecondChild());
          else
             valueChild = node->getSecondChild();
-         valueChild->incReferenceCount();
-         node->removeAllChildren();
-         node->setFirst(valueChild);
-         node->setNumChildren(1);
-         TR::Node::recreate(node, newOpCode);
-         node->setSymbolReference(autoSymRef);
+
+         // Special case of non-contiguous immutable object that escapes in
+         // a cold block:  need to ensure the store to the original object
+         // is preserved for heapification; otherwise, replace the old store
+         // completely
+         if (candidate->escapesInColdBlock(_curBlock)
+                && isImmutableObject(candidate) && !candidate->isContiguousAllocation())
+            {
+            TR::Node *newStore = TR::Node::createWithSymRef(newOpCode, 1, 1, valueChild, autoSymRef);
+            TR::TreeTop *newTree = TR::TreeTop::create(comp(), newStore);
+            TR::TreeTop *prev = _curTree->getPrevTreeTop();
+            prev->join(newTree);
+            newTree->join(_curTree);
+
+            if (trace())
+               traceMsg(comp(), "Preserve old node [%p] for store to non-contiguous immutable object that escapes in cold block; create new tree [%p] for direct store\n", node, newTree);
+            }
+         else
+            {
+            valueChild->incReferenceCount();
+            node->removeAllChildren();
+            node->setFirst(valueChild);
+            node->setNumChildren(1);
+            TR::Node::recreate(node, newOpCode);
+            node->setSymbolReference(autoSymRef);
+            }
 
          if (autoSymRef->getSymbol()->getDataType().isVector() &&
              !node->getDataType().isVector())
