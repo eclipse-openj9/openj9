@@ -63,10 +63,10 @@ def get_sources_with_authentication() {
 def get_sources() {
     // Temp workaround for Windows clones
     // See #3633 and JENKINS-54612
-    if (NODE_LABELS.contains("windows")) {
+    if (NODE_LABELS.contains("windows") || NODE_LABELS.contains("zos")) {
         cleanWs()
         CLONE_CMD = "git clone --reference ${OPENJDK_REFERENCE_REPO} -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
-        if (USER_CREDENTIALS_ID != '') {
+        if (USER_CREDENTIALS_ID && NODE_LABELS.contains("windows")) {
             sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
                 sh "${CLONE_CMD}"
             }
@@ -74,10 +74,8 @@ def get_sources() {
             sh "${CLONE_CMD}"
         }
     } else {
-        // use credentials ID for all platforms except zOS
-        // for zOS use ssh key
         def remote_config_parameters = [url: "${OPENJDK_REPO}"]
-        if (!SPEC.startsWith('zos') && USER_CREDENTIALS_ID) {
+        if (USER_CREDENTIALS_ID) {
             remote_config_parameters.put('credentialsId', "${USER_CREDENTIALS_ID}")
         }
 
