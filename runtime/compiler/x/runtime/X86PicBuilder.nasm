@@ -26,8 +26,6 @@
 ;
 ; --------------------------------------------------------------------------------
 
-      CPU PPRO
-
       %include "jilconsts.inc"
       %include "X86PicBuilder_nasm.inc"
 
@@ -207,11 +205,7 @@ callResolveInterfaceMethod:
 
       ; Attempt to patch the code.
       ;
-%ifdef WINDOWS
-      lock cmpxchg8b    qword [edi-5]                                   ; EA of CMP instruction in mainline
-%else
       lock cmpxchg8b    [edi-5]                                         ; EA of CMP instruction in mainline
-%endif
 
       pop         ecx                                                   ; restore
       pop         ebx                                                   ; restore
@@ -345,11 +339,7 @@ mergePopulateIPicClass:
 
       ; Attempt to patch in the CMP instruction.
       ;
-%ifdef WINDOWS
-      lock cmpxchg8b    qword  [edi-5]                            ; EA of CMP instruction in mainline
-%else
       lock cmpxchg8b    [edi-5]                                   ; EA of CMP instruction in mainline
-%endif
 
 
 %ifdef ASM_J9VM_GC_DYNAMIC_CLASS_UNLOADING
@@ -685,11 +675,7 @@ mergeFindDataBlockForResolveVPicClass:
 
       ; Attempt to patch the code.
       ;
-%ifdef WINDOWS
-      lock cmpxchg8b    qword  [edi-5]                            ; EA of CMP instruction in mainline
-%else
       lock cmpxchg8b    [edi-5]                                   ; EA of CMP instruction in mainline
-%endif
 
       pop         ecx                                             ; restore
       pop         ebx                                             ; restore
@@ -793,11 +779,7 @@ mergePopulateVPicClass:
 
       ; Attempt to patch in the CMP instruction.
       ;
-%ifdef WINDOWS
-      lock        cmpxchg8b qword [edi-5]                         ; EA of CMP instruction in mainline
-%else
       lock        cmpxchg8b [edi-5]                               ; EA of CMP instruction in mainline
-%endif
 
 
 %ifdef ASM_J9VM_GC_DYNAMIC_CLASS_UNLOADING
@@ -1071,11 +1053,8 @@ populateVPicVTableDispatch:
 
       ; Attempt to patch the code.
       ;
-%ifdef WINDOWS
-      lock        cmpxchg8b qword  [edi]                          ; EA of vtable dispatch
-%else
+
       lock        cmpxchg8b [edi]                                 ; EA of vtable dispatch
-%endif
 
       mov         dword  [esp+24], edi                            ; fix RA to run the vtable call
       pop         esi                                             ; restore
@@ -1182,11 +1161,7 @@ resolveAndPopulateVTableDispatch:
       ; Attempt to patch the code. No need to check for failure as we will always
       ; back up and re-run the instruction in the mainline code.
       ;
-%ifdef WINDOWS
-      lock cmpxchg8b    qword  [edi]                  ; EA of vtable dispatch
-%else
       lock cmpxchg8b    [edi]                         ; EA of vtable dispatch
-%endif
 
       mov         dword  [esp+24], edi                ; fix RA to run the vtable call
       pop         esi                                 ; restore
