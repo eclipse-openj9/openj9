@@ -510,14 +510,14 @@ JCL      - a786f96b13 based on jdk-11+21)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V12** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 12.
+The following instructions guide you through the process of building a macOS **OpenJDK V12** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
 
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 10](https://adoptopenjdk.net/archive.html?variant=openjdk11&jvmVariant=hotspot), which is used as the boot JDK.
+- [macOS OpenJDK 11](https://adoptopenjdk.net/archive.html?variant=openjdk11&jvmVariant=hotspot), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/):
 
