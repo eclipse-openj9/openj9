@@ -210,22 +210,20 @@ final class Access implements JavaLangAccess {
 		 */
 		throw new Error("invokeFinalize unimplemented"); //$NON-NLS-1$
 	}
-	
+
 /*[IF Sidecar19-SE]*/
 	public Class<?> findBootstrapClassOrNull(ClassLoader classLoader, String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
-	 }
-	
-	public 
-	java.lang.ModuleLayer
-	getBootLayer() {
+	}
+
+	public ModuleLayer getBootLayer() {
 		return System.bootLayer;
 	}
-	
+
 	public ServicesCatalog createOrGetServicesCatalog(ClassLoader classLoader) {
 		return classLoader.createOrGetServicesCatalog();
 	}
-	
+
 /*[IF !Java10]*/
 	@Deprecated
 	public ServicesCatalog getServicesCatalog(ClassLoader classLoader) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1231,11 +1231,19 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_AMD64induceRecompilation,             (void *)_induceRecompilation,     TR_Helper);
 #endif /* NASM_ASSEMBLER */
 #else /* TR_HOST_64BIT */
+#if defined(NASM_ASSEMBLER)
+   SET(TR_IA32samplingRecompileMethod,          (void *)samplingRecompileMethod, TR_Helper);
+   SET(TR_IA32countingRecompileMethod,          (void *)countingRecompileMethod, TR_Helper);
+   SET(TR_IA32samplingPatchCallSite,            (void *)samplingPatchCallSite,   TR_Helper);
+   SET(TR_IA32countingPatchCallSite,            (void *)countingPatchCallSite,   TR_Helper);
+   SET(TR_IA32induceRecompilation,              (void *)induceRecompilation,     TR_Helper);
+#else
    SET(TR_IA32samplingRecompileMethod,          (void *)_samplingRecompileMethod, TR_Helper);
    SET(TR_IA32countingRecompileMethod,          (void *)_countingRecompileMethod, TR_Helper);
    SET(TR_IA32samplingPatchCallSite,            (void *)_samplingPatchCallSite,   TR_Helper);
    SET(TR_IA32countingPatchCallSite,            (void *)_countingPatchCallSite,   TR_Helper);
    SET(TR_IA32induceRecompilation,              (void *)_induceRecompilation,     TR_Helper);
+#endif /* NASM_ASSEMBLER */
 #endif /* TR_HOST_64BIT */
 
 #elif defined(TR_HOST_POWER)
