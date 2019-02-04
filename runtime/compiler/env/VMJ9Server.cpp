@@ -1449,11 +1449,8 @@ TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
    TR::Compilation *comp = TR::comp();
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (!comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames))
-         {
-         TR_ASSERT(false, "Failed to validate addStackWalkerMaySkipFramesRecord\n");
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in stackWalkerMaySkipFrames");
-         }
+      bool recordCreated = comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
+      SVM_ASSERT(recordCreated, "Failed to validate addStackWalkerMaySkipFramesRecord");
       }
    return skipFrames;
    }
