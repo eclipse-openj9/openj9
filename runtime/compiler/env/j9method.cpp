@@ -1456,13 +1456,20 @@ TR_ResolvedRelocatableJ9Method::isInterpreted()
    {
    bool alwaysTreatAsInterpreted = true;
 #if defined(TR_TARGET_S390)
-   alwaysTreatAsInterpreted = false;
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+      alwaysTreatAsInterpreted = true;
+   else
+      alwaysTreatAsInterpreted = false;
 #elif defined(TR_TARGET_X86)
 
    /*if isInterpreted should be only overridden for JNI methods.
    Otherwise buildDirectCall in X86PrivateLinkage.cpp will generate CALL 0
    for certain jitted methods as startAddressForJittedMethod still returns NULL in AOT
-   this is not an issue on z as direct calls are dispatched via snippets
+   this is not an issue on z as direct calls are dispatched via snippets.
+   For Z under AOT while using SVM, we do not need to treat all calls unresolved as it was case
+   for oldAOT. So alwaysTreatAsInterpreted is set to true in AOT using SVM so that call snippet
+   can be generated using correct j9method address.
 
    If one of the options to disable JNI is specified
    this function reverts back to the old behaviour
