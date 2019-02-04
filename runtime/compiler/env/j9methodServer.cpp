@@ -1355,3 +1355,111 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey ke
       }
    return false;
    }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
+
+   bool storeClassInfo = true;
+   bool fieldInfoCanBeUsed = false;
+   TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)fej9->_jitConfig->privateConfig)->aotStats;
+   bool isStatic = false;
+
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
+   TR_RelocationRuntime *reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
+
+   isStatic = (reloKind == TR_ValidateStaticField);
+
+   TR_J9ServerVM *feServer = (TR_J9ServerVM *) fej9;
+   J9Class *clazz = (J9Class *) feServer->TR_J9ServerVM::getClassOfMethod((TR_OpaqueMethodBlock *) ramMethod);
+   traceMsg(comp, "storeValidationRecordIfNecessary:\n");
+   traceMsg(comp, "\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
+   traceMsg(comp, "\treloKind %d isStatic %d\n", reloKind, isStatic);
+   J9UTF8 *methodClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) clazz));
+   traceMsg(comp, "\tmethod %p from class %p %.*s\n", ramMethod, clazz, J9UTF8_LENGTH(methodClassName), J9UTF8_DATA(methodClassName));
+   traceMsg(comp, "\tdefiningClass %p\n", definingClass);
+
+   if (!definingClass)
+      {
+      definingClass = (J9Class *) reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, isStatic);
+      traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
+      }
+
+   if (!definingClass)
+      {
+      if (aotStats)
+         aotStats->numDefiningClassNotFound++;
+      return false;
+      }
+
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) definingClass));
+   traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+
+   J9ROMClass *romClass = NULL;
+   void *classChain = NULL;
+
+   // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
+   classChain = fej9->sharedCache()->rememberClass(definingClass);
+   if (!classChain)
+      return false;
+
+   bool inLocalList = false;
+   TR::list<TR::AOTClassInfo*>* aotClassInfo = comp->_aotClassInfo;
+   if (!aotClassInfo->empty())
+      {
+      for (auto info = aotClassInfo->begin(); info != aotClassInfo->end(); ++info)
+         {
+         TR_ASSERT(((*info)->_reloKind == TR_ValidateInstanceField ||
+                 (*info)->_reloKind == TR_ValidateStaticField ||
+                 (*info)->_reloKind == TR_ValidateClass ||
+                 (*info)->_reloKind == TR_ValidateArbitraryClass),
+                "TR::AOTClassInfo reloKind is not TR_ValidateInstanceField or TR_ValidateStaticField or TR_ValidateClass!");
+
+         if ((*info)->_reloKind == reloKind)
+            {
+            if (isStatic)
+               inLocalList = (romClass == ((J9Class *)((*info)->_clazz))->romClass);
+            else
+               inLocalList = (classChain == (*info)->_classChain &&
+                              cpIndex == (*info)->_cpIndex &&
+                              ramMethod == (J9Method *)(*info)->_method);
+
+            if (inLocalList)
+               break;
+            }
+         }
+      }
+
+   if (inLocalList)
+      {
+      traceMsg(comp, "\tFound in local list, nothing to do\n");
+      if (aotStats)
+         {
+         if (isStatic)
+            aotStats->numStaticEntriesAlreadyStoredInLocalList++;
+         else
+            aotStats->numCHEntriesAlreadyStoredInLocalList++;
+         }
+      return true;
+      }
+
+   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(fej9, (TR_OpaqueClassBlock *)definingClass, (void *) classChain, (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind);
+   if (classInfo)
+      {
+      traceMsg(comp, "\tCreated new AOT class info %p\n", classInfo);
+      comp->_aotClassInfo->push_front(classInfo);
+      if (aotStats)
+         {
+         if (isStatic)
+            aotStats->numNewStaticEntriesInLocalList++;
+         else
+            aotStats->numNewCHEntriesInLocalList++;
+         }
+
+      return true;
+      }
+
+   // should only be a native OOM that gets us here...
+   return false;
+   }
