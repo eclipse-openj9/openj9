@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,48 +42,48 @@ public:
 
    TR_J9SharedCache(TR_J9VMBase *fe);
 
-   bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   uint16_t getAllEnabledHints(J9Method *method);
-   uint16_t getAllEnabledHints(J9ROMMethod *method);
-   void addHint(J9Method *, TR_SharedCacheHint);
-   void addHint(J9ROMMethod *, TR_SharedCacheHint);
-   void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
-   bool isMostlyFull();
+   virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
+   virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
+   // virtual bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
+   virtual uint16_t getAllEnabledHints(J9Method *method);
+   // virtual uint16_t getAllEnabledHints(J9ROMMethod *method);
+   virtual void addHint(J9Method *, TR_SharedCacheHint);
+   // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint);
+   virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
+   virtual bool isMostlyFull();
 
    virtual void *pointerFromOffsetInSharedCache(void *offset);
    virtual void *offsetInSharedCacheFromPointer(void *ptr);
 
-   void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
-   void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
 
-   bool canRememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
       return (rememberClass((J9Class *) classPtr, false) != NULL);
       }
 
-   uintptrj_t *rememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual uintptrj_t *rememberClass(TR_OpaqueClassBlock *classPtr)
       {
       return (uintptrj_t *) rememberClass((J9Class *) classPtr, true);
       }
 
-   UDATA *rememberClass(J9Class *clazz, bool create=true);
+   virtual UDATA *rememberClass(J9Class *clazz, bool create=true);
 
-   UDATA rememberDebugCounterName(const char *name);
-   const char *getDebugCounterName(UDATA offset);
+   virtual UDATA rememberDebugCounterName(const char *name);
+   virtual const char *getDebugCounterName(UDATA offset);
 
-   bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL);
-   bool classMatchesCachedVersion(TR_OpaqueClassBlock *classPtr, UDATA *chainData=NULL)
+   virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL);
+   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *classPtr, UDATA *chainData=NULL)
       {
       return classMatchesCachedVersion((J9Class *) classPtr, chainData);
       }
 
-   TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
 
-   uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz);
+   virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz);
 
-   bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
+   virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
 
    
    enum TR_J9SharedCacheDisabledReason
@@ -107,7 +107,7 @@ public:
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
    
-   UDATA getCacheStartAddress() { return _cacheStartAddress; }
+   virtual UDATA getCacheStartAddress() { return _cacheStartAddress; }
 
 private:
    J9JITConfig *jitConfig() { return _jitConfig; }
@@ -156,6 +156,51 @@ private:
    static TR_J9SharedCacheDisabledReason _sharedCacheState;
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
    static UDATA                          _storeSharedDataFailedLength;
+   };
+
+class TR_J9JITaaSServerSharedCache : public TR_J9SharedCache
+   {
+public:
+   TR_ALLOC(TR_Memory::SharedCache)
+
+   TR_J9JITaaSServerSharedCache(TR_J9VMBase *fe);
+
+   virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
+   virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
+   // virtual bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
+   virtual uint16_t getAllEnabledHints(J9Method *method) override { TR_ASSERT(false, "called"); return 0;}
+   // virtual uint16_t getAllEnabledHints(J9ROMMethod *method) override { TR_ASSERT(false, "called"); return 0;}
+   virtual void addHint(J9Method *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
+   // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
+   virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
+   virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
+
+   virtual void *pointerFromOffsetInSharedCache(void *offset) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual void *offsetInSharedCacheFromPointer(void *ptr) override { TR_ASSERT(false, "called"); return NULL;}
+
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp) override { TR_ASSERT(false, "called"); }
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp) override { TR_ASSERT(false, "called"); }
+
+   virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override { TR_ASSERT(false, "called"); return NULL;}
+
+   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT(false, "called"); return NULL;}
+
+   virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT(false, "called"); return false;}
+
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT(false, "called"); return NULL;}
+
+   virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz) override { TR_ASSERT(false, "called"); return NULL;}
+
+   virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) override { TR_ASSERT(false, "called"); return false;}
+
+   
+   static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT(false, "called"); }
+   static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
+   static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT(false, "called"); return TR_no;}
+   static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT(false, "called"); }
+   
+   virtual UDATA getCacheStartAddress() override { TR_ASSERT(false, "called"); return NULL; }
    };
 
 #endif
