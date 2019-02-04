@@ -205,22 +205,22 @@ public:
 
    virtual bool shouldDelayAotLoad() override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool traceableMethodsCanBeInlined() override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool canMethodEnterEventBeHooked() override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool canMethodExitEventBeHooked() override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled() override { TR_ASSERT(0, "called");  return 0; }
-   virtual int32_t getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result) override { TR_ASSERT(0, "called");  return 0; }
-   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
+   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool traceableMethodsCanBeInlined() override;
+   virtual bool canMethodEnterEventBeHooked() override;
+   virtual bool canMethodExitEventBeHooked() override;
+   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled() override;
+   virtual int32_t getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed) override;
+   virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result) override;
+   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options) override;
    virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override { TR_ASSERT(0, "called");  return 0; }
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override { TR_ASSERT(0, "called");  return; }
    virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueMethodBlock * getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod=0) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT=false) override { TR_ASSERT(0, "called");  return TR_no; }
