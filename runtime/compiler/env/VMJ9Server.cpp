@@ -1530,6 +1530,21 @@ TR_J9SharedCacheServerVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBl
    }
 
 bool
+TR_J9SharedCacheServerVM::supportAllocationInlining(TR::Compilation *comp, TR::Node *node)
+   {
+   if (comp->getOptions()->realTimeGC())
+      return false;
+
+   if ((TR::Compiler->target.cpu.isX86() ||
+        TR::Compiler->target.cpu.isPower() ||
+        TR::Compiler->target.cpu.isZ()) &&
+       !comp->getOption(TR_DisableAllocationInlining))
+      return true;
+
+   return false;
+   }
+
+bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
    bool skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);
