@@ -1953,3 +1953,92 @@ TR_J9SharedCacheServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * class
    else
       return 0;
    }
+
+bool
+TR_J9SharedCacheServerVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass)
+   {
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+      SVM_ASSERT_ALREADY_VALIDATED(svm, sourceClass);
+      SVM_ASSERT_ALREADY_VALIDATED(svm, destClass);
+      validated = true;
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) sourceClass) &&
+                  ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) destClass);
+      }
+
+   return (validated ? TR_J9ServerVM::isClassVisible(sourceClass, destClass) : false);
+   }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
+   {
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   TR_OpaqueClassBlock *classPointer = TR_J9ServerVM::getClassOfMethod(method);
+
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(classPointer, method);
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+      }
+
+   return (validated ? classPointer : NULL);
+   }
+
+J9Class *
+TR_J9SharedCacheServerVM::getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef)
+   {
+   bool returnClassForAOT = true;
+   if (!classSymRef->isUnresolved())
+      return TR_J9VM::getClassForAllocationInlining(comp, classSymRef);
+   else
+      return (J9Class *) classSymRef->getOwningMethod(comp)->getClassFromConstantPool(comp, classSymRef->getCPIndex(), returnClassForAOT);
+   }
+
+// Multiple codeCache support
+TR::CodeCache *
+TR_J9SharedCacheServerVM::getDesignatedCodeCache(TR::Compilation *comp)
+   {
+   int32_t numReserved = 0;
+   int32_t compThreadID = comp ? comp->getCompThreadID() : -1;
+   bool hadClassUnloadMonitor = false;
+   bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
+   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, 0, compThreadID, &numReserved);
+   acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
+   // For AOT we need some alignment
+   if (codeCache)
+      {
+      codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment - 1);
+
+      // For AOT we must install the beginning of the code cache
+      comp->setRelocatableMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
+      }
+   else
+      {
+      // If this is a temporary condition due to all code caches being reserved for the moment
+      // we should retry this compilation
+      if (!(jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL) &&
+          (numReserved > 0) &&
+          comp)
+         {
+         comp->failCompilation<TR::RecoverableCodeCacheError>("Cannot reserve code cache");
+         }
+      }
+
+   return codeCache;
+   }

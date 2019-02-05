@@ -150,8 +150,7 @@ TR_J9ByteCodeIlGenerator::genIL()
           * if DelayRelocationForAOT don't persist iprofiler info now.
           * instead, persist iprofiler info when loading the aot compilation
           */
-         TR_J9SharedCacheVM *fej9sc = (TR_J9SharedCacheVM *)(comp()->fej9());
-         if(comp()->getOption(TR_DisableDelayRelocationForAOTCompilations) || !fej9sc->shouldDelayAotLoad())
+         if(comp()->getOption(TR_DisableDelayRelocationForAOTCompilations) || !comp()->fej9()->shouldDelayAotLoad())
             {
             sc->persistIprofileInfo(_methodSymbol->getResolvedMethodSymbol(), comp());
             }

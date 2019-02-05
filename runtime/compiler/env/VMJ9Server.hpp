@@ -179,7 +179,7 @@ public:
       :TR_J9ServerVM(jitConfig, compInfo, vmContext)
       {}
 
- // in process of removing this query in favour of more meaningful queries below
+   // in process of removing this query in favour of more meaningful queries below
    virtual bool       isAOT_DEPRECATED_DO_NOT_USE()  override                 { return true; }
 
    // replacing calls to isAOT
@@ -206,8 +206,8 @@ public:
    virtual bool       isBenefitInliningCheckIfFinalizeObject() override       { return true; }
    virtual bool       needsContiguousAllocation() override                    { return true; }
 
-   virtual bool shouldDelayAotLoad() override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool shouldDelayAotLoad() override                                 { return true; }
+   virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
    virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
@@ -218,7 +218,7 @@ public:
    virtual int32_t getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed) override;
    virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result) override;
    virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options) override;
-   virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override { TR_ASSERT(0, "called");  return 0; }
+   virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override;
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override;
    virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override;
@@ -251,12 +251,12 @@ public:
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { return NULL; }
    virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
    virtual intptrj_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
-   virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
+   virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override;
    virtual void * getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
    virtual void * setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
    virtual void * persistJ2IThunk(void *thunk) override { TR_ASSERT(0, "called");  return 0; }
    void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize) { TR_ASSERT(0, "called");  return 0; }
-   virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override { TR_ASSERT(0, "called");  return 0; }
+   virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
 
    };
 
