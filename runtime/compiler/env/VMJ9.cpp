@@ -4638,11 +4638,7 @@ TR_J9VMBase::unsupportedByteCode(TR::Compilation * comp, U_8 opcode)
 void
 TR_J9VMBase::unknownByteCode(TR::Compilation * comp, U_8 opcode)
    {
-   // an unknown bytecode may be seen if the method contains a breakpoint, in that case we should abort the compile
-   //
-   char errMsg[40];
-   snprintf(errMsg, 40, "Unknown bytecode %d to JIT", opcode);
-   comp->failCompilation<TR::CompilationException>(errMsg);
+   TR_ASSERT_FATAL(0, "Unknown bytecode to JIT %d \n", opcode);
    }
 
 char*
