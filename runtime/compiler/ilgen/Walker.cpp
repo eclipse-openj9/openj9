@@ -1529,6 +1529,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
 
          case J9BCdefaultvalue:
          case J9BCwithfield:
+         case J9BCbreakpoint:
             fej9()->unsupportedByteCode(comp(), opcode);
          case J9BCunknown:
             fej9()->unknownByteCode(comp(), opcode);
