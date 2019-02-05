@@ -167,6 +167,9 @@ public:
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType) override;
    virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding) override;
    virtual intptrj_t methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override;
+
+protected:
+   void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
    };
 
 class TR_J9SharedCacheServerVM: public TR_J9ServerVM
@@ -216,9 +219,9 @@ public:
    virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result) override;
    virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options) override;
    virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override { TR_ASSERT(0, "called");  return 0; }
-   virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override { TR_ASSERT(0, "called");  return; }
-   virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override { TR_ASSERT(0, "called");  return 0; }
+   virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
+   virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override;
+   virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override;
    virtual TR_OpaqueMethodBlock * getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod=0) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL) override;
@@ -237,17 +240,17 @@ public:
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isReferenceArray(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_OpaqueMethodBlock * getInlinedCallSiteMethod(TR_InlinedCallSite *ics) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override;
+   virtual bool isReferenceArray(TR_OpaqueClassBlock *) override;
+   virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *) override;
+   virtual TR_OpaqueMethodBlock * getInlinedCallSiteMethod(TR_InlinedCallSite *ics) override;
+   virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override { return false; }
+   virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override { return true; }
+   virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override { return true; }
    virtual bool isGetImplInliningSupported() override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { TR_ASSERT(0, "called");  return 0; }
-   virtual intptrj_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT(0, "called");  return 0; }
+   virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { return NULL; }
+   virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
+   virtual intptrj_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
    virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
    virtual void * getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
    virtual void * setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }

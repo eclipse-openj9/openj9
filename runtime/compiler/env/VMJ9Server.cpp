@@ -33,6 +33,26 @@
 #include "env/PersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"
 
+void
+TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getResolvedMethodsAndMirror, classPointer);
+   auto recv = stream->read<J9Method *, std::vector<TR_ResolvedJ9JITaaSServerMethodInfo>>();
+   auto methodsInClass = std::get<0>(recv);
+   auto &methodsInfo = std::get<1>(recv);
+   if (methods)
+      *methods = methodsInClass;
+   if (numMethods)
+      *numMethods = methodsInfo.size();
+   for (int i = 0; i < methodsInfo.size(); ++i)
+      {
+      // create resolved methods, using information from mirrors
+      auto resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) &(methodsInClass[i]), this, trMemory, methodsInfo[i], 0);
+      resolvedMethodsInClass->add(resolvedMethod);
+      }
+   }
+
 bool
 TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
@@ -549,18 +569,9 @@ TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
 void
 TR_J9ServerVM::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
    {
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getResolvedMethodsAndMirror, classPointer);
-   auto recv = stream->read<J9Method *, std::vector<TR_ResolvedJ9JITaaSServerMethodInfo>>();
-   J9Method *methods = std::get<0>(recv);
-   auto &methodsInfo = std::get<1>(recv);
-   for (int i = 0; i < methodsInfo.size(); ++i)
-      {
-      // create resolved methods, using information from mirrors
-      auto resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) &(methods[i]), this, trMemory, methodsInfo[i], 0);
-      resolvedMethodsInClass->add(resolvedMethod);
-      }
+   getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass, NULL, NULL);
    }
+
 
 /*uint32_t
 TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
@@ -1430,6 +1441,7 @@ TR_J9ServerVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference
     // Not necessary in JITaaS server mode, return the call's PC so that the call will not appear to require a trampoline
     return (intptrj_t)callSite;
 }
+
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
@@ -1575,7 +1587,7 @@ uint32_t
 TR_J9SharedCacheServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen,
                                     char * sig, uint32_t sigLen, UDATA options)
    {
-   TR::Compilation* comp = TR::comp();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -1594,4 +1606,168 @@ TR_J9SharedCacheServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPoin
       return TR_J9ServerVM::getInstanceFieldOffset (classPointer, fieldName, fieldLen, sig, sigLen, options);
 
    return ~0;
+   }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getSuperClass(TR_OpaqueClassBlock * classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   TR_OpaqueClassBlock *superClass = TR_J9ServerVM::getSuperClass(classPointer);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addSuperClassFromClassRecord(superClass, classPointer);
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+      }
+
+   if (validated)
+      return superClass;
+
+   return NULL;
+   }
+
+void
+TR_J9SharedCacheServerVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+      }
+
+   if (validated)
+      {
+      J9Method *resolvedMethods;
+      uint32_t numMethods;
+      TR_J9ServerVM::getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass, &resolvedMethods, &numMethods);
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         uint32_t indexIntoArray;
+         for (indexIntoArray = 0; indexIntoArray < numMethods; indexIntoArray++)
+            {
+            comp->getSymbolValidationManager()->addMethodFromClassRecord((TR_OpaqueMethodBlock *) &(resolvedMethods[indexIntoArray]),
+                                                                         classPointer,
+                                                                         indexIntoArray);
+            }
+         }
+
+      }
+   }
+
+
+TR_ResolvedMethod *
+TR_J9SharedCacheServerVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer,
+                                                         const char* methodName, const char *signature)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   TR_ResolvedMethod *resolvedMethod = TR_J9ServerVM::getResolvedMethodForNameAndSignature(trMemory, classPointer, methodName, signature);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)((TR_ResolvedJ9Method *)resolvedMethod)->ramMethod();
+      /*
+       * TR_J9VM::getResolvedMethodForNameAndSignature will call getMatchingMethodFromNameAndSignature
+       * which adds a MethodFromClassRecord.
+       */
+      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(getClassFromMethodBlock(method), method);
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *)comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *)classPointer);
+      }
+
+   if (validated)
+      return resolvedMethod;
+   else
+      return NULL;
+   }
+
+bool
+TR_J9SharedCacheServerVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   bool isPrimArray = TR_J9ServerVM::isPrimitiveArray(classPointer);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+         validated = true;
+      }
+
+   if (validated)
+      return isPrimArray;
+   else
+      return false;
+   }
+
+bool
+TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   bool isRefArray = TR_J9ServerVM::isReferenceArray(classPointer);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+         validated = true;
+      }
+
+   if (validated)
+      return isRefArray;
+   else
+      return false;
+   }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
+   {
+   TR_OpaqueClassBlock *ccPointer = TR_J9ServerVM::getClassClassPointer(objectClassPointer);
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addClassClassRecord(ccPointer, objectClassPointer))
+         ccPointer = NULL;
+      }
+   return ccPointer;
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheServerVM::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
+   {
+   return (TR_OpaqueMethodBlock *)((TR_AOTMethodInfo *)(ics->_vmMethodInfo))->resolvedMethod->getPersistentIdentifier();
    }
