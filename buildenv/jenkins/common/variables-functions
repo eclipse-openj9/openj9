@@ -517,6 +517,7 @@ def set_job_properties(JOB_TYPE) {
     *           strings: OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA,
     *                    OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA,
     *                    OMR_REPO, OMR_BRANCH, OMR_SHA,
+    *                    ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH,
     *                    VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID
     *       - Build or PR or Pipeline
     *           Choices: SDK_VERSION, PLATFORM
@@ -616,6 +617,8 @@ def set_job_properties(JOB_TYPE) {
                 'OMR_REPO':'',
                 'OMR_BRANCH':'',
                 'OMR_SHA':'',
+                'ADOPTOPENJDK_REPO':'',
+                'ADOPTOPENJDK_BRANCH':'',
                 'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
                 'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
@@ -746,6 +749,7 @@ def set_job_variables(job_type) {
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
+            set_adoptopenjdk_tests_repository()
             set_vendor_variables()
             set_build_extra_options()
             set_test_targets()
@@ -756,6 +760,7 @@ def set_job_variables(job_type) {
             //set variable for pipeline all/personal
             set_repos_variables(BUILD_SPECS)
             set_build_extra_options(BUILD_SPECS)
+            set_adoptopenjdk_tests_repository(get_build_releases(BUILD_SPECS))
             set_restart_timeout()
             break
         default:
@@ -1112,6 +1117,56 @@ def set_build_extra_options(build_specs=null) {
                 OPENJDK_CLONE_DIR_MAP.put(release, clone_dir_by_specs)
             }
         }
+    }
+}
+
+/*
+* Set the Git repository URL and branch for the AdoptOpenJDK Testing material.
+*/
+def set_adoptopenjdk_tests_repository(build_releases=null) {
+    ADOPTOPENJDK_MAP = [:]
+
+    if (build_releases) {
+        for (release in build_releases) {
+            // fetch from the variables file
+            def adoptOpenJdkByReleaseMap = [:]
+            if (get_value(VARIABLES.adoptopenjdk, release)) {
+                adoptOpenJdkByReleaseMap.putAll(get_value(VARIABLES.adoptopenjdk, release))
+            } else {
+                adoptOpenJdkByReleaseMap.putAll(VARIABLES.adoptopenjdk.default)
+            }
+
+            if (params."ADOPTOPENJDK${release}_REPO") {
+                // override repo with user value
+                adoptOpenJdkByReleaseMap['repoUrl'] = params."ADOPTOPENJDK${release}_REPO"
+            }
+
+            if (params."ADOPTOPENJDK${release}_BRANCH") {
+                // override branch with user value
+                adoptOpenJdkByReleaseMap['branch'] = params."ADOPTOPENJDK${release}_BRANCH"
+            }
+
+            if (adoptOpenJdkByReleaseMap) {
+                ADOPTOPENJDK_MAP.put(release, adoptOpenJdkByReleaseMap)
+            }
+        }
+
+        echo "ADOPTOPENJDK_MAP = ${ADOPTOPENJDK_MAP.toString()}"
+    } else {
+        // fetch from the variables file
+        def adoptOpenJdkByReleaseMap = VARIABLES.adoptopenjdk.default
+
+        ADOPTOPENJDK_REPO = params.ADOPTOPENJDK_REPO
+        if (!ADOPTOPENJDK_REPO && adoptOpenJdkByReleaseMap) {
+            ADOPTOPENJDK_REPO = adoptOpenJdkByReleaseMap.get('repoUrl')
+        }
+
+        ADOPTOPENJDK_BRANCH = params.ADOPTOPENJDK_BRANCH
+        if (!ADOPTOPENJDK_BRANCH && adoptOpenJdkByReleaseMap) {
+            ADOPTOPENJDK_BRANCH = adoptOpenJdkByReleaseMap.get('branch')
+        }
+
+        echo "Using ADOPTOPENJDK_REPO = ${ADOPTOPENJDK_REPO} ADOPTOPENJDK_BRANCH = ${ADOPTOPENJDK_BRANCH}"
     }
 }
 
