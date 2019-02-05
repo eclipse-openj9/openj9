@@ -1914,7 +1914,7 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
          generateRegImmInstruction(MOV4RegImm4, callNode, ramMethodReg, (uint32_t)(uintptrj_t)methodSymbol->getMethodAddress(), cg());
          }
 
-      callInstr = generateHelperCallInstruction(callNode, TR_icallVMprJavaSendNativeStatic, NULL, cg());
+      callInstr = generateHelperCallInstruction(callNode, TR_j2iTransition, NULL, cg());
       cg()->stopUsingRegister(ramMethodReg);
       }
    else if (TR::Compiler->target.is64Bit() && methodSymbol->isJITInternalNative())

@@ -3569,14 +3569,12 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    TR::ResolvedMethodSymbol* methodSymbol = comp->getJittedMethodSymbol();
 
-   TR_RuntimeHelper helperId = methodSymbol->getVMCallHelper();
-
-   TR::SymbolReference* helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(helperId, false, false, false);
+   TR::SymbolReference* helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
 
    // AOT relocation for the helper address
    TR::S390EncodingRelocation* encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, helperSymRef);
 
-   AOTcgDiag4(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p helperId = %x\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference(), helperId);
+   AOTcgDiag3(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference());
 
    const intptrj_t vmCallHelperAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
 
