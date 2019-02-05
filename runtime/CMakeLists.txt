@@ -108,6 +108,25 @@ omr_add_hookgen(INPUT oti/j9vm.hdf)
 omr_add_hookgen(INPUT oti/zipCachePool.hdf)
 omr_add_hookgen(INPUT gc_include/j9mm.hdf)
 
+# Here we generate jvmti.h if it's built on linter
+if($ENV{RUN_LINT} MATCHES "yes")
+	file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/j9cfg.h tempversion REGEX "#define JAVA_SPEC_VERSION*")
+	string(REGEX REPLACE "#define JAVA_SPEC_VERSION" "" tempversion ${tempversion})
+	string(STRIP ${tempversion} tempversion)
+	message(${tempversion})
+	add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h"
+	COMMAND m4 -D JAVA_SPEC_VERSION=${tempversion} "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > jvmti.h
+	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+	add_custom_target(java_spec_headers
+		DEPENDS
+			${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h
+)
+endif()
+
+
+
+
 # Wrap up the hookgen'd files in a named target
 # This is to work arround the fact that CMake does not do proper dependency tracking
 # for generated files across different directories

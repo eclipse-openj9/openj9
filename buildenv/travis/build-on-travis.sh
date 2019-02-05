@@ -60,7 +60,7 @@ if test "x$RUN_LINT" = "xyes"; then
   mkdir $CMAKE_BUILD_DIR
   cd $CMAKE_BUILD_DIR
   cmake -C $J9SRC/cmake/caches/linux_x86-64_cmprssptrs.cmake ..
-  make -j $MAKE_JOBS run_cptool omrgc_hookgen j9vm_hookgen j9jit_tracegen j9vm_nlsgen
+  make -j $MAKE_JOBS run_cptool omrgc_hookgen j9vm_hookgen j9jit_tracegen j9vm_nlsgen java_spec_headers
 
   # Now we can build the linter plugin
   cd $OMRCHECKER_DIR
