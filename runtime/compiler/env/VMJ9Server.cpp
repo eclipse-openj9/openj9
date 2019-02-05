@@ -1470,6 +1470,32 @@ TR_J9SharedCacheServerVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, 
    }
 
 bool
+TR_J9SharedCacheServerVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool publicClass = TR_J9VM::isPublicClass(classPointer); // TR_J9ServerVM also uses TR_J9VM::isPublicClass
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+         validated = true;
+      }
+
+   if (validated)
+      return publicClass;
+   else
+      return true;
+   }
+
+bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
    bool skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);

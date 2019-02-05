@@ -228,7 +228,7 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo) override { TR_ASSERT(0, "called");  return 0; }
-   virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalizer(TR_OpaqueClassBlock * classPointer) override { TR_ASSERT(0, "called");  return 0; }
    virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override { TR_ASSERT(0, "called");  return 0; }
