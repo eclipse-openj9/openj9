@@ -1442,6 +1442,33 @@ TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, boo
    return false;
    }
 
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheServerVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, char * methodName, char * signature, TR_OpaqueClassBlock *callingClass)
+   {
+   TR_OpaqueMethodBlock* omb = TR_J9ServerVM::getMethodFromClass(methodClass, methodName, signature, callingClass);
+   if (omb)
+      {
+      TR::Compilation* comp = _compInfoPT->getCompilation();
+      TR_ASSERT(comp, "Should be called only within a compilation");
+
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         bool validated = comp->getSymbolValidationManager()->addMethodFromClassAndSignatureRecord(omb, methodClass, callingClass);
+         if (!validated)
+            omb = NULL;
+         }
+      else
+         {
+         if (!((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)methodClass))
+            omb = NULL;
+         if (callingClass && !((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)callingClass))
+            omb = NULL;
+         }
+      }
+
+   return omb;
+   }
+
 bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
