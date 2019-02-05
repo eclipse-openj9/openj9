@@ -229,9 +229,9 @@ interpreterUnresolvedSpecialGlue:
       movdqu      [esp], xmm0
       push        001f0f00h                                 ; NOP
       push        000000bfh                                 ; 1st byte of MOV edi, 0xaabbccdd
-      mov         dword [esp+1], eax
+      mov         dword [esp+1], edi
       movsd       xmm0, qword [esp]
-      movsd       qword [edi-8], xmm0
+      movsd       qword [eax-5], xmm0
       movdqu      xmm0, [esp+8]
       add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
       jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
@@ -255,7 +255,7 @@ interpreterUnresolvedSpecialGlue:
 ; the interpreter which reads the parameters from the stack. The backspilling has
 ; already occured at this point.
 ;
-interpreterStaticAndSpecialGlue proc near
+interpreterStaticAndSpecialGlue:
       test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
       jnz         j2iTransition
       mov         edi, dword [edi+J9TR_MethodPCStartOffset]
@@ -264,7 +264,6 @@ interpreterStaticAndSpecialGlue proc near
       mov         dword [edx-4], edi
       add         edi, edx
       jmp         edi
-interpreterStaticAndSpecialGlue endp
 
 
 ; updateInterpreterDispatchGlueSite
