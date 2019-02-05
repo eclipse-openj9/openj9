@@ -83,6 +83,8 @@ public:
 
    void doInstructionSelection();
 
+   void createReferenceReadBarrier(TR::TreeTop* treeTop, TR::Node* parent);
+
    // OSR, not code generator
    void populateOSRBuffer();
 

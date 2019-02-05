@@ -9707,29 +9707,27 @@ J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::
    }
 
 void
-J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel, TR_S390ScratchRegisterManager *srm, bool isForward)
+J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg,
+                                        TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                        TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel,
+                                        TR_S390ScratchRegisterManager *srm, bool isForward)
    {
-   TR_ASSERT_FATAL(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE == 0x20000,
-               "GSCS: The OOL sequence branch is dependant on the flag being 0x20000");
-   TR_ASSERT_FATAL(TR::Compiler->target.is64Bit(),
-               "GSCS: Guarded Load OOL Path only defined in 64 bit mode");
-
    TR::LabelSymbol* slowPathLabel = generateLabelSymbol(cg);
-
    TR::Register *vmReg = cg->getMethodMetaDataRealRegister();
-   TR::MemoryReference *privFlagMR = generateS390MemoryReference(vmReg,
-   TR::Compiler->vm.thisThreadGetConcurrentScavengeActiveByteAddressOffset(cg->comp()), cg);
+   auto baseMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateBaseAddressOffset(cg->comp()), cg);
+   generateSILInstruction(cg, cg->comp()->useCompressedPointers() ? TR::InstOpCode::CHSI : TR::InstOpCode::CGHSI, node, baseMemRef, -1);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, slowPathLabel);
 
-   generateSIInstruction(cg, TR::InstOpCode::TM, node, privFlagMR, 0x00000002);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC3, node, slowPathLabel);
-   // Generate OOL Slow Path
    TR_S390OutOfLineCodeSection* outOfLineCodeSection = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(slowPathLabel, mergeLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outOfLineCodeSection);
    outOfLineCodeSection->swapInstructionListsWithCompilation();
-
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, slowPathLabel);
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "readBar/arraycopy/OOL"), 1, TR::DebugCounter::Cheap);
+
    // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instuction in ICF.
-   TR::RegisterDependencyConditions *loopDeps = TR::TreeEvaluator::generateMemToMemElementCopy(node, cg, byteSrcReg, byteDstReg, byteLenReg, srm, isForward, true);
+   TR::RegisterDependencyConditions *loopDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 10, cg);
+   TR::TreeEvaluator::generateMemToMemElementCopy(node, cg, byteSrcReg, byteDstReg, byteLenReg, srm, isForward, true, false, loopDeps);
 
    TR::LabelSymbol *doneOOLLabel = generateLabelSymbol(cg);
    loopDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(loopDeps, 0, 3+srm->numAvailableRegisters(), cg);
@@ -9739,23 +9737,26 @@ J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, T
    srm->addScratchRegistersToDependencyList(loopDeps);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneOOLLabel, loopDeps);
    doneOOLLabel->setEndInternalControlFlow();
+
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergeLabel);
    outOfLineCodeSection->swapInstructionListsWithCompilation();
    }
 
 void
-J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node,
+                                                    TR::Register *srcObjReg,
+                                                    TR::Register *dstObjReg,
+                                                    TR::Register *srcAddrReg,
+                                                    TR::Register *dstAddrReg,
+                                                    TR::Register *lengthReg,
+                                                    TR::CodeGenerator *cg)
    {
-   TR::Instruction *iCursor;
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   intptrj_t *funcdescrptr = (intptrj_t*) fej9->getReferenceArrayCopyHelperAddress();
 
    TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(9, 9, cg);
-   TR::LabelSymbol * doneLabel, * callLabel, * OKLabel;
-   doneLabel = generateLabelSymbol(cg);
-   callLabel = generateLabelSymbol(cg);
-   OKLabel   = generateLabelSymbol(cg);
-   TR::Snippet * snippet;
+   TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * callLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * OKLabel   = generateLabelSymbol(cg);
    TR::Linkage * linkage = cg->getLinkage(node->getSymbol()->castToMethodSymbol()->getLinkageConvention());
    TR::SystemLinkage *sysLink = (TR::SystemLinkage *) cg->getLinkage(TR_System);
 
@@ -9774,7 +9775,6 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
       }
 
    TR::Register *helperReg = cg->allocateRegister();
-   TR::Register         *thdReg = cg->getVMThreadRegister();
    int32_t  offset  = sysLink->getOffsetToFirstParm();
    int32_t  ptrSize = (int32_t)TR::Compiler->om.sizeofReferenceAddress();
 
@@ -9802,7 +9802,24 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
          generateS390MemoryReference(metaReg, (int32_t)(fej9->thisThreadGetSystemSPOffset()), cg));
       }
 
-   TR::Instruction *inst = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, metaReg,
+   // Ready parameter 5: count reg
+   TR::Register *countReg  = cg->allocateRegister();
+   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, countReg, lengthReg);
+   generateRSInstruction(cg, TR::InstOpCode::SRL, node,  countReg, trailingZeroes(TR::Compiler->om.sizeofReferenceField()));
+
+   // Ready parameter 6: helper reg
+   intptrj_t *funcdescrptr = (intptrj_t*) fej9->getReferenceArrayCopyHelperAddress();
+   if (comp->compileRelocatableCode())
+      {
+      generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, helperReg, (intptrj_t)funcdescrptr, TR_ArrayCopyHelper, NULL, NULL, NULL);
+      }
+   else
+      {
+      genLoadAddressConstant(cg, node, (long) funcdescrptr, helperReg);
+      }
+
+   // Store 7 paramters
+   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, metaReg,
          generateS390MemoryReference(sspReg, offset+0*ptrSize, cg));
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, srcObjReg,
          generateS390MemoryReference(sspReg, offset+1*ptrSize, cg));
@@ -9812,22 +9829,12 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
          generateS390MemoryReference(sspReg, offset+3*ptrSize, cg));
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, dstAddrReg,
          generateS390MemoryReference(sspReg, offset+4*ptrSize, cg));
-
-   TR::Register *countReg  = cg->allocateRegister();
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, countReg, lengthReg  );
-   int32_t shiftAmount = comp->useCompressedPointers() ? (int32_t)TR::Compiler->om.sizeofReferenceField()
-                                                             : (int32_t)TR::Compiler->om.sizeofReferenceAddress();
-   generateRSInstruction(cg, TR::InstOpCode::SRL, node,  countReg, trailingZeroes(shiftAmount));
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, countReg,
          generateS390MemoryReference(sspReg, offset+5*ptrSize, cg));
-   cg->stopUsingRegister(countReg);
-
-   if (comp->compileRelocatableCode())
-      generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, helperReg, (intptrj_t)funcdescrptr, TR_ArrayCopyHelper, NULL, NULL, NULL);
-   else
-      genLoadAddressConstant(cg, node, (long) funcdescrptr, helperReg);
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, helperReg,
          generateS390MemoryReference(sspReg, offset+6*ptrSize, cg));
+
+   cg->stopUsingRegister(countReg);
    cg->stopUsingRegister(helperReg);
 
    TR::Register *rcReg     = cg->allocateRegister();
@@ -9835,9 +9842,10 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
    TR::Register *tmpReg    = cg->allocateRegister();
    TR::Register *R2SaveReg = cg->allocateRegister();
 
-   snippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, callLabel, cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390referenceArrayCopyHelper, false, false, false), doneLabel);
-   cg->addSnippet(snippet);
-   void*     destAddr = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390referenceArrayCopyHelper, false, false, false)->getMethodAddress();
+   TR::SymbolReference* helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390referenceArrayCopyHelper, false, false, false);
+   TR::Snippet * helperCallSnippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, callLabel,
+                                                                              helperCallSymRef, doneLabel);
+   cg->addSnippet(helperCallSnippet);
 
 // The snippet kill r14 and may kill r15, the rc is in r2
    deps->addPostCondition(rcReg,  linkage->getIntegerReturnRegister());
@@ -9862,7 +9870,6 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
       }
 
    generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCode(), node, rcReg, 65535);
-
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, OKLabel);
 
    // raise exceptions
@@ -10119,15 +10126,20 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && isObj)
       {
       TR::Register* tempReadBarrier = cg->allocateRegister();
+      if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
+         {
+         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
+         }
+      else
+         {
+         auto guardedLoadMnemonic = comp->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
 
-      auto guardedLoadMnemonic = comp->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
-
-      // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it
-      // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
-      // a read barrier
-      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      generateRXInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
-
+         // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it
+         // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
+         // a read barrier
+         generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
+         generateRXInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
+         }
       cg->stopUsingRegister(tempReadBarrier);
       }
 
@@ -12055,4 +12067,317 @@ J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->stopUsingRegister(codeReg);
 #endif
    return NULL;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ardbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* resultReg = NULL;
+
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      {
+      bool dynLitPoolLoad = false;
+      resultReg = TR::TreeEvaluator::checkAndAllocateReferenceRegister(node, cg, dynLitPoolLoad);
+      // MemRef can generate BRCL to unresolved data snippet if needed.
+      TR::MemoryReference* loadMemRef = generateS390MemoryReference(node, cg);
+
+      if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
+         {
+         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, loadMemRef);
+         }
+      else
+         {
+         TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, loadMemRef);
+         TR::InstOpCode::Mnemonic loadOp = cg->comp()->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
+         generateRXInstruction(cg, loadOp, node, resultReg, loadMemRef);
+         }
+      node->setRegister(resultReg);
+      }
+   else
+      {
+      resultReg = OMR::TreeEvaluatorConnector::ardbarEvaluator(node, cg);
+      }
+
+   return resultReg;
+   }
+
+/**
+ * \details
+ * Resolved and unresolved reference field load get two slightly different sequences.
+ *
+ * Resolved reference fields load sequence for -XnocompressedRefs:
+ * \verbatim
+ *
+ * Label:   startICF
+ * LG   R_obj, Ref_field_MemRef
+ *
+ * // range check with implicit CS cycle check
+ * CLG  R_obj, EvacuateBase(R_vmthread)
+ * BRC  COND_BL, doneLabel
+ * CLG  R_obj, EvacuateTop(R_vmthread)
+ * BRC  COND_BH, doneLabel
+ *
+ * LAY  R_addr, Ref_field_MemRef
+ * BRC  helper_call_snippet
+ *
+ * Label: jitReadBarrier return label
+ * // reload evacuated reference
+ * LG   R_obj, 0(R_addr)
+ *
+ * doneLabel: endICF
+ * \endverbatim
+ *
+ *
+ * Unresolved reference fields load sequence for -XnocompressedRefs:
+ * \verbatim
+ *
+ * Label:   startICF
+ * LAY  R_addr, Ref_field_MemRef
+ * LG   R_obj, 0(R_addr)
+ *
+ * // range check with implicit CS cycle check
+ * CLG  R_obj, EvacuateBase(R_vmthread)
+ * BRC  COND_BL, doneLabel
+ * CLG  R_obj, EvacuateTop(R_vmthread)
+ * BRC  COND_BH, doneLabel
+ *
+ * BRC  helper_call_snippet
+ *
+ * Label: jitReadBarrier return label
+ * // reload evacuated reference
+ * LG   R_obj, 0(R_addr)
+ *
+ * doneLabel: endICF
+ * \endverbatim
+ *
+ * If compressed pointer is enabled, the LG instructions above are replaced by LLGF+SLLG.
+ */
+TR::Register *
+J9::Z::TreeEvaluator::generateSoftwareReadBarrier(TR::Node* node,
+                                                  TR::CodeGenerator* cg,
+                                                  TR::Register* resultReg,
+                                                  TR::MemoryReference* loadMemRef,
+                                                  TR::RegisterDependencyConditions* deps,
+                                                  bool produceUnshiftedValue)
+   {
+   TR::Compilation* comp = cg->comp();
+   TR::Register* fieldAddrReg = cg->allocateRegister();
+   TR::RealRegister* raReg   = cg->machine()->getRealRegister(cg->getReturnAddressRegister());
+   bool isCompressedRef = comp->useCompressedPointers();
+
+   if (!isCompressedRef)
+      {
+      TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, loadMemRef);
+      }
+
+   const bool fieldUnresolved = node->getSymbolReference()->isUnresolved();
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "SoftwareReadBarrier: symbol is %s. Compr shift %d. RA reg: %s Entry reg %s\n",
+               fieldUnresolved ? "unresolved" : "resolved",
+               TR::Compiler->om.compressedReferenceShift(),
+               raReg->getRegisterName(comp),
+               cg->getEntryPointRealRegister()->getRegisterName(comp));
+      }
+
+   bool notInsideICF = (deps == NULL);
+   if (notInsideICF)
+      {
+      deps = generateRegisterDependencyConditions(0, 6, cg);
+      TR::LabelSymbol* startICFLabel = generateLabelSymbol(cg);
+
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startICFLabel);
+      startICFLabel->setStartInternalControlFlow();
+      }
+
+   TR::Register* dummyRegForRA = cg->allocateRegister();
+   TR::Register* dummyRegForEntry = cg->allocateRegister();
+   dummyRegForRA->setPlaceholderReg();
+   dummyRegForEntry->setPlaceholderReg();
+
+   deps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+   deps->addPostCondition(fieldAddrReg, TR::Compiler->target.isLinux() ? TR::RealRegister::GPR3 : TR::RealRegister::GPR2);
+   deps->addPostCondition(dummyRegForRA, cg->getReturnAddressRegister());
+   deps->addPostCondition(dummyRegForEntry, cg->getEntryPointRegister());
+
+   cg->stopUsingRegister(dummyRegForRA);
+   cg->stopUsingRegister(dummyRegForEntry);
+
+   int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+   bool shouldShift = (shiftAmount != 0) && !produceUnshiftedValue;
+   TR::InstOpCode::Mnemonic loadOpCode = isCompressedRef ? TR::InstOpCode::LLGF: TR::InstOpCode::LG;
+
+   if (fieldUnresolved)
+      {
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, fieldAddrReg, loadMemRef);
+      generateRXInstruction(cg, loadOpCode, node, resultReg, generateS390MemoryReference(fieldAddrReg, 0, cg));
+      }
+   else
+      {
+      generateRXInstruction(cg, loadOpCode, node, resultReg, loadMemRef);
+      }
+
+   deps->addAssignAnyPostCondOnMemRef(loadMemRef);
+
+   TR::Register* vmReg = cg->getLinkage()->getMethodMetaDataRealRegister();
+
+   TR::MemoryReference* baseMemRef = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateBaseAddressOffset(comp), cg);
+   TR::MemoryReference* topMemRef  = generateS390MemoryReference(vmReg, TR::Compiler->vm.thisThreadGetEvacuateTopAddressOffset(comp), cg);
+
+   // Range check with implicit software CS status check.
+   TR::LabelSymbol* doneLabel = generateLabelSymbol(cg);
+   generateRXInstruction(cg, comp->useCompressedPointers() ? TR::InstOpCode::CL : TR::InstOpCode::CLG, node, resultReg, baseMemRef);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, doneLabel);
+   generateRXInstruction(cg, comp->useCompressedPointers() ? TR::InstOpCode::CL : TR::InstOpCode::CLG, node, resultReg, topMemRef);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, doneLabel);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "readBar/helperCall"), 1, TR::DebugCounter::Cheap);
+   if (!fieldUnresolved)
+      {
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, fieldAddrReg, generateS390MemoryReference(*loadMemRef, 0, cg));
+      }
+
+   TR::LabelSymbol* callLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* callEndLabel = generateLabelSymbol(cg);
+   TR::Instruction *gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, callLabel);
+   gcPoint->setNeedsGCMap(0);
+   auto readBarHelperSnippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, callLabel,
+                                                                                  cg->symRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false),
+                                                                                  callEndLabel);
+   cg->addSnippet(readBarHelperSnippet);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callEndLabel);
+
+   // Reload the object after helper call.
+   generateRXInstruction(cg, loadOpCode, node, resultReg, generateS390MemoryReference(fieldAddrReg, 0, cg));
+   TR::Instruction* cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel);
+   if (notInsideICF)
+      {
+      cursor->setDependencyConditions(deps);
+      doneLabel->setEndInternalControlFlow();
+      }
+
+   // produce decompressed value in the end
+   if (shouldShift)
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SLLG, node, resultReg, resultReg, shiftAmount);
+      }
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "readBar/total"), 1, TR::DebugCounter::Cheap);
+   cg->stopUsingRegister(fieldAddrReg);
+
+   return resultReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::arraycopyEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   if (node->isReferenceArrayCopy())
+      {
+      TR::TreeEvaluator::referenceArraycopyEvaluator(node, cg);
+      }
+   else
+      {
+      OMR::TreeEvaluatorConnector::arraycopyEvaluator(node, cg);
+      }
+   return NULL;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::referenceArraycopyEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node* byteSrcObjNode = node->getChild(0);
+   TR::Node* byteDstObjNode = node->getChild(1);
+   TR::Node* byteSrcNode    = node->getChild(2);
+   TR::Node* byteDstNode    = node->getChild(3);
+   TR::Node* byteLenNode    = node->getChild(4);
+
+   TR::Register* byteSrcObjReg = cg->evaluate(byteSrcObjNode);
+   TR::Register* byteDstObjReg = cg->evaluate(byteDstObjNode);
+
+   if (!node->chkNoArrayStoreCheckArrayCopy())
+      {
+      TR::Register* byteSrcReg = cg->evaluate(byteSrcNode);
+      TR::Register* byteDstReg = cg->evaluate(byteDstNode);
+      TR::Register* byteLenReg = cg->evaluate(byteLenNode);
+
+      genArrayCopyWithArrayStoreCHK(node, byteSrcObjReg, byteDstObjReg, byteSrcReg, byteDstReg, byteLenReg, cg);
+
+      cg->decReferenceCount(byteSrcNode);
+      cg->decReferenceCount(byteDstNode);
+      cg->decReferenceCount(byteLenNode);
+      }
+   else
+      {
+      TR_ASSERT_FATAL(node->getArrayCopyElementType() == TR::Address, "Reference arraycopy element type should be TR::Address but was '%s'", node->getArrayCopyElementType().toString());
+      primitiveArraycopyEvaluator(node, cg, byteSrcNode, byteDstNode, byteLenNode);
+      genWrtbarForArrayCopy(node, byteSrcObjReg, byteDstObjReg, byteSrcNode->isNonNull(), cg);
+      }
+
+   cg->decReferenceCount(byteSrcObjNode);
+   cg->decReferenceCount(byteDstObjNode);
+   return NULL;
+   }
+
+void
+J9::Z::TreeEvaluator::forwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg,
+                                                        TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                                        TR::Register *byteLenReg, TR::Node *byteLenNode,
+                                                        TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel)
+   {
+   bool mustGenerateOOLGuardedLoadPath = TR::Compiler->om.readBarrierType() != gc_modron_readbar_none &&
+                                         node->getArrayCopyElementType() == TR::Address;
+   if (mustGenerateOOLGuardedLoadPath)
+      {
+      // It might be possible that we have constant byte lenght load and it is forward array copy.
+      // In this case if we need to do guarded Load then need to evaluate byteLenNode.
+      if (byteLenReg == NULL)
+         byteLenReg = cg->gprClobberEvaluate(byteLenNode);
+      TR::TreeEvaluator::genGuardedLoadOOL(node, cg, byteSrcReg, byteDstReg, byteLenReg, mergeLabel, srm, true);
+      }
+
+   OMR::TreeEvaluatorConnector::forwardArrayCopySequenceGenerator(node, cg, byteSrcReg, byteDstReg, byteLenReg, byteLenNode, srm, mergeLabel);
+   }
+
+TR::RegisterDependencyConditions *
+J9::Z::TreeEvaluator::backwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg,
+                                                         TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                                         TR::Register *byteLenReg, TR::Node *byteLenNode,
+                                                         TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel)
+   {
+   bool mustGenerateOOLGuardedLoadPath = TR::Compiler->om.readBarrierType() != gc_modron_readbar_none &&
+                                         node->getArrayCopyElementType() == TR::Address;
+   if (mustGenerateOOLGuardedLoadPath)
+      {
+      TR::TreeEvaluator::genGuardedLoadOOL(node, cg, byteSrcReg, byteDstReg, byteLenReg, mergeLabel, srm, false);
+      }
+
+   return OMR::TreeEvaluatorConnector::backwardArrayCopySequenceGenerator(node, cg, byteSrcReg, byteDstReg, byteLenReg, byteLenNode, srm, mergeLabel);
+   }
+
+void
+J9::Z::TreeEvaluator::generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeGenerator *cg,
+                                                       TR::MemoryReference *srcMemRef, TR::MemoryReference *dstMemRef,
+                                                       TR_S390ScratchRegisterManager *srm,
+                                                       TR::DataType elenmentType, bool needsGuardedLoad,
+                                                       TR::RegisterDependencyConditions* deps)
+
+   {
+   if ((node->getArrayCopyElementType() == TR::Address)
+           && needsGuardedLoad
+           && TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
+      {
+      TR::Register* resultReg = srm->findOrCreateScratchRegister();
+      TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, srcMemRef, deps, true);
+      TR::InstOpCode::Mnemonic storeOp = TR::InstOpCode::ST;
+      if (TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers())
+         {
+         storeOp = TR::InstOpCode::STG;
+         }
+
+      generateRXInstruction(cg, storeOp, node, resultReg, dstMemRef);
+      srm->reclaimScratchRegister(resultReg);
+      }
+   else
+      {
+      OMR::TreeEvaluatorConnector::generateLoadAndStoreForArrayCopy(node, cg, srcMemRef, dstMemRef, srm, elenmentType, needsGuardedLoad, deps);
+      }
    }

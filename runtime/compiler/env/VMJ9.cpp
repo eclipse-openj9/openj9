@@ -1920,11 +1920,11 @@ UDATA TR_J9VMBase::thisThreadGetConcurrentScavengeActiveByteAddressOffset()
 UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-#if defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
    return offsetof(J9VMThread, readBarrierRangeCheckBaseCompressed);
 #else
    return offsetof(J9VMThread, readBarrierRangeCheckBase);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390) */
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field readBarrierRangeCheckBase does not exists in J9VMThread.");
    return 0;
@@ -1937,11 +1937,11 @@ UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
 UDATA TR_J9VMBase::thisThreadGetEvacuateTopAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-#if defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
    return offsetof(J9VMThread, readBarrierRangeCheckTopCompressed);
 #else
    return offsetof(J9VMThread, readBarrierRangeCheckTop);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390) */
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field readBarrierRangeCheckTop does not exists in J9VMThread.");
    return 0;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 
-J9_EXTERN_BUILDER_SYMBOL(handleSoftwareReadBarrier);
 J9_EXTERN_BUILDER_SYMBOL(handleHardwareReadBarrier);
 
 void
@@ -72,11 +71,7 @@ j9gs_initializeThread(J9VMThread *vmThread)
 			gsControlBlock->designationRegister = 0;
 			gsControlBlock->sectionMask = 0;
 			gsControlBlock->paramListAddr = (uint64_t) &vmThread->gsParameters;
-			if (1 == supportsGuardedStorageFacility) {
-				vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleHardwareReadBarrier);
-			} else {
-				vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleSoftwareReadBarrier);
-			}
+			vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleHardwareReadBarrier);
 
 			/* Initialize the parameters */
 			j9gs_params_init(&vmThread->gsParameters, gsControlBlock);
