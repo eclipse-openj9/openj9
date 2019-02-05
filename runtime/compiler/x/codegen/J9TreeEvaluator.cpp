@@ -1672,9 +1672,11 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         static_assert(IS_32BIT_SIGNED(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE), "Unexcepted value of J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE.");
+         bool use64BitClasses = TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers();
+
          TR::LabelSymbol* rdbarLabel = generateLabelSymbol(cg);
-         generateMemImmInstruction(TEST4MemImm4, node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, privateFlags), cg), J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE, cg);
+         // EvacuateTopAddress == 0 means Concurrent Scavenge is inactive
+         generateMemImmInstruction(CMPMemImms(use64BitClasses), node, generateX86MemoryReference(cg->getVMThreadRegister(), cg->comp()->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg), 0, cg);
          generateLabelInstruction(JNE4, node, rdbarLabel, cg);
 
          TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
