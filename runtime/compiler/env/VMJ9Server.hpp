@@ -226,7 +226,7 @@ public:
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL) override;
    virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override { TR_ASSERT(0, "called");  return 0; }
-   virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT=false) override { TR_ASSERT(0, "called");  return TR_no; }
+   virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT=false) override;
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT=false) override { TR_ASSERT(0, "called");  return 0; }
