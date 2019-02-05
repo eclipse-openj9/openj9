@@ -3416,18 +3416,6 @@ bool
     }
 
 bool
-TR_J9VMBase::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return isMethodTracingEnabled(method);
-   }
-
-bool
-TR_J9VMBase::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return isMethodTracingEnabled(method);
-   }
-
-bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
    {
    return false;
@@ -8444,19 +8432,6 @@ TR_J9SharedCacheVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
    // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
    return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
-   }
-
-bool
-TR_J9SharedCacheVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
-   return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter);
-   }
-
-bool
-TR_J9SharedCacheVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
    }
 
 bool
