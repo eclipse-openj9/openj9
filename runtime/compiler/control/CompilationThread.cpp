@@ -6787,7 +6787,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
       eligibleForRelocatableCompile =
-            enableJITaaSRemoteAOT && // disable remote JITaaS AOT until it's working
+            (enableJITaaSRemoteAOT || !entry->isOutOfProcessCompReq()) && // disable remote JITaaS AOT until it's working
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
