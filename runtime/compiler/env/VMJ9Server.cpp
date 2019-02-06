@@ -1505,6 +1505,7 @@ TR_J9SharedCacheServerVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
       return publicClass;
    else
       return true;
+   }
 
 TR_YesNoMaybe
 TR_J9SharedCacheServerVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT)
