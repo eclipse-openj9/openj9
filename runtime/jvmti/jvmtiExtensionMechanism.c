@@ -3301,7 +3301,7 @@ jvmtiGetJ9method(jvmtiEnv *env, jmethodID mid, void **j9MethodPtr, ...)
 
 done:
 	if (NULL != j9MethodPtr) {
-		j9MethodPtr = rv_j9Method;
+		*j9MethodPtr = rv_j9Method;
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetJ9method);
 }
