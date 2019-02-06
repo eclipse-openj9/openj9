@@ -124,8 +124,6 @@ class X86CallSnippet : public TR::Snippet
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
 
-   static TR_RuntimeHelper getInterpretedDispatchHelper(TR::SymbolReference *, TR::DataType, bool, TR::CodeGenerator *);
-
    TR::SymbolReference *getRealMethodSymbolReference() { return _realMethodSymbolReference; }
 
    private:
