@@ -1507,6 +1507,34 @@ TR_J9SharedCacheServerVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
       return true;
    }
 
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo)
+   {
+   TR_OpaqueClassBlock * classPointer = (TR_OpaqueClassBlock *)(profiledInfo->_value);
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   if (comp->getPersistentInfo()->isObsoleteClass((void *)classPointer, comp->fe()))
+      return NULL;
+
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addProfiledClassRecord(classPointer);
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer))
+         validated = true;
+      }
+
+   if (validated)
+      return classPointer;
+   else
+      return NULL;
+   }
+
 TR_YesNoMaybe
 TR_J9SharedCacheServerVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT)
    {
