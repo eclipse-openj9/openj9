@@ -2181,6 +2181,28 @@ TR_RelocationRecordInlinedMethod::preparePrivateData(TR_RelocationRuntime *reloR
    RELO_LOG(reloRuntime->reloLogger(), 5, "\tpreparePrivateData: ramMethod %p inlinedSiteIsValid %d\n", ramMethod, inlinedSiteIsValid);
    }
 
+bool
+TR_RelocationRecordInlinedMethod::inlinedSiteCanBeActivated(TR_RelocationRuntime *reloRuntime,
+                                                            TR_RelocationTarget *reloTarget,
+                                                            J9Method *currentMethod)
+   {
+   TR::SimpleRegex * regex = reloRuntime->options()->getDisabledInlineSites();
+   if (regex && TR::SimpleRegex::match(regex, inlinedSiteIndex(reloTarget)))
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: inlined site forcibly disabled by options\n");
+      return false;
+      }
+
+   if (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod) ||
+       reloRuntime->fej9()->canMethodEnterEventBeHooked() ||
+       reloRuntime->fej9()->canMethodExitEventBeHooked())
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: target may need enter/exit tracing so disabling inline site\n");
+      return false;
+      }
+
+   return true;
+   }
 
 bool
 TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock **theMethod)
@@ -2248,14 +2270,8 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             inlinedSiteIsValid = false;
          }
 
-      if (inlinedSiteIsValid &&
-          (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod) ||
-           reloRuntime->fej9()->canMethodEnterEventBeHooked() ||
-           reloRuntime->fej9()->canMethodExitEventBeHooked()))
-         {
-         RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: target may need enter/exit tracing so disabling inline site\n");
-         inlinedSiteIsValid = false;
-         }
+      if (inlinedSiteIsValid)
+         inlinedSiteIsValid = inlinedSiteCanBeActivated(reloRuntime, reloTarget, currentMethod);
 
       if (inlinedSiteIsValid)
          {
@@ -2277,27 +2293,22 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             }
          else
             {
-            inlinedSiteIsValid = false;
             if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
                SVM_ASSERT(false, "compileRomClass and currentRomClass should not be different!");
+
+            inlinedSiteIsValid = false;
             }
          }
-      }
-
-   /* Even if the inlined site is disabled, the inlined site table in the metadata
-    * should still be populated
-    */
-   TR::SimpleRegex * regex = reloRuntime->options()->getDisabledInlineSites();
-   if (regex && TR::SimpleRegex::match(regex, inlinedSiteIndex(reloTarget)))
-      {
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: inlined site forcibly disabled by options\n");
-      inlinedSiteIsValid = false;
       }
 
    if (!inlinedSiteIsValid)
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: not valid\n");
 
+   /* Even if the inlined site is disabled, the inlined site table in the metadata
+    * should still be populated under AOT w/ SVM
+    */
    *theMethod = reinterpret_cast<TR_OpaqueMethodBlock *>(currentMethod);
+
    return inlinedSiteIsValid;
    }
 
