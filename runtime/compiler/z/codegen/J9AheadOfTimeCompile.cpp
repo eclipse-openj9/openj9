@@ -960,6 +960,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
       case TR_ProfiledMethodGuardRelocation :
          {
          guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
+         TR_OpaqueClassBlock *inlinedCodeClass = guard->getThisClass();
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
          *(uintptrj_t *)cursor = (uintptrj_t)inlinedSiteIndex;
@@ -970,10 +971,18 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          *(uintptrj_t *)cursor = (uintptrj_t)owningMethod->constantPool(); // record constant pool
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t*)cursor = (uintptrj_t)callSymRef->getCPIndex(); // record cpIndex
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            uint16_t inlinedCodeClassID = symValManager->getIDFromSymbol(static_cast<void *>(inlinedCodeClass));
+            uintptrj_t data = (uintptrj_t)inlinedCodeClassID;
+            *(uintptrj_t*)cursor = data;
+            }
+         else
+            {
+            *(uintptrj_t*)cursor = (uintptrj_t)callSymRef->getCPIndex(); // record cpIndex
+            }
          cursor += SIZEPOINTER;
 
-         TR_OpaqueClassBlock *inlinedCodeClass = guard->getThisClass();
          int32_t len;
          char *className = fej9->getClassNameChars(inlinedCodeClass, len);
          //traceMsg(comp(), "inlined site index is %d, inlined code class is %.*s\n", inlinedSiteIndex, len, className);
