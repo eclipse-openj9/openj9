@@ -1363,7 +1363,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             {
             TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
-            svm->addClassFromMethodRecord(containingClass(), aMethod);
+            SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
          else
             {

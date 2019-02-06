@@ -437,9 +437,8 @@ TR_ResolvedMethod * TR_PersistentCHTable::findSingleImplementer(
                                                                  callerMethod->getPersistentIdentifier(),
                                                                  useGetResolvedInterfaceMethod);
       if (validated)
-         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
-
-      if (!validated)
+         SVM_ASSERT_ALREADY_VALIDATED(svm, implementer->classOfMethod());
+      else
          implementer = NULL;
       }
 
@@ -487,9 +486,8 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
                                                                           callerMethod->getPersistentIdentifier());
 
       if (validated)
-         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
-
-      if (!validated)
+         SVM_ASSERT_ALREADY_VALIDATED(svm, implementer->classOfMethod());
+      else
          implementer = NULL;
       }
 
@@ -594,9 +592,8 @@ TR_PersistentCHTable::findSingleAbstractImplementer(
                                                                          callerMethod->getPersistentIdentifier());
 
       if (validated)
-         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
-
-      if (!validated)
+         SVM_ASSERT_ALREADY_VALIDATED(svm, implementer->classOfMethod());
+      else
          implementer = NULL;
       }
 
