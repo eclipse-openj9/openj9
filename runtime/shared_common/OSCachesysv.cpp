@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -281,24 +281,20 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 					break;
 				}
 
-				if (0 == getCachePathName(PORTLIB, _cacheDirName, pathFileName, J9SH_MAXPATH, _semFileName)) {
-					memset(&statBuf, 0, sizeof(statBuf));
-					if (0 == j9file_stat(pathFileName, 0, &statBuf)) {
-						if (1 != statBuf.perm.isGroupReadable) {
-							/* Control file needs to be group readable */
-							Trc_SHR_OSC_startup_setGroupAccessFailed(pathFileName);
-							OSC_WARNING_TRACE1(J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED, pathFileName);
-						}
-					} else {
-						Trc_SHR_OSC_startup_badFileStat(pathFileName);
-						lastErrorInfo.lastErrorCode = j9error_last_error_number();
-						lastErrorInfo.lastErrorMsg = j9error_last_error_message();
-						errorHandler(J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT, &lastErrorInfo);
-						rc = OSCACHESYSV_FAILURE;
-						break;
+				getCachePathName(PORTLIB, _cacheDirName, pathFileName, J9SH_MAXPATH, _semFileName);
+				/* No check for return value of getCachePathName() as it always return 0 */
+				memset(&statBuf, 0, sizeof(statBuf));
+				if (0 == j9file_stat(pathFileName, 0, &statBuf)) {
+					if (1 != statBuf.perm.isGroupReadable) {
+						/* Control file needs to be group readable */
+						Trc_SHR_OSC_startup_setGroupAccessFailed(pathFileName);
+						OSC_WARNING_TRACE1(J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED, pathFileName);
 					}
 				} else {
-					Trc_SHR_Assert_ShouldNeverHappen();
+					Trc_SHR_OSC_startup_badFileStat(pathFileName);
+					lastErrorInfo.lastErrorCode = j9error_last_error_number();
+					lastErrorInfo.lastErrorMsg = j9error_last_error_message();
+					errorHandler(J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT, &lastErrorInfo);
 					rc = OSCACHESYSV_FAILURE;
 					break;
 				}
@@ -2677,12 +2673,8 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 	}
 
 	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false);
-
-	if (0 != SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen)) {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		rc = -1;
-		goto done;
-	}
+	/* No check for the return value of getCachePathName() as it always returns 0 */
+	SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
 
 	fd = j9file_open(pathFileName, EsOpenRead | EsOpenWrite, 0);
 	if (-1 == fd) {
