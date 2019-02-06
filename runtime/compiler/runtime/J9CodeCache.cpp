@@ -103,61 +103,6 @@ J9::CodeCache::allocate(TR::CodeCacheManager *cacheManager, size_t segmentSize, 
    return newCodeCache;
    }
 
-// Initialize a code cache
-//
-// This function is deprecated in favour of the version that does not take
-// a CodeCacheHashEntrySlab parameter, and will be removed once upstream
-// OMR changes have merged.  It is otherwise identical to that function.
-//
-bool
-J9::CodeCache::initialize(TR::CodeCacheManager *manager,
-                         TR::CodeCacheMemorySegment *codeCacheSegment,
-                         size_t codeCacheSizeAllocated,
-                         OMR::CodeCacheHashEntrySlab *hashEntrySlab)
-   {
-   // make J9 memory segment look all used up
-   //J9MemorySegment *j9segment = _segment->segment();
-   //j9segment->heapAlloc = j9segment->heapTop;
-
-   TR::CodeCacheConfig & config = manager->codeCacheConfig();
-   if (config.needsMethodTrampolines())
-      {
-      int32_t percentageToUse;
-      if (!(TR::Options::getCmdLineOptions()->getTrampolineSpacePercentage() > 0))
-         {
-#if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
-         percentageToUse = 7;
-#else
-         percentageToUse = 4;
-#endif
-         // The number of helpers and the trampoline size are both factors here
-         size_t trampolineSpaceSize = config.trampolineCodeSize() * config.numRuntimeHelpers();
-         if (trampolineSpaceSize >= 3400)
-            {
-            // This will be PPC64, AMD64 and 390
-            if (config.codeCacheKB() < 512 && config.codeCacheKB() > 256)
-               percentageToUse = 5;
-            else if (config.codeCacheKB() <= 256)
-               percentageToUse = 6;
-            }
-         }
-      else
-         {
-         percentageToUse = TR::Options::getCmdLineOptions()->getTrampolineSpacePercentage();
-         }
-
-      config._trampolineSpacePercentage = percentageToUse;
-      }
-
-   if (!self()->OMR::CodeCache::initialize(manager, codeCacheSegment, codeCacheSizeAllocated, hashEntrySlab))
-      return false;
-   self()->setInitialAllocationPointers();
-
-   _manager->reportCodeLoadEvents();
-
-   return true;
-   }
-
 
 bool
 J9::CodeCache::initialize(TR::CodeCacheManager *manager,
