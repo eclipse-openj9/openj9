@@ -23,18 +23,6 @@
 ;                                    COMMON
 ; --------------------------------------------------------------------------------
 
-; Binary encoding of the MFENCE instruction.  Not all assemblers can handle the mnemonic.
-;
-%macro tr_mfence 0
-      db          00Fh
-      db          0AEh
-      db          0F0h
-%endmacro
-
-%macro MEMORY_FENCE 0
-      tr_mfence
-%endmacro
-
 eq_WideCPIndexPush                equ 000800000h
 eq_ResolveWithoutPatchingMainline equ 000400000h
 eq_ResolveWithoutPatchingSnippet  equ 000200000h
