@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,7 +122,7 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 	}
 
 	sharedMemoryPathAndFileName = getSharedMemoryPathandFileName(portLibrary, cacheDirName, semname);
-	omrstr_printf(baseFile, J9SH_MAXPATH, "%s_mutex", sharedMemoryPathAndFileName);
+	omrstr_printf(baseFile, J9SH_MAXPATH, "%s"J9SH_MUTEX_STR, sharedMemoryPathAndFileName);
 	omrmem_free_memory(sharedMemoryPathAndFileName);
 	Trc_PRT_shsem_j9shsem_open_builtsemname(baseFile);
 	for (i = 0; baseFile[i] != '\0' && i < J9SH_MAXPATH; i++) {
@@ -416,7 +416,7 @@ createMutex(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_hand
 	
 	for (i = 0; i < shsem_handle->setSize; i++) {
 		HANDLE debugHandle;          
-		omrstr_printf(mutexName, J9SH_MAXPATH, "%s_set%d", shsem_handle->rootName, i);
+		omrstr_printf(mutexName, J9SH_MAXPATH, "%s"J9SH_SET_STR"%d", shsem_handle->rootName, i);
 		Trc_PRT_shsem_j9shsem_createmutex_creatingset(i, mutexName);   
 		  
 		unicodeMutexName = port_convertFromUTF8(OMRPORTLIB, mutexName, unicodeBuffer, UNICODE_BUFFER_SIZE);
@@ -450,7 +450,7 @@ openMutex(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle
 	Trc_PRT_shsem_j9shsem_openmutex_entered(shsem_handle->rootName);
 
 	for (i = 0; i < shsem_handle->setSize; i++) {
-		omrstr_printf(mutexName, J9SH_MAXPATH, "%s_set%d", shsem_handle->rootName, i);
+		omrstr_printf(mutexName, J9SH_MAXPATH, "%s"J9SH_SET_STR"%d", shsem_handle->rootName, i);
 		Trc_PRT_shsem_j9shsem_openmutex_openingset(i, mutexName);          
 
 		/*convert the name to unicode*/
