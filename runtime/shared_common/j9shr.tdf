@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2018 IBM Corp. and others
+// Copyright (c) 2006, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2935,3 +2935,4 @@ TraceEvent=Trc_SHR_INIT_j9shr_findGCHints_Event_Found Overhead=1 Level=4 Templat
 TraceEvent=Trc_SHR_CM_storeSharedData_OverwriteExisting Overhead=1 Level=4 Template="CM storeSharedData: Existing data in the shared cache has been overwritten (result %p, data->address %p, foundDatalen %zu)."
 TraceEvent=Trc_SHR_CM_updateLocalHintsData_OverwriteHeapSizes Overhead=1 Level=4 Template="CM updateLocalHintsData: Existing hints (heapSize1=%zu, heapSize2=%zu) in the shared cache will be overwritten to (heapSize1=%zu, heapSize2=%zu)."
 TraceEvent=Trc_SHR_CM_updateLocalHintsData_WriteHeapSizes Overhead=1 Level=4 Template="CM updateLocalHintsData: Will write hints (heapSize1=%zu, heapSize2=%zu) to shared cache."
+TraceException=Trc_SHR_OSC_getCachePathName_BufferOverFlow NoEnv Overhead=1 Level=1 Template="OSCache:: getCachePathName: The length of cacheDir %s and cacheNameWithVGen %s should be less than buffer size %zu"
