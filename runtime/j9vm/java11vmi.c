@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,6 @@ static UDATA hashTableAtPut(J9HashTable * table, void * value, BOOLEAN collision
 static void throwExceptionHelper(J9VMThread * currentThread, UDATA errCode);
 static void freePackage(J9VMThread * currentThread, J9Package * j9package);
 static J9ClassLoader * getModuleObjectClassLoader(J9VMThread * currentThread, j9object_t moduleObject);
-static j9object_t getModuleObjectName(J9VMThread * currentThread, j9object_t moduleObject);
 static J9Module * createModule(J9VMThread * currentThread, j9object_t moduleObject, J9ClassLoader * classLoader, j9object_t moduleName);
 static J9Module * getJ9Module(J9VMThread * currentThread, jobject module);
 static BOOLEAN isModuleNameValid(j9object_t moduleName);
@@ -256,12 +255,7 @@ createPackage(J9VMThread * currentThread, J9Module * fromModule, j9object_t pack
 static J9ClassLoader *
 getModuleObjectClassLoader(J9VMThread * currentThread, j9object_t moduleObject)
 {
-	j9object_t classLoader = NULL;
-	if(J2SE_SHAPE(currentThread->javaVM) < J2SE_SHAPE_B165) {
-		classLoader = J9VMJAVALANGREFLECTMODULE_LOADER(currentThread, moduleObject);
-	} else {
-		classLoader = J9VMJAVALANGMODULE_LOADER(currentThread, moduleObject);
-	}
+	j9object_t classLoader = J9VMJAVALANGMODULE_LOADER(currentThread, moduleObject);
 	if (NULL == classLoader) {
 		return currentThread->javaVM->systemClassLoader;
 	} else {
@@ -271,19 +265,6 @@ getModuleObjectClassLoader(J9VMThread * currentThread, j9object_t moduleObject)
 			loader = vm->internalVMFunctions->internalAllocateClassLoader(vm, classLoader);
 		}
 		return loader;
-	}
-}
-
-/** @note It assumes moduleObject is guaranteed not to be NULL
- *  @return Java String containing module name. 
- */
-static j9object_t
-getModuleObjectName(J9VMThread * currentThread, j9object_t moduleObject)
-{
-	if(J2SE_SHAPE(currentThread->javaVM) < J2SE_SHAPE_B165) {
-		return J9VMJAVALANGREFLECTMODULE_NAME(currentThread, moduleObject);
-	} else {
-		return J9VMJAVALANGMODULE_NAME(currentThread, moduleObject);
 	}
 }
 
@@ -941,7 +922,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
 
 		J9ClassLoader * const classLoader = getModuleObjectClassLoader(currentThread, modObj);
-		j9object_t moduleName = getModuleObjectName(currentThread, modObj);
+		j9object_t moduleName = J9VMJAVALANGMODULE_NAME(currentThread, modObj);
 
 #if J9VM_JAVA9_BUILD >= 156
 		if ((classLoader != vm->systemClassLoader) && (classLoader != vm->platformClassLoader)) {
@@ -1561,17 +1542,10 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module) {
 		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
 		J9ClassLoader *systemClassLoader = vm->systemClassLoader;
 		J9Class *instanceClazz = J9OBJECT_CLAZZ(currentThread, modObj);
-		J9Class *moduleClass = NULL;
-		if (J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-			moduleClass = vmFuncs->internalFindKnownClass(currentThread,
-				J9VMCONSTANTPOOL_JAVALANGREFLECTMODULE,
-				J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
-		} else {
-			moduleClass = vmFuncs->internalFindKnownClass(currentThread,
-				J9VMCONSTANTPOOL_JAVALANGMODULE,
-				J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
-		}
 		if (!currentThread->currentException) {
+			J9Class *moduleClass = vmFuncs->internalFindKnownClass(currentThread,
+					J9VMCONSTANTPOOL_JAVALANGMODULE,
+					J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 			if (!isModuleUnnamed(currentThread, modObj)) {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "named module was supplied");
 			} else if (!isSameOrSuperClassOf(moduleClass, instanceClazz)) {

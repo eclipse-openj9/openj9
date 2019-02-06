@@ -1287,43 +1287,29 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 }
 
 typedef struct VersionSetting {
-	char* key;
+	const char* key;
 	UDATA value;
 } VersionSetting;
 
 
 /**
  * Table to map textual props file entries to numeric constants.
- * The 'b' levels are sorted in ascending order, and camparison of the shape value from classlib.properties
- * with the keys starts from last entry in this table, the lower and closest key to the the shape value is returned.
- * For example, a shape value 'b140' will match to 'b136' and J2SE_SHAPE_B136 is returned;
- * If a shape value specified such as b72 is less than smallest existing key (i.e. b135), an error is printed.
- *
- * !!! Note about "b135" ==> J2SE_SHAPE_B136 !!!
- * For historic reason, J2SE_SHAPE_B136 was introduced when actual build level 135 was used.
- * Mapping b135 to J2SE_SHAPE_B136 (changed from previous b136) allows both shape b135 & b136 working
- * and avoid naming change from J2SE_SHAPE_B136 to J2SE_SHAPE_B135.
- * This will be removed when a new stable JCL build level is determined and b135 is obsolete.
  *
  * Note: shapes "sun" and "sun_openjdk" here are for accommodation of such values within Java 8 classlib.properties.
  *       Both shapes are mapped to J2SE_SHAPE_OPENJDK to indicate a Java 8 SDK.
  */
-VersionSetting SHAPE_SETTINGS[] = {
+static const VersionSetting SHAPE_SETTINGS[] = {
 		{"sun", J2SE_SHAPE_OPENJDK},
 		{"sun_openjdk", J2SE_SHAPE_OPENJDK},
 		{"raw", J2SE_SHAPE_RAW},
 		{"rawplusj9", J2SE_SHAPE_RAWPLUSJ9},
-		{"b135", J2SE_SHAPE_B136},
-		{"b148", J2SE_SHAPE_B148},
-		{"b165", J2SE_SHAPE_B165},
-		{"b1000", J2SE_SHAPE_V10},
 };
 #define NUM_SHAPE_SETTINGS (sizeof(SHAPE_SETTINGS) / sizeof(VersionSetting))
 
 /**
  * Table to map textual props file entries to numeric constants.
  */
-VersionSetting VERSION_SETTINGS[] = {
+static const VersionSetting VERSION_SETTINGS[] = {
 		{"1.8", J2SE_18},
 		{"1.9", J2SE_19}
 };
@@ -1331,12 +1317,12 @@ VersionSetting VERSION_SETTINGS[] = {
 
 
 static UDATA 
-decodeSetting(const char* key, const char* value, VersionSetting* settings, IDATA numSettings)
+decodeSetting(const char* key, const char* value, const VersionSetting* settings, IDATA numSettings)
 {
 	IDATA index = 0;
 	
 	for (index = 0; index < numSettings; index++) {
-		VersionSetting *setting = &settings[index];
+		const VersionSetting *setting = &settings[index];
 		if (!strcmp(value, setting->key)) {
 			return setting->value;
 		}
@@ -1350,7 +1336,7 @@ decodeSetting(const char* key, const char* value, VersionSetting* settings, IDAT
 		int levelValue = atoi((const char*)(value + 1));
 		if (levelValue > 0) {
 			for (index = numSettings - 1; index >= 0; index--) {
-				VersionSetting *setting = &settings[index];
+				const VersionSetting *setting = &settings[index];
 				if ('b' == *setting->key) {
 					int keyNbr = atoi((const char*)(setting->key + 1));
 					if (keyNbr > 0) {
@@ -1371,7 +1357,7 @@ decodeSetting(const char* key, const char* value, VersionSetting* settings, IDAT
 #if defined(DEBUG)	
 	printf("Valid choices are: ");
 	for (index=0; index < numSettings; index++) {
-		VersionSetting* setting = &settings[index];
+		const VersionSetting* setting = &settings[index];
 		printf("%s", setting->key);
 		if (index != numSettings-1)
 				printf(", ");		
@@ -1453,16 +1439,19 @@ bail:
  * Attempt loading 'release' file, and get Java version info.
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
  * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
- * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
+ * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_V9';
  * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
  * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
- * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
- *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
- *         'J2SE_V12 | J2SE_SHAPE_V12', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK',
+ *         'J2SE_19 | J2SE_SHAPE_V9',
+ *         'J2SE_V10 | J2SE_SHAPE_V10',
+ *         'J2SE_V11 | J2SE_SHAPE_V11',
+ *         'J2SE_V12 | J2SE_SHAPE_V12',
+ *         'J2SE_LATEST | J2SE_SHAPE_LATEST'
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1489,7 +1478,7 @@ getVersionFromReleaseFile(void)
 #define	 JAVA_VERSION_9 "\"9" /* its usual format is "9[.x.x]" */
 			} else if (!strncmp(version, JAVA_VERSION_9, sizeof(JAVA_VERSION_9) - 1)) {
 #undef   JAVA_VERSION_9
-				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
+				finalVersion = J2SE_19 | J2SE_SHAPE_V9;
 #define	 JAVA_VERSION_10 "\"10" /* its usual format is "10[.x.x]" */
 			} else if (!strncmp(version, JAVA_VERSION_10, sizeof(JAVA_VERSION_10) - 1)) {
 #undef   JAVA_VERSION_10			
