@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -196,7 +196,7 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 			jclass classLoaderClass = NULL;
 			jmethodID mid = NULL;
 
-			if (J2SE_SHAPE(vm) >= J2SE_SHAPE_B165) {
+			if (J2SE_VERSION(vm) >= J2SE_19) {
 				jclass jimModules = getJimModules(currentThread);
 				jstring moduleNameString = NULL;
 				jobject vmModule = NULL;
@@ -220,7 +220,7 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 				}
 
 				vmModule = (*env)->CallStaticObjectMethod(env, jimModules, loadModule, moduleNameString);
-				(*env)->DeleteLocalRef(env, vmModule);		
+				(*env)->DeleteLocalRef(env, vmModule);
 				(*env)->DeleteLocalRef(env, moduleNameString);
 				if ((*env)->ExceptionOccurred(env)) {
 					rc = CLS_ERROR_INTERNAL;
