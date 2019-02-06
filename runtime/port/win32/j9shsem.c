@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -398,7 +398,7 @@ createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_
 	
 	for (i = 0; i < shsem_handle->setSize; i++) {
 		HANDLE debugHandle;
-		omrstr_printf(semaphoreName, J9SH_MAXPATH, "%s"J9SH_SET_STR"%d", shsem_handle->rootName, i);
+		omrstr_printf(semaphoreName, J9SH_MAXPATH, "%s_set%d", shsem_handle->rootName, i);
 		Trc_PRT_shsem_j9shsem_createsemaphore_creatingset(i, semaphoreName);   
 		  
 		unicodeSemaphoreName = port_convertFromUTF8(OMRPORTLIB, semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE);
@@ -431,7 +431,7 @@ openSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_ha
 	Trc_PRT_shsem_j9shsem_opensemaphore_entered(shsem_handle->rootName);
 
 	for (i = 0; i < shsem_handle->setSize; i++) {
-		omrstr_printf(semaphoreName, J9SH_MAXPATH, "%s"J9SH_SET_STR"%d", shsem_handle->rootName, i);
+		omrstr_printf(semaphoreName, J9SH_MAXPATH, "%s_set%d", shsem_handle->rootName, i);
 		Trc_PRT_shsem_j9shsem_opensemaphore_openingset(i, semaphoreName);          
 
 		/*convert the name to unicode*/

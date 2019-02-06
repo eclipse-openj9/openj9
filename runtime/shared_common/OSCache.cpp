@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,20 +246,14 @@ SH_OSCache::createCacheDir(J9PortLibrary* portLibrary, char* cacheDirName, UDATA
 IDATA
 SH_OSCache::getCachePathName(J9PortLibrary* portLibrary, const char* cacheDirName, char* buffer, UDATA bufferSize, const char* cacheNameWithVGen)
 {
-	IDATA rc = 0;
-	UDATA pathLen = 0;
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	
 	Trc_SHR_OSC_getCachePathName_Entry(cacheNameWithVGen);
 	
-	pathLen = j9str_printf(PORTLIB, buffer, bufferSize, "%s%s", cacheDirName, cacheNameWithVGen);
-	if (pathLen >= (bufferSize - 1)) {
-		Trc_SHR_OSC_getCachePathName_BufferOverFlow(cacheDirName, cacheNameWithVGen, bufferSize - 1);
-		rc = -1;
-	}
+	j9str_printf(PORTLIB, buffer, bufferSize, "%s%s", cacheDirName, cacheNameWithVGen);
 	
 	Trc_SHR_OSC_getCachePathName_Exit();
-	return rc;
+	return 0;
 }
 
 /**
@@ -405,9 +399,6 @@ SH_OSCache::commonStartup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirP
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ALLOC_FAILED);
 			return -1;
 		}
-	} else {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		return -1;
 	}
 
 	_doCheckBuildID = ((openMode & J9OSCACHE_OPEN_MODE_CHECKBUILDID) != 0);

@@ -170,10 +170,8 @@
 #define J9PORT_SHSEM_MODE_NOWAIT ((uintptr_t) 2)
 /** @} */
 
-/* The following defines are used by j9shmem.c, j9shsem.c and j9shsem_deprecated.c */
+/* The following defines are used by j9shmem and j9shsem */
 #define J9SH_MAXPATH EsMaxPath
-#define J9SH_MUTEX_STR "_mutex"
-#define J9SH_SET_STR "_set"
 
 #define J9SH_MEMORY_ID "_memory_"
 #define J9SH_SEMAPHORE_ID "_semaphore_"
