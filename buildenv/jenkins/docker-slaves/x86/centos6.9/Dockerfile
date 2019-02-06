@@ -126,8 +126,8 @@ RUN cd /etc/yum.repos.d \
   && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/cc \
   && yum -y update \
   && yum -y install centos-release-scl \
-  && yum -y install devtoolset-7-gcc devtoolset-7-binutils \
-  && yum -y install devtoolset-7-gcc-c++ devtoolset-2-gcc-gfortran \
+  && yum -y install devtoolset-7-gcc-7.3* devtoolset-7-binutils \
+  && yum -y install devtoolset-7-gcc-c++-7.3* devtoolset-2-gcc-gfortran-7.3* \
   && yum clean all
 
 #Building and setting up git version 2.5.3

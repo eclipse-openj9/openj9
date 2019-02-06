@@ -1507,7 +1507,9 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 	char fileName[EsMaxPath];
 	J9PortLibrary* privatePortLibrary = vm->portLibrary;
 	int releaseAccess = 0;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 	int exitVM = 0;
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	BOOLEAN exclusiveRequestedLocally = FALSE;
 
 	if ( !vm->mainThread ) {
