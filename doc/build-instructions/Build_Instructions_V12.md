@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Building OpenJDK Version 12 with OpenJ9 (Work in progress, only Linux x86_64/PPCLE/s390 platform verified, depends on https://github.com/eclipse/openj9/pull/3980)
+Building OpenJDK Version 12 with OpenJ9
 ======================================
 
 Our website describes a simple [build process](http://www.eclipse.org/openj9/oj9_build.html)
@@ -248,7 +248,7 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 13.1.3](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java10_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9#ppc64_aix).
+You must also install the boot JDK: [Java11_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9#ppc64_aix).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
@@ -339,12 +339,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "11-internal" 2018-09-25
-OpenJDK Runtime Environment (build 11-internal+0-adhoc..openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-06905e2, JRE 11 AIX ppc64-64 Compressed References 20180726_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 06905e2
-OMR      - 28139f2
-JCL      - e5c64f5 based on jdk-11+21)
+openjdk version "12-internal" 2019-03-19
+OpenJDK Runtime Environment (build 12-internal+0-adhoc.jenkins.Build-JDK12-aixppc-64cmprssptrs)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 12 AIX ppc64-64-Bit Compressed References 20190206_28 (JIT enabled, AOT enabled)
+OpenJ9   - e85051733
+OMR      - 46127623
+JCL      - 2ef6b4c54d8 based on jdk-12+30)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
@@ -490,12 +490,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "11-internal" 2018-09-25
-OpenJDK Runtime Environment (build 11-internal+0-adhoc.Administrator.openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-11410ac2, JRE 11 Windows 7 amd64-64-Bit Compressed References 20180724_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 11410ac2
-OMR      - e2e4b67c
-JCL      - a786f96b13 based on jdk-11+21)
+openjdk version "12-internal" 2019-03-19
+OpenJDK Runtime Environment (build 12-internal+0-adhoc.jenkins.Build-JDK12-winx86-64cmprssptrs)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 12 Windows Server 2016 amd64-64-Bit Compressed References 20190206_27 (JIT enabled, AOT enabled)
+OpenJ9   - e85051733
+OMR      - dfbca14c
+JCL      - 2ef6b4c54d8 based on jdk-12+30)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
@@ -628,12 +628,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "11-internal" 2018-09-25
-OpenJDK Runtime Environment (build 11-internal+0-adhoc.heidinga.openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build djh/libjava-72338d7a1, JRE 11 Mac OS X amd64-64-Bit Compressed References 20181104_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 72338d7a1
-OMR      - d4cd7c31
-JCL      - 9da99f8b97 based on jdk-11+28)
+openjdk version "12-internal" 2019-03-19
+OpenJDK Runtime Environment (build 12-internal+0-adhoc.jenkins.Build-JDK12-osxx86-64cmprssptrs)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 12 Mac OS X amd64-64-Bit Compressed References 20190206_27 (JIT enabled, AOT enabled)
+OpenJ9   - e85051733
+OMR      - dfbca14c
+JCL      - 2ef6b4c54d8 based on jdk-12+30)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
