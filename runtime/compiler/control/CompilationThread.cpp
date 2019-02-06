@@ -4604,7 +4604,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       increaseQueueWeightBy(entryWeight);
 
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CR, "%p     Added entry %p of weight %d to comp queue. Now Q_SZ=%d weight=%d",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CR, "%p   Added entry %p of weight %d to comp queue. Now Q_SZ=%d weight=%d",
             _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM), cur, entryWeight, getMethodQueueSize(), getQueueWeight());
 
       // Examine if we need to activate a new thread
@@ -5624,6 +5624,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 
    TR_ASSERT(asynchronousCompilation() || requireAsyncCompile != TR_yes, "We cannot require async compilation when it is turned off");
 
+   bool forcedSync = false;
    bool async = asynchronousCompilation() && requireAsyncCompile != TR_no;
    if (async)
       {
@@ -5678,6 +5679,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       if (!async)
          {
          debugPrint("forced synchronous");
+         forcedSync = true;
          }
       else
          {
@@ -5882,6 +5884,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 
    if (entry == NULL)
       {
+      releaseCompMonitor(vmThread);
       if (compErrCode)
          *compErrCode = compilationFailure;
       return 0;  // We couldn't add a method entry to be compiled.
@@ -5923,8 +5926,10 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // for an asynchronous compilation (very rare event possible due to some races)
    //
    if (!(*queued) && entry->_changedFromAsyncToSync && requireAsyncCompile != TR_yes)
+      {
       async = false;
-
+      forcedSync = true;
+      }
    entry->_async = async;
 
    // no need to grab slot monitor or releasing VM access if we are doing async
@@ -6054,6 +6059,56 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       // When numThreadsWaiting reaches 0, the entry can be reused or deallocated
       //
       acquireCompMonitor(vmThread);
+
+      // If a remote sync compilation has been changed to a local sync compilation,
+      // queue a new remote async compilation entry for this method.
+      // - The second compilation is queued only when this is the last thread waiting
+      //   for the compilation of the method.
+      // - If for any reason, the current compilation request is changed to a sync
+      //   compilation from an async compilation, it probably means we can’t do an
+      //   async compilation. Don't queue the second async remote compilation.
+      if (entry->hasChangedToLocalSyncComp() &&
+          (entry->_numThreadsWaiting <= 1) &&
+          !forcedSync &&
+          (startPC && startPC != oldStartPC))
+         {
+         void *currOldStartPC = startPCIfAlreadyCompiled(vmThread, details, startPC);
+         // If currOldStartPC is NULL, the method body defined by startPC has not been
+         // recompiled. We will queue the second remote aync compilation here. Otherwise,
+         // another thread is doing the recompilation and will take care of queueing
+         // the second compilation.
+         if (!currOldStartPC)
+            {
+            CompilationPriority compPriority = CP_ASYNC_NORMAL;
+            bool queuedForRemote = false;
+            bool isAsync = true;
+            TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(entry->_origOptLevel);
+            TR_YesNoMaybe mthInSharedCache = TR_no;
+
+            if (plan)
+               {
+               TR_MethodToBeCompiled *entryRemoteCompReq = addMethodToBeCompiled(details, currOldStartPC, compPriority, isAsync,
+                                                                                 plan, &queuedForRemote, mthInSharedCache);
+
+               if (entryRemoteCompReq)
+                  {
+                  entryRemoteCompReq->_async = isAsync;
+
+                  if (getMethodQueueSize() <= 1 ||
+                     getNumCompThreadsJobless() > 0) // send notification if any thread is sleeping on comp monitor waiting for suitable work
+                     {
+                     getCompilationMonitor()->notifyAll();
+                     }
+                  if (TR::Options::getJITCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
+                      TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p   Queued a remote async compilation: entry=%p, j9method=%p",
+                        vmThread, entryRemoteCompReq, entryRemoteCompReq->getMethodDetails().getMethod());
+                  }
+               if (!queuedForRemote)
+                   TR_OptimizationPlan::freeOptimizationPlan(plan);
+               }
+            }
+         }
+
       entry->_numThreadsWaiting--;
 
       TR_ASSERT_FATAL(!(entry->_freeTag & (ENTRY_DEALLOCATED|ENTRY_IN_POOL_FREE)), "Java thread waking up with a freed entry");
@@ -6861,6 +6916,30 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
                doLocalCompilation = true;
 
+            // If this is a remote sync compilation, change it to a local sync compilation.
+            // After the local compilation is completed successfully, a remote async compilation
+            // will be scheduled in compileOnSeparateThread().
+            TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
+            if (!doLocalCompilation &&
+                !entry->_async &&
+                !entry->isJNINative() &&
+                !details.isNewInstanceThunk() &&
+                !details.isMethodHandleThunk() &&
+                TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) &&
+                !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
+                TR::Options::getCmdLineOptions()->allowRecompilation())
+               {
+               doLocalCompilation = true;
+               entry->_origOptLevel = entry->_optimizationPlan->getOptLevel();
+               entry->_optimizationPlan->setOptLevel(cold);
+               entry->_optimizationPlan->setOptLevelDowngraded(true);
+
+               if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
+                  entry->getMethodDetails().getMethod());
+               }
+
+            //TODO: Do we still need the following?
             // In another heuristic we could downgrade all first time compilations
             // that happen during startup.
             if (false)

@@ -2393,7 +2393,8 @@ void TR_DebugExt::dxPrintMethodToBeCompiled(TR_MethodToBeCompiled *remoteCompEnt
    _dbgPrintf("\tint16_t                       _index = %d\n",localCompEntry->_index);
    _dbgPrintf("\tbool                          _freeTag = %d\n",localCompEntry->_freeTag);
    _dbgPrintf("\tuint8_t                       _weight = %u\n",localCompEntry->_weight);
-   _dbgPrintf("\tbool                          _hasIncrementedNumCompThreadsCompilingHotterMethods = %d\n\n",localCompEntry->_hasIncrementedNumCompThreadsCompilingHotterMethods);
+   _dbgPrintf("\tbool                          _hasIncrementedNumCompThreadsCompilingHotterMethods = %d\n",localCompEntry->_hasIncrementedNumCompThreadsCompilingHotterMethods);
+   _dbgPrintf("\tTR_Hotness                   _origOptLevel = 0x%p\n\n", localCompEntry->_origOptLevel);
 
    struct J9Method *ramMethod = (struct J9Method *)dxGetJ9MethodFromMethodToBeCompiled(remoteCompEntry);
    if (ramMethod)

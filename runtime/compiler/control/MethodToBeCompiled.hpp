@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "compile/CompilationTypes.hpp"
 #include "control/CompilationPriority.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
@@ -66,6 +67,7 @@ struct TR_MethodToBeCompiled
    bool isOutOfProcessCompReq() const { return _stream != nullptr; } // at the server
    uint64_t getClientUID() const;
    void cleanupJITaaS();
+   bool hasChangedToLocalSyncComp() const { return _origOptLevel != unknownHotness; }
 
    TR_MethodToBeCompiled *_next;
    TR::IlGeneratorMethodDetails _methodDetailsStorage;
@@ -124,6 +126,7 @@ struct TR_MethodToBeCompiled
    JITaaS::J9ServerStream  *_stream; // a non-NULL field denotes an out-of-process compilation request
    char                  *_clientOptions;
    size_t                _clientOptionsSize;
+   TR_Hotness            _origOptLevel; // used to cache original optLevel when transforming a remote sync compilation to a local cheap one
    }; // TR_MethodToBeCompiled
 
 

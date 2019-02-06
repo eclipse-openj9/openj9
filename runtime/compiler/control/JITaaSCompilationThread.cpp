@@ -2330,7 +2330,7 @@ remoteCompilationEnd(
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d has successfully compiled %s", 
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d has successfully compiled %s",
          entry->_compInfoPT->getCompThreadId(), entry->_compInfoPT->getCompilation()->signature());
       }
    }
