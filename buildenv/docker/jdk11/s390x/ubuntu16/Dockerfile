@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@ RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     software-properties-common \
     python-software-properties \
-  && add-apt-repository ppa:ubuntu-toolchain-r/test \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     autoconf \
@@ -38,8 +37,6 @@ RUN apt-get update \
     cmake \
     cpio \
     file \
-    g++-7 \
-    gcc-7 \
     git \
     git-core \
     libasound2-dev \
@@ -48,6 +45,7 @@ RUN apt-get update \
     libelf-dev \
     libfontconfig1-dev \
     libfreetype6-dev \
+    libmpc3 \
     libx11-dev \
     libxext-dev \
     libxrender-dev \
@@ -68,11 +66,17 @@ RUN apt-get update \
     vim \
   && rm -rf /var/lib/apt/lists/*
 
-# Create links for c++,g++,cc,gcc
-RUN ln -s g++ /usr/bin/c++ \
-  && ln -s g++-7 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-7 /usr/bin/gcc
+# Install GCC-7.4
+RUN cd /usr/local \
+  && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc740+ccache.s390x.tar.xz" \
+  && tar -xJf gcc-7.tar.xz --strip-components=1 \
+  && rm -rf gcc-7.tar.xz
+
+# Create links for GCC to access the C library and gcc,g++
+RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
+  && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include \
+  && ln -s /usr/local/bin/g++-7.4 /usr/bin/g++ \
+  && ln -s /usr/local/bin/gcc-7.4 /usr/bin/gcc
 
 # Download and setup freemarker.jar to /root/freemarker.jar
 RUN cd /root \
