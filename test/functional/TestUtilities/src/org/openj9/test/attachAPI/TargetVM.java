@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,13 +24,12 @@ package org.openj9.test.attachAPI;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.Properties;
 
 
 public class TargetVM {
 
-	public static final String WAITING_FOR_INITIALIZATION = "STATUS_WAIT_INITIALIZATION";
+	public static final String WAITING_FOR_INITIALIZATION = "STATUS_WAIT_INITIALIZATION"; //$NON-NLS-1$
 
 	/**
 	 * @param args
@@ -42,14 +41,10 @@ public class TargetVM {
 		System.err.println("starting");
 		long pid = 0;
 		try {
-			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
-			final Method getVmId = attachHandlerClass.getMethod("getVmId");
-			final Method getProcessId = attachHandlerClass.getMethod("getProcessId");
-			final Method waitForAttachApiInitialization = attachHandlerClass.getMethod("waitForAttachApiInitialization");
-			pid = (long) getProcessId.invoke(attachHandlerClass);
+			pid = TargetManager.getProcessId();
 			System.out.println(TargetManager.PID_PREAMBLE + pid);
-			if ((boolean) waitForAttachApiInitialization.invoke(attachHandlerClass)) {
-				System.out.println(TargetManager.VMID_PREAMBLE + getVmId.invoke(attachHandlerClass));
+			if (TargetManager.waitForAttachApiInitialization()) {
+				System.out.println(TargetManager.VMID_PREAMBLE + TargetManager.getVmId());
 				System.out.println(TargetManager.STATUS_PREAMBLE
 						+ TargetManager.STATUS_INIT_SUCESS);
 				System.out.flush();
