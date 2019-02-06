@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -889,8 +889,8 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
                   continue;
                /* call getResolvedMethod again to generate the validation records */
                TR_ResolvedMethod* target_method = getResolvedMethod (tempreceiverClass);
-               if (!comp()->getSymbolValidationManager()->addClassFromMethodRecord(target_method->classOfMethod(), target_method->getPersistentIdentifier()))
-                  continue;
+               TR_OpaqueClassBlock *classOfMethod = target_method->classOfMethod();
+               SVM_ASSERT_ALREADY_VALIDATED(comp()->getSymbolValidationManager(), classOfMethod);
                }
 
 
