@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3301,7 +3301,7 @@ jvmtiGetJ9method(jvmtiEnv *env, jmethodID mid, void **j9MethodPtr, ...)
 
 done:
 	if (NULL != j9MethodPtr) {
-		j9MethodPtr = rv_j9Method;
+		*j9MethodPtr = rv_j9Method;
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetJ9method);
 }
