@@ -26,6 +26,7 @@
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "control/JITaaSCompilationThread.hpp"
+#include "exceptions/DataCacheError.hpp"
 
 ClientSessionData::ClassInfo &
 getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
@@ -1356,6 +1357,18 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey ke
    return false;
    }
 
+TR_OpaqueMethodBlock *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getNonPersistentIdentifier()
+   {
+   return (TR_OpaqueMethodBlock *)ramMethod();
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::validateArbitraryClass(TR::Compilation *comp, J9Class *clazz)
+   {
+   return storeValidationRecordIfNecessary(comp, cp(), 0, TR_ValidateArbitraryClass, ramMethod(), clazz);
+   }
+
 bool
 TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
    {
@@ -1462,4 +1475,30 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR:
 
    // should only be a native OOM that gets us here...
    return false;
+   }
+
+U_8 *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::allocateException(uint32_t numBytes, TR::Compilation *comp)
+   {
+   J9JITExceptionTable *eTbl = NULL;
+   uint32_t size = 0;
+   bool shouldRetryAllocation;
+   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, _fe->needsContiguousAllocation(), &shouldRetryAllocation,
+                                                              J9_JIT_DCE_EXCEPTION_INFO, &size);
+   if (!eTbl)
+      {
+      if (shouldRetryAllocation)
+         {
+         // force a retry
+         comp->failCompilation<J9::RecoverableDataCacheError>("Failed to allocate exception table");
+         }
+      comp->failCompilation<J9::DataCacheError>("Failed to allocate exception table");
+      }
+   memset((uint8_t *)eTbl, 0, size);
+
+   // These get updated in TR_RelocationRuntime::relocateAOTCodeAndData
+   eTbl->ramMethod = NULL;
+   eTbl->constantPool = NULL;
+
+   return (U_8 *) eTbl;
    }
