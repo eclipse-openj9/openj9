@@ -1530,6 +1530,32 @@ TR_J9SharedCacheServerVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBl
       return TR_maybe;
    }
 
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
+   {
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   TR_OpaqueClassBlock *classPointer = TR_J9ServerVM::getSystemClassFromClassName(name, length);
+   bool validated = false;
+
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addSystemClassByNameRecord(classPointer);
+      }
+   else
+      {
+      if (isVettedForAOT)
+         {
+         if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+            validated = true;
+         }
+      }
+
+   if (validated)
+      return classPointer;
+   else
+      return NULL;
+   }
+
 bool
 TR_J9SharedCacheServerVM::supportAllocationInlining(TR::Compilation *comp, TR::Node *node)
    {
