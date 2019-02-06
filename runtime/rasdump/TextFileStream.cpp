@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2014 IBM Corp. and others
+ * Copyright (c) 2003, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,11 @@ void
 TextFileStream::open(const char* fileName, bool cacheWrites)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
-	if (fileName[0] != '-' ) {
+	if (NULL != strstr(fileName, "/STDOUT/")) {
+		_FileHandle = 1; 
+	} else if (NULL != strstr(fileName, "/STDERR/")) {
+		_FileHandle = 2;
+	} else if (fileName[0] != '-' ) {
 		_FileHandle = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate | EsOpenCreateNoTag, 0666);
 	}
 	if(!cacheWrites) {
