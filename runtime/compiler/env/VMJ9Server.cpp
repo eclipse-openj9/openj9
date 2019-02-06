@@ -1545,6 +1545,44 @@ TR_J9SharedCacheServerVM::supportAllocationInlining(TR::Compilation *comp, TR::N
    return false;
    }
 
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedMethod * method, bool isVettedForAOT)
+   {
+   TR_ResolvedRelocatableJ9JITaaSServerMethod* resolvedJITaaSMethod = (TR_ResolvedRelocatableJ9JITaaSServerMethod *)method;
+   return getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
+   }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueMethodBlock * method, bool isVettedForAOT)
+   {
+   TR_OpaqueClassBlock* j9class = TR_J9ServerVM::getClassFromSignature(sig, sigLength, method, true);
+   bool validated = false;
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+
+   if (j9class)
+      {
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         SVM_ASSERT_ALREADY_VALIDATED(svm, method);
+         validated = svm->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
+         }
+      else
+         {
+         if (isVettedForAOT)
+            {
+            if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class))
+               validated = true;
+            }
+         }
+      }
+
+   if (validated)
+      return j9class;
+   else
+      return NULL;
+   }
+
 bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
