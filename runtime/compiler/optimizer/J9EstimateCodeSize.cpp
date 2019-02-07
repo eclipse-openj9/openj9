@@ -1025,7 +1025,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       debugTrace(tracer(),"PECS: iterating over bc indexes in CFG creation. maxIndex =%d", maxIndex);
       int32_t blockStartSize = 0;
       int32_t startIndex = 0;
-      for (i = 0; i < maxIndex; ++i)
+      for (bc = bci.first(), i = bci.bcIndex(); bc != J9BCunknown; bc = bci.next(), i = bci.bcIndex())
          {
          if (flags[i].testAny(bbStart))
             {
@@ -1084,8 +1084,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   cfg.getMethodSymbol()->addProfilingOffsetInfo(currentBlock->getEntry()->getNode()->getByteCodeIndex(), currentBlock->getEntry()->getNode()->getByteCodeIndex() + currentBlock->getBlockSize());
                }
 
-            bci.setIndex(i);
-            switch (bc = bci.current())
+            switch (bc)
                {
                case J9BCificmpeq:
                case J9BCificmpne:
@@ -1633,7 +1632,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          bool isCold = false;
          int coldBorderFrequency = 20;
 
-         for (i = 0; i < (int32_t) maxIndex; ++i)
+         for (bc = bci.first(), i = bci.bcIndex(); bc != J9BCunknown; bc = bci.next(), i = bci.bcIndex())
             {
             if (blocks[i])
                if (!blocks[i]->isCold() && blocks[i]->getFrequency() > coldBorderFrequency)
@@ -1730,7 +1729,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
       /****************** Phase 4: Deal with Inlineable Calls **************************/
 
-      for (i = 0; i < maxIndex && inlineableCallExists; ++i)
+      for (bc = bci.first(), i = bci.bcIndex(); bc != J9BCunknown && inlineableCallExists; bc = bci.next(), i = bci.bcIndex())
          {
          //heuristicTrace(tracer(),"--- Depth %d: Checking _real size vs Size Threshold: _realSize %d _sizeThreshold %d sizeThreshold %d ",_recursionDepth, _realSize, _sizeThreshold, sizeThreshold);
 
@@ -1743,7 +1742,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          if (blocks[i])
             currentBlock = blocks[i];
 
-         bci.setIndex(i);
          newBCInfo.setByteCodeIndex(i);
          if (callSites[i])
             {
