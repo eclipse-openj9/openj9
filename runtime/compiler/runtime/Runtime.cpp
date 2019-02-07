@@ -1062,6 +1062,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_reportMethodEnter,          (void *)jitReportMethodEnter,          TR_Helper);
    SET(TR_reportStaticMethodEnter,    (void *)jitReportStaticMethodEnter,    TR_Helper);
    SET(TR_reportMethodExit,           (void *)jitReportMethodExit,           TR_Helper);
+   SET(TR_reportFinalFieldModified,   (void *)jitReportFinalFieldModified,   TR_Helper);
    SET(TR_acquireVMAccess,            (void *)jitAcquireVMAccess,            TR_Helper);
    SET(TR_jitReportInstanceFieldRead, (void *)jitReportInstanceFieldRead,    TR_Helper);
    SET(TR_jitReportInstanceFieldWrite,(void *)jitReportInstanceFieldWrite,   TR_Helper);
