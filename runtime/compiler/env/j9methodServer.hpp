@@ -270,7 +270,7 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
 
    virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override { TR_ASSERT(0, "called");  return NULL; }
    virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz) override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz) override;
 
    virtual void *                stringConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
    virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override { TR_ASSERT(0, "called");  return false; }
@@ -297,8 +297,8 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
 
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
 
-   virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override { TR_ASSERT(0, "called");  return NULL; }
-   virtual uint8_t *             allocateException(uint32_t, TR::Compilation*) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override;
+   virtual uint8_t *             allocateException(uint32_t, TR::Compilation*) override;
 
    virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
    bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
