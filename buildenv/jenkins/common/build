@@ -311,17 +311,22 @@ def archive() {
                         "files":[
                             {
                                 "pattern": "${OPENJDK_CLONE_DIR}/${SDK_FILENAME}",
-                                "target": "${artifactory_upload_dir}"
+                                "target": "${artifactory_upload_dir}",
+                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
                             },
                             {
                                 "pattern": "${OPENJDK_CLONE_DIR}/${TEST_FILENAME}",
-                                "target": "${artifactory_upload_dir}"
+                                "target": "${artifactory_upload_dir}",
+                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
                             }
                         ]
                     }"""
 
                     def buildInfo = Artifactory.newBuildInfo()
                     buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
+                    // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
+                    buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
+                    buildInfo.env.capture = true
                     server.upload spec: uploadSpec, buildInfo: buildInfo
                     server.publishBuildInfo buildInfo
                     // Write URL to env so that we can pull it from the upstream pipeline job
