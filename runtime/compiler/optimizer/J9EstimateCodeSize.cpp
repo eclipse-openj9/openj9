@@ -369,7 +369,11 @@ static TR::ILOpCodes convertBytecodeToIL (TR_J9ByteCode bc)
       case J9BClookupswitch: return TR::lookup;
       case J9BCgoto:
       case J9BCgotow: return TR::Goto;
-      case J9BCgenericReturn: return TR::Return;
+      case J9BCReturnC: /* fall-through */
+      case J9BCReturnS: /* fall-through */
+      case J9BCReturnB: /* fall-through */
+      case J9BCReturnZ: /* fall-through */
+      case J9BCgenericReturn:  return TR::Return;
       case J9BCathrow: return TR::athrow;
       default:
          TR_ASSERT(0,"Unsupported conversion for now.");
@@ -610,7 +614,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          foundNewAllocation = false;
          }
 
-      if (bc == J9BCgenericReturn)
+      if (bc == J9BCgenericReturn ||
+          bc == J9BCReturnC ||
+          bc == J9BCReturnS ||
+          bc == J9BCReturnB ||
+          bc == J9BCReturnZ)
          {
          if (!calltarget->_calleeMethod->isSynchronized())
             size += 1;
@@ -644,6 +652,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             flags[i + bci.relativeBranch()].set(bbStart);
             blockStart = true;
             break;
+         case J9BCReturnC:
+         case J9BCReturnS:
+         case J9BCReturnB:
+         case J9BCReturnZ:
          case J9BCgenericReturn:
             flags[i].set(isBranch);
             blockStart = true;
@@ -1120,6 +1132,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   cfg.addEdge(currentBlock, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), stackAlloc);
                   addFallThruEdge = false;
                   break;
+               case J9BCReturnC:
+               case J9BCReturnS:
+               case J9BCReturnB:
+               case J9BCReturnZ:
                case J9BCgenericReturn:
                case J9BCathrow:
                   setupLastTreeTop(currentBlock, bc, i, cfg.getEnd()->asBlock(), calltarget->_calleeMethod, comp());
