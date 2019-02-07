@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -521,7 +521,7 @@ Java_java_lang_System_startSNMPAgent(JNIEnv *env, jclass jlClass)
 		jclass smAClass = NULL;
 		jmethodID startAgent = NULL;
 		
-		if ((J2SE_VERSION(vm) >= J2SE_19) && (J2SE_SHAPE(vm) >= J2SE_SHAPE_B165)) {
+		if (J2SE_VERSION(vm) >= J2SE_19) {
 			smAClass = (*env)->FindClass(env, "jdk/internal/agent/Agent");
 		} else {
 			smAClass = (*env)->FindClass(env, "sun/management/Agent");

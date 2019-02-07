@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@
 #if JAVA_SPEC_VERSION == 8
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_OPENJDK
 #elif JAVA_SPEC_VERSION == 9
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B165
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V9
 #elif JAVA_SPEC_VERSION == 10
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V10
 #elif JAVA_SPEC_VERSION == 11
@@ -84,9 +84,7 @@
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V12
 #endif
 #define J2SE_SHAPE_OPENJDK 		0x10000
-#define J2SE_SHAPE_B136    		0x40000
-#define J2SE_SHAPE_B148    		0x50000
-#define J2SE_SHAPE_B165    		0x60000
+#define J2SE_SHAPE_V9           0x60000
 #define J2SE_SHAPE_V10			0x70000
 #define J2SE_SHAPE_V11			0x80000
 #define J2SE_SHAPE_V12			0x90000

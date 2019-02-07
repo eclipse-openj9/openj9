@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,11 +36,7 @@ static BOOLEAN isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Modu
 BOOLEAN
 isModuleUnnamed(J9VMThread *currentThread, j9object_t moduleObject)
 {
-	if(J2SE_SHAPE(currentThread->javaVM) < J2SE_SHAPE_B165) {
-		return (NULL == J9VMJAVALANGREFLECTMODULE_NAME(currentThread, moduleObject));
-	} else {
-		return (NULL == J9VMJAVALANGMODULE_NAME(currentThread, moduleObject));
-	}
+	return (NULL == J9VMJAVALANGMODULE_NAME(currentThread, moduleObject));
 }
 
 BOOLEAN

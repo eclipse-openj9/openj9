@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,11 +65,7 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 		fromJ9Module = J9OBJECT_ADDRESS_LOAD(currentThread, fromModuleObj, vm->modulePointerOffset);
 		fromInstanceClazz = J9OBJECT_CLAZZ(currentThread, fromModuleObj);
 		toInstanceClazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(toModule));
-		if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-			moduleClass = J9VMJAVALANGREFLECTMODULE_OR_NULL(vm);
-		} else {
-			moduleClass = J9VMJAVALANGMODULE_OR_NULL(vm);
-		}
+		moduleClass = J9VMJAVALANGMODULE_OR_NULL(vm);
 
 		Assert_JVMTI_notNull(moduleClass);
 
@@ -116,82 +112,27 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 		vmFuncs->internalExitVMToJNI(currentThread);
 		if ((JVMTI_ERROR_NONE == rc) && (FALSE == isUnnamedOrOpen)) {
 			jstring pkg = NULL;
-			if (J2SE_SHAPE(vm) >= J2SE_SHAPE_B148) {
-				if (NULL == vm->addExports) {
-					jmethodID addExports = NULL;
+			if (NULL == vm->addExports) {
+				jmethodID addExports = (*env)->GetMethodID(env, moduleJClass, "implAddExportsOrOpens", "(Ljava/lang/String;Ljava/lang/Module;ZZ)V");
 
-					if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-						addExports = (*env)->GetMethodID(env, moduleJClass, "implAddExportsOrOpens", "(Ljava/lang/String;Ljava/lang/reflect/Module;ZZ)V");
-					} else {
-						addExports = (*env)->GetMethodID(env, moduleJClass, "implAddExportsOrOpens", "(Ljava/lang/String;Ljava/lang/Module;ZZ)V");
-					}
-
-					if (NULL == addExports) {
-						rc = JVMTI_ERROR_INTERNAL;
-						goto done;
-					}
-
-					vm->addExports = addExports;
+				if (NULL == addExports) {
+					rc = JVMTI_ERROR_INTERNAL;
+					goto done;
 				}
-				pkg = (*env)->NewStringUTF(env, pkgName);
-				if (NULL == pkg) {
-					rc = JVMTI_ERROR_OUT_OF_MEMORY;
-				} else {
-					(*env)->CallObjectMethod(env,
-											fromModule,
-											vm->addExports,
-											pkg,
-											toModule,
-											!exports,
-											JNI_TRUE);
-				}
+
+				vm->addExports = addExports;
+			}
+			pkg = (*env)->NewStringUTF(env, pkgName);
+			if (NULL == pkg) {
+				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				if (exports) {
-					if (NULL == vm->addExports) {
-						jmethodID addExports = NULL;
-
-						addExports = (*env)->GetMethodID(env, moduleJClass, "implAddExports", "(Ljava/lang/String;Ljava/lang/reflect/Module;Z)V");
-						if (NULL == addExports) {
-							rc = JVMTI_ERROR_INTERNAL;
-							goto done;
-						}
-
-						vm->addExports = addExports;
-					}
-					pkg = (*env)->NewStringUTF(env, pkgName);
-					if (NULL == pkg) {
-						rc = JVMTI_ERROR_OUT_OF_MEMORY;
-					} else {
-						(*env)->CallObjectMethod(env,
-												fromModule,
-												vm->addExports,
-												pkg,
-												toModule,
-												JNI_TRUE);
-					}
-				} else {
-					if (NULL == vm->addOpens) {
-						jmethodID addOpens = NULL;
-
-						addOpens = (*env)->GetMethodID(env, moduleJClass, "implAddOpens", "(Ljava/lang/String;Ljava/lang/reflect/Module;)V");
-						if (NULL == addOpens) {
-							rc = JVMTI_ERROR_OUT_OF_MEMORY;
-							goto done;
-						}
-
-						vm->addOpens = addOpens;
-					}
-					pkg = (*env)->NewStringUTF(env, pkgName);
-					if (NULL == pkg) {
-						rc = JVMTI_ERROR_INTERNAL;
-					} else {
-						(*env)->CallObjectMethod(env,
-												fromModule,
-												vm->addExports,
-												pkg,
-												toModule);
-					}
-				}
+				(*env)->CallObjectMethod(env,
+										fromModule,
+										vm->addExports,
+										pkg,
+										toModule,
+										!exports,
+										JNI_TRUE);
 			}
 			if ((*env)->ExceptionOccurred(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
@@ -426,11 +367,7 @@ jvmtiAddModuleReads(jvmtiEnv* jvmtiEnv, jobject fromModule, jobject toModule)
 		fromJ9Module = J9OBJECT_ADDRESS_LOAD(currentThread, fromModuleObj, vm->modulePointerOffset);
 		fromInstanceClazz = J9OBJECT_CLAZZ(currentThread, fromModuleObj);
 		toInstanceClazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(toModule));
-		if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-			moduleClass = J9VMJAVALANGREFLECTMODULE_OR_NULL(vm);
-		} else {
-			moduleClass = J9VMJAVALANGMODULE_OR_NULL(vm);
-		}
+		moduleClass = J9VMJAVALANGMODULE_OR_NULL(vm);
 
 		Assert_JVMTI_notNull(moduleClass);
 
@@ -449,13 +386,8 @@ jvmtiAddModuleReads(jvmtiEnv* jvmtiEnv, jobject fromModule, jobject toModule)
 			JNIEnv *env = (JNIEnv *) currentThread;
 
 			if (NULL == vm->addReads) {
-				jmethodID addReads = NULL;
+				jmethodID addReads = (*env)->GetMethodID(env, moduleJClass, "implAddReads", "(Ljava/lang/Module;Z)V");
 
-				if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-					addReads = (*env)->GetMethodID(env, moduleJClass, "implAddReads", "(Ljava/lang/reflect/Module;Z)V");
-				} else {
-					addReads = (*env)->GetMethodID(env, moduleJClass, "implAddReads", "(Ljava/lang/Module;Z)V");
-				}
 				if (NULL == addReads) {
 					rc = JVMTI_ERROR_INTERNAL;
 					goto done;
@@ -542,11 +474,7 @@ jvmtiAddModuleUses(jvmtiEnv* jvmtiEnv, jobject module, jclass service)
 
 		moduleObject = J9_JNI_UNWRAP_REFERENCE(module);
 		serviceClassObject = J9_JNI_UNWRAP_REFERENCE(service);
-		if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-			moduleJ9Class = J9VMJAVALANGREFLECTMODULE_OR_NULL(vm);
-		} else {
-			moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
-		}
+		moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
 		jlClass = J9VMJAVALANGCLASS_OR_NULL(vm);
 
 		Assert_JVMTI_notNull(moduleJ9Class);
@@ -628,11 +556,7 @@ jvmtiAddModuleProvides(jvmtiEnv* jvmtiEnv,
 		moduleObject = J9_JNI_UNWRAP_REFERENCE(module);
 		serviceClassObject = J9_JNI_UNWRAP_REFERENCE(service);
 		implClassObject = J9_JNI_UNWRAP_REFERENCE(implClass);
-		if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-			moduleJ9Class = J9VMJAVALANGREFLECTMODULE_OR_NULL(vm);
-		} else {
-			moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
-		}
+		moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
 		jlClass = J9VMJAVALANGCLASS_OR_NULL(vm);
 
 		Assert_JVMTI_notNull(moduleJ9Class);
@@ -658,13 +582,8 @@ jvmtiAddModuleProvides(jvmtiEnv* jvmtiEnv,
 				goto done;
 			}
 			if (NULL == vm->addProvides) {
-				jmethodID addProvides = NULL;
+				jmethodID addProvides = (*env)->GetStaticMethodID(env, jimModules, "addProvides", "(Ljava/lang/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
 
-				if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-					addProvides = (*env)->GetStaticMethodID(env, jimModules, "addProvides", "(Ljava/lang/reflect/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
-				} else {
-					addProvides = (*env)->GetStaticMethodID(env, jimModules, "addProvides", "(Ljava/lang/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
-				}
 				if (NULL == addProvides) {
 					rc = JVMTI_ERROR_INTERNAL;
 					goto done;
@@ -719,11 +638,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
 		moduleObject = J9_JNI_UNWRAP_REFERENCE(module);
-		if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-			moduleJ9Class = J9VMJAVALANGREFLECTMODULE_OR_NULL(vm);
-		} else {
-			moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
-		}
+		moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
 
 		Assert_JVMTI_notNull(moduleJ9Class);
 

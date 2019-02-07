@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -596,14 +596,8 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	vmFuncs->internalAcquireVMAccess(vmThread);
 
 	/* request an extra slot in java/lang/Module which we will use to connect native data to the Module object */
-	if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-		if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/reflect/Module", "modulePointer", "J", &vm->modulePointerOffset)) {
-			return 1;
-		}
-	} else {
-		if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Module", "modulePointer", "J", &vm->modulePointerOffset)) {
-			return 1;
-		}
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Module", "modulePointer", "J", &vm->modulePointerOffset)) {
+		return 1;
 	}
 
 	vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS;
