@@ -257,8 +257,8 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
    virtual bool                  isFinal() override { TR_ASSERT(0, "called");  return false; }
    virtual bool                  isStrictFP() override { TR_ASSERT(0, "called");  return 0; }
 
-   virtual bool                  isInterpreted() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isInterpretedForHeuristics() override { TR_ASSERT(0, "called");  return false; }
+   virtual bool                  isInterpreted() override;
+   virtual bool                  isInterpretedForHeuristics() override;
    virtual bool                  hasBackwardBranches() override { TR_ASSERT(0, "called");  return false; }
    virtual bool                  isObjectConstructor() override { TR_ASSERT(0, "called");  return false; }
    virtual bool                  isNonEmptyObjectConstructor() override { TR_ASSERT(0, "called");  return false; }

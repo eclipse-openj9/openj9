@@ -1357,6 +1357,46 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey ke
    return false;
    }
 
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::isInterpreted()
+   {
+   bool alwaysTreatAsInterpreted = true;
+#if defined(TR_TARGET_S390)
+   alwaysTreatAsInterpreted = false;
+#elif defined(TR_TARGET_X86)
+
+   /*if isInterpreted should be only overridden for JNI methods.
+   Otherwise buildDirectCall in X86PrivateLinkage.cpp will generate CALL 0
+   for certain jitted methods as startAddressForJittedMethod still returns NULL in AOT
+   this is not an issue on z as direct calls are dispatched via snippets
+
+   If one of the options to disable JNI is specified
+   this function reverts back to the old behaviour
+   */
+   TR::Compilation *comp = _fe->_compInfoPT->getCompilation();
+   if (isJNINative() &&
+        !comp->getOption(TR_DisableDirectToJNI)  &&
+        !comp->getOption(TR_DisableDirectToJNIInline) &&
+        !comp->getOption(TR_DisableDirectToJNI) &&
+        !comp->getOption(TR_DisableDirectToJNIInline)
+        )
+      {
+      alwaysTreatAsInterpreted = false;
+      }
+#endif
+
+   if (alwaysTreatAsInterpreted)
+      return true;
+
+   return TR_ResolvedJ9JITaaSServerMethod::isInterpreted();
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::isInterpretedForHeuristics()
+   {
+   return TR_ResolvedJ9JITaaSServerMethod::isInterpreted();
+   }
+
 TR_OpaqueMethodBlock *
 TR_ResolvedRelocatableJ9JITaaSServerMethod::getNonPersistentIdentifier()
    {
