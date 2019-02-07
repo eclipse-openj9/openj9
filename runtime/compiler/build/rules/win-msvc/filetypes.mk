@@ -57,39 +57,6 @@ endef # DEF_RULE.cpp
 RULE.cpp=$(eval $(DEF_RULE.cpp))
 
 #
-# Compile .asm file into .obj file
-#
-define DEF_RULE.asm
-$(1): $(2) | jit_createdirs
-	$$(ASM_CMD) $$(ASM_FLAGS) $$(patsubst %,-D"%",$$(ASM_DEFINES)) $$(patsubst %,-I%,$$(call FIXPATH,$$(ASM_INCLUDES))) -Fo$$(call FIXPATH,$$@) $$(call FIXPATH,$$<)
-
-JIT_DIR_LIST+=$(dir $(1))
-
-jit_cleanobjs::
-	$$(call RM,$(1))
-
-endef # DEF_RULE.asm
-
-RULE.asm=$(eval $(DEF_RULE.asm))
-
-#
-# Compile .pasm file into .o file
-#
-define DEF_RULE.pasm
-$(1).asm: $(2) | jit_createdirs
-	$$(PASM_CMD) $$(PASM_FLAGS) $$(patsubst %,-D"%",$$(PASM_DEFINES)) $$(patsubst %,-I%,$$(call FIXPATH,$$(PASM_INCLUDES))) -EP $$(call FIXPATH,$$<) > $$(call FIXPATH,$$@)
-
-JIT_DIR_LIST+=$(dir $(1))
-
-jit_cleanobjs::
-	$$(call RM,$(1))
-
-$(call RULE.asm,$(1),$(1).asm)
-endef # DEF_RULE.pasm
-
-RULE.pasm=$(eval $(DEF_RULE.pasm))
-
-#
 # Compile .nasm file into .obj file
 #
 define DEF_RULE.nasm

@@ -21,7 +21,7 @@
 %ifndef TR_HOST_64BIT
 
         %include "jilconsts.inc"
-        %include "IA32CompressString_nasm.inc"
+        %include "IA32CompressString.inc"
 
 J9TR_ObjectColorBlack equ 03h
 

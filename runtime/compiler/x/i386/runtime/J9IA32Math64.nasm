@@ -20,7 +20,7 @@
 
 %ifndef TR_HOST_64BIT
 
-    %include "IA32Math64_nasm.inc"
+    %include "IA32Math64.inc"
 
 %else ; TR_HOST_64BIT
 segment .data

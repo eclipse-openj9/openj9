@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2017 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,20 +18,20 @@
 ;
 ; SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 	
-        .686p
-        assume cs:flat,ds:flat,ss:flat
-        _TEXT SEGMENT PARA USE32 PUBLIC 'CODE'
-        _TEXT ends
-        _TEXT SEGMENT PARA USE32 PUBLIC 'CODE'
-        public _longDivide
-        public _longRemainder
-        public jitMathHelpersDivideBegin
-        public jitMathHelpersDivideEnd
-        public jitMathHelpersRemainderBegin
-        public jitMathHelpersRemainderEnd
+      
+        %include "jilconsts.inc"
+
+segment .text
+
+        DECLARE_GLOBAL longDivide
+        DECLARE_GLOBAL longRemainder
+        DECLARE_GLOBAL jitMathHelpersDivideBegin
+        DECLARE_GLOBAL jitMathHelpersDivideEnd
+        DECLARE_GLOBAL jitMathHelpersRemainderBegin
+        DECLARE_GLOBAL jitMathHelpersRemainderEnd
 ;
       align    16
-_longRemainder PROC NEAR
+longRemainder:
 jitMathHelpersRemainderBegin:
       ; divides two signed 64-bit numbers and returns the remainder.
       ;
@@ -44,13 +44,13 @@ jitMathHelpersRemainderBegin:
       push    ecx                                 ; ebx, ecx, edi, esi
       push    edi                                 ; esi is preserved later
       
-      mov     ecx, dword ptr [esp+28]             ; divisor-hi
-      mov     ebx, dword ptr [esp+24]             ; divisor-lo
+      mov     ecx, dword  [esp+28]             ; divisor-hi
+      mov     ebx, dword  [esp+24]             ; divisor-lo
       mov     edx, ecx                            ; check to see if we are 
       or      edx, ebx                            ; going to throw div/0            
       jz      zero_remainder                      ; exception
-      mov     edx, dword ptr [esp+20]             ; dividend-hi
-      mov     eax, dword ptr [esp+16]             ; dividend-lo
+      mov     edx, dword  [esp+20]             ; dividend-hi
+      mov     eax, dword  [esp+16]             ; dividend-lo
                                                         
       cmp     edx, -1                             ; check the exception case MIN_INT/-1
       jz      short high_dividend_neg_one         ; handle that separately
@@ -146,10 +146,10 @@ long_long_rem_begin:                              ; the following algorithm is b
                                                   ; AMD opteron optimization guide
 
       sub     esp, 16                             ; make room for four spills
-      mov     dword ptr [esp], eax                ; save dividend low
-      mov     dword ptr [esp+4], ebx              ; save divisor low
-      mov     dword ptr [esp+8], edx              ; save dividend high
-      mov     dword ptr [esp+12], ecx             ; save divisor high
+      mov     dword  [esp], eax                ; save dividend low
+      mov     dword  [esp+4], ebx              ; save divisor low
+      mov     dword  [esp+8], edx              ; save dividend high
+      mov     dword  [esp+12], ecx             ; save divisor high
       mov     edi, ecx                            ; spill divisor high
       shr     edx, 1                              ; shift right by 1 both
       rcr     eax, 1                              ; divisor and
@@ -161,18 +161,18 @@ long_long_rem_begin:                              ; the following algorithm is b
       shr     edx, cl                             ; less than 2^32 (that is, fits in EBX)
       rol     edi, 1                              ; restore original divisor high
       div     ebx                                 ; compute quotient
-      mov     ebx, dword ptr [esp]                ; restore dividend low
+      mov     ebx, dword  [esp]                ; restore dividend low
       mov     ecx, eax                            ; save quotient
       imul    edi, eax                            ; quotient * divisor high word (low only)
-      mul     dword ptr [esp+4]                   ; quotient * divisor low word
+      mul     dword  [esp+4]                   ; quotient * divisor low word
       add     edx, edi                            ; edx:eax = quotient * divisor
       sub     ebx, eax                            ; dividend low - (quotient * divisor low)
-      mov     ecx, dword ptr [esp+8]              ; dividend high
+      mov     ecx, dword  [esp+8]              ; dividend high
       sbb     ecx, edx                            ; subtract divisor * quotient from dividend.
       sbb     eax, eax                            ; remainder < 0 ? 0xffffffff : 0
-      mov     edx, dword ptr [esp+12]             ; divisor high
+      mov     edx, dword  [esp+12]             ; divisor high
       and     edx, eax                            ; remainder < 0 ? divisor high : 0
-      and     eax, dword ptr [esp+4]              ; remainder < 0 ? divisor low : 0
+      and     eax, dword  [esp+4]              ; remainder < 0 ? divisor low : 0
       add     eax, ebx                            ; remainder low
       adc     edx, ecx                            ; remainder high
       add     esp, 16                             ; restore stack shape
@@ -257,11 +257,11 @@ lrem_path_end:
       jmp     sign_rem                            ; to set the sign
                   
 jitMathHelpersRemainderEnd:
-_longRemainder endp    
+ret
 
 
 ;
-; _longDivide divides two signed 64-bit numbers and delivers the quotient
+; longDivide divides two signed 64-bit numbers and delivers the quotient
 ;
 ; INPUT: [ESP+8]:[ESP+4] dividend
 ; [ESP+16]:[ESP+12] divisor
@@ -269,10 +269,10 @@ _longRemainder endp
 ; OUTPUT: EDX:EAX quotient of division
 
        align 16
-_longDivide PROC NEAR
+longDivide:
 jitMathHelpersDivideBegin:
-	mov edx, dword ptr[esp + 12]
-	or  edx, dword ptr[esp + 16]
+	mov edx, dword [esp + 12]
+	or  edx, dword [esp + 16]
 	jz  _zero_divisor
 	push ebx 				; save ebx as per private linkage
 	push esi 				; save esi as per private linkage
@@ -348,7 +348,7 @@ _big_divisor:
 	mov ebx, [esp] 				;dividend-lo
 	mov ecx, eax 				;save quotient
 	imul edi, eax 				;quotient * divisor hi-word (low only)
-	mul dword ptr [esp+4] 			;quotient * divisor lo-word
+	mul dword  [esp+4] 			;quotient * divisor lo-word
 	add edx, edi 				;edx:eax = quotient * divisor
 	sub ebx, eax 				;dividend-lo - (quot.*divisor)-lo
 	mov eax, ecx 				;get quotient
@@ -379,20 +379,20 @@ _slow_path:
 	pop esi 				; restore esi as per private linkage
 	pop ebx 				; restore ebx as per private linkage
 	push     ecx
-	fstcw    word ptr[esp]
-	mov      word ptr[esp+2], 0f7fH
-	fldcw    word ptr[esp+2]
-	fild     qword ptr[esp+8]
-	fild     qword ptr[esp+16]
-	fdivp    st(1), st(0)
-	fistp    qword ptr[esp+8]
+	fstcw    word [esp]
+	mov      word [esp+2], 0f7fH
+	fldcw    word [esp+2]
+	fild     qword [esp+8]
+	fild     qword [esp+16]
+	fdivp    st1, st0
+	fistp    qword [esp+8]
 	fclex
-	fldcw    word ptr[esp]
+	fldcw    word [esp]
 	add      esp, 4
-	mov      eax, dword ptr[esp+4]
-	mov      edx, dword ptr[esp+8]
+	mov      eax, dword [esp+4]
+	mov      edx, dword [esp+8]
 	ret      16	
 
 jitMathHelpersDivideEnd:
-_longDivide endp
-      _TEXT ends
+ret
+
