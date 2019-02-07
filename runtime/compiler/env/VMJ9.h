@@ -879,16 +879,6 @@ public:
       {
       return isMethodTracingEnabled((TR_OpaqueMethodBlock *)j9method);
       }
-   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool isMethodEnterTracingEnabled(J9Method *j9method)
-      {
-      return isMethodEnterTracingEnabled((TR_OpaqueMethodBlock *)j9method);
-      }
-   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool isMethodExitTracingEnabled(J9Method *j9method)
-      {
-      return isMethodExitTracingEnabled((TR_OpaqueMethodBlock *)j9method);
-      }
 
    virtual bool isSelectiveMethodEnterExitEnabled();
 
@@ -1128,8 +1118,6 @@ public:
    virtual bool               stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
    virtual bool               isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool               isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool               isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method);
    virtual bool               traceableMethodsCanBeInlined();
 
    virtual bool               canMethodEnterEventBeHooked();
