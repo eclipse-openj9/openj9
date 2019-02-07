@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,6 +70,9 @@ endif
 ifeq ($(JAVA_VERSION), SE110)
 	JDK_VERSION:=11
 endif
+ifeq ($(JAVA_VERSION), SE120)
+	JDK_VERSION:=12
+endif
 
 ifndef JDK_VERSION
 	export JDK_VERSION:=8
@@ -101,6 +104,9 @@ ifeq ($(JDK_VERSION), 10)
 endif
 ifeq ($(JDK_VERSION), 11)
 	OPENJDK_VERSION = openjdk11
+endif
+ifeq ($(JDK_VERSION), 12)
+	OPENJDK_VERSION = openjdk12
 endif
 
 ifeq (hotspot, $(JDK_IMPL))
