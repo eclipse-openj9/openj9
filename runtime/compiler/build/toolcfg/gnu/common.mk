@@ -211,16 +211,6 @@ S_DEFINES_DEBUG+=DEBUG
 S_FLAGS+=--noexecstack
 S_FLAGS_DEBUG+=--gstabs
 
-ifeq ($(HOST_ARCH),x)
-    ifeq ($(HOST_BITS),32)
-        S_FLAGS+=--32
-    endif
-
-    ifeq ($(HOST_BITS),64)
-        S_FLAGS+=--64
-    endif
-endif
-
 ifeq ($(HOST_ARCH),p)
     S_FLAGS+=-maltivec
     ifeq ($(HOST_BITS),32)
@@ -258,46 +248,6 @@ endif
 
 S_DEFINES+=$(S_DEFINES_EXTRA)
 S_FLAGS+=$(S_FLAGS_EXTRA)
-
-#
-# Setup MASM2GAS to preprocess x86 assembly files
-# PASM files are first preprocessed by CPP as well
-#
-ifeq ($(HOST_ARCH),x)
-
-    ASM_SCRIPT=$(JIT_SCRIPT_DIR)/masm2gas.pl
-
-    ASM_INCLUDES=$(PRODUCT_INCLUDES)
-
-    ifeq ($(HOST_BITS),64)
-        ASM_FLAGS+=--64
-    endif
-
-    ifeq ($(BUILD_CONFIG),debug)
-        ASM_FLAGS+=$(ASM_FLAGS_DEBUG)
-    endif
-
-    ifeq ($(BUILD_CONFIG),prod)
-        ASM_FLAGS+=$(ASM_FLAGS_PROD)
-    endif
-
-    ASM_FLAGS+=$(ASM_FLAGS_EXTRA)
-
-    PASM_CMD=$(CC)
-
-    PASM_INCLUDES=$(PRODUCT_INCLUDES)
-    PASM_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
-
-    ifeq ($(BUILD_CONFIG),debug)
-        PASM_FLAGS+=$(PASM_FLAGS_DEBUG)
-    endif
-
-    ifeq ($(BUILD_CONFIG),prod)
-        PASM_FLAGS+=$(PASM_FLAGS_PROD)
-    endif
-
-    PASM_FLAGS+=$(PASM_FLAGS_EXTRA)
-endif
 
 ifeq ($(HOST_ARCH),x)
 #

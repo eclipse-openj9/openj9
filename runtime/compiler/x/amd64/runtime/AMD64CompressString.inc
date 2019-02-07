@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2017 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,70 +18,70 @@
 ;
 ; SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-_TEXT           segment para 'CODE'
+segment .text
 
-                public  _compressString
-                public  _compressStringJ
-                public  _compressStringNoCheck
-		public  _compressStringNoCheckJ
-		public  _andORString
+        DECLARE_GLOBAL  compressString
+        DECLARE_GLOBAL  compressStringJ
+        DECLARE_GLOBAL  compressStringNoCheck
+        DECLARE_GLOBAL  compressStringNoCheckJ
+        DECLARE_GLOBAL  andORString
 
-                align 16
+        align 16
 
 
-_compressString PROC 
-		SHR  RCX, 4
-		ADD  RSI, RAX
-		ADD  RSI, RAX
-		MOV  RDX, 0
+compressString:
+        shr  rcx, 4
+        add  rsi, rax
+        add  rsi, rax
+        mov  rdx, 0
 eightchars:
-		MOV  RAX, QWORD PTR [RSI]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RDX, RAX				;
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+2], AX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rdx, rax				    ;
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+2], ax			; write the low 2 bytes of the 4 byte value in the destination
 
-		MOV  RAX, QWORD PTR [RSI+8]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RDX, RAX				;
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI+4], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+6], AX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi+8]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rdx, rax				    ;
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi+4], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+6], ax			; write the low 2 bytes of the 4 byte value in the destination
 
-		MOV  RAX, QWORD PTR [RSI+16]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RDX, RAX				;
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI+8], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+10], AX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi+16]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rdx, rax				    ;
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi+8], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+10], ax			; write the low 2 bytes of the 4 byte value in the destination
 
 
-		MOV  RAX, QWORD PTR [RSI+24]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RDX, RAX				;
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI+12], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+14], AX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi+24]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rdx, rax				    ;
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi+12], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+14], ax			; write the low 2 bytes of the 4 byte value in the destination
 
-		ADD  RDI, 16
-		ADD  RSI, 32		
-		LOOP eightchars
-                MOV  RAX, RDX
-                SHL  RDX, 32
-                OR   RAX, RDX
-		SHR  RAX, 32
-                ret
-_compressString endp
-;
+        add  rdi, 16
+        add  rsi, 32		
+        loop eightchars
+                mov  rax, rdx
+                shl  rdx, 32
+                or   rax, rdx
+                ;loop eightchars
+        shr  rax, 32
+ret
+
 
 
 ; A c-style memmove with no assumptions on the element size
@@ -89,151 +89,137 @@ _compressString endp
 ; ecx has length of copy in bytes
 ; esi has source address
 ; edi has destination address
-_compressStringJ PROC
-		SHR  RCX, 4
-		ADD  RSI, RAX
-		ADD  RSI, RAX
-		MOV  RDX, 0
+compressStringJ:
+        shr  rcx, 4
+        add  rsi, rax
+        add  rsi, rax
+        mov  rdx, 0
 eightcharsJ:
-		MOV  RAX, QWORD PTR [RSI]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, QWORD PTR [RSI+8]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RDX, RAX				;
-		OR   RDX, RBX
-		SHL  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  QWORD PTR [RDI], RAX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi]  		; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, QWORD  [rsi+8]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rdx, rax				    ;
+        or   rdx, rbx
+        shl  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  QWORD  [rdi], rax			; write the low 2 bytes of the 4 byte value in the destination
 
-		MOV  RAX, QWORD PTR [RSI+16]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, QWORD PTR [RSI+24]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RDX, RAX				;
-		OR   RDX, RBX
-		SHL  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  QWORD PTR [RDI+8], RAX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi+16]  		; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, QWORD  [rsi+24]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rdx, rax				    ;
+        or   rdx, rbx
+        shl  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  QWORD  [rdi+8], rax		; write the low 2 bytes of the 4 byte value in the destination
 
-		ADD  RDI, 16
-		ADD  RSI, 32		
-		LOOP eightcharsJ
-                MOV  RAX, RDX
-                SHL  RDX, 32
-                OR   RAX, RDX
-		SHR  RAX, 32
-                ret
-_compressStringJ endp
-;
+        add  rdi, 16
+        add  rsi, 32		
+        loop eightcharsJ
+                mov  rax, rdx
+                shl  rdx, 32
+                or   rax, rdx
+        shr  rax, 32
+ret
 
-_andORString    PROC
-		SHR  RCX, 4
-		ADD  RSI, RAX
-		ADD  RSI, RAX
-		MOV  RBX, 0
-		MOV  RDX, 0ffffffffffffffffh
+andORString:
+        shr  rcx, 4
+        add  rsi, rax
+        add  rsi, rax
+        mov  rbx, 0
+        mov  rdx, 0ffffffffffffffffh
 eightchars2:
-		MOV  RAX, QWORD PTR [RSI]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RBX, RAX
-		AND  RDX, RAX
-		MOV  RAX, QWORD PTR [RSI+8]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RBX, RAX
-		AND  RDX, RAX
-		MOV  RAX, QWORD PTR [RSI+16]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RBX, RAX
-		AND  RDX, RAX
-		MOV  RAX, QWORD PTR [RSI+24]  		; load 4 bytes from the source array into EAX (2 chars)
-		OR   RBX, RAX
-		AND  RDX, RAX
-		ADD  RSI, 32		
-		LOOP eightchars2
+        mov  rax, QWORD  [rsi]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rbx, rax
+        and  rdx, rax
+        mov  rax, QWORD  [rsi+8]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rbx, rax
+        and  rdx, rax
+        mov  rax, QWORD  [rsi+16]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rbx, rax
+        and  rdx, rax
+        mov  rax, QWORD  [rsi+24]  		; load 4 bytes from the source array into EAX (2 chars)
+        or   rbx, rax
+        and  rdx, rax
+        add  rsi, 32		
+        loop eightchars2
 
-		MOV  RAX, RBX                           ; building the OR
-		MOV  RCX, RDX                           ; building the AND
-		SHR  RBX, 32                            ; building the OR
-		SHR  RDX, 32                            ; building the AND
-		OR   EBX, EAX				; building the OR
-		AND  EDX, ECX				; building the AND
-		MOV  EAX, EBX				; building the OR
-		MOV  ECX, EDX				; building the AND
-		SHR  EBX, 16				; building the OR
-		SHL  EDX, 16				; building the AND
-		OR   BX, AX				; building the OR
-		AND  EDX, ECX				; building the AND
+        mov  rax, rbx                           ; building the or
+        mov  rcx, rdx                           ; building the and
+        shr  rbx, 32                            ; building the or
+        shr  rdx, 32                            ; building the and
+        or   ebx, eax				            ; building the or
+        and  edx, ecx				            ; building the and
+        mov  eax, ebx				            ; building the or
+        mov  ecx, edx				            ; building the and
+        shr  ebx, 16				            ; building the or
+        shl  edx, 16				            ; building the and
+        or   bx, ax				                ; building the or
+        and  edx, ecx				            ; building the and
 
-		MOV  DX, BX
-                ret
-_andORString endp
-;
+        mov  dx, bx
+ret
 
 
-_compressStringNoCheckJ    PROC
-		SHR  RCX, 4
-		ADD  RSI, RAX
-		ADD  RSI, RAX
+compressStringNoCheckJ:
+        shr  rcx, 4
+        add  rsi, rax
+        add  rsi, rax
 eightcharsNoCheckJ:
-		MOV  RAX, QWORD PTR [RSI]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, QWORD PTR [RSI+8]  		; load 4 bytes from the source array into EAX (2 chars)
-		SHL  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  QWORD PTR [RDI], RAX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi]  		        ; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, QWORD  [rsi+8]  		        ; load 4 bytes from the source array into EAX (2 chars)
+        shl  rbx, 8					            ; shift right by 8
+        or   rax, rbx					        ; or the 2 values
+        mov  QWORD  [rdi], rax			        ; write the low 2 bytes of the 4 byte value in the destination
 
-		MOV  RAX, QWORD PTR [RSI+16]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, QWORD PTR [RSI+24]  		; load 4 bytes from the source array into EAX (2 chars)
-		SHL  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  QWORD PTR [RDI+8], RAX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi+16]  		        ; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, QWORD  [rsi+24]  		        ; load 4 bytes from the source array into EAX (2 chars)
+        shl  rbx, 8					            ; shift right by 8
+        or   rax, rbx					        ; or the 2 values
+        mov  QWORD  [rdi+8], rax			    ; write the low 2 bytes of the 4 byte value in the destination
 
-		ADD  RDI, 16
-		ADD  RSI, 32		
-		LOOP eightcharsNoCheckJ
-                ret
-_compressStringNoCheckJ endp
-;
+        add  rdi, 16
+        add  rsi, 32		
+        loop eightcharsNoCheckJ
+ret
 
-
-_compressStringNoCheck PROC 
-		SHR  RCX, 4
-		ADD  RSI, RAX
-		ADD  RSI, RAX
+compressStringNoCheck:
+        shr  rcx, 4
+        add  rsi, rax
+        add  rsi, rax
 eightcharsNoCheck:
-		MOV  RAX, QWORD PTR [RSI]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+2], AX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi]  		; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+2], ax			; write the low 2 bytes of the 4 byte value in the destination
 
-		MOV  RAX, QWORD PTR [RSI+8]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI+4], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+6], AX			; write the low 2 bytes of the 4 byte value in the destination
+        mov  rax, QWORD  [rsi+8]  		; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi+4], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+6], ax			; write the low 2 bytes of the 4 byte value in the destination
 
-		MOV  RAX, QWORD PTR [RSI+16]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI+8], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+10], AX			; write the low 2 bytes of the 4 byte value in the destination
-
-
-		MOV  RAX, QWORD PTR [RSI+24]  		; load 4 bytes from the source array into EAX (2 chars)
-		MOV  RBX, RAX					; copy the loaded value
-		SHR  RBX, 8					; shift right by 8
-		OR   RAX, RBX					; or the 2 values
-		MOV  WORD PTR [RDI+12], AX			; write the low 2 bytes of the 4 byte value in the destination
-		SHR  RAX, 32
-		MOV  WORD PTR [RDI+14], AX			; write the low 2 bytes of the 4 byte value in the destination
-
-		ADD  RDI, 16
-		ADD  RSI, 32		
-		LOOP eightcharsNoCheck
-                ret
-_compressStringNoCheck endp
-;
+        mov  rax, QWORD  [rsi+16]  		; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi+8], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+10], ax			; write the low 2 bytes of the 4 byte value in the destination
 
 
-_TEXT           ends
+        mov  rax, QWORD  [rsi+24]  		; load 4 bytes from the source array into EAX (2 chars)
+        mov  rbx, rax					; copy the loaded value
+        shr  rbx, 8					    ; shift right by 8
+        or   rax, rbx					; or the 2 values
+        mov  WORD  [rdi+12], ax			; write the low 2 bytes of the 4 byte value in the destination
+        shr  rax, 32
+        mov  WORD  [rdi+14], ax			; write the low 2 bytes of the 4 byte value in the destination
 
-
+        add  rdi, 16
+        add  rsi, 32		
+        loop eightcharsNoCheck
+ret

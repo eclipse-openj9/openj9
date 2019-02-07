@@ -27,7 +27,7 @@
 ; --------------------------------------------------------------------------------
 
       %include "jilconsts.inc"
-      %include "X86PicBuilder_nasm.inc"
+      %include "X86PicBuilder.inc"
 
       segment .text
 
@@ -1181,7 +1181,7 @@ ret                                                   ; branch will mispredict s
 ; --------------------------------------------------------------------------------
 
       %include "jilconsts.inc"
-      %include "X86PicBuilder_nasm.inc"
+      %include "X86PicBuilder.inc"
 
 segment .text
 

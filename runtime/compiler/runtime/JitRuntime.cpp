@@ -1105,26 +1105,18 @@ extern "C" void _patchJNICallSite(J9Method *method, uint8_t *pc, uint8_t *newAdd
    }
 #endif
 
-#if defined(NASM_ASSEMBLER)
+#if defined(TR_HOST_X86)
 JIT_HELPER(prepareForOSR);
 #else
 JIT_HELPER(_prepareForOSR);
 #endif
 
 #ifdef TR_HOST_X86
-#if defined(NASM_ASSEMBLER)
 JIT_HELPER(countingRecompileMethod);
 JIT_HELPER(samplingRecompileMethod);
 JIT_HELPER(countingPatchCallSite);
 JIT_HELPER(samplingPatchCallSite);
 JIT_HELPER(induceRecompilation);
-#else /* NASM_ASSEMBLER */
-JIT_HELPER(_countingRecompileMethod);
-JIT_HELPER(_samplingRecompileMethod);
-JIT_HELPER(_countingPatchCallSite);
-JIT_HELPER(_samplingPatchCallSite);
-JIT_HELPER(_induceRecompilation);
-#endif /* NASM_ASSEMBLER */
 
 #elif defined(TR_HOST_POWER)
 
@@ -1208,42 +1200,26 @@ void initializeJitRuntimeHelperTable(char isSMP)
 
 #if defined(J9ZOS390)
    SET_CONST(TR_prepareForOSR,                  (void *)_prepareForOSR);
-#elif defined(NASM_ASSEMBLER)
+#elif defined(TR_HOST_X86)
    SET(TR_prepareForOSR,                        (void *)prepareForOSR, TR_Helper);
 #else
    SET(TR_prepareForOSR,                        (void *)_prepareForOSR, TR_Helper);
-#endif /* NASM_ASSEMBLER */
+#endif /* TR_HOST_X86 */
 
 #ifdef TR_HOST_X86
 
 #if defined(TR_HOST_64BIT)
-#if defined(NASM_ASSEMBLER)
    SET(TR_AMD64samplingRecompileMethod,         (void *)samplingRecompileMethod, TR_Helper);
    SET(TR_AMD64countingRecompileMethod,         (void *)countingRecompileMethod, TR_Helper);
    SET(TR_AMD64samplingPatchCallSite,           (void *)samplingPatchCallSite,   TR_Helper);
    SET(TR_AMD64countingPatchCallSite,           (void *)countingPatchCallSite,   TR_Helper);
    SET(TR_AMD64induceRecompilation,             (void *)induceRecompilation,     TR_Helper);
-#else /* NASM_ASSEMBLER */
-   SET(TR_AMD64samplingRecompileMethod,         (void *)_samplingRecompileMethod, TR_Helper);
-   SET(TR_AMD64countingRecompileMethod,         (void *)_countingRecompileMethod, TR_Helper);
-   SET(TR_AMD64samplingPatchCallSite,           (void *)_samplingPatchCallSite,   TR_Helper);
-   SET(TR_AMD64countingPatchCallSite,           (void *)_countingPatchCallSite,   TR_Helper);
-   SET(TR_AMD64induceRecompilation,             (void *)_induceRecompilation,     TR_Helper);
-#endif /* NASM_ASSEMBLER */
 #else /* TR_HOST_64BIT */
-#if defined(NASM_ASSEMBLER)
    SET(TR_IA32samplingRecompileMethod,          (void *)samplingRecompileMethod, TR_Helper);
    SET(TR_IA32countingRecompileMethod,          (void *)countingRecompileMethod, TR_Helper);
    SET(TR_IA32samplingPatchCallSite,            (void *)samplingPatchCallSite,   TR_Helper);
    SET(TR_IA32countingPatchCallSite,            (void *)countingPatchCallSite,   TR_Helper);
    SET(TR_IA32induceRecompilation,              (void *)induceRecompilation,     TR_Helper);
-#else
-   SET(TR_IA32samplingRecompileMethod,          (void *)_samplingRecompileMethod, TR_Helper);
-   SET(TR_IA32countingRecompileMethod,          (void *)_countingRecompileMethod, TR_Helper);
-   SET(TR_IA32samplingPatchCallSite,            (void *)_samplingPatchCallSite,   TR_Helper);
-   SET(TR_IA32countingPatchCallSite,            (void *)_countingPatchCallSite,   TR_Helper);
-   SET(TR_IA32induceRecompilation,              (void *)_induceRecompilation,     TR_Helper);
-#endif /* NASM_ASSEMBLER */
 #endif /* TR_HOST_64BIT */
 
 #elif defined(TR_HOST_POWER)
@@ -1618,7 +1594,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
    return startPC;
    }
 
-#if defined(NASM_ASSEMBLER)
+#if defined(TR_HOST_X86)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -1690,7 +1666,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
    else
       {
       uintptrj_t fieldOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(thunkTuple), "invokeExactThunk", "J");
-#if defined(NASM_ASSEMBLER)
+#if defined(TR_HOST_X86)
       bool success = fej9->compareAndSwapInt64Field(thunkTuple, "invokeExactThunk", (uint64_t)(uintptrj_t)initialInvokeExactThunkGlue, (uint64_t)(uintptrj_t)addressToDispatch);
       
       if (details)
@@ -1703,7 +1679,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
       if (details)
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   %s updating ThunkTuple %p field %+d from %p to %p",
             vmThread, success? "Succeeded" : "Failed", thunkTuple, (int)fieldOffset, _initialInvokeExactThunkGlue, addressToDispatch);
-#endif /* NASM_ASSEMBLER */
+#endif /* TR_HOST_X86 */
       }
    return addressToDispatch;
    }
