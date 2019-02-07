@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2230,12 +2230,14 @@ j9process_runTests(struct J9PortLibrary *portLibrary, char *argv0, char* j9proce
 		rc |= j9process_testRedirect(portLibrary);
 #if !defined(WIN32)
 		rc |= j9process_testCreateInNewProcessGroupUnix(portLibrary);
-#if !(defined(J9ZOS390) || defined(LINUX))
-		/* z/OS: writes extra characters to the console in the build environment when a process catches a SIGQUIT
-		 * Linux: in certain linux distros the /bin/sh command receives the SIGQUIT, see PR 56109 
+#if !(defined(J9ZOS390) || defined(LINUX) || defined(OSX))
+		/* z/OS: writes extra characters to the console in the build environment when a process catches a SIGQUIT.
+		 * Linux: in certain Linux distros the /bin/sh command receives a SIGQUIT signal, see PR 56109.
+		 * OSX: make, tee and other test framework processes receive a SIGQUIT signal, which causes the test
+		 *      framework to crash. See https://github.com/eclipse/openj9/issues/4520.
 		 */
 		rc |= j9process_testNewProcessGroupByTriggeringSignal(portLibrary);
-#endif /* !defined(J9ZOS390) */
+#endif /* !(defined(J9ZOS390) || defined(LINUX) || defined(OSX)) */
 #endif	/* !defined(WIN32) */
 		rc |= j9process_envTest(portLibrary);
 	}

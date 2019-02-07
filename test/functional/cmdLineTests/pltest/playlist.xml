@@ -32,7 +32,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3685 -->
 		<platformRequirements>^os.aix,^os.win,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
@@ -40,6 +39,37 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>11+</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_pltest_osx</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+	-DEXE='$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -exclude:j9sock $(_JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.osx</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
