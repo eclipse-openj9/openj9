@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,45 +44,7 @@ target_include_directories(jvm_redirect
 )
 set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
 
-################################################################################
-# Redirector b150
-################################################################################
-add_library(jvm_b150_redirect SHARED
-	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
-	redirector.c
-)
-target_link_libraries(jvm_b150_redirect
-	PRIVATE
-		j9vm_interface
-		dl
-)
-target_include_directories(jvm_b150_redirect
-	PRIVATE
-		"${j9vm_SOURCE_DIR}/j9vm"
-		"${j9vm_BINARY_DIR}/j9vm"
-)
-set_target_properties(jvm_b150_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b150)
-
-################################################################################
-# Redirector b156
-################################################################################
-add_library(jvm_b156_redirect SHARED
-	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
-	redirector.c
-)
-target_link_libraries(jvm_b156_redirect
-	PRIVATE
-		j9vm_interface
-		dl
-)
-target_include_directories(jvm_b156_redirect
-	PRIVATE
-		"${j9vm_SOURCE_DIR}/j9vm"
-		"${j9vm_BINARY_DIR}/j9vm"
-)
-set_target_properties(jvm_b156_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b156)
-
 install(
-	TARGETS jvm_b150_redirect jvm_b156_redirect jvm_redirect
+	TARGETS jvm_redirect
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}/redirector
 )
