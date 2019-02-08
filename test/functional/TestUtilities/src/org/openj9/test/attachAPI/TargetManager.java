@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,15 +21,8 @@
  *******************************************************************************/
 package org.openj9.test.attachAPI;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -38,17 +31,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-
 import org.openj9.test.util.StringPrintStream;
-import org.testng.log4testng.Logger;
-
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
 @SuppressWarnings("nls")
-class TargetManager {
+class TargetManager extends ProcessLauncher {
 	static final String COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER = "com.ibm.tools.attach.target.AttachHandler";
-	private static Logger logger = Logger.getLogger(TargetManager.class);
 	public static final String PID_PREAMBLE = "pid=";
 	public static final String VMID_PREAMBLE = "vmid=";
 	public static final String STATUS_PREAMBLE = "status=";
@@ -57,13 +46,6 @@ class TargetManager {
 	public static final String STATUS_INIT_FAIL = "attach_init_fail";
 
 	String targetId, displayName;
-	private Process proc;
-	private BufferedWriter targetInWriter;
-	private BufferedReader targetOutReader;
-	private BufferedReader targetErrReader;
-	private OutputStream targetIn;
-	String errOutput = "";
-	String outOutput = "";
 	private String targetPid;
 	private String targetVmid;
 	public static final String TARGETVM_START = "targetvm_start";
@@ -86,18 +68,6 @@ class TargetManager {
 			targetPid = "null";
 		}
 		return targetPid;
-	}
-
-	public BufferedWriter getTargetInWriter() {
-		return targetInWriter;
-	}
-
-	public BufferedReader getTargetOutReader() {
-		return targetOutReader;
-	}
-
-	public BufferedReader getTargetErrReader() {
-		return targetErrReader;
 	}
 
 	public TargetManager(String cmdName, String targetId) {
@@ -197,9 +167,7 @@ class TargetManager {
 			String myDisplayName, List<String> vmArgs,
 			List<String> appArgs) {
 		ArrayList<String> argBuffer = new ArrayList<String>();
-		String[] args = {};
 		this.displayName = myDisplayName;
-		Runtime me = Runtime.getRuntime();
 		char fs = File.separatorChar;
 		String javaExec = System.getProperty("java.home") + fs + "bin" + fs
 				+ "java";
@@ -232,36 +200,15 @@ class TargetManager {
 		if (null != appArgs) {
 			argBuffer.addAll(appArgs);
 		}
-		Process target = null;
-		args = new String[argBuffer.size()];
-		argBuffer.toArray(args);
-		
-		StringBuilder debugBuffer = new StringBuilder();
-		debugBuffer.append("Arguments:\n");
-		for (int i = 0; i < args.length; ++i) {
-			debugBuffer.append(args[i]);
-			debugBuffer.append(" ");
-		}
-		debugBuffer.append("\n");
-		logger.debug(debugBuffer.toString());
-		try {
-			target = me.exec(args);
-		} catch (IOException e) {
-			StringPrintStream.logStackTrace(e, logger);
-			return null;
-		}
-		this.targetIn = target.getOutputStream();
-		InputStream targetOut = target.getInputStream();
-		InputStream targetErr = target.getErrorStream();
-		targetInWriter = new BufferedWriter(new OutputStreamWriter(targetIn));
-		targetOutReader = new BufferedReader(new InputStreamReader(targetOut));
-		targetErrReader = new BufferedReader(new InputStreamReader(targetErr));
-		try {
-			targetInWriter.write(TargetManager.TARGETVM_START + '\n');
-			targetInWriter.flush();
-		} catch (IOException e) {
-			StringPrintStream.logStackTrace(e, logger);
-			return null;
+		Process target = launchProcess(argBuffer);
+		if (null != target) {
+			try {
+				targetInWriter.write(TargetManager.TARGETVM_START + '\n');
+				targetInWriter.flush();
+			} catch (IOException e) {
+				StringPrintStream.logStackTrace(e, logger);
+				return null;
+			}
 		}
 		return target;
 	}
@@ -397,22 +344,6 @@ class TargetManager {
 			return status;
 		}
 
-	}
-
-	public synchronized String getErrOutput() {
-		return errOutput;
-	}
-
-	public synchronized String getOutOutput() {
-		return outOutput;
-	}
-
-	public synchronized BufferedReader getTgtOut() {
-		return targetOutReader;
-	}
-
-	public synchronized BufferedReader getTgtErr() {
-		return targetErrReader;
 	}
 
 	public static void setLogging(boolean enableLogging) {
