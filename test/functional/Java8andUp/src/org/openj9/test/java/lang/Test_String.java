@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1245,144 +1245,6 @@ public class Test_String {
 	}
 
 	/**
-	 * @tests java.lang.String#toLowerCase(java.util.Locale) using different Unicode standards depending on what Java
-	 *        version we are executing on
-	 */
-	@Test
-	public void test_toLowerCase_lithuanian() {
-		String lower1 = "\ud801\udc00".toLowerCase(Locale.US);
-		AssertJUnit.assertTrue("Wrong surrogate conversion: " + writeString(lower1), lower1.equals("\ud801\udc28"));
-
-		/* [PR CMVC 89469] incorrect case mapping for Lithuanian */
-		Locale lithuanian = new Locale("lt");
-		AssertJUnit.assertTrue("Wrong conversion 0xcc", "\u00cc".toLowerCase(lithuanian).equals("i\u0307\u0300"));
-		AssertJUnit.assertTrue("Wrong conversion 0xcd", "\u00cd".toLowerCase(lithuanian).equals("i\u0307\u0301"));
-		AssertJUnit.assertTrue("Wrong conversion 0x128", "\u0128".toLowerCase(lithuanian).equals("i\u0307\u0303"));
-		AssertJUnit.assertTrue("Wrong conversion 0xcc", "\u00cc".toLowerCase(Locale.US).equals("\u00ec"));
-		AssertJUnit.assertTrue("Wrong conversion 0xcd", "\u00cd".toLowerCase(Locale.US).equals("\u00ed"));
-		AssertJUnit.assertTrue("Wrong conversion 0x128", "\u0128".toLowerCase(Locale.US).equals("\u0129"));
-
-		String startCombiningAbove = null;
-		String endCombiningAbove = null;
-
-		int javaMajorVersion = VersionCheck.major();
-
-		switch (javaMajorVersion) {
-			case 8:
-				startCombiningAbove = "\u0300\u033D\u0346\u034A\u0350\u0357\u035B\u0363\u0483\u0592\u0597\u059C\u05A8\u05AB\u05AF\u05C4\u0610\u0653\u0657\u065D\u06D6\u06DF\u06E4\u06E7\u06EB\u0730\u0732\u0735\u073A\u073D\u073F\u0743\u0745\u0747\u0749\u07EB\u07F3\u0816\u081B\u0825\u0829\u08E4\u08E7\u08EA\u08F3\u08F7\u08FB\u0951\u0953\u0F82\u0F86\u135D\u17DD\u193A\u1A17\u1A75\u1B6B\u1B6D\u1CD0\u1CDA\u1CE0\u1CF4\u1DC0\u1DC3\u1DCB\u1DD1\u1DFE\u20D0\u20D4\u20DB\u20E1\u20E7\u20E9\u20F0\u2CEF\u2DE0\uA66F\uA674\uA69F\uA6F0\uA8E0\uAAB0\uAAB2\uAAB7\uAABE\uAAC1\uFE20";
-				endCombiningAbove = "\u0314\u0344\u0346\u034C\u0352\u0357\u035B\u036F\u0487\u0595\u0599\u05A1\u05A9\u05AC\u05AF\u05C4\u0617\u0654\u065B\u065E\u06DC\u06E2\u06E4\u06E8\u06EC\u0730\u0733\u0736\u073A\u073D\u0741\u0743\u0745\u0747\u074A\u07F1\u07F3\u0819\u0823\u0827\u082D\u08E5\u08E8\u08EC\u08F5\u08F8\u08FE\u0951\u0954\u0F83\u0F87\u135F\u17DD\u193A\u1A17\u1A7C\u1B6B\u1B73\u1CD2\u1CDB\u1CE0\u1CF4\u1DC1\u1DC9\u1DCC\u1DE6\u1DFE\u20D1\u20D7\u20DC\u20E1\u20E7\u20E9\u20F0\u2CF1\u2DFF\uA66F\uA67D\uA69F\uA6F1\uA8F1\uAAB0\uAAB3\uAAB8\uAABF\uAAC1\uFE26";
-				break;
-
-			case 9:
-			case 10:
-				startCombiningAbove = "\u0300\u033D\u0346\u034A\u0350\u0357\u035B\u0363\u0483\u0592\u0597\u059C\u05A8\u05AB\u05AF\u05C4\u0610\u0653\u0657\u065D\u06D6\u06DF\u06E4\u06E7\u06EB\u0730\u0732\u0735\u073A\u073D\u073F\u0743\u0745\u0747\u0749\u07EB\u07F3\u0816\u081B\u0825\u0829\u08E4\u08E7\u08EA\u08F3\u08F7\u08FB\u0951\u0953\u0F82\u0F86\u135D\u17DD\u193A\u1A17\u1A75\u1AB0\u1ABB\u1B6B\u1B6D\u1CD0\u1CDA\u1CE0\u1CF4\u1CF8\u1DC0\u1DC3\u1DCB\u1DD1\u1DFE\u20D0\u20D4\u20DB\u20E1\u20E7\u20E9\u20F0\u2CEF\u2DE0\uA66F\uA674\uA69E\uA6F0\uA8E0\uAAB0\uAAB2\uAAB7\uAABE\uAAC1\uFE20\uFE2E";
-				endCombiningAbove = "\u0314\u0344\u0346\u034C\u0352\u0357\u035B\u036F\u0487\u0595\u0599\u05A1\u05A9\u05AC\u05AF\u05C4\u0617\u0654\u065B\u065E\u06DC\u06E2\u06E4\u06E8\u06EC\u0730\u0733\u0736\u073A\u073D\u0741\u0743\u0745\u0747\u074A\u07F1\u07F3\u0819\u0823\u0827\u082D\u08E5\u08E8\u08EC\u08F5\u08F8\u08FF\u0951\u0954\u0F83\u0F87\u135F\u17DD\u193A\u1A17\u1A7C\u1AB4\u1ABC\u1B6B\u1B73\u1CD2\u1CDB\u1CE0\u1CF4\u1CF9\u1DC1\u1DC9\u1DCC\u1DF5\u1DFE\u20D1\u20D7\u20DC\u20E1\u20E7\u20E9\u20F0\u2CF1\u2DFF\uA66F\uA67D\uA69F\uA6F1\uA8F1\uAAB0\uAAB3\uAAB8\uAABF\uAAC1\uFE26\uFE2F";
-				break;
-
-			default:
-				startCombiningAbove = "\u0300\u033D\u0346\u034A\u0350\u0357\u035B\u0363\u0483\u0592\u0597\u059C\u05A8\u05AB\u05AF\u05C4\u0610\u0653\u0657\u065D\u06D6\u06DF\u06E4\u06E7\u06EB\u0730\u0732\u0735\u073A\u073D\u073F\u0743\u0745\u0747\u0749\u07EB\u07F3\u0816\u081B\u0825\u0829\u08D4\u08E4\u08E7\u08EA\u08F3\u08F7\u08FB\u0951\u0953\u0F82\u0F86\u135D\u17DD\u193A\u1A17\u1A75\u1AB0\u1ABB\u1B6B\u1B6D\u1CD0\u1CDA\u1CE0\u1CF4\u1CF8\u1DC0\u1DC3\u1DCB\u1DD1\u1DFB\u1DFE\u20D0\u20D4\u20DB\u20E1\u20E7\u20E9\u20F0\u2CEF\u2DE0\uA66F\uA674\uA69E\uA6F0\uA8E0\uAAB0\uAAB2\uAAB7\uAABE\uAAC1\uFE20\uFE2E";
-				endCombiningAbove = "\u0314\u0344\u0346\u034C\u0352\u0357\u035B\u036F\u0487\u0595\u0599\u05A1\u05A9\u05AC\u05AF\u05C4\u0617\u0654\u065B\u065E\u06DC\u06E2\u06E4\u06E8\u06EC\u0730\u0733\u0736\u073A\u073D\u0741\u0743\u0745\u0747\u074A\u07F1\u07F3\u0819\u0823\u0827\u082D\u08E1\u08E5\u08E8\u08EC\u08F5\u08F8\u08FF\u0951\u0954\u0F83\u0F87\u135F\u17DD\u193A\u1A17\u1A7C\u1AB4\u1ABC\u1B6B\u1B73\u1CD2\u1CDB\u1CE0\u1CF4\u1CF9\u1DC1\u1DC9\u1DCC\u1DF5\u1DFB\u1DFE\u20D1\u20D7\u20DC\u20E1\u20E7\u20E9\u20F0\u2CF1\u2DFF\uA66F\uA67D\uA69F\uA6F1\uA8F1\uAAB0\uAAB3\uAAB8\uAABF\uAAC1\uFE26\uFE2F";
-				break;
-		}
-
-		boolean[] accents = new boolean[0x10ffff];
-		for (int combining = 0; combining < startCombiningAbove.length(); combining++) {
-			for (int accent = startCombiningAbove.charAt(combining); accent <= endCombiningAbove
-					.charAt(combining); accent++) {
-				accents[accent] = true;
-			}
-		}
-		
-		if (javaMajorVersion >= 9) {
-			for (int i = 0x10376; i <= 0x1037A; i++)
-				accents[i] = true;
-		}
-		
-		accents[0x10A0F] = true;
-		accents[0x10A38] = true;
-
-		if (javaMajorVersion >= 9) {
-			accents[0x10AE5] = true;
-		}
-
-		for (int i = 0x11100; i <= 0x11102; i++)
-			accents[i] = true;
-
-		if (javaMajorVersion >= 9) {
-			for (int i = 0x11366; i <= 0x1136C; i++)
-				accents[i] = true;
-			for (int i = 0x11370; i <= 0x11374; i++)
-				accents[i] = true;
-			for (int i = 0x16B30; i <= 0x16B36; i++)
-				accents[i] = true;
-		}
-
-		for (int i = 0x1D185; i <= 0x1D189; i++)
-			accents[i] = true;
-		for (int i = 0x1D1AA; i <= 0x1D1AD; i++)
-			accents[i] = true;
-		for (int i = 0x1D242; i <= 0x1D244; i++)
-			accents[i] = true;
-
-		if (javaMajorVersion >= 11) {
-			for (int i = 0x1E000; i <= 0x1E006; i++)
-				accents[i] = true;
-			for (int i = 0x1E008; i <= 0x1E018; i++)
-				accents[i] = true;
-			for (int i = 0x1E01B; i <= 0x1E021; i++)
-				accents[i] = true;
-			for (int i = 0x1E023; i <= 0x1E024; i++)
-				accents[i] = true;
-			for (int i = 0x1E026; i <= 0x1E02A; i++)
-				accents[i] = true;
-			for (int i = 0x1E944; i <= 0x1E949; i++)
-				accents[i] = true;
-		}
-
-		for (int i = 0; i < 0x10ffff; i++) {
-			String testChar;
-			if (i < 0x10000) {
-				testChar = "" + (char)i;
-			} else {
-				int sur = i - 0x10000;
-				testChar = "" + (char)(0xd800 + (sur >> 10)) + (char)(0xdc00 + (sur & 0x3ff));
-			}
-			// sigma is converted to final sigma
-			String lower = i == 0x3a3 ? "\u03c2" : testChar.toLowerCase(lithuanian);
-
-			String org = "I" + testChar;
-			String result = org.toLowerCase(lithuanian);
-			String expected = "i" + (accents[i] ? "\u0307" : "") + lower;
-			AssertJUnit.assertTrue(
-					"unexpected I conversion for: " + Integer.toHexString(i) + " : " + writeString(result),
-					result.equals(expected));
-
-			org = "J" + testChar;
-			result = org.toLowerCase(lithuanian);
-			// sigma is converted to final sigma
-			expected = "j" + (accents[i] ? "\u0307" : "") + lower;
-			AssertJUnit.assertTrue(
-					"unexpected J conversion for: " + Integer.toHexString(i) + " : " + writeString(result),
-					result.equals(expected));
-
-			org = "\u012e" + testChar;
-			result = org.toLowerCase(lithuanian);
-			// sigma is converted to final sigma
-			expected = "\u012f" + (accents[i] ? "\u0307" : "") + lower;
-			AssertJUnit.assertTrue(
-					"unexpected \\u012e conversion for: " + Integer.toHexString(i) + " : " + writeString(result),
-					result.equals(expected));
-
-			org = "I" + testChar;
-			result = org.toLowerCase(Locale.US);
-			expected = "i" + (i == 0x3a3 ? "\u03c2" : testChar.toLowerCase(Locale.US));
-			AssertJUnit.assertTrue(
-					"unexpected US conversion for: " + Integer.toHexString(i) + " : " + writeString(result),
-					result.equals(expected));
-		}
-	}
-
-	/**
 	 * @tests java.lang.String#toLowerCase(java.util.Locale)
 	 */
 	@Test
@@ -1487,46 +1349,6 @@ public class Test_String {
 				"\u0069".toUpperCase(new Locale("tr", "")).equals("\u0130"));
 		/* [PR 111909] Unicode 4.0 special case mappings for tr, az */
 		AssertJUnit.assertTrue("Invalid \\u0069 for Azeri", "\u0069".toUpperCase(new Locale("az")).equals("\u0130"));
-	}
-
-	/**
-	 * @tests java.lang.String#toUpperCase(java.util.Locale)
-	 */
-	@Test
-	public void test_toUpperCase3() {
-		String upper1 = "\ud801\udc28".toUpperCase(Locale.US);
-		AssertJUnit.assertTrue("Wrong surrogate conversion: " + writeString(upper1), upper1.equals("\ud801\udc00"));
-
-		/* [PR CMVC 89469] incorrect case mapping for Lithuanian */
-		Locale lithuanian = new Locale("lt");
-		int dotIndex = 0;
-		String dotAbove = "ij\u012f\u0268\u0456\u0458\u1e2d\u1ecb";
-		String upper = "IJ\u012e\u0197\u0406\u0408\u1e2c\u1eca";
-		for (int i = 0; i < 0x10ffff; i++) {
-			String org;
-			if (i < 0x10000) {
-				org = "" + (char)i + '\u0307';
-			} else {
-				int sur = i - 0x10000;
-				org = "" + (char)(0xd800 + (sur >> 10)) + (char)(0xdc00 + (sur & 0x3ff)) + "\u0307";
-			}
-			String result = org.toUpperCase(lithuanian);
-			if (dotIndex < dotAbove.length() && dotAbove.charAt(dotIndex) == i) {
-				String expected = "" + upper.charAt(dotIndex);
-				AssertJUnit.assertTrue(
-						"unexpected dot conversion for: " + Integer.toHexString(i) + " : " + writeString(result),
-						result.equals(expected));
-				dotIndex++;
-			} else {
-				AssertJUnit.assertTrue(
-						"unexpected conversion for: " + Integer.toHexString(i) + " : " + writeString(result),
-						result.charAt(result.length() - 1) == '\u0307');
-			}
-			String us_result = org.toUpperCase(Locale.US);
-			AssertJUnit.assertTrue(
-					"unexpected US conversion for: " + Integer.toHexString(i) + " : " + writeString(us_result),
-					us_result.charAt(us_result.length() - 1) == '\u0307');
-		}
 	}
 
 	/**
