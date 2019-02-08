@@ -58,6 +58,11 @@ J9::CodeGenPhase::getNumPhases()
    return static_cast<int>(TR::CodeGenPhase::LastJ9Phase);
    }
 
+void 
+J9::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
+   {
+   cg->fixUpProfiledInterfaceGuardTest();
+   }
 
 void
 J9::CodeGenPhase::performAllocateLinkageRegistersPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
@@ -145,6 +150,8 @@ J9::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
 	      return "IdentifyUnneededByteConvsPhase";
       case LateSequentialConstantStoreSimplificationPhase:
          return "LateSequentialConstantStoreSimplification";
+      case FixUpProfiledInterfaceGuardTest:
+         return "FixUpProfiledInterfaceGuardTest";
       default:
          return OMR::CodeGenPhaseConnector::getName(phase);
       }
