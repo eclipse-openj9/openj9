@@ -893,10 +893,8 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
                SVM_ASSERT_ALREADY_VALIDATED(comp()->getSymbolValidationManager(), classOfMethod);
                }
 
-
-            TR_SharedCache *sharedCache = fej9->sharedCache();
-            if (!sharedCache->canRememberClass(tempreceiverClass) ||
-                !sharedCache->canRememberClass(callSiteClass))
+            if (!fej9->canRememberClass(tempreceiverClass) ||
+                !fej9->canRememberClass(callSiteClass))
                {
                if (comp()->trace(OMR::inlining))
                   traceMsg(comp(), "inliner: profiled class [%p] or callSiteClass [%p] cannot be rememberd in shared cache\n", tempreceiverClass, callSiteClass);
@@ -977,9 +975,8 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
                break;
                }
 
-         TR_SharedCache *sharedCache = fej9->sharedCache();
-         if (!sharedCache->canRememberClass(clazz) ||
-             !sharedCache->canRememberClass(callSiteClass))
+         if (!fej9->canRememberClass(clazz) ||
+             !fej9->canRememberClass(callSiteClass))
             {
             classValuesAreSane = false;
             break;
