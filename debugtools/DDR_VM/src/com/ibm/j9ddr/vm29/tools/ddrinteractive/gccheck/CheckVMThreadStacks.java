@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 
 import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
+import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 import static com.ibm.j9ddr.vm29.tools.ddrinteractive.gccheck.ScanFormatter.formatPointer;
 
 class CheckVMThreadStacks extends Check
@@ -146,7 +147,7 @@ class CheckVMThreadStacks extends Check
 						
 						try {
 							J9ROMMethodPointer romMethod = J9MethodHelper.romMethod(walkState.method);
-							isNative = romMethod.modifiers().allBitsIn(J9_JAVA_NATIVE);
+							isNative = romMethod.modifiers().allBitsIn(J9AccNative);
 							if(!isNative) {
 								bytecodes = J9ROMMethodHelper.bytecodes(romMethod);
 							}

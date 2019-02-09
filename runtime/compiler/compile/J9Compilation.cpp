@@ -535,10 +535,10 @@ J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &
          return -1;
 
       // Can not inline the allocation on stack if the class is special
-      if (clazz->classDepthAndFlags & (J9_JAVA_CLASS_REFERENCE_WEAK      |
-                                       J9_JAVA_CLASS_REFERENCE_SOFT      |
-                                       J9_JAVA_CLASS_FINALIZE            |
-                                       J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER))
+      if (clazz->classDepthAndFlags & (J9AccClassReferenceWeak      |
+                                       J9AccClassReferenceSoft      |
+                                       J9AccClassFinalizeNeeded            |
+                                       J9AccClassOwnableSynchronizer))
          {
          return -1;
          }
@@ -561,7 +561,7 @@ J9::Compilation::canAllocateInlineClass(TR_OpaqueClassBlock *block)
       return false;
 
    // Can not inline the allocation if the class is an interface or abstract
-   if (clazz->romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE))
+   if (clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface))
       return false;
 
    return true;

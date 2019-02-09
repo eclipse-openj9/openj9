@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,7 +93,7 @@ public:
 	 */
 	MMINLINE static bool usesSharedITable(J9JavaVM *javaVM, J9Class *clazzPtr)
 	{
-		return (clazzPtr->romClass->modifiers & J9_JAVA_CLASS_ARRAY) && (clazzPtr != javaVM->booleanArrayClass);
+		return (clazzPtr->romClass->modifiers & J9AccClassArray) && (clazzPtr != javaVM->booleanArrayClass);
 	}
 
 	/**
