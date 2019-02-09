@@ -370,6 +370,15 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          cursor += 4;
          }
 
+   if (self()->comp()->getOption(TR_UseSymbolValidationManager))
+      {
+      traceMsg(
+         self()->comp(),
+         "SCC offset of class chain offsets of well-known classes is: 0x%llx\n\n",
+         (unsigned long long)*(uintptrj_t *)cursor);
+      cursor += sizeof (uintptrj_t);
+      }
+
    traceMsg(self()->comp(), "Address           Size %-31s", "Type");
    traceMsg(self()->comp(), "Width EIP Index Offsets\n"); // Offsets from Code Start
 
@@ -1375,25 +1384,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_cpIndex);
                }
             cursor += sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateClassClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class Class: classClassID=%d, objectClassID=%d ",
-                        (uint32_t)binaryTemplate->_classClassID,
-                        (uint32_t)binaryTemplate->_objectClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;

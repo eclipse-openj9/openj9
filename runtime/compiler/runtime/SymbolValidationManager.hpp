@@ -337,21 +337,6 @@ struct DeclaringClassFromFieldOrStaticRecord : public ClassValidationRecord
    uint32_t  _cpIndex;
    };
 
-struct ClassClassRecord : public ClassValidationRecord
-   {
-   ClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass)
-      : ClassValidationRecord(TR_ValidateClassClass),
-        _classClass(classClass),
-        _objectClass(objectClass)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_classClass;
-   TR_OpaqueClassBlock *_objectClass;
-   };
-
 struct ConcreteSubClassFromClassRecord : public ClassValidationRecord
    {
    ConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass)
@@ -642,6 +627,12 @@ public:
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
+   void populateWellKnownClasses();
+   bool validateWellKnownClasses(const uintptrj_t *wellKnownClassChainOffsets);
+   bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
+   bool classCanSeeWellKnownClasses(TR_OpaqueClassBlock *clazz);
+   const void *wellKnownClassChainOffsets() { return _wellKnownClassChainOffsets; }
+
    enum Presence
       {
       SymRequired,
@@ -673,7 +664,6 @@ public:
    bool addSystemClassByNameRecord(TR_OpaqueClassBlock *systemClass);
    bool addClassFromITableIndexCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
    bool addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
-   bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
 
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
@@ -714,7 +704,6 @@ public:
    bool validateSystemClassByNameRecord(uint16_t systemClassID, uintptrj_t *classChain);
    bool validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
-   bool validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
@@ -816,6 +805,9 @@ private:
    TR_Memory * const _trMemory;
    TR_PersistentCHTable * const _chTable;
 
+   TR_OpaqueClassBlock *_rootClass;
+   const void *_wellKnownClassChainOffsets;
+
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;
 
@@ -848,6 +840,14 @@ private:
    IdToSymbolTable _idToSymbolTable;
 
    SeenSymbolsSet _seenSymbolsSet;
+
+   typedef TR::typed_allocator<TR_OpaqueClassBlock*, TR::Region&> ClassAllocator;
+   typedef std::vector<TR_OpaqueClassBlock*, ClassAllocator> ClassVector;
+   ClassVector _wellKnownClasses;
+
+   typedef TR::typed_allocator<J9ClassLoader*, TR::Region&> LoaderAllocator;
+   typedef std::vector<J9ClassLoader*, LoaderAllocator> LoaderVector;
+   LoaderVector _loadersOkForWellKnownClasses;
    };
 
 }

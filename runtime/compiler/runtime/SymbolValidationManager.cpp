@@ -34,6 +34,10 @@
 
 #include "j9protos.h"
 
+#if defined (_MSC_VER) && _MSC_VER < 1900
+#define snprintf _snprintf
+#endif
+
 TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee)
    : _symbolID(FIRST_ID),
      _heuristicRegion(0),
@@ -43,16 +47,20 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _fej9((TR_J9VM *)TR_J9VMBase::get(_vmThread->javaVM->jitConfig, _vmThread)),
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
+     _rootClass(compilee->classOfMethod()),
+     _wellKnownClassChainOffsets(NULL),
      _symbolValidationRecords(_region),
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
      _idToSymbolTable(_region),
-     _seenSymbolsSet((SeenSymbolsComparator()), _region)
+     _seenSymbolsSet((SeenSymbolsComparator()), _region),
+     _wellKnownClasses(_region),
+     _loadersOkForWellKnownClasses(_region)
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
-   defineGuaranteedID(compilee->classOfMethod(), TR::SymbolType::typeClass);
+   defineGuaranteedID(_rootClass, TR::SymbolType::typeClass);
    defineGuaranteedID(compilee->getPersistentIdentifier(), TR::SymbolType::typeMethod);
 
    struct J9Class ** arrayClasses = &_fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
@@ -77,6 +85,195 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    _symbolToIdMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
    _seenSymbolsSet.insert(symbol);
+   }
+
+void
+TR::SymbolValidationManager::populateWellKnownClasses()
+   {
+#define WELL_KNOWN_CLASS_COUNT 10
+#define REQUIRED_WELL_KNOWN_CLASS_COUNT 1
+
+   // Classes must have names only allowed to be defined by the bootstrap loader
+   // The first REQUIRED_WELL_KNOWN_CLASS_COUNT entries are required - if any is
+   // missing then the compilation will fail.
+   static const char * const names[] =
+      {
+      "java/lang/Class",
+      "java/lang/Object",
+      "java/lang/Integer",
+      "java/lang/Runnable",
+      "java/lang/String",
+      "java/lang/StringBuilder",
+      "java/lang/StringBuffer",
+      "java/lang/System",
+      "java/lang/ref/Reference",
+      "com/ibm/jit/JITHelpers",
+      };
+
+   unsigned int includedClasses = 0;
+
+   static_assert(
+      sizeof (names) / sizeof (names[0]) == WELL_KNOWN_CLASS_COUNT,
+      "wrong number of well-known class names");
+
+   static_assert(
+      CHAR_BIT * sizeof (includedClasses) >= WELL_KNOWN_CLASS_COUNT,
+      "includedClasses needs >= WELL_KNOWN_CLASS_COUNT bits");
+
+   uintptrj_t classChainOffsets[1 + WELL_KNOWN_CLASS_COUNT] = {0};
+   uintptrj_t *classCount = &classChainOffsets[0];
+   uintptrj_t *nextClassChainOffset = &classChainOffsets[1];
+
+   for (int i = 0; i < WELL_KNOWN_CLASS_COUNT; i++)
+      {
+      const char *name = names[i];
+      int32_t len = (int32_t)strlen(name);
+      TR_OpaqueClassBlock *wkClass = _fej9->getSystemClassFromClassName(name, len);
+
+      void *chain = NULL;
+      if (wkClass == NULL)
+         traceMsg(_comp, "well-known class %s not found\n", name);
+      else if (!_fej9->isPublicClass(wkClass))
+         traceMsg(_comp, "well-known class %s is not public\n", name);
+      else
+         chain = _fej9->sharedCache()->rememberClass(wkClass);
+
+      if (chain == NULL)
+         {
+         traceMsg(_comp, "no class chain for well-known class %s\n", name);
+         SVM_ASSERT_NONFATAL(
+            i >= REQUIRED_WELL_KNOWN_CLASS_COUNT,
+            "failed to remember required class %s\n",
+            name);
+         continue;
+         }
+
+      if (wkClass != _rootClass)
+         defineGuaranteedID(wkClass, TR::SymbolType::typeClass);
+
+      includedClasses |= 1 << i;
+      _wellKnownClasses.push_back(wkClass);
+      *nextClassChainOffset++ =
+         (uintptrj_t)_fej9->sharedCache()->offsetInSharedCacheFromPointer(chain);
+      }
+
+   *classCount = _wellKnownClasses.size();
+
+   char key[128];
+   snprintf(key, sizeof (key), "AOTWellKnownClasses:%x", includedClasses);
+
+   J9SharedDataDescriptor dataDescriptor;
+   dataDescriptor.address = (U_8*)classChainOffsets;
+   dataDescriptor.length = (1 + _wellKnownClasses.size()) * sizeof (classChainOffsets[0]);
+   dataDescriptor.type = J9SHR_DATA_TYPE_JITHINT;
+   dataDescriptor.flags = 0;
+
+   _wellKnownClassChainOffsets =
+      _fej9->_jitConfig->javaVM->sharedClassConfig->storeSharedData(
+         _vmThread,
+         key,
+         strlen(key),
+         &dataDescriptor);
+
+   SVM_ASSERT_NONFATAL(
+      _wellKnownClassChainOffsets != NULL,
+      "Failed to store well-known classes' class chains");
+
+#undef WELL_KNOWN_CLASS_COUNT
+   }
+
+bool
+TR::SymbolValidationManager::validateWellKnownClasses(const uintptrj_t *wellKnownClassChainOffsets)
+   {
+   // We may have already run populateWellKnownClasses on this
+   // SymbolValidationManager, if there was no delay before processing the
+   // relocations, in which case the Compilation is reused.
+   bool assignNewIDs = _wellKnownClassChainOffsets == NULL;
+   int classCount = static_cast<int>(wellKnownClassChainOffsets[0]);
+   for (int i = 1; i <= classCount; i++)
+      {
+      void *classChainOffset = reinterpret_cast<void*>(wellKnownClassChainOffsets[i]);
+      uintptrj_t *classChain = reinterpret_cast<uintptrj_t*>(
+         _fej9->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset));
+      J9ROMClass *romClass = _fej9->sharedCache()->startingROMClassOfClassChain(classChain);
+      J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
+
+      TR_OpaqueClassBlock *clazz = _fej9->getSystemClassFromClassName(
+         reinterpret_cast<const char *>(J9UTF8_DATA(className)),
+         J9UTF8_LENGTH(className));
+
+      if (clazz == NULL)
+         return false;
+
+      if (!_fej9->sharedCache()->classMatchesCachedVersion(clazz, classChain))
+         return false;
+
+      _seenSymbolsSet.insert(clazz);
+      if (assignNewIDs)
+         {
+         _wellKnownClasses.push_back(clazz);
+         if (clazz != _rootClass)
+            setSymbolOfID(getNewSymbolID(), clazz, TR::SymbolType::typeClass);
+         }
+      }
+
+   // These classes are definitely visible to any other class defined by the
+   // bootstrap loader.
+   _loadersOkForWellKnownClasses.push_back(TR::Compiler->javaVM->systemClassLoader);
+
+   // The root class has a guaranteed ID, so it won't be newly encountered
+   // later. Check now that its loader doesn't hide well-known classes.
+   return classCanSeeWellKnownClasses(_rootClass);
+   }
+
+bool
+TR::SymbolValidationManager::isWellKnownClass(TR_OpaqueClassBlock *clazz)
+   {
+   auto end = _wellKnownClasses.end();
+   return std::find(_wellKnownClasses.begin(), end, clazz) != end;
+   }
+
+bool
+TR::SymbolValidationManager::classCanSeeWellKnownClasses(TR_OpaqueClassBlock *beholder)
+   {
+   J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(reinterpret_cast<J9Class*>(beholder));
+   if (beholderCP == NULL)
+      {
+      // This is a class with no CP, e.g. an array. (Are there any others?)
+      // It can't be used for ClassFromSignature or ClassFromCP anyway.
+      return true;
+      }
+
+   // Avoid repeated lookups using the same loader.
+   J9ClassLoader *loader =
+      reinterpret_cast<J9ClassLoader*>(_fej9->getClassLoader(beholder));
+      {
+      // Use linear search - the number of loaders will generally be small.
+      auto begin = _loadersOkForWellKnownClasses.end();
+      auto end = _loadersOkForWellKnownClasses.end();
+      if (std::find(begin, end, loader) != end)
+         return true;
+      }
+
+   // Check that every well-known class can be found. It's good enough here to
+   // find anything (non-null) for a given name, because these names can only
+   // be defined by the bootstrap loader, so if the class is found, then it
+   // must be the same one found during validateWellKnownClasses().
+   for (auto it = _wellKnownClasses.begin(); it != _wellKnownClasses.end(); ++it)
+      {
+      TR_OpaqueClassBlock *wkClass = *it;
+      J9Class *wkJ9Class = reinterpret_cast<J9Class*>(wkClass);
+      J9UTF8 *utf8 = J9ROMCLASS_CLASSNAME(wkJ9Class->romClass);
+      char *name = reinterpret_cast<char *>(J9UTF8_DATA(utf8));
+      uint32_t len = J9UTF8_LENGTH(utf8);
+      if (_fej9->getClassFromSignature(name, len, beholderCP) == NULL)
+         return false;
+      }
+
+   // All of the well-known classes are visible. This will be the case for all
+   // classes using the same loader, because the well-known classes are public.
+   _loadersOkForWellKnownClasses.push_back(loader);
+   return true;
    }
 
 bool
@@ -376,7 +573,10 @@ bool
 TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
+   if (isWellKnownClass(clazz))
+      return true;
+   else
+      return addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
    }
 
 bool
@@ -405,7 +605,10 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
+   if (isWellKnownClass(clazz))
+      return true;
+   else
+      return addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
    }
 
 bool
@@ -462,7 +665,10 @@ TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *
 bool
 TR::SymbolValidationManager::addSystemClassByNameRecord(TR_OpaqueClassBlock *systemClass)
    {
-   return addClassRecordWithChain(new (_region) SystemClassByNameRecord(systemClass));
+   if (isWellKnownClass(systemClass))
+      return true;
+   else
+      return addClassRecordWithChain(new (_region) SystemClassByNameRecord(systemClass));
    }
 
 bool
@@ -479,13 +685,6 @@ TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueC
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    return addClassRecord(clazz, new (_region) DeclaringClassFromFieldOrStaticRecord(clazz, beholder, cpIndex));
-   }
-
-bool
-TR::SymbolValidationManager::addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass)
-   {
-   SVM_ASSERT_ALREADY_VALIDATED(this, objectClass);
-   return addClassRecord(classClass, new (_region) ClassClassRecord(classClass, objectClass));
    }
 
 bool
@@ -657,9 +856,18 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
       {
       if (_seenSymbolsSet.find(validSymbol) == _seenSymbolsSet.end())
          {
-         setSymbolOfID(idToBeValidated, validSymbol, type);
-         _seenSymbolsSet.insert(validSymbol);
          valid = true;
+         if (type == TR::SymbolType::typeClass)
+            {
+            valid = classCanSeeWellKnownClasses(
+               reinterpret_cast<TR_OpaqueClassBlock*>(validSymbol));
+            }
+
+         if (valid)
+            {
+            setSymbolOfID(idToBeValidated, validSymbol, type);
+            _seenSymbolsSet.insert(validSymbol);
+            }
          }
       }
    else
@@ -852,15 +1060,6 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       }
 
    return validateSymbol(definingClassID, definingClass);
-   }
-
-bool
-TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID)
-   {
-   TR_OpaqueClassBlock *objectClass = getClassFromID(objectClassID);
-   TR_OpaqueClassBlock *classClass = _fej9->getClassClassPointer(objectClass);
-
-   return validateSymbol(classClassID, classClass);
    }
 
 bool
@@ -1353,22 +1552,6 @@ void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
-   }
-
-bool TR::ClassClassRecord::isLessThanWithinKind(SymbolValidationRecord *other)
-   {
-   TR::ClassClassRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_classClass, rhs->_classClass)
-      .thenBy(_objectClass, rhs->_objectClass).less();
-   }
-
-void TR::ClassClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "ClassClassRecord\n");
-   traceMsg(TR::comp(), "\t_classClass=0x%p\n", _classClass);
-   printClass(_classClass);
-   traceMsg(TR::comp(), "\t_objectClass=0x%p\n", _objectClass);
-   printClass(_objectClass);
    }
 
 bool TR::ConcreteSubClassFromClassRecord::isLessThanWithinKind(

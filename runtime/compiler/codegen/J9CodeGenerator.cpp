@@ -2848,7 +2848,7 @@ J9::CodeGenerator::processRelocations()
          }
 
       TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
-      if (!validationRecords.empty() && self()->comp()->getOption(TR_UseSymbolValidationManager))
+      if (self()->comp()->getOption(TR_UseSymbolValidationManager))
          {
          // Add the flags in TR_AOTMethodHeader on the compile run
          J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)self()->comp()->getAotMethodDataStart();
