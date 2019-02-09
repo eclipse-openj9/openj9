@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,56 +256,6 @@ extern "C" {
 
 #define J9_RESOLVE_STATIC_FIELD_TAG_FROM_CLINIT 0x1
 #define J9_RESOLVE_STATIC_FIELD_TAG_IS_ISOLATED 0x2
-
-#define J9_JAVA_PUBLIC 0x1
-#define J9_JAVA_PRIVATE 0x2
-#define J9_JAVA_PROTECTED 0x4
-#define J9_JAVA_STATIC 0x8
-#define J9_JAVA_FINAL 0x10
-#define J9_JAVA_CLASS_RAM_SHAPE_SHIFT 0x10
-#define J9_JAVA_CLASS_REFERENCE_SHIFT 0x1C
-#define J9_JAVA_SYNC 0x20
-#define J9_JAVA_NATIVE 0x100
-#define J9_JAVA_GETTER_METHOD 0x200
-#define J9_JAVA_INTERFACE 0x200
-#define J9_JAVA_UNUSED_0X200 0x200
-#define J9_JAVA_ABSTRACT 0x400
-#define J9_JAVA_FORWARDER_METHOD 0x2000
-#define J9_JAVA_EMPTY_METHOD 0x4000
-#define J9_JAVA_CLASS_DEPTH_MASK 0xFFFF
-#define J9_JAVA_CLASS_ARRAY 0x10000
-#define J9_JAVA_CLASS_RAM_ARRAY 0x10000
-#define J9_JAVA_METHOD_VTABLE 0x10000
-#define J9_JAVA_METHOD_HAS_EXCEPTIONS 0x20000
-#define J9_JAVA_CLASS_PRIMITIVE_TYPE 0x20000
-#define J9_JAVA_CLASS_UNSAFE 0x40000
-#define J9_JAVA_METHOD_FRAME_ITERATOR_SKIP 0x80000
-#define J9_JAVA_METHOD_CALLER_SENSITIVE 0x100000
-#define J9_JAVA_CLASS_BYTECODES_MODIFIED 0x100000
-#define J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN 0x100000
-#define J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER 0x200000
-#define J9_JAVA_CLASS_HAS_EMPTY_FINALIZE 0x200000
-#define J9_JAVA_CLASS_HAS_JDBC_NATIVES 0x400000
-#define J9_JAVA_METHOD_OBJECT_CONSTRUCTOR 0x400000
-#define J9_JAVA_CLASS_GC_SPECIAL 0x800000
-#define J9_JAVA_CLASS_HAS_VERIFY_DATA 0x800000
-#define J9_JAVA_METHOD_UNUSED_1000000 0x1000000
-#define J9_JAVA_CLASS_CONTENDED 0x1000000
-#define J9_JAVA_CLASS_HAS_FINAL_FIELDS 0x2000000
-#define J9_JAVA_METHOD_HAS_GENERIC_SIGNATURE 0x2000000
-#define J9_JAVA_CLASS_HOT_SWAPPED_OUT 0x4000000
-#define J9_JAVA_CLASS_HAS_CLINIT 0x4000000
-#define J9_JAVA_CLASS_DYING 0x8000000
-#define J9_JAVA_CLASS_REFERENCE_WEAK 0x10000000
-#define J9_JAVA_FIELD_UNUSED_10000000 0x10000000
-#define J9_JAVA_CLASS_REFERENCE_SOFT 0x20000000
-#define J9_JAVA_CLASS_REFERENCE_MASK 0x30000000
-#define J9_JAVA_CLASS_REFERENCE_PHANTOM 0x30000000
-#define J9_JAVA_CLASS_FINALIZE 0x40000000
-#define J9_JAVA_CLASS_FINALIZER_CHECK_MASK (J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER)
-#define J9_JAVA_MODIFIERS_SPECIAL_OBJECT (J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_REFERENCE_MASK)
-#define J9_JAVA_CLASS_CLONEABLE 0x80000000
-#define J9_JAVA_CLASS_ROMRAMMASK 0xF3000000
 
 #define J9_RUNTIME_REPORT_STACK_USE 0x1
 #define J9_RUNTIME_VERIFY 0x2
@@ -858,6 +808,102 @@ extern "C" {
 #define J9_ITABLE_OFFSET_DIRECT 1
 #define J9_ITABLE_OFFSET_VIRTUAL 2
 #define J9_ITABLE_OFFSET_TAG_BITS (J9_ITABLE_OFFSET_DIRECT | J9_ITABLE_OFFSET_VIRTUAL)
+
+/* @ddr_namespace: map_to_type=J9JavaAccessFlags */
+
+/* Constants from J9JavaAccessFlags */
+#define J9AccAbstract 0x400
+#define J9AccAnnotation 0x2000
+#define J9AccBridge 0x40
+#define J9AccClassAnnnotionRefersDoubleSlotEntry 0x80000
+#define J9AccClassAnonClass 0x800
+#define J9AccClassArray 0x10000
+#define J9AccClassBytecodesModified 0x100000
+#define J9AccClassCloneable 0x80000000
+#define J9AccClassCompatibilityMask 0x7FFF
+#define J9AccClassDepthMask 0xFFFF
+#define J9AccClassDying 0x8000000
+#define J9AccClassFinalizeNeeded 0x40000000
+#define J9AccClassGCSpecial 0x800000
+#define J9AccClassHasBeenOverridden 0x100000
+#define J9AccClassHasClinit 0x4000000
+#define J9AccClassHasEmptyFinalize 0x200000
+#define J9AccClassHasFinalFields 0x2000000
+#define J9AccClassHasJDBCNatives 0x400000
+#define J9AccClassHasNonStaticNonAbstractMethods 0x8000000
+#define J9AccClassHasVerifyData 0x800000
+#define J9AccClassHotSwappedOut 0x4000000
+#define J9AccClassInnerClass 0x4000
+#define J9AccClassIntermediateDataIsClassfile 0x20000
+#define J9AccClassInternalPrimitiveType 0x20000
+#define J9AccClassIsContended 0x1000000
+#define J9AccClassOwnableSynchronizer 0x200000
+#define J9AccClassUnused200 0x200
+#define J9AccClassUnused400 0x400
+#define J9AccClassRAMArray 0x10000
+#define J9AccClassRAMShapeShift 0x10
+#define J9AccClassReferenceMask 0x30000000
+#define J9AccClassReferencePhantom 0x30000000
+#define J9AccClassReferenceShift 0x1C
+#define J9AccClassReferenceSoft 0x20000000
+#define J9AccClassReferenceWeak 0x10000000
+#define J9AccClassRomToRamMask 0xF3000000
+#define J9AccClassUnsafe 0x40000
+#define J9AccClassUseBisectionSearch 0x2000
+#define J9AccEmptyMethod 0x4000
+#define J9AccEnum 0x4000
+#define J9AccFinal 0x10
+#define J9AccForwarderMethod 0x2000
+#define J9AccGetterMethod 0x200
+#define J9AccInterface 0x200
+#define J9AccMandated 0x8000
+#define J9AccMethodCallerSensitive 0x100000
+#define J9AccMethodUnused0x1000000 0x1000000
+#define J9AccMethodFrameIteratorSkip 0x80000
+#define J9AccMethodHasBackwardBranches 0x200000
+#define J9AccMethodHasDebugInfo 0x40000
+#define J9AccMethodHasDefaultAnnotation 0x80000000
+#define J9AccMethodHasExceptionInfo 0x20000
+#define J9AccMethodHasExtendedModifiers 0x4000000
+#define J9AccMethodHasGenericSignature 0x2000000
+#define J9AccMethodHasMethodAnnotations 0x20000000
+#define J9AccMethodHasMethodHandleInvokes 0x8000000
+#define J9AccMethodHasMethodParameters 0x800000
+#define J9AccMethodHasParameterAnnotations 0x40000000
+#define J9AccMethodHasStackMap 0x10000000
+#define J9AccMethodHasTypeAnnotations 0x4000000
+#define J9AccMethodObjectConstructor 0x400000
+#define J9AccMethodReturn0 0x0
+#define J9AccMethodReturn1 0x40000
+#define J9AccMethodReturn2 0x80000
+#define J9AccMethodReturnA 0x140000
+#define J9AccMethodReturnD 0x100000
+#define J9AccMethodReturnF 0xC0000
+#define J9AccMethodReturnMask 0x1C0000
+#define J9AccMethodReturnShift 0x12
+#define J9AccMethodVTable 0x10000
+#define J9AccNative 0x100
+#define J9AccPrivate 0x2
+#define J9AccProtected 0x4
+#define J9AccPublic 0x1
+#define J9AccStatic 0x8
+#define J9AccStrict 0x800
+#define J9AccSuper 0x20
+#define J9AccSynchronized 0x20
+#define J9AccSynthetic 0x1000
+#define J9AccTransient 0x80
+#define J9AccValueType 0x100
+#define J9AccVarArgs 0x80
+#define J9AccVolatile 0x40
+#define J9StaticFieldRefBaseType 0x1
+#define J9StaticFieldRefDouble 0x2
+#define J9StaticFieldRefVolatile 0x4
+#define J9StaticFieldRefBoolean 0x8
+#define J9StaticFieldRefPutResolved 0x10
+#define J9StaticFieldRefFinal 0x20
+#define J9StaticFieldRefFlagBits 0x3F
+#define J9_JAVA_CLASS_FINALIZER_CHECK_MASK (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)
+#define J9_JAVA_MODIFIERS_SPECIAL_OBJECT (J9AccClassFinalizeNeeded | J9AccClassReferenceMask)
 
 #ifdef __cplusplus
 }

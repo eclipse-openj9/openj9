@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3111,17 +3111,17 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
                                        new (cg->trHeapMemory()) TR::MemoryReference(r7, offsetof(J9ROMClass, modifiers), 4, cg),
                                        cursor);
    cursor = generateShiftRightLogicalImmediate(cg, n, r7, r7, 1, cursor);
-   TR_ASSERT(!(((J9_JAVA_CLASS_ARRAY | J9_JAVA_INTERFACE) >> 1) & ~0xffff),
+   TR_ASSERT(!(((J9AccClassArray | J9AccInterface) >> 1) & ~0xffff),
            "Expecting shifted ROM class modifiers to fit in immediate");
-   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, n, r7, r7, cr0, (J9_JAVA_CLASS_ARRAY | J9_JAVA_INTERFACE) >> 1, cursor);
+   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, n, r7, r7, cr0, (J9AccClassArray | J9AccInterface) >> 1, cursor);
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, n, skipSuperclassTestLabel, cr0, cursor);
 
    cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r7,
                                        new (cg->trHeapMemory()) TR::MemoryReference(r6, offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress(), cg),
                                        cursor);
-   TR_ASSERT(!(J9_JAVA_CLASS_DEPTH_MASK & ~0xffff),
+   TR_ASSERT(!(J9AccClassDepthMask & ~0xffff),
            "Expecting class depth mask to fit in immediate");
-   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, n, r7, r7, cr0, J9_JAVA_CLASS_DEPTH_MASK, cursor);
+   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, n, r7, r7, cr0, J9AccClassDepthMask, cursor);
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, n, skipSuperclassTestLabel, cr0, cursor);
    cursor = generateTrg1MemInstruction(cg,Op_lclass, n, r7,
                                        new (cg->trHeapMemory()) TR::MemoryReference(r6, offsetof(J9Class, superclasses), TR::Compiler->om.sizeofReferenceField(), cg),

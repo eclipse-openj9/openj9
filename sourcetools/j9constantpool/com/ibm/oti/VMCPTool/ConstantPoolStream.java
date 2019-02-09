@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -336,7 +336,7 @@ public class ConstantPoolStream {
 			out.println("} _jclROMClass = {");
 
 			String shapeDescriptionOffset = "sizeof(J9ROMClass) - offsetof(J9ROMClass, cpShapeDescription) + " + size;
-			out.println("\t{0,0,0,0,0,J9_JAVA_CLASS_UNSAFE, 0,0,0,0,0,0,0,0, " + itemCount + ", " + itemCount + ", 0,0,0, " + shapeDescriptionOffset + ", 0,},");
+			out.println("\t{0,0,0,0,0,J9AccClassUnsafe, 0,0,0,0,0,0,0,0, " + itemCount + ", " + itemCount + ", 0,0,0, " + shapeDescriptionOffset + ", 0,},");
 			out.println("\t{");
 		}
 	}

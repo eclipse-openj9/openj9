@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1010,7 +1010,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 				J9Class* ramClass;
 				
 				ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
-				ramClass->classDepthAndFlags |= J9_JAVA_CLASS_HAS_JDBC_NATIVES;
+				ramClass->classDepthAndFlags |= J9AccClassHasJDBCNatives;
 			}
 		}
 #endif

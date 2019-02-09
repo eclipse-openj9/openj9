@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@
 
 #include "j9.h"
 #include "j9cfg.h"
-
 #include "BaseVirtual.hpp"
 
 class MM_EnvironmentBase;
@@ -59,7 +58,7 @@ private:
 	/**
 	 * Determine the type (weak/soft/phantom) of the specified reference object.
 	 * @param object[in] the object to examine
-	 * @return one of J9_JAVA_CLASS_REFERENCE_WEAK, J9_JAVA_CLASS_REFERENCE_SOFT or J9_JAVA_CLASS_REFERENCE_PHANTOM
+	 * @return one of J9AccClassReferenceWeak, J9AccClassReferenceSoft or J9AccClassReferencePhantom
 	 */
 	UDATA getReferenceObjectType(j9object_t object);
 	
