@@ -89,10 +89,16 @@ TR_RelocationRecordGroup::size(TR_RelocationTarget *reloTarget)
    }
 
 TR_RelocationRecordBinaryTemplate *
-TR_RelocationRecordGroup::firstRecord(TR_RelocationTarget *reloTarget)
+TR_RelocationRecordGroup::firstRecord(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget)
    {
-   // first word of the group is a pointer size field for the entire group
-   return (TR_RelocationRecordBinaryTemplate *) (((uintptr_t *)_group)+1);
+   // The first word is the size of the group (itself pointer-sized).
+   // When using the SVM, the second is a pointer-sized SCC offset to the
+   // well-known classes' class chain offsets.
+   bool useSVM = reloRuntime->comp()->getOption(TR_UseSymbolValidationManager);
+   int offs = 1 + int(useSVM);
+   return (TR_RelocationRecordBinaryTemplate *) (((uintptrj_t *)_group)+offs);
    }
 
 TR_RelocationRecordBinaryTemplate *
@@ -101,12 +107,40 @@ TR_RelocationRecordGroup::pastLastRecord(TR_RelocationTarget *reloTarget)
    return (TR_RelocationRecordBinaryTemplate *) ((uint8_t *)_group + size(reloTarget));
    }
 
+const uintptrj_t *
+TR_RelocationRecordGroup::wellKnownClassChainOffsets(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget)
+   {
+   if (!TR::comp()->getOption(TR_UseSymbolValidationManager))
+      return NULL;
+
+   // The first word is the size of the group (itself pointer-sized). Skip it
+   // to reach the SCC offset of the well-known classes' class chain offsets.
+   void *offset = reinterpret_cast<void*>(*((uintptrj_t *)_group + 1));
+   void *classChains =
+      reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(offset);
+
+   return reinterpret_cast<const uintptrj_t*>(classChains);
+   }
+
 int32_t
 TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
                                            TR_RelocationTarget *reloTarget,
                                            uint8_t *reloOrigin)
    {
-   TR_RelocationRecordBinaryTemplate *recordPointer = firstRecord(reloTarget);
+   const uintptrj_t *wkClassChainOffsets =
+      wellKnownClassChainOffsets(reloRuntime, reloTarget);
+   if (wkClassChainOffsets != NULL)
+      {
+      TR::SymbolValidationManager *svm =
+         reloRuntime->comp()->getSymbolValidationManager();
+
+      if (!svm->validateWellKnownClasses(wkClassChainOffsets))
+         return compilationAotClassReloFailure;
+      }
+
+   TR_RelocationRecordBinaryTemplate *recordPointer = firstRecord(reloRuntime, reloTarget);
    TR_RelocationRecordBinaryTemplate *endOfRecords = pastLastRecord(reloTarget);
 
    TR_AOTStats *aotStats = reloRuntime->aotStats();
@@ -354,9 +388,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ValidateDeclaringClassFromFieldOrStatic:
          reloRecord = new (storage) TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic(reloRuntime, record);
-         break;
-      case TR_ValidateClassClass:
-         reloRecord = new (storage) TR_RelocationRecordValidateClassClass(reloRuntime, record);
          break;
       case TR_ValidateConcreteSubClassFromClass:
          reloRecord = new (storage) TR_RelocationRecordValidateConcreteSubClassFromClass(reloRuntime, record);
@@ -3466,25 +3497,6 @@ TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic::applyRelocation(TR_R
    }
 
 int32_t
-TR_RelocationRecordValidateClassClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassClassBinaryTemplate *)_record)->_classClassID);
-   uint16_t objectClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassClassBinaryTemplate *)_record)->_objectClassID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classClassID %d\n", classClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: objectClassID %d\n", objectClassID);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateClassClassRecord(classClassID, objectClassID))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateConcreteSubClassFromClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t childClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *)_record)->_childClassID);
@@ -4564,7 +4576,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate),               // TR_ValidateSystemClassByName                    = 74
    sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate),          // TR_ValidateClassFromITableIndexCP               = 75
    sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate), // TR_ValidateDeclaringClassFromFieldOrStatic      = 76
-   sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),                      // TR_ValidateClassClass                           = 77
+   0,                                                                                // TR_ValidateClassClass                           = 77
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),            // TR_ValidateConcreteSubClassFromClass            = 78
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),                      // TR_ValidateClassChain                           = 79
    0,                                                                                // TR_ValidateRomClass                             = 80

@@ -73,13 +73,37 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
       {
       self()->addToSizeOfAOTRelocations(r->getSizeOfRelocationData());
       }
+
    // now allocate the memory  size of all iterated relocations + the header (total length field)
-   if (self()->getSizeOfAOTRelocations() != 0)
+
+   // Note that when using the SymbolValidationManager, the well-known classes
+   // must be checked even if no explicit records were generated, since they
+   // might be responsible for the lack of records.
+   bool useSVM = self()->comp()->getOption(TR_UseSymbolValidationManager);
+   if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
       {
-      uint8_t *relocationDataCursor = self()->setRelocationData(fej9->allocateRelocationData(self()->comp(), self()->getSizeOfAOTRelocations() + SIZEPOINTER));
+      // It would be more straightforward to put the well-known classes offset
+      // in the AOT method header, but that would use space for AOT bodies that
+      // don't use the SVM. TODO: Move it once SVM takes over?
+      int wellKnownClassesOffsetSize = useSVM ? SIZEPOINTER : 0;
+      uintptrj_t reloBufferSize =
+         self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
+      uint8_t *relocationDataCursor = self()->setRelocationData(
+         fej9->allocateRelocationData(self()->comp(), reloBufferSize));
       // set up the size for the region
-      *(uint64_t *)relocationDataCursor = self()->getSizeOfAOTRelocations() + SIZEPOINTER;
+      *(uintptrj_t *)relocationDataCursor = reloBufferSize;
       relocationDataCursor += SIZEPOINTER;
+
+      if (useSVM)
+         {
+         TR::SymbolValidationManager *svm =
+            self()->comp()->getSymbolValidationManager();
+         void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
+         *(uintptrj_t *)relocationDataCursor = reinterpret_cast<uintptrj_t>(
+            fej9->sharedCache()->offsetInSharedCacheFromPointer(offsets));
+         relocationDataCursor += SIZEPOINTER;
+         }
+
       // set up pointers for each iterated relocation and initialize header
       TR::IteratedExternalRelocation *s;
       for (s = self()->getAOTRelocationTargets().getFirst();
@@ -778,22 +802,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateClassClass:
-         {
-         TR::ClassClassRecord *record = reinterpret_cast<TR::ClassClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateClassClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateClassClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_classClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_classClass));
-         binaryTemplate->_objectClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_objectClass));
-
-         cursor += sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateConcreteSubClassFromClass:
          {
          TR::ConcreteSubClassFromClassRecord *record = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
@@ -1295,7 +1303,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate), //TR_ValidateSystemClassByName            = 74,
    sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate),//TR_ValidateClassFromITableIndexCP   = 75,
    sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate),//TR_ValidateDeclaringClassFromFieldOrStatic=76,
-   sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),        // TR_ValidateClassClass                  = 77,
+   0,                                                                  // TR_ValidateClassClass                  = 77,
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
    0,                                                                  // TR_ValidateRomClass                    = 80,
