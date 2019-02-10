@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2014 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ public:
 
 	/**
 	 * Perform initial cleanup for classloader unloading.  The current thread has exclusive access.
-	 * The J9AccClassDying bit is set and J9HOOK_VM_CLASS_UNLOAD is triggered for each class that will be unloaded.
+	 * The J9_JAVA_CLASS_DYING bit is set and J9HOOK_VM_CLASS_UNLOAD is triggered for each class that will be unloaded.
 	 * The J9_GC_CLASS_LOADER_DEAD bit is set for each class loader that will be unloaded.
 	 * J9HOOK_VM_CLASSES_UNLOAD is triggered if any classes will be unloaded.
 	 * 

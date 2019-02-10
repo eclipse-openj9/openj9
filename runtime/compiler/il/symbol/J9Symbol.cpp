@@ -111,7 +111,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
       {r(TR::Symbol::Com_ibm_jit_JITHelpers_IDENTITY_HASH_SALT_POLICY,"com/ibm/jit/JITHelpers","IDENTITY_HASH_SALT_POLICY", "I")},
       {r(TR::Symbol::Com_ibm_oti_vm_VM_J9CLASS_CLASS_FLAGS_OFFSET,"com/ibm/oti/vm/VM","J9CLASS_CLASS_FLAGS_OFFSET", "I")},
       {r(TR::Symbol::Com_ibm_oti_vm_VM_J9CLASS_INITIALIZE_STATUS_OFFSET,"com/ibm/oti/vm/VM","J9CLASS_INITIALIZE_STATUS_OFFSET", "I")},
-      {r(TR::Symbol::Com_ibm_oti_vm_VM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT,"com/ibm/oti/vm/VM","J9AccClassRAMShapeShift", "I")},
+      {r(TR::Symbol::Com_ibm_oti_vm_VM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT,"com/ibm/oti/vm/VM","J9_JAVA_CLASS_RAM_SHAPE_SHIFT", "I")},
       {r(TR::Symbol::Com_ibm_oti_vm_VM_OBJECT_HEADER_SHAPE_MASK,"com/ibm/oti/vm/VM","OBJECT_HEADER_SHAPE_MASK", "I")},
       {r(TR::Symbol::Com_ibm_oti_vm_VM_ADDRESS_SIZE,"com/ibm/oti/vm/VM","ADDRESS_SIZE", "I")},
       {TR::Symbol::UnknownField}
