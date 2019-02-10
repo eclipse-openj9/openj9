@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -629,7 +629,7 @@ GC_CheckEngine::checkJ9ClassIsNotUnloaded(J9JavaVM *javaVM, J9Class *clazz)
 {
 	/* Check to ensure J9Class header has the correct eyecatcher.
 	 */
-	if (0 != (clazz->classDepthAndFlags & J9AccClassDying)) {
+	if (0 != (clazz->classDepthAndFlags & J9_JAVA_CLASS_DYING)) {
 		return  J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED;
 	}
 	return  J9MODRON_GCCHK_RC_OK;
@@ -1107,7 +1107,7 @@ GC_CheckEngine::checkObjectHeap(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *
 
 	if (!extensions->isConcurrentScavengerEnabled()) {
 		/* check Ownable Synchronizer Object consistency */
-		if ((OBJECT_HEADER_SHAPE_MIXED == J9GC_CLASS_SHAPE(clazz)) && (0 != (J9CLASS_FLAGS(clazz) & J9AccClassOwnableSynchronizer))) {
+		if ((OBJECT_HEADER_SHAPE_MIXED == J9GC_CLASS_SHAPE(clazz)) && (0 != (J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER))) {
 			if (NULL == extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectDesc->object)) {
 				PORT_ACCESS_FROM_PORT(_portLibrary);
 				j9tty_printf(PORTLIB, "  <gc check: found Ownable SynchronizerObject %p is not on the list >\n", objectDesc->object);
@@ -1299,7 +1299,7 @@ GC_CheckEngine::checkSlotOwnableSynchronizerList(J9JavaVM *javaVM, J9Object **ob
 		_reporter->report(&error);
 	} else {
 		J9Class *instanceClass = J9GC_J9OBJECT_CLAZZ(objectPtr);
-		if (0 == (J9CLASS_FLAGS(instanceClass) & J9AccClassOwnableSynchronizer)) {
+		if (0 == (J9CLASS_FLAGS(instanceClass) & J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER)) {
 			GC_CheckError error(currentList, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_INVALID_FLAGS, _cycle->nextErrorCount());
 			_reporter->report(&error);
 		}

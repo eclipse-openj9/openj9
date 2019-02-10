@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,7 @@ cInterpGetStackClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState 
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
+	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) == J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
@@ -99,7 +99,7 @@ cInterpGetStackClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState 
 	case 1:
 		/* Caller must be annotated with @sun.reflect.CallerSensitive annotation */
 		if (((vm->systemClassLoader != currentClass->classLoader) && (vm->extensionClassLoader != currentClass->classLoader))
-				|| J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodCallerSensitive)
+				|| J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9_JAVA_METHOD_CALLER_SENSITIVE)
 		) {
 			walkState->userData3 = (void *) TRUE;
 			return J9_STACKWALK_STOP_ITERATING;

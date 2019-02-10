@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,7 @@ public class J9ClassHelper
 	
 	public static boolean isArrayClass(J9ClassPointer clazz) throws CorruptDataException
 	{
-		return classDepthAndFlags(clazz).anyBitsIn(J9JavaAccessFlags.J9AccClassRAMArray);
+		return classDepthAndFlags(clazz).anyBitsIn(J9Consts.J9_JAVA_CLASS_RAM_ARRAY);
 	}
 	
 	public static String getName(J9ClassPointer clazz) throws CorruptDataException
@@ -353,7 +353,7 @@ public class J9ClassHelper
 				}
 				
 				// Find the end of the last iTable
-				if (clazz.romClass().modifiers().allBitsIn(J9JavaAccessFlags.J9AccInterface)) {
+				if (clazz.romClass().modifiers().allBitsIn(J9Consts.J9_JAVA_INTERFACE)) {
 					iTable = iTable.add(1);
 				} else {
 					iTable = iTable.add(1).addOffset(iTable.interfaceClass().romClass().romMethodCount().mult(UDATA.SIZEOF));
@@ -428,7 +428,7 @@ public class J9ClassHelper
 	}
 	
 	public static UDATA classDepth(J9ClassPointer j9class) throws CorruptDataException {
-		return classDepthAndFlags(j9class).bitAnd(J9JavaAccessFlags.J9AccClassDepthMask);
+		return classDepthAndFlags(j9class).bitAnd(J9Consts.J9_JAVA_CLASS_DEPTH_MASK);
 	}
 	
 	public static U32 extendedClassFlags(J9ClassPointer j9class) throws CorruptDataException {
@@ -440,7 +440,7 @@ public class J9ClassHelper
 	}
 
 	public static boolean isObsolete(J9ClassPointer j9class) throws CorruptDataException {
-		return classDepthAndFlags(j9class).allBitsIn(J9JavaAccessFlags.J9AccClassHotSwappedOut);
+		return classDepthAndFlags(j9class).allBitsIn(J9Consts.J9_JAVA_CLASS_HOT_SWAPPED_OUT);
 	}
 
 	public static J9ClassPointer currentClass(J9ClassPointer j9class) throws CorruptDataException {

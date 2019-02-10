@@ -2561,7 +2561,7 @@ void printAllCounts(J9JavaVM *javaVM)
             {
             J9Method * method = &ramMethods[m];
             J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            if (!(romMethod->modifiers & (J9AccNative | J9AccAbstract)) &&
+            if (!(romMethod->modifiers & (J9_JAVA_NATIVE | J9_JAVA_ABSTRACT)) &&
                 method != newInstanceThunk &&
                 !TR::CompilationInfo::isCompiled(method))
                {

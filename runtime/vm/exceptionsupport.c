@@ -383,7 +383,7 @@ exceptionHandlerSearch(J9VMThread *currentThread, J9StackWalkState *walkState)
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 					if (walkState->jitInfo != NULL) {
-						if (romMethod->modifiers & J9AccStatic) {
+						if (romMethod->modifiers & J9_JAVA_STATIC) {
 							J9Class *syncClass = walkState->constantPool->ramClass;
 
 							syncObject = J9VM_J9CLASS_TO_HEAPCLASS(syncClass);
