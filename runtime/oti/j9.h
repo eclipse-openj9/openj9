@@ -120,9 +120,9 @@ typedef struct J9ClassLoaderWalkState {
 
 /* RAM class shape flags - valid to use these when the underlying ROM class has been unloaded */
 
-#define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK)
-#define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9AccClassRAMArray) != 0)
-#define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
+#define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9_JAVA_CLASS_RAM_SHAPE_SHIFT) & OBJECT_HEADER_SHAPE_MASK)
+#define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9_JAVA_CLASS_RAM_ARRAY) != 0)
+#define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9_JAVA_CLASS_RAM_SHAPE_SHIFT) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
 
 #define IS_STRING_COMPRESSION_ENABLED(vmThread) (FALSE != ((vmThread)->javaVM)->strCompEnabled)
 

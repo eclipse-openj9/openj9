@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -942,7 +942,7 @@ findMethodInVTable(J9Method *method, UDATA *vTable)
 		J9Method *vTableMethod = vTableMethods[searchIndex];
 		J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableMethod);
 
-		if (vTableRomMethod->modifiers & J9AccPublic) {
+		if (vTableRomMethod->modifiers & J9_JAVA_PUBLIC) {
 			if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(J9_CLASS_FROM_METHOD(method)->romClass, J9_CLASS_FROM_METHOD(vTableRomMethod)->romClass, romMethod, vTableRomMethod)) {
 				return searchIndex;
 			}
@@ -1643,7 +1643,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 				case J9CPTYPE_CLASS:
 					if (((J9RAMClassRef *) ramConstantPool)[i].value != NULL) {
 						J9Class * klass = ((J9RAMClassRef *) ramConstantPool)[i].value;
-						if (J9CLASS_FLAGS(klass) & J9AccClassHotSwappedOut) {
+						if (J9CLASS_FLAGS(klass) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) {
 							J9JVMTIClassPair exemplar;
 							J9JVMTIClassPair * result;
 							exemplar.originalRAMClass = ((J9RAMClassRef *) ramConstantPool)[i].value;
@@ -2421,8 +2421,8 @@ outOfMemory:
 		replacementRAMClass->replacedClass = originalRAMClass;
 
 		/* Preserve externally set class flag (by the jit) */
-		if (J9CLASS_FLAGS(originalRAMClass) & J9AccClassHasBeenOverridden) {
-			replacementRAMClass->classDepthAndFlags |= J9AccClassHasBeenOverridden;
+		if (J9CLASS_FLAGS(originalRAMClass) & J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN) {
+			replacementRAMClass->classDepthAndFlags |= J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
 		}
 
 		/* Replace the class in all classloaders */

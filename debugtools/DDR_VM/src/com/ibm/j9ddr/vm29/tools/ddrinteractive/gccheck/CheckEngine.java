@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,7 @@ import static com.ibm.j9ddr.vm29.structure.J9MemorySegment.*;
 import static com.ibm.j9ddr.vm29.structure.J9Object.*;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS;
-import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccClassDying;
+import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_JAVA_CLASS_DYING;
 
 class CheckEngine
 {
@@ -1079,7 +1079,7 @@ class CheckEngine
 	
 	private int checkJ9ClassIsNotUnloaded(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if(!clazz.classDepthAndFlags().bitAnd(J9AccClassDying).eq(0)) {
+		if(!clazz.classDepthAndFlags().bitAnd(J9_JAVA_CLASS_DYING).eq(0)) {
 			return J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED;
 		}
 		return J9MODRON_GCCHK_RC_OK;

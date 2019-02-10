@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2421,18 +2421,18 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	bool referentMustBeCleared = false;
 	if (isReferenceInCollectionSet) {
 		UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
+		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK;
 		switch (referenceObjectType) {
-		case J9AccClassReferenceWeak:
+		case J9_JAVA_CLASS_REFERENCE_WEAK:
 			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak)) ;
 			break;
-		case J9AccClassReferenceSoft:
+		case J9_JAVA_CLASS_REFERENCE_SOFT:
 			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 			referentMustBeMarked = referentMustBeMarked || (
 				((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
 				&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())));
 			break;
-		case J9AccClassReferencePhantom:
+		case J9_JAVA_CLASS_REFERENCE_PHANTOM:
 			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
 			break;
 		default:
@@ -3151,7 +3151,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
 	}
 
-	if (J9AccClassReferenceSoft == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask)) {
+	if (J9_JAVA_CLASS_REFERENCE_SOFT == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK)) {
 		/* Object is a Soft Reference: mark it if not expired */
 		U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr);
 		referentMustBeMarked = age < _extensions->getDynamicMaxSoftReferenceAge();
@@ -5026,7 +5026,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
 		if (NULL != referent) {
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9_JAVA_CLASS_REFERENCE_MASK;
 			
 			/* update the referent if it's been forwarded */
 			MM_ScavengerForwardedHeader forwardedReferent(referent);
@@ -5038,7 +5038,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 			}
 			
 			if (isLiveObject(referent)) {
-				if (J9AccClassReferenceSoft == referenceObjectType) {
+				if (J9_JAVA_CLASS_REFERENCE_SOFT == referenceObjectType) {
 					U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, referenceObj);
 					if (age < _extensions->getMaxSoftReferenceAge()) {
 						/* Soft reference hasn't aged sufficiently yet - increment the age */
@@ -5056,7 +5056,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 				J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj) = GC_ObjectModel::REF_STATE_CLEARED;
 				
 				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
-				if ((J9AccClassReferencePhantom == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
 					/* Scanning will be done after the enqueuing */
 					copyAndForward(env, region->_allocateData._owningContext, referenceObj, &referentSlotObject);
 					if (GC_ObjectModel::REF_STATE_REMEMBERED == previousState) {

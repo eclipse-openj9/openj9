@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ lookupInterfaceMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *n
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL);
 			method = NULL;
 		} else {
-			if (J9_ARE_ANY_BITS_SET(J9_CLASS_FROM_METHOD(method)->romClass->modifiers, J9AccInterface)) {
+			if (J9_ARE_ANY_BITS_SET(J9_CLASS_FROM_METHOD(method)->romClass->modifiers, J9_JAVA_INTERFACE)) {
 				*methodIndex = getITableIndexForMethod(method, lookupClass);
 				if (-1  == *methodIndex) {
 					PORT_ACCESS_FROM_VMC(currentThread);
@@ -257,7 +257,7 @@ Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, 
 			J9Class *methodClass = J9_CLASS_FROM_METHOD((J9Method *)method);
 		
 			if (methodClass != j9LookupClass) {
-				if (J9AccInterface == (j9LookupClass->romClass->modifiers & J9AccInterface)) {
+				if (J9_JAVA_INTERFACE == (j9LookupClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
 					/* Throws NoSuchMethodError (an IncompatibleClassChangeError subclass).
 					 * This will be converted to NoSuchMethodException
 					 * by the finishMethodInitialization() call in DirectHandle constructor.
@@ -346,7 +346,7 @@ accessCheckFieldSignature(J9VMThread *currentThread, J9Class* lookupClass, UDATA
 		}
 	
 		if ('L' == lookupSigData[sigOffset]) {
-			BOOLEAN isVirtual = (0 == (((J9ROMFieldShape*)romField)->modifiers & J9AccStatic));
+			BOOLEAN isVirtual = (0 == (((J9ROMFieldShape*)romField)->modifiers & J9_JAVA_STATIC));
 			j9object_t argsArray = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, methodType);
 			U_32 numParameters = J9INDEXABLEOBJECT_SIZE(currentThread, argsArray);
 			j9object_t clazz = NULL;
@@ -409,7 +409,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 		U_32 start = 0;
 
 		/* For virtual methods we need to skip the first parameter in the MethodType parameter array */
-		if (0 == (romMethod->modifiers & J9AccStatic)) {
+		if (0 == (romMethod->modifiers & J9_JAVA_STATIC)) {
 			J9UTF8 *targetName = J9ROMMETHOD_NAME(romMethod);
 			if ('<' != J9UTF8_DATA(targetName)[0]) {
 				/* ensure the method is not a constructor which has a name <init> */
@@ -633,7 +633,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField(JNIEnv *
 	fieldID = reflectFunctions->idFromFieldObject(vmThread, NULL, fieldObject);
 
 	fieldOffset = fieldID->offset;
-	if (J9AccStatic == (fieldID->field->modifiers & J9AccStatic)) {
+	if (J9_JAVA_STATIC == (fieldID->field->modifiers & J9_JAVA_STATIC)) {
 		/* ensure this is correctly tagged so that the JIT targets using Unsafe will correctly detect this is static */
 		fieldOffset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
 	}

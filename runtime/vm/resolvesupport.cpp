@@ -362,7 +362,7 @@ tryAgain:
 	}
 
 	if (jitCompileTimeResolve) {
-		if (J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
+		if (J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
 			if (J9ClassInitSucceeded != resolvedClass->initializeStatus) {
 				goto bail;
 			}
@@ -479,7 +479,7 @@ tryAgain:
 	if (resolvedClass == NULL) {
 		goto done;
 	}
-	isResolvedClassAnInterface = (J9AccInterface == (resolvedClass->romClass->modifiers & J9AccInterface));
+	isResolvedClassAnInterface = (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE));
 
 	/* Find the method. */
 	lookupOptions |= J9_LOOK_STATIC;
@@ -716,11 +716,11 @@ tryAgain:
 				}
 			}
 
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions);
+			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, lookupOptions);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					targetClass = definingClass;
-					badMemberModifier = J9AccPrivate;
+					badMemberModifier = J9_JAVA_PRIVATE;
 illegalAccess:
 					staticAddress = NULL;
 					if (canRunJavaCode && !threadEventsPending(vmStruct)) {
@@ -916,10 +916,10 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 				goto illegalAccess;
 			}
 
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions);
+			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, lookupOptions);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
-					badMemberModifier = J9AccPrivate;
+					badMemberModifier = J9_JAVA_PRIVATE;
 					targetClass = definingClass;
 illegalAccess:
 					fieldOffset = -1;
@@ -1038,7 +1038,7 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 		goto done;
 	}
 
-	if ((interfaceClass->romClass->modifiers & J9AccInterface) != J9AccInterface) {
+	if ((interfaceClass->romClass->modifiers & J9_JAVA_INTERFACE) != J9_JAVA_INTERFACE) {
 		if (throwException) {
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
 			j9object_t detailMessage = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_STR_XLAT);
@@ -1068,7 +1068,7 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
 			UDATA tagBits = 0;
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9AccInterface)) {
+			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
 				/* Resolved method is in an interface class */
 				if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
 					/* Resolved method is a private interface method which does not appear in the
@@ -1202,7 +1202,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				 * check may incorrectly fail.
 				 */
 				UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramCP)->romClass), cpIndex);
-				if (J9AccInterface == (resolvedClass->romClass->modifiers & J9AccInterface)) {
+				if (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
 					if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
 					&& (J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
 					&& (J9CPTYPE_INTERFACE_METHOD != cpType)
@@ -1594,7 +1594,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			/* Only allow non-interface method to call invokePrivate, private interface method should use "invokeInterface" bytecode
 			 * The else case will throw ICCE for private interface method 
 			 */
-			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
+			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
 				/* Private method found, will not be in vTable, point vTable index to invokePrivate */
 				if (ramCPEntry != NULL) {
 					ramCPEntry->method = method;

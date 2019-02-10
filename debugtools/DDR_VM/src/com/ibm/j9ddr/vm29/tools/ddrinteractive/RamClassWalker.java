@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,6 @@ import com.ibm.j9ddr.vm29.structure.J9RAMStaticMethodRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMStringRef;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
 import com.ibm.j9ddr.vm29.structure.J9VTableHeader;
-import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -225,7 +224,7 @@ public class RamClassWalker extends ClassWalker {
 			 * The iTables for the interface classes do not contain entries for
 			 * methods.
 			 */
-			if (!ramClass.romClass().modifiers().allBitsIn(J9JavaAccessFlags.J9AccInterface)) {
+			if (!ramClass.romClass().modifiers().allBitsIn(J9Consts.J9_JAVA_INTERFACE)) {
 				int methodCount = iTable.interfaceClass().romClass().romMethodCount().intValue();
 				for (int i = 0; i < methodCount; i++) {
 					/*

@@ -172,7 +172,7 @@ getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 	J9JavaVM * vm = currentThread->javaVM;
 	
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
+	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) == J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
@@ -212,7 +212,7 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
 	
 	Assert_SunVMI_mustHaveVMAccess(currentThread);
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
+	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) == J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
@@ -221,7 +221,7 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
 	case 1:
 		/* Caller must be annotated with @sun.reflect.CallerSensitive annotation */
 		if (((vm->systemClassLoader != currentClass->classLoader) && (vm->extensionClassLoader != currentClass->classLoader))
-				|| J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodCallerSensitive)
+				|| J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9_JAVA_METHOD_CALLER_SENSITIVE)
 		) {
 			walkState->userData3 = (void *) TRUE;
 			return J9_STACKWALK_STOP_ITERATING;
@@ -382,7 +382,7 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 		Assert_SunVMI_true(J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, *(j9object_t*)clazzRef));
 		romClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *(j9object_t*)clazzRef)->romClass;
 		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
-			modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;
+			modifiers = J9_JAVA_ABSTRACT | J9_JAVA_FINAL | J9_JAVA_PUBLIC;
 		} else {
 			modifiers = romClass->modifiers & 0xFFFF;
 		}
@@ -564,7 +564,7 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 {
 	J9JavaVM * vm = currentThread->javaVM;
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
+	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) == J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
