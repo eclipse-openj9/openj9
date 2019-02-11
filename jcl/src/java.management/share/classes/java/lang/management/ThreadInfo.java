@@ -771,8 +771,8 @@ public class ThreadInfo {
 				result.append(String.format(" on %s owned by \"%s\" Id=%d",  //$NON-NLS-1$
 						lockName, lockOwnerName, Long.valueOf(lockOwnerId)));
 			}
+			result.append(ls);
 			if (stackTraces != null && stackTraces.length > 0) {
-				result.append(ls);
 				MonitorInfo[] lockList = getLockedMonitors();
 				MonitorInfo[] lockArray = new MonitorInfo[stackTraces.length];
 				for (MonitorInfo mi: lockList) {
@@ -792,9 +792,6 @@ public class ThreadInfo {
 					}
 					++stackDepth;
 				}
-			} else {
-				result.append(" null"); //$NON-NLS-1$
-				result.append(ls);
 			}
 			TOSTRING_VALUE = result.toString();
 		}
