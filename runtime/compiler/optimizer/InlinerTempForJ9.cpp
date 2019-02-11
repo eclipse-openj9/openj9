@@ -56,7 +56,6 @@
 #include "control/Recompilation.hpp"                      //TR_PersistentJittedBodyInfo
 #include "control/RecompilationInfo.hpp"                  //TR_PersistentJittedBodyInfo
 #include "optimizer/EstimateCodeSize.hpp"
-#include "env/SharedCache.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "ras/DebugCounter.hpp"
@@ -278,20 +277,6 @@ void TR_MultipleCallTargetInliner::generateNodeEstimate::operator ()(TR_CallTarg
       size = size * ((float)(ct->_partialSize)/(float)(ct->_fullSize));
       }
    _nodeEstimate += size;
-   }
-
-bool
-TR_J9InlinerPolicy::isMethodInSharedCache(TR_ResolvedMethod *interfaceMethod)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
-   TR_OpaqueClassBlock *clazz = interfaceMethod->classOfMethod();
-   void *dummy;
-   bool clazzInCache = fej9->sharedCache()->isPointerInSharedCache((void*)fej9->getPersistentClassPointerFromClassPointer(clazz), dummy);
-
-   if (clazzInCache)
-      return true;  //fprintf(stderr, "\tsingle interface target found in AOT compilation\n");
-   else
-      return false; //fprintf(stderr, "\tsingle interface target aborted for AOT compilation\n");
    }
 
 bool

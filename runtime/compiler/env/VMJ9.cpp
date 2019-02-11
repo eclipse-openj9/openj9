@@ -9204,6 +9204,14 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
    return thunkStart;
    }
 
+bool
+TR_J9SharedCacheVM::canRememberClass(TR_OpaqueClassBlock *classPtr)
+   {
+   if (_sharedCache)
+      return (_sharedCache->rememberClass((J9Class *) classPtr, false) != NULL);
+   return false;
+   }
+
 //////////////////////////////////////////////////////////
 // TR_J9SharedCacheVM
 //////////////////////////////////////////////////////////
