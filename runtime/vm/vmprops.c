@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -550,16 +550,13 @@ initializeSystemProperties(J9JavaVM * vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	J9VMSystemProperty *javaEndorsedDirsProperty;
-	jint i;
-	JavaVMInitArgs * initArgs;
+	jint i = 0;
+	JavaVMInitArgs * initArgs = NULL;
 	char * jclName = J9_DEFAULT_JCL_DLL_NAME;
-	J9JCLConfigurationInfo * jclConfig;
+	J9JCLConfigurationInfo * jclConfig = NULL;
 	UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 	const char* propValue = NULL;
-	const char* classVersion = NULL;
-	const char* specificationVersion = NULL;
-	const char* specificationVendor = NULL;
-	UDATA rc;
+	UDATA rc = J9SYSPROP_ERROR_NONE;
 
 	if (omrthread_monitor_init(&(vm->systemPropertiesMutex), 0) != 0) {
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
@@ -594,40 +591,72 @@ initializeSystemProperties(J9JavaVM * vm)
 		}
 	}
 
-	/* Properties that always exist */
-	specificationVendor = "Oracle Corporation";
-	switch (j2seVersion) {
-		case J2SE_18:
-			classVersion = "52.0";
-			specificationVersion = "1.8";
-			break;
-
-		case J2SE_19:
-			classVersion = "53.0";
-			specificationVersion = "9";
-			break;
-			
-		case J2SE_V10:
-			classVersion = "54.0";
-			specificationVersion = "10";
-			break;
-			
-		case J2SE_V11:
-			classVersion = "55.0";
-			specificationVersion = "11";
-			break;
-
-		case J2SE_V12:
-			/* FALLTHROUGH */
-		default:
-			classVersion = "56.0";
-			specificationVersion = "12";
-			break;
+#if JAVA_SPEC_VERSION < 12
+	/* Following system properties are defined via java.lang.VersionProps.init(systemProperties) and following settings within System.ensureProperties() */
+	{
+		const char* classVersion = NULL;
+		const char* specificationVersion = NULL;
+		
+		/* Properties that always exist */
+		switch (j2seVersion) {
+			case J2SE_18:
+				classVersion = "52.0";
+				specificationVersion = "1.8";
+				break;
+	
+			case J2SE_19:
+				classVersion = "53.0";
+				specificationVersion = "9";
+				break;
+				
+			case J2SE_V10:
+				classVersion = "54.0";
+				specificationVersion = "10";
+				break;
+				
+			case J2SE_V11:
+				classVersion = "55.0";
+				specificationVersion = "11";
+				break;
+	
+			case J2SE_V12:
+				/* FALLTHROUGH */
+			default:
+				classVersion = "56.0";
+				specificationVersion = "12";
+				break;
+		}
+		rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+	
+		rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+		
+		rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+		
+		rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+		
+		rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+		
+		rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VENDOR, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
 	}
-	rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
+#endif /* JAVA_SPEC_VERSION < 12 */
 
 	rc = addSystemProperty(vm, "com.ibm.oti.vm.library.version", J9_DLL_VERSION_STRING, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
@@ -644,28 +673,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
-
-	rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
-
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
-
-	rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
-	
-	rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
-
-	rc = addSystemProperty(vm, "java.vm.specification.vendor", specificationVendor, 0);
+	rc = addSystemProperty(vm, "java.vm.specification.vendor", "Oracle Corporation", 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
@@ -676,11 +684,6 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 
 	rc = addSystemProperty(vm, "java.vm.version", J9JVM_VERSION_STRING, 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
-	}
-
-	rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
