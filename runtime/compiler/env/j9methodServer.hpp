@@ -243,25 +243,8 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
    public:
    TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   virtual TR_Method *           convertToMethod() override { TR_ASSERT(0, "called");  return NULL; }
-
-   virtual void *                constantPool() override { TR_ASSERT(0, "called");  return NULL; }
-
-   virtual bool                  isStatic() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isAbstract() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isNative() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isSynchronized() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isPrivate() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isProtected() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isPublic() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isFinal() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isStrictFP() override { TR_ASSERT(0, "called");  return 0; }
-
    virtual bool                  isInterpreted() override;
    virtual bool                  isInterpretedForHeuristics() override;
-   virtual bool                  hasBackwardBranches() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isObjectConstructor() override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  isNonEmptyObjectConstructor() override { TR_ASSERT(0, "called");  return false; }
 
    virtual void *                startAddressForJittedMethod() override { TR_ASSERT(0, "called");  return NULL; }
    virtual void *                startAddressForJNIMethod( TR::Compilation *) override { TR_ASSERT(0, "called");  return NULL; }
