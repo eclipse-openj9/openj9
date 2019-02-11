@@ -250,7 +250,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
    {
    if (TR::CompilationInfo::getStream())
       {
-      return true; // Handled in remoteCompilationEnd instead
+      return true; // Handled in outOfProcessCompilationEnd instead
       }
    else
       {

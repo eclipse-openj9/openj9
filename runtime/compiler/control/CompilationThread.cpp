@@ -8607,14 +8607,14 @@ TR::CompilationInfoPerThreadBase::compile(
       // Compile the method
       //
 
-      // For AOT/JITaaS we need to reserve a data cache to ensure contiguous memory
+      // For local AOT and JITaaS we need to reserve a data cache to ensure contiguous memory
       // For TOSS_CODE we need to reserve a data cache so that we know what dataCache
       // to reset when throwing the data away
       //
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
             || compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-            || vm.isAOT_DEPRECATED_DO_NOT_USE()
+            || vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq()
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
         )
          {
@@ -8655,7 +8655,7 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
-      if (vm.isAOT_DEPRECATED_DO_NOT_USE() || _methodBeingCompiled->isOutOfProcessCompReq())
+      if (vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq() || _methodBeingCompiled->isOutOfProcessCompReq())
          {
          TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
          TR_ASSERT(dataCache, "Must have a reserved dataCache for AOT compilations");
@@ -9586,7 +9586,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
          J9Class *clazz = mhDetails.classNeedingThunk();
 
-         remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+         outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
          }
       else
          {
@@ -9624,7 +9624,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       if (startPC)
          {
          if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
-            remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+            outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
          else
             {
             J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
@@ -9663,7 +9663,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          {
          if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             {
-            remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+            outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
             }
          else
             {
@@ -9704,11 +9704,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
       if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
-         remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+         outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
          }
       else if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
          {
-         if (trvm->isAOT_DEPRECATED_DO_NOT_USE())
+         if (trvm->isAOT_DEPRECATED_DO_NOT_USE() && !entry->isRemoteCompReq())
             {
             // Committing AOT compilation that succeeded
             // We want to store AOT code in the cache
@@ -9753,9 +9753,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
                aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
-               J9ROMMethod *romMethod = entry->isOutOfProcessCompReq() ?
-                  ((TR_ResolvedJ9JITaaSServerMethod*)comp->getCurrentMethod())->romMethod() :
-                  J9_ROM_METHOD_FROM_RAM_METHOD(method);
+               J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
                if (safeToStore)
                   {
@@ -9804,9 +9802,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                TR_Debug *debug = TR::Options::getDebug();
                bool canRelocateMethod = false;
-               if (entry->isOutOfProcessCompReq())
-                  canRelocateMethod = false;
-               else if (debug)
+               if (debug)
                   {
                   TR_FilterBST *filter = NULL;
                   J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
@@ -9976,8 +9972,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                               }
                            }
                         }
-                     if (!entry->isOutOfProcessCompReq())
-                        jitMethodTranslated(vmThread, method, startPC);
+                     jitMethodTranslated(vmThread, method, startPC);
                      }
                   else
                      {
