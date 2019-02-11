@@ -1664,6 +1664,32 @@ TR_J9SharedCacheServerVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    }
 
 bool
+TR_J9SharedCacheServerVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   bool isPrimClass = TR_J9VMBase::isPrimitiveClass(classPointer); // TR_J9ServerVM also uses TR_J9VMBase::isPrimitiveClass
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+         validated = true;
+      }
+
+   if (validated)
+      return isPrimClass;
+   else
+      return false;
+   }
+
+bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
    bool skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);

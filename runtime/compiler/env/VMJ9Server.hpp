@@ -234,7 +234,7 @@ public:
    virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalizer(TR_OpaqueClassBlock * classPointer) override;
    virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override;
-   virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override { TR_ASSERT(0, "called");  return 0; }
+   virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override { TR_ASSERT(0, "called");  return 0; }
