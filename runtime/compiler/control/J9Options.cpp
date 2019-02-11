@@ -2934,15 +2934,23 @@ TR_Debug *createDebugObject(TR::Compilation *);
 // Used by JITaaSServer
 // Side effect: set _logFile
 void
-J9::Options::setLogFileForClientOptions()
+J9::Options::setLogFileForClientOptions(int doubleCompile)
    {
    if (_logFileName)
       {
       _fe->acquireLogMonitor();
-      _compilationSequenceNumber++;
-      self()->setOption(TR_EnablePIDExtension, false);
+      if (doubleCompile)
+         {
+         self()->setOption(TR_EnablePIDExtension, true);
+         self()->openLogFile(doubleCompile);
+         }
+      else 
+         {
+         _compilationSequenceNumber++;
+         self()->setOption(TR_EnablePIDExtension, false);
+         self()->openLogFile(_compilationSequenceNumber);
+         }
 
-      self()->openLogFile(_compilationSequenceNumber);
       if (_logFile != NULL)
          {
          J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
@@ -2971,15 +2979,16 @@ J9::Options::closeLogFileForClientOptions()
 
 // JITaaS: create a log file on the client side
 // Used by JITaaSClient
-void
+int
 J9::Options::writeLogFileFromServer(const std::string& logFileContent)
    {
    if (logFileContent.empty() || !_logFileName)
-      return;
+      return 0;
 
    char buf[FILENAME_MAX_SIZE];
    _fe->acquireLogMonitor();
-   snprintf(buf, sizeof(buf), "%s.%d", _logFileName, ++_compilationSequenceNumber);
+   snprintf(buf, sizeof(buf), "%s.%d.REMOTE", _logFileName, ++_compilationSequenceNumber);
+   int sequenceNumber = _compilationSequenceNumber;
    _fe->releaseLogMonitor();
 
    int32_t len = strlen(buf);
@@ -2991,7 +3000,7 @@ J9::Options::writeLogFileFromServer(const std::string& logFileContent)
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Trace log not genereted due to filename being too long");
          }
-      return; // may overflow the buffer
+      return 0; // may overflow the buffer
       }
    char tmp[FILENAME_MAX_SIZE];
    char * filename = _fe->getFormattedName(tmp, FILENAME_MAX_SIZE, buf, _suffixLogsFormat, true);
@@ -3000,6 +3009,8 @@ J9::Options::writeLogFileFromServer(const std::string& logFileContent)
    ::fputs(logFileContent.c_str(), logFile->_stream);
    trfflush(logFile);
    trfclose(logFile);
+
+   return sequenceNumber;
    }
 
 #if 0
