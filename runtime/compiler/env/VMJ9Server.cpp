@@ -1693,7 +1693,7 @@ bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
    bool skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
       bool recordCreated = comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
@@ -1705,7 +1705,7 @@ TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
 bool
 TR_J9SharedCacheServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
 
    // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
@@ -1715,7 +1715,7 @@ TR_J9SharedCacheServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *meth
 bool
 TR_J9SharedCacheServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
 
    return TR_J9ServerVM::isMethodExitTracingEnabled(method) || option;
@@ -1730,7 +1730,7 @@ TR_J9SharedCacheServerVM::traceableMethodsCanBeInlined()
 bool
 TR_J9SharedCacheServerVM::canMethodEnterEventBeHooked()
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
 
    // We want to return the same answer as TR_J9ServerVM unless we want to force it to allow tracing
@@ -1740,7 +1740,7 @@ TR_J9SharedCacheServerVM::canMethodEnterEventBeHooked()
 bool
 TR_J9SharedCacheServerVM::canMethodExitEventBeHooked()
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
    // We want to return the same answer as TR_J9ServerVM unless we want to force it to allow tracing
    return TR_J9ServerVM::canMethodExitEventBeHooked() || option;
