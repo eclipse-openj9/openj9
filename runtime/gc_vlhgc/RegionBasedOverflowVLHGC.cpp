@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,15 +195,15 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 
 				bool referentMustBeCleared = false;
 				UDATA referenceObjectOptions = envVLHGC->_cycleState->_referenceObjectOptions;
-				UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK;
+				UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
 				switch (referenceObjectType) {
-				case J9_JAVA_CLASS_REFERENCE_WEAK:
+				case J9AccClassReferenceWeak:
 					referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak)) ;
 					break;
-				case J9_JAVA_CLASS_REFERENCE_SOFT:
+				case J9AccClassReferenceSoft:
 					referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 					break;
-				case J9_JAVA_CLASS_REFERENCE_PHANTOM:
+				case J9AccClassReferencePhantom:
 					referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
 					break;
 				default:

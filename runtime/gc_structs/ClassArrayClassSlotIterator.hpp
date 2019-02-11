@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ class GC_ClassArrayClassSlotIterator
 public:
 	GC_ClassArrayClassSlotIterator(J9Class *clazz) :
 		_iterateClazz(clazz),
-		_isArrayClass((clazz->romClass->modifiers & J9_JAVA_CLASS_ARRAY) != 0),
+		_isArrayClass((clazz->romClass->modifiers & J9AccClassArray) != 0),
 		_state(classArrayClassSlotIterator_state_arrayClass)
 	{};
 

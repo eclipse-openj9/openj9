@@ -1748,14 +1748,14 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
    modifiersTree->insertBefore(nullCheckTree);
 
    /*** need to generate this:
-    *  if (modifiers & J9_JAVA_CLASS_PRIMITIVE_TYPE) {
-    *    modifiers = J9_JAVA_ABSTRACT | J9_JAVA_FINAL | J9_JAVA_PUBLIC;
+    *  if (modifiers & J9AccClassInternalPrimitiveType) {
+    *    modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;
     *  } else {
     *    modifiers &= 0xFFF;
     *  }
     *  return modifiers;
     */
-   // generatng "if (modifiers & J9_JAVA_CLASS_PRIMITIVE_TYPE)"
+   // generatng "if (modifiers & J9AccClassInternalPrimitiveType)"
    TR::Node *iAndNode = TR::Node::create(TR::iand, 2,
                                        TR::Node::createLoad(callNode, modifiersSymRef),
                                        TR::Node::iconst(callNode, (int32_t)comp()->fej9()->constClassFlagsPrimitive()));
@@ -1765,7 +1765,7 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
                           0);
    TR::TreeTop *compareTree = TR::TreeTop::create(comp(), compareNode);
 
-   // generating if-then part "   modifiers = J9_JAVA_ABSTRACT | J9_JAVA_FINAL | J9_JAVA_PUBLIC;"
+   // generating if-then part "   modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;"
    TR::Node *modifiersIfStrNode = TR::Node::createStore(modifiersSymRef,
                                  TR::Node::iconst(callNode, (int32_t)(comp()->fej9()->constClassFlagsAbstract() | comp()->fej9()->constClassFlagsFinal() | comp()->fej9()->constClassFlagsPublic()))
                                                      );

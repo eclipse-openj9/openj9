@@ -30,6 +30,7 @@
 #include "j9cfg.h"
 #include "j9modron.h"
 #include "j9nonbuilder.h"
+#include "j9consts.h"
 #include "mmhook.h"
 #include "mmomrhook.h"
 #include "vmaccess.h"
@@ -840,7 +841,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
        ((intptrj_t)(walkState.method->constantPool) & J9_STARTPC_JNI_NATIVE) ||
        !J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ||
        TR::CompilationInfo::getJ9MethodVMExtra(walkState.method)==J9_JIT_NEVER_TRANSLATE ||
-       (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(walkState.method)) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) ||
+       (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(walkState.method)) & J9AccClassHotSwappedOut) ||
        walkState.bytecodePCOffset<=0)      // FIXME: Deal with loop back on entry later
       {
       dltBlock->methods[idx] = 0;
@@ -2494,7 +2495,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
          // If the romableAotITable field is set to 0, that means this class was not caught
          // by the JIT load hook and has not been loaded.
          //
-         if (J9CLASS_FLAGS(j9clazz) &  J9_JAVA_CLASS_DYING && j9clazz->romableAotITable !=0 )
+         if (J9CLASS_FLAGS(j9clazz) &  J9AccClassDying && j9clazz->romableAotITable !=0 )
             {
             clazz = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(j9clazz);
             table->classGotUnloadedPost(fe,clazz); // side-effect: builds the array of visited superclasses
@@ -3155,7 +3156,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
 
    J9ROMClass *ROMCl = cl->romClass;
 
-   if(ROMCl->modifiers & J9_JAVA_INTERFACE  )   //Do nothing if interface
+   if(ROMCl->modifiers &  J9AccInterface )   //Do nothing if interface
       return;
 
    int32_t classDepth = J9CLASS_DEPTH(cl) - 1;
@@ -3515,7 +3516,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    if (classDepth >= 0)
       {
       J9Class * superCl = cl->superclasses[classDepth];
-      superCl->classDepthAndFlags |= J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
+      superCl->classDepthAndFlags |= J9AccClassHasBeenOverridden;
 
       TR_OpaqueClassBlock *superClazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(superCl);
       if (p)
@@ -3533,7 +3534,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
          superCl = iTableEntry->interfaceClass;
          if (superCl != cl)
             {
-            superCl->classDepthAndFlags |= J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
+            superCl->classDepthAndFlags |= J9AccClassHasBeenOverridden;
             superClazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(superCl);
             if (p)
                {
@@ -4003,7 +4004,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    // ALI 20031015: I think I have fixed the above todo - we should never
    // get an inconsistent state now.  The following should be unnecessary -
    // verify and remove  FIXME
-   cl->classDepthAndFlags &= ~J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
+   cl->classDepthAndFlags &= ~J9AccClassHasBeenOverridden;
 
    J9ClassLoader *classLoader = cl->classLoader;
 

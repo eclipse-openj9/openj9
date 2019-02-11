@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@
 #endif /* J9VM_OUT_OF_PROCESS */
 
 #define VMCHECK_CLASS_DEPTH(clazz) J9CLASS_DEPTH(clazz)
-#define VMCHECK_IS_CLASS_OBSOLETE(clazz) (J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_HOT_SWAPPED_OUT)
+#define VMCHECK_IS_CLASS_OBSOLETE(clazz) (J9CLASS_FLAGS(clazz) & J9AccClassHotSwappedOut)
 #define VMCHECK_J9_CURRENT_CLASS(clazz) (VMCHECK_IS_CLASS_OBSOLETE(clazz) ? (J9Class *)DBG_ARROW(clazz, arrayClass) : (clazz))
 
 #endif /* gcdbgext_h */

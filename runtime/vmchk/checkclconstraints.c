@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,7 @@ checkClassLoadingConstraints(J9JavaVM *vm)
 			if (J9_GC_CLASS_LOADER_DEAD == (constraint->classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD) ) {
 				vmchkPrintf(vm, "%s - Error classLoader=0x%p is dead>\n", VMCHECK_FAILED, constraint->classLoader);
 			}
-			if ((NULL != clazz) && (J9_JAVA_CLASS_DYING == (J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_DYING))) {
+			if ((NULL != clazz) && (J9AccClassDying == (J9CLASS_FLAGS(clazz) & J9AccClassDying))) {
 				vmchkPrintf(vm, "%s - Error class=0x%p is dead>\n", VMCHECK_FAILED, clazz);
 			}
 			if ((NULL == constraint->linkNext) || (NULL == constraint->linkPrevious) ||
