@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -286,16 +286,20 @@ addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClas
 			while (searchIndex < vTableSize) {
 				J9Method *vTableRamMethod = vTable[searchIndex];
 				J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableRamMethod);
-				J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
-				J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
 
-				if (vTableRomMethod->modifiers & J9_JAVA_PUBLIC) {
+				if (J9ROMMETHOD_IN_ITABLE(vTableRomMethod)) {
+					J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
+					J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
+
 					if ((J9UTF8_LENGTH(interfaceMethodName) == J9UTF8_LENGTH(vTableMethodName))
 					&& (J9UTF8_LENGTH(interfaceMethodSig) == J9UTF8_LENGTH(vTableMethodSig))
 					&& (memcmp(J9UTF8_DATA(interfaceMethodName), J9UTF8_DATA(vTableMethodName), J9UTF8_LENGTH(vTableMethodName)) == 0)
 					&& (memcmp(J9UTF8_DATA(interfaceMethodSig), J9UTF8_DATA(vTableMethodSig), J9UTF8_LENGTH(vTableMethodSig)) == 0)
 					) {
+						/* fill in interface index --> vTableOffset mapping */
 						vTableOffset = J9VTABLE_OFFSET_FROM_INDEX(searchIndex);
+						**currentSlot = vTableOffset;
+						(*currentSlot)++;
 						break;
 					}
 				}
@@ -309,10 +313,6 @@ addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClas
 						J9UTF8_DATA(interfaceMethodName), J9UTF8_LENGTH(interfaceMethodSig), J9UTF8_DATA(interfaceMethodSig), vTableOffset, searchIndex);
 			}
 #endif
-
-			/* fill in interface index --> vTableOffset mapping */
-			**currentSlot = vTableOffset;
-			(*currentSlot)++;
 
 			interfaceRamMethod++;
 		}
@@ -751,8 +751,7 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 		if (J9ROMCLASS_IS_ARRAY(romClass) == 0) {
 			J9Class *interfaceWalk = interfaceHead;
 			while (interfaceWalk != NULL) {
-				/* TODO: this over-estimates due to private + static methods. */
-				maxSlots += interfaceWalk->romClass->romMethodCount;
+				maxSlots += J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceWalk);
 				interfaceWalk = (J9Class *)((UDATA)interfaceWalk->instanceDescription & ~INTERFACE_TAG);
 			}
 		}
@@ -2377,6 +2376,7 @@ fail:
 			J9ConstantPool *ramConstantPool = (J9ConstantPool *) (ramClass->ramConstantPool);
 			UDATA ramConstantPoolCount = romClass->ramConstantPoolCount * 2; /* 2 slots per CP entry */
 			U_32 tempClassDepthAndFlags = 0;
+			UDATA iTableMethodCount = 0;
 			Trc_VM_initializeRAMClass_Start(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classLoader);
 
 			/* Default to no class path entry. */
@@ -2410,11 +2410,14 @@ fail:
 					currentRAMMethod->bytecodes = (U_8 *)(romMethod + 1);
 					currentRAMMethod->constantPool = ramConstantPool;
 					currentRAMMethod++;
-					
+
+					if (J9ROMMETHOD_IN_ITABLE(romMethod)) {
+						iTableMethodCount += 1;
+					}
 					romMethod = nextROMMethod(romMethod);
 				}
 			}
-			
+
 			if (ramConstantPoolCount != 0) {
 				ramConstantPool->ramClass = ramClass;
 				ramConstantPool->romConstantPool = (J9ROMConstantPoolItem *)(romClass + 1);
@@ -2646,7 +2649,12 @@ fail:
 			if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 				ramClass->initializeStatus = J9ClassInitSucceeded;
 			}
-			
+
+			/* If the class is an interface, fill in the iTableMethodCount */
+			if (J9ROMCLASS_IS_INTERFACE(romClass)) {
+				J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(ramClass, iTableMethodCount);
+			}
+
 			Trc_VM_initializeRAMClass_End(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classSize, classLoader);
 		}
 		

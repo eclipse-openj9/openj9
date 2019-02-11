@@ -259,7 +259,7 @@ tryAgain:
 	ramClassRefWrapper = (J9RAMClassRef *)&ramCP[cpIndex];
 	resolvedClass = ramClassRefWrapper->value;
 	/* If resolving for "new", check if the class is instantiable */
-	if ((NULL != resolvedClass) && (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE) || J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccAbstract | J9AccInterface))) {
+	if ((NULL != resolvedClass) && (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE) || !J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(resolvedClass->romClass))) {
 		/* ensure that the caller can safely read the modifiers field if it so desires */
 		issueReadBarrier();
 		goto done;

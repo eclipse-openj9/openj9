@@ -2971,6 +2971,10 @@ typedef struct J9Class {
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 } J9Class;
 
+/* Interface classes can never be instantiated - overload the totalInstanceSize slot to hold the iTable method count */
+#define J9INTERFACECLASS_ITABLEMETHODCOUNT(clazz) ((clazz)->totalInstanceSize)
+#define J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(clazz, value) (clazz)->totalInstanceSize = (value)
+
 typedef struct J9ArrayClass {
 	UDATA eyecatcher;
 	struct J9ROMClass* romClass;

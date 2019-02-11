@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1868,13 +1868,31 @@ getReturnTypeFromSignature(U_8 * inData, UDATA inLength, U_8 **outData);
 /* ---------------- mthutil.c ---------------- */
 
 /**
+ * @brief Retrieve the J9Method which maps to the index within the iTable for interfaceClass.
+ * @param interfaceClass The interface class to query
+ * @param index The iTable index
+ * @return J9Method* The J9Method which maps to index within interfaceClass
+  */
+J9Method *
+iTableMethodAtIndex(J9Class *interfaceClass, UDATA index);
+
+/**
+ * @brief Retrieve the iTable index of an interface method within the iTable for
+ *        its declaring class.
+ * @param method The interface method
+ * @return UDATA The iTable index (not including the fixed J9ITable header)
+ */
+UDATA
+getITableIndexWithinDeclaringClass(J9Method *method);
+
+/**
  * @brief Retrieve the index of an interface method within the iTable for an interface
  *        (not necessarily the same interface, as iTables contain methods from all
  *        extended interfaces as well as the local one).
  * @param method The interface method
  * @param targetInterface The interface in whose table to search
  *                        (NULL to use the declaring class of method)
- * @return UDATA The iTable index (not including the fixed J9ITable header), or -1 if not found
+ * @return UDATA The iTable index (not including the fixed J9ITable header)
  */
 UDATA
 getITableIndexForMethod(J9Method * method, J9Class *targetInterface);
