@@ -996,6 +996,7 @@ public:
    virtual void *getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *classPointer);
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) { return false; }
    private:
 #if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
    uint32_t     getSharedCacheHint(J9VMThread * vmThread, J9Method *romMethod, J9SharedClassConfig * scConfig);
@@ -1181,6 +1182,7 @@ public:
    virtual bool                   supportAllocationInlining( TR::Compilation *comp, TR::Node *node);
 
    virtual J9Class *              getClassForAllocationInlining( TR::Compilation *comp, TR::SymbolReference *classSymRef);
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr);
    };
 
 #endif

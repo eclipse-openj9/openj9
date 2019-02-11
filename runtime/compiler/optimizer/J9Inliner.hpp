@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -234,7 +234,6 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       bool validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_ParameterMapping> &map);
       virtual bool supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp);
       virtual TR_InlinerFailureReason checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp);
-      bool isMethodInSharedCache(TR_ResolvedMethod *interfaceMethod);
    };
 
 class TR_J9JSR292InlinerPolicy : public TR_J9InlinerPolicy
