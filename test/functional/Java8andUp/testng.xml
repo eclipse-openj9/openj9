@@ -90,6 +90,11 @@
 			<class name="org.openj9.test.attachAPI.TestJps"/>
 		</classes>
 	</test>
+	<test name="TestJstack">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJstack"/>
+		</classes>
+	</test>
 	
 	<test name="TestFileLocking">
 		<classes>
