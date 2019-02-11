@@ -210,7 +210,9 @@ std::string packROMClass(J9ROMClass *, TR_Memory *);
 bool handleServerMessage(JITaaS::J9ClientStream *, TR_J9VM *);
 TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMethod *,
       J9Method *, TR::IlGeneratorMethodDetails &, TR::CompilationInfoPerThreadBase *);
-void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig,
+TR_MethodMetaData *remoteCompilationEnd(J9VMThread * vmThread, TR::Compilation *comp, TR_ResolvedMethod * compilee, J9Method * method,
+                          TR::CompilationInfoPerThreadBase *compInfoPT, const std::string& codeCacheStr, const std::string& dataCacheStr);
+void outOfProcessCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig,
       TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp);
 void printJITaaSMsgStats(J9JITConfig *);
 void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
