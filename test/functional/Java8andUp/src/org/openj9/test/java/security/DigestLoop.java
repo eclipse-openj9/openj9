@@ -54,7 +54,7 @@ public final class DigestLoop extends Thread {
             logger.info("Using Provider " + md.getProvider().getName());
             logger.info("Payload size: " + data.length + " bytes");
         } catch (Exception e) {
-            logger.debug(e.printStackTrace);
+            logger.debug(e.printStackTrace());
         }
         int num_threads=20;
 
@@ -68,7 +68,7 @@ public final class DigestLoop extends Thread {
         try {
             loop(ITERATIONS);
         } catch (Exception e) {
-            logger.debug(e.printStackTrace);
+            logger.debug(e.printStackTrace());
         }
     }
 
@@ -94,7 +94,7 @@ public final class DigestLoop extends Thread {
                      md = (MessageDigest) md.clone();
                 }
             } catch (Exception e) {
-                logger.debug(e.printStackTrace);
+                logger.debug(e.printStackTrace());
             }
         }
         return numIterations;
