@@ -694,7 +694,17 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
    // the frontend method performs a RPC
    void * ramMethod = fej9->getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
-   TR_ResolvedMethod *m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
+   TR_ResolvedMethod *m;
+   // it seems better to override this method for AOT but that's what baseline is doing
+   // maybe there is a reason for it
+   if (_fe->isAOT_DEPRECATED_DO_NOT_USE())
+      {
+      m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
+      }
+   else
+      {
+      m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
+      }
    return m;
    }
 
