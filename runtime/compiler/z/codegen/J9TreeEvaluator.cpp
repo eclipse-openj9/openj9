@@ -640,12 +640,13 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, invalidRangeVector, 0, 0);
    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, invalidCondVector, 0, 0);
 
-   // Letters a-z (0x61-0x7A) when to upper and A-Z (0x41-0x5A) when to lower
+   // Characters a-z (0x61-0x7A) when to upper and A-Z (0x41-0x5A) when to lower
    generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0x617A : 0x415A, 0x0);
    // Characters àáâãäåæçèéêëìíîïðñòóôõö (0xE0-0xF6) when to upper and ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ (0xC0-0xD6) when to lower
    generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0xE0F6 : 0xC0D6, 0x1);
    // Characters øùúûüýþ (0xF8-0xFE) when to upper and ØÙÚÛÜÝÞ (0xD8-0xDE) when to lower
    generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0xF8FE : 0xD8DE, 0X2);
+
    if (!isCompressedString)
       {
       generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, alphaRangeVector, alphaRangeVector, 0, 0, 0, 0);
@@ -668,36 +669,36 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
       generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XC000, 0X5);
       }
 
-   // Can't toUpper \u00df (capital sharp s) nor \u00b5 (mu) with a simple addition of 0x20
-   // Condition code equal for capital sharp and mu (bit 0=0x80) and greater than (bit 2=0x20) for codes larger than 0xFF
    if (isToUpper)
       {
+      // Can't uppercase \u00DF (capital sharp s) nor \u00B5 (mu) with a simple addition of 0x20 so we do an equality
+      // comparison (bit 0) and greater than or equal comparison (bits 0 and 2) for codes larger than or equal to 0xFF
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xDFDF, 0x0);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xB5B5, 0x1);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xFFFF, 0x2);
+
       if (isCompressedString)
          {
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xdfdf, 0x0);
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xb5b5, 0x1);
-
          generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8080, 0x0);
          generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8080, 0x1);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0xA0A0, 0x2);
          }
       else
          {
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xdfdf, 0x0);
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xb5b5, 0x1);
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xffff, 0x2);
          generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, invalidRangeVector, invalidRangeVector, 0, 0, 0, 0);
 
          generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x0);
          generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x1);
          generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x2);
          generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x3);
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x2000, 0x4);
-         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x2000, 0x5);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0xA000, 0x4);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0xA000, 0x5);
          }
       }
-   else if (!isToUpper && !isCompressedString)
+   else if (!isCompressedString)
       {
-      // to lower is only invalid when values are greater than 0xFF
+      // Can't lowercase codes larger than 0xFF but we only need to check this if our input is not compressed since
+      // all compressed values will be <= 0xFF
       generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0x00FF, 0x0);
       generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0x00FF, 0x1);
 
@@ -706,7 +707,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
       }
 
    // Constant value of 0x20, used to convert between upper and lower
-   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, charOffsetVector, static_cast<uint16_t>(0x20), elementSizeMask);
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, charOffsetVector, 0x20, elementSizeMask);
 
    generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, lengthRegister);
    generateRILInstruction(cg, TR::InstOpCode::NILF, node, loadLength, 0xF);
@@ -714,13 +715,13 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    cFlowRegionStart->setStartInternalControlFlow();
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fullVectorConversion);
 
-   // VLL and VSTL take an index, not a count, so subtract the count by 1
+   // VLL and VSTL take an index, not a count, so subtract the input length by 1
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
 
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(sourceRegister, headerSize, cg));
 
    // Check for invalid characters, go to fallback individual character conversion implementation
-   if (!isCompressedString)
+   if (isToUpper || !isCompressedString)
       {
       generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, selectionVector, charBufferVector, invalidRangeVector, invalidCondVector, 0x1 , elementSizeMask);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, handleInvalidChars);
@@ -746,7 +747,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
 
    generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(sourceRegister, addressOffset, headerSize, cg));
 
-   if (!isCompressedString)
+   if (isToUpper || !isCompressedString)
       {
       generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, selectionVector, charBufferVector, invalidRangeVector, invalidCondVector, 0x1 , elementSizeMask);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, handleInvalidChars);
