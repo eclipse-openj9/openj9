@@ -112,7 +112,6 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-dollars-in-identifiers \
     -fno-strict-aliasing
 
 CXX_FLAGS+=\
