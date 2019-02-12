@@ -46,12 +46,12 @@ private:
 	MM_Alarm *_alarm;
 	omrthread_monitor_t _mutex;
 	volatile bool _shutdown;
-	enum AlarmThradActive {
+	enum AlarmThreadActive {
 			ALARM_THREAD_INACTIVE,
 			ALARM_THREAD_ACTIVE,
 			ALARM_THREAD_SHUTDOWN
 	};
-	volatile  AlarmThradActive _alarmThreadActive;
+	volatile  AlarmThreadActive _alarmThreadActive;
 	MM_Scheduler *_scheduler;
 
 protected:
