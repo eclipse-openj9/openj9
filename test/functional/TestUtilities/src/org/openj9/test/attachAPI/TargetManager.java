@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@ package org.openj9.test.attachAPI;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -105,6 +104,54 @@ class TargetManager {
 		this.proc = launchTarget(cmdName, targetId, null, null, null);
 	}
 
+	/**
+	 * Wait until the JVM's attach API has initialized
+	 * @return success if true, false if attach API is disabled or error
+	 */
+	public static boolean waitForAttachApiInitialization() {
+		boolean result = false;
+		try {
+			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			final Method waitForAttachApiInitialization = attachHandlerClass.getMethod("waitForAttachApiInitialization");
+			result = (boolean) waitForAttachApiInitialization.invoke(attachHandlerClass);
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			logger.error("error waiting for attach API initialization: "+e.getMessage());
+		}
+		return result;
+	}
+	
+	/**
+	 * Get the process ID of the current process
+	 * @return Process ID or -1 on error
+	 */
+	public static long getProcessId() {
+		long result = -1;
+		try {
+			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			final Method getPid = attachHandlerClass.getMethod("getProcessId");
+			result = (long) getPid.invoke(attachHandlerClass);
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			logger.error("error getting process ID: "+e.getMessage());
+		}
+		return result;
+	}
+	
+	/**
+	 * Get the AttachAPI virtual machine ID of the current process
+	 * @return Process ID or null on error
+	 */
+	public static String getVmId() {
+		String result = null;
+		try {
+			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			final Method getVmId = attachHandlerClass.getMethod("getVmId");
+			result = (String) getVmId.invoke(attachHandlerClass);
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			logger.error("error getting process ID: "+e.getMessage());
+		}
+		return result;
+	}
+	
 	/*
 	 * target must print the PID on one line, other information on following
 	 * line(s) (if any), the initialization status on the final line.
