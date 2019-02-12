@@ -2094,3 +2094,29 @@ TR_J9SharedCacheServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * 
    else
       return NULL;
    }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   TR_OpaqueClassBlock *arrayClass = TR_J9ServerVM::getArrayClassFromComponentClass(componentClass);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addArrayClassFromComponentClassRecord(arrayClass, componentClass);
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) componentClass))
+         validated = true;
+      }
+
+   if (validated)
+      return arrayClass;
+   else
+      return NULL;
+   }
+
