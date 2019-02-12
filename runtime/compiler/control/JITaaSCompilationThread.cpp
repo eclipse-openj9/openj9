@@ -2249,8 +2249,9 @@ remoteCompile(
             // double compile is also controlled by TR_EnableJITaaSDoubleCompile option
             // try to perform an equivalent local compilation and generate vlog
             // append the same compilationSequenceNumber in the filename
+            intptr_t rtn = 0;
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
-            if (compiler->compile() != COMPILATION_SUCCEEDED)
+            if ((rtn = compiler->compile()) != COMPILATION_SUCCEEDED)
                {
                TR_ASSERT(false, "Compiler returned non zero return code %d\n", rtn);
                compiler->failCompilation<TR::CompilationException>("Compilation Failure");
