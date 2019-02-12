@@ -49,10 +49,6 @@
 #include "infra/Flags.hpp"                     // for flags32_t
 #include "ras/Debug.hpp"                       // for TR_DebugBase
 
-TR::Symbol::RecognizedField
-J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * owningMethod, int32_t cpIndex, bool isStatic)
-   {
-
     struct F
       {
       TR::Symbol::RecognizedField id;
@@ -166,6 +162,9 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
        {TR::Symbol::UnknownField}
       };
 
+TR::Symbol::RecognizedField
+J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * owningMethod, int32_t cpIndex, bool isStatic)
+   {
    struct FP
       {
       struct F   *fieldInfo;
@@ -182,6 +181,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
        {0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},
        {recognizedFieldName_j, 16, 52}
       };
+
    const char minClassPrefix = 'c';
    const char maxClassPrefix = 'j';
 
@@ -269,6 +269,38 @@ J9::Symbol::getRecognizedField()
       return self()->getRecognizedStaticSymbol()->getRecognizedField();
    else
       return TR::Symbol::UnknownField;
+   }
+
+/**
+ * Return the owning class name of this recognized field.
+ * Return null if this symbol does not have a recognized field.
+ */
+const char *
+J9::Symbol::owningClassNameCharsForRecognizedField(int32_t & length)
+   {
+   TR_ASSERT(isShadow(), "Must be a shadow symbol");
+   TR::Symbol::RecognizedField recognizedField = self()->getRecognizedField();
+   TR_ASSERT(TR::Symbol::UnknownField != recognizedField, "Symbol should have a valid recognized field");
+   for (int i = 0; recognizedFieldName_c[i].id != TR::Symbol::UnknownField; ++i)
+      {
+      F &knownField = recognizedFieldName_c[i];
+      if (knownField.id == recognizedField)
+         {
+         length = knownField.classLen;
+         return knownField.classStr;
+         }
+      }
+   for (int i = 0; recognizedFieldName_j[i].id != TR::Symbol::UnknownField; ++i)
+      {
+      F &knownField = recognizedFieldName_j[i];
+      if (knownField.id == recognizedField)
+         {
+         length = knownField.classLen;
+         return knownField.classStr;
+         }
+      }
+
+   return NULL;
    }
 
 /**
