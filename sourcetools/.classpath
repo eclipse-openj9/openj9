@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="bin/j9hook" path="j9hook"/>
 	<classpathentry kind="src" output="bin/j9vmcp" path="j9constantpool"/>
 	<classpathentry kind="src" output="bin/om" path="objectmodel"/>
 	<classpathentry kind="src" output="bin/j9nls" path="j9nls"/>
