@@ -67,7 +67,7 @@ MM_MetronomeAlarmThreadDelegate::metronomeAlarmThreadWrapper(void* userData)
 		&rc);
 		
 	omrthread_monitor_enter(alarmThread->_mutex);
-	alarmThread->_alarmThreadActive = MM_MetronomeAlarmThread::AlarmThradActive::ALARM_THREAD_SHUTDOWN;
+	alarmThread->_alarmThreadActive = MM_MetronomeAlarmThread::ALARM_THREAD_SHUTDOWN;
 	omrthread_monitor_notify(alarmThread->_mutex);
 	omrthread_exit(alarmThread->_mutex);
 		
