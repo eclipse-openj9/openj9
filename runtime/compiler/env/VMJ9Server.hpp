@@ -222,7 +222,6 @@ public:
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override;
    virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override;
-   virtual TR_OpaqueMethodBlock * getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod=0) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL) override;
    virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override;
