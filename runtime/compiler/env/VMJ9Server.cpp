@@ -2120,3 +2120,29 @@ TR_J9SharedCacheServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * 
       return NULL;
    }
 
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   TR_OpaqueClassBlock *leafComponent = TR_J9ServerVM::getLeafComponentClassFromArrayClass(arrayClass);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), leafComponent);
+      validated = true;
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
+         validated = true;
+      }
+
+   if (validated)
+      return leafComponent;
+   else
+      return NULL;
+   }
+

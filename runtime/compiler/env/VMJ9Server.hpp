@@ -236,7 +236,7 @@ public:
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
-   virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override { TR_ASSERT(0, "called");  return 0; }
+   virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override { TR_ASSERT(0, "called");  return 0; }
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override { TR_ASSERT(0, "called");  return 0; }
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override;
