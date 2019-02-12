@@ -2146,3 +2146,30 @@ TR_J9SharedCacheServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBloc
       return NULL;
    }
 
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getBaseComponentClass(TR_OpaqueClassBlock * classPointer, int32_t & numDims)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   TR_OpaqueClassBlock *baseComponent = TR_J9ServerVM::getBaseComponentClass(classPointer, numDims);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), baseComponent);
+      validated = true;
+      }
+   else
+      {
+      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+         validated = true;
+      }
+
+   if (validated)
+      return baseComponent;
+   else
+      return classPointer;  // not sure about this return value, but it's what we used to return before we got "smart"
+   }
+
+
