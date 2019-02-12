@@ -1497,8 +1497,14 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR:
 
    isStatic = (reloKind == TR_ValidateStaticField);
 
-   TR_J9ServerVM *feServer = (TR_J9ServerVM *) fej9;
-   J9Class *clazz = (J9Class *) feServer->TR_J9ServerVM::getClassOfMethod((TR_OpaqueMethodBlock *) ramMethod);
+   
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary, ramMethod, constantPool, cpIndex, isStatic);
+   // 1. RAM class of ramMethod
+   // 2. defining class
+   // 3. class chain
+   auto recv = _stream->read<J9Class *, J9Class *, UDATA *>();
+
+   J9Class *clazz = std::get<0>(recv);
    traceMsg(comp, "storeValidationRecordIfNecessary:\n");
    traceMsg(comp, "\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
    traceMsg(comp, "\treloKind %d isStatic %d\n", reloKind, isStatic);
@@ -1508,7 +1514,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR:
 
    if (!definingClass)
       {
-      definingClass = (J9Class *) reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, isStatic);
+      definingClass = std::get<1>(recv);
       traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
@@ -1523,10 +1529,9 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR:
    traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
    J9ROMClass *romClass = NULL;
-   void *classChain = NULL;
-
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   classChain = fej9->sharedCache()->rememberClass(definingClass);
+   void *classChain = (void *) std::get<2>(recv);
+
    if (!classChain)
       return false;
 

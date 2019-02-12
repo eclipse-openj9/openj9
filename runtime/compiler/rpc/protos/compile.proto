@@ -104,6 +104,7 @@ enum J9ServerMessageType
    ResolvedMethod_stringConstant = 149;
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 150;
+   ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 151;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
