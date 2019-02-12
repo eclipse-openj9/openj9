@@ -1064,14 +1064,15 @@ class TR_RelocationRecordInlinedMethod : public TR_RelocationRecordConstantPoolW
    protected:
       virtual void fixInlinedSiteInfo(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock *inlinedMethod);
       virtual bool needsReceiverClassFromID() { return false; }
+      bool inlinedSiteCanBeActivated(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, J9Method *currentMethod);
 
    private:
       virtual bool inlinedSiteValid(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock **theMethod);
 
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod) { return NULL; }
 
-      virtual void invalidateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {};
-      virtual void activateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {};
+      virtual void invalidateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {}
+      virtual void activateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {}
 
       virtual void updateFailedStats(TR_AOTStats *aotStats) { }
       virtual void updateSucceededStats(TR_AOTStats *aotStats) { }
