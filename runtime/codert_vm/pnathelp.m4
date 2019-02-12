@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -851,6 +851,63 @@ START_PROC(jitFillOSRBufferReturn)
 	SWITCH_TO_C_STACK
 	CINTERP(J9TR_bcloop_exit_interpreter, 0)
 END_PROC(jitFillOSRBufferReturn)
+
+dnl Expects r3 to already contain the vmThread.
+dnl Expects r4 to already contain the address being loaded from.
+START_PROC(jitReadBarrier)
+ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
+	staddr r0,JIT_GPR_SAVE_SLOT(0)
+	SAVE_LR
+	SAVE_JIT_GOT_REGISTERS
+	INIT_JIT_TOC
+	SWITCH_TO_C_STACK
+	SAVE_C_VOLATILE_REGS
+
+	laddr r5,J9TR_VMThread_javaVM(J9VMTHREAD)
+	laddr r5,J9TR_JavaVM_memoryManagerFunctions(r5)
+	laddr FUNC_PTR,J9TR_J9MemoryManagerFunctions_J9ReadBarrier(r5)
+	CALL_INDIRECT
+
+	RESTORE_C_VOLATILE_REGS
+	RESTORE_JIT_GOT_REGISTERS
+	RESTORE_LR
+	SWITCH_TO_JAVA_STACK
+	laddr r0,JIT_GPR_SAVE_SLOT(0)
+	blr
+},{
+dnl jitReadBarrier is not supported if OMR_GC_CONCURRENT_SCAVENGER is not set
+	trap
+})
+END_PROC(jitReadBarrier)
+
+dnl Expects r3 to already contain vmThread.
+dnl Expects r4 to already contain srcObj.
+dnl Expects r5 to already contain dstObj.
+dnl Expects r6 to already contain srcAddr.
+dnl Expects r7 to already contain dstAddr.
+dnl Expects r8 to already contain length.
+START_PROC(jitReferenceArrayCopy)
+	staddr r0,JIT_GPR_SAVE_SLOT(0)
+	SAVE_LR
+	SAVE_JIT_GOT_REGISTERS
+	INIT_JIT_TOC
+	SWITCH_TO_C_STACK
+	SAVE_ALL_REGS
+
+	laddr r9,J9TR_VMThread_javaVM(J9VMTHREAD)
+	laddr r9,J9TR_JavaVM_memoryManagerFunctions(r9)
+	laddr FUNC_PTR,J9TR_J9MemoryManagerFunctions_referenceArrayCopy(r9)
+	CALL_INDIRECT
+	staddr r3,J9TR_VMThread_returnValue(J9VMTHREAD)
+
+	RESTORE_ALL_REGS
+	RESTORE_JIT_GOT_REGISTERS
+	RESTORE_LR
+	SWITCH_TO_JAVA_STACK
+	laddr r0,JIT_GPR_SAVE_SLOT(0)
+	laddr r3,J9TR_VMThread_returnValue(J9VMTHREAD)
+	blr
+END_PROC(jitReferenceArrayCopy)
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 

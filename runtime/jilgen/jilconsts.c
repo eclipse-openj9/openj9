@@ -480,6 +480,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_compressedPointersShift", offsetof(J9JavaVM, compressedPointersShift)) |
 #endif /* J9VM_GC_COMPRESSED_POINTERS */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_J9ReadBarrier", offsetof(J9MemoryManagerFunctions, J9ReadBarrier)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_referenceArrayCopy", offsetof(J9MemoryManagerFunctions, referenceArrayCopy)) |
 			/* J9VMEntryLocalStorage */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitGlobalStorageBase", offsetof(J9VMEntryLocalStorage, jitGlobalStorageBase)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitFPRegisterStorageBase", offsetof(J9VMEntryLocalStorage, jitFPRegisterStorageBase)) |
