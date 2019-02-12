@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.IPC;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
@@ -63,6 +62,7 @@ public class TestAttachAPI extends AttachApiTest {
 	final String JVMTITSTNAME = "test:gmhc001";
 	private final String DUMP_LOGS = "j9vm.test.attach.dumplogs";
 	private String myProcessId;
+	private String mvVmId;
 	final boolean dumpLogs = Boolean.getBoolean(DUMP_LOGS);
 	private File commonDir;
 	@BeforeMethod
@@ -81,9 +81,9 @@ public class TestAttachAPI extends AttachApiTest {
 			commonDir = new File(System.getProperty("java.io.tmpdir"),
 					".com_ibm_tools_attach");
 		}
-		if (false == AttachHandler.waitForAttachApiInitialization()) {
+		if (false == TargetManager.waitForAttachApiInitialization()) {
 			TargetManager.dumpLogs(true);
-			myProcessId = Long.toString(AttachHandler.getProcessId());
+			myProcessId = Long.toString(TargetManager.getProcessId());
 			File myAdvert = new File(commonDir, myProcessId);
 			if (myAdvert.exists()) {
 				logger.error(myAdvert.getAbsolutePath()
@@ -93,8 +93,8 @@ public class TestAttachAPI extends AttachApiTest {
 					+ myProcessId);
 		}
 		logger.debug("\n------------------------------------------------------------\ntime = "+System.currentTimeMillis());
-		String myId = AttachHandler.getVmId();
-		if ((null == myId) || (myId.length() == 0)) {
+		mvVmId = TargetManager.getVmId();
+		if ((null == mvVmId) || (mvVmId.length() == 0)) {
 			logger.error("attach API failed to initialize");
 			if (!commonDir.exists()) {
 				TargetManager.dumpLogs();
@@ -122,7 +122,7 @@ public class TestAttachAPI extends AttachApiTest {
 	@Test
 	public void test_agntld01() {
 		logger.debug("*****************************\nMy VMID = "
-				+ AttachHandler.getVmId() + "\n*****************************");
+				+ mvVmId + "\n*****************************");
 		logger.debug("starting " + testName);
 		if (isWindows()) {
 			logger.debug("skipping  " + testName + " on Windows");
@@ -162,7 +162,7 @@ public class TestAttachAPI extends AttachApiTest {
 	@Test
 	public void test_agntld02() {
 		logger.debug("*****************************\nMy VMID = "
-				+ AttachHandler.getVmId() + "\n*****************************");
+				+ mvVmId + "\n*****************************");
 		
 		logger.debug("starting " + testName);
 		if (isWindows()) {
