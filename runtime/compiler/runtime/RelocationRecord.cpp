@@ -2212,6 +2212,28 @@ TR_RelocationRecordInlinedMethod::preparePrivateData(TR_RelocationRuntime *reloR
    RELO_LOG(reloRuntime->reloLogger(), 5, "\tpreparePrivateData: ramMethod %p inlinedSiteIsValid %d\n", ramMethod, inlinedSiteIsValid);
    }
 
+bool
+TR_RelocationRecordInlinedMethod::inlinedSiteCanBeActivated(TR_RelocationRuntime *reloRuntime,
+                                                            TR_RelocationTarget *reloTarget,
+                                                            J9Method *currentMethod)
+   {
+   TR::SimpleRegex * regex = reloRuntime->options()->getDisabledInlineSites();
+   if (regex && TR::SimpleRegex::match(regex, inlinedSiteIndex(reloTarget)))
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: inlined site forcibly disabled by options\n");
+      return false;
+      }
+
+   if (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod) ||
+       reloRuntime->fej9()->canMethodEnterEventBeHooked() ||
+       reloRuntime->fej9()->canMethodExitEventBeHooked())
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: target may need enter/exit tracing so disabling inline site\n");
+      return false;
+      }
+
+   return true;
+   }
 
 bool
 TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock **theMethod)
@@ -2279,14 +2301,8 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             inlinedSiteIsValid = false;
          }
 
-      if (inlinedSiteIsValid &&
-          (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod) ||
-           reloRuntime->fej9()->canMethodEnterEventBeHooked() ||
-           reloRuntime->fej9()->canMethodExitEventBeHooked()))
-         {
-         RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: target may need enter/exit tracing so disabling inline site\n");
-         inlinedSiteIsValid = false;
-         }
+      if (inlinedSiteIsValid)
+         inlinedSiteIsValid = inlinedSiteCanBeActivated(reloRuntime, reloTarget, currentMethod);
 
       if (inlinedSiteIsValid)
          {
@@ -2308,27 +2324,22 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             }
          else
             {
-            inlinedSiteIsValid = false;
             if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
                SVM_ASSERT(false, "compileRomClass and currentRomClass should not be different!");
+
+            inlinedSiteIsValid = false;
             }
          }
-      }
-
-   /* Even if the inlined site is disabled, the inlined site table in the metadata
-    * should still be populated
-    */
-   TR::SimpleRegex * regex = reloRuntime->options()->getDisabledInlineSites();
-   if (regex && TR::SimpleRegex::match(regex, inlinedSiteIndex(reloTarget)))
-      {
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: inlined site forcibly disabled by options\n");
-      inlinedSiteIsValid = false;
       }
 
    if (!inlinedSiteIsValid)
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: not valid\n");
 
+   /* Even if the inlined site is disabled, the inlined site table in the metadata
+    * should still be populated under AOT w/ SVM
+    */
    *theMethod = reinterpret_cast<TR_OpaqueMethodBlock *>(currentMethod);
+
    return inlinedSiteIsValid;
    }
 
@@ -2729,66 +2740,75 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
    reloPrivateData->_needUnloadAssumption = false;
    reloPrivateData->_guardValue = 0;
    bool failValidation = true;
+   TR_OpaqueClassBlock *inlinedCodeClass = NULL;
 
-   J9ROMClass *inlinedCodeRomClass = (J9ROMClass *) reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) romClassOffsetInSharedCache(reloTarget));
-   J9UTF8 *inlinedCodeClassName = J9ROMCLASS_CLASSNAME(inlinedCodeRomClass);
-   RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass, inlinedCodeClassName->length, inlinedCodeClassName->data);
+   if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+      {
+      uint16_t inlinedCodeClassID = (uint16_t)cpIndex(reloTarget);
+      inlinedCodeClass = (TR_OpaqueClassBlock *)reloRuntime->comp()->getSymbolValidationManager()->getJ9ClassFromID(inlinedCodeClassID);
+      }
+   else
+      {
+      J9ROMClass *inlinedCodeRomClass = (J9ROMClass *) reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) romClassOffsetInSharedCache(reloTarget));
+      J9UTF8 *inlinedCodeClassName = J9ROMCLASS_CLASSNAME(inlinedCodeRomClass);
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass, inlinedCodeClassName->length, inlinedCodeClassName->data);
 
 #if defined(PUBLIC_BUILD)
-   J9ClassLoader *classLoader = NULL;
+      J9ClassLoader *classLoader = NULL;
 #else
-   void *classChainIdentifyingLoader = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
-   RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classChainIdentifyingLoader %p\n", classChainIdentifyingLoader);
-   J9ClassLoader *classLoader = (J9ClassLoader *) reloRuntime->fej9()->sharedCache()->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+      void *classChainIdentifyingLoader = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classChainIdentifyingLoader %p\n", classChainIdentifyingLoader);
+      J9ClassLoader *classLoader = (J9ClassLoader *) reloRuntime->fej9()->sharedCache()->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
 #endif
-   RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classLoader %p\n", classLoader);
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classLoader %p\n", classLoader);
 
-   if (classLoader)
-      {
-      if (0 && *((uint32_t *)classLoader->classLoaderObject) != 0x99669966)
-         {
-         RELO_LOG(reloRuntime->reloLogger(), 1,"\tpreparePrivateData: SUSPICIOUS class loader found\n");
-         RELO_LOG(reloRuntime->reloLogger(), 1,"\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass, inlinedCodeClassName->length, inlinedCodeClassName->data);
-         RELO_LOG(reloRuntime->reloLogger(), 1,"\tpreparePrivateData: classChainIdentifyingLoader %p\n", classChainIdentifyingLoader);
-         RELO_LOG(reloRuntime->reloLogger(), 1,"\tpreparePrivateData: classLoader %p\n", classLoader);
-         }
-      J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
-      J9VMThread *vmThread = reloRuntime->currentThread();
-
-      TR_OpaqueClassBlock *inlinedCodeClass;
-
+      if (classLoader)
          {
          TR::VMAccessCriticalSection preparePrivateDataCriticalSection(reloRuntime->fej9());
-         inlinedCodeClass = (TR_OpaqueClassBlock *) jitGetClassInClassloaderFromUTF8(vmThread,
+         inlinedCodeClass = (TR_OpaqueClassBlock *) jitGetClassInClassloaderFromUTF8(reloRuntime->currentThread(),
                                                                                      classLoader,
                                                                                      J9UTF8_DATA(inlinedCodeClassName),
                                                                                      J9UTF8_LENGTH(inlinedCodeClassName));
          }
+      }
 
-      if (inlinedCodeClass && checkInlinedClassValidity(reloRuntime, inlinedCodeClass))
+   if (inlinedCodeClass && checkInlinedClassValidity(reloRuntime, inlinedCodeClass))
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlined class valid\n");
+      reloPrivateData->_inlinedCodeClass = inlinedCodeClass;
+
+      bool inlinedSiteIsValid = true;
+      TR_OpaqueMethodBlock *inlinedMethod = NULL;
+
+      uintptrj_t *chainData = (uintptrj_t *) reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) classChainForInlinedMethod(reloTarget));
+      if (!reloRuntime->fej9()->sharedCache()->classMatchesCachedVersion(inlinedCodeClass, chainData))
+         inlinedSiteIsValid = false;
+
+      if (inlinedSiteIsValid)
          {
-         RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlined class valid\n");
-         reloPrivateData->_inlinedCodeClass = inlinedCodeClass;
-         uintptrj_t *chainData = (uintptrj_t *) reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) classChainForInlinedMethod(reloTarget));
-         if (reloRuntime->fej9()->sharedCache()->classMatchesCachedVersion(inlinedCodeClass, chainData))
-            {
-            RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classes match\n");
-            TR_OpaqueMethodBlock *inlinedMethod = * (TR_OpaqueMethodBlock **) (((uint8_t *)reloPrivateData->_inlinedCodeClass) + vTableSlot(reloTarget));
-
-            if (reloRuntime->fej9()->isAnyMethodTracingEnabled(inlinedMethod))
-               {
-               RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: target may need enter/exit tracing so disable inline site\n");
-               }
-            else
-               {
-               fixInlinedSiteInfo(reloRuntime, reloTarget, inlinedMethod);
-
-               reloPrivateData->_needUnloadAssumption = !reloRuntime->fej9()->sameClassLoaders(inlinedCodeClass, reloRuntime->comp()->getCurrentMethod()->classOfMethod());
-               setupInlinedMethodData(reloRuntime, reloTarget);
-               failValidation = false;
-               }
-            }
+         inlinedMethod = * (TR_OpaqueMethodBlock **) (((uint8_t *)reloPrivateData->_inlinedCodeClass) + vTableSlot(reloTarget));
+         if (!inlinedMethod)
+            inlinedSiteIsValid = false;
          }
+
+      if (inlinedSiteIsValid)
+         inlinedSiteIsValid = inlinedSiteCanBeActivated(reloRuntime, reloTarget, reinterpret_cast<J9Method *>(inlinedMethod));
+
+      if (inlinedSiteIsValid)
+         {
+         reloPrivateData->_needUnloadAssumption = !reloRuntime->fej9()->sameClassLoaders(inlinedCodeClass, reloRuntime->comp()->getCurrentMethod()->classOfMethod());
+         setupInlinedMethodData(reloRuntime, reloTarget);
+         }
+
+      /* Even if the inlined site is disabled, the inlined site table in the metadata
+       * should still be populated under AOT w/ SVM
+       */
+      if (inlinedMethod)
+         fixInlinedSiteInfo(reloRuntime, reloTarget, inlinedMethod);
+      else if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+         SVM_ASSERT(inlinedMethod != NULL, "inlinedMethod should not be NULL when using the SVM!");
+
+      failValidation = !inlinedSiteIsValid;
       }
 
    reloPrivateData->_failValidation = failValidation;
