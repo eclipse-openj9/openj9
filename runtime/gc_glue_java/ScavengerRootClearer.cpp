@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,7 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 					/* Reference object can be enqueued onto the finalizable list */
 					buffer.add(env, referenceObj);
 					referenceStats->_enqueued += 1;
-					_clij->scavenger_setFinalizationRequired(true);
+					_scavenger->getDelegate()->setFinalizationRequired(true);
 				}
 			}
 		}
@@ -185,7 +185,7 @@ MM_ScavengerRootClearer::scavengeUnfinalizedObjects(MM_EnvironmentStandard *env)
 									/* object was not previously forwarded -- it is now finalizable so push it to the local buffer */
 									buffer.add(env, finalizableObject);
 									gcEnv->_scavengerJavaStats._unfinalizedEnqueued += 1;
-									_clij->scavenger_setFinalizationRequired(true);
+									_scavenger->getDelegate()->setFinalizationRequired(true);
 								}
 							} else {
 								omrobjectptr_t forwardedPtr =  forwardedHeader.getForwardedObject();
