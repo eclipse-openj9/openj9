@@ -378,7 +378,10 @@ private static void ensureProperties() {
 	systemProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
 	systemProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
 	systemProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[IF !Java12]*/
+	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
 	systemProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[ENDIF] !Java12 */
 	systemProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
 	systemProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
 
@@ -397,6 +400,9 @@ private static void ensureProperties() {
 	/*[IF Java12]*/
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	java.lang.VersionProps.init(systemProperties);
+	/* VersionProps.init(systemProperties) above sets java.specification.version value which is used to set java.vm.specification.version. */
+	systemProperties.put("java.vm.specification.version", systemProperties.getProperty("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
+	systemProperties.put("java.vm.vendor", systemProperties.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[ELSE]
 	/*[IF Sidecar19-SE]*/
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
@@ -507,12 +513,14 @@ static Properties internalGetProperties() {
  * The properties currently provided by the virtual
  * machine are:
  * <pre>
+/*[IF !Java12]
+ *     java.vendor
  *     java.vendor.url
+ /*[ENDIF] Java12
  *     java.class.path
  *     user.home
  *     java.class.version
  *     os.version
- *     java.vendor
  *     user.dir
  *     user.timezone
  *     path.separator
