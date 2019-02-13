@@ -56,16 +56,16 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
    _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
-   TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
-   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->getJ9JITConfig());
+   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(fej9->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JITaaSServerMethod*) owningMethod)->_remoteMirror : nullptr;
 
    // If in AOT mode, will actually create relocatable version of resolved method on the client
-   _stream->write(JITaaS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot, TR::comp()->compileRelocatableCode());
+   _stream->write(JITaaS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot, fej9->isAOT_DEPRECATED_DO_NOT_USE());
    auto recv = _stream->read<TR_ResolvedJ9JITaaSServerMethodInfo>();
    auto &methodInfo = std::get<0>(recv);
 
@@ -79,9 +79,9 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    // Mirror has already been created, its parameters are passed in methodInfo
-   TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
-   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->getJ9JITConfig());
+   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(fej9->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
    unpackMethodInfo(aMethod, fe, trMemory, vTableSlot, threadCompInfo, methodInfo);
    }
