@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,6 +130,7 @@ IDATA testProtectNewROMClassData_test1(J9JavaVM* vm) {
 		rc = FAIL;
 		goto done;
 	}
+	UnitTest::unitTest = UnitTest::PROTECT_NEW_ROMCLASS_DATA_TEST;
 
 	cacheMap = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
 	cc = (SH_CompositeCacheImpl *)cacheMap->getCompositeCacheAPI();
@@ -212,6 +213,7 @@ IDATA testProtectNewROMClassData_test1(J9JavaVM* vm) {
 		goto done;
 	}
 	INFOPRINTF("Correctly protected existing ROMClasses when opening an existing cache");
+	UnitTest::unitTest = UnitTest::PROTECT_NEW_ROMCLASS_DATA_TEST;
 	
 
 	/* Test 4: Add and protect a 2nd ROMClass
@@ -246,5 +248,6 @@ done:
 		j9mem_free_memory(OSCacheMem);
 	}
 	vm->internalVMFunctions->internalExitVMToJNI(vm->mainThread);
+	UnitTest::unitTest = UnitTest::NO_TEST;
 	return rc;
 }
