@@ -169,34 +169,38 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
         def branch = default_openjdk_info.get('default').get('branch')
         def sha = ''
 
-        if (default_openjdk_info[build_spec]) {
-            repo = default_openjdk_info.get(build_spec).get('repoUrl')
-            branch = default_openjdk_info.get(build_spec).get('branch')
-        }
-
-        // check build parameters
-        if (params."${param_name}_REPO_${build_spec}") {
-            // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
-            repo = params."${param_name}_REPO_${build_spec}"
-        } else if (params."${param_name}_REPO") {
+        // check build params
+        if (params."${param_name}_REPO") {
             // got OPENJDK*_REPO build parameter, overwrite repo
             repo = params."${param_name}_REPO"
-        }
-
-        if (params."${param_name}_BRANCH_${build_spec}") {
-            // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
-            branch = params."${param_name}_BRANCH_${build_spec}"
-        } else if (params."${param_name}_BRANCH") {
+        } 
+        if (params."${param_name}_BRANCH") {
             // got OPENJDK*_BRANCH build parameter, overwrite branch
             branch = params."${param_name}_BRANCH"
         }
 
-        if (params."${param_name}_SHA_${build_spec}") {
-            // got OPENJDK*_SHA_<spec> build parameter, overwrite sha
-            sha = params."${param_name}_SHA_${build_spec}"
-        } else if (params."${param_name}_SHA") {
+        if (params."${param_name}_SHA") {
             // got OPENJDK*_SHA build parameter, overwrite sha
             sha = params."${param_name}_SHA"
+        }
+
+        if (default_openjdk_info.get(build_spec)) {
+            repo = default_openjdk_info.get(build_spec).get('repoUrl')
+            if (params."${param_name}_REPO_${build_spec}") {
+                // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
+                repo = params."${param_name}_REPO_${build_spec}"
+            }
+
+            branch = default_openjdk_info.get(build_spec).get('branch')
+            if (params."${param_name}_BRANCH_${build_spec}") {
+                // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
+                branch = params."${param_name}_BRANCH_${build_spec}"
+            }
+
+            if (params."${param_name}_SHA_${build_spec}") {
+                // got OPENJDK*_SHA_<spec> build parameter, overwrite sha
+                sha = params."${param_name}_SHA_${build_spec}"
+            }
         }
 
         // populate the map
