@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1538,7 +1538,7 @@ uint8_t *TR::PPCReadMonitorSnippet::emitSnippetBody()
 
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(getMonitorEnterHelper()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(getMonitorEnterHelper()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }
@@ -1713,7 +1713,7 @@ uint8_t *TR::PPCHeapAllocSnippet::emitSnippetBody()
    intptrj_t   distance = (intptrj_t)getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptrj_t)buffer;
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(getDestination()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT, "CodeCache is more than 32MB.\n");
       }
 
@@ -2251,12 +2251,12 @@ static uint8_t* initializeCCPreLoadedObjectAlloc(uint8_t *buffer, void **CCPreLo
    //Branch to VM Helpers for Zeroed TLH.
    TR::LabelSymbol *zeroed_branchToHelperLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *zeroed_helperTrampolineLabel = generateLabelSymbol(cg);
-   zeroed_helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_newObject));
+   zeroed_helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_newObject, buffer));
 
    //Branch to VM Helpers for nonZeroed TLH.
    TR::LabelSymbol *nonZeroed_branchToHelperLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroed_helperTrampolineLabel = generateLabelSymbol(cg);
-   nonZeroed_helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_newObjectNoZeroInit));
+   nonZeroed_helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_newObjectNoZeroInit, buffer));
 
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
@@ -2464,16 +2464,16 @@ static uint8_t* initializeCCPreLoadedArrayAlloc(uint8_t *buffer, void **CCPreLoa
    TR::LabelSymbol *zeroed_branchToPrimArrayHelperLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *zeroed_aNewArrayTrampolineLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *zeroed_newArrayTrampolineLabel = generateLabelSymbol(cg);
-   zeroed_aNewArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_aNewArray));
-   zeroed_newArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_newArray));
+   zeroed_aNewArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_aNewArray, buffer));
+   zeroed_newArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_newArray, buffer));
 
    //Branch to VM Helpers for non-Zeroed TLH.
    TR::LabelSymbol *nonZeroed_branchToHelperLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroed_branchToPrimArrayHelperLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroed_aNewArrayTrampolineLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroed_newArrayTrampolineLabel = generateLabelSymbol(cg);
-   nonZeroed_aNewArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_aNewArrayNoZeroInit));
-   nonZeroed_newArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_newArrayNoZeroInit));
+   nonZeroed_aNewArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_aNewArrayNoZeroInit, buffer));
+   nonZeroed_newArrayTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_newArrayNoZeroInit, buffer));
 
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
@@ -2748,7 +2748,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
 
    TR::LabelSymbol *entryLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *helperTrampolineLabel = generateLabelSymbol(cg);
-   helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_writeBarrierStoreGenerational));
+   helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_writeBarrierStoreGenerational, buffer));
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
 #if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
@@ -2850,7 +2850,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    TR::LabelSymbol *entryLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneCardMarkLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *helperTrampolineLabel = generateLabelSymbol(cg);
-   helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_writeBarrierStoreGenerationalAndConcurrentMark));
+   helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_writeBarrierStoreGenerationalAndConcurrentMark, buffer));
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
 #if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
@@ -3065,7 +3065,7 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    TR::LabelSymbol *entryLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *skipSuperclassTestLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *helperTrampolineLabel = generateLabelSymbol(cg);
-   helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(buffer, TR_typeCheckArrayStore));
+   helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_typeCheckArrayStore, buffer));
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
 #if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)

@@ -151,6 +151,13 @@ public:
     */
    void printOccupancyStats();
 
+   /**
+    * @brief A temporary function to assist with changing the return type of
+    *        findHelperTrampoline.  It simply redirects to the original version
+    *        and will be removed once the OMR API has changed.
+    */
+   intptrj_t findHelperTrampoline(int32_t helperIndex, void *callSite);
+
 private :
    TR_FrontEnd *_fe;
    static TR::CodeCacheManager *_codeCacheManager;

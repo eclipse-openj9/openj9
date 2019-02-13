@@ -94,7 +94,7 @@ extern "C" int32_t interpretedDispatchGlueDisp32(
 
    if (!IS_32BIT_RIP(glueMethodAddress, callSiteInSnippet))
       {
-      glueMethodAddress = (uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(callSiteInSnippet, glueMethodIndex);
+      glueMethodAddress = (uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(glueMethodIndex, callSiteInSnippet);
       }
 
    int32_t disp32 = (int32_t)(glueMethodAddress - callSiteInSnippet);

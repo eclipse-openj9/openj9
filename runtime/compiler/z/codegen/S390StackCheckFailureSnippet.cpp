@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "z/codegen/TRSystemLinkage.hpp"
 
 TR::S390StackCheckFailureSnippet::S390StackCheckFailureSnippet
@@ -234,7 +235,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    // necessary.
    intptrj_t destAddr = (intptrj_t)(getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress());
 
-#if defined(TR_TARGET_64BIT) 
+#if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
    if (comp->getOption(TR_EnableRMODE64))
 #endif
@@ -243,7 +244,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
          {
          // Destination is beyond our reachable jump distance, we'll find the
          // trampoline.
-         destAddr = fej9->indexedTrampolineLookup(getDestination()->getReferenceNumber(), (void *)cursor);
+         destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)cursor);
          this->setUsedTrampoline(true);
          }
       }

@@ -28,6 +28,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/VMJ9.h"
 
@@ -141,7 +142,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       distance  = (uint8_t *)runtimeHelperValue(TR_PPCcountingPatchCallSite) - (uint8_t *)patchAddr;
       if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
 	 {
-         distance = fe->indexedTrampolineLookup(TR_PPCcountingPatchCallSite, (void *)patchAddr) - (intptrj_t)patchAddr;
+         distance = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCcountingPatchCallSite, (void *)patchAddr) - (intptrj_t)patchAddr;
          TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
                 "CodeCache is more than 32MB.\n");
 	 }
@@ -159,7 +160,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       distance  = (uint8_t *)runtimeHelperValue(TR_PPCsamplingPatchCallSite) - (uint8_t *)patchAddr;
       if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
 	 {
-         distance = fe->indexedTrampolineLookup(TR_PPCsamplingPatchCallSite, (void *)patchAddr) - (intptrj_t)patchAddr;
+         distance = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCsamplingPatchCallSite, (void *)patchAddr) - (intptrj_t)patchAddr;
          TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
                 "CodeCache is more than 32MB.\n");
 	 }

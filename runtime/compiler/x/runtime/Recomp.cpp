@@ -198,7 +198,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
       if (!IS_32BIT_RIP(helperAddr, (intptrj_t)(startByte+5)))
          {
-         helperAddr = fe->indexedTrampolineLookup(COUNTING_PATCH_CALL_SITE, startByte);
+         helperAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(COUNTING_PATCH_CALL_SITE, startByte);
          }
 #endif
 
@@ -240,7 +240,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
       if (!IS_32BIT_RIP(helperAddr, (intptrj_t)(p+4)))
          {
-         helperAddr = fe->indexedTrampolineLookup(SAMPLING_PATCH_CALL_SITE, p);
+         helperAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(SAMPLING_PATCH_CALL_SITE, p);
          }
 #endif
 
