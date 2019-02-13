@@ -11598,6 +11598,23 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          break;
       }
 
+   if (cg->getSupportsInlineStringCaseConversion())
+      {
+      switch (symbol->getRecognizedMethod())
+         {
+         case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
+            return TR::TreeEvaluator::toUpperIntrinsicUTF16Evaluator(node, cg);
+         case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
+            return TR::TreeEvaluator::toUpperIntrinsicLatin1Evaluator(node, cg);
+         case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
+            return TR::TreeEvaluator::toLowerIntrinsicUTF16Evaluator(node, cg);
+         case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
+            return TR::TreeEvaluator::toLowerIntrinsicLatin1Evaluator(node, cg);
+         default:
+            break;
+         }
+      }
+
    switch (symbol->getRecognizedMethod())
       {
       case TR::java_nio_Bits_keepAlive:
@@ -11679,14 +11696,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_String_andOR:
          return TR::TreeEvaluator::andORStringEvaluator(node, cg);
 
-      case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
-         return TR::TreeEvaluator::toUpperIntrinsicUTF16Evaluator(node, cg);
-      case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
-         return TR::TreeEvaluator::toUpperIntrinsicLatin1Evaluator(node, cg);
-      case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
-         return TR::TreeEvaluator::toLowerIntrinsicUTF16Evaluator(node, cg);
-      case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
-         return TR::TreeEvaluator::toLowerIntrinsicLatin1Evaluator(node, cg);
       default:
          break;
       }
@@ -12130,7 +12139,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    auto ascciUpperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getAsciiMax()), cg);
    cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegAsciiUpperBnd, ascciUpperBnd, cg); iComment("maximum ascii value ");
 
-   generateRegRegInstruction(MOVRegReg(), node, result, dstArray, cg);
+   generateRegImmInstruction(MOV4RegImm4, node, result, 1, cg);
 
    // initialize the loop counter
    cursor = generateRegRegInstruction(XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
