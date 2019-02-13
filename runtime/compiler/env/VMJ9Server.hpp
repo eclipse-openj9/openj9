@@ -238,7 +238,7 @@ public:
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override;
-   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override { TR_ASSERT(0, "called");  return 0; }
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override;
    virtual bool isReferenceArray(TR_OpaqueClassBlock *) override;
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *) override;
