@@ -42,6 +42,7 @@ target_sources(j9vm_gc_glue
 		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModel.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModelDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerBackOutScanner.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootClearer.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootScanner.cpp
 )
