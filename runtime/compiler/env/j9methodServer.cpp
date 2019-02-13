@@ -63,10 +63,13 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
 
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JITaaSServerMethod*) owningMethod)->_remoteMirror : nullptr;
-   _stream->write(JITaaS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
+
+   // If in AOT mode, will actually create relocatable version of resolved method on the client
+   _stream->write(JITaaS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot, TR::comp()->compileRelocatableCode());
    auto recv = _stream->read<TR_ResolvedJ9JITaaSServerMethodInfo>();
    auto &methodInfo = std::get<0>(recv);
-   setAttributes(aMethod, fe, trMemory, vTableSlot, threadCompInfo, methodInfo);
+
+   unpackMethodInfo(aMethod, fe, trMemory, vTableSlot, threadCompInfo, methodInfo);
    }
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
@@ -80,7 +83,7 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
    TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
-   setAttributes(aMethod, fe, trMemory, vTableSlot, threadCompInfo, methodInfo);
+   unpackMethodInfo(aMethod, fe, trMemory, vTableSlot, threadCompInfo, methodInfo);
    }
 
 J9ROMClass *
@@ -1224,10 +1227,19 @@ TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(TR_ResolvedJ9JITaa
    TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
    if (!resolvedMethod) throw std::bad_alloc();
 
+   packMethodInfo(methodInfo, resolvedMethod, fe);
+   }
+
+void
+TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe)
+   {
+   TR::Compilation *comp = TR::comp();
+
+   // retrieve all relevant attributes of resolvedMethod and set them in methodInfo
    J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
    J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
 
-   J9Method *j9method = (J9Method *)method;
+   J9Method *j9method = resolvedMethod->ramMethod();
   
    // fill-in struct fields 
    auto &methodInfoStruct = std::get<0>(methodInfo);
@@ -1265,11 +1277,11 @@ TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(TR_ResolvedJ9JITaa
    // set IP method data string.
    // fanin info is not used at cold opt level, so there is no point sending this information to the server
    TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *)((TR_J9VMBase *) fe)->getIProfiler();
-   std::get<3>(methodInfo) = (TR::comp() && TR::comp()->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(method) : std::string();
+   std::get<3>(methodInfo) = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
    }
 
 void
-TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo)
+TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo)
    {
    auto methodInfoStruct = std::get<0>(methodInfo);
    
@@ -1325,6 +1337,7 @@ TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, T
    _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : nullptr; 
    }
 
+
 void
 TR_ResolvedJ9JITaaSServerMethod::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod* resolvedMethod, bool *unresolvedInCP)
    {
@@ -1355,6 +1368,66 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey ke
       return true;
       }
    return false;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedRelocatableJ9MethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory)
+   {
+   TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
+   if (!resolvedMethod) throw std::bad_alloc();
+
+   TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(methodInfo, resolvedMethod, fe);
+   }
+
+TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
+   : TR_ResolvedJ9JITaaSServerMethod(aMethod, fe, trMemory, owner, vTableSlot)
+   {
+   // NOTE: avoid using this constructor as much as possible.
+   // Using may result in multiple remote messages (up to 3?) sent to the client
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   TR::Compilation *comp = fej9->_compInfoPT->getCompilation();
+   if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
+      {
+      // TODO: replace with fe->canRememberClass(containingClass()) after rebase
+      if (fej9->sharedCache()->rememberClass(containingClass()))
+         {
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+            SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
+            svm->addClassFromMethodRecord(containingClass(), aMethod);
+            }
+         else
+            {
+            ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) owner)->validateArbitraryClass(comp, (J9Class*)containingClass());
+            }
+         }
+      }
+   }
+
+TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, bool rememberedClass, TR_ResolvedMethod * owner, uint32_t vTableSlot)
+   : TR_ResolvedJ9JITaaSServerMethod(aMethod, fe, trMemory, methodInfo, owner, vTableSlot)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   TR::Compilation *comp = fej9->_compInfoPT->getCompilation();
+   if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
+      {
+      if (rememberedClass)
+         {
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+            SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
+            svm->addClassFromMethodRecord(containingClass(), aMethod);
+            }
+         else
+            {
+            // TODO: this will require more remote messages.
+            // For simplicity, leave it like this for now, once testing can be done, optimize it
+            ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) owner)->validateArbitraryClass(comp, (J9Class*)containingClass());
+            }
+         }
+      }
    }
 
 bool
@@ -1541,4 +1614,49 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::allocateException(uint32_t numBytes,
    eTbl->constantPool = NULL;
 
    return (U_8 *) eTbl;
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedMethodFromJ9Method(TR::Compilation *comp, I_32 cpIndex, uint32_t vTableSlot, J9Method *j9method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) {
+   TR_ResolvedMethod *resolvedMethod = NULL;
+
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   static char *dontInline = feGetEnv("TR_AOTDontInline");
+
+   if (dontInline)
+      return NULL;
+
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, getRemoteMirror(), j9method, cpIndex, vTableSlot);
+   auto recv = _stream->read<TR_ResolvedJ9JITaaSServerMethodInfo, bool, bool, bool, bool>();
+   auto methodInfo = std::get<0>(recv);
+   bool isRomClassForMethodInSharedCache = std::get<1>(recv);
+   bool sameClassLoaders = std::get<2>(recv);
+   bool sameClass = std::get<3>(recv);
+   bool rememberedClass = std::get<4>(recv);
+
+   if (std::get<0>(methodInfo).remoteMirror)
+      {
+      // remote mirror created successfully
+      resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), methodInfo, rememberedClass, this, vTableSlot);
+      if (aotStats)
+         {
+         aotStats->numMethodResolvedAtCompile++;
+         if (sameClass)
+            aotStats->numMethodInSameClass++;
+         else
+            aotStats->numMethodNotInSameClass++;
+         }
+      }
+   else if (aotStats)
+      {
+      // remote mirror not created, process failure cases here
+      if (!isRomClassForMethodInSharedCache)
+         aotStats->numMethodROMMethodNotInSC++;
+      else if (!sameClassLoaders)
+         aotStats->numMethodFromDiffClassLoader++;
+      }
+
+#endif
+
+   return resolvedMethod;
    }

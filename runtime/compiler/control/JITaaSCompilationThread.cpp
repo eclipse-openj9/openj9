@@ -972,14 +972,19 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
-         // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
+         // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
          // easily done on the client side.
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_ResolvedJ9Method *, uint32_t>();
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_ResolvedJ9Method *, uint32_t, bool>();
          TR_OpaqueMethodBlock *method = std::get<0>(recv);
          auto *owningMethod = std::get<1>(recv);
          uint32_t vTableSlot = std::get<2>(recv);
+         bool isAOT = std::get<3>(recv);
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-         TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
+         // if in AOT mode, create a relocatable method mirror
+         if (!isAOT)
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
+         else
+            TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedRelocatableJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
          
          client->write(methodInfo);
          }
@@ -1530,6 +1535,57 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
          client->write(mirror->stringConstant(cpIndex));
+         }
+         break;
+      case J9ServerMessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();
+         auto mirror = std::get<0>(recv);
+         auto j9method = std::get<1>(recv);
+         auto cpIndex = std::get<2>(recv);
+         auto vTableSlot = std::get<3>(recv);
+
+         bool sameLoaders = false;
+         bool sameClass = false;
+         bool isRomClassForMethodInSC = false;
+         bool rememberedClass = false;
+         bool resolveAOTMethods = !comp->getOption(TR_DisableAOTResolveDiffCLMethods);
+         bool enableAggressive = comp->getOption(TR_EnableAOTInlineSystemMethod);
+         bool isSystemClassLoader = false;
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+
+         if (comp->getOption(TR_DisableDFP) ||
+             (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
+#ifdef TR_TARGET_S390
+             || TR::Compiler->target.cpu.getS390SupportsDFP()
+#endif
+               ) ||
+                !TR_J9MethodBase::isBigDecimalMethod(j9method)))
+            {
+            // Check if same classloader
+            J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD((j9method))));
+            TR_OpaqueClassBlock *clazzOfInlinedMethod = fe->convertClassPtrToClassOffset(j9clazz);
+            TR_OpaqueClassBlock *clazzOfCompiledMethod = fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(mirror->ramMethod()));
+
+            if (enableAggressive)
+               {
+               isSystemClassLoader = ((void*) fe->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*) fe->getClassLoader(clazzOfInlinedMethod));
+               }
+            
+            isRomClassForMethodInSC = TR::CompilationInfo::get(fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method, fe->_jitConfig->javaVM);
+            if (isRomClassForMethodInSC)
+               {
+               TR_J9VMBase *fej9 = (TR_J9VMBase *) fe;
+               if (resolveAOTMethods ||
+                   (sameLoaders = fej9->sameClassLoaders(clazzOfInlinedMethod, clazzOfCompiledMethod)) ||
+                   isSystemClassLoader)
+                  {
+                  rememberedClass = TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedRelocatableJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
+                  sameClass = fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(mirror->ramMethod())) == fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(j9method));
+                  }
+               }
+            }
+         client->write(methodInfo, isRomClassForMethodInSC, sameLoaders, sameClass, rememberedClass);
          }
          break;
       case J9ServerMessageType::CompInfo_isCompiled:
@@ -2101,6 +2157,13 @@ remoteCompile(
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
 
+   if (compiler->getOption(TR_UseSymbolValidationManager))
+       {
+       // We do not want client to validate anything during compilation, because
+       // validations are done on the server. Creating heuristic region makes SVM assume that everything is valdiated.
+       compiler->enterHeuristicRegion();
+       }
+
    if (compiler->isOptServer())
       compiler->setOption(TR_Server);
    auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm(), compiler->trMemory());
@@ -2181,6 +2244,13 @@ remoteCompile(
       {
       try
          {
+         if (compiler->getOption(TR_EnableSymbolValidationManager))
+            {
+            // compilation is done, now we need client to validate all of the records accumulated by the server,
+            // so need to exit heuristic region.
+            compiler->exitHeuristicRegion();
+            }
+
          compInfoPT->reloRuntime()->setReloStartTime(compInfoPT->getTimeWhenCompStarted());
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");
