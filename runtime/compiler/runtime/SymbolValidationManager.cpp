@@ -51,6 +51,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _wellKnownClassChainOffsets(NULL),
      _symbolValidationRecords(_region),
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
+     _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region),
@@ -396,6 +397,15 @@ TR::SymbolValidationManager::recordExists(TR::SymbolValidationRecord *record)
    return _alreadyGeneratedRecords.find(record) != _alreadyGeneratedRecords.end();
    }
 
+bool
+TR::SymbolValidationManager::anyClassFromCPRecordExists(
+   TR_OpaqueClassBlock *clazz,
+   TR_OpaqueClassBlock *beholder)
+   {
+   ClassFromAnyCPIndex pair(clazz, beholder);
+   return _classesFromAnyCPIndex.find(pair) != _classesFromAnyCPIndex.end();
+   }
+
 void
 TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationRecord *record)
    {
@@ -608,6 +618,10 @@ TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (isWellKnownClass(clazz))
       return true;
+   else if (clazz == beholder)
+      return true;
+   else if (anyClassFromCPRecordExists(clazz, beholder))
+      return true; // already have an equivalent ClassFromCP
    else
       return addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
    }
@@ -636,12 +650,30 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
 bool
 TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex)
    {
+   if (inHeuristicRegion())
+      return true; // to make sure not to modify _classesFromAnyCPIndex
+
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (isWellKnownClass(clazz))
       return true;
+   else if (clazz == beholder)
+      return true;
+
+   ClassByNameRecord byName(clazz, beholder);
+   if (recordExists(&byName))
+      return true; // already have an equivalent ClassByName
+
+   bool added;
+   if (!isAlreadyValidated(clazz)) // save a ClassChainRecord
+      added = addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
    else
-      return addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
+      added = addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
+
+   if (added)
+      _classesFromAnyCPIndex.insert(ClassFromAnyCPIndex(clazz, beholder));
+
+   return added;
    }
 
 bool
