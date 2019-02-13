@@ -22,18 +22,18 @@ package org.openj9.test.com.ibm.jit;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-import org.testng.annotations.Test;
-import org.testng.AssertJUnit;
-import org.testng.Assert;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import com.ibm.jit.JITHelpers;
-import org.openj9.test.com.ibm.jit.Test_JITHelpersImpl;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.lang.reflect.Field;
-
+import com.ibm.jit.JITHelpers;
+import org.testng.annotations.Test;
+import org.testng.AssertJUnit;
+import org.testng.Assert;
+import org.openj9.test.com.ibm.jit.Test_JITHelpersImpl;
 
 @Test(groups = { "level.sanity" })
 public class Test_JITHelpers {
@@ -71,6 +71,9 @@ public class Test_JITHelpers {
 			throw new RuntimeException(e);
 		}
 	}
+
+	// Used for storing bytes into a char[]. We could have used the OpenJ9 String helpers here instead however.
+	private static final ByteOrder byteOrder = ByteOrder.nativeOrder();
 
 	private static int[] edgecaseLengths = new int[]{0, 1, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33};
 
@@ -379,8 +382,13 @@ public class Test_JITHelpers {
 			char[] converted = Arrays.copyOfRange(uppercaseLatin1Char, 0, (j + 1) / 2);
 
 			if (j % 2 == 1) {
-				source[source.length - 1] &= 0xff00;
-				converted[source.length - 1] &= 0xff00;
+				if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
+					source[source.length - 1] &= 0x00FF;
+					converted[source.length - 1] &= 0x00FF;
+				} else {
+					source[source.length - 1] &= 0xFF00;
+					converted[source.length - 1] &= 0xFF00;
+				}
 			}
 
 			char[] buffer = new char[(j + 1) / 2];
@@ -408,8 +416,13 @@ public class Test_JITHelpers {
 			char[] converted = Arrays.copyOfRange(lowercaseLatin1Char, 0, (j + 1) / 2);
 
 			if (j % 2 == 1) {
-				source[source.length - 1] &= 0xff00;
-				converted[source.length - 1] &= 0xff00;
+				if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
+					source[source.length - 1] &= 0x00FF;
+					converted[source.length - 1] &= 0x00FF;
+				} else {
+					source[source.length - 1] &= 0xFF00;
+					converted[source.length - 1] &= 0xFF00;
+				}
 			}
 
 			char[] buffer = new char[(j + 1) / 2];
