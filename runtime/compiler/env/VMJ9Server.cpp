@@ -2172,4 +2172,16 @@ TR_J9SharedCacheServerVM::getBaseComponentClass(TR_OpaqueClassBlock * classPoint
       return classPointer;  // not sure about this return value, but it's what we used to return before we got "smart"
    }
 
-
+TR_OpaqueClassBlock *
+TR_J9SharedCacheServerVM::getClassFromNewArrayType(int32_t arrayType)
+   {
+   // TODO: This needs to return null because for some reason VP depends on it.
+   // It may be that this is just done because rememberClass is broken and can't 
+   // handle arrays of primitives.
+   // If you change this, please update the TEMP HACK in J9Compilation.cpp
+   // and in initializeLocalArrayHeader as well.
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      return TR_J9ServerVM::getClassFromNewArrayType(arrayType);
+   return NULL;
+   }
