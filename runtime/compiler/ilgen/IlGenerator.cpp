@@ -262,7 +262,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
                            fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(),callerClass1));
 
 
-            if (doIt)
+            if (doIt && !comp()->compileRelocatableCode())
                {
                if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader
                   )
