@@ -28,6 +28,9 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+/*[IF Java12]*/
+import java.util.Optional;
+/*[ENDIF]*/
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
 /*[ELSE]*/
@@ -49,7 +52,11 @@ import java.lang.constant.DynamicConstantDesc;
  * VarHandle instances are created through the MethodHandles factory API.
  * 
  */
-public abstract class VarHandle extends VarHandleInternal {
+public abstract class VarHandle extends VarHandleInternal 
+/*[IF Java12]*/
+	implements Constable
+/*[ENDIF]*/
+{
 	/**
 	 * Access mode identifiers for VarHandle operations.
 	 */
@@ -311,6 +318,29 @@ public abstract class VarHandle extends VarHandleInternal {
 	public final List<Class<?>> coordinateTypes() {
 		return Collections.unmodifiableList(Arrays.<Class<?>>asList(coordinateTypes));
 	}
+
+/*[IF Java12]*/
+	public Optional<VarHandle.VarHandleDesc> describeConstable() {
+		/* Jep334 */
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public final boolean equals(Object obj) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public final int hashCode() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public final String toString() {
+		/* Jep334 */
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF]*/
 	
 	/**
 	 * Each {@link AccessMode}, e.g. get and set, requires different parameters
@@ -931,7 +961,7 @@ public abstract class VarHandle extends VarHandleInternal {
 
 /*[IF Java12]*/
 	/* nominal descriptor of a VarHandle constant */
-	public static final class VarHandleDesc extends DynamicConstantDesc<VarHandle> {
+	public static final class VarHandleDesc extends DynamicConstantDesc<VarHandle> implements ConstantDesc {
 
 		protected VarHandleDesc(DirectMethodHandleDesc bootstrapMethod, String constantName, ClassDesc constantType, ConstantDesc... bootstrapArgs) {
 			super(bootstrapMethod, constantName, constantType, bootstrapArgs);
@@ -939,26 +969,34 @@ public abstract class VarHandle extends VarHandleInternal {
 		}
 
 		public static VarHandleDesc ofArray(ClassDesc arrayClass) {
+			/* Jep334 */
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 
 		public static VarHandleDesc ofField(ClassDesc declaringClass, String name, ClassDesc fieldType) {
+			/* Jep334 */
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 
 		public static VarHandleDesc ofStaticField(ClassDesc declaringClass, String name, ClassDesc fieldType) {
+			/* Jep334 */
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 
-		public VarHandle resolveConstantDesc(MethodHandles.Lookup lookup) {
+		@Override
+		public VarHandle resolveConstantDesc(MethodHandles.Lookup lookup) throws ReflectiveOperationException {
+			/* Jep334 */
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 
+		@Override
 		public String toString() {
+			/* Jep334 */
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 
 		public ClassDesc varType() {
+			/* Jep334 */
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 	}
