@@ -96,14 +96,31 @@ TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
                           char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
    {
-   TR_ResolvedJ9Method *result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod(aMethod, this, trMemory, owningMethod);
+   TR_ResolvedJ9Method *result = NULL;
+   if (isAOT_DEPRECATED_DO_NOT_USE())
+      {
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod(aMethod, this, trMemory, owningMethod);
+      TR::Compilation *comp = _compInfoPT->getCompilation();
+      if (comp && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         if (!svm->isAlreadyValidated(result->containingClass()))
+            return NULL;
+         }
+#endif
+      }
+   else
+      {
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod(aMethod, this, trMemory, owningMethod);
+      if (classForNewInstance)
+         {
+         result->setClassForNewInstance((J9Class*)classForNewInstance);
+         TR_ASSERT(result->isNewInstanceImplThunk(), "createResolvedMethodWithSignature: if classForNewInstance is given this must be a thunk");
+         }
+      }
    if (signature)
       result->setSignature(signature, signatureLength, trMemory);
-   if (classForNewInstance)
-      {
-      result->setClassForNewInstance((J9Class*)classForNewInstance);
-      TR_ASSERT(result->isNewInstanceImplThunk(), "createResolvedMethodWithSignature: if classForNewInstance is given this must be a thunk");
-      }
    return result;
    }
 
