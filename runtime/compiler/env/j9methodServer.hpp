@@ -251,13 +251,13 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
    virtual bool                  isInterpreted() override;
    virtual bool                  isInterpretedForHeuristics() override;
 
-   virtual void *                startAddressForJittedMethod() override { TR_ASSERT(0, "called");  return NULL; }
-   virtual void *                startAddressForJNIMethod( TR::Compilation *) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual void *                startAddressForJITInternalNativeMethod() override { TR_ASSERT(0, "called");  return NULL; }
-   virtual void *                startAddressForInterpreterOfJittedMethod() override { TR_ASSERT(0, "called");  return NULL; }
+   virtual void *                startAddressForJittedMethod() override;
+   virtual void *                startAddressForJNIMethod( TR::Compilation *) override;
+   virtual void *                startAddressForJITInternalNativeMethod() override;
+   virtual void *                startAddressForInterpreterOfJittedMethod() override;
 
-   virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override { TR_ASSERT(0, "called");  return false; }
+   virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
+   virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override;
    virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz) override;
 
    virtual void *                stringConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }

@@ -1675,3 +1675,59 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedMethodFromJ9Method(TR:
 
    return resolvedMethod;
    }
+
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::startAddressForJittedMethod()
+   {
+   return NULL;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::startAddressForJNIMethod(TR::Compilation * comp)
+   {
+#if defined(TR_TARGET_S390)  || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER)
+   return TR_ResolvedJ9JITaaSServerMethod::startAddressForJNIMethod(comp);
+#else
+   return NULL;
+#endif
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::startAddressForJITInternalNativeMethod()
+   {
+   return NULL;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::startAddressForInterpreterOfJittedMethod()
+   {
+   return ((J9Method *)getNonPersistentIdentifier())->extra;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compilation *comp, uint32_t cpIndex, bool returnClassForAOT)
+   {
+   if (returnClassForAOT || comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR_OpaqueClassBlock * resolvedClass = TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(comp, cpIndex);
+      if (resolvedClass &&
+         validateClassFromConstantPool(comp, (J9Class *)resolvedClass, cpIndex))
+         {
+         return (TR_OpaqueClassBlock*)resolvedClass;
+         }
+      }
+   return NULL;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex,  TR_ExternalRelocationTargetKind reloKind)
+   {
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      return comp->getSymbolValidationManager()->addClassFromCPRecord(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), cp(), cpIndex);
+      }
+   else
+      {
+      return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), clazz);
+      }
+   }
