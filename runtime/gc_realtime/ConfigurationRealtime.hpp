@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +28,8 @@
 #if !defined(CONFIGURATIONREALTIME_HPP_)
 #define CONFIGURATIONREALTIME_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "Configuration.hpp"
 #include "EnvironmentRealtime.hpp"
@@ -53,11 +52,11 @@ private:
 /* Methods */
 public:
 	virtual MM_GlobalCollector *createGlobalCollector(MM_EnvironmentBase *env) = 0;
-	virtual MM_Heap *createHeapWithManager(MM_EnvironmentBase *env, UDATA heapBytesRequested, MM_HeapRegionManager *regionManager);
+	virtual MM_Heap *createHeapWithManager(MM_EnvironmentBase *env, uintptr_t heapBytesRequested, MM_HeapRegionManager *regionManager);
 	virtual MM_HeapRegionManager *createHeapRegionManager(MM_EnvironmentBase *env);
 	virtual MM_MemorySpace *createDefaultMemorySpace(MM_EnvironmentBase *env, MM_Heap *heap, MM_InitializationParameters *parameters);
 	virtual J9Pool *createEnvironmentPool(MM_EnvironmentBase *env);
-	virtual MM_Dispatcher *createDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, UDATA defaultOSStackSize);
+	virtual MM_Dispatcher *createDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize);
 	
 	virtual void defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void* defaultMemorySpace);
 	

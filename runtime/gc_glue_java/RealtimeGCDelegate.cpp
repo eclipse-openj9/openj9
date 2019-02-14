@@ -711,5 +711,14 @@ MM_RealtimeGCDelegate::reportSyncGCEnd(MM_EnvironmentBase *env)
 	);
 }
 
+void
+MM_RealtimeGCDelegate::defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void* defaultMemorySpace)
+{
+	J9JavaVM* vm = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
+	
+	vm->heapBase = extensions->heap->getHeapBase();
+	vm->heapTop = extensions->heap->getHeapTop();
+}
+
 #endif /* defined(J9VM_GC_REALTIME) */
 
