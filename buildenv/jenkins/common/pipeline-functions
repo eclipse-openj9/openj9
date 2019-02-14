@@ -380,7 +380,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
         }
         for (name in TARGET_NAMES) {
-            def TEST_FLAG
+            def TEST_FLAG = ''
             if (name.contains('+jitaas')) {
                 name -= '+jitaas'
                 TEST_FLAG = 'JITAAS'
