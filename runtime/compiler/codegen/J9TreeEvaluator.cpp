@@ -176,6 +176,12 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
          continue;
          }
 
+      // For AOT compiles with a SymbolValidationManager, skip any classes which cannot be verified.
+      //
+      if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+         if (!comp->getSymbolValidationManager()->addProfiledClassRecord(tempProfiledClass))
+            continue;
+
       float frequency = profiledInfo->_frequency / totalFrequency;
       if ( frequency >= TR::Options::getMinProfiledCheckcastFrequency() )
          {
