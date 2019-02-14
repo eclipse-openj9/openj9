@@ -34,7 +34,7 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
-	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)softmx.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)

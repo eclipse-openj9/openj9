@@ -48,7 +48,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xjit:count=1,disableAsyncCompilation,verbose,vlog="$(REPORTDIR)$(D)jitv.log" \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xjit:count=1,disableAsyncCompilation,verbose,vlog=$(Q)$(REPORTDIR)$(D)jitv.log$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames stringConcatOptTest -groups $(TEST_GROUP) \
@@ -285,7 +285,7 @@
 	<test>
 		<testCaseName>jit_ra</testCaseName>
 		<variations>
-			<variation>-Xmn1M -Xjit:'{*powerOfTenBI*}(count=7),disableasynccompilation,tryToInline={java/lang/String.<init>([C)V|java/lang/String.<init>([CII)V|java/lang/Object.<init>()V|java/math/BigInteger.<init>(Ljava/lang/String;)V|java/math/BigInteger.<init>(Ljava/lang/String;I)V|java/lang/Object.<init>()V|java/lang/String.length()I|java/lang/String.lengthInternal()I},dontInline={java/util/Arrays.fill([CC)V}'</variation>
+			<variation>-Xmn1M -Xjit:$(SQ){*powerOfTenBI*}(count=7),disableasynccompilation,tryToInline={java/lang/String.&lt;init&gt;([C)V|java/lang/String.&lt;init&gt;([CII)V|java/lang/Object.&lt;init&gt;()V|java/math/BigInteger.&lt;init&gt;(Ljava/lang/String;)V|java/math/BigInteger.&lt;init&gt;(Ljava/lang/String;I)V|java/lang/Object.&lt;init&gt;()V|java/lang/String.length()I|java/lang/String.lengthInternal()I},dontInline={java/util/Arrays.fill([CC)V}$(SQ)</variation>
 		</variations>
 		<command>
 			$(JAVA_COMMAND) $(JVM_OPTIONS) \

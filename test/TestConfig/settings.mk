@@ -38,7 +38,9 @@ RUN_SCRIPT = sh
 RUN_SCRIPT_STRING = "sh -c"
 SCRIPT_SUFFIX=.sh
 Q="
+SQ='
 P=:
+AND_IF_SUCCESS=&&
 PROPS_DIR=props_unix
 
 include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
