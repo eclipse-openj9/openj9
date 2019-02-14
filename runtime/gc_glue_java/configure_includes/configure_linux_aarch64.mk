@@ -38,7 +38,8 @@ ifneq (,$(findstring linux_aarch64, $(SPEC)))
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		'OMR_CROSS_CONFIGURE=yes'
 endif
 
 ifeq (default,$(origin AS))
