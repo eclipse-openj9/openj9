@@ -48,8 +48,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
-   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *writeBarrierEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *writeBarrierIndirectEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -462,7 +462,27 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static void         restoreGPR7(TR::Node *node, TR::CodeGenerator *cg);   
+   static void         restoreGPR7(TR::Node *node, TR::CodeGenerator *cg);
+   static void VMrdbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg);
+   static void VMwrtbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static void rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static void wrtbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 }
 
