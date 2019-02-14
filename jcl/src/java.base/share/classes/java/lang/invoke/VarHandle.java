@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,13 @@ import jdk.internal.misc.Unsafe;
 /*[ELSE]*/
 import sun.misc.Unsafe;
 /*[ENDIF]*/
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+import java.lang.constant.Constable;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DynamicConstantDesc;
+/*[ENDIF] Java12 */
 
 /**
  * Dynamically typed reference to a field, allowing read and write operations, 
@@ -921,4 +928,39 @@ public abstract class VarHandle extends VarHandleInternal {
 	MethodHandle getFromHandleTable(int operation) {
 		return handleTable[operation];
 	}
+
+/*[IF Java12]*/
+	/* nominal descriptor of a VarHandle constant */
+	public static final class VarHandleDesc extends DynamicConstantDesc<VarHandle> {
+
+		protected VarHandleDesc(DirectMethodHandleDesc bootstrapMethod, String constantName, ClassDesc constantType, ConstantDesc... bootstrapArgs) {
+			super(bootstrapMethod, constantName, constantType, bootstrapArgs);
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		public static VarHandleDesc ofArray(ClassDesc arrayClass) {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		public static VarHandleDesc ofField(ClassDesc declaringClass, String name, ClassDesc fieldType) {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		public static VarHandleDesc ofStaticField(ClassDesc declaringClass, String name, ClassDesc fieldType) {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		public VarHandle resolveConstantDesc(MethodHandles.Lookup lookup) {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		public String toString() {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		public ClassDesc varType() {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+	}
+/*[ENDIF] Java12 */ 
 }
