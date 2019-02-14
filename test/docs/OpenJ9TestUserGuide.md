@@ -47,7 +47,7 @@ tools should be installed on your test machine to run tests.
     ```
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
-    JDK_VERSION=[8|9|10|11|Panama|Valhalla] (8 default value)
+    JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value)
     JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
     NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as JDK_HOME)
