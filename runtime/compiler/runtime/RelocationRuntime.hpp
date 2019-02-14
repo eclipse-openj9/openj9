@@ -401,32 +401,22 @@ public:
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
       TR_JITaaSRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
+// The following public APIs should not be used with this class
+      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!");  return TR_no; }
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+
 private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
       virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);
       virtual void initializeCacheDeltas();
-};
+// The following private APIs should not be used with this class
+      virtual void initializeAotRuntimeInfo()  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!");  return; }
 
-class TR_SharedCacheJITaaSRelocationRuntime : public TR_JITaaSRelocationRuntime {
-public:
-      TR_ALLOC(TR_Memory::Relocation);
-      void * operator new(size_t, J9JITConfig *);
-      TR_SharedCacheJITaaSRelocationRuntime(J9JITConfig *jitCfg) : TR_JITaaSRelocationRuntime(jitCfg) {}
-
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "called"); return 0;}
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe)  override { TR_ASSERT(0, "called"); return 0;}
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "called"); return 0;}
-
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM)  override { TR_ASSERT(0, "called"); return 0; }
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "called"); return 0; }
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "called");  return TR_no; }
-
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "called"); return 0; }
-
-private:
-       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)  override { TR_ASSERT(0, "called"); return 0; }
-       virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type)  override { TR_ASSERT(0, "called"); return 0;}
-       virtual void initializeAotRuntimeInfo()  override { TR_ASSERT(0, "called");  return; }
-       virtual void initializeCacheDeltas()  override { TR_ASSERT(0, "called"); return;}
 };
 #endif   // RELOCATION_RUNTIME_INCL
