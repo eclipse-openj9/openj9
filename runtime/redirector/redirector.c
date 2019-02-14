@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,6 +178,8 @@ static BOOLEAN parseGCPolicy(char *buffer, int *value);
 #define JVM_ARCH_DIR "amd64"
 #elif defined(J9ARM)
 #define JVM_ARCH_DIR "arm"
+#elif defined(J9AARCH64)
+#define JVM_ARCH_DIR "aarch64"
 #else
 #error "Must define an architecture"
 #endif

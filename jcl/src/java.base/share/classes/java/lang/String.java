@@ -37,6 +37,7 @@ import java.util.function.IntUnaryOperator;
 import java.util.Iterator;
 import java.nio.charset.Charset;
 /*[IF Java12]*/
+import java.util.function.Function;
 import java.util.Optional;
 /*[ENDIF]*/
 import java.util.Spliterator;
@@ -8303,6 +8304,16 @@ written authorization of the copyright holder.
 
 	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
 		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+	}
+	
+	/**
+	 * Apply a function to this string. The function expects a single String input and returns an R.
+	 * 
+	 * @param f - the functional interface to be applied
+	 * @return the result of application of the function to this string
+	 */
+	public <R> R transform(Function<? super String, ? extends R> f) {
+		return f.apply(this);
 	}
 /*[ENDIF] Java12 */
 }
