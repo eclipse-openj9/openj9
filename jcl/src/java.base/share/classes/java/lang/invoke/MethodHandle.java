@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
@@ -119,6 +119,9 @@ public abstract class MethodHandle {
 	/*[IF Panama]*/
 	static final byte KIND_NATIVE = 32;
 	/*[ENDIF]*/
+	/*[IF Java12]*/
+	static final byte KIND_FILTERARGUMENTS_WITHCOMBINER = 33;
+	/*[ENDIF] Java12 */
 
 /*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
@@ -1363,6 +1366,21 @@ public abstract class MethodHandle {
 		return this;
 	}
 	
+	/*[IF Java12]*/
+	/*[IF ]*/
+	/*
+	 * Used to preserve the MH on the stack when avoiding the call-in for
+	 * filterArgumentsWithCombinerHandle.  Must return 'this' so stackmapper will keep the MH
+	 * alive.
+	 */
+	/*[ENDIF]*/
+	@SuppressWarnings("unused")
+	@VMCONSTANTPOOL_METHOD
+	private MethodHandle filterArgumentsWithCombinerPlaceHolder() {
+		return this;
+	}
+	/*[ENDIF] Java12 */
+
 	/*[IF ]*/
 	/*
 	 * Used to preserve the MH on the stack when avoiding the call-in for

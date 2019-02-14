@@ -36,7 +36,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
 import java.lang.Module;
@@ -141,16 +141,10 @@ public final class System {
 		}
 
 		// Fill in the properties from the VM information.
-		ensureProperties();
+		ensureProperties(true);
 
 		/*[PR CMVC 150472] sun.misc.SharedSecrets needs access to java.lang. */
 		SharedSecrets.setJavaLangAccess(new Access());
-
-		/*[PR CMVC 179976] System.setProperties(null) throws IllegalStateException */
-		try {
-			VM.saveAndRemoveProperties(systemProperties);
-		} catch (NoSuchMethodError e) {
-		}
 		
 		/*[REM] Initialize the JITHelpers needed in J9VMInternals since the class can't do it itself */
 		try {
@@ -362,28 +356,32 @@ private static native Properties initProperties(Properties props);
  * provided by the virtual machine.
  */
 @SuppressWarnings("nls")
-private static void ensureProperties() {
+private static void ensureProperties(boolean isInitialization) {
 /*[IF OpenJ9-RawBuild]*/
 	// invoke JCL native to initialize platform encoding
 	initProperties(new Properties());
 /*[ENDIF] OpenJ9-RawBuild */
 	
-	systemProperties = new Properties();
+/*[IF Java12]*/
+	Map<String, String> initializedProperties = new Hashtable<String, String>();
+/*[ELSE]
+	Properties initializedProperties = new Properties();
+/*[ENDIF] Java12 */
 
 	if (osEncoding != null) {
-		systemProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
+		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
 	}
 	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
-	systemProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
-	systemProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
-	systemProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
-	systemProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
+	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
+	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
+	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
+	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[IF !Java12]*/
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
-	systemProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
+	initializedProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[ENDIF] !Java12 */
-	systemProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
-	systemProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
+	initializedProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
+	initializedProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
 
 	String[] list = getPropertyList();
 	for (int i = 0; i < list.length; i += 2) {
@@ -392,44 +390,84 @@ private static void ensureProperties() {
 		if (key == null) {
 			break;
 		}
-		systemProperties.put(key, list[i+1]);
+		initializedProperties.put(key, list[i+1]);
 	}
 	
+	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	propertiesInitialized = true;
-	
-	/*[IF Java12]*/
-	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
-	java.lang.VersionProps.init(systemProperties);
-	/* VersionProps.init(systemProperties) above sets java.specification.version value which is used to set java.vm.specification.version. */
-	systemProperties.put("java.vm.specification.version", systemProperties.getProperty("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
-	systemProperties.put("java.vm.vendor", systemProperties.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ELSE]
-	/*[IF Sidecar19-SE]*/
-	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
-	java.lang.VersionProps.init();
-	/*[ELSE]*/
-	sun.misc.Version.init();
-	/*[ENDIF] Sidecar19-SE */
-	/*[ENDIF] Java12 */
 
-	/*[IF !Sidecar19-SE]*/
+/*[IF Java12]*/
+	java.lang.VersionProps.init(initializedProperties);
+	/* VersionProps.init(systemProperties) above sets java.specification.version value which is used to set java.vm.specification.version. */
+	initializedProperties.put("java.vm.specification.version", initializedProperties.get("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
+	initializedProperties.put("java.vm.vendor", initializedProperties.get("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
+/*[ELSE]
+	/* VersionProps.init requires systemProperties to be set */
+	systemProperties = initializedProperties;
+
+/*[IF Sidecar19-SE]*/
+	java.lang.VersionProps.init();
+/*[ELSE]
+	sun.misc.Version.init();
+
 	StringBuffer.initFromSystemProperties(systemProperties);
 	StringBuilder.initFromSystemProperties(systemProperties);
-	/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] Java12 */
 
-	String javaRuntimeVersion = systemProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
+/*[IF Java12]*/
+	String javaRuntimeVersion = initializedProperties.get("java.runtime.version"); //$NON-NLS-1$
+/*[ELSE]
+	String javaRuntimeVersion = initializedProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
+/*[ENDIF] Java12 */
 	if (null != javaRuntimeVersion) {
-		String fullVersion = systemProperties.getProperty("java.fullversion"); //$NON-NLS-1$
+	/*[IF Java12]*/
+		String fullVersion = initializedProperties.get("java.fullversion"); //$NON-NLS-1$
+	/*[ELSE]
+		String fullVersion = initializedProperties.getProperty("java.fullversion"); //$NON-NLS-1$
+	/*[ENDIF] Java12 */
 		if (null != fullVersion) {
-			systemProperties.put("java.fullversion", (javaRuntimeVersion + "\n" + fullVersion)); //$NON-NLS-1$ //$NON-NLS-2$
+			initializedProperties.put("java.fullversion", (javaRuntimeVersion + "\n" + fullVersion)); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		rasInitializeVersion(javaRuntimeVersion);
 	}
 
-	lineSeparator = systemProperties.getProperty("line.separator", "\n"); //$NON-NLS-1$
+/*[IF Java12]*/
+	lineSeparator = initializedProperties.getOrDefault("line.separator", "\n"); //$NON-NLS-1$
+/*[ELSE]
+	lineSeparator = initializedProperties.getProperty("line.separator", "\n"); //$NON-NLS-1$
+/*[ENDIF] Java12 */
 	/*[IF Sidecar19-SE]*/
-	useLegacyVerPresents = systemProperties.containsKey("use.legacy.version");
+	useLegacyVerPresents = initializedProperties.containsKey("use.legacy.version");
 	/*[ENDIF]*/
+
+	if (isInitialization) {
+		/*[PR CMVC 179976] System.setProperties(null) throws IllegalStateException */
+		/*[IF Java12]*/
+		VM.saveProperties(initializedProperties);
+		/*[ELSE]
+		VM.saveAndRemoveProperties(initializedProperties);
+		/*[ENDIF] Java12 */
+	}
+
+	/* create systemProperties from properties Map */
+/*[IF Java12]*/
+	initializeSystemProperties(initializedProperties);
+/*[ELSE]
+	systemProperties = initializedProperties;
+/*[ENDIF] Java12 */
+}
+
+/* Converts a Map<String, String> to a properties object.
+ * 
+ * The sytem properties will be initialized as a Map<String, String> type to be compatible
+ * with jdk.internal.misc.VM and java.lang.VersionProps APIs.
+ */
+private static void initializeSystemProperties(Map<String, String> mapProperties) {
+	systemProperties = new Properties();
+	for (Map.Entry<String, String> property : mapProperties.entrySet()) {
+		systemProperties.put(property.getKey(), property.getValue());
+	}
 }
 
 private static native void rasInitializeVersion(String javaRuntimeVersion);
@@ -731,7 +769,7 @@ public static void setProperties(Properties p) {
 	if (security != null)
 		security.checkPropertiesAccess();
 	if (p == null) {
-		ensureProperties();
+		ensureProperties(false);
 	} else {
 		systemProperties = p;
 	}

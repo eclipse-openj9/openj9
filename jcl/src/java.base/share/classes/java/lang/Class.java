@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,9 @@ import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.AllPermission;
 import java.security.Permissions;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+/*[ENDIF] Java12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
@@ -38,6 +41,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+/*[IF Java12]*/
+import java.util.Optional;
+/*[ENDIF] Java12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.AccessController;
@@ -4545,4 +4551,14 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	return nestMembers;
 }
 /*[ENDIF] Java11 */
+
+/*[IF Java12]*/
+	public Class<?> arrayType() {
+		throw new UnsupportedOperationException("Stub for Java 12 compilation");
+	}
+
+	public Optional<ClassDesc> describeConstable() {
+		throw new UnsupportedOperationException("Stub for Java 12 compilation");
+	}
+/*[ENDIF] Java12 */
 }
