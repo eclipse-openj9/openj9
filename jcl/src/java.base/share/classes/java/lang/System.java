@@ -783,13 +783,23 @@ public static void setProperties(Properties p) {
  *
  * @param		s			the new security manager
  * 
- * @throws		SecurityException 	if the security manager has already been set.
+ * @throws		SecurityException 	if the security manager has already been set and its checkPermission method doesn't allow it to be replaced.
+ /*[IF Java12]
+ * @throws		UnsupportedOperationException 	if s is non-null and a special token "disallow" has been set for system property "java.security.manager"
+ * 												which indicates that a security manager is not allowed to be set dynamically.
+ /*[ENDIF] Java12
  */
 public static void setSecurityManager(final SecurityManager s) {
 	/*[PR 113606] security field could be modified by another Thread */
 	final SecurityManager currentSecurity = security;
 	
 	if (s != null) {
+		/*[IF Java12]*/
+		if ("disallow".equals(systemProperties.getProperty("java.security.manager"))) { //$NON-NLS-1$ //$NON-NLS-2$
+			/*[MSG "K0B00", "`-Djava.security.manager=disallow` has been specified"]*/
+			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
+		}
+		/*[ENDIF] Java12 */
 		if (currentSecurity == null) {
 			// only preload classes when current security manager is null
 			// not adding an extra static field to preload only once
