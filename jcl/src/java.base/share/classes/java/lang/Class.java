@@ -50,6 +50,10 @@ import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.lang.ref.*;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+import java.lang.constant.Constable;
+/*[ENDIF]*/
 
 import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -130,7 +134,11 @@ import java.security.PrivilegedActionException;
  * @author		OTI
  * @version		initial
  */
-public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type {
+public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type
+/*[IF Java12]*/
+	, Constable, TypeDescriptor, TypeDescriptor.OfField<Class<?>>
+/*[ENDIF]*/
+{
 	private static final long serialVersionUID = 3206093459760846163L;
 	private static ProtectionDomain AllPermissionsPD;
 	private static final int SYNTHETIC = 0x1000;
@@ -4554,11 +4562,19 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 
 /*[IF Java12]*/
 	public Class<?> arrayType() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation");
+		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+	}
+
+	public Class<?> componentType() {
+		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
 	}
 
 	public Optional<ClassDesc> describeConstable() {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation");
+		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+	}
+
+	public String descriptorString() {
+		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
 	}
 /*[ENDIF] Java12 */
 }

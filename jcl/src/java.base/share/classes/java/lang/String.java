@@ -36,6 +36,9 @@ import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.Iterator;
 import java.nio.charset.Charset;
+/*[IF Java12]*/
+import java.util.Optional;
+/*[ENDIF]*/
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
 
@@ -50,6 +53,13 @@ import sun.misc.Unsafe;
 import java.util.stream.Stream;
 /*[ENDIF] Java11*/
 
+/*[IF Java12]*/
+import java.lang.constant.Constable;
+import java.lang.constant.ConstantDesc;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+/*[ENDIF]*/
+
 /**
  * Strings are objects which represent immutable arrays of characters.
  *
@@ -58,7 +68,11 @@ import java.util.stream.Stream;
  *
  * @see StringBuffer
  */
-public final class String implements Serializable, Comparable<String>, CharSequence {
+public final class String implements Serializable, Comparable<String>, CharSequence 
+/*[IF Java12]*/
+	, Constable, ConstantDesc
+/*[ENDIF]*/
+{
 	
 	/*
 	 * Last character of String substitute in String.replaceAll(regex, substitute) can't be \ or $.
@@ -8281,4 +8295,14 @@ written authorization of the copyright holder.
 	}
 
 /*[ENDIF] Sidecar19-SE*/
+
+/*[IF Java12]*/
+	public Optional<String> describeConstable() {
+		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+	}
+
+	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
+		throw new UnsupportedOperationException("Stub for Java 12 compilation (Jep334)");
+	}
+/*[ENDIF] Java12 */
 }
