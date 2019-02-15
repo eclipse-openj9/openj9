@@ -2562,7 +2562,19 @@ remoteCompilationEnd(
             returnCode = compilationAotRelocationInterrupted;
             }
 
-         if (!relocatedMetaData)
+         if (relocatedMetaData) 
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client successfully relocated metadata for %s", comp->signature());
+               }
+
+            if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
+               {
+               TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(vmThread, method, jitConfig, relocatedMetaData);
+               }
+            }
+         else
             {
             entry->_doNotUseAotCodeFromSharedCache = true;
             entry->_compErrCode = returnCode;

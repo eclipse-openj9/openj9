@@ -9926,51 +9926,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                      if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
                         {
-                        OMR::CodeCacheMethodHeader *ccMethodHeader;
-                        ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-                           jitConfig->javaVM->hookInterface,
-                           vmThread,
-                           method,
-                           reinterpret_cast<void *>(relocatedMetaData->startPC),
-                           relocatedMetaData->endWarmPC - relocatedMetaData->startPC,
-                           "JIT warm body",
-                           relocatedMetaData
-                           );
-                        if (relocatedMetaData->startColdPC)
-                           {
-                           // Register the cold code section too
-                           //
-                           ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-                              jitConfig->javaVM->hookInterface,
-                              vmThread,
-                              method,
-                              reinterpret_cast<void *>(relocatedMetaData->startColdPC),
-                              relocatedMetaData->endPC - relocatedMetaData->startColdPC,
-                              "JIT cold body",
-                              relocatedMetaData
-                              );
-                           }
-                        ccMethodHeader = getCodeCacheMethodHeader(
-                           reinterpret_cast<char *>(relocatedMetaData->startPC),
-                           32,
-                           relocatedMetaData
-                           );
-                        if (ccMethodHeader && (relocatedMetaData->bodyInfo != NULL))
-                           {
-                           TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(reinterpret_cast<void *>(relocatedMetaData->startPC));
-                           if (linkageInfo->isRecompMethodBody())
-                              {
-                              ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-                                 jitConfig->javaVM->hookInterface,
-                                 vmThread,
-                                 method,
-                                 ccMethodHeader->_eyeCatcher + 4,
-                                 relocatedMetaData->startPC - reinterpret_cast<uintptr_t>(ccMethodHeader->_eyeCatcher + 4),
-                                 "JIT method header",
-                                 relocatedMetaData
-                                 );
-                              }
-                           }
+                        TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(vmThread, method, jitConfig, relocatedMetaData);
                         }
                      jitMethodTranslated(vmThread, method, startPC);
                      }
@@ -10072,7 +10028,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   }
                }
             }
-         else // Non-AOT compilation
+         else // Non-AOT compilation and JITaaS remote JIT/AOT compilations
             {
             jitMethodTranslated(vmThread, method, startPC);
             }
@@ -10206,6 +10162,56 @@ TR::CompilationInfo::setProcessorByDebugOption()
       TR::Compiler->target.cpu.setProcessor(TR_PPC7xx);
    }
 
+
+void
+TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(J9VMThread* vmThread, J9Method* method, J9JITConfig* jitConfig, TR_MethodMetaData* relocatedMetaData)
+   {
+   OMR::CodeCacheMethodHeader *ccMethodHeader;
+   ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+      jitConfig->javaVM->hookInterface,
+      vmThread,
+      method,
+      reinterpret_cast<void *>(relocatedMetaData->startPC),
+      relocatedMetaData->endWarmPC - relocatedMetaData->startPC,
+      "JIT warm body",
+      relocatedMetaData
+      );
+   if (relocatedMetaData->startColdPC)
+      {
+      // Register the cold code section too
+      //
+      ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+         jitConfig->javaVM->hookInterface,
+         vmThread,
+         method,
+         reinterpret_cast<void *>(relocatedMetaData->startColdPC),
+         relocatedMetaData->endPC - relocatedMetaData->startColdPC,
+         "JIT cold body",
+         relocatedMetaData
+         );
+      }
+   ccMethodHeader = getCodeCacheMethodHeader(
+      reinterpret_cast<char *>(relocatedMetaData->startPC),
+      32,
+      relocatedMetaData
+      );
+   if (ccMethodHeader && (relocatedMetaData->bodyInfo != NULL))
+      {
+      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(reinterpret_cast<void *>(relocatedMetaData->startPC));
+      if (linkageInfo->isRecompMethodBody())
+         {
+         ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+            jitConfig->javaVM->hookInterface,
+            vmThread,
+            method,
+            ccMethodHeader->_eyeCatcher + 4,
+            relocatedMetaData->startPC - reinterpret_cast<uintptr_t>(ccMethodHeader->_eyeCatcher + 4),
+            "JIT method header",
+            relocatedMetaData
+            );
+         }
+      }
+   }
 
 // Ensure that only methods whose name (prefix) matches names in
 // the translation filter list are compiled.
