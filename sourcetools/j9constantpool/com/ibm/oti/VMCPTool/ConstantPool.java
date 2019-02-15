@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,11 +52,11 @@ public class ConstantPool {
 		}
 	}
 
-	public void writeForClassLibrary(String jcl, Set<String> flags, PrintWriter out) {
+	public void writeForClassLibrary(int version, Set<String> flags, PrintWriter out) {
 		// Two pass process:
 		//   1) Compute offsets by writing to a disconnected stream.
 		//   2) Connect stream output, reset offset and write to the connected stream.
-		ConstantPoolStream ds = new ConstantPoolStream(jcl, flags, this, primaryItems.size() + 1);
+		ConstantPoolStream ds = new ConstantPoolStream(version, flags, this, primaryItems.size() + 1);
 		writeConstantPool(ds);
 		
 		// Now the offsets have been calculated, start over again
@@ -73,7 +73,7 @@ public class ConstantPool {
 		// Write the primary items.
 		int cpIndex=1;
 		for (PrimaryItem item : primaryItems) {
-			ds.comment("cp[" + cpIndex + "] = " + item.commentText());
+			ds.comment("cp[" + cpIndex + "] = " + item.commentText()); //$NON-NLS-1$ //$NON-NLS-2$
 			item.write(ds);
 			cpIndex += 1;
 		}

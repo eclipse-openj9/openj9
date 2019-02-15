@@ -43,27 +43,10 @@ static U_8*  unicodeEscapeStringToMUtf8(J9JavaVM * vm, const char* escapeString,
 static U_8* getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength);
 static UDATA getLibSubDir(J9JavaVM *VM, const char *subDir, char **value);
 
-typedef struct {
-	char * jclName;
-} J9JCLConfigurationInfo;
-
-static J9JCLConfigurationInfo jclConfigs[] = {
-	{ "scar" },
-	{ "se7b" },
-	{ "se7r" },
-	{ "se9" },
-	{ "se10" },
-	{ "se11" },
-	{ "se12" },
-};
-
-#define NUM_JCL_CONFIGS (sizeof(jclConfigs) / sizeof(jclConfigs[0]))
-
 #define JAVA_ENDORSED_DIRS "java.endorsed.dirs"
 #define JAVA_EXT_DIRS "java.ext.dirs"
 
 UDATA addSystemProperty(J9JavaVM * vm, const char* propName,  const char* propValue, UDATA flags);
-static J9JCLConfigurationInfo * determineJCLConfig (J9JavaVM * vm, char * jclName);
 static char * getOptionArg(J9JavaVM *vm, IDATA argIndex, UDATA optionNameLen);
 static UDATA addPropertyForOptionWithPathArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName);
 static UDATA addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDATA optionNameLen, const char *propName);
@@ -549,11 +532,10 @@ initializeSystemProperties(J9JavaVM * vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	J9VMSystemProperty *javaEndorsedDirsProperty;
+	J9VMSystemProperty *javaEndorsedDirsProperty = NULL;
 	jint i = 0;
-	JavaVMInitArgs * initArgs = NULL;
-	char * jclName = J9_DEFAULT_JCL_DLL_NAME;
-	J9JCLConfigurationInfo * jclConfig = NULL;
+	JavaVMInitArgs *initArgs = NULL;
+	char *jclName = J9_DEFAULT_JCL_DLL_NAME;
 	UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 	const char* propValue = NULL;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
@@ -573,14 +555,13 @@ initializeSystemProperties(J9JavaVM * vm)
 		}
 	}
 
-	/* If no known JCL config was found, error */
-	jclConfig = determineJCLConfig(vm, jclName);
-	if (jclConfig == NULL) {
+	/* error if not a valid JCL config */
+	if (0 != strncmp(jclName, "jclse", 5)) {
 		return J9SYSPROP_ERROR_INVALID_JCL;
 	}
 
 	/* Allocate the properties pool */
-	if ((vm->systemProperties = pool_new(sizeof(J9VMSystemProperty),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary))) == NULL) {
+	if ((vm->systemProperties = pool_new(sizeof(J9VMSystemProperty), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary))) == NULL) {
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
 	}
 
@@ -594,63 +575,54 @@ initializeSystemProperties(J9JavaVM * vm)
 #if JAVA_SPEC_VERSION < 12
 	/* Following system properties are defined via java.lang.VersionProps.init(systemProperties) and following settings within System.ensureProperties() */
 	{
-		const char* classVersion = NULL;
-		const char* specificationVersion = NULL;
-		
+		const char *classVersion = NULL;
+		const char *specificationVersion = NULL;
+
 		/* Properties that always exist */
 		switch (j2seVersion) {
-			case J2SE_18:
-				classVersion = "52.0";
-				specificationVersion = "1.8";
-				break;
-	
-			case J2SE_19:
-				classVersion = "53.0";
-				specificationVersion = "9";
-				break;
-				
-			case J2SE_V10:
-				classVersion = "54.0";
-				specificationVersion = "10";
-				break;
-				
-			case J2SE_V11:
-				classVersion = "55.0";
-				specificationVersion = "11";
-				break;
-	
-			case J2SE_V12:
-				/* FALLTHROUGH */
-			default:
-				classVersion = "56.0";
-				specificationVersion = "12";
-				break;
+		case J2SE_18:
+			classVersion = "52.0";
+			specificationVersion = "1.8";
+			break;
+		case J2SE_19:
+			classVersion = "53.0";
+			specificationVersion = "9";
+			break;
+		case J2SE_V10:
+			classVersion = "54.0";
+			specificationVersion = "10";
+			break;
+		case J2SE_V11:
+		default:
+			classVersion = "55.0";
+			specificationVersion = "11";
+			break;
 		}
 		rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-	
+
 		rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-		
+
 		rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-		
+
 		rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-		
+
 		rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-		
+
 		rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VENDOR, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
@@ -714,9 +686,10 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 
 	/* We don't have enough information yet. Put in placeholders. */
-	propValue = "..";
 #if defined(J9VM_OPT_SIDECAR) && !defined(WIN32)
 	propValue = "../..";
+#else
+	propValue = "..";
 #endif
 	rc = addSystemProperty(vm, "java.home", propValue, J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {
@@ -735,9 +708,8 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-
 	/* We don't have enough information yet. Put in placeholders. */
-#ifdef J9VM_OPT_SIDECAR
+#if defined(J9VM_OPT_SIDECAR)
 	if (j2seVersion < J2SE_19) {
 		rc = addSystemProperty(vm, BOOT_PATH_SYS_PROP, "", J9SYSPROP_FLAG_WRITEABLE);
 	} else {
@@ -750,8 +722,8 @@ initializeSystemProperties(J9JavaVM * vm)
 
 	/* Figure out the path separator by querying port library */
 	{
-		char* pathSep = (char*) j9mem_allocate_memory(2, OMRMEM_CATEGORY_VM);
-		if (pathSep == NULL){
+		char *pathSep = (char*) j9mem_allocate_memory(2, OMRMEM_CATEGORY_VM);
+		if (pathSep == NULL) {
 			return J9SYSPROP_ERROR_OUT_OF_MEMORY;
 		}
 		pathSep[0] = (char) j9sysinfo_get_classpathSeparator();
@@ -787,8 +759,8 @@ initializeSystemProperties(J9JavaVM * vm)
 
 	/* Set the system agent path, which is necessary for system agents such as JDWP to load the libraries they need. */
 	if (NULL != vm->j2seRootDirectory) {
-		char *agentPath;
-		UDATA agentPathLength;
+		char *agentPath = NULL;
+		UDATA agentPathLength = 0;
 
 		if (J2SE_LAYOUT_VM_IN_SUBDIR == (J2SE_LAYOUT(vm) & J2SE_LAYOUT_VM_IN_SUBDIR)) {
 			/* Use the parent of the j2seRootDir - find the last dir separator and declare that the end. */
@@ -834,7 +806,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		/* Win32 os.version is expected to be strictly numeric.
 		 * The port library includes build information which derails the Java
 		 * code.  Chop off the version after the major/minor. */
-		char* cursor = strchr(propValue,' ');
+		char *cursor = strchr(propValue, ' ');
 		if (cursor != NULL) {
 			*cursor = '\0';
 		}
@@ -853,10 +825,10 @@ initializeSystemProperties(J9JavaVM * vm)
 		char * optionString = initArgs->options[i].optionString;
 
 		if (strncmp("-D", optionString, 2) == 0) {
-			J9VMSystemProperty * currentProp;
-			char *propNameCopy;
+			J9VMSystemProperty *currentProp = NULL;
+			char *propNameCopy = NULL;
 			char *propValueCopy = NULL;
-			UDATA propNameLen;
+			UDATA propNameLen = 0;
 
 			propValue = strchr(optionString + 2, '=');
 			if (propValue == NULL) {
@@ -884,7 +856,7 @@ initializeSystemProperties(J9JavaVM * vm)
 			}
 			if (j2seVersion >= J2SE_19) {
 				if ('\0' != propValue[0]) {
-					/* On Java 9 support for java.endorsed.dirs and java.ext.dirs is disabled */
+					/* Support for java.endorsed.dirs and java.ext.dirs is disabled in Java 9+. */
 					if (0 == strncmp(JAVA_ENDORSED_DIRS, propNameCopy, sizeof(JAVA_ENDORSED_DIRS))) {
 						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED, optionString + 2);
 						j9mem_free_memory(propNameCopy);
@@ -907,8 +879,9 @@ initializeSystemProperties(J9JavaVM * vm)
 				j9mem_free_memory(propNameCopy);
 
 				rc = setSystemPropertyValue(vm, currentProp, propValueCopy, TRUE);
-				/* Ignore the failure case of trying to write a read-only system property. */
-				if (rc != J9SYSPROP_ERROR_NONE && rc != J9SYSPROP_ERROR_READ_ONLY) {
+				if (J9SYSPROP_ERROR_READ_ONLY == rc) {
+					/* Ignore attempts to modify read-only system properties. */
+				} else if (J9SYSPROP_ERROR_NONE != rc) {
 					goto fail;
 				}
 			} else {
@@ -932,7 +905,7 @@ initializeSystemProperties(J9JavaVM * vm)
 
 		rc = getLibSubDir(vm, "endorsed", &defaultEndorsedDir);
 		if (NULL != defaultEndorsedDir) {
-			isDir = j9file_attr((char *) defaultEndorsedDir);
+			isDir = j9file_attr(defaultEndorsedDir);
 			j9mem_free_memory(defaultEndorsedDir);
 
 			if (EsIsDir == isDir) {
@@ -944,7 +917,7 @@ initializeSystemProperties(J9JavaVM * vm)
 
 		rc = getLibSubDir(vm, "ext", &defaultExtDir);
 		if (NULL != defaultExtDir) {
-			isDir = j9file_attr((char *) defaultExtDir);
+			isDir = j9file_attr(defaultExtDir);
 			j9mem_free_memory(defaultExtDir);
 
 			if (EsIsDir == isDir) {
@@ -974,7 +947,6 @@ initializeSystemProperties(J9JavaVM * vm)
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
-
 
 	/* If we get here all is good */
 	rc = J9SYSPROP_ERROR_NONE;
@@ -1117,32 +1089,6 @@ setSystemProperty(J9JavaVM * vm, J9VMSystemProperty * property, const char * val
 	}
 
 	return J9SYSPROP_ERROR_NONE;
-}
-
-
-static J9JCLConfigurationInfo *
-determineJCLConfig(J9JavaVM * vm, char * jclName)
-{
-	if (strncmp(jclName, "jcl", 3) == 0) {
-		char * configName = jclName + 3;
-		char * underscore = strchr(configName, '_');
-
-		if (underscore != NULL) {
-			UDATA len = underscore - configName;
-			UDATA i = 0;
-
-			for (i = 0; i < NUM_JCL_CONFIGS; ++i) {
-				J9JCLConfigurationInfo * currentConfig = &(jclConfigs[i]);
-
-				if ((strncmp(configName, currentConfig->jclName, len) == 0)
-						&& ('\0' == currentConfig->jclName[len])) {
-					return currentConfig;
-				}
-			}
-		}
-	}
-
-	return NULL;
 }
 
 /**

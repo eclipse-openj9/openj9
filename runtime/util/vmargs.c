@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -669,8 +669,8 @@ addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 IDATA
 addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2seVersion)
 {
-	char *dllName = NULL;
-	size_t dllNameLength = -1;
+	char *dllName = J9_JAVA_SE_DLL_NAME;
+	size_t dllNameLength = sizeof(J9_JAVA_SE_DLL_NAME);
 	size_t argumentLength = -1;
 	char *argString = NULL;
 	UDATA j2seReleaseValue = j2seVersion & J2SE_RELEASE_MASK;
@@ -680,25 +680,6 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
 		Assert_Util_unreachable();
 	}
-	if (J2SE_V12 <= j2seReleaseValue) {
-		dllName = J9_JAVA_SE_12_DLL_NAME;
-		dllNameLength = sizeof(J9_JAVA_SE_12_DLL_NAME);
-	} else if (J2SE_V11 <= j2seReleaseValue) {
-		dllName = J9_JAVA_SE_11_DLL_NAME;
-		dllNameLength = sizeof(J9_JAVA_SE_11_DLL_NAME);
-	} else if (J2SE_V10 <= j2seReleaseValue) {
-		dllName = J9_JAVA_SE_10_DLL_NAME;
-		dllNameLength = sizeof(J9_JAVA_SE_10_DLL_NAME);
-	} else if (J2SE_19 <= j2seReleaseValue) {
-		dllName = J9_JAVA_SE_9_DLL_NAME;
-		dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
-	} else if (J2SE_18 <= j2seReleaseValue) {
-		/* Java 8 uses DLL name for Java 7 */
-		dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
-		dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
-	} else { /* Java 6, 7 */
-		Assert_Util_unreachable();
-	}
 
 	argumentLength = sizeof(VMOPT_XJCL_COLON) + dllNameLength - 1; /* sizeof called twice, each includes the \0 */
 	argString = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
@@ -706,7 +687,7 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 		return -1;
 	}
 	j9str_printf(PORTLIB, argString, argumentLength, VMOPT_XJCL_COLON "%s", dllName);
-	optArg = newJavaVMArgInfo(vmArgumentsList, argString, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
+	optArg = newJavaVMArgInfo(vmArgumentsList, argString, ARG_MEMORY_ALLOCATION | CONSUMABLE_ARG);
 	if (NULL == optArg) {
 		j9mem_free_memory(argString);
 		return -1;

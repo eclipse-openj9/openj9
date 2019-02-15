@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,18 +29,14 @@ extern"C"{
 
 #define J9_DLL_VERSION_STRING "29"
 
-#define J9_DEFAULT_JCL_DLL_NAME "jclscar_29"
+#define J9_DEFAULT_JCL_DLL_NAME "jclse29"
 
 #define J9_MANAGEMENT_EXTENSIONS_DLL_NAME "management_ext"
 #define J9_JAVACORE_GENERATOR_DLL_NAME "jcoregen29"
 #define J9_VM_DLL_NAME "j9vm29"
 #define J9_HARMONY_THREAD_API_DLL_NAME "hythr"
 #define J9_SHARED_DLL_NAME "j9shr29"
-#define J9_JAVA_SE_7_BASIC_DLL_NAME "jclse7b_29"
-#define J9_JAVA_SE_9_DLL_NAME "jclse9_29"
-#define J9_JAVA_SE_10_DLL_NAME "jclse10_29"
-#define J9_JAVA_SE_11_DLL_NAME "jclse11_29"
-#define J9_JAVA_SE_12_DLL_NAME "jclse12_29"
+#define J9_JAVA_SE_DLL_NAME "jclse29"
 #define J9_TOOLS_MIGRATION_DLL_NAME "migration"
 #define J9_BCUTIL_TEST_NATIVES_DLL_NAME "bcuwhite"
 #define J9_VERIFY_DLL_NAME "j9bcv29"
