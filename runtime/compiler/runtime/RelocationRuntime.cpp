@@ -543,7 +543,6 @@ TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
 
    if (_relocationStatus == RelocationNoError)
       {
-      initializeAotRuntimeInfo();
       AOTcgDiag5(comp, "%s: relocating code %p -> %p (start pc %p -> %p)\n",
                  comp->signature(), oldCodeStart, newCodeStart, _exceptionTable->startPC, (uint8_t *)_exceptionTable->startPC - oldCodeStart + newCodeStart);
       relocateAOTCodeAndData(tempDataStart, oldDataStart, newCodeStart, oldCodeStart);
