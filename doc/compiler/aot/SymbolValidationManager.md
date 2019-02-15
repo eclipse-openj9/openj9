@@ -212,3 +212,33 @@ in the same way, to match the IDs assigned during compilation.
 3. Allows relocations of classes/methods associated with cpIndex=-1
 4. Facilitates the enablement of Known Object Table under AOT
 5. Facilitates the enablement of JSR292 under AOT
+
+## When to create a new Validation Record
+
+Any time a new front end query is created, or an existing query is 
+modified, the appropriate validation record should be created, or 
+modified, respectively<sup>1</sup>. "Front end query" means, a query that the 
+compiler (the "back end") makes of the runtime (the "front end") in order
+to get information about the environment such that execution of the
+compiled method will be functionally correct. The SVM uses the 
+validation record to redo the query in order to perform the validation. 
+Therefore, the validation record needs to contain all the information
+necessary to redo the query in a different JVM instance. Each unique
+front end query will have its own associated validation record; this is
+a fundamental aspect of the SVM.
+
+Note the validation is required where the query result is used in a way 
+that could affect **functional correctness** - queries used only for 
+heuristic purposes do not necessarily _need_ to be validated since, 
+by nature, they do not affect the correctness of the program. 
+All omissions on the basis of heuristic usage should be documented as 
+such in the code to make the omission clearly intentional and the basis 
+for that omission clear. The `enterHeuristicRegion`/`exitHeuristicRegion`
+APIs are used to facilitate making frontend queries without generating
+validation records.
+
+<hr/>
+
+1. We can have "compound" queries that simply combine other 
+existing queries for convenience (e.g. `getMethodFromName`). These 
+queries don't necessarily need their own validation records.
