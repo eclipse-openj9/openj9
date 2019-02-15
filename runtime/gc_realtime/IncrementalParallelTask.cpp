@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 			_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::synchedThreads);
 			omrthread_monitor_notify_all(_synchronizeMutex);
 		} else {
-			volatile UDATA index = _synchronizeIndex;
+			volatile uintptr_t index = _synchronizeIndex;
 			
 			do {
 				if (_yieldCollaborator.getYieldCount() + _synchronizeCount >= _threadCount && _yieldCollaborator.getYieldCount() > 0) {					
@@ -93,7 +93,7 @@ MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentB
 	bool isMasterThread = false;
 
 	if(1 < _totalThreadCount) {
-		volatile UDATA index = _synchronizeIndex;
+		volatile uintptr_t index = _synchronizeIndex;
 
 		if (env->isMasterThread()) {
 			/* This function only has to be re-entrant for the master thread */
