@@ -131,11 +131,11 @@ public:
 
 	void setShouldScavengeUnfinalizedObjects(bool shouldScavenge) { _shouldScavengeUnfinalizedObjects = shouldScavenge; }
 
-	volatile bool getShouldScavengeFinalizableObjects() { return _shouldScavengeFinalizableObjects; }
-	volatile bool getShouldScavengeUnfinalizedObjects() { return _shouldScavengeUnfinalizedObjects; }
-	volatile bool getShouldScavengeSoftReferenceObjects() { return _shouldScavengeSoftReferenceObjects; }
-	volatile bool getShouldScavengeWeakReferenceObjects() { return _shouldScavengeWeakReferenceObjects; }
-	volatile bool getShouldScavengePhantomReferenceObjects() { return _shouldScavengePhantomReferenceObjects; }
+	bool getShouldScavengeFinalizableObjects() { return _shouldScavengeFinalizableObjects; }
+	bool getShouldScavengeUnfinalizedObjects() { return _shouldScavengeUnfinalizedObjects; }
+	bool getShouldScavengeSoftReferenceObjects() { return _shouldScavengeSoftReferenceObjects; }
+	bool getShouldScavengeWeakReferenceObjects() { return _shouldScavengeWeakReferenceObjects; }
+	bool getShouldScavengePhantomReferenceObjects() { return _shouldScavengePhantomReferenceObjects; }
 
 #if defined(J9VM_GC_FINALIZATION)
 	void setFinalizationRequired(bool req) { _finalizationRequired = req; }
