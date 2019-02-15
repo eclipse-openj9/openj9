@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,8 @@ import org.w3c.dom.Element;
 
 public class StaticFieldRef extends FieldRef implements Constants {
 	private static class Alias extends FieldRef.Alias {
-		Alias(String[] jcl, String[] flags, ClassRef classRef, NameAndSignature nas, String cast) {
-			super(jcl, flags, classRef, nas, cast);
+		Alias(VersionRange[] versions, String[] flags, ClassRef classRef, NameAndSignature nas, String cast) {
+			super(versions, flags, classRef, nas, cast);
 		}
 
 		void write(ConstantPoolStream ds) {
@@ -51,7 +51,7 @@ public class StaticFieldRef extends FieldRef implements Constants {
 		public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
 			Alias p = (Alias)proto;
 			return new Alias(
-				jcl(e, p),
+				versions(e, p),
 				flags(e, p),
 				classRef(e),
 				new NameAndSignature(
