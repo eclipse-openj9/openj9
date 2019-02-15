@@ -117,6 +117,10 @@ public:
 	void lockClassUnloadMonitor(MM_EnvironmentRealtime *env);
 	void unlockClassUnloadMonitor(MM_EnvironmentRealtime *env);
 
+	UDATA getUnfinalizedObjectListCount(MM_EnvironmentBase *env) { return _extensions->gcThreadCount; }
+	UDATA getOwnableSynchronizerObjectListCount(MM_EnvironmentBase *env) { return _extensions->gcThreadCount; }
+	UDATA getReferenceObjectListCount(MM_EnvironmentBase *env) { return _extensions->gcThreadCount; }
+
 	/*
 	 * Friends
 	 */

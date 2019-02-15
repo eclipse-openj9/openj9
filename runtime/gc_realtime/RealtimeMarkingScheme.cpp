@@ -35,11 +35,17 @@
 #include "MarkMap.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
+#include "OwnableSynchronizerObjectBufferRealtime.hpp"
+#include "OwnableSynchronizerObjectList.hpp"
 #include "RealtimeGC.hpp"
 #include "RealtimeRootScanner.hpp"
 #include "RealtimeMarkingScheme.hpp"
+#include "ReferenceObjectBufferRealtime.hpp"
+#include "ReferenceObjectList.hpp"
 #include "SlotObject.hpp"
 #include "StackSlotValidator.hpp"
+#include "UnfinalizedObjectBufferRealtime.hpp"
+#include "UnfinalizedObjectList.hpp"
 #include "WorkPacketsRealtime.hpp"
 
 /**
@@ -1021,7 +1027,7 @@ MM_RealtimeMarkingScheme::incrementalConsumeQueue(MM_EnvironmentRealtime *env, U
 void
 MM_RealtimeMarkingScheme::scanUnfinalizedObjects(MM_EnvironmentRealtime *env)
 {
-	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getUnfinalizedObjectListCount(env);
+	const UDATA maxIndex = _realtimeGC->getRealtimeDelegate()->getUnfinalizedObjectListCount(env);
 	/* first we need to move the current list to the prior list and process the prior list,
 	 * because if object has not yet become finalizable, we have to re-insert it back to the current list.
 	 */
@@ -1078,7 +1084,7 @@ MM_RealtimeMarkingScheme::scanUnfinalizedObjects(MM_EnvironmentRealtime *env)
 void
 MM_RealtimeMarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env)
 {
-	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getOwnableSynchronizerObjectListCount(env);
+	const UDATA maxIndex = _realtimeGC->getRealtimeDelegate()->getOwnableSynchronizerObjectListCount(env);
 
 	/* first we need to move the current list to the prior list and process the prior list,
 	 * because if object has been marked, we have to re-insert it back to the current list.
@@ -1133,7 +1139,7 @@ MM_RealtimeMarkingScheme::scanWeakReferenceObjects(MM_EnvironmentRealtime *env)
 {
 	GC_Environment *gcEnv = env->getGCEnvironment();
 	Assert_MM_true(gcEnv->_referenceObjectBuffer->isEmpty());
-	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
+	const UDATA maxIndex = _realtimeGC->getRealtimeDelegate()->getReferenceObjectListCount(env);
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
@@ -1151,7 +1157,7 @@ MM_RealtimeMarkingScheme::scanSoftReferenceObjects(MM_EnvironmentRealtime *env)
 {
 	GC_Environment *gcEnv = env->getGCEnvironment();
 	Assert_MM_true(gcEnv->_referenceObjectBuffer->isEmpty());
-	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
+	const UDATA maxIndex = _realtimeGC->getRealtimeDelegate()->getReferenceObjectListCount(env);
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
@@ -1170,7 +1176,7 @@ MM_RealtimeMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentRealtime *en
 	GC_Environment *gcEnv = env->getGCEnvironment();
 	/* unfinalized processing may discover more phantom reference objects */
 	gcEnv->_referenceObjectBuffer->flush(env);
-	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
+	const UDATA maxIndex = _realtimeGC->getRealtimeDelegate()->getReferenceObjectListCount(env);
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
