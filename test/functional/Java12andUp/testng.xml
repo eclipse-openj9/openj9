@@ -31,4 +31,10 @@
 		</classes>
 	</test>
 
+	<test name="StringIndentTests">
+		<classes>
+			<class name="org.openj9.test.java_lang.Test_StringIndent" />
+		</classes>
+	</test>
+
 </suite>
