@@ -2549,7 +2549,7 @@ remoteCompilationEnd(
                comp->cg()->getCodeCache(),
                cacheEntry,
                method,
-               true,
+               false,
                comp->getOptions(),
                comp,
                compilee
