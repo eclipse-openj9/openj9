@@ -565,7 +565,7 @@ J9::CodeCache::adjustTrampolineReservation(TR_OpaqueMethodBlock *method,
       if (unresolvedEntry && resolvedEntry)
          {
          // remove 1 trampoline reservation
-         self()->unreserveTrampoline();
+         self()->unreserveSpaceForTrampoline();
 
          // remove the entry from the unresolved hash table and release it
          if (_unresolvedMethodHT->remove(unresolvedEntry))
@@ -662,7 +662,7 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
       if (!entry)
          {
          // don't have any reservation for this particular name/classLoader, make one
-         OMR::CodeCacheTrampolineCode *trampoline = self()->reserveTrampoline();
+         OMR::CodeCacheTrampolineCode *trampoline = self()->reserveSpaceForTrampoline();
          if (trampoline)
             {
             if (!self()->addUnresolvedMethod(cp, cpIndex))

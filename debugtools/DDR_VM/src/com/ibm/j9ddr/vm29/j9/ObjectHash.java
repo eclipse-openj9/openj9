@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,8 +33,11 @@ import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class ObjectHash 
-{
+public class ObjectHash {
+
+	private static final long J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE =
+			J9ConstantHelper.getLong(J9Consts.class, "J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE", 0);
+
 	private static U32 getSalt(J9JavaVMPointer vm, UDATA objectPointer) throws CorruptDataException
 	{
 		/* set up the default salt */
@@ -137,14 +140,13 @@ public class ObjectHash
 		hashValue = hashValue.bitXor(hashValue.rightShift(16));
 
 		/* If forcing positive hash codes, AND out the sign bit */
-		if (J9JavaVMHelper.extendedRuntimeFlagIsSet(vm, J9Consts.J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE)) {
+		if (J9JavaVMHelper.extendedRuntimeFlagIsSet(vm, J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE)) {
 			hashValue = hashValue.bitAnd(0x7FFFFFFF);
 		}
 
 		return new I32(hashValue);
 	}
 
-	
 	public static I32 convertObjectAddressToHash(J9JavaVMPointer vm, J9ObjectPointer object) throws CorruptDataException
 	{
 		return inlineConvertValueToHash(vm, UDATA.cast(object));
