@@ -362,7 +362,38 @@ public class ValueTypeTests {
 			Assert.fail("should throw error. Class does not exist");
 		} catch (NoClassDefFoundError e) {}
 	}
-	
+
+	/*
+	 * Test ifacmp on value class
+	 * 
+	 * class TestIfacmpOnValueClass {}
+	 */
+	@Test(priority=2)
+	static public void TestIfacmpOnValueClass() throws Throwable {
+		int x = 0;
+		int y = 0;
+		
+		Object valueType = makePoint2D.invoke(x, y);
+
+		Object refType = (Object) x;
+		
+		Assert.assertFalse((valueType == refType), "An identity (==) comparison that contains a valueType should always return false");
+		
+		Assert.assertFalse((refType == valueType), "An identity (==) comparison that contains a valueType should always return false");
+
+		Assert.assertFalse((valueType == valueType), "An identity (==) comparison that contains a valueType should always return false");
+
+		Assert.assertTrue((refType == refType), "An identity (==) comparison on the same refType should always return true");
+
+		Assert.assertTrue((valueType != refType), "An identity (!=) comparison that contains a valueType should always return true");
+
+		Assert.assertTrue((refType != valueType), "An identity (!=) comparison that contains a valueType should always return true");
+
+		Assert.assertTrue((valueType != valueType), "An identity (!=) comparison that contains a valueType should always return true");
+
+		Assert.assertFalse((refType != refType), "An identity (!=) comparison on the same refType should always return false");
+	}
+		
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));
