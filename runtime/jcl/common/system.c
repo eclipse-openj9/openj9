@@ -521,7 +521,7 @@ Java_java_lang_System_startSNMPAgent(JNIEnv *env, jclass jlClass)
 		jclass smAClass = NULL;
 		jmethodID startAgent = NULL;
 		
-		if (J2SE_VERSION(vm) >= J2SE_19) {
+		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			smAClass = (*env)->FindClass(env, "jdk/internal/agent/Agent");
 		} else {
 			smAClass = (*env)->FindClass(env, "sun/management/Agent");

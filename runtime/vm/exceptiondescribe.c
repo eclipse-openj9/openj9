@@ -124,7 +124,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 		BOOLEAN freeModuleVersion = FALSE;
 		UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 
-		if (j2seVersion >= J2SE_19) {
+		if (j2seVersion >= J2SE_V11) {
 			moduleNameUTF = JAVA_BASE_MODULE;
 			moduleVersionUTF = JAVA_MODULE_VERSION;
 

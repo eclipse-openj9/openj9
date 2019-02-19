@@ -102,20 +102,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 			j2se_version_info = "1.8.?";
 		}
 		break;
-	case J2SE_19:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
-			j2se_version_info = "9";
-		} else {
-			j2se_version_info = "9.?";
-		}
-		break;
-	case J2SE_V10:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V10) {
-			j2se_version_info = "10";
-		} else {
-			j2se_version_info = "10.?";
-		}
-		break;
 	case J2SE_V11:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
 			j2se_version_info = "11";
@@ -574,7 +560,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
-	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 	   vm->runtimeFlags |= J9_RUNTIME_STRING_BYTE_ARRAY;
 	}
 
