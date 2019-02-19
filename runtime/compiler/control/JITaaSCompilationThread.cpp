@@ -2452,43 +2452,7 @@ remoteCompilationEnd(
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
 
       TR_Debug *debug = TR::Options::getDebug();
-      bool canRelocateMethod = false;
-      if (debug)
-         {
-         TR_FilterBST *filter = NULL;
-         J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
-         J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
-         J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
-         char *methodSignature;
-         char arr[1024];
-         int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
-         if (len < 1024)
-            methodSignature = arr;
-         else
-            methodSignature = (char *) TR_MemoryBase::jitPersistentAlloc(len);
-
-         if (methodSignature)
-            {
-            sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
-            //printf("methodSig: %s\n", methodSignature);
-
-            if (debug->methodSigCanBeRelocated(methodSignature, filter))
-               canRelocateMethod = true;
-            }
-         else
-            canRelocateMethod = true;
-
-         if (methodSignature && (len >= 1024))
-            TR_MemoryBase::jitPersistentFree(methodSignature);
-         }
-      else
-         {
-         // Prevent the relocation if specific option is given
-         if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
-            canRelocateMethod = false;
-         else
-            canRelocateMethod = true;
-         }
+      bool canRelocateMethod = TR::CompilationInfo::canRelocateMethod(comp);
 
       if (canRelocateMethod)
          {
