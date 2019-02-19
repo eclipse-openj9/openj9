@@ -34,6 +34,7 @@
 class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
+namespace JITaaS { class J9ServerStream; }
 
 class TR_J9SharedCache : public TR_SharedCache
    {
@@ -80,8 +81,6 @@ public:
       }
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
-
-   virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz);
 
    virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
 
@@ -178,13 +177,10 @@ public:
    virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
    virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
 
-   virtual void *pointerFromOffsetInSharedCache(void *offset) override { TR_ASSERT(false, "called"); return NULL;}
-   virtual void *offsetInSharedCacheFromPointer(void *ptr) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual void *pointerFromOffsetInSharedCache(void *offset) override;
+   virtual void *offsetInSharedCacheFromPointer(void *ptr) override;
 
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp) override { TR_ASSERT(false, "called"); }
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp) override { TR_ASSERT(false, "called"); }
-
-   virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
 
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return NULL;}
    virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT(false, "called"); return NULL;}
@@ -192,8 +188,6 @@ public:
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT(false, "called"); return false;}
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT(false, "called"); return NULL;}
-
-   virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz) override { TR_ASSERT(false, "called"); return NULL;}
 
    virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) override { TR_ASSERT(false, "called"); return false;}
 
@@ -203,7 +197,13 @@ public:
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT(false, "called"); return TR_no;}
    static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT(false, "called"); }
    
-   virtual UDATA getCacheStartAddress() override { TR_ASSERT(false, "called"); return NULL; }
+   virtual UDATA getCacheStartAddress() override;
+
+   virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
+
+private:
+   JITaaS::J9ServerStream *_stream;
+
    };
 
 #endif

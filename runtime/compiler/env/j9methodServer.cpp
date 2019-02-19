@@ -1447,8 +1447,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServer
    TR::Compilation *comp = fej9->_compInfoPT->getCompilation();
    if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
       {
-      // TODO: replace with fe->canRememberClass(containingClass()) after rebase
-      if (fej9->sharedCache()->rememberClass(containingClass()))
+      if (fej9->canRememberClass(containingClass()))
          {
          if (comp->getOption(TR_UseSymbolValidationManager))
             {

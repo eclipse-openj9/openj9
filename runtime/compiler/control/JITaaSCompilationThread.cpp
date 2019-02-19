@@ -430,6 +430,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
          vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
          vmInfo._compressedReferenceShift = TR::Compiler->om.compressedReferenceShift();
+         vmInfo._cacheStartAddress = fe->sharedCache() ? fe->sharedCache()->getCacheStartAddress() : 0;
 
          client->write(vmInfo);
          }
@@ -1724,8 +1725,16 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         uintptrj_t classChainOffsetInSharedCache = fe->sharedCache()->lookupClassChainOffsetInSharedCacheFromClass(j9class);
+         uintptrj_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          client->write(classChainOffsetInSharedCache);
+         }
+         break;
+      case J9ServerMessageType::SharedCache_rememberClass:
+         {
+         auto recv = client->getRecvData<J9Class *, bool>();
+         auto clazz = std::get<0>(recv);
+         bool create = std::get<1>(recv);
+         client->write(fe->sharedCache()->rememberClass(clazz, create));
          }
          break;
       case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
@@ -2105,6 +2114,15 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          auto count = std::get<2>(recv);
          TR_IProfiler * iProfiler = fe->getIProfiler();
          iProfiler->setCallCount(method, bcIndex, count, comp);
+         client->write(JITaaS::Void());
+         }
+         break;
+      case J9ServerMessageType::IProfiler_persistIprofileInfo:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *>();
+         auto mirror = std::get<0>(recv);
+         TR_IProfiler *iProfiler = fe->getIProfiler();
+         iProfiler->persistIprofileInfo(NULL, mirror, comp);
          client->write(JITaaS::Void());
          }
          break;

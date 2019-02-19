@@ -735,9 +735,14 @@ TR_J9VMBase::TR_J9VMBase(
          }
 
    _sharedCache = NULL;
-   if (TR::Options::sharedClassCache())        // shared classes and AOT must be enabled
+   if (TR::Options::sharedClassCache() ||
+       (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE && feGetEnv("TR_EnableJITaaSRemoteAOT")))
+      // shared classes and AOT must be enabled, or we should be on the JITaaS server with remote AOT enabled
       {
-      _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         _sharedCache = new (PERSISTENT_NEW) TR_J9JITaaSServerSharedCache(this);
+      else
+         _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
       if (!_sharedCache)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);

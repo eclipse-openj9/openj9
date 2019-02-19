@@ -2621,7 +2621,7 @@ J9::CodeGenerator::processRelocations()
 
    if (self()->comp()->compileRelocatableCode() || isJITaaSMode)
       {
-      if (!isJITaaSMode)
+      if (self()->comp()->compileRelocatableCode())
          {
          uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
