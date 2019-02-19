@@ -5578,19 +5578,20 @@ JVM_GetClassName(JNIEnv *env, jclass theClass)
 
 /**
  * Return the JVM_INTERFACE_VERSION. This function should not lock, gc or throw exception.
- * @return JVM_INTERFACE_VERSION, current value is 4
+ * @return JVM_INTERFACE_VERSION, JDK8 - 4, JDK11+ - 6.
  */
 jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
-	jint result = 4;
-	UDATA j2seVersion = getVersionFromPropertiesFile();
-
-	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
-		result = 5;
-	}
+	jint result = 4;	/* JDK8 */
+	UDATA j2seVersion = 0;
 
 	Trc_SC_GetInterfaceVersion_Entry();
+
+	j2seVersion = getVersionFromPropertiesFile();
+	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
+		result = 6; /* JDK11+ */
+	}
 
 	Trc_SC_GetInterfaceVersion_Exit(result);
 
