@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +87,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	public String getClassPath();
 
 	/**
-	 * Returns a list of all of the input arguments passed to the virtual
+	 * Returns a list of user of the input arguments passed to the virtual
 	 * machine on start-up. This will <i>not </i> include any input arguments
 	 * that are passed into the application's <code>main(String[] args)</code>
 	 * method.

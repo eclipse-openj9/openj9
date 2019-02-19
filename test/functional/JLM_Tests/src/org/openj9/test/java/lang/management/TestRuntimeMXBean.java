@@ -30,7 +30,7 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
+import com.ibm.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -108,7 +108,7 @@ public class TestRuntimeMXBean {
 
 	@BeforeClass
 	protected void setUp() throws Exception {
-		rb = ManagementFactory.getRuntimeMXBean();
+		rb = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
 		try {
 			objName = new ObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME);
 			mbs = ManagementFactory.getPlatformMBeanServer();
@@ -309,7 +309,7 @@ public class TestRuntimeMXBean {
 
 	@Test
 	public final void testGetInputArguments() {
-		List<String> args = rb.getInputArguments();
+		List<String> args = rb.getAllInputArguments();
 		// Should always return a List<String> object. If no
 		// input args then should return an empty List<String>.
 		AssertJUnit.assertNotNull(args);

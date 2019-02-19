@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,8 @@ import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 import org.openj9.test.contendedfields.TestClasses.*;
 
+import java.lang.management.RuntimeMXBean;
+
 @Test(groups = { "level.extended" })
 public class ContendedFieldsTests {
 	private static boolean jep142Restricted = true;
@@ -63,7 +65,8 @@ public class ContendedFieldsTests {
 			CACHE_LINE_SIZE = 64;			
 		}
 		jep142Restricted = true;
-		for (String vmarg: ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+		RuntimeMXBean bean = (RuntimeMXBean)ManagementFactory.getRuntimeMXBean();
+		for (String vmarg: bean.getInputArguments()) {
 			switch (vmarg) {
 			case "-XX:-RestrictContended": 
 				jep142Restricted = false;

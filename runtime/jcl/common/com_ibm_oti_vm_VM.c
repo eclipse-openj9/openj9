@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,15 +27,17 @@
 #include "jclprots.h"
 #include "jcl_internal.h"
 #include "util_api.h"
+#include "jvminit.h"
 
 /* private static native byte[][] getVMArgsImpl(); */
 
 jobjectArray JNICALL
-Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv)
+Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv, jboolean getUserArgsOnly)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM *vm = vmThread->javaVM;
-	JavaVMInitArgs *vmOptionsStruct = vm->vmArgsArray->actualVMArgs;
+	J9VMInitArgs* j9vm_args = vm->vmArgsArray;
+	JavaVMInitArgs *vmOptionsStruct = j9vm_args->actualVMArgs;
 	jint originalSize = vmOptionsStruct->nOptions;
 	jint resultSize = 0;
 	JavaVMOption *options = vmOptionsStruct->options;
@@ -46,7 +48,7 @@ Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv)
 	/* Count only options that begin with "-" */
 
 	for (i = 0; i < originalSize; ++i) {
-		if ('-' == options[i].optionString[0]) {
+		if (('-' == options[i].optionString[0]) && (!getUserArgsOnly || IS_USER_ARG(j9vm_args, i))) {
 			resultSize += 1;
 		}
 	}
@@ -69,11 +71,12 @@ Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv)
 					if (NULL == option) {
 						/* Don't use break here to avoid triggering the assertion below */
 						return NULL;
+					} else if (!getUserArgsOnly || IS_USER_ARG( j9vm_args, i )) {
+						(*env)->SetByteArrayRegion(env, option, 0, optionLength, (jbyte*)optionString);
+						(*env)->SetObjectArrayElement(env, result, writeIndex, option);
+						(*env)->DeleteLocalRef(env, option);
+						writeIndex += 1;
 					}
-					(*env)->SetByteArrayRegion(env, option, 0, optionLength, (jbyte*)optionString);
-					(*env)->SetObjectArrayElement(env, result, writeIndex, option);
-					(*env)->DeleteLocalRef(env, option);
-					writeIndex += 1;
 				}
 			}
 			Assert_JCL_true(writeIndex == resultSize);

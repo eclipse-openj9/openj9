@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ newJavaVMArgInfo(J9JavaVMArgInfoList *vmArgumentsList, char *optString, uintptr_
  */
 
 intptr_t
-parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags)
+parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, UDATA containsUserArgs)
 {
 	char* cursor = (char*)fileText;
 	uintptr_t isEOL, isEOF, isMultiple;
@@ -202,7 +202,8 @@ parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMA
 					memcpy(nextOptionPosition, tokenStart, argumentLength);
 					/* The first argument is at the head of the buffer and is the same pointer as the allocated buffer */
 					optArg = newJavaVMArgInfo(vmArgumentsList, nextOptionPosition,
-							((0 == count) ? ARG_MEMORY_ALLOCATION: 0) | CONSUMABLE_ARG);
+						((0 == count) ? ARG_MEMORY_ALLOCATION: 0) | ((containsUserArgs) ? USER_ARG : 0) | CONSUMABLE_ARG);
+					
 					if (NULL == optArg) {
 						return RC_FAILED;
 					}
@@ -230,7 +231,7 @@ parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMA
 }
 
 intptr_t
-addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags)
+addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, UDATA containsUserArgs)
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -277,8 +278,10 @@ addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArg
 		return -1;
 	}
 
-	/* add the -Xoptionsfile argument */
-	optArg = newJavaVMArgInfo(vmArgumentsList, NULL, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
+	/* add the -Xoptionsfile argument. Sets the USER_ARG flag if the optionfile is not the default optionfile */
+	optArg = newJavaVMArgInfo(vmArgumentsList, NULL, ARG_MEMORY_ALLOCATION | (containsUserArgs ? USER_ARG : 0) | CONSUMABLE_ARG);
+
+	
 	if (NULL == optArg) {
 		j9mem_free_memory(optionsFileBuffer);
 		return -1;
@@ -299,7 +302,7 @@ addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArg
 			free(abuf);
 		}
 #endif
-		parseResult = parseOptionsFileText(PORTLIB, optionsFileContents, vmArgumentsList, verboseFlags);
+		parseResult = parseOptionsFileText(PORTLIB, optionsFileContents, vmArgumentsList, verboseFlags, containsUserArgs);
 
 		if (parseResult < 0) {
 			j9mem_free_memory(optionsFileBuffer);
@@ -313,11 +316,18 @@ addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArg
 intptr_t
 parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, BOOLEAN parseOptionsFileFlag)
 {
+	return parseOptionsBufferImpl(portLib, argumentBuffer, vmArgumentsList, verboseFlags, parseOptionsFileFlag, FALSE);
+}
+
+intptr_t
+parseOptionsBufferImpl(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, BOOLEAN parseOptionsFileFlag, BOOLEAN parseEnvVar)
+{
 	char* cursor = argumentBuffer;
 	char* tokenStart = NULL;
 	char *tokenEnd = NULL;
 	char *quotesStart = NULL;
 	char *quotesEnd = NULL;
+	J9JavaVMArgInfo *optArg = NULL;
 	intptr_t count = 0;
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -360,11 +370,11 @@ parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfo
 		if (tokenEnd) {
 			if ((0 == strncmp(tokenStart, VMOPT_XOPTIONSFILE_EQUALS, strlen(VMOPT_XOPTIONSFILE_EQUALS))) && (TRUE == parseOptionsFileFlag)) {
 				/* addXOptionsFile allocates a new buffer for the -Xoptionsfile argument and the file contents */
-				if (0 != addXOptionsFile(portLib, tokenStart, vmArgumentsList, verboseFlags)) {
+				if (0 != addXOptionsFile(portLib, tokenStart, vmArgumentsList, verboseFlags, TRUE)) {
 					return -1;
 				}
 			} else {
-				J9JavaVMArgInfo *optArg = newJavaVMArgInfo(vmArgumentsList, NULL, CONSUMABLE_ARG);
+				optArg = newJavaVMArgInfo(vmArgumentsList, NULL, CONSUMABLE_ARG | parseEnvVar ? USER_ARG : 0);
 				if (NULL == optArg) {
 					return -1;
 				}

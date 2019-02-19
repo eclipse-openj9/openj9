@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1033,7 +1033,7 @@ jobject JNICALL Java_com_ibm_oti_vm_ORBVMHelpers_LatestUserDefinedLoader(JNIEnv 
 
 
 /* com_ibm_oti_vm_VM.c */
-jobjectArray JNICALL Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv);
+jobjectArray JNICALL Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv, jboolean getUserArgsOnly);
 
 /* rcmnatives.c */
 jlong JNICALL Java_javax_rcm_CPUThrottlingRunnable_requestToken(JNIEnv *env, jobject runnable, jlong tokenNumber);

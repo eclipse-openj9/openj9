@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ import org.testng.AssertJUnit;
 import j9vm.test.softmx.MemoryExhauster;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
+import com.ibm.lang.management.RuntimeMXBean;
 import java.util.Iterator;
 import java.util.List;
 
@@ -111,8 +111,8 @@ public class SoftmxAdvanceTest {
 		boolean disableDisclaimMemory = false;
 		boolean softmxExist = false;
 
-		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-		List<String> arguments = RuntimemxBean.getInputArguments();
+		RuntimeMXBean RuntimemxBean = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
+		List<String> arguments = RuntimemxBean.getAllInputArguments();
 
 		Iterator it = arguments.iterator();
 
