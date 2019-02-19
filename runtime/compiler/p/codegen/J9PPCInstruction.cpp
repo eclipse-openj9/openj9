@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 #include "p/codegen/CallSnippet.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
    {
@@ -111,7 +112,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
             {
             if (refNum < TR_PPCnumRuntimeHelpers)
                {
-               distance = fej9->indexedTrampolineLookup(refNum, (void *)cursor) - (intptrj_t)cursor;
+               distance = TR::CodeCacheManager::instance()->findHelperTrampoline(refNum, (void *)cursor) - (intptrj_t)cursor;
                }
             else if (refNum >= cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::firstPerCodeCacheHelperSymbol) &&
                      refNum <= cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::lastPerCodeCacheHelperSymbol))

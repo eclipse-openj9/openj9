@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@
 #include "il/Node_inlines.hpp"
 #include "p/codegen/PPCAOTRelocation.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 #if defined(AIXPPC)
 extern FILE *j2Profile;
@@ -354,7 +355,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
    if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
       TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }
@@ -541,7 +542,7 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
 
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
          "CodeCache is more than 32MB.\n");
       }
@@ -665,7 +666,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
 
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }

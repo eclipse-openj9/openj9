@@ -37,6 +37,7 @@
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 uint32_t TR::X86CheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
    {
@@ -152,7 +153,7 @@ uint8_t *TR::X86CheckFailureSnippet::emitCheckFailureSnippetBody(uint8_t *buffer
 
    if (NEEDS_TRAMPOLINE(destinationAddress, buffer+4, cg()))
       {
-      destinationAddress = fej9->indexedTrampolineLookup(getDestination()->getReferenceNumber(), (void *)buffer);
+      destinationAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
       }
 
@@ -301,7 +302,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
    intptrj_t glueAddress = (intptrj_t)glueSymRef->getMethodAddress();
    if (NEEDS_TRAMPOLINE(glueAddress, buffer+4, cg()))
       {
-      glueAddress = fej9->indexedTrampolineLookup(glueSymRef->getReferenceNumber(), (void *)buffer);
+      glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueSymRef->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(glueAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
       }
    *(int32_t *)buffer = (int32_t)(glueAddress - (intptrj_t)(buffer+4));
@@ -327,7 +328,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
    intptrj_t destinationAddress = (intptrj_t)getDestination()->getMethodAddress();
    if (NEEDS_TRAMPOLINE(destinationAddress, buffer+4, cg()))
       {
-      destinationAddress = fej9->indexedTrampolineLookup(getDestination()->getReferenceNumber(), (void *)buffer);
+      destinationAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
       TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
       }
    *(int32_t *)buffer = (int32_t)(destinationAddress - (intptrj_t)(buffer+4));
