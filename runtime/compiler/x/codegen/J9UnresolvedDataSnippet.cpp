@@ -36,6 +36,7 @@
 #include "il/Symbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/symbol/StaticSymbol_inlines.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
 #include "x/codegen/X86Ops.hpp"
@@ -157,7 +158,7 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
        NEEDS_TRAMPOLINE(glueAddress, rip, cg()))
       {
       TR_ASSERT(TR::Compiler->target.is64Bit(), "should not require a trampoline on 32-bit");
-      glueAddress = cg()->fej9()->indexedTrampolineLookup(_glueSymRef->getReferenceNumber(), (void *)cursor);
+      glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(_glueSymRef->getReferenceNumber(), (void *)cursor);
       TR_ASSERT(IS_32BIT_RIP(glueAddress, rip), "Local helper trampoline should be reachable directly.\n");
       }
 

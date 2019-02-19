@@ -577,7 +577,7 @@ TR_RelocationRecord::computeHelperAddress(TR_RelocationRuntime *reloRuntime, TR_
       {
       TR::VMAccessCriticalSection computeHelperAddress(reloRuntime->fej9());
       J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
-      helperAddress = (uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline((void *)baseLocation, reloPrivateData->_helperID);
+      helperAddress = (uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(reloPrivateData->_helperID, (void *)baseLocation);
       }
 
    return helperAddress;

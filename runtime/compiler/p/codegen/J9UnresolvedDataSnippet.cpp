@@ -51,6 +51,7 @@
 #include "infra/Assert.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "ras/Debug.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/CompilerEnv.hpp"
 
@@ -125,7 +126,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    intptrj_t distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
    if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
       TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "env/VMJ9.h"
+#include "runtime/CodeCacheManager.hpp"
 #include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Snippets.hpp"
@@ -90,7 +91,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
 
    intptrj_t destAddr = (intptrj_t) getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress();
 
-#if defined(TR_TARGET_64BIT) 
+#if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
    if (cg()->comp()->getOption(TR_EnableRMODE64))
 #endif
@@ -100,7 +101,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
          uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
          // Destination is beyond our reachable jump distance, we'll find the
          // trampoline.
-         destAddr = fej9->indexedTrampolineLookup(getDestination()->getReferenceNumber(), (void *)buffer);
+         destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
          this->setUsedTrampoline(true);
 
          // We clobber rEP if we take a trampoline.  Update our register map if necessary.

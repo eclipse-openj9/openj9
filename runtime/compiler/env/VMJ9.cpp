@@ -5630,9 +5630,9 @@ intptrj_t
 TR_J9VMBase::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
    {
    TR::VMAccessCriticalSection indexedTrampolineLookup(this);
-   void * tramp = (void *)TR::CodeCacheManager::instance()->findHelperTrampoline(callSite, helperIndex);
-   TR_ASSERT(tramp!=NULL, "Error: CodeCache is not initialized properly.\n");
-   return (intptrj_t)tramp;
+   intptrj_t tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(helperIndex, callSite);
+   TR_ASSERT(tramp, "Error: CodeCache is not initialized properly.\n");
+   return tramp;
    }
 
 // interpreter profiling support
@@ -6995,7 +6995,7 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
    TR_ASSERT(!symRef->isUnresolved(), "No need to lookup trampolines for unresolved methods.\n");
    TR_OpaqueMethodBlock * method = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
 
-   void *tramp;
+   intptrj_t tramp;
    TR::MethodSymbol *methodSym = symRef->getSymbol()->castToMethodSymbol();
    switch (methodSym->getMandatoryRecognizedMethod())
       {
@@ -7005,16 +7005,16 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
          // This is a hack, and it appears more than once.  Search for PROPER_DISPATCH_J9METHOD.
          //
          TR_RuntimeHelper vmCallHelper = TR::MethodSymbol::getVMCallHelperFor(methodSym->getMethod()->returnType(), methodSym->isSynchronised(), false, comp);
-         tramp = (void *)TR::CodeCacheManager::instance()->findHelperTrampoline(callSite, vmCallHelper);
+         tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(vmCallHelper, callSite);
          }
          break;
       default:
-         tramp = (void *)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
+         tramp = (intptrj_t)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
          break;
       }
 
-   TR_ASSERT(tramp!=NULL, "It should not fail since it is reserved first.\n");
-   return (intptrj_t)tramp;
+   TR_ASSERT(tramp, "It should not fail since it is reserved first.\n");
+   return tramp;
    }
 
 TR_OpaqueClassBlock *

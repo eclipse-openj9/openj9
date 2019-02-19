@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,7 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCRecompilation.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    {
@@ -54,7 +55,7 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    intptrj_t distance = (intptrj_t)countingRecompMethodSymRef->getMethodAddress() - (intptrj_t)buffer;
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = fej9->indexedTrampolineLookup(countingRecompMethodSymRef->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(countingRecompMethodSymRef->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }
