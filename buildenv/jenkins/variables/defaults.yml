@@ -28,14 +28,6 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
       branch: 'openj9'
-  9:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
-      branch: 'openj9'
-  10:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git'
-      branch: 'openj9'
   11:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
@@ -58,8 +50,6 @@ adoptopenjdk:
 #========================================#
 jdk_image_dir:
   8: 'j2sdk-image'
-  9: 'jdk'
-  10: 'jdk'
   11: 'jdk'
   12: 'jdk'
   next: 'jdk'
@@ -85,15 +75,11 @@ restart_timeout:
 linux_ppc-64_cmprssptrs_le:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
-    9: '/usr/lib/jvm/adoptojdk-java-80'
-    10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-ppc64le-normal-server-release'
-    9: 'linux-ppc64le-normal-server-release'
-    10: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
     12: 'linux-ppc64le-server-release'
     next: 'linux-ppc64le-server-release'
@@ -102,8 +88,6 @@ linux_ppc-64_cmprssptrs_le:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      9: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      10: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
@@ -127,15 +111,11 @@ linux_ppc-64_cmprssptrs_le:
 linux_390-64_cmprssptrs:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-s390x-normal-server-release'
-    9: 'linux-s390x-normal-server-release'
-    10: 'linux-s390x-normal-server-release'
     11: 'linux-s390x-normal-server-release'
     12: 'linux-s390x-server-release'
     next: 'linux-s390x-server-release'
@@ -144,8 +124,6 @@ linux_390-64_cmprssptrs:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      9: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      10: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
@@ -167,15 +145,11 @@ linux_390-64_cmprssptrs:
 aix_ppc-64_cmprssptrs:
   boot_jdk:
     8: '/usr/java7'
-    9: '/usr/java8_64'
-    10: '/usr/java9_64'
     11: '/usr/java11_64'
     12: '/usr/java11_64'
     next: '/usr/java11_64'
   release:
     8: 'aix-ppc64-normal-server-release'
-    9: 'aix-ppc64-normal-server-release'
-    10: 'aix-ppc64-normal-server-release'
     11: 'aix-ppc64-normal-server-release'
     12: 'aix-ppc64-server-release'
     next: 'aix-ppc64-server-release'
@@ -184,15 +158,11 @@ aix_ppc-64_cmprssptrs:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-      9: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-      10: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
-    9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
-    10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
@@ -202,15 +172,11 @@ aix_ppc-64_cmprssptrs:
 linux_x86-64_cmprssptrs:
   boot_jdk:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
-    9: '/usr/lib/jvm/adoptojdk-java-80'
-    10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
-    9: 'linux-x86_64-normal-server-release'
-    10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
     12: 'linux-x86_64-server-release'
     next: 'linux-x86_64-server-release'
@@ -219,8 +185,6 @@ linux_x86-64_cmprssptrs:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
@@ -242,15 +206,11 @@ linux_x86-64_cmprssptrs:
 linux_x86-64_cmprssptrs_cmake:
   boot_jdk:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
-    9: '/usr/lib/jvm/adoptojdk-java-80'
-    10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
-    9: 'linux-x86_64-normal-server-release'
-    10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
     12: 'linux-x86_64-server-release'
     next: 'linux-x86_64-server-release'
@@ -259,8 +219,6 @@ linux_x86-64_cmprssptrs_cmake:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
@@ -269,15 +227,11 @@ linux_x86-64_cmprssptrs_cmake:
     11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
-    9: '--with-cmake --disable-ddr'
-    10: '--with-cmake --disable-ddr'
     11: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     12: '--with-cmake --disable-ddr'
     next: '--with-cmake --disable-ddr'
   extra_make_options:
     8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-    9: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-    10: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     12: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
@@ -293,15 +247,11 @@ linux_x86-64_cmprssptrs_cmake:
 linux_x86-64:
   boot_jdk:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
-    9: '/usr/lib/jvm/adoptojdk-java-80'
-    10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
-    9: 'linux-x86_64-normal-server-release'
-    10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
     12: 'linux-x86_64-server-release'
     next: 'linux-x86_64-server-release'
@@ -310,8 +260,6 @@ linux_x86-64:
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
-      10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       12: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
@@ -320,8 +268,6 @@ linux_x86-64:
     11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    9: '--with-noncompressedrefs'
-    10: '--with-noncompressedrefs'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     12: '--with-noncompressedrefs'
     next: '--with-noncompressedrefs'
@@ -337,15 +283,11 @@ linux_x86-64:
 win_x86-64_cmprssptrs:
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
-    9: '/cygdrive/c/openjdk/jdk8'
-    10: '/cygdrive/c/openjdk/jdk9'
     11: '/cygdrive/c/openjdk/jdk11'
     12: '/cygdrive/c/openjdk/jdk11'
     next: '/cygdrive/c/openjdk/jdk11'
   release:
     8: 'windows-x86_64-normal-server-release'
-    9: 'windows-x86_64-normal-server-release'
-    10: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
     12: 'windows-x86_64-server-release'
     next: 'windows-x86_64-server-release'
@@ -353,16 +295,12 @@ win_x86-64_cmprssptrs:
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
     8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
-    10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
     12: '--with-toolchain-version=2017 --disable-ccache'
     next: '--with-toolchain-version=2017 --disable-ccache'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      9: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      10: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       12: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -407,9 +345,13 @@ osx_x86-64_cmprssptrs:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
+    next: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
+    12: '--with-openssl=fetched --enable-openssl-bundling'
+    next: '--with-openssl=fetched --enable-openssl-bundling'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
@@ -438,10 +380,13 @@ osx_x86-64:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
+    next: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     12: '--with-noncompressedrefs'
+    next: '--with-noncompressedrefs'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
