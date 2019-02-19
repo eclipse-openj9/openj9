@@ -2386,9 +2386,17 @@ remoteCompilationEnd(
       {
       compInfoPT->reloRuntime()->setReloStartTime(compInfoPT->getTimeWhenCompStarted());
 
-      relocatedMetaData = compInfoPT->reloRuntime()->prepareRelocateJITCodeAndData(vmThread, fe,
-            comp->cg()->getCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0],
-            method, false, TR::comp()->getOptions(), TR::comp(), compilee);
+      relocatedMetaData = compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+         vmThread,
+         fe,
+         comp->cg()->getCodeCache(),
+         (J9JITDataCacheHeader *)&dataCacheStr[0],
+         method,
+         false,
+         comp->getOptions(),
+         comp,
+         compilee,
+         (uint8_t *)&codeCacheStr[0]);
 
       if (!relocatedMetaData)
          {
@@ -2552,7 +2560,8 @@ remoteCompilationEnd(
                false,
                comp->getOptions(),
                comp,
-               compilee
+               compilee,
+               (uint8_t *)&codeCacheStr[0]
                );
             returnCode = entry->_compInfoPT->reloRuntime()->returnCode();
             }

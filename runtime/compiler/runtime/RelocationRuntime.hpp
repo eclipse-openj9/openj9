@@ -181,18 +181,8 @@ class TR_RelocationRuntime {
                                                          bool shouldUseCompiledCopy,
                                                          TR::Options *options,
                                                          TR::Compilation *compilation,
-                                                         TR_ResolvedMethod *resolvedMethod);
-
-      J9JITExceptionTable *prepareRelocateJITCodeAndData(J9VMThread* vmThread,
-                                                         TR_FrontEnd *fe,
-                                                         TR::CodeCache *cc,
-                                                         uint8_t *code,
-                                                         const J9JITDataCacheHeader *cacheEntry,
-                                                         J9Method *theMethod,
-                                                         bool shouldUseCompiledCopy,
-                                                         TR::Options *options,
-                                                         TR::Compilation *compilation,
-                                                         TR_ResolvedMethod *resolvedMethod);
+                                                         TR_ResolvedMethod *resolvedMethod,
+                                                         uint8_t *existingCode = NULL);
 
       virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe);
@@ -415,8 +405,6 @@ private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
       virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);
       virtual void initializeCacheDeltas();
-// The following private APIs should not be used with this class
-      virtual void initializeAotRuntimeInfo()  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!");  return; }
-
+      virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
 };
 #endif   // RELOCATION_RUNTIME_INCL
