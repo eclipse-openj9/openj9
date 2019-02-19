@@ -9573,7 +9573,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    //
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR_DataCache *dataCache = NULL;
-   const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
    if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       // end of compilation, clear per-compilation IProfiler cache
@@ -9715,32 +9714,10 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
             if (TR::Options::sharedClassCache())
                {
-               bool safeToStore;
-
-               TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-
-               if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
-                  {
-                  safeToStore = true;
-                  }
-               else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
-                  {
-                  // If validation has been performed, then a header already existed
-                  // or one was already been created in this JVM
-                  TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-                  safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
-                  }
-               else
-                  {
-                  safeToStore = false;
-                  }
-
                J9JITExceptionTable *relocatedMetaData = NULL;
                const U_8 *dataStart;
                const U_8 *codeStart;
                UDATA dataSize, codeSize;
-               UDATA classReloAmount = 0;
-               const U_8 *returnCode = NULL;
 
                TR_ASSERT(comp, "AOT compilation that succeeded must have a compilation object");
                J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
@@ -9755,48 +9732,17 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
                J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
-               if (safeToStore)
-                  {
-                  storedCompiledMethod =
-                     reinterpret_cast<const J9JITDataCacheHeader*>(
-                        jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
-                           vmThread,
-                           romMethod,
-                           dataStart,
-                           dataSize,
-                           codeStart,
-                           codeSize,
-                           0));
-                  switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
-                     {
-                     case J9SHR_RESOURCE_STORE_FULL:
-                        {
-                        if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                           j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
-                        TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
-                        disableAOTCompilations();
-                        }
-                        break;
-                     case J9SHR_RESOURCE_STORE_ERROR:
-                        {
-                        if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                           j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
-                        TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
-                        TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-                        disableAOTCompilations();
-                        }
-                     }
-                  }
-               else
-                  {
-                  if (TR::Options::getAOTCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
-                     {
-                     PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, " Failed AOT cache validation");
-                     }
-
-                  disableAOTCompilations();
-                  }
+               TR::CompilationInfo::storeAOTInSharedCache(
+                  vmThread,
+                  romMethod,
+                  dataStart,
+                  dataSize,
+                  codeStart,
+                  codeSize,
+                  comp,
+                  jitConfig,
+                  entry
+                  );
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
 
@@ -11362,6 +11308,85 @@ TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compil
    }
 
 
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+void
+TR::CompilationInfo::storeAOTInSharedCache(
+   J9VMThread *vmThread,
+   J9ROMMethod *romMethod,
+   const U_8 *dataStart,
+   UDATA dataSize,
+   const U_8 *codeStart,
+   UDATA codeSize,
+   TR::Compilation *comp,
+   J9JITConfig *jitConfig,
+   TR_MethodToBeCompiled *entry
+   ) 
+   {
+   bool safeToStore;
+   const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
+   PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+
+   if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
+      {
+      safeToStore = true;
+      }
+   else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
+      {
+      // If validation has been performed, then a header already existed
+      // or one was already been created in this JVM
+      TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
+      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
+      }
+   else
+      {
+      safeToStore = false;
+      }
+
+   if (safeToStore)
+      {
+      storedCompiledMethod =
+         reinterpret_cast<const J9JITDataCacheHeader*>(
+            jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
+               vmThread,
+               romMethod,
+               dataStart,
+               dataSize,
+               codeStart,
+               codeSize,
+               0));
+      switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
+         {
+         case J9SHR_RESOURCE_STORE_FULL:
+            {
+            if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+               j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
+            TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
+            disableAOTCompilations();
+            }
+            break;
+         case J9SHR_RESOURCE_STORE_ERROR:
+            {
+            if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+               j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
+            TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
+            TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+            disableAOTCompilations();
+            }
+         }
+      }
+   else
+      {
+      if (TR::Options::getAOTCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
+         {
+         PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, " Failed AOT cache validation");
+         }
+
+      disableAOTCompilations();
+      }
+}
+#endif
 
 //===========================================================
 TR_LowPriorityCompQueue::TR_LowPriorityCompQueue()
