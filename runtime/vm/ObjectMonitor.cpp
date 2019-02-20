@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -547,9 +547,11 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 			}
 			if (nestedPath) {
 				VM_AtomicSupport::yieldCPU();
+				VM_AtomicSupport::dropSMTThreadPriority();
 				for (UDATA _tryEnterSpinCount1 = tryEnterSpinCount1; _tryEnterSpinCount1 > 0; _tryEnterSpinCount1--) {
 					VM_AtomicSupport::nop();
 				} /* end tight loop */
+				VM_AtomicSupport::restoreSMTThreadPriority();
 			}
 		}
 		if ((0 == tryEnterNestedSpinning) && nestedPath) {
