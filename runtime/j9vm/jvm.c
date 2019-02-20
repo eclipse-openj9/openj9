@@ -977,18 +977,14 @@ getj9bin()
 #endif
 
 /* We use forward slashes here because J9VM_LIB_ARCH_DIR is not used on Windows. */
-#if (J9VM_JAVA9_BUILD >= 150) || defined(OSX)
-/* On OSX, <arch> doesn't exist. So, JVM_ARCH_DIR shouldn't be appended to
- * J9VM_LIB_ARCH_DIR on OSX.
- */
+#if (JAVA_SPEC_VERSION >= 9) || defined(OSX)
+/* On OSX, <arch> doesn't exist, so JVM_ARCH_DIR shouldn't be included in J9VM_LIB_ARCH_DIR. */
 #define J9VM_LIB_ARCH_DIR "/lib/"
-#elif defined(JVM_ARCH_DIR) /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#else /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 #define J9VM_LIB_ARCH_DIR "/lib/" JVM_ARCH_DIR "/"
-#else /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
-#error "No matching ARCH found"
-#endif /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#endif /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 
-#if J9VM_JAVA9_BUILD < 150
+#if JAVA_SPEC_VERSION == 8
 /*
  * Remove the suffix from string if present.
  */
@@ -1006,7 +1002,7 @@ removeSuffix(char *string, const char *suffix)
 		}
 	}
 }
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 #if defined(J9UNIX) || defined(J9ZOS390)
 static BOOLEAN 
@@ -1060,10 +1056,10 @@ preloadLibraries(void)
 	if (0 == strcmp(lastDirName + 1, "classic")) {
 		truncatePath(jvmBufferData(j9binBuffer)); /* at jre/bin or jre/lib/<arch> */
 		truncatePath(jvmBufferData(j9binBuffer)); /* at jre     or jre/lib        */
-#if J9VM_JAVA9_BUILD < 150
+#if JAVA_SPEC_VERSION == 8
 		/* remove /lib if present */
 		removeSuffix(jvmBufferData(j9binBuffer), "/lib"); /* at jre */
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 		j9binBuffer = jvmBufferCat(j9binBuffer, J9VM_LIB_ARCH_DIR "j9vm/");
 		if (-1 != stat(jvmBufferData(j9binBuffer), &statBuf)) {
 			/* does exist, carry on */
@@ -1105,10 +1101,10 @@ preloadLibraries(void)
 	/* <arch> directory doesn't exist on OSX so j9libBuffer shouldn't
 	 * be truncated on OSX for removing <arch>.
 	 */
-#if (J9VM_JAVA9_BUILD < 150)
+#if JAVA_SPEC_VERSION == 8
 	/* Remove <arch> */
 	truncatePath(jvmBufferData(j9libBuffer));
-#endif /* (J9VM_JAVA9_BUILD < 150) */
+#endif /* JAVA_SPEC_VERSION == 8 */
 #endif /* !defined(OSX) */
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 	j9Buffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
