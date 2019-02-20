@@ -1476,6 +1476,7 @@ static void jitHookGlobalGCStart(J9HookInterface * * hookInterface, UDATA eventN
 
    if (jitConfig && jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
       printf("\n{GGC");
+   jitReclaimMarkedAssumptions(false);
    }
 
 static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1498,6 +1499,7 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
       printf("\n<jit: enabling stack tracing at gc %d>", jitConfig->gcCount);
       TR::Options::getCmdLineOptions()->setVerboseOption(TR_VerboseGc);
       }
+   jitReclaimMarkedAssumptions(false);
    }
 
 static void jitHookGlobalGCEnd(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -6786,7 +6788,7 @@ static void jitHookReleaseCodeGlobalGCEnd(J9HookInterface **hook, UDATA eventNum
    MM_GlobalGCEndEvent *event = (MM_GlobalGCEndEvent *)eventData;
    J9VMThread  *vmThread  = (J9VMThread*)event->currentThread->_language_vmthread;
    jitReleaseCodeStackWalk(vmThread->omrVMThread);
-   jitReclaimMarkedAssumptions();
+   jitReclaimMarkedAssumptions(true);
    }
 
 static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
@@ -6798,14 +6800,14 @@ static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum,
       condYield = event->condYieldFromGCFunction;
 
    jitReleaseCodeStackWalk(omrVMThread,condYield);
-   jitReclaimMarkedAssumptions();
+   jitReclaimMarkedAssumptions(true);
    }
 
 static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
    {
    MM_LocalGCEndEvent *event = (MM_LocalGCEndEvent *)eventData;
    jitReleaseCodeStackWalk(event->currentThread);
-   jitReclaimMarkedAssumptions();
+   jitReclaimMarkedAssumptions(true);
    }
 
 

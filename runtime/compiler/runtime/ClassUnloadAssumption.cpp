@@ -230,8 +230,6 @@ bool OMR::RuntimeAssumption::isAssumingMethod(void *md, bool reclaimPrePrologueA
 // must be executed under assumptionTableMutex
 void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
    {
-   // We should not try to detach TR::SentinelRuntimeAssumption
-   TR_ASSERT_FATAL(getAssumptionKind() != RuntimeAssumptionSentinel, "Sentinel assumptions cannot be detached");
    OMR::RuntimeAssumption *crt = this->getNextAssumptionForSameJittedBodyEvenIfDead();
    OMR::RuntimeAssumption *prev = this;
    TR_ASSERT(crt, "Assumption must be queued when trying to detach");
@@ -254,7 +252,7 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
    // Now I completed a full circle
    prev->setNextAssumptionForSameJittedBody(crt->getNextAssumptionForSameJittedBodyEvenIfDead());
    crt->setNextAssumptionForSameJittedBody(NULL); // assumption no longer in the circular list
-   /* need a frontend */
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions))
       {
       TR_VerboseLog::vlogAcquire();
@@ -286,7 +284,7 @@ void TR_RuntimeAssumptionTable::purgeAssumptionListHead(OMR::RuntimeAssumption *
    {
    assumptionList->compensate(fe, 0, 0);
 
-   OMR::RuntimeAssumption *next = assumptionList->getNext();
+   OMR::RuntimeAssumption *next = assumptionList->getNextEvenIfDead();
    printf("Freeing Assumption 0x%x and next assumption is 0x%x \n", assumptionList, next);
 
    assumptionList->dequeueFromListOfAssumptionsForJittedBody();
@@ -375,8 +373,11 @@ void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *ass
  */
 void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount)
    {
+   if (_marked == 0)
+      return;
+
    assumptionTableMutex->enter();
-   for (int kind=0; cleanupCount != 0 && kind < LastAssumptionKind; kind++) // for each table
+   for (int kind=0; _marked > 0 && cleanupCount != 0 && kind < LastAssumptionKind; kind++) // for each table
       {
       if (_detachPending[kind] == true)  // Is there anything to remove from this table?
          {
