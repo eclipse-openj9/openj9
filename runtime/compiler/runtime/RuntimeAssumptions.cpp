@@ -490,15 +490,6 @@ TR_PersistentCHTable::removeAssumptionFromList(
       OMR::RuntimeAssumption *assumption,
       OMR::RuntimeAssumption *prev)
    {
-   OMR::RuntimeAssumption *next = assumption->getNext();
-   assumption->dequeueFromListOfAssumptionsForJittedBody();
    TR_RuntimeAssumptionTable *rat = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-   rat->incReclaimedAssumptionCount(assumption->getAssumptionKind());
-   assumption->paint(); // RAS
-
-   jitPersistentFree(assumption);
-   if (prev)
-      prev->setNext(next);
-   else
-      *list = next;
+   rat->detachFromRAT(assumption);
    }

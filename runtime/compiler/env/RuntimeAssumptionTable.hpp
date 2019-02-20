@@ -116,7 +116,15 @@ class TR_RuntimeAssumptionTable
    void detachFromRAT(OMR::RuntimeAssumption *assumption);
 
    void markAssumptionsAndDetach(void *reclaimedMetaData, bool reclaimPrePrologueAssumptions = false);
-   void reclaimMarkedAssumptionsFromRAT();
+
+   /**
+    * Walk the table removing entries that have been marked as detached.
+    *
+    * If a clean-up count is specified at most that number of entries will be
+    * removed from the table - this is used to rate limit clean-up activity
+    * and amortize the cost over time.
+    */
+   void reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount = -1);
 
    int32_t countRatAssumptions();
 
