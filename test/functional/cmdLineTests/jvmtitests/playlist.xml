@@ -124,7 +124,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>11</subset>
+			<subset>11+</subset>
 		</subsets>
 	</test>
 	<test>
@@ -261,7 +261,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9+</subset>
+			<subset>11+</subset>
 		</subsets>
 	</test>
 
@@ -321,7 +321,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9+</subset>
+			<subset>11+</subset>
 		</subsets>
 	</test>
 
