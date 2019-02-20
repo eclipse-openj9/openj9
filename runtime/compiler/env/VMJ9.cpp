@@ -5626,15 +5626,6 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
    TR_ASSERT(newCache->isReserved(), "assertion failure"); // MCT
    }
 
-intptrj_t
-TR_J9VMBase::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
-   {
-   TR::VMAccessCriticalSection indexedTrampolineLookup(this);
-   intptrj_t tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(helperIndex, callSite);
-   TR_ASSERT(tramp, "Error: CodeCache is not initialized properly.\n");
-   return tramp;
-   }
-
 // interpreter profiling support
 TR_IProfiler *
 TR_J9VMBase::getIProfiler()
