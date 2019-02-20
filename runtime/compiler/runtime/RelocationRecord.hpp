@@ -382,6 +382,11 @@ struct TR_RelocationRecordMethodCallAddressBinaryTemplate : public TR_Relocation
    UDATA _methodAddress;
    };
 
+struct TR_RelocationRecordResolvedTrampolinesBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _symbolID;
+   };
+
 extern char* AOTcgDiagOn;
 
 class TR_RelocationRecordGroup
@@ -489,6 +494,11 @@ struct TR_RelocationSymbolFromManagerPrivateData
    void *_symbol;
    };
 
+struct TR_RelocationRecordResolvedTrampolinesPrivateData
+   {
+   TR_OpaqueMethodBlock *_method;
+   };
+
 union TR_RelocationRecordPrivateData
    {
    TR_RelocationRecordHelperAddressPrivateData helperAddress;
@@ -503,6 +513,7 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordEmitClassPrivateData emitClass;
    TR_RelocationRecordDebugCounterPrivateData debugCounter;
    TR_RelocationSymbolFromManagerPrivateData symbolFromManager;
+   TR_RelocationRecordResolvedTrampolinesPrivateData resolvedTrampolines;
    };
 
 // TR_RelocationRecord is the base class for all relocation records.  It is used for all queries on relocation
@@ -1705,9 +1716,30 @@ class TR_RelocationRecordSymbolFromManager : public TR_RelocationRecord
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual void storePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
       virtual void activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
       bool needsUnloadAssumptions(TR::SymbolType symbolType);
       bool needsRedefinitionAssumption(TR_RelocationRuntime *reloRuntime, uint8_t *reloLocation, TR_OpaqueClassBlock *clazz, TR::SymbolType symbolType);
+   };
+
+class TR_RelocationRecordDiscontiguousSymbolFromManager : public TR_RelocationRecordSymbolFromManager
+   {
+   public:
+      TR_RelocationRecordDiscontiguousSymbolFromManager() {}
+      TR_RelocationRecordDiscontiguousSymbolFromManager(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordSymbolFromManager(reloRuntime, record) {}
+      virtual char *name() { return "TR_RelocationRecordDiscontiguousSymbolFromManager"; }
+      virtual void storePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
+class TR_RelocationRecordResolvedTrampolines : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordResolvedTrampolines() {}
+      TR_RelocationRecordResolvedTrampolines(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+      virtual char *name() { return "TR_RelocationRecordResolvedTrampolines"; }
+      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate); }
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 /* SYMBOL VALIDATION MANAGER */
 
