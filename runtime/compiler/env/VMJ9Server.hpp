@@ -251,10 +251,11 @@ public:
    virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
    virtual intptrj_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
    virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override;
-   virtual void * getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
-   virtual void * setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp) override { TR_ASSERT(0, "called");  return 0; }
-   virtual void * persistJ2IThunk(void *thunk) override { TR_ASSERT(0, "called");  return 0; }
-   void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize) { TR_ASSERT(0, "called");  return 0; }
+   virtual void * getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp) override;
+   virtual void * setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp) override;
+   virtual void * persistJ2IThunk(void *thunk) override;
+   virtual void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize);
+   virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength) override;
    virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
 
    };
