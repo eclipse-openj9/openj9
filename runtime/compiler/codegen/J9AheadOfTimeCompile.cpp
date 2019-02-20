@@ -676,6 +676,25 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
+
+         case TR_ResolvedTrampolines:
+            {
+            cursor++;
+            if (is64BitTarget)
+               cursor += 4;     // padding
+            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+            TR_RelocationRecordResolvedTrampolinesBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordResolvedTrampolinesBinaryTemplate *>(cursor);
+            if (isVerbose)
+               {
+               traceMsg(self()->comp(), "\n Resolved Trampoline: symbolID=%d ",
+                        (uint32_t)binaryTemplate->_symbolID);
+               }
+            cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
+            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+            }
+            break;
+
          case TR_CheckMethodEnter:
          case TR_CheckMethodExit:
             cursor++;        // unused field
@@ -1704,6 +1723,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
 
          case TR_SymbolFromManager:
+         case TR_DiscontiguousSymbolFromManager:
             {
             cursor++;
             if (is64BitTarget)
@@ -1715,6 +1735,11 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                {
                traceMsg(self()->comp(), "\n Symbol From Manager: symbolID=%d symbolType=%d ",
                         (uint32_t)binaryTemplate->_symbolID, (uint32_t)binaryTemplate->_symbolType);
+
+               if (kind == TR_DiscontiguousSymbolFromManager)
+                  {
+                  traceMsg(self()->comp(), "isDiscontiguous ");
+                  }
                }
             cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
