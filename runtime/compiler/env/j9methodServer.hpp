@@ -259,35 +259,24 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
    virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
    virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override;
    virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz) override;
-
-   virtual void *                stringConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override { TR_ASSERT(0, "called");  return false; }
-   virtual void *                methodTypeConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual bool                  isUnresolvedMethodType(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
-   virtual void *                methodHandleConstant(int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
-
-   virtual bool                  fieldAttributes ( TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override { TR_ASSERT(0, "called");  return false; }
-
-   virtual bool                  staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override { TR_ASSERT(0, "called");  return false; }
-
+   virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
+   virtual void *                methodTypeConstant(int32_t cpIndex) override;
+   virtual bool                  isUnresolvedMethodType(int32_t cpIndex) override;
+   virtual void *                methodHandleConstant(int32_t cpIndex) override;
+   virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex) override;
+   /* No need to override the stringConstant, fieldAttributes and staticAttributes method as the parent method will be sufficient */
    virtual int32_t               virtualCallSelector(uint32_t cpIndex) override { TR_ASSERT(0, "called");  return 0; }
    virtual char *                fieldSignatureChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
    virtual char *                staticSignatureChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
-
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override { TR_ASSERT(0, "called");  return NULL; }
    virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return NULL; }
-
    virtual bool                  getUnresolvedFieldInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
    virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
    virtual bool                  getUnresolvedSpecialMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
    virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
-
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
-
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override;
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*) override;
-
    virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
    bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
    static bool createResolvedRelocatableJ9MethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
