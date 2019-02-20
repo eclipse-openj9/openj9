@@ -5590,7 +5590,11 @@ JVM_GetInterfaceVersion(void)
 
 	j2seVersion = getVersionFromPropertiesFile();
 	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
-		result = 6; /* JDK11+ */
+		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) == J2SE_V12) {
+			result = 5; /* JDK12 hasn't got same update as JDK11 & HEAD */
+		} else {
+			result = 6; /* JDK11 & HEAD */
+		}
 	}
 
 	Trc_SC_GetInterfaceVersion_Exit(result);
