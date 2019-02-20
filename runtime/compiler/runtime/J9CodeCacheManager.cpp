@@ -722,10 +722,3 @@ J9::CodeCacheManager::printOccupancyStats()
       codeCache->printOccupancyStats();
       }
    }
-
-
-intptrj_t
-J9::CodeCacheManager::findHelperTrampoline(int32_t helperIndex, void *callSite)
-   {
-   return (intptrj_t)OMR::CodeCacheManagerConnector::findHelperTrampoline(helperIndex, callSite);
-   }
