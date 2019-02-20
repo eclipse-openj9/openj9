@@ -197,7 +197,9 @@ if(JAVA_SPEC_VERSION EQUAL 8)
 	)
 endif()
 
-if(JAVA_SPEC_VERSION GREATER_EQUAL 9)
+# We'd like to use GREATER_EQUAL here (and below), but that operator requires
+# cmake version 3.7 or better; the minimum version we require is 3.4.
+if(NOT JAVA_SPEC_VERSION LESS 9)
 	# sources for Java 9+
 	target_sources(jclse
 		PRIVATE
@@ -206,15 +208,15 @@ if(JAVA_SPEC_VERSION GREATER_EQUAL 9)
 	)
 endif()
 
-if(JAVA_SPEC_VERSION GREATER_EQUAL 10)
+if(NOT JAVA_SPEC_VERSION LESS 10)
 	# sources for Java 10+
 endif()
 
-if(JAVA_SPEC_VERSION GREATER_EQUAL 11)
+if(NOT JAVA_SPEC_VERSION LESS 11)
 	# sources for Java 11+
 endif()
 
-if(JAVA_SPEC_VERSION GREATER_EQUAL 12)
+if(NOT JAVA_SPEC_VERSION LESS 12)
 	# sources for Java 12+
 endif()
 
