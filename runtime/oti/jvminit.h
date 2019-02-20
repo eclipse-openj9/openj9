@@ -374,6 +374,11 @@ enum INIT_STAGE {
 #define VMOPT_XXENABLEPOSITIVEHASHCODE "-XX:+PositiveIdentityHash"
 #define VMOPT_XXDISABLEPOSITIVEHASHCODE "-XX:-PositiveIdentityHash"
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define VMOPT_XXENABLEVALHALLA "-XX:+EnableValhalla"
+#define VMOPT_XXDISABLEVALHALLA "-XX:-EnableValhalla"
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 
 #define VMOPT_XUSE_CEEHDLR "-XCEEHDLR"
