@@ -158,7 +158,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
                                                     bool shouldUseCompiledCopy,
                                                     TR::Options *options,
                                                     TR::Compilation *comp,
-                                                    TR_ResolvedMethod *resolvedMethod)
+                                                    TR_ResolvedMethod *resolvedMethod,
+                                                    uint8_t *existingCode)
    {
    _currentThread = vmThread;
    _fe = theFE;
@@ -194,14 +195,14 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
 
    // If we want to trace this method but the AOT body is not prepared to handle it
    // we must fail this AOT load with an error code that will force retrial
-   if ((fej9->isMethodExitTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
+   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
       {
       setReturnCode(compilationAotValidateMethodExitFailure);
       return NULL; // fail
       }
-   if ((fej9->isMethodEnterTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
+   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
       &&
        (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
       {
@@ -264,7 +265,12 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       else
          {
          _newExceptionTableStart = allocateSpaceInDataCache(_exceptionTableCacheEntry->size, _exceptionTableCacheEntry->type);
-         tempCodeStart = tempDataStart + dataSize;
+         // JITaaS: code should always be non-NULL, should point to the code cache
+         // received from the server.
+         if (existingCode)
+            tempCodeStart = existingCode;
+         else
+            tempCodeStart = tempDataStart + dataSize;
          if (_newExceptionTableStart)
             {
             TR_DataCacheManager::copyDataCacheAllocation(reinterpret_cast<J9JITDataCacheHeader *>(_newExceptionTableStart), _exceptionTableCacheEntry);
@@ -354,213 +360,6 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
          }
       }
 
-   if (haveReservedCodeCache())
-      codeCache()->unreserve();
-   return _exceptionTable;
-   }
-
-// Prepare to relocate an AOT method from either a JXE or shared cache
-// returns J9JITExceptionTable pointer if successful, NULL if not
-J9JITExceptionTable *
-TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
-                                                    TR_FrontEnd *theFE,
-                                                    TR::CodeCache *cc,
-                                                    uint8_t *code,
-                                                    const J9JITDataCacheHeader *cacheEntry,
-                                                    J9Method *theMethod,
-                                                    bool shouldUseCompiledCopy,
-                                                    TR::Options *options,
-                                                    TR::Compilation *comp,
-                                                    TR_ResolvedMethod *resolvedMethod)
-   {
-   _currentThread = vmThread;
-   _fe = theFE;
-   _codeCache = cc;
-   _method = theMethod;
-   _ramCP = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->cp();
-   _useCompiledCopy = shouldUseCompiledCopy;
-   _classReloAmount = 1;
-   _exceptionTable = NULL;
-   _newExceptionTableStart = NULL;
-   _relocationStatus = RelocationNoError;
-   _haveReservedCodeCache = false;
-   _returnCode = 0;
-   _comp = comp;
-   _trMemory = comp->trMemory();
-   _currentResolvedMethod = resolvedMethod;
-
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-
-   _options = options;
-   TR_ASSERT(_options, "Options were not correctly initialized.");
-   _reloLogger->setupOptions(_options);
-
-   uint8_t *tempCodeStart, *tempDataStart;
-   uint8_t *oldDataStart, *oldCodeStart, *newCodeStart;
-   tempDataStart = (uint8_t *)cacheEntry;
-
-   //Check method header is valid
-   _aotMethodHeaderEntry = (TR_AOTMethodHeader *)(cacheEntry + 1); // skip the header J9JITDataCacheHeader
-   if (!aotMethodHeaderVersionsMatch())
-      return NULL;
-
-   // If we want to trace this method but the AOT body is not prepared to handle it
-   // we must fail this AOT load with an error code that will force retrial
-   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
-      &&
-       (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
-      {
-      setReturnCode(compilationAotValidateMethodExitFailure);
-      return NULL; // fail
-      }
-   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
-      &&
-       (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
-      {
-      setReturnCode(compilationAotValidateMethodEnterFailure);
-      return NULL; // fail
-      }
-
-   // Check the flags related to string compression
-   if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesEnableStringCompressionFolding)
-      {
-      int32_t *enableCompressionFieldAddr = fej9->getStringClassEnableCompressionFieldAddr(comp, true);
-      bool conflict = true;
-      if (enableCompressionFieldAddr)
-         {
-         if (*enableCompressionFieldAddr)
-            {
-            if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_StringCompressionEnabled)
-               conflict = false;
-            }
-         else
-            {
-            if (!(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_StringCompressionEnabled))
-               conflict = false;
-            }
-         }
-      if (conflict)
-         {
-         setReturnCode(compilationAotValidateStringCompressionFailure);
-         return NULL;
-         }
-      }
-
-   _exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *)cacheEntry + _aotMethodHeaderEntry->offsetToExceptionTable);
-
-   if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
-      {
-      oldDataStart = (U_8 *)_aotMethodHeaderEntry->compileMethodDataStartPC;
-      oldCodeStart = (U_8 *)_aotMethodHeaderEntry->compileMethodCodeStartPC;
-
-      UDATA dataSize = _aotMethodHeaderEntry->compileMethodDataSize;
-      UDATA codeSize = _aotMethodHeaderEntry->compileMethodCodeSize;
-
-      TR_ASSERT(codeSize > sizeof(OMR::CodeCacheMethodHeader), "codeSize for AOT loads should include the CodeCacheHeader");
-
-      if (useCompiledCopy())
-         {
-         newCodeStart = oldCodeStart;
-         _newExceptionTableStart = oldDataStart;
-         TR_ASSERT(oldCodeStart != NULL, "assertion failure");
-         TR_ASSERT(_codeCache, "assertion failure"); // some code cache must be reserved // MCT
-         TR_ASSERT(oldDataStart != NULL, "assertion failure");
-         _exceptionTable = (J9JITExceptionTable *) (_exceptionTableCacheEntry + 1); // skip the header J9JITDataCacheHeader
-         }
-      else
-         {
-         _newExceptionTableStart = allocateSpaceInDataCache(_exceptionTableCacheEntry->size, _exceptionTableCacheEntry->type);
-         tempCodeStart = code;
-         if (_newExceptionTableStart)
-            {
-            TR_DataCacheManager::copyDataCacheAllocation(reinterpret_cast<J9JITDataCacheHeader *>(_newExceptionTableStart), _exceptionTableCacheEntry);
-            _exceptionTable = reinterpret_cast<J9JITExceptionTable *>(_newExceptionTableStart + sizeof(J9JITDataCacheHeader)); // Get new exceptionTable location
-
-            // This must be an AOT load because for AOT compilations we relocate in place
-
-            // We must prepare the list of assumptions linked to the metadata
-            // We could set just a NULL pointer and let the code update that should an
-            // assumption be created.
-            // Another alternative is to create a sentinel entry right away to avoid
-            // having to allocate one at runtime and possibly running out of memory
-            OMR::RuntimeAssumption * raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
-            comp->setMetadataAssumptionList(raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
-            _exceptionTable->runtimeAssumptionList = raList;
-            // If we cannot allocate the memory, fail the compilation
-            if (raList == NULL)
-               _relocationStatus = RelocationAssumptionCreateError; // signal an error
-
-            if (_exceptionTable->bodyInfo)
-               {
-               J9JITDataCacheHeader *persistentInfoCacheEntry = (J9JITDataCacheHeader *)((U_8 *)cacheEntry + _aotMethodHeaderEntry->offsetToPersistentInfo);
-               TR_ASSERT(persistentInfoCacheEntry->type == J9_JIT_DCE_AOT_PERSISTENT_INFO, "Incorrect data cache type read from disk.");
-               _newPersistentInfo = allocateSpaceInDataCache(persistentInfoCacheEntry->size, persistentInfoCacheEntry->type);
-               if (_newPersistentInfo)
-                  {
-                  TR_DataCacheManager::copyDataCacheAllocation(reinterpret_cast<J9JITDataCacheHeader *>(_newPersistentInfo), persistentInfoCacheEntry);
-                  }
-               else
-                  {
-                  reloLogger()->maxCodeOrDataSizeWarning();
-                  _relocationStatus = RelocationPersistentCreateError;
-                  }
-               }
-
-            // newCodeStart points after a OMR::CodeCacheMethodHeader, but tempCodeStart points at a OMR::CodeCacheMethodHeader
-            // to keep alignment consistent, back newCodeStart over the OMR::CodeCacheMethodHeader
-            //we can still do the code start without the bodyInfo! need check in cleanup!
-            newCodeStart = allocateSpaceInCodeCache(codeSize-sizeof(OMR::CodeCacheMethodHeader));
-            if (newCodeStart)
-               {
-               newCodeStart = ((U_8*)newCodeStart) - sizeof(OMR::CodeCacheMethodHeader);
-               // Before copying, memorize the real size of the block returned by the code cache manager
-               // and fix it later
-               U_32 blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
-               memcpy(newCodeStart, tempCodeStart, codeSize);  // the real size may have been overwritten
-               ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; // fix it
-               // Must fix the pointer to the metadata which is stored in the OMR::CodeCacheMethodHeader
-               ((OMR::CodeCacheMethodHeader*)newCodeStart)->_metaData = _exceptionTable;
-               }
-            else
-               {
-               reloLogger()->maxCodeOrDataSizeWarning();
-               _relocationStatus = RelocationCodeCreateError;
-               }
-            }
-         else
-            {
-            reloLogger()->maxCodeOrDataSizeWarning();
-            _relocationStatus = RelocationTableCreateError;
-            }
-         }
-      }
-   else
-      {
-      PORT_ACCESS_FROM_JAVAVM(javaVM());
-      j9tty_printf(PORTLIB, "Relocation Error: Failed to find the exception table");
-      _relocationStatus = RelocationNoClean;
-      }
-
-   if (_relocationStatus == RelocationNoError)
-      {
-      AOTcgDiag5(comp, "%s: relocating code %p -> %p (start pc %p -> %p)\n",
-                 comp->signature(), oldCodeStart, newCodeStart, _exceptionTable->startPC, (uint8_t *)_exceptionTable->startPC - oldCodeStart + newCodeStart);
-      relocateAOTCodeAndData(tempDataStart, oldDataStart, newCodeStart, oldCodeStart);
-      }
-
-   if (_relocationStatus != RelocationNoError)
-      {
-      if (_options->getOption(TR_EnableAOTCacheReclamation))
-         {
-         relocationFailureCleanup();
-         }
-      else
-         {
-         _exceptionTable=NULL;
-         }
-      }
-   // If we reserved a code cache we must unreserve it now because it it not
-   // attached to the comp object, so we can`t discover it later on to unreserve
    if (haveReservedCodeCache())
       codeCache()->unreserve();
    return _exceptionTable;
