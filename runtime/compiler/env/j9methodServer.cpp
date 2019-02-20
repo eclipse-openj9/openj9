@@ -667,25 +667,11 @@ TR_ResolvedJ9JITaaSServerMethod::startAddressForJNIMethod(TR::Compilation *comp)
    return std::get<0>(_stream->read<void *>());
    }
 
-bool
-TR_ResolvedJ9JITaaSServerMethod::getUnresolvedStaticMethodInCP(int32_t cpIndex)
-   {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP, _remoteMirror, cpIndex);
-   return std::get<0>(_stream->read<bool>());
-   }
-
 void *
 TR_ResolvedJ9JITaaSServerMethod::startAddressForInterpreterOfJittedMethod()
    {
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod, _remoteMirror);
    return std::get<0>(_stream->read<void *>());
-   }
-
-bool
-TR_ResolvedJ9JITaaSServerMethod::getUnresolvedSpecialMethodInCP(I_32 cpIndex)
-   {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getUnresolvedSpecialMethodInCP, _remoteMirror, cpIndex);
-   return std::get<0>(_stream->read<bool>());
    }
 
 TR_ResolvedMethod *
@@ -706,18 +692,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
       m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
       }
    return m;
-   }
-
-bool
-TR_ResolvedJ9JITaaSServerMethod::getUnresolvedFieldInCP(I_32 cpIndex)
-   {
-   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getUnresolvedFieldInCP, _remoteMirror, cpIndex);
-   return std::get<0>(_stream->read<bool>());
-#else
-      return true;
-#endif
    }
 
 bool
@@ -1881,4 +1855,82 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::getDeclaringClassFromFieldOrStatic(T
          return NULL;
       }
    return definingClass;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::classOfStatic(int32_t cpIndex, bool returnClassForAOT)
+   {
+   TR_OpaqueClassBlock * clazz = TR_ResolvedJ9JITaaSServerMethod::classOfStatic(cpIndex, returnClassForAOT);
+
+   TR::Compilation *comp = TR::comp();
+   bool validated = false;
+
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addStaticClassFromCPRecord(clazz, cp(), cpIndex);
+      }
+   else
+      {
+      validated = returnClassForAOT;
+      }
+
+   if (validated)
+      return clazz;
+   else
+      return NULL;
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(
+   TR::Compilation *comp,
+   int32_t cpIndex,
+   bool ignoreRtResolve,
+   bool * unresolvedInCP)
+   {
+   TR_ResolvedMethod *method =
+      TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(
+         comp,
+         cpIndex,
+         ignoreRtResolve,
+         unresolvedInCP);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      return method;
+
+   // For now leave private invokevirtual unresolved in AOT. If we resolve it,
+   // we may forceUnresolvedDispatch in codegen, in which case the generated
+   // code would attempt to resolve the wrong kind of constant pool entry.
+   return (method == NULL || method->isPrivate()) ? NULL : method;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getUnresolvedFieldInCP(I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getUnresolvedFieldInCP, getRemoteMirror(), cpIndex);
+   return std::get<0>(_stream->read<bool>());
+#else
+   return true;
+#endif
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getUnresolvedStaticMethodInCP(int32_t cpIndex)
+   {
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP, getRemoteMirror(), cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getUnresolvedSpecialMethodInCP(I_32 cpIndex)
+   {
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getUnresolvedSpecialMethodInCP, getRemoteMirror(), cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getUnresolvedVirtualMethodInCP(int32_t cpIndex)
+   {
+   return false;
    }

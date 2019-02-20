@@ -173,11 +173,8 @@ public:
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override;
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
-   virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
    virtual void *startAddressForInterpreterOfJittedMethod() override;
-   virtual bool getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
-   virtual bool getUnresolvedFieldInCP(I_32 cpIndex) override;
    virtual char * fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len) override;
    virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
@@ -266,15 +263,12 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
    virtual void *                methodHandleConstant(int32_t cpIndex) override;
    virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex) override;
    /* No need to override the stringConstant, fieldAttributes and staticAttributes method as the parent method will be sufficient */
-   virtual int32_t               virtualCallSelector(uint32_t cpIndex) override { TR_ASSERT(0, "called");  return 0; }
-   virtual char *                fieldSignatureChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual char *                staticSignatureChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return NULL; }
-   virtual bool                  getUnresolvedFieldInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  getUnresolvedSpecialMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
-   virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex) override { TR_ASSERT(0, "called");  return false; }
+   virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
+   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override;
+   virtual bool                  getUnresolvedFieldInCP(I_32 cpIndex) override;
+   virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
+   virtual bool                  getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
+   virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex) override;
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override;
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*) override;
