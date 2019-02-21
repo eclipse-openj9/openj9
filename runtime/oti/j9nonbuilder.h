@@ -756,6 +756,7 @@ typedef struct J9NonHeapMemoryData {
 	U_64 postCollectionUsed;
 	U_64 peakSize;
 	U_64 peakUsed;
+	U_64 maxSize;
 }J9NonHeapMemoryData;
 
 typedef struct J9JavaLangManagementData {
