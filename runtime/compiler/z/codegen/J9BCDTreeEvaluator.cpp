@@ -7239,106 +7239,146 @@ J9::Z::TreeEvaluator::pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
 
    TR::MemoryReference* targetMR = generateS390RightAlignedMemoryReference(node, targetReg->getStorageReference(), cg);
    TR::MemoryReference* sourceMR = generateS390RightAlignedMemoryReference(srcNode, srcReg->getStorageReference(), cg);
+   TR_StorageReference* tmpStorageRef = NULL;
+   TR::MemoryReference* tmpMR = NULL;
 
-   bool isNeedExtraShift = false;
-   bool isSimpleCopy = false;
-
-   if(resultPrecision < srcPrecision)
+   if (cg->traceBCDCodeGen())
       {
-      if(resultPrecision % 2 == 0)
+      traceMsg(comp,"\tGen packed decimal shift: %s %p : shift by %d, roundAmount=%d, result Size=%d, precision %d, sourceSize=%d, precision %d\n",
+               node->getOpCode().getName(),
+               node,
+               shiftAmount,
+               roundAmount,
+               resultSize,
+               resultPrecision,
+               sourceSize,
+               srcNode->getDecimalPrecision());
+      }
+
+   if(shiftAmount == 0)
+      {
+      if (srcPrecision > resultPrecision)
          {
-         // MVC + SRP + ZAP + SRP
-         isNeedExtraShift = true;
-         shiftAmount += 1;
-         }
-      else
-         {
-         if(shiftAmount == 0)
+         /* Packed decimal narrrowing with exception handling:
+          *
+          * If the narrowing operation truncates non-zero digits (e.g. shift "123C" by 0 digts and keep 2 digits yields "23C")
+          * and the 'checkOverflow' parameter is true, the JIT'ed sequence should trigger HW exception and
+          * yield control to the Java code (via OOL call) so that overflow exceptions can be thrown.
+          * This is why PD arithmetic operations use 'pdshlOverflow' to perform data truncations
+          * instead of 'modifyPrecision'.
+          */
+
+         tmpStorageRef = TR_StorageReference::createTemporaryBasedStorageReference(sourceSize, comp);
+         tmpStorageRef->setTemporaryReferenceCount(1);
+         tmpMR = generateS390RightAlignedMemoryReference(node, tmpStorageRef, cg);
+
+         generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
+                                sourceSize - 1,
+                                generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
+                                sourceSize - 1,
+                                generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
+
+         shiftAmount = srcPrecision - resultPrecision;
+         if ((srcPrecision % 2) == 0)
             {
-            // ZAP
-            isSimpleCopy = true;
+            // Source being even precision means we need an extra left shift to get right of the source's highest nibble.
+            shiftAmount++;
             }
-         else
+
+         generateSS3Instruction(cg, TR::InstOpCode::SRP, node,
+                                sourceSize - 1,
+                                generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
+                                shiftAmount, roundAmount);
+
+         generateSS3Instruction(cg, TR::InstOpCode::SRP, node,
+                                sourceSize - 1,
+                                generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
+                                -1*shiftAmount, roundAmount);
+
+         generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
+                                resultSize - 1,
+                                generateS390RightAlignedMemoryReference(*targetMR, node, 0, cg),
+                                resultSize - 1,
+                                generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg));
+         }
+      else  // zero shift, copy or widen result
+         {
+         generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
+                                resultSize - 1,
+                                generateS390RightAlignedMemoryReference(*targetMR, node, 0, cg),
+                                sourceSize - 1,
+                                generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
+
+         // Top nibble cleaning if the PD widening or copying source precision is even
+         if ((srcPrecision % 2) == 0)
             {
-            // MVC + SRP + ZAP
+            cg->genZeroLeftMostPackedDigits(node, targetReg, sourceSize, 1,
+                                            generateS390RightAlignedMemoryReference(*targetMR, node, 0, cg));
             }
          }
       }
-   else
+   else // shiftAmount != 0
       {
-      if(shiftAmount == 0)
-         {
-         // ZAP
-         isSimpleCopy = true;
-         }
-      else
-         {
-         if(resultPrecision % 2 == 0)
-            {
-            // MVC + SRP + ZAP + SRP
-            isNeedExtraShift = true;
-            shiftAmount += 1;
-            }
-         else
-            {
-            // MVC + SRP + ZAP
-            }
-         }
-      }
+      int32_t tmpResultByteSize = sourceSize;
+      bool needExtraShift = false;
 
-   if(isSimpleCopy)
-      {
-      generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
-                             resultSize - 1,
-                             generateS390RightAlignedMemoryReference(*targetMR, node, 0, cg),
-                             sourceSize - 1,
-                             generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
-      }
-   else
-      {
-      if (cg->traceBCDCodeGen())
+      if (!isRightShift)
          {
-         traceMsg(comp,"\tGen MVC + SRP + ZAP for shift: %s %p : shift by %d, roundAmount=%d, \
-                                                                isNeedExtraShift=%d \
-                                                                result Size=%d, precision %d, \
-                                                                sourceSize=%d, precision %d\n",
-                  node->getOpCode().getName(),
-                  node,
-                  shiftAmount,
-                  roundAmount,
-                  isNeedExtraShift,
-                  resultSize,
-                  resultPrecision,
-                  sourceSize,
-                  srcNode->getDecimalPrecision());
+         if ((resultPrecision % 2) == 0)
+            {
+            /* An extra shift is needed when the left shift result's precision is even.
+             * For example, let the input be 00 12 3C (precision=5), shiftAmount=2 and let the result precision be 4.
+             * Shift this left by 2 should produce and expected result of 02 30 0C.
+             *
+             * To produce this expected result with HW exception, we need to
+             *
+             * 1. shift 00 12 3C by 3 (instead of 2) digits to produce an intermediate result 01 23 00 0C
+             * 2. use ZAP to truncate this to 23 00 0C. The purpose of this ZAP is to truncate the leading digits,
+             *    which may or may not be zero, and trigger HW exception in case they are non-zero so that the
+             *    DAA Java implementation gets a chance to thrown Java exceptions. In our example, the leading
+             *    '1' should not be silently discarded (using the NI instruction) because the API 'checkOverflow' parameter
+             *    may be true.
+             * 3. perform a right shift of 1 on the intermediate result to produce the expected result 02 30 0C.
+             *
+             */
+            shiftAmount++;
+            needExtraShift = true;
+            }
+
+         // Allocate enough temporary space to accomodate the amount of left shifts.
+         tmpResultByteSize += (shiftAmount + 1)/2;
          }
 
-      TR_StorageReference* tmpStorageRef = TR_StorageReference::createTemporaryBasedStorageReference(sourceSize, comp);
-      TR_PseudoRegister* tmpReg = cg->allocatePseudoRegister(node->getDataType());
-      tmpReg->setIsInitialized(true);
-      tmpReg->setSize(sourceSize);
-      tmpReg->setStorageReference(tmpStorageRef, node);
-      TR::MemoryReference* tmpMR = generateS390RightAlignedMemoryReference(node, tmpReg->getStorageReference(), cg);
+      tmpStorageRef = TR_StorageReference::createTemporaryBasedStorageReference(tmpResultByteSize, comp);
+      tmpStorageRef->setTemporaryReferenceCount(1);
+      tmpMR = generateS390RightAlignedMemoryReference(node, tmpStorageRef, cg);
+
+      // For this large tmp storage, we need to use XC+MVC to clear and move input into it.
+      if (!isRightShift)
+         {
+         generateSS1Instruction(cg, TR::InstOpCode::XC, node,
+                                tmpResultByteSize - 1,
+                                generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
+                                generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg));
+         }
 
       generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
-                              sourceSize - 1,
-                              generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
-                              sourceMR);
+                             sourceSize - 1,
+                             generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
+                             sourceMR);
 
       generateSS3Instruction(cg, TR::InstOpCode::SRP, node,
-                             sourceSize - 1,
+                             tmpResultByteSize - 1,
                              generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg),
                              shiftAmount, roundAmount);
 
       generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
                              resultSize - 1,
                              generateS390RightAlignedMemoryReference(*targetMR, node, 0, cg),
-                             sourceSize - 1,
+                             tmpResultByteSize - 1,
                              generateS390RightAlignedMemoryReference(*tmpMR, node, 0, cg));
 
-      cg->stopUsingRegister(tmpReg);
-
-      if(isNeedExtraShift)
+      if (needExtraShift)
          {
          generateSS3Instruction(cg, TR::InstOpCode::SRP, node,
                                 resultSize - 1,
