@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -556,7 +556,7 @@ public class J9BCUtil {
 
 		out.append(String.format("Sun Access Flags (0x%s): ", Long.toHexString(romClass.modifiers().longValue())));
 		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
-		
+		out.append(nl);
 		out.append(String.format("J9  Access Flags (0x%s): ", Long.toHexString(romClass.extraModifiers().longValue())));
 		dumpClassJ9ExtraModifiers(out, romClass.extraModifiers().longValue());
 		out.append(nl);
@@ -708,6 +708,8 @@ public class J9BCUtil {
 			out.append("(preverified) ");
 		if ((accessFlags & J9JavaAccessFlags.J9AccClassAnonClass) != 0)
 			out.append("(anonClass) ");
+		if ((accessFlags & J9JavaAccessFlags.J9AccClassIsUnmodifiable) != 0)
+			out.append("(unmodifiable) ");
 	}
 
 	private static void dumpEnclosingMethod(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {

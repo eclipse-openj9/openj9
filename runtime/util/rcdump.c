@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1316,6 +1316,13 @@ j9_printClassExtraModifiers(J9PortLibrary *portLib, U_32 modifiers)
 	{
 		j9tty_printf(PORTLIB, "(preverified)");
 		modifiers &= ~CFR_ACC_HAS_VERIFY_DATA;
+		if(modifiers) j9tty_printf(PORTLIB, " ");
+	}
+
+	if(modifiers & J9AccClassIsUnmodifiable)
+	{
+		j9tty_printf(PORTLIB, "(unmodifiable)");
+		modifiers &= ~J9AccClassIsUnmodifiable;
 		if(modifiers) j9tty_printf(PORTLIB, " ");
 	}
 }

@@ -3232,25 +3232,7 @@ verifyClassesCanBeReplaced(J9VMThread * currentThread, jint class_count, const j
 jboolean
 classIsModifiable(J9JavaVM * vm, J9Class * clazz)
 {
-	jboolean rc = JNI_TRUE;
-
-	if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(clazz->romClass)) {
-		rc = JNI_FALSE;
-	} else if (clazz == J9VMJAVALANGJ9VMINTERNALS_OR_NULL(vm)) {
-		rc = JNI_FALSE;
-	} else if ((J2SE_VERSION(vm) >= J2SE_V11) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsAnonymous)) {
-		rc = JNI_FALSE;
-	}
-
-	/* Object is currently only allowed to be redefined in fast HCR */
-	if (areExtensionsEnabled(vm)) {
-		if (0 == J9CLASS_DEPTH(clazz)) {
-			/* clazz is Object */
-			rc = JNI_FALSE;
-		}
-	}
-
-	return rc;
+	return !J9ROMCLASS_IS_UNMODIFIABLE(clazz->romClass);
 }
 
 jvmtiError

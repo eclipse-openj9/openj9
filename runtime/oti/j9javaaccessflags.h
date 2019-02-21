@@ -47,6 +47,7 @@
 #define J9AccClassHasBeenOverridden 0x100000
 #define J9AccClassHasClinit 0x4000000
 #define J9AccClassHasEmptyFinalize 0x200000
+#define J9AccClassIsUnmodifiable 0x400000
 #define J9AccClassHasFinalFields 0x2000000
 #define J9AccClassHasJDBCNatives 0x400000
 #define J9AccClassHasNonStaticNonAbstractMethods 0x8000000

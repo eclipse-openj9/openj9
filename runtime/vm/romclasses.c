@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ initializeArrayROMClass(J9ROMArrayClass *romClass, J9UTF8 *className, U_32 array
 	NNSRP_SET(romClass->className, className);
 	NNSRP_SET(romClass->superclassName, &arrayROMClasses.objectClassName);
 	romClass->modifiers = J9AccFinal | J9AccPublic | J9AccClassArray | J9AccAbstract;
-	romClass->extraModifiers = J9AccClassCloneable;
+	romClass->extraModifiers = J9AccClassCloneable | J9AccClassIsUnmodifiable;
 	romClass->interfaceCount = sizeof(arrayROMClasses.interfaceClasses) / sizeof(J9SRP);
 	NNSRP_SET(romClass->interfaces, &arrayROMClasses.interfaceClasses);
 	romClass->arrayShape = arrayShape;
@@ -150,6 +150,7 @@ initializeBaseTypeROMClass(J9ROMReflectClass *romClass, J9UTF8 *className, U_32 
 	romClass->romSize = size;
 	NNSRP_SET(romClass->className, className);
 	romClass->modifiers = J9AccFinal | J9AccPublic | J9AccClassInternalPrimitiveType | J9AccAbstract;
+	romClass->extraModifiers = J9AccClassIsUnmodifiable;
 	romClass->reflectTypeCode = typeCode;
 	romClass->instanceShape = instanceShape;
 	romClass->elementSize = elementSize;

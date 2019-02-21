@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1064,7 +1064,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                             + UNUSED
  *                            + UNUSED
  *                           + UNUSED
- *                          + AccClassAnonClass;
+ *                          + AccClassAnonClass
  *
  *                        + AccSynthetic (matches Oracle modifier position)
  *                       + AccClassUseBisectionSearch
@@ -1078,10 +1078,10 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *
  *              + AccClassBytecodesModified
  *             + AccClassHasEmptyFinalize
- *            + UNUSED
+ *            + AccClassIsUnmodifiable
  *           + AccClassHasVerifyData
  *
- *         + J9AccClassIsContended
+ *         + AccClassIsContended
  *        + AccClassHasFinalFields
  *       + AccClassHasClinit
  *      + AccClassHasNonStaticNonAbstractMethods
@@ -1125,6 +1125,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 
 	if ( classFileOracle->isClassContended() ) {
 		modifiers |= J9AccClassIsContended;
+	}
+
+	if ( classFileOracle->isClassUnmodifiable() ) {
+		modifiers |= J9AccClassIsUnmodifiable;
 	}
 
 	U_32 classNameindex = classFileOracle->getClassNameIndex();

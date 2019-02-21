@@ -338,4 +338,26 @@ static const struct { \
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
 #endif /* defined(OPENJ9_BUILD) */
 
+/* Annotation name which indicates that a class is not allowed to be modified by
+ * JVMTI ClassFileLoadHook or RedefineClasses.
+ */
+#define J9_UNMODIFIABLE_CLASS_ANNOTATION "Lcom/ibm/oti/vm/J9UnmodifiableClass;"
+
+typedef struct {
+	char tag;
+	char zero;
+	char size;
+	char data[LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION)];
+} J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA;
+
+#if defined(__cplusplus)
+static_assert((sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA) == (3 + LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION))), "Annotation structure is not packed correctly");
+/* '/' is the lowest numbered character which appears in the annotation name (assume
+ * that no '$' exists in there). The name length must be smaller than '/' in order
+ * to ensure that there are no overlapping substrings which would mandate a more
+ * complex matching algorithm.
+ */
+static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), "Annotation contains invalid characters");
+#endif /* __cplusplus */
+
 #endif /* J9_H */
