@@ -26,7 +26,7 @@
 	<test>
 		<testCaseName>cmdLineTest_J9test_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) \
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)j9tests_Java8.xml$(Q) \
 	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
@@ -46,7 +46,7 @@
 	<test>
 		<testCaseName>cmdLineTest_J9test</testCaseName>
 		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) \
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)j9tests_Java9.xml$(Q) \
 	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
@@ -66,7 +66,7 @@
 	<test>
 		<testCaseName>cmdLineTest_J9test_extended</testCaseName>
 		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) \
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)j9tests.xml$(Q) \
 	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \

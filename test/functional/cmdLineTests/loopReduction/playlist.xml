@@ -28,7 +28,7 @@
 		<variations>
 			<variation>-Xjit -Xdump:java</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DCPDL=$(Q)$(P)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)loopReduction.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DCPDL=$(Q)$(P)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)loopReduction.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>

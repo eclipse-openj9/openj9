@@ -230,7 +230,7 @@
 		<testCaseName>jsr292_MethodHandleAPI_Test_JitCount1</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED \
-	-Xjit:count=1,disableAsyncCompilation,verbose,vlog="$(TEST_RESROOT)$(D)jitv.log" \
+	-Xjit:count=1,disableAsyncCompilation,verbose,vlog=$(Q)$(TEST_RESROOT)$(D)jitv.log$(Q) \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
