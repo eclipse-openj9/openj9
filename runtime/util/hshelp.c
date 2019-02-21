@@ -733,7 +733,6 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 	for (i = 0; i < classCount; ++i) {
 		J9Class * replacementClass;
 		J9Class * superclass;
-		J9Class * nextLink;
 
 		if (array[i]->replacementClass.ramClass) {
 			replacementClass = array[i]->replacementClass.ramClass;
