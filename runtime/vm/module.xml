@@ -81,6 +81,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="UMA_OBJECTS:=$(filter-out armcinterp%,$(UMA_OBJECTS))\n">
 				<exclude-if condition="spec.flags.arch_arm"/>
 			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out arm64cinterp%,$(UMA_OBJECTS))\n">
+				<exclude-if condition="spec.flags.arch_aarch64"/>
+			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out pcinterp%,$(UMA_OBJECTS))\n">
 				<exclude-if condition="spec.flags.arch_power"/>
 			</makefilestub>
