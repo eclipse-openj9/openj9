@@ -148,7 +148,7 @@ BOOLEAN
 requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass)
 {
 	BOOLEAN checkFlag = TRUE;
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		if (srcModule == targetClass->module) {
 			if (NULL != srcModule) {
 				/* same named module */
@@ -489,7 +489,7 @@ tryAgain:
 		cpClass = J9_CLASS_FROM_CP(ramCP);
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 
-		if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_19) {
+		if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_V11) {
 			/* This check is only required in Java9 and there have been applications that
 			 * fail when this check is enabled on Java8.
 			 */
@@ -1191,7 +1191,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 	}
 
-	if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_19) {
+	if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_V11) {
 		/* This check is only required in Java9 and there have been applications that
 		 * fail when this check is enabled on Java8.
 		 */

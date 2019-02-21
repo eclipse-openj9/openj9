@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,7 +122,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
 
 			/* Fill in module name and version */
-			if (j2seVersion >= J2SE_19) {
+			if (j2seVersion >= J2SE_V11) {
 				J9Module *module = NULL;
 				U_8 *classNameUTF = NULL;
 				UDATA length = 0;

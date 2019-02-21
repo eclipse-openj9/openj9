@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1345,7 +1345,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 	}
 
 	J9Module* module = eventData->j9module;
-	if ((J2SE_VERSION(vm) >= J2SE_19)
+	if ((J2SE_VERSION(vm) >= J2SE_V11)
 		&& (NULL == module)
 	) {
 		module = getModule(currentThread, (U_8*)eventData->className, realClassNameLength, eventData->classloader);
@@ -1394,7 +1394,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 	if (!classpath && !infoFound) {
 		UDATA pathEntryCount = eventData->entryCount;
 
-		if (J2SE_VERSION(vm) >= J2SE_19) {
+		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			if (eventData->classloader == vm->systemClassLoader) {
 				isBootLoader = true;
 				pathEntryCount += 1;
@@ -2726,7 +2726,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 #if defined(OPENJ9_BUILD)
 	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 #else /* OPENJ9_BUILD */
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
 #endif /* OPENJ9_BUILD */

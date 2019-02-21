@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@
 #include "j2sever.h"
 
 /* processReferenceMonitor is only used for Java 9 and later */
-#define J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_19)
+#define J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_V11)
 
 UDATA initializeVMThreading(J9JavaVM *vm)
 {

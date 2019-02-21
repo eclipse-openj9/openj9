@@ -2721,7 +2721,7 @@ fail:
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				}
 			}
-			if ((J2SE_VERSION(javaVM) >= J2SE_19) && (NULL == classBeingRedefined)) {
+			if ((J2SE_VERSION(javaVM) >= J2SE_V11) && (NULL == classBeingRedefined)) {
 				ramClass->module = module;
 				if (TrcEnabled_Trc_MODULE_setting_package) {
 					trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
@@ -2837,7 +2837,7 @@ retry:
 	/* To prevent deadlock, release the classTableMutex before loading the classes required for the new class. */
 	omrthread_monitor_exit(javaVM->classTableMutex);
 
-	if (J2SE_VERSION(javaVM) >= J2SE_19) {
+	if (J2SE_VERSION(javaVM) >= J2SE_V11) {
 		if (NULL == classBeingRedefined) {
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 				/* At this point the elementClass has been loaded. No

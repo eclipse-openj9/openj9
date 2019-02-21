@@ -3232,7 +3232,7 @@ classIsModifiable(J9JavaVM * vm, J9Class * clazz)
 		rc = JNI_FALSE;
 	} else if (clazz == J9VMJAVALANGJ9VMINTERNALS_OR_NULL(vm)) {
 		rc = JNI_FALSE;
-	} else if ((J2SE_VERSION(vm) >= J2SE_19) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsAnonymous)) {
+	} else if ((J2SE_VERSION(vm) >= J2SE_V11) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsAnonymous)) {
 		rc = JNI_FALSE;
 	}
 

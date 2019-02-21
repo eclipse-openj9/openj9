@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -386,10 +386,6 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 
 	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
 		javaVersion = "JRE 1.8.0";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
-		javaVersion = "JRE 9";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V10) {
-		javaVersion = "JRE 10";
 	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
 		javaVersion = "JRE 11";
 	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {

@@ -1312,8 +1312,7 @@ static const VersionSetting SHAPE_SETTINGS[] = {
  * Table to map textual props file entries to numeric constants.
  */
 static const VersionSetting VERSION_SETTINGS[] = {
-		{"1.8", J2SE_18},
-		{"1.9", J2SE_19}
+		{"1.8", J2SE_18}
 };
 #define NUM_VERSION_SETTINGS (sizeof(VERSION_SETTINGS) / sizeof(VersionSetting))
 
@@ -1441,16 +1440,12 @@ bail:
  * Attempt loading 'release' file, and get Java version info.
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
  * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
- * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_V9';
- * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
  * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
  * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK',
- *         'J2SE_19 | J2SE_SHAPE_V9',
- *         'J2SE_V10 | J2SE_SHAPE_V10',
  *         'J2SE_V11 | J2SE_SHAPE_V11',
  *         'J2SE_V12 | J2SE_SHAPE_V12',
  *         'J2SE_LATEST | J2SE_SHAPE_LATEST'
@@ -1477,14 +1472,6 @@ getVersionFromReleaseFile(void)
 			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
 #undef   JAVA_VERSION_8
 				finalVersion = J2SE_18 | J2SE_SHAPE_OPENJDK;
-#define	 JAVA_VERSION_9 "\"9" /* its usual format is "9[.x.x]" */
-			} else if (!strncmp(version, JAVA_VERSION_9, sizeof(JAVA_VERSION_9) - 1)) {
-#undef   JAVA_VERSION_9
-				finalVersion = J2SE_19 | J2SE_SHAPE_V9;
-#define	 JAVA_VERSION_10 "\"10" /* its usual format is "10[.x.x]" */
-			} else if (!strncmp(version, JAVA_VERSION_10, sizeof(JAVA_VERSION_10) - 1)) {
-#undef   JAVA_VERSION_10			
-				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
 #define	 JAVA_VERSION_11 "\"11" /* its usual format is "11[.x.x]" */
 			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
 #undef   JAVA_VERSION_11
@@ -1657,7 +1644,7 @@ setNLSCatalog(struct J9PortLibrary* portLib, UDATA j2seVersion)
 	const char *nlsSearchPaths = NULL;
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
+	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
 		/*
 		 * j9libBuffer doesn't end in a slash, but j9nls_set_catalog ignores everything after
 		 * the last slash. Append a slash to our local copy of j9libBuffer
@@ -1757,7 +1744,7 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 	}
 
 	if (includeAccessors) {
-		if (J2SE_VERSION(vm) >= J2SE_19) {
+		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
 			clazzMethodAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/MethodAccessorImpl");
 		} else {
@@ -2107,7 +2094,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 			zipFuncs = (J9ZipFunctionTable*) J9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 		}
-		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
+		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
 			optionsDefaultFileLocation = jvmBufferData(j9libBuffer);
 		} else {
 			optionsDefaultFileLocation = jvmBufferData(j9binBuffer);

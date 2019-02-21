@@ -80,7 +80,7 @@ computeJCLRuntimeFlags(J9JavaVM *vm)
 #endif
 
 #ifdef J9VM_OPT_MODULE
-	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		flags |= JCL_RTFLAG_OPT_MODULE;
 	}
 #endif
@@ -100,11 +100,10 @@ standardInit( J9JavaVM *vm, char *dllName)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ConstantPool *jclConstantPool = (J9ConstantPool *) vm->jclConstantPool;
 	extern J9ROMClass *jclROMClass;
-	jclass clazz;
+	jclass clazz = NULL;
 	J9NativeLibrary *javaLibHandle = NULL;
 	char *threadName = NULL;
 	jobject threadGroup = NULL;
-	UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 
 	/* Register this module with trace */
 	UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
@@ -117,7 +116,7 @@ standardInit( J9JavaVM *vm, char *dllName)
 	jclConstantPool->romConstantPool = J9_ROM_CP_FROM_ROM_CLASS(jclROMClass);
 
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-	if (j2seVersion < J2SE_19) {
+	if (J2SE_VERSION(vm) < J2SE_V11) {
 		/* Process the command-line bootpath additions/modifications */
 		if (computeFinalBootstrapClassPath(vm)) {
 			goto _fail;
@@ -209,7 +208,7 @@ standardInit( J9JavaVM *vm, char *dllName)
 	internalInitializeJavaLangClassLoader((JNIEnv*)vmThread);
 	if (vmThread->currentException) goto _fail;
 
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		result = registerJdkInternalReflectConstantPoolNatives((JNIEnv*)vmThread);
 		if (0 != result) {
 			fprintf(stderr, "Failed to register natives for jdk.internal.reflect.ConstantPool\n");
@@ -294,7 +293,7 @@ standardPreconfigure(JavaVM *jvm)
 	J9JavaVM* vm = (J9JavaVM*)jvm;
 
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-	if (J2SE_VERSION(vm) < J2SE_19) {
+	if (J2SE_VERSION(vm) < J2SE_V11) {
 		/* Now, based on java.home we can compute the default bootpath */
 		if (initializeBootClassPathSystemProperty(vm)) {
 			goto _fail;
@@ -525,7 +524,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	BOOLEAN initClassPathEntry = FALSE;
 
 	/* Get the BP from the VM sysprop */
-	if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) < J2SE_19) {
+	if (J2SE_VERSION(vm) < J2SE_V11) {
 		(*VMI)->GetSystemProperty(VMI, BOOT_PATH_SYS_PROP, &path);
 	} else {
 		(*VMI)->GetSystemProperty(VMI, BOOT_CLASS_PATH_APPEND_PROP, &path);

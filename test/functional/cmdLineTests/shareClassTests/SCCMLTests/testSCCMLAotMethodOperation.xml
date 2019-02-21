@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2018 IBM Corp. and others
+  Copyright (c) 2012, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,7 +110,7 @@
 	</test>
 	
 	<test id="Test 2 - Setup: create an cache with AOT methods" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$ -Xaot:forceAot,count=1,disableAsyncCompilation -version</command>
+		<command>$JAVA_EXE$ $currentMode$ -Xaot:forceAot,count=0,disableAsyncCompilation -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
 		
 		<output type="failure" caseSensitive="yes" regex="no">error</output>

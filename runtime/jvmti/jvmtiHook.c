@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -587,7 +587,7 @@ jvmtiHookVMStarted(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 		UDATA javaOffloadOldState = 0;
 		BOOLEAN reportEvent = TRUE;
 
-	 	if (J2SE_VERSION(vm) >= J2SE_19) {
+	 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 	 		if (j9env->capabilities.can_generate_early_vmstart == 0) {
 	 			reportEvent = FALSE;
 	 		}
@@ -614,7 +614,7 @@ jvmtiHookModuleSystemStarted(J9HookInterface** hook, UDATA eventNum, void* event
 	Trc_JVMTI_jvmtiHookModuleSystemStarted_Entry();
 
 	Assert_JVMTI_true(J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED));
-	Assert_JVMTI_true(J2SE_VERSION(vm) >= J2SE_19);
+	Assert_JVMTI_true(J2SE_VERSION(vm) >= J2SE_V11);
 
 	/*
 	 * In Java9 the VMStart event can be triggered from either the J9HOOK_VM_STARTED
@@ -2248,7 +2248,7 @@ jvmtiHookClassFileLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventDa
 
 	Trc_JVMTI_jvmtiHookClassFileLoadHook_Entry();
 
-	if ((J2SE_VERSION(vm) >= J2SE_19)
+	if ((J2SE_VERSION(vm) >= J2SE_V11)
 		&& (j9env->capabilities.can_generate_early_class_hook_events == 0)
 	) {
 		ENSURE_EVENT_PHASE_START_OR_LIVE(jvmtiHookClassFileLoadHook, j9env);
