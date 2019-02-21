@@ -27,7 +27,7 @@
 		<testCaseName>cmdLineTester_LazyClassLoading</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DJ9JAR=$(Q)$(TEST_RESROOT)$(D)lazyClassLoadingTest.jar$(Q) \
-	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -Xint -jar $(CMDLINETESTER_JAR) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)lazyClassLoading.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>

@@ -98,7 +98,6 @@ static jvmtiError jitEventInitialize(J9VMThread * currentThread, jint redefinedC
 static void jitEventAddMethod(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Method * oldMethod, J9Method * newMethod, UDATA equivalent);
 static void jitEventAddClass(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Class * originalRAMClass, J9Class * replacementRAMClass);
 #endif
-static void removeFromSubclassHierarchy(J9JavaVM *javaVM, J9Class *clazzPtr);
 static void swapClassesForFastHCR(J9Class *originalClass, J9Class *newClass);
 
 #undef  J9HSHELP_DEBUG_SANITY_CHECK
@@ -351,7 +350,6 @@ fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMeth
 					goto done;
 				}
 			}
-
 
 			oldMethodID = oldJNIIDs[oldMethodIndex];
 
@@ -693,11 +691,25 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 	UDATA i;
 
 	/*
-	 * Remove all replaced classes from the subclass traversal list.
+	 * Update the subclass traversal list with the replaced classes.
 	 */
 	classPair = hashTableStartDo(classPairs, &hashTableState);
 	while (classPair != NULL) {
-		removeFromSubclassHierarchy(vm, classPair->originalRAMClass);
+		J9Class *replacementClass = classPair->replacementClass.ramClass;
+		if (NULL != replacementClass) {
+			J9Class *originalClass = classPair->originalRAMClass;
+			J9Class *previous = originalClass->subclassTraversalReverseLink;
+			J9Class *next = originalClass->subclassTraversalLink;
+
+			/* Put the new class into the subclass hierarchy */
+			previous->subclassTraversalLink = replacementClass;
+			next->subclassTraversalReverseLink = replacementClass;
+			replacementClass->subclassTraversalReverseLink = previous;
+			replacementClass->subclassTraversalLink = next;
+			/* link this obsolete class to itself so that it won't have dangling pointers into the subclass traversal list */
+			originalClass->subclassTraversalReverseLink = originalClass;
+			originalClass->subclassTraversalLink = originalClass;
+		}
 		classPair = hashTableNextDo(&hashTableState);
 	}
 
@@ -722,7 +734,6 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 		J9Class * replacementClass;
 		J9Class * superclass;
 		J9Class * nextLink;
-		UDATA superclassCount = 0;
 
 		if (array[i]->replacementClass.ramClass) {
 			replacementClass = array[i]->replacementClass.ramClass;
@@ -747,22 +758,13 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 				superclass = result->replacementClass.ramClass;
 			}
 		}
-		
-		/* Update classes->superclass array with possibly updated ramClass address */
-		superclassCount = J9CLASS_DEPTH(superclass);
-		memcpy(replacementClass->superclasses, superclass->superclasses, superclassCount * sizeof(UDATA));
-		replacementClass->superclasses[superclassCount] = superclass;
 
-		/*
-		 printf("super [j9class %p -> %p] <- class [j9class %p]\n",
-		 superclass, superclass->subclassTraversalLink, replacementClass);
-		 */
-
-		nextLink = superclass->subclassTraversalLink;
-		replacementClass->subclassTraversalLink = nextLink;
-		nextLink->subclassTraversalReverseLink = replacementClass;
-		superclass->subclassTraversalLink = replacementClass;
-		replacementClass->subclassTraversalReverseLink = superclass;
+		if (NULL != superclass) {
+			/* Update classes->superclass array with possibly updated ramClass address */
+			UDATA superclassCount = J9CLASS_DEPTH(superclass);
+			memcpy(replacementClass->superclasses, superclass->superclasses, superclassCount * sizeof(UDATA));
+			replacementClass->superclasses[superclassCount] = superclass;
+		}
 	}
 }
 
@@ -1663,7 +1665,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 }
 
 static void
-fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *classHashTable, J9HashTable *methodHashTable)
+fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *classHashTable, J9HashTable *methodHashTable, J9Class *objectClass)
 {
 	J9ROMClass *romClass = ramConstantPool->ramClass->romClass;
 	U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
@@ -1706,33 +1708,33 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 				if (NULL != resolvedClass) {
 					UDATA methodIndexAndArgCount = methodRef->methodIndexAndArgCount;
 					UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
-					if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS)) {
+					UDATA newMethodIndex = methodIndex;
+					UDATA tagsAndArgCount = methodIndexAndArgCount & (J9_ITABLE_INDEX_TAG_BITS | 0xFF);
+					if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
+						/* Private interface method or non-vTable Object method */
 						if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
-							/* Object can currently not be redefined, so nothing need be done */
-						} else if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
-							/* Private interface method */
-							classPair.originalRAMClass = resolvedClass;
-							classResult = hashTableFind(classHashTable, &classPair);
-							/* If the class was not replaced, no need to update the constant pool */
-							if (NULL != classResult) {
-								J9Class *obsoleteClass = classResult->replacementClass.ramClass;
-								if (NULL != obsoleteClass) {
-									/* If the referenced method was not reordered, no need to update the constant pool */
-									methodPair.oldMethod = obsoleteClass->ramMethods + methodIndex;
-									methodResult = hashTableFind(methodHashTable, &methodPair);
-									if (NULL != methodResult) {
-										UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
-										J9Method *newMethod = methodResult->newMethod;
-										UDATA newMethodIndex = newMethod - J9_CLASS_FROM_METHOD(newMethod)->ramMethods;
-										/* Fix the index in the resolved CP entry, retaining the argCount and tag */
-										methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | argCount | J9_ITABLE_INDEX_METHOD_INDEX);
-									}
+							resolvedClass = objectClass;
+						}
+						classPair.originalRAMClass = resolvedClass;
+						classResult = hashTableFind(classHashTable, &classPair);
+						/* If the class was not replaced, no need to update the constant pool */
+						if (NULL != classResult) {
+							J9Class *obsoleteClass = classResult->replacementClass.ramClass;
+							if (NULL != obsoleteClass) {
+								/* If the referenced method was not reordered, no need to update the constant pool */
+								methodPair.oldMethod = obsoleteClass->ramMethods + methodIndex;
+								methodResult = hashTableFind(methodHashTable, &methodPair);
+								if (NULL != methodResult) {
+									J9Method *newMethod = methodResult->newMethod;
+									newMethodIndex = newMethod - J9_CLASS_FROM_METHOD(newMethod)->ramMethods;
 								}
 							}
 						}
+					} else if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
+						/* vTable Object method - vTable indices are stable in fast HCR, so no need to update */
 					} else {
-						/* Find the appropriate segment for the referenced method within the
-						 * resolvedClass iTable.  This is fast HCR (no addition or removal of
+						/* Standard interface method - find the appropriate segment for the referenced method
+						 * within the resolvedClass iTable.  This is fast HCR (no addition or removal of
 						 * methods), so the shape of the iTables cannot change, just the ordering
 						 * of methods within them.
 						 */
@@ -1751,10 +1753,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 										methodPair.oldMethod = iTableMethodAtIndex(obsoleteClass, methodIndex);
 										methodResult = hashTableFind(methodHashTable, &methodPair);
 										if (NULL != methodResult) {
-											UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
-											UDATA newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
-											/* Fix the index in the resolved CP entry, retaining the argCount */
-											methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | argCount);
+											newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
 										}
 									}
 								}
@@ -1765,6 +1764,8 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 							allInterfaces = allInterfaces->next;
 						}
 					}
+					/* Fix the index in the resolved CP entry, retaining the argCount and tag bits */
+					methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | tagsAndArgCount);
 				}
 				break;
 			}
@@ -1812,13 +1813,14 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9Class *clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
+	J9Class *objectClass = J9VMJAVALANGOBJECT_OR_NULL(currentThread->javaVM);
 
 	while (NULL != clazz) {
 		if (0 != clazz->romClass->ramConstantPoolCount) {
 			/* NOTE: We must fix up the constant pool even if the class is obsolete, as
 			 * this is necessary to invoke new methods from running old methods.
 			 */
-			fixRAMConstantPoolForFastHCR(J9_CP_FROM_CLASS(clazz), classPairs, methodPairs);
+			fixRAMConstantPoolForFastHCR(J9_CP_FROM_CLASS(clazz), classPairs, methodPairs, objectClass);
 		}
 
 		fixRAMSplitTablesForFastHCR(clazz, methodPairs);
@@ -1827,7 +1829,7 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 	}
 	vmFuncs->allClassesEndDo(&state);
 
-	fixRAMConstantPoolForFastHCR((J9ConstantPool *) vm->jclConstantPool, classPairs, methodPairs);
+	fixRAMConstantPoolForFastHCR((J9ConstantPool *) vm->jclConstantPool, classPairs, methodPairs, objectClass);
 }
 
 
@@ -3057,6 +3059,8 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 		J9ROMClass * originalROMClass = classPairs[i].originalRAMClass->romClass;
 		J9ROMClass * replacementROMClass = classPairs[i].replacementClass.romClass;
 		jvmtiError rc;
+		J9UTF8 *originalSuperclassName = J9ROMCLASS_SUPERCLASSNAME(originalROMClass);
+		J9UTF8 *replacementSuperclassName = J9ROMCLASS_SUPERCLASSNAME(replacementROMClass);
 
 		/* Verify that the class names match */
 
@@ -3066,7 +3070,13 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 
 		/* Verify that the superclass names match */
 
-		if (!utfsAreIdentical(J9ROMCLASS_SUPERCLASSNAME(originalROMClass), J9ROMCLASS_SUPERCLASSNAME(replacementROMClass))) {
+		if (NULL == originalSuperclassName) {
+			if (NULL != replacementSuperclassName) {
+				return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;							
+			}
+		} else if (NULL == replacementSuperclassName) {
+			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;			
+		} else if (!utfsAreIdentical(originalSuperclassName, replacementSuperclassName)) {
 			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
 		}
 
@@ -3216,9 +3226,9 @@ verifyClassesCanBeReplaced(J9VMThread * currentThread, jint class_count, const j
 /*
  * Can't replace:
  * - primitive or array classes
- * - Object
  * - J9VMInternals
  * - sun.misc.Unsafe Anonymous classes
+ * - Object (in extended HCR mode)
  */
 jboolean
 classIsModifiable(J9JavaVM * vm, J9Class * clazz)
@@ -3227,13 +3237,18 @@ classIsModifiable(J9JavaVM * vm, J9Class * clazz)
 
 	if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(clazz->romClass)) {
 		rc = JNI_FALSE;
-	} else if (0 == J9CLASS_DEPTH(clazz)) {
-		/* clazz is Object */
-		rc = JNI_FALSE;
 	} else if (clazz == J9VMJAVALANGJ9VMINTERNALS_OR_NULL(vm)) {
 		rc = JNI_FALSE;
 	} else if ((J2SE_VERSION(vm) >= J2SE_V11) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsAnonymous)) {
 		rc = JNI_FALSE;
+	}
+
+	/* Object is currently only allowed to be redefined in fast HCR */
+	if (areExtensionsEnabled(vm)) {
+		if (0 == J9CLASS_DEPTH(clazz)) {
+			/* clazz is Object */
+			rc = JNI_FALSE;
+		}
 	}
 
 	return rc;
@@ -3423,11 +3438,17 @@ compareClassDepth(const void *leftPair, const void *rightPair)
 		return -1;
 	}
 
-	/* Make sure interfaces sort earlier than normal classes */
+	/* Make sure interfaces sort earlier than normal classes, other than Object */
 
 	if (left->romClass->modifiers & J9AccInterface) {
+		if (0 == rightDepth) {
+			return 1;
+		}
 		return -1;
 	} else if (right->romClass->modifiers & J9AccInterface) {
+		if (0 == leftDepth) {
+			return -1;
+		}
 		return 1;
 	}
 
@@ -3778,21 +3799,6 @@ jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEv
 			jitConfig->jitHotswapOccurred(currentThread);
 		}
 	}
-}
-
-
-static void
-removeFromSubclassHierarchy(J9JavaVM *javaVM, J9Class *clazzPtr)
-{
-	J9Class* nextLink = clazzPtr->subclassTraversalLink;
-	J9Class* reverseLink = clazzPtr->subclassTraversalReverseLink;
-	
-	reverseLink->subclassTraversalLink = nextLink;
-	nextLink->subclassTraversalReverseLink = reverseLink;
-	
-	/* link this obsolete class to itself so that it won't have dangling pointers into the subclass traversal list */
-	clazzPtr->subclassTraversalLink = clazzPtr;
-	clazzPtr->subclassTraversalReverseLink = clazzPtr;
 }
 
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT */ /* End File Level Build Flags */

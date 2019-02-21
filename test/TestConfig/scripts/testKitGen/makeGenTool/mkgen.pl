@@ -20,12 +20,12 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
-use strict;
-use warnings;
+use constant DEBUG => 0;
 use Data::Dumper;
 use feature 'say';
-
-use constant DEBUG => 0;
+use strict;
+use warnings;
+use XML::Parser;
 
 my $headerComments =
 	"########################################################\n"
@@ -52,6 +52,13 @@ my %targetGroup = ();
 my $buildList = '';
 my $iterations = 1;
 my $testFlag = '';
+my $parseResult = {};
+my $parseTest = {};
+$parseResult->{'tests'} = [];
+my $parentEle = '';
+my $currentEle = '';
+my $eleStr = '';
+my $eleArr = [];
 
 sub runmkgen {
 	( $projectRootDir, $allLevels, $allGroups, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
@@ -187,12 +194,211 @@ sub generateMk {
 
 sub xml2mk {
 	my ($makeFile, $playlistXML, $currentdirs) = @_;
-	my $result = parseXML($playlistXML);
-	if (!%{$result}) {
+	$parseTest = {};
+	$parseResult = {};
+	parseXML($playlistXML);
+	if (!%{$parseResult}) {
 		return 0;
 	}
-	writeTargets($makeFile, $result, $currentdirs);
+	writeTargets($makeFile, $parseResult, $currentdirs);
 	return 1;
+}
+
+sub parseXML {
+	my ( $playlistXML ) = @_;
+	my $parser = new XML::Parser(Handlers => {Start => \&handle_start,
+										End   => \&handle_end,
+										Char  => \&handle_char});
+	$parser->parsefile($playlistXML);
+}
+
+sub handle_start {
+	my ($p, $elt) = @_;
+	if ($elt eq 'include') {
+		$eleStr = '';
+		$currentEle = 'include';
+	} elsif ($elt eq 'test') {
+		$eleStr = '';
+		$parseTest = {};
+	} elsif ($elt eq 'disabled') {
+		$eleStr = '';
+		$currentEle = 'disabled';
+	} elsif ($elt eq 'testCaseName') {
+		$eleStr = '';
+		$currentEle = 'testCaseName';
+	} elsif ($elt eq 'command') {
+		$eleStr = '';
+		$currentEle = 'command';
+	} elsif ($elt eq 'platformRequirements') {
+		$eleStr = '';
+		$currentEle = 'platformRequirements';
+	} elsif ($elt eq 'capabilities') {
+		$eleStr = '';
+		$currentEle = 'capabilities';
+	} elsif ($elt eq 'variations') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'variations';
+		$parentEle = 'variations';
+	} elsif ($elt eq 'variation') {
+		$eleStr = '';
+		$currentEle = 'variation';
+	} elsif ($elt eq 'levels') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'levels';
+		$parentEle = 'levels';
+	} elsif ($elt eq 'level') {
+		$eleStr = '';
+		$currentEle = 'level';
+	} elsif ($elt eq 'groups') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'groups';
+		$parentEle = 'groups';
+	} elsif ($elt eq 'group') {
+		$eleStr = '';
+		$currentEle = 'group';
+	} elsif ($elt eq 'impls') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'impls';
+		$parentEle = 'impls';
+	} elsif ($elt eq 'impl') {
+		$eleStr = '';
+		$currentEle = 'impl';
+	} elsif ($elt eq 'aot') {
+		$eleStr = '';
+		$currentEle = 'aot';
+	} elsif ($elt eq 'subsets') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'subsets';
+		$parentEle = 'subsets';
+	} elsif ($elt eq 'subset') {
+		$eleStr = '';
+		$currentEle = 'subset';
+	}
+}
+
+sub handle_end {
+	my ($p, $elt) = @_;
+	if (($elt eq 'include') && ($currentEle eq 'include')) {
+		$parseResult->{'include'} = $eleStr;
+	} elsif ($elt eq 'test') {
+		# do not generate make taget if impl doesn't match the exported impl
+		if ((defined $parseTest->{'impls'}) && !grep(/^$impl$/, @{$parseTest->{'impls'}}) ) {
+			$parseTest->{'disabled'} = 1;
+		}
+		# do not generate make target if subset doesn't match the exported jdk_version
+		if (defined $parseTest->{'subsets'}) {
+			my $isSubsetValid = 0;
+			foreach my $eachSubset ( @{$parseTest->{'subsets'}} ) {
+				if ( $eachSubset =~ /^(.*)\+$/ ) {
+					if ( $1 <=  $jdkVersion ) {
+						$isSubsetValid = 1;
+						last;
+					}
+				} elsif ( $eachSubset eq $jdkVersion) {
+					$isSubsetValid = 1;
+					last;
+				}
+			}
+			if ( $isSubsetValid == 0) {
+				$parseTest->{'disabled'} = 1;
+			}
+		}
+		if (!defined $parseTest->{'disabled'}) {
+			# variation defaults to noOption
+			if (!defined $parseTest->{'variation'}) {
+				$parseTest->{'variation'} = ['NoOptions'];
+			}
+			# level defaults to 'extended'
+			if (!defined $parseTest->{'levels'}) {
+				$parseTest->{'levels'} = ['extended'];;
+			}
+			# group defaults to 'functional'
+			if (!defined $parseTest->{'groups'}) {
+				$parseTest->{'groups'} = ['functional'];;
+			}
+			# impl defaults to all
+			if (!defined $parseTest->{'impls'}) {
+				$parseTest->{'impls'} = $allImpls;
+			}
+			# aot default to applicable when testFlag contains AOT
+			if (( $testFlag =~ /AOT/ ) && ( !defined $parseTest->{'aot'} )) {
+				$parseTest->{'aot'} = 'applicable';
+			}
+			push( @{$parseResult->{'tests'}}, $parseTest );
+		}
+	} elsif (($elt eq 'disabled') && ($currentEle eq 'disabled')) {
+		$parseTest->{'disabled'} = 1;
+	} elsif (($elt eq 'testCaseName') && ($currentEle eq 'testCaseName')) {
+		$parseTest->{'testCaseName'} = $eleStr;
+	} elsif (($elt eq 'command') && ($currentEle eq 'command')) {
+		$parseTest->{'command'} = $eleStr;
+	} elsif (($elt eq 'platformRequirements') && ($currentEle eq 'platformRequirements')) {
+		$parseTest->{'platformRequirements'} = $eleStr;
+	} elsif (($elt eq 'capabilities') && ($currentEle eq 'capabilities')) {
+		$parseTest->{'capabilities'} = $eleStr;
+	} elsif (($elt eq 'variation') && ($currentEle eq 'variation') && ($parentEle eq 'variations')) {
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'variations') && ($parentEle eq 'variations')) {
+		if (@{$eleArr}) {
+			$parseTest->{'variation'} = $eleArr;
+		}
+	} elsif (($elt eq 'level') && ($currentEle eq 'level') && ($parentEle eq 'levels')) {
+		if ( !grep(/^$eleStr$/, @{$allLevels}) ) {
+			die "The level: " . $eleStr . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid level strings are " . join(",", @{$allLevels}) . ".";
+		}
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'levels') && ($parentEle eq 'levels')) {
+		if (@{$eleArr}) {
+			$parseTest->{'levels'} = $eleArr;
+		}
+	} elsif (($elt eq 'group') && ($currentEle eq 'group') && ($parentEle eq 'groups')) {
+		if ( !grep(/^$eleStr$/, @{$allGroups}) ) {
+			die "The group: " . $eleStr . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid group strings are " . join(",", @{$allGroups}) . ".";
+		}
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'groups') && ($parentEle eq 'groups')) {
+		if (@{$eleArr}) {
+			$parseTest->{'groups'} = $eleArr;
+		}
+	} elsif (($elt eq 'impl') && ($currentEle eq 'impl') && ($parentEle eq 'impls')) {
+		if ( !grep(/^$eleStr$/, @{$allImpls}) ) {
+			die "The impl: " . $eleStr . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid impl strings are " . join(",", @{$allImpls}) . ".";
+		}
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'impls') && ($parentEle eq 'impls')) {
+		if (@{$eleArr}) {
+			$parseTest->{'impls'} = $eleArr;
+		}
+	} elsif (($elt eq 'aot') && ($currentEle eq 'aot')) {
+		if ( $testFlag =~ /AOT/ ) {
+			if ( $eleStr eq 'nonapplicable' ) {
+				# Do not generate make taget if the test is aot not applicable when test flag is set to AOT.
+				$parseTest->{'disabled'} = 1;
+			} elsif ( $eleStr eq 'applicable' ) {
+				$parseTest->{'aot'} = $eleStr;
+			} elsif ( $eleStr eq 'explicit' ) {
+				$parseTest->{'aot'} = $eleStr;
+			} else {
+				die "The aot tag: " . $eleStr . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid subset strings are nonapplicable, applicable and explicit.";
+			}
+		}
+	} elsif (($elt eq 'subset') && ($currentEle eq 'subset') && ($parentEle eq 'subsets')) {
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'subsets') && ($parentEle eq 'subsets')) {
+		if (@{$eleArr}) {
+			$parseTest->{'subsets'} = $eleArr;
+		}
+	}
+}
+
+sub handle_char {
+	my ($p, $str) = @_;
+	$eleStr .= $str;
 }
 
 sub writeVars {
@@ -218,139 +424,6 @@ sub writeVars {
 	print $fhOut "SUBDIRS = " . join(" ", @{$subdirsHavePlaylist}) . "\n\n";
 	print $fhOut 'include $(TEST_ROOT)$(D)TestConfig$(D)' . $settings . "\n\n";
 	close $fhOut;
-}
-
-sub parseXML {
-	my ($playlistXML) = @_;
-	open( my $fhIn, '<', $playlistXML ) or die "Cannot open file $_[0]";
-	my %result = ();
-	my @tests = ();
-	while ( my $line = <$fhIn> ) {
-		my %test;
-		my $testlines;
-		if ( $line =~ /\<include\>/ ) {
-			my $include = getElementByTag( $line, 'include' );
-			$result{'include'} = $include;
-		} elsif ( $line =~ /\<test\>/ ) {
-			$testlines .= $line;
-			while ( my $testline = <$fhIn> ) {
-				$testlines .= $testline;
-				if ( $testline =~ /\<\/test\>/ ) {
-					last;
-				}
-			}
-
-			my $disabled = getElementByTag( $testlines, 'disabled' );
-			if (defined $disabled) {
-				next;
-			}
-
-			$test{'testCaseName'} =
-			  getElementByTag( $testlines, 'testCaseName' );
-			$test{'command'} = getElementByTag( $testlines, 'command' );
-			$test{'platformRequirements'} =
-			  getElementByTag( $testlines, 'platformRequirements' );
-			$test{'capabilities'} = getElementByTag( $testlines, 'capabilities');
-			my $variations = getElementByTag( $testlines, 'variations' );
-			my $variation = getElementsByTag( $testlines, 'variation' );
-			if ( !@{$variation} ) {
-				$variation = ['NoOptions'];
-			}
-			$test{'variation'} = $variation;
-
-			$test{'levels'} = getElementsByTag( $testlines, 'level' );
-			# defaults to extended
-			if (!@{$test{'levels'}}) {
-				$test{'levels'} = ['extended'];
-			}
-			foreach my $level ( @{$test{'levels'}} ) {
-				if ( !grep(/^$level$/, @{$allLevels}) ) {
-					die "The level: " . $level . " for test " . $test{'testCaseName'} . " is not valid, the valid level strings are " . join(",", @{$allLevels}) . ".";
-				}
-			}
-
-			$test{'groups'} = getElementsByTag( $testlines, 'group' );
-			# defaults to functional
-			if (!@{$test{'groups'}}) {
-				$test{'groups'} = ['functional'];
-			}
-			foreach my $group ( @{$test{'groups'}} ) {
-				if ( !grep(/^$group$/, @{$allGroups}) ) {
-					die "The group: " . $group . " for test " . $test{'testCaseName'} . " is not valid, the valid group strings are " . join(",", @{$allGroups}) . ".";
-				}
-			}
-
-			my $impls = getElementsByTag( $testlines, 'impl' );
-			# defaults to all impls
-			if (!@{$impls}) {
-				$impls = $allImpls;
-			}
-			foreach my $impl ( @{$impls} ) {
-				if ( !grep(/^$impl$/, @{$allImpls}) ) {
-					die "The impl: " . $impl . " for test " . $test{'testCaseName'} . " is not valid, the valid impl strings are " . join(",", @{$allImpls}) . ".";
-				}
-			}
-			# do not generate make taget if impl doesn't match the exported impl
-			if ( !grep(/^$impl$/, @{$impls}) ) {
-				next;
-			}
-
-			my $isSubsetValid = 0;
-			my $subsets = getElementsByTag( $testlines, 'subset' );
-			# if subset is not specified, it defaults to match all jdk version
-			if ( !@{$subsets} ) {
-				$isSubsetValid = 1;
-			} else {
-				foreach my $eachSubset ( @{$subsets} ) {
-					if ( $eachSubset =~ /^(.*)\+$/ ) {
-						if ( $1 <=  $jdkVersion ) {
-							$isSubsetValid = 1;
-							last;
-						}
-					} elsif ( $eachSubset eq $jdkVersion) {
-						$isSubsetValid = 1;
-						last;
-					}
-				}
-			}
-			if ( $isSubsetValid == 0 ) {
-				next;
-			}
-
-
-			if ( $testFlag =~ /AOT/ ) {
-				my $aotTag = getElementByTag( $testlines, 'aot' );
-				if ( !$aotTag ) {
-					# default to aot applicable
-					$test{'aot'} = 'applicable';
-				} elsif ( $aotTag eq 'nonapplicable' ) {
-					# Do not generate make taget if the test is aot not applicable when test flag is set to AOT.
-					next;
-				} elsif ( $aotTag eq 'applicable' ) {
-					$test{'aot'} = 'applicable';
-				} elsif ( $aotTag eq 'explicit' ) {
-					$test{'aot'} = 'explicit';
-				} else {
-					die "The aot tag: " . $aotTag . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are nonapplicable, applicable and explicit.";
-				}
-			}
-
-			push( @tests, \%test );
-		}
-	}
-	close $fhIn;
-	$result{'tests'} = \@tests;
-	return \%result;
-}
-
-sub getElementByTag {
-	my ($element) = $_[0] =~ /\<$_[1]\>(.*)\<\/$_[1]\>/s;
-	return $element;
-}
-
-sub getElementsByTag {
-	my (@elements) = $_[0] =~ /\<$_[1]\>(.*?)\<\/$_[1]\>/sg;
-	return \@elements;
 }
 
 sub writeTargets {

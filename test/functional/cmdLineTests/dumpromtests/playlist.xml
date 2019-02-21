@@ -29,7 +29,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-DJVM_TEST_ROOT="$(JVM_TEST_ROOT)" \
+	-DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DEXE=$(JAVA_COMMAND) \
 	-DGENERAL_TEST_DIR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Java8andUp$(Q) \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \

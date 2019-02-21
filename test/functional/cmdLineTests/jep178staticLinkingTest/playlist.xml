@@ -24,19 +24,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking_SE80</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
-	-DJAVATEST_ROOT="$(JAVATEST_ROOT)" \
+	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
-	-DJAVA_EXECUTABLE_DIR="$(JAVA_BIN)" \
-	-DSTATLNKJAR="$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar" \
-	-DTESTJEP178_STATIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static" \
-	-DTESTJEP178_DYNAMIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic" \
+	-DJAVA_EXECUTABLE_DIR=$(Q)$(JAVA_BIN)$(Q) \
+	-DSTATLNKJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar$(Q) \
+	-DTESTJEP178_STATIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static$(Q) \
+	-DTESTJEP178_DYNAMIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic$(Q) \
 	-DAGENTLIBA=testjvmtiA \
 	-DAGENTLIBB=testjvmtiB \
-	-DJVMLIBPATH="$(J9VM_PATH)" \
-	-DJEPTESTCLASS="com/ibm/j9/tests/jeptests/StaticLinking" \
-	-DJVMTITESTCLASS="com/ibm/j9/tests/jeptests/StaticAgents" \
-	-DATTACHTOOLSJAR="$(JAVA_BIN)$(D)..$(D)..$(D)lib$(D)tools.jar" \
-	-DJVM_OPTIONS="$(JVM_OPTIONS)" \
+	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
+	-DJEPTESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticLinking$(Q) \
+	-DJVMTITESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticAgents$(Q) \
+	-DATTACHTOOLSJAR=$(Q)$(JAVA_BIN)$(D)..$(D)..$(D)lib$(D)tools.jar$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jep178.xml$(Q) \
 	-verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
@@ -56,19 +56,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
-	-DJAVATEST_ROOT="$(JAVATEST_ROOT)" \
+	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
-	-DJAVA_EXECUTABLE_DIR="$(JAVA_BIN)" \
-	-DSTATLNKJAR="$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar" \
-	-DTESTJEP178_STATIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static" \
-	-DTESTJEP178_DYNAMIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic" \
+	-DJAVA_EXECUTABLE_DIR=$(Q)$(JAVA_BIN)$(Q) \
+	-DSTATLNKJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar$(Q) \
+	-DTESTJEP178_STATIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static$(Q) \
+	-DTESTJEP178_DYNAMIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic$(Q) \
 	-DAGENTLIBA=testjvmtiA \
 	-DAGENTLIBB=testjvmtiB \
-	-DJVMLIBPATH="$(J9VM_PATH)" \
-	-DJEPTESTCLASS="com/ibm/j9/tests/jeptests/StaticLinking" \
-	-DJVMTITESTCLASS="com/ibm/j9/tests/jeptests/StaticAgents" \
-	-DATTACHTOOLSJAR="$(JAVA_BIN)$(D)..$(D)lib$(D)tools.jar" \
-	-DJVM_OPTIONS="$(JVM_OPTIONS)" \
+	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
+	-DJEPTESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticLinking$(Q) \
+	-DJVMTITESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticAgents$(Q) \
+	-DATTACHTOOLSJAR=$(Q)$(JAVA_BIN)$(D)..$(D)lib$(D)tools.jar$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jep178.xml$(Q) \
 	-verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \

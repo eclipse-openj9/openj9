@@ -31,13 +31,13 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
-	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
-	-DJAVA_EXECUTABLE_DIR="$(JAVA_BIN)" \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
+	-DJAVA_EXECUTABLE_DIR=$(Q)$(JAVA_BIN)$(Q) \
 	-DUTILS_DIR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(Q) \
-	-DGLAUNCH="$(JAVA_SHARED_LIBRARIES_DIR)$(D)glaunch" \
-	-DJVMLIBPATH="$(JAVA_BIN)$(D)j9vm" \
-	-DFIBTARGET="VMBench$(D)FibBench" \
-	-DJVM_OPTIONS="$(JVM_OPTIONS)" \
+	-DGLAUNCH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)glaunch$(Q) \
+	-DJVMLIBPATH=$(Q)$(JAVA_BIN)$(D)j9vm$(Q) \
+	-DFIBTARGET=$(Q)VMBench$(D)FibBench$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config  $(Q)$(TEST_RESROOT)$(D)gptests.xml$(Q) -verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)cmdlineopttest_exclude.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}	</command>
