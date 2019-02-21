@@ -34,6 +34,7 @@
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "runtime/IProfiler.hpp"
+#include "env/ClassLoaderTable.hpp"
 
 #define   LOG(n,c) \
    if (_logLevel >= (3*n)) \
@@ -772,4 +773,13 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *cla
       return (TR_OpaqueClassBlock *) clazz;
 
    return NULL;
+   }
+
+uintptrj_t
+TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
+   {
+   void *loaderForClazz = _fe->getClassLoader(clazz);
+   void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+   uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+   return classChainOffsetInSharedCache;
    }

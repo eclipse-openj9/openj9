@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,15 @@ public class rtc001
 			if (!Boolean.TRUE.equals(method.invoke(new rtc001_testUnsafe()))) {
 				return false;
 			}
-			Field field = method.getClass().getDeclaredField("methodAccessor");
-			field.setAccessible(true);
-			Object methodAccessor = field.get(method);
+			
+			/* JDK12 disallows direct field reflection on java.lang.reflect.Method.methodAccessor 
+			 * (refer https://github.com/eclipse/openj9/issues/4658#issuecomment-461913909 for details), 
+			 * this is a workaround via reflection of package access method java.lang.reflect.Method.getMethodAccessor().
+			 */
+			Method getMethodAccessor = method.getClass().getDeclaredMethod("getMethodAccessor");
+			getMethodAccessor.setAccessible(true);
+			Object methodAccessor = getMethodAccessor.invoke(method);
+			
 			System.out.println("Retransforming " + methodAccessor.getClass().getCanonicalName());
 			if (!retransformClass(methodAccessor.getClass())) {
 				return false;
@@ -65,9 +71,6 @@ public class rtc001
 			e.printStackTrace();
 			return false;
 		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-			return false;
-		} catch (NoSuchFieldException e) {
 			e.printStackTrace();
 			return false;
 		}

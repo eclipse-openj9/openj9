@@ -437,9 +437,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          TR_OpaqueClassBlock *classToValidate = record->_class;
          void *classChainForClassToValidate = record->_classChain;
          //store the classchain's offset for the classloader for the class
-         void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
-         void *classChainIdentifyingLoaderForClazzToValidate = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazzToValidate);
-         uintptrj_t classChainOffsetInSharedCacheForCL = reinterpret_cast<uintptrj_t>(sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazzToValidate));
+         uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
          //store the classchain's offset for the class that needs to be validated in the second run
          void * classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
          binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
@@ -801,11 +799,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
             j9method = (TR_OpaqueMethodBlock *) aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
          TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
 
-         void *loaderForClazz = fej9->getClassLoader(j9class);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-         //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -839,11 +833,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
                j9class = (TR_OpaqueClassBlock *) aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
             }
 
-         void *loaderForClazz = fej9->getClassLoader(j9class);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-         //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -864,9 +854,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          *(uintptrj_t *)cursor = inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
-         void *loaderForClazz = fej9->getClassLoader(j9class);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -990,11 +978,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          *(uintptrj_t *)cursor = (uintptrj_t) romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
-         void *loaderForClazz = fej9->getClassLoader(inlinedCodeClass);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-         //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -1075,9 +1059,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
 
          //store the classchain's offset for the classloader for the class
-         void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
-         void *classChainIdentifyingLoaderForClazzToValidate = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazzToValidate);
-         uintptrj_t classChainOffsetInSharedCacheForCL = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazzToValidate);
+         uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCacheForCL;
          cursor += SIZEPOINTER;
 
