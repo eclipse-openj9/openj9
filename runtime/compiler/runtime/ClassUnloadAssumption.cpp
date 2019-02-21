@@ -340,12 +340,6 @@ void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_Runt
       }
    }
 
-void
-TR_RuntimeAssumptionTable::detachFromRAT(OMR::RuntimeAssumption *assumption)
-   {
-   markForDetachFromRAT(assumption);
-   }
-
 /** 
  * Mark an assumption for future detach and reclaiming from the RAT
  * @param assumption The assumption to be marked for removal

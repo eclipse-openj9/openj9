@@ -448,5 +448,5 @@ void
 TR_PersistentCHTable::removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption)
    {
    TR_RuntimeAssumptionTable *rat = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-   rat->detachFromRAT(assumption);
+   rat->markForDetachFromRAT(assumption);
    }
