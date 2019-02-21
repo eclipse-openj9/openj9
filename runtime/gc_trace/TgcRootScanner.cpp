@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ static void tgcHookGCEnd(J9HookInterface** hook, UDATA eventNumber, void* eventD
  * @ref RootScannerEntity
  */
 const static char *attributeNames[] = {
-	"none", /* RootScannerEntity_None */
+	"unknown", /* RootScannerEntity_None */
 	"scavengerememberedset", /* RootScannerEntity_ScavengeRememberedSet */
 	"classes", /* RootScannerEntity_Classes */
 	"vmclassslots",	/* RootScannerEntity_VMClassSlots */
