@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include "mgmtinit.h"
 #include "j9modron.h"
 
-static jobject processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action);
+static jobject processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initSize, I_64 maxSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action);
 static UDATA getIndexFromPoolID(J9JavaLangManagementData *mgmt, UDATA id);
 static J9MemorySegmentList *getMemorySegmentList(J9JavaVM *javaVM, jint id);
 
@@ -147,7 +147,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl
 		/* NonHeap MemoryPool */
 		J9MemorySegmentList *segList = getMemorySegmentList(javaVM, id);
 		if (NULL != segList) {
-			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 1);
+			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].maxSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 1);
 		} else {
 			return NULL;
 		}
@@ -204,7 +204,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNI
 		/* NonHeap MemoryPool */
 		J9MemorySegmentList *segList = getMemorySegmentList(javaVM, id);
 		if (NULL != segList) {
-			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 0);
+			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].maxSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 0);
 		} else {
 			return NULL;
 		}
@@ -358,7 +358,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_resetPeakUsageIm
 		/* NonHeap MemoryPool */
 		J9MemorySegmentList *segList = getMemorySegmentList(javaVM, id);
 		if (NULL != segList) {
-			processSegmentList(env, NULL, NULL, segList, 0, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 2);
+			processSegmentList(env, NULL, NULL, segList, 0, 0, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 2);
 		}
 	}
 }
@@ -440,7 +440,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPreCollection
 		1 - check peak and update if necessary, return a MemoryUsage object for the peak usage
 		2 - reset the peak to the current usage, return nothing */
 static jobject
-processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initialSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action) {
+processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initialSize, I_64 maxSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action) {
 	jlong used = 0;
 	jlong committed = 0;
 	jlong peakUsed = 0;
@@ -483,9 +483,9 @@ processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor,
 		}
 
 		if (0 == action) {
-			memoryUsageObj = (*env)->NewObject(env, memoryUsage, ctor, (jlong) initialSize, used, committed, (jlong)-1);
+			memoryUsageObj = (*env)->NewObject(env, memoryUsage, ctor, (jlong) initialSize, used, committed, (jlong) maxSize);
 		} else if (1 == action) {
-			memoryUsageObj = (*env)->NewObject(env, memoryUsage, ctor, (jlong) initialSize, peakUsed, peakSize, (jlong)-1);
+			memoryUsageObj = (*env)->NewObject(env, memoryUsage, ctor, (jlong) initialSize, peakUsed, peakSize, (jlong) maxSize);
 		}
 	}
 
