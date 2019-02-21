@@ -536,7 +536,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	jint i = 0;
 	JavaVMInitArgs *initArgs = NULL;
 	char *jclName = J9_DEFAULT_JCL_DLL_NAME;
-	UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
+	UDATA j2seVersion = J2SE_VERSION(vm);
 	const char* propValue = NULL;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
 
@@ -565,7 +565,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
 	}
 
-	if (j2seVersion >= J2SE_19) {
+	if (j2seVersion >= J2SE_V11) {
 		rc = addModularitySystemProperties(vm);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
@@ -583,14 +583,6 @@ initializeSystemProperties(J9JavaVM * vm)
 		case J2SE_18:
 			classVersion = "52.0";
 			specificationVersion = "1.8";
-			break;
-		case J2SE_19:
-			classVersion = "53.0";
-			specificationVersion = "9";
-			break;
-		case J2SE_V10:
-			classVersion = "54.0";
-			specificationVersion = "10";
 			break;
 		case J2SE_V11:
 		default:
@@ -710,7 +702,7 @@ initializeSystemProperties(J9JavaVM * vm)
 
 	/* We don't have enough information yet. Put in placeholders. */
 #if defined(J9VM_OPT_SIDECAR)
-	if (j2seVersion < J2SE_19) {
+	if (j2seVersion < J2SE_V11) {
 		rc = addSystemProperty(vm, BOOT_PATH_SYS_PROP, "", J9SYSPROP_FLAG_WRITEABLE);
 	} else {
 		rc = addSystemProperty(vm, BOOT_CLASS_PATH_APPEND_PROP, "", J9SYSPROP_FLAG_WRITEABLE);
@@ -750,7 +742,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 
 	/* -Xzero option is removed from Java 9 */
-	if (j2seVersion < J2SE_19) {
+	if (j2seVersion < J2SE_V11) {
 		rc = addSystemProperty(vm, "com.ibm.zero.version", "2", 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
@@ -854,7 +846,7 @@ initializeSystemProperties(J9JavaVM * vm)
 					goto fail;
 				}
 			}
-			if (j2seVersion >= J2SE_19) {
+			if (j2seVersion >= J2SE_V11) {
 				if ('\0' != propValue[0]) {
 					/* Support for java.endorsed.dirs and java.ext.dirs is disabled in Java 9+. */
 					if (0 == strncmp(JAVA_ENDORSED_DIRS, propNameCopy, sizeof(JAVA_ENDORSED_DIRS))) {
@@ -895,7 +887,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		}
 	}
 	
-	if (j2seVersion >= J2SE_19) {
+	if (j2seVersion >= J2SE_V11) {
 		/* On Java 9 support for java.endorsed.dirs is disabled. If java.home/lib/endorsed dir is found, JVM fails to startup. *
 		 * Similarly, support for java.ext.dirs is disabled. If java.home/lib/ext dir is found, JVM fails to startup.
 		 */

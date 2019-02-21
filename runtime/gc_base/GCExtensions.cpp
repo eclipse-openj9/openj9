@@ -237,7 +237,7 @@ MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
 	}
 
 #if defined(OMR_ENV_DATA64)
-	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_19) {
+	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_V11) {
 		/* extend java default max memory to 25% of usable RAM */
 		memoryMax = OMR_MAX(memoryMax, usablePhysicalMemory / 4);
 	}

@@ -94,7 +94,7 @@ latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * w
 	 * In Java 9+, vm->extensionClassLoader is the PlatformClassLoader.
 	 */
 	BOOLEAN isPlatformClassLoader = FALSE;
-	if ((J2SE_VERSION(vm) >= J2SE_19) && (classLoader == vm->extensionClassLoader)) {
+	if ((J2SE_VERSION(vm) >= J2SE_V11) && (classLoader == vm->extensionClassLoader)) {
 		isPlatformClassLoader = TRUE;
 	}
 
@@ -424,7 +424,7 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	}
 #endif
 	
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
 		clazzMethodAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/MethodAccessorImpl");
 	} else {
@@ -734,7 +734,7 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 						 * java.lang.Package.getSystemPackages() expects a trailing slash in Java 8
 						 * but no trailing slash in Java 9.
 						 */
-						if (J2SE_VERSION(vm) >= J2SE_19) {
+						if (J2SE_VERSION(vm) >= J2SE_V11) {
 							packageString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread,
 									(U_8*) packageName, packageNameLength, 0);
 						} else {

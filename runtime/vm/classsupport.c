@@ -520,7 +520,7 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
 			}
 		} else {
 			/* The class is found in shared class cache. */
-			if (J2SE_VERSION(vmThread->javaVM) >= J2SE_19) {
+			if (J2SE_VERSION(vmThread->javaVM) >= J2SE_V11) {
 				if (localBuffer->entryIndex >= 0) {
 					localBuffer->loadLocationType = LOAD_LOCATION_CLASSPATH;
 				} else {
@@ -558,7 +558,7 @@ attemptDynamicClassLoad(J9VMThread* vmThread, J9Module *j9module, U_8* className
 	Trc_VM_internalFindClass_attemptDynamicClassLoad_entry(vmThread, classLoader->classLoaderObject, classNameLength, className);
 
 	/* try to load classes from system class loader */
-	if ((J2SE_VERSION(vmThread->javaVM) >= J2SE_19)
+	if ((J2SE_VERSION(vmThread->javaVM) >= J2SE_V11)
 		|| ((NULL != classLoader->classPathEntries) && (classLoader == vmThread->javaVM->systemClassLoader))
 	) {
 		IDATA findResult = -1;

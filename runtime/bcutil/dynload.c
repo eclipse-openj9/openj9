@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * classN
 	Trc_BCU_findLocallyDefinedClass_Entry(mbString, classPathEntryCount);
 	
 	/* Search patch path of the module before looking up in bootclasspath */
-	if (J2SE_VERSION(javaVM) >= J2SE_19) {
+	if (J2SE_VERSION(javaVM) >= J2SE_V11) {
 		if (NULL == module) {
 			if (J9_ARE_NO_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 				module = javaVM->javaBaseModule;

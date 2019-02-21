@@ -33,8 +33,6 @@
  *       nor release file presents.
  */
 #define J2SE_18   0x0800
-#define J2SE_19   0x0900
-#define J2SE_V10  0x0A00            /* This refers Java 10 */
 #define J2SE_V11  0x0B00            /* This refers Java 11 */
 #define J2SE_V12  0x0C00            /* This refers Java 12 */
 /* Shared class cache is using JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) to get the Java version.
@@ -43,10 +41,6 @@
 
 #if JAVA_SPEC_VERSION == 8
 	#define J2SE_LATEST  J2SE_18
-#elif JAVA_SPEC_VERSION == 9
-	#define J2SE_LATEST  J2SE_19
-#elif JAVA_SPEC_VERSION == 10
-	#define J2SE_LATEST  J2SE_V10
 #elif JAVA_SPEC_VERSION == 11
 	#define J2SE_LATEST  J2SE_V11
 #else
@@ -72,10 +66,6 @@
  */
 #if JAVA_SPEC_VERSION == 8
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_OPENJDK
-#elif JAVA_SPEC_VERSION == 9
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V9
-#elif JAVA_SPEC_VERSION == 10
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V10
 #elif JAVA_SPEC_VERSION == 11
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V11
 #elif JAVA_SPEC_VERSION == 12
@@ -84,8 +74,6 @@
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V12
 #endif
 #define J2SE_SHAPE_OPENJDK 		0x10000
-#define J2SE_SHAPE_V9           0x60000
-#define J2SE_SHAPE_V10			0x70000
 #define J2SE_SHAPE_V11			0x80000
 #define J2SE_SHAPE_V12			0x90000
 #define J2SE_SHAPE_RAWPLUSJ9	0xA0000

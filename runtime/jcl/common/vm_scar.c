@@ -278,7 +278,6 @@ scarInit(J9JavaVM * vm)
 #if defined(WIN32) && !defined(OPENJ9_BUILD)
 	switch (jclVersion) {
 	case J2SE_18:
-	case J2SE_19:	/* This will need to be modified when the JCL team provides a dbgwrapper90 */
 		dbgwrapperStr = "dbgwrapper80";
 		break;
 	default:
@@ -448,7 +447,7 @@ scarPreconfigure(J9JavaVM * vm)
 		return JNI_ERR;
 	}
 
-	if (J2SE_VERSION(vm) < J2SE_19) {
+	if (J2SE_VERSION(vm) < J2SE_V11) {
 		char *vmSpecificDirectoryPath = "jclSC180";
 
 		rc = addVMSpecificDirectories(vm, &i, vmSpecificDirectoryPath);

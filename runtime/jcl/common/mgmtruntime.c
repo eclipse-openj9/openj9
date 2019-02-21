@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_isBootClassPathSupportedImpl(JNIEnv *env, jobject beanInstance)
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	if (J2SE_VERSION(javaVM) < J2SE_19) {
+	if (J2SE_VERSION(javaVM) < J2SE_V11) {
 		return JNI_TRUE;
 	} else {
 		return JNI_FALSE;
