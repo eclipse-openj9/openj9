@@ -201,15 +201,15 @@ protected:
 		}
 	}
 	
-	MMINLINE void updateScanStats(uint64_t endTime) {
-	
+	MMINLINE void updateScanStats(uint64_t endTime)
+	{
 		if (_entityIncrementStartTime >= endTime) {
 			/* overflow */
  			_env->_rootScannerStats._entityScanTime[_scanningEntity] += 1;
  		} else {
 			uint64_t duration = endTime - _entityIncrementStartTime;
-			_env->_rootScannerStats._entityScanTime[_scanningEntity] += duration;	
-			if ((duration > _env->_rootScannerStats._maxIncrementTime) && (RootScannerEntity_None != _scanningEntity)) {
+			_env->_rootScannerStats._entityScanTime[_scanningEntity] += duration;
+			if (duration > _env->_rootScannerStats._maxIncrementTime) {
 				_env->_rootScannerStats._maxIncrementTime = duration;
 				_env->_rootScannerStats._maxIncrementEntity = _scanningEntity;
 			}
@@ -237,7 +237,12 @@ protected:
 			updateScanStats(entityEndScanTime);
  			
  			_entityStartScanTime = 0;
-			_entityIncrementStartTime = 0;
+ 			/* In theory, it would be cleaner to reset _entityIncrementStartTime to 0, but sometimes increments could be dis-associated from any entity.
+ 			    For example sync barrier between two entities. Since they can suspend, they will try to report the duration of the increment,
+ 			    but the start point 0 would lead to invalid (too long duration). Hence, we set the start point to the current time, just in case it 
+ 			    is used be non-tracked increments.
+ 			 */
+			_entityIncrementStartTime = entityEndScanTime;
  		}
 
 		_lastScannedEntity = _scanningEntity;
@@ -305,6 +310,10 @@ public:
 		, _lastScannedEntity(RootScannerEntity_None)
 	{
 		_typeId = __FUNCTION__;
+		
+		OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+		_entityIncrementStartTime = omrtime_hires_clock();
+
 	}
 
 	/**
