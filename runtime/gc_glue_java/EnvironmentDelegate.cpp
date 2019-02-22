@@ -252,7 +252,7 @@ void
 MM_EnvironmentDelegate::forceOutOfLineVMAccess()
 {
 	J9VMThread *vmThread = (J9VMThread *)_env->getLanguageVMThread();
-	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE);
+	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 }
 
 #if defined (J9VM_GC_THREAD_LOCAL_HEAP)
