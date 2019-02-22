@@ -2721,6 +2721,26 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
+	/* java.lang.Class: private native Class<?> arrayTypeImpl(); */
+	VMINLINE VM_BytecodeAction
+	inlClassArrayTypeImpl(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		J9Class *componentClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
+		J9Class *arrayClazz = componentClazz->arrayClass;
+		if (NULL == arrayClazz) {
+			arrayClazz = internalCreateArrayClass(_currentThread, 
+				(J9ROMArrayClass *) J9ROMIMAGEHEADER_FIRSTCLASS(_currentThread->javaVM->arrayROMClasses), 
+				componentClazz);
+		}
+		if (NULL == arrayClazz) {
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+		} else {
+			returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(arrayClazz), 1);
+		}
+		return rc;
+	}
+
 	/* java.lang.Class: private native String getSimpleNameImpl(); */
 	VMINLINE VM_BytecodeAction
 	inlClassGetSimpleNameImpl(REGISTER_ARGS_LIST)
@@ -8718,6 +8738,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_VARHANDLE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL),
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
 
@@ -9277,6 +9298,8 @@ runMethod: {
 		PERFORM_ACTION(inlThreadOnSpinWait(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL):
 		PERFORM_ACTION(outOfLineINL(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL):
+		PERFORM_ACTION(inlClassArrayTypeImpl(REGISTER_ARGS));
 #if !defined(USE_COMPUTED_GOTO)
 	default:
 		Assert_VM_unreachable();

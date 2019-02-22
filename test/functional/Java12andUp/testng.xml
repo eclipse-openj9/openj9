@@ -28,6 +28,7 @@
 	<test name="Jep334Tests">
 		<classes>
 			<class name="org.openj9.test.java_lang.Test_String" />
+			<class name="org.openj9.test.java_lang.Test_Class" />
 		</classes>
 	</test>
 

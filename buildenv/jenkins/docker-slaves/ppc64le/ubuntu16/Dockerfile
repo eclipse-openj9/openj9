@@ -48,8 +48,8 @@ RUN apt-get update \
     autoconf \
     build-essential \
     curl \
-    g++-4.8 \
-    gcc-4.8 \
+    g++-7 \
+    gcc-7 \
     gdb \
     git \
     make \

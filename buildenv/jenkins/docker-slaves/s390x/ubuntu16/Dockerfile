@@ -48,8 +48,6 @@ RUN apt-get update \
     cpio \
     curl \
     file \
-    g++-4.8 \
-    gcc-4.8 \
     gdb \
     git \
     git-core \
@@ -81,8 +79,10 @@ RUN apt-get update \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV
+# Dependency required by test framework
+RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
+  && cpanm Text::CSV \
+  && cpanm JSON
 
 # Install GCC-7.4
 RUN cd /usr/local \
@@ -92,15 +92,14 @@ RUN cd /usr/local \
 
 # Create links for c++,g++,cc,gcc and for GCC to access the C library
 # There is a true at the end of the library link because it throws an error and it allows the container to be built
-RUN rm /usr/bin/c++ /usr/bin/g++ /usr/bin/cc /usr/bin/gcc \
-  && ln -s g++ /usr/bin/c++ \
-  && ln -s g++-4.8 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-4.8 /usr/bin/gcc \
-  && ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
+RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
   && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include | true \ 
   && ln -s /usr/local/bin/g++-7.4 /usr/bin/g++-7 \
   && ln -s /usr/local/bin/gcc-7.4 /usr/bin/gcc-7
+
+# Edit ldconfig to connect the new libstdc++.so* library
+RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
+  && ldconfig
 
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
