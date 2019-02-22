@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -407,13 +407,11 @@ spinOnFlatLock(J9VMThread *currentThread, j9objectmonitor_t volatile *lwEA, j9ob
 			{
 				if (nestedPath) {
 					VM_AtomicSupport::yieldCPU();
-					if (0 != spinCount1) {
-						VM_AtomicSupport::dropSMTThreadPriority();
-						for (UDATA _spinCount1 = spinCount1; _spinCount1 > 0; _spinCount1--) {
-							VM_AtomicSupport::nop();
-						} /* end tight loop */
-						VM_AtomicSupport::restoreSMTThreadPriority();
-					}
+					VM_AtomicSupport::dropSMTThreadPriority();
+					for (UDATA _spinCount1 = spinCount1; _spinCount1 > 0; _spinCount1--) {
+						VM_AtomicSupport::nop();
+					} /* end tight loop */
+					VM_AtomicSupport::restoreSMTThreadPriority();
 				}
 			} else {
 				goto done;
