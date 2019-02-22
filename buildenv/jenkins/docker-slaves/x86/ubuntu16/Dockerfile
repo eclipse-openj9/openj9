@@ -49,9 +49,7 @@ RUN apt-get update \
     cpio \
     curl \
     file \
-    g++-4.8 \
     g++-7 \
-    gcc-4.8 \
     gcc-7 \
     gdb \
     git \
@@ -85,13 +83,6 @@ RUN apt-get update \
 
 # Install Docker module to run test framework
 RUN echo yes | cpan install JSON Text::CSV
-
-# Create links for c++,g++,cc,gcc
-RUN rm /usr/bin/c++ /usr/bin/g++ /usr/bin/cc /usr/bin/gcc \
-  && ln -s g++ /usr/bin/c++ \
-  && ln -s g++-4.8 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-4.8 /usr/bin/gcc
 
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
