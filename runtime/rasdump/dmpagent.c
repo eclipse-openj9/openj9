@@ -886,7 +886,12 @@ static omr_error_t
 doJavaDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
 	J9JavaVM *vm = context->javaVM;
-	if ((0 != strcmp(label, "/STDOUT/")) && (0 != strcmp(label, "/STDERR/"))) {
+
+	if ((0 == strcmp("-", label)) || (0 == j9_cmdla_stricmp(label, J9RAS_STDOUT_NAME))) {
+		strcpy(label, J9RAS_STDOUT_NAME);
+	} else if (0 == j9_cmdla_stricmp(label, J9RAS_STDERR_NAME)) {
+		strcpy(label, J9RAS_STDERR_NAME);
+	} else {
 		if (makePath(vm, label) == OMR_ERROR_INTERNAL) {
 			/* Nowhere available to write the dump, we are done, makePath() will have issued error message */
 			return OMR_ERROR_INTERNAL;
