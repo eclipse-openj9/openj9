@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.ibm.tools.attach.target.AttachHandler;
 
 @SuppressWarnings({"nls","boxing"})
 public class AttachAPIStress extends AttachApiTest {
@@ -55,8 +53,8 @@ public class AttachAPIStress extends AttachApiTest {
 	@BeforeMethod
 	protected void setUp() {
 		logger.debug("Attaching process is "
-				+ AttachHandler.getProcessId());
-		if (!AttachHandler.waitForAttachApiInitialization()) {
+				+ TargetManager.getProcessId());
+		if (!TargetManager.waitForAttachApiInitialization()) {
 			TargetManager.dumpLogs(true);
 			Assert.fail("main process did not initialize attach API");
 		}

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,8 @@ package com.ibm.lang.management.internal;
 
 import com.ibm.java.lang.management.internal.RuntimeMXBeanImpl;
 import com.ibm.lang.management.RuntimeMXBean;
+import com.ibm.tools.attach.target.AttachHandler;
+
 
 /**
  * Runtime type for {@link com.ibm.lang.management.RuntimeMXBean}.
@@ -106,5 +108,23 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isAttachApiInitialized() {
+		checkMonitorPermission();
+		return AttachHandler.isAttachApiInitialized();
+	}
+
+	@Override
+	public boolean isAttachApiTerminated() {
+		checkMonitorPermission();
+		return AttachHandler.isAttachApiTerminated();
+	}
+
+	@Override
+	public String getVmId() {
+		checkMonitorPermission();
+		return AttachHandler.getVmId();
 	}
 }

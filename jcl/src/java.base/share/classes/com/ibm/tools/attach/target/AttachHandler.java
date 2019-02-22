@@ -6,7 +6,7 @@ import static com.ibm.tools.attach.target.IPC.LOGGING_ENABLED;
 import static com.ibm.tools.attach.target.IPC.loggingStatus;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -727,7 +727,7 @@ public class AttachHandler extends Thread {
 	 * or is shutting down
 	 * 
 	 */
-	static boolean isAttachApiTerminated() {
+	public static boolean isAttachApiTerminated() {
 		return (AttachStateValues.ATTACH_TERMINATED == getAttachState());
 	}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@ import org.testng.log4testng.Logger;
 import org.testng.annotations.BeforeClass;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
@@ -94,6 +95,9 @@ public class TestRuntimeMXBean {
 		attribs.put("VMGeneratedCPULoad", new AttributeData(Double.TYPE.getName(), true, false, false));
 		attribs.put("VMIdleState", new AttributeData(String.class.getName(), true, false, false));
 		attribs.put("VMIdle", new AttributeData(Boolean.TYPE.getName(), true, false, true));
+		attribs.put("AttachApiInitialized", new AttributeData(Boolean.TYPE.getName(), true, false, true)); //$NON-NLS-1$
+		attribs.put("AttachApiTerminated", new AttributeData(Boolean.TYPE.getName(), true, false, true)); //$NON-NLS-1$
+		attribs.put("VmId", new AttributeData(String.class.getName(), true, false, false)); //$NON-NLS-1$
 	}// end static initializer
 
 	private RuntimeMXBean rb;
@@ -619,10 +623,10 @@ public class TestRuntimeMXBean {
 		// Print description and the class name (not necessarily identical).
 		logger.debug("MBean description for " + rb.getClass().getName() + ": " + mbi.getDescription());
 
-		// Sixteen attributes - none writable - and five IBM specific.
+		// Sixteen attributes - none writable - and eight IBM specific.
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		AssertJUnit.assertTrue(attributes.length == 22);
+		org.testng.Assert.assertEquals(25, attributes.length, "wrong number of attributes");
 		for (int i = 0; i < attributes.length; i++) {
 			MBeanAttributeInfo info = attributes[i];
 			AssertJUnit.assertNotNull(info);
