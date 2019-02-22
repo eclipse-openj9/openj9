@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,6 +125,9 @@ void setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max);
 #endif
 
 #define J9RAS_DUMP_EXCEPTION_EVENT_GROUP (J9RAS_DUMP_ON_EXCEPTION_THROW | J9RAS_DUMP_ON_EXCEPTION_SYSTHROW | J9RAS_DUMP_ON_EXCEPTION_CATCH | J9RAS_DUMP_ON_EXCEPTION_DESCRIBE)
+
+#define J9RAS_STDOUT_NAME "/STDOUT/"
+#define J9RAS_STDERR_NAME "/STDERR/"
 
 #ifdef __cplusplus
 }
