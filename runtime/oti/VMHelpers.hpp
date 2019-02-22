@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,6 +165,7 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_VARHANDLE,
 	J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT,
 	J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL,
+	J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL,
 } VM_SendTarget;
 
 typedef enum {
