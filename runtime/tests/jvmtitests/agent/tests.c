@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,6 +128,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "mt001",   mt001,   "com.ibm.jvmti.tests.modularityTests.mt001", "Test Modularity functions"},
 	{ "nmr001",     nmr001,    "com.ibm.jvmti.tests.nestMatesRedefinition.nmr001", "Test nestmates redefinition"},
 	{ "snmp001",     snmp001,    "com.ibm.jvmti.tests.setNativeMethodPrefix.snmp001", "Tests setting a native method prefix and disposing a subsequent environment"},
+	{ "soae001", soae001, "com.ibm.jvmti.tests.samplingObjectAllocation.soae001", "Test JEP331 low-overhead sampling heap object allocation" },
 	{ NULL, NULL, NULL, NULL }
 };
 
