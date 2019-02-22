@@ -20,10 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "modronapi.hpp"
-#include "modronopt.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "AllocateDescription.hpp"
 #include "Collector.hpp"
@@ -31,27 +29,12 @@
 #include "GCCode.hpp"
 #include "JNICriticalRegion.hpp"
 #include "MemoryPool.hpp"
-#include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
+#include "MemorySubSpaceMetronomeDelegate.hpp"
 #include "Scheduler.hpp"
 #include "RealtimeGC.hpp"
 
 #include "MemorySubSpaceMetronome.hpp"
-
-void
-MM_MemorySubSpaceMetronome::yieldWhenRequested(MM_EnvironmentBase *env)
-{
-	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
-	UDATA accessMask;
-	MM_Scheduler *sched = (MM_Scheduler *)ext->dispatcher;
-	if (sched->_mode != MM_Scheduler::MUTATOR) {
-		MM_JNICriticalRegion::releaseAccess((J9VMThread *)env->getLanguageVMThread(), &accessMask);
-		while (sched->_mode != MM_Scheduler::MUTATOR) {	
-			omrthread_sleep(10);
-		}
-		MM_JNICriticalRegion::reacquireAccess((J9VMThread *)env->getLanguageVMThread(), accessMask);
-	}
-}
 
 /**
  * Allocation.
@@ -72,32 +55,32 @@ MM_MemorySubSpaceMetronome::allocateObject(MM_EnvironmentBase *env, MM_AllocateD
 	return result;
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
+#if defined(OMR_GC_ARRAYLETS)
 /**
  * Allocate an arraylet leaf.
  */
 void *
 MM_MemorySubSpaceMetronome::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure)
 {
-	J9IndexableObject *spine = allocDescription->getSpine();
+	omrarrayptr_t spine = allocDescription->getSpine();
 	/* spine object refers to the barrier-safe "object" reference, as opposed to the internal "heap address" represented by the spine variable */
-	J9Object *spineObject = (J9Object *)spine;
+	omrobjectptr_t spineObject = (omrobjectptr_t)spine;
 	void *leaf = NULL;
-	if(env->saveObjects((omrobjectptr_t)spineObject)) {
+	if(env->saveObjects(spineObject)) {
 		leaf = allocateMixedObjectOrArraylet(env, allocDescription, arrayletLeaf);
-		env->restoreObjects((omrobjectptr_t*)&spineObject);
-		spine = (J9IndexableObject *)(spineObject);
+		env->restoreObjects(&spineObject);
+		spine = (omrarrayptr_t)spineObject;
 		allocDescription->setSpine(spine);
 	}
 	return leaf;
 }
-#endif /* J9VM_GC_ARRAYLETS */
+#endif /* OMR_GC_ARRAYLETS */
 
 void
 MM_MemorySubSpaceMetronome::collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCode, MM_AllocateDescription *allocDescription)
 {
 	MM_EnvironmentRealtime *envRealtime = MM_EnvironmentRealtime::getEnvironment(env);
-	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(envRealtime);
+	MM_GCExtensionsBase *ext = envRealtime->getExtensions();
 	MM_Scheduler *sched = (MM_Scheduler *)ext->dispatcher;
 	
 	if (sched->isInitialized()) {
@@ -106,7 +89,7 @@ MM_MemorySubSpaceMetronome::collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCo
 		sched->continueGC(envRealtime, OUT_OF_MEMORY_TRIGGER, allocDescription->getBytesRequested(), env->getOmrVMThread(), true);
 	}
 	/* TODO CRGTMP remove call to yieldWhenRequested since continueGC blocks */
-	yieldWhenRequested(envRealtime);
+	_delegate.yieldWhenRequested(envRealtime);
 }
 
 /**
@@ -165,14 +148,14 @@ MM_MemorySubSpaceMetronome::systemGarbageCollect(MM_EnvironmentBase *env, U_32 g
 	MM_Scheduler *sched = (MM_Scheduler *)envRealtime->getExtensions()->dispatcher;
 
 	if (sched->isInitialized()) {
-		MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
+		MM_GCExtensionsBase *ext = env->getExtensions();
 		ext->realtimeGC->setFixHeapForWalk(true);
 		sched->startGC(envRealtime);
 		sched->setGCCode(MM_GCCode(gcCode));
 		/* if we were triggered by rasdump, then the caller has already acquired exclusive VM access */
 		sched->continueGC(envRealtime, SYSTEM_GC_TRIGGER, 0, env->getOmrVMThread(), J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT != gcCode);
 		/* TODO CRGTMP remove this call since continueGC blocks */
-		yieldWhenRequested(envRealtime);
+		_delegate.yieldWhenRequested(envRealtime);
 	}
 }
 
@@ -197,7 +180,7 @@ MM_MemorySubSpaceMetronome::newInstance(
 {
 	MM_MemorySubSpaceMetronome *memorySubSpace;
 	
-	memorySubSpace = (MM_MemorySubSpaceMetronome *)env->getForge()->allocate(sizeof(MM_MemorySubSpaceMetronome), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	memorySubSpace = (MM_MemorySubSpaceMetronome *)env->getForge()->allocate(sizeof(MM_MemorySubSpaceMetronome), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL != memorySubSpace) {
 		new(memorySubSpace) MM_MemorySubSpaceMetronome(env, physicalSubArena, memoryPool, usesGlobalCollector, minimumSize, initialSize, maximumSize);
 		if (!memorySubSpace->initialize(env)) {

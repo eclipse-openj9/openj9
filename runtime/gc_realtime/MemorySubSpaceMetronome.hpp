@@ -1,6 +1,5 @@
- 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,10 +23,12 @@
 #if !defined(MEMORYSUBSPACEMETRONOME_HPP_)
 #define MEMORYSUBSPACEMETRONOME_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "MemorySubSpaceSegregated.hpp"
+
+#include "MemorySubSpaceMetronomeDelegate.hpp"
 
 class MM_AllocateDescription;
 class MM_EnvironmentBase;
@@ -41,6 +42,8 @@ class MM_MemoryPool;
 class MM_MemorySubSpaceMetronome : public MM_MemorySubSpaceSegregated
 {
 private:
+	MM_MemorySubSpaceMetronomeDelegate _delegate;
+
 	/* TODO: this is temporary as a way to avoid dup code in MemorySubSpaceMetronome::allocate. 
 	 * We will specifically fix this allocate method in a separate design.
 	 */
@@ -60,12 +63,10 @@ public:
 
 	virtual void systemGarbageCollect(MM_EnvironmentBase *env, U_32 gcCode);
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#if defined(J9VM_GC_ARRAYLETS)
+#if defined(OMR_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
+#endif /* defined(OMR_GC_ARRAYLETS) */
 
-
- 	void yieldWhenRequested(MM_EnvironmentBase *env);
  	void collect(MM_EnvironmentBase *env, MM_GCCode gcCode);
 
 	
