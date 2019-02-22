@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+import java.util.Optional;
+/*[ENDIF] Java12 */
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import static java.lang.invoke.MethodType.*;
@@ -73,6 +77,24 @@ abstract class FieldVarHandle extends VarHandle {
 		checkSetterFieldFinality(handleTable);
 	}
 	
+	/*[IF Java12]*/
+	@Override
+	public Optional<VarHandleDesc> describeConstable() {
+		VarHandleDesc result = null;
+		Optional<ClassDesc> fieldTypeOp = fieldType.describeConstable();
+		Optional<ClassDesc> declaringClassOp = definingClass.describeConstable();
+
+		if (fieldTypeOp.isPresent() && declaringClassOp.isPresent()) {
+			if (this instanceof InstanceFieldVarHandle) {
+				result = VarHandleDesc.ofField(declaringClassOp.get(), fieldName, fieldTypeOp.get());
+			} else { /* static */
+				result = VarHandleDesc.ofStaticField(declaringClassOp.get(), fieldName, fieldTypeOp.get());
+			}
+		}
+		return Optional.ofNullable(result);
+	}
+	/*[ENDIF] Java12 */
+
 	/**
 	 * Checks whether the field referenced by this VarHandle, is final. 
 	 * If so, MethodHandles in the handleTable that represent access modes that may modify the field, 

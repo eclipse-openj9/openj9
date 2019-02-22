@@ -40,8 +40,10 @@ import sun.misc.Unsafe;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
+import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
+import java.util.Objects;
 /*[ENDIF] Java12 */
 
 /**
@@ -267,6 +269,9 @@ public abstract class VarHandle extends VarHandleInternal
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
 	final int modifiers;
+/*[IF Java12]*/
+	private int hashCode = 0;
+/*[ENDIF] Java12 */
 	
 	/**
 	 * Constructs a generic VarHandle instance. 
@@ -274,7 +279,6 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @param fieldType The type of the field referenced by this VarHandle.
 	 * @param coordinateTypes An array of the argument types required to utilize the access modes on this VarHandle.
 	 * @param handleTable An array of MethodHandles referencing the methods corresponding to this VarHandle's access modes.
-	 * @param typeTable An array of MethodTypes describing the exact descriptors to be used when invoking access modes on this VarHandle.
 	 * @param modifiers The field's modifiers.
 	 */
 	VarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, int modifiers) {
@@ -320,25 +324,95 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 
 /*[IF Java12]*/
-	public Optional<VarHandle.VarHandleDesc> describeConstable() {
-		/* Jep334 */
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	/**
+	 * Returns the nominal descriptor of this VarHandle instance, or an empty Optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with a nominal descriptor of VarHandle instance
+	 */
+	public Optional<VarHandleDesc> describeConstable() {
+		/* this method should be overriden by types that are supported */
+		return Optional.empty();
 	}
 
+	/**
+	 * Compares the specified object to this VarHandle and answer if they are equal.
+	 *
+	 * @param obj the object to compare
+	 * @return true if the specified object is equal to this VarHandle, false otherwise
+	 */
 	@Override
 	public final boolean equals(Object obj) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof VarHandle)) {
+			return false;
+		}
+
+
+		/* argument comparison */
+		VarHandle that = (VarHandle)obj;
+		if (!(this.fieldType.equals(that.fieldType) 
+			&& (this.modifiers == that.modifiers)
+			&& Arrays.equals(this.coordinateTypes, that.coordinateTypes))
+		) {
+			return false;
+		}
+
+		/* Compare properties of FieldVarHandle that are not captured in the parent class */
+		if (obj instanceof FieldVarHandle) {
+			if (!(this instanceof FieldVarHandle)) {
+				return false;
+			}
+
+			FieldVarHandle thisf = (FieldVarHandle)this;
+			FieldVarHandle thatf = (FieldVarHandle)obj;
+			if (!(thisf.definingClass.equals(thatf.definingClass)
+				&& thisf.fieldName.equals(thatf.fieldName))
+			) {
+				return false;
+			}
+			
+		}
+
+		return true;
 	}
 
+	/**
+	 * Answers an integer hash code for the VarHandle. VarHandle instances
+	 * which are equal answer the same value for this method.
+	 *
+	 * @return a hash for this VarHandle
+	 */
 	@Override
 	public final int hashCode() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		if (hashCode == 0) {
+			hashCode = fieldType.hashCode();
+			for (Class<?> c : coordinateTypes) {
+				hashCode = 31 * hashCode + c.hashCode();
+			}
+
+			/* Add properties for FieldVarHandle */
+			if (this instanceof FieldVarHandle) {
+				hashCode = 31 * hashCode + ((FieldVarHandle)this).definingClass.hashCode();
+			}
+		}
+		return hashCode;
 	}
 
+	/**
+	 * Returns a text representation of the VarHandle instance.
+	 * 
+	 * @return String representation of VarHandle instance
+	 */
 	@Override
 	public final String toString() {
-		/* Jep334 */
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		/* VarHandle[varType=x, coord=[x, x]] */
+		String structure = "VarHandle[varType=%s, coord=%s]"; //$NON-NLS-1$
+		String coordList = Arrays.toString(coordinateTypes);
+		return String.format(structure, this.fieldType.getName(), coordList);
 	}
 /*[ENDIF]*/
 	
@@ -962,42 +1036,167 @@ public abstract class VarHandle extends VarHandleInternal
 /*[IF Java12]*/
 	/* nominal descriptor of a VarHandle constant */
 	public static final class VarHandleDesc extends DynamicConstantDesc<VarHandle> implements ConstantDesc {
+		private Kind type = null;
+		private ClassDesc declaringClassDesc = null;
 
-		protected VarHandleDesc(DirectMethodHandleDesc bootstrapMethod, String constantName, ClassDesc constantType, ConstantDesc... bootstrapArgs) {
-			super(bootstrapMethod, constantName, constantType, bootstrapArgs);
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		private static enum Kind {
+			ARRAY,
+			STATIC_FIELD,
+			INSTANCE_FIELD;
+
+			DirectMethodHandleDesc getBootstrap() {
+				DirectMethodHandleDesc result = null;
+				switch (this) {
+					case ARRAY:
+						result = ConstantDescs.BSM_VARHANDLE_ARRAY;
+						break;
+					case STATIC_FIELD:
+						result = ConstantDescs.BSM_VARHANDLE_FIELD;
+						break;
+					case INSTANCE_FIELD:
+						result = ConstantDescs.BSM_VARHANDLE_STATIC_FIELD;
+						break;
+				}
+				return result;
+			}
 		}
 
-		public static VarHandleDesc ofArray(ClassDesc arrayClass) {
-			/* Jep334 */
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		/**
+		 * Create a nominal descriptor for a field VarHandle.
+		 * 
+		 * @param declaringClassDesc ClassDesc describing the declaring class for the field (null for array)
+		 * @param name unqualified String name of the field (null for array)
+		 * @param varHandleType ClassDesc describing the field type
+		 * @throws NullPointerException if there is a null argument
+		 */
+		private VarHandleDesc(Kind type, ClassDesc declaringClassDesc, String name, ClassDesc varHandleDesc) throws NullPointerException {
+			super(type.getBootstrap(), name, varHandleDesc, ConstantDescs.CD_VarHandle);
+			this.type = type;
+			this.declaringClassDesc = declaringClassDesc;
 		}
 
-		public static VarHandleDesc ofField(ClassDesc declaringClass, String name, ClassDesc fieldType) {
-			/* Jep334 */
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		/**
+		 * Creates a VarHandleDesc describing a VarHandle for an array type.
+		 * 
+		 * @param arrayClass ClassDesc describing the array type
+		 * @return VarHandleDesc describing a VarHandle for an array type
+		 * @throws NullPointerException if there is a null argument
+		 */
+		public static VarHandleDesc ofArray(ClassDesc arrayClass) throws NullPointerException {
+			/* Verify that arrayClass is an array, and throw an error. Otherwise the call to componentType() 
+			 * will return null and a NullPointerException will be thrown which does not follow the spec.
+			 */
+			if (!arrayClass.isArray()) {
+				/*[MSG "K0625", "{0} is not an array type."]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0625", arrayClass.descriptorString())); //$NON-NLS-1$
+			}
+			return new VarHandleDesc(Kind.ARRAY, arrayClass, "_", arrayClass.componentType()); //$NON-NLS-1$
 		}
 
-		public static VarHandleDesc ofStaticField(ClassDesc declaringClass, String name, ClassDesc fieldType) {
-			/* Jep334 */
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		/**
+		 * Creates a VarHandleDesc describing an instance field.
+		 * 
+		 * @param declaringClassDesc ClassDesc describing the declaring class for the field
+		 * @param name unqualified String name of the field
+		 * @param fieldType ClassDesc describing the field type
+		 * @return VarHandleDesc describing the instance field
+		 * @throws NullPointerException if there is a null argument
+		 */
+		public static VarHandleDesc ofField(ClassDesc declaringClassDesc, String name, ClassDesc fieldType) throws NullPointerException {
+			/* other fields will be null checked in constructor */
+			Objects.requireNonNull(declaringClassDesc);
+			return new VarHandleDesc(Kind.INSTANCE_FIELD, declaringClassDesc, name, fieldType);
 		}
 
+		/**
+		 * Creates a VarHandleDesc describing a static field.
+		 * 
+		 * @param declaringClassDesc ClassDesc describing the declaring class for the field
+		 * @param name unqualified String name of the field
+		 * @param fieldType ClassDesc describing the field type
+		 * @return VarHandleDesc describing the static field
+		 * @throws NullPointerException if there is a null argument
+		 */
+		public static VarHandleDesc ofStaticField(ClassDesc declaringClassDesc, String name, ClassDesc fieldType) throws NullPointerException {
+			/* other fields will be null checked in constructor */
+			Objects.requireNonNull(declaringClassDesc);
+			return new VarHandleDesc(Kind.STATIC_FIELD, declaringClassDesc, name, fieldType);
+		}
+
+		/**
+		 * Resolve nominal VarHandle descriptor reflectively.
+		 * 
+		 * @param lookup provides name resolution and access control context
+		 * @return resolved VarHandle
+		 * @throws ReflectiveOperationException if field, class, or method could not be resolved
+		 */
 		@Override
 		public VarHandle resolveConstantDesc(MethodHandles.Lookup lookup) throws ReflectiveOperationException {
-			/* Jep334 */
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+			VarHandle result;
+
+			/* resolve declaringClassDesc, which is array class for array type */
+			Class<?> declaringClass = (Class<?>)declaringClassDesc.resolveConstantDesc(lookup);
+
+			switch(type) {
+				case ARRAY:
+					result = MethodHandles.arrayElementVarHandle(declaringClass);
+					break;
+				case STATIC_FIELD:
+				case INSTANCE_FIELD:
+					/* resolve field descriptor and field name */
+					Class<?> fieldClass = (Class<?>)constantType().resolveConstantDesc(lookup);
+					String name = constantName();
+
+					try {
+						if (type.equals(Kind.STATIC_FIELD)) {
+							result = lookup.findStaticVarHandle(declaringClass, name, fieldClass);
+						} else {
+							result = lookup.findVarHandle(declaringClass, name, fieldClass);
+						}
+					} catch(Exception e) {
+						throw new ReflectiveOperationException(e);
+					}
+					break;
+				default:
+					throw new java.lang.InternalError();
+			}
+			
+			return result;
 		}
 
+		/**
+		 * Returns a string containing a concise, human-readable representation of the VarHandleDesc. 
+		 * Description includes the bootstrap method, name, type, and bootstrap arguments.
+		 *
+		 * @return String that textually represents the Object instance
+		 */
 		@Override
 		public String toString() {
-			/* Jep334 */
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+
+			/* VarHandleDesc[(static) (declaring class name).(constant field):(constant type)] */
+			String structure = "VarHandleDesc[%s]"; //$NON-NLS-1$
+			String content = ""; //$NON-NLS-1$
+
+			if (type.equals(Kind.ARRAY)) {
+				/* array type is declaring class, varType is the component type of the array */
+				content = String.format("%s[]", declaringClassDesc.displayName()); //$NON-NLS-1$
+			} else {
+				if (type.equals(Kind.STATIC_FIELD)) {
+					content += "static ";  //$NON-NLS-1$
+				}
+				content = String.format(content + "%s.%s:%s", declaringClassDesc.displayName(), constantName(), varType().displayName()); //$NON-NLS-1$
+			}
+
+			return String.format(structure, content);
 		}
 
+		/**
+		 * Returns a ClassDesc describing the variable represented by this VarHandleDesc.
+		 * 
+		 * @return ClassDesc of variable type
+		 */
 		public ClassDesc varType() {
-			/* Jep334 */
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+			return constantType();
 		}
 	}
 /*[ENDIF] Java12 */ 
