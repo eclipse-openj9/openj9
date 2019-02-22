@@ -256,6 +256,7 @@ typedef struct TR_AOTStats
 
    int32_t numClassValidations;
    int32_t numClassValidationsFailed;
+   int32_t numWellKnownClassesValidationsFailed;
 
    TR_FailedPerfAssumptionCode failedPerfAssumptionCode;
 

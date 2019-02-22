@@ -2781,11 +2781,9 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numRuntimeClassAddressReloUnresolvedCP: %d\n", aotStats->numRuntimeClassAddressReloUnresolvedCP);
       fprintf(stderr, "numRuntimeClassAddressReloUnresolvedClass: %d\n", aotStats->numRuntimeClassAddressReloUnresolvedClass);
 
-
       fprintf(stderr, "numClassValidations: %d\n", aotStats->numClassValidations);
       fprintf(stderr, "numClassValidationsFailed: %d\n", aotStats->numClassValidationsFailed);
-
-
+      fprintf(stderr, "numWellKnownClassesValidationsFailed: %d\n", aotStats->numWellKnownClassesValidationsFailed);
 
       fprintf(stderr, "numVMCheckCastEvaluator (x86): %d\n", aotStats->numVMCheckCastEvaluator);
       fprintf(stderr, "numVMInstanceOfEvaluator (x86): %d\n", aotStats->numVMInstanceOfEvaluator);
