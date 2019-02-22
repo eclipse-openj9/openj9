@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -275,10 +275,15 @@ public:
 
 	virtual CompletePhaseCode scanWeakReferencesComplete(MM_EnvironmentBase *envBase) {
 		MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+		reportScanningStarted(RootScannerEntity_WeakReferenceObjectsComplete);
+
 		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
 			env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_weak;
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
+
+		reportScanningEnded(RootScannerEntity_WeakReferenceObjectsComplete);
+
 		return complete_phase_OK;
 	}
 
