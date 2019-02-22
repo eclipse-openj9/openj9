@@ -2709,7 +2709,7 @@ JVM_DefineClassWithSourceCond(jint arg0, jint arg1, jint arg2, jint arg3, jint a
 jobject JNICALL
 JVM_EnqueueOperation(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
 {
-	assert(!"JVM_EnqueueOperation() stubbed!");
+	assert(!"A HotSpot VM Attach API is attempting to connect to an OpenJ9 VM. This is not supported.");
 	return NULL;
 }
 
