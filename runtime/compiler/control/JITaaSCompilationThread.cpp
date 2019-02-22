@@ -411,7 +411,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          for (int i = 0; i < numMethods; ++i)
             {
             TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
             methodsInfo.push_back(methodInfo);
             }
          client->write(methods, methodsInfo);
@@ -986,10 +986,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool isAOT = std::get<3>(recv);
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          // if in AOT mode, create a relocatable method mirror
-         if (!isAOT)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
-         else
-            TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedRelocatableJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
+         TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
          
          client->write(methodInfo);
          }
@@ -1086,7 +1083,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          if (ramMethod)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
 
          client->write(ramMethod, methodInfo, unresolvedInCP);
          }
@@ -1116,7 +1113,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          if (ramMethod)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
 
          client->write(ramMethod, unresolved, tookBranch, methodInfo);
          }
@@ -1173,7 +1170,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) ramMethod;
            
             TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
                         
             client->write(ramMethod, vTableIndex, resolvedInCP, methodInfo);
             }
@@ -1262,7 +1259,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          if (resolved)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
 
          client->write(resolved, ramMethod, methodInfo);
          }
@@ -1290,7 +1287,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
          if (j9method)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
 
          client->write(j9method, methodInfo);
          }
@@ -1553,44 +1550,24 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool sameLoaders = false;
          bool sameClass = false;
          bool isRomClassForMethodInSC = false;
-         bool rememberedClass = false;
-         bool resolveAOTMethods = !comp->getOption(TR_DisableAOTResolveDiffCLMethods);
-         bool enableAggressive = comp->getOption(TR_EnableAOTInlineSystemMethod);
-         bool isSystemClassLoader = false;
+
+         // Create mirror, if possible
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, vTableSlot, mirror, fe, trMemory);
 
-         if (comp->getOption(TR_DisableDFP) ||
-             (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-             || TR::Compiler->target.cpu.getS390SupportsDFP()
-#endif
-               ) ||
-                !TR_J9MethodBase::isBigDecimalMethod(j9method)))
-            {
-            // Check if same classloader
-            J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD((j9method))));
-            TR_OpaqueClassBlock *clazzOfInlinedMethod = fe->convertClassPtrToClassOffset(j9clazz);
-            TR_OpaqueClassBlock *clazzOfCompiledMethod = fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(mirror->ramMethod()));
+         // Collect AOT stats
+         TR_ResolvedJ9Method *resolvedMethod = std::get<0>(methodInfo).remoteMirror;
 
-            if (enableAggressive)
-               {
-               isSystemClassLoader = ((void*) fe->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*) fe->getClassLoader(clazzOfInlinedMethod));
-               }
-            
-            isRomClassForMethodInSC = TR::CompilationInfo::get(fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method, fe->_jitConfig->javaVM);
-            if (isRomClassForMethodInSC)
-               {
-               TR_J9VMBase *fej9 = (TR_J9VMBase *) fe;
-               if (resolveAOTMethods ||
-                   (sameLoaders = fej9->sameClassLoaders(clazzOfInlinedMethod, clazzOfCompiledMethod)) ||
-                   isSystemClassLoader)
-                  {
-                  rememberedClass = TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedRelocatableJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
-                  sameClass = fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(mirror->ramMethod())) == fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(j9method));
-                  }
-               }
-            }
-         client->write(methodInfo, isRomClassForMethodInSC, sameLoaders, sameClass, rememberedClass);
+         isRomClassForMethodInSC = TR::CompilationInfo::get(fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method, fe->_jitConfig->javaVM);
+
+         J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD(((J9Method *)j9method))));
+         TR_OpaqueClassBlock *clazzOfInlinedMethod = fe->convertClassPtrToClassOffset(j9clazz);
+         TR_OpaqueClassBlock *clazzOfCompiledMethod = fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(mirror->ramMethod()));
+         sameLoaders = fe->sameClassLoaders(clazzOfInlinedMethod, clazzOfCompiledMethod);
+         if (resolvedMethod)
+            sameClass = fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(mirror->ramMethod())) == fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(j9method));
+
+         client->write(methodInfo, isRomClassForMethodInSC, sameLoaders, sameClass);
          }
          break;
       case J9ServerMessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary:

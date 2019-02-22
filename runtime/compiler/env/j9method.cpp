@@ -1363,7 +1363,8 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
             svm->addClassFromMethodRecord(containingClass(), aMethod);
             }
-         else
+         else if (owner) // JITaaS: in baseline, if owner doesn't exist then comp doesn't exist, so thi case is not possible
+            // but in JITaaS client comp is initialized before creating resolved method for compilee, so need this guard.
             {
             ((TR_ResolvedRelocatableJ9Method *) owner)->validateArbitraryClass(comp, (J9Class*)containingClass());
             }
