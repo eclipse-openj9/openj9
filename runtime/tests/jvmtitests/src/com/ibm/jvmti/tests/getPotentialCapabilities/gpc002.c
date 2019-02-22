@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -181,11 +181,16 @@ getCapabilities(jvmtiCapabilities * caps, int * availableCount, int * unavailabl
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_heap_events);
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_threads_events);
 
-    /* JVMTI 9.0 */
-    if (JVMTI_VERSION_9_0 == env->jvmtiVersion) {
-        PRINT_CAPABILITY(can_generate_early_vmstart);
-        PRINT_CAPABILITY(can_generate_early_class_hook_events);
-    }
+	/* JVMTI 9.0 */
+	if (env->jvmtiVersion >= JVMTI_VERSION_9) {
+		PRINT_CAPABILITY(can_generate_early_vmstart);
+		PRINT_CAPABILITY(can_generate_early_class_hook_events);
+	}
+	
+	/* JVMTI 11 */
+	if (env->jvmtiVersion >= JVMTI_VERSION_11) {
+		PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
+	}
 }
 
 
