@@ -120,6 +120,10 @@ CX_DEFAULTOPT=-O3
 CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
+ifeq ($(HOST_BITS),64)
+    CX_FLAGS+=-fstack-protector
+endif
+
 ifeq ($(HOST_ARCH),x)
     CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-math-errno -fno-trapping-math
 
