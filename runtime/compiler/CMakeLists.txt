@@ -131,6 +131,7 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegister.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegisterInStruct.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineState.cpp
+	${omr_SOURCE_DIR}/compiler/optimizer/SwitchAnalyzer.cpp
 )
 
 # Extra defines not provided by the create_omr_compiler_library call
