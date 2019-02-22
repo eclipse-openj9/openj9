@@ -131,19 +131,23 @@ TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
    {
    const uintptrj_t *wkClassChainOffsets =
       wellKnownClassChainOffsets(reloRuntime, reloTarget);
+   TR_AOTStats *aotStats = reloRuntime->aotStats();
+
    if (wkClassChainOffsets != NULL)
       {
       TR::SymbolValidationManager *svm =
          reloRuntime->comp()->getSymbolValidationManager();
 
       if (!svm->validateWellKnownClasses(wkClassChainOffsets))
+         {
+         if (aotStats)
+            aotStats->numWellKnownClassesValidationsFailed++;
          return compilationAotClassReloFailure;
+         }
       }
 
    TR_RelocationRecordBinaryTemplate *recordPointer = firstRecord(reloRuntime, reloTarget);
    TR_RelocationRecordBinaryTemplate *endOfRecords = pastLastRecord(reloTarget);
-
-   TR_AOTStats *aotStats = reloRuntime->aotStats();
 
    while (recordPointer < endOfRecords)
       {
