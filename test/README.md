@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,7 +140,7 @@ typical use case for OpenJ9 developers, there are also many cases
 where developers need to verify features for a specific version or
 compare behaviour against a particular implementation.
 
-JDK_VERSION=[8|9|10|11|Panama|Valhalla] (8 default value)
+JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value)
 
 JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
 
