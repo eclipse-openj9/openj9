@@ -75,7 +75,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="_JVM_GetClassConstantPool@8" />
 		<export name="_JVM_GetClassContext@4" />
 		<export name="_JVM_GetClassLoader@8" />
-		<export name="_JVM_GetClassName@8" />
+		<export name="_JVM_GetClassName@8">
+			<include-if condition="spec.java12 or not spec.java11"/>
+			<exclude-if condition="spec.java13"/>
+		</export>
 		<export name="_JVM_GetClassSignature@8" />
 		<export name="_JVM_GetEnclosingMethodInfo@8" />
 		<export name="_JVM_GetInterfaceVersion@0" />
@@ -329,6 +332,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="JVM_GetNestHost"/>
 		<export name="JVM_GetNestMembers"/>
 		<export name="JVM_AreNestMates"/>
+		<export name="JVM_InitClassName">
+			<exclude-if condition="spec.java12 and not spec.java13"/>
+		</export>
 	</exports>
 
 	<exports group="jdk12">

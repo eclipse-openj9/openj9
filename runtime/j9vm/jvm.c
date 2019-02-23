@@ -230,6 +230,7 @@ static char * newPath = NULL;
 J9JavaVM *BFUjavaVM = NULL;
 
 static jclass jlClass = NULL;
+static jfieldID classNameFID = NULL;
 static jmethodID classDepthMID = NULL;
 static jmethodID classLoaderDepthMID = NULL;
 static jmethodID currentClassLoaderMID = NULL;
@@ -1681,7 +1682,12 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 		return JNI_ERR;
 	}
 
-	if (J2SE_SHAPE_RAW != J2SE_SHAPE(vm)) {
+	if (J2SE_SHAPE_RAW == J2SE_SHAPE(vm)) {
+		classNameFID = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");
+		if (!classNameFID) {
+			return JNI_ERR;
+		}
+	} else {
 		classDepthMID = (*env)->GetStaticMethodID(env, clazz, "classDepth", "(Ljava/lang/String;)I");
 		if (!classDepthMID) {
 			return JNI_ERR;
@@ -5491,10 +5497,18 @@ JVM_ActiveProcessorCount(void)
 J9Class* java_lang_Class_vmRef(JNIEnv* env, jobject clazz);
 
 /**
- * JVM_GetClassName
+ * JVM_GetClassName / JVM_InitClassName
+ *
+ * The name was changed from JVM_GetClassName to JVM_InitClassName
+ * in interface version 6.
  */
 jstring JNICALL
-JVM_GetClassName(JNIEnv *env, jclass theClass)
+#if (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12)
+JVM_GetClassName
+#else /* (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12) */
+JVM_InitClassName
+#endif /* (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12) */
+(JNIEnv *env, jclass theClass)
 {
 	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
 	jstring result;
@@ -5546,6 +5560,13 @@ JVM_GetClassName(JNIEnv *env, jclass theClass)
 
 			result = (*env)->NewStringUTF(env, name);
 			j9mem_free_memory(name);
+#if (JAVA_SPEC_VERSION >= 11) && (JAVA_SPEC_VERSION != 12)
+			// JVM_InitClassName is expected to also cache the result in the 'name' field
+			(*env)->SetObjectField(env, theClass, classNameFID, result);
+			if ((*env)->ExceptionCheck(env)) {
+				result = NULL;
+			}
+#endif /* (JAVA_SPEC_VERSION >= 11) && (JAVA_SPEC_VERSION != 12) */
 			return result;
 		}
 	}
