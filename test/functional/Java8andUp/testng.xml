@@ -85,6 +85,12 @@
 			<class name="org.openj9.test.attachAPI.TestManagementAgent"/>
 		</classes>
 	</test>
+	<test name="TestJps">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJps"/>
+		</classes>
+	</test>
+	
 	<test name="TestFileLocking">
 		<classes>
 			<class name="org.openj9.test.fileLock.TestFileLocking"/>
