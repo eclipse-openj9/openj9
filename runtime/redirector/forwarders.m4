@@ -67,8 +67,11 @@ _X(JVM_GetClassAnnotations,JNICALL,true,jbyteArray ,JNIEnv *env, jclass target)
 _X(JVM_GetClassConstantPool,JNICALL,true,jobject ,JNIEnv *env, jclass target)
 _X(JVM_GetClassContext,JNICALL,true,jobject ,JNIEnv *env)
 _X(JVM_GetClassLoader,JNICALL,true,jobject ,JNIEnv *env, jobject obj)
-_X(JVM_GetClassName,JNICALL,true,jstring ,JNIEnv *env, jclass theClass)
-_X(JVM_GetClassSignature,JNICALL,true,jstring ,JNIEnv *env, jclass target)
+_IF([(JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12)],
+	[_X(JVM_GetClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)])
+_IF([(JAVA_SPEC_VERSION == 11) || (JAVA_SPEC_VERSION >= 13)],
+	[_X(JVM_InitClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)])
+_X(JVM_GetClassSignature,JNICALL,true,jstring,JNIEnv *env, jclass target)
 _X(JVM_GetEnclosingMethodInfo,JNICALL,true,jobjectArray ,JNIEnv *env, jclass theClass)
 _X(JVM_GetInterfaceVersion,JNICALL,true,jint ,void)
 _X(JVM_GetLastErrorString,JNICALL,true,jint ,char* buffer, jint length)
