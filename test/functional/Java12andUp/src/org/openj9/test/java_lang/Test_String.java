@@ -82,5 +82,4 @@ public class Test_String {
 		String resolvedTest2 = test.resolveConstantDesc(null);
 		Assert.assertTrue(test.equals(resolvedTest2));
 	}
-	 
 }

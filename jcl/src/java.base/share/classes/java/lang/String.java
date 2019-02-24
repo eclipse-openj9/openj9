@@ -8299,10 +8299,15 @@ written authorization of the copyright holder.
 
 /*[IF Java12]*/
 	/**
-	 * Apply a function to this string. The function expects a single String input and returns an R.
+	 * Apply a function to this string. The function expects a single String input
+	 * and returns an R.
 	 * 
-	 * @param f - the functional interface to be applied
+	 * @param f 
+	 *			  the functional interface to be applied
+	 *
 	 * @return the result of application of the function to this string
+	 * 
+	 * @since 12
 	 */
 	public <R> R transform(Function<? super String, ? extends R> f) {
 		return f.apply(this);
@@ -8313,20 +8318,75 @@ written authorization of the copyright holder.
 	 * if construction is not possible.
 	 * 
 	 * @return Optional with nominal descriptor of String instance
+	 * 
+	 * @since 12
 	 */
 	public Optional<String> describeConstable() {
 		return Optional.of(this);
 	}
 
 	/**
-	 * Resolves this ConstantDesc instance
+	 * Resolves this ConstantDesc instance.
 	 * 
-	 * @param lookup parameter is ignored
+	 * @param lookup 
+	 *			  parameter is ignored
 	 * 
 	 * @return the resolved Constable value
+	 * 
+	 * @since 12
 	 */
 	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
 		return this;
 	}
+
+	/**
+	 * Indents each line of the string depending on the value of n, and normalizes
+	 * line terminators to the newline character "\n".
+	 * 
+	 * @param n 
+	 *			  the number of spaces to indent the string
+	 *
+	 * @return the indented string with normalized line terminators
+	 * 
+	 * @since 12
+	 */
+	public String indent(int n) {
+		Stream<String> lines = lines();
+		Iterator<String> iter = lines.iterator();
+		StringBuilder builder = new StringBuilder();
+
+		String spaces = n > 0 ? " ".repeat(n) : null;
+		int absN = Math.abs(n);
+
+		while (iter.hasNext()) {
+			String currentLine = iter.next();
+
+			if (n > 0) {
+				builder.append(spaces);
+			} else if (n < 0) {
+				int start = 0;
+
+				while ((currentLine.length() > start) 
+					&& (Character.isWhitespace(currentLine.charAt(start)))
+				) {
+					start++;
+
+					if (start >= absN) {
+						break;
+					}
+				}
+				currentLine = currentLine.substring(start);
+			}
+
+			/**
+			 * Line terminators are removed when lines() is called. A newline character is
+			 * added to the end of each line, to normalize line terminators.
+			 */
+			builder.append(currentLine);
+			builder.append("\n");
+		}
+
+		return builder.toString();
+	}	
 /*[ENDIF] Java12 */
 }
