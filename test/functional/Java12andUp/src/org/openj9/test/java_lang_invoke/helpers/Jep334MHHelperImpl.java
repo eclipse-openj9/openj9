@@ -27,29 +27,58 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.VarHandle;
 
 public class Jep334MHHelperImpl implements Jep334MHHelper {
-    /*
-     * MethodHandle helper fields & methods
-     */
-    /* fields */
-    public volatile int getterTest = 1;
-    public int setterTest = 2;
-    public static volatile int staticGetterTest = 3;
-    public static int staticSetterTest = 4;
+	/*
+	 * MethodHandle helper fields & methods
+	 */
+	/* fields */
+	public volatile int getterTest = 1;
+	public int setterTest = 2;
+	public static volatile int staticGetterTest = 3;
+	public static int staticSetterTest = 4;
 
-    /* constructors */
-    public Jep334MHHelperImpl() {}
+	/* constructors */
+	public Jep334MHHelperImpl() {}
 
-    public Jep334MHHelperImpl(String s, int i) {}
+	public Jep334MHHelperImpl(String s, int i) {}
 
-    /* methods to invoke */
-    public void virtualTest() {}
+	/* methods to invoke */
+	public void virtualTest() {}
 
-    public void specialTest() {}
-    
-    public static void staticTest() {}
+	public void specialTest() {}
 
-    /* special helper */
-    public static MethodHandles.Lookup lookup() {
-        return MethodHandles.lookup();
-    }
+	public static void staticTest() {}
+
+	/* special helper */
+	public static MethodHandles.Lookup lookup() {
+		return MethodHandles.lookup();
+	}
+
+	/*
+	 * VarHandle helper fields & methods
+	 */
+
+	/* test types */
+	final public static int array_test = 1;
+	final public static int instance_test = 2;
+	final public static int static_test = 3;
+
+	public static int staticTest;
+	public Integer instanceTest;
+
+	public static VarHandle getInstanceTest() throws Throwable {
+		return MethodHandles.lookup().findVarHandle(Jep334MHHelperImpl.class, "instanceTest", Integer.class);
+	}
+
+	public static VarHandle getStaticTest() throws Throwable {
+		return MethodHandles.lookup().findStaticVarHandle(Jep334MHHelperImpl.class, "staticTest", int.class);
+	}
+
+	public static VarHandle getArrayTest() throws Throwable {
+		return MethodHandles.arrayElementVarHandle(double[].class);
+	}
+
+	public static VarHandle getArrayTest2() throws Throwable {
+		return MethodHandles.arrayElementVarHandle(Float[][].class);
+	}
 }
+
