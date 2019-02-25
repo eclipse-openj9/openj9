@@ -315,17 +315,17 @@ sub handle_end {
 			}
 			# level defaults to 'extended'
 			if (!defined $parseTest->{'levels'}) {
-				$parseTest->{'levels'} = ['extended'];;
+				$parseTest->{'levels'} = ['extended'];
 			}
 			# group defaults to 'functional'
 			if (!defined $parseTest->{'groups'}) {
-				$parseTest->{'groups'} = ['functional'];;
+				$parseTest->{'groups'} = ['functional'];
 			}
 			# impl defaults to all
 			if (!defined $parseTest->{'impls'}) {
 				$parseTest->{'impls'} = $allImpls;
 			}
-			# aot default to applicable when testFlag contains AOT
+			# aot defaults to applicable when testFlag contains AOT
 			if (( $testFlag =~ /AOT/ ) && ( !defined $parseTest->{'aot'} )) {
 				$parseTest->{'aot'} = 'applicable';
 			}
@@ -363,7 +363,7 @@ sub handle_end {
 		push (@{$eleArr}, $eleStr);
 	} elsif (($elt eq 'groups') && ($parentEle eq 'groups')) {
 		if (@{$eleArr}) {
-			$parseTest->{'groups'} = $eleArr;
+			$parseTest->{'groups'} = $eleArr;
 		}
 	} elsif (($elt eq 'impl') && ($currentEle eq 'impl') && ($parentEle eq 'impls')) {
 		if ( !grep(/^$eleStr$/, @{$allImpls}) ) {
