@@ -76,6 +76,7 @@
 #define J9ClassIsValueType 0x400
 #define J9ClassLargestAlignmentConstraintReference 0x800
 #define J9ClassLargestAlignmentConstraintDouble 0x1000
+#define J9ClassIsExemptFromValidation 0x2000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 

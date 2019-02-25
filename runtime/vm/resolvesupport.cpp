@@ -80,7 +80,7 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 		 */
 		fieldClass = J9_CURRENT_CLASS(fieldClass);
 		callerClass = J9_CURRENT_CLASS(callerClass);
-		if (VM_VMHelpers::romClassChecksFinalStores(callerClass->romClass)) {
+		if (VM_VMHelpers::ramClassChecksFinalStores(callerClass)) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			if ((fieldClass != callerClass) || !VM_VMHelpers::romMethodIsInitializer(romMethod, isStatic)) {
 				if (canRunJavaCode) {

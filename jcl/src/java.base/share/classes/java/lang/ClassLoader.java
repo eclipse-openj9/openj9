@@ -538,6 +538,18 @@ protected final Class<?> defineClass (
 		ProtectionDomain protectionDomain) 
 		throws java.lang.ClassFormatError 
 {
+	return defineClassInternal(className, classRep, offset, length, protectionDomain, false /* allowNullProtectionDomain */);
+}
+
+final Class<?> defineClassInternal(
+		final String className, 
+		final byte[] classRep, 
+		final int offset, 
+		final int length, 
+		ProtectionDomain protectionDomain,
+		boolean allowNullProtectionDomain)
+		throws java.lang.ClassFormatError 
+{
 	Certificate[] certs = null; 
 	if (protectionDomain != null) {
 		final CodeSource cs = protectionDomain.getCodeSource();
@@ -555,7 +567,7 @@ protected final Class<?> defineClass (
 		throw new ArrayIndexOutOfBoundsException();
 	}
 
-	if (protectionDomain == null)	{
+	if ((protectionDomain == null) && !allowNullProtectionDomain) {
 		protectionDomain = getDefaultProtectionDomain();
 	}
 	
