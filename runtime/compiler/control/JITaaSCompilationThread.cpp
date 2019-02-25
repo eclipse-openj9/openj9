@@ -975,6 +975,28 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->dereferenceStaticFinalAddress(address, addressType));
          }
          break;
+      case J9ServerMessageType::SharedCacheVM_persistThunk:
+         {
+         auto recv = client->getRecvData<std::string, J9SharedDataDescriptor>();
+         auto signatureStr = std::get<0>(recv);
+         auto dataDescriptor = std::get<1>(recv);
+         const void *store= fe->_jitConfig->javaVM->sharedClassConfig->storeSharedData(fe->getCurrentVMThread(), signatureStr.data(), signatureStr.length(), &dataDescriptor);
+         client->write(store);
+         }
+         break;
+      case J9ServerMessageType::SharedCacheVM_findPersistentThunk:
+         {
+         auto recv = client->getRecvData<std::string>();
+         auto signatureStr = std::get<0>(recv);
+         J9SharedDataDescriptor firstDescriptor;
+         J9VMThread *curThread = fe->getCurrentVMThread();
+         firstDescriptor.address = NULL;
+
+         fe->_jitConfig->javaVM->sharedClassConfig->findSharedData(curThread, signatureStr.data(), signatureStr.length(),
+                                                         J9SHR_DATA_TYPE_AOTTHUNK, false, &firstDescriptor, NULL);
+         client->write(firstDescriptor.address);
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
