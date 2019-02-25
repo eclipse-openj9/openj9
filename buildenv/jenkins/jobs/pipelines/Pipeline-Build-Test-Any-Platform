@@ -26,6 +26,7 @@ SETUP_LABEL = params.SETUP_LABEL
 if (!SETUP_LABEL) {
     SETUP_LABEL = 'worker'
 }
+def BUILD_NAME = 'Build-JDK'
 
 timestamps {
     node(SETUP_LABEL) {
@@ -36,10 +37,14 @@ timestamps {
 
             buildFile = load 'buildenv/jenkins/common/pipeline-functions'
             SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
+            BUILD_NAME="Build-JDK${SDK_VERSION}-${SPEC}"
+            if (params.AUTOMATIC_GENERATION != 'false'){
+                variableFile.create_job(BUILD_NAME, SDK_VERSION, SPEC, 'build')
+            }
         } finally {
             // Temporarily turn off disableDeferredWipeout. See https://issues.jenkins-ci.org/browse/JENKINS-54225
             cleanWs notFailBuild: true, disableDeferredWipeout: false
         }
     }
-    jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, BUILD_LIST, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
+    jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, BUILD_LIST, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_NAME)
 }
