@@ -1224,7 +1224,7 @@ TR::Block *TR::SwitchAnalyzer::addGotoBlock(TR::TreeTop *dest)
    }
 TR::Block *TR::SwitchAnalyzer::addIfBlock(TR::ILOpCodes opCode, CASECONST_TYPE val, TR::TreeTop *dest)
    {
-   TR::Node *constNode = TR::Node::create(_switch, _isInt64 ? (_signed ? TR::lconst : TR::luconst) : (_signed ? TR::iconst : TR::iuconst), 0);
+   TR::Node *constNode = TR::Node::create(_switch, _isInt64 ? TR::lconst : TR::iconst, 0);
    constNode->set64bitIntegralValue(val);
    TR::Node *node = TR::Node::createif(opCode,
                                      TR::Node::createLoad(_switch, _temp),
@@ -1269,10 +1269,6 @@ TR::Block *TR::SwitchAnalyzer::addTableBlock(SwitchInfo *dense)
       node->setAndIncChild(0, TR::Node::create(TR::isub, 2,
                                            (_isInt64 ? TR::Node::create(TR::l2i, 1, TR::Node::createLoad(_switch, _temp)) : TR::Node::createLoad(_switch, _temp)),
                                            TR::Node::create(_switch, TR::iconst, 0, dense->_min)));
-   else
-      node->setAndIncChild(0, TR::Node::create(TR::iusub, 2,
-                                           (_isInt64 ? TR::Node::create(TR::l2i, 1, TR::Node::createLoad(_switch, _temp)) : TR::Node::createLoad(_switch, _temp)),
-                                           TR::Node::create(_switch, TR::iuconst, 0, dense->_min)));
 
    node->setAndIncChild(1, TR::Node::createCase(_switch, _defaultDest));
 

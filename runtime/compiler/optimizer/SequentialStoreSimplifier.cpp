@@ -694,7 +694,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
       case TR::l2b: shift = true;  _valueSize = 8; shiftCode = TR::lushr; altShiftCode = TR::lshr; constCode = TR::iconst; break;
       case TR::bload:
       case TR::bconst:
-      case TR::cconst:
       case TR::sconst:
       case TR::iconst:
       case TR::lconst: shift = false; _valueSize = 1; _shiftValue = 0; break;
@@ -721,7 +720,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
          _valNode = loadNode->getFirstChild()->getFirstChild();
          switch(constCode)
             {
-            case TR::cconst: _shiftValue = shiftVal->getConst<uint16_t>(); break;
             case TR::sconst: _shiftValue = shiftVal->getShortInt(); break;
             case TR::iconst: _shiftValue = shiftVal->getInt(); break;
             case TR::lconst: _shiftValue = shiftVal->getLongInt(); break;
@@ -966,7 +964,6 @@ int64_t TR_arraycopySequentialStores::constVal()
       switch (_val[entry]->getValNode()->getOpCodeValue())
          {
          case TR::bconst: curVal = (uint64_t) (_val[entry]->getValNode()->getByte() & 0xFF); break;
-         case TR::cconst: curVal = (uint64_t) (_val[entry]->getValNode()->getConst<uint16_t>() & 0xFF); break;
          case TR::sconst: curVal = (uint64_t) (_val[entry]->getValNode()->getShortInt() & 0xFF); break;
          case TR::iconst: curVal = (uint64_t) (_val[entry]->getValNode()->getInt() & 0xFF); break;
          case TR::lconst: curVal = (uint64_t) (_val[entry]->getValNode()->getLongInt() & 0xFF); break;
@@ -2475,7 +2472,6 @@ TR_SequentialStoreSimplifier::optDetailString() const throw()
  *
  * [0x2A0A5874]   ibstore #182[id=42:"WS-ATM-ACCT-ENTRY-USED-F"][0x29201614]  Shadow[<refined-array-shadow>] <intPrec=2>
  *                  ==>aiadd at [0x2A0A561C]
- * [0x2A0A58B4]     buconst -16 <intPrec=2>    <flags:"0x204" (X!=0 X<=0 )/>
  * [0x2A0A5A94]   astore #201[id=305:"Subscr-AddrTemp"][0x2A08552C]  Auto[<auto slot 84>]
  *                  ==>aiadd at [0x2A0A561C]
  * [0x2A0A5CAC]   ipdstore #184[id=44:"WS-ATM-ACCT-BRANCH"][0x2920168C]  Shadow[<refined-array-shadow>] <prec=5 (len=3)>

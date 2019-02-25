@@ -285,11 +285,7 @@ bool TR_DynamicLiteralPool::transformLitPoolConst(TR::Node *grandParent, TR::Nod
       case TR::iconst:
       case TR::lconst:
       case TR::bconst:
-      case TR::cconst:
       case TR::sconst:
-      case TR::iuconst:
-      case TR::luconst:
-      case TR::buconst:
          if (transformNeeded(grandParent, parent, child))
             {
             if (performTransformation(comp(), "%s Large non-float Constant\n", optDetailString()))
@@ -372,18 +368,15 @@ bool TR_DynamicLiteralPool::transformNeeded(TR::Node *grandParent, TR::Node *par
       else
          {
          TR::ILOpCodes oldOpCode = child->getOpCodeValue();
-         if (oldOpCode == TR::iuconst &&
-             (parentOpCode.isAdd() || parentOpCode.isSub()))
+         if (parentOpCode.isAdd() || parentOpCode.isSub())
             {
             TR::Node::recreate(child, TR::iconst);
             }
-         else if (oldOpCode == TR::luconst &&
-             (parentOpCode.isAdd() || parentOpCode.isSub()))
+         else if (parentOpCode.isAdd() || parentOpCode.isSub())
             {
             TR::Node::recreate(child, TR::lconst);
             }
-         else if (oldOpCode == TR::cconst &&
-             (parentOpCode.isAdd() || parentOpCode.isSub()))
+         else if (parentOpCode.isAdd() || parentOpCode.isSub())
             {
             TR::Node::recreate(child, TR::sconst);
             }
