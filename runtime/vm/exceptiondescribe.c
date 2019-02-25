@@ -280,7 +280,6 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 			UDATA lineNumber = 0;
 			J9UTF8 * fileName = NULL;
 			J9ClassLoader *classLoader = NULL;
-			UDATA offset = 0;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 			J9JITExceptionTable * metaData = NULL;
 			UDATA inlineDepth = 0;
@@ -340,14 +339,12 @@ inlinedEntry:
 					ramClass = J9_CLASS_FROM_CP(J9_CP_FROM_METHOD(ramMethod));
 					romClass = ramClass->romClass;
 					classLoader = ramClass->classLoader;
-
-					offset = getMethodIndexUnchecked(ramMethod);
 				} else {
 					pruneConstructors = FALSE;
 #endif
 					romClass = findROMClassFromPC(vmThread, methodPC, &classLoader);
 					if(romClass) {
-						romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC, &offset);
+						romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC);
 						if (romMethod != NULL) {
 							methodPC -= (UDATA) J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
 						}
@@ -358,7 +355,7 @@ inlinedEntry:
 
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
 				if (romMethod != NULL) {
-					lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, offset, classLoader, methodPC);
+					lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, classLoader, methodPC);
 					fileName = getSourceFileNameForROMClass(vm, classLoader, romClass);
 				}
 #endif

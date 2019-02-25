@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,7 +171,7 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 
 			result = vmFuncs->j9jni_createLocalRef(env, frame);
 			UDATA bytecodeOffset = walkState->bytecodePCOffset;  /* need this for StackFrame */
-			UDATA lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, 0, classLoader, bytecodeOffset);
+			UDATA lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, classLoader, bytecodeOffset);
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, frame);
 
 			/* set the class object if requested */

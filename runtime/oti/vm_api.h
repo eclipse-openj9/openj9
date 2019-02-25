@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3843,13 +3843,12 @@ J9ROMClass *
 * @param vmThread
 * @param romClass
 * @param methodPC
-* @param offset
 * @return J9ROMMethod
 *
 * Returns the method, or NULL on failure.
 */
 J9ROMMethod * 
-	findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA methodPC, UDATA *offset);
+	findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA methodPC);
 
 /**
 * @brief Finds the rom class given a PC.  Also returns the classloader it belongs to.
