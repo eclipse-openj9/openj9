@@ -278,7 +278,7 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override;
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*) override;
-   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override;
    bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
 protected:
@@ -288,6 +288,6 @@ protected:
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return; }
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return; }
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override { TR_ASSERT(0, "called");  return; }
-   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override { TR_ASSERT(0, "called");  return NULL; }
+   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    };
 #endif // J9METHODSERVER_H
