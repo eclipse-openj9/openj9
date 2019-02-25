@@ -1825,3 +1825,41 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::validateClassFromConstantPool(TR::Co
       return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), clazz);
       }
    }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+
+   if (optimizeForAOT)
+      return TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(cpIndex);
+   return true;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::methodTypeConstant(I_32 cpIndex)
+   {
+   TR_ASSERT(false, "should be unreachable");
+   return NULL;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::isUnresolvedMethodType(I_32 cpIndex)
+   {
+   TR_ASSERT(false, "should be unreachable");
+   return true;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::methodHandleConstant(I_32 cpIndex)
+   {
+   TR_ASSERT(false, "should be unreachable");
+   return NULL;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::isUnresolvedMethodHandle(I_32 cpIndex)
+   {
+   TR_ASSERT(false, "should be unreachable");
+   return true;
+   }
