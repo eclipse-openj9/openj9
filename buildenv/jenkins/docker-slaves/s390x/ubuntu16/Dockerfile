@@ -82,7 +82,8 @@ RUN apt-get update \
 # Dependency required by test framework
 RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm Text::CSV \
-  && cpanm JSON
+  && cpanm JSON \
+  && cpanm XML::Parser
 
 # Install GCC-7.4
 RUN cd /usr/local \

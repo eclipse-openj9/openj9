@@ -99,11 +99,6 @@ RUN cd /usr/src/ \
   && cd .. \
   && rm -rf /usr/src/autoconf-2.69
 
-# Dependency required by test framework
-RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
-  && cpanm Text::CSV \
-  && cpanm JSON
-
 # Install GCC-7.3.1
 RUN cd /usr/local \
   && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
@@ -116,7 +111,13 @@ RUN cd /usr/local \
 # Edit ldconfig to connect this library
 RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
   && ldconfig
-
+  
+# Dependency required by test framework
+RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
+  && cpanm Text::CSV \
+  && cpanm JSON \
+  && cpanm XML::Parser
+  
 #Building and setting up git version 2.5.3
 RUN yum -y update \
   && yum -y install \

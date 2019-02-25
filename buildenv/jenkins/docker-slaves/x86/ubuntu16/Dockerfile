@@ -82,7 +82,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV
+RUN echo yes | cpan install JSON Text::CSV XML::Parser
 
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
