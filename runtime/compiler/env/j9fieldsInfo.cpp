@@ -154,7 +154,17 @@ TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int bu
    for (i=numSupClasses-1; i>=0; i--)
       {
       supClass = (J9Class*)comp->fej9()->getSuperClass((TR_OpaqueClassBlock*)supClass);
-      TR_ASSERT(supClass, "Found NULL supClass in inheritance chain");
+
+      if (comp->compileRelocatableCode())
+         {
+         if (!supClass)
+            comp->failCompilation<J9::AOTNoSupportForAOTFailure>("Found NULL supClass in inheritance chain");
+         }
+      else
+         {
+         TR_ASSERT_FATAL(supClass, "Found NULL supClass in inheritance chain");
+         }
+
       romCl = supClass->romClass;
 
       // iterate through the fields creating TR_VMField and inserting them into a List
