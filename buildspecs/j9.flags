@@ -1047,6 +1047,10 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Controls if the VM includes support for romImageLoad and romImageUnload</description>
 		<ifRemoved>No facility for installing jxes or romImages</ifRemoved>
 	</flag>
+	<flag id="ive_rawBuild">
+		<description>Pure OpenJDK Java code without any OpenJ9 modifications</description>
+		<ifRemoved>No raw builds</ifRemoved>
+	</flag>
 	<flag id="jit_32bitUses64bitRegisters">
 		<description>Allow the 32 bit JIT to use the 64 bit registers</description>
 		<ifRemoved></ifRemoved>
