@@ -10651,7 +10651,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Code
    static char * debugTM = feGetEnv("TR_DebugTM");
 
    /*
-    * TODO: TM is currently not compatible with read barriers. If read barriers are required, TM is disabled until the issue is fixed.
+    * TM is not compatible with read barriers. If read barriers are required, TM is disabled.
     */
    if (disableTMOffer || TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
       {
@@ -10857,7 +10857,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeG
    static char * debugTM = feGetEnv("TR_DebugTM");
 
    /*
-    * TODO: TM is currently not compatible with read barriers. If read barriers are required, TM is disabled until the issue is fixed.
+    * TM is not compatible with read barriers. If read barriers are required, TM is disabled.
     */
    if (disableTMPoll || TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
       {
@@ -12666,7 +12666,6 @@ static void inlineVSXArrayCopy(TR::Node *node, TR::Register *srcAddrReg, TR::Reg
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, lengthReg, lengthReg, -1);
       }
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
-   return;
    }
 
 extern TR::Register *inlineLongRotateLeft(TR::Node *node, TR::CodeGenerator *cg);
@@ -13925,27 +13924,17 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          if (stopUsingCopyReg5)
             cg->stopUsingRegister(lengthReg);
 
-         if (tmp1Reg)
-            cg->stopUsingRegister(tmp1Reg);
-         if (tmp2Reg)
-            cg->stopUsingRegister(tmp2Reg);
-         if (tmp3Reg)
-            cg->stopUsingRegister(tmp3Reg);
-         if (tmp4Reg)
-            cg->stopUsingRegister(tmp4Reg);
-         if (fp1Reg)
-            cg->stopUsingRegister(fp1Reg);
-         if (fp2Reg)
-            cg->stopUsingRegister(fp2Reg);
-         if (fp3Reg)
-            cg->stopUsingRegister(fp3Reg);
-         if (fp4Reg)
-            cg->stopUsingRegister(fp4Reg);
+         cg->stopUsingRegister(tmp1Reg);
+         cg->stopUsingRegister(tmp2Reg);
+         cg->stopUsingRegister(tmp3Reg);
+         cg->stopUsingRegister(tmp4Reg);
+         cg->stopUsingRegister(fp1Reg);
+         cg->stopUsingRegister(fp2Reg);
+         cg->stopUsingRegister(fp3Reg);
+         cg->stopUsingRegister(fp4Reg);
 
-         if (r3Reg)
-            cg->stopUsingRegister(r3Reg);
-         if (condReg)
-            cg->stopUsingRegister(condReg);
+         cg->stopUsingRegister(r3Reg);
+         cg->stopUsingRegister(condReg);
 
          cg->machine()->setLinkRegisterKilled(true);
          cg->setHasCall();
@@ -14262,28 +14251,18 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
       cg->stopUsingRegister(dstAddrReg);
    if (stopUsingCopyReg5)
       cg->stopUsingRegister(lengthReg);
-   if (tmp1Reg)
-      cg->stopUsingRegister(tmp1Reg);
-   if (tmp2Reg)
-      cg->stopUsingRegister(tmp2Reg);
-   if (tmp3Reg)
-      cg->stopUsingRegister(tmp3Reg);
-   if (tmp4Reg)
-      cg->stopUsingRegister(tmp4Reg);
-   if (fp1Reg)
-      cg->stopUsingRegister(fp1Reg);
-   if (fp2Reg)
-      cg->stopUsingRegister(fp2Reg);
-   if (vec0Reg)
-      cg->stopUsingRegister(vec0Reg);
-   if (vec1Reg)
-      cg->stopUsingRegister(vec1Reg);
-   if (r3Reg)
-      cg->stopUsingRegister(r3Reg);
-   if (r4Reg)
-      cg->stopUsingRegister(r4Reg);
-   if (condReg)
-      cg->stopUsingRegister(condReg);
+
+   cg->stopUsingRegister(tmp1Reg);
+   cg->stopUsingRegister(tmp2Reg);
+   cg->stopUsingRegister(tmp3Reg);
+   cg->stopUsingRegister(tmp4Reg);
+   cg->stopUsingRegister(fp1Reg);
+   cg->stopUsingRegister(fp2Reg);
+   cg->stopUsingRegister(vec0Reg);
+   cg->stopUsingRegister(vec1Reg);
+   cg->stopUsingRegister(r3Reg);
+   cg->stopUsingRegister(r4Reg);
+   cg->stopUsingRegister(condReg);
 
    cg->machine()->setLinkRegisterKilled(true);
    cg->setHasCall();
