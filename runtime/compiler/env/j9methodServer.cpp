@@ -1863,3 +1863,22 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::isUnresolvedMethodHandle(I_32 cpInde
    TR_ASSERT(false, "should be unreachable");
    return true;
    }
+
+char *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldOrStaticNameChars(I_32 cpIndex, int32_t & len)
+   {
+   len = 0;
+   return "";
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)
+   {
+   TR_OpaqueClassBlock *definingClass = TR_ResolvedJ9JITaaSServerMethod::getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addDeclaringClassFromFieldOrStaticRecord(definingClass, cp(), cpIndex))
+         return NULL;
+      }
+   return definingClass;
+   }
