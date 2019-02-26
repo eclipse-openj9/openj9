@@ -932,6 +932,19 @@ TR_RelocationRecordWithInlinedSiteIndex::ignore(TR_RelocationRuntime *reloRuntim
 
    if (method == reinterpret_cast<J9Method *>(-1))
       {
+      /* Currently there is a coupling between the existence of guards and the
+       * relocation of the inlined table in the metadata. This means that if the
+       * JIT does not produce a guard for certain inlined sites, the associated
+       * entry in the inlined table in the metadata will not be relocated. This
+       * has the consequence of causing other relocations that need information
+       * via this entry to not have the means to do so. The only way to proceed
+       * is to fail the AOT load - if the compiler cannot materialize a value to
+       * relocate a location that **MUST** be relocated, the code **CANNOT** be
+       * loaded and executed.
+       */
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tAborting Load: cannot ignore relocation!\n");
+      reloRuntime->comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("inlined site method is -1");
+
       if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
          {
          /* With the SVM, it isn't possible for the method to be equal to -1
@@ -946,8 +959,13 @@ TR_RelocationRecordWithInlinedSiteIndex::ignore(TR_RelocationRuntime *reloRuntim
          }
       else
          {
-         // -1 means this inlined method isn't active, so can ignore relocations associated with it
-         return true;
+         /* Decoupling the guards from the relocation of the inlined table
+          * can only be done (with any reasonable amount of effort anyway)
+          * with the SVM. This comment exists as a reminder to replace the
+          * TR_ASSERT in this else block with the the code to fail the load
+          * once the decoupling work has been completed.
+          */
+         TR_ASSERT(false, "inlined site method should not be -1!");
          }
       }
 
