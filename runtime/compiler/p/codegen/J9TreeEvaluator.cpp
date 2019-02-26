@@ -13479,6 +13479,7 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    TR::MethodSymbol    *callee    = symRef->getSymbol()->castToMethodSymbol();
    TR::Linkage      *linkage;
    TR::Register        *returnRegister;
+   bool doJNIDirectDispatch = false;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
 
@@ -13488,14 +13489,11 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
       //Too many checks here, can we simplify this?
 
       static char * disableDirectNativeCall = feGetEnv("TR_DisableDirectNativeCall");
-      bool doJNIDirectDispatch =    fej9->canRelocateDirectNativeCalls() &&
-                                       (node->isPreparedForDirectJNI() ||
-                                             (disableDirectNativeCall == NULL && callee->getResolvedMethodSymbol()->canDirectNativeCall()));
+      doJNIDirectDispatch = fej9->canRelocateDirectNativeCalls() &&
+                            (node->isPreparedForDirectJNI() ||
+                            (disableDirectNativeCall == NULL && callee->getResolvedMethodSymbol()->canDirectNativeCall()));
 
-      if(doJNIDirectDispatch)
-         callee->setLinkage(TR_J9JNILinkage);
       }
-
 
    if (!cg->inlineDirectCall(node, returnRegister))
       {
@@ -13510,7 +13508,10 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
                    symRefTab->getNonHelperSymbol(symRef));
          }
 
-      linkage = cg->getLinkage(callee->getLinkageConvention());
+      if(doJNIDirectDispatch)
+         linkage = cg->getLinkage(TR_J9JNILinkage);
+      else
+         linkage = cg->getLinkage(callee->getLinkageConvention());
       returnRegister = linkage->buildDirectDispatch(node);
       }
 
