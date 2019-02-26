@@ -698,14 +698,18 @@ j9ThunkInvokeExactHelperFromTerseSignature(void * jitConfig, UDATA signatureLeng
 void
 TR::CompilationInfoPerThread::relocateThunks()
    {
-   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, _compilationThread, TR_J9VMBase::J9_VM);
+   TR_J9VMBase *fe = _vm;
    for (auto p : _thunksToBeRelocated)
       {
       void *thunk = (U_8 *)p.first - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart();
       std::string signature = p.second;
       void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
       TR::compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation((uint8_t*) thunk, (UDATA)vmHelper);
-      fe->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
+      // Always need to call base version of setJ2IThunk, even in AOT mode
+      fe->TR_J9VMBase::setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
+      if (_vm->_compInfoPT->getCompilation()->compileRelocatableCode())
+         // For AOT compilation, also need to call TR_J9SharedCacheVM version of the method
+         _vm->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
       }
    _thunksToBeRelocated.clear();
    for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)

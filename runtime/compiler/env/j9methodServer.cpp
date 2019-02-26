@@ -1517,6 +1517,12 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServer
       }
    }
 
+void *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::constantPool()
+   {
+   return romLiterals();
+   }
+
 bool
 TR_ResolvedRelocatableJ9JITaaSServerMethod::isInterpreted()
    {
