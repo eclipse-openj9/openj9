@@ -21,11 +21,12 @@
  *******************************************************************************/
 
 #include "codegen/TreeEvaluator.hpp"
-
-#include "util_api.h"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/J9WatchedInstanceFieldSnippet.hpp"
+#include "codegen/J9WatchedStaticFieldSnippet.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/Node.hpp"
@@ -33,7 +34,476 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-#include "env/PersistentCHTable.hpp"
+#include "util_api.h"
+
+void
+J9::TreeEvaluator::rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg)
+   {
+   bool isWrite = node->getOpCode().isWrtBar();
+
+   TR_ASSERT_FATAL(J9ClassHasWatchedFields >= std::numeric_limits<uint16_t>::min() && J9ClassHasWatchedFields <= std::numeric_limits<uint16_t>::max(), "Expecting value of J9ClassHasWatchedFields to be within 16 bits. Currently it's %d(%p).", J9ClassHasWatchedFields, J9ClassHasWatchedFields);
+   // Populate a data snippet with the required information so we can call a VM helper to report the fieldwatch event.
+   J9Method *owningMethod = reinterpret_cast<J9Method *>(node->getOwningMethod());
+   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   bool isUnresolved = symRef->isUnresolved();
+   TR::Snippet *dataSnippet = NULL;
+   if (symRef->getSymbol()->isStatic())
+      {
+      void *fieldAddress = isUnresolved ? reinterpret_cast<void *>(-1) : symRef->getSymbol()->getStaticSymbol()->getStaticAddress();
+      J9Class *fieldClass = isUnresolved ? NULL : reinterpret_cast<J9Class *>(symRef->getOwningMethod(cg->comp())->getDeclaringClassFromFieldOrStatic(cg->comp(), symRef->getCPIndex()));
+      dataSnippet = new (cg->trHeapMemory()) TR::J9WatchedStaticFieldSnippet (cg, node, owningMethod, bcIndex, fieldAddress, fieldClass);
+      }
+   else
+      {
+      dataSnippet = new (cg->trHeapMemory()) TR::J9WatchedInstanceFieldSnippet(cg, node, owningMethod, bcIndex, isUnresolved ? -1 : symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
+      }
+   cg->addSnippet(dataSnippet);
+
+   // If unresolved, then we generate instructions to populate the data snippet's fields correctly at runtime.
+   // Note: We also call the VM Helper routine to fill in the data snippet's fields if this is an AOT compilation.
+   // Once the infrastructure to support AOT during fieldwatch is enabled and functionally correct, we can remove is check.
+   if (node->getSymbolReference()->isUnresolved() || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
+      {
+      // Resolve and populate dataSnippet fields.
+      TR::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(cg, node, dataSnippet, isWrite, sideEffectRegister);
+      }
+   // Generate instructions to call the VM helper and report the fieldwatch event.
+   TR::TreeEvaluator::generateTestAndReportFieldWatchInstructions(cg, node, dataSnippet, isWrite, sideEffectRegister, valueReg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getFirstChild());
+   TR::Node *sideEffectNode = node->getSecondChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::bwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getSecondChild());
+   TR::Node *sideEffectNode = node->getThirdChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getFirstChild());
+   TR::Node *sideEffectNode = node->getSecondChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::swrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getSecondChild());
+   TR::Node *sideEffectNode = node->getThirdChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getFirstChild());
+   TR::Node *sideEffectNode = node->getSecondChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::iwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getSecondChild());
+   TR::Node *sideEffectNode = node->getThirdChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getFirstChild());
+   TR::Node *sideEffectNode = node->getSecondChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::lwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getSecondChild());
+   TR::Node *sideEffectNode = node->getThirdChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the 
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::floadEvaluator(node, cg);
+   } 
+
+TR::Register *
+J9::TreeEvaluator::frdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return TR::TreeEvaluator::floadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::dloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::drdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return TR::TreeEvaluator::dloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::bloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::brdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return TR::TreeEvaluator::bloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::sloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return TR::TreeEvaluator::sloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::lloadEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::TreeEvaluator::lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return TR::TreeEvaluator::lloadEvaluator(node, cg);
+   }
+
+bool J9::TreeEvaluator::getIndirectWrtbarValueNode(TR::CodeGenerator *cg, TR::Node *node, TR::Node*& sourceChild, bool incSrcRefCount)
+   {
+   TR_ASSERT_FATAL(node->getOpCode().isIndirect() && node->getOpCode().isWrtBar(), "getIndirectWrtbarValueNode expects indirect wrtbar nodes only n%dn (%p)\n", node->getGlobalIndex(), node);
+   bool usingCompressedPointers = false;
+   sourceChild = node->getSecondChild();
+
+   if (cg->comp()->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) &&
+         (node->getSecondChild()->getDataType() != TR::Address))
+      {
+      // pattern match the sequence
+      //     awrtbari f     awrtbari f         <- node
+      //       aload O       aload O
+      //     value           l2i
+      //                       lshr
+      //                         lsub        <- translatedNode
+      //                           a2l
+      //                             value   <- sourceChild
+      //                           lconst HB
+      //                         iconst shftKonst
+      //
+      // -or- if the field is known to be null
+      // awrtbari f
+      //    aload O
+      //    l2i
+      //      a2l
+      //        value  <- sourceChild
+      //
+      TR::Node *translatedNode = sourceChild;
+      if (translatedNode->getOpCodeValue() == TR::l2i)
+         {
+         translatedNode = translatedNode->getFirstChild();
+         }
+      if (translatedNode->getOpCode().isRightShift())
+         {
+         TR::Node *shiftAmountChild = translatedNode->getSecondChild();
+         TR_ASSERT_FATAL(TR::Compiler->om.compressedReferenceShiftOffset() == shiftAmountChild->getConstValue(),
+                "Expect shift amount in the compressedref conversion sequence to be %d but get %d for indirect wrtbar node n%dn (%p)\n",
+                TR::Compiler->om.compressedReferenceShiftOffset(), shiftAmountChild->getConstValue(), node->getGlobalIndex(), node);
+
+         translatedNode = translatedNode->getFirstChild();
+         }
+
+      if (translatedNode->getOpCode().isSub() ||
+           TR::Compiler->vm.heapBaseAddress() == 0 || sourceChild->isNull()) /* i.e. usingLowMemHeap */
+         {
+         usingCompressedPointers = true;
+         }
+
+      if (usingCompressedPointers)
+         {
+         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
+            {
+            sourceChild = sourceChild->getFirstChild();
+            }
+         if (sourceChild->getOpCodeValue() == TR::a2l)
+            {
+            sourceChild = sourceChild->getFirstChild();
+            }
+
+         // Artificially bump up the refCount on the value so
+         // that different registers are allocated for the actual
+         // and compressed values. This is done so that the VMwrtbarEvaluator
+         // uses the uncompressed value. We only need to do this when the caller
+         // is evaluating the actual write barrier.
+         if (incSrcRefCount)
+            {
+            sourceChild->incReferenceCount();
+            }
+         }
+      }
+   return usingCompressedPointers;
+   }
 
 static
 void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *node, TR_OpaqueClassBlock *castClass)

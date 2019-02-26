@@ -41,6 +41,7 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/J9WatchedStaticFieldSnippet.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/TreeEvaluator.hpp"
@@ -210,21 +211,6 @@ doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
    cg->decReferenceCount(node->getSecondChild());
 
    return node->getRegister();
-   }
-
-static TR_OpaqueMethodBlock *
-getMethodFromBCInfo(
-      TR_ByteCodeInfo &bcInfo,
-      TR::Compilation *comp)
-   {
-   TR_OpaqueMethodBlock *method = NULL;
-
-   if (bcInfo.getCallerIndex() >= 0)
-      method = (TR_OpaqueMethodBlock *)(comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo);
-   else
-      method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
-
-   return method;
    }
 
 /**
@@ -1157,16 +1143,11 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
    // Bit-mask for masking J9Object header to extract J9Class
    uint16_t mask = 0xFF00;
    TR::Compilation *comp = cg->comp();
-   bool disabled = comp->getOption(TR_DisableZ13) || comp->getOption(TR_DisableZ13LoadAndMask);
-   bool needsNULLCHK = false;
-   TR::ILOpCodes opValue = node->getOpCodeValue();
-   TR::Instruction * loadInstr;
-
-   if (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar())
-      needsNULLCHK = true;
+   TR::Instruction *loadInstr;
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13) && !disabled)
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13) &&
+         !(comp->getOption(TR_DisableZ13) || comp->getOption(TR_DisableZ13LoadAndMask)))
       {
       iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
       loadInstr = iCursor;
@@ -1194,14 +1175,25 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
       iCursor = generateRIInstruction(cg, TR::InstOpCode::NILL,           node, reg, mask,   iCursor);
       }
 #endif
-   if (needsNULLCHK)
+
+   // The intended functionality of rdbar/wrtbar IL nodes is to first report to the VM that a field is being watched
+   // (i.e. being read or being written to), and then perform the actual load/store operation. To achieve this, evaluators
+   // for rdbar/wrtbar opcodes first call helper routines to generate code that will report to the VM that a field is being
+   // read or written to. Following this, they will perform the actual load/store operation on the field.
+   // The helper routines can call this routine in order to determine if fieldwatch is enabled
+   // on a particular Java class. In those cases we may end up loading the Java class before the actual indirect load occurs
+   // on the field. In general, if the object we are trying to load is null, an exception is thrown during the load.
+   // To handle this we need to set an exception point and the GC Map for the VM. We must do the same here for rdbar/wrtbar for
+   // the above explained reason.
+   if (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar())
       {
       cg->setImplicitExceptionPoint(loadInstr);
       loadInstr->setNeedsGCMap(0x0000FFFF);
-      if (opValue == TR::checkcastAndNULLCHK)
+      if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+         {
          loadInstr->setNode(cg->comp()->findNullChkInfo(node));
+         }
       }
-
    return iCursor;
    }
 
@@ -2049,222 +2041,6 @@ VMwrtbarEvaluator(
       }
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, conditions);
    }
-
-///////////////////////////////////////////////////////////////////////////////////////
-//  wrtbarEvaluator:  direct write barrier store checks for new space in old space
-//    reference store the first child is the value as in TR::astore.  The second child is
-//    the address of the object that must be checked for old space the symbol reference
-//    holds addresses, flags and offsets as in TR::astore
-///////////////////////////////////////////////////////////////////////////////////////
-TR::Register *
-J9::Z::TreeEvaluator::writeBarrierEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * owningObjectChild = node->getSecondChild();
-   TR::Node * sourceChild = node->getFirstChild();
-   TR::Compilation * comp = cg->comp();
-   bool doWrtBar = (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck ||
-                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck ||
-                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always);
-   bool doCrdMrk = ((TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark ||
-                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_incremental ||
-                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck) && !node->isNonHeapObjectWrtBar());
-
-   TR::Register * owningObjectRegister = NULL;
-   TR::Register * sourceRegister = NULL;
-   bool canSkip = false;
-
-   if ((node->getOpCode().isWrtBar() && node->skipWrtBar()) ||
-       ((node->getOpCodeValue() == TR::ArrayStoreCHK) &&
-        node->getFirstChild()->getOpCode().isWrtBar() &&
-        node->getFirstChild()->skipWrtBar()))
-      {
-      canSkip = true;
-      }
-
-   if ((doWrtBar || doCrdMrk) && !canSkip)
-      {
-      owningObjectRegister = cg->gprClobberEvaluate(owningObjectChild);
-      }
-   else
-      {
-      owningObjectRegister = cg->evaluate(owningObjectChild);
-      }
-
-   if (canSkip)
-      {
-      sourceRegister = cg->evaluate(sourceChild);
-      }
-   else
-      {
-      sourceRegister = allocateWriteBarrierInternalPointerRegister(cg, sourceChild);
-      }
-
-   // we need to evaluate all the children first before we generate memory reference
-   // since it will screw up the code sequence for patching when we do symbol resolution
-   TR::MemoryReference * tempMR = generateS390MemoryReference(node, cg);
-   TR::Instruction * instr = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, sourceRegister, tempMR);
-
-   // When a new object is stored into an old object, we need to invoke jitWriteBarrierStore
-   // helper to update the remembered sets for GC.  Helper call is needed only if the object
-   // is in old space or is scanned (black). Since the checking involves control flow, we delay
-   // the code gen for write barrier for RA cannot handle control flow.
-
-   VMwrtbarEvaluator(node, sourceRegister, owningObjectRegister, sourceChild->isNonNull(), cg);
-
-   cg->decReferenceCount(sourceChild);
-   cg->decReferenceCount(owningObjectChild);
-   cg->stopUsingRegister(sourceRegister);
-   if (owningObjectRegister) cg->stopUsingRegister(owningObjectRegister);
-   tempMR->stopUsingMemRefRegister(cg);
-   return NULL;
-   }
-
-///////////////////////////////////////////////////////////////////////////////////////
-// awrtbariEvaluator: indirect write barrier store checks for new space in old space
-//    reference store.  The first two children are as in TR::astorei.  The third child
-//    is address of the beginning of the destination object.  For putfield this will often
-//    be the same as the first child (when the offset is on the symbol reference.
-//    But for array references, children 1 and 3 will be quite different although
-//    child 1's subtree will contain a reference to child 3's subtree
-///////////////////////////////////////////////////////////////////////////////////////
-TR::Register *
-J9::Z::TreeEvaluator::writeBarrierIndirectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * owningObjectChild = node->getChild(2);
-   TR::Node * sourceChild = node->getSecondChild();
-   TR::Compilation *comp = cg->comp();
-   bool adjustRefCnt = false;
-   bool usingCompressedPointers = false;
-   if (comp->useCompressedPointers() &&
-       (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) &&
-       (node->getSecondChild()->getDataType() != TR::Address))
-      {
-      // pattern match the sequence
-      //     awrtbari f     awrtbari f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr
-      //                         lsub        <- translatedNode
-      //                           a2l
-      //                             value   <- sourceChild
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null
-      // awrtbari f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- sourceChild
-      //
-      ////usingCompressedPointers = true;
-
-      TR::Node *translatedNode = sourceChild;
-      if (translatedNode->getOpCodeValue() == TR::l2i)
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 ||
-             sourceChild->isNull())
-         usingLowMemHeap = true;
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         adjustRefCnt = true;
-         ///node->getFirstChild()->incReferenceCount();
-         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
-            sourceChild = sourceChild->getFirstChild();
-         if (sourceChild->getOpCodeValue() == TR::a2l)
-            sourceChild = sourceChild->getFirstChild();
-         // artificially bump up the refCount on the value so
-         // that different registers are allocated for the actual
-         // and compressed values. this is done so that the VMwrtbarEvaluator
-         // uses the uncompressed value
-         //
-         sourceChild->incReferenceCount();
-         }
-      }
-
-   bool doWrtBar = (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck ||
-                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck ||
-                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always);
-   bool doCrdMrk = ((TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark ||
-                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_incremental ||
-                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck) && !node->isNonHeapObjectWrtBar());
-
-   TR::Register * owningObjectRegister = NULL;
-
-   bool canSkip = false;
-   if ((node->getOpCode().isWrtBar() && node->skipWrtBar()) ||
-       ((node->getOpCodeValue() == TR::ArrayStoreCHK) &&
-        node->getFirstChild()->getOpCode().isWrtBar() &&
-        node->getFirstChild()->skipWrtBar()))
-      {
-      canSkip = true;
-      }
-
-   if ((doWrtBar || doCrdMrk) && !canSkip)
-      {
-      owningObjectRegister = cg->gprClobberEvaluate(owningObjectChild);
-      }
-   else
-      {
-//    cg->decReferenceCount(owningObjectChild);
-      owningObjectRegister = owningObjectChild->getRegister();
-//    owningObjectRegister = cg->evaluate(owningObjectChild);
-      }
-
-   //Don't need to clobber evaluate
-   //TR::Register * sourceRegister = allocateWriteBarrierInternalPointerRegister(cg, sourceChild);
-   TR::Register *sourceRegister = cg->evaluate(sourceChild);
-   TR::Register * compressedRegister = sourceRegister;
-   if (usingCompressedPointers)
-      compressedRegister = cg->evaluate(node->getSecondChild());
-
-   // we need to evaluate all the children first before we generate memory reference
-   // since it will screw up the code sequence for patching when we do symbol resolution
-   TR::MemoryReference * tempMR = generateS390MemoryReference(node, cg);
-
-   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::ST : TR::InstOpCode::getStoreOpCode();
-   TR::Instruction * instr = generateRXInstruction(cg, storeOp, node, compressedRegister, tempMR);
-
-   // When a new object is stored into an old object, we need to invoke jitWriteBarrierStore
-   // helper to update the remembered sets for GC.  Helper call is needed only if the object
-   // is in old space or is scanned (black). Since the checking involves control flow, we delay
-   // the code gen for write barrier since RA cannot handle control flow.
-
-   VMwrtbarEvaluator(node, sourceRegister, owningObjectRegister, sourceChild->isNonNull(), cg);
-
-   ///if (adjustRefCnt)
-   ///   cg->decReferenceCount(node->getFirstChild());
-
-   if (comp->useCompressedPointers())
-      node->setStoreAlreadyEvaluated(true);
-   cg->decReferenceCount(sourceChild);
-   if (usingCompressedPointers)
-      {
-      cg->decReferenceCount(node->getSecondChild());
-      cg->recursivelyDecReferenceCount(owningObjectChild);
-      }
-   else
-      cg->decReferenceCount(owningObjectChild);
-   if (owningObjectRegister) cg->stopUsingRegister(owningObjectRegister);
-   cg->stopUsingRegister(sourceRegister);
-   ///if (usingCompressedPointers)
-   ///   tempMR->decNodeReferenceCounts(cg);
-   ///else
-   tempMR->stopUsingMemRefRegister(cg);
-
-   return NULL;
-   }
-
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // monentEvaluator:  acquire lock for synchronising method
@@ -3527,663 +3303,633 @@ J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerato
    return NULL;
    }
 
-/*
- * \brief
- *    Return the node representing the value to be written for an indirect wrtbar
- *
- * \note
- *    For address type using compressedrefs, the compressed refs sequence is skipped
- *    from the sub tree and return the uncompressed address value.
- *    For all other cases, return the second child
- *
- */
-static TR::Node *getIndirectWrtbarValueNode(TR::Node *node, TR::Compilation *comp)
+void
+J9::Z::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister)
    {
-   TR_ASSERT(node->getOpCode().isIndirect() && node->getOpCode().isWrtBar(), "getIndirectWrtbarValueNode expects indirect wrtbar nodes only n%dn (%p)\n", node->getGlobalIndex(), node);
-   bool usingCompressedPointers = false;
-   bool usingLowMemHeap = false;
-   bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
-   TR::Node *sourceObject = node->getSecondChild();
-   if (comp->useCompressedPointers() &&
-         (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) &&
-         (node->getSecondChild()->getDataType() != TR::Address))
-      {
-      // pattern match the sequence
-      //     iwrtbar f     iwrtbar f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr
-      //                         lsub        <- translatedNode
-      //                           a2l
-      //                             value   <- sourceObject
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null or usingLowMemHeap
-      // iwrtbar f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- sourceObject
-      //
-      TR::Node *translatedNode = sourceObject;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         {
-         TR::Node *shiftAmountChild = translatedNode->getSecondChild();
-         TR_ASSERT(TR::Compiler->om.compressedReferenceShiftOffset() == shiftAmountChild->getConstValue(),
-               "Expect shift amount in the compressedref conversion sequence to be %d but get %d for indirect wrtbar node n%dn (%p)\n",
-               TR::Compiler->om.compressedReferenceShiftOffset(), shiftAmountChild->getConstValue(), node->getGlobalIndex(), node);
-         translatedNode = translatedNode->getFirstChild();
-         }
-
-      if (TR::Compiler->vm.heapBaseAddress() == 0 ||
-            sourceObject->isNull()) {
-         usingLowMemHeap = true;
-      }
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         {
-         usingCompressedPointers = true;
-         }
-
-      if (usingCompressedPointers)
-         {
-         while ((sourceObject->getNumChildren() > 0) && (sourceObject->getOpCodeValue() != TR::a2l))
-            sourceObject = sourceObject->getFirstChild();
-
-         if (sourceObject->getOpCodeValue() == TR::a2l)
-            sourceObject = sourceObject->getFirstChild();
-         }
-      }
-   return sourceObject;
-   }
-
-/*
- * Return the j9class of the static field for the direct wrtbar
- */
-static TR::Node *getDirectWrtbarJ9ClassNode(TR::Node *node)
-   {
-   TR::Compilation *comp = TR::comp();
-   TR_ASSERT(!node->getOpCode().isIndirect() && node->getOpCode().isWrtBar(), "getDirectWrtbarJ9ClassChild expects direct wrtbar nodes only n%dn (%p)\n", node->getGlobalIndex(), node);
-   if (TR::Compiler->cls.classesOnHeap())
-      {
-      TR_ASSERT(node->getSecondChild()->getSymbolReference()->getSymbol() == comp->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef()->getSymbol(), "Second child of direct wrtbar should be JavaLangClassFromClass symbol n%dn (%p)", node->getGlobalIndex(), node);
-      TR::Node *grandChild = node->getSecondChild()->getFirstChild();
-      TR_ASSERT(grandChild->getSymbolReference() && grandChild->getSymbolReference()->getSymbol()->isClassObject(), "child of second child of direct wrtbar should be class object symbol n%dn (%p)", node->getGlobalIndex(), node);
-      return node->getSecondChild()->getFirstChild(); // the direct second child is JavaLangClass which is loaded from the j9class
-      }
-   else 
-      return node->getFirstChild();
-   }
-
-/*
-   * Fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static field
-   * and J9JITWatchedInstanceFieldData.offset for instance field
-   *
-   */
-
-void generateFillInDataBlockSequenceForUnresolvedField (TR::Node *node, J9Method* owningMethod, TR::S390WritableDataSnippet *dataSnippet, bool isWrite, TR::CodeGenerator *cg)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::LabelSymbol *unresolvedLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *mergePointLabel = generateLabelSymbol(cg);
    TR::SymbolReference *symRef = node->getSymbolReference();
-   bool is64Bit = TR::Compiler->target.is64Bit();
    bool isStatic = symRef->getSymbol()->getKind() == TR::Symbol::IsStatic;
 
-   TR_RuntimeHelper helperIndex = isWrite? (isStatic ?  TR_jitResolveStaticFieldSetterDirect: TR_jitResolveFieldSetterDirect):
-                                          (isStatic ?  TR_jitResolveStaticFieldDirect: TR_jitResolveFieldDirect);
-
-   TR::S390HelperLinkage *helperLink = static_cast<TR::S390HelperLinkage*>(cg->getLinkage(runtimeHelperLinkage(helperIndex)));
-
-   intptr_t offsetInDataBlock = isStatic ? offsetof(J9JITWatchedStaticFieldData, fieldAddress): offsetof(J9JITWatchedInstanceFieldData, offset);
-
-   TR::LabelSymbol* startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol* endLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *unresolvedLabel = generateLabelSymbol(cg);
-   startLabel->setStartInternalControlFlow();
-   endLabel->setEndInternalControlFlow();
-
-   // need 2 registers for arguments, 2 for entry point and return address register, and 1 for datablock
-   uint8_t numOfConditions = 5;
-
-   if (isStatic) // needs fieldClassReg
-      numOfConditions++;
-
-   TR::RegisterDependencyConditions  *deps =  generateRegisterDependencyConditions(0, numOfConditions, cg);
-   TR::Register *resultReg = NULL;
-   TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *offsetReg = cg->allocateRegister();
    TR::Register *dataBlockReg = cg->allocateRegister();
-
-   deps->addPostCondition(dataBlockReg, TR::RealRegister::AssignAny);
 
    generateRILInstruction(cg, TR::InstOpCode::LARL, node, dataBlockReg, dataSnippet);
-   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, tempReg, static_cast<int32_t>(-1));
 
-   generateRXInstruction(cg, is64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, tempReg, generateS390MemoryReference(dataBlockReg, offsetInDataBlock, cg));
+   intptr_t offsetInDataBlock = isStatic ? offsetof(J9JITWatchedStaticFieldData, fieldAddress) : offsetof(J9JITWatchedInstanceFieldData, offset);
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, offsetReg, generateS390MemoryReference(dataBlockReg, offsetInDataBlock, cg));
+   // If the offset is not -1 then the field is already resolved. No more work is required and we can fall through to end (mergePointLabel).
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, offsetReg, -1, TR::InstOpCode::COND_BE, unresolvedLabel, false, false, NULL, NULL);
 
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel); // branch to end if not set
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel);
-     
+   // If the offset is -1, then we must call a VM helper routine (indicated by helperLink below) to resolve this field. The OOL code (below) inside unresolvedLabel
+   // will prepare the registers and generate a directCall to the VM helper routine.
+   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(unresolvedLabel, mergePointLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+
+   // OOL code start.
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, unresolvedLabel);
+ 
    if (isStatic)
       {
-      // Fills in J9JITWatchedStaticFieldData.fieldClass
-      TR::Register *fieldClassReg = cg->evaluate(isWrite ? getDirectWrtbarJ9ClassNode(node): node->getFirstChild());
-      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, fieldClassReg, generateS390MemoryReference(dataBlockReg, (int32_t)(offsetof(J9JITWatchedStaticFieldData, fieldClass)), cg));
-      deps->addPostCondition(fieldClassReg, TR::RealRegister::AssignAny);
-      }
-   TR::ResolvedMethodSymbol *methodSymbol = node->getByteCodeInfo().getCallerIndex() == -1 ? cg->comp()->getMethodSymbol(): cg->comp()->getInlinedResolvedMethodSymbol(node->getByteCodeInfo().getCallerIndex());
-        
-   // setup linkage 
-   TR::Register *cpAddressReg = cg->allocateRegister();
-   TR::Register *cpIndexReg = cg->allocateRegister();
-
-   generateRegLitRefInstruction(cg, TR::InstOpCode::LG, node, cpAddressReg, (uintptrj_t) methodSymbol->getResolvedMethod()->constantPool(), TR_ConstantPool, deps, 0, 0);
-
-   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, cpIndexReg, symRef->getCPIndex());
-   deps->addPostCondition(cpAddressReg, TR::RealRegister::GPR1);
-   deps->addPostCondition(cpIndexReg, TR::RealRegister::GPR2);
-             
-   // Z specific linkage
-   TR::Register * scratchReg1 = cg->allocateRegister();
-   TR::Register * scratchReg2 = cg->allocateRegister();
-
-   deps->addPostCondition(scratchReg1, cg->getEntryPointRegister());
-   deps->addPostCondition(scratchReg2, cg->getReturnAddressRegister());
-                  
-   resultReg = cpIndexReg;
-
-   cg->stopUsingRegister(scratchReg1);
-   cg->stopUsingRegister(scratchReg2);
-   cg->stopUsingRegister(cpAddressReg);
-         
-
-   TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
-   cg->resetIsLeafMethod();
-
-   TR::Instruction * call = generateDirectCall(cg, node, false /*myself*/, helperSymRef, deps);//do call;
-   call->setNeedsGCMap(0x0000FFFF);
-
-   /*
-   For instance field offset, the result returned by the vmhelper includes header size.
-   subtract the header size to get the offset needed by field watch helpers
-   */
-   if (!isStatic)
-      generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, resultReg, static_cast<uint32_t>(TR::Compiler->om.objectHeaderSizeInBytes()));
-
-   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, resultReg, generateS390MemoryReference(dataBlockReg, offsetInDataBlock, cg));
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK15, node, endLabel);
-      
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, endLabel, deps);
-   cg->stopUsingRegister(resultReg);
-   
-   cg->stopUsingRegister(dataBlockReg);
-   cg->stopUsingRegister(tempReg);
-   }
-
-/*
- * Generate the reporting field access helper call with required arguments
- *
- * jitReportInstanceFieldRead
- * arg1 pointer to static data block
- * arg2 object being read
- *
- * jitReportInstanceFieldWrite
- * arg1 pointer to static data block
- * arg2 object being written to
- * arg3 pointer to value being written
- *
- * jitReportStaticFieldRead
- * arg1 pointer to static data block
- *
- * jitReportStaticFieldWrite
- * arg1 pointer to static data block
- * arg2 pointer to value being written
- *
- */
-
-void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymbol *endLabel, TR::S390WritableDataSnippet *dataSnippet, bool isWrite, TR::RegisterDependencyConditions * dependencies, TR::CodeGenerator *cg)
-   {
-   bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isResolved = !node->getSymbolReference()->isUnresolved();
-   bool isInstanceField = node->getSymbolReference()->getSymbol()->getKind() != TR::Symbol::IsStatic;
-   J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
-
-   TR_RuntimeHelper helperIndex = isWrite ? (isInstanceField ? TR_jitReportInstanceFieldWrite: TR_jitReportStaticFieldWrite):
-                                            (isInstanceField ? TR_jitReportInstanceFieldRead: TR_jitReportStaticFieldRead);
-
-   TR::S390HelperLinkage *helperLink = static_cast<TR::S390HelperLinkage*>(cg->getLinkage(runtimeHelperLinkage(helperIndex)));
-
-   TR::Register *objectReg = isInstanceField ? cg->evaluate(node->getFirstChild()): NULL;
-   TR::Node *valueNode = isWrite? (isInstanceField ? getIndirectWrtbarValueNode(node, cg->comp()) : node->getFirstChild()): NULL;
-
-   TR::Register *valueReg = isWrite? cg->evaluate(valueNode): NULL;
-   TR::Register *valueReferenceReg = NULL;
-   TR::MemoryReference * valueMR = NULL;
-
-   TR::Register *dataBlockReg = cg->allocateRegister();
-
-   // in the event that we have to write to a value, the vm helper routine expects that a pointer to the value being written to
-   // is passed in as a parameter. So we must store valueReg into memory and then pass the address of that value
-   if (isWrite)
-      {
-      TR::DataType nodeType = valueNode->getDataType();
-      TR::SymbolReference * sr = cg->allocateLocalTemp(nodeType);
-      valueMR = generateS390MemoryReference(valueNode, sr, cg);
-      if (valueReg->getKind() == TR_GPR)
+      // Fills in J9JITWatchedStaticFieldData.fieldClass.
+      TR::Register *fieldClassReg;
+      if (isWrite)
          {
-         auto mnemonic = TR::InstOpCode::ST;
-         if (node->getDataType() == TR::Address && TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers())
-            mnemonic = TR::InstOpCode::STG;
-         generateRXInstruction(cg, mnemonic, node, valueReg, valueMR);
-         }
-      else if (valueReg->getKind() == TR_FPR)
-         {
-         auto mnemonic = nodeType == TR::Float ? TR::InstOpCode::STE : TR::InstOpCode::STD;
-         generateRXInstruction(cg, mnemonic, node, valueReg, valueMR);
+         fieldClassReg = cg->allocateRegister();
+         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, fieldClassReg, generateS390MemoryReference(sideEffectRegister, cg->comp()->fej9()->getOffsetOfClassFromJavaLangClassField(), cg));
          }
       else
          {
-         TR_ASSERT_FATAL(false, "Unsupported register kind (%d) for fieldwatch", valueReg->getKind());
+         fieldClassReg = sideEffectRegister;
          }
-      // valueReg and valueReferenceReg are different. Add conditions for valueReg here
-      dependencies->addPostCondition(valueReg, TR::RealRegister::AssignAny);
-      valueReferenceReg = cg->allocateRegister();
-      // now store the stack location into a register
-      TR::MemoryReference * tempMR = generateS390MemoryReference(*valueMR, 0, cg);
-
-      generateRXInstruction(cg, TR::InstOpCode::LAY, node, valueReferenceReg , tempMR);
+      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, fieldClassReg, generateS390MemoryReference(dataBlockReg, offsetof(J9JITWatchedStaticFieldData, fieldClass), cg));
+      if (isWrite)
+         {
+         cg->stopUsingRegister(fieldClassReg);
+         }
       }
 
-   generateRILInstruction(cg, TR::InstOpCode::LARL, node, dataBlockReg, dataSnippet);
+   // These will be used as argument registers for the direct call to the VM helper.
+   TR::Register *cpAddressReg = cg->allocateRegister();
+   TR::Register *cpIndexReg = cg->allocateRegister();
 
+   // Populate the argument registers.
+   TR::ResolvedMethodSymbol *methodSymbol = node->getByteCodeInfo().getCallerIndex() == -1 ? cg->comp()->getMethodSymbol() : cg->comp()->getInlinedResolvedMethodSymbol(node->getByteCodeInfo().getCallerIndex());
+   generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, cpAddressReg, reinterpret_cast<uintptrj_t>(methodSymbol->getResolvedMethod()->constantPool()), TR_ConstantPool, NULL, 0, 0);
+   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, cpIndexReg, symRef->getCPIndex());
+
+   TR_RuntimeHelper helperIndex = isWrite? (isStatic ? TR_jitResolveStaticFieldSetterDirect: TR_jitResolveFieldSetterDirect) :
+                                           (isStatic ? TR_jitResolveStaticFieldDirect: TR_jitResolveFieldDirect);
+   TR::S390HelperLinkage *helperLink = static_cast<TR::S390HelperLinkage*>(cg->getLinkage(runtimeHelperLinkage(helperIndex)));
+
+
+   // We specify 2 preConditions because we need to provide 2 register arguments.
+   // We specify 4 postConditions because both of the argument registers need to be specified as
+   // register dependencies (GPR 1 as a dummy dependency and GPR2 is a return register), and we
+   // need to specify 2 more register dependencies for Entry Point and Return Address register
+   // when making a direct call.
+   TR::RegisterDependencyConditions *deps =  generateRegisterDependencyConditions(2, 4, cg);
    int numArgs = 0;
-   dependencies->addPostCondition(dataBlockReg, helperLink->getIntegerArgumentRegister(numArgs));
+
+   // The VM helper routine that we call expects cpAddress to be in GPR1 and cpIndex inside GPR2.
+   // So we set those dependencies here.
+   deps->addPreCondition(cpAddressReg, helperLink->getIntegerArgumentRegister(numArgs));
+   deps->addPostCondition(cpAddressReg, helperLink->getIntegerArgumentRegister(numArgs));
    numArgs++;
+
+   // Add pre and post condition because GPR2 is an argument register as well as return register.
+   deps->addPreCondition(cpIndexReg, helperLink->getIntegerArgumentRegister(numArgs));
+   deps->addPostCondition(cpIndexReg, helperLink->getIntegerReturnRegister()); // cpIndexReg (i.e. GPR2) will also hold the return value of the helper routine call.
+
+   // These two registers are used for Return Address and Entry Point registers. These dependencies are required when generating directCalls on Z.
+   TR::Register *scratchReg1 = cg->allocateRegister();
+   TR::Register *scratchReg2 = cg->allocateRegister();
+   deps->addPostCondition(scratchReg1, cg->getEntryPointRegister());
+   deps->addPostCondition(scratchReg2, cg->getReturnAddressRegister());
+
+   // Now make the call. Return value of the call is in GPR2 (cpIndexReg).
+   TR::Instruction *call = generateDirectCall(cg, node, false /*myself*/, cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false), deps);
+   call->setNeedsGCMap(0x0000FFFF);
+   call->setDependencyConditions(deps);
+
+   // For instance fields, the offset (i.e. result value) returned by the vmhelper includes the header size.
+   // We subtract the header size from the return value here to get the actual offset.
+   if (!isStatic)
+      {
+      generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, cpIndexReg, static_cast<uint32_t>(TR::Compiler->om.objectHeaderSizeInBytes()));
+      }
+
+   // Store the field value into the data snippet to resolve it.
+   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cpIndexReg, generateS390MemoryReference(dataBlockReg, offsetInDataBlock, cg));
+
+   // End of OOL code. Branch back to mainline.
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergePointLabel);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, mergePointLabel);
+
+   cg->stopUsingRegister(cpIndexReg);
+   cg->stopUsingRegister(scratchReg1);
+   cg->stopUsingRegister(scratchReg2);
+   cg->stopUsingRegister(cpAddressReg);
+   cg->stopUsingRegister(dataBlockReg);
+   cg->stopUsingRegister(offsetReg);
+   }
+
+/*
+ * This method will prepare the registers and then make a VM Helper call to report that a fieldwatch event has occurred 
+ * in a Java class with field watch enabled.
+ *
+ * The possible VM Helpers are:
+ *
+ * For indirect nodes (i.e. instance fields):
+ *    jitReportInstanceFieldRead (if node is indirect)
+ *      arg1 pointer to static data block
+ *      arg2 object being read
+ *
+ *    jitReportInstanceFieldWrite (if node is indirect)
+ *      arg1 pointer to static data block
+ *      arg2 object being written to (represented by sideEffectRegister)
+ *      arg3 pointer to value being written
+ *
+ * For direct nodes (i.e. static fields):
+ *    jitReportStaticFieldRead (for direct/static nodes)
+ *      arg1 pointer to static data block
+ *
+ *    jitReportStaticFieldWrite
+ *      arg1 pointer to static data block
+ *      arg2 pointer to value being written
+ */
+void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymbol *fieldReportLabel, TR::LabelSymbol *mergePointLabel, TR::Snippet *dataSnippet, bool isWrite, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg)
+   {
+   bool isInstanceField = node->getSymbolReference()->getSymbol()->getKind() != TR::Symbol::IsStatic;
+   // Figure out the VM Helper we need to call.
+   TR_RuntimeHelper helperIndex = isWrite ? (isInstanceField ? TR_jitReportInstanceFieldWrite: TR_jitReportStaticFieldWrite):
+                                            (isInstanceField ? TR_jitReportInstanceFieldRead: TR_jitReportStaticFieldRead);
+
+   // Figure out the number of dependencies needed to make the VM Helper call.
+   // numPreConditions is equal to the number of arguments required by the VM Helper.
+   uint8_t numPreConditions = 1; // All helpers need at least one parameter.
+   if (helperIndex == TR_jitReportInstanceFieldWrite)
+      {
+      numPreConditions = 3;
+      }
+   else if (helperIndex == TR_jitReportInstanceFieldRead || helperIndex == TR_jitReportStaticFieldWrite)
+      {
+      numPreConditions = 2;
+      }
+   // Note: All preConditions need to be added as post dependencies (dummy dependencies). We also need to specify 2 more
+   // post dependencies for Return Address register and Entry Point register.
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(numPreConditions, numPreConditions + 2, cg);
+   TR::S390HelperLinkage *helperLink = static_cast<TR::S390HelperLinkage*>(cg->getLinkage(runtimeHelperLinkage(helperIndex)));
+   int numArgs = 0;
+
+   // Initialize OOL path and generate label that marks beginning of the OOL code.
+   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(fieldReportLabel, mergePointLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fieldReportLabel);
+
+   // Populate the first argument needed by the VM Helper (address to the data snippet), and set the dependencies.
+   TR::Register *dataBlockReg = cg->allocateRegister();
+   generateRILInstruction(cg, TR::InstOpCode::LARL, node, dataBlockReg, dataSnippet);
+   dependencies->addPreCondition(dataBlockReg, helperLink->getIntegerArgumentRegister(numArgs));
+   dependencies->addPostCondition(dataBlockReg, helperLink->getIntegerArgumentRegister(numArgs));
+   dataBlockReg->setPlaceholderReg();
+   numArgs++;
+
+   // Populate the next argument if needed.
+   TR::Register *objectReg = NULL;
    if (isInstanceField)
       {
-      dependencies->addPostCondition(objectReg, helperLink->getIntegerArgumentRegister(numArgs));
+      dependencies->addPreCondition(sideEffectRegister, helperLink->getIntegerArgumentRegister(numArgs));
+      dependencies->addPostCondition(sideEffectRegister, helperLink->getIntegerArgumentRegister(numArgs));
+      sideEffectRegister->setPlaceholderReg();
       numArgs++;
       }
+
+   // Populate the final argument if needed.
+   // Note: In the event that we have to write to a value, the VM helper routine expects that a pointer to the value being written to
+   // is passed in as a parameter. So we must store the value into memory and then load the address back into a register in order
+   // to pass the address of that value as an argument. We prepare the register below.
    if (isWrite)
       {
-      dependencies->addPostCondition(valueReferenceReg, helperLink->getIntegerArgumentRegister(numArgs));
-      }
-   
-   // Z specific linkage registers
-   // TODO: We might be able to reuse some registers instead of allocating new ones
-   TR::Register * scratch1 = cg->allocateRegister();
-   TR::Register * scratch2 = cg->allocateRegister();
-   dependencies->addPostCondition(scratch1, cg->getEntryPointRegister(), DefinesDependentRegister);
-   dependencies->addPostCondition(scratch2, cg->getReturnAddressRegister(), DefinesDependentRegister);
+      TR::Node *valueNode = node->getFirstChild();
+      if (isInstanceField)
+         {
+         // Pass in valueNode so it can be set to the correct node.
+         TR::TreeEvaluator::getIndirectWrtbarValueNode(cg, node, valueNode, false);
+         }
 
-   TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
-   cg->resetIsLeafMethod();
-   TR::Instruction * call = generateDirectCall(cg, node, false /*myself*/, helperSymRef, dependencies);
+      // First load the actual value into the register.
+      TR::Register *valueReferenceReg = valueReg;
+
+      TR::DataType nodeType = valueNode->getDataType();
+      TR::SymbolReference *sr = cg->allocateLocalTemp(nodeType);
+      TR::MemoryReference *valueMR = generateS390MemoryReference(valueNode, sr, cg);
+      if (valueReferenceReg->getKind() == TR_GPR)
+         {
+         // Use STG if the dataType is an uncompressed TR::Address or TR::Int64. ST otherwise.
+         auto mnemonic = TR::DataType::getSize(nodeType) == 8 ? TR::InstOpCode::STG : TR::InstOpCode::ST;
+         // Now store the value onto the stack.
+         generateRXInstruction(cg, mnemonic, node, valueReferenceReg, valueMR);
+         }
+      else if (valueReferenceReg->getKind() == TR_FPR)
+         {
+         auto mnemonic = nodeType == TR::Float ? TR::InstOpCode::STE : TR::InstOpCode::STD;
+         // Now store the value onto the stack.
+         generateRXInstruction(cg, mnemonic, node, valueReferenceReg, valueMR);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(false, "Unsupported register kind (%d) for fieldwatch.", valueReferenceReg->getKind());
+         }
+      valueReferenceReg = cg->allocateRegister();
+
+      // Now load the memory location back into the register so that it can be used
+      // as an argument register for the VM helper call.
+      TR::MemoryReference *tempMR = generateS390MemoryReference(*valueMR, 0, cg);
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, valueReferenceReg, tempMR);
+
+      dependencies->addPreCondition(valueReferenceReg, helperLink->getIntegerArgumentRegister(numArgs));
+      dependencies->addPostCondition(valueReferenceReg, helperLink->getIntegerArgumentRegister(numArgs));
+      valueReferenceReg->setPlaceholderReg();
+
+      cg->stopUsingRegister(valueReferenceReg);
+      }
+
+   // These registers will hold Entry Point and Return Address registers, which are required when generating a directCall.
+   TR::Register *scratch1 = cg->allocateRegister();
+   TR::Register *scratch2 = cg->allocateRegister();
+   dependencies->addPostCondition(scratch1, cg->getEntryPointRegister());
+   dependencies->addPostCondition(scratch2, cg->getReturnAddressRegister());
+
+   // Now generate the call to VM Helper to report the fieldwatch.
+   TR::Instruction *call = generateDirectCall(cg, node, false /*myself*/, cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false), dependencies);
    call->setNeedsGCMap(0x0000FFFF);
+   call->setDependencyConditions(dependencies);
+
+   // After returning from the VM Helper, branch back to mainline code.
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergePointLabel);
+   // End of OOL.
+   outlinedSlowPath->swapInstructionListsWithCompilation();
 
    cg->stopUsingRegister(scratch1);
    cg->stopUsingRegister(scratch2);
 
-   // TODO: this may be unnecessary
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK15, node, endLabel);
-
    cg->stopUsingRegister(dataBlockReg);
-   cg->stopUsingRegister(valueReferenceReg);
-   }
-
-/*
- * Get the number of register dependencies needed to generate the out-of-line sequence reporting field accesses
- */
-static uint8_t getNumOfConditionsForReportFieldAccess(TR::Node *node, bool isResolved, bool isWrite, bool isInstanceField, TR::CodeGenerator *cg)
-   {
-   uint8_t numOfConditions = 1; // 1st arg is always the data block
-   if (!isResolved || isInstanceField)
-      numOfConditions = numOfConditions+1; // classReg is needed in both cases.
-   if (isWrite)
-      {
-      TR::Node *valueNode = isInstanceField ? getIndirectWrtbarValueNode(node, cg->comp()): node->getFirstChild();
-      TR::Register *valueReg = cg->evaluate(valueNode); 
-      /* Field write report needs
-       * a) value being written
-       * b) the reference to the value being written
-       *
-       */
-      numOfConditions = numOfConditions + 2 ;
-      }
-   if (isInstanceField)
-      numOfConditions = numOfConditions+1; // Instance field report needs the base object
-   return numOfConditions;
-   }
-
-void directReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningMethod, int32_t bcIndex, bool isWrite, TR::CodeGenerator *cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR::SymbolReference *symRef = node->getSymbolReference();
-   bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isResolved = !node->getSymbolReference()->isUnresolved();
-
-   static J9JITWatchedStaticFieldData staticFieldDataBlock;
-
-   // prepare data block
-   staticFieldDataBlock.method = owningMethod;
-   staticFieldDataBlock.location = bcIndex;
-
-   J9Class * fieldClass = NULL;
-
-   if (isResolved)
-      {
-      fieldClass = (J9Class *)symRef->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(cg->comp(), symRef->getCPIndex());
-      TR_ASSERT_FATAL(fieldClass, "valid field class is expected for resolved field reference" POINTER_PRINTF_FORMAT, node);
-      staticFieldDataBlock.fieldAddress = (void *)node->getSymbolReference()->getSymbol()->getStaticSymbol()->getStaticAddress();
-      staticFieldDataBlock.fieldClass = fieldClass;
-      }
-   else
-      {
-      staticFieldDataBlock.fieldAddress = (void *) -1;
-      }
-
-   TR::S390WritableDataSnippet * dataSnippet = (TR::S390WritableDataSnippet*)cg->CreateConstant(node, &staticFieldDataBlock, sizeof(J9JITWatchedStaticFieldData), true);
-
-   if (!isResolved)
-      generateFillInDataBlockSequenceForUnresolvedField(node, owningMethod, dataSnippet, isWrite, cg); 
-
-   TR::LabelSymbol* startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol* endLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol* fieldReportLabel = generateLabelSymbol(cg);
-   startLabel->setStartInternalControlFlow();
-   endLabel->setEndInternalControlFlow();
-
-   TR_ASSERT_FATAL(J9ClassHasWatchedFields >= SHRT_MIN  && J9ClassHasWatchedFields <= SHRT_MAX, "expect value of J9ClassHasWatchedFields to be with in 16 bits");
-
-   TR::MemoryReference *classFlagsMemRef = NULL;
-   TR::Register *fieldClassReg;
-   TR::Register *fieldClassFlags = cg->allocateRegister();
-
-   if (isResolved)
-      {
-      fieldClassReg = cg->allocateRegister();
-      generateRILInstruction(cg, TR::InstOpCode::LARL, node, fieldClassReg, (void *)fieldClass);
-      classFlagsMemRef = generateS390MemoryReference(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
-      }
-   else
-      {
-      fieldClassReg = cg->evaluate(isWrite ? getDirectWrtbarJ9ClassNode(node): node->getFirstChild());
-      classFlagsMemRef = generateS390MemoryReference(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
-      }
-      
-   // first load the class flags into a register
-   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, fieldClassFlags, classFlagsMemRef);
-   // then AND with the set bit to see if there's a match (i.e. fieldwatch is set). If not, then skip to end label
-   generateRIInstruction(cg, TR::InstOpCode::NILL, node, fieldClassFlags, J9ClassHasWatchedFields);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, endLabel); // branch to end if not set
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel);
-
-   uint8_t numOfConditions = getNumOfConditionsForReportFieldAccess(node, isResolved, isWrite, false /*isInstanceField*/, cg);
-   if (!isResolved) 
-      numOfConditions++;
-      
-   // +2 (on the numOfConditions) because on z, we need to specify 2 extra linkage related dependencies (entry point and return address) 
-   // when manually generating a directCall
-   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, numOfConditions + 2, cg);
-   if (!isResolved)
-      {
-      deps->addPostCondition(fieldClassReg, TR::RealRegister::AssignAny);
-      }
-
-   // Generates the fieldwatch reporting call.
-   generateReportFieldAccessOutlinedInstructions(node, endLabel, dataSnippet, isWrite, deps, cg);
-
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, endLabel, deps);
-
-   if (isResolved)
-      cg->stopUsingRegister(fieldClassReg);
-   cg->stopUsingRegister(fieldClassFlags);
-   }
-
-/*
- * Generate sequence for instance field access report
- */
-void indirectReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningMethod, int32_t bcIndex, bool isWrite, TR::CodeGenerator *cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::SymbolReference *symRef = node->getSymbolReference();
-   bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isResolved = !node->getSymbolReference()->isUnresolved();
-
-   J9JITWatchedInstanceFieldData instanceFieldDataBlock;
-
-   instanceFieldDataBlock.method = owningMethod;
-   instanceFieldDataBlock.location = bcIndex;
-
-   if (isResolved)
-      instanceFieldDataBlock.offset = (UDATA) (node->getSymbolReference()->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
-   else
-      instanceFieldDataBlock.offset = (UDATA) -1;
-
-   TR::S390WritableDataSnippet * dataSnippet = (TR::S390WritableDataSnippet*)cg->CreateConstant(node, &instanceFieldDataBlock, 1 << (int) (log2(sizeof(J9JITWatchedInstanceFieldData)-1)+1), true);
-
-   if (!isResolved)
-      generateFillInDataBlockSequenceForUnresolvedField(node, owningMethod, dataSnippet, isWrite, cg);
-
-   TR::Register *objReg = cg->evaluate(node->getFirstChild());
-   TR::Register *j9classReg = cg->allocateRegister();
-   
-   // load class of the instance object into j9classReg
-   TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, j9classReg, generateS390MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
-
-
-   TR::Register *j9classFlags = cg->allocateRegister();
-
-   TR::LabelSymbol* startLabel  = generateLabelSymbol(cg);
-   TR::LabelSymbol* endLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol* fieldReportLabel = generateLabelSymbol(cg);
-   startLabel->setStartInternalControlFlow();
-   endLabel->setEndInternalControlFlow();
-
-   TR_ASSERT_FATAL(J9ClassHasWatchedFields >= SHRT_MIN  && J9ClassHasWatchedFields <= SHRT_MAX, "expect value of J9ClassHasWatchedFields to be with in 16 bits");
-
-   // Test the bit in fieldClassReg with constant to make sure fieldwatch is enabled
-   auto instr = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, j9classFlags, generateS390MemoryReference(j9classReg, fej9->getOffsetOfClassFlags(), cg));
-   generateRIInstruction(cg, TR::InstOpCode::NILL, node, j9classFlags, J9ClassHasWatchedFields);
-
-   cg->setImplicitExceptionPoint(instr);
-   instr->setNeedsGCMap(0x0000FFFF);
-
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel); 
-   // branch to end if not set
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, endLabel);
-
-   uint8_t numOfConditions = getNumOfConditionsForReportFieldAccess(node, isResolved, isWrite, true /*isInstanceField*/, cg);
-   // +2 (on numOfConditions) because on z, we need to specify 2 extra linkage dependencies when generating direct calls manually
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, numOfConditions + 2, cg);
-   deps->addPostCondition(j9classReg, TR::RealRegister::AssignAny);
-
-   generateReportFieldAccessOutlinedInstructions(node, endLabel, dataSnippet, isWrite, deps, cg);
-
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, endLabel, deps);
-
-   cg->stopUsingRegister(j9classFlags);
-   cg->stopUsingRegister(j9classReg);
    }
 
 void
-J9::Z::TreeEvaluator::VMrdbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg)
    {
-   bool isStatic = node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsStatic;
-   J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
-   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
-   for (int i = 0; i < node->getNumChildren(); i++)
-      cg->evaluate(node->getChild(i));
-   if (isStatic)
-      directReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, false /* isWrite */ , cg);
+   bool isResolved = !node->getSymbolReference()->isUnresolved();
+   TR::LabelSymbol *mergePointLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *fieldReportLabel = generateLabelSymbol(cg);
+
+   TR::Register *fieldClassReg;
+   TR::Register *fieldClassFlags = cg->allocateRegister();
+   bool opCodeIsIndirect = node->getOpCode().isIndirect();
+
+   if (opCodeIsIndirect)
+      {
+      // Load the class of the instance object into fieldClassReg.
+      fieldClassReg = cg->allocateRegister();
+      TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, fieldClassReg, generateS390MemoryReference(sideEffectRegister, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg), NULL);
+      }
    else
-      indirectReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, false /* isWrite */, cg);
-   }
-
-void J9::Z::TreeEvaluator::VMwrtbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   bool isStatic = node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsStatic;
-   J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
-   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
-   for (int i=0; i < node->getNumChildren(); i++) //evaluate children here to avoid first evaluation point in ICF
-      cg->evaluate(node->getChild(i));
-   if (isStatic)
       {
-      // the j9classReg is the grand child of the second child and the evaluation of the second child is optimized to avoid
-      // explicitly storing the j9class into a register. Evaluate the j9class node to store the j9class into j9classReg
-      if (node->getSymbolReference()->isUnresolved())
-         cg->evaluate(getDirectWrtbarJ9ClassNode(node));
-      directReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, true /* isWrite */ , cg);
+      if (isResolved)
+         {
+         fieldClassReg = cg->allocateRegister();
+         if (!(cg->comp()->compileRelocatableCode()))
+            {
+            // For non-AOT compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
+            J9Class *fieldClass = static_cast<TR::J9WatchedStaticFieldSnippet *>(dataSnippet)->getFieldClass();
+            TR_ASSERT_FATAL(fieldClass != NULL, "A valid J9Class must be provided for direct rdbar/wrtbar opcodes %p\n", node);
+            generateRILInstruction(cg, TR::InstOpCode::LARL, node, fieldClassReg, static_cast<void *>(fieldClass));
+            }
+         else
+            {
+            // If this is an AOT compile, we generate instructions to load the fieldClass directly from the snippet because the fieldClass will be invalid
+            // if we load using the dataSnippet's helper query at compile time.
+            generateRILInstruction(cg, TR::InstOpCode::LARL, node, fieldClassReg, dataSnippet);
+            generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, fieldClassReg, generateS390MemoryReference(fieldClassReg, offsetof(J9JITWatchedStaticFieldData, fieldClass), cg));
+            }
+         }
+      else
+         {
+         if (isWrite)
+            {
+            fieldClassReg = cg->allocateRegister();
+            generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, fieldClassReg, generateS390MemoryReference(sideEffectRegister, cg->comp()->fej9()->getOffsetOfClassFromJavaLangClassField(), cg));
+            }
+         else
+            {
+            fieldClassReg = sideEffectRegister;
+            }
+         }
       }
-   else indirectReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, true /* isWrite */, cg);
-   }
+   // First load the class flags into a register.
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, fieldClassFlags, generateS390MemoryReference(fieldClassReg, cg->comp()->fej9()->getOffsetOfClassFlags(), cg));
+   // Then test the bit to test with the relevant flag to check if fieldwatch is enabled.
+   generateRIInstruction(cg, TR::InstOpCode::TMLL, node, fieldClassFlags, J9ClassHasWatchedFields);
+   // If Condition Code from above test is not 0, then we branch to OOL (instructions) to report the fieldwatch event. Otherwise fall through to mergePointLabel.
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRNZ, node, fieldReportLabel);
 
-void 
-J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // The child of rdbar for static field is for side effects and is
-   // not used by the store evaluator
-   TR::Node *sideEffectNode = node->getSymbolReference()->getSymbol()->isStatic() ? node->getFirstChild() : NULL;
-   if (cg->comp()->getOption(TR_EnableFieldWatch))
+   // Generate instructions to call a VM Helper and report the fieldwatch event. Also generates an instruction to
+   // branch back to mainline (mergePointLabel).
+   generateReportFieldAccessOutlinedInstructions(node, fieldReportLabel, mergePointLabel, dataSnippet, isWrite, cg, sideEffectRegister, valueReg);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, mergePointLabel);
+
+   if (opCodeIsIndirect || isResolved || isWrite)
       {
-      TR::TreeEvaluator::VMrdbarEvaluatorForFieldWatch(node, cg);
-      if (sideEffectNode)
-         cg->decReferenceCount(sideEffectNode);
+      cg->stopUsingRegister(fieldClassReg);
       }
-   else if (sideEffectNode)
-      cg->recursivelyDecReferenceCount(sideEffectNode);
+
+   cg->stopUsingRegister(fieldClassFlags);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
-      return TR::TreeEvaluator::iloadEvaluator(node, cg);
-   }   
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::iloadEvaluator(node, cg);
+   }
 
 TR::Register *
-J9::Z::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::floadEvaluator(node, cg);
-   }   
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
 
-TR::Register *
-J9::Z::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::dloadEvaluator(node, cg);
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return TR::TreeEvaluator::iloadEvaluator(node, cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Node *sideEffectNode = node->getFirstChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+   cg->decReferenceCount(sideEffectNode);
    return TR::TreeEvaluator::aloadEvaluator(node, cg);
    }
 
 TR::Register *
-J9::Z::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::bloadEvaluator(node, cg);
-   }
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *sideEffectRegister = cg->evaluate(node->getFirstChild());
 
-TR::Register *
-J9::Z::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::sloadEvaluator(node, cg);
-   }
-
-TR::Register *
-J9::Z::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   J9::Z::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::lloadEvaluator(node, cg);
-   }
-
-void J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // The 2nd/3rd child of wrtbar for static/instance field is for side affect
-   // and is not used by store evaluator
-   TR::Node *sideEffectNode = node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild(): node->getThirdChild();
    if (cg->comp()->getOption(TR_EnableFieldWatch))
       {
-      TR::TreeEvaluator::VMwrtbarEvaluatorForFieldWatch(node, cg);
-      cg->decReferenceCount(sideEffectNode);
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
+      }
+
+   TR::Register* resultReg = NULL;
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      {
+      bool dynLitPoolLoad = false;
+      resultReg = TR::TreeEvaluator::checkAndAllocateReferenceRegister(node, cg, dynLitPoolLoad);
+      // MemRef can generate BRCL to unresolved data snippet if needed.
+      TR::MemoryReference* loadMemRef = generateS390MemoryReference(node, cg);
+
+      if (TR::Compiler->target.cpu.getSupportsGuardedStorageFacility())
+         {
+         TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, loadMemRef);
+         TR::InstOpCode::Mnemonic loadOp = cg->comp()->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
+         generateRXInstruction(cg, loadOp, node, resultReg, loadMemRef);
+         }
+      else
+         {
+         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, loadMemRef);
+         }
+      node->setRegister(resultReg);
       }
    else
-      cg->recursivelyDecReferenceCount(sideEffectNode);
+      {
+      resultReg = TR::TreeEvaluator::aloadEvaluator(node, cg);
+      }
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
+   // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
+   // decrementing the node we skip doing it here and let the load evaluator do it.
+   return resultReg;
    }
 
 TR::Register *
-J9::Z::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getSecondChild());
+   TR::Node *sideEffectNode = node->getThirdChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::fstoreEvaluator(node, cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getFirstChild());
+   TR::Node *sideEffectNode = node->getSecondChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
    return TR::TreeEvaluator::fstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getSecondChild());
+   TR::Node *sideEffectNode = node->getThirdChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
+   return TR::TreeEvaluator::dstoreEvaluator(node, cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   // For rdbar and wrtbar nodes we first evaluate the children we need to
+   // handle the side effects. Then we delegate the evaluation of the remaining
+   // children and the load/store operation to the appropriate load/store evaluator.
+   TR::Register *valueReg = cg->evaluate(node->getFirstChild());
+   TR::Node *sideEffectNode = node->getSecondChild();
+   TR::Register *sideEffectRegister = cg->evaluate(sideEffectNode);
+
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
+      }
+
+   // Note: The reference count for valueReg's node is not decremented here because the
+   // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
+   // to avoid double decrementing.
+   cg->decReferenceCount(sideEffectNode);
    return TR::TreeEvaluator::dstoreEvaluator(node, cg);
    }
 
 TR::Register *
 J9::Z::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
+   return TR::TreeEvaluator::awrtbariEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *owningObjectChild;
+   TR::Node *sourceChild;
+   TR::Compilation *comp = cg->comp();
+   bool opCodeIsIndirect = node->getOpCode().isIndirect();
+   if (opCodeIsIndirect)
+      {
+      owningObjectChild = node->getChild(2);
+      sourceChild = node->getSecondChild();
+      }
+   else
+      {
+      owningObjectChild = node->getSecondChild();
+      sourceChild = node->getFirstChild();
+      }
+
+   bool usingCompressedPointers = false;
+   if (opCodeIsIndirect)
+      {
+      // Pass in valueNode so it can be set to the correct node. If the sourceChild is modified, usingCompressedPointers will be true.
+      usingCompressedPointers = TR::TreeEvaluator::getIndirectWrtbarValueNode(cg, node, sourceChild, true);
+      }
+
+   bool doWrtBar = (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck ||
+                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck ||
+                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always);
+   bool doCrdMrk = ((TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark ||
+                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_incremental ||
+                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck) && !node->isNonHeapObjectWrtBar());
+
+   bool canSkip = false;
+   TR::Register *owningObjectRegister = NULL;
+   TR::Register *sourceRegister = NULL;
+
+   if ((node->getOpCode().isWrtBar() && node->skipWrtBar()) ||
+         ((node->getOpCodeValue() == TR::ArrayStoreCHK) &&
+         node->getFirstChild()->getOpCode().isWrtBar() &&
+         node->getFirstChild()->skipWrtBar()))
+      {
+      canSkip = true;
+      }
+
+   if ((doWrtBar || doCrdMrk) && !canSkip)
+      {
+      owningObjectRegister = cg->gprClobberEvaluate(owningObjectChild);
+      }
+   else
+      {
+      owningObjectRegister = cg->evaluate(owningObjectChild);
+      }
+
+   if (canSkip || opCodeIsIndirect)
+      {
+      sourceRegister = cg->evaluate(sourceChild);
+      }
+   else
+      {
+      sourceRegister = allocateWriteBarrierInternalPointerRegister(cg, sourceChild);
+      }
+
+   TR::Register * compressedRegister = sourceRegister;
+   if (usingCompressedPointers)
+      {
+      compressedRegister = cg->evaluate(node->getSecondChild());
+      }
+
+   // Handle fieldwatch side effect first if it's enabled.
    if (cg->comp()->getOption(TR_EnableFieldWatch) && !node->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
       {
-      bool isInstance = node->getSymbolReference()->getSymbol()->getKind() != TR::Symbol::IsStatic;
-      if (isInstance)
-         {
-         // Evaluate children here to avoid first evaluation point in ICF.
-         // The other wrtbar opcodes evaluate their children in VMwrtbarEvaluatorForFieldWatch
-         // awrtbari is special and we want to evaluate some grand child of the second child rather than the second child itself because:
-         // 1. the valueNode is not a direct child but a grand child of the compression nodes
-         // 2. some code path in wrtbar evaluator for GC assumes the second child hasn't been evaluated and we don't want to break it
-         cg->evaluate(node->getFirstChild());
-         cg->evaluate(getIndirectWrtbarValueNode(node, cg->comp()));
-         cg->evaluate(node->getThirdChild());
-         indirectReadWriteBarrierHelperForFieldWatch(node, (J9Method *) node->getOwningMethod(), node->getByteCodeInfo().getByteCodeIndex(), true /* isWrite */, cg);
-         }
-      else TR::TreeEvaluator::VMwrtbarEvaluatorForFieldWatch(node, cg);
+      TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, owningObjectRegister /* sideEffectRegister */, sourceRegister /* valueReg */);
       }
-   if (node->getOpCode().isIndirect())
-      return TR::TreeEvaluator::writeBarrierIndirectEvaluator(node, cg);
+
+   // We need to evaluate all the children first before we generate memory reference
+   // since it will screw up the code sequence for patching when we do symbol resolution.
+   TR::MemoryReference *tempMR = generateS390MemoryReference(node, cg);
+   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::ST : TR::InstOpCode::getStoreOpCode();
+   TR::Instruction * instr = generateRXInstruction(cg, storeOp, node, opCodeIsIndirect ? compressedRegister : sourceRegister, tempMR);
+
+   // When a new object is stored into an old object, we need to invoke jitWriteBarrierStore
+   // helper to update the remembered sets for GC.  Helper call is needed only if the object
+   // is in old space or is scanned (black). Since the checking involves control flow, we delay
+   // the code gen for write barrier since RA cannot handle control flow.
+   VMwrtbarEvaluator(node, sourceRegister, owningObjectRegister, sourceChild->isNonNull(), cg);
+
+   if (opCodeIsIndirect && comp->useCompressedPointers())
+      {
+      node->setStoreAlreadyEvaluated(true);
+      }
+
+   cg->decReferenceCount(sourceChild);
+   if (usingCompressedPointers)
+      {
+      cg->decReferenceCount(node->getSecondChild());
+      cg->recursivelyDecReferenceCount(owningObjectChild);
+      }
    else
-      return TR::TreeEvaluator::writeBarrierEvaluator(node, cg);
-   }
+      {
+      cg->decReferenceCount(owningObjectChild);
+      }
 
-TR::Register *J9::Z::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
-   }
-
-TR::Register *J9::Z::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
-   }
-
-TR::Register *J9::Z::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   J9::Z::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
-   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   if (owningObjectRegister)
+      {
+      cg->stopUsingRegister(owningObjectRegister);
+      }
+   cg->stopUsingRegister(sourceRegister);
+   tempMR->stopUsingMemRefRegister(cg);
+   return NULL;
    }
 
 TR::Register *
@@ -4274,7 +4020,6 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
 
    // Top-level check whether a decompression sequence is necessary, because the first child
    // may have been created by a PRE temp.
-   //
    if ((loadOrStoreChild->getOpCodeValue() == TR::aload || loadOrStoreChild->getOpCodeValue() == TR::aRegLoad) &&
        node->isSpineCheckWithArrayElementChild() && TR::Compiler->target.is64Bit() && comp->useCompressedPointers())
       {
@@ -12659,38 +12404,6 @@ J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->stopUsingRegister(codeReg);
 #endif
    return NULL;
-   }
-
-TR::Register *
-J9::Z::TreeEvaluator::ardbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Register* resultReg = NULL;
-
-   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
-      {
-      bool dynLitPoolLoad = false;
-      resultReg = TR::TreeEvaluator::checkAndAllocateReferenceRegister(node, cg, dynLitPoolLoad);
-      // MemRef can generate BRCL to unresolved data snippet if needed.
-      TR::MemoryReference* loadMemRef = generateS390MemoryReference(node, cg);
-
-      if (TR::Compiler->target.cpu.getSupportsGuardedStorageFacility())
-         {
-         TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, loadMemRef);
-         TR::InstOpCode::Mnemonic loadOp = cg->comp()->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
-         generateRXInstruction(cg, loadOp, node, resultReg, loadMemRef);
-         }
-      else
-         {
-         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, loadMemRef);
-         }
-      node->setRegister(resultReg);
-      }
-   else
-      {
-      resultReg = OMR::TreeEvaluatorConnector::ardbarEvaluator(node, cg);
-      }
-
-   return resultReg;
    }
 
 /**

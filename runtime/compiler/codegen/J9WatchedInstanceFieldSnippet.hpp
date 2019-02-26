@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,46 +20,32 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_AMD64_TREE_EVALUATOR_INCL
-#define J9_AMD64_TREE_EVALUATOR_INCL
+#ifndef J9WATCHEDINSTANCEFIELDSNIPPET_INCL
+#define J9WATCHEDINSTANCEFIELDSNIPPET_INCL
 
-/*
- * The following #define and typedef must appear before any #includes in this file
- */
-#ifndef J9_TREE_EVALUATOR_CONNECTOR
-#define J9_TREE_EVALUATOR_CONNECTOR
-namespace J9 { namespace X86 { namespace AMD64 { class TreeEvaluator; } } }
-namespace J9 { typedef J9::X86::AMD64::TreeEvaluator TreeEvaluatorConnector; }
-#else
-#error J9::X86::AMD64::TreeEvaluator expected to be a primary connector, but a J9 connector is already defined
-#endif
+#include "codegen/Snippet.hpp"
+#include "codegen/CodeGenerator.hpp"
 
+namespace TR {
 
-#include "x/codegen/J9TreeEvaluator.hpp"  // include parent
-
-namespace J9
-{
-
-namespace X86
-{
-
-namespace AMD64
-{
-
-class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
+class J9WatchedInstanceFieldSnippet : public TR::Snippet
    {
-   public:
+   private :
 
-   static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   J9JITWatchedInstanceFieldData instanceFieldData;
 
+   public :
+
+   J9WatchedInstanceFieldSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, UDATA os);
+
+   J9Method *getMethod() { return instanceFieldData.method; }
+   UDATA getLocation() { return instanceFieldData.location; }
+   UDATA getOffset() { return instanceFieldData.offset; }
+   virtual uint32_t getLength(int32_t val) { return sizeof(J9JITWatchedInstanceFieldData); }
+
+   virtual uint8_t *emitSnippetBody();
+   virtual void print(TR::FILE *pOutFile, TR_Debug *debug);
    };
-
-} // namespace AMD64
-
-} // namespace X86
-
-} // namespace J9
+}
 
 #endif

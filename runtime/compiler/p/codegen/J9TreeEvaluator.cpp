@@ -921,6 +921,18 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
    cg->stopUsingRegister(temp2Reg);
    }
 
+void
+J9::Power::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg)
+   {
+   TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on Power platforms.\n");
+   }
+
+void
+J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister)
+   {
+   TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on Power platforms.\n");
+   }
+
 TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation * comp = cg->comp();
@@ -1214,6 +1226,11 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
 
 TR::Register *J9::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
+   return TR::TreeEvaluator::irdbariEvaluator(node, cg);
+   }
+
+TR::Register *J9::Power::TreeEvaluator::irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
    TR_ASSERT(TR::Compiler->om.readBarrierType() != gc_modron_readbar_none, "iReadBarrierEvaluator");
 #ifdef OMR_GC_CONCURRENT_SCAVENGER
    TR_ASSERT(cg->comp()->useCompressedPointers(), "irdbarEvaluator is expecting compressed references");
@@ -1338,6 +1355,11 @@ TR::Register *J9::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::Code
    }
 
 TR::Register *J9::Power::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::ardbariEvaluator(node, cg);
+   }
+
+TR::Register *J9::Power::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT(TR::Compiler->om.readBarrierType() != gc_modron_readbar_none, "aReadBarrierEvaluator");
 #ifdef OMR_GC_CONCURRENT_SCAVENGER

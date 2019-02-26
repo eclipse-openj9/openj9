@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ namespace J9 { namespace X86 { class TreeEvaluator; } }
 namespace J9 { typedef J9::X86::TreeEvaluator TreeEvaluatorConnector; }
 #endif
 
-
+#include "codegen/Snippet.hpp"
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
 
 namespace J9
@@ -100,11 +100,17 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static void VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *node, TR::MemoryReference *storeMRForRealTime, TR::Register *stoerAddressRegForRealTime, TR::Node *destOwningObject, TR::Node *sourceObject, TR::Register *srcReg, TR_X86ScratchRegisterManager *scratchRegisterManager, TR::CodeGenerator *cg);
    static void VMwrtbarWithoutStoreEvaluator(TR::Node *node, TR::Node *destOwningObject, TR::Node *sourceObject, TR::Register *srcReg, TR_X86ScratchRegisterManager *scratchRegisterManager, TR::CodeGenerator *cg);
    static void VMwrtbarWithStoreEvaluator(TR::Node *node, TR::MemoryReference  *storeMR, TR_X86ScratchRegisterManager *, TR::Node *destinationChild, TR::Node *sourceChild, bool isIndirect, TR::CodeGenerator *cg, bool nullAdjusted = false);
-   static void VMrdbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg);
-   static void VMwrtbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg);
 
-   static void rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static void wrtbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   /*
+    * Generate instructions for static/instance field access report.
+    */ 
+   static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg);
+
+   /*
+    * Generates instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
+    * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
+    */
+   static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister);
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
@@ -116,19 +122,15 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *toLowerIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
-   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *generateConcurrentScavengeSequence(TR::Node *node, TR::CodeGenerator *cg);
 
    class CaseConversionManager;
    static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);
