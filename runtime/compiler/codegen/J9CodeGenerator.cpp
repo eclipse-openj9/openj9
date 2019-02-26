@@ -53,6 +53,7 @@
 #include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
+#include "infra/ILWalk.hpp"
 #include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -3915,6 +3916,132 @@ J9::CodeGenerator::collectSymRefs(
 
    return true;
    }
+
+  /** \brief 
+    *       Following codegen phase walks the blocks in the CFG and checks for the virtual guard performing TR_MethodTest
+    *       and guarding an inlined interface call. 
+    *
+    * \details
+    *       Virtual Guard performing TR_MethodTest would look like following.
+    *       n1n BBStart <block_X>
+    *       ...      
+    *       n2n ifacmpne goto -> nXXn 
+    *       n3n    aloadi <offset of inlined method in VTable>
+    *       n4n       aload <vft>
+    *       n5n    aconst <J9Method of inlined method>
+    *       n6n BBEnd <block_X>
+    *       For virtual dispatch sequence, we know that this is the safe check but in case of interface call, classes implementing
+    *       that interface would have different size of VTable. This makes executing above check unsafe when VTable of the class of
+    *       the receiver object is smaller, effectively making reference in n3n to pointing to a garbage location which might lead 
+    *       to a segmentation fault if the reference in not memory mapped or if bychance it contains J9Method  pointer of same inlined
+    *       method then it will execute a code which should not be executed.
+    *       For this kind of Virtual guards which are not nop'd we need to add a range check to make sure the address we are going to
+    *       access is pointing to a valid location in VTable. There are mainly two ways we can add this range check test. First one is
+    *       during the conception of the virtual guard. There are many downsides of doing so especially when other optimizations which
+    *       can moved guards around (for example loop versioner, virtualguard head merger, etc) needs to make sure to move range check 
+    *       test around as well. Other way is to scan for this type of guards after optimization is finished like here in CodeGen Phase
+    *       and add a range check test here.
+    *       At the end of this function, we would have following code around them method test.
+    *       BBStart <block_X>    
+    *       ...      
+    *       ifacmple goto nXXn
+    *          aloadi <offset of VTableHeader.size from J9Class*>
+    *             aload <vft>
+    *          aconst <Index of the inlined method in VTable of class of inlined method>
+    *       BBEnd <block_X>
+    * 
+    *       BBStart <block_Y>
+    *       ifacmpne goto -> nXXn 
+    *          aloadi <offset of inlined method in VTable>
+    *             aload <vft>
+    *          aconst <J9Method of inlined method>
+    *       BBEnd <block_Y>
+    */  
+void
+J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
+   {
+   TR::Compilation *comp = self()->comp();
+   TR::CFG * cfg = comp->getFlowGraph();
+   TR::NodeChecklist checklist(comp);
+   for (TR::AllBlockIterator iter(cfg, comp); iter.currentBlock() != NULL; ++iter)
+      {
+      TR::Block *block = iter.currentBlock();
+      TR::TreeTop *treeTop = block->getLastRealTreeTop();
+      TR::Node *node = treeTop->getNode();
+      if (node->getOpCode().isIf() && node->isTheVirtualGuardForAGuardedInlinedCall() && !checklist.contains(node))
+         {
+         TR_VirtualGuard *vg = comp->findVirtualGuardInfo(node);
+         // Mainly we need to make sure that virtual guard which performs the TR_MethodTest and can be NOP'd are needed the range check.
+         if (vg && vg->getTestType() == TR_MethodTest && 
+            !(comp->performVirtualGuardNOPing() && (node->isNopableInlineGuard() || comp->isVirtualGuardNOPingRequired(vg))))
+            {
+            TR::SymbolReference *callSymRef = vg->getSymbolReference();
+            TR_ASSERT_FATAL(callSymRef != NULL, "Guard n%dn for the inlined call should have stored symbol reference for the call", node->getGlobalIndex());
+            if (callSymRef->getSymbol()->castToMethodSymbol()->isInterface())
+               {
+               TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "profiledInterfaceTest/({%s}{%s})", comp->signature(), comp->getHotnessName(comp->getMethodHotness())));
+               dumpOptDetails(comp, "Need to add a rangecheck before n%dn in block_%d\n",node->getGlobalIndex(), block->getNumber());
+
+               // We need a VFT Load of the receiver object to get the VTableHeader.size to check the range. As this operation is happening during codegen phase, only
+               // known concrete way we can have this information is through aloadi child of the guard that has single child which is vft load of receiver object.
+               // Now instead of accessing VFT load from the child of the aloadi, we could have treetop's the aloadi during inlining where we generate the virtual guard
+               // to access information from the treetop. Because of the same reasons lined up behind adding range check test during codegen phase in the description of this function,
+               // we would need to make changes in all optimizations moving Virtual Guard around to keep that treetop together before guard which will be very difficult to enforce.
+               // Also as children of virtual guard is very self contained and atm it is very unlikely that other optimizations are going to find opportunity of manipulating them and
+               // Because of the fact that it is very unlikely that we will have another aloadi node with same VTable offset of same receiver object, this child would not be commoned out
+               // and have only single reference in this virtual guard therefore splitting of block will not store it to temp slot.
+               // In rare case child of the virtual guard is manipulated then illegal memory reference load would hace occured before the Virtual Guard which 
+               // is already a bug as mentioned in the description of this function and it would be safer to fail compilation. 
+               TR::Node *vTableLoad = node->getFirstChild();
+               if (!(vTableLoad->getOpCodeValue() == TR::aloadi && comp->getSymRefTab()->isVtableEntrySymbolRef(vTableLoad->getSymbolReference())))
+                  comp->failCompilation<TR::CompilationException>("Abort compilation as Virtual Guard has generated illegal memory reference");
+               TR::Node *vTableSizeOfReceiver = NULL;
+               TR::Node *rangeCheckTest = NULL;
+               if (TR::Compiler->target.is64Bit())
+                  {
+                  vTableSizeOfReceiver = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vTableLoad->getFirstChild(),
+                                                                           comp->getSymRefTab()->findOrCreateVtableEntrySymbolRef(comp->getMethodSymbol(),
+                                                                                                                                    sizeof(J9Class)+ offsetof(J9VTableHeader, size)));
+                  rangeCheckTest = TR::Node::createif(TR::iflcmple, vTableSizeOfReceiver, 
+                                                                  TR::Node::lconst(node,  (vTableLoad->getSymbolReference()->getOffset() - sizeof(J9Class) - sizeof(J9VTableHeader)) / sizeof(UDATA)) , 
+                                                                  node->getBranchDestination());
+                  }
+               else
+                  {
+                  vTableSizeOfReceiver = TR::Node::createWithSymRef(TR::iloadi, 1, 1, vTableLoad->getFirstChild(),
+                                                                           comp->getSymRefTab()->findOrCreateVtableEntrySymbolRef(comp->getMethodSymbol(),
+                                                                                                                                    sizeof(J9Class)+ offsetof(J9VTableHeader, size)));
+                  rangeCheckTest = TR::Node::createif(TR::ificmple, vTableSizeOfReceiver, 
+                                                                  TR::Node::iconst(node,  (vTableLoad->getSymbolReference()->getOffset() - sizeof(J9Class) - sizeof(J9VTableHeader)) / sizeof(UDATA)) , 
+                                                                  node->getBranchDestination());
+                  }
+               TR::TreeTop *rangeTestTT = TR::TreeTop::create(comp, treeTop->getPrevTreeTop(), rangeCheckTest);
+               TR::Block *newBlock = block->split(treeTop, cfg, false, false);
+               cfg->addEdge(block, node->getBranchDestination()->getEnclosingBlock());
+               newBlock->setIsExtensionOfPreviousBlock();
+               if (node->getNumChildren() == 3)
+                  {
+                  TR::Node *currentBlockGlRegDeps = node->getChild(2);
+                  TR::Node *exitGlRegDeps = TR::Node::create(TR::GlRegDeps, currentBlockGlRegDeps->getNumChildren());
+                  for (int i = 0; i < currentBlockGlRegDeps->getNumChildren(); i++)
+                     {
+                     TR::Node *child = currentBlockGlRegDeps->getChild(i);
+                     exitGlRegDeps->setAndIncChild(i, child);
+                     }
+                  rangeCheckTest->addChildren(&exitGlRegDeps, 1);
+                  }
+               // While walking all blocks in CFG, when we find the location to add the range check, it will split the original block and
+               // We will have actual Virtual Guard in new block. As Block Iterator guarantees to visit all block in the CFG, 
+               // While going over the blocks, we will encounter same virtual guard in newly created block after split.  
+               // We need to make sure we are not examining already visited guard. 
+               // Add checked virtual guard node to NodeChecklist to make sure we check all the nodes only once.
+               checklist.add(node);
+               }
+            }
+         }
+      }
+   }
+
 
 
 void
