@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -536,7 +536,7 @@ allLiveClassesNextDo(J9ClassWalkState* state)
 		if (clazzPtr != NULL) {
 			J9ClassLoader *classLoader = clazzPtr->classLoader;
 			if ((J9_GC_CLASS_LOADER_DEAD == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD))
-					|| (J9_JAVA_CLASS_DYING == (J9CLASS_FLAGS(clazzPtr) & J9_JAVA_CLASS_DYING))
+					|| (J9AccClassDying == (J9CLASS_FLAGS(clazzPtr) & J9AccClassDying))
 					|| (needCheckInGC && (0 == vm->memoryManagerFunctions->j9gc_objaccess_checkClassLive(vm, clazzPtr))))
 			{
 				/* class is not alive */

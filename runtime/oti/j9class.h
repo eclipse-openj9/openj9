@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 #ifndef j9class_h
 #define j9class_h
 typedef struct J9ClassLoadingConstraint {
@@ -33,7 +32,7 @@ typedef struct J9ClassLoadingConstraint {
 } J9ClassLoadingConstraint;
 
 #define J9CLASS_FLAGS(clazz) ((UDATA)(clazz)->classDepthAndFlags)
-#define J9CLASS_DEPTH(clazz) (((UDATA)(clazz)->classDepthAndFlags) & J9_JAVA_CLASS_DEPTH_MASK)
+#define J9CLASS_DEPTH(clazz) (((UDATA)(clazz)->classDepthAndFlags) & J9AccClassDepthMask)
 #define J9CLASS_EXTENDED_FLAGS(clazz) ((clazz)->classFlags)
 #define J9CLASS_EXTENDED_FLAGS_SET(clazz, bits) ((clazz)->classFlags |= (bits))
 #define J9CLASS_EXTENDED_FLAGS_CLEAR(clazz, bits) ((clazz)->classFlags &= ~(bits))

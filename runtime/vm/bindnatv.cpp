@@ -1017,7 +1017,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 				J9Class* ramClass;
 				
 				ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
-				ramClass->classDepthAndFlags |= J9_JAVA_CLASS_HAS_JDBC_NATIVES;
+				ramClass->classDepthAndFlags |= J9AccClassHasJDBCNatives;
 			}
 		}
 #endif

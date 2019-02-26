@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1492,7 +1492,7 @@ static void jniCheckValidClass(JNIEnv* env, const char* function, UDATA argNum, 
 		exitVM(vmThread);
 	}
 
-	if (classDepthAndFlags & J9_JAVA_CLASS_HOT_SWAPPED_OUT) {
+	if (classDepthAndFlags & J9AccClassHotSwappedOut) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_OBSOLETE_CLASS, function, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 	}
@@ -2255,7 +2255,7 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 		}
 	}
 
-	if ( ((romMethod->modifiers & J9_JAVA_STATIC) == J9_JAVA_STATIC) != (methodType == METHOD_STATIC) ) {
+	if ( ((romMethod->modifiers & J9AccStatic) == J9AccStatic) != (methodType == METHOD_STATIC) ) {
 		if (methodType == METHOD_STATIC) {
 			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_IS_NOT_STATIC, function);
 		} else {

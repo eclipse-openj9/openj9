@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ verifyClassMethods(J9JavaVM *vm, J9Class *clazz)
 {
 	J9ROMClass *romClass = (J9ROMClass *)DBG_ARROW(clazz, romClass);
 	UDATA romClassModifiers = (UDATA)DBG_ARROW(romClass, modifiers);
-	BOOLEAN isInterfaceClass = (J9_JAVA_INTERFACE == (romClassModifiers & J9_JAVA_INTERFACE));
+	BOOLEAN isInterfaceClass = (J9AccInterface == (romClassModifiers & J9AccInterface));
 	J9ConstantPool *ramConstantPool = (J9ConstantPool *)DBG_ARROW(clazz, ramConstantPool);
 	U_32 methodCount = (U_32)DBG_ARROW(romClass, romMethodCount);
 	J9Method *methods = (J9Method *)DBG_ARROW(clazz, ramMethods);

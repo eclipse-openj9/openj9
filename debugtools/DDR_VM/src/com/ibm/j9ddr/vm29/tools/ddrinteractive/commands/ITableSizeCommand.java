@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.structure.J9ITable;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
+import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 
 public class ITableSizeCommand extends Command 
 {
@@ -90,7 +91,7 @@ public class ITableSizeCommand extends Command
 			ClassSegmentIterator classSegmentIterator = new ClassSegmentIterator(vm.classMemorySegments());
 			while (classSegmentIterator.hasNext()) {
 				J9ClassPointer clazz = (J9ClassPointer) classSegmentIterator.next();
-				int classDepth = clazz.classDepthAndFlags().bitAnd(J9_JAVA_CLASS_DEPTH_MASK).intValue();
+				int classDepth = clazz.classDepthAndFlags().bitAnd(J9AccClassDepthMask).intValue();
 				J9ITablePointer superITable = J9ITablePointer.NULL;
 				J9ITablePointer startITable = J9ITablePointer.cast(clazz.iTable());
 				if (0 != classDepth) {
