@@ -100,8 +100,13 @@
 #define J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod) \
 	((((romMethod)->modifiers) & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor)
 
-#define J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(romClass) \
-	J9_ARE_ANY_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface)
+/* Class instances are allocated via the new bytecode */
+#define J9ROMCLASS_ALLOCATES_VIA_NEW(romClass) \
+	J9_ARE_NO_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface | J9AccClassArray | J9AccValueType)
+
+/* Class instances are allocated via J9RAMClass->totalInstanceSize */
+#define J9ROMCLASS_ALLOCATE_USES_TOTALINSTANCESIZE(romClass) \
+	J9_ARE_NO_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface | J9AccClassArray)
 
 /* Only public vTable methods go into the iTable */
 #define J9ROMMETHOD_IN_ITABLE(romMethod) \
