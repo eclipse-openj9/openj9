@@ -1594,13 +1594,17 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary:
          {
-         auto recv = client->getRecvData<J9Method *, J9ConstantPool *, int32_t, bool>();
+         auto recv = client->getRecvData<J9Method *, J9ConstantPool *, int32_t, bool, J9Class *>();
          auto ramMethod = std::get<0>(recv);
          auto constantPool = std::get<1>(recv);
          auto cpIndex = std::get<2>(recv);
          bool isStatic = std::get<3>(recv);
+         J9Class *definingClass = std::get<4>(recv);
          J9Class *clazz = (J9Class *) J9_CLASS_FROM_METHOD(ramMethod);
-         J9Class *definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, isStatic);
+         if (!definingClass)
+            {
+            definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, isStatic);
+            }
          UDATA *classChain = fe->sharedCache()->rememberClass(definingClass);
 
          client->write(clazz, definingClass, classChain);
