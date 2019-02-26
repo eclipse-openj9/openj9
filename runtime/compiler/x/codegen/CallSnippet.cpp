@@ -39,10 +39,6 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "x/codegen/X86PrivateLinkage.hpp"
 
-// TODO: Delete this forward declaration along with the corresponding
-// TR_Debug::print overload.
-namespace TR { class X86UnresolvedVirtualCallSnippet; }
-
 bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
    {
    if (!TR::Compiler->target.is64Bit())
@@ -1133,11 +1129,4 @@ uint32_t TR::X86CallSnippet::getLength(int32_t estimatedSnippetStart)
       }
 
    return length;
-   }
-
-// TODO: Delete this once the (dead) call site is deleted from omr.
-void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86UnresolvedVirtualCallSnippet *snippet)
-   {
-   TR_ASSERT_FATAL(false, "stub for staged deletion");
    }
