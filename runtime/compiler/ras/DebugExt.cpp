@@ -2560,7 +2560,7 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tList<TR::Instruction> _staticMethodPICSites = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_staticMethodPICSites) - (char*)localCompiler) );
    _dbgPrintf("\tList<TR_Snippet> _snippetsToBePatchedOnClassUnload = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_snippetsToBePatchedOnClassUnload) - (char*)localCompiler) );
    _dbgPrintf("\tList<TR_Snippet> _methodSnippetsToBePatchedOnClassUnload = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_methodSnippetsToBePatchedOnClassUnload) - (char*)localCompiler) );
-   _dbgPrintf("\tList<TR_Pair<TR_Snippet,TR_ResolvedMethod> > _snippetsToBePatchedOnRegisterNative = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_snippetsToBePatchedOnRegisterNative) - (char*)localCompiler) );
+   //_dbgPrintf("\tList<TR_Pair<TR_Snippet,TR_ResolvedMethod> > _snippetsToBePatchedOnRegisterNative = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_snippetsToBePatchedOnRegisterNative) - (char*)localCompiler) );
    _dbgPrintf("\t&(TR::SymbolReferenceTable _symRefTab) = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_symRefTab) - (char*)localCompiler) );
    _dbgPrintf("\tTR::Options *_options = 0x%p\n",localCompiler->_options);
    _dbgPrintf("\tuint32_t _returnInfo = %d\n",localCompiler->_returnInfo);
