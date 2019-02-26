@@ -972,7 +972,24 @@ illegalAccess:
 		
 			if (ramCPEntry != NULL) {
 				UDATA valueOffset = fieldOffset;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if ('Q' == *J9UTF8_DATA(signature)) {
+					J9FlattenedClassCache *flattenedClassCache = classFromCP->flattenedClassCache;
+					J9Class *flattenableClass = NULL;
+					UDATA index = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
+					flattenableClass = flattenedClassCache[index].clazz;
 
+					if (J9_ARE_ALL_BITS_SET(flattenableClass->classFlags, J9ClassIsFlattened)) {
+						modifiers |= J9FieldFlagFlattened;
+
+						flattenedClassCache[index].offset = valueOffset;
+						valueOffset = index;
+
+						/* offset must be written to flattenedClassCache before fieldref is marked as resolved */
+						issueWriteBarrier();
+					}
+				}
+#endif
 				/* Sign extend the resolved constant to make sure that it is always larger than valueOffset field */
 				modifiers |= (UDATA)(IDATA)(I_32) J9FieldFlagResolved;
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {

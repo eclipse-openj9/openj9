@@ -6415,12 +6415,47 @@ retry:
 				{
 					UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
 					bool isVolatile = (0 != (flags & J9AccVolatile));
+
 					if (flags & J9FieldSizeDouble) {
 						_sp += (slotsToPop - 2);
 						*(U_64*)_sp = _objectAccessBarrier.inlineMixedObjectReadU64(_currentThread, objectref, newValueOffset, isVolatile);
 					} else if (flags & J9FieldFlagObject) {
 						_sp += (slotsToPop - 1);
-						*(j9object_t*)_sp = _objectAccessBarrier.inlineMixedObjectReadObject(_currentThread, objectref, newValueOffset, isVolatile);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+						if (flags & J9FieldFlagFlattened) {
+							J9FlattenedClassCache *cache = J9OBJECT_CLAZZ(_currentThread, objectref)->flattenedClassCache + valueOffset;
+							J9Class *flattenedFieldClass = cache->clazz;
+							j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, flattenedFieldClass, false, false);
+
+							if (NULL == newObjectRef) {
+								buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+								pushObjectInSpecialFrame(REGISTER_ARGS, objectref);
+								updateVMStruct(REGISTER_ARGS);
+								newObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, flattenedFieldClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+								VMStructHasBeenUpdated(REGISTER_ARGS);
+								objectref = popObjectInSpecialFrame(REGISTER_ARGS);
+								restoreGenericSpecialStackFrame(REGISTER_ARGS);
+								if (J9_UNEXPECTED(NULL == newObjectRef)) {
+									rc = THROW_HEAP_OOM;
+									goto done;
+								}
+								flattenedFieldClass = VM_VMHelpers::currentClass(flattenedFieldClass);
+							}
+
+							_objectAccessBarrier.copyObjectFields(_currentThread,
+												flattenedFieldClass,
+												objectref,
+												cache->offset + J9_OBJECT_HEADER_SIZE,
+												newObjectRef,
+												J9_OBJECT_HEADER_SIZE);
+
+							_sp += (slotsToPop - 1);
+							*(j9object_t*)_sp = newObjectRef;
+						} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+						{
+							*(j9object_t*)_sp = _objectAccessBarrier.inlineMixedObjectReadObject(_currentThread, objectref, newValueOffset, isVolatile);
+						}
 					} else {
 						_sp += (slotsToPop - 1);
 						*(U_32*)_sp = _objectAccessBarrier.inlineMixedObjectReadU32(_currentThread, objectref, newValueOffset, isVolatile);
@@ -6516,6 +6551,7 @@ resolve:
 		{
 			bool isVolatile = (0 != (flags & J9AccVolatile));
 			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+
 			if (flags & J9FieldSizeDouble) {
 				j9object_t objectref = *(j9object_t*)(_sp + 2);
 				if (NULL == objectref) {
@@ -6530,7 +6566,22 @@ resolve:
 					rc = THROW_NPE;
 					goto done;
 				}
-				_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, objectref, newValueOffset, *(j9object_t*)_sp, isVolatile);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (flags & J9FieldFlagFlattened) {
+					J9FlattenedClassCache *cache = J9OBJECT_CLAZZ(_currentThread, objectref)->flattenedClassCache + valueOffset;
+
+					_objectAccessBarrier.copyObjectFields(_currentThread,
+										cache->clazz,
+										*(j9object_t*)_sp,
+										J9_OBJECT_HEADER_SIZE,
+										objectref,
+										cache->offset + J9_OBJECT_HEADER_SIZE);
+
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				{
+					_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, objectref, newValueOffset, *(j9object_t*)_sp, isVolatile);
+				}
 				_sp += 2;
 			} else {
 				j9object_t objectref = *(j9object_t*)(_sp + 1);
@@ -8182,6 +8233,7 @@ retry:
 		UDATA const flags = ramFieldRef->flags;
 		UDATA const valueOffset = ramFieldRef->valueOffset;
 		j9object_t copyObjectRef = NULL;
+		J9Class *objectRefClass = NULL;
 
 		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
 		 * having a higher value than any valid valueOffset.
@@ -8210,7 +8262,6 @@ retry:
 		}
 		{
 			j9object_t originalObjectRef = *(j9object_t *)(_sp + (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble) ? 2 : 1));
-			J9Class *objectRefClass = NULL;
 
 			if (NULL == originalObjectRef) {
 				rc = THROW_NPE;
@@ -8234,6 +8285,7 @@ retry:
 				copyObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, objectRefClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				originalObjectRef = popObjectInSpecialFrame(REGISTER_ARGS);
+				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				if (J9_UNEXPECTED(NULL == copyObjectRef)) {
 					rc = THROW_HEAP_OOM;
 					goto done;
@@ -8250,7 +8302,17 @@ retry:
 				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copyObjectRef, newValueOffset, *(U_64*)_sp, isVolatile);
 				_sp += 2;
 			} else if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagObject)) {
-				_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copyObjectRef, newValueOffset, *(j9object_t*)_sp, isVolatile);
+				if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagFlattened)) {
+					J9FlattenedClassCache *cache = objectRefClass->flattenedClassCache + valueOffset;
+					_objectAccessBarrier.copyObjectFields(_currentThread,
+										cache->clazz,
+										*(j9object_t*)_sp,
+										J9_OBJECT_HEADER_SIZE,
+										copyObjectRef,
+										cache->offset + J9_OBJECT_HEADER_SIZE);
+				} else {
+					_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copyObjectRef, newValueOffset, *(j9object_t*)_sp, isVolatile);
+				}
 				_sp += 1;
 			} else {
 				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, *(U_32*)_sp, isVolatile);

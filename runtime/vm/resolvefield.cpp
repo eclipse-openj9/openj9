@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,7 @@
 #include "j9modifiers_api.h"
 #include "ObjectFieldInfo.hpp"
 #include "util_api.h"
+#include "vm_api.h"
 
 /* Extra hidden fields are lockword and finalizeLink. */
 #define NUMBER_OF_EXTRA_HIDDEN_FIELDS 2
@@ -214,7 +215,12 @@ findFieldInClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fie
 		}
 
 		/* walk all instance and static fields */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		result = fieldOffsetsStartDo(javaVM, romClass, SUPERCLASS( clazz ), &state, walkFlags, clazz->flattenedClassCache);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		result = fieldOffsetsStartDo(javaVM, romClass, SUPERCLASS( clazz ), &state, walkFlags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		while (!found && (result->field != NULL)) {
 			/* compare name and sig */
 			J9UTF8* thisName = J9ROMFIELDSHAPE_NAME(result->field);
@@ -602,9 +608,53 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
 }
 #endif /* !defined(J9VM_OUT_OF_PROCESS) */
 
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+J9Class *
+findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength)
+{
+	/* first field indicates the number of classes in the cache */
+	UDATA length = flattenedClassCache->offset;
+	J9Class *clazz = NULL;
+
+	for (UDATA i = 1; i <= length; i++) {
+		J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(flattenedClassCache[i].clazz->romClass);
+		if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
+			clazz = flattenedClassCache[i].clazz;
+			break;
+		}
+	}
+
+	Assert_VM_notNull(clazz);
+	return clazz;
+}
+
+UDATA
+findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
+{
+	/* first field indicates the number of classes in the cache */
+	UDATA length = flattenedClassCache->offset;
+	UDATA index = 0;
+
+	for (UDATA i = 1; i <= length; i++) {
+		if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMNAMEANDSIGNATURE_NAME(flattenedClassCache[i].nameAndSignature))
+			&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMNAMEANDSIGNATURE_SIGNATURE(flattenedClassCache[i].nameAndSignature))
+		) {
+			index = i;
+			break;
+		}
+	}
+
+	Assert_VM_true(index != 0);
+	return index;
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 J9ROMFieldOffsetWalkResult *
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache)
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags)
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 {
 
 	Trc_VM_romFieldOffsetsStartDo_Entry( NULL, romClass, superClazz, flags );
@@ -615,7 +665,14 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 	state->romClass = romClass;
 	state->hiddenInstanceFieldWalkIndex = (UDATA)-1;
 
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	state->flattenedClassCache = flattenedClassCache;
+
+	ObjectFieldInfo fieldInfo(vm, romClass, flattenedClassCache);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	ObjectFieldInfo fieldInfo(vm, romClass);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 	/* Calculate instance size. Skip the following if we  care about only about statics */
 	if (J9_ARE_ANY_BITS_SET(state->walkFlags, (J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN | J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE))) {
 
@@ -709,9 +766,19 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 		}
 
 		state->result.totalInstanceSize = fieldInfo.calculateTotalFieldsSizeAndBackfill();
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+		state->firstFlatDoubleOffset = fieldInfo.calculateFieldDataStart();
+		state->firstDoubleOffset = fieldInfo.addFlatDoublesArea(state->firstFlatDoubleOffset);
+		state->firstFlatObjectOffset = fieldInfo.addDoublesArea(state->firstDoubleOffset);
+		state->firstObjectOffset = fieldInfo.addFlatObjectsArea(state->firstFlatObjectOffset);
+		state->firstFlatSingleOffset = fieldInfo.addObjectsArea(state->firstObjectOffset);
+		state->firstSingleOffset = fieldInfo.addFlatSinglesArea(state->firstFlatSingleOffset);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		state->firstDoubleOffset = fieldInfo.calculateFieldDataStart();
 		state->firstObjectOffset = fieldInfo.addDoublesArea(state->firstDoubleOffset);
 		state->firstSingleOffset = fieldInfo.addObjectsArea(state->firstObjectOffset);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 
 		if (fieldInfo.isMyBackfillSlotAvailable() && fieldInfo.isBackfillSuitableFieldAvailable() ) {
 			if (fieldInfo.isBackfillSuitableInstanceSingleAvailable()) {
@@ -815,6 +882,9 @@ fieldOffsetsNextDo(J9ROMFieldOffsetWalkState *state)
 	BOOLEAN walkHiddenFields = FALSE;
 
 	state->result.field = NULL;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	state->result.flattenedClass = NULL;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	/*
 	 * Walk regular ROM fields until we run out of them. Then switch
@@ -909,8 +979,35 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 							state->result.offset = state->backfillOffsetToUse;
 							state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 						} else {
-							state->result.offset = state->firstObjectOffset + state->objectsSeen * sizeof( fj9object_t );
-							state->objectsSeen++;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+							J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
+							U_8 *fieldSigBytes = J9UTF8_DATA(fieldSig);
+							if ('Q' == *fieldSigBytes) {
+								J9Class *fieldClass = NULL;
+								fieldClass = findJ9ClassInFlattenedClassCache(state->flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
+								if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
+									state->result.offset = state->firstObjectOffset + state->objectsSeen * sizeof(fj9object_t);
+									state->objectsSeen++;
+								} else {
+									U_32 firstFieldOffset = (U_32) fieldClass->backfillOffset;
+									state->result.flattenedClass = fieldClass;
+									if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
+										state->result.offset = state->firstFlatDoubleOffset + state->currentFlatDoubleOffset - firstFieldOffset;
+										state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, sizeof(U_64));
+									} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
+										state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset - firstFieldOffset;
+										state->currentFlatObjectOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, sizeof(fj9object_t));
+									} else {
+										state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset - firstFieldOffset;
+										state->currentFlatSingleOffset += fieldClass->totalInstanceSize - firstFieldOffset;
+									}
+								}
+							} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+							{
+								state->result.offset = state->firstObjectOffset + state->objectsSeen * sizeof( fj9object_t );
+								state->objectsSeen++;
+							}
 						}
 						break;
 					} else if ( 0 == (state->walkFlags & J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS) ) {
@@ -997,8 +1094,11 @@ fullTraversalFieldOffsetsStartDo(J9JavaVM *vm, J9Class *clazz, J9ROMFullTraversa
 				iTable = iTable->next;
 			}
 		}
-		
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		result = fieldOffsetsStartDo(state->javaVM, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags, state->currentClass->flattenedClassCache);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		result = fieldOffsetsStartDo(state->javaVM, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		field = result->field;
 		if (NULL != field) {
 			state->fieldOffset = result->offset;
@@ -1066,7 +1166,12 @@ fullTraversalFieldOffsetsNextDo(J9ROMFullTraversalFieldOffsetWalkState *state)
 			}
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		result = fieldOffsetsStartDo(state->javaVM, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags, state->currentClass->flattenedClassCache);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		result = fieldOffsetsStartDo(state->javaVM, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		field = result->field;
 		if (NULL != field) {
 			state->fieldOffset = result->offset;
@@ -1237,8 +1342,14 @@ createFieldTable(J9VMThread *vmThread, J9Class *clazz) {
 	fieldList = (J9FieldTableEntry*) j9mem_allocate_memory(romClass->romFieldCount * sizeof(J9FieldTableEntry), OMRMEM_CATEGORY_VM);
 	
 	/* get the field names and put them in the list in unsorted order */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	result = fieldOffsetsStartDo(javaVM, romClass, SUPERCLASS(clazz),
+		&state, J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE, clazz->flattenedClassCache);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	result = fieldOffsetsStartDo(javaVM, romClass, SUPERCLASS(clazz),
 		&state, J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	while (result->field != NULL) {
 		/* compare name and sig */
 		fieldList[count].field = result->field;

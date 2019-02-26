@@ -163,10 +163,12 @@
 #define J9ClassContainsMethodsPresentInMCCHash 0x10
 #define J9ClassGCScanned 0x20
 #define J9ClassIsAnonymous 0x40
-#define J9ClassIsDerivedValueType 0x80
+#define J9ClassIsFlattened 0x80
 #define J9ClassHasWatchedFields 0x100
 #define J9ClassReservableLockWordInit 0x200
 #define J9ClassIsValueType 0x400
+#define J9ClassLargestAlignmentConstraintReference 0x800
+#define J9ClassLargestAlignmentConstraintDouble 0x1000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -177,7 +179,7 @@
 #define J9FieldFlagHasTypeAnnotations 0x800000
 #define J9FieldFlagIsContended 0x10000000
 #define J9FieldFlagObject 0x20000
-#define J9FieldFlagUnused_1000000 0x1000000
+#define J9FieldFlagFlattened 0x1000000
 #define J9FieldFlagUnused_2000000 0x2000000
 #define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagPutResolved 0x8000000
@@ -1647,6 +1649,9 @@ typedef struct J9ROMFieldOffsetWalkResult {
 	UDATA superTotalInstanceSize;
 	UDATA index;
 	IDATA backfillOffset;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	struct J9Class* flattenedClass;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 } J9ROMFieldOffsetWalkResult;
 
 typedef struct J9HiddenInstanceField {
@@ -1681,6 +1686,15 @@ typedef struct J9ROMFieldOffsetWalkState {
 	struct J9HiddenInstanceField* hiddenInstanceFields[J9VM_MAX_HIDDEN_FIELDS_PER_CLASS];
 	UDATA hiddenInstanceFieldCount;
 	UDATA hiddenInstanceFieldWalkIndex;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	struct J9FlattenedClassCache *flattenedClassCache;
+	UDATA firstFlatSingleOffset;
+	UDATA firstFlatObjectOffset;
+	UDATA firstFlatDoubleOffset;
+	UDATA currentFlatSingleOffset;
+	UDATA currentFlatObjectOffset;
+	UDATA currentFlatDoubleOffset;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 } J9ROMFieldOffsetWalkState;
 
 #define J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC  1
@@ -1787,6 +1801,14 @@ typedef struct J9ModuleExtraInfo {
 	struct J9ClassPathEntry* patchPathEntries;
 	UDATA patchPathCount;
 } J9ModuleExtraInfo;
+
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+typedef struct J9FlattenedClassCache {
+	struct J9Class* clazz;
+	struct J9ROMNameAndSignature* nameAndSignature;
+	UDATA offset;
+} J9FlattenedClassCache;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 struct J9TranslationBufferSet;
 typedef struct J9VerboseStruct {
@@ -2969,6 +2991,9 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9FlattenedClassCache* flattenedClassCache;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9Class;
 
 /* Interface classes can never be instantiated - overload the totalInstanceSize slot to hold the iTable method count */
@@ -4580,7 +4605,11 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *structuredSignalHandler)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *structuredSignalHandlerVM)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *addHiddenInstanceField)(struct J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn) ;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache) ;
+#else
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags) ;
+#endif
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsNextDo)(struct J9ROMFieldOffsetWalkState *state) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9Class *clazz, struct J9ROMFullTraversalFieldOffsetWalkState *state, U_32 flags) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsNextDo)(struct J9ROMFullTraversalFieldOffsetWalkState *state) ;
@@ -5373,6 +5402,9 @@ typedef struct J9JavaVM {
 #endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	omrthread_monitor_t constantDynamicMutex;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	UDATA valueFlatteningThreshold;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,6 +356,7 @@ enum INIT_STAGE {
 #define VMOPT_OPT_XXNOINTERLEAVEMEMORY "-XX:-InterleaveMemory"
 #define VMOPT_OPT_XXINTERLEAVEMEMORY "-XX:+InterleaveMemory"
 #define VMOPT_ROMMETHODSORTTHRESHOLD_EQUALS "-XX:ROMMethodSortThreshold="
+#define VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS "-XX:ValueTypeFlatteningThreshold="
 #define VMOPT_XXREDUCECPUMONITOROVERHEAD "-XX:+ReduceCPUMonitorOverhead"
 #define VMOPT_XXNOREDUCECPUMONITOROVERHEAD "-XX:-ReduceCPUMonitorOverhead"
 #define VMOPT_XXENABLECPUMONITOR "-XX:+EnableCPUMonitor"

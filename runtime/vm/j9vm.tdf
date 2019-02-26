@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2018 IBM Corp. and others
+// Copyright (c) 2006, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -777,3 +777,5 @@ TraceEntry=Trc_VM_sendResolveConstantDynamic_Entry Overhead=1 Level=2 Template="
 TraceExit=Trc_VM_sendResolveConstantDynamic_Exit Overhead=1 Level=2 Template="sendResolveConstantDynamic"
 
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible Overhead=1 Level=1 Template="Nested field (RAM class=%p, classloader=%p, this classloader=%p) is not visible. Throw IllegalAccessError"
+
+TraceEvent=Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened Overhead=1 Level=7 Template="ValueType is eligible for flattening name=%.*s j9class=%p"

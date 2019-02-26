@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2166,15 +2166,20 @@ instanceFieldOffsetWithSourceClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fi
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
-* @param vm[in]			pointer to the J9JavaVM
-* @param romClass[in]	the ROM class whose fields will be iterated
-* @param superClazz[in] the RAM super class of the class whose fields will be iterated
-* @param state[in/out]  the walk state that can subsequently be passed to fieldOffsetsNextDo()
-* @param flags[in]		J9VM_FIELD_OFFSET_WALK_* flags
+* @param vm[in]					pointer to the J9JavaVM
+* @param romClass[in]			the ROM class whose fields will be iterated
+* @param superClazz[in]			the RAM super class of the class whose fields will be iterated
+* @param state[in/out]			the walk state that can subsequently be passed to fieldOffsetsNextDo()
+* @param flags[in]				J9VM_FIELD_OFFSET_WALK_* flags
+* @param flattenedClassCache[in]	A table of all flattened instance field types
 * @return J9ROMFieldOffsetWalkResult *
 */
 J9ROMFieldOffsetWalkResult *
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache);
+#else
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags);
+#endif
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
@@ -2202,6 +2207,32 @@ fullTraversalFieldOffsetsStartDo(J9JavaVM *vm, J9Class *clazz, J9ROMFullTraversa
 */
 J9ROMFieldShape *
 fullTraversalFieldOffsetsNextDo(J9ROMFullTraversalFieldOffsetWalkState *state);
+
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+/**
+ * @brief Search for ramClass in flattened class cache
+ *
+ * @param flattenedClassCache[in]	A table of flattend instance field types
+ * @param className[in]				Name of class to search
+ * @param classNameLength[in]		Length of class name to search
+ *
+ * @return J9Class if found NULL otherwise
+ */
+J9Class *
+findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength);
+
+/**
+ * @brief Search for index of field in flattened class cache
+ *
+ * @param flattenedClassCache[in]	A table of flattend instance field types
+ * @param nameAndSignature[in]		The name and signature of field to look for
+ *
+ * @return index if found 0 otherwise
+ */
+UDATA
+findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 
 /**
 * @brief
