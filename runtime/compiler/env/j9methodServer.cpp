@@ -1585,7 +1585,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::storeValidationRecordIfNecessary(TR:
    isStatic = (reloKind == TR_ValidateStaticField);
 
    
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary, ramMethod, constantPool, cpIndex, isStatic);
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary, ramMethod, constantPool, cpIndex, isStatic, definingClass);
    // 1. RAM class of ramMethod
    // 2. defining class
    // 3. class chain
