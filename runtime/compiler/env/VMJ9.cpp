@@ -5439,13 +5439,6 @@ TR_J9VMBase::reportPrexInvalidation(void * startPC)
    }
 
 
-void
-TR_J9VMBase::traceAssumeFailure(int32_t line, const char * file)
-   {
-   //Trc_JIT_assumeFailure(vmThread(), line, file);
-   }
-
-
 // Multiple codeCache support
 
 void
