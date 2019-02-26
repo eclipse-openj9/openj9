@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "j9modifiers_api.h"
 #include "ObjectFieldInfo.hpp"
 #include "util_api.h"
+#include "vm_api.h"
 
 /**
  * Calculate the number of various types of fields.
@@ -43,10 +44,29 @@ ObjectFieldInfo::countInstanceFields(void)
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic) ) {
-
 			if (modifiers & J9FieldFlagObject) {
-				_instanceObjectCount += 1;
-				_totalObjectCount += 1;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+				J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
+				U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(field));
+				if ('Q' == *fieldSigBytes) {
+					J9Class *fieldClass = NULL;
+					fieldClass = findJ9ClassInFlattenedClassCache(_flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
+					if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
+						_instanceObjectCount += 1;
+						_totalObjectCount += 1;
+					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
+						_totalFlatFieldDoubleBytes += (U_32) ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - fieldClass->backfillOffset, sizeof(U_64));
+					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
+						_totalFlatFieldRefBytes += (U_32) ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - fieldClass->backfillOffset, sizeof(fj9object_t));
+					} else {
+						_totalFlatFieldSingleBytes += (U_32) (fieldClass->totalInstanceSize - fieldClass->backfillOffset);
+					}
+				} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+				{
+					_instanceObjectCount += 1;
+					_totalObjectCount += 1;
+				}
 			} else if (modifiers & J9FieldSizeDouble) {
 				_instanceDoubleCount += 1;
 				_totalDoubleCount += 1;
@@ -112,27 +132,44 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 		accumulator = ROUND_UP_TO_POWEROF2((UDATA)accumulator, (UDATA)_cacheLineSize) - sizeof(J9Object); /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
 	} else {
 		accumulator = _superclassFieldsSize + (_totalObjectCount * sizeof(J9Object)) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64));
-		/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
-		if (
-				((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
-				((_totalDoubleCount > 0) || (!_objectCanUseBackfill && (_totalObjectCount > 0)))
-		){ /* our fields start on a 8-byte boundary */
-			Assert_VM_equal(_superclassBackfillOffset, NO_BACKFILL_AVAILABLE);
-			_superclassBackfillOffset = getSuperclassFieldsSize();
-			accumulator += BACKFILL_SIZE;
-		}
-		if (isSuperclassBackfillSlotAvailable() && isBackfillSuitableFieldAvailable()) {
-			accumulator -= BACKFILL_SIZE;
-			_myBackfillOffset = _superclassBackfillOffset;
-			_superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
-		}
-		if (((accumulator + sizeof(J9Object)) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
-			/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
-			_subclassBackfillOffset = accumulator;
-			accumulator += BACKFILL_SIZE;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+		accumulator += _totalFlatFieldDoubleBytes + _totalFlatFieldRefBytes + _totalFlatFieldSingleBytes;
+
+		/* ValueTypes cannot be subtyped and their superClass contains no fields */
+		if (!isValue()) {
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
+			if (
+					((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
+					((_totalDoubleCount > 0) || (!_objectCanUseBackfill && (_totalObjectCount > 0)))
+			){ /* our fields start on a 8-byte boundary */
+				Assert_VM_equal(_superclassBackfillOffset, NO_BACKFILL_AVAILABLE);
+				_superclassBackfillOffset = getSuperclassFieldsSize();
+				accumulator += BACKFILL_SIZE;
+			}
+			if (isSuperclassBackfillSlotAvailable() && isBackfillSuitableFieldAvailable()) {
+				accumulator -= BACKFILL_SIZE;
+				_myBackfillOffset = _superclassBackfillOffset;
+				_superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
+			}
+			if (((accumulator + sizeof(J9Object)) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
+				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
+				_subclassBackfillOffset = accumulator;
+				accumulator += BACKFILL_SIZE;
+			} else {
+				_subclassBackfillOffset = _superclassBackfillOffset;
+			}
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 		} else {
-			_subclassBackfillOffset = _superclassBackfillOffset;
+			/* If the first field does not start at zero, this means we added padding to satisfy
+			 * alignment requirements of double slot fields. Since values cannot be subclassed we can use
+			 * the _subclassBackfillOffset to denote where the first field actually starts.
+			 */
+			U_32 firstFieldOffset = calculateFieldDataStart();
+			accumulator += firstFieldOffset;
+			_subclassBackfillOffset = firstFieldOffset;
 		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	}
 	return accumulator;
 }

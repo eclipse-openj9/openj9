@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1401,9 +1401,10 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 	UDATA limit = objectClass->totalInstanceSize;
 
 	if (isValueType) {
-		if (0 <= (IDATA)objectClass->lockOffset) {
-			/* skip lockword */
-			limit -= sizeof(j9objectmonitor_t);
+		U_32 firstFieldOffset = (U_32) objectClass->backfillOffset;
+		if (0 != firstFieldOffset) {
+			/* subtract padding */
+			offset += firstFieldOffset;
 			descriptionBits >>= 1;
 			descriptionIndex -= 1;
 		}
