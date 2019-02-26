@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ extern "C" {
 static uintptr_t stackIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 static void dumpStackFrames(J9VMThread *currentThread);
 static void traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields);
-static void traceAllocateObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
+static void traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
 static bool traceObjectCheck(J9VMThread *vmThread);
 
 #define STACK_FRAMES_TO_DUMP	8
@@ -217,9 +217,10 @@ traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t obj
 }
 
 static void
-traceAllocateObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
+traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
 {
 	if(traceObjectCheck(vmThread)){
+		PORT_ACCESS_FROM_VMC(vmThread);
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 		uintptr_t byteGranularity = extensions->oolObjectSamplingBytesGranularity;
@@ -231,6 +232,16 @@ traceAllocateObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uin
 			Trc_MM_J9AllocateObject_outOfLineObjectAllocation(
 				vmThread, clazz, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), objSize);
 		}
+
+		TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING(
+			extensions->hookInterface,
+			vmThread,
+			j9time_hires_clock(),
+			J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING,
+			object,
+			clazz,
+			objSize);
+
 		/* Keep the remainder, want this to happen so that we don't miss objects
 		 * after seeing large objects
 		 */
@@ -426,7 +437,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 		dumpStackFrames(vmThread);
 		TRIGGER_J9HOOK_MM_PRIVATE_OUT_OF_MEMORY(extensions->privateHookInterface, vmThread->omrVMThread, j9time_hires_clock(), J9HOOK_MM_PRIVATE_OUT_OF_MEMORY, memorySpace, memorySpace->getName());
 	} else {
-		traceAllocateObject(vmThread, clazz, sizeInBytesRequired);
+		traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired);
 		if (extensions->isStandardGC()) {
 			if (OMR_GC_ALLOCATE_OBJECT_TENURED == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_TENURED)) {
 				/* Object must be allocated in Tenure if it is requested */
@@ -549,7 +560,7 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 				highThreshold);
 		}
 		
-		traceAllocateObject(vmThread, clazz, sizeInBytesRequired, (uintptr_t)numberOfIndexedFields);
+		traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired, (uintptr_t)numberOfIndexedFields);
 		if (extensions->isStandardGC()) {
 			if (OMR_GC_ALLOCATE_OBJECT_TENURED == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_TENURED)) {
 				/* Object must be allocated in Tenure if it is requested */
