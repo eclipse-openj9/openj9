@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
+import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
@@ -541,7 +542,7 @@ public class DTFJJavaClass implements JavaClass {
 	private boolean isInterface() throws com.ibm.j9ddr.CorruptDataException {
 		if(isInterface == null) {
 			J9ROMClassPointer romclass = j9class.romClass();
-			if(romclass.modifiers().allBitsIn(J9Consts.J9_JAVA_INTERFACE)) {
+			if(romclass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccInterface)) {
 				isInterface = true;
 			} else {
 				isInterface = false;

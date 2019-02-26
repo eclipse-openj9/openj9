@@ -510,7 +510,7 @@ MM_RealtimeGC::addDyingClassesToList(MM_EnvironmentRealtime *env, J9ClassLoader 
 					/* Remove the class from the subclass traversal list */
 					_extensions->classLoaderManager->removeFromSubclassHierarchy(env, clazz);
 					/* Mark class as dying */
-					clazz->classDepthAndFlags |= J9_JAVA_CLASS_DYING;
+					clazz->classDepthAndFlags |= J9AccClassDying;
 
 					/* Call class unload hook */
 					Trc_MM_cleanUpClassLoadersStart_triggerClassUnload(env->getLanguageVMThread(),clazz,
@@ -551,7 +551,7 @@ MM_RealtimeGC::processUnlinkedClassLoaders(MM_EnvironmentBase *envModron, J9Clas
 	J9Class *previousClass = jlObject;
 	J9Class *nextClass = (NULL != jlObject) ? jlObject->subclassTraversalLink : jlObject;
 	while ((NULL != nextClass) && (jlObject != nextClass)) {
-		if (J9CLASS_FLAGS(nextClass) & J9_JAVA_CLASS_DYING) {
+		if (J9CLASS_FLAGS(nextClass) & J9AccClassDying) {
 			while ((NULL != nextClass->subclassTraversalLink) && (jlObject != nextClass) && (J9CLASS_FLAGS(nextClass) & 0x08000000)) {
 				nextClass = nextClass->subclassTraversalLink;
 			}

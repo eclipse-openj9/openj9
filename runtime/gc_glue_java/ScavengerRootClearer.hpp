@@ -87,7 +87,7 @@ public:
 	{
 		if (_scavenger->getDelegate()->getShouldScavengeSoftReferenceObjects()) {
 			reportScanningStarted(RootScannerEntity_SoftReferenceObjects);
-			scavengeReferenceObjects(MM_EnvironmentStandard::getEnvironment(env), J9_JAVA_CLASS_REFERENCE_SOFT);
+			scavengeReferenceObjects(MM_EnvironmentStandard::getEnvironment(env), J9AccClassReferenceSoft);
 			reportScanningEnded(RootScannerEntity_SoftReferenceObjects);
 		}
 	}
@@ -104,7 +104,7 @@ public:
 	{
 		if (_scavenger->getDelegate()->getShouldScavengeWeakReferenceObjects()) {
 			reportScanningStarted(RootScannerEntity_WeakReferenceObjects);
-			scavengeReferenceObjects(MM_EnvironmentStandard::getEnvironment(env), J9_JAVA_CLASS_REFERENCE_WEAK);
+			scavengeReferenceObjects(MM_EnvironmentStandard::getEnvironment(env), J9AccClassReferenceWeak);
 			reportScanningEnded(RootScannerEntity_WeakReferenceObjects);
 		}
 	}
@@ -158,7 +158,7 @@ public:
 	{
 		if (_scavenger->getDelegate()->getShouldScavengePhantomReferenceObjects()) {
 			reportScanningStarted(RootScannerEntity_PhantomReferenceObjects);
-			scavengeReferenceObjects(MM_EnvironmentStandard::getEnvironment(env), J9_JAVA_CLASS_REFERENCE_PHANTOM);
+			scavengeReferenceObjects(MM_EnvironmentStandard::getEnvironment(env), J9AccClassReferencePhantom);
 			reportScanningEnded(RootScannerEntity_PhantomReferenceObjects);
 		}
 	}
