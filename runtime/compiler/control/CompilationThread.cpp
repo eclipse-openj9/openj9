@@ -6635,8 +6635,19 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
             // Now let's see if we need to schedule an AOT upgrade
             if (hints)
                {
-               entry->_newStartPC = startPC; // must do this before calling queueForcedAOTUpgrade
-               _compInfo.queueForcedAOTUpgrade(entry, hints, _vm);
+               // must do this before queueing for an upgrade
+               entry->_newStartPC = startPC;
+
+               static char *disableQueueLPQAOTUpgrade = feGetEnv("TR_DisableQueueLPQAOTUpgrade");
+               if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableSymbolValidationManager)
+                   && !disableQueueLPQAOTUpgrade)
+                  {
+                  _compInfo.getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled());
+                  }
+               else
+                  {
+                  _compInfo.queueForcedAOTUpgrade(entry, hints, _vm);
+                  }
                }
             }
          }
