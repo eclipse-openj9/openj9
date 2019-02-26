@@ -100,6 +100,8 @@ public:
 
    void allocateLinkageRegisters();
 
+   void fixUpProfiledInterfaceGuardTest();
+
    void zeroOutAutoOnEdge(TR::SymbolReference * liveAutoSym, TR::Block *block, TR::Block *succBlock, TR::list<TR::Block*> *newBlocks, TR_ScratchList<TR::Node> *fsdStores);
 
    TR::Linkage *createLinkageForCompilation();
