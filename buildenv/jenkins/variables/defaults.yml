@@ -110,9 +110,11 @@ linux_ppc-64_cmprssptrs_le:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched'
+    12: '--with-openssl=fetched'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -158,9 +160,11 @@ linux_390-64_cmprssptrs:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched'
+    12: '--with-openssl=fetched'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -189,12 +193,15 @@ aix_ppc-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+  extra_getsource_options:
+    11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
-    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
-    12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
+    12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
 #========================================#
 # Linux x86 64bits Compressed Pointers
@@ -227,9 +234,11 @@ linux_x86-64_cmprssptrs:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched'
+    12: '--with-openssl=fetched'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -267,12 +276,13 @@ linux_x86-64_cmprssptrs_cmake:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-cmake --disable-ddr'
     10: '--with-cmake --disable-ddr'
-    11: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
-    12: '--with-cmake --disable-ddr'
+    11: '--with-cmake --disable-ddr --with-openssl=fetched'
+    12: '--with-cmake --disable-ddr --with-openssl=fetched'
     next: '--with-cmake --disable-ddr'
   extra_make_options:
     8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
@@ -318,12 +328,13 @@ linux_x86-64:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-noncompressedrefs'
     10: '--with-noncompressedrefs'
-    11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    12: '--with-noncompressedrefs'
+    11: '--with-noncompressedrefs --with-openssl=fetched'
+    12: '--with-noncompressedrefs --with-openssl=fetched'
     next: '--with-noncompressedrefs'
   build_env:
     vars:
@@ -356,7 +367,7 @@ win_x86-64_cmprssptrs:
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    12: '--with-toolchain-version=2017 --disable-ccache'
+    12: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
     next: '--with-toolchain-version=2017 --disable-ccache'
   node_labels:
     build:
@@ -407,9 +418,11 @@ osx_x86-64_cmprssptrs:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
+    12: '--with-openssl=fetched --enable-openssl-bundling'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
@@ -438,10 +451,11 @@ osx_x86-64:
   extra_getsource_options:
     8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
+    12: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    12: '--with-noncompressedrefs'
+    12: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
