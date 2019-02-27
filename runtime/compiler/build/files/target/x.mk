@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/codegen/JNIPauseSnippet.cpp \
     compiler/x/codegen/PassJNINullSnippet.cpp \
     compiler/x/codegen/RecompilationSnippet.cpp \
-    compiler/x/codegen/StackOverflowCheckSnippet.cpp \
     compiler/x/codegen/WriteBarrierSnippet.cpp \
     compiler/x/codegen/X86HelperLinkage.cpp \
     compiler/x/codegen/X86PrivateLinkage.cpp \

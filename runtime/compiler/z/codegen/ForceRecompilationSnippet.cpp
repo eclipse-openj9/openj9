@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 uint8_t *
 TR::S390ForceRecompilationSnippet::emitSnippetBody()
@@ -81,7 +82,7 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
       if (NEEDS_TRAMPOLINE(destAddr, cursor, cg()))
          {
          // Destination is beyond our reachable jump distance, we'll find the trampoline.
-         destAddr = fej9->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor);
+         destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
          this->setUsedTrampoline(true);
          }
       }

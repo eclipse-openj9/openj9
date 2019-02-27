@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,4 +80,21 @@ jvmtiDeallocate(jvmtiEnv* env,
 	TRACE_JVMTI_RETURN(jvmtiDeallocate);
 }
 
+jvmtiError JNICALL 
+jvmtiSetHeapSamplingInterval(jvmtiEnv *env, 
+	jint samplingInterval)
+{
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	
+	Trc_JVMTI_jvmtiSetHeapSamplingInterval_Entry(env, samplingInterval);
+	
+	ENSURE_PHASE_ONLOAD_OR_LIVE(env);
+	ENSURE_CAPABILITY(env, can_generate_sampled_object_alloc_events);
+	ENSURE_NON_NEGATIVE(samplingInterval);
 
+	/* this method is to be implemented via https://github.com/eclipse/openj9/pull/3754 */
+	JVMTI_ERROR(JVMTI_ERROR_UNSUPPORTED_VERSION);
+
+done:
+	TRACE_JVMTI_RETURN(jvmtiSetHeapSamplingInterval);
+}

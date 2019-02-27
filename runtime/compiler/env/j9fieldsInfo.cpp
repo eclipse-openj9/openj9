@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,11 +149,22 @@ TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int bu
       }
 
    //supers
-   J9Class **supClasses = aClazz->superclasses;
    int numSupClasses = J9CLASS_DEPTH(aClazz);
+   J9Class *supClass = aClazz;
    for (i=numSupClasses-1; i>=0; i--)
       {
-      J9Class *supClass = supClasses[i];
+      supClass = (J9Class*)comp->fej9()->getSuperClass((TR_OpaqueClassBlock*)supClass);
+
+      if (comp->compileRelocatableCode())
+         {
+         if (!supClass)
+            comp->failCompilation<J9::AOTNoSupportForAOTFailure>("Found NULL supClass in inheritance chain");
+         }
+      else
+         {
+         TR_ASSERT_FATAL(supClass, "Found NULL supClass in inheritance chain");
+         }
+
       romCl = supClass->romClass;
 
       // iterate through the fields creating TR_VMField and inserting them into a List

@@ -713,9 +713,7 @@ MM_Scheduler::condYieldFromGC(MM_EnvironmentBase *envBase, U_64 timeSlack)
 		return false;
 	}
 
-	env->reportScanningSuspended();
 	yieldFromGC(env, true);
-	env->reportScanningResumed();
 
 	env->resetCurrentDistanceToYieldTimeCheck();
 
@@ -739,9 +737,11 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 			startGCTime(env, true);
 		} else {
 			reportStopGCIncrement(env);
+			env->reportScanningSuspended();
 			Assert_MM_true(isGCOn());
 			restartMutatorsAndWait(env);
 			waitForMutatorsToStop(env);
+			env->reportScanningResumed();
 			reportStartGCIncrement(env);
 			_shouldGCYield = false;
 		}
@@ -752,7 +752,9 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 		
 	} else {
 		/* Slave only running here. _yieldCollaborator instance exists for sure */
+		env->reportScanningSuspended();
 		_yieldCollaborator->yield(env);
+		env->reportScanningResumed();
 	}
 }
 

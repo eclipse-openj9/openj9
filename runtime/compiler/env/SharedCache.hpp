@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,8 @@ public:
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *cinaData, void *loader) { return NULL; }
    virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz) { return 0; }
+
+   virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) { return 0; }
 
    void setPersistentClassLoaderTable(TR_PersistentClassLoaderTable *table) { _persistentClassLoaderTable = table; }
 

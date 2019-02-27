@@ -112,6 +112,7 @@ enum TR_J9ByteCode
    J9BCasyncCheck,
    J9BCdefaultvalue,
    J9BCwithfield,
+   J9BCbreakpoint,
    J9BCunknown
    };
 

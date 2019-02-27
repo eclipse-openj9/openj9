@@ -43,23 +43,10 @@
 #include "sunvmi_api.h"
 #include "jcl_internal.h"
 
-#define OPT_XJCL_COLON "-Xjcl:"
 #define JAVA_FONTS_STR "JAVA_FONTS"
 #define OFFLOAD_PREFIX "offload_"
 
-#if JAVA_SPEC_VERSION == 8
-#define J9_DLL_NAME J9_JAVA_SE_7_BASIC_DLL_NAME
-#elif JAVA_SPEC_VERSION == 9
-#define J9_DLL_NAME J9_JAVA_SE_9_DLL_NAME
-#elif JAVA_SPEC_VERSION == 10
-#define J9_DLL_NAME J9_JAVA_SE_10_DLL_NAME
-#elif JAVA_SPEC_VERSION == 11
-#define J9_DLL_NAME J9_JAVA_SE_11_DLL_NAME
-#elif JAVA_SPEC_VERSION == 12
-#define J9_DLL_NAME J9_JAVA_SE_12_DLL_NAME
-#else
-#error Unsupported JAVA_SPEC_VERSION
-#endif
+#define J9_DLL_NAME J9_JAVA_SE_DLL_NAME
 
 /* this file is owned by the VM-team.  Please do not modify it without consulting the VM team */
 
@@ -291,7 +278,6 @@ scarInit(J9JavaVM * vm)
 #if defined(WIN32) && !defined(OPENJ9_BUILD)
 	switch (jclVersion) {
 	case J2SE_18:
-	case J2SE_19:	/* This will need to be modified when the JCL team provides a dbgwrapper90 */
 		dbgwrapperStr = "dbgwrapper80";
 		break;
 	default:
@@ -373,7 +359,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			break;
 
 		case ALL_VM_ARGS_CONSUMED :
-			FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, OPT_XJCL_COLON, NULL);
+			FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
 			break;
 
 		case JCL_INITIALIZED :
@@ -461,7 +447,7 @@ scarPreconfigure(J9JavaVM * vm)
 		return JNI_ERR;
 	}
 
-	if (J2SE_VERSION(vm) < J2SE_19) {
+	if (J2SE_VERSION(vm) < J2SE_V11) {
 		char *vmSpecificDirectoryPath = "jclSC180";
 
 		rc = addVMSpecificDirectories(vm, &i, vmSpecificDirectoryPath);

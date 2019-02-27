@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2014 IBM Corp. and others
+ * Copyright (c) 2003, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,12 @@
 #include "TextFileStream.hpp"
 #include "j9.h"
 #include "j9port.h"
+#include "rasdump_internal.h"
 
 /* Constructor */
 TextFileStream::TextFileStream(J9PortLibrary* portLibrary) :
+	_Buffer(NULL),
+	_IsOpen(false),
 	_BufferPos(0),
 	_BufferSize(16*1024),
 	_PortLibrary(portLibrary),
@@ -51,8 +54,16 @@ void
 TextFileStream::open(const char* fileName, bool cacheWrites)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
-	if (fileName[0] != '-' ) {
+	if (0 == strcmp(fileName, J9RAS_STDOUT_NAME)) {
+		_FileHandle = J9PORT_TTY_OUT; 
+	} else if (0 == strcmp(fileName, J9RAS_STDERR_NAME)) {
+		_FileHandle = J9PORT_TTY_ERR;
+	} else {
 		_FileHandle = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate | EsOpenCreateNoTag, 0666);
+		if (_FileHandle != -1) {
+			_IsOpen = true;
+		}
+		
 	}
 	if(!cacheWrites) {
 		_BufferSize = 0;
@@ -69,7 +80,10 @@ TextFileStream::close(void)
 			j9file_write_text(_FileHandle, _Buffer, _BufferPos);
 		}
 		j9file_sync(_FileHandle);
-		j9file_close(_FileHandle);
+		if (_IsOpen) {
+			/*If we don't open the file stream, it means that we don't close it either */
+			j9file_close(_FileHandle);
+		}
 	}
 
 	_FileHandle = -1;	

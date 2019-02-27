@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2018 IBM Corp. and others
+Copyright (c) 2006, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,6 +55,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
+			<group name="jdk11">
+				<include-if condition="spec.java11"/>
+			</group>
+			<group name="jdk12">
+				<include-if condition="spec.java12"/>
+			</group>
 		</exports>
 		<includes>
 			<include path="j9include"/>
@@ -75,7 +81,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</vpath>
 		</vpaths>
 		<objects>
-			<object name="java11vmi"/>
 			<object name="j8vmi"/>
 			<object name="j7vmi"/>
 			<object name="j7verify"/>
@@ -85,6 +90,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<object name="j9memcategories"/>
 			<object name="harmony_vm">
 				<include-if condition="spec.flags.opt_harmony"/>
+			</object>
+			<object name="java11vmi">
+				<!--
+				This object is mis-named and should have been separated into additions
+				for 9, 10 and 11. As Java 9 and 10 are out-of-service at this point it
+				isn't worth fixing.
+				-->
+				<!-- TODO include this object conditionally
+				<include-if condition="spec.java9"/>
+				-->
+			</object>
+			<object name="javanextvmi">
+				<include-if condition="spec.java12"/>
 			</object>
 		</objects>
 

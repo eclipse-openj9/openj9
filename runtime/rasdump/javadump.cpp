@@ -314,6 +314,9 @@ private :
 	IDATA       getOwnedObjectMonitors       (J9VMThread* vmThread, J9ObjectMonitorInfo* monitorInfos);
 	void 		writeJavaLangThreadInfo		 (J9VMThread* vmThread);
 	void		writeCPUinfo				 (void);
+#if defined(LINUX)
+	void 		writeCgroupMetrics(void);
+#endif
 	void 		writeThreadsWithNativeStacks(void);
 	void 		writeThreadsJavaOnly(void);
 	void        writeThreadTime              (const char * timerName, I_64 nanoTime);
@@ -1057,6 +1060,14 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	writeVMRuntimeState(_VirtualMachine->internalVMFunctions->getVMRuntimeState(_VirtualMachine));
 	_OutputStream.writeCharacters("\n");
 
+	OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
+	BOOLEAN inContainer = omrsysinfo_is_running_in_container();
+	_OutputStream.writeCharacters("1CICONTINFO    Running in container : ");
+	_OutputStream.writeCharacters( inContainer ? "TRUE\n" : "FALSE\n");
+	uint64_t availableSubsystems = omrsysinfo_cgroup_get_enabled_subsystems();
+	_OutputStream.writeCharacters("1CICGRPINFO    JVM support for cgroups enabled : ");
+	_OutputStream.writeCharacters((availableSubsystems > 0) ? "TRUE\n" : "FALSE\n");
+
 	PORT_ACCESS_FROM_JAVAVM(_VirtualMachine);
 
 	/* Write the JVM start date and time */
@@ -1335,6 +1346,11 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write section for entitled CPU information */
 	writeCPUinfo();
+
+#if defined(LINUX)
+	/* Write section for Cgroup Information */
+ 	writeCgroupMetrics();
+#endif
 
 	/* Write the section trailer */
 	_OutputStream.writeCharacters(
@@ -5164,6 +5180,64 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 
 	return;
 }
+
+#if defined(LINUX)
+void
+JavaCoreDumpWriter::writeCgroupMetrics(void)
+{
+	OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
+	BOOLEAN isCgroupSystemAvailable = omrsysinfo_cgroup_is_system_available();
+	if (isCgroupSystemAvailable) {
+		const OMRCgroupEntry *entryHead = omrsysinfo_get_cgroup_subsystem_list();
+		OMRCgroupEntry *cgEntry = (OMRCgroupEntry *)entryHead;
+		int32_t rc = 0;
+		if (NULL != cgEntry) {
+			_OutputStream.writeCharacters("NULL \n");
+			_OutputStream.writeCharacters("1CICGRPINFO    Cgroup Information \n");
+			_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+			do {
+				_OutputStream.writeCharacters("2CICGRPINFO    subsystem : ");
+				_OutputStream.writeCharacters(cgEntry->subsystem);
+				_OutputStream.writeCharacters("\n");
+				_OutputStream.writeCharacters("2CICGRPINFO    cgroup name : ");
+				_OutputStream.writeCharacters(cgEntry->cgroup);
+				_OutputStream.writeCharacters("\n");
+				OMRCgroupMetricIteratorState cgroupState = {0};
+				rc = omrsysinfo_cgroup_subsystem_iterator_init(cgEntry->flag, &cgroupState);
+				if (0 == rc) {
+					if (0 != cgroupState.numElements) {
+						OMRCgroupMetricElement metricElement = {0};
+						while (0 != omrsysinfo_cgroup_subsystem_iterator_hasNext(&cgroupState)) {
+							const char *metricKey = NULL;
+							rc = omrsysinfo_cgroup_subsystem_iterator_metricKey(&cgroupState, &metricKey);
+							if (0 == rc) {
+								rc = omrsysinfo_cgroup_subsystem_iterator_next(&cgroupState, &metricElement);
+								if (rc == 0) {
+									_OutputStream.writeCharacters("3CICGRPINFO        ");
+									_OutputStream.writeCharacters(metricKey);
+									_OutputStream.writeCharacters(" : ");
+									_OutputStream.writeCharacters(metricElement.value);
+									if (NULL != metricElement.units) {
+										_OutputStream.writeCharacters(" ");
+										_OutputStream.writeCharacters(metricElement.units);
+									}
+									_OutputStream.writeCharacters("\n");
+								} else {
+									_OutputStream.writeCharacters("3CICGRPINFO        ");
+									_OutputStream.writeCharacters(metricKey);
+									_OutputStream.writeCharacters(" : Unavailable\n");
+								}
+							}
+						}
+					}
+					omrsysinfo_cgroup_subsystem_iterator_destroy(&cgroupState);
+				}
+				cgEntry = cgEntry->next;
+			} while (cgEntry != entryHead);
+		}
+	}
+}
+#endif
 
 /**************************************************************************************************/
 /*                                                                                                */

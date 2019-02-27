@@ -29,7 +29,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
@@ -57,7 +57,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
@@ -86,7 +86,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \

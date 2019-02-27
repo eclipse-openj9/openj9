@@ -261,7 +261,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
                            fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(),callerClass1));
 
 
-            if (doIt)
+            if (doIt && !comp()->compileRelocatableCode())
                {
                if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader)
                   {
@@ -1131,7 +1131,7 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
    TR::Node * methodEnterHook = 0;
 
    static const char* disableMethodHookForCallees = feGetEnv("TR_DisableMethodHookForCallees");
-   if ((fej9()->isMethodEnterTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
+   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
         TR::Compiler->vm.canMethodEnterEventBeHooked(comp()))
          && (isOutermostMethod() || !disableMethodHookForCallees))
       {

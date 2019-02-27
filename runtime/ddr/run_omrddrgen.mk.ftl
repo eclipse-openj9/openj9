@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,15 +25,7 @@ TOP_DIR := ../
 include $(TOP_DIR)makelib/mkconstants.mk
 include $(TOP_DIR)makelib/uma_macros.mk
 
-ifeq (8,$(VERSION_MAJOR))
-  DDR_JCL_MODULE := jclse7b_
-else ifneq (,$(findstring $(VERSION_MAJOR),9 10 11 12))
-  DDR_JCL_MODULE := jclse$(VERSION_MAJOR)_
-else
-  DDR_JCL_MODULE := jclse12_
-endif
-
-DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm $(DDR_JCL_MODULE)
+DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm jclse
 DDR_INPUT_DEPENDS := $(addprefix $(TOP_DIR),$(foreach module,$(DDR_INPUT_MODULES),$($(module)_depend)))
 
 <#if uma.spec.type.windows>

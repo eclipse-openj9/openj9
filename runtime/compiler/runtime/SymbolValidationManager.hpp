@@ -142,19 +142,35 @@ struct ClassValidationRecord : public SymbolValidationRecord
    virtual bool isClassValidationRecord() { return true; }
    };
 
-struct ClassByNameRecord : public ClassValidationRecord
+// A class validation where the class chain provides data that is used to find
+// the class (e.g. its name). It can be advantageous to use a class chain even
+// when it is not required for the validation at hand, since each class needs a
+// class chain validation at some point. By including one in ClassByNameRecord
+// (for example), it's possible to eliminate the separate ClassChainRecord that
+// would otherwise be required.
+struct ClassValidationRecordWithChain : public ClassValidationRecord
+   {
+   ClassValidationRecordWithChain(TR_ExternalRelocationTargetKind kind, TR_OpaqueClassBlock *clazz)
+      : ClassValidationRecord(kind), _class(clazz), _classChain(NULL)
+      {}
+
+   virtual void printFields();
+
+   TR_OpaqueClassBlock * _class;
+   void * _classChain;
+   };
+
+struct ClassByNameRecord : public ClassValidationRecordWithChain
    {
    ClassByNameRecord(TR_OpaqueClassBlock *clazz,
                      TR_OpaqueClassBlock *beholder)
-      : ClassValidationRecord(TR_ValidateClassByName),
-        _class(clazz),
+      : ClassValidationRecordWithChain(TR_ValidateClassByName, clazz),
         _beholder(beholder)
       {}
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueClassBlock * _class;
    TR_OpaqueClassBlock * _beholder;
    };
 
@@ -225,36 +241,6 @@ struct StaticClassFromCPRecord : public ClassValidationRecord
    uint32_t  _cpIndex;
    };
 
-struct ClassFromMethodRecord : public ClassValidationRecord
-   {
-   ClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method)
-      : ClassValidationRecord(TR_ValidateClassFromMethod),
-        _class(clazz),
-        _method(method)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock * _class;
-   TR_OpaqueMethodBlock *_method;
-   };
-
-struct ComponentClassFromArrayClassRecord : public ClassValidationRecord
-   {
-   ComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass)
-      : ClassValidationRecord(TR_ValidateComponentClassFromArrayClass),
-        _componentClass(componentClass),
-        _arrayClass(arrayClass)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock * _componentClass;
-   TR_OpaqueClassBlock * _arrayClass;
-   };
-
 struct ArrayClassFromComponentClassRecord : public ClassValidationRecord
    {
    ArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
@@ -306,17 +292,14 @@ struct ClassInstanceOfClassRecord : public SymbolValidationRecord
    bool _isInstanceOf;
    };
 
-struct SystemClassByNameRecord : public ClassValidationRecord
+struct SystemClassByNameRecord : public ClassValidationRecordWithChain
    {
    SystemClassByNameRecord(TR_OpaqueClassBlock *systemClass)
-      : ClassValidationRecord(TR_ValidateSystemClassByName),
-        _systemClass(systemClass)
+      : ClassValidationRecordWithChain(TR_ValidateSystemClassByName, systemClass)
       {}
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
-
-   TR_OpaqueClassBlock *_systemClass;
    };
 
 struct ClassFromITableIndexCPRecord : public ClassValidationRecord
@@ -354,21 +337,6 @@ struct DeclaringClassFromFieldOrStaticRecord : public ClassValidationRecord
    uint32_t  _cpIndex;
    };
 
-struct ClassClassRecord : public ClassValidationRecord
-   {
-   ClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass)
-      : ClassValidationRecord(TR_ValidateClassClass),
-        _classClass(classClass),
-        _objectClass(objectClass)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_classClass;
-   TR_OpaqueClassBlock *_objectClass;
-   };
-
 struct ConcreteSubClassFromClassRecord : public ClassValidationRecord
    {
    ConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass)
@@ -399,11 +367,26 @@ struct ClassChainRecord : public SymbolValidationRecord
    void *_classChain;
    };
 
-struct MethodFromClassRecord : public SymbolValidationRecord
+struct MethodValidationRecord : public SymbolValidationRecord
+   {
+   MethodValidationRecord(TR_ExternalRelocationTargetKind kind, TR_OpaqueMethodBlock *method)
+      : SymbolValidationRecord(kind),
+        _method(method)
+      {}
+
+   TR_OpaqueClassBlock *definingClass()
+      {
+      return reinterpret_cast<TR_OpaqueClassBlock *>(
+         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(_method)));
+      }
+
+   TR_OpaqueMethodBlock *_method;
+   };
+
+struct MethodFromClassRecord : public MethodValidationRecord
    {
    MethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index)
-      : SymbolValidationRecord(TR_ValidateMethodFromClass),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromClass, method),
         _beholder(beholder),
         _index(index)
       {}
@@ -411,18 +394,16 @@ struct MethodFromClassRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    uint32_t _index;
    };
 
-struct StaticMethodFromCPRecord : public SymbolValidationRecord
+struct StaticMethodFromCPRecord : public MethodValidationRecord
    {
    StaticMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *beholder,
                                int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateStaticMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateStaticMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -430,18 +411,16 @@ struct StaticMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
 
-struct SpecialMethodFromCPRecord : public SymbolValidationRecord
+struct SpecialMethodFromCPRecord : public MethodValidationRecord
    {
    SpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                              TR_OpaqueClassBlock *beholder,
                              int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateSpecialMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateSpecialMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -449,18 +428,16 @@ struct SpecialMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
 
-struct VirtualMethodFromCPRecord : public SymbolValidationRecord
+struct VirtualMethodFromCPRecord : public MethodValidationRecord
    {
    VirtualMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                              TR_OpaqueClassBlock *beholder,
                              int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateVirtualMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateVirtualMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -468,19 +445,17 @@ struct VirtualMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
 
-struct VirtualMethodFromOffsetRecord : public SymbolValidationRecord
+struct VirtualMethodFromOffsetRecord : public MethodValidationRecord
    {
    VirtualMethodFromOffsetRecord(TR_OpaqueMethodBlock *method,
                                  TR_OpaqueClassBlock *beholder,
                                  int32_t virtualCallOffset,
                                  bool ignoreRtResolve)
-      : SymbolValidationRecord(TR_ValidateVirtualMethodFromOffset),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateVirtualMethodFromOffset, method),
         _beholder(beholder),
         _virtualCallOffset(virtualCallOffset),
         _ignoreRtResolve(ignoreRtResolve)
@@ -489,20 +464,18 @@ struct VirtualMethodFromOffsetRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _virtualCallOffset;
    bool _ignoreRtResolve;
    };
 
-struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
+struct InterfaceMethodFromCPRecord : public MethodValidationRecord
    {
    InterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *beholder,
                                TR_OpaqueClassBlock *lookup,
                                int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateInterfaceMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateInterfaceMethodFromCP, method),
         _beholder(beholder),
         _lookup(lookup),
         _cpIndex(cpIndex)
@@ -511,28 +484,25 @@ struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    TR_OpaqueClassBlock *_lookup;
    int32_t _cpIndex;
    };
 
-struct MethodFromClassAndSigRecord : public SymbolValidationRecord
+struct MethodFromClassAndSigRecord : public MethodValidationRecord
    {
    MethodFromClassAndSigRecord(TR_OpaqueMethodBlock *method,
-                               TR_OpaqueClassBlock *methodClass,
+                               TR_OpaqueClassBlock *lookupClass,
                                TR_OpaqueClassBlock *beholder)
-      : SymbolValidationRecord(TR_ValidateMethodFromClassAndSig),
-        _method(method),
-        _methodClass(methodClass),
+      : MethodValidationRecord(TR_ValidateMethodFromClassAndSig, method),
+        _lookupClass(lookupClass),
         _beholder(beholder)
       {}
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
-   TR_OpaqueClassBlock *_methodClass;
+   TR_OpaqueClassBlock *_lookupClass;
    TR_OpaqueClassBlock *_beholder;
    };
 
@@ -570,15 +540,14 @@ struct ClassInfoIsInitialized : public SymbolValidationRecord
    bool _isInitialized;
    };
 
-struct MethodFromSingleImplementer : public SymbolValidationRecord
+struct MethodFromSingleImplementer : public MethodValidationRecord
    {
    MethodFromSingleImplementer(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *thisClass,
                                int32_t cpIndexOrVftSlot,
                                TR_OpaqueMethodBlock *callerMethod,
                                TR_YesNoMaybe useGetResolvedInterfaceMethod)
-      : SymbolValidationRecord(TR_ValidateMethodFromSingleImplementer),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromSingleImplementer, method),
         _thisClass(thisClass),
         _cpIndexOrVftSlot(cpIndexOrVftSlot),
         _callerMethod(callerMethod),
@@ -588,21 +557,19 @@ struct MethodFromSingleImplementer : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_thisClass;
    int32_t _cpIndexOrVftSlot;
    TR_OpaqueMethodBlock *_callerMethod;
    TR_YesNoMaybe _useGetResolvedInterfaceMethod;
    };
 
-struct MethodFromSingleInterfaceImplementer : public SymbolValidationRecord
+struct MethodFromSingleInterfaceImplementer : public MethodValidationRecord
    {
    MethodFromSingleInterfaceImplementer(TR_OpaqueMethodBlock *method,
                                         TR_OpaqueClassBlock *thisClass,
                                         int32_t cpIndex,
                                         TR_OpaqueMethodBlock *callerMethod)
-      : SymbolValidationRecord(TR_ValidateMethodFromSingleInterfaceImplementer),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromSingleInterfaceImplementer, method),
         _thisClass(thisClass),
         _cpIndex(cpIndex),
         _callerMethod(callerMethod)
@@ -611,20 +578,18 @@ struct MethodFromSingleInterfaceImplementer : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_thisClass;
    int32_t _cpIndex;
    TR_OpaqueMethodBlock *_callerMethod;
    };
 
-struct MethodFromSingleAbstractImplementer : public SymbolValidationRecord
+struct MethodFromSingleAbstractImplementer : public MethodValidationRecord
    {
    MethodFromSingleAbstractImplementer(TR_OpaqueMethodBlock *method,
                                        TR_OpaqueClassBlock *thisClass,
                                        int32_t vftSlot,
                                        TR_OpaqueMethodBlock *callerMethod)
-      : SymbolValidationRecord(TR_ValidateMethodFromSingleAbstractImplementer),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromSingleAbstractImplementer, method),
         _thisClass(thisClass),
         _vftSlot(vftSlot),
         _callerMethod(callerMethod)
@@ -633,19 +598,17 @@ struct MethodFromSingleAbstractImplementer : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_thisClass;
    int32_t _vftSlot;
    TR_OpaqueMethodBlock *_callerMethod;
    };
 
-struct ImproperInterfaceMethodFromCPRecord : public SymbolValidationRecord
+struct ImproperInterfaceMethodFromCPRecord : public MethodValidationRecord
    {
    ImproperInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *beholder,
                                int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateImproperInterfaceMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateImproperInterfaceMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -653,7 +616,6 @@ struct ImproperInterfaceMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
@@ -664,6 +626,12 @@ public:
    TR_ALLOC(TR_MemoryBase::SymbolValidationManager);
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
+
+   void populateWellKnownClasses();
+   bool validateWellKnownClasses(const uintptrj_t *wellKnownClassChainOffsets);
+   bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
+   bool classCanSeeWellKnownClasses(TR_OpaqueClassBlock *clazz);
+   const void *wellKnownClassChainOffsets() { return _wellKnownClassChainOffsets; }
 
    enum Presence
       {
@@ -690,15 +658,12 @@ public:
    bool addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
    bool addDefiningClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex, bool isStatic = false);
    bool addStaticClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
-   bool addClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method);
-   bool addComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass);
    bool addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass);
    bool addSuperClassFromClassRecord(TR_OpaqueClassBlock *superClass, TR_OpaqueClassBlock *childClass);
    bool addClassInstanceOfClassRecord(TR_OpaqueClassBlock *classOne, TR_OpaqueClassBlock *classTwo, bool objectTypeIsFixed, bool castTypeIsFixed, bool isInstanceOf);
    bool addSystemClassByNameRecord(TR_OpaqueClassBlock *systemClass);
    bool addClassFromITableIndexCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
    bool addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
-   bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
 
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
@@ -728,42 +693,42 @@ public:
 
 
 
-   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass);
+   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, uintptrj_t *classChain);
    bool validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic);
    bool validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
-   bool validateClassFromMethodRecord(uint16_t classID, uint16_t methodID);
-   bool validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID);
    bool validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID);
    bool validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID);
    bool validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf);
-   bool validateSystemClassByNameRecord(uint16_t systemClassID, J9ROMClass *romClass);
+   bool validateSystemClassByNameRecord(uint16_t systemClassID, uintptrj_t *classChain);
    bool validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
-   bool validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
 
    bool validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index);
-   bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve);
-   bool validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex);
-   bool validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t methodClassID, uint16_t beholderID, J9ROMMethod *romMethod);
+   bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve);
+   bool validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex);
+   bool validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t definingClassID, uint16_t lookupClassID, uint16_t beholderID, J9ROMMethod *romMethod);
    bool validateMethodFromSingleImplementerRecord(uint16_t methodID,
+                                                  uint16_t definingClassID,
                                                   uint16_t thisClassID,
                                                   int32_t cpIndexOrVftSlot,
                                                   uint16_t callerMethodID,
                                                   TR_YesNoMaybe useGetResolvedInterfaceMethod);
    bool validateMethodFromSingleInterfaceImplementerRecord(uint16_t methodID,
+                                                uint16_t definingClassID,
                                                 uint16_t thisClassID,
                                                 int32_t cpIndex,
                                                 uint16_t callerMethodID);
    bool validateMethodFromSingleAbstractImplementerRecord(uint16_t methodID,
+                                               uint16_t definingClassID,
                                                uint16_t thisClassID,
                                                int32_t vftSlot,
                                                uint16_t callerMethodID);
@@ -795,21 +760,37 @@ private:
    bool abandonRecord(TR::SymbolValidationRecord *record);
 
    bool recordExists(TR::SymbolValidationRecord *record);
+   bool anyClassFromCPRecordExists(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
    void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
    void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
 
+   struct ClassChainInfo
+      {
+      ClassChainInfo()
+         : _baseComponent(NULL), _baseComponentClassChain(NULL), _arrayDims(0) {}
+
+      TR_OpaqueClassBlock *_baseComponent;
+      void *_baseComponentClassChain;
+      int32_t _arrayDims;
+      };
+
+   bool getClassChainInfo(TR_OpaqueClassBlock *clazz, TR::SymbolValidationRecord *record, ClassChainInfo &info);
+   void appendClassChainInfoRecords(TR_OpaqueClassBlock *clazz, const ClassChainInfo &info);
+
    bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
-   bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);
+   bool addClassRecordWithChain(TR::ClassValidationRecordWithChain *record);
    void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
-   bool addMethodRecord(TR_OpaqueMethodBlock *method, TR::SymbolValidationRecord *record);
+   bool addMethodRecord(TR::MethodValidationRecord *record);
+   bool skipFieldRefClassRecord(TR_OpaqueClassBlock *definingClass, TR_OpaqueClassBlock *beholder, uint32_t cpIndex);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
    bool validateSymbol(uint16_t idToBeValidated, J9Class *clazz);
-   bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueMethodBlock *method);
-   bool validateSymbol(uint16_t idToBeValidated, J9Method *method);
+   bool validateSymbol(uint16_t methodID, uint16_t definingClassID, TR_OpaqueMethodBlock *method);
+   bool validateSymbol(uint16_t methodID, uint16_t definingClassID, J9Method *method);
 
+   bool isDefinedID(uint16_t id);
    void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
    void defineGuaranteedID(void *symbol, TR::SymbolType type);
 
@@ -825,6 +806,9 @@ private:
    TR_J9VM * const _fej9; // DEFAULT_VM
    TR_Memory * const _trMemory;
    TR_PersistentCHTable * const _chTable;
+
+   TR_OpaqueClassBlock *_rootClass;
+   const void *_wellKnownClassChainOffsets;
 
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;
@@ -858,6 +842,45 @@ private:
    IdToSymbolTable _idToSymbolTable;
 
    SeenSymbolsSet _seenSymbolsSet;
+
+   typedef TR::typed_allocator<TR_OpaqueClassBlock*, TR::Region&> ClassAllocator;
+   typedef std::vector<TR_OpaqueClassBlock*, ClassAllocator> ClassVector;
+   ClassVector _wellKnownClasses;
+
+   typedef TR::typed_allocator<J9ClassLoader*, TR::Region&> LoaderAllocator;
+   typedef std::vector<J9ClassLoader*, LoaderAllocator> LoaderVector;
+   LoaderVector _loadersOkForWellKnownClasses;
+
+   // Remember which classes have already been found in which beholders'
+   // constant pools, regardless of CP index. If a class C has already been
+   // found in the constant pool of class D (producing a ClassFromCP record),
+   // then ClassByName(C, D) is redundant.
+   struct ClassFromAnyCPIndex
+      {
+      TR_OpaqueClassBlock *clazz;
+      TR_OpaqueClassBlock *beholder;
+
+      ClassFromAnyCPIndex(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
+         : clazz(clazz), beholder(beholder) { }
+      };
+
+   struct LessClassFromAnyCPIndex
+      {
+      bool operator()(const ClassFromAnyCPIndex &a, const ClassFromAnyCPIndex &b) const
+         {
+         std::less<TR_OpaqueClassBlock*> lt;
+         if (lt(a.clazz, b.clazz))
+            return true;
+         else if (lt(b.clazz, a.clazz))
+            return false;
+         else
+            return lt(a.beholder, b.beholder);
+         }
+      };
+
+   typedef TR::typed_allocator<ClassFromAnyCPIndex, TR::Region&> ClassFromAnyCPIndexAlloc;
+   typedef std::set<ClassFromAnyCPIndex, LessClassFromAnyCPIndex, ClassFromAnyCPIndexAlloc> ClassFromAnyCPIndexSet;
+   ClassFromAnyCPIndexSet _classesFromAnyCPIndex;
    };
 
 }

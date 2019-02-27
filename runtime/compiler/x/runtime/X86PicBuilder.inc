@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,21 +18,22 @@
 ;
 ; SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
+
 ; --------------------------------------------------------------------------------
 ;                                    COMMON
 ; --------------------------------------------------------------------------------
 
 ; Binary encoding of the MFENCE instruction.  Not all assemblers can handle the mnemonic.
 ;
-tr_mfence macro
+%macro tr_mfence 0
       db          00Fh
       db          0AEh
       db          0F0h
-endm
+%endmacro
 
-MEMORY_FENCE macro
+%macro MEMORY_FENCE 0
       tr_mfence
-endm
+%endmacro
 
 eq_WideCPIndexPush                equ 000800000h
 eq_ResolveWithoutPatchingMainline equ 000400000h
@@ -58,12 +59,12 @@ eq_ObjectClassMask                equ -J9TR_RequiredClassAlignment
 ;                                    32-BIT
 ; --------------------------------------------------------------------------------
 
-ifndef TR_HOST_64BIT
+%ifndef TR_HOST_64BIT
 
-eq_VPicData_cpAddr             equ 00h
-eq_VPicData_cpIndex            equ 04h
-eq_VPicData_directMethod       equ 08h
-eq_VPicData_cmpRegImm4ModRM    equ 0ch
+eq_VPicData_cmpRegImm4ModRM    equ 00h
+eq_VPicData_cpAddr             equ 01h
+eq_VPicData_cpIndex            equ 05h
+eq_VPicData_directMethod       equ 09h
 eq_VPicData_size               equ 0dh
 
 eq_IPicData_cpAddr             equ 00h
@@ -75,24 +76,24 @@ eq_IPicData_cmpRegImm4ModRM    equ 10h
 
 J9PreservedFPRStackSize    equ   80
 
-LoadClassPointerFromObjectHeader macro ObjectReg, ClassPtrReg64, ClassPtrReg32
-        mov     &ClassPtrReg32, dword ptr[&ObjectReg+J9TR_J9Object_class]
-        and     &ClassPtrReg32, eq_ObjectClassMask
-endm
+%macro LoadClassPointerFromObjectHeader 3 ;args: ObjectReg, ClassPtrReg64, ClassPtrReg32
+        mov     %3, dword [%1+J9TR_J9Object_class]
+        and     %3, eq_ObjectClassMask
+%endmacro
 
-else
+%else ; ifndef TR_HOST_64BIT
 
 ; --------------------------------------------------------------------------------
 ;                                    64-BIT
 ; --------------------------------------------------------------------------------
 
-eq_VPicData_cpAddr             equ 00h
-eq_VPicData_cpIndex            equ 08h
-eq_VPicData_directMethod       equ 10h
-eq_VPicData_j2iThunk           equ 18h
-eq_VPicData_movabsRexAndOpcode equ 20h
-eq_VPicData_callMemRex         equ 22h
-eq_VPicData_callMemModRM       equ 23h
+eq_VPicData_movabsRexAndOpcode equ 00h
+eq_VPicData_callMemRex         equ 02h
+eq_VPicData_callMemModRM       equ 03h
+eq_VPicData_cpAddr             equ 04h
+eq_VPicData_cpIndex            equ 0ch
+eq_VPicData_directMethod       equ 14h
+eq_VPicData_j2iThunk           equ 1ch
 eq_VPicData_size               equ 24h
 
 eq_IPicData_cpAddr             equ 00h
@@ -104,27 +105,23 @@ eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is pos
 ; IPIC data size is either 22h or 2ah, due to the optional j2iThunk.
 ; It's omitted here since it would be unused anyway.
 
-LoadHelperIndex macro targetReg,helperIndexSym
-ifdef WINDOWS
-        mov     &targetReg, dword ptr[&helperIndexSym]
-else
-        mov     &targetReg, dword ptr[rip+&helperIndexSym]
-endif
-      endm
+%macro LoadHelperIndex 2 ; args: targetReg, helperIndexSym
+        mov     %1, dword [rel + %2]
+%endmacro
 
 
 ; Reads the class pointer from an object (the first 4 or 8 bytes)
 ; ObjectReg and ClassPtrReg may be the same register
 ; ClassPtrReg32 must be the lower part of ClassPtrReg64
 ;
-LoadClassPointerFromObjectHeader macro ObjectReg, ClassPtrReg64, ClassPtrReg32
-ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
-        mov     &ClassPtrReg32, dword ptr[&ObjectReg+J9TR_J9Object_class]  ; read only 32 bits and zero extend
-        and     &ClassPtrReg32, eq_ObjectClassMask
-else
-        mov     &ClassPtrReg64, qword ptr[&ObjectReg+J9TR_J9Object_class]
-        and     &ClassPtrReg64, eq_ObjectClassMask
-endif
-endm
+%macro LoadClassPointerFromObjectHeader 3 ;ObjectReg, ClassPtrReg64, ClassPtrReg32
+%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+        mov     %3, dword [%1 + J9TR_J9Object_class] ; read only 32 bits and zero extend
+        and     %3, eq_ObjectClassMask
+%else
+        mov     %2, qword [%1 + J9TR_J9Object_class]
+        and     %2, eq_ObjectClassMask
+%endif
+%endmacro
 
-endif
+%endif ; ifndef TR_HOST_64BIT

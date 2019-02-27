@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ Java_com_ibm_jvmti_tests_getJ9method_gj9m001_validateGJ9M001(JNIEnv * jni_env, j
 	jvmtiError err = JVMTI_ERROR_NONE;
 	J9Method *j9method_ptr;
 	jthread thread_ptr = NULL;
-	jboolean rc = JNI_FALSE;
+	jboolean rc = JNI_TRUE;
 	jclass clazz_arg;
 	jmethodID mid_arg;
 
@@ -58,13 +58,11 @@ Java_com_ibm_jvmti_tests_getJ9method_gj9m001_validateGJ9M001(JNIEnv * jni_env, j
 		return JNI_FALSE;
 	}
 
-
 	fprintf(stderr, "Validating getJ9method works with good parameter\n");
 	err = getJ9method(jvmti_env, mid_arg, &j9method_ptr);
 	if ( JVMTI_ERROR_NONE == err ) {
 		if (((J9JNIMethodID *)mid_arg)->method == j9method_ptr) {
 			fprintf(stderr, "\tgetJ9method successfully returned J9Method %p\n", j9method_ptr);
-			rc = JNI_TRUE;
 		} else {
 			fprintf(stderr, "\tgetJ9method failed to returned J9Method %p\n", j9method_ptr);
 			rc = JNI_FALSE;
@@ -73,20 +71,21 @@ Java_com_ibm_jvmti_tests_getJ9method_gj9m001_validateGJ9M001(JNIEnv * jni_env, j
 
 	fprintf(stderr, "Validating getJ9method fails with NULL jmid\n");
 	err = getJ9method(jvmti_env, NULL, &j9method_ptr);
-	if ( JVMTI_ERROR_NONE != err )
-	{
+	if ( JVMTI_ERROR_NONE != err ) {
 		fprintf(stderr, "\tgetJ9method successfully detected NULL jmid\n");
-		rc = JNI_TRUE;
+	} else {
+		fprintf(stderr, "\tgetJ9method failed to detect NULL jmid\n");
+		rc = JNI_FALSE;
 	}
 
 	fprintf(stderr, "Validating getJ9method works with NULL return argument\n");
 	err = getJ9method(jvmti_env, mid_arg, NULL);
-	if ( JVMTI_ERROR_NONE != err )
-	{
+	if ( JVMTI_ERROR_NONE != err ) {
 		fprintf(stderr, "\tgetJ9method successfully detected NULL return parameter\n");
-		rc = JNI_TRUE;
+	} else {
+		fprintf(stderr, "\tgetJ9method failed to detect NULL return parameter\n");
+		rc = JNI_FALSE;
 	}
-
 
 	return rc;
 }

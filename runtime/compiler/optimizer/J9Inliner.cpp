@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -888,14 +888,12 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
                   continue;
                /* call getResolvedMethod again to generate the validation records */
                TR_ResolvedMethod* target_method = getResolvedMethod (tempreceiverClass);
-               if (!comp()->getSymbolValidationManager()->addClassFromMethodRecord(target_method->classOfMethod(), target_method->getPersistentIdentifier()))
-                  continue;
+               TR_OpaqueClassBlock *classOfMethod = target_method->classOfMethod();
+               SVM_ASSERT_ALREADY_VALIDATED(comp()->getSymbolValidationManager(), classOfMethod);
                }
 
-
-            TR_SharedCache *sharedCache = fej9->sharedCache();
-            if (!sharedCache->canRememberClass(tempreceiverClass) ||
-                !sharedCache->canRememberClass(callSiteClass))
+            if (!fej9->canRememberClass(tempreceiverClass) ||
+                !fej9->canRememberClass(callSiteClass))
                {
                if (comp()->trace(OMR::inlining))
                   traceMsg(comp(), "inliner: profiled class [%p] or callSiteClass [%p] cannot be rememberd in shared cache\n", tempreceiverClass, callSiteClass);
@@ -976,9 +974,8 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
                break;
                }
 
-         TR_SharedCache *sharedCache = fej9->sharedCache();
-         if (!sharedCache->canRememberClass(clazz) ||
-             !sharedCache->canRememberClass(callSiteClass))
+         if (!fej9->canRememberClass(clazz) ||
+             !fej9->canRememberClass(callSiteClass))
             {
             classValuesAreSane = false;
             break;

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,9 @@ import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.AllPermission;
 import java.security.Permissions;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+/*[ENDIF] Java12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
@@ -38,12 +41,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+/*[IF Java12]*/
+import java.util.Optional;
+/*[ENDIF] Java12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.lang.ref.*;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+import java.lang.constant.Constable;
+/*[ENDIF]*/
 
 import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -124,7 +134,11 @@ import java.security.PrivilegedActionException;
  * @author		OTI
  * @version		initial
  */
-public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type {
+public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type
+/*[IF Java12]*/
+	, Constable, TypeDescriptor, TypeDescriptor.OfField<Class<?>>
+/*[ENDIF]*/
+{
 	private static final long serialVersionUID = 3206093459760846163L;
 	private static ProtectionDomain AllPermissionsPD;
 	private static final int SYNTHETIC = 0x1000;
@@ -4545,4 +4559,79 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	return nestMembers;
 }
 /*[ENDIF] Java11 */
+
+/*[IF Java12]*/
+	/**
+	 * Create class of an array. The component type will be this Class instance.
+	 * 
+	 * @return array class where the component type is this Class instance
+	 */
+	public Class<?> arrayType() {
+		if (this == void.class) {
+			throw new IllegalArgumentException();
+		}
+		return arrayTypeImpl();
+	}
+
+	private native Class<?> arrayTypeImpl();
+
+	/**
+	 * Answers a Class object which represents the receiver's component type if the receiver 
+	 * represents an array type. The component type of an array type is the type of the elements 
+	 * of the array.
+	 *
+	 * @return the component type of the receiver. Returns null if the receiver does 
+	 * not represent an array.
+	 */
+	public Class<?> componentType() {
+		return getComponentType();
+	}
+
+	/**
+	 * Returns the nominal descriptor of this Class instance, or an empty Optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with a nominal descriptor of Class instance
+	 */
+	public Optional<ClassDesc> describeConstable() {
+		ClassDesc classDescriptor = ClassDesc.ofDescriptor(this.descriptorString());
+		return Optional.of(classDescriptor);
+	}
+
+	/**
+	 * Return field descriptor of Class instance.
+	 * 
+	 * @return field descriptor of Class instance
+	 */
+	public String descriptorString() {
+		/* see MethodType.getBytecodeStringName */
+
+		if (this.isPrimitive()) {
+			if (this == int.class) {
+				return "I"; //$NON-NLS-1$
+			} else if (this == long.class) {
+				return "J"; //$NON-NLS-1$
+			} else if (this == byte.class) {
+				return "B"; //$NON-NLS-1$
+			} else if (this == boolean.class) {
+				return "Z"; //$NON-NLS-1$
+			} else if (this == void.class) {
+				return "V"; //$NON-NLS-1$
+			} else if (this == char.class) {
+				return "C"; //$NON-NLS-1$
+			} else if (this == double.class) {
+				return "D"; //$NON-NLS-1$
+			} else if (this == float.class) {
+				return "F"; //$NON-NLS-1$
+			} else if (this == short.class) {
+				return "S"; //$NON-NLS-1$
+			}
+		}
+		String name = this.getName().replace('.', '/');
+		if (this.isArray()) {
+			return name;
+		}
+		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+/*[ENDIF] Java12 */
 }

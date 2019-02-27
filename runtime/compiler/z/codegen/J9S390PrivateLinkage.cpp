@@ -2387,7 +2387,7 @@ TR::S390PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference
       TR::LabelSymbol * label = generateLabelSymbol(cg());
       TR::Snippet * snippet;
 
-      if (callSymRef->isUnresolved() || comp()->compileRelocatableCode())
+      if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
          {
          snippet = new (trHeapMemory()) TR::S390UnresolvedCallSnippet(cg(), callNode, label, argSize);
          }
@@ -2823,6 +2823,55 @@ void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
    generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, exceptionRestartLabel);
    }
 
+void
+TR::J9S390JNILinkage::processJNIReturnValue(TR::Node * callNode,
+                                            TR::CodeGenerator* cg,
+                                            TR::Register* javaReturnRegister)
+   {
+   auto resolvedMethod = callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
+   auto returnType = resolvedMethod->returnType();
+   const bool isUnwrapAddressReturnValue = !((TR_J9VMBase *)fe())->jniDoNotWrapObjects(resolvedMethod)
+                                            && (returnType == TR::Address);
+
+   TR::LabelSymbol *cFlowRegionStart = NULL, *cFlowRegionEnd = NULL;
+
+   if (isUnwrapAddressReturnValue)
+      {
+      cFlowRegionStart = generateLabelSymbol(cg);
+      cFlowRegionEnd = generateLabelSymbol(cg);
+
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
+      cFlowRegionStart->setStartInternalControlFlow();
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
+      generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), callNode, javaReturnRegister,
+                            generateS390MemoryReference(javaReturnRegister, 0, cg));
+
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd);
+      cFlowRegionEnd->setEndInternalControlFlow();
+      }
+   else if ((returnType == TR::Int8) && comp()->getSymRefTab()->isReturnTypeBool(callNode->getSymbolReference()))
+      {
+      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13))
+         {
+         generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCode(), callNode, javaReturnRegister, 0);
+         generateRIEInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LOCGHI : TR::InstOpCode::LOCHI,
+                                callNode, javaReturnRegister, 1, TR::InstOpCode::COND_BNE);
+         }
+      else
+         {
+         cFlowRegionStart = generateLabelSymbol(cg);
+         cFlowRegionEnd = generateLabelSymbol(cg);
+
+         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
+         cFlowRegionStart->setStartInternalControlFlow();
+         generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister,
+                                                 0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
+         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, javaReturnRegister, 1);
+         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd);
+         cFlowRegionEnd->setEndInternalControlFlow();
+         }
+      }
+   }
 
 TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    {
@@ -2887,7 +2936,6 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    bool isAcquireVMAccess = isReleaseVMAccess;
    bool isCollapseJNIReferenceFrame = !fej9->jniNoSpecialTeardown(resolvedMethod);
    bool isCheckException = !fej9->jniNoExceptionsThrown(resolvedMethod);
-   bool isUnwrapAddressReturnValue = !fej9->jniDoNotWrapObjects(resolvedMethod);
    bool isKillAllUnlockedGPRs = isJNIGCPoint;
 
    killMask = killAndAssignRegister(killMask, deps, &methodAddressReg, (TR::Compiler->target.isLinux()) ?  TR::RealRegister::GPR1 : TR::RealRegister::GPR9 , codeGen, true);
@@ -3028,31 +3076,7 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    generateRXInstruction(codeGen, TR::InstOpCode::getAddOpCode(), callNode, javaStackPointerRealRegister,
             new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen));
 
-   isUnwrapAddressReturnValue = (isUnwrapAddressReturnValue &&
-                         (returnType == TR::Address) &&
-                         (javaReturnRegister!= NULL) &&
-                         (javaReturnRegister->getKind() == TR_GPR));
-
-   if (isUnwrapAddressReturnValue)
-     {
-     TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(codeGen);
-     TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(codeGen);
-
-     generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
-     cFlowRegionStart->setStartInternalControlFlow();
-     generateS390CompareAndBranchInstruction(codeGen, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, (signed char)0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
-     generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaReturnRegister,
-                generateS390MemoryReference(javaReturnRegister, 0, codeGen));
-
-
-     int32_t regPos = deps->searchPostConditionRegisterPos(javaReturnRegister);
-     TR::RealRegister::RegNum realReg = deps->getPostConditions()->getRegisterDependency(regPos)->getRealRegister();
-     TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg());
-     postDeps->addPostCondition(javaReturnRegister, realReg);
-
-     generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd, postDeps);
-     cFlowRegionEnd->setEndInternalControlFlow();
-     }
+   processJNIReturnValue(callNode, codeGen, javaReturnRegister);
 
    if (isCollapseJNIReferenceFrame)
      {

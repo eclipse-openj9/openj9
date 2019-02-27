@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1854,8 +1854,12 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 	if (0 != rc) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to change current directory rc: %d\n", rc);
 	}
-#else
+#else /* defined(WIN32) */
+#if defined(OSX)
+	const char *utf8 = "/private/tmp/j9sysinfo_test_get_cwd3/";
+#else /* defined(OSX) */
 	const char *utf8 = "/tmp/j9sysinfo_test_get_cwd3/";
+#endif /* defined(OSX) */
 
 	reportTestEntry(portLibrary, testName);
 
@@ -1870,9 +1874,9 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 	}
 #if defined(J9ZOS390)
 	rc = atoe_chdir(utf8);
-#else
+#else /* defined(J9ZOS390) */
 	rc = chdir(utf8);
-#endif
+#endif /* defined(J9ZOS390) */
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", utf8, rc);
 	} else {
@@ -2269,9 +2273,9 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	rc |= j9sysinfo_test_get_groups(portLibrary);
 #endif /* !(defined(WIN32) || defined(WIN64)) */
 	rc |= j9sysinfo_test_get_l1dcache_line_size(portLibrary);
-#if !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM))
+#if !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(OSX))
 	rc |= j9sysinfo_test_get_levels_and_types(portLibrary);
-#endif
+#endif /* !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(OSX)) */
 #if defined(LINUX) || defined(AIXPPC)
 	/* Not supported on Z & OSX (and Windows, of course).  Enable, when available. */
 	rc |= j9sysinfo_test_get_open_file_count(portLibrary);

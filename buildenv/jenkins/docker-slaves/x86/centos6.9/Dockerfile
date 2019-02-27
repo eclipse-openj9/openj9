@@ -111,24 +111,15 @@ RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm Text::CSV \
   && cpanm JSON
 
-# install GCC-4.8 and GCC-7.3
-RUN cd /etc/yum.repos.d \
-  && wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo \
-  && yum -y update \
-  && yum -y install devtoolset-2-gcc devtoolset-2-binutils \
-  && yum -y install devtoolset-2-gcc-c++ devtoolset-2-gcc-gfortran \
-  && yum clean all \
-  && scl enable devtoolset-2 bash \
-  && mv /opt/rh/devtoolset-2/root/usr/bin/gcc /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 \
-  && mv /opt/rh/devtoolset-2/root/usr/bin/g++ /opt/rh/devtoolset-2/root/usr/bin/g++-4.8 \
-  && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/gcc \
-  && ln -s /opt/rh/devtoolset-2/root/usr/bin/g++-4.8 /usr/bin/g++ \
-  && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/cc \
-  && yum -y update \
+# Install GCC-7.3
+RUN yum -y update \
   && yum -y install centos-release-scl \
-  && yum -y install devtoolset-7-gcc devtoolset-7-binutils \
-  && yum -y install devtoolset-7-gcc-c++ devtoolset-2-gcc-gfortran \
-  && yum clean all
+  && yum -y install devtoolset-7-gcc-7.3* devtoolset-7-binutils \
+  && yum -y install devtoolset-7-gcc-c++-7.3* devtoolset-2-gcc-gfortran-7.3* \
+  && yum clean all \
+  && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/cc \
+  && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/gcc \
+  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++ 
 
 #Building and setting up git version 2.5.3
 RUN yum -y update \

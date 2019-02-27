@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2018 IBM Corp. and others
+Copyright (c) 1998, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <#if uma.spec.processor.arm>
   ARM_ARCH_FLAGS := -march=armv6 -marm -mfpu=vfp -mfloat-abi=hard
   OPENJ9_CC_PREFIX ?= bcm2708hardfp
+  OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
+<#elseif uma.spec.processor.aarch64>
   OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
 <#else>
   OBJCOPY := objcopy
@@ -300,6 +302,10 @@ endif
   CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
   CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics
   CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
+<#elseif uma.spec.processor.aarch64>
+  CFLAGS += -DJ9AARCH64
+  CXXFLAGS += -DJ9AARCH64
+  CPPFLAGS += -DJ9AARCH64
 <#elseif uma.spec.processor.ppc>
   CFLAGS += -DLINUXPPC
   CXXFLAGS += -DLINUXPPC

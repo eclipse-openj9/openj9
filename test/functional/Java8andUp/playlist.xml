@@ -164,7 +164,7 @@
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames AttachAPISanity \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -208,7 +208,7 @@
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachAPI \
@@ -253,7 +253,7 @@
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachAPIEnabling \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -297,7 +297,7 @@
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachErrorHandling \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -344,7 +344,7 @@
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	-Djdk.attach.allowAttachSelf=true \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestSunAttachClasses \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -388,7 +388,7 @@
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestManagementAgent \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -404,6 +404,57 @@
 		</subsets>
 	</test>
 	<!-- Attach API tests -->
+
+	<test>
+		<testCaseName>TestJps_SE80</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
+	-Dcom.ibm.tools.attach.timeout=15000 \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJps \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		 </impls>
+	</test>
+
+	<test>
+		<testCaseName>TestJps</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
+	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
+	-Dcom.ibm.tools.attach.timeout=15000 \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJps \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		 </impls>
+	</test>
 
 	<test>
 		<testCaseName>TestFileLocking_SE80</testCaseName>
@@ -431,7 +482,7 @@
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=no \
-	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
+	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestFileLocking \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -666,26 +717,6 @@
 	</test>
 
 	<test>
-		<testCaseName>OpenSSL</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames OpenSSL \
-	-groups $(TEST_GROUP) \
-	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS)</command>
-		<platformRequirements>^os.aix</platformRequirements>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-		</impls>
-	</test>
-
-	<test>
 		<testCaseName>JCL_Test</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -704,6 +735,7 @@
 	--add-exports java.base/sun.net.www.protocol.jrt=ALL-UNNAMED \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-opens=java.base/java.security=ALL-UNNAMED \
+	$(ADD_EXPORTS_JDK_INTERNAL_ACCESS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(JAXB_API_JAR)$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1010,7 +1042,7 @@
 	<test>
 		<testCaseName>JCL_TEST_MathMethods</testCaseName>
 		<variations>
-			<variation>'-Xjit:disableAsyncCompilation,{*Test_Math*}(count=1)'</variation>
+			<variation>$(SQ)-Xjit:disableAsyncCompilation,{*Test_Math*}(count=1)$(SQ)</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1617,7 +1649,7 @@
 	-testnames hanoiTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	if [ $$? -ne 0 ] ; then echo "hanoiTestTM_SHOULDFAIL test failed as expected"; else sh triggerAFailure.sh ; fi; \
+	if [ $$? -ne 0 ] ; then echo $(Q)hanoiTestTM_SHOULDFAIL test failed as expected$(Q); else sh triggerAFailure.sh ; fi; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.zos</platformRequirements>
 		<levels>
@@ -1687,7 +1719,7 @@
 		<testCaseName>testStringIndexOfString</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>'-Xjit:disableAsyncCompilation,tryToInline={java/lang/String.indexOf*},limit={org/openj9/test/string/StringIndexOfString.doTest*},{org/openj9/test/string/StringIndexOfString.doTest*}(count=50)'</variation>
+			<variation>$(SQ)-Xjit:disableAsyncCompilation,tryToInline={java/lang/String.indexOf*},limit={org/openj9/test/string/StringIndexOfString.doTest*},{org/openj9/test/string/StringIndexOfString.doTest*}(count=50)$(SQ)</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \

@@ -1507,6 +1507,9 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 	char fileName[EsMaxPath];
 	J9PortLibrary* privatePortLibrary = vm->portLibrary;
 	int releaseAccess = 0;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	int exitVM = 0;
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	BOOLEAN exclusiveRequestedLocally = FALSE;
 
 	if ( !vm->mainThread ) {
@@ -1519,6 +1522,12 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 
 	if(J9_XACCESS_NONE == vm->exclusiveAccessState) {
 		if (NULL != self) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			if (self->inNative) {
+				internalEnterVMFromJNI(self);
+				exitVM = 1;
+			} else
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			if ( 0 == (self->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) ) {
 				internalAcquireVMAccess(self);
 				releaseAccess = 1;
@@ -1583,6 +1592,11 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 	if(exclusiveRequestedLocally) {
 		if (self) {
 			releaseExclusiveVMAccess(self);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			if ( exitVM ) {
+				internalExitVMToJNI(self);
+			} else
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			if ( releaseAccess ) {
 				internalReleaseVMAccess(self);
 			}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -887,10 +887,17 @@ doJavaDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
 	J9JavaVM *vm = context->javaVM;
 
-	if (makePath(vm, label) == OMR_ERROR_INTERNAL) {
-		/* Nowhere available to write the dump, we are done, makePath() will have issued error message */
-		return OMR_ERROR_INTERNAL;
+	if ((0 == strcmp("-", label)) || (0 == j9_cmdla_stricmp(label, J9RAS_STDOUT_NAME))) {
+		strcpy(label, J9RAS_STDOUT_NAME);
+	} else if (0 == j9_cmdla_stricmp(label, J9RAS_STDERR_NAME)) {
+		strcpy(label, J9RAS_STDERR_NAME);
+	} else {
+		if (makePath(vm, label) == OMR_ERROR_INTERNAL) {
+			/* Nowhere available to write the dump, we are done, makePath() will have issued error message */
+			return OMR_ERROR_INTERNAL;
+		}
 	}
+	
 	runJavadump(label, context, agent);
 
 	return OMR_ERROR_NONE;

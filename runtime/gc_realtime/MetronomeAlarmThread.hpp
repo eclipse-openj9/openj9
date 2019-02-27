@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,8 @@
 #if !defined(METRONOMEALARMTHREAD_HPP_)
 #define METRONOMEALARMTHREAD_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "ProcessorInfo.hpp"
 #include "MetronomeAlarm.hpp"
@@ -46,12 +46,12 @@ private:
 	MM_Alarm *_alarm;
 	omrthread_monitor_t _mutex;
 	volatile bool _shutdown;
-	enum AlarmThradActive {
+	enum AlarmThreadActive {
 			ALARM_THREAD_INACTIVE,
 			ALARM_THREAD_ACTIVE,
 			ALARM_THREAD_SHUTDOWN
 	};
-	volatile  AlarmThradActive _alarmThreadActive;
+	volatile  AlarmThreadActive _alarmThreadActive;
 	MM_Scheduler *_scheduler;
 
 protected:
@@ -63,7 +63,6 @@ public:
 	 */
 private:
 	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void* userData);
-	static UDATA signalProtectedFunction(J9PortLibrary* portLib, void* userData);
 
 protected:
 	void tearDown(MM_EnvironmentBase *env);
@@ -94,6 +93,8 @@ public:
 	 * Friends
 	 */
 	friend class MM_Scheduler;
+	friend class MM_MetronomeAlarmThreadDelegate;
 };
 
 #endif /* METRONOMEALARMTHREAD_HPP_ */
+

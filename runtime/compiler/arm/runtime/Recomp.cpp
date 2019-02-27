@@ -27,6 +27,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/VMJ9.h"
 
@@ -237,19 +238,16 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 
 uint32_t encodeRuntimeHelperBranchAndLink(TR_RuntimeHelper helper, uint8_t *cursor, TR_FrontEnd *fe)
    {
-   int32_t  distance;
-   uint32_t target;
+   intptrj_t target = (intptrj_t)runtimeHelperValue(helper);
 
-   target = (uintptr_t)runtimeHelperValue(helper);
-   distance = target - (uintptr_t) cursor;
-   if (distance > BRANCH_FORWARD_LIMIT || distance < BRANCH_BACKWARD_LIMIT)
+   if (!TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptrj_t)cursor))
       {
-      target = fe->indexedTrampolineLookup(helper, (void *)cursor);
-      TR_ASSERT(((int32_t)target - (int32_t)cursor) <= BRANCH_FORWARD_LIMIT &&
-             ((int32_t)target - (int32_t)cursor) >=  BRANCH_BACKWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      target = TR::CodeCacheManager::instance()->findHelperTrampoline(helper, (void *)cursor);
+
+      TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptrj_t)cursor),
+                "Helper target address is out of range");
       }
-   return 0xEB000000 | encodeBranchDistance((uintptr_t) cursor, target);
+   return 0xEB000000 | encodeBranchDistance((uintptr_t) cursor, (uint32_t)target);
    }
 
 void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *fe)

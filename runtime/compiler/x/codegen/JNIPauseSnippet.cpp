@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,41 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "x/codegen/JNIPauseSnippet.hpp"
-#include "env/IO.hpp"
+ //  __   ___  __   __   ___  __       ___  ___  __
+ // |  \ |__  |__) |__) |__  /  `  /\   |  |__  |  \
+ // |__/ |___ |    |  \ |___ \__, /~~\  |  |___ |__/
+ //
+ // This file is now deprecated and will be deleted soon.
 
-uint8_t *TR::X86JNIPauseSnippet::emitSnippetBody()
-   {
-   uint8_t *buffer = cg()->getBinaryBufferCursor();
-   getSnippetLabel()->setCodeLocation(buffer);
+#include "ras/Debug.hpp"
 
-   *buffer++ = 0xf3;  // PAUSE
-   *buffer++ = 0x90;
-
-   return genRestartJump(buffer);
-   }
-
-void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86JNIPauseSnippet  * snippet)
-   {
-   if (pOutFile == NULL)
-      return;
-
-   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
-
-   printPrefix(pOutFile, NULL, bufferPos, 2);
-   trfprintf(pOutFile, "pause\t\t%s spin loop pause",
-                 commentString());
-   bufferPos += 2;
-
-   printRestartJump(pOutFile, snippet, bufferPos);
-   }
-
-
-
-uint32_t TR::X86JNIPauseSnippet::getLength(int32_t estimatedSnippetStart)
-   {
-   return 2 + estimateRestartJumpLength(estimatedSnippetStart + 2);
-   }
+#ifdef BUILD_DEPRECATED_TR_DEBUG_PRINT
+namespace TR { class X86JNIPauseSnippet; }
+void TR_Debug::print(TR::FILE *pOutFile, TR::X86JNIPauseSnippet* snippet) { }
+#endif

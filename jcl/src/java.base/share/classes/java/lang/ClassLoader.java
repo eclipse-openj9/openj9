@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 import java.security.cert.Certificate;
 
 /*[IF Sidecar19-SE]
+import java.lang.reflect.Modifier;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
@@ -46,7 +47,7 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -259,6 +260,12 @@ public abstract class ClassLoader {
 		
 		/*[IF Sidecar19-SE]*/
 		jdk.internal.misc.VM.initLevel(1);
+		/* 
+		 * Following code ensures that the field jdk.internal.reflect.langReflectAccess 
+		 * is initialized before any usage references. This is a workaround.
+		 * More details are at https://github.com/eclipse/openj9/issues/3399#issuecomment-459004840.
+		 */
+		Modifier.isPublic(Modifier.PUBLIC);
 		/*[IF Java10]*/
 		try {
 		/*[ENDIF]*/
@@ -271,12 +278,18 @@ public abstract class ClassLoader {
 		/*[ENDIF]*/
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
-		if (null != javaSecurityManager) {
-			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) {
+		if ((javaSecurityManager != null) 
+		/*[IF Java12]*/
+			/* See the SecurityManager javadoc for details about special tokens. */
+			&& !javaSecurityManager.equals("disallow") //$NON-NLS-1$ /* special token to disallow SecurityManager */
+			&& !javaSecurityManager.equals("allow") //$NON-NLS-1$ /* special token to allow SecurityManager */
+			/*[ENDIF] Java12 */
+		) {
+			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
 				System.setSecurityManager(new SecurityManager());
 			} else {
 				try {
-					System.setSecurityManager((SecurityManager)Class.forName(javaSecurityManager, true, applicationClassLoader).newInstance());
+					System.setSecurityManager((SecurityManager)Class.forName(javaSecurityManager, true, applicationClassLoader).getDeclaredConstructor().newInstance());
 				} catch (Throwable e) {
 					/*[MSG "K0631", "JVM can't set custom SecurityManager due to {0}"]*/
 					throw new Error(com.ibm.oti.util.Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$

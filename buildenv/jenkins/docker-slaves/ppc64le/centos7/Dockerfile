@@ -50,8 +50,6 @@ RUN yum -y update \
     fontconfig \
     fontconfig-devel \
     freetype-devel \
-    gcc-4.8.5 \
-    gcc-c++-4.8.5 \
     gettext \
     glibc \
     glibc-common \
@@ -106,16 +104,18 @@ RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm Text::CSV \
   && cpanm JSON
 
-# Setup links to GCC-4.8.5
-RUN rm /usr/bin/c++ /usr/bin/cc \
-  && ln -s g++ /usr/bin/c++ \
-  && ln -s gcc /usr/bin/cc
-
 # Install GCC-7.3.1
 RUN cd /usr/local \
   && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
   && tar -xJf gcc-7.tar.xz --strip-components=1 \
-  && rm -rf gcc-7.tar.xz
+  && rm -rf gcc-7.tar.xz \
+  && ln -s /usr/local/bin/gcc-7.3 /usr/bin/cc \
+  && ln -s /usr/local/bin/gcc-7.3 /usr/bin/gcc \
+  && ln -s /usr/local/bin/g++-7.3 /usr/bin/g++ 
+
+# Edit ldconfig to connect this library
+RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
+  && ldconfig
 
 #Building and setting up git version 2.5.3
 RUN yum -y update \

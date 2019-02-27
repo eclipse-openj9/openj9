@@ -1529,6 +1529,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
 
          case J9BCdefaultvalue:
          case J9BCwithfield:
+         case J9BCbreakpoint:
             fej9()->unsupportedByteCode(comp(), opcode);
          case J9BCunknown:
             fej9()->unknownByteCode(comp(), opcode);
@@ -7062,7 +7063,7 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
       }
 
    static const char* disableMethodHookForCallees = feGetEnv("TR_DisableMethodHookForCallees");
-   if ((fej9()->isMethodExitTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
+   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
         TR::Compiler->vm.canMethodExitEventBeHooked(comp()))
          && (isOutermostMethod() || !disableMethodHookForCallees))
       {

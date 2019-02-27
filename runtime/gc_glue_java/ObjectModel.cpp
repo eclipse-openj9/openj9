@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,16 +107,16 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 		const char * const abstractOwnableSynchronizer = "java/util/concurrent/locks/AbstractOwnableSynchronizer";
 
 		if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)atomicMarkableReference, strlen(atomicMarkableReference))) {
-			clazz->classDepthAndFlags |= J9_JAVA_CLASS_GC_SPECIAL;
+			clazz->classDepthAndFlags |= J9AccClassGCSpecial;
 			objectModel->_atomicMarkableReferenceClass = clazz;
 		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)javaLangClassLoader, strlen(javaLangClassLoader))) {
-			clazz->classDepthAndFlags |= J9_JAVA_CLASS_GC_SPECIAL;
+			clazz->classDepthAndFlags |= J9AccClassGCSpecial;
 			objectModel->_classLoaderClass = clazz;
 		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)javaLangClass, strlen(javaLangClass))) {
-			clazz->classDepthAndFlags |= J9_JAVA_CLASS_GC_SPECIAL;
+			clazz->classDepthAndFlags |= J9AccClassGCSpecial;
 			objectModel->_classClass = clazz;
 		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)abstractOwnableSynchronizer, strlen(abstractOwnableSynchronizer))) {
-			 clazz->classDepthAndFlags |= J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER;
+			 clazz->classDepthAndFlags |= J9AccClassOwnableSynchronizer;
 		}
 	}
 }

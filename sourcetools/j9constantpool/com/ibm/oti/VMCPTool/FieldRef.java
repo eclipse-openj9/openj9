@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,9 @@ public class FieldRef extends PrimaryItem implements Constants {
 	protected static class Alias extends PrimaryItem.AliasWithClass {
 		final NameAndSignature nas;
 		final String cast;
-		
-		Alias(String[] jcl, String[] flags, ClassRef classRef, NameAndSignature nas, String cast) {
-			super(jcl, flags, classRef);
+
+		Alias(VersionRange[] versions, String[] flags, ClassRef classRef, NameAndSignature nas, String cast) {
+			super(versions, flags, classRef);
 			this.nas = nas;
 			this.cast = cast;
 		}
@@ -42,7 +42,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 				ds.writeSecondaryItem(nas);
 			}
 		}
-		
+
 		void write(ConstantPoolStream ds) {
 			if (checkClassForWrite(ds)) {
 				ds.alignTo(4);
@@ -65,7 +65,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 		public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
 			Alias p = (Alias)proto;
 			return new Alias(
-				jcl(e, p),
+				versions(e, p),
 				flags(e, p),
 				classRef(e),
 				new NameAndSignature(

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,8 @@ public class ClassRef extends PrimaryItem implements Constants {
 	private static class Alias extends PrimaryItem.Alias {
 		final J9UTF8 name;
 		
-		Alias(String[] jcl, String[] flags, J9UTF8 name) {
-			super(jcl, flags);
+		Alias(VersionRange[] versions, String[] flags, J9UTF8 name) {
+			super(versions, flags);
 			this.name = name;
 		}
 
@@ -65,7 +65,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 		super(e, CLASSALIAS, new Alias.Factory() {
 			public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
 				Alias p = (Alias) proto;
-				return new Alias(ClassRef.jcl(e, p), ClassRef.flags(e, p),
+				return new Alias(ClassRef.versions(e, p), ClassRef.flags(e, p),
 						new J9UTF8(ClassRef.attribute(e, "name", p != null ? p.name.data : "")));
 			}
 		});
@@ -74,7 +74,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 	protected String cMacroName() {
 		char[] buf = ((Alias) primary).name.data.toCharArray();
 		int j = 0;
-		
+
 		for (int i = 0; i < buf.length; i++) {
 			if (buf[i] != '/' && buf[i] != '$') {
 				buf[j++] = buf[i];
@@ -82,7 +82,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 		}
 		return new String(buf, 0, j).toUpperCase();
 	}
-	
+
 	public void writeMacros(ConstantPool pool, PrintWriter out) {	
 		super.writeMacros(pool, out);
 		

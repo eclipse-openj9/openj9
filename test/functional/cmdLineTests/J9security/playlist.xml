@@ -30,7 +30,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
-		-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -Xint -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
+		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -Xint -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
 		-verbose -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<levels>

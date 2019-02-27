@@ -121,43 +121,6 @@ RULE.s=$(eval $(DEF_RULE.s))
 ##### START X SPECIFIC RULES #####
 ifeq ($(HOST_ARCH),x)
 
-# TODO - Fix MASM2GAS to have a little more sane output file behavior
-#
-# Compile .asm file into .o file
-# (By changing it to a .s file and then assembling it)
-#
-define DEF_RULE.asm
-$(1).s: $(2) | jit_createdirs
-	$$(PERL) $$(ASM_SCRIPT) $$(ASM_FLAGS) $$(patsubst %,-I'%',$$(ASM_INCLUDES)) -o$$(dir $$@) $$<
-	-mv $$(dir $$@)$$(notdir $$(basename $$<).s) $$@ || true
-
-JIT_DIR_LIST+=$(dir $(1))
-
-jit_cleanobjs::
-	rm -f $(1).s
-
-$(call RULE.s,$(1),$(1).s)
-endef # DEF_RULE.asm
-
-RULE.asm=$(eval $(DEF_RULE.asm))
-
-#
-# Compile .pasm file into .o file
-#
-define DEF_RULE.pasm
-$(1).asm: $(2) | jit_createdirs
-	$$(PASM_CMD) $$(PASM_FLAGS) $$(patsubst %,-I'%',$$(PASM_INCLUDES)) -o $$@ -x assembler-with-cpp -E -P $$<
-
-JIT_DIR_LIST+=$(dir $(1))
-
-jit_cleanobjs::
-	rm -f $(1).asm
-
-$(call RULE.asm,$(1),$(1).asm)
-endef # DEF_RULE.pasm
-
-RULE.pasm=$(eval $(DEF_RULE.pasm))
-
 #
 # Compile .nasm file into .o file
 #

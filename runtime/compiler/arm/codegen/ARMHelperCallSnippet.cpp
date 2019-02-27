@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 uint8_t *TR::ARMHelperCallSnippet::emitSnippetBody()
    {
@@ -41,10 +42,10 @@ uint8_t *TR::ARMHelperCallSnippet::emitSnippetBody()
    intptrj_t distance = (intptrj_t)getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptrj_t)buffer - 8;
 
    getSnippetLabel()->setCodeLocation(buffer);
-   
+
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = TR::comp()->fe()->indexedTrampolineLookup(getDestination()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer - 8;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer - 8;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }

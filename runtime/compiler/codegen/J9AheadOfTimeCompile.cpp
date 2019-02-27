@@ -370,6 +370,15 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          cursor += 4;
          }
 
+   if (self()->comp()->getOption(TR_UseSymbolValidationManager))
+      {
+      traceMsg(
+         self()->comp(),
+         "SCC offset of class chain offsets of well-known classes is: 0x%llx\n\n",
+         (unsigned long long)*(uintptrj_t *)cursor);
+      cursor += sizeof (uintptrj_t);
+      }
+
    traceMsg(self()->comp(), "Address           Size %-31s", "Type");
    traceMsg(self()->comp(), "Width EIP Index Offsets\n"); // Offsets from Code Start
 
@@ -667,6 +676,25 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
+
+         case TR_ResolvedTrampolines:
+            {
+            cursor++;
+            if (is64BitTarget)
+               cursor += 4;     // padding
+            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+            TR_RelocationRecordResolvedTrampolinesBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordResolvedTrampolinesBinaryTemplate *>(cursor);
+            if (isVerbose)
+               {
+               traceMsg(self()->comp(), "\n Resolved Trampoline: symbolID=%d ",
+                        (uint32_t)binaryTemplate->_symbolID);
+               }
+            cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
+            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+            }
+            break;
+
          case TR_CheckMethodEnter:
          case TR_CheckMethodExit:
             cursor++;        // unused field
@@ -1169,10 +1197,10 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateClassByNameBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d romClassOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d classChainOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_classID,
                         (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_romClassOffsetInSCC);
+                        binaryTemplate->_classChainOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
@@ -1260,44 +1288,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateClassFromMethod:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassFromMethodBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassFromMethodBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class From Method: classID=%d, methodID=%d ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_methodID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateComponentClassFromArrayClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateCompFromArrayBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateCompFromArrayBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Component Class From Array: componentClassID=%d, arrayClassID=%d ",
-                        (uint32_t)binaryTemplate->_componentClassID,
-                        (uint32_t)binaryTemplate->_arrayClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateCompFromArrayBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateArrayClassFromComponentClass:
             {
             cursor++;
@@ -1368,9 +1358,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate System Class By Name: systemClassID=%d romClassOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate System Class By Name: systemClassID=%d classChainOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_systemClassID,
-                        binaryTemplate->_romClassOffsetInSCC);
+                        binaryTemplate->_classChainOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
@@ -1413,25 +1403,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_cpIndex);
                }
             cursor += sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateClassClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class Class: classClassID=%d, objectClassID=%d ",
-                        (uint32_t)binaryTemplate->_classClassID,
-                        (uint32_t)binaryTemplate->_objectClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;
@@ -1504,8 +1475,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1524,8 +1496,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Special Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Special Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1544,8 +1517,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Virtual Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1564,11 +1538,12 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
+               traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, definingClassID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_virtualCallOffset,
-                        binaryTemplate->_ignoreRtResolve ? "true" : "false");
+                        binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve & ~1,
+                        (binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve & 1) ? "true" : "false");
                }
             cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
@@ -1585,8 +1560,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         (uint32_t)binaryTemplate->_lookupID,
                         binaryTemplate->_cpIndex);
@@ -1606,8 +1582,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Improper Interface Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Improper Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1626,9 +1603,10 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, methodClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_methodClassID,
+                        (uint32_t)binaryTemplate->_definingClassID,
+                        (uint32_t)binaryTemplate->_lookupClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_romMethodOffsetInSCC);
                }
@@ -1686,8 +1664,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Single Implementor: methodID=%d, thisClassID=%d, cpIndexOrVftSlot=%d, callerMethodID=%d, useGetResolvedInterfaceMethod=%d ",
+               traceMsg(self()->comp(), "\n Validate Method From Single Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndexOrVftSlot=%d, callerMethodID=%d, useGetResolvedInterfaceMethod=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_thisClassID,
                         binaryTemplate->_cpIndexOrVftSlot,
                         (uint32_t)binaryTemplate->_callerMethodID,
@@ -1708,8 +1687,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, thisClassID=%d, cpIndex=%d, callerMethodID=%d ",
+               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndex=%d, callerMethodID=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_thisClassID,
                         binaryTemplate->_cpIndex,
                         (uint32_t)binaryTemplate->_callerMethodID);
@@ -1729,8 +1709,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, thisClassID=%d, vftSlot=%d, callerMethodID=%d ",
+               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, vftSlot=%d, callerMethodID=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_thisClassID,
                         binaryTemplate->_vftSlot,
                         (uint32_t)binaryTemplate->_callerMethodID);
@@ -1742,6 +1723,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
 
          case TR_SymbolFromManager:
+         case TR_DiscontiguousSymbolFromManager:
             {
             cursor++;
             if (is64BitTarget)
@@ -1753,6 +1735,11 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                {
                traceMsg(self()->comp(), "\n Symbol From Manager: symbolID=%d symbolType=%d ",
                         (uint32_t)binaryTemplate->_symbolID, (uint32_t)binaryTemplate->_symbolType);
+
+               if (kind == TR_DiscontiguousSymbolFromManager)
+                  {
+                  traceMsg(self()->comp(), "isDiscontiguous ");
+                  }
                }
             cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);

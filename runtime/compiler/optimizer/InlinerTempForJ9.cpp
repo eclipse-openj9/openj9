@@ -56,7 +56,6 @@
 #include "control/Recompilation.hpp"                      //TR_PersistentJittedBodyInfo
 #include "control/RecompilationInfo.hpp"                  //TR_PersistentJittedBodyInfo
 #include "optimizer/EstimateCodeSize.hpp"
-#include "env/SharedCache.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "ras/DebugCounter.hpp"
@@ -278,20 +277,6 @@ void TR_MultipleCallTargetInliner::generateNodeEstimate::operator ()(TR_CallTarg
       size = size * ((float)(ct->_partialSize)/(float)(ct->_fullSize));
       }
    _nodeEstimate += size;
-   }
-
-bool
-TR_J9InlinerPolicy::isMethodInSharedCache(TR_ResolvedMethod *interfaceMethod)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
-   TR_OpaqueClassBlock *clazz = interfaceMethod->classOfMethod();
-   void *dummy;
-   bool clazzInCache = fej9->sharedCache()->isPointerInSharedCache((void*)fej9->getPersistentClassPointerFromClassPointer(clazz), dummy);
-
-   if (clazzInCache)
-      return true;  //fprintf(stderr, "\tsingle interface target found in AOT compilation\n");
-   else
-      return false; //fprintf(stderr, "\tsingle interface target aborted for AOT compilation\n");
    }
 
 bool
@@ -1061,9 +1046,6 @@ Unsafe.getShort.
 bool
 TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck, bool isOrdered)
    {
-   if (callNodeTreeTop->getEnclosingBlock()->isCold())
-      return false;
-
    if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
@@ -1100,11 +1082,12 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
          traceMsg(comp(),"\t Duplicate Tree for ordered call, orderedCallNode = %p\n",orderedCallNode);
       }
 
-   static char *enableIllegalWriteReport = feGetEnv("TR_EnableIllegalWriteReport");
-   TR::TreeTop* callTreeForIllegalWriteReport = NULL;
-   // Keep the call for illegal write report
-   if (enableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
-      callTreeForIllegalWriteReport = callNodeTreeTop->duplicateTree();
+   static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
+   TR::TreeTop* reportFinalFieldModification = NULL;
+   if (!disableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+      {
+      reportFinalFieldModification = TR::TransformUtil::generateReportFinalFieldModificationCallTree(comp(), unsafeCall->getArgument(1)->duplicateTree());
+      }
 
    TR::Node * unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
    if(comp()->getOption(TR_TraceUnsafeInlining))
@@ -1226,24 +1209,21 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
 
    // Test for static final field
-   if (callTreeForIllegalWriteReport)
+   if (reportFinalFieldModification)
       {
-      TR::Node* duplicatedCallNode = callTreeForIllegalWriteReport->getNode()->getFirstChild();
       TR::Block* storeToStaticFieldBlock = indirectAccessTreeTop->getEnclosingBlock();
       auto isFinalStaticNode = TR::Node::createif(TR::iflcmpeq,
-                                                     TR::Node::create(TR::land, 2, duplicatedCallNode->getChild(2)->duplicateTree(), TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG)),
-                                                     TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG),
-                                                     NULL /*branchTarget*/);
+                                                  TR::Node::create(TR::land, 2, offset->duplicateTree(), TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG)),
+                                                  TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG),
+                                                  NULL /*branchTarget*/);
       auto isFinalStaticTreeTop = TR::TreeTop::create(comp(), isFinalStaticNode);
 
-      TR_ASSERT(storeToStaticFieldBlock->getSuccessors().size() == 1, "storeToStaticFieldBlock should have only one successor");
-      TR::Block* mergeBlock = toBlock(storeToStaticFieldBlock->getSuccessors().front()->getTo());
-      TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalStaticTreeTop, callTreeForIllegalWriteReport, storeToStaticFieldBlock, mergeBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
+      TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalStaticTreeTop, reportFinalFieldModification, storeToStaticFieldBlock, storeToStaticFieldBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
 
       if (comp()->getOption(TR_TraceUnsafeInlining))
          {
          traceMsg(comp(), "Created isFinal test node n%dn whose branch target is Block_%d to report illegal write to static final field\n",
-                  isFinalStaticNode->getGlobalIndex(), callTreeForIllegalWriteReport->getEnclosingBlock()->getNumber());
+                  isFinalStaticNode->getGlobalIndex(), reportFinalFieldModification->getEnclosingBlock()->getNumber());
          }
 
       TR::DebugCounter::prependDebugCounter(comp(),
@@ -1251,7 +1231,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
                                                                               "illegalWriteReport/put/(%s %s)",
                                                                                comp()->signature(),
                                                                                comp()->getHotnessName(comp()->getMethodHotness())),
-                                                                               callTreeForIllegalWriteReport->getNextTreeTop());
+                                            reportFinalFieldModification->getNextTreeTop());
 
       }
 
@@ -1768,14 +1748,14 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
    modifiersTree->insertBefore(nullCheckTree);
 
    /*** need to generate this:
-    *  if (modifiers & J9_JAVA_CLASS_PRIMITIVE_TYPE) {
-    *    modifiers = J9_JAVA_ABSTRACT | J9_JAVA_FINAL | J9_JAVA_PUBLIC;
+    *  if (modifiers & J9AccClassInternalPrimitiveType) {
+    *    modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;
     *  } else {
     *    modifiers &= 0xFFF;
     *  }
     *  return modifiers;
     */
-   // generatng "if (modifiers & J9_JAVA_CLASS_PRIMITIVE_TYPE)"
+   // generatng "if (modifiers & J9AccClassInternalPrimitiveType)"
    TR::Node *iAndNode = TR::Node::create(TR::iand, 2,
                                        TR::Node::createLoad(callNode, modifiersSymRef),
                                        TR::Node::iconst(callNode, (int32_t)comp()->fej9()->constClassFlagsPrimitive()));
@@ -1785,7 +1765,7 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
                           0);
    TR::TreeTop *compareTree = TR::TreeTop::create(comp(), compareNode);
 
-   // generating if-then part "   modifiers = J9_JAVA_ABSTRACT | J9_JAVA_FINAL | J9_JAVA_PUBLIC;"
+   // generating if-then part "   modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;"
    TR::Node *modifiersIfStrNode = TR::Node::createStore(modifiersSymRef,
                                  TR::Node::iconst(callNode, (int32_t)(comp()->fej9()->constClassFlagsAbstract() | comp()->fej9()->constClassFlagsFinal() | comp()->fej9()->constClassFlagsPublic()))
                                                      );

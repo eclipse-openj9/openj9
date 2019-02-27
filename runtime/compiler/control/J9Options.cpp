@@ -2150,7 +2150,7 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
-#if defined(TR_HOST_X86) && defined(TR_TARGET_64BIT)
+#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
    self()->setOption(TR_EnableSymbolValidationManager);
 #endif
 

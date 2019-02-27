@@ -1672,9 +1672,11 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         static_assert(IS_32BIT_SIGNED(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE), "Unexcepted value of J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE.");
+         bool use64BitClasses = TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers();
+
          TR::LabelSymbol* rdbarLabel = generateLabelSymbol(cg);
-         generateMemImmInstruction(TEST4MemImm4, node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, privateFlags), cg), J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE, cg);
+         // EvacuateTopAddress == 0 means Concurrent Scavenge is inactive
+         generateMemImmInstruction(CMPMemImms(use64BitClasses), node, generateX86MemoryReference(cg->getVMThreadRegister(), cg->comp()->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg), 0, cg);
          generateLabelInstruction(JNE4, node, rdbarLabel, cg);
 
          TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
@@ -3973,7 +3975,7 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_Opaq
       auto depth = TR::Compiler->cls.classDepthOf(clazz);
       if (depth >= cg->comp()->getOptions()->_minimumSuperclassArraySize)
          {
-         static_assert(J9_JAVA_CLASS_DEPTH_MASK == 0xffff, "J9_JAVA_CLASS_DEPTH_MASK must be 0xffff");
+         static_assert(J9AccClassDepthMask == 0xffff, "J9AccClassDepthMask must be 0xffff");
          auto depthMR = generateX86MemoryReference(j9class, offsetof(J9Class, classDepthAndFlags), cg);
          generateMemImmInstruction(CMP2MemImm2, node, depthMR, depth, cg);
          if (!isCheckCast)
@@ -8227,7 +8229,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       // Get the depth of array component type in testerReg
       //
-      bool eliminateDepthMask = (J9_JAVA_CLASS_DEPTH_MASK == 0xffff);
+      bool eliminateDepthMask = (J9AccClassDepthMask == 0xffff);
       TR::MemoryReference *destComponentClassDepthMR =
          generateX86MemoryReference(destComponentClassReg, offsetof(J9Class,classDepthAndFlags), cg);
 
@@ -8259,13 +8261,13 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          {
          if (TR::Compiler->target.is64Bit())
             {
-            TR_ASSERT(!(J9_JAVA_CLASS_DEPTH_MASK & 0x80000000), "AMD64: need to use a second register for AND mask");
-            if (!(J9_JAVA_CLASS_DEPTH_MASK & 0x80000000))
-               generateRegImmInstruction(AND8RegImm4, node, destComponentClassDepthReg, J9_JAVA_CLASS_DEPTH_MASK, cg);
+            TR_ASSERT(!(J9AccClassDepthMask & 0x80000000), "AMD64: need to use a second register for AND mask");
+            if (!(J9AccClassDepthMask & 0x80000000))
+               generateRegImmInstruction(AND8RegImm4, node, destComponentClassDepthReg, J9AccClassDepthMask, cg);
             }
          else
             {
-            generateRegImmInstruction(AND4RegImm4, node, destComponentClassDepthReg, J9_JAVA_CLASS_DEPTH_MASK, cg);
+            generateRegImmInstruction(AND4RegImm4, node, destComponentClassDepthReg, J9AccClassDepthMask, cg);
             }
          }
 
@@ -8304,13 +8306,13 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
          if (TR::Compiler->target.is64Bit())
             {
-            TR_ASSERT(!(J9_JAVA_CLASS_DEPTH_MASK & 0x80000000), "AMD64: need to use a second register for AND mask");
-            if (!(J9_JAVA_CLASS_DEPTH_MASK & 0x80000000))
-               generateRegImmInstruction(AND8RegImm4, node, sourceClassDepthReg, J9_JAVA_CLASS_DEPTH_MASK, cg);
+            TR_ASSERT(!(J9AccClassDepthMask & 0x80000000), "AMD64: need to use a second register for AND mask");
+            if (!(J9AccClassDepthMask & 0x80000000))
+               generateRegImmInstruction(AND8RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
             }
          else
             {
-            generateRegImmInstruction(AND4RegImm4, node, sourceClassDepthReg, J9_JAVA_CLASS_DEPTH_MASK, cg);
+            generateRegImmInstruction(AND4RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
             }
          generateRegRegInstruction(CMP4RegReg, node, sourceClassDepthReg, destComponentClassDepthReg, cg);
          }
@@ -8324,13 +8326,13 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       if (TR::Compiler->target.is64Bit())
          {
-         TR_ASSERT(!(J9_JAVA_CLASS_DEPTH_MASK & 0x80000000), "AMD64: need to use a second register for AND mask");
-         if (!(J9_JAVA_CLASS_DEPTH_MASK & 0x80000000))
-            generateRegImmInstruction(AND8RegImm4, node, sourceClassDepthReg, J9_JAVA_CLASS_DEPTH_MASK, cg);
+         TR_ASSERT(!(J9AccClassDepthMask & 0x80000000), "AMD64: need to use a second register for AND mask");
+         if (!(J9AccClassDepthMask & 0x80000000))
+            generateRegImmInstruction(AND8RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
          }
       else
          {
-         generateRegImmInstruction(AND4RegImm4, node, sourceClassDepthReg, J9_JAVA_CLASS_DEPTH_MASK, cg);
+         generateRegImmInstruction(AND4RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
          }
 
       generateRegRegInstruction(CMP4RegReg, node, sourceClassDepthReg, destComponentClassDepthReg, cg);*/
@@ -8469,7 +8471,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       // Check that object 1 is an array. If not, throw exception.
       //
       TR_X86OpCodes testOpCode;
-      if ((J9_JAVA_CLASS_RAM_ARRAY >= CHAR_MIN) && (J9_JAVA_CLASS_RAM_ARRAY <= CHAR_MAX))
+      if ((J9AccClassRAMArray >= CHAR_MIN) && (J9AccClassRAMArray <= CHAR_MAX))
          testOpCode = TEST1MemImm1;
       else
          testOpCode = TEST4MemImm4;
@@ -8481,7 +8483,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       #endif
 
 	 TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
-         generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9_JAVA_CLASS_RAM_ARRAY, cg);
+         generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
       if (!snippetLabel)
          {
          snippetLabel = generateLabelSymbol(cg);
@@ -8538,11 +8540,11 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
 
 	 TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
          generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(tempReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
-         // X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
+         // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
 
          // X & OBJECT_HEADER_SHAPE_MASK
-         generateRegImmInstruction(ANDRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_MASK << J9_JAVA_CLASS_RAM_SHAPE_SHIFT), cg);
-         generateRegImmInstruction(CMPRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_POINTERS << J9_JAVA_CLASS_RAM_SHAPE_SHIFT), cg);
+         generateRegImmInstruction(ANDRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
+         generateRegImmInstruction(CMPRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift), cg);
 
          if (!snippetLabel)
             {
@@ -8559,7 +8561,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
          // Check that object 2 is an array. If not, throw exception.
          //
          TR_X86OpCodes testOpCode;
-         if ((J9_JAVA_CLASS_RAM_ARRAY >= CHAR_MIN) && (J9_JAVA_CLASS_RAM_ARRAY <= CHAR_MAX))
+         if ((J9AccClassRAMArray >= CHAR_MIN) && (J9AccClassRAMArray <= CHAR_MAX))
             testOpCode = TEST1MemImm1;
          else
             testOpCode = TEST4MemImm4;
@@ -8572,7 +8574,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
             generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
          #endif
 	    TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
-            generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9_JAVA_CLASS_RAM_ARRAY, cg);
+            generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
          if (!snippetLabel)
             {
             snippetLabel = generateLabelSymbol(cg);
@@ -8584,8 +8586,8 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
             generateLabelInstruction(JE4, node, snippetLabel, cg);
 
          generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(tempReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
-         generateRegImmInstruction(ANDRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_MASK << J9_JAVA_CLASS_RAM_SHAPE_SHIFT), cg);
-         generateRegImmInstruction(CMPRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_POINTERS << J9_JAVA_CLASS_RAM_SHAPE_SHIFT), cg);
+         generateRegImmInstruction(ANDRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
+         generateRegImmInstruction(CMPRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift), cg);
 
          generateLabelInstruction(JNE4, node, snippetLabel, cg);
          }

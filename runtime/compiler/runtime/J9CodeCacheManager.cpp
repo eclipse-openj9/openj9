@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,6 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "codegen/FrontEnd.hpp"
-#ifdef CODECACHE_STATS
-#include "infra/Statistics.hpp"
-#endif
 #include "env/ut_j9jit.h"
 #include "infra/CriticalSection.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -624,3 +621,115 @@ J9::CodeCacheManager::isInRange(uintptr_t address1, uintptr_t address2, uintptr_
       return (address2 - address1) <= range;
    }
 
+void
+J9::CodeCacheManager::reservationInterfaceCache(void *callSite, TR_OpaqueMethodBlock *method)
+   {
+   TR::CodeCacheConfig &config = self()->codeCacheConfig();
+   if (!config.needsMethodTrampolines())
+      return;
+
+   TR::CodeCache *codeCache = self()->findCodeCacheFromPC(callSite);
+   if (!codeCache)
+      return;
+
+   codeCache->findOrAddResolvedMethod(method);
+   }
+
+
+void
+J9::CodeCacheManager::lateInitialization()
+   {
+   TR::CodeCacheConfig &config = self()->codeCacheConfig();
+   if (!config.trampolineCodeSize())
+      return;
+
+   for (TR::CodeCache * codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
+      {
+      config.mccCallbacks().createHelperTrampolines((uint8_t *)codeCache->getHelperBase(), config.numRuntimeHelpers());
+      }
+   }
+
+
+void
+J9::CodeCacheManager::addFreeBlock(void *metaData, uint8_t *startPC)
+   {
+   TR::CodeCache *owningCodeCache = self()->findCodeCacheFromPC(startPC);
+   owningCodeCache->addFreeBlock(metaData);
+   }
+
+
+bool
+J9::CodeCacheManager::almostOutOfCodeCache()
+   {
+   if (self()->lowCodeCacheSpaceThresholdReached())
+      return true;
+
+   TR::CodeCacheConfig &config = self()->codeCacheConfig();
+
+   // If we can allocate another code cache we are fine
+   // Put common case first
+   if (self()->canAddNewCodeCache())
+      return false;
+   else
+      {
+      // Check the space in the the most current code cache
+      bool foundSpace = false;
+
+         {
+         CacheListCriticalSection scanCacheList(self());
+         for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
+            {
+            if (codeCache->getFreeContiguousSpace() >= config.lowCodeCacheThreshold())
+               {
+               foundSpace = true;
+               break;
+               }
+            }
+         }
+
+      if (!foundSpace)
+         {
+         _lowCodeCacheSpaceThresholdReached = true;   // Flag can be checked under debugger
+         if (config.verbosePerformance())
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"Reached code cache space threshold. Disabling JIT profiling.");
+            }
+
+         return true;
+         }
+      }
+
+   return false;
+   }
+
+
+void
+J9::CodeCacheManager::printMccStats()
+   {
+   self()->printRemainingSpaceInCodeCaches();
+   self()->printOccupancyStats();
+   }
+
+
+void
+J9::CodeCacheManager::printRemainingSpaceInCodeCaches()
+   {
+   CacheListCriticalSection scanCacheList(self());
+   for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
+      {
+      fprintf(stderr, "cache %p has %u bytes empty\n", codeCache, codeCache->getFreeContiguousSpace());
+      if (codeCache->isReserved())
+         fprintf(stderr, "Above cache is reserved by compThread %d\n", codeCache->getReservingCompThreadID());
+      }
+   }
+
+
+void
+J9::CodeCacheManager::printOccupancyStats()
+   {
+   CacheListCriticalSection scanCacheList(self());
+   for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
+      {
+      codeCache->printOccupancyStats();
+      }
+   }

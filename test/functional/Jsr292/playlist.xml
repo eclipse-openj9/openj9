@@ -103,6 +103,36 @@
 	</test>
 
 	<test>
+		<testCaseName>jsr292Test_jdk12</testCaseName>
+		<variations>
+				<variation>NoOptions</variation>
+				<variation>Mode195</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_Java12up \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>12+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
 		<testCaseName>jsr292Test_JitCount0_jdk8</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
@@ -230,7 +260,7 @@
 		<testCaseName>jsr292_MethodHandleAPI_Test_JitCount1</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED \
-	-Xjit:count=1,disableAsyncCompilation,verbose,vlog="$(TEST_RESROOT)$(D)jitv.log" \
+	-Xjit:count=1,disableAsyncCompilation,verbose,vlog=$(Q)$(TEST_RESROOT)$(D)jitv.log$(Q) \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \

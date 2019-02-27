@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,16 +43,12 @@ import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 
 /*[IF Sidecar19-SE]
-/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 import java.util.Iterator;
 import java.util.List;
 /*[IF Java11]*/
 import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
-/*[ENDIF]*/
-/*[ELSE]
-import java.lang.reflect.Module;
 /*[ENDIF]*/
 /*[IF Java12]*/
 import jdk.internal.access.JavaLangAccess;
@@ -214,26 +210,20 @@ final class Access implements JavaLangAccess {
 		 */
 		throw new Error("invokeFinalize unimplemented"); //$NON-NLS-1$
 	}
-	
+
 /*[IF Sidecar19-SE]*/
 	public Class<?> findBootstrapClassOrNull(ClassLoader classLoader, String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
-	 }
-	
-	public 
-/*[IF Sidecar19-SE-OpenJ9]	
-	java.lang.ModuleLayer
-/*[ELSE]*/
-	java.lang.reflect.Layer
-/*[ENDIF]*/	
-	getBootLayer() {
+	}
+
+	public ModuleLayer getBootLayer() {
 		return System.bootLayer;
 	}
-	
+
 	public ServicesCatalog createOrGetServicesCatalog(ClassLoader classLoader) {
 		return classLoader.createOrGetServicesCatalog();
 	}
-	
+
 /*[IF !Java10]*/
 	@Deprecated
 	public ServicesCatalog getServicesCatalog(ClassLoader classLoader) {

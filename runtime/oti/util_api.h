@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1868,13 +1868,31 @@ getReturnTypeFromSignature(U_8 * inData, UDATA inLength, U_8 **outData);
 /* ---------------- mthutil.c ---------------- */
 
 /**
+ * @brief Retrieve the J9Method which maps to the index within the iTable for interfaceClass.
+ * @param interfaceClass The interface class to query
+ * @param index The iTable index
+ * @return J9Method* The J9Method which maps to index within interfaceClass
+  */
+J9Method *
+iTableMethodAtIndex(J9Class *interfaceClass, UDATA index);
+
+/**
+ * @brief Retrieve the iTable index of an interface method within the iTable for
+ *        its declaring class.
+ * @param method The interface method
+ * @return UDATA The iTable index (not including the fixed J9ITable header)
+ */
+UDATA
+getITableIndexWithinDeclaringClass(J9Method *method);
+
+/**
  * @brief Retrieve the index of an interface method within the iTable for an interface
  *        (not necessarily the same interface, as iTables contain methods from all
  *        extended interfaces as well as the local one).
  * @param method The interface method
  * @param targetInterface The interface in whose table to search
  *                        (NULL to use the declaring class of method)
- * @return UDATA The iTable index (not including the fixed J9ITable header), or -1 if not found
+ * @return UDATA The iTable index (not including the fixed J9ITable header)
  */
 UDATA
 getITableIndexForMethod(J9Method * method, J9Class *targetInterface);
@@ -2637,11 +2655,7 @@ isPackageExportedToModuleWithName(J9VMThread *currentThread, J9Module *fromModul
  * @return the package definition
  */
 J9Package*
-#if J9VM_JAVA9_BUILD >= 156
 getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, const char *packageName, UDATA * errCode);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, j9object_t packageName, UDATA * errCode);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 /**
  * Get a pointer to J9Package structure associated with incoming classloader and package name
  *
@@ -2652,11 +2666,7 @@ getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, j9object
  * @return a pointer to J9Package structure associated with incoming classloader and package name
  */
 J9Package*
-#if J9VM_JAVA9_BUILD >= 156
 hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, const char *packageName);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, j9object_t packageName);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 /**
  * Add UTF package name to construct a J9Package for hashtable query
  *
@@ -2669,12 +2679,7 @@ hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, j9ob
  * @return true if finished successfully, false if NativeOutOfMemoryError occurred
  */
 BOOLEAN
-#if J9VM_JAVA9_BUILD >= 156
 addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char *packageName, U_8 *buf, UDATA bufLen);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t packageName, U_8 *buf, UDATA bufLen);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
-
 
 /**
  * Find the J9Package with given package name. Caller needs to hold the

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -215,12 +215,40 @@ getCodeTypeAnnotationsDataFromROMMethod(J9ROMMethod *romMethod)
 	return result;
 }
 
+J9Method *
+iTableMethodAtIndex(J9Class *interfaceClass, UDATA index)
+{
+	J9Method *ramMethod = interfaceClass->ramMethods;
+	while (0 != index) {
+		if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
+			index -= 1;
+		}
+		ramMethod += 1;
+	}
+	return ramMethod;
+}
+
+UDATA
+getITableIndexWithinDeclaringClass(J9Method *method)
+{
+	UDATA index = 0;
+	J9Class * const methodClass = J9_CLASS_FROM_METHOD(method);
+	J9Method *ramMethod = methodClass->ramMethods;
+	UDATA const methodCount = methodClass->romClass->romMethodCount;
+	while (method != ramMethod) {
+		if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
+			index += 1;
+		}
+		ramMethod += 1;
+	}
+	return index;
+	
+}
+
 UDATA
 getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
 {
 	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
-	const UDATA methodCount = methodClass->romClass->romMethodCount;
-	const UDATA methodIndex = method - methodClass->ramMethods;
 	UDATA skip = 0;
 	/* NULL targetInterface implies searching only within methodClass, which may be an obsolete class.
 	 * This works because the methods for the local interface always appear first in the iTable, with
@@ -234,26 +262,11 @@ getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
 			if (interfaceClass == methodClass) {
 				break;
 			}
-			skip += interfaceClass->romClass->romMethodCount;
+			skip += J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceClass);
 			allInterfaces = allInterfaces->next;
 		}
 	}
-	/* The iTableIndex is the same as the (ram/rom)method index. 
-	 * This includes static and private methods - they just exist 
-	 * as dead entries in the iTable.
-	 * 
-	 * Code below is the equivalent of doing:
-	 *	for (; methodIndex < methodCount; methodIndex++) {
-	 *		if (ramMethod == method) {
-	 *				return methodIndex;
-	 *		}
-	 *		ramMethod++;
-	 *	}
-	 */
-	if (methodIndex < methodCount) {
-		return methodIndex + skip;
-	}
-	return -1;
+	return getITableIndexWithinDeclaringClass(method) + skip;
 }
 
 J9MethodDebugInfo *

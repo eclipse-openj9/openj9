@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2018 IBM Corp. and others
+# Copyright (c) 1991, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ set(OMR_GC_MODRON_COMPACTION ON CACHE BOOL "")
 set(OMR_GC_MODRON_CONCURRENT_MARK ON CACHE BOOL "")
 set(OMR_GC_MODRON_SCAVENGER ON CACHE BOOL "")
 set(OMR_GC_REALTIME ON CACHE BOOL "")
+set(OMR_GC_SCAVENGER_DELEGATE ON CACHE BOOL "")
 set(OMR_GC_SEGREGATED_HEAP ON CACHE BOOL "")
 set(OMR_GC_STACCATO ON CACHE BOOL "")
 set(OMR_GC_VLHGC ON CACHE BOOL "")

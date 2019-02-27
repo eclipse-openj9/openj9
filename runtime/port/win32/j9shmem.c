@@ -421,7 +421,7 @@ j9shmem_stat(struct J9PortLibrary *portLibrary, const char* cacheDirName, uintpt
 	sharedMemoryFullPath = getSharedMemoryPathandFileName(portLibrary, cacheDirName, name);
 
 	/* Convert the filename from UTF8 to Unicode */
-	unicodePath = port_convertFromUTF8(OMRPORTLIB, sharedMemoryFullPath, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodePath = port_file_get_unicode_path(OMRPORTLIB, sharedMemoryFullPath, unicodeBuffer, UNICODE_BUFFER_SIZE);
 	if (NULL == unicodePath) {
 		omrmem_free_memory(sharedMemoryFullPath);
 		Trc_PRT_shmem_j9shmem_stat_unicodePathNull();
@@ -647,7 +647,7 @@ createMappedFile(struct J9PortLibrary* portLibrary, const char* cacheDirName , s
 		Trc_PRT_shmem_createMappedFile_fileCreateSucceeded();
 
 		/* Convert the filename from UTF8 to Unicode */
-		unicodePath = port_convertFromUTF8(OMRPORTLIB, shareMemoryFileName, unicodeBuffer, UNICODE_BUFFER_SIZE);
+		unicodePath = port_file_get_unicode_path(OMRPORTLIB, shareMemoryFileName, unicodeBuffer, UNICODE_BUFFER_SIZE);
 		if (NULL != unicodePath) {
 			/* MoveFileEx allows us to delete the share cache after the next reboot */
 			MoveFileExW(unicodePath, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);

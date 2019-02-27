@@ -120,9 +120,9 @@ typedef struct J9ClassLoaderWalkState {
 
 /* RAM class shape flags - valid to use these when the underlying ROM class has been unloaded */
 
-#define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9_JAVA_CLASS_RAM_SHAPE_SHIFT) & OBJECT_HEADER_SHAPE_MASK)
-#define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9_JAVA_CLASS_RAM_ARRAY) != 0)
-#define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9_JAVA_CLASS_RAM_SHAPE_SHIFT) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
+#define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK)
+#define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9AccClassRAMArray) != 0)
+#define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
 
 #define IS_STRING_COMPRESSION_ENABLED(vmThread) (FALSE != ((vmThread)->javaVM)->strCompEnabled)
 
@@ -130,33 +130,33 @@ typedef struct J9ClassLoaderWalkState {
 
 #define IS_STRING_COMPRESSED(vmThread, object) \
 	(IS_STRING_COMPRESSION_ENABLED(vmThread) ? \
-		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_V11 ? \
 			(((I_32) J9VMJAVALANGSTRING_CODER(vmThread, object)) == 0) : \
 			(((I_32) J9VMJAVALANGSTRING_COUNT(vmThread, object)) >= 0)) : \
 		FALSE)
 
 #define IS_STRING_COMPRESSED_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
-		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+		(J2SE_VERSION(javaVM) >= J2SE_V11 ? \
 			(((I_32) J9VMJAVALANGSTRING_CODER_VM(javaVM, object)) == 0) : \
 			(((I_32) J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)) >= 0)) : \
 		FALSE)
 
 #define J9VMJAVALANGSTRING_LENGTH(vmThread, object) \
 	(IS_STRING_COMPRESSION_ENABLED(vmThread) ? \
-		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_V11 ? \
 			(J9INDEXABLEOBJECT_SIZE(vmThread, J9VMJAVALANGSTRING_VALUE(vmThread, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER(vmThread, object))) : \
 			(J9VMJAVALANGSTRING_COUNT(vmThread, object) & 0x7FFFFFFF)) : \
-		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_V11 ? \
 			(J9INDEXABLEOBJECT_SIZE(vmThread, J9VMJAVALANGSTRING_VALUE(vmThread, object)) >> 1) : \
 			(J9VMJAVALANGSTRING_COUNT(vmThread, object))))
 
 #define J9VMJAVALANGSTRING_LENGTH_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
-		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+		(J2SE_VERSION(javaVM) >= J2SE_V11 ? \
 			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER_VM(javaVM, object))) : \
 			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object) & 0x7FFFFFFF)) : \
-		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+		(J2SE_VERSION(javaVM) >= J2SE_V11 ? \
 			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> 1) : \
 			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object))))
 
@@ -290,7 +290,7 @@ static const struct { \
 
 #define J9_IS_J9MODULE_OPEN(module) (TRUE == module->isOpen)
 
-#define J9_ARE_MODULES_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_19)
+#define J9_ARE_MODULES_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_V11)
 
 /* Macro for VM internalVMFunctions */
 #if defined(J9_INTERNAL_TO_VM)

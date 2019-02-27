@@ -386,7 +386,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
 	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -414,7 +414,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
 	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -442,7 +442,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xmx768m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Xmx768m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
 	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -470,7 +470,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xlp:objectheap:pagesize=4k -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Xlp:objectheap:pagesize=4k -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
 	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -498,7 +498,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option="$(JVM_OPTIONS) -Xlp:objectheap:pagesize=64k -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" \
+	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Xlp:objectheap:pagesize=64k -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
 	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \

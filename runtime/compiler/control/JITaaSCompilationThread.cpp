@@ -741,13 +741,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getMethodFromName:
          {
-         auto recv = client->getRecvData<std::string, std::string, std::string, TR_OpaqueMethodBlock *>();
+         auto recv = client->getRecvData<std::string, std::string, std::string>();
          std::string className = std::get<0>(recv);
          std::string methodName = std::get<1>(recv);
          std::string signature = std::get<2>(recv);
-         TR_OpaqueMethodBlock *callingMethod = std::get<3>(recv);
          client->write(fe->getMethodFromName(const_cast<char*>(className.c_str()),
-                  const_cast<char*>(methodName.c_str()), const_cast<char*>(signature.c_str()), callingMethod));
+                  const_cast<char*>(methodName.c_str()), const_cast<char*>(signature.c_str())));
          }
          break;
       case J9ServerMessageType::VM_getMethodFromClass:
@@ -1397,7 +1396,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
 #if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
          bool unresolvedInCP = mirror->isUnresolvedMethodTypeTableEntry(cpIndex);
          TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
-               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;", mirror->getNonPersistentIdentifier());
+               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
          J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(mirror->cp()->romConstantPool + cpIndex);
          J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
          int32_t signatureLength;
@@ -1405,7 +1404,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
 #else
          bool unresolvedInCP = mirror->isUnresolvedMethodType(cpIndex);
          TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
-               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;", mirror->getNonPersistentIdentifier());
+               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
          J9ROMMethodTypeRef *romMethodTypeRef = (J9ROMMethodTypeRef *)(mirror->cp()->romConstantPool + cpIndex);
          int32_t signatureLength;
          char   *signature = utf8Data(J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef), signatureLength);
@@ -1449,10 +1448,9 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedDynamicMethod:
          {
-         auto recv = client->getRecvData<int32_t, J9Class *, TR_OpaqueMethodBlock*>();
+         auto recv = client->getRecvData<int32_t, J9Class *>();
          int32_t callSiteIndex = std::get<0>(recv);
          J9Class *clazz = std::get<1>(recv);
-         TR_OpaqueMethodBlock *method = std::get<2>(recv);
 
          TR::VMAccessCriticalSection getResolvedDynamicMethod(fe);
          J9ROMClass *romClass = clazz->romClass;
@@ -1461,7 +1459,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
          J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
          TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
-               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;", method);
+               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
          client->write(dummyInvokeExact, std::string(utf8Data(signature), J9UTF8_LENGTH(signature)), unresolvedInCP);
          }
          break;
@@ -1675,10 +1673,10 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::CompInfo_isClassSpecial:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
-         bool val = clazz->classDepthAndFlags & (J9_JAVA_CLASS_REFERENCE_WEAK      |
-                                                 J9_JAVA_CLASS_REFERENCE_SOFT      |
-                                                 J9_JAVA_CLASS_FINALIZE            |
-                                                 J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER);
+         bool val = clazz->classDepthAndFlags & (J9AccClassReferenceWeak      |
+                                                 J9AccClassReferenceSoft      |
+                                                 J9AccClassFinalizeNeeded     |
+                                                 J9AccClassOwnableSynchronizer);
          client->write(val);
          }
          break;

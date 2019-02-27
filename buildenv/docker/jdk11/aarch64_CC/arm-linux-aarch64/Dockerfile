@@ -79,7 +79,7 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&heap_size=normal" \
+  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&heap_size=normal&type=jdk" \
   && tar -xzf bootjdk11.tar.gz \
   && rm -f bootjdk11.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk11

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,12 +28,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -43,23 +41,26 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+@SuppressWarnings("nls")
 public class Main implements Constants {
 
-	static class JCLRuntimeFlag {
-		String flagName;
-		int value;
+	static final class JCLRuntimeFlag {
+		final String flagName;
+		final int value;
 		int useCount;
 
 		public JCLRuntimeFlag(String flagName, int value) {
 			this.flagName = flagName;
 			this.value = value;
+			this.useCount = 0;
 		}
 
 		public String cDefine() {
 			StringBuilder buf = new StringBuilder();
-			buf.append("JCL_RTFLAG_");
 
-			for (int i = 0; i < flagName.length(); i++) {
+			buf.append("#define JCL_RTFLAG_");
+
+			for (int i = 0, length = flagName.length(); i < length; ++i) {
 				char c = flagName.charAt(i);
 				if (Character.isUpperCase(c)) {
 					buf.append("_");
@@ -67,7 +68,9 @@ public class Main implements Constants {
 				buf.append(Character.toUpperCase(c));
 			}
 
-			return "#define " + buf.toString() + "  0x" + Integer.toHexString(value);
+			buf.append(" 0x").append(Integer.toHexString(value));
+
+			return buf.toString();
 		}
 	}
 
@@ -163,7 +166,7 @@ public class Main implements Constants {
 
 	private static final String optionBuildSpecId = "-buildSpecId";
 	private static final String optionHelp = "-help";
-	private static final String optionJcls = "-jcls";
+	private static final String optionVersion = "-version";
 	private static final String optionRootDir = "-rootDir";
 	private static final String optionConfigDir = "-configDir";
 	private static final String optionOutputDir = "-outputDir";
@@ -172,7 +175,7 @@ public class Main implements Constants {
 	private static final String constantPool = "vmconstantpool.xml";
 
 	private static String buildSpecId = null;
-	private static String jcls = null;
+	private static Integer version = null;
 	private static String configDirectory = null;
 	private static String rootDirectory = ".";
 	private static String outputDirectory = null;
@@ -180,27 +183,35 @@ public class Main implements Constants {
 	private static boolean verbose = false;
 
 	private static IFlagInfo flagInfo;
-	private static HashMap<String, JCLRuntimeFlag> runtimeFlagDefs;
+	private static TreeMap<String, JCLRuntimeFlag> runtimeFlagDefs;
 
 	private static boolean parseOptions(String[] args) {
+		boolean isValid = true;
+
 		try {
-			for (int i = 0; i < args.length; i++) {
+			for (int i = 0; i < args.length; ++i) {
 				String arg = args[i];
-				if (arg.equalsIgnoreCase(optionHelp)) {
+				if (optionHelp.equalsIgnoreCase(arg)) {
 					return false;
-				} else if (arg.equalsIgnoreCase(optionJcls)) {
-					jcls = args[++i];
-				} else if (arg.equalsIgnoreCase(optionRootDir)) {
+				} else if (optionVersion.equalsIgnoreCase(arg)) {
+					String versionValue = args[++i];
+					try {
+						version = Integer.valueOf(versionValue);
+					} catch (NumberFormatException e) {
+						System.err.printf("ERROR: argument for '%s' must be numeric (%s)\n", optionVersion, versionValue);
+						isValid = false;
+					}
+				} else if (optionRootDir.equalsIgnoreCase(arg)) {
 					rootDirectory = args[++i];
-				} else if (arg.equalsIgnoreCase(optionConfigDir)) {
+				} else if (optionConfigDir.equalsIgnoreCase(arg)) {
 					configDirectory = args[++i];
-				} else if (arg.equalsIgnoreCase(optionBuildSpecId)) {
+				} else if (optionBuildSpecId.equalsIgnoreCase(arg)) {
 					buildSpecId = args[++i];
-				} else if (arg.equalsIgnoreCase(optionOutputDir)) {
+				} else if (optionOutputDir.equalsIgnoreCase(arg)) {
 					outputDirectory = args[++i];
-				} else if (arg.equalsIgnoreCase(optionCmakeCache)) {
+				} else if (optionCmakeCache.equalsIgnoreCase(arg)) {
 					cmakeCache = args[++i];
-				} else if (arg.equalsIgnoreCase(optionVerbose)) {
+				} else if (optionVerbose.equalsIgnoreCase(arg)) {
 					verbose = true;
 				} else {
 					System.err.printf("Unrecognized option '%s'\n", arg);
@@ -211,9 +222,8 @@ public class Main implements Constants {
 			return false;
 		}
 
-		boolean isValid = true;
-		if (jcls == null) {
-			System.err.printf("ERROR: required argument '%s' not given\n", optionJcls);
+		if (version == null) {
+			System.err.printf("ERROR: required argument '%s' not given\n", optionVersion);
 			isValid = false;
 		}
 
@@ -241,8 +251,8 @@ public class Main implements Constants {
 		System.err.println();
 		System.err.println("Usage:");
 
-		String commonOptStr = "\t" + optionRootDir + " <directory> [" +  optionOutputDir + " <directory>] ";
-		String trailingOptStr =  optionJcls + " max,xtr,cldc11,...";
+		String commonOptStr = "\t" + optionRootDir + " <directory> [" + optionOutputDir + " <directory>] ";
+		String trailingOptStr = optionVersion + " <version>";
 
 		System.err.println(commonOptStr + optionConfigDir + " <directory> " + optionBuildSpecId + "<specId> " + trailingOptStr);
 		System.err.println(commonOptStr + optionCmakeCache + " <cacheFile> " + trailingOptStr);
@@ -251,7 +261,7 @@ public class Main implements Constants {
 	public static void main(String[] args) throws Throwable {
 		if (!parseOptions(args)) {
 			printHelp();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		if (cmakeCache != null) {
@@ -269,10 +279,7 @@ public class Main implements Constants {
 		ConstantPool pool = parseConstantPool();
 		writeHeader(pool);
 
-		StringTokenizer tokenizer = new StringTokenizer(jcls, ",");
-		while (tokenizer.hasMoreTokens()) {
-			writeDefinition(pool, tokenizer.nextToken(), flagInfo.getAllSetFlags());
-		}
+		writeDefinition(pool, version.intValue(), flagInfo.getAllSetFlags());
 	}
 
 	private static File getOutputFile(String directory, String fileName) throws FileNotFoundException {
@@ -291,13 +298,13 @@ public class Main implements Constants {
 	}
 
 	private static void printOn(PrintWriter out, String[] lines) {
-		for (int i = 0; i < lines.length; i++) {
+		for (int i = 0; i < lines.length; ++i) {
 			out.println(lines[i]);
 		}
 	}
 
-	private static void writeDefinition(ConstantPool pool, String jcl, Set<String> flags) throws Throwable {
-		System.out.println("Generating jcl constant pool definitions for " + jcl);
+	private static void writeDefinition(ConstantPool pool, int version, Set<String> flags) throws Throwable {
+		System.out.println("Generating JCL constant pool definitions for Java " + version);
 		StringWriter buffer = new StringWriter();
 		PrintWriter out = new PrintWriter(buffer);
 		printOn(out, openDefinition);
@@ -305,12 +312,12 @@ public class Main implements Constants {
 		printOn(out, endianMacros);
 		out.println();
 
-		pool.writeForClassLibrary(jcl, flags, out);
+		pool.writeForClassLibrary(version, flags, out);
 
 		out.flush();
 		out.close();
 
-		writeToDisk(getOutputFile("jcl", "j9vmconstantpool_" + jcl + ".c"), buffer.toString());
+		writeToDisk(getOutputFile("jcl", "j9vmconstantpool.c"), buffer.toString());
 	}
 
 	private static void writeHeader(ConstantPool pool) throws Throwable {
@@ -320,13 +327,8 @@ public class Main implements Constants {
 		printOn(out, openHeader);
 		out.println();
 
-		ArrayList<String> sortedKeys = new ArrayList<String>();
-		sortedKeys.addAll(runtimeFlagDefs.keySet());
-		Collections.sort(sortedKeys);
-
 		out.println("/* Runtime flag definitions */");
-		for (String key : sortedKeys) {
-			JCLRuntimeFlag flag = runtimeFlagDefs.get(key);
+		for (JCLRuntimeFlag flag : runtimeFlagDefs.values()) {
 			out.println(flag.cDefine());
 		}
 		out.println();
@@ -372,9 +374,10 @@ public class Main implements Constants {
 		}
 
 		Map<String, ClassRef> classes = new HashMap<String, ClassRef>();
+		final int nodeCount = nodes.getLength();
 
 		// Find classrefs.
-		for (int i = 0; i < nodes.getLength(); i++) {
+		for (int i = 0; i < nodeCount; ++i) {
 			Node node = nodes.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals(CLASSREF)) {
 				classes.put(((Element) node).getAttribute("name"), new ClassRef((Element) node));
@@ -383,14 +386,14 @@ public class Main implements Constants {
 
 		// Build constant pool
 		ConstantPool pool = new ConstantPool();
-		runtimeFlagDefs = new HashMap<String, JCLRuntimeFlag>();
+		// TreeMap keeps flags ordered by name.
+		runtimeFlagDefs = new TreeMap<String, JCLRuntimeFlag>();
 
-		int nextFlagValue = 0x1;
-		JCLRuntimeFlag defaultFlag = new JCLRuntimeFlag("default", nextFlagValue);
+		int lastFlagValue = 0x1;
+		JCLRuntimeFlag defaultFlag = new JCLRuntimeFlag("default", lastFlagValue);
 		runtimeFlagDefs.put("default", defaultFlag);
-		nextFlagValue = nextFlagValue << 1;
 
-		for (int i = 0; i < nodes.getLength(); i++) {
+		for (int i = 0; i < nodeCount; ++i) {
 			Node node = nodes.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
 				PrimaryItem cpItem = cpItem((Element) node, classes);
@@ -403,7 +406,7 @@ public class Main implements Constants {
 					/* non-null flags= attribute */
 					String flagName = flagsNode.getTextContent();
 
-					/* validate flags used in constantpool.xml  */
+					/* validate flags used in constantpool.xml */
 					if (!flagInfo.isFlagValid(flagName)) {
 						System.err.println("Invalid flag used ->" + flagName);
 						System.exit(-1);
@@ -412,9 +415,9 @@ public class Main implements Constants {
 					/* Find or create the flag object */
 					JCLRuntimeFlag flag = runtimeFlagDefs.get(flagName);
 					if (null == flag) {
-						flag = new JCLRuntimeFlag(flagName, nextFlagValue);
+						lastFlagValue <<= 1;
+						flag = new JCLRuntimeFlag(flagName, lastFlagValue);
 						runtimeFlagDefs.put(flagName, flag);
-						nextFlagValue = nextFlagValue << 1;
 					}
 
 					/* increment the useCount */
@@ -426,13 +429,9 @@ public class Main implements Constants {
 		}
 
 		System.out.println("Found " + runtimeFlagDefs.size() + " flags used, declaring runtime constants.");
-		ArrayList<String> sortedFlags = new ArrayList<String>();
-		sortedFlags.addAll(runtimeFlagDefs.keySet());
-		Collections.sort(sortedFlags);
 
-		for (String flag : sortedFlags) {
-			JCLRuntimeFlag runtimeFlag = runtimeFlagDefs.get(flag);
-			System.out.println("\t" + runtimeFlag.cDefine() + " (useCount=" + runtimeFlag.useCount + ")");
+		for (JCLRuntimeFlag flag : runtimeFlagDefs.values()) {
+			System.out.println("\t" + flag.cDefine() + " (useCount=" + flag.useCount + ")");
 		}
 
 		return pool;
@@ -443,21 +442,21 @@ public class Main implements Constants {
 		if (CLASSREF.equals(type)) {
 			return (ClassRef) classes.get(e.getAttribute("name"));
 		} else if (FIELDREF.equals(type)) {
-			return new FieldRef((Element) e, classes);
+			return new FieldRef(e, classes);
 		} else if (STATICFIELDREF.equals(type)) {
-			return new StaticFieldRef((Element) e, classes);
+			return new StaticFieldRef(e, classes);
 		} else if (STATICMETHODREF.equals(type)) {
-			return new StaticMethodRef((Element) e, classes);
+			return new StaticMethodRef(e, classes);
 		} else if (VIRTUALMETHODREF.equals(type)) {
-			return new VirtualMethodRef((Element) e, classes);
+			return new VirtualMethodRef(e, classes);
 		} else if (SPECIALMETHODREF.equals(type)) {
-			return new SpecialMethodRef((Element) e, classes);
+			return new SpecialMethodRef(e, classes);
 		} else if (INTERFACEMETHODREF.equals(type)) {
-			return new InterfaceMethodRef((Element) e, classes);
+			return new InterfaceMethodRef(e, classes);
 		} else {
 			System.err.println("Unrecognized node type: " + type);
 			System.exit(-1);
-			return null; // Unreachable
+			return null; // unreachable
 		}
 	}
 
@@ -468,14 +467,11 @@ public class Main implements Constants {
 	/**
 	 * Checks if a file with given name exists on disk. Returns true if it does
 	 * not exist. If the file exists, compares it with generated buffer and
-	 * returns true if they are equals. Also it deletes old file from the file
-	 * system.
+	 * returns true if they are equal.
 	 *
 	 * @param fileName
 	 * @param desiredContent
 	 * @return boolean TRUE|FALSE
-	 * @throws FileNotFoundException
-	 * @throws IOException
 	 */
 	private static boolean differentFromCopyOnDisk(String fileName, String desiredContent) {
 		File fileOnDisk = new File(fileName);

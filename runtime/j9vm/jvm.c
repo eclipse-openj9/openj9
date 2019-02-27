@@ -230,6 +230,7 @@ static char * newPath = NULL;
 J9JavaVM *BFUjavaVM = NULL;
 
 static jclass jlClass = NULL;
+static jfieldID classNameFID = NULL;
 static jmethodID classDepthMID = NULL;
 static jmethodID classLoaderDepthMID = NULL;
 static jmethodID currentClassLoaderMID = NULL;
@@ -969,23 +970,25 @@ getj9bin()
 #define JVM_ARCH_DIR "amd64"
 #elif defined(J9ARM)
 #define JVM_ARCH_DIR "arm"
+#elif defined(J9AARCH64)
+#define JVM_ARCH_DIR "aarch64"
 #else
 #error "Must define an architecture"
 #endif
 
 /* We use forward slashes here because J9VM_LIB_ARCH_DIR is not used on Windows. */
-#if (J9VM_JAVA9_BUILD >= 150) || defined(OSX)
+#if (JAVA_SPEC_VERSION >= 9) || defined(OSX)
 /* On OSX, <arch> doesn't exist. So, JVM_ARCH_DIR shouldn't be appended to
  * J9VM_LIB_ARCH_DIR on OSX.
  */
 #define J9VM_LIB_ARCH_DIR "/lib/"
-#elif defined(JVM_ARCH_DIR) /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#elif defined(JVM_ARCH_DIR) /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 #define J9VM_LIB_ARCH_DIR "/lib/" JVM_ARCH_DIR "/"
-#else /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#else /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 #error "No matching ARCH found"
-#endif /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#endif /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 
-#if J9VM_JAVA9_BUILD < 150
+#if JAVA_SPEC_VERSION == 8
 /*
  * Remove the suffix from string if present.
  */
@@ -1003,7 +1006,7 @@ removeSuffix(char *string, const char *suffix)
 		}
 	}
 }
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 #if defined(J9UNIX) || defined(J9ZOS390)
 static BOOLEAN 
@@ -1057,10 +1060,10 @@ preloadLibraries(void)
 	if (0 == strcmp(lastDirName + 1, "classic")) {
 		truncatePath(jvmBufferData(j9binBuffer)); /* at jre/bin or jre/lib/<arch> */
 		truncatePath(jvmBufferData(j9binBuffer)); /* at jre     or jre/lib        */
-#if J9VM_JAVA9_BUILD < 150
+#if JAVA_SPEC_VERSION == 8
 		/* remove /lib if present */
 		removeSuffix(jvmBufferData(j9binBuffer), "/lib"); /* at jre */
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 		j9binBuffer = jvmBufferCat(j9binBuffer, J9VM_LIB_ARCH_DIR "j9vm/");
 		if (-1 != stat(jvmBufferData(j9binBuffer), &statBuf)) {
 			/* does exist, carry on */
@@ -1102,10 +1105,10 @@ preloadLibraries(void)
 	/* <arch> directory doesn't exist on OSX so j9libBuffer shouldn't
 	 * be truncated on OSX for removing <arch>.
 	 */
-#if (J9VM_JAVA9_BUILD < 150)
+#if JAVA_SPEC_VERSION == 8
 	/* Remove <arch> */
 	truncatePath(jvmBufferData(j9libBuffer));
-#endif /* (J9VM_JAVA9_BUILD < 150) */
+#endif /* JAVA_SPEC_VERSION == 8 */
 #endif /* !defined(OSX) */
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 	j9Buffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
@@ -1287,56 +1290,41 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 }
 
 typedef struct VersionSetting {
-	char* key;
+	const char* key;
 	UDATA value;
 } VersionSetting;
 
 
 /**
  * Table to map textual props file entries to numeric constants.
- * The 'b' levels are sorted in ascending order, and camparison of the shape value from classlib.properties
- * with the keys starts from last entry in this table, the lower and closest key to the the shape value is returned.
- * For example, a shape value 'b140' will match to 'b136' and J2SE_SHAPE_B136 is returned;
- * If a shape value specified such as b72 is less than smallest existing key (i.e. b135), an error is printed.
- *
- * !!! Note about "b135" ==> J2SE_SHAPE_B136 !!!
- * For historic reason, J2SE_SHAPE_B136 was introduced when actual build level 135 was used.
- * Mapping b135 to J2SE_SHAPE_B136 (changed from previous b136) allows both shape b135 & b136 working
- * and avoid naming change from J2SE_SHAPE_B136 to J2SE_SHAPE_B135.
- * This will be removed when a new stable JCL build level is determined and b135 is obsolete.
  *
  * Note: shapes "sun" and "sun_openjdk" here are for accommodation of such values within Java 8 classlib.properties.
  *       Both shapes are mapped to J2SE_SHAPE_OPENJDK to indicate a Java 8 SDK.
  */
-VersionSetting SHAPE_SETTINGS[] = {
+static const VersionSetting SHAPE_SETTINGS[] = {
 		{"sun", J2SE_SHAPE_OPENJDK},
 		{"sun_openjdk", J2SE_SHAPE_OPENJDK},
 		{"raw", J2SE_SHAPE_RAW},
 		{"rawplusj9", J2SE_SHAPE_RAWPLUSJ9},
-		{"b135", J2SE_SHAPE_B136},
-		{"b148", J2SE_SHAPE_B148},
-		{"b165", J2SE_SHAPE_B165},
-		{"b1000", J2SE_SHAPE_V10},
 };
 #define NUM_SHAPE_SETTINGS (sizeof(SHAPE_SETTINGS) / sizeof(VersionSetting))
 
 /**
  * Table to map textual props file entries to numeric constants.
  */
-VersionSetting VERSION_SETTINGS[] = {
-		{"1.8", J2SE_18},
-		{"1.9", J2SE_19}
+static const VersionSetting VERSION_SETTINGS[] = {
+		{"1.8", J2SE_18}
 };
 #define NUM_VERSION_SETTINGS (sizeof(VERSION_SETTINGS) / sizeof(VersionSetting))
 
 
 static UDATA 
-decodeSetting(const char* key, const char* value, VersionSetting* settings, IDATA numSettings)
+decodeSetting(const char* key, const char* value, const VersionSetting* settings, IDATA numSettings)
 {
 	IDATA index = 0;
 	
 	for (index = 0; index < numSettings; index++) {
-		VersionSetting *setting = &settings[index];
+		const VersionSetting *setting = &settings[index];
 		if (!strcmp(value, setting->key)) {
 			return setting->value;
 		}
@@ -1350,7 +1338,7 @@ decodeSetting(const char* key, const char* value, VersionSetting* settings, IDAT
 		int levelValue = atoi((const char*)(value + 1));
 		if (levelValue > 0) {
 			for (index = numSettings - 1; index >= 0; index--) {
-				VersionSetting *setting = &settings[index];
+				const VersionSetting *setting = &settings[index];
 				if ('b' == *setting->key) {
 					int keyNbr = atoi((const char*)(setting->key + 1));
 					if (keyNbr > 0) {
@@ -1371,7 +1359,7 @@ decodeSetting(const char* key, const char* value, VersionSetting* settings, IDAT
 #if defined(DEBUG)	
 	printf("Valid choices are: ");
 	for (index=0; index < numSettings; index++) {
-		VersionSetting* setting = &settings[index];
+		const VersionSetting* setting = &settings[index];
 		printf("%s", setting->key);
 		if (index != numSettings-1)
 				printf(", ");		
@@ -1453,16 +1441,15 @@ bail:
  * Attempt loading 'release' file, and get Java version info.
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
  * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
- * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
- * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
  * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
- * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
- *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
- *         'J2SE_V12 | J2SE_SHAPE_V12', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK',
+ *         'J2SE_V11 | J2SE_SHAPE_V11',
+ *         'J2SE_V12 | J2SE_SHAPE_V12',
+ *         'J2SE_LATEST | J2SE_SHAPE_LATEST'
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1486,14 +1473,6 @@ getVersionFromReleaseFile(void)
 			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
 #undef   JAVA_VERSION_8
 				finalVersion = J2SE_18 | J2SE_SHAPE_OPENJDK;
-#define	 JAVA_VERSION_9 "\"9" /* its usual format is "9[.x.x]" */
-			} else if (!strncmp(version, JAVA_VERSION_9, sizeof(JAVA_VERSION_9) - 1)) {
-#undef   JAVA_VERSION_9
-				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
-#define	 JAVA_VERSION_10 "\"10" /* its usual format is "10[.x.x]" */
-			} else if (!strncmp(version, JAVA_VERSION_10, sizeof(JAVA_VERSION_10) - 1)) {
-#undef   JAVA_VERSION_10			
-				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
 #define	 JAVA_VERSION_11 "\"11" /* its usual format is "11[.x.x]" */
 			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
 #undef   JAVA_VERSION_11
@@ -1666,7 +1645,7 @@ setNLSCatalog(struct J9PortLibrary* portLib, UDATA j2seVersion)
 	const char *nlsSearchPaths = NULL;
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
+	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
 		/*
 		 * j9libBuffer doesn't end in a slash, but j9nls_set_catalog ignores everything after
 		 * the last slash. Append a slash to our local copy of j9libBuffer
@@ -1703,7 +1682,12 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 		return JNI_ERR;
 	}
 
-	if (J2SE_SHAPE_RAW != J2SE_SHAPE(vm)) {
+	if (J2SE_SHAPE_RAW == J2SE_SHAPE(vm)) {
+		classNameFID = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");
+		if (!classNameFID) {
+			return JNI_ERR;
+		}
+	} else {
 		classDepthMID = (*env)->GetStaticMethodID(env, clazz, "classDepth", "(Ljava/lang/String;)I");
 		if (!classDepthMID) {
 			return JNI_ERR;
@@ -1766,7 +1750,7 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 	}
 
 	if (includeAccessors) {
-		if (J2SE_VERSION(vm) >= J2SE_19) {
+		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
 			clazzMethodAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/MethodAccessorImpl");
 		} else {
@@ -2116,7 +2100,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 			zipFuncs = (J9ZipFunctionTable*) J9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 		}
-		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
+		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
 			optionsDefaultFileLocation = jvmBufferData(j9libBuffer);
 		} else {
 			optionsDefaultFileLocation = jvmBufferData(j9binBuffer);
@@ -5513,10 +5497,18 @@ JVM_ActiveProcessorCount(void)
 J9Class* java_lang_Class_vmRef(JNIEnv* env, jobject clazz);
 
 /**
- * JVM_GetClassName
+ * JVM_GetClassName / JVM_InitClassName
+ *
+ * The name was changed from JVM_GetClassName to JVM_InitClassName
+ * in interface version 6.
  */
 jstring JNICALL
-JVM_GetClassName(JNIEnv *env, jclass theClass)
+#if (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12)
+JVM_GetClassName
+#else /* (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12) */
+JVM_InitClassName
+#endif /* (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12) */
+(JNIEnv *env, jclass theClass)
 {
 	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
 	jstring result;
@@ -5568,6 +5560,13 @@ JVM_GetClassName(JNIEnv *env, jclass theClass)
 
 			result = (*env)->NewStringUTF(env, name);
 			j9mem_free_memory(name);
+#if (JAVA_SPEC_VERSION >= 11) && (JAVA_SPEC_VERSION != 12)
+			// JVM_InitClassName is expected to also cache the result in the 'name' field
+			(*env)->SetObjectField(env, theClass, classNameFID, result);
+			if ((*env)->ExceptionCheck(env)) {
+				result = NULL;
+			}
+#endif /* (JAVA_SPEC_VERSION >= 11) && (JAVA_SPEC_VERSION != 12) */
 			return result;
 		}
 	}
@@ -5587,19 +5586,24 @@ JVM_GetClassName(JNIEnv *env, jclass theClass)
 
 /**
  * Return the JVM_INTERFACE_VERSION. This function should not lock, gc or throw exception.
- * @return JVM_INTERFACE_VERSION, current value is 4
+ * @return JVM_INTERFACE_VERSION, JDK8 - 4, JDK11+ - 6.
  */
 jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
-	jint result = 4;
-	UDATA j2seVersion = getVersionFromPropertiesFile();
-
-	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
-		result = 5;
-	}
+	jint result = 4;	/* JDK8 */
+	UDATA j2seVersion = 0;
 
 	Trc_SC_GetInterfaceVersion_Entry();
+
+	j2seVersion = getVersionFromPropertiesFile();
+	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
+		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) == J2SE_V12) {
+			result = 5; /* JDK12 hasn't got same update as JDK11 & HEAD */
+		} else {
+			result = 6; /* JDK11 & HEAD */
+		}
+	}
 
 	Trc_SC_GetInterfaceVersion_Exit(result);
 

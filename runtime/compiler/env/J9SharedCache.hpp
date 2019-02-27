@@ -85,7 +85,10 @@ public:
 
    virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
 
-   
+   J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
+
+   virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz);
+
    enum TR_J9SharedCacheDisabledReason
       {
       UNINITIALIZED,

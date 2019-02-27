@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ public class InnerPreexistence implements Notifiable {
 	public static final int TASK_LOAD_C = 1;
 
 	private Timer timer;
-	private boolean keepOnGoing = true;
+	private volatile boolean keepOnGoing = true;
 	private A someA;
 	private B someB;
 	private B otherB;

@@ -28,7 +28,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) \
+		<command>$(JAVA_COMMAND) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)XXArgumentTesting.xml$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>vm.cmprssptrs</platformRequirements>

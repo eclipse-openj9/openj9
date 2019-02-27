@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -275,10 +275,15 @@ public:
 
 	virtual CompletePhaseCode scanWeakReferencesComplete(MM_EnvironmentBase *envBase) {
 		MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+		reportScanningStarted(RootScannerEntity_WeakReferenceObjectsComplete);
+
 		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
 			env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_weak;
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
+
+		reportScanningEnded(RootScannerEntity_WeakReferenceObjectsComplete);
+
 		return complete_phase_OK;
 	}
 
@@ -818,23 +823,23 @@ MM_RealtimeMarkingScheme::scanReferenceMixedObject(MM_EnvironmentRealtime *env, 
 	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
 	I_32 referenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr);
-	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK;
+	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
 	UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
 	bool isReferenceCleared = (GC_ObjectModel::REF_STATE_CLEARED == referenceState) || (GC_ObjectModel::REF_STATE_ENQUEUED == referenceState);
 	bool referentMustBeMarked = isReferenceCleared;
 	bool referentMustBeCleared = false;
 
 	switch (referenceObjectType) {
-	case J9_JAVA_CLASS_REFERENCE_WEAK:
+	case J9AccClassReferenceWeak:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
 		break;
-	case J9_JAVA_CLASS_REFERENCE_SOFT:
+	case J9AccClassReferenceSoft:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 		referentMustBeMarked = referentMustBeMarked || (
 			((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
 			&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _gcExtensions->getDynamicMaxSoftReferenceAge())));
 		break;
-	case J9_JAVA_CLASS_REFERENCE_PHANTOM:
+	case J9AccClassReferencePhantom:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
 		break;
 	default:
@@ -1198,9 +1203,9 @@ MM_RealtimeMarkingScheme::processReferenceList(MM_EnvironmentRealtime *env, MM_H
 		GC_SlotObject referentSlotObject(_gcExtensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
 		if (NULL != referent) {
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9_JAVA_CLASS_REFERENCE_MASK;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
 			if (isMarked(referent)) {
-				if (J9_JAVA_CLASS_REFERENCE_SOFT == referenceObjectType) {
+				if (J9AccClassReferenceSoft == referenceObjectType) {
 					U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, referenceObj);
 					if (age < _gcExtensions->getMaxSoftReferenceAge()) {
 						/* Soft reference hasn't aged sufficiently yet - increment the age */
@@ -1215,7 +1220,7 @@ MM_RealtimeMarkingScheme::processReferenceList(MM_EnvironmentRealtime *env, MM_H
 				referenceStats->_cleared += 1;
 
 				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
-				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+				if ((J9AccClassReferencePhantom == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
 					/* Scanning will be done after the enqueuing */
 					markObject(env, referent);
 				} else {

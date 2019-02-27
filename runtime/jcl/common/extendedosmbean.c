@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -538,10 +538,10 @@ Java_com_ibm_lang_management_internal_UnixExtendedOperatingSystem_getMaxFileDesc
 	U_64 limit = 0;
 	PORT_ACCESS_FROM_ENV(env);
 	rc = j9sysinfo_get_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS, &limit);
-	if (OMRPORT_LIMIT_UNLIMITED == rc) { /* No limit set (i.e., "unlimited"). */
+	if (OMRPORT_LIMIT_UNKNOWN == rc) { /* The port library failed! */
+		limit = ((U_64) -1);
+	} else if (OMRPORT_LIMIT_UNLIMITED == rc) { /* No limit set (i.e., "unlimited"). */
 		limit = ((U_64) LLONG_MAX);
-	} else if (OMRPORT_LIMIT_UNKNOWN == rc) { /* The port library failed! */
-    	limit = ((U_64) -1);
 	}
 	return ((jlong) limit);
 }
@@ -561,13 +561,13 @@ Java_com_ibm_lang_management_internal_UnixExtendedOperatingSystem_getMaxFileDesc
 jlong JNICALL
 Java_com_ibm_lang_management_internal_UnixExtendedOperatingSystem_getOpenFileDescriptorCountImpl(JNIEnv *env, jclass theClass)
 {
-    I_32 ret = 0;
+	I_32 ret = 0;
 	U_64 count = 0;
 	PORT_ACCESS_FROM_ENV(env);
-    ret = j9sysinfo_get_open_file_count(&count);
-   	/* Check if an error occurred while obtaining the open file count. */
-    if (ret < 0) {
-    	count = ((U_64) -1);
-    }
+	ret = j9sysinfo_get_open_file_count(&count);
+	/* Check if an error occurred while obtaining the open file count. */
+	if (ret < 0) {
+		count = ((U_64) -1);
+	}
 	return ((jlong) count);
 }

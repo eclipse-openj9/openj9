@@ -586,7 +586,7 @@ When you have all the source files that you need, run the configure script, whic
 
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_macOS_JDK11> \
+               --with-boot-jdk=<path_to_macOS_JDK10> \
                --disable-warnings-as-errors
 ```
 

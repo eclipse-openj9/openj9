@@ -351,16 +351,9 @@ public:
 	}
 
 	VMINLINE UDATA
-	mixedObjectGetDataSize(J9Class *objectClass, bool dontIncludeLockword)
+	mixedObjectGetDataSize(J9Class *objectClass)
 	{
-		UDATA size = objectClass->totalInstanceSize;
-		if (dontIncludeLockword) {
-			if ((0 <= (IDATA)objectClass->lockOffset)) {
-				size -= sizeof(j9objectmonitor_t);
-			}
-		}
-
-		return size;
+		return objectClass->totalInstanceSize;
 	}
 
 	VMINLINE void
@@ -395,8 +388,11 @@ public:
 			}
 		} else {
 			UDATA offset = 0;
-			bool isValueType = J9_IS_J9CLASS_VALUETYPE(objectClass);
-			UDATA limit = mixedObjectGetDataSize(objectClass, isValueType);
+			UDATA limit = mixedObjectGetDataSize(objectClass);
+			
+			if (J9_IS_J9CLASS_VALUETYPE(objectClass)) {
+				offset += objectClass->backfillOffset;
+			}
 			
 			while (offset < limit) {
 				*(fj9object_t *)((UDATA)destObject + offset + destOffset) = *(fj9object_t *)((UDATA)srcObject + offset + srcOffset);

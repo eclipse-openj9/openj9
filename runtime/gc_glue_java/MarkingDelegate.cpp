@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -276,7 +276,7 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 								GC_ClassHeapIterator classHeapIterator(javaVM, segment);
 								J9Class *clazz = NULL;
 								while (NULL != (clazz = classHeapIterator.nextClass())) {
-									Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9_JAVA_CLASS_DYING));
+									Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9AccClassDying));
 									if ((0 == (J9CLASS_EXTENDED_FLAGS(clazz) & J9ClassGCScanned)) && _markingScheme->isMarked(clazz->classObject)) {
 										J9CLASS_EXTENDED_FLAGS_SET(clazz, J9ClassGCScanned);
 
@@ -459,9 +459,9 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 			_markingScheme->fixupForwardedSlot(&referentSlotObject);
 			omrobjectptr_t referent = referentSlotObject.readReferenceFromSlot();
 
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9_JAVA_CLASS_REFERENCE_MASK;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
 			if (_markingScheme->isMarked(referent)) {
-				if (J9_JAVA_CLASS_REFERENCE_SOFT == referenceObjectType) {
+				if (J9AccClassReferenceSoft == referenceObjectType) {
 					U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, referenceObj);
 					if (age < _extensions->getMaxSoftReferenceAge()) {
 						/* Soft reference hasn't aged sufficiently yet - increment the age */
@@ -477,7 +477,7 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 
 				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
 				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
-				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+				if ((J9AccClassReferencePhantom == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
 					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
 					_markingScheme->inlineMarkObject(env, referent);
 				} else {
@@ -537,18 +537,18 @@ MM_MarkingDelegate::getReferenceStatus(MM_EnvironmentBase *env, omrobjectptr_t o
 	*referentMustBeMarked = *isReferenceCleared;
 	bool referentMustBeCleared = false;
 
-	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK;
+	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
 	switch (referenceObjectType) {
-	case J9_JAVA_CLASS_REFERENCE_WEAK:
+	case J9AccClassReferenceWeak:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
 		break;
-	case J9_JAVA_CLASS_REFERENCE_SOFT:
+	case J9AccClassReferenceSoft:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
 		*referentMustBeMarked = *referentMustBeMarked || (
 			((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
 			&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())));
 		break;
-	case J9_JAVA_CLASS_REFERENCE_PHANTOM:
+	case J9AccClassReferencePhantom:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
 		break;
 	default:

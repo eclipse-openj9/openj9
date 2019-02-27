@@ -130,7 +130,7 @@ public:
    virtual int32_t getJavaLangClassHashCode(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, bool &hashCodeComputed) override;
    virtual bool hasFinalizer(TR_OpaqueClassBlock *clazz) override;
    virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz) override;
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod) override;
+   virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature) override;
    virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass) override;
    virtual bool isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass) override;
    virtual void markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart) override;
@@ -209,8 +209,7 @@ public:
    virtual bool shouldDelayAotLoad() override                                 { return true; }
    virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
-   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
-   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool traceableMethodsCanBeInlined() override;
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
@@ -241,7 +240,6 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override;
    virtual bool isReferenceArray(TR_OpaqueClassBlock *) override;
-   virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *) override;
    virtual TR_OpaqueMethodBlock * getInlinedCallSiteMethod(TR_InlinedCallSite *ics) override;
    virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override { return false; }
    virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override { return true; }

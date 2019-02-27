@@ -33,6 +33,7 @@
 #include "j9vmconstantpool.h"
 #include "j9consts.h"
 #include "jvmti.h"
+#include "j9javaaccessflags.h"
 
 #define J9VM_MAX_HIDDEN_FIELDS_PER_CLASS 8
 
@@ -59,100 +60,6 @@
 #define J9DataTypeThunkMappingList 0x8
 #define J9DataTypeUnallocated 0x100
 
-/* @ddr_namespace: map_to_type=J9JavaAccessFlags */
-
-/* Constants from J9JavaAccessFlags */
-#define J9AccAbstract 0x400
-#define J9AccAnnotation 0x2000
-#define J9AccBridge 0x40
-#define J9AccClassAnnnotionRefersDoubleSlotEntry 0x80000
-#define J9AccClassAnonClass 0x800
-#define J9AccClassArray 0x10000
-#define J9AccClassBytecodesModified 0x100000
-#define J9AccClassCloneable 0x80000000
-#define J9AccClassCompatibilityMask 0x7FFF
-#define J9AccClassDepthMask 0xFFFF
-#define J9AccClassDying 0x8000000
-#define J9AccClassFinalizeNeeded 0x40000000
-#define J9AccClassGCSpecial 0x800000
-#define J9AccClassHasBeenOverridden 0x100000
-#define J9AccClassHasClinit 0x4000000
-#define J9AccClassHasEmptyFinalize 0x200000
-#define J9AccClassHasFinalFields 0x2000000
-#define J9AccClassHasJDBCNatives 0x400000
-#define J9AccClassHasNonStaticNonAbstractMethods 0x8000000
-#define J9AccClassHasVerifyData 0x800000
-#define J9AccClassHotSwappedOut 0x4000000
-#define J9AccClassInnerClass 0x4000
-#define J9AccClassIntermediateDataIsClassfile 0x20000
-#define J9AccClassInternalPrimitiveType 0x20000
-#define J9AccClassIsContended 0x1000000
-#define J9AccClassOwnableSynchronizer 0x200000
-#define J9AccClassUnused200 0x200
-#define J9AccClassUnused400 0x400
-#define J9AccClassRAMArray 0x10000
-#define J9AccClassRAMShapeShift 0x10
-#define J9AccClassReferenceMask 0x30000000
-#define J9AccClassReferencePhantom 0x30000000
-#define J9AccClassReferenceShift 0x1C
-#define J9AccClassReferenceSoft 0x20000000
-#define J9AccClassReferenceWeak 0x10000000
-#define J9AccClassRomToRamMask 0xF3000000
-#define J9AccClassUnsafe 0x40000
-#define J9AccClassUseBisectionSearch 0x2000
-#define J9AccEmptyMethod 0x4000
-#define J9AccEnum 0x4000
-#define J9AccFinal 0x10
-#define J9AccForwarderMethod 0x2000
-#define J9AccGetterMethod 0x200
-#define J9AccInterface 0x200
-#define J9AccMandated 0x8000
-#define J9AccMethodCallerSensitive 0x100000
-#define J9AccMethodUnused0x1000000 0x1000000
-#define J9AccMethodFrameIteratorSkip 0x80000
-#define J9AccMethodHasBackwardBranches 0x200000
-#define J9AccMethodHasDebugInfo 0x40000
-#define J9AccMethodHasDefaultAnnotation 0x80000000
-#define J9AccMethodHasExceptionInfo 0x20000
-#define J9AccMethodHasExtendedModifiers 0x4000000
-#define J9AccMethodHasGenericSignature 0x2000000
-#define J9AccMethodHasMethodAnnotations 0x20000000
-#define J9AccMethodHasMethodHandleInvokes 0x8000000
-#define J9AccMethodHasMethodParameters 0x800000
-#define J9AccMethodHasParameterAnnotations 0x40000000
-#define J9AccMethodHasStackMap 0x10000000
-#define J9AccMethodHasTypeAnnotations 0x4000000
-#define J9AccMethodObjectConstructor 0x400000
-#define J9AccMethodReturn0 0x0
-#define J9AccMethodReturn1 0x40000
-#define J9AccMethodReturn2 0x80000
-#define J9AccMethodReturnA 0x140000
-#define J9AccMethodReturnD 0x100000
-#define J9AccMethodReturnF 0xC0000
-#define J9AccMethodReturnMask 0x1C0000
-#define J9AccMethodReturnShift 0x12
-#define J9AccMethodVTable 0x10000
-#define J9AccNative 0x100
-#define J9AccPrivate 0x2
-#define J9AccProtected 0x4
-#define J9AccPublic 0x1
-#define J9AccStatic 0x8
-#define J9AccStrict 0x800
-#define J9AccSuper 0x20
-#define J9AccSynchronized 0x20
-#define J9AccSynthetic 0x1000
-#define J9AccTransient 0x80
-#define J9AccValueType 0x100
-#define J9AccVarArgs 0x80
-#define J9AccVolatile 0x40
-#define J9StaticFieldRefBaseType 0x1
-#define J9StaticFieldRefDouble 0x2
-#define J9StaticFieldRefVolatile 0x4
-#define J9StaticFieldRefBoolean 0x8
-#define J9StaticFieldRefPutResolved 0x10
-#define J9StaticFieldRefFinal 0x20
-#define J9StaticFieldRefFlagBits 0x3F
-
 /* @ddr_namespace: map_to_type=J9JavaClassFlags */
 
 /* Constants from J9JavaClassFlags */
@@ -163,10 +70,12 @@
 #define J9ClassContainsMethodsPresentInMCCHash 0x10
 #define J9ClassGCScanned 0x20
 #define J9ClassIsAnonymous 0x40
-#define J9ClassIsDerivedValueType 0x80
+#define J9ClassIsFlattened 0x80
 #define J9ClassHasWatchedFields 0x100
 #define J9ClassReservableLockWordInit 0x200
 #define J9ClassIsValueType 0x400
+#define J9ClassLargestAlignmentConstraintReference 0x800
+#define J9ClassLargestAlignmentConstraintDouble 0x1000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -177,7 +86,7 @@
 #define J9FieldFlagHasTypeAnnotations 0x800000
 #define J9FieldFlagIsContended 0x10000000
 #define J9FieldFlagObject 0x20000
-#define J9FieldFlagUnused_1000000 0x1000000
+#define J9FieldFlagFlattened 0x1000000
 #define J9FieldFlagUnused_2000000 0x2000000
 #define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagPutResolved 0x8000000
@@ -1647,6 +1556,9 @@ typedef struct J9ROMFieldOffsetWalkResult {
 	UDATA superTotalInstanceSize;
 	UDATA index;
 	IDATA backfillOffset;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	struct J9Class* flattenedClass;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 } J9ROMFieldOffsetWalkResult;
 
 typedef struct J9HiddenInstanceField {
@@ -1681,6 +1593,15 @@ typedef struct J9ROMFieldOffsetWalkState {
 	struct J9HiddenInstanceField* hiddenInstanceFields[J9VM_MAX_HIDDEN_FIELDS_PER_CLASS];
 	UDATA hiddenInstanceFieldCount;
 	UDATA hiddenInstanceFieldWalkIndex;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	struct J9FlattenedClassCache *flattenedClassCache;
+	UDATA firstFlatSingleOffset;
+	UDATA firstFlatObjectOffset;
+	UDATA firstFlatDoubleOffset;
+	UDATA currentFlatSingleOffset;
+	UDATA currentFlatObjectOffset;
+	UDATA currentFlatDoubleOffset;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 } J9ROMFieldOffsetWalkState;
 
 #define J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC  1
@@ -1787,6 +1708,14 @@ typedef struct J9ModuleExtraInfo {
 	struct J9ClassPathEntry* patchPathEntries;
 	UDATA patchPathCount;
 } J9ModuleExtraInfo;
+
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+typedef struct J9FlattenedClassCache {
+	struct J9Class* clazz;
+	struct J9ROMNameAndSignature* nameAndSignature;
+	UDATA offset;
+} J9FlattenedClassCache;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 struct J9TranslationBufferSet;
 typedef struct J9VerboseStruct {
@@ -2969,7 +2898,14 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9FlattenedClassCache* flattenedClassCache;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9Class;
+
+/* Interface classes can never be instantiated - overload the totalInstanceSize slot to hold the iTable method count */
+#define J9INTERFACECLASS_ITABLEMETHODCOUNT(clazz) ((clazz)->totalInstanceSize)
+#define J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(clazz, value) (clazz)->totalInstanceSize = (value)
 
 typedef struct J9ArrayClass {
 	UDATA eyecatcher;
@@ -4576,7 +4512,11 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *structuredSignalHandler)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *structuredSignalHandlerVM)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *addHiddenInstanceField)(struct J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn) ;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache) ;
+#else
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags) ;
+#endif
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsNextDo)(struct J9ROMFieldOffsetWalkState *state) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9Class *clazz, struct J9ROMFullTraversalFieldOffsetWalkState *state, U_32 flags) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsNextDo)(struct J9ROMFullTraversalFieldOffsetWalkState *state) ;
@@ -5369,6 +5309,9 @@ typedef struct J9JavaVM {
 #endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	omrthread_monitor_t constantDynamicMutex;
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	UDATA valueFlatteningThreshold;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2
