@@ -411,7 +411,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          for (int i = 0; i < numMethods; ++i)
             {
             TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
             methodsInfo.push_back(methodInfo);
             }
          client->write(methods, methodsInfo);
