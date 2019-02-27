@@ -349,12 +349,8 @@ public:
 	/**
 	 * Checks whether the class must be initialized before using it.
 	 *
-	 * Non-isolated classes which have been successfully initialized or are in the process
+	 * Classes which have been successfully initialized or are in the process
 	 * of being initialized by the current thread do not need to be initialized.
-	 *
-	 * Isolated classes which have been successfully initialized on the current tenant
-	 * or are in the process of being initialized on the current tenant by the current thread
-	 * do not need to be initialized.
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param j9clazz[in] the J9Class to query
@@ -367,7 +363,6 @@ public:
 		bool requiresInitialization = true;
 		UDATA initStatus = j9clazz->initializeStatus;
 		if ((J9ClassInitSucceeded == initStatus) || (((UDATA)currentThread) == initStatus)) {
-			/* Non-isolated class either fully initialized or initializing on the current thread */
 			requiresInitialization = false;
 		}
 		return requiresInitialization;
