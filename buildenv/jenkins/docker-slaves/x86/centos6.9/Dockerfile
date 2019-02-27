@@ -126,6 +126,16 @@ RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm Text::CSV \
   && cpanm JSON \
   && cpanm XML::Parser
+  
+# Install nasm-2.13.03
+RUN cd /tmp \
+  && wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.03/nasm-2.13.03.tar.gz \
+  && tar xzf nasm-2.13.03.tar.gz \
+  && rm /tmp/nasm-2.13.03.tar.gz \
+  && cd /tmp/nasm-2.13.03 \
+  && ./configure -prefix=/usr/local \
+  && make install \
+  && rm -rf /tmp/nasm-2.13.03
 
 #Building and setting up git version 2.5.3
 RUN cd /usr/src \
