@@ -366,7 +366,7 @@ win_x86-64_cmprssptrs:
     8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
-    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64'
     12: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
     next: '--with-toolchain-version=2017 --disable-ccache'
   node_labels:
