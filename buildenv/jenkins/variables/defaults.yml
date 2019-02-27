@@ -112,7 +112,7 @@ linux_ppc-64_cmprssptrs_le:
     11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -160,7 +160,7 @@ linux_390-64_cmprssptrs:
     11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -189,11 +189,13 @@ aix_ppc-64_cmprssptrs:
       11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+  extra_getsource_options:
+    11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
-    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
     12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
 #========================================#
@@ -229,7 +231,7 @@ linux_x86-64_cmprssptrs:
     11: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -271,7 +273,7 @@ linux_x86-64_cmprssptrs_cmake:
     8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-cmake --disable-ddr'
     10: '--with-cmake --disable-ddr'
-    11: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-cmake --disable-ddr --with-openssl=fetched'
     12: '--with-cmake --disable-ddr'
     next: '--with-cmake --disable-ddr'
   extra_make_options:
@@ -322,7 +324,7 @@ linux_x86-64:
     8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-noncompressedrefs'
     10: '--with-noncompressedrefs'
-    11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-noncompressedrefs --with-openssl=fetched'
     12: '--with-noncompressedrefs'
     next: '--with-noncompressedrefs'
   build_env:
