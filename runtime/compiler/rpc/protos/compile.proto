@@ -212,9 +212,6 @@ enum J9ServerMessageType
    VM_getVMInfo = 301;
    VM_isAnonymousClass = 302;
    VM_dereferenceStaticAddress = 303;
-   
-   SharedCacheVM_persistThunk = 350;
-   SharedCacheVM_findPersistentThunk = 351;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;
