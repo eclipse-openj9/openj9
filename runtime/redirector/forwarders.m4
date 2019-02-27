@@ -269,18 +269,30 @@ _X(JVM_PrintStackTrace,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2)
 _X(JVM_SetField,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2, jint arg3)
 _X(JVM_SetPrimitiveField,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)
 _X(JVM_SetNativeThreadName,JNICALL,true,void ,jint arg0, jobject arg1, jstring arg2)
-_IF([JAVA_SPEC_VERSION >= 9],
-	[_X(JVM_DefineModule,JNICALL,false,jobject,JNIEnv arg0, jobject arg1, jboolean arg2, jstring arg3, jstring arg4, const char* const* arg5, jsize arg6)])
-_IF([JAVA_SPEC_VERSION >= 9],
-	[_X(JVM_AddModuleExports,JNICALL,false,void,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
-_IF([JAVA_SPEC_VERSION >= 9],
-	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
+_IF([J9VM_JAVA9_BUILD < 148],
+	[_X(JVM_DefineModule,JNICALL,false,jobject ,JNIEnv arg0, jobject arg1, jstring arg2, jstring arg3, jobjectArray arg4)])
+_IF([(148 <= J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD < 156)],
+	[_X(JVM_DefineModule,JNICALL,false,jobject ,JNIEnv arg0, jobject arg1, jboolean arg2, jstring arg3, jstring arg4, jobjectArray arg5)])
+_IF([J9VM_JAVA9_BUILD >= 156],
+	[_X(JVM_DefineModule,JNICALL,false,jobject ,JNIEnv arg0, jobject arg1, jboolean arg2, jstring arg3, jstring arg4, const char* const* arg5, jsize arg6)])
+_IF([J9VM_JAVA9_BUILD < 156],
+	[_X(JVM_AddModuleExports,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2, jobject arg3)])
+_IF([J9VM_JAVA9_BUILD >= 156],
+	[_X(JVM_AddModuleExports,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
+_IF([J9VM_JAVA9_BUILD < 156],
+	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2, jobject arg3)])
+_IF([J9VM_JAVA9_BUILD >= 156],
+	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
 _X(JVM_AddReadsModule,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jobject arg2)
 _X(JVM_CanReadModule,JNICALL,false,jboolean ,JNIEnv arg0, jobject arg1, jobject arg2)
-_IF([JAVA_SPEC_VERSION >= 9],
-	[_X(JVM_AddModulePackage,JNICALL,false,void,JNIEnv arg0, jobject arg1, const char *arg2)])
-_IF([JAVA_SPEC_VERSION >= 9],
-	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void,JNIEnv arg0, jobject arg1, const char *arg2)])
+_IF([J9VM_JAVA9_BUILD < 156],
+	[_X(JVM_AddModulePackage,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2)])
+_IF([J9VM_JAVA9_BUILD >= 156],
+	[_X(JVM_AddModulePackage,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2)])
+_IF([J9VM_JAVA9_BUILD < 156],
+	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2)])
+_IF([J9VM_JAVA9_BUILD >= 156],
+	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2)])
 _X(JVM_GetSimpleBinaryName,JNICALL,false,jstring ,JNIEnv arg0, jclass arg1)
 _X(JVM_SetMethodInfo,JNICALL,false,void ,JNIEnv arg0, jobject arg1)
 _X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint ,JNIEnv arg0, jobject arg1, jobject arg2, jint arg3)
@@ -301,8 +313,7 @@ _X(JVM_InitStackTraceElement,JNICALL,false,void ,JNIEnv *env, jobject arg1, jobj
 _X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject ,JNIEnv *env)
 _X(JVM_HasReferencePendingList,JNICALL,false,jboolean ,JNIEnv *env)
 _X(JVM_WaitForReferencePendingList,JNICALL,false,void ,JNIEnv *env)
-_IF([JAVA_SPEC_VERSION >= 9],
-	[_X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)])
+_X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_BeforeHalt,JNICALL,false,void,void)])
 _IF([JAVA_SPEC_VERSION >= 11],
