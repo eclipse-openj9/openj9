@@ -2655,7 +2655,11 @@ isPackageExportedToModuleWithName(J9VMThread *currentThread, J9Module *fromModul
  * @return the package definition
  */
 J9Package*
+#if J9VM_JAVA9_BUILD >= 156
 getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, const char *packageName, UDATA * errCode);
+#else /* J9VM_JAVA9_BUILD >= 156 */
+getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, j9object_t packageName, UDATA * errCode);
+#endif /* J9VM_JAVA9_BUILD >= 156 */
 /**
  * Get a pointer to J9Package structure associated with incoming classloader and package name
  *
@@ -2666,7 +2670,11 @@ getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, const ch
  * @return a pointer to J9Package structure associated with incoming classloader and package name
  */
 J9Package*
+#if J9VM_JAVA9_BUILD >= 156
 hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, const char *packageName);
+#else /* J9VM_JAVA9_BUILD >= 156 */
+hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, j9object_t packageName);
+#endif /* J9VM_JAVA9_BUILD >= 156 */
 /**
  * Add UTF package name to construct a J9Package for hashtable query
  *
@@ -2679,7 +2687,12 @@ hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, cons
  * @return true if finished successfully, false if NativeOutOfMemoryError occurred
  */
 BOOLEAN
+#if J9VM_JAVA9_BUILD >= 156
 addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char *packageName, U_8 *buf, UDATA bufLen);
+#else /* J9VM_JAVA9_BUILD >= 156 */
+addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t packageName, U_8 *buf, UDATA bufLen);
+#endif /* J9VM_JAVA9_BUILD >= 156 */
+
 
 /**
  * Find the J9Package with given package name. Caller needs to hold the
