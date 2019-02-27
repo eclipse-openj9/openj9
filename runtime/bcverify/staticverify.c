@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1821,9 +1821,10 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 		 * In a class file whose version number is 51.0 or above, the method
 		 * has its ACC_STATIC flag set and takes no arguments.
 		 */
-                 /* Leave this here to find usages of the following check:
-                  * if (J2SE_VERSION(vm) >= J2SE_19) {
-                  */
+		/* Leave this here to find usages of the following check:
+		 * J2SE_19 has been deprecated and replaced with J2SE_V11
+		 * if (J2SE_VERSION(vm) >= J2SE_V11) {
+		 */
 		if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
 			if (classfile->majorVersion >= 51) {
 				if ((CFR_METHOD_NAME_CLINIT == isInit) 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,8 @@ extern "C" {
 
 #define LOCAL_INTERFACE_ARRAY_SIZE 10
 
+#define DEFAULT_SIZE_OF_CLASS_CACHE 8
+
 enum J9ClassFragments {
 	RAM_CLASS_HEADER_FRAGMENT,
 	RAM_METHODS_FRAGMENT,
@@ -65,6 +67,9 @@ enum J9ClassFragments {
 	RAM_VARHANDLE_METHOD_TYPES_FRAGMENT,
 	RAM_STATIC_SPLIT_TABLE_FRAGMENT,
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	RAM_CLASS_FLATTENED_CLASS_CACHE,
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	RAM_CLASS_FRAGMENT_COUNT
 };
 
@@ -145,23 +150,28 @@ static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClas
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
 static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class* internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMClass *romClass, UDATA options, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9UTF8 *className, J9CreateRAMClassState *state);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *largestFieldType, J9FlattenedClassCache *flattenedClassCache);
+
+static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
+	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
+	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
 	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 static J9MemorySegment* internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassAllocationRequest *allocationRequests, UDATA allocationRequestCount);
 static I_32 interfaceDepthCompare(const void *a, const void *b);
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 static void checkForCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 static void trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader *classLoader, J9UTF8 *className);
-
 
 /**
  * Mark all of the interfaces supported by this class, including all interfaces
@@ -205,7 +215,7 @@ markInterfaces(J9ROMClass *romClass, J9Class *superclass, J9ClassLoader *classLo
 			/* peek the table, do not load */
 			J9Class *interfaceClass = hashClassTableAt(classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName));
 			/* the interface classes are not NULL, as this was checked by the caller */
-			if ((foundCloneable != NULL) && (J9_JAVA_CLASS_CLONEABLE == (J9CLASS_FLAGS(interfaceClass) & J9_JAVA_CLASS_CLONEABLE))) {
+			if ((foundCloneable != NULL) && (J9AccClassCloneable == (J9CLASS_FLAGS(interfaceClass) & J9AccClassCloneable))) {
 				*foundCloneable = TRUE;
 			}
 			iTable = (J9ITable *)interfaceClass->iTable;
@@ -286,16 +296,20 @@ addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClas
 			while (searchIndex < vTableSize) {
 				J9Method *vTableRamMethod = vTable[searchIndex];
 				J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableRamMethod);
-				J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
-				J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
 
-				if (vTableRomMethod->modifiers & J9_JAVA_PUBLIC) {
+				if (J9ROMMETHOD_IN_ITABLE(vTableRomMethod)) {
+					J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
+					J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
+
 					if ((J9UTF8_LENGTH(interfaceMethodName) == J9UTF8_LENGTH(vTableMethodName))
 					&& (J9UTF8_LENGTH(interfaceMethodSig) == J9UTF8_LENGTH(vTableMethodSig))
 					&& (memcmp(J9UTF8_DATA(interfaceMethodName), J9UTF8_DATA(vTableMethodName), J9UTF8_LENGTH(vTableMethodName)) == 0)
 					&& (memcmp(J9UTF8_DATA(interfaceMethodSig), J9UTF8_DATA(vTableMethodSig), J9UTF8_LENGTH(vTableMethodSig)) == 0)
 					) {
+						/* fill in interface index --> vTableOffset mapping */
 						vTableOffset = J9VTABLE_OFFSET_FROM_INDEX(searchIndex);
+						**currentSlot = vTableOffset;
+						(*currentSlot)++;
 						break;
 					}
 				}
@@ -309,10 +323,6 @@ addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClas
 						J9UTF8_DATA(interfaceMethodName), J9UTF8_LENGTH(interfaceMethodSig), J9UTF8_DATA(interfaceMethodSig), vTableOffset, searchIndex);
 			}
 #endif
-
-			/* fill in interface index --> vTableOffset mapping */
-			**currentSlot = vTableOffset;
-			(*currentSlot)++;
 
 			interfaceRamMethod++;
 		}
@@ -331,7 +341,7 @@ createITable(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClass, J
 	*currentSlot = (UDATA *)((UDATA)(*currentSlot) + sizeof(J9ITable));
 
 	/* If the newly-built class is not an interface class, fill in the iTable. */
-	if (J9_JAVA_INTERFACE != (ramClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
+	if (J9AccInterface != (ramClass->romClass->modifiers & J9AccInterface)) {
 		/* iTables contain all methods from the local interface, and any interfaces it extends */
 		J9ITable *allInterfaces = (J9ITable*)interfaceClass->iTable;
 		do {
@@ -352,7 +362,7 @@ initializeRAMClassITable (J9VMThread* vmStruct, J9Class *ramClass, J9Class *supe
 	{
 		PORT_ACCESS_FROM_VMC(vmStruct);
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-		j9tty_printf(PORTLIB, "\n<initializeRAMClassITable: %.*s %d>", J9UTF8_LENGTH(className), J9UTF8_DATA(className), (romClass->modifiers & J9_JAVA_INTERFACE));
+		j9tty_printf(PORTLIB, "\n<initializeRAMClassITable: %.*s %d>", J9UTF8_LENGTH(className), J9UTF8_DATA(className), (romClass->modifiers & J9AccInterface));
 	}
 #endif
 
@@ -362,8 +372,8 @@ initializeRAMClassITable (J9VMThread* vmStruct, J9Class *ramClass, J9Class *supe
 	booleanArrayClass = vmStruct->javaVM->booleanArrayClass;
 	if (J9ROMCLASS_IS_ARRAY(romClass) && (booleanArrayClass != NULL)) {
 		ramClass->iTable = booleanArrayClass->iTable;
-		if ((J9CLASS_FLAGS(booleanArrayClass) & J9_JAVA_CLASS_CLONEABLE) == J9_JAVA_CLASS_CLONEABLE) {
-			ramClass->classDepthAndFlags |= J9_JAVA_CLASS_CLONEABLE;
+		if ((J9CLASS_FLAGS(booleanArrayClass) & J9AccClassCloneable) == J9AccClassCloneable) {
+			ramClass->classDepthAndFlags |= J9AccClassCloneable;
 		}
 		unmarkInterfaces(interfaceHead);
 	} else {
@@ -376,7 +386,7 @@ initializeRAMClassITable (J9VMThread* vmStruct, J9Class *ramClass, J9Class *supe
 
 		/* Create the iTables. Interface classes must add themselves to their iTables. */
 		previousLink = (J9ITable **)&ramClass->iTable;
-		if ((romClass->modifiers & J9_JAVA_INTERFACE) == J9_JAVA_INTERFACE) {
+		if ((romClass->modifiers & J9AccInterface) == J9AccInterface) {
 			createITable(vmStruct, ramClass, ramClass, &previousLink, &currentSlot, (UDATA)(maxInterfaceDepth + 1));
 		}
 
@@ -442,7 +452,7 @@ addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *i
 		for (j=0; j < count; j++) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceMethod);
 			/* Ignore the <clinit> from the interface class. */
-			if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9_JAVA_PRIVATE | J9_JAVA_STATIC)) {
+			if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPrivate | J9AccStatic)) {
 				J9UTF8 *interfaceMethodNameUTF = J9ROMMETHOD_NAME(romMethod);
 				J9UTF8 *interfaceMethodSigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 				UDATA tempIndex = vTableMethodCount;
@@ -521,7 +531,7 @@ addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *i
 								} else {
 									/* if either is abstract, convert to equivSet, else conflict */
 									const UDATA combinedModifiers = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceMethod)->modifiers | vTableMethod->modifiers;
-									if (J9_ARE_ANY_BITS_SET(combinedModifiers, J9_JAVA_ABSTRACT)) {
+									if (J9_ARE_ANY_BITS_SET(combinedModifiers, J9AccAbstract)) {
 										/* Convert to equivSet by adding the existing vtable method to the equivSet */
 										J9EquivalentEntry *entry = (J9EquivalentEntry*) pool_newElement(equivalentSets);
 										if (NULL == entry) {
@@ -574,7 +584,7 @@ add_existing:
 							Assert_VM_unreachable();
 							break;
 						}
-						if (J9_JAVA_PUBLIC == (vTableMethod->modifiers & J9_JAVA_PUBLIC)) {
+						if (J9AccPublic == (vTableMethod->modifiers & J9AccPublic)) {
 							J9ClassLoader *interfaceLoader = interfaceClass->classLoader;
 							J9ClassLoader *vTableMethodLoader = classLoader;
 							if (NULL != methodClass) {
@@ -673,7 +683,7 @@ processEquivalentSets(J9VMThread *vmStruct, UDATA *defaultConflictCount, UDATA v
 			J9Method *candidate = entry->method;
 			bool foundNonAbstract = false;
 			while (NULL != entry) {
-				if (J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(entry->method)->modifiers, J9_JAVA_ABSTRACT)) {
+				if (J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(entry->method)->modifiers, J9AccAbstract)) {
 					if (foundNonAbstract) {
 						/* Two non-abstract methods -> conflict */
 						vTableMethods[i] = ((UDATA)entry->method | DEFAULT_CONFLICT_METHOD_ID_TAG);
@@ -732,7 +742,7 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 
 	/* Compute the absolute maximum size of the vTable and allocate it. */
 	
-	if ((romClass->modifiers & J9_JAVA_INTERFACE) == J9_JAVA_INTERFACE) {
+	if ((romClass->modifiers & J9AccInterface) == J9AccInterface) {
 		maxSlots = 1;
 	} else {
 		/* All methods in the current class might need new slots in the vTable. */
@@ -751,8 +761,7 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 		if (J9ROMCLASS_IS_ARRAY(romClass) == 0) {
 			J9Class *interfaceWalk = interfaceHead;
 			while (interfaceWalk != NULL) {
-				/* TODO: this over-estimates due to private + static methods. */
-				maxSlots += interfaceWalk->romClass->romMethodCount;
+				maxSlots += J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceWalk);
 				interfaceWalk = (J9Class *)((UDATA)interfaceWalk->instanceDescription & ~INTERFACE_TAG);
 			}
 		}
@@ -781,7 +790,7 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 		J9VTableHeader *vTableHeader = (J9VTableHeader *)vTableAddress;
 
 		/* Write size of 0 */
-		if (J9_JAVA_INTERFACE == (romClass->modifiers & J9_JAVA_INTERFACE)) {
+		if (J9AccInterface == (romClass->modifiers & J9AccInterface)) {
 			vTableHeader->size = 0;
 			goto done;
 		}
@@ -819,8 +828,8 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 				for (i=count; i>0; i--) {
 					J9UTF8* methodName = J9ROMMETHOD_NAME(romMethod);
 					/* Check for '<' to exclude <init> from being processed */
-					if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccMethodVTable | J9_JAVA_PRIVATE)
-					&& J9_ARE_NO_BITS_SET(romMethod->modifiers, J9_JAVA_STATIC)
+					if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccMethodVTable | J9AccPrivate)
+					&& J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)
 					&& ('<' != J9UTF8_DATA(methodName)[0])
 					) {
 						vTableMethodCount = processVTableMethod(vmStruct, classLoader, vTableAddress, superclass, romClass, romMethod,
@@ -1165,7 +1174,7 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 	UDATA newModifiers = romMethod->modifiers;
 
 	/* Private methods do not appear in the vTable or take part in any overriding decision */
-	if (J9_ARE_NO_BITS_SET(newModifiers, J9_JAVA_PRIVATE)) {
+	if (J9_ARE_NO_BITS_SET(newModifiers, J9AccPrivate)) {
 		UDATA *vTableMethods = (UDATA *)J9VTABLE_FROM_HEADER(vTableAddress);
 		J9UTF8 *nameUTF = J9ROMMETHOD_NAME(romMethod);
 		J9UTF8 *sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
@@ -1208,7 +1217,7 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 					 * Public and protected are always overridden.
 					 * Package private (i.e. default) is overridden only by a method in the same package.
 					 */
-					if (J9_ARE_ANY_BITS_SET(currentSuperclassModifiers, J9_JAVA_PROTECTED | J9_JAVA_PUBLIC)
+					if (J9_ARE_ANY_BITS_SET(currentSuperclassModifiers, J9AccProtected | J9AccPublic)
 						|| (currentSuperclassVTableMethodClass->packageID == localPackageID)
 					) {
 						overridden = TRUE;
@@ -1225,7 +1234,7 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 					if ((((UDATA)storeValue & VTABLE_SLOT_TAG_MASK) == ROM_METHOD_ID_TAG)
 						|| (vTableMethods[superclassVTableIndex] == (UDATA)superclassVTableMethod)
 					) {
-						if ((modifiers & J9_JAVA_FINAL) == J9_JAVA_FINAL) {
+						if ((modifiers & J9AccFinal) == J9AccFinal) {
 							vmThread->tempSlot = (UDATA)romMethod;
 						}
 						/* fill in vtable, override parent slot */
@@ -1280,7 +1289,7 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 		}
 
 		/* Package private (i.e. default) methods always requires a new slot unless the new method is final */
-		if (J9_ARE_NO_BITS_SET(newModifiers, J9_JAVA_PROTECTED | J9_JAVA_PUBLIC | J9_JAVA_PRIVATE | J9_JAVA_FINAL)) {
+		if (J9_ARE_NO_BITS_SET(newModifiers, J9AccProtected | J9AccPublic | J9AccPrivate | J9AccFinal)) {
 			newSlotRequired = TRUE;
 		}
 
@@ -1356,7 +1365,7 @@ getVTableOffsetForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread
 	UDATA modifiers = methodClass->romClass->modifiers;
 
 	/* If this method came from an interface class, handle it specially. */
-	if ((modifiers & J9_JAVA_INTERFACE) == J9_JAVA_INTERFACE) {
+	if ((modifiers & J9AccInterface) == J9AccInterface) {
 		J9VTableHeader *vTable = J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
 		UDATA vTableSize = vTable->size;
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -1550,12 +1559,12 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 			}
 
 			/* ensure that the superclass isn't an interface or final */
-			if ((superclass->romClass->modifiers & J9_JAVA_FINAL) != 0) {
+			if ((superclass->romClass->modifiers & J9AccFinal) != 0) {
 				Trc_VM_CreateRAMClassFromROMClass_superclassIsFinal(vmThread, superclass);
 				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR);
 				return FALSE;
 			}
-			if ((superclass->romClass->modifiers & J9_JAVA_INTERFACE) != 0) {
+			if ((superclass->romClass->modifiers & J9AccInterface) != 0) {
 				Trc_VM_CreateRAMClassFromROMClass_superclassIsInterface(vmThread, superclass);
 				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR);
 				return FALSE;
@@ -1571,7 +1580,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				 * belongs to a module that doesn't have access to the module that
 				 * owns the superClass class.
 				 */
-				bool superClassIsPublic = J9_ARE_ALL_BITS_SET(superclass->romClass->modifiers, J9_JAVA_PUBLIC);
+				bool superClassIsPublic = J9_ARE_ALL_BITS_SET(superclass->romClass->modifiers, J9AccPublic);
 				if ((!superClassIsPublic && (packageID != superclass->packageID))
 					|| (superClassIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(vmThread, vm, romClass, module, superclass->romClass, superclass->module, superclass->packageID, 0)))
 				) {
@@ -1600,7 +1609,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						return FALSE;
 					}
 					/* ensure that the interface is in fact an interface */
-					if ((interfaceClass->romClass->modifiers & J9_JAVA_INTERFACE) != J9_JAVA_INTERFACE) {
+					if ((interfaceClass->romClass->modifiers & J9AccInterface) != J9AccInterface) {
 						Trc_VM_CreateRAMClassFromROMClass_interfaceIsNotAnInterface(vmThread, interfaceClass);
 						setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR);
 						return FALSE;
@@ -1614,7 +1623,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						 * belongs to a module that doesn't have access to the module that
 						 * owns the interface class.
 						 */
-						bool interfaceIsPublic = J9_ARE_ALL_BITS_SET(interfaceClass->romClass->modifiers, J9_JAVA_PUBLIC);
+						bool interfaceIsPublic = J9_ARE_ALL_BITS_SET(interfaceClass->romClass->modifiers, J9AccPublic);
 						if ((!interfaceIsPublic && (packageID != interfaceClass->packageID))
 							|| (interfaceIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(vmThread, vm, romClass, module, interfaceClass->romClass, interfaceClass->module, interfaceClass->packageID, 0)))
 						) {
@@ -1634,7 +1643,9 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /**
  * Attempts to pre-load classes of fields with Q signatures and no static
- * access modifier set.
+ * access modifier set. Also records largest field type in largestFieldType.
+ * 0 for single 1 for ref and 2 for double. Records total number of
+ * flattenable instance fields in flattenableInstanceFieldCount.
  *
  * Caller should not hold the classTableMutex.
  *
@@ -1642,45 +1653,74 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
  * appropriate Java error on the VM.
  */
 static BOOLEAN
-loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module)
+loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *largestFieldType, J9FlattenedClassCache *flattenedClassCache)
 {
 	J9ROMFieldWalkState fieldWalkState = {0};
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 	BOOLEAN result = TRUE;
+	UDATA flattenableInstanceFieldCount = 0;
+
 	/* iterate over fields and load classes of fields marked as QTypes */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
-		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
-		U_8 *signatureChars = J9UTF8_DATA(signature);
-		if (('Q' == signatureChars[0]) && J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
-			J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, classPreloadFlags);
-			if (NULL == valueClass) {
-				result = FALSE;
-				goto done;
-			} else {
-				J9ROMClass *valueROMClass = valueClass->romClass;
-
-				if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)) {
-					J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
-					setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
+		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
+			J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
+			U_8 *signatureChars = J9UTF8_DATA(signature);
+			switch (signatureChars[0]) {
+			case 'Q':
+			{
+				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, classPreloadFlags);
+				if (NULL == valueClass) {
 					result = FALSE;
 					goto done;
-				}
+				} else {
+					J9ROMClass *valueROMClass = valueClass->romClass;
 
-				bool classIsPublic = J9_ARE_ALL_BITS_SET(valueROMClass->modifiers, J9AccPublic);
+					if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)) {
+						J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
+						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
+						result = FALSE;
+						goto done;
+					}
 
-				if ((!classIsPublic && (packageID != valueClass->packageID))
-					|| (classIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(currentThread, currentThread->javaVM, romClass, module, valueROMClass, valueClass->module, valueClass->packageID, 0)))
-				) {
-					Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible(currentThread, valueClass, valueClass->classLoader, classLoader);
-					setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(valueROMClass), J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
-					result = FALSE;
-					goto done;
+					bool classIsPublic = J9_ARE_ALL_BITS_SET(valueROMClass->modifiers, J9AccPublic);
+
+					if ((!classIsPublic && (packageID != valueClass->packageID))
+						|| (classIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(currentThread, currentThread->javaVM, romClass, module, valueROMClass, valueClass->module, valueClass->packageID, 0)))
+					) {
+						Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible(currentThread, valueClass, valueClass->classLoader, classLoader);
+						setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(valueROMClass), J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
+						result = FALSE;
+						goto done;
+					}
+
+					J9FlattenedClassCache *entry = flattenedClassCache + (flattenableInstanceFieldCount + 1);
+					entry->clazz = valueClass;
+					entry->nameAndSignature = &(field->nameAndSignature);
+					entry->offset = 0;
+					flattenableInstanceFieldCount += 1;
 				}
+				*largestFieldType |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference));
+				break;
+			}
+			case 'J':
+			case 'D':
+				*largestFieldType |= J9ClassLargestAlignmentConstraintDouble;
+				break;
+			case 'L':
+				*largestFieldType |= J9ClassLargestAlignmentConstraintReference;
+				break;
+			default:
+				/* Do nothing for now. If we eventually decide to pack fields smaller than 32 bits we'll
+				 * need to modify this code.
+				 */
+				break;
 			}
 		}
 		field = romFieldsNextDo(&fieldWalkState);
 	}
+	flattenedClassCache[0].offset = flattenableInstanceFieldCount;
+
 done:
 	return result;
 }
@@ -1926,11 +1966,17 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 		}
 	}
 }
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static J9Class*
+internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
+	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
+	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache)
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
 	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
 	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module)
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	BOOLEAN retried = state->retry;
@@ -2052,9 +2098,16 @@ fail:
 		/* add in the static and special split tables */
 		classSize += (romClass->staticSplitMethodRefCount + romClass->specialSplitMethodRefCount);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
+			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
+			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS), flattenedClassCache);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
 			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS));
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 		/* inherited from superclass: superclasses array, instance shape and interface slots */
 		if (superclass == NULL) {
 			/* java.lang.Object has a NULL at superclasses[-1] for fast superclass fetch. */
@@ -2132,7 +2185,7 @@ fail:
 			 * classes must appear in their own iTable list.
 			 */
 			iTableSlotCount = (sizeof(J9ITable) / sizeof(UDATA)) * interfaceCount;
-			if ((romClass->modifiers & J9_JAVA_INTERFACE) == J9_JAVA_INTERFACE) {
+			if ((romClass->modifiers & J9AccInterface) == J9AccInterface) {
 				/* The iTables for interface classes do not contain entries for methods. */
 				iTableSlotCount += sizeof(J9ITable) / sizeof(UDATA);
 			} else {
@@ -2292,6 +2345,14 @@ fail:
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignedSize = romClass->specialSplitMethodRefCount * sizeof(J9Method *);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address = NULL;
 
+			/* flattened classes cache */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].prefixSize = 0;
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignment = OMR_MAX(sizeof(J9Class *), sizeof(UDATA));
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignedSize = sizeof(J9FlattenedClassCache) * (flattenedClassCache[0].offset > 0 ? flattenedClassCache[0].offset + 1 : 0);
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address = NULL;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 			if (fastHCR) {
 				/* For shared fragments, set alignedSize and prefixSize to 0 to make internalAllocateRAMClass() ignore them. */
 				allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = (UDATA *) classBeingRedefined->superclasses;
@@ -2346,6 +2407,12 @@ fail:
 				for (U_16 i = 0; i < romClass->specialSplitMethodRefCount; ++i) {
 					ramClass->specialSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialSpecialMethod;
 				}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				ramClass->flattenedClassCache = (J9FlattenedClassCache *) allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address;
+				if (flattenedClassCache[0].offset > 0) {
+					memcpy(ramClass->flattenedClassCache, flattenedClassCache, sizeof(J9FlattenedClassCache) * (flattenedClassCache[0].offset + 1));
+				}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			}
 		}
 		
@@ -2377,6 +2444,7 @@ fail:
 			J9ConstantPool *ramConstantPool = (J9ConstantPool *) (ramClass->ramConstantPool);
 			UDATA ramConstantPoolCount = romClass->ramConstantPoolCount * 2; /* 2 slots per CP entry */
 			U_32 tempClassDepthAndFlags = 0;
+			UDATA iTableMethodCount = 0;
 			Trc_VM_initializeRAMClass_Start(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classLoader);
 
 			/* Default to no class path entry. */
@@ -2410,11 +2478,14 @@ fail:
 					currentRAMMethod->bytecodes = (U_8 *)(romMethod + 1);
 					currentRAMMethod->constantPool = ramConstantPool;
 					currentRAMMethod++;
-					
+
+					if (J9ROMMETHOD_IN_ITABLE(romMethod)) {
+						iTableMethodCount += 1;
+					}
 					romMethod = nextROMMethod(romMethod);
 				}
 			}
-			
+
 			if (ramConstantPoolCount != 0) {
 				ramConstantPool->ramClass = ramClass;
 				ramConstantPool->romConstantPool = (J9ROMConstantPoolItem *)(romClass + 1);
@@ -2476,14 +2547,14 @@ fail:
 			 *                                  + ContainsMethodsPresentInMCCHash
 			 *                                 + GCScanned
 			 *                                + IsAnonymous
-			 *                               + J9ClassHasWatchedFields (inherited)
+			 *                               + IsFlattened
 			 *
-			 *                             + Unused
-			 *                            + Unused
-			 *                           + Unused
-			 *                          + Unused
+			 *                             + J9ClassHasWatchedFields (inherited)
+			 *                            + ReservableLockWordInit
+			 *                           + IsValueType
+			 *                          + LargestAlignmentConstraintReference
 			 *
-			 *                        + Unused
+			 *                        + LargestAlignmentConstraintDouble
 			 *                       + Unused
 			 *                      + Unused
 			 *                     + Unused
@@ -2514,15 +2585,15 @@ fail:
 
 #if defined(J9VM_GC_FINALIZATION)
 			if ((javaVM->jclFlags & J9_JCL_FLAG_FINALIZATION) != J9_JCL_FLAG_FINALIZATION) {
-				tempClassDepthAndFlags &= ~J9_JAVA_CLASS_FINALIZE;
+				tempClassDepthAndFlags &= ~J9AccClassFinalizeNeeded;
 			}
 #endif
 			
 			if ((javaVM->jclFlags & J9_JCL_FLAG_REFERENCE_OBJECTS) != J9_JCL_FLAG_REFERENCE_OBJECTS) {
-				tempClassDepthAndFlags &= ~J9_JAVA_CLASS_REFERENCE_MASK;
+				tempClassDepthAndFlags &= ~J9AccClassReferenceMask;
 			}
 
-			tempClassDepthAndFlags &= J9_JAVA_CLASS_ROMRAMMASK;
+			tempClassDepthAndFlags &= J9AccClassRomToRamMask;
 			ramClass->subclassTraversalLink = NULL;
 			ramClass->subclassTraversalReverseLink = NULL;
 			if (superclass == NULL) {
@@ -2546,13 +2617,13 @@ fail:
 				}
 				/* fill in class depth */
 				tempClassDepthAndFlags |= superclass->classDepthAndFlags;
-				tempClassDepthAndFlags &= ~(J9_JAVA_CLASS_HOT_SWAPPED_OUT | J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN | J9_JAVA_CLASS_HAS_JDBC_NATIVES | J9_JAVA_CLASS_RAM_ARRAY | (OBJECT_HEADER_SHAPE_MASK << J9_JAVA_CLASS_RAM_SHAPE_SHIFT));
+				tempClassDepthAndFlags &= ~(J9AccClassHotSwappedOut | J9AccClassHasBeenOverridden | J9AccClassHasJDBCNatives | J9AccClassRAMArray | (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift));
 				tempClassDepthAndFlags++;
 				
 #if defined(J9VM_GC_FINALIZATION)
 				/* if this class has an empty finalize() method, make sure not to inherit javaFlagsClassFinalizeNeeded from the superclass */
 				if (J9ROMCLASS_HAS_EMPTY_FINALIZE(romClass)) {
-					tempClassDepthAndFlags &= ~J9_JAVA_CLASS_FINALIZE;
+					tempClassDepthAndFlags &= ~J9AccClassFinalizeNeeded;
 				}
 #endif
 				
@@ -2562,9 +2633,9 @@ fail:
 				}
 				ramClass->superclasses[superclassCount] = superclass;
 			}
-			tempClassDepthAndFlags |= ((romClass->instanceShape & OBJECT_HEADER_SHAPE_MASK) << J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+			tempClassDepthAndFlags |= ((romClass->instanceShape & OBJECT_HEADER_SHAPE_MASK) << J9AccClassRAMShapeShift);
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
-				tempClassDepthAndFlags |= J9_JAVA_CLASS_RAM_ARRAY;
+				tempClassDepthAndFlags |= J9AccClassRAMArray;
 			}
 
 			
@@ -2611,12 +2682,12 @@ fail:
 			}
 
 			if (foundCloneable) {
-				ramClass->classDepthAndFlags |= J9_JAVA_CLASS_CLONEABLE;
+				ramClass->classDepthAndFlags |= J9AccClassCloneable;
 			}
 
 			/* Prevent certain classes from having Cloneable subclasses */
 
-			if (J9CLASS_FLAGS(ramClass) & J9_JAVA_CLASS_CLONEABLE) {
+			if (J9CLASS_FLAGS(ramClass) & J9AccClassCloneable) {
 				static UDATA uncloneableClasses[] = {
 						J9VMCONSTANTPOOL_JAVALANGCLASSLOADER,
 						J9VMCONSTANTPOOL_JAVALANGTHREAD,
@@ -2630,7 +2701,7 @@ fail:
 						UDATA currentClassDepth = J9CLASS_DEPTH(ramClass);
 					
 						if ((currentClassDepth > uncloneableClassDepth) && (ramClass->superclasses[uncloneableClassDepth]) == uncloneableClass) {
-							ramClass->classDepthAndFlags &= ~J9_JAVA_CLASS_CLONEABLE;
+							ramClass->classDepthAndFlags &= ~J9AccClassCloneable;
 							break;
 						}
 					}
@@ -2646,7 +2717,12 @@ fail:
 			if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 				ramClass->initializeStatus = J9ClassInitSucceeded;
 			}
-			
+
+			/* If the class is an interface, fill in the iTableMethodCount */
+			if (J9ROMCLASS_IS_INTERFACE(romClass)) {
+				J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(ramClass, iTableMethodCount);
+			}
+
 			Trc_VM_initializeRAMClass_End(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classSize, classLoader);
 		}
 		
@@ -2713,7 +2789,7 @@ fail:
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				}
 			}
-			if ((J2SE_VERSION(javaVM) >= J2SE_19) && (NULL == classBeingRedefined)) {
+			if ((J2SE_VERSION(javaVM) >= J2SE_V11) && (NULL == classBeingRedefined)) {
 				ramClass->module = module;
 				if (TrcEnabled_Trc_MODULE_setting_package) {
 					trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
@@ -2775,6 +2851,15 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	J9Class *result = NULL;
 	J9ClassLoader* hostClassLoader = classLoader;
 	J9Module* module = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA romFieldCount = romClass->romFieldCount;
+	UDATA flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) * (romFieldCount + 1);
+	UDATA largestFieldType = 0;
+	/* The +1 is for the size field */
+	J9FlattenedClassCache flattenedClassCacheBuffer[DEFAULT_SIZE_OF_CLASS_CACHE + 1] = {0};
+	J9FlattenedClassCache *flattenedClassCache = flattenedClassCacheBuffer;
+	PORT_ACCESS_FROM_VMC(vmThread);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	/* if this is an anon class classLoader should be anonClassLoader */
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
@@ -2829,7 +2914,7 @@ retry:
 	/* To prevent deadlock, release the classTableMutex before loading the classes required for the new class. */
 	omrthread_monitor_exit(javaVM->classTableMutex);
 
-	if (J2SE_VERSION(javaVM) >= J2SE_19) {
+	if (J2SE_VERSION(javaVM) >= J2SE_V11) {
 		if (NULL == classBeingRedefined) {
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 				/* At this point the elementClass has been loaded. No
@@ -2869,19 +2954,43 @@ retry:
 			}
 		}
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (romFieldCount > DEFAULT_SIZE_OF_CLASS_CACHE) {
+		flattenedClassCache = (J9FlattenedClassCache *) j9mem_allocate_memory(flattenedClassCacheAllocSize, J9MEM_CATEGORY_CLASSES);
+		if (NULL == flattenedClassCache) {
+			setNativeOutOfMemoryError(vmThread, 0, 0);
+			omrthread_monitor_enter(javaVM->classTableMutex);
+			return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
+		}
+		memset(flattenedClassCache, 0, flattenedClassCacheAllocSize);
+	}
 
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module)
+		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module, &largestFieldType, flattenedClassCache)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (flattenedClassCache != flattenedClassCacheBuffer) {
+			j9mem_free_memory(flattenedClassCache);
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		omrthread_monitor_enter(javaVM->classTableMutex);
 		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
 	}
 
-	
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
+		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache);
+
+		if (flattenedClassCache != flattenedClassCacheBuffer) {
+			j9mem_free_memory(flattenedClassCache);
+		}
+#else
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
 		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (state.retry) {
 		goto retry;
 	}
@@ -2905,6 +3014,16 @@ retry:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
 			classFlags |= J9ClassIsValueType;
+			if ((result->totalInstanceSize <= javaVM->valueFlatteningThreshold) && !J9ROMCLASS_IS_CONTENDED(romClass)) {
+				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
+				classFlags |= J9ClassIsFlattened;
+			}
+
+			if (J9_ARE_ALL_BITS_SET(largestFieldType, J9ClassLargestAlignmentConstraintDouble)) {
+				classFlags |= J9ClassLargestAlignmentConstraintDouble;
+			} else if (J9_ARE_ALL_BITS_SET(largestFieldType, J9ClassLargestAlignmentConstraintReference)) {
+				classFlags |= J9ClassLargestAlignmentConstraintReference;
+			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

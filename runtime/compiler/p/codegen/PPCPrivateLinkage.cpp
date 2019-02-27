@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2675,8 +2675,12 @@ void TR::PPCPrivateLinkage::buildDirectCall(TR::Node *callNode,
    if (callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
+   if (comp()->getOption(TR_UseSymbolValidationManager))
+      forceUnresolvedDispatch = false;
+
    if ((callSymbol->isJITInternalNative() ||
-        (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((comp()->compileRelocatableCode() && callSymbol->isHelper()) || !comp()->compileRelocatableCode()))))
+        (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch))))
       {
       gcPoint = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode,
                                                                   myself?0:(uintptrj_t)callSymbol->getMethodAddress(),
@@ -2687,7 +2691,7 @@ void TR::PPCPrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::LabelSymbol *label   = generateLabelSymbol(cg());
       TR::Snippet     *snippet;
 
-      if (callSymRef->isUnresolved() || comp()->compileRelocatableCode())
+      if (callSymRef->isUnresolved() || forceUnresolvedDispatch)
          {
          snippet = new (trHeapMemory()) TR::PPCUnresolvedCallSnippet(cg(), callNode, label, argSize);
          }

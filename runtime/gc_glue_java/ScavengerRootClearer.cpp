@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,7 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 			}
 
 			if (_scavenger->isObjectInEvacuateMemory(referent)) {
-				uintptr_t referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9_JAVA_CLASS_REFERENCE_MASK;
+				uintptr_t referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
 				/* transition the state to cleared */
 				Assert_MM_true(GC_ObjectModel::REF_STATE_INITIAL == J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj));
 				J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj) = GC_ObjectModel::REF_STATE_CLEARED;
@@ -78,7 +78,7 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 
 				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
 				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
-				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+				if ((J9AccClassReferencePhantom == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
 					/* Scanning will be done after the enqueuing */
 					_scavenger->copyObjectSlot(env, &referentSlotObject);
 				} else {
@@ -90,7 +90,7 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 					/* Reference object can be enqueued onto the finalizable list */
 					buffer.add(env, referenceObj);
 					referenceStats->_enqueued += 1;
-					_clij->scavenger_setFinalizationRequired(true);
+					_scavenger->getDelegate()->setFinalizationRequired(true);
 				}
 			}
 		}
@@ -118,21 +118,21 @@ MM_ScavengerRootClearer::scavengeReferenceObjects(MM_EnvironmentStandard *env, u
 					MM_ReferenceStats *stats = NULL;
 					j9object_t head = NULL;
 					switch (referenceObjectType) {
-						case J9_JAVA_CLASS_REFERENCE_WEAK:
+						case J9AccClassReferenceWeak:
 						list->startWeakReferenceProcessing();
 						if (!list->wasWeakListEmpty()) {
 							head = list->getPriorWeakList();
 							stats = &javaStats->_weakReferenceStats;
 						}
 						break;
-						case J9_JAVA_CLASS_REFERENCE_SOFT:
+						case J9AccClassReferenceSoft:
 						list->startSoftReferenceProcessing();
 						if (!list->wasSoftListEmpty()) {
 							head = list->getPriorSoftList();
 							stats = &javaStats->_softReferenceStats;
 						}
 						break;
-						case J9_JAVA_CLASS_REFERENCE_PHANTOM:
+						case J9AccClassReferencePhantom:
 						list->startPhantomReferenceProcessing();
 						if (!list->wasPhantomListEmpty()) {
 							head = list->getPriorPhantomList();
@@ -185,7 +185,7 @@ MM_ScavengerRootClearer::scavengeUnfinalizedObjects(MM_EnvironmentStandard *env)
 									/* object was not previously forwarded -- it is now finalizable so push it to the local buffer */
 									buffer.add(env, finalizableObject);
 									gcEnv->_scavengerJavaStats._unfinalizedEnqueued += 1;
-									_clij->scavenger_setFinalizationRequired(true);
+									_scavenger->getDelegate()->setFinalizationRequired(true);
 								}
 							} else {
 								omrobjectptr_t forwardedPtr =  forwardedHeader.getForwardedObject();

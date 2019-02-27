@@ -2913,7 +2913,7 @@ void printAllCounts(J9JavaVM *javaVM)
             {
             J9Method * method = &ramMethods[m];
             J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            if (!(romMethod->modifiers & (J9_JAVA_NATIVE | J9_JAVA_ABSTRACT)) &&
+            if (!(romMethod->modifiers & (J9AccNative | J9AccAbstract)) &&
                 method != newInstanceThunk &&
                 !TR::CompilationInfo::isCompiled(method))
                {
@@ -3133,11 +3133,9 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numRuntimeClassAddressReloUnresolvedCP: %d\n", aotStats->numRuntimeClassAddressReloUnresolvedCP);
       fprintf(stderr, "numRuntimeClassAddressReloUnresolvedClass: %d\n", aotStats->numRuntimeClassAddressReloUnresolvedClass);
 
-
       fprintf(stderr, "numClassValidations: %d\n", aotStats->numClassValidations);
       fprintf(stderr, "numClassValidationsFailed: %d\n", aotStats->numClassValidationsFailed);
-
-
+      fprintf(stderr, "numWellKnownClassesValidationsFailed: %d\n", aotStats->numWellKnownClassesValidationsFailed);
 
       fprintf(stderr, "numVMCheckCastEvaluator (x86): %d\n", aotStats->numVMCheckCastEvaluator);
       fprintf(stderr, "numVMInstanceOfEvaluator (x86): %d\n", aotStats->numVMInstanceOfEvaluator);
@@ -5138,7 +5136,7 @@ bool TR::CompilationInfo::isQueuedForCompilation(J9Method * method, void *oldSta
    return linkageInfo->isBeingCompiled();
    }
 
-#if defined(NASM_ASSEMBLER)
+#if defined(TR_HOST_X86)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -5172,7 +5170,7 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
          initialInvokeExactThunkGlueAddress = (void*)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
          initialInvokeExactThunkGlueAddress = (*(void **)_initialInvokeExactThunkGlue);
-#elif defined(NASM_ASSEMBLER)
+#elif defined(TR_HOST_X86)
          initialInvokeExactThunkGlueAddress = (void*)initialInvokeExactThunkGlue;
 #else
          initialInvokeExactThunkGlueAddress = (void*)_initialInvokeExactThunkGlue;
@@ -8037,11 +8035,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      options->setOption(TR_EnableGRACostBenefitModel, false);
                   }
 
-            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP || options->getOptLevel() < warm)
-               {
-               options->setOption(TR_UseSymbolValidationManager, false);
-               }
-
 
                // See if we need to inset GCR trees
                if (!details.supportsInvalidation())
@@ -8705,6 +8698,9 @@ TR::CompilationInfoPerThreadBase::compile(
             if (compiler->getOption(TR_AlwaysFatalAssert)) {
                TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
             }
+
+            if (vm.isAOT_DEPRECATED_DO_NOT_USE())
+               compiler->getSymbolValidationManager()->populateWellKnownClasses();
 
             rtn = compiler->compile();
 

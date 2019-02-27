@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,26 +24,12 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/runtime/Recomp.cpp \
     compiler/x/runtime/X86PicBuilderC.cpp \
-    compiler/x/runtime/X86RelocationTarget.cpp
-
-ifeq ($(NASM_ASSEMBLER),yes)
-    JIT_PRODUCT_SOURCE_FILES+=\
-        compiler/x/runtime/X86ArrayTranslate.nasm \
-        compiler/x/runtime/X86Codert.nasm \
-        compiler/x/runtime/X86EncodeUTF16.nasm \
-        compiler/x/runtime/X86LockReservation.nasm \
-        compiler/x/runtime/X86PicBuilder.nasm \
-        compiler/x/runtime/X86Unresolveds.nasm
-    
-else
-    JIT_PRODUCT_SOURCE_FILES+=\
-        compiler/x/runtime/X86ArrayTranslate.asm \
-        compiler/x/runtime/X86Codert.asm \
-        compiler/x/runtime/X86EncodeUTF16.asm \
-        compiler/x/runtime/X86LockReservation.asm \
-        compiler/x/runtime/X86PicBuilder.pasm \
-        compiler/x/runtime/X86Unresolveds.pasm
-
-endif # NASM_ASSEMBLER == yes
+    compiler/x/runtime/X86RelocationTarget.cpp \
+    compiler/x/runtime/X86ArrayTranslate.nasm \
+    compiler/x/runtime/X86Codert.nasm \
+    compiler/x/runtime/X86EncodeUTF16.nasm \
+    compiler/x/runtime/X86LockReservation.nasm \
+    compiler/x/runtime/X86PicBuilder.nasm \
+    compiler/x/runtime/X86Unresolveds.nasm
 
 include $(JIT_MAKE_DIR)/files/host/$(HOST_SUBARCH).mk

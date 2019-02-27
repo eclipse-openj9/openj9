@@ -1035,7 +1035,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedDynamicMethod(TR::Compilation * comp
 
    J9Class    *ramClass = constantPoolHdr();
    J9ROMClass *romClass = romClassPtr();
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedDynamicMethod, callSiteIndex, ramClass, getNonPersistentIdentifier());
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedDynamicMethod, callSiteIndex, ramClass);
    auto recv = _stream->read<TR_OpaqueMethodBlock*, std::string, bool>();
    TR_OpaqueMethodBlock *dummyInvokeExact = std::get<0>(recv);
    std::string signature = std::get<1>(recv);
@@ -1480,7 +1480,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServer
             {
             TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
-            svm->addClassFromMethodRecord(containingClass(), aMethod);
+            SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
          else
             {
@@ -1506,7 +1506,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServer
          {
          TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
          SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
-         svm->addClassFromMethodRecord(containingClass(), aMethod);
+         SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
          }
       else
          {

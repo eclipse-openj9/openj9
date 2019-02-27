@@ -1,7 +1,7 @@
 # buildtools Makefile
 
 ###############################################################################
-# Copyright (c) 1998, 2018 IBM Corp. and others
+# Copyright (c) 1998, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,7 +220,7 @@ CONSTANTPOOL_OPTIONS := \
 	-rootDir . \
 	-buildSpecId $(SPEC) \
 	-configDir $(SPEC_DIR) \
-	-jcls se7_basic,se9_before_b165,se9,se10,se11,se12
+	-version $(VERSION_MAJOR)
 
 constantpool : buildtools
 	$(CONSTANTPOOL_TOOL) $(CONSTANTPOOL_OPTIONS)

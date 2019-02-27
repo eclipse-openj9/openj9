@@ -28,7 +28,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTPROXYFIELDACCESSJAR=$(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.jar$(Q) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.xml$(Q) -explainExcludes -nonZeroExitWhenError -xids all,$(PLATFORM),$(VARIATION) $(CMDLINETESTER_XLIST); \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTPROXYFIELDACCESSJAR=$(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.jar$(Q) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.xml$(Q) -explainExcludes -nonZeroExitWhenError -xids all,$(PLATFORM),$(VARIATION) $(CMDLINETESTER_XLIST); \
 	${TEST_STATUS}</command>
 		<levels>
 			<level>sanity</level>
@@ -45,7 +45,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTPROXYFIELDACCESSJAR=$(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.jar$(Q) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang=ALL-UNNAMED --add-reads java.base=jdk.unsupported --add-opens=java.base/java.lang=ALL-UNNAMED -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.xml$(Q) -explainExcludes -nonZeroExitWhenError -xids all,$(PLATFORM),$(VARIATION) $(CMDLINETESTER_XLIST); \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTPROXYFIELDACCESSJAR=$(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.jar$(Q) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang=ALL-UNNAMED --add-reads java.base=jdk.unsupported --add-opens=java.base/java.lang=ALL-UNNAMED -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)testproxyfieldaccess.xml$(Q) -explainExcludes -nonZeroExitWhenError -xids all,$(PLATFORM),$(VARIATION) $(CMDLINETESTER_XLIST); \
 	${TEST_STATUS}</command>
 		<levels>
 			<level>sanity</level>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 
-import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
+import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccClassArray;
 
 public class GCClassArrayClassSlotIterator extends GCIterator
 {
@@ -47,7 +47,7 @@ public class GCClassArrayClassSlotIterator extends GCIterator
 			slots.add(slot);
 			addresses.add(VoidPointer.cast(clazz.arrayClassEA()));
 		}
-		if(clazz.romClass().modifiers().allBitsIn(J9_JAVA_CLASS_ARRAY)) {
+		if(clazz.romClass().modifiers().allBitsIn(J9AccClassArray)) {
 			J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(clazz);
 			slot = arrayClass.componentType();
 			if(slot.notNull()) {

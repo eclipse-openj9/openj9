@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,6 +145,25 @@ public:
 
    J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_J9JNILinkage);
    virtual TR::Register * buildDirectDispatch(TR::Node * callNode);
+
+   /**
+    * \brief
+    *   JNI return value processing:
+    *   1) Unwrap return value if needed for object return types, or
+    *   2) Enforce a return value of 0 or 1 for boolean return type
+    *
+    * \param callNode
+    *   The JNI call node to be evaluated.
+    *
+    * \param cg
+    *   The code generator object.
+    *
+    * \param javaReturnRegister
+    *   Register for the JNI call return value.
+   */
+   void processJNIReturnValue(TR::Node * callNode,
+                              TR::CodeGenerator* cg,
+                              TR::Register* javaReturnRegister);
 
    void checkException(TR::Node * callNode, TR::Register *methodMetaDataVirtualRegister, TR::Register * tempReg);
    void releaseVMAccessMask(TR::Node * callNode, TR::Register * methodMetaDataVirtualRegister,

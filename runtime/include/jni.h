@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,11 +69,11 @@ extern "C" {
 #define JNI_EINVAL			(-6)
 
 typedef unsigned char jboolean;
-/* jbyte is platform specific */
+typedef signed char jbyte;
 typedef unsigned short jchar;
 typedef short jshort;
-/* jint is platform specific */
-/* jlong is platform specific */
+typedef int jint;
+/* jlong is platform specific - defined in jniport.h */
 typedef float jfloat;
 typedef double jdouble;
 typedef jint jsize;

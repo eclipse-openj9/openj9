@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,6 +83,7 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Class_isPrimitive__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE },
 	{ "Java_java_lang_Class_getModifiersImpl__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL },
 	{ "Java_java_lang_Class_getComponentType__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE },
+	{ "Java_java_lang_Class_arrayTypeImpl__", J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL },
 	{ "Java_java_lang_System_arraycopy__Ljava_lang_Object_2ILjava_lang_Object_2II", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_ARRAYCOPY },
 	{ "Java_java_lang_System_currentTimeMillis__", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_CURRENT_TIME_MILLIS },
 	{ "Java_java_lang_System_nanoTime__", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_NANO_TIME },
@@ -241,6 +242,10 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_getObjectVolatile__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT_VOLATILE },
 	{ "Java_jdk_internal_misc_Unsafe_putObject__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_putObjectVolatile__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT_VOLATILE },
+	{ "Java_jdk_internal_misc_Unsafe_getReference__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT },
+	{ "Java_jdk_internal_misc_Unsafe_getReferenceVolatile__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT_VOLATILE },
+	{ "Java_jdk_internal_misc_Unsafe_putReference__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT },
+	{ "Java_jdk_internal_misc_Unsafe_putReferenceVolatile__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT_VOLATILE },
 	{ "Java_jdk_internal_misc_Unsafe_putOrderedObject__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT_VOLATILE },
 	{ "Java_jdk_internal_misc_Unsafe_getAddress__J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETADDRESS },
 	{ "Java_jdk_internal_misc_Unsafe_putAddress__JJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTADDRESS },
@@ -256,6 +261,7 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSwapLong__Ljava_lang_Object_2JJJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSwapInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetObject__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT },
+	{ "Java_jdk_internal_misc_Unsafe_compareAndSetReference__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetLong__Ljava_lang_Object_2JJJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
 	{ "Java_jdk_internal_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
@@ -272,6 +278,7 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_sun_misc_Unsafe_fullFence__", OutOfLineINL_jdk_internal_misc_Unsafe_fullFence },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeObject__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile },
+	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeReference__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile__Ljava_lang_Object_2JII", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeInt__Ljava_lang_Object_2JII", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile__Ljava_lang_Object_2JJJ", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile },
@@ -1010,7 +1017,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 				J9Class* ramClass;
 				
 				ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
-				ramClass->classDepthAndFlags |= J9_JAVA_CLASS_HAS_JDBC_NATIVES;
+				ramClass->classDepthAndFlags |= J9AccClassHasJDBCNatives;
 			}
 		}
 #endif

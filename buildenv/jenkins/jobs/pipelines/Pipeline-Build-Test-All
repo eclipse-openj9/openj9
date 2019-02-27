@@ -45,7 +45,9 @@
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
  *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse/openj9-omr.git (default)
  *   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
- *   OMR_SHA: the last commit SHA of the OMR repository
+ *   OMR_SHA: String - the last commit SHA of the OMR repository
+ *   ADOPTOPENJDK_REPO: String - the AdoptOpenJDK testing repository URL: e.g. https://github.com/AdoptOpenJDK/openjdk-tests.git
+ *   ADOPTOPENJDK_BRANCH: String - the AdoptOpenJDK testing branch: e.g. master
  *   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
  *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
  *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
@@ -81,7 +83,7 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'linux_ppc-64_cmprssptrs_le' : CURRENT_RELEASES,
          'linux_x86-64'               : CURRENT_RELEASES,
          'linux_x86-64_cmprssptrs'    : CURRENT_RELEASES,
-         'linux_x86-64_cmprssptrs_cmake' : ['9'],
+         'linux_x86-64_cmprssptrs_cmake' : ['8', '11'],
          'win_x86'                    : ['8'],
          'win_x86-64_cmprssptrs'      : CURRENT_RELEASES,
          'zos_390-64_cmprssptrs'      : ['11'],
@@ -110,6 +112,8 @@ BUILD_LIST = (params.BUILD_LIST) ? params.BUILD_LIST : ""
 echo "BUILD_LIST:'${BUILD_LIST}'"
 BUILD_IDENTIFIER = (params.BUILD_IDENTIFIER) ? params.BUILD_IDENTIFIER : ""
 echo "BUILD_IDENTIFIER:'${BUILD_IDENTIFIER}'"
+AUTOMATIC_GENERATION = (params.AUTOMATIC_GENERATION) ? params.AUTOMATIC_GENERATION : 'true'
+echo "AUTOMATIC_GENERATION:'${AUTOMATIC_GENERATION}'"
 
 OPENJDK_REPO = [:]
 OPENJDK_BRANCH = [:]
@@ -156,7 +160,24 @@ timeout(time: 12, unit: 'HOURS') {
                             TEST_NODE = TEST_NODES[SPEC]
                         }
 
-                        builds["build_test_JDK${SDK_VERSION}_${SPEC}"] = { build(REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) }
+                        def EXTRA_GETSOURCE_OPTIONS = get_value_by_spec(EXTRA_GETSOURCE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                        def EXTRA_CONFIGURE_OPTIONS = get_value_by_spec(EXTRA_CONFIGURE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                        def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                        def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
+
+                        def ADOPTOPENJDK_REPO = ''
+                        def ADOPTOPENJDK_BRANCH = ''
+                        if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
+                            ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
+                            ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
+                        }
+
+                        def job_name = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
+                        if (AUTOMATIC_GENERATION != 'false'){
+                            variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
+                        }
+
+                        builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) }
                     }
                 }
             } finally {
@@ -181,8 +202,7 @@ timeout(time: 12, unit: 'HOURS') {
     }
 }
 
-def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
-    def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
+def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) {
 
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
@@ -196,6 +216,8 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'OMR_REPO', value: OMR_REPO),
                     string(name: 'OMR_BRANCH', value: OMR_BRANCH),
                     string(name: 'OMR_SHA', value: SHAS['OMR']),
+                    string(name: 'ADOPTOPENJDK_REPO', value: ADOPTOPENJDK_REPO),
+                    string(name: 'ADOPTOPENJDK_BRANCH', value: ADOPTOPENJDK_BRANCH),
                     string(name: 'TESTS_TARGETS', value: TESTS_TARGETS),
                     string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
                     string(name: 'VENDOR_REPO', value: VENDOR_REPO),
@@ -209,7 +231,12 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'RESTART_TIMEOUT_UNITS', value: RESTART_TIMEOUT_UNITS),
                     string(name: 'SETUP_LABEL', value: SETUP_LABEL),
                     string(name: 'BUILD_LIST', value: BUILD_LIST),
-                    string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)]
+                    string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
+                    string(name: 'EXTRA_GETSOURCE_OPTIONS', value: EXTRA_GETSOURCE_OPTIONS),
+                    string(name: 'EXTRA_CONFIGURE_OPTIONS', value: EXTRA_CONFIGURE_OPTIONS),
+                    string(name: 'EXTRA_MAKE_OPTIONS', value: EXTRA_MAKE_OPTIONS),
+                    string(name: 'OPENJDK_CLONE_DIR', value: OPENJDK_CLONE_DIR),
+                    booleanParam(name: 'AUTOMATIC_GENERATION', value: AUTOMATIC_GENERATION)]
         return JOB
     }
 }
@@ -253,4 +280,11 @@ def get_node_labels(NODE_LABELS, SPECS) {
     }
 
     return LABELS
+}
+
+def get_value_by_spec(map, release, spec) {
+    if (map && map.containsKey(release) && map.get(release).containsKey(spec)) {
+        return map.get(release).get(spec)
+    }
+    return ''
 }

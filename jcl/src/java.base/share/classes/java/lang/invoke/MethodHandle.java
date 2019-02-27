@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+import java.lang.constant.Constable;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DirectMethodHandleDesc.Kind;
+import java.lang.constant.MethodHandleDesc;
+import java.lang.constant.MethodTypeDesc;
+/*[ENDIF]*/
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
@@ -35,6 +43,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.util.Objects;
+/*[IF Java12]*/
+import java.util.NoSuchElementException;
+import java.util.Optional;
+/*[ENDIF]*/
 // {{{ JIT support
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,7 +56,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
+/*[ENDIF] Java12 */
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
@@ -81,7 +93,11 @@ import com.ibm.oti.vm.VMLangAccess;
  * @since 1.7
  */
 @VMCONSTANTPOOL_CLASS
-public abstract class MethodHandle {
+public abstract class MethodHandle 
+/*[IF Java12]*/
+	implements Constable
+/*[ENDIF]*/
+{
 	/* Ensure that these stay in sync with the MethodHandleInfo constants and VM constants in VM_MethodHandleKinds.h */
 	/* Order matters here - static and special are direct pointers */
 	static final byte KIND_BOUND = 0;
@@ -119,6 +135,9 @@ public abstract class MethodHandle {
 	/*[IF Panama]*/
 	static final byte KIND_NATIVE = 32;
 	/*[ENDIF]*/
+	/*[IF Java12]*/
+	static final byte KIND_FILTERARGUMENTS_WITHCOMBINER = 33;
+	/*[ENDIF] Java12 */
 
 /*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
@@ -721,6 +740,106 @@ public abstract class MethodHandle {
 		return this;
 	}
 	
+/*[IF Java12]*/
+	/**
+	 * Returns the nominal descriptor of this MethodHandle instance, or an empty Optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with a nominal descriptor of MethodHandle instance
+	 */
+	public Optional<MethodHandleDesc> describeConstable() {
+		try {
+			DirectMethodHandleDesc.Kind handleKind;
+
+			/* Define handle as a crackable type. If its not possible to do so this method should fail */
+			MethodHandleInfo handleInfo = Lookup.IMPL_LOOKUP.revealDirect(this);
+			switch(handleInfo.getReferenceKind()) {
+				case MethodHandleInfo.REF_getField:
+					handleKind = DirectMethodHandleDesc.Kind.GETTER;
+					break;
+				case MethodHandleInfo.REF_getStatic:
+					handleKind = DirectMethodHandleDesc.Kind.STATIC_GETTER;
+					break;
+				case MethodHandleInfo.REF_putField:
+					handleKind = DirectMethodHandleDesc.Kind.SETTER;
+					break;
+				case MethodHandleInfo.REF_putStatic:
+					handleKind = DirectMethodHandleDesc.Kind.STATIC_SETTER;
+					break;
+				case MethodHandleInfo.REF_invokeVirtual:
+					handleKind = DirectMethodHandleDesc.Kind.VIRTUAL;
+					break;
+				case MethodHandleInfo.REF_invokeStatic:
+					if (handleInfo.getDeclaringClass().isInterface()) {
+						handleKind = DirectMethodHandleDesc.Kind.INTERFACE_STATIC;
+					} else {
+						handleKind = DirectMethodHandleDesc.Kind.STATIC;
+					}
+					break;
+				case MethodHandleInfo.REF_invokeSpecial:
+					if (handleInfo.getDeclaringClass().isInterface()) {
+						handleKind = DirectMethodHandleDesc.Kind.INTERFACE_SPECIAL;
+					} else {
+						handleKind = DirectMethodHandleDesc.Kind.SPECIAL;
+					}
+					break;
+				case MethodHandleInfo.REF_newInvokeSpecial:
+					handleKind = DirectMethodHandleDesc.Kind.CONSTRUCTOR;	
+					break;
+				case MethodHandleInfo.REF_invokeInterface:
+					handleKind = DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL;
+					break;
+				default:
+					/* fail */
+					return Optional.empty();
+			}
+
+			/* create descriptor for the declaring class */
+			ClassDesc declaringDesc = handleInfo.getDeclaringClass().describeConstable().orElseThrow();
+
+			/* create handle descriptor */
+			MethodHandleDesc handleDesc;
+			switch(handleInfo.getReferenceKind()) {
+				/* field types */
+				case MethodHandleInfo.REF_getField:
+				case MethodHandleInfo.REF_getStatic:
+				case MethodHandleInfo.REF_putField:
+				case MethodHandleInfo.REF_putStatic:
+					ClassDesc fieldType = ((FieldHandle)this).fieldClass.describeConstable().orElseThrow();
+					handleDesc = MethodHandleDesc.ofField(handleKind, declaringDesc, handleInfo.getName(), fieldType);
+					break;
+				/* method types */
+				case MethodHandleInfo.REF_invokeVirtual:
+				case MethodHandleInfo.REF_invokeStatic:
+				case MethodHandleInfo.REF_invokeSpecial:
+				case MethodHandleInfo.REF_invokeInterface:
+					MethodTypeDesc lookupType = handleInfo.getMethodType().describeConstable().orElseThrow();
+					handleDesc = MethodHandleDesc.ofMethod(handleKind, declaringDesc, handleInfo.getName(), lookupType);
+					break;
+				/* constructor types */
+				case MethodHandleInfo.REF_newInvokeSpecial:
+					/* create list of descriptors for constructor parameters */
+					Class<?>[] handleParams = handleInfo.getMethodType().parameterArray();
+					int paramCount = handleParams.length;
+					ClassDesc[] paramDescs = new ClassDesc[paramCount];
+					for (int i = 0; i < paramCount; i++) {
+						paramDescs[i] = handleParams[i].describeConstable().orElseThrow();
+					}
+					handleDesc = MethodHandleDesc.ofConstructor(declaringDesc, paramDescs);
+					break;
+				default:
+					/* fail */
+					return Optional.empty();
+			}
+			return Optional.ofNullable(handleDesc);
+
+		} catch(IllegalArgumentException | SecurityException | NoSuchElementException e) {
+			/* fail */
+			return Optional.empty();
+		}
+	}
+/*[ENDIF]*/
+
 	public MethodHandle bindTo(Object value) throws IllegalArgumentException, ClassCastException {
 		/*
 		 * Check whether the first parameter has a reference type assignable from value. Note that MethodType.parameterType(0) will
@@ -1363,6 +1482,21 @@ public abstract class MethodHandle {
 		return this;
 	}
 	
+	/*[IF Java12]*/
+	/*[IF ]*/
+	/*
+	 * Used to preserve the MH on the stack when avoiding the call-in for
+	 * filterArgumentsWithCombinerHandle.  Must return 'this' so stackmapper will keep the MH
+	 * alive.
+	 */
+	/*[ENDIF]*/
+	@SuppressWarnings("unused")
+	@VMCONSTANTPOOL_METHOD
+	private MethodHandle filterArgumentsWithCombinerPlaceHolder() {
+		return this;
+	}
+	/*[ENDIF] Java12 */
+
 	/*[IF ]*/
 	/*
 	 * Used to preserve the MH on the stack when avoiding the call-in for

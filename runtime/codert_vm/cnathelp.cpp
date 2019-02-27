@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -437,7 +437,7 @@ fast_jitNewObjectImpl(J9VMThread *currentThread, J9Class *objectClass, bool chec
 			goto slow;
 		}
 	}
-	if (J9_UNEXPECTED(J9_ARE_ANY_BITS_SET(objectClass->romClass->modifiers, J9AccAbstract | J9AccInterface))) {
+	if (J9_UNEXPECTED(J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(objectClass->romClass))) {
 		goto slow;
 	}
 	{
@@ -471,7 +471,7 @@ slow_jitNewObjectImpl(J9VMThread *currentThread, bool checkClassInit, bool nonZe
 	if (nonZeroTLH) {
 		allocationFlags |= J9_GC_ALLOCATE_OBJECT_NON_ZERO_TLH;
 	}
-	if (J9_ARE_ANY_BITS_SET(objectClass->romClass->modifiers, J9AccAbstract | J9AccInterface)) {
+	if (J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(objectClass->romClass)) {
 		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
 		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGINSTANTIATIONERROR | J9_EX_CTOR_CLASS, J9VM_J9CLASS_TO_HEAPCLASS(objectClass));
 		goto done;

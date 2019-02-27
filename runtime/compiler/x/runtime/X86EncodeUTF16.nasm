@@ -1,4 +1,4 @@
-; Copyright (c) 2014, 2018 IBM Corp. and others
+; Copyright (c) 2014, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,18 +77,18 @@ encodeUTF16Big_shufmask:
 %1:                                      ; helperName
                 ; Remember original count -
                 ; will subtract at return to compute number converted
-                mov rax, rdx
-                cmp rdx, 0
+                mov _rax, _rdx
+                cmp _rdx, 0
                 je Lend_%1               ; helpername
-                sub rdi, rsi             ; relative to _rsi, only advance _rsi
-                cmp rdx, SSE_MIN_CHARS
+                sub _rdi, _rsi             ; relative to _rsi, only advance _rsi
+                cmp _rdx, SSE_MIN_CHARS
                 jl Lresidue_loop_%1      ; helperName
 
 Lprealign_%1:                            ; helperName
-                test rsi, 0fh
+                test _rsi, 0fh
                 jz Laligned16_%1         ; helperName
 
-                mov cx, word [rsi]
+                mov cx, word [_rsi]
 
                 ; return if surrogate
                 mov bx, cx
@@ -100,14 +100,14 @@ Lprealign_%1:                            ; helperName
 %if %2 ;bigEndian
                 xchg cl, ch
 %endif
-                mov word [rsi + rdi], cx
-                add rsi, 2
-                dec rdx
+                mov word [_rsi + _rdi], cx
+                add _rsi, 2
+                dec _rdx
                 jg Lprealign_%1          ; helperName
                 jmp Lend_%1              ; helperName
 
 Laligned16_%1:                           ; helperName
-                sub rdx, 8
+                sub _rdx, 8
                 jl Lresidue_%1           ; helperName
 
                 ; initialize constant vectors:
@@ -129,7 +129,7 @@ Laligned16_%1:                           ; helperName
 L8_at_a_time_%1:                         ; helperName
                 ; read 8 chars
                 ; should this use movdqu, start once 8-byte aligned?
-                movdqa xmm2, oword [rsi]
+                movdqa xmm2, oword [_rsi]
 
                 ; jump to residue loop if any are surrogate
                 movdqa xmm3, xmm2
@@ -144,19 +144,19 @@ L8_at_a_time_%1:                         ; helperName
 %endif
 
                 ; write 8 chars
-                movdqu oword [rsi + rdi], xmm2
+                movdqu oword [_rsi + _rdi], xmm2
 
-                add rsi, 16
-                sub rdx, 8
+                add _rsi, 16
+                sub _rdx, 8
                 jge L8_at_a_time_%1      ; helperName
 
 Lresidue_%1:                             ; helperName
-                add rdx, 8
-                cmp rdx, 0
+                add _rdx, 8
+                cmp _rdx, 0
                 je Lend_%1               ; helperName
 
 Lresidue_loop_%1:                        ; helperName
-                mov cx, word [rsi]
+                mov cx, word [_rsi]
 
                                          ; return if surrogate
                 mov bx, cx
@@ -168,13 +168,13 @@ Lresidue_loop_%1:                        ; helperName
 %if %2 ;&bigEndian
                 xchg cl, ch
 %endif
-                mov word [rsi + rdi], cx
-                add rsi, 2
-                dec rdx
+                mov word [_rsi + _rdi], cx
+                add _rsi, 2
+                dec _rdx
                 jg Lresidue_loop_%1     ; helperName
 
 Lend_%1: ;&helperName:
-                sub rax, rdx
+                sub _rax, _rdx
                 ret
 
 %endmacro

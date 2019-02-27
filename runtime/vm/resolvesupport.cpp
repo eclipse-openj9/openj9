@@ -148,7 +148,7 @@ BOOLEAN
 requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass)
 {
 	BOOLEAN checkFlag = TRUE;
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		if (srcModule == targetClass->module) {
 			if (NULL != srcModule) {
 				/* same named module */
@@ -259,7 +259,7 @@ tryAgain:
 	ramClassRefWrapper = (J9RAMClassRef *)&ramCP[cpIndex];
 	resolvedClass = ramClassRefWrapper->value;
 	/* If resolving for "new", check if the class is instantiable */
-	if ((NULL != resolvedClass) && (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE) || J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccAbstract | J9AccInterface))) {
+	if ((NULL != resolvedClass) && (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE) || !J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(resolvedClass->romClass))) {
 		/* ensure that the caller can safely read the modifiers field if it so desires */
 		issueReadBarrier();
 		goto done;
@@ -362,7 +362,7 @@ tryAgain:
 	}
 
 	if (jitCompileTimeResolve) {
-		if (J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
+		if (J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
 			if (J9ClassInitSucceeded != resolvedClass->initializeStatus) {
 				goto bail;
 			}
@@ -479,7 +479,7 @@ tryAgain:
 	if (resolvedClass == NULL) {
 		goto done;
 	}
-	isResolvedClassAnInterface = (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE));
+	isResolvedClassAnInterface = (J9AccInterface == (resolvedClass->romClass->modifiers & J9AccInterface));
 
 	/* Find the method. */
 	lookupOptions |= J9_LOOK_STATIC;
@@ -489,7 +489,7 @@ tryAgain:
 		cpClass = J9_CLASS_FROM_CP(ramCP);
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 
-		if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_19) {
+		if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_V11) {
 			/* This check is only required in Java9 and there have been applications that
 			 * fail when this check is enabled on Java8.
 			 */
@@ -716,11 +716,11 @@ tryAgain:
 				}
 			}
 
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, lookupOptions);
+			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					targetClass = definingClass;
-					badMemberModifier = J9_JAVA_PRIVATE;
+					badMemberModifier = J9AccPrivate;
 illegalAccess:
 					staticAddress = NULL;
 					if (canRunJavaCode && !threadEventsPending(vmStruct)) {
@@ -916,10 +916,10 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 				goto illegalAccess;
 			}
 
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, lookupOptions);
+			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
-					badMemberModifier = J9_JAVA_PRIVATE;
+					badMemberModifier = J9AccPrivate;
 					targetClass = definingClass;
 illegalAccess:
 					fieldOffset = -1;
@@ -972,7 +972,24 @@ illegalAccess:
 		
 			if (ramCPEntry != NULL) {
 				UDATA valueOffset = fieldOffset;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if ('Q' == *J9UTF8_DATA(signature)) {
+					J9FlattenedClassCache *flattenedClassCache = classFromCP->flattenedClassCache;
+					J9Class *flattenableClass = NULL;
+					UDATA index = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
+					flattenableClass = flattenedClassCache[index].clazz;
 
+					if (J9_ARE_ALL_BITS_SET(flattenableClass->classFlags, J9ClassIsFlattened)) {
+						modifiers |= J9FieldFlagFlattened;
+
+						flattenedClassCache[index].offset = valueOffset;
+						valueOffset = index;
+
+						/* offset must be written to flattenedClassCache before fieldref is marked as resolved */
+						issueWriteBarrier();
+					}
+				}
+#endif
 				/* Sign extend the resolved constant to make sure that it is always larger than valueOffset field */
 				modifiers |= (UDATA)(IDATA)(I_32) J9FieldFlagResolved;
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
@@ -1038,7 +1055,7 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 		goto done;
 	}
 
-	if ((interfaceClass->romClass->modifiers & J9_JAVA_INTERFACE) != J9_JAVA_INTERFACE) {
+	if ((interfaceClass->romClass->modifiers & J9AccInterface) != J9AccInterface) {
 		if (throwException) {
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
 			j9object_t detailMessage = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_STR_XLAT);
@@ -1068,7 +1085,7 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
 			UDATA tagBits = 0;
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
+			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9AccInterface)) {
 				/* Resolved method is in an interface class */
 				if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
 					/* Resolved method is a private interface method which does not appear in the
@@ -1191,7 +1208,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 	}
 
-	if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_19) {
+	if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_V11) {
 		/* This check is only required in Java9 and there have been applications that
 		 * fail when this check is enabled on Java8.
 		 */
@@ -1202,7 +1219,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				 * check may incorrectly fail.
 				 */
 				UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramCP)->romClass), cpIndex);
-				if (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
+				if (J9AccInterface == (resolvedClass->romClass->modifiers & J9AccInterface)) {
 					if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
 					&& (J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
 					&& (J9CPTYPE_INTERFACE_METHOD != cpType)
@@ -1594,7 +1611,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			/* Only allow non-interface method to call invokePrivate, private interface method should use "invokeInterface" bytecode
 			 * The else case will throw ICCE for private interface method 
 			 */
-			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
+			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
 				/* Private method found, will not be in vTable, point vTable index to invokePrivate */
 				if (ramCPEntry != NULL) {
 					ramCPEntry->method = method;

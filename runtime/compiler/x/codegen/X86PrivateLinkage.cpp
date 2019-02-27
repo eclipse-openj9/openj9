@@ -2179,23 +2179,9 @@ TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
 
    callInstr->setNeedsGCMap(site.getPreservedRegisterMask());
 
-   if (site.getSymbolReference()->isUnresolved() && !site.getMethodSymbol()->isInterface())
-      {
-      generateBoundaryAvoidanceInstruction(
-         TR::X86BoundaryAvoidanceInstruction::unresolvedAtomicRegions, 8, 8, callInstr, cg());
-
-      TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
-      TR::UnresolvedDataSnippet *snippet = new (comp()->trHeapMemory()) TR::X86UnresolvedVirtualCallSnippet(
-         callNode,
-         site.getSymbolReference(),
-         callInstr,
-         cg());
-
-      // Need to do this so that stack map registered inside the snippet
-      targetAddressMemref->setUnresolvedDataSnippet(snippet);
-      snippet->gcMap().setGCRegisterMask(site.getPreservedRegisterMask());
-      cg()->addSnippet(snippet);
-      }
+   TR_ASSERT_FATAL(
+      !site.getSymbolReference()->isUnresolved() || site.getMethodSymbol()->isInterface(),
+      "buildVFTCall: unresolved virtual site");
 
    if (cg()->enableSinglePrecisionMethods() &&
        comp()->getJittedMethodSymbol()->usesSinglePrecisionMode())

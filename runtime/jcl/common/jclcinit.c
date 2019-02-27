@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,20 +100,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 			j2se_version_info = "1.8.0";
 		} else {
 			j2se_version_info = "1.8.?";
-		}
-		break;
-	case J2SE_19:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
-			j2se_version_info = "9";
-		} else {
-			j2se_version_info = "9.?";
-		}
-		break;
-	case J2SE_V10:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V10) {
-			j2se_version_info = "10";
-		} else {
-			j2se_version_info = "10.?";
 		}
 		break;
 	case J2SE_V11:
@@ -453,7 +439,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_METRONOME, J9_GC_POLICY_METRONOME },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_NOGC, J9_GC_POLICY_NOGC },
 
-		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT, J9_JAVA_CLASS_RAM_SHAPE_SHIFT },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT, J9AccClassRAMShapeShift },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_SHAPE_MASK, OBJECT_HEADER_SHAPE_MASK },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INSTANCESIZE_OFFSET, offsetof(J9Class, totalInstanceSize) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INSTANCE_DESCRIPTION_OFFSET, offsetof(J9Class, instanceDescription) },
@@ -469,7 +455,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_SUPERCLASSES_OFFSET, offsetof(J9Class, superclasses) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_ROMCLASS_OFFSET, offsetof(J9Class, romClass) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9ROMCLASS_MODIFIERS_OFFSET, offsetof(J9ROMClass, modifiers) },
-		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_DEPTH_MASK, J9_JAVA_CLASS_DEPTH_MASK },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_DEPTH_MASK, J9AccClassDepthMask },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_MASK, ~(J9_REQUIRED_CLASS_ALIGNMENT - 1) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE, J9AccClassInternalPrimitiveType },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_ARRAY, J9AccClassArray },
@@ -574,7 +560,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
-	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
 	   vm->runtimeFlags |= J9_RUNTIME_STRING_BYTE_ARRAY;
 	}
 
@@ -596,14 +582,8 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	vmFuncs->internalAcquireVMAccess(vmThread);
 
 	/* request an extra slot in java/lang/Module which we will use to connect native data to the Module object */
-	if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-		if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/reflect/Module", "modulePointer", "J", &vm->modulePointerOffset)) {
-			return 1;
-		}
-	} else {
-		if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Module", "modulePointer", "J", &vm->modulePointerOffset)) {
-			return 1;
-		}
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Module", "modulePointer", "J", &vm->modulePointerOffset)) {
+		return 1;
 	}
 
 	vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS;

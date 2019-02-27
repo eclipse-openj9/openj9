@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2004, 2018 IBM Corp. and others
+  Copyright (c) 2004, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -410,6 +410,11 @@
  	<!-- This should be last test to clean up any cache left behind	-->
 	<test id="Cleanup any shared cache left behind" modeHints="HINT_SHARECLASSES">
  		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:destroyAll</command>
+		<return type="success" value="1"/>
+	</test>
+
+	<test id="soae001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:soae001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="1"/>
 	</test>
 </suite>

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,11 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
+/*[IF Java12]*/
+import java.lang.constant.Constable;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.MethodTypeDesc;
+/*[ENDIF]*/
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -38,6 +43,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+/*[IF Java12]*/
+import java.util.NoSuchElementException;
+import java.util.Optional;
+/*[ENDIF]*/
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -60,7 +69,11 @@ import java.lang.invoke.MethodTypeForm;
  * @since 1.7
  */
 @VMCONSTANTPOOL_CLASS
-public final class MethodType implements Serializable {
+public final class MethodType implements Serializable 
+/*[IF Java12]*/
+	, Constable, TypeDescriptor.OfMethod<Class<?>, MethodType>
+/*[ENDIF]*/
+{
 	static final Class<?>[] EMTPY_PARAMS = new Class<?>[0];
 	static final Set<Class<?>> WRAPPER_SET;
 	static {
@@ -854,7 +867,7 @@ public final class MethodType implements Serializable {
 	 * 
 	 * @return the parameter types as an array
 	 */
-	public Class<?>[] parameterArray(){
+	public Class<?>[] parameterArray() {
 		return arguments.clone();
 	}
 
@@ -863,7 +876,7 @@ public final class MethodType implements Serializable {
 	 * 
 	 * @return the number of parameters
 	 */
-	public int parameterCount(){
+	public int parameterCount() {
 		return arguments.length;
 	}
 
@@ -885,7 +898,7 @@ public final class MethodType implements Serializable {
 	 * 
 	 * @return the parameter types as a List
 	 */
-	public List<Class<?>> parameterList(){
+	public List<Class<?>> parameterList() {
 		List<Class<?>> list = Arrays.asList(arguments.clone()); 
 		return Collections.unmodifiableList(list);
 	}     
@@ -908,7 +921,7 @@ public final class MethodType implements Serializable {
 	/**
 	 * @return the type of the return
 	 */
-	public Class<?> returnType(){
+	public Class<?> returnType() {
 		return returnType;
 	}
 	
@@ -1257,6 +1270,42 @@ public final class MethodType implements Serializable {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 /*[ENDIF]*/
+/*[ENDIF]*/
+
+/*[IF Java12]*/
+	/**
+	 * Return field descriptor of MethodType instance.
+	 * 
+	 * @return field descriptor of MethodType instance
+	 */
+	public String descriptorString() {
+		return methodDescriptor;
+	}
+
+	/**
+	 * Returns the nominal descriptor of this MethodType instance, or an empty Optional 
+	 * if construction is not possible.
+	 * 
+	 * @return Optional with a nominal descriptor of MethodType instance
+	 */
+	public Optional<MethodTypeDesc> describeConstable() {
+		try {
+			ClassDesc returnDesc = returnType.describeConstable().orElseThrow();
+
+			/* convert parameter classes to ClassDesc */
+			final int argumentsLength = arguments.length;
+			ClassDesc[] paramDescs = new ClassDesc[argumentsLength];
+			for (int i = 0; i < argumentsLength; i++) {
+				paramDescs[i] = arguments[i].describeConstable().orElseThrow();
+			}
+
+			/* create MethodTypeDesc */
+			MethodTypeDesc typeDesc = MethodTypeDesc.of(returnDesc, paramDescs);
+			return Optional.of(typeDesc);
+		} catch(NoSuchElementException e) {
+			return Optional.empty();
+		}
+	}
 /*[ENDIF]*/
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1505,6 +1505,15 @@ jvmtiGetLocalInstance(jvmtiEnv* env,
 	jint depth,
 	jobject* value_ptr);
 
+/**
+* @brief Set the allocation sampling interval
+* @param env The JVMTI environment pointer.
+* @param samplingInterval The sampling interval in bytes.
+* @return jvmtiError Error code returned by JVMTI function
+*/
+jvmtiError JNICALL 
+jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
+	jint samplingInterval);
 
 /**
 * @brief

@@ -412,6 +412,17 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, void * & cacheOffset)
    return false;
    }
 
+J9ROMClass *
+TR_J9SharedCache::startingROMClassOfClassChain(UDATA *classChain)
+   {
+   UDATA lengthInBytes = classChain[0];
+   TR_ASSERT_FATAL(lengthInBytes >= 2 * sizeof (UDATA), "class chain is too short!");
+
+   void *romClassOffset = reinterpret_cast<void*>(classChain[1]);
+   void *romClass = pointerFromOffsetInSharedCache(romClassOffset);
+   return static_cast<J9ROMClass*>(romClass);
+   }
+
 // convert an offset into a string of 8 characters
 void
 TR_J9SharedCache::convertUnsignedOffsetToASCII(UDATA offset, char *buffer)
@@ -776,4 +787,13 @@ uintptrj_t TR_J9SharedCache::lookupClassChainOffsetInSharedCacheFromClass(TR_Opa
       //fprintf(stderr,"SharedCache: classChainOffsetInSharedCache %p\n", (void*)classChainOffsetInSharedCache);
       return classChainOffsetInSharedCache;
       }
+   }
+
+uintptrj_t
+TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
+   {
+   void *loaderForClazz = _fe->getClassLoader(clazz);
+   void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+   uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+   return classChainOffsetInSharedCache;
    }

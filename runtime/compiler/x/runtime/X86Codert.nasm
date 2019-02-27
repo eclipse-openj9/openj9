@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,6 @@ eq_gpr_size                   equ 8
 %endif
 %else
         ; 32-bit
-        CPU P2
 
 eq_gpr_size                   equ 4
 eq_vft_pointer_size           equ 4
@@ -357,16 +356,16 @@ X87floatRemainder:
 %ifdef NO_X87_UNDER_WIN64
         int 3
 %else
-        push        rax
-        fld         dword [rsp+12]  ; load divisor (ST1)
-        fld         dword [rsp+8]   ; load dividend (ST0)
+        push        _rax
+        fld         dword [_rsp+12]  ; load divisor (ST1)
+        fld         dword [_rsp+8]   ; load dividend (ST0)
 fremloop:
         fprem
         fstsw       ax
         test        ax, 0400h
         jnz short   fremloop
         fstp        st1
-        pop         rax
+        pop         _rax
         ret         8
 %endif
 
@@ -375,16 +374,16 @@ X87doubleRemainder:
 %ifdef NO_X87_UNDER_WIN64
         int 3
 %else
-        push        rax
-        fld         qword [rsp+16]  ; load divisor (ST1)
-        fld         qword [rsp+8]   ; load dividend (ST0)
+        push        _rax
+        fld         qword [_rsp+16]  ; load divisor (ST1)
+        fld         qword [_rsp+8]   ; load dividend (ST0)
 dremloop:
         fprem
         fstsw       ax
         test        ax, 0400h
         jnz short   dremloop
         fstp        st1
-        pop         rax
+        pop         _rax
         ret         16
 %endif
 
@@ -395,14 +394,14 @@ dremloop:
 ;
         align 16
 SSEfloatRemainderIA32Thunk:
-        sub         rsp, 8
-        movq        qword [rsp], xmm1
-        cvtss2sd    xmm1, dword [rsp +16]     ; dividend
-        cvtss2sd    xmm0, dword [rsp +12]     ; divisor
+        sub         _rsp, 8
+        movq        qword [_rsp], xmm1
+        cvtss2sd    xmm1, dword [_rsp +16]     ; dividend
+        cvtss2sd    xmm0, dword [_rsp +12]     ; divisor
         call        doSSEdoubleRemainder
         cvtsd2ss    xmm0, xmm0
-        movq        xmm1, qword [rsp]
-        add         rsp, 8
+        movq        xmm1, qword [_rsp]
+        add         _rsp, 8
         ret         8
 
 
@@ -412,13 +411,13 @@ SSEfloatRemainderIA32Thunk:
 ;
         align 16
 SSEdoubleRemainderIA32Thunk:
-        sub         rsp, 8
-        movq        qword [rsp], xmm1
-        movq        xmm1, qword [rsp +20]     ; dividend
-        movq        xmm0, qword [rsp +12]     ; divisor
+        sub         _rsp, 8
+        movq        qword [_rsp], xmm1
+        movq        xmm1, qword [_rsp +20]     ; dividend
+        movq        xmm0, qword [_rsp +12]     ; divisor
         call        doSSEdoubleRemainder
-        movq        xmm1, qword [rsp]
-        add         rsp, 8
+        movq        xmm1, qword [_rsp]
+        add         _rsp, 8
         ret         16
 
 
@@ -434,15 +433,11 @@ SSEfloatRemainder:
 SSEdoubleRemainder:
 
 doSSEdoubleRemainder:
-%ifdef ASM_J9VM_USE_GOT
-        push        rdx
-        LoadGOTInto rdx
-%endif
         ucomisd xmm0, xmm1                    ; unordered compare, is either operand NaN
         jp short RETURN_NAN                   ; either dividend or divisor was a NaN
 
-        sub     rsp, 8
-        movq    qword [rsp], xmm2
+        sub     _rsp, 8
+        movq    qword [_rsp], xmm2
 
         ; TODO: current helper linkage expects the dividend and divisor to be
         ; the opposite order of how this code is written
@@ -454,80 +449,50 @@ doSSEdoubleRemainder:
 
         punpcklqdq xmm1, xmm0                           ; xmm1 = {a, b}
         ; note, the sign of the divisor has no affect on the final result
-%ifndef ASM_J9VM_USE_GOT
-        andpd xmm1, oword  [rel + ABSMASK]              ; xmm1 = {|a|, |b|}
-        movapd xmm2, [rel NULL_INF_MASK]                ; xmm2 = {+inf, 0.0}
-%else
-        andpd xmm1, QWORD  ABSMASK@GOTOFF[rdx]          ; xmm1 = {|a|, |b|}
-        movapd xmm2, QWORD  NULL_INF_MASK@GOTOFF[rdx]   ; xmm2 = {+inf, 0.0}
-%endif
+        andpd xmm1, oword  [_rel ABSMASK]                            ; xmm1 = {|a|, |b|}
+        movapd xmm2, [_rel NULL_INF_MASK]                            ; xmm2 = {+inf, 0.0}
+        
         cmppd xmm2, xmm1, 4                             ; compare xmm2 != xmm1, leave mask in xmm1
 
         ; xmm1 = {(|a| != +inf ? |a| : 0, |b| != 0.0 ? |b| : 0}
         andpd xmm1, xmm2
 
         ; xmm2 = {|a| != +inf ? 0 : QNaN, |b| != 0.0 ? 0 : QNaN}
-%ifndef ASM_J9VM_USE_GOT
-        andnpd xmm2, [rel  QNaN] ;qword
-%else
-        andnpd xmm2, QWORD  QNaN@GOTOFF[rdx]
-%endif
+        andnpd xmm2, [_rel QNaN] ;qword
+
         ; xmm1 = {|a| != +inf ? |a| : QNaN, |b| != 0.0 ? |b| : QNaN}
         orpd xmm1, xmm2
         movapd xmm2, xmm1                        ; xmm2 = xmm1
         shufpd xmm2, xmm2, 1                     ; swap elems in xmm2 so |a| (or QNaN) in xmm2
 
-        add     rsp, 8
+        add     _rsp, 8
         ucomisd xmm2, xmm1
-        movq    xmm2, qword [rsp -8]             ; for scheduling reasons updating of the SP was done 2 intrs above
-%ifndef ASM_J9VM_USE_GOT
+        movq    xmm2, qword [_rsp -8]             ; for scheduling reasons updating of the SP was done 2 intrs above
+
         jae short _dblRemain                     ; Do normal algorithm
-%else
-        jae short JMP_DBLREMAIN                  ; Do normal algorithm
-%endif
+
         jnp short RETURN_DIVIDEND
 
 RETURN_NAN:
-%ifndef ASM_J9VM_USE_GOT
-        movapd xmm0, [rel QNaN]                  ; xmm0 = QNaN
-%else
-        movapd xmm0, QWORD  QNaN@GOTOFF[rdx]     ; xmm0 = QNaN
-%endif
+        movapd xmm0, [_rel QNaN]                  ; xmm0 = QNaN
 RETURN_DIVIDEND:                                 ; dividend already in xmm0
-%ifdef ASM_J9VM_USE_GOT
-        pop     rdx
-%endif
         nop
-        ret
 
-%ifdef ASM_J9VM_USE_GOT
-JMP_DBLREMAIN:
-        pop     rdx
-        jmp short _dblRemain                     ; Do normal algorithm
-%endif
         ret
 
         align 16
 _dblRemain:
         ; Prolog Start
-        push rax
-        push rbx
-        push rcx
-%ifdef ASM_J9VM_USE_GOT
-        push rdx
-        LoadGOTInto rdx
-%endif
-        sub rsp, 48                              ; rsp = rsp - 48(bytes)
-        movq QWORD  [rsp+16], xmm2               ; preserve xmm2
+        push _rax
+        push _rbx
+        push _rcx
+        sub _rsp, 48                              ; _rsp = _rsp - 48(bytes)
+        movq QWORD  [_rsp+16], xmm2               ; preserve xmm2
         ; Prolog End
-%ifndef ASM_J9VM_USE_GOT
-        andpd xmm1, [rel ABSMASK]                ; xmm1 = |divisor|
-%else
-        andpd xmm1, QWORD  ABSMASK@GOTOFF[rdx]   ; xmm1 = |divisor|
-%endif
-        movq QWORD  [rsp], xmm0                  ; store dividend on stack
-        movq QWORD  [rsp+8], xmm1                ; store |divisor| on stack
-        mov eax, DWORD  [rsp+12]                 ; eax = high 32 bits of |divisor|
+        andpd xmm1, [_rel ABSMASK]                ; xmm1 = |divisor|
+        movq QWORD  [_rsp], xmm0                  ; store dividend on stack
+        movq QWORD  [_rsp+8], xmm1                ; store |divisor| on stack
+        mov eax, DWORD  [_rsp+12]                 ; eax = high 32 bits of |divisor|
         and eax, 7ff00000h                       ; eax = exponent of |divisor|
         shr eax, 20
         cmp eax, 2                               ; ppc uses 0x0001 and does bgt L144
@@ -536,179 +501,140 @@ L144:                                            ; and fall through to the norma
 
         ; Anything greater than MAGIC_NUM1 is considered "large"
         ; compare |dividend| to MAGIC_NUM1
-%ifndef ASM_J9VM_USE_GOT
-        ucomisd xmm1, [rel MAGIC_NUM1]
-%else
-        ucomisd xmm1, QWORD  MAGIC_NUM1@GOTOFF[rdx]
-%endif
+        ucomisd xmm1, [_rel MAGIC_NUM1]
         jae LARGE_NUMS                           ; if xmm1 >= 0x7fde42d13077b76
 
 L184:
         movq  xmm2, xmm1                         ; xmm2 = xmm1
         addsd xmm2, xmm1                         ; xmm2 = xmm1 + xmm1 (2 * |divisor|)
-        movq  QWORD  [rsp+32], xmm2              ; store xmm2 on the stack
-        mov eax, DWORD  [rsp+4]                  ; eax = high 32 bits of dividend
+        movq  QWORD  [_rsp+32], xmm2              ; store xmm2 on the stack
+        mov eax, DWORD  [_rsp+4]                  ; eax = high 32 bits of dividend
 
         movq  xmm4, xmm0                         ; xmm4 = xmm0 (dividend)
-%ifndef ASM_J9VM_USE_GOT
-        andpd xmm4, [rel ABSMASK]                ; xmm4 = |dividend|
-%else
-        andpd xmm4, QWORD  ABSMASK@GOTOFF[rdx]   ; xmm4 = |dividend|
-%endif
-        movq QWORD  [rsp], xmm4                  ; store xmm4 on the stack
+        andpd xmm4, [_rel ABSMASK]                ; xmm4 = |dividend|
+        movq QWORD  [_rsp], xmm4                  ; store xmm4 on the stack
         mov ebx, eax                             ; ebx = eba
         and ebx, 80000000h                       ; ebx = sign bit of dividend
 
         ucomisd xmm4, xmm2                       ; compare xmm4 with xmm2
         jna L234                                 ; if xmm4 <= xmm2 goto L234
 
-        movq QWORD  [rsp+40], xmm2               ; store xmm2 on the stack
-        mov ecx, DWORD  [rsp+36]                 ; ms 32bits of |dividend| (was xmm4)
+        movq QWORD  [_rsp+40], xmm2               ; store xmm2 on the stack
+        mov ecx, DWORD  [_rsp+36]                 ; ms 32bits of |dividend| (was xmm4)
         sub eax, ecx                             ; eax = eax - ecx
         and eax, 7ff00000h                       ; get exponent (rlwinm r0,r0,0,1,11)
-        mov ecx, DWORD  [rsp+44]
-        movq xmm2, QWORD  [rsp]                  ; save xmm2 to stack
+        mov ecx, DWORD  [_rsp+44]
+        movq xmm2, QWORD  [_rsp]                  ; save xmm2 to stack
         add ecx, eax                             ; ecx += eax
         mov eax, ecx                             ; eax = ecx (2 results)
         add eax, 0fff00000h                      ; addis r0,r4,-16
-        mov DWORD  [rsp+44], ecx                 ; save ecx to stack
-        movq xmm0, QWORD  [rsp+40]               ; store xmm0 to stack
+        mov DWORD  [_rsp+44], ecx                 ; save ecx to stack
+        movq xmm0, QWORD  [_rsp+40]               ; store xmm0 to stack
 L1d8:
         ucomisd xmm2, xmm0                       ; moved this instruction down from ppc
         jae short L1e8                           ; if xmm2 >= xmm0 goto L1e8
-        mov DWORD  [rsp+44], eax
-        movq  xmm2, QWORD  [rsp]
-        movq  xmm0, QWORD  [rsp+40]
+        mov DWORD  [_rsp+44], eax
+        movq  xmm2, QWORD  [_rsp]
+        movq  xmm0, QWORD  [_rsp+40]
 L1e8:
         movq  xmm4, xmm2                         ; xmm4 = xmm2
         subsd xmm4, xmm0                         ; xmm4 = xmm4 - xmm0
-        movq  QWORD  [rsp], xmm4                 ; save xmm4
-        movq  xmm2, QWORD  [rsp+32]              ; load xmm2 from stack
+        movq  QWORD  [_rsp], xmm4                 ; save xmm4
+        movq  xmm2, QWORD  [_rsp+32]              ; load xmm2 from stack
         ucomisd xmm4, xmm2                       ; compare xmm4 with xmm2
         jna short L230                           ; if xmm4 <= xmm2 goto L230
-        mov eax, DWORD  [rsp+4]                  ; eax = ms 32bits of dividend stack area
-        mov ecx, DWORD  [rsp+36]
-        movq QWORD  [rsp+40], xmm2               ; store xmm2 on stack
+        mov eax, DWORD  [_rsp+4]                  ; eax = ms 32bits of dividend stack area
+        mov ecx, DWORD  [_rsp+36]
+        movq QWORD  [_rsp+40], xmm2               ; store xmm2 on stack
         sub eax, ecx                             ;  (subf r0,r4,r0)
-        mov ecx, DWORD  [rsp+44]
+        mov ecx, DWORD  [_rsp+44]
         and eax, 7ff00000h                       ; eax = exponent of |divisor|
         add ecx, eax                             ; ecx += eax
         mov eax, ecx
         add eax, 0fff00000h                      ; addis r0,r4,-16
-        mov DWORD  [rsp+44], ecx                 ; save ecx to stack
-        movq xmm2, QWORD  [rsp]
-        movq xmm0, QWORD  [rsp+40]
+        mov DWORD  [_rsp+44], ecx                 ; save ecx to stack
+        movq xmm2, QWORD  [_rsp]
+        movq xmm0, QWORD  [_rsp+40]
         jmp short L1d8
 
 L230:
-        movq    xmm1, QWORD  [rsp+8]
+        movq    xmm1, QWORD  [_rsp+8]
 L234:
         ucomisd xmm4, xmm1
         xorpd   xmm2, xmm2                       ; xmm2 = {0.0, 0.0} (only need scalar part)
         jb short L258
         subsd xmm4, xmm1
         ucomisd xmm4, xmm1
-        movq    QWORD  [rsp], xmm4
+        movq    QWORD  [_rsp], xmm4
         jb L258
         subsd xmm4, xmm1
-        movq  QWORD  [rsp], xmm4
+        movq  QWORD  [_rsp], xmm4
 
 L258:
         ucomisd xmm2, xmm4
-        mov eax, DWORD  [rsp+4]                  ; ms 32bits of dividend
+        mov eax, DWORD  [_rsp+4]                  ; ms 32bits of dividend
         jne short L280
         or eax, ebx                              ; restore sign of result
-        mov DWORD  [rsp+4], eax                  ; put result back on stack
-        movq xmm0, QWORD  [rsp]                  ; load result into xmm0
+        mov DWORD  [_rsp+4], eax                  ; put result back on stack
+        movq xmm0, QWORD  [_rsp]                  ; load result into xmm0
 
         ; Epilog Start
-        movq xmm2, QWORD  [rsp+16]               ; restore xmm2
-        add rsp, 48
-%ifdef ASM_J9VM_USE_GOT
-        pop rdx
-%endif
-        pop rcx
-        pop rbx
-        pop rax
+        movq xmm2, QWORD  [_rsp+16]               ; restore xmm2
+        add _rsp, 48
+        pop _rcx
+        pop _rbx
+        pop _rax
         ret                                      ; Epilog End
 L280:
         xor eax, ebx
-        mov DWORD  [rsp+4], eax
-        movq xmm0, QWORD  [rsp]                  ; load result into xmm0
+        mov DWORD  [_rsp+4], eax
+        movq xmm0, QWORD  [_rsp]                  ; load result into xmm0
 
         ; Epilog Start
-        movq xmm2, QWORD  [rsp+16]               ; restore xmm2
-        add rsp, 48
-%ifdef ASM_J9VM_USE_GOT
-        pop rdx
-%endif
-        pop rcx
-        pop rbx
-        pop rax
+        movq xmm2, QWORD  [_rsp+16]               ; restore xmm2
+        add _rsp, 48
+        pop _rcx
+        pop _rbx
+        pop _rax
         ret                                      ; Epilog End
 
 SMALL_NUMS:
-%ifndef ASM_J9VM_USE_GOT
-        mulsd xmm1,  [rel SCALEUP_NUM]                  ; xmm1 = |divisor| * 2^54
-%else
-        mulsd xmm1, QWORD  SCALEUP_NUM@GOTOFF[rdx]      ; xmm1 = |divisor| * 2^54
-%endif
-        movq  QWORD  [rsp+8], xmm1                      ; store xmm1 on the stack
+        mulsd xmm1,  [_rel SCALEUP_NUM]                  ; xmm1 = |divisor| * 2^54
+        movq  QWORD  [_rsp+8], xmm1                      ; store xmm1 on the stack
         call _dblRemain
 
-%ifndef ASM_J9VM_USE_GOT
-        mulsd xmm0,  [rel SCALEUP_NUM]                  ; xmm0 = dividend * 2^54
-%else
-        mulsd xmm0, QWORD  SCALEUP_NUM@GOTOFF[rdx]      ; xmm0 = dividend * 2^54
-%endif
-        movq  xmm1, QWORD  [rsp+8]                      ; load divisor from the stack
-        movq  QWORD  [rsp], xmm0                        ; store dividend on the stack
+        mulsd xmm0,  [_rel SCALEUP_NUM]                  ; xmm0 = dividend * 2^54
+        movq  xmm1, QWORD  [_rsp+8]                      ; load divisor from the stack
+        movq  QWORD  [_rsp], xmm0                        ; store dividend on the stack
         call _dblRemain
 
-%ifndef ASM_J9VM_USE_GOT
-        mulsd xmm0,  [rel SCALEDOWN_NUM]                ; dividend * 1/2^54
-%else
-        mulsd xmm0, QWORD  SCALEDOWN_NUM@GOTOFF[rdx]    ; dividend * 1/2^54
-%endif
+        mulsd xmm0,  [_rel SCALEDOWN_NUM]                ; dividend * 1/2^54
 
         ; Epilog Start
-        movq xmm2, QWORD  [rsp+16]                      ; restore xmm2
-        add rsp, 48
-%ifdef ASM_J9VM_USE_GOT
-        pop rdx
-%endif
-        pop rcx
-        pop rbx
-        pop rax
+        movq xmm2, QWORD  [_rsp+16]                      ; restore xmm2
+        add _rsp, 48
+        pop _rcx
+        pop _rbx
+        pop _rax
         ret                                             ; Epilog End
 
 LARGE_NUMS:
-%ifndef ASM_J9VM_USE_GOT
-        mulsd xmm1,  [rel ONEHALF]                      ; xmm1 *= 0.5 (scaledown)
-%else
-        mulsd xmm1, QWORD  ONEHALF@GOTOFF[rdx]          ; xmm1 *= 0.5 (scaledown)
-%endif
+        mulsd xmm1,  [_rel ONEHALF]                      ; xmm1 *= 0.5 (scaledown)
         ; store xmm1 in divisor slot on stack
-        movq  QWORD  [rsp+8], xmm1
-%ifndef ASM_J9VM_USE_GOT
-        mulsd xmm0,  [rel ONEHALF]                      ; xmm2 *= 0.5 (scaledown)
-%else
-        mulsd xmm0, QWORD  ONEHALF@GOTOFF[rdx]          ; xmm2 *= 0.5 (scaledown)
-%endif
-        movq     QWORD  [rsp], xmm0                     ; store xmm0 in dividend slot on stack
+        movq  QWORD  [_rsp+8], xmm1
+        mulsd xmm0,  [_rel ONEHALF]                      ; xmm2 *= 0.5 (scaledown)
+
+        movq     QWORD  [_rsp], xmm0                     ; store xmm0 in dividend slot on stack
         call _dblRemain
 
         addsd xmm0, xmm0                                ; xmm0 *= 2 (scaleup)
 
         ; Epilog Start
-        movq     xmm2, QWORD  [rsp+16]                  ; restore xmm2
-        add rsp, 48
-%ifdef ASM_J9VM_USE_GOT
-        pop rdx
-%endif
-        pop rcx
-        pop rbx
-        pop rax
+        movq     xmm2, QWORD  [_rsp+16]                  ; restore xmm2
+        add _rsp, 48
+        pop _rcx
+        pop _rbx
+        pop _rax
         ret                                             ; Epilog End
 
 %ifndef TR_HOST_64BIT
@@ -720,8 +646,8 @@ LARGE_NUMS:
 
         align 16
 SSEdouble2LongIA32:
-        mov edx, dword [rsp+8]      ; load the double into edx:eax
-        mov eax, dword [rsp+4]
+        mov edx, dword [esp+8]      ; load the double into edx:eax
+        mov eax, dword [esp+4]
 
         push esi                    ; save esi as private linkage
         push ecx                    ; save ecx as private linkage
@@ -848,30 +774,30 @@ eq_J9VMThread_PrefetchCursor equ J9TR_VMThread_tlhPrefetchFTA
 
         align 16
 prefetchTLH:
-        push  rcx
+        push  _rcx
 
 %ifdef TR_HOST_64BIT
-        mov   rcx, qword [rbp + eq_J9VMThread_heapAlloc]
+        mov   rcx, qword [_rbp + eq_J9VMThread_heapAlloc]
 %else
-        mov   rcx, dword [rbp + eq_J9VMThread_heapAlloc]
+        mov   ecx, dword [_rbp + eq_J9VMThread_heapAlloc]
 %endif
-        prefetchnta byte [rcx+256]
-        prefetchnta byte [rcx+320]
-        prefetchnta byte [rcx+384]
-        prefetchnta byte [rcx+448]
-        prefetchnta byte [rcx+512]
-        prefetchnta byte [rcx+576]
-        prefetchnta byte [rcx+640]
-        prefetchnta byte [rcx+704]
-        prefetchnta byte [rcx+768]
+        prefetchnta byte [_rcx+256]
+        prefetchnta byte [_rcx+320]
+        prefetchnta byte [_rcx+384]
+        prefetchnta byte [_rcx+448]
+        prefetchnta byte [_rcx+512]
+        prefetchnta byte [_rcx+576]
+        prefetchnta byte [_rcx+640]
+        prefetchnta byte [_rcx+704]
+        prefetchnta byte [_rcx+768]
 
 %ifdef TR_HOST_64BIT
         mov   qword [rbp + eq_J9VMThread_PrefetchCursor], 384
 %else
-        mov   dword [rbp + eq_J9VMThread_PrefetchCursor], 384
+        mov   dword [ebp + eq_J9VMThread_PrefetchCursor], 384
 %endif
 prefetch_done:
-        pop   rcx
+        pop   _rcx
         ret
 
 
@@ -893,47 +819,47 @@ eq_prefetchTriggerDistance  equ 64*8
         align 16
 newPrefetchTLH:
 
-        push        rcx        ; preserve
-        push        rdx        ; preserve
-        push        rsi        ; preserve
+        push        _rcx        ; preserve
+        push        _rdx        ; preserve
+        push        _rsi        ; preserve
 
 %ifdef TR_HOST_64BIT
         mov         rdx, qword [rbp + eq_J9VMThread_heapAlloc]       ; rdx = O+S
-        mov         ecx, dword [rbp + eq_J9VMThread_PrefetchCursor]  ; rcx = current trigger boundary (B)
+        mov         ecx, dword  [rbp + eq_J9VMThread_PrefetchCursor]  ; rcx = current trigger boundary (B)
 %else
-        mov         rdx, dword [rbp + eq_J9VMThread_heapAlloc]       ; rdx = O+S
-        mov         rcx, dword [rbp + eq_J9VMThread_PrefetchCursor]  ; rcx = current trigger boundary (B)
+        mov         edx, dword [ebp + eq_J9VMThread_heapAlloc]       ; edx = O+S
+        mov         ecx, dword [ebp + eq_J9VMThread_PrefetchCursor]  ; ecx = current trigger boundary (B)
 %endif
 
         ; A zero value for the trigger boundary indicates that this is a new TLH
         ; that we haven't prefetched from yet.
         ;
-        test        rcx, rcx
+        test        _rcx, _rcx
         jz prefetchFromNewTLH
 
-        lea         rcx, [rcx + eq_prefetchTriggerDistance]     ; rcx = derive prefetch frontier (F)
+        lea         _rcx, [_rcx + eq_prefetchTriggerDistance]     ; _rcx = derive prefetch frontier (F)
                                                                 ;    where F = B + prefetchTriggerDistance
-        lea         rsi, [rcx +64]                              ; rsi = prefetch frontier (F) + 1 cache line
+        lea         _rsi, [_rcx +64]                              ; _rsi = prefetch frontier (F) + 1 cache line
                                                                 ;    +1 = start at the next cache line after the frontier
 
         ; Push the new frontier out even further if we're allocating a large object that
         ; exceeds the current frontier.
         ;
-        cmp         rcx, rdx
-        cmovl       rcx, rdx                                    ; rcx = max(F, O+S)
-        add         rcx, eq_prefetchWindow                      ; rcx = F' = F+eq_prefetchWindow = new prefetch frontier (F')
+        cmp         _rcx, _rdx
+        cmovl       _rcx, _rdx                                    ; _rcx = max(F, O+S)
+        add         _rcx, eq_prefetchWindow                      ; _rcx = F' = F+eq_prefetchWindow = new prefetch frontier (F')
 
 %ifdef TR_HOST_64BIT
         mov         rdx, qword [rbp + eq_J9VMThread_heapTop]
 %else
-        mov         rdx, dword [rbp + eq_J9VMThread_heapTop]
+        mov         edx, dword [ebp + eq_J9VMThread_heapTop]
 %endif
 
-        cmp         rcx, rdx                                    ; F' >= heapTop?
+        cmp         _rcx, _rdx                                    ; F' >= heapTop?
         jae prefetchFinalFrontier
 
 mergePrefetchTLHRoundDown:
-        and         rcx, -64                                    ; round down to cache line
+        and         _rcx, -64                                    ; round down to cache line
 
 mergePrefetchTLH:
       ; Prefetch all lines between the last prefetch frontier (F) and the new one (F').
@@ -946,29 +872,26 @@ mergePrefetchTLH:
       ; might be behind the allocation pointer, in which case we want to move it forward so
       ; that we don't prefetch data that has already been allocated.
       ;
-        cmp         rsi, rax
-        cmovl       rsi, rax                                    ; rsi = max(F+64, O)
+        cmp         _rsi, _rax
+        cmovl       _rsi, _rax                                    ; _rsi = max(F+64, O)
 
-        sub         rsi, rcx
+        sub         _rsi, _rcx
 doPrefetch:
-        prefetchnta [rcx+rsi]
-        add         rsi, 64
+        prefetchnta [_rcx+_rsi]
+        add         _rsi, 64
         jle short doPrefetch
 
-        sub         rcx, eq_prefetchTriggerDistance             ; rcx = new trigger boundary (B)
+        sub         _rcx, eq_prefetchTriggerDistance             ; _rcx = new trigger boundary (B)
 
-%ifdef TR_HOST_64BIT
-        mov         dword [rbp + eq_J9VMThread_PrefetchCursor], ecx
-%else
-        mov         dword [rbp + eq_J9VMThread_PrefetchCursor], rcx
-%endif
-        pop         rsi
-        pop         rdx
-        pop         rcx
+        mov         dword [_rbp + eq_J9VMThread_PrefetchCursor], ecx
+
+        pop         _rsi
+        pop         _rdx
+        pop         _rcx
         ret
 
 prefetchFinalFrontier:
-        mov         rcx, rdx
+        mov         _rcx, _rdx
         jmp mergePrefetchTLH
 
 
@@ -979,15 +902,15 @@ prefetchFromNewTLH:
       ; Prefetch from O through O+initialPrefetchWindow
       ; if (O+i <= O+s) prefetch to
       ;
-        mov         rsi, rdx                                   ; rsi = A
-        lea         rcx, [rdx + eq_initialPrefetchWindow]      ; rcx = A + Wi
+        mov         _rsi, _rdx                                   ; _rsi = A
+        lea         _rcx, [_rdx + eq_initialPrefetchWindow]      ; _rcx = A + Wi
 
 %ifdef TR_HOST_64BIT
         mov         rdx, qword [rbp + eq_J9VMThread_heapTop]
 %else
-        mov         rdx, dword [rbp + eq_J9VMThread_heapTop]
+        mov         edx, dword [ebp + eq_J9VMThread_heapTop]
 %endif
-        cmp         rcx, rdx
+        cmp         _rcx, _rdx
         jae mergePrefetchTLH
 
         jmp mergePrefetchTLHRoundDown

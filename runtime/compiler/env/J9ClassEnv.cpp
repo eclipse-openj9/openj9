@@ -60,10 +60,10 @@ J9::ClassEnv::convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset)
 bool
 J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
    {
-   const int32_t mask = (J9_JAVA_CLASS_REFERENCE_WEAK |
-                         J9_JAVA_CLASS_REFERENCE_SOFT |
-                         J9_JAVA_CLASS_FINALIZE |
-                         J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER);
+   const int32_t mask = (J9AccClassReferenceWeak |
+                         J9AccClassReferenceSoft |
+                         J9AccClassFinalizeNeeded |
+                         J9AccClassOwnableSynchronizer);
 
    if (auto stream = TR::CompilationInfo::getStream())
       {
@@ -103,7 +103,7 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
       uintptrj_t classDepthAndFlags = 0;
       JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
 
-      return (classDepthAndFlags & J9_JAVA_CLASS_DEPTH_MASK);
+      return (classDepthAndFlags & J9AccClassDepthMask);
       }
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
    }

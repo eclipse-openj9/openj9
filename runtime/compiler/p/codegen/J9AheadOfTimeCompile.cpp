@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@
 #include "ras/DebugCounter.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
+#include "runtime/SymbolValidationManager.hpp"
 
 J9::Power::AheadOfTimeCompile::AheadOfTimeCompile(TR::CodeGenerator *cg) :
          J9::AheadOfTimeCompile(_relocationTargetTypeToHeaderSizeMap, cg->comp()),
@@ -70,27 +71,35 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
       }
 
    // now allocate the memory  size of all iterated relocations + the header (total length field)
-   if (getSizeOfAOTRelocations() != 0)
+
+   // Note that when using the SymbolValidationManager, the well-known classes
+   // must be checked even if no explicit records were generated, since they
+   // might be responsible for the lack of records.
+   bool useSVM = self()->comp()->getOption(TR_UseSymbolValidationManager);
+   if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
       {
-      uint8_t *relocationDataCursor;
+      // It would be more straightforward to put the well-known classes offset
+      // in the AOT method header, but that would use space for AOT bodies that
+      // don't use the SVM. TODO: Move it once SVM takes over?
+      int wellKnownClassesOffsetSize = useSVM ? SIZEPOINTER : 0;
+      uintptrj_t reloBufferSize =
+         self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
+      uint8_t *relocationDataCursor = self()->setRelocationData(
+         fej9->allocateRelocationData(self()->comp(), reloBufferSize));
+      // set up the size for the region
+      *(uintptrj_t*)relocationDataCursor = reloBufferSize;
+      relocationDataCursor += SIZEPOINTER;
 
-      if (TR::Compiler->target.is64Bit())
+      if (useSVM)
          {
-         relocationDataCursor = setRelocationData(fej9->allocateRelocationData(comp, getSizeOfAOTRelocations() + 8));
-
-         // set up the size for the region
-         *(uint64_t *) relocationDataCursor = getSizeOfAOTRelocations() + 8;
-         relocationDataCursor += 8;
-
+         TR::SymbolValidationManager *svm =
+            self()->comp()->getSymbolValidationManager();
+         void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
+         *(uintptrj_t *)relocationDataCursor = reinterpret_cast<uintptrj_t>(
+            fej9->sharedCache()->offsetInSharedCacheFromPointer(offsets));
+         relocationDataCursor += SIZEPOINTER;
          }
-      else
-         {
-         relocationDataCursor = setRelocationData(fej9->allocateRelocationData(comp, getSizeOfAOTRelocations() + 4));
 
-         // set up the size for the region
-         *(uint32_t *) relocationDataCursor = getSizeOfAOTRelocations() + 4;
-         relocationDataCursor += 4;
-         }
       // set up pointers for each iterated relocation and initialize header
       TR::IteratedExternalRelocation *s;
       for (s = getAOTRelocationTargets().getFirst(); s != NULL; s = s->getNext())
@@ -107,6 +116,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
    TR::Compilation* comp = TR::comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();
+   TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
 
    TR_VirtualGuard *guard;
    uint8_t flags = 0;
@@ -417,6 +427,23 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
+      case TR_ResolvedTrampolines:
+         {
+         uint8_t *symbol = relocation->getTargetAddress();
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+         TR_ASSERT_FATAL(symbolID, "symbolID should exist!\n");
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordResolvedTrampolinesBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordResolvedTrampolinesBinaryTemplate *>(cursor);
+
+         binaryTemplate->_symbolID = symbolID;
+
+         cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
+         }
+         break;
+
       case TR_J2IVirtualThunkPointer:
          {
          auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
@@ -485,9 +512,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_OpaqueMethodBlock *j9method = (TR_OpaqueMethodBlock *) aconstNode->getAddress();
          TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
 
-         void *loaderForClazz = fej9->getClassLoader(j9class);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -508,9 +533,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          TR_OpaqueClassBlock *j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
 
-         void *loaderForClazz = fej9->getClassLoader(j9class);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -536,9 +559,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *(uintptrj_t *)cursor = inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
-         void *loaderForClazz = fej9->getClassLoader(j9class);
-         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -549,6 +570,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_InlinedStaticMethodWithNopGuard:
       case TR_InlinedSpecialMethodWithNopGuard:
       case TR_InlinedVirtualMethodWithNopGuard:
+      case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedVirtualMethod:
       case TR_InlinedInterfaceMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
@@ -556,17 +578,13 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
-         if (relocation->getTargetKind() == TR_InlinedHCRMethod)
-            {
-            // Setup flags field with type of method that needs to be validated at relocation time
-            if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
-               flags = inlinedMethodIsStatic;
-            if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
-               flags = inlinedMethodIsSpecial;
-            if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
-               flags = inlinedMethodIsVirtual;
-            }
-
+         // Setup flags field with type of method that needs to be validated at relocation time
+         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
+            flags = inlinedMethodIsStatic;
+         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
+            flags = inlinedMethodIsSpecial;
+         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
+            flags = inlinedMethodIsVirtual;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
@@ -577,11 +595,9 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *(uintptrj_t *) cursor = (uintptrj_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t*) cursor = (uintptrj_t) guard->getSymbolReference()->getCPIndex(); // record cpIndex
-         cursor += SIZEPOINTER;
-
          if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
-             relocation->getTargetKind() == TR_InlinedInterfaceMethod)
+             relocation->getTargetKind() == TR_InlinedInterfaceMethod ||
+             relocation->getTargetKind() == TR_InlinedAbstractMethodWithNopGuard)
             {
             TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
             TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *) inlinedCallSite->_methodInfo;
@@ -591,6 +607,23 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             {
             resolvedMethod = guard->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
             }
+
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
+            TR_OpaqueClassBlock *thisClass = guard->getThisClass();
+            uint16_t methodID = symValManager->getIDFromSymbol(static_cast<void *>(method));
+            uint16_t receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
+
+            uintptrj_t data = 0;
+            data = (((uintptrj_t)receiverClassID << 16) | (uintptrj_t)methodID);
+            *(uintptrj_t*)cursor = data;
+            }
+         else
+            {
+            *(uintptrj_t*)cursor = (uintptrj_t)guard->getSymbolReference()->getCPIndex(); // record cpIndex
+            }
+         cursor += SIZEPOINTER;
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
@@ -613,6 +646,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_ProfiledMethodGuardRelocation:
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
+         TR_OpaqueClassBlock *inlinedCodeClass = guard->getThisClass();
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
          *(uintptrj_t *) cursor = (uintptrj_t) inlinedSiteIndex;
@@ -623,10 +657,18 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *(uintptrj_t *) cursor = (uintptrj_t) owningMethod->constantPool(); // record constant pool
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t*) cursor = (uintptrj_t) callSymRef->getCPIndex(); // record cpIndex
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            uint16_t inlinedCodeClassID = symValManager->getIDFromSymbol(static_cast<void *>(inlinedCodeClass));
+            uintptrj_t data = (uintptrj_t)inlinedCodeClassID;
+            *(uintptrj_t*)cursor = data;
+            }
+         else
+            {
+            *(uintptrj_t*)cursor = (uintptrj_t)callSymRef->getCPIndex(); // record cpIndex
+            }
          cursor += SIZEPOINTER;
 
-         TR_OpaqueClassBlock *inlinedCodeClass = guard->getThisClass();
          int32_t len;
          char *className = fej9->getClassNameChars(inlinedCodeClass, len);
 
@@ -636,10 +678,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *(uintptrj_t *) cursor = (uintptrj_t) romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
-         void *loaderForClazz = fej9->getClassLoader(inlinedCodeClass);
-         void *classChainIdentifyingLoaderForClazz =
-                  sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
          *(uintptrj_t *) cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -678,7 +717,17 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)recordInfo->data5;
+            uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(clazz));
+            TR_ASSERT_FATAL(classID, "classID should exist!\n");
+            *(uintptrj_t *)cursor = classID;
+            }
+         else
+            {
+            *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
+            }
          cursor += SIZEPOINTER;
 
          uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
@@ -703,7 +752,17 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_OpaqueClassBlock *classOfMethod = (TR_OpaqueClassBlock *)recordInfo->data5;
+            uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
+            TR_ASSERT_FATAL(classID, "classID should exist!\n");
+            *(uintptrj_t *)cursor = classID;
+            }
+         else
+            {
+            *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
+            }
          cursor += SIZEPOINTER;
 
          uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
@@ -730,6 +789,551 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          cursor += SIZEPOINTER;
          break;
          }
+
+      case TR_ValidateClassByName:
+         {
+         TR::ClassByNameRecord *record = reinterpret_cast<TR::ClassByNameRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateClassByNameBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateClassByNameBinaryTemplate *>(cursor);
+
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(record->_classChain);
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(record->_class);
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(record->_beholder);
+         binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
+
+         cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateProfiledClass:
+         {
+         TR::ProfiledClassRecord *record = reinterpret_cast<TR::ProfiledClassRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateProfiledClassBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateProfiledClassBinaryTemplate *>(cursor);
+
+         TR_OpaqueClassBlock *classToValidate = record->_class;
+         void *classChainForClassToValidate = record->_classChain;
+
+         //store the classchain's offset for the classloader for the class
+         uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+
+         //store the classchain's offset for the class that needs to be validated in the second run
+         void* classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
+         binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
+         binaryTemplate->_classChainOffsetForCLInScc = classChainOffsetInSharedCacheForCL;
+
+         cursor += sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateClassFromCP:
+         {
+         TR::ClassFromCPRecord *record = reinterpret_cast<TR::ClassFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateClassFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateClassFromCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = record->_cpIndex;
+
+         cursor += sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateDefiningClassFromCP:
+         {
+         TR::DefiningClassFromCPRecord *record = reinterpret_cast<TR::DefiningClassFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_isStatic = record->_isStatic;
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = record->_cpIndex;
+
+         cursor += sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateStaticClassFromCP:
+         {
+         TR::StaticClassFromCPRecord *record = reinterpret_cast<TR::StaticClassFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = record->_cpIndex;
+
+         cursor += sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateArrayClassFromComponentClass:
+         {
+         TR::ArrayClassFromComponentClassRecord *record = reinterpret_cast<TR::ArrayClassFromComponentClassRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateArrayFromCompBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateArrayFromCompBinaryTemplate *>(cursor);
+
+         binaryTemplate->_arrayClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_arrayClass));
+         binaryTemplate->_componentClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_componentClass));
+
+         cursor += sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateSuperClassFromClass:
+         {
+         TR::SuperClassFromClassRecord *record = reinterpret_cast<TR::SuperClassFromClassRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate *>(cursor);
+
+         binaryTemplate->_superClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_superClass));
+         binaryTemplate->_childClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_childClass));
+
+         cursor += sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateClassInstanceOfClass:
+         {
+         TR::ClassInstanceOfClassRecord *record = reinterpret_cast<TR::ClassInstanceOfClassRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate *>(cursor);
+
+         binaryTemplate->_objectTypeIsFixed = record->_objectTypeIsFixed;
+         binaryTemplate->_castTypeIsFixed = record->_castTypeIsFixed;
+         binaryTemplate->_isInstanceOf = record->_isInstanceOf;
+         binaryTemplate->_classOneID = symValManager->getIDFromSymbol(static_cast<void *>(record->_classOne));
+         binaryTemplate->_classTwoID = symValManager->getIDFromSymbol(static_cast<void *>(record->_classTwo));
+
+         cursor += sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateSystemClassByName:
+         {
+         TR::SystemClassByNameRecord *record = reinterpret_cast<TR::SystemClassByNameRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *>(cursor);
+
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(record->_classChain);
+         binaryTemplate->_systemClassID = symValManager->getIDFromSymbol(record->_class);
+         binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
+
+         cursor += sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateClassFromITableIndexCP:
+         {
+         TR::ClassFromITableIndexCPRecord *record = reinterpret_cast<TR::ClassFromITableIndexCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = record->_cpIndex;
+
+         cursor += sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateDeclaringClassFromFieldOrStatic:
+         {
+         TR::DeclaringClassFromFieldOrStaticRecord *record = reinterpret_cast<TR::DeclaringClassFromFieldOrStaticRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate *>(cursor);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = record->_cpIndex;
+
+         cursor += sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateConcreteSubClassFromClass:
+         {
+         TR::ConcreteSubClassFromClassRecord *record = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *>(cursor);
+
+         binaryTemplate->_childClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_childClass));
+         binaryTemplate->_superClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_superClass));
+
+         cursor += sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateClassChain:
+         {
+         TR::ClassChainRecord *record = reinterpret_cast<TR::ClassChainRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateClassChainBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateClassChainBinaryTemplate *>(cursor);
+
+         void *classToValidate = static_cast<void *>(record->_class);
+         void *classChainForClassToValidate = record->_classChain;
+         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(classToValidate);
+         binaryTemplate->_classChainOffsetInSCC = reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache);
+
+         cursor += sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateMethodFromClass:
+         {
+         TR::MethodFromClassRecord *record = reinterpret_cast<TR::MethodFromClassRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateMethodFromClassBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateMethodFromClassBinaryTemplate *>(cursor);
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_index = static_cast<uintptrj_t>(record->_index);
+
+         cursor += sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateStaticMethodFromCP:
+         {
+         TR::StaticMethodFromCPRecord *record = reinterpret_cast<TR::StaticMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *>(cursor);
+
+         TR_ASSERT_FATAL(
+            (record->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) == 0,
+            "static method cpIndex has special split table flag set");
+
+         if ((record->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) != 0)
+            *flagsCursor |= TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT;
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = static_cast<uint16_t>(record->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK);
+
+         cursor += sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateSpecialMethodFromCP:
+         {
+         TR::SpecialMethodFromCPRecord *record = reinterpret_cast<TR::SpecialMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate *>(cursor);
+
+         TR_ASSERT_FATAL(
+            (record->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) == 0,
+            "special method cpIndex has static split table flag set");
+
+         if ((record->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) != 0)
+            *flagsCursor |= TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT;
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = static_cast<uint16_t>(record->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK);
+
+         cursor += sizeof(TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateVirtualMethodFromCP:
+         {
+         TR::VirtualMethodFromCPRecord *record = reinterpret_cast<TR::VirtualMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = static_cast<uint16_t>(record->_cpIndex);
+
+         cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateVirtualMethodFromOffset:
+         {
+         TR::VirtualMethodFromOffsetRecord *record = reinterpret_cast<TR::VirtualMethodFromOffsetRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate *>(cursor);
+
+         TR_ASSERT_FATAL((record->_virtualCallOffset & 1) == 0, "virtualCallOffset must be even");
+         TR_ASSERT_FATAL(
+            record->_virtualCallOffset == (int32_t)(int16_t)record->_virtualCallOffset,
+            "virtualCallOffset must fit in a 16-bit signed integer");
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve = (uint16_t)(record->_virtualCallOffset | (int)record->_ignoreRtResolve);
+
+         cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateInterfaceMethodFromCP:
+         {
+         TR::InterfaceMethodFromCPRecord *record = reinterpret_cast<TR::InterfaceMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_lookupID = symValManager->getIDFromSymbol(static_cast<void *>(record->_lookup));
+         binaryTemplate->_cpIndex = static_cast<uintptrj_t>(record->_cpIndex);
+
+         cursor += sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateImproperInterfaceMethodFromCP:
+         {
+         TR::ImproperInterfaceMethodFromCPRecord *record = reinterpret_cast<TR::ImproperInterfaceMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate *>(cursor);
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_cpIndex = static_cast<uint16_t>(record->_cpIndex);
+
+         cursor += sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateMethodFromClassAndSig:
+         {
+         TR::MethodFromClassAndSigRecord *record = reinterpret_cast<TR::MethodFromClassAndSigRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *>(cursor);
+
+         // Store rom method to get name of method
+         J9Method *methodToValidate = reinterpret_cast<J9Method *>(record->_method);
+         J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodToValidate);
+         void *romMethodOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romMethod);
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_lookupClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_lookupClass));
+         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
+         binaryTemplate->_romMethodOffsetInSCC = reinterpret_cast<uintptrj_t>(romMethodOffsetInSharedCache);
+
+         cursor += sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateMethodFromSingleImplementer:
+         {
+         TR::MethodFromSingleImplementer *record = reinterpret_cast<TR::MethodFromSingleImplementer *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *>(cursor);
+
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_thisClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_thisClass));
+         binaryTemplate->_cpIndexOrVftSlot = record->_cpIndexOrVftSlot;
+         binaryTemplate->_callerMethodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_callerMethod));
+         binaryTemplate->_useGetResolvedInterfaceMethod = (uint16_t)record->_useGetResolvedInterfaceMethod;
+
+         cursor += sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateMethodFromSingleInterfaceImplementer:
+         {
+         TR::MethodFromSingleInterfaceImplementer *record = reinterpret_cast<TR::MethodFromSingleInterfaceImplementer *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate *>(cursor);
+
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_thisClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_thisClass));
+         binaryTemplate->_callerMethodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_callerMethod));
+         binaryTemplate->_cpIndex = (uint16_t)record->_cpIndex;
+
+         cursor += sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateMethodFromSingleAbstractImplementer:
+         {
+         TR::MethodFromSingleAbstractImplementer *record = reinterpret_cast<TR::MethodFromSingleAbstractImplementer *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate *>(cursor);
+
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
+         binaryTemplate->_thisClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_thisClass));
+         binaryTemplate->_vftSlot = record->_vftSlot;
+         binaryTemplate->_callerMethodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_callerMethod));
+
+         cursor += sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateStackWalkerMaySkipFramesRecord:
+         {
+         TR::StackWalkerMaySkipFramesRecord *record = reinterpret_cast<TR::StackWalkerMaySkipFramesRecord *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate *>(cursor);
+
+         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
+         binaryTemplate->_methodClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_methodClass));
+         binaryTemplate->_skipFrames = record->_skipFrames;
+
+         cursor += sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate);
+         }
+         break;
+
+      case TR_ValidateClassInfoIsInitialized:
+         {
+         TR::ClassInfoIsInitialized *record = reinterpret_cast<TR::ClassInfoIsInitialized *>(relocation->getTargetAddress());
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate *>(cursor);
+
+         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
+         binaryTemplate->_isInitialized = record->_isInitialized;
+
+         cursor += sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate);
+         }
+         break;
+
+      case TR_SymbolFromManager:
+         {
+         uint8_t *symbol = relocation->getTargetAddress();
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+
+         uint16_t symbolType = (uint16_t)(uintptrj_t)relocation->getTargetAddress2();
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
+
+         binaryTemplate->_symbolID = symbolID;
+         binaryTemplate->_symbolType = symbolType;
+
+         cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
+         }
+         break;
+
+      case TR_DiscontiguousSymbolFromManager:
+         {
+         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
+
+         uint8_t *symbol = (uint8_t *)recordInfo->data1;
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+
+         uint16_t symbolType = (uint16_t)recordInfo->data2;
+
+         uint8_t flags = (uint8_t) recordInfo->data3;
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+
+         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+
+         TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
+               reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
+
+         binaryTemplate->_flags |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+         binaryTemplate->_symbolID = symbolID;
+         binaryTemplate->_symbolType = symbolType;
+
+         cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
+         }
+         break;
 
       case TR_ValidateClass:
       case TR_ValidateInstanceField:
@@ -775,9 +1379,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
 
          //store the classchain's offset for the classloader for the class
-         void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
-         void *classChainIdentifyingLoaderForClazzToValidate = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazzToValidate);
-         uintptrj_t classChainOffsetInSharedCacheForCL = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazzToValidate);
+         uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCacheForCL;
          cursor += SIZEPOINTER;
 
@@ -908,6 +1510,46 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    56,                                       // TR_DebugCounter                        = 59
    8,                                        // TR_ClassUnloadAssumption               = 60
    32,                                       // TR_J2IVirtualThunkPointer              = 61
+   48,                                              // TR_InlinedAbstractMethodWithNopGuard   = 62,
+   0,                                                                  // TR_ValidateRootClass                   = 63,
+   sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate),       // TR_ValidateClassByName                 = 64,
+   sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate),     // TR_ValidateProfiledClass               = 65,
+   sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       // TR_ValidateClassFromCP                 = 66,
+   sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate),//TR_ValidateDefiningClassFromCP         = 67,
+   sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate), // TR_ValidateStaticClassFromCP           = 68,
+   0,                                                                  // TR_ValidateClassFromMethod             = 69,
+   0,                                                                  // TR_ValidateComponentClassFromArrayClass= 70,
+   sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate),     // TR_ValidateArrayClassFromComponentClass= 71,
+   sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),//TR_ValidateSuperClassFromClass         = 72,
+   sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate),//TR_ValidateClassInstanceOfClass       = 73,
+   sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate), //TR_ValidateSystemClassByName            = 74,
+   sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate),//TR_ValidateClassFromITableIndexCP   = 75,
+   sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate),//TR_ValidateDeclaringClassFromFieldOrStatic=76,
+   0,                                                                  // TR_ValidateClassClass                  = 77,
+   sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
+   sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
+   0,                                                                  // TR_ValidateRomClass                    = 80,
+   0,                                                                  // TR_ValidatePrimitiveClass              = 81,
+   0,                                                                  // TR_ValidateMethodFromInlinedSite       = 82,
+   0,                                                                  // TR_ValidatedMethodByName               = 83,
+   sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,
+   sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),// TR_ValidateStaticMethodFromCP          = 85,
+   sizeof(TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate),//TR_ValidateSpecialMethodFromCP         = 86,
+   sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate),//TR_ValidateVirtualMethodFromCP         = 87,
+   sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate),//TR_ValidateVirtualMethodFromOffset = 88,
+   sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),//TR_ValidateInterfaceMethodFromCP     = 89,
+   sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),//TR_ValidateMethodFromClassAndSig     = 90,
+   sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate),//TR_ValidateStackWalkerMaySkipFramesRecord= 91,
+   0,                                                                     //TR_ValidateArrayClassFromJavaVM      = 92,
+   sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate),//TR_ValidateClassInfoIsInitialized   = 93,
+   sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate),//TR_ValidateMethodFromSingleImplementer= 94,
+   sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate),//TR_ValidateMethodFromSingleInterfaceImplementer= 95,
+   sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate),//TR_ValidateMethodFromSingleAbstractImplementer= 96,
+   sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate),//TR_ValidateImproperInterfaceMethodFromCP= 97,
+   sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_SymbolFromManager = 98,
+   0,                                                                  // TR_MethodCallAddress = 99,
+   sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_DiscontiguousSymbolFromManager = 100,
+   sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),       // TR_ResolvedTrampolines = 101,
    };
 #else
 uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds] =
@@ -971,9 +1613,49 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    0,                                        // TR_NativeMethodAbsolute                = 56,
    0,                                        // TR_NativeMethodRelative                = 57,
    16,                                       // TR_ArbitraryClassAddress               = 58,
-   28,                                        // TR_DebugCounter                        = 59
+   28,                                       // TR_DebugCounter                        = 59
    4,                                        // TR_ClassUnloadAssumption               = 60
    16,                                       // TR_J2IVirtualThunkPointer              = 61
+   24,                                       // TR_InlinedAbstractMethodWithNopGuard   = 62,
+   0,                                                                  // TR_ValidateRootClass                   = 63,
+   sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate),       // TR_ValidateClassByName                 = 64,
+   sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate),     // TR_ValidateProfiledClass               = 65,
+   sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       // TR_ValidateClassFromCP                 = 66,
+   sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate),//TR_ValidateDefiningClassFromCP         = 67,
+   sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate), // TR_ValidateStaticClassFromCP           = 68,
+   0,                                                                  // TR_ValidateClassFromMethod             = 69,
+   0,                                                                  // TR_ValidateComponentClassFromArrayClass= 70,
+   sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate),     // TR_ValidateArrayClassFromComponentClass= 71,
+   sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),//TR_ValidateSuperClassFromClass         = 72,
+   sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate),//TR_ValidateClassInstanceOfClass       = 73,
+   sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate), //TR_ValidateSystemClassByName            = 74,
+   sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate),//TR_ValidateClassFromITableIndexCP   = 75,
+   sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate),//TR_ValidateDeclaringClassFromFieldOrStatic=76,
+   0,                                                                  // TR_ValidateClassClass                  = 77,
+   sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
+   sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
+   0,                                                                  // TR_ValidateRomClass                    = 80,
+   0,                                                                  // TR_ValidatePrimitiveClass              = 81,
+   0,                                                                  // TR_ValidateMethodFromInlinedSite       = 82,
+   0,                                                                  // TR_ValidatedMethodByName               = 83,
+   sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,
+   sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),// TR_ValidateStaticMethodFromCP          = 85,
+   sizeof(TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate),//TR_ValidateSpecialMethodFromCP         = 86,
+   sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate),//TR_ValidateVirtualMethodFromCP         = 87,
+   sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate),//TR_ValidateVirtualMethodFromOffset = 88,
+   sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),//TR_ValidateInterfaceMethodFromCP     = 89,
+   sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),//TR_ValidateMethodFromClassAndSig     = 90,
+   sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate),//TR_ValidateStackWalkerMaySkipFramesRecord= 91,
+   0,                                                                     //TR_ValidateArrayClassFromJavaVM      = 92,
+   sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate),//TR_ValidateClassInfoIsInitialized   = 93,
+   sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate),//TR_ValidateMethodFromSingleImplementer= 94,
+   sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate),//TR_ValidateMethodFromSingleInterfaceImplementer= 95,
+   sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate),//TR_ValidateMethodFromSingleAbstractImplementer= 96,
+   sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate),//TR_ValidateImproperInterfaceMethodFromCP= 97,
+   sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_SymbolFromManager = 98,
+   0,                                                                  // TR_MethodCallAddress = 99,
+   sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_DiscontiguousSymbolFromManager = 100,
+   sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),       // TR_ResolvedTrampolines = 101,
    };
 
 #endif

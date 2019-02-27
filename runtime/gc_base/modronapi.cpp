@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -914,8 +914,8 @@ j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *oldClass, J9Class
     }
 
 	/* classes should not be unloaded */
-	Assert_MM_true(!J9_ARE_ANY_BITS_SET(oldClass->classDepthAndFlags, J9_JAVA_CLASS_DYING));
-	Assert_MM_true(!J9_ARE_ANY_BITS_SET(newClass->classDepthAndFlags, J9_JAVA_CLASS_DYING));
+	Assert_MM_true(!J9_ARE_ANY_BITS_SET(oldClass->classDepthAndFlags, J9AccClassDying));
+	Assert_MM_true(!J9_ARE_ANY_BITS_SET(newClass->classDepthAndFlags, J9AccClassDying));
 
 	/*
 	 * class->gcLink slot can be not NULL in two cases:

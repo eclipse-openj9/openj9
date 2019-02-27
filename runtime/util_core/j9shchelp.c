@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,9 +168,6 @@ getShcModlevelForJCL(uintptr_t j2seVersion)
 	switch (j2seVersion) {
 	case J2SE_18 :
 		modLevel = J9SH_MODLEVEL_JAVA8;
-		break;
-	case J2SE_19 :
-		modLevel = J9SH_MODLEVEL_JAVA9;
 		break;
 	default: 
 		modLevel = JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion);

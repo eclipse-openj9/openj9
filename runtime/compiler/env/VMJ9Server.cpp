@@ -773,7 +773,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
      }
 
    if (isClassInitialized)
-      return ((modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE ))?false:true);
+      return ((modifiers & (J9AccAbstract | J9AccInterface ))?false:true);
 
    return false;
    }
@@ -1037,7 +1037,7 @@ TR_J9ServerVM::hasFinalizer(TR_OpaqueClassBlock *clazz)
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
 
-   return ((classDepthAndFlags & (J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER)) != 0);
+   return ((classDepthAndFlags & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)) != 0);
    }
 
 uintptrj_t
@@ -1049,11 +1049,11 @@ TR_J9ServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz)
    }
 
 TR_OpaqueMethodBlock *
-TR_J9ServerVM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+TR_J9ServerVM::getMethodFromName(char *className, char *methodName, char *signature)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getMethodFromName, std::string(className, strlen(className)),
-         std::string(methodName, strlen(methodName)), std::string(signature, strlen(signature)), callingMethod);
+         std::string(methodName, strlen(methodName)), std::string(signature, strlen(signature)));
    return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
    }
 
@@ -1163,7 +1163,7 @@ TR_J9ServerVM::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
 
-   return ((classDepthAndFlags & J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER) != 0);
+   return ((classDepthAndFlags & J9AccClassOwnableSynchronizer) != 0);
    }
 
 TR_OpaqueClassBlock *
@@ -1720,22 +1720,12 @@ TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
    }
 
 bool
-TR_J9SharedCacheServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
+TR_J9SharedCacheServerVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
    TR::Compilation *comp = _compInfoPT->getCompilation();
-   bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
 
    // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
-   return TR_J9ServerVM::isMethodEnterTracingEnabled(method) || option;
-   }
-
-bool
-TR_J9SharedCacheServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   TR::Compilation *comp = _compInfoPT->getCompilation();
-   bool option  = comp->getOptions()->getOption(TR_EnableAOTMethodExit);
-
-   return TR_J9ServerVM::isMethodExitTracingEnabled(method) || option;
+   return TR_J9ServerVM::isMethodTracingEnabled(method) || comp->getOptions()->getOption(TR_EnableAOTMethodEnter) || comp->getOptions()->getOption(TR_EnableAOTMethodExit);
    }
 
 bool
@@ -1882,11 +1872,9 @@ TR_J9SharedCacheServerVM::getResolvedMethodForNameAndSignature(TR_Memory * trMem
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)((TR_ResolvedJ9Method *)resolvedMethod)->ramMethod();
-      /*
-       * TR_J9VM::getResolvedMethodForNameAndSignature will call getMatchingMethodFromNameAndSignature
-       * which adds a MethodFromClassRecord.
-       */
-      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(getClassFromMethodBlock(method), method);
+      TR_OpaqueClassBlock *clazz = getClassFromMethodBlock(method);
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), clazz);
+      validated = true;
       }
    else
       {
@@ -1949,20 +1937,6 @@ TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       return isRefArray;
    else
       return false;
-   }
-
-TR_OpaqueClassBlock *
-TR_J9SharedCacheServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
-   {
-   TR_OpaqueClassBlock *ccPointer = TR_J9ServerVM::getClassClassPointer(objectClassPointer);
-   TR::Compilation *comp = _compInfoPT->getCompilation();
-   TR_ASSERT(comp, "Should be called only within a compilation");
-   if (comp && comp->getOption(TR_UseSymbolValidationManager))
-      {
-      if (!comp->getSymbolValidationManager()->addClassClassRecord(ccPointer, objectClassPointer))
-         ccPointer = NULL;
-      }
-   return ccPointer;
    }
 
 TR_OpaqueMethodBlock *
@@ -2033,7 +2007,8 @@ TR_J9SharedCacheServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(classPointer, method);
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {

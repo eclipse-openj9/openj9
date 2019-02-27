@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,7 @@ char *
 ddrFindDefaultClasspath()
 {
 #if defined(LINUX)
-#if defined(J9X86) || defined(J9HAMMER) || defined(LINUXPPC) || defined(LINUXPPC64) || defined(J9ARM)
+#if defined(J9X86) || defined(J9HAMMER) || defined(LINUXPPC) || defined(LINUXPPC64) || defined(J9ARM) || defined(J9AARCH64)
 	return "/bluebird/tools/ddr/j9ddr.jar:/bluebird/tools/ddr/asm.jar";
 #endif
 #if defined(S390) || defined(S39064)

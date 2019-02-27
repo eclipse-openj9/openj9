@@ -259,6 +259,7 @@ public:
 /////
    virtual bool isGetImplInliningSupported();
 
+   virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
@@ -844,7 +845,6 @@ public:
    void *getCCPreLoadedCodeAddress(TR::CodeCache *codeCache, TR_CCPreLoadedCode h, TR::CodeGenerator *cg);
 
    virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding);
-   virtual intptrj_t indexedTrampolineLookup(int32_t helperIndex, void *callSite);
    virtual TR::CodeCache* getResolvedTrampoline( TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) = 0;
 
    // Interpreter profiling support
@@ -904,15 +904,9 @@ public:
     TR::TreeTop * lowerAsyncCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
     TR::TreeTop * lowerAtcCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool isMethodEnterTracingEnabled(J9Method *j9method)
+   virtual bool isMethodTracingEnabled(J9Method *j9method)
       {
-      return isMethodEnterTracingEnabled((TR_OpaqueMethodBlock *)j9method);
-      }
-   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool isMethodExitTracingEnabled(J9Method *j9method)
-      {
-      return isMethodExitTracingEnabled((TR_OpaqueMethodBlock *)j9method);
+      return isMethodTracingEnabled((TR_OpaqueMethodBlock *)j9method);
       }
 
    virtual bool isSelectiveMethodEnterExitEnabled();
@@ -1029,6 +1023,7 @@ public:
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass);
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) { return false; }
 
 protected:
 
@@ -1059,9 +1054,7 @@ public:
    virtual void               initializeHasFixedFrameC_CallingConvention();
 
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod);
    virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature);
-   virtual uintptrj_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
@@ -1153,8 +1146,7 @@ public:
 
    virtual bool               stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
-   virtual bool               isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method);
-   virtual bool               isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method);
+   virtual bool               isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
    virtual bool               traceableMethodsCanBeInlined();
 
    virtual bool               canMethodEnterEventBeHooked();
@@ -1176,8 +1168,6 @@ public:
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);
    virtual TR_OpaqueClassBlock *             getSuperClass(TR_OpaqueClassBlock *classPointer);
-
-   virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *);
 
    virtual bool               sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
@@ -1220,6 +1210,7 @@ public:
    virtual bool                   supportAllocationInlining( TR::Compilation *comp, TR::Node *node);
 
    virtual J9Class *              getClassForAllocationInlining( TR::Compilation *comp, TR::SymbolReference *classSymRef);
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr);
    };
 
 #endif

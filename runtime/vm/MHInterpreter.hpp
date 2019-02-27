@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -150,6 +150,16 @@ private:
 		return J9VMJAVALANGINVOKESPREADHANDLE_ARRAYCLASS(_currentThread, methodHandle);
 	}
 
+	/**
+	 * Fetch the filterPosition field from the j.l.i.MethodHandle.
+	 * @param methodHandle[in] A MethodHandle object
+	 * @return The filterPosition field from the j.l.i.MethodHandle.
+	 */
+	VMINLINE U_32
+	getMethodHandleFilterPosition(j9object_t methodHandle) const
+	{
+		return (U_32)J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_FILTERPOSITION(_currentThread, methodHandle);
+	}
 
 	/**
 	 * Fetch the foldPosition field from the j.l.i.MethodHandle.
@@ -168,9 +178,15 @@ private:
 	 * @return The combinerHandle from the j.l.i.MethodHandle.
 	 */
 	VMINLINE j9object_t
-	getCombinerHandle(j9object_t methodHandle) const
+	getCombinerHandleForFold(j9object_t methodHandle) const
 	{
 		return J9VMJAVALANGINVOKEFOLDHANDLE_COMBINER(_currentThread, methodHandle);
+	}
+
+	VMINLINE j9object_t
+	getCombinerHandleForFilter(j9object_t methodHandle) const
+	{
+		return J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_COMBINER(_currentThread, methodHandle);
 	}
 
 	/**
@@ -510,11 +526,28 @@ foundITable:
 
 	/**
 	* @brief
+	* Perform argument filtering for filterArgumentsWithCombiner.
+	* @param methodHandle
+	* @return j9object_t The target MethodHandle with argument filtered by combinerHandle
+	*/
+	j9object_t
+	filterArgumentsWithCombiner(j9object_t methodHandle);
+
+	/**
+	* @brief
 	* Insert the return value of combinerHandle to the argument list of foldHandle.
 	* @return j9object_t The target MethodHandle  (the one to execute foldHandle)
 	*/
 	j9object_t
 	insertReturnValueForFoldArguments();
+
+	/**
+	* @brief
+	* Insert the return value of combinerHandle to the argument list of the methodHandle.
+	* @return j9object_t The target MethodHandle
+	*/
+	j9object_t
+	replaceReturnValueForFilterArgumentsWithCombiner();
 
 	/**
 	* @brief

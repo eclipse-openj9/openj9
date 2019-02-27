@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ addToBootstrapClassLoaderSearch(J9JavaVM * vm, const char * pathSegment,
 	}
 
 	if (classLoaderType & CLS_TYPE_ADD_TO_SYSTEM_PROPERTY) {
-		if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) < J2SE_19) {
+		if (J2SE_VERSION(vm) < J2SE_V11) {
 			rc = addToSystemProperty(vm, BOOT_PATH_SYS_PROP, pathSegment);
 		} else {
 			rc = addToSystemProperty(vm, BOOT_CLASS_PATH_APPEND_PROP, pathSegment);
@@ -182,7 +182,7 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 		zip_releaseZipFile(vm->portLibrary, &zipFile);
 	}
 
-	if ((classLoader == vm->systemClassLoader) && (J2SE_VERSION(vm) >= J2SE_19)) {
+	if ((classLoader == vm->systemClassLoader) && (J2SE_VERSION(vm) >= J2SE_V11)) {
 		if (0 == addJarToSystemClassLoaderClassPathEntries(vm, filename)) {
 			rc = CLS_ERROR_OUT_OF_MEMORY;
 		}
@@ -196,7 +196,7 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 			jclass classLoaderClass = NULL;
 			jmethodID mid = NULL;
 
-			if (J2SE_SHAPE(vm) >= J2SE_SHAPE_B165) {
+			if (J2SE_VERSION(vm) >= J2SE_V11) {
 				jclass jimModules = getJimModules(currentThread);
 				jstring moduleNameString = NULL;
 				jobject vmModule = NULL;
@@ -220,7 +220,7 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 				}
 
 				vmModule = (*env)->CallStaticObjectMethod(env, jimModules, loadModule, moduleNameString);
-				(*env)->DeleteLocalRef(env, vmModule);		
+				(*env)->DeleteLocalRef(env, vmModule);
 				(*env)->DeleteLocalRef(env, moduleNameString);
 				if ((*env)->ExceptionOccurred(env)) {
 					rc = CLS_ERROR_INTERNAL;

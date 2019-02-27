@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,13 +107,57 @@ public:
    uintptr_t getSomeJitLibraryAddress();
    bool isInRange(uintptr_t address1, uintptr_t address2, uintptr_t range);
 
+   /**
+    * @brief Reserve a trampoline for an interface PIC slot.
+    *
+    * @param[in] callSite : address in the code cache of the call instruction
+    * @param[in] method : J9Method for the interface
+    */
+   void reservationInterfaceCache(void *callSite, TR_OpaqueMethodBlock *method);
+
+   /**
+    * @brief Re-do the helper trampoline initialization for existing codeCaches
+    */
+   void lateInitialization();
+
+   /**
+    * @brief Add block defined by metaData to the freeBlockList.  The caller
+    *        should expect that the block may not always be added.
+    */
+   void addFreeBlock(void *metaData, uint8_t *startPC);
+
+   /**
+    * @brief Answers whether the total code cache capacity is nearly used up.
+    *        This code is executed by compilation thread and by application
+    *        threads when trying to induce a profiling compilation. Acquires
+    *        codeCacheList.mutex.
+    *
+    * @return true if capacity nearly reached; false otherwise.
+    */
+   bool almostOutOfCodeCache();
+
+   /**
+    * @brief Print some code cache usage statistics
+    */
+   void printMccStats();
+
+   /**
+    * @brief Print space remaining in each code cache
+    */
+   void printRemainingSpaceInCodeCaches();
+
+   /**
+    * @brief Print occupancy stats for each code cache
+    */
+   void printOccupancyStats();
+
 private :
    TR_FrontEnd *_fe;
    static TR::CodeCacheManager *_codeCacheManager;
    static J9JITConfig *_jitConfig;
    static J9JavaVM *_javaVM;
    };
-   
+
 } // namespace J9
 
 #endif // J9_CODECACHEMANAGER_INCL

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,11 @@
  */
 #define J9ROMCLASS_IS_CONTENDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsContended)
 
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+/* Will need to modify this if ValObject/RefObject proposal goes through */
+#define J9ROMCLASS_IS_VALUE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccValueType)
+#endif/* #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 #define J9ROMMETHOD_IS_GETTER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccGetterMethod)
 #define J9ROMMETHOD_IS_FORWARDER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccForwarderMethod)
 #define J9ROMMETHOD_IS_EMPTY(romMethod)					_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccEmptyMethod)
@@ -99,5 +104,12 @@
 #define J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass) _J9ROMCLASS_SUNMODIFIER_IS_ANY_SET((romClass), J9AccClassArray | J9AccClassInternalPrimitiveType)
 #define J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod) \
 	((((romMethod)->modifiers) & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor)
+
+#define J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(romClass) \
+	J9_ARE_ANY_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface)
+
+/* Only public vTable methods go into the iTable */
+#define J9ROMMETHOD_IN_ITABLE(romMethod) \
+	J9_ARE_ALL_BITS_SET((romMethod)->modifiers, J9AccMethodVTable | J9AccPublic)
 
 #endif	/* _J9MODIFIERS_API_H */

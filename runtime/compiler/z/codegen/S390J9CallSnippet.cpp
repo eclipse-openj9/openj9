@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "z/codegen/TRSystemLinkage.hpp"
 
 uint8_t *
@@ -213,14 +214,14 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       cursor += 2;
 
       TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue, false, false, false);
-      uintptrj_t destAddr = (uintptrj_t)helper->getMethodAddress();
+      intptrj_t destAddr = (intptrj_t)helper->getMethodAddress();
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
       if (comp->getOption(TR_EnableRMODE64))
 #endif
          {
          if (NEEDS_TRAMPOLINE(destAddr, cursor, cg))
-            destAddr = fej9->indexedTrampolineLookup(helper->getReferenceNumber(), (void *)cursor);
+            destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)cursor);
          }
 #endif
       TR_ASSERT(CHECK_32BIT_TRAMPOLINE_RANGE(destAddr, cursor), "Helper Call must be reachable");
@@ -343,7 +344,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
       {
       // Store the method pointer: it is NULL for unresolved
       // This field must be doubleword aligned for 64-bit and word aligned for 32-bit
-      if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+      if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager)))
          {
          pad_bytes = (((uintptrj_t) cursor + (sizeof(uintptrj_t) - 1)) / sizeof(uintptrj_t) * sizeof(uintptrj_t) - (uintptrj_t) cursor);
          TR_ASSERT( pad_bytes == 0, "Method Pointer field must be aligned for patching");
@@ -358,12 +359,26 @@ TR::S390J9CallSnippet::emitSnippetBody()
          }
       else
          {
-         *(uintptrj_t *) cursor = (uintptrj_t) methodSymbol->getMethodAddress();
+         uintptrj_t ramMethod = (uintptr_t)methodSymbol->getMethodAddress();
+         *(uintptrj_t *) cursor = ramMethod;
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
          AOTcgDiag1(comp, "add TR_MethodObject cursor=%x\n", cursor);
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
-                                   __FILE__, __LINE__, callNode);
+         if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_ASSERT_FATAL(ramMethod, "cursor = %x, ramMehtod can not be null", cursor);
+            cg()->addExternalRelocation( new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                        (uint8_t *)ramMethod,
+                                                                        (uint8_t *)TR::SymbolType::typeMethod,
+                                                                        TR_SymbolFromManager,
+                                                                        cg()),
+                                                                     __FILE__, __LINE__, callNode);
+            }
+         else
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
+                                    __FILE__, __LINE__, callNode);
+            }
          }
       }
 
@@ -656,7 +671,7 @@ TR::S390InterfaceCallSnippet::emitSnippetBody()
          {
          // Destination is beyond our reachable jump distance, we'll find the
          // trampoline.
-         destAddr = fej9->indexedTrampolineLookup(glueRef->getReferenceNumber(), (void *)cursor);
+         destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
          this->setUsedTrampoline(true);
          }
       }

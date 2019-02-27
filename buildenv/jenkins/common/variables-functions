@@ -167,38 +167,36 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
         // default values from variables file
         def repo = default_openjdk_info.get('default').get('repoUrl')
         def branch = default_openjdk_info.get('default').get('branch')
+        def sha = ''
 
         if (default_openjdk_info[build_spec]) {
             repo = default_openjdk_info.get(build_spec).get('repoUrl')
-
-            if (params."${param_name}_REPO_${build_spec}") {
-                // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
-                repo = params."${param_name}_REPO_${build_spec}"
-            }
-
             branch = default_openjdk_info.get(build_spec).get('branch')
-
-            if (params."${param_name}_BRANCH_${build_spec}") {
-                // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
-                branch = params."${param_name}_BRANCH_${build_spec}"
-            }
-
-            sha = params."${param_name}_SHA_${build_spec}"
-        } else {
-            // check build parameters
-            if (params."${param_name}_REPO") {
-                repo = params."${param_name}_REPO"
-            }
-
-            if (params."${param_name}_BRANCH") {
-                branch = params."${param_name}_BRANCH"
-            }
-
-            sha = params."${param_name}_SHA"
         }
 
-        if (!sha) {
-            sha = ''
+        // check build parameters
+        if (params."${param_name}_REPO_${build_spec}") {
+            // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
+            repo = params."${param_name}_REPO_${build_spec}"
+        } else if (params."${param_name}_REPO") {
+            // got OPENJDK*_REPO build parameter, overwrite repo
+            repo = params."${param_name}_REPO"
+        }
+
+        if (params."${param_name}_BRANCH_${build_spec}") {
+            // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
+            branch = params."${param_name}_BRANCH_${build_spec}"
+        } else if (params."${param_name}_BRANCH") {
+            // got OPENJDK*_BRANCH build parameter, overwrite branch
+            branch = params."${param_name}_BRANCH"
+        }
+
+        if (params."${param_name}_SHA_${build_spec}") {
+            // got OPENJDK*_SHA_<spec> build parameter, overwrite sha
+            sha = params."${param_name}_SHA_${build_spec}"
+        } else if (params."${param_name}_SHA") {
+            // got OPENJDK*_SHA build parameter, overwrite sha
+            sha = params."${param_name}_SHA"
         }
 
         // populate the map
@@ -386,12 +384,10 @@ def set_build_variables() {
     // fetch values per spec and Java version from the variables file
     BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
     FREEMARKER = VARIABLES."${SPEC}".freemarker
-    EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_getsource_options, SDK_VERSION)
-    EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
-    EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
     OPENJDK_REFERENCE_REPO = VARIABLES."${SPEC}".openjdk_reference_repo
     set_release()
     set_jdk_folder()
+    set_build_extra_options()
 
     // set variables for the build environment configuration
     // check job parameters, if not provided default to variables file
@@ -503,175 +499,6 @@ def set_restart_timeout() {
     }
 }
 
-def set_job_properties(JOB_TYPE) {
-    /*************************
-    * Setup Jenkins Properties
-    * - Parameters
-    * - Triggers
-    * - Build discarder
-    *
-    * Three main build types
-    * - Build*
-    * - PullRequest*
-    * - Pipeline*
-    *   - Parameters:
-    *       - Build:
-    *           strings: NODE, SDK_FILENAME
-    *       - Build or Pipeline:
-    *           strings: OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA,
-    *                    OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA,
-    *                    OMR_REPO, OMR_BRANCH, OMR_SHA,
-    *                    VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID
-    *       - Build or PR or Pipeline
-    *           Choices: SDK_VERSION, PLATFORM
-    *       - PR or Pipeline
-    *           Choices: TESTS_TARGETS
-    *   - Build Discarder
-    *       - Ideally get values from variable file
-    *   - Trigger
-    *       - Build/Pipeline - no trigger
-    *       - PR: GH Trigger
-    ****************************/
-
-    if (JOB_TYPE == "build" || JOB_TYPE == "pipeline") {
-        // Start with just supporting Build and Pipeline jobs
-        // PR jobs will need some playing to get the trigger figured out
-        // Also regarding PR builds, see OpenJ9 Issue #2728
-        // This IF can be removed once we support PR job types (all job types)
-
-        echo "Configure Jenkins job PROPERTIES"
-        /********************
-        * BUILD DISCARDER
-        ********************/
-
-        echo "Configure Build Discarder..."
-        NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, JOB_TYPE)
-        NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, JOB_TYPE)
-        echo "NUM_BUILDS:'${NUM_BUILDS}"
-        echo "NUM_ARTIFACTS:'${NUM_ARTIFACTS}"
-
-        /********************
-        * PARAMETERS
-        ********************/
-
-        // All build types
-
-        // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
-        // Else parse the JOB_NAME to determine the verison
-        SDK_VERSION = params.SDK_VERSION
-        if (!SDK_VERSION) {
-            echo "Parse build name to determine SDK_VERSION..."
-            // Eg - Build-JDK8-linux_390-64_cmprssptrs
-            //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
-            //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-            // Index of JDK + 3 until index of next '-'
-            INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
-            SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
-        }
-        echo "SDK_VERSION:'${SDK_VERSION}'"
-
-        PLATFORM = params.PLATFORM
-        if (!PLATFORM) {
-            echo "Parse build name to determine PLATFORM..."
-            // Assuming consistent naming convention
-            // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
-            // Build-JDK8-linux_390-64_cmprssptrs
-            // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
-            // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
-            PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
-            if (JOB_TYPE == "pullRequest") {
-                // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-                // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
-                PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
-            }
-        }
-        echo "PLATFORM:'${PLATFORM}'"
-
-        PARAMETERS = []
-
-        // All build types
-        PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
-        PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
-
-        // Pipeline or build
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
-            // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
-            // This allows us to know what the default values are without being told explicitly.
-            // These DEFAULT values are typically constant per Jenkins Server.
-            if (!env.VARIABLE_FILE_DEFAULT) {
-                VARIABLE_FILE_DEFAULT = ''
-            }
-            if (!env.VENDOR_REPO_DEFAULT) {
-                VENDOR_REPO_DEFAULT = ''
-            }
-            if (!env.VENDOR_BRANCH_DEFAULT) {
-                VENDOR_BRANCH_DEFAULT = ''
-            }
-            if (!env.VENDOR_CREDENTIALS_ID_DEFAULT) {
-                VENDOR_CREDENTIALS_ID_DEFAULT = ''
-            }
-            add_string_params([
-                'OPENJDK_REPO':'',
-                'OPENJDK_BRANCH':'',
-                'OPENJDK_SHA':'',
-                'OPENJ9_REPO':'',
-                'OPENJ9_BRANCH':'',
-                'OPENJ9_SHA':'',
-                'OMR_REPO':'',
-                'OMR_BRANCH':'',
-                'OMR_SHA':'',
-                'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
-                'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
-                'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
-                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}",
-                'SETUP_LABEL':'',
-                'BUILD_IDENTIFIER':'',
-                'ghprbGhRepository':'',
-                'ghprbActualCommit':'',
-                'PERSONAL_BUILD':''])
-        }
-
-        // Pipeline or PR
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
-            add_string_params(['TESTS_TARGETS':''])
-        }
-
-        if (JOB_TYPE == 'build') {
-            add_string_params(['NODE':''])
-        }
-
-        if (JOB_TYPE == 'pipeline') {
-            add_string_params([
-                'BUILD_NODE':'',
-                'TEST_NODE':'',
-                'SLACK_CHANNEL':'',
-                'RESTART_TIMEOUT':'',
-                'RESTART_TIMEOUT_UNITS':'',
-                'BUILD_LIST':''])
-        }
-
-        /********************
-        * TRIGGER
-        ********************/
-
-        // No trigger for Build and Pipeline jobs
-        // TODO PR builds will need Github trigger setup
-
-        /********************
-        * SETUP PROPERTIES
-        ********************/
-
-        properties([
-            buildDiscarder(logRotator(
-                artifactDaysToKeepStr: '',
-                artifactNumToKeepStr: NUM_ARTIFACTS,
-                daysToKeepStr: '',
-                numToKeepStr: NUM_BUILDS)),
-            parameters(PARAMETERS)
-        ])
-    }
-}
-
 def set_build_identifier() {
     BUILD_IDENTIFIER = params.BUILD_IDENTIFIER
     if (!BUILD_IDENTIFIER) {
@@ -713,10 +540,7 @@ def set_job_variables(job_type) {
     // fetch credentials required to connect to GitHub using ssh protocol
     set_user_credentials()
 
-    // Setup Jenkins Job Parameters
-    set_job_properties(job_type)
-
-    // Setup Build Identifier so we can determin whaere a build belongs
+    // Setup Build Identifier so we can determine where a build belongs
     set_build_identifier()
 
     // check mandatory parameters if any
@@ -746,7 +570,9 @@ def set_job_variables(job_type) {
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
+            set_adoptopenjdk_tests_repository()
             set_vendor_variables()
+            set_build_extra_options()
             set_test_targets()
             set_slack_channel()
             set_restart_timeout()
@@ -754,6 +580,8 @@ def set_job_variables(job_type) {
         case "wrapper":
             //set variable for pipeline all/personal
             set_repos_variables(BUILD_SPECS)
+            set_build_extra_options(BUILD_SPECS)
+            set_adoptopenjdk_tests_repository(get_build_releases(BUILD_SPECS))
             set_restart_timeout()
             break
         default:
@@ -1017,6 +845,191 @@ def get_specs(SUPPORTED_SPECS) {
     }
 
     return SPECS
+}
+
+/*
+* Set build extra options
+*/
+def set_build_extra_options(build_specs=null) {
+    if (!build_specs) {
+        // single release
+        EXTRA_GETSOURCE_OPTIONS = params.EXTRA_GETSOURCE_OPTIONS
+        if (!EXTRA_GETSOURCE_OPTIONS) {
+            EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_getsource_options, SDK_VERSION)
+        }
+
+        EXTRA_CONFIGURE_OPTIONS = params.EXTRA_CONFIGURE_OPTIONS
+        if (!EXTRA_CONFIGURE_OPTIONS) {
+            EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
+        }
+
+        EXTRA_MAKE_OPTIONS = params.EXTRA_MAKE_OPTIONS
+        if (!EXTRA_MAKE_OPTIONS) {
+            EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
+        }
+
+        OPENJDK_CLONE_DIR = params.OPENJDK_CLONE_DIR
+        if (!OPENJDK_CLONE_DIR) {
+            OPENJDK_CLONE_DIR = ''
+        }
+    } else {
+        // multiple releases
+        EXTRA_GETSOURCE_OPTIONS_MAP = [:]
+        EXTRA_CONFIGURE_OPTIONS_MAP = [:]
+        EXTRA_MAKE_OPTIONS_MAP = [:]
+        OPENJDK_CLONE_DIR_MAP = [:]
+
+        def build_releases = get_build_releases(build_specs)
+        build_releases.each { release ->
+            def extra_getsource_options_by_specs = [:]
+            def extra_configure_options_by_specs = [:]
+            def extra_make_options_by_specs = [:]
+            def clone_dir_by_specs = [:]
+
+            build_specs.each { spec, releases ->
+                if (releases.contains(release)) {
+                    ['EXTRA_GETSOURCE_OPTIONS', 'EXTRA_CONFIGURE_OPTIONS', 'EXTRA_MAKE_OPTIONS'].each { it ->
+                        // look up extra options by release and spec/platform provided as build parameters:
+                        // e.g. EXTRA_GETSOURCE_OPTIONS_JDK<release>_<spec>
+                        //      EXTRA_CONFIGURE_OPTIONS_JDK<release>_<spec>
+                        //      EXTRA_MAKE_OPTIONS_JDK<release>_<spec>
+                        def extraOptions = params."${it}_JDK${release}_${spec}"
+                        if (!extraOptions) {
+                            extraOptions = get_value(VARIABLES."${spec}"."${it.toLowerCase()}", release)
+                        }
+
+                        if (extraOptions) {
+                            // populate maps by specs
+                            switch (it) {
+                                case 'EXTRA_GETSOURCE_OPTIONS':
+                                    extra_getsource_options_by_specs.put(spec, extraOptions)
+                                    break
+                                case 'EXTRA_CONFIGURE_OPTIONS':
+                                    extra_configure_options_by_specs.put(spec, extraOptions)
+                                    break
+                                case 'EXTRA_MAKE_OPTIONS':
+                                    extra_make_options_by_specs.put(spec, extraOptions)
+                                    break
+                            }
+                        }
+                    }
+
+                    def cloneDir = params."OPENJDK${release}_CLONE_DIR_${spec}"
+                    if (!cloneDir) {
+                        cloneDir = params."OPENJDK${release}_CLONE_DIR"
+                    }
+                    if (cloneDir) {
+                        clone_dir_by_specs.put(spec, cloneDir)
+                    }
+                }
+            }
+
+            // populate maps by releases and specs
+            if (extra_getsource_options_by_specs) {
+                EXTRA_GETSOURCE_OPTIONS_MAP.put(release, extra_getsource_options_by_specs)
+            }
+            if (extra_configure_options_by_specs) {
+                EXTRA_CONFIGURE_OPTIONS_MAP.put(release, extra_configure_options_by_specs)
+            }
+            if (extra_make_options_by_specs) {
+                EXTRA_MAKE_OPTIONS_MAP.put(release, extra_make_options_by_specs)
+            }
+            if (clone_dir_by_specs) {
+                OPENJDK_CLONE_DIR_MAP.put(release, clone_dir_by_specs)
+            }
+        }
+    }
+}
+
+/*
+* Set the Git repository URL and branch for the AdoptOpenJDK Testing material.
+*/
+def set_adoptopenjdk_tests_repository(build_releases=null) {
+    ADOPTOPENJDK_MAP = [:]
+
+    if (build_releases) {
+        for (release in build_releases) {
+            // fetch from the variables file
+            def adoptOpenJdkByReleaseMap = [:]
+            if (get_value(VARIABLES.adoptopenjdk, release)) {
+                adoptOpenJdkByReleaseMap.putAll(get_value(VARIABLES.adoptopenjdk, release))
+            } else {
+                adoptOpenJdkByReleaseMap.putAll(VARIABLES.adoptopenjdk.default)
+            }
+
+            if (params."ADOPTOPENJDK${release}_REPO") {
+                // override repo with user value
+                adoptOpenJdkByReleaseMap['repoUrl'] = params."ADOPTOPENJDK${release}_REPO"
+            }
+
+            if (params."ADOPTOPENJDK${release}_BRANCH") {
+                // override branch with user value
+                adoptOpenJdkByReleaseMap['branch'] = params."ADOPTOPENJDK${release}_BRANCH"
+            }
+
+            if (adoptOpenJdkByReleaseMap) {
+                ADOPTOPENJDK_MAP.put(release, adoptOpenJdkByReleaseMap)
+            }
+        }
+
+        echo "ADOPTOPENJDK_MAP = ${ADOPTOPENJDK_MAP.toString()}"
+    } else {
+        // fetch from the variables file
+        def adoptOpenJdkByReleaseMap = VARIABLES.adoptopenjdk.default
+
+        ADOPTOPENJDK_REPO = params.ADOPTOPENJDK_REPO
+        if (!ADOPTOPENJDK_REPO && adoptOpenJdkByReleaseMap) {
+            ADOPTOPENJDK_REPO = adoptOpenJdkByReleaseMap.get('repoUrl')
+        }
+
+        ADOPTOPENJDK_BRANCH = params.ADOPTOPENJDK_BRANCH
+        if (!ADOPTOPENJDK_BRANCH && adoptOpenJdkByReleaseMap) {
+            ADOPTOPENJDK_BRANCH = adoptOpenJdkByReleaseMap.get('branch')
+        }
+
+        echo "Using ADOPTOPENJDK_REPO = ${ADOPTOPENJDK_REPO} ADOPTOPENJDK_BRANCH = ${ADOPTOPENJDK_BRANCH}"
+    }
+}
+
+// Creates a job using the job DSL plugin on Jenkins
+def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
+
+    // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
+    // This allows us to know what the default values are without being told explicitly.
+    // These DEFAULT values are typically constant per Jenkins Server.
+    if (!env.VARIABLE_FILE_DEFAULT) {
+        VARIABLE_FILE_DEFAULT = ''
+    }
+    if (!env.VENDOR_REPO_DEFAULT) {
+        VENDOR_REPO_DEFAULT = ''
+    }
+    if (!env.VENDOR_BRANCH_DEFAULT) {
+        VENDOR_BRANCH_DEFAULT = ''
+    }
+    if (!env.VENDOR_CREDENTIALS_ID_DEFAULT) {
+        VENDOR_CREDENTIALS_ID_DEFAULT = ''
+    }
+
+    // Configruing the build discarder in the downstream project
+
+    DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, downstreamJobType)
+    DISCARDER_NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, downstreamJobType)
+
+    def params = [:]
+    params.put('JOB_NAME', JOB_NAME)
+    params.put('SDK_VERSION', SDK_VERSION)
+    params.put('PLATFORM', SPEC)
+    params.put('VARIABLE_FILE_DEFAULT', VARIABLE_FILE_DEFAULT)
+    params.put('VENDOR_REPO_DEFAULT', VENDOR_REPO_DEFAULT)
+    params.put('VENDOR_BRANCH_DEFAULT', VENDOR_BRANCH_DEFAULT)
+    params.put('VENDOR_CREDENTIALS_ID_DEFAULT', VENDOR_CREDENTIALS_ID_DEFAULT)
+    params.put('jobType', downstreamJobType)
+    params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
+    params.put('DISCARDER_NUM_ARTIFACTS', DISCARDER_NUM_ARTIFACTS)
+
+    def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
+
+    create = jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params
 }
 
 return this

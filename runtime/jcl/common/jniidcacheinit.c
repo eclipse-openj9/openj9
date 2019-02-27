@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ initializeSunReflectConstantPoolIDCache(JNIEnv* env)
 	if (!isClassIDAlreadyCached) {	
 
 		/* Load sun/reflect/ConstantPool */
-		if (J2SE_VERSION(javaVM) >= J2SE_19) {
+		if (J2SE_VERSION(javaVM) >= J2SE_V11) {
 			sunReflectConstantPool = (*env)->FindClass(env, "jdk/internal/reflect/ConstantPool");
 		} else {
 			sunReflectConstantPool = (*env)->FindClass(env, "sun/reflect/ConstantPool");

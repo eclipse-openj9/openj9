@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,11 +36,7 @@ static BOOLEAN isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Modu
 BOOLEAN
 isModuleUnnamed(J9VMThread *currentThread, j9object_t moduleObject)
 {
-	if(J2SE_SHAPE(currentThread->javaVM) < J2SE_SHAPE_B165) {
-		return (NULL == J9VMJAVALANGREFLECTMODULE_NAME(currentThread, moduleObject));
-	} else {
-		return (NULL == J9VMJAVALANGMODULE_NAME(currentThread, moduleObject));
-	}
+	return (NULL == J9VMJAVALANGMODULE_NAME(currentThread, moduleObject));
 }
 
 BOOLEAN
@@ -90,11 +86,7 @@ isAllowedReadAccessToModule(J9VMThread *currentThread, J9Module *fromModule, J9M
 }
 
 J9Package *
-#if J9VM_JAVA9_BUILD >= 156
 getPackageDefinition(J9VMThread *currentThread, J9Module *fromModule, const char *packageName, UDATA *errCode)
-#else /* J9VM_JAVA9_BUILD >= 156 */
-getPackageDefinition(J9VMThread *currentThread, J9Module *fromModule, j9object_t packageName, UDATA *errCode)
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 {
 	J9Package *retval = NULL;
 	if (isModuleDefined(currentThread, fromModule)) {
@@ -111,11 +103,7 @@ getPackageDefinition(J9VMThread *currentThread, J9Module *fromModule, j9object_t
 }
 
 J9Package*
-#if J9VM_JAVA9_BUILD >= 156
 hashPackageTableAt(J9VMThread *currentThread, J9ClassLoader *classLoader, const char *packageName)
-#else /* J9VM_JAVA9_BUILD >= 156 */
-hashPackageTableAt(J9VMThread *currentThread, J9ClassLoader *classLoader, j9object_t packageName)
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 {
 	J9Package package = {0};
 	J9Package *packagePtr = &package;
@@ -136,18 +124,13 @@ hashPackageTableAt(J9VMThread *currentThread, J9ClassLoader *classLoader, j9obje
 }
 
 BOOLEAN
-#if J9VM_JAVA9_BUILD >= 156
 addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char *packageName, U_8 *buf, UDATA bufLen)
-#else /* J9VM_JAVA9_BUILD >= 156 */
-addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t packageName, U_8 *buf, UDATA bufLen)
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 {
 	J9JavaVM * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 	UDATA packageNameLength = 0;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
-#if J9VM_JAVA9_BUILD >= 156
 	j9package->packageName = (J9UTF8*)buf;
 	packageNameLength = (UDATA) strlen(packageName);
 	if ((NULL == j9package->packageName) || ((packageNameLength + sizeof(j9package->packageName->length) + 1) > bufLen)) {
@@ -161,13 +144,6 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t 
 	memcpy(J9UTF8_DATA(j9package->packageName), (void *)packageName, packageNameLength);
 	J9UTF8_DATA(j9package->packageName)[packageNameLength] = '\0';
 	J9UTF8_SET_LENGTH(j9package->packageName, (U_16)packageNameLength);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-	j9package->packageName = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, packageName, J9_STR_NULL_TERMINATE_RESULT, "", 0, (char*)buf, bufLen);
-	if (NULL == j9package->packageName) {
-		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-		return FALSE;
-	}
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 
 	return TRUE;
 }

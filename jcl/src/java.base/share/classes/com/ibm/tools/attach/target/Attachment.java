@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.Properties;
+
 /*[IF Sidecar19-SE]*/
 import jdk.internal.vm.VMSupport;
 /*[ELSE] Sidecar19-SE
@@ -199,7 +200,11 @@ final class Attachment extends Thread implements Response {
 							+ " " + attachError); //$NON-NLS-1$
 				}
 			} else if (cmd.startsWith(Command.GET_SYSTEM_PROPERTIES)) {
-				replyWithProperties(com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties());
+				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
+				String argumentString = String.join(" ", com.ibm.oti.vm.VM.getVMArgs()); //$NON-NLS-1$
+				Properties newProperties = (Properties) internalProperties.clone();
+				newProperties.put("sun.jvm.args", argumentString); //$NON-NLS-1$
+				replyWithProperties(newProperties);
 			} else if (cmd.startsWith(Command.GET_AGENT_PROPERTIES)) {
 				replyWithProperties(AttachHandler.getAgentProperties());
 			} else if (cmd.startsWith(Command.START_LOCAL_MANAGEMENT_AGENT)) {

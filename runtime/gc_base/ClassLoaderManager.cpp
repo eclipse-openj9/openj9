@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -394,7 +394,7 @@ MM_ClassLoaderManager::addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoa
 					removeFromSubclassHierarchy(env, clazz);
 
 					/* Mark class as dying */
-					clazz->classDepthAndFlags |= J9_JAVA_CLASS_DYING;
+					clazz->classDepthAndFlags |= J9AccClassDying;
 
 					/* For CMVC 137275. For all dying classes we poison the classObject
 					 * field to J9_INVALID_OBJECT to investigate the origin of a class object
@@ -482,7 +482,7 @@ MM_ClassLoaderManager::cleanUpSegmentsInAnonymousClassLoader(MM_EnvironmentBase 
 				/* Anonymous classes expected to be allocated one per segment */
 				Assert_MM_true(NULL == classHeapIterator.nextClass());
 
-				if (J9_JAVA_CLASS_DYING == (J9CLASS_FLAGS(clazz) & J9_JAVA_CLASS_DYING)) {
+				if (J9AccClassDying == (J9CLASS_FLAGS(clazz) & J9AccClassDying)) {
 					/* TODO replace this to better algorithm */
 					/* Try to find ROM class for unloading anonymous RAM class if it is not an array */
 					if (!_extensions->objectModel.isIndexable(clazz)) {

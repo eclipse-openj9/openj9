@@ -62,40 +62,6 @@ J9::Z::CodeGenerator::CodeGenerator() :
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   // Do random Disable<Platform> when -Xjit randomGen
-   if (comp->getOption(TR_Randomize))
-      {
-      switch(randomizer.randomInt(TR::Compiler->target.cpu.id() - TR_s370gp7))
-         {
-         case 1:
-            {
-            _processorInfo.disableArch(TR_S390ProcessorInfo::TR_z196);
-            traceMsg(comp, "disablez196");
-            break;
-            }
-
-         case 2:
-            {
-            _processorInfo.disableArch(TR_S390ProcessorInfo::TR_zEC12);
-            traceMsg(comp, "disablezEC12");
-            break;
-            }
-
-         case 3:
-            {
-            _processorInfo.disableArch(TR_S390ProcessorInfo::TR_z13);
-            traceMsg(comp, "disablez13");
-            break;
-            }
-         case 4:
-            {
-            _processorInfo.disableArch(TR_S390ProcessorInfo::TR_zNext);
-            traceMsg(comp, "RandomGen: Setting disabling zNext processor architecture.");
-            break;
-            }
-         }
-      }
-
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
 
    // Java specific runtime helpers
@@ -204,7 +170,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    const bool accessStaticsIndirectly = !cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10) ||
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
-         comp->compileRelocatableCode();
+         (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
    cg->setAccessStaticsIndirectly(accessStaticsIndirectly);
 
@@ -3629,9 +3595,8 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    const int32_t offsetFromEPRegisterValueToJ9MethodAddress = CalcCodeSize(basrInstruction->getNext(), cursor);
 
    j9MethodAddressMemRef->setOffset(offsetFromEPRegisterValueToJ9MethodAddress);
-
-   // Symbol reference is NULL as we don't use it when adding ExternalRelocation for J9Method
-   encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_RamMethod, NULL);
+   TR::SymbolReference *methodSymRef = new (self()->trHeapMemory()) TR::SymbolReference(self()->symRefTab(), methodSymbol);
+   encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_RamMethod, methodSymRef);
 
    AOTcgDiag2(comp, "Add encodingRelocation = %p reloType = %p\n", encodingRelocation, encodingRelocation->getReloType());
 

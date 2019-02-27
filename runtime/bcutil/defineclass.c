@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,7 +144,7 @@ internalDefineClass(
 		/* Host class can only be set for anonymous classes, which are defined by Unsafe.defineAnonymousClass.
 		 * For other cases, host class is set to NULL.
 		 */
-		if ((NULL != hostClass) && (J2SE_VERSION(vm) >= J2SE_19)) {
+		if ((NULL != hostClass) && (J2SE_VERSION(vm) >= J2SE_V11)) {
 			J9ROMClass *hostROMClass = hostClass->romClass;
 			/* This error-check should only be done for anonymous classes. */
 			Trc_BCU_Assert_True(isAnonFlagSet);
@@ -536,10 +536,6 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 		translationFlags |= BCT_Java12MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_V11) {
 		translationFlags |= BCT_Java11MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V10) {
-		translationFlags |= BCT_Java10MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_19) {
-		translationFlags |= BCT_Java9MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_18) {
 		translationFlags |= BCT_Java8MajorVersionShifted;
 	}
@@ -749,10 +745,9 @@ callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediat
 			localBuffer);
 
 	/* The module of a class transformed by a JVMTI agent needs access to unnamed modules */
-	if (
-			(J2SE_VERSION(vm) >= J2SE_19)
-			&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
-			&& (NULL != loadData->romClass)
+	if ((J2SE_VERSION(vm) >= J2SE_V11)
+		&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
+		&& (NULL != loadData->romClass)
 	) {
 		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
 		J9Module *module = vm->internalVMFunctions->findModuleForPackage(currentThread, loadData->classLoader,

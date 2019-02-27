@@ -399,7 +399,7 @@ void releaseVMaccessIfNeeded(J9VMThread *vmThread, bool haveAcquiredVMAccess)
 bool
 TR_J9VMBase::isAnyMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   return isMethodEnterTracingEnabled(method) || isMethodExitTracingEnabled(method);
+   return isMethodTracingEnabled(method);
    }
 
 
@@ -1007,7 +1007,7 @@ UDATA TR_J9VMBase::getOffsetOfJ9IdentityHashDataHashSaltTable()     {return offs
 UDATA TR_J9VMBase::getJ9IdentityHashSaltPolicyStandard()            {return J9_IDENTITY_HASH_SALT_POLICY_STANDARD;}
 UDATA TR_J9VMBase::getJ9IdentityHashSaltPolicyRegion()              {return J9_IDENTITY_HASH_SALT_POLICY_REGION;}
 UDATA TR_J9VMBase::getJ9IdentityHashSaltPolicyNone()                {return J9_IDENTITY_HASH_SALT_POLICY_NONE;}
-UDATA TR_J9VMBase::getJ9JavaClassRamShapeShift()                    {return J9_JAVA_CLASS_RAM_SHAPE_SHIFT; }
+UDATA TR_J9VMBase::getJ9JavaClassRamShapeShift()                    {return J9AccClassRAMShapeShift; }
 UDATA TR_J9VMBase::getObjectHeaderShapeMask()                       {return OBJECT_HEADER_SHAPE_MASK; }
 
 UDATA TR_J9VMBase::getIdentityHashSaltPolicy()
@@ -1461,14 +1461,14 @@ UDATA TR_J9VMBase::constJNICallOutFrameFlagsOffset()                {return offs
 
 UDATA TR_J9VMBase::constJNIReferenceFrameAllocatedFlags()       {return J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS;}
 
-UDATA TR_J9VMBase::constClassFlagsPrimitive()   {return J9_JAVA_CLASS_PRIMITIVE_TYPE;}
-UDATA TR_J9VMBase::constClassFlagsAbstract()    {return J9_JAVA_ABSTRACT;}
-UDATA TR_J9VMBase::constClassFlagsFinal()       {return J9_JAVA_FINAL;}
-UDATA TR_J9VMBase::constClassFlagsPublic()      {return J9_JAVA_PUBLIC;}
+UDATA TR_J9VMBase::constClassFlagsPrimitive()   {return J9AccClassInternalPrimitiveType;}
+UDATA TR_J9VMBase::constClassFlagsAbstract()    {return J9AccAbstract;}
+UDATA TR_J9VMBase::constClassFlagsFinal()       {return J9AccFinal;}
+UDATA TR_J9VMBase::constClassFlagsPublic()      {return J9AccPublic;}
 
 int32_t TR_J9VMBase::getFlagValueForPrimitiveTypeCheck()        {return J9AccClassInternalPrimitiveType;}
 int32_t TR_J9VMBase::getFlagValueForArrayCheck()                {return J9AccClassArray;}
-int32_t TR_J9VMBase::getFlagValueForFinalizerCheck()            {return J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER;}
+int32_t TR_J9VMBase::getFlagValueForFinalizerCheck()            {return J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer;}
 
 
 UDATA TR_J9VMBase::getGCForwardingPointerOffset()               {
@@ -1736,11 +1736,11 @@ UDATA TR_J9VMBase::thisThreadGetConcurrentScavengeActiveByteAddressOffset()
 UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-#if defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86)
+#if defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390)
    return offsetof(J9VMThread, readBarrierRangeCheckBaseCompressed);
 #else
    return offsetof(J9VMThread, readBarrierRangeCheckBase);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86) */
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field readBarrierRangeCheckBase does not exists in J9VMThread.");
    return 0;
@@ -1753,11 +1753,11 @@ UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
 UDATA TR_J9VMBase::thisThreadGetEvacuateTopAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-#if defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86)
+#if defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390)
    return offsetof(J9VMThread, readBarrierRangeCheckTopCompressed);
 #else
    return offsetof(J9VMThread, readBarrierRangeCheckTop);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86) */
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && !defined(TR_TARGET_S390) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field readBarrierRangeCheckTop does not exists in J9VMThread.");
    return 0;
@@ -2156,7 +2156,7 @@ bool
 TR_J9VMBase::hasFinalFieldsInClass(TR_OpaqueClassBlock * clazz)
    {
    J9Class *clazzPtr = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-   return (clazzPtr->classDepthAndFlags & J9_JAVA_CLASS_HAS_FINAL_FIELDS)!=0;
+   return (clazzPtr->classDepthAndFlags & J9AccClassHasFinalFields)!=0;
    }
 
 static uint32_t offsetOfHotFields() { return offsetof(J9Class, instanceHotFieldDescription); }
@@ -3238,18 +3238,6 @@ bool
     }
 
 bool
-TR_J9VMBase::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return isMethodTracingEnabled(method);
-   }
-
-bool
-TR_J9VMBase::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return isMethodTracingEnabled(method);
-   }
-
-bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
    {
    return false;
@@ -3287,8 +3275,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    TR::Node * ramMethod = TR::Node::aconst(root, (uintptrj_t)j9method);
    ramMethod->setIsMethodPointerConstant(true);
 
-   int32_t event = root->getOpCodeValue() == TR::MethodEnterHook ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
-   bool isTrace = (event == J9HOOK_VM_METHOD_ENTER) ? isMethodEnterTracingEnabled(j9method) : isMethodExitTracingEnabled(j9method);
+   bool isTrace = isMethodTracingEnabled(j9method);
 
    TR::Node * methodCall;
    if (root->getNumChildren() == 0)
@@ -3397,6 +3384,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
       //      buload &vmThread()->javaVM->hookInterface->flags[J9HOOK_VM_METHOD_ENTER/J9HOOK_VM_METHOD_RETURN];
       //    iconst J9HOOK_FLAG_HOOKED
       //
+      int32_t event = root->getOpCodeValue() == TR::MethodEnterHook ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
       TR::StaticSymbol * addressSym = TR::StaticSymbol::create(comp->trHeapMemory(),TR::Address);
       addressSym->setStaticAddress(getStaticHookAddress(event));
 
@@ -3914,7 +3902,7 @@ TR_J9VMBase::compileMethods(TR::OptionSet *optionSet, void *config)
             {
             J9Method * method = &ramMethods[m];
 
-            if (!(romMethod->modifiers & (J9_JAVA_NATIVE | J9_JAVA_ABSTRACT))
+            if (!(romMethod->modifiers & (J9AccNative | J9AccAbstract))
                  && method != newInstanceThunk &&
                  !TR::CompilationInfo::isCompiled(method))
                {
@@ -4487,11 +4475,7 @@ TR_J9VMBase::unsupportedByteCode(TR::Compilation * comp, U_8 opcode)
 void
 TR_J9VMBase::unknownByteCode(TR::Compilation * comp, U_8 opcode)
    {
-   // an unknown bytecode may be seen if the method contains a breakpoint, in that case we should abort the compile
-   //
-   char errMsg[40];
-   snprintf(errMsg, 40, "Unknown bytecode %d to JIT", opcode);
-   comp->failCompilation<TR::CompilationException>(errMsg);
+   TR_ASSERT_FATAL(0, "Unknown bytecode to JIT %d \n", opcode);
    }
 
 char*
@@ -5497,15 +5481,6 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
    TR_ASSERT(newCache->isReserved(), "assertion failure"); // MCT
    }
 
-intptrj_t
-TR_J9VMBase::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
-   {
-   TR::VMAccessCriticalSection indexedTrampolineLookup(this);
-   void * tramp = (void *)TR::CodeCacheManager::instance()->findHelperTrampoline(callSite, helperIndex);
-   TR_ASSERT(tramp!=NULL, "Error: CodeCache is not initialized properly.\n");
-   return (intptrj_t)tramp;
-   }
-
 // interpreter profiling support
 TR_IProfiler *
 TR_J9VMBase::getIProfiler()
@@ -6023,7 +5998,7 @@ TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
       return false;
 
    // Can not inline the allocation if the class is an interface or abstract
-   if (clazz->romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE))
+   if (clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface))
       return false;
    return true;
    }
@@ -6292,7 +6267,7 @@ bool
 TR_J9VMBase::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
    {
    J9Class* j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-   return ((J9CLASS_FLAGS(j9class) & J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER) != 0);
+   return ((J9CLASS_FLAGS(j9class) & J9AccClassOwnableSynchronizer) != 0);
    }
 
 const char *
@@ -6465,13 +6440,13 @@ TR_J9VM::isUnloadAssumptionRequired(TR_OpaqueClassBlock * clazzPointer, TR_Resol
 bool
 TR_J9VM::classHasBeenExtended(TR_OpaqueClassBlock * clazzPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9AccClassHasBeenOverridden) != 0;
    }
 
 bool
 TR_J9VM::classHasBeenReplaced(TR_OpaqueClassBlock * clazzPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)) & J9AccClassHotSwappedOut) != 0;
    }
 
 bool
@@ -6601,11 +6576,11 @@ TR_J9VM::isPublicClass(TR_OpaqueClassBlock * clazz)
 bool
 TR_J9VMBase::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    {
-   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER)) != 0;
+   return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)) != 0;
    }
 
 uintptrj_t
-TR_J9VM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
+TR_J9VMBase::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classDepthAndFlags);
    }
@@ -6613,12 +6588,6 @@ TR_J9VM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
 #define LOOKUP_OPTION_JNI 1024
 #define LOOKUP_OPTION_NO_CLIMB 32
 #define LOOKUP_OPTION_NO_THROW 8192
-
-TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
-   {
-   return getMethodFromName(className, methodName, signature); // ignore callingMethod
-   }
 
 TR_OpaqueMethodBlock *
 TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature)
@@ -6931,7 +6900,7 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
    TR_ASSERT(!symRef->isUnresolved(), "No need to lookup trampolines for unresolved methods.\n");
    TR_OpaqueMethodBlock * method = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
 
-   void *tramp;
+   intptrj_t tramp;
    TR::MethodSymbol *methodSym = symRef->getSymbol()->castToMethodSymbol();
    switch (methodSym->getMandatoryRecognizedMethod())
       {
@@ -6941,16 +6910,16 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
          // This is a hack, and it appears more than once.  Search for PROPER_DISPATCH_J9METHOD.
          //
          TR_RuntimeHelper vmCallHelper = TR::MethodSymbol::getVMCallHelperFor(methodSym->getMethod()->returnType(), methodSym->isSynchronised(), false, comp);
-         tramp = (void *)TR::CodeCacheManager::instance()->findHelperTrampoline(callSite, vmCallHelper);
+         tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(vmCallHelper, callSite);
          }
          break;
       default:
-         tramp = (void *)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
+         tramp = (intptrj_t)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
          break;
       }
 
-   TR_ASSERT(tramp!=NULL, "It should not fail since it is reserved first.\n");
-   return (intptrj_t)tramp;
+   TR_ASSERT(tramp, "It should not fail since it is reserved first.\n");
+   return tramp;
    }
 
 TR_OpaqueClassBlock *
@@ -8403,16 +8372,10 @@ TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
    }
 
 bool
-TR_J9SharedCacheVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
+TR_J9SharedCacheVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
    // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
-   return TR_J9VMBase::isMethodEnterTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter);
-   }
-
-bool
-TR_J9SharedCacheVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
-   {
-   return TR_J9VMBase::isMethodExitTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
+   return TR_J9VMBase::isMethodTracingEnabled(method) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodEnter) || TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTMethodExit);
    }
 
 bool
@@ -8492,7 +8455,8 @@ TR_J9SharedCacheVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(classPointer, method);
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8581,11 +8545,9 @@ TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, T
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)((TR_ResolvedJ9Method *)resolvedMethod)->ramMethod();
-      /*
-       * TR_J9VM::getResolvedMethodForNameAndSignature will call getMatchingMethodFromNameAndSignature
-       * which adds a MethodFromClassRecord.
-       */
-      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(getClassFromMethodBlock(method), method);
+      TR_OpaqueClassBlock *clazz = getClassFromMethodBlock(method);
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), clazz);
+      validated = true;
       }
    else
       {
@@ -9040,19 +9002,6 @@ TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       return false;
    }
 
-TR_OpaqueClassBlock *
-TR_J9SharedCacheVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
-   {
-   TR_OpaqueClassBlock *ccPointer = TR_J9VM::getClassClassPointer(objectClassPointer);
-   TR::Compilation *comp = TR::comp();
-   if (comp && comp->getOption(TR_UseSymbolValidationManager))
-      {
-      if (!comp->getSymbolValidationManager()->addClassClassRecord(ccPointer, objectClassPointer))
-         ccPointer = NULL;
-      }
-   return ccPointer;
-   }
-
 TR_OpaqueMethodBlock *
 TR_J9SharedCacheVM::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
    {
@@ -9204,6 +9153,14 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
    return thunkStart;
    }
 
+bool
+TR_J9SharedCacheVM::canRememberClass(TR_OpaqueClassBlock *classPtr)
+   {
+   if (_sharedCache)
+      return (_sharedCache->rememberClass((J9Class *) classPtr, false) != NULL);
+   return false;
+   }
+
 //////////////////////////////////////////////////////////
 // TR_J9SharedCacheVM
 //////////////////////////////////////////////////////////
@@ -9269,7 +9226,7 @@ TR_J9VMBase::classNameChars(TR::Compilation *comp, TR::SymbolReference * symRef,
 
 // Native method bodies
 //
-#if defined(NASM_ASSEMBLER)
+#if defined(TR_HOST_X86)
 JIT_HELPER(initialInvokeExactThunkGlue);
 #else
 JIT_HELPER(_initialInvokeExactThunkGlue);
@@ -9282,7 +9239,7 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
    return (jlong)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
    return (jlong)(*(void **)_initialInvokeExactThunkGlue);
-#elif defined(NASM_ASSEMBLER)
+#elif defined(TR_HOST_X86)
    return (jlong)initialInvokeExactThunkGlue;
 #else
    return (jlong)_initialInvokeExactThunkGlue;

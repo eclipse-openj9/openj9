@@ -1361,7 +1361,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             {
             TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
-            svm->addClassFromMethodRecord(containingClass(), aMethod);
+            SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
          else if (owner) // JITaaS: in baseline, if owner doesn't exist then comp doesn't exist, so thi case is not possible
             // but in JITaaS client comp is initialized before creating resolved method for compilee, so need this guard.
@@ -1455,13 +1455,20 @@ TR_ResolvedRelocatableJ9Method::isInterpreted()
    {
    bool alwaysTreatAsInterpreted = true;
 #if defined(TR_TARGET_S390)
-   alwaysTreatAsInterpreted = false;
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+      alwaysTreatAsInterpreted = true;
+   else
+      alwaysTreatAsInterpreted = false;
 #elif defined(TR_TARGET_X86)
 
    /*if isInterpreted should be only overridden for JNI methods.
    Otherwise buildDirectCall in X86PrivateLinkage.cpp will generate CALL 0
    for certain jitted methods as startAddressForJittedMethod still returns NULL in AOT
-   this is not an issue on z as direct calls are dispatched via snippets
+   this is not an issue on z as direct calls are dispatched via snippets.
+   For Z under AOT while using SVM, we do not need to treat all calls unresolved as it was case
+   for oldAOT. So alwaysTreatAsInterpreted is set to true in AOT using SVM so that call snippet
+   can be generated using correct j9method address.
 
    If one of the options to disable JNI is specified
    this function reverts back to the old behaviour
@@ -3223,6 +3230,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_putFloat_jlObjectJF_V,         "putFloat",   "(Ljava/lang/Object;JF)V")},
       {x(TR::sun_misc_Unsafe_putDouble_jlObjectJD_V,        "putDouble",  "(Ljava/lang/Object;JD)V")},
       {x(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+      {x(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putReference",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
 
       {x(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanVolatile", "(Ljava/lang/Object;JZ)V")},
       {x(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteVolatile",    "(Ljava/lang/Object;JB)V")},
@@ -3233,6 +3241,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V,         "putFloatVolatile",   "(Ljava/lang/Object;JF)V")},
       {x(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleVolatile",  "(Ljava/lang/Object;JD)V")},
       {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+      {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putReferenceVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
 
       {x(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanRelease", "(Ljava/lang/Object;JZ)V")},
       {x(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteRelease",    "(Ljava/lang/Object;JB)V")},
@@ -3255,6 +3264,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_getFloat_jlObjectJ_F,          "getFloat",   "(Ljava/lang/Object;J)F")},
       {x(TR::sun_misc_Unsafe_getDouble_jlObjectJ_D,         "getDouble",  "(Ljava/lang/Object;J)D")},
       {x(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getObject",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+      {x(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getReference",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
 
       {x(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanVolatile", "(Ljava/lang/Object;J)Z")},
       {x(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteVolatile",    "(Ljava/lang/Object;J)B")},
@@ -3265,6 +3275,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatVolatile",   "(Ljava/lang/Object;J)F")},
       {x(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleVolatile",  "(Ljava/lang/Object;J)D")},
       {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+      {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getReferenceVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
 
       {x(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanAcquire", "(Ljava/lang/Object;J)Z")},
       {x(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteAcquire",    "(Ljava/lang/Object;J)B")},
@@ -3300,10 +3311,12 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,                 "compareAndSetLong",   "(Ljava/lang/Object;JJJ)Z")},
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSwapObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
+      {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
 
       {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeInt",    "(Ljava/lang/Object;JII)I")},
       {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLong",   "(Ljava/lang/Object;JJJ)J")},
       {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
 
       {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeIntVolatile",    "(Ljava/lang/Object;JII)I")},
       {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLongVolatile",   "(Ljava/lang/Object;JJJ)J")},
@@ -3880,7 +3893,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X VarHandleMethods[] =
       {
-      // Recognized method only works for resovled methods
+      // Recognized method only works for resolved methods
       // Resolved VarHandle access methods are suffixed with _impl in their names
       // A list for unresolved VarHandle access methods is in VarHandleTransformer.cpp,
       // changes in the following list need to be reflected in the other
@@ -4038,6 +4051,14 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_FoldHandle_foldPosition,               "foldPosition",            "()I")},
       {x(TR::java_lang_invoke_FoldHandle_argIndices,                 "argIndices",               "()I")},
       {  TR::java_lang_invoke_FoldHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
+      {  TR::unknownMethod}
+      };
+   static X FilterArgumentsWithCombinerHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition,               "filterPosition",            "()I")},
+      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices,               "argumentIndices",            "()I")},
+      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs,      "numSuffixArgs",     "()I")},
+      {  TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };
 
@@ -4260,6 +4281,7 @@ void TR_ResolvedJ9Method::construct()
 
    struct Y { const char * _class; X * _methods; };
 
+   /* classXX where XX is the number of characters in the class name */
    static Y class13[] =
       {
       { "java/nio/Bits", BitsMethods },
@@ -4554,6 +4576,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class50[] =
       {
       { "java/util/concurrent/atomic/AtomicLongFieldUpdater", JavaUtilConcurrentAtomicLongFieldUpdaterMethods },
+      { "java/lang/invoke/FilterArgumentsWithCombinerHandle", FilterArgumentsWithCombinerHandleMethods },
       { 0 }
       };
 
@@ -8180,7 +8203,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             arrayClass   = fej9->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
             arrayJ9Class = (J9ArrayClass*)(intptrj_t)fej9->getInt64Field(arrayClass,
                                                                          "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
-            leafClass = arrayJ9Class->leafComponentType;
+            leafClass = (J9Class*)fej9->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock*)arrayJ9Class);
             arity = arrayJ9Class->arity;
             uint32_t spreadPositionOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(methodHandle), "spreadPosition", "I");
             if (spreadPositionOffset != ~0)
@@ -8378,6 +8401,29 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             }
          return true;
          }
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices:
+         {
+         TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for argumentIndices()
+         J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
+         if (!thunkDetails)
+            return false;
+
+         uintptrj_t methodHandle;
+         uintptrj_t argumentIndices;
+            {
+            TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
+            methodHandle = *thunkDetails->getHandleRef();
+            argumentIndices = fej9->getReferenceField(methodHandle, "argumentIndices", "[I");
+            int32_t arrayLength = (int32_t)fej9->getArrayLengthInElements(argumentIndices);
+            // Push the indices in reverse order
+            for (int i = arrayLength - 1; i >= 0; i--) {
+               int32_t index = fej9->getInt32Element(argumentIndices, i);
+               loadConstant(TR::iconst, index);
+            }
+            loadConstant(TR::iconst, arrayLength); // number of arguments
+            }
+         return true;
+         }
       case TR::java_lang_invoke_FoldHandle_foldPosition:
          {
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for foldPosition()
@@ -8404,7 +8450,27 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          loadConstant(TR::iconst, foldPosition);
          return true;
          }
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition:
+         {
+         TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for filterPosition()
+
+         J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
+         if (!thunkDetails)
+            return false;
+
+         uintptrj_t methodHandle;
+         int32_t filterPosition;
+            {
+            TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
+            methodHandle = *thunkDetails->getHandleRef();
+            filterPosition = fej9->getInt32Field(methodHandle, "filterPosition");
+            }
+
+         loadConstant(TR::iconst, filterPosition);
+         return true;
+         }
       case TR::java_lang_invoke_FoldHandle_argumentsForCombiner:
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner:
          {
          TR::Node *placeholder = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
 
@@ -8483,7 +8549,30 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          loadConstant(TR::iconst, numArgsPassToFinallyTarget);
          return true;
          }
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs:
+         {
+         TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
+         J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
+         if (!thunkDetails)
+            return false;
+
+         uintptrj_t methodHandle;
+         uintptrj_t arguments;
+         int32_t numArguments;
+         int32_t filterPos;
+
+            {
+            TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
+            methodHandle = *thunkDetails->getHandleRef();
+            arguments = fej9->getReferenceField(fej9->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+            numArguments = (int32_t)fej9->getArrayLengthInElements(arguments);
+            filterPos     = (int32_t)fej9->getInt32Field(methodHandle, "filterPosition");
+            }
+
+         loadConstant(TR::iconst, numArguments - (filterPos + 1));
+         return true;
+         }
       case TR::java_lang_invoke_FilterArgumentsHandle_numPrefixArgs:
       case TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs:
       case TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter:

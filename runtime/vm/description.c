@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,6 +97,12 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 		ramClass->totalInstanceSize = walkResult->totalInstanceSize;
 		ramClass->backfillOffset = sizeof(J9Object) + ((walkResult->backfillOffset == -1) ?	walkResult->totalInstanceSize : walkResult->backfillOffset);
 
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+		if (J9ROMCLASS_IS_VALUE(ramClass->romClass)) {
+			ramClass->backfillOffset = walkResult->backfillOffset;
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 #if defined( J9VM_THR_LOCK_NURSERY )
 		/* write lockword offset into ramClass */
 		ramClass->lockOffset =	walkState->lockOffset;
@@ -157,19 +163,98 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 	{
 		while (walkResult->field) {
 			UDATA slotOffset = walkResult->offset / (objectSlotSize * slotsPerShapeElement);
-			UDATA bit = (UDATA)1 << ((walkResult->offset % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
-			shape[slotOffset] |= bit;
-#ifdef J9VM_GC_LEAF_BITS
-			if (isLeafField(walkResult->field)) {
-				leafShape[slotOffset] |= bit;
-			} else if (isString) {
-				J9UTF8 *fieldName = J9ROMFIELDSHAPE_NAME(walkResult->field);
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+			U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(walkResult->field));
+			if ('Q' == *fieldSigBytes) {
+				J9Class *fieldClass = walkResult->flattenedClass;
+				if ((NULL != fieldClass) && J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
+					UDATA size = fieldClass->totalInstanceSize;
 
-				if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(fieldName), J9UTF8_LENGTH(fieldName), "value")) {
-					leafShape[slotOffset] |= bit;
+					/* positive means the field will spill over to the next slot in the shape array */
+					IDATA spillAmount = ((walkResult->offset + size) - (slotOffset * (objectSlotSize * slotsPerShapeElement))) - (objectSlotSize * slotsPerShapeElement);
+					UDATA shift = ((walkResult->offset  % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
+					if (0 >= spillAmount) {
+						/* If we are here this means the description bits for the field fits within the current
+						 * slot shape word. This also means they are all low tagged.
+						 */
+						UDATA bits = 0;
+						UDATA description = (UDATA) fieldClass->instanceDescription;
+
+						/* remove low tag bit */
+						description >>= 1;
+						bits = (UDATA) description << shift;
+						shape[slotOffset] |= bits;
+					} else {
+						UDATA description = (UDATA) fieldClass->instanceDescription;
+
+						if (J9_ARE_ALL_BITS_SET(description, 1)) {
+							/* simple case where the field has less than 64 (or 32 slots if in 32bit mode) slots. Split the instance
+							 * bits into two parts, put the first part at the current slot offset put the last part in the next one */
+							UDATA nextDescription = 0;
+							UDATA spillBits = spillAmount/objectSlotSize;
+
+							/* remove low tag bit */
+							description >>= 1;
+
+							nextDescription = description;
+							nextDescription >>= ((size/objectSlotSize) - spillBits);
+							description <<= shift;
+							shape[slotOffset] |= description;
+							slotOffset += 1;
+							shape[slotOffset] |= nextDescription;
+						} else {
+							/* complex case were field is larger than 64 slots. Just add the bits
+							 * one at a time. */
+							UDATA *descriptionPtr = (UDATA *)description;
+							UDATA totalAmountLeft = size/objectSlotSize;
+							UDATA positionInDescriptionWord = 0;
+							UDATA bitsLeftInShapeSlot = slotsPerShapeElement - shift;
+
+							description = *descriptionPtr;
+							descriptionPtr += 1;
+
+							while (totalAmountLeft > 0) {
+								shape[slotOffset] |= (1 & description) << (slotsPerShapeElement - bitsLeftInShapeSlot);
+								description >>= 1;
+								positionInDescriptionWord++;
+
+								if (slotsPerShapeElement == positionInDescriptionWord) {
+									description = *descriptionPtr;
+									descriptionPtr += 1;
+									positionInDescriptionWord = 0;
+								}
+
+								bitsLeftInShapeSlot--;
+								if (0 == bitsLeftInShapeSlot) {
+									slotOffset++;
+									bitsLeftInShapeSlot = 64;
+								}
+								totalAmountLeft--;
+							}
+						}
+					}
+				} else {
+					UDATA bit = (UDATA)1 << ((walkResult->offset % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
+					shape[slotOffset] |= bit;
 				}
-			}
+			} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			{
+				UDATA bit = (UDATA)1 << ((walkResult->offset % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
+				shape[slotOffset] |= bit;
+#ifdef J9VM_GC_LEAF_BITS
+				if (isLeafField(walkResult->field)) {
+					leafShape[slotOffset] |= bit;
+				} else if (isString) {
+					J9UTF8 *fieldName = J9ROMFIELDSHAPE_NAME(walkResult->field);
+
+					if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(fieldName), J9UTF8_LENGTH(fieldName), "value")) {
+						leafShape[slotOffset] |= bit;
+					}
+				}
 #endif
+			}
+
 			walkResult = fieldOffsetsNextDo(walkState);
 		}
 	}
@@ -233,8 +318,13 @@ checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, 
 	if (J9ROMCLASS_IS_ARRAY(romClass)) {
 		return NO_LOCKWORD_NEEDED;
 	}
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+	/* ValueTypes don not have lockwords */
+	if (J9ROMCLASS_IS_VALUE(romClass)) {
+		return NO_LOCKWORD_NEEDED;
+	}
+#endif
 	
-
 	/* check for primitive types or java.lang.Object */
 	if (ramSuperClass == NULL) {
 		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {

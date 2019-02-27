@@ -3990,7 +3990,7 @@ VMarrayStoreCHKEvaluator(
       "VMarrayStoreCHKEvaluator::J9Class->classDepthAndFlags is wrong size\n");
 
    // Check super class values
-   static_assert(J9_JAVA_CLASS_DEPTH_MASK == 0xffff, "VMarrayStoreCHKEvaluator::J9_JAVA_CLASS_DEPTH_MASK should have be 16 bit of ones");
+   static_assert(J9AccClassDepthMask == 0xffff, "VMarrayStoreCHKEvaluator::J9AccClassDepthMask should have be 16 bit of ones");
 
    // Compare depths and makes sure depth(src) >= depth(array-type)
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, owningObjectRegVal, t2Reg, TR::InstOpCode::COND_BH, helperCallLabel, false, false);
@@ -8153,7 +8153,9 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
 
       // a pointer to the virtual register that will actually hold the class pointer.
       TR::Register * clzReg = classReg;
-
+      // TODO: Following approach for initializing object header for array of objects in AOT is conservative.
+      // We need support for relocation in generating RIL type instruction. If we have support, we can use
+      // same sequence generated in JIT which saves us a load and store.
       if (comp->compileRelocatableCode())
          {
          if (node->getOpCodeValue() == TR::newarray)
@@ -8861,20 +8863,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       current = cg->getAppendInstruction();
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
-
-      if (comp->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray))
-         {
-         iCursor = firstInstruction = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_VGNOP, node, callLabel, current);
-         if(!firstBRCToOOL)
-            {
-            firstBRCToOOL = iCursor;
-            }
-         else
-            {
-            secondBRCToOOL = iCursor;
-            }
-         }
-
+      
       if (outlineNew)
          {
          if (isVariableLen)
@@ -9030,6 +9019,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (comp->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray) )
          {
+         firstInstruction = current->getNext();
          TR_RelocationRecordInformation *recordInfo =
          (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
          recordInfo->data1 = allocateSize;
@@ -9038,6 +9028,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          recordInfo->data4 = (uintptr_t) firstInstruction;
          TR::SymbolReference * classSymRef;
          TR_ExternalRelocationTargetKind reloKind;
+         TR_OpaqueClassBlock *classToValidate = classAddress;
 
          if (opCode == TR::New)
             {
@@ -9048,8 +9039,17 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             {
             classSymRef = node->getSecondChild()->getSymbolReference();
             reloKind = TR_VerifyRefArrayForAlloc;
+            // In AOT without SVM, we validate the class by pulling it from the constant pool which is not the array class as anewarray bytecode refers to the component class.
+            // In the evaluator we directly refer to the array class.  In AOT with SVM we need to remember to validate the component class since relocation infrastructure is
+            // expecting component class. 
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
             }
-
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_ASSERT_FATAL(classToValidate != NULL, "ClassToValidate Should not be NULL, clazz = %p\n", classAddress);
+            recordInfo->data5 = (uintptr_t)classToValidate;
+            }
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction,
                      (uint8_t *) classSymRef,
                      (uint8_t *) recordInfo,
@@ -9187,13 +9187,13 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
       TR::Register * class1Reg = cg->allocateRegister();
       TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, class1Reg, generateS390MemoryReference(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-      // TODO: Can we check the value of J9_JAVA_CLASS_RAM_ARRAY and use NILF here?
+      // TODO: Can we check the value of J9AccClassRAMArray and use NILF here?
 #ifdef TR_HOST_64BIT
-      genLoadLongConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, NULL, deps, NULL);
+      genLoadLongConstant(cg, node, J9AccClassRAMArray, tempReg, NULL, deps, NULL);
       generateRXInstruction(cg, TR::InstOpCode::NG, node, tempReg,
       new (cg->trHeapMemory()) TR::MemoryReference(class1Reg, offsetof(J9Class, classDepthAndFlags), cg));
 #else
-      generateLoad32BitConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, true, NULL, deps, NULL);
+      generateLoad32BitConstant(cg, node, J9AccClassRAMArray, tempReg, true, NULL, deps, NULL);
       generateRXInstruction(cg, TR::InstOpCode::N, node, tempReg,
       new (cg->trHeapMemory()) TR::MemoryReference(class1Reg, offsetof(J9Class, classDepthAndFlags), cg));
 #endif
@@ -9271,8 +9271,8 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
          generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
 
-         // X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
-         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+         // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
+         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9AccClassRAMShapeShift);
 
          // X & OBJECT_HEADER_SHAPE_MASK
          generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, tempClassReg, tempClassReg);
@@ -9299,16 +9299,16 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
          // Check that object 2 is an array. If not, throw exception.
          TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, tempClassReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-         // TODO: Can we check the value of J9_JAVA_CLASS_RAM_ARRAY and use NILF here?
+         // TODO: Can we check the value of J9AccClassRAMArray and use NILF here?
 #ifdef TR_HOST_64BIT
          {
-         genLoadLongConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, NULL, deps, NULL);
+         genLoadLongConstant(cg, node, J9AccClassRAMArray, tempReg, NULL, deps, NULL);
          generateRXInstruction(cg, TR::InstOpCode::NG, node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
          }
 #else
          {
-         generateLoad32BitConstant(cg, node, J9_JAVA_CLASS_RAM_ARRAY, tempReg, true, NULL, deps, NULL);
+         generateLoad32BitConstant(cg, node, J9AccClassRAMArray, tempReg, true, NULL, deps, NULL);
          generateRXInstruction(cg, TR::InstOpCode::N, node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
          }
@@ -9333,8 +9333,8 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
          generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, tempReg,
          new (cg->trHeapMemory()) TR::MemoryReference(tempClassReg, offsetof(J9Class, classDepthAndFlags), cg));
 
-         // X = (ramclass->ClassDepthAndFlags)>>J9_JAVA_CLASS_RAM_SHAPE_SHIFT
-         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9_JAVA_CLASS_RAM_SHAPE_SHIFT);
+         // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
+         generateRSInstruction(cg, TR::InstOpCode::SRL, node, tempReg, J9AccClassRAMShapeShift);
 
          // X & OBJECT_HEADER_SHAPE_MASK
          generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, tempClassReg, tempClassReg);

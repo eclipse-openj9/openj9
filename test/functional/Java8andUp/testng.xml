@@ -85,6 +85,12 @@
 			<class name="org.openj9.test.attachAPI.TestManagementAgent"/>
 		</classes>
 	</test>
+	<test name="TestJps">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJps"/>
+		</classes>
+	</test>
+	
 	<test name="TestFileLocking">
 		<classes>
 			<class name="org.openj9.test.fileLock.TestFileLocking"/>
@@ -113,11 +119,6 @@
 	<test name="ConstructorVerifierTests">
 		<classes>
 			<class name="org.openj9.test.constructorverify.TryInCtor"/>
-		</classes>
-	</test>
-	<test name="OpenSSL">
-		<classes>
-			<class name="org.openj9.test.openssl.TestOpenSSL"/>
 		</classes>
 	</test>
 
@@ -221,6 +222,7 @@
 			<class name="org.openj9.test.java.security.Test_AccessController"/>
 			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
 			<class name="org.openj9.test.java.security.Test_MHLoaderConstraints"/>
+			<class name="org.openj9.test.java.security.DigestLoop"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_IBM-VM">

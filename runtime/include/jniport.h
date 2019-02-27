@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,27 +23,17 @@
 #ifndef jniport_h
 #define jniport_h
 
-#if defined(WIN32) || (defined(_WIN32)) || (defined(BREW) && defined(AEE_SIMULATOR))
+#if defined(WIN32)
 
 #define JNIEXPORT __declspec(dllexport)
 #define JNICALL __stdcall
-typedef signed char jbyte;
-typedef int jint;
 typedef __int64 jlong;
 
-#else
+#else /* WIN32 */
 
 #define JNIEXPORT 
 
-typedef signed char jbyte;
 typedef long long jlong;
-
-#ifdef BREW
-#include "AEEFile.h"
-#define FILE IFile
-#endif
-
-typedef int jint;
 
 #endif /* WIN32 */
 

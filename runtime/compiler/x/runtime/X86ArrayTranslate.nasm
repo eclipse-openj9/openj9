@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2018 IBM Corp. and others
+; Copyright (c) 2000, 2019 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,46 +38,46 @@ segment .text
    %ifdef TR_HOST_64BIT
       mov ecx, ecx
    %endif
-      xor  rax, rax
-      cmp  rcx, 8
+      xor  _rax, _rax
+      cmp  _rcx, 8
       jl   byteresidualTO
       movd xmm1, edx
       pshufd xmm1, xmm1, 0
-      cmp  rcx, 16
+      cmp  _rcx, 16
       jl   eightcharsTO
    sixteencharsTO:
-      movdqu xmm2, [rsi+2*rax]
+      movdqu xmm2, [_rsi+2*_rax]
       ptest xmm2, xmm1          ; SSE4.1 instruction
       jnz  failedloopTO
-      movdqu xmm3, [rsi+2*rax+16]
+      movdqu xmm3, [_rsi+2*_rax+16]
       ptest xmm3, xmm1          ; SSE4.1 instruction
       jnz  eightcharsTO
       packuswb xmm2, xmm3
-      movdqu oword [rdi+rax], xmm2
-      sub  rcx, 16
-      add  rax, 16
-      cmp  rcx, 16
+      movdqu oword [_rdi+_rax], xmm2
+      sub  _rcx, 16
+      add  _rax, 16
+      cmp  _rcx, 16
       jge  sixteencharsTO
-      cmp  rcx, 8
+      cmp  _rcx, 8
       jl   byteresidualTO
    eightcharsTO:
-      movdqu xmm2, [rsi+2*rax]
+      movdqu xmm2, [_rsi+2*_rax]
       ptest xmm2, xmm1          ; SSE4.1 instruction
       jnz  failedloopTO
       packuswb xmm2, xmm1       ; only the first 8 bytes of xmm2 are meaningful
-      movq qword [rdi+rax], xmm2
-      sub  rcx, 8
-      add  rax, 8
+      movq qword [_rdi+_rax], xmm2
+      sub  _rcx, 8
+      add  _rax, 8
    byteresidualTO:
-      and rcx, rcx
+      and _rcx, _rcx
       je  doneTO
    failedloopTO:
-      mov  bx, word [rsi+2*rax]
+      mov  bx, word [_rsi+2*_rax]
       test bx, dx
       jnz  doneTO
-      mov  byte [rdi+rax], bl
-      inc  rax
-      dec  rcx
+      mov  byte [_rdi+_rax], bl
+      inc  _rax
+      dec  _rcx
       jnz  failedloopTO
    doneTO:   ;EAX is result register
       ret
@@ -90,62 +90,62 @@ segment .text
    %ifdef TR_HOST_64BIT
       mov ecx, ecx
    %endif
-      xor    rax, rax
+      xor    _rax, _rax
       xorps  xmm3, xmm3
-      cmp    rcx, 16
+      cmp    _rcx, 16
       jl     qwordResidualOTNoBreak
 
    sixteencharsOTNoBreak:
-      movdqu  xmm1, [rsi+rax]
+      movdqu  xmm1, [_rsi+_rax]
       movdqu  xmm2, xmm1
       punpcklbw xmm1, xmm3
       punpckhbw xmm2, xmm3
-      movdqu [rdi+rax*2], xmm1
-      movdqu [rdi+rax*2+16], xmm2
-      sub rcx, 16
-      add rax, 16
-      cmp rcx, 16
+      movdqu [_rdi+_rax*2], xmm1
+      movdqu [_rdi+_rax*2+16], xmm2
+      sub _rcx, 16
+      add _rax, 16
+      cmp _rcx, 16
       jge sixteencharsOTNoBreak
 
    slideWindowResidualOTNoBreak:
-      test rcx, rcx
+      test _rcx, _rcx
       jz doneOTNoBreak
-      sub rax, 16
-      add rax, rcx
-      mov rcx, 16
+      sub _rax, 16
+      add _rax, _rcx
+      mov _rcx, 16
       jmp sixteencharsOTNoBreak
 
    doneOTNoBreak:
       ret
 
    qwordResidualOTNoBreak:
-      bt rcx, 3
+      bt _rcx, 3
       jnc dwordResidualOTNoBreak
-      movq xmm1, qword [rsi+rax]
+      movq xmm1, qword [_rsi+_rax]
       punpcklbw xmm1, xmm3
-      movdqu [rdi+rax*2], xmm1
-      add rax, 8
-      sub rcx, 8
+      movdqu [_rdi+_rax*2], xmm1
+      add _rax, 8
+      sub _rcx, 8
 
    dwordResidualOTNoBreak:
-      bt rcx, 2
+      bt _rcx, 2
       jnc byteResidualOTNoBreak
-      movd xmm1, dword [rsi+rax]
+      movd xmm1, dword [_rsi+_rax]
       punpcklbw xmm1, xmm3
-      movq qword [rdi+rax*2], xmm1
-      add rax, 4
-      sub rcx, 4
+      movq qword [_rdi+_rax*2], xmm1
+      add _rax, 4
+      sub _rcx, 4
 
    byteResidualOTNoBreak:
-      test rcx, rcx
+      test _rcx, _rcx
       jz doneOTNoBreak
       xor  bx, bx
 
    failedloopOTNoBreak:
-      mov  bl, [rsi+rax]
-      mov  [rdi+rax*2], bx
-      inc  rax
-      dec  rcx
+      mov  bl, [_rsi+_rax]
+      mov  [_rdi+_rax*2], bx
+      inc  _rax
+      dec  _rcx
       jnz  failedloopOTNoBreak
       jmp  doneOTNoBreak
 
@@ -161,32 +161,32 @@ segment .text
    %ifdef TR_HOST_64BIT
       mov ecx, ecx
    %endif
-      xor    rax, rax
+      xor    _rax, _rax
       xorps  xmm3, xmm3
-      cmp    rcx, 16
+      cmp    _rcx, 16
       jl     qwordResidualOT
 
    sixteencharsOT:
-      movdqu  xmm1, [rsi+rax]
+      movdqu  xmm1, [_rsi+_rax]
       pmovmskb ebx, xmm1
       test ebx, ebx
       jnz    computeNewLengthOT
       movdqu  xmm2, xmm1
       punpcklbw xmm1, xmm3
       punpckhbw xmm2, xmm3
-      movdqu [rdi+rax*2], xmm1
-      movdqu [rdi+rax*2+16], xmm2
-      sub rcx, 16
-      add rax, 16
-      cmp rcx, 16
+      movdqu [_rdi+_rax*2], xmm1
+      movdqu [_rdi+_rax*2+16], xmm2
+      sub _rcx, 16
+      add _rax, 16
+      cmp _rcx, 16
       jge sixteencharsOT
 
    slideWindowResidualOT:
-      test rcx, rcx
+      test _rcx, _rcx
       jz doneOT
-      sub rax, 16
-      add rax, rcx
-      mov rcx, 16
+      sub _rax, 16
+      add _rax, _rcx
+      mov _rcx, 16
       jmp sixteencharsOT
 
    doneOT:
@@ -197,46 +197,46 @@ segment .text
    %ifdef TR_HOST_64BIT
       mov ebx, ebx
    %endif
-      mov rcx, rbx
-      cmp rax, 16
+      mov _rcx, _rbx
+      cmp _rax, 16
       jge slideWindowResidualOT
 
    qwordResidualOT:
-      bt rcx, 3
+      bt _rcx, 3
       jnc dwordResidualOT
-      movq xmm1, qword [rsi+rax]
+      movq xmm1, qword [_rsi+_rax]
       pmovmskb ebx, xmm1
       test ebx, ebx
       jnz computeNewLengthOT
       punpcklbw xmm1, xmm3
-      movdqu [rdi+rax*2], xmm1
-      add rax, 8
-      sub rcx, 8
+      movdqu [_rdi+_rax*2], xmm1
+      add _rax, 8
+      sub _rcx, 8
 
    dwordResidualOT:
-      bt rcx, 2
+      bt _rcx, 2
       jnc byteResidualOT
-      movd xmm1, dword [rsi+rax]
+      movd xmm1, dword [_rsi+_rax]
       pmovmskb ebx, xmm1
       test ebx, ebx
       jnz computeNewLengthOT
       punpcklbw xmm1, xmm3
-      movq qword [rdi+rax*2], xmm1
-      add rax, 4
-      sub rcx, 4
+      movq qword [_rdi+_rax*2], xmm1
+      add _rax, 4
+      sub _rcx, 4
 
    byteResidualOT:
-      test rcx, rcx
+      test _rcx, _rcx
       jz doneOT
       xor  bx, bx
 
    failedloopOT:
-      mov  bl, [rsi+rax]
+      mov  bl, [_rsi+_rax]
       test bl, 80h
       jnz  doneOT
-      mov  [rdi+rax*2], bx
-      inc  rax
-      dec  rcx
+      mov  [_rdi+_rax*2], bx
+      inc  _rax
+      dec  _rcx
       jnz  failedloopOT
       jmp doneOT
 

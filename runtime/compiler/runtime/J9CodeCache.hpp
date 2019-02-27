@@ -32,7 +32,6 @@ namespace J9 { typedef CodeCache CodeCacheConnector; }
 
 
 #include "env/jittypes.h"
-//#include "runtime/CodeCacheMemorySegment.hpp"
 #include "runtime/OMRCodeCache.hpp"
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
@@ -55,11 +54,6 @@ class OMR_EXTENSIBLE CodeCache : public OMR::CodeCacheConnector
 
 public:
    CodeCache() { }
-
-   bool                       initialize(TR::CodeCacheManager *manager,
-                                         TR::CodeCacheMemorySegment *codeCacheSegment,
-                                         size_t codeCacheSizeAllocated,
-                                         OMR::CodeCacheHashEntrySlab *hashEntrySlab);
 
    /**
     * @brief Initialize an allocated CodeCache object

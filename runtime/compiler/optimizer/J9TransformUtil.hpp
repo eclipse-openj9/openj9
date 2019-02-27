@@ -139,6 +139,15 @@ public:
     *   \param trace Bool to enable tracing
     */
    static void separateNullCheck(TR::Compilation* comp, TR::TreeTop* tree, bool trace = false);
+   /*
+    * \brief
+    *    Generate a tree to report modification to a static final field after intialization.
+    *
+    * \param node The java/lang/Class object
+    *
+    * \return Tree with the call to `jitReportFinalFieldModified`
+    */
+   static TR::TreeTop* generateReportFinalFieldModificationCallTree(TR::Compilation *comp, TR::Node *node);
 
 protected:
    /**

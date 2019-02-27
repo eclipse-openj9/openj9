@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,7 @@ extern "C" {
 #define CACHEMAP_FMTPRINT1(nlsFlags, var1, p1) j9nls_printf(PORTLIB, nlsFlags, var1, 1,' ',p1)
 
 static char* formatAttachedDataString(J9VMThread* currentThread, U_8 *attachedData, UDATA attachedDataLength, char *attachedDataStringBuffer, UDATA bufferLength);
+static void checkROMClassUTF8SRPs(J9ROMClass *romClass);
 /* If you make this sleep a lot longer, it almost eliminates store contention
  * because the VMs get out of step with each other, but you delay excessively */
 #define WRITE_HASH_WAIT_MAX_MICROS 80000
@@ -1963,7 +1964,7 @@ SH_CacheMap::updateLineNumberContentInfo(J9VMThread* currentThread)
  * THREADING: We assume the Segment Mutex, String Table Lock, and Write Area Lock is held by the transaction.
  */
 IDATA
-SH_CacheMap::commitROMClass(J9VMThread* currentThread, ShcItem* itemInCache, SH_CompositeCacheImpl* cacheAreaForAllocate, ClasspathWrapper* cpw, I_16 cpeIndex, const J9UTF8* partitionInCache, const J9UTF8* modContextInCache, BlockPtr romClassBuffer, bool commitOutOfLineData)
+SH_CacheMap::commitROMClass(J9VMThread* currentThread, ShcItem* itemInCache, SH_CompositeCacheImpl* cacheAreaForAllocate, ClasspathWrapper* cpw, I_16 cpeIndex, const J9UTF8* partitionInCache, const J9UTF8* modContextInCache, BlockPtr romClassBuffer, bool commitOutOfLineData, bool checkSRPs)
 {
 	IDATA retval = 0;
 	bool storeResult = false;
@@ -1980,6 +1981,9 @@ SH_CacheMap::commitROMClass(J9VMThread* currentThread, ShcItem* itemInCache, SH_
 	Trc_SHR_Assert_True(_ccHead->hasWriteMutex(currentThread));
 	Trc_SHR_Assert_ShouldHaveLocalMutex(currentThread->javaVM->classMemorySegments->segmentMutex);
 	Trc_SHR_CM_commitROMClass_Entry((UDATA)currentThread, (UDATA)itemInCache, (UDATA)cacheAreaForAllocate, (UDATA)cpw, (UDATA)cpeIndex, (UDATA)partitionInCache, (UDATA)modContextInCache, (UDATA)J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
+	if (checkSRPs) {
+		checkROMClassUTF8SRPs((J9ROMClass *)romClassBuffer);
+	}
 
 	if (true == commitOutOfLineData) {
 		/* If called from commitMetaDataROMClassIfRequired then commitDebugData is false
@@ -2091,6 +2095,7 @@ SH_CacheMap::commitOrphanROMClass(J9VMThread* currentThread, ShcItem* itemInCach
 	Trc_SHR_Assert_True(_ccHead->hasWriteMutex(currentThread));
 	Trc_SHR_Assert_ShouldHaveLocalMutex(currentThread->javaVM->classMemorySegments->segmentMutex);
 	Trc_SHR_CM_commitOrphanROMClass_Entry((UDATA)currentThread, (UDATA)itemInCache, (UDATA)cacheAreaForAllocate, (UDATA)cpw, (UDATA)J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
+	checkROMClassUTF8SRPs((J9ROMClass *)romClassBuffer);
 
 	/*If there was class debug allocated we need to commit it before the ROMClass*/
 	this->commitClassDebugData(currentThread, J9UTF8_LENGTH(romClassName), (const char*)J9UTF8_DATA(romClassName));
@@ -2334,7 +2339,8 @@ SH_CacheMap::commitMetaDataROMClassIfRequired(J9VMThread* currentThread, Classpa
 #endif /* !defined(J9ZOS390) && !defined(AIXPPC) */
 	}
 
-	retval = commitROMClass(currentThread, itemInCache, cacheAreaForAllocate, cpw, cpeIndex, partitionInCache, modContextInCache, romClassBuffer, false);
+	/* SRPs has already been checked when committing the Orphan ROMClass, pass false to param checkSRPs */
+	retval = commitROMClass(currentThread, itemInCache, cacheAreaForAllocate, cpw, cpeIndex, partitionInCache, modContextInCache, romClassBuffer, false, false);
 	goto done_skipHashUpdate;
 
 done:
@@ -7400,3 +7406,50 @@ SH_CacheMap::updateLocalHintsData(J9VMThread* currentThread, J9SharedLocalStartu
 	}
 	memcpy(&localHints->hintsData, &updatedHintsData, sizeof(J9SharedStartupHintsDataDescriptor));
 }
+
+static void
+checkROMClassUTF8SRPs(J9ROMClass *romClass)
+{
+	if ((UnitTest::CORRUPT_CACHE_TEST == UnitTest::unitTest)
+		|| (UnitTest::CACHE_FULL_TEST == UnitTest::unitTest)
+		|| (UnitTest::PROTECTA_SHARED_CACHE_DATA_TEST == UnitTest::unitTest)
+		|| (UnitTest::PROTECT_NEW_ROMCLASS_DATA_TEST == UnitTest::unitTest)
+	) {
+		return;
+	}
+
+	UDATA romClassEnd = (UDATA)romClass + (UDATA)romClass->romSize;
+	U_32 i = 0;
+
+	Trc_SHR_Assert_True((UDATA)J9ROMCLASS_CLASSNAME(romClass) < romClassEnd);
+	Trc_SHR_Assert_True((UDATA)J9ROMCLASS_SUPERCLASSNAME(romClass) < romClassEnd);
+	Trc_SHR_Assert_True((UDATA)J9ROMCLASS_OUTERCLASSNAME(romClass) < romClassEnd);
+
+	if (romClass->interfaceCount > 0) {
+		J9SRP * interfaceNames = J9ROMCLASS_INTERFACES(romClass);
+		for (i = 0; i < romClass->interfaceCount; i++) {
+			Trc_SHR_Assert_True(NNSRP_PTR_GET(interfaceNames, UDATA) < romClassEnd);
+			interfaceNames++;
+		}
+	}
+	if (romClass->innerClassCount > 0) {
+		J9SRP* innerClassNames = J9ROMCLASS_INNERCLASSES(romClass);
+		for (i = 0; i < romClass->innerClassCount; i++) {
+			Trc_SHR_Assert_True(NNSRP_PTR_GET(innerClassNames, UDATA) < romClassEnd);
+			innerClassNames++;
+		}
+	}
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	Trc_SHR_Assert_True((UDATA)J9ROMCLASS_NESTHOSTNAME(romClass) < romClassEnd);
+
+	if (romClass->nestMemberCount > 0) {
+		J9SRP *nestMemberNames = J9ROMCLASS_NESTMEMBERS(romClass);
+		for (i = 0; i < (U_32)romClass->nestMemberCount; i++) {
+			Trc_SHR_Assert_True(NNSRP_PTR_GET(nestMemberNames, UDATA) < romClassEnd);
+			nestMemberNames++;
+		}
+	}
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+}
+
