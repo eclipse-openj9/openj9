@@ -178,9 +178,6 @@ public final class System {
 		/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 		setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
 		setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
-		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
-		setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
-		/*[ENDIF]*/
 		/*[ELSE]*/
 		/*[PR s66168] - ConsoleInputStream initialization may write to System.err */
 		/*[PR s73550, s74314] ConsolePrintStream incorrectly initialized */
@@ -192,7 +189,6 @@ public final class System {
 native static void startSNMPAgent();
 	
 static void completeInitialization() {
-	/*[IF !Sidecar19-SE_RAWPLUSJ9]*/	
 	/*[IF !Sidecar18-SE-OpenJ9]*/
 	Class<?> systemInitialization = null;
 	Method hook;
@@ -224,12 +220,11 @@ static void completeInitialization() {
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
 	/*[ENDIF]*/ //Sidecar18-SE-OpenJ9|Sidecar19-SE
-	/*[ENDIF] */ //!Sidecar19-SE_RAWPLUSJ9
 		
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
 	
-	/*[IF !Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9]*/
+	/*[IF !Sidecar18-SE-OpenJ9]*/
 	try {
 		if (null != systemInitialization) {
 			hook = systemInitialization.getMethod("lastChanceHook");	//$NON-NLS-1$
@@ -238,7 +233,7 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
-	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
+	/*[ENDIF]*/	//!Sidecar18-SE-OpenJ9
 }
 
 
