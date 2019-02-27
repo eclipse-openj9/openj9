@@ -1386,10 +1386,10 @@ VM_MHInterpreter::filterArgumentsWithCombiner(j9object_t methodHandle)
 	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
 	U_32 combinerArgSlots = getMethodTypeArgSlots(combinerType);
 
-	/* Add combinerHandle to top of stack and adjust sp to make room for combinerHandle.type.argSlots */
-	/* [... filterHandle args descriptionBytes MethodTypeFrame combinerHandle combinerArgs] */
+	/* Adjust sp to make room for combinerHandle and combinerArgs. There is no point in actually adding the 
+	 * combinerHandle to the stack here because it will later be overwritten by insertPlaceHolderFrame. */
+	/* [... filterHandle args descriptionBytes MethodTypeFrame combinerHandle(empty) combinerArgs(empty)] */
 	_currentThread->sp -= (combinerArgSlots + 1);
-	((j9object_t *)_currentThread->sp)[combinerArgSlots] = combinerHandle;
 	UDATA *spCombinerSlot = _currentThread->sp + combinerArgSlots;
 
 	/* Copy all arguments specified by argumentIndices from filterHandle to the stack slots used by combinerHandler */
@@ -1426,8 +1426,8 @@ VM_MHInterpreter::filterArgumentsWithCombiner(j9object_t methodHandle)
 	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame filterHandle combinerArgs] */
 	insertPlaceHolderFrame(combinerArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FILTERARGUMENTSWITHCOMBINERPLACEHOLDER_METHOD(_vm));
 
-	/* insertPlaceHolderFrame will replace combinerHandle with methodHandle. This should be undone so the stack is correctly 
-	 * prepared to call the combiner handle */
+	/* insertPlaceHolderFrame adds methodHandle to the stack in the slot where combinerHandle should be. Insert combinerHandle
+	 * so the stack is correctly set up to call the combiner handle */ 
 	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame combinerHandle combinerArgs] */
 	((j9object_t *)_currentThread->sp)[combinerArgSlots] = combinerHandle;
 
@@ -1507,48 +1507,36 @@ VM_MHInterpreter::foldForFoldArguments(j9object_t methodHandle)
 	/* Count the slot number of all the arguments before the specified fold position to
 	 * determine the 1st slot of fold arguments.
 	 */
-	U_32 argumentSlots = getArgSlotsBeforePosition(argumentTypes, foldPosition);
+	U_32 slotsBeforeFold = getArgSlotsBeforePosition(argumentTypes, foldPosition);
 
 	/* [... foldHandle args descriptionBytes MethodTypeFrame] */
-	UDATA *spPriorToFrameBuild = _currentThread->sp;
 	(void)buildMethodTypeFrame(_currentThread, foldType);
-
-	/* [... foldHandle args descriptionBytes MethodTypeFrame foldHandle args] */
-	_currentThread->sp -= (foldArgSlots  + 1);
-	memcpy(_currentThread->sp, spPriorToFrameBuild, sizeof(UDATA) * (foldArgSlots+1));
-
-	/* [... foldHandle args descriptionBytes MethodTypeFrame foldHandle PlaceHolderFrame foldHandle args] */
-	insertPlaceHolderFrame(foldArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FOLDHANDLEPLACEHOLDER_METHOD(_vm));
 
 	/* Get combinerHandle, combinerHandle.type and combinerHandle.type.argSlots */
 	j9object_t combinerHandle = getCombinerHandleForFold(methodHandle);
 	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
 	U_32 combinerArgSlots = getMethodTypeArgSlots(combinerType);
 
-	/* Replace foldHandle with combinerHandle and adjust sp according to combinerHandle.type.argSlots */
-	/* [... foldHandle args descriptionBytes MethodTypeFrame foldHandle PlaceHolderFrame combinerHandle args] */
-	((j9object_t *)_currentThread->sp)[foldArgSlots] = combinerHandle;
-	UDATA *spCombinerSlot = _currentThread->sp + foldArgSlots;
+	/* Adjust sp to make room for combinerHandle and combinerArgs. There is no point in actually adding the 
+	 * combinerHandle to the stack here because it will later be overwritten by insertPlaceHolderFrame. */
+	/* [... foldHandle args descriptionBytes MethodTypeFrame combinerHandle(empty) combinerArgs(empty)] */
+	_currentThread->sp -= (combinerArgSlots  + 1);
 
 	/* Do the normal fold operation if the argument indices of foldHandle are not specified;
 	 * Otherwise, use the specified arguments of foldHandle to fold.
 	 */
 	if (0 == argumentIndicesCount) {
-		/* Locate the last slot of combinerHandler's arguments measured from the 1st slot of argument list
-		 * and the last slot of combinerHandler's arguments from the specified fold position so as to
-		 * move up all arguments of combinerHandler by combinerArgSlots to the 1st slot of arguments
-		 * for later invocation.
-		 * e.g.
-		 * Before: arguments of foldHandle:  [int, long, {int, double, ....} remaining arguments ]
-		 *                                                 |---> arguments of combinerHandler from foldPosition
-		 * After:  arguments of combinerHandler [int, double, .... ]
-		 */
-		UDATA *spCombinerTopofStack = spCombinerSlot - combinerArgSlots;
-		UDATA *spLastSlotOfCombinerArgs = spCombinerSlot - argumentSlots - combinerArgSlots;
-		memmove(spCombinerTopofStack, spLastSlotOfCombinerArgs, combinerArgSlots * sizeof(UDATA));
-		_currentThread->sp = spCombinerTopofStack;
+		/* Copy the subset of arguments from foldHandle that are used for combinerArgs.
+		* e.g.
+		* Arguments of foldHandle:  [int, long, {int, double, ....} remaining arguments ]
+		*                                       |---> arguments of combinerHandler from foldPosition
+		* Arguments of combinerHandler [int, double, .... ]
+		*/
+		UDATA *spLastSlotOfCombinerArgs = spFirstFoldArgSlot - slotsBeforeFold - combinerArgSlots;
+		memcpy(_currentThread->sp, spLastSlotOfCombinerArgs, combinerArgSlots * sizeof(UDATA));
 	} else {
 		U_32 arrayIndex = 0;
+		UDATA *spCombinerSlot = _currentThread->sp + combinerArgSlots;
 		/* Copy all arguments specified by argumentIndices from foldHandle to the stack slots used by combinerHandler */
 		for (arrayIndex = 0; arrayIndex < argumentIndicesCount; arrayIndex++) {
 			U_32 argumentTypeIndex = (U_32)J9JAVAARRAYOFINT_LOAD(_currentThread, argumentIndices, arrayIndex);
@@ -1600,8 +1588,17 @@ VM_MHInterpreter::foldForFoldArguments(j9object_t methodHandle)
 	 			*spCombinerSlot = *(spFirstFoldArgSlot - argumentTypeSlots - 1);
 	 		}
 		}
-		_currentThread->sp = spCombinerSlot;
+		/* after loop spCombinerSlot is at the top of the combiner arguments */
+		Assert_VM_true(spCombinerSlot == _currentThread->sp);
 	}
+
+	/* [... foldHandle args descriptionBytes MethodTypeFrame foldHandle PlaceHolderFrame foldHandle combinerArgs] */
+	insertPlaceHolderFrame(combinerArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FOLDHANDLEPLACEHOLDER_METHOD(_vm));
+
+	/* insertPlaceHolderFrame adds methodHandle to the stack in the slot where combinerHandle should be. Insert combinerHandle
+	 * so the stack is correctly set up to call the combiner handle */ 
+	/* [... foldHandle args descriptionBytes MethodTypeFrame foldHandle PlaceHolderFrame combinerHandle combinerArgs] */
+	((j9object_t *)_currentThread->sp)[combinerArgSlots] = combinerHandle;
 
 exitFoldForFoldArguments:
 	return combinerHandle;
