@@ -47,6 +47,7 @@ RUN apt-get update \
     cmake \
     cpio \
     curl \
+    libexpat1-dev `# This is being used for the xml parser` \
     file \
     gdb \
     git \
