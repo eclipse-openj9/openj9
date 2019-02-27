@@ -42,7 +42,9 @@ RUN yum -y update \
     cups-devel \
     cmake \
     cpio \
+    curl-devel `# This is being used for git` \
     elfutils-libelf-devel \
+    expat-devel `# This is being used for the xml parser and git` \
     file-devel \
     file-libs \
     flex \
@@ -50,6 +52,7 @@ RUN yum -y update \
     fontconfig-devel \
     freetype-devel \
     gettext \
+    gettext-devel `# This is being used for git` \
     glibc \
     glibc-common \
     glibc-devel \
@@ -72,12 +75,13 @@ RUN yum -y update \
     nasm \
     numactl-devel \
     ntp \
-    openssl-devel \
+    openssl-devel `# This is being used in git, etc` \
     openssh-server \
     openssh-clients \
     perl-CPAN \
     perl-DBI \
     perl-devel \
+    perl-ExtUtils-MakeMaker `# This is being used for git` \
     perl-GD \
     perl-libwww-perl \
     perl-Time-HiRes \
@@ -87,6 +91,7 @@ RUN yum -y update \
     xorg-x11-server-Xvfb \
     xz \
     zip \
+    zlib-devel `# This is being used for git` \
   && yum clean all
 
 RUN yum -y update \
@@ -106,11 +111,6 @@ RUN cd /usr/src/ \
   && cd .. \
   && rm -rf /usr/src/autoconf-2.69
 
-# Dependency required by test framework
-RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
-  && cpanm Text::CSV \
-  && cpanm JSON
-
 # Install GCC-7.3
 RUN yum -y update \
   && yum -y install centos-release-scl \
@@ -121,17 +121,14 @@ RUN yum -y update \
   && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/gcc \
   && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++ 
 
+# Dependency required by test framework
+RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
+  && cpanm Text::CSV \
+  && cpanm JSON \
+  && cpanm XML::Parser
+
 #Building and setting up git version 2.5.3
-RUN yum -y update \
-  && yum -y install \
-    curl-devel \
-    expat-devel \
-    gettext-devel \
-    openssl-devel \
-    perl-ExtUtils-MakeMaker \
-    zlib-devel \
-  && yum clean all \
-  && cd /usr/src \
+RUN cd /usr/src \
   && wget https://www.kernel.org/pub/software/scm/git/git-2.5.3.tar.gz \
   && tar xzf git-2.5.3.tar.gz \
   && rm git-2.5.3.tar.gz \

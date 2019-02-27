@@ -62,7 +62,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV
+RUN echo yes | cpan install JSON Text::CSV XML::Parser
 
 # Create links for c++,g++,cc,gcc
 RUN rm /usr/bin/c++ /usr/bin/g++ /usr/bin/cc /usr/bin/gcc \
