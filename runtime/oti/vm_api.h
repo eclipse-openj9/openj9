@@ -3874,13 +3874,12 @@ J9ROMClass *
 * @param vmThread
 * @param romClass
 * @param methodPC
-* @param offset
 * @return J9ROMMethod
 *
 * Returns the method, or NULL on failure.
 */
 J9ROMMethod * 
-	findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA methodPC, UDATA *offset);
+	findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA methodPC);
 
 /**
 * @brief Finds the rom class given a PC.  Also returns the classloader it belongs to.
