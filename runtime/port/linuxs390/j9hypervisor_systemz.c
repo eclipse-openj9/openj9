@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -404,7 +404,7 @@ get_hypfs_attribute(struct J9PortLibrary *portLibrary, const char *filepath, con
 	val = fgets(attribVal, PATH_MAX, hypfsFP);
 	fclose(hypfsFP);
 
-	if ('\0' == attribVal) {
+	if ('\0' == *attribVal) {
 		Trc_PRT_get_hypfs_attribute_failed(filename, J9PORT_ERROR_HYPERVISOR_HYPFS_READ_FAILED);
 		return J9PORT_ERROR_HYPERVISOR_HYPFS_READ_FAILED;
 	}
