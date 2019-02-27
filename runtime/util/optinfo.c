@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -695,7 +695,7 @@ getSimpleNameForROMClass(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMClass *r
 }
 
 UDATA
-getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA offset, J9ClassLoader *classLoader, UDATA relativePC)
+getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, J9ClassLoader *classLoader, UDATA relativePC)
 {
 	UDATA bytecodeSize = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
 	UDATA number = (UDATA)-1;

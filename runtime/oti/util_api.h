@@ -1299,14 +1299,13 @@ void validateLibrary(J9JavaVM *javaVM, J9NativeLibrary *library);
 * @param *vm
 * @param *romMethod
 * @param *romClass
-* @param offset
 * @param *classLoader
 * @param relativePC
 * @param *romClass
 * @return UDATA
 */
 UDATA
-getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA offset, J9ClassLoader *classLoader, UDATA relativePC);
+getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, J9ClassLoader *classLoader, UDATA relativePC);
 
 /**
 * @brief

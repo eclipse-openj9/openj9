@@ -4631,7 +4631,7 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
             J9ROMClass * romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)pc, &loader);
             if (romClass)
                {
-               //J9ROMMethod * romMethod = vmFunctions->findROMMethodInROMClass(vmThread, romClass, (UDATA)pc, NULL);
+               //J9ROMMethod * romMethod = vmFunctions->findROMMethodInROMClass(vmThread, romClass, (UDATA)pc);
                J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
                J9ROMMethod *desiredMethod = NULL;
                //fprintf(stderr, "Scanning %u romMethods...\n", romClass->romMethodCount);
