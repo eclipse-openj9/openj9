@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import com.ibm.tools.attach.target.AttachHandler;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
@@ -41,9 +40,8 @@ public class Props {
 		ArrayList<String> vmidBuffer = new ArrayList<String>();
 		String[] vmidList;
 		int reps = 1;
-		AttachHandler.getVmId();
 		boolean getIterations = false;
-		AttachHandler.waitForAttachApiInitialization();
+		TargetManager.waitForAttachApiInitialization();
 
 		for (String arg : args) {
 			if (getIterations) {

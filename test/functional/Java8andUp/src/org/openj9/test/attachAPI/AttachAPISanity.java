@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.sun.tools.attach.VirtualMachine;
-import com.ibm.tools.attach.target.AttachHandler;
 import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.spi.AttachProvider;
 
 @SuppressWarnings({"nls"})
@@ -41,11 +39,11 @@ import com.sun.tools.attach.spi.AttachProvider;
 public class AttachAPISanity extends AttachApiTest {
 
 	private final String VENDOR_NAME_PROP = "vendor.name";
+	private String myVmid;
 
 	@Test(groups = { "level.sanity" })
 	public void testAttachToSelf() {
 		logger.debug("testAttachToSelf");
-		String myVmid = com.ibm.tools.attach.target.AttachHandler.getVmId();
 
 		try {
 			VirtualMachine selfVm = VirtualMachine.attach(myVmid);
@@ -72,7 +70,6 @@ public class AttachAPISanity extends AttachApiTest {
 	@Test(groups = { "level.sanity" })
 	public void testAttachToSelfAndOthers() {
 		final int numberOfTargets = 4;
-		String myVmid = com.ibm.tools.attach.target.AttachHandler.getVmId();
 		logger.debug("starting " + testName);
 		TargetManager tgts[] = new TargetManager[numberOfTargets];
 		for (int i = 0; i < numberOfTargets; ++i) {
@@ -100,9 +97,10 @@ public class AttachAPISanity extends AttachApiTest {
 
 	@BeforeMethod
 	protected void setUp() {
-		if (!AttachHandler.waitForAttachApiInitialization()) {
+		if (!TargetManager.waitForAttachApiInitialization()) {
 			TargetManager.dumpLogs(true);
 			Assert.fail("main process did not initialize attach API");
 		}
+		myVmid = org.openj9.test.attachAPI.TargetManager.getVmId();
 	}
 }
