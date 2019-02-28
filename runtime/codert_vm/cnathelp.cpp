@@ -437,7 +437,7 @@ fast_jitNewObjectImpl(J9VMThread *currentThread, J9Class *objectClass, bool chec
 			goto slow;
 		}
 	}
-	if (J9_UNEXPECTED(J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(objectClass->romClass))) {
+	if (J9_UNEXPECTED(!J9ROMCLASS_ALLOCATES_VIA_NEW(objectClass->romClass))) {
 		goto slow;
 	}
 	{
@@ -471,7 +471,7 @@ slow_jitNewObjectImpl(J9VMThread *currentThread, bool checkClassInit, bool nonZe
 	if (nonZeroTLH) {
 		allocationFlags |= J9_GC_ALLOCATE_OBJECT_NON_ZERO_TLH;
 	}
-	if (J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(objectClass->romClass)) {
+	if (!J9ROMCLASS_ALLOCATES_VIA_NEW(objectClass->romClass)) {
 		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
 		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGINSTANTIATIONERROR | J9_EX_CTOR_CLASS, J9VM_J9CLASS_TO_HEAPCLASS(objectClass));
 		goto done;
