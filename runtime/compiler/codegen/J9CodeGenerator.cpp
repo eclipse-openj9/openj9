@@ -1437,7 +1437,7 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
    TR::Node *storeNode;
 
    if (self()->comp()->getOption(TR_PoisonDeadSlots))
-      storeNode = generatePoisonNode(self()->comp(), block, liveAutoSymRef);
+      storeNode = self()->generatePoisonNode(block, liveAutoSymRef);
    else
       storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(block->getEntry()->getNode(), 0));
 
@@ -1919,7 +1919,7 @@ J9::CodeGenerator::doInstructionSelection()
                                  {
                                  TR::Node *storeNode;
                                  if (self()->comp()->getOption(TR_PoisonDeadSlots))
-                                    storeNode = generatePoisonNode(self()->comp(), block, liveAutoSymRef);
+                                    storeNode = self()->generatePoisonNode(block, liveAutoSymRef);
                                  else
                                     storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(block->getEntry()->getNode(), 0));
                                  if (storeNode)
@@ -2014,7 +2014,7 @@ J9::CodeGenerator::doInstructionSelection()
                      if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
                         traceMsg(self()->comp(), "POISON DEAD SLOTS --- MonExit Block Number: %d\n", self()->getCurrentEvaluationBlock()->getNumber());
 
-                     storeNode = generatePoisonNode(self()->comp(), self()->getCurrentEvaluationBlock(), symRef);
+                     storeNode = self()->generatePoisonNode(self()->getCurrentEvaluationBlock(), symRef);
                      if (storeNode)
                         {
                         TR::TreeTop *storeTree = TR::TreeTop::create(self()->comp(), storeNode);
@@ -3917,46 +3917,46 @@ J9::CodeGenerator::collectSymRefs(
    return true;
    }
 
-  /** \brief 
+  /** \brief
     *       Following codegen phase walks the blocks in the CFG and checks for the virtual guard performing TR_MethodTest
-    *       and guarding an inlined interface call. 
+    *       and guarding an inlined interface call.
     *
     * \details
     *       Virtual Guard performing TR_MethodTest would look like following.
     *       n1n BBStart <block_X>
-    *       ...      
-    *       n2n ifacmpne goto -> nXXn 
+    *       ...
+    *       n2n ifacmpne goto -> nXXn
     *       n3n    aloadi <offset of inlined method in VTable>
     *       n4n       aload <vft>
     *       n5n    aconst <J9Method of inlined method>
     *       n6n BBEnd <block_X>
     *       For virtual dispatch sequence, we know that this is the safe check but in case of interface call, classes implementing
     *       that interface would have different size of VTable. This makes executing above check unsafe when VTable of the class of
-    *       the receiver object is smaller, effectively making reference in n3n to pointing to a garbage location which might lead 
+    *       the receiver object is smaller, effectively making reference in n3n to pointing to a garbage location which might lead
     *       to a segmentation fault if the reference in not memory mapped or if bychance it contains J9Method  pointer of same inlined
     *       method then it will execute a code which should not be executed.
     *       For this kind of Virtual guards which are not nop'd we need to add a range check to make sure the address we are going to
     *       access is pointing to a valid location in VTable. There are mainly two ways we can add this range check test. First one is
     *       during the conception of the virtual guard. There are many downsides of doing so especially when other optimizations which
-    *       can moved guards around (for example loop versioner, virtualguard head merger, etc) needs to make sure to move range check 
+    *       can moved guards around (for example loop versioner, virtualguard head merger, etc) needs to make sure to move range check
     *       test around as well. Other way is to scan for this type of guards after optimization is finished like here in CodeGen Phase
     *       and add a range check test here.
     *       At the end of this function, we would have following code around them method test.
-    *       BBStart <block_X>    
-    *       ...      
+    *       BBStart <block_X>
+    *       ...
     *       ifacmple goto nXXn
     *          aloadi <offset of VTableHeader.size from J9Class*>
     *             aload <vft>
     *          aconst <Index of the inlined method in VTable of class of inlined method>
     *       BBEnd <block_X>
-    * 
+    *
     *       BBStart <block_Y>
-    *       ifacmpne goto -> nXXn 
+    *       ifacmpne goto -> nXXn
     *          aloadi <offset of inlined method in VTable>
     *             aload <vft>
     *          aconst <J9Method of inlined method>
     *       BBEnd <block_Y>
-    */  
+    */
 void
 J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
    {
@@ -3972,7 +3972,7 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
          {
          TR_VirtualGuard *vg = comp->findVirtualGuardInfo(node);
          // Mainly we need to make sure that virtual guard which performs the TR_MethodTest and can be NOP'd are needed the range check.
-         if (vg && vg->getTestType() == TR_MethodTest && 
+         if (vg && vg->getTestType() == TR_MethodTest &&
             !(comp->performVirtualGuardNOPing() && (node->isNopableInlineGuard() || comp->isVirtualGuardNOPingRequired(vg))))
             {
             TR::SymbolReference *callSymRef = vg->getSymbolReference();
@@ -3990,8 +3990,8 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
                // Also as children of virtual guard is very self contained and atm it is very unlikely that other optimizations are going to find opportunity of manipulating them and
                // Because of the fact that it is very unlikely that we will have another aloadi node with same VTable offset of same receiver object, this child would not be commoned out
                // and have only single reference in this virtual guard therefore splitting of block will not store it to temp slot.
-               // In rare case child of the virtual guard is manipulated then illegal memory reference load would hace occured before the Virtual Guard which 
-               // is already a bug as mentioned in the description of this function and it would be safer to fail compilation. 
+               // In rare case child of the virtual guard is manipulated then illegal memory reference load would hace occured before the Virtual Guard which
+               // is already a bug as mentioned in the description of this function and it would be safer to fail compilation.
                TR::Node *vTableLoad = node->getFirstChild();
                if (!(vTableLoad->getOpCodeValue() == TR::aloadi && comp->getSymRefTab()->isVtableEntrySymbolRef(vTableLoad->getSymbolReference())))
                   comp->failCompilation<TR::CompilationException>("Abort compilation as Virtual Guard has generated illegal memory reference");
@@ -4002,8 +4002,8 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
                   vTableSizeOfReceiver = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vTableLoad->getFirstChild(),
                                                                            comp->getSymRefTab()->findOrCreateVtableEntrySymbolRef(comp->getMethodSymbol(),
                                                                                                                                     sizeof(J9Class)+ offsetof(J9VTableHeader, size)));
-                  rangeCheckTest = TR::Node::createif(TR::iflcmple, vTableSizeOfReceiver, 
-                                                                  TR::Node::lconst(node,  (vTableLoad->getSymbolReference()->getOffset() - sizeof(J9Class) - sizeof(J9VTableHeader)) / sizeof(UDATA)) , 
+                  rangeCheckTest = TR::Node::createif(TR::iflcmple, vTableSizeOfReceiver,
+                                                                  TR::Node::lconst(node,  (vTableLoad->getSymbolReference()->getOffset() - sizeof(J9Class) - sizeof(J9VTableHeader)) / sizeof(UDATA)) ,
                                                                   node->getBranchDestination());
                   }
                else
@@ -4011,8 +4011,8 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
                   vTableSizeOfReceiver = TR::Node::createWithSymRef(TR::iloadi, 1, 1, vTableLoad->getFirstChild(),
                                                                            comp->getSymRefTab()->findOrCreateVtableEntrySymbolRef(comp->getMethodSymbol(),
                                                                                                                                     sizeof(J9Class)+ offsetof(J9VTableHeader, size)));
-                  rangeCheckTest = TR::Node::createif(TR::ificmple, vTableSizeOfReceiver, 
-                                                                  TR::Node::iconst(node,  (vTableLoad->getSymbolReference()->getOffset() - sizeof(J9Class) - sizeof(J9VTableHeader)) / sizeof(UDATA)) , 
+                  rangeCheckTest = TR::Node::createif(TR::ificmple, vTableSizeOfReceiver,
+                                                                  TR::Node::iconst(node,  (vTableLoad->getSymbolReference()->getOffset() - sizeof(J9Class) - sizeof(J9VTableHeader)) / sizeof(UDATA)) ,
                                                                   node->getBranchDestination());
                   }
                TR::TreeTop *rangeTestTT = TR::TreeTop::create(comp, treeTop->getPrevTreeTop(), rangeCheckTest);
@@ -4031,9 +4031,9 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
                   rangeCheckTest->addChildren(&exitGlRegDeps, 1);
                   }
                // While walking all blocks in CFG, when we find the location to add the range check, it will split the original block and
-               // We will have actual Virtual Guard in new block. As Block Iterator guarantees to visit all block in the CFG, 
-               // While going over the blocks, we will encounter same virtual guard in newly created block after split.  
-               // We need to make sure we are not examining already visited guard. 
+               // We will have actual Virtual Guard in new block. As Block Iterator guarantees to visit all block in the CFG,
+               // While going over the blocks, we will encounter same virtual guard in newly created block after split.
+               // We need to make sure we are not examining already visited guard.
                // Add checked virtual guard node to NodeChecklist to make sure we check all the nodes only once.
                checklist.add(node);
                }
@@ -4852,4 +4852,36 @@ J9::CodeGenerator::allocateCodeMemoryInner(
    TR_ASSERT_FATAL( !((warmCodeSizeInBytes && !warmCode) || (coldCodeSizeInBytes && !coldCode)), "Allocation failed but didn't throw an exception");
 
    return warmCode;
+   }
+
+
+TR::Node *
+J9::CodeGenerator::generatePoisonNode(TR::Block *currentBlock, TR::SymbolReference *liveAutoSymRef)
+   {
+   bool poisoned = true;
+   TR::Node *storeNode = NULL;
+
+   if (liveAutoSymRef->getSymbol()->getType().isAddress())
+      storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(currentBlock->getEntry()->getNode(), 0x0));
+   else if (liveAutoSymRef->getSymbol()->getType().isInt64())
+      storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::lconst(currentBlock->getEntry()->getNode(), 0xc1aed1e5));
+   else if (liveAutoSymRef->getSymbol()->getType().isInt32())
+      storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::iconst(currentBlock->getEntry()->getNode(), 0xc1aed1e5));
+   else
+      poisoned = false;
+
+   TR::Compilation *comp = self()->comp();
+   if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+      {
+      if (poisoned)
+         {
+         traceMsg(comp, "POISON DEAD SLOTS --- Live local %d  from parent block %d going dead .... poisoning slot with node 0x%x .\n", liveAutoSymRef->getReferenceNumber() , currentBlock->getNumber(), storeNode);
+         }
+      else
+         {
+         traceMsg(comp, "POISON DEAD SLOTS --- Live local %d of unsupported type from parent block %d going dead .... poisoning skipped.\n", liveAutoSymRef->getReferenceNumber() , currentBlock->getNumber());
+         }
+      }
+
+   return storeNode;
    }
