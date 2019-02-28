@@ -887,19 +887,8 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
 
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg);
    generateTrg1MemInstruction(cg, ARMOp_ldr, node, monitorReg, tempMR);
-
-#if !defined(J9VM_TASUKI_LOCKS_SINGLE_SLOT)
-   tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objReg, TR::Compiler->om.offsetOfHeaderFlags(), cg);
-   generateTrg1MemInstruction(cg, ARMOp_ldr, node, flagReg, tempMR);
-#endif
-
    generateSrc2Instruction(cg, ARMOp_cmp, node, monitorReg, metaReg);
 
-#if !defined(J9VM_TASUKI_LOCKS_SINGLE_SLOT)
-   TR_ASSERT(OBJECT_HEADER_FLAT_LOCK_CONTENTION == 0x80000000, "Constant redefined.");
-   TR::Instruction *instr = generateTrg1Src1ImmInstruction(cg, ARMOp_and_r, node, flagReg, flagReg, 2, 30);
-   instr->setConditionCode(ARMConditionCodeEQ);
-#else
    TR::Instruction *instr = generateTrg1ImmInstruction(cg, ARMOp_mov, node, flagReg, 0, 0);
    instr->setConditionCode(ARMConditionCodeEQ);
 
@@ -909,13 +898,11 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
       instr = generateInstruction(cg, ARMOp_dmb_v6 , node); // v7 version is unconditional
       instr->setConditionCode(ARMConditionCodeEQ);
       }
-#endif
 
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg);
    instr  = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, flagReg);
    instr->setConditionCode(ARMConditionCodeEQ);
 
-#ifdef J9VM_TASUKI_LOCKS_SINGLE_SLOT
    // Branch to decLabel in snippet first
    TR::LabelSymbol *decLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -927,14 +914,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
    generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);
    cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
-#else
-   // Branch directly to jitMonitorExit
-   TR::SymbolReference *symRef = node->getSymbolReference();
-   instr = generateImmSymInstruction(cg, ARMOp_bl, node, (uint32_t)symRef->getMethodAddress(), deps, symRef);
-   instr->setConditionCode(ARMConditionCodeNE);
-   instr->ARMNeedsGCMap(0xFFFFFFFF);
-   cg->machine()->setLinkRegisterKilled(true);
-#endif
+
    cg->decReferenceCount(objNode);
    return NULL;
    }
@@ -1503,13 +1483,11 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
-#ifdef J9VM_TASUKI_LOCKS_SINGLE_SLOT
    TR::Register *tempReg = cg->allocateRegister();
    TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
-#endif
+
    callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-#ifdef J9VM_TASUKI_LOCKS_SINGLE_SLOT // __ARM_ARCH_6__ and up
    // This is spinning on the object itself and not on the global objectFlagSpinLock
    TR::LabelSymbol *incLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -1535,29 +1513,7 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARMMonitorEnterSnippet(cg, node, lwOffset, incLabel, callLabel, doneLabel);
    cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
-#else
-   generateTrg1MemInstruction(cg, ARMOp_ldr, node, addrReg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, objectFlagSpinLockAddress), cg));
 
-   generateTrg1Src2Instruction(cg, ARMOp_swp, node, dataReg, addrReg, addrReg);
-   generateSrc1ImmInstruction(cg, ARMOp_cmp, node, dataReg, 0, 0);
-   generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, callLabel);
-   generateTrg1MemInstruction(cg, ARMOp_ldr, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg));
-   generateSrc1ImmInstruction(cg, ARMOp_cmp, node, dataReg, 0, 0);
-
-   iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg), metaReg);
-   iCursor->setConditionCode(ARMConditionCodeEQ);
-
-   iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, dataReg, 0, 0);
-   iCursor->setConditionCode(ARMConditionCodeNE);
-
-   generateMemSrc1Instruction(cg, ARMOp_str, node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), dataReg);
-   generateLabelInstruction(cg, ARMOp_label, node, callLabel);
-
-   iCursor = generateImmSymInstruction(cg, ARMOp_bl, node, (uint32_t)node->getSymbolReference()->getMethodAddress(), deps, node->getSymbolReference());
-   iCursor->setConditionCode(ARMConditionCodeNE);
-   iCursor->ARMNeedsGCMap(0xFFFFFFFF);
-   cg->machine()->setLinkRegisterKilled(true);
-#endif
    deps->stopAddingConditions();
 
    cg->decReferenceCount(objNode);
