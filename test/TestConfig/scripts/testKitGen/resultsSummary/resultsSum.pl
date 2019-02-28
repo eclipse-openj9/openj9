@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,16 +125,6 @@ sub resultReporter {
 		close $fhIn;
 	}
 
-	my $dir = dirname($tapFile);
-	if (!(-e $dir and -d $dir)) {
-		make_path($dir);
-	}
-	#generate tap output
-	open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
-	print $fhOut "1.." . $numOfTotal . "\n";
-	print $fhOut $tapString;
-	close $fhOut;
-
 	#generate console output
 	print "TEST TARGETS SUMMARY\n";
 	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -158,9 +148,21 @@ sub resultReporter {
 	$numOfExecuted = $numOfTotal - $numOfSkipped;
 
 	print "TOTAL: $numOfTotal   EXECUTED: $numOfExecuted   PASSED: $numOfPassed   FAILED: $numOfFailed   SKIPPED: $numOfSkipped\n";
-	if (($numOfTotal > 0) && ($numOfFailed == 0)) {
-		print "ALL TESTS PASSED\n";
+	if ($numOfTotal > 0) {
+		#generate tap output
+		my $dir = dirname($tapFile);
+		if (!(-e $dir and -d $dir)) {
+			make_path($dir);
+		}
+		open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
+		print $fhOut "1.." . $numOfTotal . "\n";
+		print $fhOut $tapString;
+		close $fhOut;
+		if ($numOfFailed == 0) {
+			print "ALL TESTS PASSED\n";
+		}
 	}
+
 	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	unlink($resultFile);
