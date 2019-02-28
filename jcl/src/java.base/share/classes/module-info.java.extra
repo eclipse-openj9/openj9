@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
   exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
   exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.jvm, openj9.sharedclasses;
   exports com.ibm.oti.util to java.management, jdk.attach, jdk.management, openj9.sharedclasses;
-  exports com.ibm.tools.attach.target to jdk.attach;
+  exports com.ibm.tools.attach.target to jdk.attach, jdk.management;
   exports jdk.internal.org.objectweb.asm to openj9.dtfj, openj9.dtfjview;
   // Following allows dtfj/dtfjview modules invoke module addReads & addExports programmatically via reflection APIs
   exports jdk.internal.module to openj9.dtfj, openj9.dtfjview;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@ package org.openj9.test.attachAPI;
 
 import java.util.List;
 
-import com.ibm.tools.attach.target.AttachHandler;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
@@ -33,7 +32,7 @@ public class ListVms {
 	public static final String LIST_VMS_EXIT = "listVms:exit";
 
 	public static void main(String[] args) {
-		if (!AttachHandler.waitForAttachApiInitialization()) {
+		if (!TargetManager.waitForAttachApiInitialization()) {
 			System.err.println("ListVms: attach API initialization failed");
 		}
 		listVms();

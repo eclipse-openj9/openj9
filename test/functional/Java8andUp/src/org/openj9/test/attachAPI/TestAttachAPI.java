@@ -42,7 +42,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ibm.tools.attach.target.IPC;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
@@ -76,7 +75,6 @@ public class TestAttachAPI extends AttachApiTest {
 		 */
 		testName = testMethod.getName();
 		logger.debug("starting " + testName);
-		IPC.logMessage("Starting test ", testName);
 		if (null == commonDir) { /* lazy initialization */
 			commonDir = new File(System.getProperty("java.io.tmpdir"),
 					".com_ibm_tools_attach");

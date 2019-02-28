@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,6 +102,7 @@ public class TestOperatingSystemMXBean {
 		attribs.put("ProcessCpuLoad", new AttributeData(Double.TYPE.getName(), true, false, false));
 		attribs.put("HardwareModel", new AttributeData(String.class.getName(), true, false, false));
 		attribs.put("HardwareEmulated", new AttributeData(Boolean.TYPE.getName(), true, false, true));
+		attribs.put("ProcessRunning", new AttributeData(Boolean.TYPE.getName(), true, false, true)); //$NON-NLS-1$
 
 		/* When we run on Unix, the implementation returned is that of
 		 * UnixExtendedOperatingSystem.  It adds a couple of APIs to the
