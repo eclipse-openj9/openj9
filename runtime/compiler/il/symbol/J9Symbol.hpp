@@ -172,6 +172,7 @@ public:
 
    static RecognizedField searchRecognizedField(TR::Compilation *, TR_ResolvedMethod * owningMethodSymbol, int32_t cpIndex, bool isStatic);
    RecognizedField  getRecognizedField();
+   const char *owningClassNameCharsForRecognizedField(int32_t & length);
 
    /**
     * TR_RecognizedShadowSymbol

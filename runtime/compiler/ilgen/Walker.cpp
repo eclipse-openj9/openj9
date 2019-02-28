@@ -3917,14 +3917,24 @@ TR_J9ByteCodeIlGenerator::genInvokeVirtual(int32_t cpIndex)
    else
       {
       symRef = symRefTab()->findOrCreateVirtualMethodSymbol(_methodSymbol, cpIndex);
+
+      // Update method in case getResolvedPossiblyPrivateVirtualMethod()
+      // returned null originally, but then findOrCreateVirtualMethodSymbol()
+      // later found the method.
+      //
+      // Without doing this, we can fail to set isDirectCall for recognized
+      // final methods (e.g. Unsafe and JITHelpers methods) where the compiler
+      // assumes calls are direct.
+      //
+      if (!symRef->isUnresolved())
+         method = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
       }
 
-   TR::Symbol * sym = symRef->getSymbol();
    bool isDirectCall = false;
    if (method != NULL)
       {
       isDirectCall =
-         sym->isFinal() ||
+         symRef->getSymbol()->isFinal() ||
          method->isPrivate() ||
          (debug("omitVirtualGuard") && !method->virtualMethodIsOverridden());
       }
