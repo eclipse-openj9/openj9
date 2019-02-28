@@ -117,6 +117,7 @@ def checkout_pullrequest() {
     def omr_upstream = false
     def openjdk_bool = false
     def openj9_bool = false
+    def JDK_REPO_SUFFIX = ""
 
     // Determine source repo of PR
     // Cannot depend on a change from the same repo as the source repo
@@ -186,10 +187,12 @@ def checkout_pullrequest() {
                     // eg. Cannot checkout a JDK8 PR for a JDK9 build
                     echo "SDK: ${SDK_VERSION}"
                     echo "REPO: ${REPO}"
-
+                    if (SDK_VERSION != "next") {
+                        JDK_REPO_SUFFIX = SDK_VERSION
+                    }
                     // For SDK 8/9/10, the Repo has the SDK version in the name
-                    if (REPO != "openj9-openjdk-jdk${SDK_VERSION}") {
-                        error "Trying to build SDK${SDK_VERSION} with a dependent change from repo '${REPO}' is not possible"
+                    if (REPO != "openj9-openjdk-jdk${JDK_REPO_SUFFIX}") {
+                        error "Trying to build SDK${JDK_REPO_SUFFIX} with a dependent change from repo '${REPO}' is not possible"
                     }
                     break
                 default:
@@ -199,11 +202,10 @@ def checkout_pullrequest() {
     }
 
     if (openjdk_bool) {
-        def REPO_SUFFIX = ""
         if (SDK_VERSION != "next") {
-            REPO_SUFFIX = SDK_VERSION
+            JDK_REPO_SUFFIX = SDK_VERSION
         }
-        checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${REPO_SUFFIX}")
+        checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${JDK_REPO_SUFFIX}")
     }
 
     sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS}"
