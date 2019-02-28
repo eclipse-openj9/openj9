@@ -420,9 +420,9 @@ def get_test_job_name(targetName, spec, version) {
 * Limits the search only to the downstream builds with given names.
 * Returns a map of builds.
 */
-def get_downstream_builds(upstreamBuild, downstreamJobNames) {
+def get_downstream_builds(upstreamBuild, upstreamJobName, downstreamJobNames) {
     def downstreamBuilds = [:]
-    def pattern = /.*${upstreamBuild.projectName}.*${upstreamBuild.number}.*/
+    def pattern = /.*${upstreamJobName}.*${upstreamBuild.number}.*/
     def startTime = System.currentTimeMillis()
 
     for (name in downstreamJobNames.sort()) {
@@ -430,7 +430,7 @@ def get_downstream_builds(upstreamBuild, downstreamJobNames) {
         if (job) {
             def builds = [:]
             //find downstream jobs
-            for (build in job.getBuilds().byTimestamp(upstreamBuild.startTimeInMillis, System.currentTimeMillis())) {
+            for (build in job.getBuilds().byTimestamp(upstreamBuild.getStartTimeInMillis(), System.currentTimeMillis())) {
                 if ((build && build.getCause(hudson.model.Cause.UpstreamCause) && build.getCause(hudson.model.Cause.UpstreamCause).upstreamRun)
                     && (build.getCause(hudson.model.Cause.UpstreamCause).upstreamRun==~pattern)) {
                         // cache all builds (in case of multiple runs)
@@ -447,7 +447,7 @@ def get_downstream_builds(upstreamBuild, downstreamJobNames) {
     }
 
     elapsedTime = (System.currentTimeMillis() - startTime)/1000
-    echo "Time spent fetching downstream jobs: ${elapsedTime} seconds"
+    echo "Time spent fetching downstream jobs for ${upstreamJobName}: ${elapsedTime} seconds"
 
     return downstreamBuilds
 }
@@ -462,6 +462,27 @@ def get_build_embedded_status_link(build) {
         return "<a href=\"${buildLink}\"><img src=\"${buildLink}badge/icon\"></a>"
     }
     return ''
+}
+
+/*
+* Returns a map storing the downstream job names for given version and spec.
+*/
+def get_downstream_job_names(spec, version) {
+    /* e.g. [build:                 Build-JDK11-linux_390-64_cmprssptrs,
+             extended.functional:   Test-extended.functional-JDK11-linux_390-64_cmprssptrs,
+             extended.system:       Test-extended.system-JDK11-linux_390-64_cmprssptrs,
+             sanity.functional:     Test-sanity.functional-JDK11-linux_390-64_cmprssptrs,
+             sanity.system:         Test-sanity.system-JDK11-linux_390-64_cmprssptrs]
+    */
+
+    downstreamJobNames = [:]
+    downstreamJobNames.put('build', get_build_job_name(spec, version))
+
+    for (target in get_test_target_names().sort()) {
+        downstreamJobNames.put(target, get_test_job_name(target, spec, version))
+    }
+
+    return downstreamJobNames
 }
 
 return this

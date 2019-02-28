@@ -146,41 +146,43 @@ timeout(time: 12, unit: 'HOURS') {
                 def TEST_NODES = get_node_labels(params.TEST_NODE_LABELS, BUILD_SPECS.keySet())
 
                 BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
-                    SDK_VERSIONS.each { SDK_VERSION ->
-                        def job_name = get_pipeline_name(SPEC, SDK_VERSION)
-                        pipelineNames.add(job_name)
+                    if (VARIABLES."${SPEC}") {
+                        SDK_VERSIONS.each { SDK_VERSION ->
+                            def job_name = get_pipeline_name(SPEC, SDK_VERSION)
+                            pipelineNames.add(job_name)
 
-                        // set OpenJDK repos and branch for the downstream build
-                        def REPO = OPENJDK_REPO.get(SDK_VERSION).get(SPEC)
-                        def BRANCH = OPENJDK_BRANCH.get(SDK_VERSION).get(SPEC)
+                            // set OpenJDK repos and branch for the downstream build
+                            def REPO = OPENJDK_REPO.get(SDK_VERSION).get(SPEC)
+                            def BRANCH = OPENJDK_BRANCH.get(SDK_VERSION).get(SPEC)
 
-                        // set nodes for the downstream builds
-                        def BUILD_NODE = ''
-                        if (BUILD_NODES[SPEC]) {
-                            BUILD_NODE = BUILD_NODES[SPEC]
+                            // set nodes for the downstream builds
+                            def BUILD_NODE = ''
+                            if (BUILD_NODES[SPEC]) {
+                                BUILD_NODE = BUILD_NODES[SPEC]
+                            }
+                            def TEST_NODE = ''
+                            if (TEST_NODES[SPEC]) {
+                                TEST_NODE = TEST_NODES[SPEC]
+                            }
+
+                            def EXTRA_GETSOURCE_OPTIONS = get_value_by_spec(EXTRA_GETSOURCE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                            def EXTRA_CONFIGURE_OPTIONS = get_value_by_spec(EXTRA_CONFIGURE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                            def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                            def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
+
+                            def ADOPTOPENJDK_REPO = ''
+                            def ADOPTOPENJDK_BRANCH = ''
+                            if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
+                                ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
+                                ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
+                            }
+
+                            if (AUTOMATIC_GENERATION != 'false'){
+                                variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
+                            }
+
+                            builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) }
                         }
-                        def TEST_NODE = ''
-                        if (TEST_NODES[SPEC]) {
-                            TEST_NODE = TEST_NODES[SPEC]
-                        }
-
-                        def EXTRA_GETSOURCE_OPTIONS = get_value_by_spec(EXTRA_GETSOURCE_OPTIONS_MAP, SDK_VERSION, SPEC)
-                        def EXTRA_CONFIGURE_OPTIONS = get_value_by_spec(EXTRA_CONFIGURE_OPTIONS_MAP, SDK_VERSION, SPEC)
-                        def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
-                        def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
-
-                        def ADOPTOPENJDK_REPO = ''
-                        def ADOPTOPENJDK_BRANCH = ''
-                        if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
-                            ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
-                            ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
-                        }
-
-                        if (AUTOMATIC_GENERATION != 'false'){
-                            variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
-                        }
-
-                        builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) }
                     }
                 }
             } finally {
@@ -246,7 +248,7 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'EXTRA_CONFIGURE_OPTIONS', value: EXTRA_CONFIGURE_OPTIONS),
                     string(name: 'EXTRA_MAKE_OPTIONS', value: EXTRA_MAKE_OPTIONS),
                     string(name: 'OPENJDK_CLONE_DIR', value: OPENJDK_CLONE_DIR),
-                    booleanParam(name: 'AUTOMATIC_GENERATION', value: AUTOMATIC_GENERATION)]
+                    string(name: 'AUTOMATIC_GENERATION', value: AUTOMATIC_GENERATION)]
         return JOB
     }
 }
@@ -307,12 +309,13 @@ def get_pipeline_name(spec, version) {
 * Returns an HTML summary table for the downstream builds.
 */
 def get_summary_table() {
-    def builds = buildFile.get_downstream_builds(currentBuild, pipelineNames)
-    if (builds.isEmpty()) {
+    // fetch the downstream builds of the current build
+    def pipelineBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, pipelineNames)
+    if (pipelineBuilds.isEmpty()) {
         return ''
     }
 
-    def buildReleases = variableFile.get_build_releases(BUILD_SPECS)
+    def buildReleases = get_sorted_releases()
     def specShortNames = ['aix_ppc-64_cmprssptrs'          : 'aix-ppc64',
                           'linux_390-64_cmprssptrs'        : 'linux-s390x',
                           'linux_ppc-64_cmprssptrs_le'     : 'linux-ppc64le',
@@ -325,7 +328,7 @@ def get_summary_table() {
                           'osx_x86-64'                     : 'osx-x64-XL',
                           'osx_x86-64_cmprssptrs'          : 'osx-x64']
 
-    def headerCols = ['Platform']
+    def headerCols = ['']
     headerCols.addAll(buildReleases)
 
     // summary table
@@ -341,23 +344,80 @@ def get_summary_table() {
 
     // table body
     summaryText += "<tbody>"
+
     for (spec in BUILD_SPECS.keySet().sort()){
         // table row
         summaryText += "<tr>"
-        summaryText += "<td>${specShortNames[spec]}</td>"
+        summaryText += "<td style=\"font-weight: bold;\">${specShortNames[spec]}</td>"
+        def showLabel = true
 
         buildReleases.each { release ->
             // table cell
-            def pipelineName = get_pipeline_name(spec, release)
-            def build = builds.get(pipelineName)
-            def statusLink = buildFile.get_build_embedded_status_link(build)
+            def innerTable = "<table><tbody>"
 
-            summaryText += "<td>${statusLink}</td>"
+            def pipelineName = get_pipeline_name(spec, release)
+            def build = pipelineBuilds.get(pipelineName)
+            def downstreamJobNames = buildFile.get_downstream_job_names(spec, release)
+
+            if (build) {
+                def pipelineLink = buildFile.get_build_embedded_status_link(build)
+                innerTable += "<tr style=\"text-align: right\"><td colspan=\"2\">${pipelineLink}</td><td>${build.getDurationString()}</td></tr>"
+
+                // add pipeline's downstream builds
+                def downstreamBuilds = buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values())
+
+                downstreamJobNames.each { label, jobName ->
+                    def downstreamBuild = downstreamBuilds.get(jobName)
+                    def link = ''
+                    def runtime = ''
+
+                    if (downstreamBuild) {
+                        link = buildFile.get_build_embedded_status_link(downstreamBuild)
+                        runtime = downstreamBuild.getDurationString()
+                    }
+
+                    if (showLabel) {
+                        //show downstream jobs short names only once per platform
+                        innerTable += "<tr><td>${label}</td><td>${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                    } else {
+                        innerTable += "<tr><td colspan=\"2\">${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                    }
+                }
+            } else {
+                downstreamJobNames.keySet().each {
+                    innerTable += "<tr><td colspan=\"3\">${it}</td></tr>"
+                }
+            }
+
+            innerTable += "</tbody></table>"
+            summaryText += "<td>${innerTable}</td>"
+
+            // do not show the jobs short names for the other releases
+            showLabel = false
         }
         summaryText += "</tr>"
     }
+
     summaryText += "</tbody>"
     summaryText += "</table>"
 
     return summaryText
+}
+
+/*
+* Returns the sorted build releases.
+*/
+def get_sorted_releases() {
+    // not using comparator due to https://issues.jenkins-ci.org/browse/JENKINS-44924
+
+    def unsortedReleases = variableFile.get_build_releases(BUILD_SPECS)
+    def sortedReleases = []
+
+    for (release in RELEASES) {
+        if (unsortedReleases.contains(release)) {
+            sortedReleases.add(release)
+        }
+    }
+
+    return sortedReleases
 }

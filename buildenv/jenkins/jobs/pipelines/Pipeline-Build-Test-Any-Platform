@@ -52,24 +52,10 @@ timestamps {
         jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, BUILD_LIST, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_NAME)
     } finally {
         //display the build status of the downstream jobs
-        def downstreamBuilds = buildFile.get_downstream_builds(currentBuild, get_downstream_job_names(SPEC, SDK_VERSION))
+        def downstreamBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, buildFile.get_downstream_job_names(SPEC, SDK_VERSION).values())
         add_badges(downstreamBuilds)
         add_summary_badge(downstreamBuilds)
     }
-}
-
-/*
-* Returns the list of the downstream jobs.
-*/
-def get_downstream_job_names(spec, version) {
-    downstreamJobNames = []
-    downstreamJobNames.add(buildFile.get_build_job_name(spec, version))
-
-    for (target in buildFile.get_test_target_names()) {
-        downstreamJobNames.add(buildFile.get_test_job_name(target, spec, version))
-    }
-
-    return downstreamJobNames
 }
 
 /*
