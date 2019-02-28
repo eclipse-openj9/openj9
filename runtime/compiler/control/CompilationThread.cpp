@@ -5276,7 +5276,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
             releaseCompMonitor(vmThread);
             if (compErrCode)
                *compErrCode = compilationInProgress;
-            return 0; // mark that copilation is not yet done
+            return 0; // mark that compilation is not yet done
             }
          }
       }
@@ -5313,11 +5313,11 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       }
 
    TR_YesNoMaybe methodIsInSharedCache = TR_no;
+   bool useCodeFromSharedCache = false;
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    // Check to see if we find the method in the shared cache
    // If yes, raise the priority to be processed ahead of other methods
    //
-   bool useCodeFromSharedCache = false;
    J9JavaVM *javaVM = vmThread->javaVM;
 
    if (TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) && details.isOrdinaryMethod())
@@ -5448,7 +5448,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
             releaseCompMonitor(vmThread);
             if (compErrCode)
                *compErrCode = err;
-            return 0; // mark that copilation is not yet done
+            return 0; // mark that compilation is not yet done
             }
          }
       }// if (async)
