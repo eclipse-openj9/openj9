@@ -2034,7 +2034,7 @@ copyPreservedValues(J9VMThread * currentThread, J9HashTable * classPairs, UDATA 
 			 * Do not do this for abstract or interface classes, which can not be
 			 * instantiated (and hence may reuse the totalInstanceSize field as something else).
 			 */
-			if (!J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(originalRAMClass->romClass)) {
+			if (J9ROMCLASS_ALLOCATE_USES_TOTALINSTANCESIZE(originalRAMClass->romClass)) {
 				originalRAMClass->totalInstanceSize = (UDATA)-256;
 			}
 		}
