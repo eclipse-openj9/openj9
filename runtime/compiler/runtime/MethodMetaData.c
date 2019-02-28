@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1746,6 +1746,9 @@ void jitAddSpilledRegisters(J9StackWalkState * walkState, void * stackMap)
          }
       while (savedGPRs != 0);
       }
+#elif defined(TR_HOST_ARM64)
+   // TODO: Implement this
+   assert(0);
 #else
 #error Unknown TR_HOST type
 #endif
