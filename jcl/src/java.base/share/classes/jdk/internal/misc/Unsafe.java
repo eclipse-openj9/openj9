@@ -3834,7 +3834,7 @@ public final class Unsafe {
 	public final byte getAndSetByte(Object obj, long offset, byte value) {
 		for (;;) {
 			byte byteAtOffset = getByteVolatile(obj, offset);
-			if (weakCompareAndSetByte(obj, offset, byteAtOffset, value)) {
+			if (compareAndSetByte(obj, offset, byteAtOffset, value)) {
 				return byteAtOffset;
 			}
 		}
@@ -3894,7 +3894,7 @@ public final class Unsafe {
 	public final int getAndSetInt(Object obj, long offset, int value) {
 		for (;;) {
 			int intAtOffset = getIntVolatile(obj, offset);
-			if (weakCompareAndSetInt(obj, offset, intAtOffset, value)) {
+			if (compareAndSetInt(obj, offset, intAtOffset, value)) {
 				return intAtOffset;
 			}
 		}
@@ -3954,7 +3954,7 @@ public final class Unsafe {
 	public final long getAndSetLong(Object obj, long offset, long value) {
 		for (;;) {
 			long longAtOffset = getLongVolatile(obj, offset);
-			if (weakCompareAndSetLong(obj, offset, longAtOffset, value)) {
+			if (compareAndSetLong(obj, offset, longAtOffset, value)) {
 				return longAtOffset;
 			}
 		}
@@ -4110,7 +4110,7 @@ public final class Unsafe {
 	public final short getAndSetShort(Object obj, long offset, short value) {
 		for (;;) {
 			short shortAtOffset = getShortVolatile(obj, offset);
-			if (weakCompareAndSetShort(obj, offset, shortAtOffset, value)) {
+			if (compareAndSetShort(obj, offset, shortAtOffset, value)) {
 				return shortAtOffset;
 			}
 		}
@@ -4170,7 +4170,7 @@ public final class Unsafe {
 	public final char getAndSetChar(Object obj, long offset, char value) {
 		for (;;) {
 			char charAtOffset = getCharVolatile(obj, offset);
-			if (weakCompareAndSetChar(obj, offset, charAtOffset, value)) {
+			if (compareAndSetChar(obj, offset, charAtOffset, value)) {
 				return charAtOffset;
 			}
 		}
@@ -4278,7 +4278,7 @@ public final class Unsafe {
 	public final Object getAndSetObject(Object obj, long offset, Object value) {
 		for (;;) {
 			Object objectAtOffset = getObjectVolatile(obj, offset);
-			if (weakCompareAndSetObject(obj, offset, objectAtOffset, value)) {
+			if (compareAndSetObject(obj, offset, objectAtOffset, value)) {
 				return objectAtOffset;
 			}
 		}
