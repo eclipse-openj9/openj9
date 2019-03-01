@@ -536,20 +536,20 @@ oom:
 				}
 				j9object_t threadGroup = (NULL == group) ? NULL : *group;
 				*--currentThread->sp = (UDATA)threadObject;
-				if (J2SE_SHAPE(vm) == J2SE_SHAPE_RAW) {
-					/* Oracle constructor takes thread group, thread name */
-					J9VMJAVALANGTHREAD_SET_PRIORITY(currentThread, threadObject, priority);
-					J9VMJAVALANGTHREAD_SET_ISDAEMON(currentThread, threadObject, (I_32)daemon);
-					*--currentThread->sp = (UDATA)threadGroup;
-					*--currentThread->sp = (UDATA)threadName;
-				} else {
-					/* J9 constructor takes thread name, thread group, priority and isDaemon */
-					J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, JNI_TRUE);
-					*--currentThread->sp = (UDATA)threadName;
-					*--currentThread->sp = (UDATA)threadGroup;
-					*(I_32*)--currentThread->sp = priority;
-					*(I_32*)--currentThread->sp = (I_32)daemon;
-				}
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+				/* Oracle constructor takes thread group, thread name */
+				J9VMJAVALANGTHREAD_SET_PRIORITY(currentThread, threadObject, priority);
+				J9VMJAVALANGTHREAD_SET_ISDAEMON(currentThread, threadObject, (I_32)daemon);
+				*--currentThread->sp = (UDATA)threadGroup;
+				*--currentThread->sp = (UDATA)threadName;
+#else /* J9VM_IVE_RAW_BUILD */
+				/* J9 constructor takes thread name, thread group, priority and isDaemon */
+				J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, JNI_TRUE);
+				*--currentThread->sp = (UDATA)threadName;
+				*--currentThread->sp = (UDATA)threadGroup;
+				*(I_32*)--currentThread->sp = priority;
+				*(I_32*)--currentThread->sp = (I_32)daemon;
+#endif /* J9VM_IVE_RAW_BUILD */
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
 				currentThread->returnValue2 = (UDATA)J9VMJAVALANGTHREAD_INIT_METHOD(vm);
 				c_cInterpreter(currentThread);

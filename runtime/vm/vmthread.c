@@ -1777,12 +1777,11 @@ startJavaThread(J9VMThread * currentThread, j9object_t threadObject, UDATA priva
 
 	privateFlags &= ~J9_PRIVATE_FLAGS_NO_EXCEPTION_IN_START_JAVA_THREAD;
 
+#ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
 	/* Any attempt to start a Thread makes it illegal to attempt to start it again.
 	 * Oracle class libraries don't have the 'started' field */
-	if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
-		J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, TRUE);
-	}
-
+	J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, TRUE);
+#endif /* !J9VM_IVE_RAW_BUILD */
 	
 	/* Save objects on the stack in case we GC */
 
@@ -1897,18 +1896,17 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 	}
 
 	/* Create the UTF8 string with the thread name */
-		
 	threadObject = PEEK_OBJECT_IN_SPECIAL_FRAME(currentThread, 3);
-	if (J2SE_SHAPE(vm) == J2SE_SHAPE_RAW) {
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+	{
 		j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
-
 		if (NULL != unicodeChars) {
 			threadName = copyStringToUTF8WithMemAlloc(currentThread, unicodeChars, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
 		}
-	} else {
-		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
-		threadName = getVMThreadNameFromString(currentThread, nameObject);
 	}
+#else /* J9VM_IVE_RAW_BUILD */
+	threadName = getVMThreadNameFromString(currentThread, J9VMJAVALANGTHREAD_NAME(currentThread, threadObject));
+#endif /* J9VM_IVE_RAW_BUILD */
 	if (threadName == NULL) {
 		Trc_VM_startJavaThread_failedVMThreadAlloc(currentThread);
 		omrthread_cancel(osThread);

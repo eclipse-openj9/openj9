@@ -1985,7 +1985,8 @@ typedef struct J9BCTranslationData {
 #define BCT_Java10MajorVersionShifted 0x36000000
 #define BCT_Java11MajorVersionShifted 0x37000000
 #define BCT_Java12MajorVersionShifted 0x38000000
-#define BCT_JavaMaxMajorVersionShifted BCT_Java12MajorVersionShifted
+#define BCT_Java13MajorVersionShifted 0x39000000
+#define BCT_JavaMaxMajorVersionShifted BCT_Java13MajorVersionShifted
 
 typedef struct J9RAMClassFreeListBlock {
 	UDATA size;

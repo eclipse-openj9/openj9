@@ -1289,244 +1289,6 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 	return result;
 }
 
-typedef struct VersionSetting {
-	const char* key;
-	UDATA value;
-} VersionSetting;
-
-
-/**
- * Table to map textual props file entries to numeric constants.
- *
- * Note: shapes "sun" and "sun_openjdk" here are for accommodation of such values within Java 8 classlib.properties.
- *       Both shapes are mapped to J2SE_SHAPE_OPENJDK to indicate a Java 8 SDK.
- */
-static const VersionSetting SHAPE_SETTINGS[] = {
-		{"sun", J2SE_SHAPE_OPENJDK},
-		{"sun_openjdk", J2SE_SHAPE_OPENJDK},
-		{"raw", J2SE_SHAPE_RAW},
-		{"rawplusj9", J2SE_SHAPE_RAWPLUSJ9},
-};
-#define NUM_SHAPE_SETTINGS (sizeof(SHAPE_SETTINGS) / sizeof(VersionSetting))
-
-/**
- * Table to map textual props file entries to numeric constants.
- */
-static const VersionSetting VERSION_SETTINGS[] = {
-		{"1.8", J2SE_18}
-};
-#define NUM_VERSION_SETTINGS (sizeof(VERSION_SETTINGS) / sizeof(VersionSetting))
-
-
-static UDATA 
-decodeSetting(const char* key, const char* value, const VersionSetting* settings, IDATA numSettings)
-{
-	IDATA index = 0;
-	
-	for (index = 0; index < numSettings; index++) {
-		const VersionSetting *setting = &settings[index];
-		if (!strcmp(value, setting->key)) {
-			return setting->value;
-		}
-	}
-
-	if (0 == strlen(value)) {
-		fprintf(stderr, "Empty shape value was set!\n");
-	} else if (('b' != *value) && ('B' != *value)) {
-		fprintf(stderr, "Unrecognized '%s' value -> %s\n", key, value);
-	} else {
-		int levelValue = atoi((const char*)(value + 1));
-		if (levelValue > 0) {
-			for (index = numSettings - 1; index >= 0; index--) {
-				const VersionSetting *setting = &settings[index];
-				if ('b' == *setting->key) {
-					int keyNbr = atoi((const char*)(setting->key + 1));
-					if (keyNbr > 0) {
-						if (keyNbr <= levelValue) {
-							return setting->value;
-						}
-					} else {
-						continue;
-					}
-				}
-			}
-			fprintf(stderr, "There was no matching level found for '%s' value -> %s\n", key, value);
-		} else {
-			fprintf(stderr, "Unrecognized '%s' value -> %s\n", key, value);
-		}
-	}
-
-#if defined(DEBUG)	
-	printf("Valid choices are: ");
-	for (index=0; index < numSettings; index++) {
-		const VersionSetting* setting = &settings[index];
-		printf("%s", setting->key);
-		if (index != numSettings-1)
-				printf(", ");		
-	}
-	printf(".\n");
-#endif
-	return 0;
-}
-
-/**
- * Attempt loading 'classlib.properties' file, and get Java version info.
- * If the file is found, 'version' and 'shape' values are retrieved
- * and decoded as J2SE_xx and J2SE_SHAPE_xx accordingly.
- * 'J2SE_xx | J2SE_SHAPE_xx' is returned;
- * Otherwise, 0 is returned.
- *
- * @return 'J2SE_xx | J2SE_SHAPE_xx' decoded from 'version' and 'shape' values in 'classlib.properties';
- *         or 0 if otherwise.
- */
-static UDATA
-getVersionFromClasslibPropertiesFile(void)
-{
-	PORT_ACCESS_FROM_PORT(&j9portLibrary);
-	J9StringBuffer *propsPathBuffer = NULL;
-	j9props_file_t propsFile = NULL;
-	UDATA finalVersion = 0;
-
-	propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9libBuffer));
-	propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "classlib.properties");
-	propsFile = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
-	free(propsPathBuffer);
-	propsPathBuffer = NULL;
-
-	if (NULL != propsFile) {
-		const char *shape = NULL;
-		const char *version = NULL;
-		UDATA decoded = 0;
-		
-		shape = props_file_get(propsFile, "shape");
-		if (NULL == shape) {
-#ifdef DEBUG
-			printf("No 'shape' property in %s\n", jvmBufferData(propsPathBuffer));
-#endif
-			goto bail;
-		}
-
-		version = props_file_get(propsFile, "version");
-		if (NULL == version) {
-#ifdef DEBUG
-			printf("No 'version' property in %s\n", jvmBufferData(propsPathBuffer));
-#endif
-			goto bail;
-		}
-	
-		decoded = decodeSetting("shape", shape, SHAPE_SETTINGS, NUM_SHAPE_SETTINGS);
-		if (0 == decoded) {
-			goto bail;
-		}
-		finalVersion |= decoded;
-	
-		decoded = decodeSetting("version", version, VERSION_SETTINGS, NUM_VERSION_SETTINGS);
-		if (0 == decoded) {
-			goto bail;
-		}
-		finalVersion |= decoded;
-
-bail:
-		props_file_close(propsFile);
-	} else {
-#ifdef DEBUG
-		printf("Could not open %s\n", jvmBufferData(propsPathBuffer));
-#endif
-	}
-	
-	return finalVersion;
-}
-
-/**
- * Attempt loading 'release' file, and get Java version info.
- * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
- * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
- * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
- * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
- * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
- * Otherwise, 0 is returned.
- *
- * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK',
- *         'J2SE_V11 | J2SE_SHAPE_V11',
- *         'J2SE_V12 | J2SE_SHAPE_V12',
- *         'J2SE_LATEST | J2SE_SHAPE_LATEST'
- *         according to the 'JAVA_VERSION' value found in 'release';
- *         or 0 if otherwise.
- */
-static UDATA
-getVersionFromReleaseFile(void)
-{
-	PORT_ACCESS_FROM_PORT(&j9portLibrary);
-	J9StringBuffer *propsPathBuffer = NULL;
-	j9props_file_t propsFile = NULL;
-	UDATA finalVersion = 0;
-
-	propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9Buffer));
-	propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "release");
-	propsFile = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
-	free(propsPathBuffer);
-	propsPathBuffer = NULL;
-	if (NULL != propsFile) {
-		const char *version = props_file_get(propsFile, "JAVA_VERSION");
-		if (NULL != version) {
-#define	 JAVA_VERSION_8 "\"1.8.0" /* its usual format is "1.8.0_xxx" */
-			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
-#undef   JAVA_VERSION_8
-				finalVersion = J2SE_18 | J2SE_SHAPE_OPENJDK;
-#define	 JAVA_VERSION_11 "\"11" /* its usual format is "11[.x.x]" */
-			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
-#undef   JAVA_VERSION_11
-				finalVersion = J2SE_V11 | J2SE_SHAPE_V11;
-#define	 JAVA_VERSION_12 "\"12" /* its usual format is "12[.x.x]" */
-			} else if (!strncmp(version, JAVA_VERSION_12, sizeof(JAVA_VERSION_12) - 1)) {
-#undef   JAVA_VERSION_12
-				finalVersion = J2SE_V12 | J2SE_SHAPE_V12;
-			} else {
-				/* Assume latest Java version and shape */
-				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;
-			}
-		} else {
-#ifdef DEBUG
-			printf("No 'JAVA_VERSION' property in %s\n", propsFile);
-#endif
-		}
-		props_file_close(propsFile);
-	} else {
-#ifdef DEBUG
-		printf("Could not open %s\n", propsFile);
-#endif
-	}
-
-	return finalVersion;
-}
-
-/**
- * Get Java version of running JVM
- * Attempt getting the Java version info from 'classlib.properties' first,
- * if not successful, try 'release' file next,
- * if still no version info found, 'J2SE_LATEST | J2SE_SHAPE_LATEST' is returned 
- *
- * @return 'J2SE_xx | J2SE_SHAPE_xx' decoded from 'classlib.properties' or 'release',
- *         or 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
- */
-static UDATA
-getVersionFromPropertiesFile(void)
-{
-	if (-1 == jvmSEVersion) {
-		UDATA finalVersion = 0;
-
-		finalVersion = getVersionFromClasslibPropertiesFile();
-		if (0 == finalVersion) {
-			finalVersion = getVersionFromReleaseFile();
-			if (0 == finalVersion) {
-				return J2SE_LATEST | J2SE_SHAPE_LATEST;
-			}
-		}
-		jvmSEVersion = finalVersion;
-	}
-	return jvmSEVersion;
-}
-
 typedef struct J9SpecialArguments {
 	UDATA localVerboseLevel;
 	IDATA *xoss;
@@ -1639,13 +1401,13 @@ addHarmonyPortLibrary(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 #endif /* J9VM_OPT_HARMONY */
 
 static void
-setNLSCatalog(struct J9PortLibrary* portLib, UDATA j2seVersion)
+setNLSCatalog(struct J9PortLibrary* portLib)
 {
 	J9StringBuffer *nlsSearchPathBuffer = NULL;
 	const char *nlsSearchPaths = NULL;
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
+	if (J2SE_CURRENT_VERSION >= J2SE_V11) {
 		/*
 		 * j9libBuffer doesn't end in a slash, but j9nls_set_catalog ignores everything after
 		 * the last slash. Append a slash to our local copy of j9libBuffer
@@ -1682,32 +1444,32 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 		return JNI_ERR;
 	}
 
-	if (J2SE_SHAPE_RAW == J2SE_SHAPE(vm)) {
-		classNameFID = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");
-		if (!classNameFID) {
-			return JNI_ERR;
-		}
-	} else {
-		classDepthMID = (*env)->GetStaticMethodID(env, clazz, "classDepth", "(Ljava/lang/String;)I");
-		if (!classDepthMID) {
-			return JNI_ERR;
-		}
-
-		classLoaderDepthMID = (*env)->GetStaticMethodID(env, clazz, "classLoaderDepth", "()I");
-		if (!classLoaderDepthMID) {
-			return JNI_ERR;
-		}
-
-		currentClassLoaderMID = (*env)->GetStaticMethodID(env, clazz, "currentClassLoader", "()Ljava/lang/ClassLoader;");
-		if (!currentClassLoaderMID) {
-			return JNI_ERR;
-		}
-
-		currentLoadedClassMID = (*env)->GetStaticMethodID(env, clazz, "currentLoadedClass", "()Ljava/lang/Class;");
-		if (!currentLoadedClassMID) {
-			return JNI_ERR;
-		}
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+	classNameFID = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");
+	if (!classNameFID) {
+		return JNI_ERR;
 	}
+#else /* J9VM_IVE_RAW_BUILD */
+	classDepthMID = (*env)->GetStaticMethodID(env, clazz, "classDepth", "(Ljava/lang/String;)I");
+	if (!classDepthMID) {
+		return JNI_ERR;
+	}
+
+	classLoaderDepthMID = (*env)->GetStaticMethodID(env, clazz, "classLoaderDepth", "()I");
+	if (!classLoaderDepthMID) {
+		return JNI_ERR;
+	}
+
+	currentClassLoaderMID = (*env)->GetStaticMethodID(env, clazz, "currentClassLoader", "()Ljava/lang/ClassLoader;");
+	if (!currentClassLoaderMID) {
+		return JNI_ERR;
+	}
+
+	currentLoadedClassMID = (*env)->GetStaticMethodID(env, clazz, "currentLoadedClass", "()Ljava/lang/Class;");
+	if (!currentLoadedClassMID) {
+		return JNI_ERR;
+	}
+#endif /* J9VM_IVE_RAW_BUILD */
 
 	getNameMID = (*env)->GetMethodID(env, clazz, "getName", "()Ljava/lang/String;");
 	if (!getNameMID) {
@@ -1802,7 +1564,6 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	UDATA argEncoding = ARG_ENCODING_DEFAULT;
 	UDATA altJavaHomeSpecified = 0; /* not used on non-Windows */
 	J9PortLibraryVersion portLibraryVersion;
-	UDATA j2seVersion;
 #if defined(AIXPPC)
 	char *origLibpath = NULL;
 #endif /* AIXPPC */
@@ -2033,13 +1794,8 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	/* Register the J9 memory categories with the port library */
 	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
 
-	j2seVersion = getVersionFromPropertiesFile();
-	if (J2SE_18 > j2seVersion) {
-		fprintf(stderr, "Invalid version 0x%" J9PRIz "x detected in classlib.properties!\n", j2seVersion);
-		result = JNI_ERR;
-		goto exit;
-	}
-	setNLSCatalog(&j9portLibrary, j2seVersion);
+	Assert_SC_true(J2SE_CURRENT_VERSION >= J2SE_18);
+	setNLSCatalog(&j9portLibrary);
 
 
 #ifdef WIN32
@@ -2100,7 +1856,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 			zipFuncs = (J9ZipFunctionTable*) J9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 		}
-		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
+		if (J2SE_CURRENT_VERSION >= J2SE_V11) {
 			optionsDefaultFileLocation = jvmBufferData(j9libBuffer);
 		} else {
 			optionsDefaultFileLocation = jvmBufferData(j9binBuffer);
@@ -2110,7 +1866,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		if (
 				/* Add the default options file */
 				(0 != addOptionsDefaultFile(&j9portLibrary, &vmArgumentsList, optionsDefaultFileLocation, localVerboseLevel))
-				|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, j2seVersion))
+				|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, J2SE_CURRENT_VERSION))
 				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dcom.ibm.oti.vm.bootstrap.library.path=",
 						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
 				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dsun.boot.library.path=",
@@ -2119,7 +1875,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
 						libpathValue, ldLibraryPathValue))
 				|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
-				|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, j2seVersion)))
+				|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
 				|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
 				|| (0 != addJavaPropertiesOptions(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
 				|| (0 != addJarArguments(&j9portLibrary, &vmArgumentsList, specialArgs.executableJarPath, zipFuncs, localVerboseLevel))
@@ -2158,11 +1914,10 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		}
 	}
 
-	if(jvmInSubdir) {
-		j2seVersion |= J2SE_LAYOUT_VM_IN_SUBDIR;
+	createParams.j2seVersion = J2SE_CURRENT_VERSION;
+	if (jvmInSubdir) {
+		createParams.j2seVersion |= J2SE_LAYOUT_VM_IN_SUBDIR;
 	}
-
-	createParams.j2seVersion = j2seVersion;
 	createParams.j2seRootDirectory = jvmBufferData(j9binBuffer);
 	createParams.j9libvmDirectory = jvmBufferData(j9libvmBuffer);
 
@@ -5515,7 +5270,8 @@ JVM_InitClassName
 
 	Trc_SC_GetClassName_Entry(env, theClass);
 
-	if (J2SE_SHAPE_RAW == J2SE_SHAPE(vm)) {
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+	{
 		J9Class* ramClass = java_lang_Class_vmRef(env, theClass);
 		J9ROMClass* romClass = ramClass->romClass;
 		PORT_ACCESS_FROM_JAVAVM(vm);
@@ -5570,6 +5326,7 @@ JVM_InitClassName
 			return result;
 		}
 	}
+#endif /* J9VM_IVE_RAW_BUILD */
 
 	result = (*env)->CallObjectMethod(env, theClass, getNameMID);
 
@@ -5592,19 +5349,15 @@ jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
 	jint result = 4;	/* JDK8 */
-	UDATA j2seVersion = 0;
 
 	Trc_SC_GetInterfaceVersion_Entry();
-
-	j2seVersion = getVersionFromPropertiesFile();
-	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_V11) {
-		if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) == J2SE_V12) {
+	if (J2SE_CURRENT_VERSION >= J2SE_V11) {
+		if (J2SE_CURRENT_VERSION == J2SE_V12) {
 			result = 5; /* JDK12 hasn't got same update as JDK11 & HEAD */
 		} else {
 			result = 6; /* JDK11 & HEAD */
 		}
 	}
-
 	Trc_SC_GetInterfaceVersion_Exit(result);
 
 	return result;

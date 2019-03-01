@@ -227,31 +227,30 @@ standardInit( J9JavaVM *vm, char *dllName)
 		vm->jlrMethodInvoke = ((J9JNIMethodID *) invokeMethod)->method;
 		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
 
-		if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
-			/* JSR 292-related class */
-			clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/oti/lang/ArgumentHelper");
-			if (!clazz) goto _fail;
-			vm->jliArgumentHelper = (*(JNIEnv*)vmThread)->NewGlobalRef((JNIEnv*)vmThread, clazz);
-			if (!vm->jliArgumentHelper) goto _fail;
-			(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
+#ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+		/* JSR 292-related class */
+		clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/oti/lang/ArgumentHelper");
+		if (!clazz) goto _fail;
+		vm->jliArgumentHelper = (*(JNIEnv*)vmThread)->NewGlobalRef((JNIEnv*)vmThread, clazz);
+		if (!vm->jliArgumentHelper) goto _fail;
+		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
 
-			clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "java/lang/invoke/MethodHandle");
-			if (!clazz) goto _fail;
-			invokeMethod = (*(JNIEnv*)vmThread)->GetMethodID((JNIEnv*)vmThread, clazz, "invokeWithArguments", "([Ljava/lang/Object;)Ljava/lang/Object;");
-			if (!invokeMethod) goto _fail;
-			vm->jliMethodHandleInvokeWithArgs = ((J9JNIMethodID *) invokeMethod)->method;
-			invokeMethod = (*(JNIEnv*)vmThread)->GetMethodID((JNIEnv*)vmThread, clazz, "invokeWithArguments", "(Ljava/util/List;)Ljava/lang/Object;");
-			if (!invokeMethod) goto _fail;
-			vm->jliMethodHandleInvokeWithArgsList = ((J9JNIMethodID *) invokeMethod)->method;
+		clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "java/lang/invoke/MethodHandle");
+		if (!clazz) goto _fail;
+		invokeMethod = (*(JNIEnv*)vmThread)->GetMethodID((JNIEnv*)vmThread, clazz, "invokeWithArguments", "([Ljava/lang/Object;)Ljava/lang/Object;");
+		if (!invokeMethod) goto _fail;
+		vm->jliMethodHandleInvokeWithArgs = ((J9JNIMethodID *) invokeMethod)->method;
+		invokeMethod = (*(JNIEnv*)vmThread)->GetMethodID((JNIEnv*)vmThread, clazz, "invokeWithArguments", "(Ljava/util/List;)Ljava/lang/Object;");
+		if (!invokeMethod) goto _fail;
+		vm->jliMethodHandleInvokeWithArgsList = ((J9JNIMethodID *) invokeMethod)->method;
+		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
+		clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/jit/JITHelpers");
+		if (NULL != clazz) {
+			/* Force class initialization */
+			(void)(*(JNIEnv*)vmThread)->GetStaticFieldID((JNIEnv*)vmThread, clazz, "helpers", "Lcom/ibm/jit/JITHelpers;");
 			(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
-
-			clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/jit/JITHelpers");
-			if (NULL != clazz) {
-				/* Force class initialization */
-				(void)(*(JNIEnv*)vmThread)->GetStaticFieldID((JNIEnv*)vmThread, clazz, "helpers", "Lcom/ibm/jit/JITHelpers;");
-				(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
-			}
 		}
+#endif /* !J9VM_IVE_RAW_BUILD */
 	}
 #endif
 

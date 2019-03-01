@@ -27,25 +27,13 @@
 /**
  * Constants for supported J2SE versions.
  */
-/*
- * Note: J2SE_LATEST is the highest Java version supported by VM for a JCL level.
- *       This allows JVM operates with latest version when neither classlib.properties
- *       nor release file presents.
- */
 #define J2SE_18   0x0800
 #define J2SE_V11  0x0B00            /* This refers Java 11 */
 #define J2SE_V12  0x0C00            /* This refers Java 12 */
+#define J2SE_V13  0x0D00            /* This refers Java 13 */
 /* Shared class cache is using JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) to get the Java version.
  * So bits 9 to 16 of the J2SE constant should match the java version number.
  */
-
-#if JAVA_SPEC_VERSION == 8
-	#define J2SE_LATEST  J2SE_18
-#elif JAVA_SPEC_VERSION == 11
-	#define J2SE_LATEST  J2SE_V11
-#else
-	#define J2SE_LATEST  J2SE_V12
-#endif
 
 /**
  * Masks for extracting major and full versions.
@@ -54,33 +42,9 @@
 #define J2SE_RELEASE_MASK 0xFFF0
 #define J2SE_SERVICE_RELEASE_MASK 0xFFFF
 
-/**
- * Masks and constants for describing J2SE shapes.
- *  J2SE_SHAPE_OPENJDK = OpenJDK core libraries (aka J9 'sidecar', OpenJDK code + J9 kernel)
- *  J2SE_SHAPE_RAW = Pure Oracle code without any IBM modifications
- */
-/*
- * Note: J2SE_SHAPE_LATEST is the highest JCL level supported by VM for a JCL level.
- *       This allows JVM operates with latest level when neither classlib.properties
- *       nor release file presents.
- */
-#if JAVA_SPEC_VERSION == 8
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_OPENJDK
-#elif JAVA_SPEC_VERSION == 11
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V11
-#elif JAVA_SPEC_VERSION == 12
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V12
-#else
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V12
-#endif
-#define J2SE_SHAPE_OPENJDK 		0x10000
-#define J2SE_SHAPE_V11			0x80000
-#define J2SE_SHAPE_V12			0x90000
-#define J2SE_SHAPE_RAWPLUSJ9	0xA0000
-#define J2SE_SHAPE_RAW	 		0xB0000
-#define J2SE_SHAPE_MASK 		0xF0000
-#define J2SE_SHAPE_SHIFT		16
 #define J2SE_JAVA_SPEC_VERSION_SHIFT 8
+/* J2SE_CURRENT_VERSION is the current Java version supported by VM for a JCL level. */
+#define J2SE_CURRENT_VERSION (JAVA_SPEC_VERSION << J2SE_JAVA_SPEC_VERSION_SHIFT)
 
 /**
  * Masks and constants for describing J2SE shapes.
@@ -98,16 +62,6 @@
  * Macro to extract J2SE version given a JNIEnv.
  */
 #define J2SE_VERSION_FROM_ENV(env) J2SE_VERSION(((J9VMThread*)env)->javaVM)
-
-/**
- * Macro to extract the shape portion of the J2SE flags.
- */
-#define J2SE_SHAPE(javaVM) 	((javaVM)->j2seVersion & J2SE_SHAPE_MASK)
-
-/**
- * Macro to extract J2SE shape given a JNIEnv.
- */
-#define J2SE_SHAPE_FROM_ENV(env) J2SE_SHAPE(((J9VMThread*)env)->javaVM)
 
 /**
  * Macro to extract java spec version from J2SE version.

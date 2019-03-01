@@ -209,10 +209,10 @@ findFieldInClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fie
 	if (NULL == shape){
 		U_32 walkFlags = J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE;
 
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
 		/* temporary workaround to allow access to vm-inserted hidden fields, needed for constant pool resolution */
-		if (J2SE_SHAPE_RAW == J2SE_SHAPE(javaVM)) {
-			walkFlags |= J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN;
-		}
+		walkFlags |= J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN;
+#endif /* J9VM_IVE_RAW_BUILD */
 
 		/* walk all instance and static fields */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
