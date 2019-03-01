@@ -40,6 +40,22 @@ namespace TR { class Compilation; }
 namespace J9
 {
 
+struct MarshalledReloData
+   {
+   uintptrj_t data1;
+   uintptrj_t data2;
+
+   /* We need to set these fields to 0 so that if they are
+    * unused in a particular platform, they don't cause any
+    * issues because of the random value they may take on
+    * due to being uninitialized (eg, relo flags)
+    */
+   MarshalledReloData()
+      : data1(0),
+        data2(0)
+      {}
+   };
+
 class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnector
    {
    public:
@@ -49,6 +65,8 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
       OMR::AheadOfTimeCompileConnector(headerSizeMap, c)
       {
       }
+
+   virtual void marshalReloData(TR::IteratedExternalRelocation *relocation, MarshalledReloData &marshalledReloData) = 0;
 
    uint8_t* emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember);
    uintptr_t findCorrectInlinedSiteIndex(void *constantPool, uintptr_t currentInlinedSiteIndex);

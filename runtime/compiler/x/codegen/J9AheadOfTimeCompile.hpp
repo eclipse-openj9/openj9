@@ -50,6 +50,8 @@ class OMR_EXTENSIBLE AheadOfTimeCompile  : public J9::AheadOfTimeCompile
       {
       }
 
+   virtual void marshalReloData(TR::IteratedExternalRelocation *relocation, MarshalledReloData &marshalledReloData);
+
    virtual void     processRelocations();
    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 

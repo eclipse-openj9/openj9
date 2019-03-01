@@ -101,6 +101,21 @@ void J9::ARM::AheadOfTimeCompile::processRelocations()
       }
    }
 
+void
+J9::ARM::AheadOfTimeCompile::marshalReloData(TR::IteratedExternalRelocation *relocation, J9::MarshalledReloData &marshalledReloData)
+   {
+   TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
+
+   switch (kind)
+      {
+      default:
+         {
+         marshalledReloData.data1 = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
+         marshalledReloData.data2 = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2());
+         }
+      }
+   }
+
 uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR::Compilation* comp = TR::comp();
