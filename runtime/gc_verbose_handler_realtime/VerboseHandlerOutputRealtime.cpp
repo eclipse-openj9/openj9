@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -241,7 +241,7 @@ MM_VerboseHandlerOutputRealtime::writeHeartbeatData(MM_EnvironmentBase* env, U_6
 		enterAtomicReportingBlock();
 		writer->formatAndOutput(env, 0, "<gc-op %s>", tagTemplate);
 
-		U_64 maxQuantaTime = j9time_hires_delta(_verboseInitTimeStamp, _maxIncrementStartTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
+		U_64 maxQuantaTime = j9time_hires_delta(_heartbeatStartTime, _maxIncrementStartTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 		U_64 meanIncrementTime = _totalIncrementTime / _incrementCount;
 		const char *gcPhase = NULL;
 		if(incrementStartsInPreviousGCPhase()) {
