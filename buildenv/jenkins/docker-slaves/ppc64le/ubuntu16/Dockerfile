@@ -48,6 +48,7 @@ RUN apt-get update \
     autoconf \
     build-essential \
     curl \
+    libexpat1-dev `# This is being used for the xml parser` \
     g++-7 \
     gcc-7 \
     gdb \
