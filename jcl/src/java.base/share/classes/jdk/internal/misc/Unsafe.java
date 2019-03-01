@@ -32,6 +32,8 @@ import java.security.ProtectionDomain;
 import java.util.Objects;
 /*[IF Java12]*/
 import java.nio.ByteBuffer;
+import sun.nio.ch.DirectBuffer;
+import jdk.internal.ref.Cleaner;
 /*[ENDIF] Java12 */
 
 public final class Unsafe {
@@ -5832,10 +5834,35 @@ public final class Unsafe {
 
 /*[IF Java12]*/
 	/**
-	 * Stub for Java 12 compilation
+	 * If incoming ByteBuffer is an instance of sun.nio.ch.DirectBuffer,
+	 * and it is direct, and not a slice or duplicate,
+	 * if it has a cleaner, it is invoked,
+	 * otherwise an IllegalArgumentException is thrown
+	 * 
+	 * @param bbo a ByteBuffer object
+	 * @throws IllegalArgumentException as per decription above
 	 */
-	public void invokeCleaner(ByteBuffer arg) {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation"); //$NON-NLS-1$
+	public void invokeCleaner(ByteBuffer bbo) {
+		if (bbo instanceof DirectBuffer) {
+			if (bbo.isDirect()) {
+				DirectBuffer db = (DirectBuffer)bbo;
+				if (db.attachment() == null) {
+					Cleaner cleaner = db.cleaner();
+					if (cleaner != null) {
+						cleaner.clean();
+					}
+				} else {
+					/*[MSG "K0706", "This DirectBuffer object is a slice or duplicate"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0706")); //$NON-NLS-1$
+				}
+			} else {
+				/*[MSG "K0705", "This DirectBuffer object is not direct"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0705")); //$NON-NLS-1$
+			}
+		} else {
+			/*[MSG "K0704", "A sun.nio.ch.DirectBuffer object is expected"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0704")); //$NON-NLS-1$
+		}
 	}
 /*[ENDIF] Java12 */
 
