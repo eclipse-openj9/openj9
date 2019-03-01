@@ -1916,6 +1916,8 @@ J9::Options::fePreProcess(void * base)
             }
          }
       }
+   if (!TR::Compiler->target.cpu.isZ())
+      self()->setOption(TR_DisableAOTBytesCompression);
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
    self()->setOption(TR_EnableSymbolValidationManager);
