@@ -447,17 +447,11 @@ def get_date() {
 def set_test_variables() {
     set_release()
     set_jdk_folder()
-    
-    if ( SPEC ==~ /.*valhalla.*/) {
-        JAVA_VERSION = "Valhalla"
-    } else {
-        JAVA_VERSION = "SE" + "${SDK_VERSION}" + "0"
-    }
     TEST_DEPENDENCIES_JOB_NAME = VARIABLES.test_dependencies_job_name
 }
 
 /*
-* Set TESTS_TARGETS, indicating the level of testing. 
+* Set TESTS_TARGETS, indicating the level of testing.
 */
 def set_test_targets() {
     TESTS_TARGETS = params.TESTS_TARGETS
