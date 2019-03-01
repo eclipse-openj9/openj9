@@ -43,7 +43,9 @@ RUN yum -y update \
     cups-devel \
     cmake \
     cpio \
+    curl-devel `# This is being used for git` \
     elfutils-libelf-devel \
+    expat-devel `# This is being used for the xml parser and git` \
     file-devel \
     file-libs \
     flex \
@@ -51,6 +53,7 @@ RUN yum -y update \
     fontconfig-devel \
     freetype-devel \
     gettext \
+    gettext-devel `# This is being used for git` \
     glibc \
     glibc-common \
     glibc-devel \
@@ -69,12 +72,13 @@ RUN yum -y update \
     mpfr-devel \
     numactl-devel \
     ntp \
-    openssl-devel \
+    openssl-devel `# This is being used in git` \
     openssh-server \
     openssh-clients \
     perl-CPAN \
     perl-DBI \
     perl-devel \
+    perl-ExtUtils-MakeMaker `# This is being used for git` \
     perl-GD \
     perl-libwww-perl \
     perl-Time-HiRes \
@@ -84,6 +88,7 @@ RUN yum -y update \
     xorg-x11-server-Xvfb \
     xz \
     zip \
+    zlib-devel `# This is being used for git` \
     libdwarf-devel \
   && yum clean all
 
@@ -119,16 +124,7 @@ RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm XML::Parser
   
 #Building and setting up git version 2.5.3
-RUN yum -y update \
-  && yum -y install \
-    curl-devel \
-    expat-devel \
-    gettext-devel \
-    openssl-devel \
-    zlib-devel \
-    perl-ExtUtils-MakeMaker \
-  && yum clean all \
-  && cd /usr/src \
+RUN cd /usr/src \
   && wget https://www.kernel.org/pub/software/scm/git/git-2.5.3.tar.gz \
   && tar xzf git-2.5.3.tar.gz \
   && rm git-2.5.3.tar.gz \
