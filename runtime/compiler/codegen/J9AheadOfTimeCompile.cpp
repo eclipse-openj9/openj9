@@ -164,6 +164,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
    TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
 
+   J9::MarshalledReloData marshalledReloData;
+   self()->marshalReloData(relocation, marshalledReloData);
+
    // initializeCommonAOTRelocationHeader is currently in the process
    // of becoming the canonical place to initialize the platform agnostic
    // relocation headers; new relocation records' header should be
@@ -175,15 +178,15 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
-         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
-         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2()));
+         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(marshalledReloData.data1));
+         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptrj_t>(marshalledReloData.data2));
          }
          break;
 
       case TR_HelperAddress:
          {
          TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
-         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(marshalledReloData.data1);
 
          haRecord->setEipRelative(reloTarget);
          haRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
@@ -210,14 +213,14 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_RelocationRecordMethodCallAddress *mcaRecord = reinterpret_cast<TR_RelocationRecordMethodCallAddress *>(reloRecord);
 
          mcaRecord->setEipRelative(reloTarget);
-         mcaRecord->setAddress(reloTarget, relocation->getTargetAddress());
+         mcaRecord->setAddress(reloTarget, marshalledReloData.data1);
          }
          break;
 
       case TR_AbsoluteHelperAddress:
          {
          TR_RelocationRecordAbsoluteHelperAddress *ahaRecord = reinterpret_cast<TR_RelocationRecordAbsoluteHelperAddress *>(reloRecord);
-         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(marshalledReloData.data1);
 
          ahaRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
          }
@@ -228,8 +231,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_StaticRamMethodConst:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
-         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
-         uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2());
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(marshalledReloData.data1);
+         uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(marshalledReloData.data2);
 
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
