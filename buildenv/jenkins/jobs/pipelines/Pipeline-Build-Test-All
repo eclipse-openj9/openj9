@@ -121,13 +121,14 @@ OPENJDK_SHA = [:]
 
 BUILD_SPECS = [:]
 builds = [:]
+pipelineNames = []
 
 timeout(time: 12, unit: 'HOURS') {
     timestamps {
         node(SETUP_LABEL) {
             try {
                 checkout scm
-                def variableFile = load 'buildenv/jenkins/common/variables-functions'
+                variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
                 BUILD_SPECS.putAll(variableFile.get_specs(SPECS))
@@ -146,6 +147,9 @@ timeout(time: 12, unit: 'HOURS') {
 
                 BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
                     SDK_VERSIONS.each { SDK_VERSION ->
+                        def job_name = get_pipeline_name(SPEC, SDK_VERSION)
+                        pipelineNames.add(job_name)
+
                         // set OpenJDK repos and branch for the downstream build
                         def REPO = OPENJDK_REPO.get(SDK_VERSION).get(SPEC)
                         def BRANCH = OPENJDK_BRANCH.get(SDK_VERSION).get(SPEC)
@@ -172,7 +176,6 @@ timeout(time: 12, unit: 'HOURS') {
                             ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
                         }
 
-                        def job_name = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
                         if (AUTOMATIC_GENERATION != 'false'){
                             variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
                         }
@@ -185,25 +188,32 @@ timeout(time: 12, unit: 'HOURS') {
                 cleanWs notFailBuild: true, disableDeferredWipeout: false
             }
         }
+        try {
+            // launch all pipeline builds
+            parallel builds
 
-        // launch all pipeline builds
-        parallel builds
-
-        if (params.PROMOTE_OMR) {
-            stage('Promote') {
-                ghprbGhRepository = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('.com') +5, OPENJ9_REPO.indexOf('.git'))
-                ghprbActualCommit = SHAS['OPENJ9']
-                GITHUB_SERVER = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('github.'), OPENJ9_REPO.indexOf('.com') +4)
-                PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9', ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
-                                                        [string(name: 'OMR_COMMIT', value: "${SHAS['OMR']}"),
-                                                        string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}")])
+            if (params.PROMOTE_OMR) {
+                stage('Promote') {
+                    ghprbGhRepository = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('.com') +5, OPENJ9_REPO.indexOf('.git'))
+                    ghprbActualCommit = SHAS['OPENJ9']
+                    GITHUB_SERVER = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('github.'), OPENJ9_REPO.indexOf('.com') +4)
+                    PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9', ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
+                                                            [string(name: 'OMR_COMMIT', value: "${SHAS['OMR']}"),
+                                                            string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}")])
+                }
+            }
+        } finally {
+            // add summary badge
+            table = get_summary_table()
+            if (table) {
+                manager.createSummary("plugin.png").appendText(table)
             }
         }
     }
 }
 
-def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) {
 
+def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) {
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -287,4 +297,67 @@ def get_value_by_spec(map, release, spec) {
         return map.get(release).get(spec)
     }
     return ''
+}
+
+def get_pipeline_name(spec, version) {
+    return "Pipeline-Build-Test-JDK${version}-${spec}"
+}
+
+/*
+* Returns an HTML summary table for the downstream builds.
+*/
+def get_summary_table() {
+    def builds = buildFile.get_downstream_builds(currentBuild, pipelineNames)
+    if (builds.isEmpty()) {
+        return ''
+    }
+
+    def buildReleases = variableFile.get_build_releases(BUILD_SPECS)
+    def specShortNames = ['aix_ppc-64_cmprssptrs'          : 'aix-ppc64',
+                          'linux_390-64_cmprssptrs'        : 'linux-s390x',
+                          'linux_ppc-64_cmprssptrs_le'     : 'linux-ppc64le',
+                          'linux_x86-64'                   : 'linux-x64-XL',
+                          'linux_x86-64_cmprssptrs'        : 'linux-x64',
+                          'linux_x86-64_cmprssptrs_cmake'  : 'linux-x64-CM',
+                          'win_x86'                        : 'win-x32',
+                          'win_x86-64_cmprssptrs'          : 'win-x64',
+                          'zos_390-64_cmprssptrs'          : 'zos-390',
+                          'osx_x86-64'                     : 'osx-x64-XL',
+                          'osx_x86-64_cmprssptrs'          : 'osx-x64']
+
+    def headerCols = ['Platform']
+    headerCols.addAll(buildReleases)
+
+    // summary table
+    def summaryText = "Downstream Jobs Status:<br/>"
+    summaryText += "<table>"
+
+    // table header
+    summaryText += "<tr>"
+    headerCols.each { it ->
+        summaryText += "<th>${it}</th>"
+    }
+    summaryText += "</tr>"
+
+    // table body
+    summaryText += "<tbody>"
+    for (spec in BUILD_SPECS.keySet().sort()){
+        // table row
+        summaryText += "<tr>"
+        summaryText += "<td>${specShortNames[spec]}</td>"
+
+        buildReleases.each { release ->
+            // table cell
+            def pipelineName = get_pipeline_name(spec, release)
+            def build = builds.get(pipelineName)
+            def statusLink = buildFile.get_build_embedded_status_link(build)
+
+            summaryText += "<td>${statusLink}</td>"
+        }
+        summaryText += "</tr>"
+    }
+    summaryText += "</tbody>"
+    summaryText += "</table>"
+
+    return summaryText
 }

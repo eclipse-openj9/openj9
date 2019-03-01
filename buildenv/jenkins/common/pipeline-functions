@@ -342,7 +342,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
-        def TARGET_NAMES = []
+        def TARGET_NAMES = get_test_target_names()
 
         if (SHAS['VENDOR_TEST']) {
             // the downstream job is expecting comma separated SHAs
@@ -351,20 +351,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         }
 
         echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
-
-        def targets = TESTS_TARGETS.split(",")
-        targets.each { target ->
-            switch (target.trim().toLowerCase()) {
-                case "_sanity":
-                    TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
-                    break
-                case "_extended":
-                    TARGET_NAMES.addAll(["extended.functional", "extended.system"])
-                    break
-                default:
-                    TARGET_NAMES.add(target.trim())
-            }
-        }
 
         // Determine if Build job archived to Artifactory
         def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
@@ -384,7 +370,8 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 name -= '+jitaas'
                 TEST_FLAG = 'JITAAS'
             }
-            def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
+            def TEST_JOB_NAME = get_test_job_name(name, SPEC, SDK_VERSION)
+
             testjobs["${TEST_JOB_NAME}"] = {
                 if (ARTIFACTORY_CREDS) {
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
@@ -398,6 +385,83 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     // return jobs for further reference
     return jobs
+}
+
+def get_test_target_names() {
+    def targetNames = []
+    def targets = TESTS_TARGETS.split(",")
+
+    targets.each { target ->
+        switch (target.trim().toLowerCase()) {
+            case "_sanity":
+                targetNames.addAll(["sanity.functional", "sanity.system"])
+                break
+            case "_extended":
+                targetNames.addAll(["extended.functional", "extended.system"])
+                break
+            default:
+                targetNames.add(target.trim())
+        }
+    }
+
+    return targetNames
+}
+
+def get_build_job_name(spec, version) {
+    return "Build-JDK${version}-${spec}"
+}
+
+def get_test_job_name(targetName, spec, version) {
+    return "Test-${targetName}-JDK${version}-${spec}"
+}
+
+/*
+* Finds the downstream builds of a build.
+* Limits the search only to the downstream builds with given names.
+* Returns a map of builds.
+*/
+def get_downstream_builds(upstreamBuild, downstreamJobNames) {
+    def downstreamBuilds = [:]
+    def pattern = /.*${upstreamBuild.projectName}.*${upstreamBuild.number}.*/
+    def startTime = System.currentTimeMillis()
+
+    for (name in downstreamJobNames.sort()) {
+        def job = Jenkins.getInstance().getItemByFullName(name)
+        if (job) {
+            def builds = [:]
+            //find downstream jobs
+            for (build in job.getBuilds().byTimestamp(upstreamBuild.startTimeInMillis, System.currentTimeMillis())) {
+                if ((build && build.getCause(hudson.model.Cause.UpstreamCause) && build.getCause(hudson.model.Cause.UpstreamCause).upstreamRun)
+                    && (build.getCause(hudson.model.Cause.UpstreamCause).upstreamRun==~pattern)) {
+                        // cache all builds (in case of multiple runs)
+                        builds.put(build.getNumber(), build)
+                }
+            }
+
+            // fetch last build
+            if (!builds.isEmpty()) {
+                lastBuildId = builds.keySet().max()
+                downstreamBuilds.put(name, builds.get(lastBuildId))
+            }
+        }
+    }
+
+    elapsedTime = (System.currentTimeMillis() - startTime)/1000
+    echo "Time spent fetching downstream jobs: ${elapsedTime} seconds"
+
+    return downstreamBuilds
+}
+
+/*
+* Returns the build status icon.
+* Requires Embeddable Build Status plugin.
+*/
+def get_build_embedded_status_link(build) {
+    if (build) {
+        def buildLink = "${JENKINS_URL}${build.getUrl()}"
+        return "<a href=\"${buildLink}\"><img src=\"${buildLink}badge/icon\"></a>"
+    }
+    return ''
 }
 
 return this
