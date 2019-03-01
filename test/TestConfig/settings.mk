@@ -75,6 +75,9 @@ endif
 ifeq ($(JAVA_VERSION), SE120)
 	JDK_VERSION:=12
 endif
+ifeq ($(JAVA_VERSION), SE130)
+	JDK_VERSION:=13
+endif
 
 ifndef JDK_VERSION
 	export JDK_VERSION:=8
@@ -95,21 +98,7 @@ endif
 
 
 ifndef JVM_VERSION
-ifeq ($(JDK_VERSION), 8)
-	OPENJDK_VERSION = openjdk8
-endif
-ifeq ($(JDK_VERSION), 9)
-	OPENJDK_VERSION = openjdk9
-endif
-ifeq ($(JDK_VERSION), 10)
-	OPENJDK_VERSION = openjdk10
-endif
-ifeq ($(JDK_VERSION), 11)
-	OPENJDK_VERSION = openjdk11
-endif
-ifeq ($(JDK_VERSION), 12)
-	OPENJDK_VERSION = openjdk12
-endif
+	OPENJDK_VERSION = openjdk$(JDK_VERSION)
 
 ifeq (hotspot, $(JDK_IMPL))
 	JVM_VERSION = $(OPENJDK_VERSION)

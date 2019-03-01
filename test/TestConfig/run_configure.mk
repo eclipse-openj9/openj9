@@ -57,6 +57,9 @@ endif
 ifeq ($(JAVA_VERSION), SE120)
 	JDK_VERSION:=12
 endif
+ifeq ($(JAVA_VERSION), SE130)
+	JDK_VERSION:=13
+endif
 
 ifndef JDK_VERSION
 export JDK_VERSION:=8
