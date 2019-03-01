@@ -451,3 +451,4 @@ J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int
    {
    return comp->fej9()->getVFTEntry(clazz, offset);
    }
+

@@ -1461,6 +1461,14 @@ TR_J9ServerVM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType a
    return it->second;
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromCP, cp);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
 void
 TR_J9ServerVM::reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
 {
@@ -1501,6 +1509,14 @@ TR_J9ServerVM::isStringCompressionEnabledVM()
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
    return vmInfo->_stringCompressionEnabled;
+   }
+
+J9ROMMethod *
+TR_J9ServerVM::getROMMethodFromRAMMethod(J9Method *ramMethod)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getROMMethodFromRAMMethod, ramMethod);
+   return std::get<0>(stream->read<J9ROMMethod *>());
    }
 
 bool
@@ -2215,4 +2231,45 @@ TR_J9SharedCacheServerVM::getClassFromNewArrayType(int32_t arrayType)
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       return TR_J9ServerVM::getClassFromNewArrayType(arrayType);
    return NULL;
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheServerVM::getMethodFromName(char *className, char *methodName, char *signature)
+   {
+   // The TR_J9VM version of this method implicitly creates SVM record during AOT compilation.
+   // The TR_J9ServerVM version doesn't account for that, so need to override it
+   // The downside is that this results in 2 remote calls, instead of 1.
+   return TR_J9VM::getMethodFromName(className, methodName, signature);
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
+   {
+   TR_OpaqueMethodBlock *ramMethod = TR_J9ServerVM::getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addVirtualMethodFromOffsetRecord(ramMethod, classObject, virtualCallOffset, ignoreRtResolve))
+         return NULL;
+      }
+
+   return ramMethod;
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheServerVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+   {
+   TR_OpaqueMethodBlock *ramMethod = TR_J9ServerVM::getResolvedInterfaceMethod(interfaceMethod, classObject, cpIndex);
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addInterfaceMethodFromCPRecord(ramMethod,
+                                                                              (TR_OpaqueClassBlock *) TR_J9VM::getClassFromMethodBlock(interfaceMethod),
+                                                                              classObject,
+                                                                              cpIndex))
+         {
+         return NULL;
+         }
+      }
+   return ramMethod;
    }

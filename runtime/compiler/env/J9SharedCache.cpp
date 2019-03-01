@@ -772,6 +772,16 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
    return classChainOffsetInSharedCache;
    }
 
+const void *
+TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
+   {
+   return _sharedCacheConfig->storeSharedData(
+         vmThread,
+         key,
+         strlen(key),
+         descriptor);
+   }
+
 TR_J9JITaaSServerSharedCache::TR_J9JITaaSServerSharedCache(TR_J9VMBase *fe)
    : TR_J9SharedCache(fe)
    {
@@ -828,4 +838,14 @@ TR_J9JITaaSServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theH
    TR_ASSERT(_stream, "stream must be initialized by now");
    _stream->write(JITaaS::J9ServerMessageType::SharedCache_addHint, method, theHint);
    _stream->read<JITaaS::Void>();
+   }
+
+const void *
+TR_J9JITaaSServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
+   {
+   TR_ASSERT(_stream, "stream must be initialized by now");
+   std::string dataStr((char *) descriptor->address, descriptor->length);
+
+   _stream->write(JITaaS::J9ServerMessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
+   return std::get<0>(_stream->read<const void *>());
    }

@@ -265,6 +265,14 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
       if (std::get<2>(recv) && unresolvedInCP)
          *unresolvedInCP = false;
 
+      bool createResolvedMethod = true;
+
+      if (comp->compileRelocatableCode() && ramMethod && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         if (!comp->getSymbolValidationManager()->addVirtualMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
+            createResolvedMethod = false;
+         }
+
       if (vTableIndex)
          {
          TR_AOTInliningStats *aotStats = nullptr;
@@ -274,7 +282,8 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo = std::get<3>(recv);
          
          // call constructor without making a new query
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats, methodInfo);
+         if (createResolvedMethod)
+            resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats, methodInfo);
          }
       }
 
@@ -448,6 +457,12 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
    if (unresolvedInCP)
       *unresolvedInCP = std::get<2>(recv);
 
+   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && ramMethod)
+      {
+      if (!comp->getSymbolValidationManager()->addStaticMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
+         ramMethod = NULL;
+      }
+
    bool skipForDebugging = false;
    if (isArchetypeSpecimen())
       {
@@ -509,11 +524,18 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
 
    if (tookBranch && ramMethod)
       {
+      bool createResolvedMethod = true;
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         if (!comp->getSymbolValidationManager()->addSpecialMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
+            createResolvedMethod = false;
+         }
       auto methodInfo = std::get<3>(recv);
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
-      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
+      if (createResolvedMethod)
+         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
       if (unresolvedInCP)
          *unresolvedInCP = false;
       }
@@ -579,7 +601,15 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA 
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_2, _remoteMirror, cpIndex);
    auto recv = _stream->read<TR_OpaqueClassBlock *, UDATA>();
    *pITableIndex = std::get<1>(recv);
-   return std::get<0>(recv);
+   auto result = std::get<0>(recv);
+
+   auto comp = _fe->_compInfoPT->getCompilation();
+   if (comp && comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addClassFromITableIndexCPRecord(result, cp(), cpIndex))
+         result = NULL;
+      }
+   return result;
    }
 
 TR_ResolvedMethod *
@@ -588,12 +618,24 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * co
    TR_ResolvedMethod *resolvedMethod = nullptr;
    if (getCachedResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, &resolvedMethod, nullptr))
       return resolvedMethod;
-
+   
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
    auto recv = _stream->read<bool, J9Method*, TR_ResolvedJ9JITaaSServerMethodInfo>();
    bool resolved = std::get<0>(recv);
    J9Method *ramMethod = std::get<1>(recv);
    auto &methodInfo = std::get<2>(recv);
+
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *) ramMethod,
+                                                                              (TR_OpaqueClassBlock *) ((TR_J9VM *) _fe)->getClassFromMethodBlock(getPersistentIdentifier()),
+                                                                              classObject,
+                                                                              cpIndex))
+         {
+         return NULL;
+         }
+      }
+
 
    // If the method ref is unresolved, the bytecodes of the ramMethod will be NULL.
    // IFF resolved, then we can look at the rest of the ref.
@@ -655,13 +697,20 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilat
       auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
       auto j9method = std::get<0>(recv);
       auto methodInfo = std::get<1>(recv);
-      if (j9method == nullptr)
-         return nullptr;
+
+      if (comp->getOption(TR_UseSymbolValidationManager) && j9method)
+         {
+         if (!comp->getSymbolValidationManager()->addImproperInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *)j9method, cp(), cpIndex))
+            j9method = NULL;
+         }
+
+      if (j9method == NULL)
+         return NULL;
       else
-         return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, nullptr, nullptr, methodInfo);
+         return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, NULL, NULL, methodInfo);
       }
 
-   return nullptr;
+   return NULL;
 #endif
    }
 
@@ -1417,8 +1466,16 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
 void
 TR_ResolvedJ9JITaaSServerMethod::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod* resolvedMethod, bool *unresolvedInCP)
    {
-   if(!_useCaching)
+   if (!_useCaching)
       return;
+   TR::Compilation *comp = _fe->_compInfoPT->getCompilation();
+   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && comp->getSymbolValidationManager()->inHeuristicRegion())
+      // Problem: If inside of heuristic region, will not create SVM record, so if the same resolved method is queried again,
+      // but outside of heuristic region, we would return cached pointer and not create the validation record, which is wrong.
+      // Temporary solution: don't cache resolved methods if in heuristic region
+      // In a later change should fix it properly by creating SVM record even if retrieved it from cache.
+      return;
+
    TR_ASSERT(_resolvedMethodsCache.find(key) == _resolvedMethodsCache.end(), "Should not cache the same method twice");
 
    _resolvedMethodsCache.insert({key, {resolvedMethod, unresolvedInCP ? *unresolvedInCP : false}});

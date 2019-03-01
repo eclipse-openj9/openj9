@@ -8345,6 +8345,18 @@ TR_J9VM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType address
    return data;
    }
 
+TR_OpaqueClassBlock *
+TR_J9VM::getClassFromCP(J9ConstantPool *cp)
+   {
+   return reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
+   }
+
+J9ROMMethod *
+TR_J9VM::getROMMethodFromRAMMethod(J9Method *ramMethod)
+   {
+   return J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+   }
+
 //////////////////////////////////////////////////////////
 // TR_J9SharedCacheVM
 //////////////////////////////////////////////////////////

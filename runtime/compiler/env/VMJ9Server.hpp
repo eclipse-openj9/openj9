@@ -170,6 +170,8 @@ public:
    virtual intptrj_t methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override;
    virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz) override;
    virtual bool isStringCompressionEnabledVM() override;
+   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp) override;
+   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod) override;
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
@@ -256,6 +258,9 @@ public:
    virtual void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize) { TR_ASSERT(0, "persistThunk should not be called on the server"); return NULL; }
    virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength) override { TR_ASSERT(0, "findPersistentThunk should not be called on the server"); return NULL; }
    virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
+   virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature) override;
+   virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true) override;
+   virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
 
    };
 

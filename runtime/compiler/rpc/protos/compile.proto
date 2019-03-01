@@ -215,6 +215,8 @@ enum J9ServerMessageType
    VM_isAnonymousClass = 302;
    VM_dereferenceStaticAddress = 303;
    VM_getClassFromNewArrayTypeNonNull = 304;
+   VM_getClassFromCP = 305;
+   VM_getROMMethodFromRAMMethod = 306;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;
@@ -246,6 +248,7 @@ enum J9ServerMessageType
    SharedCache_getClassChainOffsetInSharedCache = 600;
    SharedCache_rememberClass = 601;
    SharedCache_addHint = 602;
+   SharedCache_storeSharedData = 603;
 
    // For runFEMacro
    runFEMacro_invokeCollectHandleNumArgsToCollect = 700;
