@@ -677,9 +677,9 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	J9JavaVMArgInfo *optArg = NULL;
 	
 	PORT_ACCESS_FROM_PORT(portLib);
-	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
-		Assert_Util_unreachable();
-	}
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+	Assert_Util_unreachable();
+#endif /* J9VM_IVE_RAW_BUILD */
 
 	argumentLength = sizeof(VMOPT_XJCL_COLON) + dllNameLength - 1; /* sizeof called twice, each includes the \0 */
 	argString = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);

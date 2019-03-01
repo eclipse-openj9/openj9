@@ -411,18 +411,16 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 		return JNI_ERR;
 	}
 
-#if defined(J9VM_OPT_METHOD_HANDLE)
-	if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
-		clazz = (*env)->FindClass(env, "java/lang/invoke/MethodHandles$Lookup");
-		if (NULL == clazz) {
-			return JNI_ERR;
-		}
-		VM.jliMethodHandles_Lookup_checkSecurity = (*env)->GetMethodID(env, clazz, "checkSecurity", "(Ljava/lang/Class;Ljava/lang/Class;I)V");
-		if (NULL == VM.jliMethodHandles_Lookup_checkSecurity) {
-			return JNI_ERR;
-		}
+#if defined(J9VM_OPT_METHOD_HANDLE) && !defined(J9VM_IVE_RAW_BUILD) /* J9VM_IVE_RAW_BUILD is not enabled by default */
+	clazz = (*env)->FindClass(env, "java/lang/invoke/MethodHandles$Lookup");
+	if (NULL == clazz) {
+		return JNI_ERR;
 	}
-#endif
+	VM.jliMethodHandles_Lookup_checkSecurity = (*env)->GetMethodID(env, clazz, "checkSecurity", "(Ljava/lang/Class;Ljava/lang/Class;I)V");
+	if (NULL == VM.jliMethodHandles_Lookup_checkSecurity) {
+		return JNI_ERR;
+	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) && !defined(J9VM_IVE_RAW_BUILD) */
 	
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
@@ -587,12 +585,12 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 			if (walkState->userData2 != NULL) {
 				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(currentClass);
 #if defined(J9VM_OPT_METHOD_HANDLE)
-				if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
-					/* check for non-static MethodHandles$Lookup methods */
-					if (walkState->method == ((J9JNIMethodID*)VM.jliMethodHandles_Lookup_checkSecurity)->method) {
-						walkState->userData3 = (void*)(n + 2);
-					}
+#ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+				/* check for non-static MethodHandles$Lookup methods */
+				if (walkState->method == ((J9JNIMethodID*)VM.jliMethodHandles_Lookup_checkSecurity)->method) {
+					walkState->userData3 = (void*)(n + 2);
 				}
+#endif /* !J9VM_IVE_RAW_BUILD */
 				if (walkState->userData3 == walkState->userData1) {
 					J9VMThread *walkThread = walkState->walkThread;
 					J9Class *accessClass = walkThread->methodHandlesLookupAccessClass;

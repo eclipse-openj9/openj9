@@ -1823,13 +1823,13 @@ nativeOOM:
 
 		/* Initialize class object and link the object and the J9Class. */
 		if (state->classObject != NULL) {
-			if (J2SE_SHAPE_RAW != J2SE_SHAPE(javaVM)) {
-				j9object_t protectionDomain = NULL;
+#ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+			j9object_t protectionDomain = NULL;
 
-				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, state->classObject, classLoader->classLoaderObject);
-				protectionDomain = (j9object_t)PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-				J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(vmThread, state->classObject, protectionDomain);
-			}
+			J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, state->classObject, classLoader->classLoaderObject);
+			protectionDomain = (j9object_t)PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+			J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(vmThread, state->classObject, protectionDomain);
+#endif /* !J9VM_IVE_RAW_BUILD */
 
 			/* Link J9Class and object after possible access barrier failures. */
 			J9VMJAVALANGCLASS_SET_VMREF(vmThread, state->classObject, state->ramClass);
