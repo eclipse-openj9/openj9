@@ -166,22 +166,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (relocation->getTargetKind())
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         //let the eip relative relocation bit for references to code addresses
-         TR::SymbolReference *tempSR =
-            (TR::SymbolReference *)relocation->getTargetAddress();
-
-         // final byte of header is the index which indicates the
-         // particular helper being relocated to
-         AOTcgDiag3(comp(), "TR_AbsoluteHelperAddress cursor=%x targetAddr=%x index=%x\n",
-                         wordAfterHeader, tempSR, tempSR->getReferenceNumber());
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor += 4;
-         }
-         break;
-
       case TR_MethodObject:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
@@ -215,10 +199,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
-      case TR_JNIVirtualTargetAddress:
-      case TR_StaticRamMethodConst:
       case TR_VirtualRamMethodConst:
       case TR_SpecialRamMethodConst:
          {
@@ -345,7 +326,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          break;
 
       case TR_AbsoluteMethodAddressOrderedPair:
-      case TR_BodyInfoAddress:
          break;
       case TR_ArrayCopyHelper:
          {
@@ -357,7 +337,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
-      case TR_Thunks:
          {
          // constant pool address is placed as the last word of the header
          if (TR::Compiler->target.is64Bit())

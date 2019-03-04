@@ -151,17 +151,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (relocation->getTargetKind())
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor += 4;
-         //printf("TR_Helper relo helperIndex: %d\n", tempSR->getReferenceNumber());
-         //printf("value at location: %d\n", *(uint32_t*)cursor);
-         }
-         break;
-
       case TR_GlobalValue:
          *(uintptrj_t*)cursor = (uintptr_t) relocation->getTargetAddress();
          cursor += SIZEPOINTER;
@@ -388,10 +377,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
          }
          break;
-      case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
-      case TR_JNIVirtualTargetAddress:
-      case TR_StaticRamMethodConst:
       case TR_VirtualRamMethodConst:
       case TR_SpecialRamMethodConst:
          {
@@ -521,12 +507,9 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
       case TR_AbsoluteMethodAddressOrderedPair:
          break;
-      case TR_BodyInfoAddress:
-         break;
 
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
-      case TR_Thunks:
          {
          // Note: thunk relos should only be created for 64 bit
          *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index

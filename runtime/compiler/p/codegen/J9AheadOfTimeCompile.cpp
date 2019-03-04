@@ -156,18 +156,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();
-
-         // final byte of header is the index which indicates the
-         // particular helper being relocated to
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor +=4;
-         }
-         break;
-
       case TR_MethodObject:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
@@ -203,10 +191,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          }
          break;
-      case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
-      case TR_JNIVirtualTargetAddress:
-      case TR_StaticRamMethodConst:
       case TR_VirtualRamMethodConst:
       case TR_SpecialRamMethodConst:
          {
@@ -363,8 +348,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
 
-      case TR_BodyInfoAddress:
-         break;
       case TR_BodyInfoAddressLoad:
          {
          if (TR::Compiler->target.is64Bit())
@@ -407,7 +390,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
 
       case TR_Trampolines:
-      case TR_Thunks:
          {
          // constant pool address is placed as the last word of the header
          if (TR::Compiler->target.is64Bit())
