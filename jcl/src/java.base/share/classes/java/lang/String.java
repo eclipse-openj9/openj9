@@ -6066,36 +6066,41 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char[] s1Value = s1.value;
 			char[] s2Value = s2.value;
 
-			if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
-				// both s1 and s2 are compressed
-				return helpers.intrinsicIndexOfStringLatin1(s1Value, s1len, s2Value, s2len, start);
-			} else if (s1.count < 0 && s2.count < 0) {
-				// both s1 and s2 are decompressed
-				return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
-			} else {
-				// s1 decompressed and s2 compressed
-				char firstChar = s2.charAtInternal(0, s2Value);
+			if (enableCompression) {
+				if (null == compressionFlag || (s1.count | s2.count) >= 0) {
+					// Both s1 and s2 are compressed.
+					return helpers.intrinsicIndexOfStringLatin1(s1Value, s1len, s2Value, s2len, start);
+				} else if ((s1.count & s2.count) < 0) {
+					// Both s1 and s2 are decompressed.
+					return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
+				} else {
+					// Mixed case.
+					char firstChar = s2.charAtInternal(0, s2Value);
 
-				while (true) {
-					int i = indexOf(firstChar, start);
+					while (true) {
+						int i = indexOf(firstChar, start);
 
-					// Handles subCount > count || start >= count
-					if (i == -1 || s2len + i > s1len) {
-						return -1;
+						// Handles subCount > count || start >= count.
+						if (i == -1 || s2len + i > s1len) {
+							return -1;
+						}
+
+						int o1 = i;
+						int o2 = 0;
+
+						while (++o2 < s2len && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value))
+							;
+
+						if (o2 == s2len) {
+							return i;
+						}
+
+						start = i + 1;
 					}
-
-					int o1 = i;
-					int o2 = 0;
-
-					while (++o2 < s2len && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value))
-						;
-
-					if (o2 == s2len) {
-						return i;
-					}
-
-					start = i + 1;
 				}
+			} else {
+				// Both s1 and s2 are decompressed.
+				return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
 			}
 		} else {
 			return start < s1len ? start : s1len;
