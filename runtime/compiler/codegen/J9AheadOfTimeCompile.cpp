@@ -171,6 +171,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
    switch (kind)
       {
       case TR_ConstantPool:
+      case TR_Thunks:
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
@@ -198,6 +199,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_AbsoluteMethodAddress:
+      case TR_BodyInfoAddress:
          {
          // Nothing to do
          }
@@ -209,6 +211,32 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          mcaRecord->setEipRelative(reloTarget);
          mcaRecord->setAddress(reloTarget, relocation->getTargetAddress());
+         }
+         break;
+
+      case TR_AbsoluteHelperAddress:
+         {
+         TR_RelocationRecordAbsoluteHelperAddress *ahaRecord = reinterpret_cast<TR_RelocationRecordAbsoluteHelperAddress *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+
+         ahaRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
+         }
+         break;
+
+      case TR_JNIVirtualTargetAddress:
+      case TR_JNIStaticTargetAddress:
+      case TR_StaticRamMethodConst:
+         {
+         TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2());
+
+         void *constantPool = symRef->getOwningMethod(comp)->constantPool();
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
+
+         cpiRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         cpiRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(constantPool));
+         cpiRecord->setCpIndex(reloTarget, symRef->getCPIndex());
          }
          break;
 
@@ -252,6 +280,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
    switch (kind)
       {
       case TR_ConstantPool:
+      case TR_Thunks:
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
@@ -283,6 +312,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_RelativeMethodAddress:
       case TR_AbsoluteMethodAddress:
+      case TR_BodyInfoAddress:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
@@ -293,6 +323,40 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          TR_RelocationRecordMethodCallAddress *mcaRecord = reinterpret_cast<TR_RelocationRecordMethodCallAddress *>(reloRecord);
          traceMsg(self()->comp(), "\n Method Call Address: address=" POINTER_PRINTF_FORMAT, mcaRecord->address(reloTarget));
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         }
+         break;
+
+      case TR_AbsoluteHelperAddress:
+         {
+         TR_RelocationRecordAbsoluteHelperAddress *ahaRecord = reinterpret_cast<TR_RelocationRecordAbsoluteHelperAddress *>(reloRecord);
+
+         uint32_t helperID = ahaRecord->helperID(reloTarget);
+
+         traceMsg(self()->comp(), "%-6d", helperID);
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
+            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            }
+         }
+         break;
+
+      case TR_JNIVirtualTargetAddress:
+      case TR_JNIStaticTargetAddress:
+      case TR_StaticRamMethodConst:
+         {
+         TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d",
+                                     getNameForMethodRelocation(kind),
+                                     cpiRecord->inlinedSiteIndex(reloTarget),
+                                     cpiRecord->constantPool(reloTarget),
+                                     cpiRecord->cpIndex(reloTarget));
+            }
          }
          break;
 
@@ -459,19 +523,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
-         case TR_AbsoluteHelperAddress:
-            // final byte of header is the index which indicates the particular helper being relocated to
-            cursor++;
-            ep1 = cursor;
-            cursor += 4;
-            traceMsg(self()->comp(), "%-6d", *(uint32_t *)ep1);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            if (isVerbose)
-               {
-               tempSR = self()->comp()->getSymRefTab()->getSymRef(*(int32_t*)ep1);
-               traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(tempSR), *(int32_t*)ep1);
-               }
-            break;
          case TR_AbsoluteMethodAddressOrderedPair:
             // Reference to the current method, no other information
             cursor++;
@@ -590,7 +641,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
-         case TR_BodyInfoAddress:
          case TR_BodyInfoAddressLoad:
          case TR_ArrayCopyHelper:
          case TR_ArrayCopyToc:
@@ -600,32 +650,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                cursor +=4;      // padding
                }
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            break;
-         case TR_Thunks:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined site index %d, constant pool %x", *(int64_t*)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined site index %d, constant pool %x", *(int32_t*)ep1, *(uint32_t *)ep2);
-                  }
-               }
             break;
          case TR_J2IVirtualThunkPointer:
             cursor++;        // unused field
@@ -1083,12 +1107,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
 
             break;
-         case TR_JNIVirtualTargetAddress:
-         case TR_JNIStaticTargetAddress:
          case TR_JNISpecialTargetAddress:
          case TR_VirtualRamMethodConst:
          case TR_SpecialRamMethodConst:
-         case TR_StaticRamMethodConst:
             cursor++;
             if (is64BitTarget)
                cursor += 4;     // padding

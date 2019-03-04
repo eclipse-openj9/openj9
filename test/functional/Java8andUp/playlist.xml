@@ -999,6 +999,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+    <variations>
+      <variation>'-Xjit:{*Test_JITHelpers*}(count=0)'</variation>
+    </variations>
 	</test>
 
 	<test>
@@ -1019,6 +1022,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+    <variations>
+      <variation>'-Xjit:{*Test_JITHelpers*}(count=0)'</variation>
+    </variations>
 	</test>
 
 	<test>
