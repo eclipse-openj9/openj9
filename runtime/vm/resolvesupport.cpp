@@ -887,6 +887,8 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 			targetClass = resolvedClass;
 			goto illegalAccess;
 		}
+		/* Reset checkResult to the default error case */
+		checkResult = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 
 		/* Get the field address. */
 		nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
