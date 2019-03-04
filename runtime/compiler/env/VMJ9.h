@@ -276,7 +276,6 @@ public:
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
    static TR_Processor getPPCProcessorType();
    virtual bool getPPCSupportsVSXRegisters();
-   static void initializeX86ProcessorInfo(J9JITConfig *);
 
    static bool isBigDecimalClass(J9UTF8 * className);
    bool isCachedBigDecimalClassFieldAddr(){ return cachedStaticDFPAvailField; }
@@ -387,10 +386,6 @@ public:
    virtual bool               hasResumableTrapHandler();
    virtual bool               hasFixedFrameC_CallingConvention();
    virtual bool               pushesOutgoingArgsAtCallSite( TR::Compilation *comp);
-
-
-   bool                       getX86SupportsHLE();
-   virtual bool               getX86SupportsPOPCNT();
 
    virtual TR::PersistentInfo * getPersistentInfo()  { return ((TR_PersistentMemory *)_jitConfig->scratchSegment)->getPersistentInfo(); }
    void                       unknownByteCode( TR::Compilation *, uint8_t opcode);
@@ -714,13 +709,6 @@ public:
    virtual bool               isClassArray(TR_OpaqueClassBlock *);
    virtual bool               isFinalFieldPointingAtJ9Class(TR::SymbolReference *symRef, TR::Compilation *comp);
 
-   virtual const char * getX86ProcessorVendorId();
-   virtual uint32_t     getX86ProcessorSignature();
-   virtual uint32_t     getX86ProcessorFeatureFlags();
-   virtual uint32_t     getX86ProcessorFeatureFlags2();
-   virtual uint32_t     getX86ProcessorFeatureFlags8();
-   virtual bool         getX86SupportsSSE4_1();
-
    virtual void *getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp);
    virtual void *setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp);
    virtual void *setJ2IThunk(TR_Method *method, void *thunkptr, TR::Compilation *comp);  // DMDM: J9 now
@@ -893,7 +881,6 @@ public:
 
    TR::Node * initializeLocalObjectFlags( TR::Compilation *, TR::Node * allocationNode, J9Class * ramClass);
 
-   virtual bool             testOSForSSESupport();
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 
    virtual int32_t getCompThreadIDForVMThread(void *vmThread);

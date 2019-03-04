@@ -466,108 +466,6 @@ TR_J9VMBase::getPPCSupportsVSXRegisters()
 
 // -----------------------------------------------------------------------------
 
-extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
-
-char TR_J9VMBase::x86VendorID[] = {'U','n','k','n','o','w','n','B','r','a','n','d','\0'};
-bool TR_J9VMBase::x86VendorIDInitialized = false;
-
-void
-TR_J9VMBase::initializeX86ProcessorInfo(J9JITConfig *jitConfig)
-   {
-   TR_ASSERT(jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-
-   // Terminate the vendor ID with NULL before returning.
-   //
-   strncpy(x86VendorID, queryX86TargetCPUID(jitConfig->javaVM)->_vendorId, 12);
-   x86VendorID[12] = '\0';
-   x86VendorIDInitialized = true;
-
-   // Initialize processorFeatureFlags
-   //
-#if defined(TR_TARGET_X86)
-   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags);
-   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags2(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags2);
-   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags8(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags8);
-#endif // TR_TARGET_X86
-   }
-
-
-const char *
-TR_J9VMBase::getX86ProcessorVendorId()
-   {
-   TR_ASSERT(x86VendorIDInitialized, "X86 Vendor ID has not yet been initialized");
-   return x86VendorID;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorSignature()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_processorSignature;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorFeatureFlags()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_featureFlags;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorFeatureFlags2()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_featureFlags2;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorFeatureFlags8()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_featureFlags8;
-   }
-
-bool
-TR_J9VMBase::testOSForSSESupport()
-   {
-   return true; // VM guarantees SSE/SSE2 are available
-   }
-
-bool
-TR_J9VMBase::getX86SupportsSSE4_1()
-   {
-   uint32_t flags = getX86ProcessorFeatureFlags2();
-   if ((flags & 0x00080000) != 0x00080000)
-      return false;
-   return true;
-   }
-
-bool
-TR_J9VMBase::getX86SupportsHLE()
-   {
-   uint32_t flags8 = getX86ProcessorFeatureFlags8();
-   if ((flags8 & TR_HLE) != 0x00000000)
-      return true;
-   else return false;
-   }
-
-bool
-TR_J9VMBase::getX86SupportsPOPCNT()
-   {
-   uint32_t flags2 = getX86ProcessorFeatureFlags2();
-   if ((flags2 & TR_POPCNT) != 0x00000000)
-      return true;
-   else return false;
-   }
-
-
-// -----------------------------------------------------------------------------
-
 // For Verbose Log
 int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
    {
@@ -902,10 +800,11 @@ TR_J9VM::initializeProcessorType()
       }
    else if (TR::Compiler->target.cpu.isX86())
       {
-      const char *vendor = getX86ProcessorVendorId();
-      uint32_t processorSignature = getX86ProcessorSignature();
+      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
+      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
 
       TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
+
       TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
              && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
       }

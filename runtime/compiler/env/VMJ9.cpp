@@ -1385,7 +1385,7 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    char processorName[size] = {0};
 
 #if defined(TR_TARGET_X86)
-   vendorId =  getX86ProcessorVendorId();
+   vendorId =  TR::Compiler->target.cpu.getX86ProcessorVendorId();
    getCompInfo(processorName, size);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Processor Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Platform Info:%s",processorName);

@@ -4308,9 +4308,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::inotz;
             break;
          case TR::java_lang_Integer_bitCount:
-            if(TR::Compiler->target.cpu.isX86() && fej9()->getX86SupportsPOPCNT())
-               opcode = TR::ipopcnt;
-            else if (TR::Compiler->target.cpu.hasPopulationCountInstruction())
+            if (TR::Compiler->target.cpu.hasPopulationCountInstruction())
                opcode = TR::ipopcnt;
             else
                opcode = TR::BadILOp;
@@ -4331,9 +4329,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::lnotz;
             break;
          case TR::java_lang_Long_bitCount:
-            if(TR::Compiler->target.cpu.isX86() && fej9()->getX86SupportsPOPCNT())
-               opcode = TR::lpopcnt;
-            else if (TR::Compiler->target.cpu.hasPopulationCountInstruction())
+            if (TR::Compiler->target.cpu.hasPopulationCountInstruction())
                opcode = TR::lpopcnt;
             else
                opcode = TR::BadILOp;

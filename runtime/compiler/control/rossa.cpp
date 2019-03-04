@@ -1099,10 +1099,6 @@ onLoadInternal(
    if (!TR::CompilationInfo::createCompilationInfo(jitConfig))
       return -1;
 
-#if defined(TR_TARGET_X86)
-   TR_J9VM::initializeX86ProcessorInfo(jitConfig);
-#endif
-
    if (!TR_J9VMBase::createGlobalFrontEnd(jitConfig, TR::CompilationInfo::get()))
       return -1;
 
