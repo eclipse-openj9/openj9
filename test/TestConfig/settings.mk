@@ -43,9 +43,12 @@ P=:
 AND_IF_SUCCESS=&&
 PROPS_DIR=props_unix
 
+-include $(TEST_ROOT)$(D)TestConfig$(D)autoGenEnv.mk
+include $(TEST_ROOT)$(D)TestConfig$(D)envSettings.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)featureSettings.mk
+
 
 ifndef JAVA_BIN
 $(error Please provide JAVA_BIN value.)
