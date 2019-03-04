@@ -109,6 +109,13 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
       - level:   [sanity|extended] (extended default value)
       - group:   [functional|system|openjdk|external|perf|jck] (required 
                  to provide one group per test)
+      - type:    [regular|native] (if a test is tagged with native, it means this
+                 test needs to run with test image (native test libs); 
+                 NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used, 
+                 native test libs download link needs to be provided in addition to SDK 
+                 download link in CUSTOMIZED_SDK_URL; for details, please refer to 
+                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins); 
+                 default to regular)
       - impl:    [openj9|hotspot] (filter test based on exported JDK_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
@@ -141,11 +148,39 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
     make _sanity
     ```
 
+  * type of tests <br />
+    make _type <br />
+    e.g., 
+    ```
+    make _native
+    ```
+
   * level of tests with specified group <br />
     make _level.group <br />
     e.g., 
     ```
     make _sanity.functional
+    ```
+
+  * level of tests with specified type <br />
+    make _level.type <br />
+    e.g., 
+    ```
+    make _sanity.native
+    ```
+
+  * group of tests with specified type <br />
+    make _group.type <br />
+    e.g., 
+    ```
+    make _functional.native
+    ```
+
+  * specify level, group and type together <br />
+    make _level.group.type <br />
+    e.g., 
+    ```
+    make _sanity.functional.native
     ```
 
   * a specific individual test <br />

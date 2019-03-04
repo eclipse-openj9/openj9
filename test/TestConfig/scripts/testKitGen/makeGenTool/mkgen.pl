@@ -41,6 +41,7 @@ my $projectRootDir = '';
 my $testRoot = '';
 my $allLevels = '';
 my $allGroups = '';
+my $allTypes = '';
 my $output = '';
 my $graphSpecs = '';
 my $jdkVersion = '';
@@ -48,7 +49,7 @@ my $allImpls = '';
 my $impl = '';
 my $modes_hs = '';
 my $sp_hs = '';
-my %targetGroup = ();
+my %targetCount = ();
 my $buildList = '';
 my $iterations = 1;
 my $testFlag = '';
@@ -61,7 +62,7 @@ my $eleStr = '';
 my $eleArr = [];
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $allTypes, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -89,11 +90,35 @@ sub runmkgen {
 		print "Getting modes data from modes services...\n";
 	}
 
-	$targetGroup{"all"} = 0;
+	#initialize counting hash targetCount 
+	$targetCount{"all"} = 0;
 	foreach my $eachLevel (sort @{$allLevels}) {
+		if (!defined $targetCount{$eachLevel}) {
+			$targetCount{$eachLevel} = 0;
+		}
 		foreach my $eachGroup (sort @{$allGroups}) {
-			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-			$targetGroup{$groupTargetKey} = 0;
+			if (!defined $targetCount{$eachGroup}) {
+				$targetCount{$eachGroup} = 0;
+			}
+			my $lgKey = $eachLevel . '.' . $eachGroup;
+			if (!defined $targetCount{$lgKey}) {
+				$targetCount{$lgKey} = 0;
+			}
+			foreach my $eachType (sort @{$allTypes}) {
+				if (!defined $targetCount{$eachType}) {
+					$targetCount{$eachType} = 0;
+				}
+				my $ltKey = $eachLevel . '.' . $eachType;
+				if (!defined $targetCount{$ltKey}) {
+					$targetCount{$ltKey} = 0;
+				}
+				my $gtKey = $eachGroup . '.' . $eachType;
+				if (!defined $targetCount{$gtKey}) {
+					$targetCount{$gtKey} = 0;
+				}
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+				$targetCount{$lgtKey} = 0;
+			}
 		}
 	}
 
@@ -259,6 +284,14 @@ sub handle_start {
 	} elsif ($elt eq 'group') {
 		$eleStr = '';
 		$currentEle = 'group';
+	} elsif ($elt eq 'types') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'types';
+		$parentEle = 'types';
+	} elsif ($elt eq 'type') {
+		$eleStr = '';
+		$currentEle = 'type';
 	} elsif ($elt eq 'impls') {
 		$eleStr = '';
 		$eleArr = [];
@@ -321,6 +354,10 @@ sub handle_end {
 			if (!defined $parseTest->{'groups'}) {
 				$parseTest->{'groups'} = ['functional'];
 			}
+			# type defaults to 'regular'
+			if (!defined $parseTest->{'types'}) {
+				$parseTest->{'types'} = ['regular'];
+			}
 			# impl defaults to all
 			if (!defined $parseTest->{'impls'}) {
 				$parseTest->{'impls'} = $allImpls;
@@ -364,6 +401,15 @@ sub handle_end {
 	} elsif (($elt eq 'groups') && ($parentEle eq 'groups')) {
 		if (@{$eleArr}) {
 			$parseTest->{'groups'} = $eleArr;
+		}
+	} elsif (($elt eq 'type') && ($currentEle eq 'type') && ($parentEle eq 'types')) {
+		if ( !grep(/^$eleStr$/, @{$allTypes}) ) {
+			die "The type: " . $eleStr . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid type strings are " . join(",", @{$allTypes}) . ".";
+		}
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'types') && ($parentEle eq 'types')) {
+		if (@{$eleArr}) {
+			$parseTest->{'types'} = $eleArr;
 		}
 	} elsif (($elt eq 'impl') && ($currentEle eq 'impl') && ($parentEle eq 'impls')) {
 		if ( !grep(/^$eleStr$/, @{$allImpls}) ) {
@@ -593,8 +639,10 @@ sub writeTargets {
 
 			foreach my $eachGroup (@{$test->{'groups'}}) {
 				foreach my $eachLevel (@{$test->{'levels'}}) {
-					my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-					push(@{$groupTargets{$groupTargetKey}}, $name);
+					foreach my $eachType (@{$test->{'types'}}) {
+						my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+						push(@{$groupTargets{$lgtKey}}, $name);
+					}
 				}
 			}
 
@@ -609,22 +657,72 @@ sub writeTargets {
 
 	foreach my $eachLevel (sort @{$allLevels}) {
 		foreach my $eachGroup (sort @{$allGroups}) {
-			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-			my $tests = $groupTargets{$groupTargetKey};
-			print $fhOut "$groupTargetKey:";
-			foreach my $test (@{$tests}) {
-				print $fhOut " \\\n$test";
+			foreach my $eachType (sort @{$allTypes}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+				my $tests = $groupTargets{$lgtKey};
+				print $fhOut "$lgtKey:";
+				foreach my $test (@{$tests}) {
+					print $fhOut " \\\n$test";
+				}
+				$targetCount{$lgtKey} += @{$tests};
+				$targetCount{"all"} += @{$tests};
+				print $fhOut "\n\n.PHONY: $lgtKey\n\n";
 			}
-			$targetGroup{$groupTargetKey} += @{$tests};
-			print $fhOut "\n\n.PHONY: $groupTargetKey\n\n";
+		}
+	}
+
+	foreach my $eachLevel (sort @{$allLevels}) {
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $lgKey = $eachLevel . '.' . $eachGroup;
+			print $fhOut "$lgKey:";
+			foreach my $eachType (sort @{$allTypes}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
+				if (defined $groupTargets{$lgtKey}) {
+					print $fhOut " \\\n$lgtKey";
+					$targetCount{$lgKey} += @{$groupTargets{$lgtKey}};
+					$targetCount{$eachLevel} += @{$groupTargets{$lgtKey}};
+				}
+			}
+			print $fhOut "\n\n.PHONY: $lgKey\n\n";
+		}
+	}
+
+	foreach my $eachGroup (sort @{$allGroups}) {
+		foreach my $eachType (sort @{$allTypes}) {
+			my $gtKey = $eachGroup . '.' . $eachType;
+			print $fhOut "$gtKey:";
+			foreach my $eachLevel (sort @{$allLevels}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
+				if (defined $groupTargets{$lgtKey}) {
+					print $fhOut " \\\n$lgtKey";
+					$targetCount{$gtKey} += @{$groupTargets{$lgtKey}};
+					$targetCount{$eachGroup} += @{$groupTargets{$lgtKey}};
+				}
+			}
+			print $fhOut "\n\n.PHONY: $gtKey\n\n";
+		}
+	}
+
+	foreach my $eachType (sort @{$allTypes}) {
+		foreach my $eachLevel (sort @{$allLevels}) {
+			my $ltKey = $eachLevel . '.' . $eachType;
+			print $fhOut "$ltKey:";
+			foreach my $eachGroup (sort @{$allGroups}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+				if (defined $groupTargets{$lgtKey}) {
+					print $fhOut " \\\n$lgtKey";
+					$targetCount{$ltKey} += @{$groupTargets{$lgtKey}};
+					$targetCount{$eachType} += @{$groupTargets{$lgtKey}};
+				}
+			}
+			print $fhOut "\n\n.PHONY: $ltKey\n\n";
 		}
 	}
 
 	foreach my $eachLevel (sort @{$allLevels}) {
 		print $fhOut "$eachLevel:";
 		foreach my $eachGroup (sort @{$allGroups}) {
-			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-			print $fhOut " \\\n$groupTargetKey";
+			print $fhOut " \\\n$eachLevel.$eachGroup";
 		}
 		print $fhOut "\n\n.PHONY: $eachLevel\n\n";
 	}
@@ -632,10 +730,17 @@ sub writeTargets {
 	foreach my $eachGroup (sort @{$allGroups}) {
 		print $fhOut "$eachGroup:";
 		foreach my $eachLevel (sort @{$allLevels}) {
-			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-			print $fhOut " \\\n$groupTargetKey";
+			print $fhOut " \\\n$eachLevel.$eachGroup";
 		}
 		print $fhOut "\n\n.PHONY: $eachGroup\n\n";
+	}
+
+	foreach my $eachType (sort @{$allTypes}) {
+		print $fhOut "$eachType:";
+		foreach my $eachLevel (sort @{$allLevels}) {
+			print $fhOut " \\\n$eachLevel.$eachType";
+		}
+		print $fhOut "\n\n.PHONY: $eachType\n\n";
 	}
 
 	print $fhOut "all:";
@@ -740,28 +845,11 @@ sub countGen {
 	my $countmkpath = $testRoot . "/TestConfig/" . $countmk;
 	open( my $fhOut, '>', $countmkpath ) or die "Cannot create file $countmkpath";
 
-	foreach my $eachLevel (sort @{$allLevels}) {
-		$targetGroup{$eachLevel} = 0;
-		foreach my $eachGroup (sort @{$allGroups}) {
-			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-			$targetGroup{$eachLevel} += $targetGroup{$groupTargetKey};
-		}
-		$targetGroup{"all"} += $targetGroup{$eachLevel};
-	}
-
-	foreach my $eachGroup (sort @{$allGroups}) {
-		$targetGroup{$eachGroup} = 0;
-		foreach my $eachLevel (sort @{$allLevels}) {
-			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
-			$targetGroup{$eachGroup} += $targetGroup{$groupTargetKey};
-		}
-	}
-
 	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
 	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
-	foreach my $targetGroupKey (keys %targetGroup) {
-		print $fhOut "ifeq (\$(GROUPTARGET),$targetGroupKey)\n";
-		print $fhOut "\tTOTALCOUNT := $targetGroup{$targetGroupKey}\n";
+	foreach my $lgtKey (keys %targetCount) {
+		print $fhOut "ifeq (\$(GROUPTARGET),$lgtKey)\n";
+		print $fhOut "\tTOTALCOUNT := $targetCount{$lgtKey}\n";
 		print $fhOut "endif\n\n";
 	}
 
