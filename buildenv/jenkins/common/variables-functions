@@ -894,7 +894,7 @@ def set_build_extra_options(build_specs=null) {
                         //      EXTRA_CONFIGURE_OPTIONS_JDK<release>_<spec>
                         //      EXTRA_MAKE_OPTIONS_JDK<release>_<spec>
                         def extraOptions = params."${it}_JDK${release}_${spec}"
-                        if (!extraOptions) {
+                        if (!extraOptions && VARIABLES."${spec}") {
                             extraOptions = get_value(VARIABLES."${spec}"."${it.toLowerCase()}", release)
                         }
 
