@@ -35,6 +35,7 @@ namespace J9 { typedef J9::X86::CPU CPUConnector; }
 #endif
 
 #include "compiler/env/J9CPU.hpp"
+#include "env/ProcessorInfo.hpp"
 
 namespace TR { class Compilation; }
 
@@ -62,33 +63,21 @@ class CPU : public J9::CPU
 protected:
 
    CPU() :
-         J9::CPU(),
-         _featureFlags(0),
-         _featureFlags2(0),
-         _featureFlags8(0)
-      {}
+         J9::CPU()
+      {
+      }
 
 public:
 
-   const char *getX86ProcessorVendorId(TR::Compilation *comp);
-   uint32_t getX86ProcessorSignature(TR::Compilation *comp);
-   uint32_t getX86ProcessorFeatureFlags(TR::Compilation *comp);
-   uint32_t getX86ProcessorFeatureFlags2(TR::Compilation *comp);
-   uint32_t getX86ProcessorFeatureFlags8(TR::Compilation *comp);
+   TR_X86CPUIDBuffer *queryX86TargetCPUID();
+   const char * getProcessorVendorId();
+   uint32_t getProcessorSignature();
+
+   bool testOSForSSESupport();
+   bool hasPopulationCountInstruction();
 
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
-
-   bool testOSForSSESupport(TR::Compilation *comp);
-
-   void setX86ProcessorFeatureFlags(uint32_t flags);
-   void setX86ProcessorFeatureFlags2(uint32_t flags2);
-   void setX86ProcessorFeatureFlags8(uint32_t flags8);
-
-private:
-   uint32_t _featureFlags;
-   uint32_t _featureFlags2;
-   uint32_t _featureFlags8;
 
    };
 

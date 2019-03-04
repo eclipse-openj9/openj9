@@ -4551,7 +4551,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       }
 
-   if (TR::Compiler->target.is64Bit() && fej9->getX86SupportsHLE() && comp->getOption(TR_X86HLE))
+   if (TR::Compiler->target.is64Bit() && cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
       {
       TR::LabelSymbol *JITMonitorEntrySnippetLabel = generateLabelSymbol(cg);
       TR::TreeEvaluator::transactionalMemoryJITMonitorEntry(node, cg, startLabel, snippetLabel, JITMonitorEntrySnippetLabel, objectReg, lwOffset);
@@ -4606,13 +4606,13 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    if (TR::Compiler->target.is64Bit() && !fej9->generateCompressedLockWord())
       {
       op = TR::Compiler->target.isSMP() ? LCMPXCHG8MemReg : CMPXCHG8MemReg;
-      if (fej9->getX86SupportsHLE() && comp->getOption(TR_X86HLE))
+      if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
          op = TR::Compiler->target.isSMP() ? XALCMPXCHG8MemReg : XACMPXCHG8MemReg;
       }
    else
       {
       op = TR::Compiler->target.isSMP() ? LCMPXCHG4MemReg : CMPXCHG4MemReg;
-      if (fej9->getX86SupportsHLE() && comp->getOption(TR_X86HLE))
+      if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
          op = TR::Compiler->target.isSMP() ? XALCMPXCHG4MemReg : XACMPXCHG4MemReg;
       }
 
@@ -5439,7 +5439,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
 #ifdef J9VM_TASUKI_LOCKS_DOUBLE_SLOT
       TR_ASSERT(TR::Compiler->target.is32Bit(), "This code-piece should never be reached");
 #endif
-      if (fej9->getX86SupportsHLE() && comp->getOption(TR_X86HLE))
+      if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
          generateMemImmInstruction(XRSMemImm4(gen64BitInstr),
             node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
       else
