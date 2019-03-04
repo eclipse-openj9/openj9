@@ -2729,15 +2729,20 @@ done:
 		J9Class *componentClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
 		J9Class *arrayClazz = componentClazz->arrayClass;
 		if (NULL == arrayClazz) {
+			buildInternalNativeStackFrame(REGISTER_ARGS);
+			updateVMStruct(REGISTER_ARGS);
 			arrayClazz = internalCreateArrayClass(_currentThread, 
 				(J9ROMArrayClass *) J9ROMIMAGEHEADER_FIRSTCLASS(_currentThread->javaVM->arrayROMClasses), 
 				componentClazz);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			if (VM_VMHelpers::exceptionPending(_currentThread) || (NULL == arrayClazz)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			restoreInternalNativeStackFrame(REGISTER_ARGS);
 		}
-		if (NULL == arrayClazz) {
-			rc = GOTO_THROW_CURRENT_EXCEPTION;
-		} else {
-			returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(arrayClazz), 1);
-		}
+		returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(arrayClazz), 1);
+done:
 		return rc;
 	}
 
