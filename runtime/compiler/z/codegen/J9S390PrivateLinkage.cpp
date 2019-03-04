@@ -200,7 +200,6 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
       freeingSSPDisabled = false;
 
    if (freeingSSPDisabled || disableFreeJITSSP != NULL ||
-       (TR::Compiler->target.is32Bit() && !cg()->supportsHighWordFacility()) ||   // Cannot use FreeSSP on 31-bit without highword tracking
        comp()->getOption(TR_Randomize))                                   // We can generate code for different hardware targets, which are incompatiable.
       {
       sspReal->setState(TR::RealRegister::Locked);
