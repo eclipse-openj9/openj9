@@ -342,7 +342,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return true if the specified object is equal to this VarHandle, false otherwise
 	 */
 	@Override
-	public final boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -387,7 +387,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return a hash for this VarHandle
 	 */
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		if (hashCode == 0) {
 			hashCode = fieldType.hashCode();
 			for (Class<?> c : coordinateTypes) {
