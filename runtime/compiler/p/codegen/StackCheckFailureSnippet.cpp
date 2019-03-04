@@ -69,7 +69,6 @@ uint8_t *loadArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::Real
 uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
    {
    TR::Compilation * comp = cg()->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::ResolvedMethodSymbol *bodySymbol=comp->getJittedMethodSymbol();
    TR::Machine *machine = cg()->machine();
    TR::SymbolReference  *sofRef  = comp->getSymRefTab()->findOrCreateStackOverflowSymbolRef(comp->getJittedMethodSymbol());
@@ -160,16 +159,15 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
       buffer += 4;
       }
 
-   intptrj_t distance = (intptrj_t)sof->getMethodAddress() - (intptrj_t)buffer;
-   if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)sof->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(sofRef->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
-      TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(sofRef->getReferenceNumber(), (void *)buffer);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
       }
 
    // bl distance
-   *(int32_t *)buffer = 0x48000001 | (distance & 0x03ffffff);
+   *(int32_t *)buffer = 0x48000001 | ((helperAddress - (intptrj_t)buffer) & 0x03ffffff);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
                                                          (uint8_t *)sofRef,
                                                          TR_HelperAddress, cg()),

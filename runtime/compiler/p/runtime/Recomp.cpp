@@ -130,7 +130,6 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
    TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(oldStartPC);
    int32_t   bytesToSaveAtStart = 0;
    int32_t   *patchAddr, newInstr;
-   intptrj_t distance;
 
    if (linkageInfo->isCountingMethodBody())
       {
@@ -139,15 +138,16 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       // which expects the new startPC.
 
       patchAddr = (int32_t *)((uint8_t *)oldStartPC + getJitEntryOffset(linkageInfo) + OFFSET_COUNTING_BRANCH_FROM_JITENTRY - 4);
-      distance  = (uint8_t *)runtimeHelperValue(TR_PPCcountingPatchCallSite) - (uint8_t *)patchAddr;
-      if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
+      intptrj_t helperAddress = (intptrj_t)runtimeHelperValue(TR_PPCcountingPatchCallSite);
+      if (!TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr) ||
+          TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines))
 	 {
-         distance = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCcountingPatchCallSite, (void *)patchAddr) - (intptrj_t)patchAddr;
-         TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
-                "CodeCache is more than 32MB.\n");
+         helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCcountingPatchCallSite, (void *)patchAddr);
+         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr),
+                         "Helper address is out of range");
 	 }
 
-      newInstr = 0x48000001 | (distance & 0x03FFFFFC);
+      newInstr = 0x48000001 | ((helperAddress - (intptrj_t)patchAddr) & 0x03FFFFFC);
       *patchAddr = newInstr;
       ppcCodeSync((uint8_t *)patchAddr, 4);
       bytesToSaveAtStart = getJitEntryOffset(linkageInfo) + OFFSET_COUNTING_BRANCH_FROM_JITENTRY;
@@ -157,15 +157,16 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       // Turn the call to samplingMethodRecompile into a call to samplingPatchCallSite
 
       patchAddr = (int32_t *)((uint8_t *)oldStartPC + OFFSET_SAMPLING_BRANCH_FROM_STARTPC);
-      distance  = (uint8_t *)runtimeHelperValue(TR_PPCsamplingPatchCallSite) - (uint8_t *)patchAddr;
-      if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
+      intptrj_t helperAddress = (intptrj_t)runtimeHelperValue(TR_PPCsamplingPatchCallSite);
+      if (!TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr) ||
+          TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines))
 	 {
-         distance = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCsamplingPatchCallSite, (void *)patchAddr) - (intptrj_t)patchAddr;
-         TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
-                "CodeCache is more than 32MB.\n");
+         helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCsamplingPatchCallSite, (void *)patchAddr);
+         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr),
+                         "Helper address is out of range");
 	 }
 
-      newInstr = 0x48000001 | (distance & 0x03FFFFFC);
+      newInstr = 0x48000001 | ((helperAddress - (intptrj_t)patchAddr) & 0x03FFFFFC);
       *patchAddr = newInstr;
       ppcCodeSync((uint8_t *)patchAddr, 4);
 
@@ -181,7 +182,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
    bool codeMemoryWasAlreadyReleased = linkageInfo->hasBeenRecompiled(); // HCR - can recompile the same body twice
    linkageInfo->setHasBeenRecompiled();
 
-   // asheikh 2005-05-05: Code Cache Reclamation does not work on ppc
+   // Code Cache Reclamation does not work on ppc
    // without counting method bodies.  _countingPatchCallSite still refers
    // to the methodInfo poitner in the snippet area.
    if (linkageInfo->isSamplingMethodBody() && !codeMemoryWasAlreadyReleased)
