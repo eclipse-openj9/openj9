@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/SPMDPreCheck.cpp \
     compiler/optimizer/StringBuilderTransformer.cpp \
     compiler/optimizer/StringPeepholes.cpp \
-    compiler/optimizer/SwitchAnalyzer.cpp \
     compiler/optimizer/UnsafeFastPath.cpp \
     compiler/optimizer/VarHandleTransformer.cpp \
     compiler/optimizer/VPBCDConstraint.cpp \
@@ -222,6 +221,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/StripMiner.cpp \
     omr/compiler/optimizer/StructuralAnalysis.cpp \
     omr/compiler/optimizer/Structure.cpp \
+    omr/compiler/optimizer/SwitchAnalyzer.cpp \
     omr/compiler/optimizer/TranslateTable.cpp \
     omr/compiler/optimizer/TrivialDeadBlockRemover.cpp \
     omr/compiler/optimizer/UnionBitVectorAnalysis.cpp \
