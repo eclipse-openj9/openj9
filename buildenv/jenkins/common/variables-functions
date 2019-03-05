@@ -145,7 +145,7 @@ def set_repos_variables(BUILD_SPECS=null) {
 * Initializes OpenJDK repository URL, branch, SHA for given release and returns
 * them as a map.
 * Build parameters take precedence over custom variables (see variables file).
-* Throws an error if repository URL or branch are not provided. 
+* Throws an error if repository URL or branch are not provided.
 */
 def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
     // map to store git repository information by spec
@@ -208,9 +208,9 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
 
 /*
 * Initializes the OpenJ9 and OMR repositories variables with values from
-* the variables file if they are not set as build parameters. 
+* the variables file if they are not set as build parameters.
 * If no values available in the variable file then initialize these variables
-* with default values, otherwise set them to empty strings (to avoid 
+* with default values, otherwise set them to empty strings (to avoid
 * downstream builds errors - Jenkins build parameters should not be null).
 */
 def set_extensions_variables(defaults=null) {
@@ -337,8 +337,8 @@ def get_user_credentials_id(KEY) {
 * to run a Jenkins job.
 * Fetches the labels from the variables file when the node is not set as build
 * parameter.
-* The node's labels could be a single label - e.g. label1 - or a boolean 
-* expression - e.g. label1 && label2 || label3. 
+* The node's labels could be a single label - e.g. label1 - or a boolean
+* expression - e.g. label1 && label2 || label3.
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
@@ -476,9 +476,11 @@ def set_artifactory_config() {
         // Set Creds to env so that the parent pipeline can retireve them.
         env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
+        env.ARTIFACTORY_VERSION = VARIABLES.artifactory_version
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+        echo "Artifactory server is version:${ARTIFACTORY_VERSION}"
     }
 }
 
@@ -506,7 +508,7 @@ def set_build_identifier() {
                 BUILD_IDENTIFIER = "${BUILD_USER_EMAIL}"
             }
         } else {
-            echo "WARNING: Can't determine appropriate BUILD_DENTIFIER automatically. Please add it as a build parameter if you would like it set."
+            echo "WARNING: Can't determine appropriate BUILD_IDENTIFIER automatically. Please add it as a build parameter if you would like it set."
         }
     }
     if (BUILD_IDENTIFIER) {
@@ -704,7 +706,7 @@ def set_vendor_variables() {
         // fetch from variables file
 
         if (VARIABLES.vendor_source && VARIABLES.vendor_source.test) {
-            // parse the vendor source multi-map 
+            // parse the vendor source multi-map
             // and populate the VENDOR_TEST_* maps
 
              VARIABLES.vendor_source.test.each { entry ->

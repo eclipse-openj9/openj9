@@ -324,13 +324,22 @@ def archive() {
                         ]
                     }"""
 
-                    def buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
-                    // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
-                    buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
-                    buildInfo.env.capture = true
-                    server.upload spec: uploadSpec, buildInfo: buildInfo
-                    server.publishBuildInfo buildInfo
+                    if (ARTIFACTORY_VERSION == "ent") {
+                        echo "Adding Artifactory buildInfo"
+                        def buildInfo = Artifactory.newBuildInfo()
+                        buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
+                        // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
+                        buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
+                        buildInfo.env.capture = true
+                        server.upload spec: uploadSpec, buildInfo: buildInfo
+                        server.publishBuildInfo buildInfo
+                    } else if (ARTIFACTORY_VERSION == "oss") {
+                        echo "Not adding Artifactory buildInfo, unsupported on OSS Version"
+                        server.upload spec: uploadSpec
+                    } else {
+                        error "Unknown Artifactory version:${ARTIFACTORY_VERSION}"
+                    }
+
                     // Write URL to env so that we can pull it from the upstream pipeline job
                     ARTIFACTORY_URL = server.getUrl()
                     env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
