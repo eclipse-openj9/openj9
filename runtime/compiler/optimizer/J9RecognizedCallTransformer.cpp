@@ -46,7 +46,15 @@
 
 void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode)
    {
+   TR::MethodSymbol *symbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+   bool isStatic = symbol->isStatic();
+   bool isJNI = symbol->isJNI();
+
    TR::Node::recreate(node, opcode);
+   if (isStatic && isJNI)
+      {
+      node->removeChild(0);
+      }
    TR::TransformUtil::removeTree(comp(), treetop);
    }
 
@@ -336,8 +344,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
-   auto node = treetop->getNode()->getFirstChild();
-   switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
+   auto callNode = treetop->getNode()->getFirstChild();
+   switch(callNode->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
          return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
@@ -367,6 +375,11 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          return !comp()->getOption(TR_DisableMaxMinOptimization);
       case TR::java_lang_StringUTF16_toBytes:
          return !comp()->compileRelocatableCode();
+      case TR::java_lang_Float_floatToIntBits:
+      case TR::java_lang_Float_floatToRawIntBits:
+      case TR::java_lang_Double_doubleToLongBits:
+      case TR::java_lang_Double_doubleToRawLongBits:
+         return comp()->cg()->getSupportsInliningOfTypeCoersionMethods();
       default:
          return false;
       }
@@ -374,8 +387,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
 
 void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
    {
-   auto node = treetop->getNode()->getFirstChild();
-   switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
+   auto callNode = treetop->getNode()->getFirstChild();
+   switch(callNode->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
       case TR::sun_misc_Unsafe_getAndAddLong:
@@ -386,40 +399,56 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          processUnsafeAtomicCall(treetop, TR::SymbolReferenceTable::atomicSwapSymbol);
          break;
       case TR::java_lang_Class_isAssignableFrom:
-         process_java_lang_Class_IsAssignableFrom(treetop, node);
+         process_java_lang_Class_IsAssignableFrom(treetop, callNode);
          break;
       case TR::java_lang_Integer_rotateLeft:
-         processIntrinsicFunction(treetop, node, TR::irol);
+         processIntrinsicFunction(treetop, callNode, TR::irol);
          break;
       case TR::java_lang_Long_rotateLeft:
-         processIntrinsicFunction(treetop, node, TR::lrol);
+         processIntrinsicFunction(treetop, callNode, TR::lrol);
          break;
       case TR::java_lang_Math_abs_I:
-         processIntrinsicFunction(treetop, node, TR::iabs);
+         processIntrinsicFunction(treetop, callNode, TR::iabs);
          break;
       case TR::java_lang_Math_abs_L:
-         processIntrinsicFunction(treetop, node, TR::labs);
+         processIntrinsicFunction(treetop, callNode, TR::labs);
          break;
       case TR::java_lang_Math_abs_D:
-         processIntrinsicFunction(treetop, node, TR::dabs);
+         processIntrinsicFunction(treetop, callNode, TR::dabs);
          break;
       case TR::java_lang_Math_abs_F:
-         processIntrinsicFunction(treetop, node, TR::fabs);
+         processIntrinsicFunction(treetop, callNode, TR::fabs);
          break;
       case TR::java_lang_Math_max_I:
-         processIntrinsicFunction(treetop, node, TR::imax);
+         processIntrinsicFunction(treetop, callNode, TR::imax);
          break;
       case TR::java_lang_Math_min_I:
-         processIntrinsicFunction(treetop, node, TR::imin);
+         processIntrinsicFunction(treetop, callNode, TR::imin);
          break;
       case TR::java_lang_Math_max_L:
-         processIntrinsicFunction(treetop, node, TR::lmax);
+         processIntrinsicFunction(treetop, callNode, TR::lmax);
          break;
       case TR::java_lang_Math_min_L:
-         processIntrinsicFunction(treetop, node, TR::lmin);
+         processIntrinsicFunction(treetop, callNode, TR::lmin);
          break;
       case TR::java_lang_StringUTF16_toBytes:
-         process_java_lang_StringUTF16_toBytes(treetop, node);
+         process_java_lang_StringUTF16_toBytes(treetop, callNode);
+         break;
+      case TR::java_lang_Float_floatToIntBits:
+         processIntrinsicFunction(treetop, callNode, TR::fbits2i);
+         callNode->setNormalizeNanValues(true);
+         break;
+      case TR::java_lang_Float_floatToRawIntBits:
+         processIntrinsicFunction(treetop, callNode, TR::fbits2i);
+         callNode->setNormalizeNanValues(false);
+         break;
+      case TR::java_lang_Double_doubleToLongBits:
+         processIntrinsicFunction(treetop, callNode, TR::dbits2l);
+         callNode->setNormalizeNanValues(true);
+         break;
+      case TR::java_lang_Double_doubleToRawLongBits:
+         processIntrinsicFunction(treetop, callNode, TR::dbits2l);
+         callNode->setNormalizeNanValues(false);
          break;
       default:
          break;

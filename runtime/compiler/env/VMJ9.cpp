@@ -7685,38 +7685,10 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
             TR::Node::recreate(callNode, TR::ibits2f);
          return callNode;
-      case TR::java_lang_Float_floatToIntBits:
-         if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
-            {
-            TR::Node::recreate(callNode, TR::fbits2i);
-            callNode->setNormalizeNanValues(true);
-            }
-         return callNode;
-      case TR::java_lang_Float_floatToRawIntBits:
-         if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
-            {
-            TR::Node::recreate(callNode, TR::fbits2i);
-            callNode->setNormalizeNanValues(false);
-            }
-         return callNode;
       case TR::java_lang_Double_longBitsToDouble:
          if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
             {
             TR::Node::recreate(callNode, TR::lbits2d);
-            }
-         return callNode;
-      case TR::java_lang_Double_doubleToLongBits:
-         if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
-            {
-            TR::Node::recreate(callNode, TR::dbits2l);
-            callNode->setNormalizeNanValues(true);
-            }
-         return callNode;
-      case TR::java_lang_Double_doubleToRawLongBits:
-         if (comp->cg()->getSupportsInliningOfTypeCoersionMethods())
-            {
-            TR::Node::recreate(callNode, TR::dbits2l);
-            callNode->setNormalizeNanValues(false);
             }
          return callNode;
       case TR::java_lang_ref_Reference_getImpl:
