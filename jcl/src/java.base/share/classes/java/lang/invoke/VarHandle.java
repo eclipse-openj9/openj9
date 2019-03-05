@@ -351,7 +351,6 @@ public abstract class VarHandle extends VarHandleInternal
 			return false;
 		}
 
-
 		/* argument comparison */
 		VarHandle that = (VarHandle)obj;
 		if (!(this.fieldType.equals(that.fieldType) 
@@ -1037,7 +1036,6 @@ public abstract class VarHandle extends VarHandleInternal
 	/* nominal descriptor of a VarHandle constant */
 	public static final class VarHandleDesc extends DynamicConstantDesc<VarHandle> implements ConstantDesc {
 		private Kind type = null;
-		private ClassDesc declaringClassDesc = null;
 
 		private static enum Kind {
 			ARRAY,
@@ -1051,46 +1049,62 @@ public abstract class VarHandle extends VarHandleInternal
 						result = ConstantDescs.BSM_VARHANDLE_ARRAY;
 						break;
 					case STATIC_FIELD:
-						result = ConstantDescs.BSM_VARHANDLE_FIELD;
+						result = ConstantDescs.BSM_VARHANDLE_STATIC_FIELD;
 						break;
 					case INSTANCE_FIELD:
-						result = ConstantDescs.BSM_VARHANDLE_STATIC_FIELD;
+						result = ConstantDescs.BSM_VARHANDLE_FIELD;
 						break;
 				}
 				return result;
 			}
+
+			ConstantDesc[] getBootstrapArgs(ClassDesc declaringClassDesc, ClassDesc varHandleDesc) {
+				ConstantDesc[] result = null;
+				switch(this) {
+					case ARRAY:
+						result = new ConstantDesc[] { varHandleDesc };
+						break;
+					case STATIC_FIELD:
+					case INSTANCE_FIELD:
+						result = new ConstantDesc[] { declaringClassDesc, varHandleDesc };
+						break;
+				}
+				return result;
+			}
+
+			boolean isField() {
+				return !this.equals(ARRAY);
+			}
 		}
 
 		/**
-		 * Create a nominal descriptor for a field VarHandle.
+		 * Create a nominal descriptor for a VarHandle.
 		 * 
+		 * @param type kind of VarHandleDesc to be created
 		 * @param declaringClassDesc ClassDesc describing the declaring class for the field (null for array)
-		 * @param name unqualified String name of the field (null for array)
-		 * @param varHandleType ClassDesc describing the field type
-		 * @throws NullPointerException if there is a null argument
+		 * @param name unqualified String name of the field ("_" for array)
+		 * @param varHandleType ClassDesc describing the field or array type
+		 * @throws NullPointerException if name argument is null
 		 */
 		private VarHandleDesc(Kind type, ClassDesc declaringClassDesc, String name, ClassDesc varHandleDesc) throws NullPointerException {
-			super(type.getBootstrap(), name, varHandleDesc, ConstantDescs.CD_VarHandle);
+			super(type.getBootstrap(), name, ConstantDescs.CD_VarHandle, type.getBootstrapArgs(declaringClassDesc, varHandleDesc));
 			this.type = type;
-			this.declaringClassDesc = declaringClassDesc;
 		}
 
 		/**
 		 * Creates a VarHandleDesc describing a VarHandle for an array type.
 		 * 
-		 * @param arrayClass ClassDesc describing the array type
+		 * @param arrayClassDesc ClassDesc describing the array type
 		 * @return VarHandleDesc describing a VarHandle for an array type
 		 * @throws NullPointerException if there is a null argument
 		 */
-		public static VarHandleDesc ofArray(ClassDesc arrayClass) throws NullPointerException {
-			/* Verify that arrayClass is an array, and throw an error. Otherwise the call to componentType() 
-			 * will return null and a NullPointerException will be thrown which does not follow the spec.
-			 */
-			if (!arrayClass.isArray()) {
+		public static VarHandleDesc ofArray(ClassDesc arrayClassDesc) throws NullPointerException {
+			/* Verify that arrayClass is an array. This also covers the null check. */
+			if (!arrayClassDesc.isArray()) {
 				/*[MSG "K0625", "{0} is not an array type."]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0625", arrayClass.descriptorString())); //$NON-NLS-1$
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0625", arrayClassDesc.descriptorString())); //$NON-NLS-1$
 			}
-			return new VarHandleDesc(Kind.ARRAY, arrayClass, "_", arrayClass.componentType()); //$NON-NLS-1$
+			return new VarHandleDesc(Kind.ARRAY, null, "_", arrayClassDesc); //$NON-NLS-1$
 		}
 
 		/**
@@ -1098,14 +1112,15 @@ public abstract class VarHandle extends VarHandleInternal
 		 * 
 		 * @param declaringClassDesc ClassDesc describing the declaring class for the field
 		 * @param name unqualified String name of the field
-		 * @param fieldType ClassDesc describing the field type
+		 * @param fieldTypeDesc ClassDesc describing the field type
 		 * @return VarHandleDesc describing the instance field
 		 * @throws NullPointerException if there is a null argument
 		 */
-		public static VarHandleDesc ofField(ClassDesc declaringClassDesc, String name, ClassDesc fieldType) throws NullPointerException {
-			/* other fields will be null checked in constructor */
+		public static VarHandleDesc ofField(ClassDesc declaringClassDesc, String name, ClassDesc fieldTypeDesc) throws NullPointerException {
+			/* name null check is in the constructor */
 			Objects.requireNonNull(declaringClassDesc);
-			return new VarHandleDesc(Kind.INSTANCE_FIELD, declaringClassDesc, name, fieldType);
+			Objects.requireNonNull(fieldTypeDesc);
+			return new VarHandleDesc(Kind.INSTANCE_FIELD, declaringClassDesc, name, fieldTypeDesc);
 		}
 
 		/**
@@ -1113,14 +1128,15 @@ public abstract class VarHandle extends VarHandleInternal
 		 * 
 		 * @param declaringClassDesc ClassDesc describing the declaring class for the field
 		 * @param name unqualified String name of the field
-		 * @param fieldType ClassDesc describing the field type
+		 * @param fieldTypeDesc ClassDesc describing the field type
 		 * @return VarHandleDesc describing the static field
 		 * @throws NullPointerException if there is a null argument
 		 */
-		public static VarHandleDesc ofStaticField(ClassDesc declaringClassDesc, String name, ClassDesc fieldType) throws NullPointerException {
-			/* other fields will be null checked in constructor */
+		public static VarHandleDesc ofStaticField(ClassDesc declaringClassDesc, String name, ClassDesc fieldTypeDesc) throws NullPointerException {
+			/* name null check is in the constructor */
 			Objects.requireNonNull(declaringClassDesc);
-			return new VarHandleDesc(Kind.STATIC_FIELD, declaringClassDesc, name, fieldType);
+			Objects.requireNonNull(fieldTypeDesc);
+			return new VarHandleDesc(Kind.STATIC_FIELD, declaringClassDesc, name, fieldTypeDesc);
 		}
 
 		/**
@@ -1134,17 +1150,16 @@ public abstract class VarHandle extends VarHandleInternal
 		public VarHandle resolveConstantDesc(MethodHandles.Lookup lookup) throws ReflectiveOperationException {
 			VarHandle result;
 
-			/* resolve declaringClassDesc, which is array class for array type */
-			Class<?> declaringClass = (Class<?>)declaringClassDesc.resolveConstantDesc(lookup);
-
 			switch(type) {
 				case ARRAY:
-					result = MethodHandles.arrayElementVarHandle(declaringClass);
+					Class<?> arrayClass = (Class<?>)getArrayTypeClassDesc().resolveConstantDesc(lookup);
+					result = MethodHandles.arrayElementVarHandle(arrayClass);
 					break;
 				case STATIC_FIELD:
 				case INSTANCE_FIELD:
-					/* resolve field descriptor and field name */
-					Class<?> fieldClass = (Class<?>)constantType().resolveConstantDesc(lookup);
+					/* resolve declaring class, field descriptor and field name */
+					Class<?> declaringClass = (Class<?>)getFieldDeclaringClassDesc().resolveConstantDesc(lookup);
+					Class<?> fieldClass = (Class<?>)getFieldTypeClassDesc().resolveConstantDesc(lookup);
 					String name = constantName();
 
 					try {
@@ -1158,7 +1173,8 @@ public abstract class VarHandle extends VarHandleInternal
 					}
 					break;
 				default:
-					throw new java.lang.InternalError();
+					/*[MSG "K0619", "Malformated VarHandleDesc, {0} could not be retrieved."]*/
+					throw new InternalError(com.ibm.oti.util.Msg.getString("K0619", "field type")); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			
 			return result;
@@ -1172,19 +1188,19 @@ public abstract class VarHandle extends VarHandleInternal
 		 */
 		@Override
 		public String toString() {
-
-			/* VarHandleDesc[(static) (declaring class name).(constant field):(constant type)] */
+			/* VarHandleDesc[(static) (declaring class name).(constant field):(var type)] */
 			String structure = "VarHandleDesc[%s]"; //$NON-NLS-1$
 			String content = ""; //$NON-NLS-1$
 
 			if (type.equals(Kind.ARRAY)) {
 				/* array type is declaring class, varType is the component type of the array */
-				content = String.format("%s[]", declaringClassDesc.displayName()); //$NON-NLS-1$
+				content = String.format("%s[]", getArrayTypeClassDesc().displayName()); //$NON-NLS-1$
 			} else {
 				if (type.equals(Kind.STATIC_FIELD)) {
 					content += "static ";  //$NON-NLS-1$
 				}
-				content = String.format(content + "%s.%s:%s", declaringClassDesc.displayName(), constantName(), varType().displayName()); //$NON-NLS-1$
+				content = String.format(content + "%s.%s:%s", getFieldDeclaringClassDesc().displayName(), //$NON-NLS-1$
+					constantName(), getFieldTypeClassDesc().displayName());
 			}
 
 			return String.format(structure, content);
@@ -1196,8 +1212,56 @@ public abstract class VarHandle extends VarHandleInternal
 		 * @return ClassDesc of variable type
 		 */
 		public ClassDesc varType() {
-			return constantType();
+			return type.isField() ? getFieldTypeClassDesc() : getArrayTypeClassDesc().componentType();
 		}
+
+		/**
+		 * Helper to retrieve declaring class descriptor from superclass bootstrap arguments.
+		 * 
+		 * @return ClassDesc declaring class desccriptor
+		 * @throws InternalError if VarHandleDesc was created improperly or instance is not a field
+		 */
+		private ClassDesc getFieldDeclaringClassDesc() {
+			ConstantDesc[] args = bootstrapArgs();
+			/* declaring class is always the first bootstrap argument */
+			if (!type.isField() || (args.length < 2) || !(args[0] instanceof ClassDesc)) {
+				/*[MSG "K0619", "Malformated VarHandleDesc, {0} could not be retrieved."]*/
+				throw new InternalError(com.ibm.oti.util.Msg.getString("K0619", "field declaring class descriptor")); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			return (ClassDesc)args[0];
+		}
+
+		/**
+		 * Helper to retrieve field type descriptor from superclass bootstrap arguments.
+		 * 
+		 * @return ClassDesc field type desccriptor
+		 * @throws InternalError if VarHandleDesc was created improperly or instance is not a field
+		 */
+		private ClassDesc getFieldTypeClassDesc() {
+			ConstantDesc[] args = bootstrapArgs();
+			/* field type is always the second bootstrap argument */
+			if (!type.isField() || (args.length < 2) || !(args[1] instanceof ClassDesc)) {
+				/*[MSG "K0619", "Malformated VarHandleDesc, {0} could not be retrieved."]*/
+				throw new InternalError(com.ibm.oti.util.Msg.getString("K0619", "field class descriptor")); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			return (ClassDesc)args[1];
+		}
+
+		/**
+		 * Helper to retrieve array type descriptor from superclass bootstrap arguments.
+		 * 
+		 * @return ClassDesc array type descriptor
+		 * @throws InternalError if VarHandleDesc was created improperly or instance is not an array type
+		 */
+		private ClassDesc getArrayTypeClassDesc() {
+			ConstantDesc[] args = bootstrapArgs();
+			/* array type is always the first bootstrap argument for an array type */
+			if (type.isField() || (args.length == 0) || !(args[0] instanceof ClassDesc)) {
+				/*[MSG "K0619", "Malformated VarHandleDesc, {0} could not be retrieved."]*/
+				throw new InternalError(com.ibm.oti.util.Msg.getString("K0619", "array type descriptor")); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			return (ClassDesc)args[0];
+		}		
 	}
 /*[ENDIF] Java12 */ 
 }
