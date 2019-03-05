@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ def configure() {
     stage('Configure Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make -f run_configure.mk'
                 }
             }
@@ -71,7 +71,7 @@ def compile() {
     stage('Compile Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make compile'
                 }
             }
@@ -83,7 +83,7 @@ def test() {
     stage('Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh "make ${TEST_TARGET}"
                 }
             }
