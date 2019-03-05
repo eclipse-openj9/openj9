@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,11 @@ final class VarargsCollectorHandle extends MethodHandle {
 	
 	private CollectHandle previousCollector = null;
 	
+	private WrongMethodTypeException throwNewWMTE(IllegalArgumentException iae) {
+		/*[MSG "K0681", "Failed to build collector"]*/
+		throw new WrongMethodTypeException(com.ibm.oti.util.Msg.getString("K0681"), iae); //$NON-NLS-1$
+	}
+	
 	@Override
 	public MethodHandle asType(MethodType newType) throws ClassCastException {
 		if (type == newType)  {
@@ -170,7 +175,11 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		CollectHandle collector = previousCollector;
 		if ((collector == null) || (collector.collectArraySize != collectCount)) {
-			collector = (CollectHandle) next.asCollector(arrayType, collectCount);
+			try {
+				collector = (CollectHandle) next.asCollector(arrayType, collectCount);
+			} catch (IllegalArgumentException iae) {
+				throw throwNewWMTE(iae);
+			}
 			// update cached collector handle
 			previousCollector = collector;
 		}
