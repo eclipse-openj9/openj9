@@ -201,20 +201,10 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    spReal->setAssignedRegister(spReal);
    spReal->setHasBeenAssignedInMethod(true);
 
-   TR::RealRegister * tempHigh = toRealRegister(spReal)->getHighWordRegister();
-   tempHigh->setState(TR::RealRegister::Locked);
-   tempHigh->setAssignedRegister(tempHigh);
-   tempHigh->setHasBeenAssignedInMethod(true);
-
    // meta data register
    mdReal->setState(TR::RealRegister::Locked);
    mdReal->setAssignedRegister(mdReal);
    mdReal->setHasBeenAssignedInMethod(true);
-
-   tempHigh = toRealRegister(mdReal)->getHighWordRegister();
-   tempHigh->setState(TR::RealRegister::Locked);
-   tempHigh->setAssignedRegister(tempHigh);
-   tempHigh->setHasBeenAssignedInMethod(true);
 
    // set register weight
    for (icount = TR::RealRegister::FirstGPR; icount <= TR::RealRegister::GPR3; icount++)
@@ -1408,7 +1398,6 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
                     !(performTransformation(comp(), "O^O No need to restore RAREG in epilog\n")) ||
                     getRealRegister(getReturnAddressRegister())->getHasBeenAssignedInMethod()                       ||
                     cg()->canExceptByTrap()                                                      ||
-                    getRealRegister(getReturnAddressRegister())->getHighWordRegister()->getHasBeenAssignedInMethod() ||
                     cg()->getExitPointsInMethod()                                                ||
                     bodySymbol->isEHAware()                                                              ||
                     comp()->getOption(TR_FullSpeedDebug);  // CMVC 195232 - FSD can modify RA slot at a GC point.
