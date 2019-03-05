@@ -148,7 +148,7 @@ TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 c
    }
 
 TR_OpaqueClassBlock *
-TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
+TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool returnClassForAOT)
    {
    if (cpIndex == -1)
       return nullptr;
@@ -169,7 +169,7 @@ TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compilation * comp
             return it->second;
          }
       }
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex);
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex, returnClassForAOT);
    TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
    if (resolvedClass)
       {
@@ -1783,7 +1783,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compila
    {
    if (returnClassForAOT || comp->getOption(TR_UseSymbolValidationManager))
       {
-      TR_OpaqueClassBlock * resolvedClass = TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(comp, cpIndex);
+      TR_OpaqueClassBlock * resolvedClass = TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(comp, cpIndex, returnClassForAOT);
       if (resolvedClass &&
          validateClassFromConstantPool(comp, (J9Class *)resolvedClass, cpIndex))
          {
