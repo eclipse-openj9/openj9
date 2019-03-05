@@ -711,6 +711,9 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9vmem_vmem_params_init(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_vmem_params_init(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_reserve_memory(param1,param2,param3,param4,param5,param6) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4,param5,param6)
 #define j9vmem_reserve_memory_ex(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory_ex(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#define j9vmem_get_contiguous_region_memory(param1, param2, param3, param4, param5, param6, param7, param8) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_get_contiguous_region_memory(OMRPORT_FROM_J9PORT(privatePortLibrary), param1, param2, param3, param4, param5, param6, param7, param8)
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #define j9vmem_get_page_size(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_get_page_size(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_get_page_flags(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_get_page_flags(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_supported_page_sizes() OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_supported_page_sizes(OMRPORT_FROM_J9PORT(privatePortLibrary))

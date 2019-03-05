@@ -25,6 +25,7 @@ include $(CONFIG_INCL_DIR)/configure_common.mk
 CONFIGURE_ARGS += \
 	--enable-OMR_THR_THREE_TIER_LOCKING \
 	--enable-OMR_THR_YIELD_ALG \
+	--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 	--enable-OMR_THR_SPIN_WAKE_CONTROL
 
 ifeq (linux_ppc-64_cmprssptrs_le, $(SPEC))

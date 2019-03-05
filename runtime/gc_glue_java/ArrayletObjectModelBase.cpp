@@ -95,7 +95,14 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 	if (InlineContiguous == layout) {
 		spineDataSize = dataSize; // All data in spine
 	} else if (Hybrid == layout) {
-		spineDataSize = (dataSize & (_omrVM->_arrayletLeafSize - 1)); // Last arraylet in spine.
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
+			spineDataSize = 0;
+		} else
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+		{
+			spineDataSize = (dataSize & (_omrVM->_arrayletLeafSize - 1)); // Last arraylet in spine.
+		}
 	}
 
 	return spinePaddingSize + spineArrayoidSize + spineDataSize;

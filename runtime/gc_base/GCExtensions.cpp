@@ -30,6 +30,10 @@
 #include "j9nongenerated.h"
 #include "j9port.h"
 #include "util_api.h"
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#include "ArrayletLeafIterator.hpp"
+#include "Heap.hpp"
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 #include "EnvironmentBase.hpp"
 #include "Forge.hpp"
@@ -84,10 +88,34 @@ bool
 MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	OMRPORT_ACCESS_FROM_J9PORT(privatePortLibrary);
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	if (!MM_GCExtensionsBase::initialize(env)) {
 		goto failed;
 	}
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/* Initialize arraylet hash table */
+	/* Create hash table. Maps arraylet heap addresses to contiguous arraylet leaf addresses */
+	arrayletHashTable = hashTableNew(
+                                   privateOmrPortLibrary,
+                                   J9_GET_CALLSITE(),
+                                   401, /* Avoids collisions and table growth given average number of objects kept alive is 250 */
+                                   sizeof(ArrayletTableEntry),
+                                   sizeof(UDATA),
+                                   J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION,
+                                   OMRMEM_CATEGORY_MM,
+                                   ArrayletTableEntry::hash,
+                                   ArrayletTableEntry::equal,
+                                   NULL,
+                                   getJavaVM());
+
+	if (!_arrayletLock.initialize(env, &lnrlOptions, "MM_GCExtensions:ArrayletTableEntry:lock") || (arrayletHashTable == NULL)) {
+		goto failed;
+	}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 #if defined(J9VM_GC_REALTIME)
 	/* only ref slots, size in bytes: 2 * minObjectSize - header size */

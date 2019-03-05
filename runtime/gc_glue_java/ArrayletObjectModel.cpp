@@ -82,13 +82,20 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 			if (extensions->isVLHGC()) {
 				adjustedHybridSpineBytesAfterMove += objectAlignmentInBytes;
 			}
-			/* if remainder data can fit in spine, make it hybrid */
-			if (adjustedHybridSpineBytesAfterMove <= largestDesirableSpine) {
-				/* remainder data can fit in spine, last arrayoid pointer points to empty data section in spine */
-				layout = Hybrid;
-			} else {
-				/* remainder data will go into an arraylet, last arrayoid pointer points to it */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
 				layout = Discontiguous;
+			} else
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+			{
+				/* if remainder data can fit in spine, make it hybrid */
+				if (adjustedHybridSpineBytesAfterMove <= largestDesirableSpine) {
+					/* remainder data can fit in spine, last arrayoid pointer points to empty data section in spine */
+					layout = Hybrid;
+				} else {
+					/* remainder data will go into an arraylet, last arrayoid pointer points to it */
+					layout = Discontiguous;
+				}
 			}
 		} else {
 			/* remainder is empty, so no arraylet allocated; last arrayoid pointer is set to MULL */

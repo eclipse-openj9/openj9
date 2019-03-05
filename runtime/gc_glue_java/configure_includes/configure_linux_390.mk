@@ -30,6 +30,7 @@ endif
 CONFIGURE_ARGS += \
 	--enable-OMR_THR_THREE_TIER_LOCKING \
 	--enable-OMR_THR_YIELD_ALG \
+	--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 	--enable-OMR_THR_SPIN_WAKE_CONTROL
 
 ifeq (linux_390-64_cmprssptrs_codecov, $(SPEC))

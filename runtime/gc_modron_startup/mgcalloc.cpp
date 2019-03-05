@@ -545,6 +545,27 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 		/* The hook could release access and so the object address could change (the value is preserved).  Since this
 		 * means the hook could write back a different value to the variable, it must be a valid lvalue (ie: not cast).
 		 */
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		GC_ArrayletObjectModel::ArrayLayout layout = extensions->indexableObjectModel.getArrayLayout((J9IndexableObject*)objectPtr);
+		if (extensions->indexableObjectModel.isDoubleMappingEnabled() && extensions->isVLHGC() && (layout != GC_ArrayletObjectModel::InlineContiguous)) {
+			Assert_MM_true(layout == GC_ArrayletObjectModel::Discontiguous);
+			UDATA arrayletLeafCount = extensions->indexableObjectModel.numArraylets((J9IndexableObject*)objectPtr);
+			UDATA sizeInElements = extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)objectPtr);
+			Assert_MM_true(sizeInElements == 0 || arrayletLeafCount > 0);
+
+			void *contiguousAddr = NULL;
+			if ((arrayletLeafCount > 1) && (sizeInElements > 0)) {
+				contiguousAddr = extensions->doubleMapArraylets(env, objectPtr);
+				if (contiguousAddr == NULL) {
+					objectPtr = NULL;
+					// TODO: must fail properly
+					goto failDoubleMap;
+				}
+			}
+		}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 		if (OMR_GC_ALLOCATE_OBJECT_INSTRUMENTABLE == (OMR_GC_ALLOCATE_OBJECT_INSTRUMENTABLE & allocateFlags)) {
 			TRIGGER_J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE(
 				vmThread->javaVM->hookInterface, 
@@ -595,6 +616,9 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 #endif /* defined(J9VM_GC_REALTIME) */
 		}
 	} else {
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+failDoubleMap:
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 		/* we're going to return NULL, trace this */
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
 		MM_MemorySpace *memorySpace = indexableOAM.getAllocateDescription()->getMemorySpace();
