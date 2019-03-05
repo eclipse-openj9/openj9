@@ -3204,6 +3204,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct.totalInstanceSize = std::get<16>(classInfo);
    classInfoStruct._classOfStaticCache = nullptr;
    classInfoStruct._constantClassPoolCache = nullptr;
+   classInfoStruct.remoteRomClass = std::get<17>(classInfo);
 
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
@@ -3250,7 +3251,7 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
    TR_OpaqueClassBlock * componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock * arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
    uintptrj_t totalInstanceSize = clazz->totalInstanceSize;
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass);
    }
 
 J9ROMClass *
@@ -3427,6 +3428,11 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
       case CLASSINFO_TOTAL_INSTANCE_SIZE :
          {
          *(uintptrj_t *)data = classInfo.totalInstanceSize;
+         }
+         break;
+      case CLASSINFO_REMOTE_ROM_CLASS :
+         {
+         *(J9ROMClass **)data = classInfo.remoteRomClass;
          }
          break;
       default :
