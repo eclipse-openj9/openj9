@@ -8252,7 +8252,7 @@ retry:
 		updateVMStruct(REGISTER_ARGS);
 
 		if (NULL == resolvedClass) {
-			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE);
+			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS);
 		} else if (!J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
 			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
 			setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
