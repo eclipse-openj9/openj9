@@ -1824,7 +1824,11 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				uint64_t limit = 0;
 				uint32_t rc = omrsysinfo_get_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | J9PORT_LIMIT_HARD, &limit);
 				if (OMRPORT_LIMIT_UNKNOWN != rc ) {
-					omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | OMRPORT_LIMIT_SOFT, limit);
+					Trc_VM_SetSoftFileLimit(vm->mainThread, limit);
+					rc = omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | OMRPORT_LIMIT_SOFT, limit);
+					Trc_VM_SetSoftFileLimitResult(vm->mainThread, rc);
+				} else {
+					Trc_VM_SetSoftFileLimitUnknown(vm->mainThread, rc);
 				}
 			}
 #endif /* !defined(WIN32) && !defined(J9ZTPF) */
