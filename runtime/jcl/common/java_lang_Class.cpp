@@ -894,15 +894,16 @@ Java_java_lang_Class_getMethodImpl(JNIEnv *env, jobject recv, jobject name, jobj
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	j9object_t resultObject = NULL;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 
 	PORT_ACCESS_FROM_VMC(currentThread);
 	if ((NULL == name) || (NULL == partialSignature)) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
+		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 		J9ROMClass *romClass = clazz->romClass;
-		/* primitives/arrays don't have local methods */
-		if (!J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
+
+		/* primitives doesn't have local methods */
+		if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
 			J9Method *currentMethod = NULL;
 			j9object_t nameObject = J9_JNI_UNWRAP_REFERENCE(name);
 			j9object_t signatureObject = J9_JNI_UNWRAP_REFERENCE(partialSignature);
