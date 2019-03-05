@@ -1262,7 +1262,6 @@ TR_CISCGraph::addOpc2CISCNode(TR_CISCNode *n)
             if (!n->isValidOtherInfo()) break;
             // else fall through
          case TR_variable:
-         case TR::cconst:
          case TR::sconst:
          case TR::iconst:
          case TR::bconst:
@@ -2436,9 +2435,6 @@ TR_CISCTransformer::addAllSubNodes(TR_CISCGraph *const graph, TR::Block *const b
             {
             case TR::iconst:
                val = node->getInt();
-               break;
-            case TR::cconst:
-               val = node->getConst<uint16_t>();
                break;
             case TR::sconst:
                val = node->getShortInt();
@@ -6220,11 +6216,9 @@ TR_CISCTransformer::compareTrNodeTree(TR::Node *a, TR::Node *b)
       {
       switch(a->getOpCodeValue())
          {
-         case TR::iuconst:
          case TR::iconst:
             if (a->getUnsignedInt() != b->getUnsignedInt()) return false;
             break;
-         case TR::luconst:
          case TR::lconst:
             if (a->getUnsignedLongInt() != b->getUnsignedLongInt()) return false;
             break;
@@ -6238,14 +6232,10 @@ TR_CISCTransformer::compareTrNodeTree(TR::Node *a, TR::Node *b)
             if (a->getDouble() != b->getDouble()) return false;
             break;
          case TR::bconst:
-         case TR::buconst:
             if (a->getUnsignedByte() != b->getUnsignedByte()) return false;
             break;
          case TR::sconst:
             if (a->getShortInt() != b->getShortInt()) return false;
-            break;
-         case TR::cconst:
-            if (a->getConst<uint16_t>() != b->getConst<uint16_t>()) return false;
             break;
          default:
             return false;

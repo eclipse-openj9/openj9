@@ -10201,7 +10201,7 @@ static TR::Register *inlineIntegerRotateRight(TR::Node *node, TR::CodeGenerator 
    TR::Register *srcRegister = cg->evaluate(firstChild);
    TR::Register *targetRegister = cg->allocateRegister();
 
-   if (secondChild->getOpCodeValue() == TR::iconst || secondChild->getOpCodeValue() == TR::iuconst)
+   if (secondChild->getOpCodeValue() == TR::iconst)
       {
       int32_t value = (32 - secondChild->getInt()) & 0x1f;
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, targetRegister, srcRegister, value, 0xffffffff);
@@ -10229,7 +10229,7 @@ static TR::Register *inlineLongRotateRight(TR::Node *node, TR::CodeGenerator *cg
    TR::Register *srcRegister = cg->evaluate(firstChild);
    TR::Register *targetRegister = cg->allocateRegister();
 
-   if (secondChild->getOpCodeValue() == TR::iconst || secondChild->getOpCodeValue() == TR::iuconst)
+   if (secondChild->getOpCodeValue() == TR::iconst)
       {
       int32_t value = (64 - secondChild->getInt()) & 0x3f;
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, targetRegister, srcRegister, value, CONSTANT64(0xffffffffffffffff));

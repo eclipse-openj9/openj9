@@ -169,7 +169,6 @@ public:
          switch(_opcode)
             {
             case TR::iconst:
-            case TR::cconst:
             case TR::sconst:
             case TR::bconst:
             case TR::lconst:
