@@ -453,6 +453,19 @@ public:
       uint8_t **coldCode,
       bool isMethodHeaderNeeded);
 
+
+   /**
+    * \brief Store a poison value in an auto slot that should have gone dead.  Used for debugging.
+    *
+    * \param[in] currentBlock : block in which the auto slot appears
+    * \param[in] liveAutoSymRef : SymbolReference of auto slot to poison
+    *
+    * \return poisoned store node
+    */
+   TR::Node *generatePoisonNode(
+      TR::Block *currentBlock,
+      TR::SymbolReference *liveAutoSymRef);
+
 private:
 
    enum // Flags
