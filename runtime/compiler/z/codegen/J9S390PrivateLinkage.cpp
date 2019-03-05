@@ -74,17 +74,6 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setRegisterFlag(TR::RealRegister::GPR12, Preserved);
    setRegisterFlag(TR::RealRegister::GPR13, Preserved);
 
-   if (TR::Compiler->target.is64Bit())
-      {
-      setRegisterFlag(TR::RealRegister::HPR6, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR7, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR8, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR9, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR10, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR11, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-      }
-
 #if defined(ENABLE_PRESERVED_FPRS)
    setRegisterFlag(TR::RealRegister::FPR8, Preserved);
    setRegisterFlag(TR::RealRegister::FPR9, Preserved);
@@ -226,17 +215,6 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    tempHigh->setState(TR::RealRegister::Locked);
    tempHigh->setAssignedRegister(tempHigh);
    tempHigh->setHasBeenAssignedInMethod(true);
-
-   for (icount = TR::RealRegister::FirstHPR; icount <= TR::RealRegister::LastHPR; ++icount)
-      {
-      TR::RealRegister * regReal = cg()->machine()->getRealRegister(icount);
-      if (regReal->getLowWordRegister()->getState() == TR::RealRegister::Locked)
-         {
-         regReal->setState(TR::RealRegister::Locked);
-         regReal->setAssignedRegister(regReal);
-         regReal->setHasBeenAssignedInMethod(true);
-         }
-      }
 
    // set register weight
    for (icount = TR::RealRegister::FirstGPR; icount <= TR::RealRegister::GPR3; icount++)
@@ -985,10 +963,8 @@ initStg(TR::CodeGenerator * codeGen, TR::Node * node, TR::RealRegister * tmpReg,
 int32_t
 TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum firstUsedReg,
                                                  TR::RealRegister::RegNum lastUsedReg,
-                                                 TR::RealRegister::RegNum firstUsedHighWordReg,
-                                                 TR::RealRegister::RegNum lastUsedHighWordReg,
                                                  int32_t &registerSaveDescription,
-                                                 int32_t &numIntSaved, int32_t &numFloatSaved, int32_t &numHighWordRegSaved)
+                                                 int32_t &numIntSaved, int32_t &numFloatSaved)
    {
    int32_t regSaveSize = 0;
    // set up registerSaveDescription which looks the following
@@ -1017,16 +993,9 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
       }
 #endif
 
-   // HPR6-HPR12 are also preserved on 32-bit
-   if (TR::Compiler->target.is32Bit())
-      {
-      if (!lastUsedHighWordReg  ==  TR::RealRegister::NoReg)
-         numHighWordRegSaved = lastUsedHighWordReg - firstUsedHighWordReg + 1;
-      }
    // calculate stackFramesize
    regSaveSize += numIntSaved * cg()->machine()->getGPRSize() +
-                          numFloatSaved * cg()->machine()->getFPRSize() +
-                          numHighWordRegSaved * 4;
+                          numFloatSaved * cg()->machine()->getFPRSize();
 
 
    int32_t firstLocalOffset = getOffsetToFirstLocal();
@@ -1070,7 +1039,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    TR::RealRegister * epReg = getEntryPointRealRegister();
    TR::Snippet * firstSnippet = NULL;
    TR::Node * firstNode = comp()->getStartTree()->getNode();
-   int32_t size = 0, argSize = 0, regSaveSize = 0, numIntSaved = 0, numFloatSaved = 0, numHighWordRegSaved =0;
+   int32_t size = 0, argSize = 0, regSaveSize = 0, numIntSaved = 0, numFloatSaved = 0;
    int32_t registerSaveDescription = 0;
    int32_t firstLocalOffset = getOffsetToFirstLocal();
    int32_t i;
@@ -1085,19 +1054,10 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    TR::RealRegister::RegNum lastUsedReg  = getLastSavedRegister(TR::RealRegister::GPR6,
                                                               TR::RealRegister::GPR12);
 
-   // HPR6-HPR12 are also preserved on 32-bit
-   TR::RealRegister::RegNum lastUsedHighWordReg  =  TR::RealRegister::NoReg;
-   TR::RealRegister::RegNum firstUsedHighWordReg =  TR::RealRegister::NoReg;
-   if (TR::Compiler->target.is32Bit())
-      {
-      lastUsedHighWordReg  =  getLastSavedRegister(TR::RealRegister::HPR6, TR::RealRegister::HPR12);
-      firstUsedHighWordReg =  getFirstSavedRegister(TR::RealRegister::HPR6, TR::RealRegister::HPR12);
-      }
    // compute the register save area
    regSaveSize = calculateRegisterSaveSize(firstUsedReg, lastUsedReg,
-                                           firstUsedHighWordReg, lastUsedHighWordReg,
                                            registerSaveDescription,
-                                           numIntSaved, numFloatSaved, numHighWordRegSaved);
+                                           numIntSaved, numFloatSaved);
 
    if (regSaveSize != 0)
       {
@@ -1139,7 +1099,6 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
       {
       traceMsg(comp(), "\n regSaveSize = %d localSize = %d argSize = %d firstLocalOffset = %d \n",regSaveSize,localSize,argSize,firstLocalOffset);
       //traceMsg(comp(), " firstUsedReg = %d lastUsedReg = %d firstUsedHighWordReg = %d lastUsedHighWordReg = %d\n", firstUsedReg, lastUsedReg, firstUsedHighWordReg, lastUsedHighWordReg);
-      //traceMsg(comp(), " numIntSaved = %d numHighWordRegSaved = %d\n", numIntSaved, numHighWordRegSaved);
       traceMsg(comp(), " Framesize = %d \n",size);
       }
 
@@ -2975,18 +2934,13 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
       jniEnvRegister, methodMetaDataVirtualRegister);
       }
 
-   // JNI dispatch does not allow for any object references to survive in preserved registers
-   // they are saved onto the system stack, which the stack walker has no way of accessing.
-   // Hence, ensure we kill all preserved HPRs (6-12) as well
+   // JNI dispatch does not allow for any object references to survive in preserved registers as they are saved onto
+   // the system stack, which the JVM stack walker has has no awareness of. Hence we need to ensure that all object
+   // references are evicted from preserved registers at the call site.
+   TR::Register* tempReg = cg()->allocateRegister();
 
-   TR::Register *dummyReg = NULL;
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR6), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR7), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR8), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR9), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR10), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR11), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR12), codeGen, true, true );
+   deps->addPostCondition(tempReg, TR::RealRegister::KillVolHighRegs);
+   cg()->stopUsingRegister(tempReg);
 
    setupRegisterDepForLinkage(callNode, TR_JNIDispatch, deps, killMask, systemLinkage, GlobalRegDeps, hasGlRegDeps, &methodAddressReg, javaLitOffsetReg);
 
