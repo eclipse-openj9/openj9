@@ -178,7 +178,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          TR_OpaqueMethodBlock *j9method = (TR_OpaqueMethodBlock *) aconstNode->getAddress();
          TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
 
-         uintptrj_t classChainOffsetInSharedCache = sharedCache->lookupClassChainOffsetInSharedCacheFromClass(j9class);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -199,7 +199,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          TR_OpaqueClassBlock *j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
-         uintptrj_t classChainOffsetInSharedCache = sharedCache->lookupClassChainOffsetInSharedCacheFromClass(j9class);
+         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 

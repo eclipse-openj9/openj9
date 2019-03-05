@@ -8703,7 +8703,8 @@ TR::CompilationInfoPerThreadBase::compile(
                TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
             }
 
-            if (vm.isAOT_DEPRECATED_DO_NOT_USE())
+            if (vm.isAOT_DEPRECATED_DO_NOT_USE() &&
+               compiler->getOption(TR_UseSymbolValidationManager))
                compiler->getSymbolValidationManager()->populateWellKnownClasses();
 
             rtn = compiler->compile();

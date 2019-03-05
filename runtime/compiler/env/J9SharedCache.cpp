@@ -35,6 +35,8 @@
 #include "env/j9method.h"
 #include "runtime/IProfiler.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "control/CompilationThread.hpp" // for TR::compInfoPT
+#include "control/JITaaSCompilationThread.hpp" // for ClientSessionData
 
 #define   LOG(n,c) \
    if (_logLevel >= (3*n)) \
@@ -99,29 +101,32 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _compInfo = TR::CompilationInfo::get(_jitConfig);
    _aotStats = fe->getPrivateConfig()->aotStats;
    _sharedCacheConfig = _javaVM->sharedClassConfig;
-   _cacheStartAddress = (UDATA) _sharedCacheConfig->cacheDescriptorList->cacheStartAddress;
-   _cacheSizeInBytes = _sharedCacheConfig->cacheDescriptorList->cacheSizeBytes;
-   _numDigitsForCacheOffsets=8;
-   if (_cacheSizeInBytes > (UDATA)0xFFFFFFFF)
-      _numDigitsForCacheOffsets=16;
+   if (_sharedCacheConfig)
+      {
+      _cacheStartAddress = (UDATA) _sharedCacheConfig->cacheDescriptorList->cacheStartAddress;
+      _cacheSizeInBytes = _sharedCacheConfig->cacheDescriptorList->cacheSizeBytes;
+      _numDigitsForCacheOffsets=8;
+      if (_cacheSizeInBytes > (UDATA)0xFFFFFFFF)
+         _numDigitsForCacheOffsets=16;
 
-   _hintsEnabledMask = 0;
-   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSharedCacheHints))
-      _hintsEnabledMask = TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags();
+      _hintsEnabledMask = 0;
+      if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSharedCacheHints))
+         _hintsEnabledMask = TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags();
 
-   _initialHintSCount = std::min(TR::Options::getCmdLineOptions()->getInitialSCount(), TR::Options::getAOTCmdLineOptions()->getInitialSCount());
-   if (_initialHintSCount == 0)
-      _initialHintSCount = 1;
+      _initialHintSCount = std::min(TR::Options::getCmdLineOptions()->getInitialSCount(), TR::Options::getAOTCmdLineOptions()->getInitialSCount());
+      if (_initialHintSCount == 0)
+         _initialHintSCount = 1;
 
 
-   _logLevel = std::max(TR::Options::getAOTCmdLineOptions()->getAotrtDebugLevel(), TR::Options::getCmdLineOptions()->getAotrtDebugLevel());
+      _logLevel = std::max(TR::Options::getAOTCmdLineOptions()->getAotrtDebugLevel(), TR::Options::getCmdLineOptions()->getAotrtDebugLevel());
 
-   _verboseHints = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints);
+      _verboseHints = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints);
 
-   LOG(5, { log("\t_sharedCacheConfig %p\n", _sharedCacheConfig); });
-   LOG(5, { log("\t_cacheStartAddress %p\n", _cacheStartAddress); });
-   LOG(5, { log("\t_cacheSizeInBytes %p\n", _cacheSizeInBytes); });
-   LOG(5, { log("\tlast cache address %p\n", _cacheStartAddress + _cacheSizeInBytes); });
+      LOG(5, { log("\t_sharedCacheConfig %p\n", _sharedCacheConfig); });
+      LOG(5, { log("\t_cacheStartAddress %p\n", _cacheStartAddress); });
+      LOG(5, { log("\t_cacheSizeInBytes %p\n", _cacheSizeInBytes); });
+      LOG(5, { log("\tlast cache address %p\n", _cacheStartAddress + _cacheSizeInBytes); });
+      }
    }
 
 void
@@ -144,8 +149,6 @@ TR_J9SharedCache::log(char *format, ...)
 uint32_t
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
-   if (TR::CompilationInfo::getStream())
-      return 0; // JITaaS TODO: bypass
    uint32_t result = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -171,8 +174,6 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
 uint16_t
 TR_J9SharedCache::getAllEnabledHints(J9Method *method)
    {
-   if (TR::CompilationInfo::getStream())
-      return 0; // JITaaS TODO: bypass
    uint16_t hintFlags = 0;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    if (_hintsEnabledMask)
@@ -190,8 +191,6 @@ TR_J9SharedCache::getAllEnabledHints(J9Method *method)
 bool
 TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t *dataField)
    {
-   if (TR::CompilationInfo::getStream())
-      return false; // JITaaS TODO: bypass
    bool isHint = false;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -223,16 +222,12 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
 bool
 TR_J9SharedCache::isHint(TR_ResolvedMethod *method, TR_SharedCacheHint hint, uint16_t *dataField)
    {
-   if (TR::CompilationInfo::getStream())
-      return false; // JITaaS TODO: bypass
    return isHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint, dataField);
    }
 
 void
 TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
-   if (TR::CompilationInfo::getStream())
-      return; // JITaaS TODO: bypass
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    static bool SCfull = false;
    uint16_t newHint = ((uint16_t)theHint) & _hintsEnabledMask;
@@ -360,8 +355,6 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 void
 TR_J9SharedCache::addHint(TR_ResolvedMethod * method, TR_SharedCacheHint hint)
    {
-   if (TR::CompilationInfo::getStream())
-      return; // JITaaS TODO: bypass
    addHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint);
    }
 
@@ -770,25 +763,6 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *cla
    return NULL;
    }
 
-uintptrj_t TR_J9SharedCache::lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz)
-   {
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      stream->write(JITaaS::J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
-      return std::get<0>(stream->read<uintptrj_t>());
-      }
-   else
-      {
-      void *loaderForClazz = _fe->getClassLoader(clazz);
-      //fprintf(stderr,"SharedCache: loaderForClazz %p\n", loaderForClazz);
-      void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-      //fprintf(stderr,"SharedCache: classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
-      uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-      //fprintf(stderr,"SharedCache: classChainOffsetInSharedCache %p\n", (void*)classChainOffsetInSharedCache);
-      return classChainOffsetInSharedCache;
-      }
-   }
-
 uintptrj_t
 TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
    {
@@ -796,4 +770,49 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
    void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
    uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
    return classChainOffsetInSharedCache;
+   }
+
+TR_J9JITaaSServerSharedCache::TR_J9JITaaSServerSharedCache(TR_J9VMBase *fe)
+   : TR_J9SharedCache(fe)
+   {
+   _stream = TR::CompilationInfo::getStream();
+   }
+
+void *
+TR_J9JITaaSServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
+   {
+   // compute pointer from client's cache start address
+   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   return (void *) ((UDATA)offset + vmInfo->_cacheStartAddress);
+   }
+
+void *
+TR_J9JITaaSServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
+   {
+   // return offset from client's cache start address
+   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   return (void *) ((UDATA)ptr - vmInfo->_cacheStartAddress);
+   }
+
+UDATA *
+TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
+   {
+   // TODO: might want to keep a per-client cache of (class -> class chain)
+   // that were remembered to reduce the number of remote calls
+   _stream->write(JITaaS::J9ServerMessageType::SharedCache_rememberClass, clazz, create);
+   return std::get<0>(_stream->read<UDATA *>());
+   }
+
+UDATA
+TR_J9JITaaSServerSharedCache::getCacheStartAddress()
+   {
+   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   return vmInfo->_cacheStartAddress;
+   }
+
+uintptrj_t
+TR_J9JITaaSServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
+   {
+   _stream->write(JITaaS::J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
+   return std::get<0>(_stream->read<uintptrj_t>());
    }

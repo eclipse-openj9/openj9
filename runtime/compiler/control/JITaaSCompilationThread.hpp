@@ -88,6 +88,7 @@ class ClientSessionData
       int32_t _arrayletLeafSize;
       uint64_t _overflowSafeAllocSize;
       int32_t _compressedReferenceShift;
+      UDATA _cacheStartAddress;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)

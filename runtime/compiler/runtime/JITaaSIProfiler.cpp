@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "bcnames.h"
+#include "env/j9methodServer.hpp"
 
 TR_JITaaSIProfiler *
 TR_JITaaSIProfiler::allocate(J9JITConfig *jitConfig)
@@ -754,4 +755,14 @@ TR_JITaaSIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
       stream->write(JITaaS::J9ServerMessageType::IProfiler_setCallCount, method, bcIndex, count);
       stream->read<JITaaS::Void>();
       }
+   }
+
+void 
+TR_JITaaSIProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp)
+   {
+   // resolvedMethodSymbol is only used for debugging on the client, so we don't have to send it
+   auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method);
+   auto stream = TR::CompilationInfo::getStream();
+   stream->write(JITaaS::J9ServerMessageType::IProfiler_persistIprofileInfo, serverMethod->getRemoteMirror());
+   auto recv = stream->read<JITaaS::Void>();
    }

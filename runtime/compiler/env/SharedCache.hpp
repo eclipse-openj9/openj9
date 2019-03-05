@@ -47,7 +47,6 @@ public:
    virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) { return false; }
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *cinaData, void *loader) { return NULL; }
-   virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz) { return 0; }
 
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) { return 0; }
 
