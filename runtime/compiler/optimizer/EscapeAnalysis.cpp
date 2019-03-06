@@ -3742,32 +3742,59 @@ static bool isFinalizableInlineTest(TR::Compilation *comp, TR::Node *candidate, 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    bool is64Bit = TR::Compiler->target.is64Bit();
-   TR::ILOpCodes ifOp = is64Bit ? TR::iflcmpne : TR::ificmpne;
-   TR::ILOpCodes andOp = is64Bit ? TR::land : TR::iand;
+
+   // root
+   //   r1      - first child of root
+   //     r11   - first child of first child of root
+   //     r12   - second child of first child of root
+   //   r2      - second child of root
+   TR::Node *r1 = (root->getNumChildren() > 0) ? root->getFirstChild() : NULL;
+   TR::Node *r2 = (root->getNumChildren() > 1) ? root->getSecondChild() : NULL;
+   TR::Node *r11 = (r1 && r1->getNumChildren() > 0) ? r1->getFirstChild() : NULL;
+   TR::Node *r12 = (r1 && r1->getNumChildren() > 1) ? r1->getSecondChild() : NULL;
+
+   bool castDownToInt = is64Bit && r11 && (r11->getOpCodeValue() == TR::l2i);
+   bool usesLongOps = is64Bit && !castDownToInt;
+
+   TR::ILOpCodes ifOp = usesLongOps ? TR::iflcmpne : TR::ificmpne;
+   TR::ILOpCodes andOp = usesLongOps ? TR::land : TR::iand;
    TR::ILOpCodes loadOp = is64Bit ? TR::lloadi : TR::iloadi;
-   TR::ILOpCodes constOp = is64Bit ? TR::lconst : TR::iconst;
+   TR::ILOpCodes constOp = usesLongOps ? TR::lconst : TR::iconst;
+
+   TR::Node *loadNode = castDownToInt ? r11->getFirstChild() : r11;
 
    /*
       Looking for a pattern of:
+
       if[i/l]cmpne                                      <root>
-         [i/l]and
-            [i/l]loadi <classAndDepthFlags>
+         [i/l]and                                       <r1>
+            [i/l]loadi <classAndDepthFlags>             <r11/loadNode>
                aloadi <vft-symbol>                      <vftLoad>
                   ...                                   <ref>
-            [i/l]const <FlagValueForFinalizerCheck>
-         [i/l]const 0
+            [i/l]const <FlagValueForFinalizerCheck>     <r12>
+         [i/l]const 0                                   <r2>
+
+       or
+
+      ificmpne                                          <root>
+         iand                                           <r1>
+            l2i                                         <r11>
+               lloadi <classAndDepthFlags>              <loadNode>
+                  aloadi <vft-symbol>                   <vftLoad>
+                     ...                                <ref>
+            iconst <FlagValueForFinalizerCheck>         <r12>
+         iconst 0                                       <r2>
    */
 
    return root->getOpCodeValue() == ifOp &&
-          root->getFirstChild()->getOpCodeValue() == andOp &&
-          root->getSecondChild()->getOpCodeValue() == constOp &&
-          (is64Bit ? root->getSecondChild()->getLongInt() == 0 : root->getSecondChild()->getInt() == 0) &&
-          root->getFirstChild()->getFirstChild()->getOpCodeValue() == loadOp &&
-          root->getFirstChild()->getSecondChild()->getOpCodeValue() == constOp &&
-          (is64Bit ?
-           root->getFirstChild()->getSecondChild()->getLongInt() == fej9->getFlagValueForFinalizerCheck() :
-           root->getFirstChild()->getSecondChild()->getInt() == fej9->getFlagValueForFinalizerCheck()) &&
-          root->getFirstChild()->getFirstChild()->getFirstChild() == vftLoad /*&& (implied by the above assume)
+          r1->getOpCodeValue() == andOp &&
+          r2->getOpCodeValue() == constOp &&
+          (usesLongOps ? r2->getLongInt() : r2->getInt() ) == 0 &&
+          loadNode->getOpCodeValue() == loadOp &&
+          r12->getOpCodeValue() == constOp &&
+          (usesLongOps ? r12->getLongInt() : r12->getInt())
+                == fej9->getFlagValueForFinalizerCheck() &&
+          loadNode->getFirstChild() == vftLoad /*&& (implied by the above assume)
           root->getFirstChild()->getFirstChild()->getFirstChild()->getFirstChild() == candidate*/;
    }
 
@@ -4986,15 +5013,24 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                TR::Node *andNode = _curTree->getNode()->getFirstChild();
                andNode->removeAllChildren();
 
-               if (TR::Compiler->target.is64Bit())
+
+               // In 64-bit mode the isFinalizable test will start out using
+               // long operations, but subsequent optimization might reduce
+               // them to int operations, so be prepared to replace the and
+               // operation with a zero of the appropriate size
+               if (andNode->getOpCodeValue() == TR::land)
                   {
                   TR::Node::recreate(andNode, TR::lconst);
                   andNode->setLongInt(0);
                   }
-               else
+               else if (andNode->getOpCodeValue() == TR::iand)
                   {
                   TR::Node::recreate(andNode, TR::iconst);
                   andNode->setInt(0);
+                  }
+               else
+                  {
+                  TR_ASSERT_FATAL(false, "Expected iand or land in isFinalizable test");
                   }
                }
 
