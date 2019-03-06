@@ -25,6 +25,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Relocation.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
@@ -41,7 +42,6 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
    uint8_t *instructionStart = cg()->getBinaryBufferCursor();
    uint8_t *cursor = getOpCode().copyBinaryToBuffer(instructionStart);
    intptrj_t imm = getAddrImmediate();
-   intptrj_t distance = imm - (intptrj_t)cursor;
 
    if (getOpCodeValue() == TR::InstOpCode::bl || getOpCodeValue() == TR::InstOpCode::b)
       {
@@ -103,16 +103,16 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
          }
       else
          {
-         if (distance <= BRANCH_FORWARD_LIMIT &&
-             distance >= BRANCH_BACKWARD_LIMIT)
+         if (TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(imm, (intptrj_t)cursor))
             {
-            *(int32_t *)cursor |= distance & 0x03fffffc;
+            *(int32_t *)cursor |= (imm - (intptrj_t)cursor) & 0x03fffffc;
             }
          else
             {
+            intptrj_t targetAddress;
             if (refNum < TR_PPCnumRuntimeHelpers)
                {
-               distance = TR::CodeCacheManager::instance()->findHelperTrampoline(refNum, (void *)cursor) - (intptrj_t)cursor;
+               targetAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(refNum, (void *)cursor);
                }
             else if (refNum >= cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::firstPerCodeCacheHelperSymbol) &&
                      refNum <= cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::lastPerCodeCacheHelperSymbol))
@@ -120,20 +120,18 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
                TR_ASSERT(cg()->hasCodeCacheSwitched(), "Expecting per-codecache helper to be unreachable only when codecache was switched");
                TR_CCPreLoadedCode helper = (TR_CCPreLoadedCode)(refNum - cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::firstPerCodeCacheHelperSymbol));
                _addrImmediate = (uintptrj_t)fej9->getCCPreLoadedCodeAddress(cg()->getCodeCache(), helper, cg());
-               distance = (intptrj_t)_addrImmediate - (intptrj_t)cursor;
+               targetAddress = (intptrj_t)_addrImmediate;
                }
             else
                {
-               void *trmpln = (void *)fej9->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
-
                // Must use the trampoline as the target and not the label
                //
-               distance = (intptrj_t)trmpln - (intptrj_t)cursor;
+               targetAddress = (intptrj_t)fej9->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
                }
 
-            TR_ASSERT(distance <= BRANCH_FORWARD_LIMIT && distance >= BRANCH_BACKWARD_LIMIT,
-               "CodeCache is more than 32MB");
-            *(int32_t *)cursor |= distance & 0x03fffffc;
+            TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+                            "Call target address is out of range");
+            *(int32_t *)cursor |= (targetAddress - (intptrj_t)cursor) & 0x03fffffc;
             }
          }
 
@@ -145,6 +143,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
       }
    else
       {
+      intptrj_t distance = imm - (intptrj_t)cursor;
       // Place holder only: non-TR::InstOpCode::b[l] usage of this instruction doesn't
       // exist at this moment.
       *(int32_t *)cursor |= distance & 0x03fffffc;

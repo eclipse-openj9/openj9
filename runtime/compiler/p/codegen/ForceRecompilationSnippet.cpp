@@ -44,7 +44,6 @@
 
 uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
    TR::SymbolReference  *induceRecompilationSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation, false, false, false);
    intptrj_t startPC = (intptrj_t)((uint8_t*)cg()->getCodeStart());
@@ -119,16 +118,16 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
       buffer += PPC_INSTRUCTION_LENGTH;
       }
 
-   intptrj_t distance = (intptrj_t)induceRecompilationSymRef->getMethodAddress() - (intptrj_t)buffer;
-   if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)induceRecompilationSymRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(induceRecompilationSymRef->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer;
-      TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(induceRecompilationSymRef->getReferenceNumber(), (void *)buffer);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer),
+                      "Helper address is out of range");
       }
 
    // b distance
-   *(int32_t *)buffer = 0x48000000 | (distance & 0x03ffffff);
+   *(int32_t *)buffer = 0x48000000 | ((helperAddress - (intptrj_t)buffer) & 0x03ffffff);
 
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)induceRecompilationSymRef,TR_HelperAddress, cg()),
                           __FILE__,

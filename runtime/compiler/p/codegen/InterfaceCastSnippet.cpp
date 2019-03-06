@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,14 +116,16 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptrj_t)getReStartLabel()->getCodeLocation() - (intptrj_t)cursor;
-         TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+         TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)getReStartLabel()->getCodeLocation(), (intptrj_t)cursor),
+                   "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
 
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptrj_t)_doneLabel->getCodeLocation() - (intptrj_t)cursor;
-         TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+         TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_doneLabel->getCodeLocation(), (intptrj_t)cursor),
+                   "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
          }
@@ -139,14 +141,16 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptrj_t)getDoneLabel()->getCodeLocation() - (intptrj_t)cursor;
-         TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+         TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)getDoneLabel()->getCodeLocation(), (intptrj_t)cursor),
+                   "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
 
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptrj_t)_callLabel->getCodeLocation() - (intptrj_t)cursor;
-         TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+         TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_callLabel->getCodeLocation(), (intptrj_t)cursor),
+                   "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
          }
@@ -256,7 +260,8 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptrj_t)getReStartLabel()->getCodeLocation() - (intptrj_t)cursor;
-         TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+         TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)getReStartLabel()->getCodeLocation(), (intptrj_t)cursor),
+                   "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
       }
@@ -272,7 +277,8 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptrj_t)_callLabel->getCodeLocation() - (intptrj_t)cursor;
-         TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+         TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_callLabel->getCodeLocation(), (intptrj_t)cursor),
+                   "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
       }
@@ -312,14 +318,16 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptrj_t)_trueLabel->getCodeLocation() - (intptrj_t)cursor;
-            TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+            TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_trueLabel->getCodeLocation(), (intptrj_t)cursor),
+                      "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
 
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptrj_t)_falseLabel->getCodeLocation() - (intptrj_t)cursor;
-            TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+            TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_falseLabel->getCodeLocation(), (intptrj_t)cursor),
+                      "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
             }
@@ -328,7 +336,8 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptrj_t)_doneLabel->getCodeLocation() - (intptrj_t)cursor;
-            TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+            TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_doneLabel->getCodeLocation(), (intptrj_t)cursor),
+                      "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
             }
@@ -361,14 +370,16 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptrj_t)_trueLabel->getCodeLocation() - (intptrj_t)cursor;
-            TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+            TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_trueLabel->getCodeLocation(), (intptrj_t)cursor),
+                      "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
 
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptrj_t)_falseLabel->getCodeLocation() - (intptrj_t)cursor;
-            TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+            TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_falseLabel->getCodeLocation(), (intptrj_t)cursor),
+                      "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
             }
@@ -377,7 +388,8 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptrj_t)_doneLabel->getCodeLocation() - (intptrj_t)cursor;
-            TR_ASSERT(branchDistance>=BRANCH_BACKWARD_LIMIT, "backward jump in Interface Cache is too long\n");
+            TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)_doneLabel->getCodeLocation(), (intptrj_t)cursor),
+                      "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
             }

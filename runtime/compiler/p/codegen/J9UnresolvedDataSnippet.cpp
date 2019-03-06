@@ -123,17 +123,15 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 
    getSnippetLabel()->setCodeLocation(cursor);
 
-   intptrj_t distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
-   if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
-      TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor), "Helper address is out of range");
       }
 
-
    // bl distance
-   *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
+   *(int32_t *)cursor = 0x48000001 | ((helperAddress - (intptrj_t)cursor) & 0x03fffffc);
    cg()->addProjectSpecializedRelocation(cursor,(uint8_t *)glueRef, NULL, TR_HelperAddress,
                           __FILE__,
                           __LINE__,
@@ -247,9 +245,10 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 4;
    *(int32_t *)cursor = 0xdeadbeef; // Pached with lis via runtime code
    cursor += 4;
-   intptrj_t ra_distance = ((intptrj_t)getAddressOfDataReference()+4) - (intptrj_t)cursor;
-   TR_ASSERT(ra_distance<=BRANCH_FORWARD_LIMIT && ra_distance>=BRANCH_BACKWARD_LIMIT, "Return address is more than 32MB.\n");
-   *(int32_t *)cursor = 0x48000000 | (ra_distance & 0x03fffffc);
+   intptrj_t targetAddress = (intptrj_t)getAddressOfDataReference()+4;
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+                   "Return address is out of range");
+   *(int32_t *)cursor = 0x48000000 | ((targetAddress - (intptrj_t)cursor) & 0x03fffffc);
 
    return cursor+4;
    }
