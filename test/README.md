@@ -28,7 +28,6 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
 ```
     cd openj9/test/TestConfig
     export JAVA_BIN=/my/openj9/sdk/bin
-    export SPEC=linux_x86-64_cmprssptrs
     make -f run_configure.mk   // generates makefiles
     make compile               // downloads test related material/libs
                                // and compiles test material
@@ -134,20 +133,16 @@ Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpe
 
 ## 7) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
 
-User can run tests against different java version and/or java
+User can run tests against different jdk version and/or jdk
 implementation. While the default values of these variables match a
 typical use case for OpenJ9 developers, there are also many cases
 where developers need to verify features for a specific version or
 compare behaviour against a particular implementation.
 
-JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value)
-
-JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
-
-```
-    export JDK_VERSION=8
-    export JDK_IMPL=hotspot
-```
+There is no extra step needed.
+By default, AUTO_DETECT is turned on, and the test framework will 
+auto detect SPEC, JDK_IMPL, and JDK_VERSION. Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#1-configure-environment) for
+details and examples. 
 
 ## 8) How to interpret test results?
 - test results summary

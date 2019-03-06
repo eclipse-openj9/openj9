@@ -72,9 +72,9 @@ static JavaVM * globalVM = NULL;
 static int attempted_to_open_master = 0;
 
 int openLibraries(const char *libraryDir);
-#else
+#else /* defined(AIXPPC) */
 static int openLibraries(const char *libraryDir);
-#endif
+#endif /* defined(AIXPPC) */
 static const char *isPackagedWithCompressedRefs(void);
 static BOOLEAN isPackagedWithSubdir(const char *subdir);
 static void showVMChoices(void);
@@ -121,7 +121,7 @@ typedef enum gc_policy{
 #include <sys/ldr.h>
 #include <load.h>
 #include <dlfcn.h>
-#endif
+#endif /* defined(AIXPPC) */
 
 #if defined(J9ZOS390)
 #include <dll.h>
@@ -133,7 +133,7 @@ typedef enum gc_policy{
 #define dlclose dllfree
 #define getj9bin        getj9binZOS
 #define J9FSTAT fstat
-#endif
+#endif /* defined(J9ZOS390) */
 
 #ifndef PATH_MAX
 #define PATH_MAX 1023
@@ -143,7 +143,7 @@ typedef enum gc_policy{
 
 #if defined(AIXPPC)
 static J9StringBuffer* getLibraryNameWithPath(J9StringBuffer *buffer);
-#endif
+#endif /* defined(AIXPPC) */
 static J9StringBuffer* getjvmBin(BOOLEAN removeSubdir);
 static void chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength);
 static void addToLibpath(const char *dir);
@@ -190,16 +190,12 @@ static BOOLEAN parseGCPolicy(char *buffer, int *value);
 #define XMX	"-Xmx"
 
 /* We use forward slashes here because J9VM_LIB_ARCH_DIR is not used on Windows. */
-#if (J9VM_JAVA9_BUILD >= 150) || defined(OSX)
-/* On OSX, <arch> doesn't exist. So, JVM_ARCH_DIR shouldn't be appended to
- * J9VM_LIB_ARCH_DIR on OSX.
- */
+#if (JAVA_SPEC_VERSION >= 9) || defined(OSX)
+/* On OSX, <arch> doesn't exist, so JVM_ARCH_DIR shouldn't be included in J9VM_LIB_ARCH_DIR. */
 #define J9VM_LIB_ARCH_DIR "/lib/"
-#elif defined(JVM_ARCH_DIR) /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#else /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 #define J9VM_LIB_ARCH_DIR "/lib/" JVM_ARCH_DIR "/"
-#else /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
-#error "No matching ARCH found"
-#endif /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
+#endif /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 
 #if defined(WIN32)
 #define DIR_SLASH_CHAR '\\'
@@ -225,7 +221,7 @@ truncatePath(char *inputPath, BOOLEAN keepSlashChar) {
 	}
 }
 
-#if defined(AIXPPC) || (J9VM_JAVA9_BUILD < 150)
+#if (JAVA_SPEC_VERSION == 8) || defined(AIXPPC)
 /*
  * Remove the suffix from string if present.
  */
@@ -243,7 +239,7 @@ removeSuffix(char *string, const char *suffix)
 		}
 	}
 }
-#endif /* defined(AIXPPC) || (J9VM_JAVA9_BUILD < 150) */
+#endif /* (JAVA_SPEC_VERSION == 8) || defined(AIXPPC) */
 
 static void
 addToLibpath(const char *dir)
@@ -305,7 +301,6 @@ addToLibpath(const char *dir)
 	}
 #endif
 }
-
 
 void
 freeGlobals(void)
@@ -990,10 +985,10 @@ isPackagedWithSubdir(const char *subdir)
 		jvmBufferData(buffer)[jvmBinLength - 1] = '\0';
 		/* remove /bin, /lib or /<arch> */
 		truncatePath(jvmBufferData(buffer), FALSE);
-#if J9VM_JAVA9_BUILD < 150
+#if JAVA_SPEC_VERSION == 8
 		/* if the path ended with /lib/<arch> we need to remove another segment */
 		removeSuffix(jvmBufferData(buffer), "/lib");
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 		buffer = jvmBufferCat(buffer, J9VM_LIB_ARCH_DIR);
 		buffer = jvmBufferCat(buffer, subdir);
 
@@ -1032,10 +1027,10 @@ findDir(const char *libraryDir) {
 		truncatePath(tmpBufferData, FALSE); /* at jre/bin/classic or jre/lib/<arch>/classic */
 		truncatePath(tmpBufferData, FALSE); /* at jre/bin         or jre/lib/<arch>         */
 		truncatePath(tmpBufferData, FALSE); /* at jre             or jre/lib                */
-#if J9VM_JAVA9_BUILD < 150
+#if JAVA_SPEC_VERSION == 8
 		/* if the path ends with .../lib we need to remove another segment */
 		removeSuffix(jvmBufferData(buffer), "/lib");
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 		tmpBuffer = jvmBufferCat(tmpBuffer, J9VM_LIB_ARCH_DIR "j9vm/");
 		DBG_MSG(("classic mode - trying J6 UNIX shape: %s\n", jvmBufferData(tmpBuffer)));
 
@@ -1149,8 +1144,7 @@ openLibraries(const char *libraryDir)
 		fprintf(stderr,"jvm.dll failed to load: global entrypoints not found\n");
 		return JNI_ERR;
 	}
-
-#else
+#else /* WIN32 */
 	buffer = jvmBufferCat(buffer, "/libjvm" J9PORT_LIBRARY_SUFFIX);
 	/* open the DLL and look up the symbols */
 #if defined(AIXPPC)
@@ -1165,7 +1159,7 @@ openLibraries(const char *libraryDir)
 	 * time. We can then call dlopen() as per normal and the just loaded library will be found.
 	 * */
 	loadAndInit(jvmBufferData(buffer), L_RTLD_LOCAL, NULL);
-#endif
+#endif /* defined(AIXPPC) */
 	j9vm_dllHandle = dlopen(jvmBufferData(buffer), RTLD_LAZY);
 	if(!j9vm_dllHandle) {
 			fprintf(stderr, "failed to open <%s> - reason: <%s>\n", jvmBufferData(buffer), dlerror());
@@ -1180,8 +1174,7 @@ openLibraries(const char *libraryDir)
 		fprintf(stderr,"jvm.dll failed to load: global entrypoints not found\n");
 		return JNI_ERR;
 	}
-
-#endif
+#endif /* WIN32 */
 
 	lookupJVMFunctions(j9vm_dllHandle);
 	free(buffer);

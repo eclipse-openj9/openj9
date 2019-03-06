@@ -44,15 +44,33 @@ tools should be installed on your test machine to run tests.
 ### 1. Configure environment:
 
   * environment variables
+
+    required:
     ```
     JAVA_BIN=<path to JDK bin directory that you wish to test>
-    SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
-    JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value)
-    JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
+    ```
+    optional:
+    ```
+    SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test, could be auto detected)
+    JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value, could be auto detected)
+    JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value, could be auto detected)
     NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as JDK_HOME)
     ```
-
+  * auto detection:
+  
+    By default, AUTO_DETECT is turned on. SPEC, JDK_VERSION, and JDK_IMPL do not need to be exported.
+    If you wish to turn off AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can turn off AUTO_DETECT.
+    ```
+    export AUTO_DETECT=off
+    ```
+    e.g.,
+    ```
+    export AUTO_DETECT=off
+    export SPEC=linux_x86-64_cmprssptrs
+    export JDK_VERSION=8
+    export JDK_IMPL=openj9
+    ```
 Please refer *.spec files in [buildspecs](https://github.com/eclipse/openj9/tree/master/buildspecs)
 for possible SPEC values.
 
