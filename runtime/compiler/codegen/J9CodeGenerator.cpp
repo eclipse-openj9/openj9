@@ -4755,10 +4755,7 @@ J9::CodeGenerator::allocateCodeMemoryInner(
    bool hadClassUnloadMonitor;
    bool hadVMAccess = self()->fej9()->releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   // Override contiguous allocation for the JITaaS client                                                                                                                                          
-   // JITaaS FIXME: why do we need contiguous allocation at the client?                                                                                                                             
    bool useContiguousAllocation = self()->fej9()->needsContiguousAllocation();                                                                                                                                      
-   useContiguousAllocation |= comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE;
 
    uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(
          warmCodeSizeInBytes,
