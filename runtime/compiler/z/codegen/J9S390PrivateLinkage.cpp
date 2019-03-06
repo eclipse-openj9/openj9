@@ -149,9 +149,7 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setOffsetToRegSaveArea (0);
    setOffsetToLongDispSlot(0);
    setOffsetToFirstParm   (0);
-   int32_t numDeps = 29;
-   if (TR::Compiler->target.is32Bit())
-      numDeps += 7; //need to kill HPRs
+   int32_t numDeps = 30;
 
    if (codeGen->getSupportsVectorRegisters())
       numDeps += 32; //need to kill VRFs
@@ -174,13 +172,7 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    TR::RealRegister * mdReal  = getMethodMetaDataRealRegister();
    int32_t icount, ret_count = 0;
 
-   // block all the dedicated registers
-
-   // native stack pointer
-   // On zOS, we can use the system stack pointer on both 31-bit and 64-bit.
-   // 31-bit requires highword facility tracking (z196 or higher).
-   static char * disableFreeJITSSP = feGetEnv("TR_DisableFreeJITSSP");
-
+   // Lock all the dedicated registers
    bool freeingSSPDisabled = true;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -188,8 +180,7 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    if (cg()->supportsJITFreeSystemStackPointer())
       freeingSSPDisabled = false;
 
-   if (freeingSSPDisabled || disableFreeJITSSP != NULL ||
-       comp()->getOption(TR_Randomize))                                   // We can generate code for different hardware targets, which are incompatiable.
+   if (freeingSSPDisabled)
       {
       sspReal->setState(TR::RealRegister::Locked);
       sspReal->setAssignedRegister(sspReal);
@@ -1088,7 +1079,6 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    if (comp()->getOption(TR_TraceCG))
       {
       traceMsg(comp(), "\n regSaveSize = %d localSize = %d argSize = %d firstLocalOffset = %d \n",regSaveSize,localSize,argSize,firstLocalOffset);
-      //traceMsg(comp(), " firstUsedReg = %d lastUsedReg = %d firstUsedHighWordReg = %d lastUsedHighWordReg = %d\n", firstUsedReg, lastUsedReg, firstUsedHighWordReg, lastUsedHighWordReg);
       traceMsg(comp(), " Framesize = %d \n",size);
       }
 
@@ -2830,8 +2820,10 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    TR::SystemLinkage * systemLinkage = (TR::SystemLinkage *) cg()->getLinkage(TR_System);
    TR::LabelSymbol * returnFromJNICallLabel = generateLabelSymbol(cg());
    TR::RegisterDependencyConditions * deps;
-   int32_t numDeps = systemLinkage->getNumberOfDependencyGPRegisters();
-   numDeps += 16; //HPRs need to be spilled
+
+   // Extra dependency for killing volatile high registers (see KillVolHighRegs)
+   int32_t numDeps = systemLinkage->getNumberOfDependencyGPRegisters() + 1;
+
    if (cg()->getSupportsVectorRegisters())
       numDeps += 32; //VRFs need to be spilled
 

@@ -263,7 +263,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
    bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof;
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
-   for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; i++)
+   for (int i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters; i++)
       {
       if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
          {
