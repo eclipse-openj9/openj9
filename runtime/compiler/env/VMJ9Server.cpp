@@ -1459,6 +1459,15 @@ TR_J9ServerVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference
     return (intptrj_t)callSite;
 }
 
+uintptrj_t
+TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz)
+   {
+   J9ROMClass *remoteRomClass = NULL;
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_REMOTE_ROM_CLASS, (void *) &remoteRomClass);
+   return (uintptrj_t) remoteRomClass;
+   }
+
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
