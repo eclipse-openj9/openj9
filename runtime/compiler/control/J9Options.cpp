@@ -2456,15 +2456,14 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       self()->setOption(TR_DisableIntrinsics);
       }
 
-   /* Temporary (until SVM is the default)
-    *
-    * If the SVM is not enabled, use the old _coldUpgradeSampleThreshold
+   /* If the SVM is enabled, use a higher _coldUpgradeSampleThreshold
     * for AGGRESSIVE_AOT
     */
-   if (!self()->getOption(TR_EnableSymbolValidationManager)
-       && TR::Options::_aggressivenessLevel == TR::Options::AGGRESSIVE_AOT)
+   if (TR::Options::_aggressivenessLevel == TR::Options::AGGRESSIVE_AOT &&
+       self()->getOption(TR_EnableSymbolValidationManager) &&
+       TR::Options::sharedClassCache())
       {
-      TR::Options::_coldUpgradeSampleThreshold = 10;
+      TR::Options::_coldUpgradeSampleThreshold = 20;
       }
 
    return true;
