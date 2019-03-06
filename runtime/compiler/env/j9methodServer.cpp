@@ -326,6 +326,10 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(
 bool
 TR_ResolvedJ9JITaaSServerMethod::fieldsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame)
    {
+   if (TR::comp()->compileRelocatableCode())
+      // in AOT, this should always return false, because mainline compares class loaders
+      // with fe->sameClassLoaders, which always returns false for AOT compiles
+      return false;
    TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(m2);
    if (getClassLoader() != serverMethod2->getClassLoader())
       return false;
@@ -364,6 +368,10 @@ TR_ResolvedJ9JITaaSServerMethod::fieldsAreSame(int32_t cpIndex1, TR_ResolvedMeth
 bool
 TR_ResolvedJ9JITaaSServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame)
    {
+   if (TR::comp()->compileRelocatableCode())
+      // in AOT, this should always return false, because mainline compares class loaders
+      // with fe->sameClassLoaders, which always returns false for AOT compiles
+      return false;
    TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(m2);
    if (getClassLoader() != serverMethod2->getClassLoader())
       return false;
