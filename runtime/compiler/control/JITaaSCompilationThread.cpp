@@ -522,6 +522,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getClassFromNewArrayType(index));
          }
          break;
+      case J9ServerMessageType::VM_getClassFromNewArrayTypeNonNull:
+         {
+         int32_t index = std::get<0>(client->getRecvData<int32_t>());
+         client->write(fe->getClassFromNewArrayTypeNonNull(index));
+         }
+         break;
       case J9ServerMessageType::VM_isCloneable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());

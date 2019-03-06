@@ -64,10 +64,9 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    defineGuaranteedID(_rootClass, TR::SymbolType::typeClass);
    defineGuaranteedID(compilee->getPersistentIdentifier(), TR::SymbolType::typeMethod);
 
-   struct J9Class ** arrayClasses = &_fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
    for (int32_t i = 4; i <= 11; i++)
       {
-      TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[i - 4]);
+      TR_OpaqueClassBlock *arrayClass = _fej9->getClassFromNewArrayTypeNonNull(i);
       TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(arrayClass);
       defineGuaranteedID(arrayClass, TR::SymbolType::typeClass);
       defineGuaranteedID(component, TR::SymbolType::typeClass);

@@ -1468,6 +1468,18 @@ TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * c
    return (uintptrj_t) remoteRomClass;
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassFromNewArrayTypeNonNull(int32_t arrayType)
+   {
+   // This query is needed for inline allocation, which requires array class to
+   // be non-NULL, but getClassFromNewArrayType returns NULL in AOT mode
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromNewArrayTypeNonNull, arrayType);
+   auto clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   TR_ASSERT(clazz, "class must not be NULL");
+   return clazz;
+   }
+
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
@@ -2176,11 +2188,6 @@ TR_J9SharedCacheServerVM::getBaseComponentClass(TR_OpaqueClassBlock * classPoint
 TR_OpaqueClassBlock *
 TR_J9SharedCacheServerVM::getClassFromNewArrayType(int32_t arrayType)
    {
-   // TODO: This needs to return null because for some reason VP depends on it.
-   // It may be that this is just done because rememberClass is broken and can't 
-   // handle arrays of primitives.
-   // If you change this, please update the TEMP HACK in J9Compilation.cpp
-   // and in initializeLocalArrayHeader as well.
    TR::Compilation *comp = _compInfoPT->getCompilation();
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       return TR_J9ServerVM::getClassFromNewArrayType(arrayType);
