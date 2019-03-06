@@ -291,7 +291,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="_JVM_IsVMGeneratedMethodIx@12"/>
 		<export name="JVM_GetTemporaryDirectory"/>
 		<export name="_JVM_CopySwapMemory@44"/>
+	</exports>
 
+	<exports group="jdk11">
 		<!-- Additions for Java 9 (Modularity) -->
 		<export name="JVM_DefineModule"/>
 		<export name="JVM_AddModuleExports"/>
@@ -325,9 +327,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 		<!-- Additions for Java 9 (General) -->
 		<export name="_JVM_GetNanoTimeAdjustment@16"/>
-	</exports>
 
-	<exports group="jdk11">
+		<!-- Additions for Java 11 (General) -->
 		<export name="JVM_BeforeHalt"/>
 		<export name="JVM_GetNestHost"/>
 		<export name="JVM_GetNestMembers"/>
