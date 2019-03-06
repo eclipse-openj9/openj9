@@ -4280,19 +4280,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
          TR_ASSERT(allocationNode->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
          int32_t arrayClassIndex = allocationNode->getSecondChild()->getInt();
 
-         // TEMP HACK: getClassFromNewArrayType returns null under AOT because primitive array classes
-         // are not in the SCC. However, here we require that the array class is actually resolved.
-         // VP requires that getClassFromNewArrayType returns null under AOT for some reason so we cannot
-         // just always resolve it.
-         if (TR::CompilationInfo::getStream())
-            {
-            ramClass = getClassFromNewArrayType(arrayClassIndex);
-            }
-         else
-            {
-            struct J9Class ** arrayClasses = &getJ9JITConfig()->javaVM->booleanArrayClass;
-            ramClass = (TR_OpaqueClassBlock*) arrayClasses[arrayClassIndex - 4];
-            }
+         ramClass = getClassFromNewArrayTypeNonNull(arrayClassIndex);
          }
          break;
 
@@ -6065,6 +6053,23 @@ TR_J9VMBase::convertMethodPtrToMethodOffset(J9Method *methodPtr)
 const char *
 TR_J9VMBase::getJ9MonitorName(J9ThreadMonitor* monitor) { return monitor->name; }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getClassFromNewArrayType(int32_t arrayType)
+   {
+   struct J9Class ** arrayClasses = &_jitConfig->javaVM->booleanArrayClass;
+   return convertClassPtrToClassOffset(arrayClasses[arrayType - 4]);
+   }
+
+TR_OpaqueClassBlock *
+TR_J9VMBase::getClassFromNewArrayTypeNonNull(int32_t arrayType)
+   {
+   // This query is needed for inline allocation, which requires array class to
+   // be non-NULL, but getClassFromNewArrayType returns NULL in AOT mode
+   auto clazz = TR_J9VMBase::getClassFromNewArrayType(arrayType);
+   TR_ASSERT(clazz, "class must not be NULL");
+   return clazz;
+   }
+
 /////////////////////////////////////////////////////
 // TR_J9VM
 /////////////////////////////////////////////////////
@@ -6730,13 +6735,6 @@ TR_J9VM::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
          return i + 4;
       }
    return -1;
-   }
-
-TR_OpaqueClassBlock *
-TR_J9VM::getClassFromNewArrayType(int32_t arrayType)
-   {
-   struct J9Class ** arrayClasses = &_jitConfig->javaVM->booleanArrayClass;
-   return convertClassPtrToClassOffset(arrayClasses[arrayType - 4]);
    }
 
 uint32_t

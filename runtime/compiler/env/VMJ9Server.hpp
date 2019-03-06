@@ -99,6 +99,7 @@ public:
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
    virtual int32_t getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType) override;
    virtual bool isCloneable(TR_OpaqueClassBlock *clazzPointer) override;
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;

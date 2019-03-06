@@ -997,6 +997,9 @@ public:
 
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *clazz) { return (((J9Class*)clazz)->initializeStatus & J9ClassInitStatusMask) == J9ClassInitSucceeded; }
 
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType);
+
    // --------------------------------------------------------------------------
    // Object model
    // --------------------------------------------------------------------------
@@ -1060,7 +1063,6 @@ public:
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual int32_t               getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz);
-   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT=false);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false);
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims);
