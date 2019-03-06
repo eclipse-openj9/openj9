@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,7 +110,7 @@ else
 		endif
 	endif
 	
-	TEST_LIB_PATH_VALUE:=$(Q)$(NATIVE_TEST_LIBS)$(PS)$(VM_SUBDIR_PATH)$(PS)$(J9VM_PATH)$(Q)
+	TEST_LIB_PATH_VALUE:=$(NATIVE_TEST_LIBS)$(PS)$(VM_SUBDIR_PATH)$(PS)$(J9VM_PATH)
 		
 	ifneq (,$(findstring win,$(SPEC)))
 		TEST_LIB_PATH:=PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(PATH)$(Q)
@@ -119,7 +119,7 @@ else
 	else ifneq (,$(findstring zos,$(SPEC)))
 		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
 	else ifneq (,$(findstring osx,$(SPEC)))
-		TEST_LIB_PATH:=DYLD_LIBRARY_PATH=$(TEST_LIB_PATH_VALUE)$(PS)$(DYLD_LIBRARY_PATH)
+		TEST_LIB_PATH:=DYLD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(DYLD_LIBRARY_PATH)$(Q)
 	else
 		TEST_LIB_PATH:=LD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LD_LIBRARY_PATH)$(Q)
 	endif
