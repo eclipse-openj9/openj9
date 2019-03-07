@@ -166,6 +166,8 @@ public:
       Java_lang_Character_value,
       Java_lang_Short_value,
       Java_lang_Boolean_value,
+      Java_lang_Class_enumVars,
+      Java_lang_ClassEnumVars_cachedEnumConstants,
       assertionsDisabled,
       NumRecognizedFields
       };
