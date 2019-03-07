@@ -615,12 +615,13 @@ initializeSystemProperties(J9JavaVM * vm)
 			goto fail;
 		}
 
-		rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VENDOR, 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			goto fail;
-		}
 	}
 #endif /* JAVA_SPEC_VERSION < 12 */
+
+	rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VM_VENDOR, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
 
 	rc = addSystemProperty(vm, "com.ibm.oti.vm.library.version", J9_DLL_VERSION_STRING, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
