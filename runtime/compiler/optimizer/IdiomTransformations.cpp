@@ -9188,7 +9188,6 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       {
       case TR::ificmpne:
       case TR::ifbcmpne:
-      case TR::ifsucmpne:
       case TR::ifscmpne:
       case TR::iflcmpne:
       case TR::ifacmpne:
