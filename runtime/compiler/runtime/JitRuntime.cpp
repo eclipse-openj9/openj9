@@ -59,7 +59,7 @@
 #include "runtime/IProfiler.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 #include "codegen/PicHelpers.hpp"
 #include "control/Recompilation.hpp"
 #endif
@@ -1309,7 +1309,7 @@ void platformUnlock(uint32_t *ptr)
    }
 }
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 uint32_t *getLinkageInfo(void *startPC)
    {
    return (uint32_t *)TR_LinkageInfo::get(startPC);
