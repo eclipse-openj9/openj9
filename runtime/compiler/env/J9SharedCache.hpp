@@ -172,9 +172,8 @@ public:
    // virtual bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
    virtual uint16_t getAllEnabledHints(J9Method *method) override { TR_ASSERT(false, "called"); return 0;}
    // virtual uint16_t getAllEnabledHints(J9ROMMethod *method) override { TR_ASSERT(false, "called"); return 0;}
-   virtual void addHint(J9Method *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
+   virtual void addHint(J9Method *, TR_SharedCacheHint) override;
    // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
-   virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
    virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
 
    virtual void *pointerFromOffsetInSharedCache(void *offset) override;
@@ -201,9 +200,10 @@ public:
 
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
+   void setStream(JITaaS::J9ServerStream *stream) { _stream = stream; }
+
 private:
    JITaaS::J9ServerStream *_stream;
-
    };
 
 #endif

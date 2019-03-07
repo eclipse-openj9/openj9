@@ -242,6 +242,7 @@ enum J9ServerMessageType
    // For TR_J9SharedCache
    SharedCache_getClassChainOffsetInSharedCache = 600;
    SharedCache_rememberClass = 601;
+   SharedCache_addHint = 602;
 
    // For runFEMacro
    runFEMacro_invokeCollectHandleNumArgsToCollect = 700;
