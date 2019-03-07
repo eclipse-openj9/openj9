@@ -173,6 +173,10 @@ ifeq ($(HOST_ARCH),arm)
     CX_FLAGS+=-fPIC -mfloat-abi=hard -mfpu=vfp -march=armv6 -marm
 endif
 
+ifeq ($(HOST_ARCH),aarch64)
+    CX_FLAGS+=-fPIC
+endif
+
 ifeq ($(C_COMPILER),clang)
     CX_FLAGS+=-Wno-parentheses -Werror=header-guard
 endif
