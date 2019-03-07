@@ -25,32 +25,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>cmdLineTester_CryptoTest_8</testCaseName>
-		<variations>
-			<variation>NoOptions</variation>
-		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-DTEST_RESROOT=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
-		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)openssl.xml$(Q) \
-		-verbose -explainExcludes -nonZeroExitWhenError; \
-		$(TEST_STATUS)</command>
-		<!-- Temporarily exclude on aix until OpenSSL is enabled on aix -->
-		<platformRequirements>^os.aix</platformRequirements>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
-	</test>
-
-	<test>
 		<testCaseName>cmdLineTester_CryptoTest</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -69,9 +43,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
 	</test>
 
 </playlist>

@@ -112,7 +112,7 @@ linux_ppc-64_cmprssptrs_le:
     11: '--openssl-version=1.1.1a'
     12: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-openssl=fetched --enable-openssl-bundling'
+    8: '--with-openssl=fetched'
     11: '--with-openssl=fetched'
     12: '--with-openssl=fetched'
   build_env:
@@ -162,7 +162,7 @@ linux_390-64_cmprssptrs:
     11: '--openssl-version=1.1.1a'
     12: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-openssl=fetched --enable-openssl-bundling'
+    8: '--with-openssl=fetched'
     11: '--with-openssl=fetched'
     12: '--with-openssl=fetched'
 #========================================#
@@ -194,10 +194,11 @@ aix_ppc-64_cmprssptrs:
       12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
   extra_getsource_options:
+    8: '--openssl-version=1.1.1a'
     11: '--openssl-version=1.1.1a'
     12: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
+    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8 --with-openssl=fetched'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
@@ -236,7 +237,7 @@ linux_x86-64_cmprssptrs:
     11: '--openssl-version=1.1.1a'
     12: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-openssl=fetched --enable-openssl-bundling'
+    8: '--with-openssl=fetched'
     11: '--with-openssl=fetched'
     12: '--with-openssl=fetched'
   build_env:
@@ -278,7 +279,7 @@ linux_x86-64_cmprssptrs_cmake:
     11: '--openssl-version=1.1.1a'
     12: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
+    8: '--with-cmake --disable-ddr --with-openssl=fetched'
     9: '--with-cmake --disable-ddr'
     10: '--with-cmake --disable-ddr'
     11: '--with-cmake --disable-ddr --with-openssl=fetched'
@@ -330,7 +331,7 @@ linux_x86-64:
     11: '--openssl-version=1.1.1a'
     12: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
+    8: '--with-noncompressedrefs --with-openssl=fetched'
     9: '--with-noncompressedrefs'
     10: '--with-noncompressedrefs'
     11: '--with-noncompressedrefs --with-openssl=fetched'
