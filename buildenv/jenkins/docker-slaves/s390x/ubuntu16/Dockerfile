@@ -44,7 +44,6 @@ RUN apt-get update \
     autoconf \
     build-essential \
     ca-certificates \
-    cmake \
     cpio \
     curl \
     libexpat1-dev `# This is being used for the xml parser` \
@@ -102,6 +101,17 @@ RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
 # Edit ldconfig to connect the new libstdc++.so* library
 RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
   && ldconfig
+
+# Install cmake version 3.11.4
+RUN cd /tmp \
+  && wget https://cmake.org/files/v3.11/cmake-3.11.4.tar.gz \
+  && tar xzf cmake-3.11.4.tar.gz \
+  && rm cmake-3.11.4.tar.gz \
+  && cd /tmp/cmake-3.11.4 \
+  && ./configure \
+  && make \
+  && make install
+
 
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
