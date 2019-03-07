@@ -238,14 +238,7 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
       if (isFabricatedVarHandleField(field, comp))
          fieldClass = fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", strlen("java/lang/invoke/VarHandle"));
       else
-         {
-         //
-         // TODO: getDeclaringClassFromFieldOrStatic would be better, but it's a
-         // little scarier because it's new.  getClassFromFieldOrStatic should be
-         // more conservative in this case, so probably more suitable for
-         // r13.java.
-         fieldClass = field->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, field->getCPIndex());
-         }
+         fieldClass = field->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(comp, field->getCPIndex());
 
       if (fieldClass == NULL)
          return false;
