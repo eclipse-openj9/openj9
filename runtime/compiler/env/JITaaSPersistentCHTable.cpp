@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,7 @@ TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
       if (!data.empty())
          return false; // this is the most frequent path
       }
+
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITaaS::J9ServerMessageType::CHTable_getAllClassInfo, JITaaS::Void());
    std::string rawData = std::get<0>(stream->read<std::string>());
@@ -180,14 +181,26 @@ TR_JITaaSServerPersistentCHTable::findClassInfoAfterLocking(
       bool returnClassInfoForAOT,
       bool validate)
    {
-   if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() && !returnClassInfoForAOT) // for AOT do not use the class hierarchy
-      return nullptr;
+   if (comp->compileRelocatableCode() && !returnClassInfoForAOT)
+      return NULL;
 
    if (comp->getOption(TR_DisableCHOpts))
-      return nullptr;
+      return NULL;
 
-   TR::ClassTableCriticalSection findClassInfoAfterLocking(comp->fe());
-   return findClassInfo(classId);
+   TR_PersistentClassInfo *classInfo = NULL;
+      {
+      TR::ClassTableCriticalSection findClassInfoAfterLocking(comp->fe());
+      classInfo = findClassInfo(classId);
+      }
+
+   if (classInfo &&
+       comp->compileRelocatableCode() &&
+       comp->getOption(TR_UseSymbolValidationManager) &&
+       validate)
+      {
+      comp->getSymbolValidationManager()->addClassInfoIsInitializedRecord(classId, classInfo->isInitialized());
+      }
+   return classInfo;
    }
 
 std::string
