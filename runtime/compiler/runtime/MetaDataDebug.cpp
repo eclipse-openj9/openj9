@@ -388,14 +388,6 @@ TR_Debug::printMapInfo(uintptrj_t startPC, uint8_t * mapBits, int32_t numberOfSl
       }
    else
       {
-#ifdef TR_HOST_S390
-      if (!nummaps)
-         {
-         trfprintf(_file, "      highWordRegisterMap: starting at [%08X] { %08X }\n", mapBits, *((U_32 *)mapBits));
-         }
-      mapBits += sizeof(U_32);
-      *sizeOfStackAtlas = *sizeOfStackAtlas + sizeof(U_32);
-#endif
       if (!nummaps)
          {
          trfprintf(_file, "      registerSaveDescription: starting at [%08X] { %08X }\n", mapBits, *((U_32 *)mapBits));

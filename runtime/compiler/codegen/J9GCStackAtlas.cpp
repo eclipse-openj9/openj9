@@ -76,10 +76,12 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
       nextMap = next->getData();
 
       int32_t mapBytes = map->getMapSizeInBytes();
+
+      // TODO: We should be using mapsAreIdentical API here instead. Also it seems there is a similar comment in OMR,
+      // i.e. "Maps are the same". Do we need a common API here for map merging which can be extended?
       if (nextMap != parameterMap &&
           mapBytes == nextMap->getMapSizeInBytes() &&
           map->getRegisterMap() == nextMap->getRegisterMap() &&
-          map->getHighWordRegisterMap() == nextMap->getHighWordRegisterMap() &&
           !memcmp(map->getMapBits(), nextMap->getMapBits(), mapBytes) &&
           (comp->getOption(TR_DisableLiveMonitorMetadata) ||
            ((map->getLiveMonitorBits() != 0) == (nextMap->getLiveMonitorBits() != 0) &&

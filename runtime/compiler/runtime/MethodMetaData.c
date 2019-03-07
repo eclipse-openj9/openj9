@@ -1421,11 +1421,9 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 #endif
             tempJitDescriptionCursorForRegs = (U_8 *)stackMap;
 
-#ifdef TR_HOST_S390
-            tempJitDescriptionCursorForRegs += 12; /*skip register map, register save description word and HighWordRegisterMap word */
-#else
+            /* Skip the register map and register save description */
             tempJitDescriptionCursorForRegs += 8;
-#endif
+
             if (((walkState->jitInfo->endPC - walkState->jitInfo->startPC) >= 65535) || (alignStackMaps))
                {
                tempJitDescriptionCursorForRegs += 8;
@@ -1612,15 +1610,6 @@ U_8 * getNextInternalPtrMapPinningArrayCursor(U_8 * internalPtrMapPinningArrayCu
 U_32 getJitRegisterMap(J9TR_MethodMetaData * methodMetaData, void * stackMap)
    {
    return *((U_32*)GET_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap));
-   }
-
-U_32 getJitHighWordRegisterMap(J9TR_MethodMetaData * methodMetaData, void * stackMap)
-   {
-#ifdef TR_HOST_S390
-   return *((U_32*)GET_HIGHWORD_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap));
-#else
-   return 0;
-#endif
    }
 
 U_8 * getJitStackSlots(J9TR_MethodMetaData * metaData, void * stackMap)
