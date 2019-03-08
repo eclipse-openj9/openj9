@@ -1,7 +1,7 @@
 ---
 name: Report a user problem
 about: Must gather information to report a problem
-
+labels: "userRaised"
 ---
 
 Java -version output
