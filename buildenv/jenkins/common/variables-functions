@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+import groovy.json.JsonSlurper;
 
 def VARIABLES
 
@@ -471,16 +472,32 @@ def set_slack_channel() {
 def set_artifactory_config() {
     ARTIFACTORY_SERVER = VARIABLES.artifactory_server
     if (ARTIFACTORY_SERVER) {
+        // Set variables to env so that the parent pipeline can retireve them.
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
-        env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-        // Set Creds to env so that the parent pipeline can retireve them.
-        env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
-        env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
-        env.ARTIFACTORY_VERSION = VARIABLES.artifactory_version
-        echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
+        ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+        echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER}/${ARTIFACTORY_REPO}"
+
+        def server = Artifactory.server ARTIFACTORY_SERVER
+        env.ARTIFACTORY_CREDS = server.getCredentialsId()
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
-        echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
-        echo "Artifactory server is version:${ARTIFACTORY_VERSION}"
+
+        withCredentials([usernamePassword(credentialsId: ARTIFACTORY_CREDS, passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+            JSON = sh returnStdout: true, script: "curl -u ${USER}:${PASS} ${server.getUrl()}/api/system/version"
+        }
+        def jsonslurper = new groovy.json.JsonSlurper()
+        def JSON_PARSED = jsonslurper.parseText(JSON)
+        def ARTIFACTORY_LICENSE = JSON_PARSED.license
+
+        if (ARTIFACTORY_LICENSE == "Artifactory OSS") {
+            ARTIFACTORY_VERSION = "OSS"
+        } else if (ARTIFACTORY_LICENSE ==~ /^[0-9a-f]+$/) {
+            ARTIFACTORY_VERSION = "PRO"
+            ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
+            echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+        } else {
+            error "Unknown ARTIFACTORY_LICENSE:${ARTIFACTORY_LICENSE}"
+        }
+        echo "Artifactory server is version: ${ARTIFACTORY_VERSION}"
     }
 }
 
