@@ -42,4 +42,10 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/env/OMRCPU.cpp \
     omr/compiler/aarch64/env/OMRDebugEnv.cpp
 
-JIT_PRODUCT_SOURCE_FILES+=
+JIT_PRODUCT_SOURCE_FILES+= \
+    compiler/aarch64/codegen/J9ARM64Snippet.cpp \
+    compiler/aarch64/codegen/J9CodeGenerator.cpp \
+    compiler/aarch64/codegen/J9TreeEvaluator.cpp \
+    compiler/aarch64/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/aarch64/codegen/StackCheckFailureSnippet.cpp \
+    compiler/aarch64/env/J9CPU.cpp
