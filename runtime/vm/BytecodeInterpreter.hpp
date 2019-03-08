@@ -6320,7 +6320,7 @@ resolve:
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
 					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
 				)) {
 					/* Store not allowed - run the resolve code to throw the exception */
@@ -6494,7 +6494,7 @@ resolve:
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
 					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
 				)) {
 					/* Store not allowed - run the resolve code to throw the exception */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -257,7 +257,7 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 	return ((tmpUtfLength == 0) && (tmpStringLength == 0));
 }
 
-#if !defined (J9VM_OUT_OF_PROCESS)
+#if !defined(J9VM_OUT_OF_PROCESS)
 UDATA
 copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength)
 {
@@ -428,7 +428,7 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 		if ('[' == J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, 0)) {
 			rc = CLASSNAME_VALID_ARRARY;
 		}
-		for (i = 1; i < unicodeLength; i++) {
+		for (i = 0; i < unicodeLength; i++) {
 			U_8 c = J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i);
 			if (c == '/') {
 				rc = CLASSNAME_INVALID;
@@ -449,7 +449,7 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 	}
 	return rc;
 }
-#endif
+#endif /* !defined(J9VM_OUT_OF_PROCESS) */
 
 /**
  * Check that each UTF8 character is well-formed.
@@ -567,4 +567,4 @@ methodToString(J9VMThread * vmThread, J9Method* method)
 			J9UTF8_DATA(sig), J9UTF8_LENGTH(sig));
 }
 
-}
+} /* extern "C" */

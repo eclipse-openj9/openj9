@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,29 +37,43 @@ jboolean JNICALL Java_java_lang_ClassLoader_isVerboseImpl(JNIEnv *env, jclass cl
 	return ( (javaVM->verboseLevel & VERBOSE_CLASS) == VERBOSE_CLASS );
 }
 
-
-jclass JNICALL 
+jclass JNICALL
 Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain)
 {
-#ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-	if (className != NULL) {
-		J9VMThread *currentThread = (J9VMThread *)env;
-		J9JavaVM *vm = currentThread->javaVM;
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	UDATA options = 0;
 
+#ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
+	if (NULL != className) {
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
 		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(className))) {
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)className);
-			vmFuncs->internalExitVMToJNI(currentThread);
-			return NULL;
+			/*
+			 * We don't yet know if the class being defined is exempt. Setting this option tells
+			 * defineClassCommon() to fail if it discovers that the class is not exempt. That failure
+			 * is distinguished by returning NULL with no exception pending.
+			 */
+			options |= J9_FINDCLASS_FLAG_NAME_IS_INVALID;
 		}
 
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
-#endif
+#endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
 
-	return defineClassCommon(env, receiver, className, classRep, offset, length, protectionDomain, 0, NULL);
+	jclass result = defineClassCommon(env, receiver, className, classRep, offset, length, protectionDomain, options, NULL);
+
+	if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID) && (NULL == result) && (NULL == currentThread->currentException)) {
+		/*
+		 * Now that we know the class is not exempt, throw NoClassDefFoundError as we
+		 * would have liked to have done above before we called defineClassCommon().
+		 */
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t *)className);
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+	return result;
 }
 
 jboolean JNICALL

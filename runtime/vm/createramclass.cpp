@@ -144,7 +144,7 @@ static UDATA checkPackageAccess(J9VMThread *vmThread, J9Class *foundClass, UDATA
 static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA exceptionIndex);
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
-static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
+static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -162,6 +162,15 @@ static void checkForCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 static void trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader *classLoader, J9UTF8 *className);
 
+/*
+ * A class which extends (perhaps indirectly) the 'magic'
+ * accessor class is exempt from the normal access rules.
+ */
+#if JAVA_SPEC_VERSION == 8
+#define MAGIC_ACCESSOR_IMPL "sun/reflect/MagicAccessorImpl"
+#else /* JAVA_SPEC_VERSION == 8 */
+#define MAGIC_ACCESSOR_IMPL "jdk/internal/reflect/MagicAccessorImpl"
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 /**
  * Mark all of the interfaces supported by this class, including all interfaces
@@ -1509,11 +1518,11 @@ popFromClassLoadingStack(J9VMThread *vmThread)
  * appropriate Java error on the VM.
  */
 static VMINLINE BOOLEAN
-loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass,
+loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module)
 {
 	J9JavaVM *vm = vmThread->javaVM;
-	const BOOLEAN isROMClassUnsafe = (J9ROMCLASS_IS_UNSAFE(romClass) != 0);
+	BOOLEAN isExemptFromValidation = J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_UNSAFE);
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 	J9UTF8 *superclassName = NULL;
 	J9Class *superclass = NULL;
@@ -1542,7 +1551,12 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 		}
 
 		if (!hotswapping) {
-			if (requirePackageAccessCheck(vm, classLoader, module, superclass)
+			if (J9CLASS_IS_EXEMPT_FROM_VALIDATION(superclass)) {
+				/* we will inherit exemption from superclass */
+				isExemptFromValidation = TRUE;
+			}
+			if (!isExemptFromValidation
+				&& requirePackageAccessCheck(vm, classLoader, module, superclass)
 				&& (checkPackageAccess(vmThread, superclass, classPreloadFlags) != 0)
 			) {
 				return FALSE;
@@ -1561,10 +1575,10 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 			}
 
 			/* ensure that the superclass is visible */
-			if (!isROMClassUnsafe) {
+			if (!isExemptFromValidation) {
 				/*
 				 * Failure occurs if
-				 * 1) The superClass class not public and does not belong to
+				 * 1) The superClass class is not public and does not belong to
 				 * the same package as the class being loaded.
 				 * 2) The superClass class is public but the class being loaded
 				 * belongs to a module that doesn't have access to the module that
@@ -1580,9 +1594,17 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				}
 			}
 
+			if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID) && !isExemptFromValidation) {
+				/*
+				 * The caller signalled that the name is invalid and this class is not exempt.
+				 * Don't set a pending exception - the caller will do that.
+				 */
+				return FALSE;
+			}
+
 			/* force the interfaces to be loaded without holding the mutex */
 			if (romClass->interfaceCount != 0) {
-				UDATA i;
+				UDATA i = 0;
 				J9SRP *interfaceNames = J9ROMCLASS_INTERFACES(romClass);
 
 				for (i = 0; i<romClass->interfaceCount; i++) {
@@ -1604,10 +1626,10 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR);
 						return FALSE;
 					}
-					if (!isROMClassUnsafe) {
+					if (!isExemptFromValidation) {
 						/*
 						 * Failure occurs if
-						 * 1) The interface class not public and does not belong to
+						 * 1) The interface class is not public and does not belong to
 						 * the same package as the class being loaded.
 						 * 2) The interface class is public but the class being loaded
 						 * belongs to a module that doesn't have access to the module that
@@ -2487,7 +2509,7 @@ fail:
 			 *                          + Unused
 			 *
 			 *                        + Unused
-			 *                       + Unused
+			 *                       + J9ClassIsExemptFromValidation (inherited)
 			 *                      + Unused
 			 *                     + Unused
 			 *
@@ -2708,7 +2730,7 @@ fail:
 				/* We don't add class location entries with locationType, LOAD_LOCATION_UNKNOWN, in the classLocationHashTable.
 				 * This should save footprint. Same applies for classes created with Unsafe.defineclass or Unsafe.defineAnonClass.
 				 */
-				if ((NULL == classBeingRedefined) && (LOAD_LOCATION_UNKNOWN != locationType) && (!J9ROMCLASS_IS_UNSAFE(romClass))) {
+				if ((NULL == classBeingRedefined) && (LOAD_LOCATION_UNKNOWN != locationType) && J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_UNSAFE)) {
 					J9ClassLocation classLocation;
 
 					classLocation.clazz = ramClass;
@@ -2857,28 +2879,49 @@ retry:
 				 */
 				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 					module = hostClass->module;
-				} else if ((classLoader != javaVM->systemClassLoader)
-					|| ((LOAD_LOCATION_PATCH_PATH == locationType)
-					|| (LOAD_LOCATION_MODULE == locationType))
-				) {
-					U_32 pkgNameLength = (U_32) packageNameLength(romClass);
-
-					omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-					module = findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(className), pkgNameLength);
-					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				} else {
-					module = javaVM->unamedModuleForSystemLoader;
+					bool findModule = false;
+
+					if (classLoader != javaVM->systemClassLoader) {
+						findModule = true;
+					} else if ((LOAD_LOCATION_PATCH_PATH == locationType)
+					|| (LOAD_LOCATION_MODULE == locationType)
+					) {
+						findModule = true;
+					} else {
+						J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+
+						if ((NULL != superclassName)
+						&& J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(superclassName), J9UTF8_LENGTH(superclassName), "java/lang/reflect/Proxy")
+						) {
+							/*
+							 * Proxy classes loaded by the system classloader may belong to a dynamically
+							 * created module (which has been granted access to the interfaces it must implement).
+							 */
+							findModule = true;
+						}
+					}
+
+					if (findModule) {
+						U_32 pkgNameLength = (U_32) packageNameLength(romClass);
+
+						omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
+						module = findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(className), pkgNameLength);
+						omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
+					} else {
+						module = javaVM->unamedModuleForSystemLoader;
+					}
 				}
 			} else {
 				/* Ignore locationType and assign all classes created before the java.base module is created to java.base.
-				 * This matches the RI implementation. Validated on JDK9 through JDK11.
+				 * This matches the reference implementation. Validated on JDK9 through JDK11.
 				 */
 				module = javaVM->javaBaseModule;
 			}
 		}
 	}
 
-	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
+	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, options, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -2897,8 +2940,9 @@ retry:
 	if (NULL != result) {
 		U_32 classFlags = result->classFlags;
 		if (NULL != superclass) {
-			/* Watched fields tag is inherited from the superclass */
-			classFlags |= (superclass->classFlags & J9ClassHasWatchedFields);
+			/* watched fields tag and exemption from validation are inherited from the superclass */
+			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation;
+			classFlags |= (superclass->classFlags & inheritedFlags);
 		}
 		if (0 != (J9_FINDCLASS_FLAG_ANON & options)) {
 			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
@@ -2908,6 +2952,13 @@ retry:
 				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, result->classObject, hostClassLoader->classLoaderObject);
 			}
 			classFlags |= J9ClassIsAnonymous;
+		}
+		if (J9_ARE_NO_BITS_SET(classFlags, J9ClassIsExemptFromValidation)) {
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+
+			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), MAGIC_ACCESSOR_IMPL)) {
+				classFlags |= J9ClassIsExemptFromValidation;
+			}
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
