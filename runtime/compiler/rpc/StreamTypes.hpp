@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,13 +59,13 @@ namespace JITaaS
    class StreamTypeMismatch: public virtual StreamFailure
       {
    public:
-      StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "type mismatch"); }
+      StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Type mismatch: %s", message.c_str()); }
       };
 
    class StreamArityMismatch: public virtual StreamFailure
       {
    public:
-      StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "arity mismatch"); }
+      StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Arity mismatch: %s", message.c_str()); }
       };
 
    class ServerCompFailure: public virtual std::exception

@@ -2279,6 +2279,16 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
+   self()->setupJITaaSOptions();
+
+   return true;
+   }
+
+void
+J9::Options::setupJITaaSOptions()
+   {
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+
    if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE ||
        compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
@@ -2312,8 +2322,6 @@ J9::Options::fePostProcessJIT(void * base)
                compInfo->getPersistentInfo()->getJITaaSServerAddress().c_str(),
                compInfo->getPersistentInfo()->getJITaaSServerPort());
       }
-
-   return true;
    }
 
 bool
@@ -2333,6 +2341,8 @@ J9::Options::fePostProcessAOT(void * base)
          TR::Options::getDebug()->printFilters();
          }
       }
+
+   self()->setupJITaaSOptions();
 
    return true;
    }
