@@ -1,7 +1,7 @@
 ---
 name: OpenJ9 test suite failure
 about: A failing functionality, system, or JTReg test
-
+labels: "test failure"
 ---
 
 Failure link
