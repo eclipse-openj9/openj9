@@ -48,9 +48,11 @@
 
 #define VENDOR_SHORT_NAME "OpenJ9"
 
+#define JAVA_VM_VENDOR "Eclipse OpenJ9"
+
 #if JAVA_SPEC_VERSION < 12
-/* Pre-JDK12 version use following defines to set system properties
- * java.vendor, java.vendor.url and java.vm.vendor within vmprop.c:initializeSystemProperties(vm).
+/* Pre-JDK12 versions use following defines to set system properties
+ * java.vendor and java.vendor.url within vmprop.c:initializeSystemProperties(vm).
  * JDK12 (assuming future versions as well) sets these properties via java.lang.VersionProps.init(systemProperties) 
  * and following settings within System.ensureProperties().
  */
