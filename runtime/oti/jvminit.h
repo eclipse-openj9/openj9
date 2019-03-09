@@ -437,6 +437,9 @@ enum INIT_STAGE {
 #define VMOPT_XXUSECONTAINERSUPPORT "-XX:+UseContainerSupport"
 #define VMOPT_XXNOUSECONTAINERSUPPORT "-XX:-UseContainerSupport"
 
+#define VMOPT_XXREADIPINFOFORRAS "-XX:+ReadIPInfoForRAS"
+#define VMOPT_XXNOREADIPINFOFORRAS "-XX:-ReadIPInfoForRAS"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"
