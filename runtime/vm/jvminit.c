@@ -2056,7 +2056,14 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			 * defer initialization of network data until after heap allocated, since the intialization
 			 * can initiate DLL loads which prevent allocation of large heaps.
 			 */
-			populateRASNetData(vm, vm->j9ras);
+			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXREADIPINFOFORRAS, NULL);
+			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOREADIPINFOFORRAS, NULL);
+			if (argIndex >= argIndex2) {
+				JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "\t\tenabled network query to determine host name and IP address for RAS.\n");
+				populateRASNetData(vm, vm->j9ras);
+			} else {
+				JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "\t\tdisabled network query to determine host name and IP address for RAS.\n");
+			}
 #endif
 			consumeVMArgs(vm, vm->vmArgsArray);
 			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXALLOWVMSHUTDOWN, NULL) >= 0) {
