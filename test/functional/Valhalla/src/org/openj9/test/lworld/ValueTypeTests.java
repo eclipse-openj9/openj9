@@ -41,7 +41,9 @@ import org.testng.annotations.Test;
  * 5) export JDK_VERSION=Valhalla
  * 6) export SPEC=linux_x86-64_cmprssptrs
  * 7) export BUILD_LIST=functional/Valhalla
- * 8) make -f run_configure.mk && make compile && make _sanity
+ * 8) export AUTO_DETECT=off
+ * 9) export JDK_IMPL=openj9
+ * 10) make -f run_configure.mk && make compile && make _sanity
  */
 
 @Test(groups = { "level.sanity" })
