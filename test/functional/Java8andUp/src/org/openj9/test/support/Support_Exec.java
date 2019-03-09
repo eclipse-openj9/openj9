@@ -1,7 +1,7 @@
 package org.openj9.test.support;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,7 +140,7 @@ public class Support_Exec {
 			String[] classpath) {
 		int baseArgs = 0;
 		String[] execArgs = null;
-		String vendor = System.getProperty("java.vendor");
+		String vendor = System.getProperty("java.vm.vendor");
 		boolean onUnix = File.separatorChar == '/';
 		String classPathString = "";
 		if (classpath != null)
