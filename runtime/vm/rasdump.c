@@ -574,12 +574,13 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 	j9addrinfo_t hints;
 	U_64 startTime, endTime;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	/* measure the time taken to call the socket APIs, so we can issue a warning */
 	startTime = j9time_current_time_millis();
 
 	/* get the host name and IP addresses */
-	if (0 != j9sock_gethostname((char*)rasStruct->hostname,  sizeof(rasStruct->hostname) )) {
+	if (0 != omrsysinfo_get_hostname((char*)rasStruct->hostname,  sizeof(rasStruct->hostname) )) {
 		/* error so null the buffer so we don't try to work with it on the other side */
 		memset(rasStruct->hostname, 0, sizeof(rasStruct->hostname));
 	}
