@@ -33,10 +33,10 @@ ifneq (,$(findstring jre,$(JAVA_BIN)))
 endif
 
 testconfig:
-ifneq ($(AUTO_DETECT), off)
-	@echo "AUTO_DETECT is turned on"
+ifneq ($(AUTO_DETECT), false)
+	@echo "AUTO_DETECT is set to true"
 	ant -f ./src/build_envInfo.xml -DJAVA_BIN=$(JAVA_BIN) -DJAVAC=$(JAVAC)
 else
-	@echo "AUTO_DETECT is turned off"
+	@echo "AUTO_DETECT is set to false"
 endif
 	$(MAKE) -f makeGen.mk AUTO_DETECT=$(AUTO_DETECT)

@@ -28,7 +28,7 @@
 
 HOTSPOT_IMPLS=$(or hotspot,sap)
 
-ifneq ($(AUTO_DETECT), off) 
+ifneq ($(AUTO_DETECT), false) 
     ifndef SPEC
         export SPEC:=$(DETECTED_SPEC)
     else
@@ -66,13 +66,13 @@ ifneq ($(AUTO_DETECT), off)
 	endif
 else
     ifndef SPEC
-        $(error Please export AUTO_DETECT=on or export SPEC value manually (i.e., export SPEC=linux_x86-64_cmprssptrs))
+        $(error Please export AUTO_DETECT=true or export SPEC value manually (i.e., export SPEC=linux_x86-64_cmprssptrs))
     endif
     ifndef JDK_VERSION
-        $(error Please export AUTO_DETECT=on or export JDK_VERSION value manually (i.e., export JDK_VERSION=8))
+        $(error Please export AUTO_DETECT=true or export JDK_VERSION value manually (i.e., export JDK_VERSION=8))
     endif
     ifndef JDK_IMPL
-        $(error Please export AUTO_DETECT=on or export JDK_IMPL value manually (i.e., export JDK_IMPL=openj9))
+        $(error Please export AUTO_DETECT=true or export JDK_IMPL value manually (i.e., export JDK_IMPL=openj9))
     endif
 endif
 
