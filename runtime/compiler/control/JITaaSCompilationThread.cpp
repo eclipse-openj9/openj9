@@ -2384,7 +2384,6 @@ remoteCompilationEnd(
    const std::string& dataCacheStr)
    {
    TR_MethodMetaData *relocatedMetaData = NULL;
-   void *startPC = NULL;
    TR_J9VM *fe = comp->fej9vm();
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
    J9JITConfig *jitConfig = compInfoPT->getJitConfig();
@@ -2424,78 +2423,21 @@ remoteCompilationEnd(
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    else // for relocating received AOT compilations
       {
-      bool safeToStore;
       TR_ASSERT(entry->_useAotCompilation, "entry must be an AOT compilation");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
-
-      if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
-         {
-         safeToStore = true;
-         }
-      else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
-         {
-         // If validation has been performed, then a header already existed
-         // or one was already been created in this JVM
-         safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, static_cast<TR_J9SharedCacheVM *>(fe), vmThread);
-         }
-      else
-         {
-         safeToStore = false;
-         }
-
-      const U_8 *dataStart;
-      const U_8 *codeStart;
-      UDATA dataSize, codeSize;
-      UDATA classReloAmount = 0;
-      const U_8 *returnCode = NULL;
-
-      dataStart = (U_8 *)(&dataCacheStr[0]);
-      dataSize  = dataCacheStr.size();
-      codeStart = (U_8 *)(&codeCacheStr[0]);
-      codeSize  = codeCacheStr.size();
-
+      
       J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-      if (safeToStore)
-         {
-         storedCompiledMethod =
-            reinterpret_cast<const J9JITDataCacheHeader*>(
-               jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
-                  vmThread,
-                  romMethod,
-                  dataStart,
-                  dataSize,
-                  codeStart,
-                  codeSize,
-                  0));
-         switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
-            {
-            case J9SHR_RESOURCE_STORE_FULL:
-               {
-               if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                  j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
-               TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
-               TR::CompilationInfo::disableAOTCompilations();
-               }
-               break;
-            case J9SHR_RESOURCE_STORE_ERROR:
-               {
-               if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                  j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
-               TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
-               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-               TR::CompilationInfo::disableAOTCompilations();
-               }
-            }
-         }
-      else
-         {
-         if (TR::Options::getAOTCmdLineOptions()->getVerboseOption(TR_VerboseJITaaS))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, " Failed AOT cache validation");
-            }
-
-         TR::CompilationInfo::disableAOTCompilations();
-         }
+      TR::CompilationInfo::storeAOTInSharedCache(
+         vmThread,
+         romMethod,
+         (U_8 *)(&dataCacheStr[0]),
+         dataCacheStr.size(),
+         (U_8 *)(&codeCacheStr[0]),
+         codeCacheStr.size(),
+         comp,
+         jitConfig,
+         entry
+         );
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
 
@@ -2540,12 +2482,7 @@ remoteCompilationEnd(
 
       if (canRelocateMethod)
          {
-         J9JITDataCacheHeader *cacheEntry;
-
          TR_ASSERT_FATAL(comp->cg(), "CodeGenerator must be allocated");
-
-         cacheEntry = (J9JITDataCacheHeader *)dataStart;
-
          int32_t returnCode = 0;
 
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
@@ -2565,7 +2502,7 @@ remoteCompilationEnd(
                vmThread,
                fe,
                comp->cg()->getCodeCache(),
-               cacheEntry,
+               (J9JITDataCacheHeader *)&dataCacheStr[0],
                method,
                false,
                comp->getOptions(),
@@ -2616,7 +2553,6 @@ remoteCompilationEnd(
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
       }
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-
    return relocatedMetaData;
    }
 
