@@ -2074,8 +2074,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          {
          client->getRecvData<JITaaS::Void>();
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         TR_OpaqueClassBlock *rootClass = fe->getSystemClassFromClassName("java/lang/Object", 16);
-         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(rootClass, comp, false);
+         TR_OpaqueClassBlock *rootClass = fe->TR_J9VM::getSystemClassFromClassName("java/lang/Object", 16);
+         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(
+                                                   rootClass,
+                                                   comp,
+                                                   true,
+                                                   comp->getOption(TR_UseSymbolValidationManager));
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
          client->write(encoded);
          }
