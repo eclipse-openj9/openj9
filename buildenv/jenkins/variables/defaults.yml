@@ -54,6 +54,13 @@ adoptopenjdk:
     repoUrl: 'https://github.com/AdoptOpenJDK/openjdk-tests.git'
     branch: 'master'
 #========================================#
+# Artifactory settings
+#========================================#
+artifactory_server: 'ci-eclipse-openj9'
+artifactory_repo: 'ci-eclipse-openj9'
+artifactory_creds: 'ab89294b-5ba1-48e9-8c85-107daca5a2e9'
+artifactory_num_artifacts: 30
+#========================================#
 # Miscellaneous settings
 #========================================#
 jdk_image_dir:
