@@ -1589,7 +1589,9 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             {
             definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, isStatic);
             }
-         UDATA *classChain = fe->sharedCache()->rememberClass(definingClass);
+         UDATA *classChain = NULL;
+         if (definingClass)
+            classChain = fe->sharedCache()->rememberClass(definingClass);
 
          client->write(clazz, definingClass, classChain);
          }
