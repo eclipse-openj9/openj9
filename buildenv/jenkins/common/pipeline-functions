@@ -408,11 +408,11 @@ def get_test_target_names() {
 }
 
 def get_build_job_name(spec, version) {
-    return "Build-JDK${version}-${spec}"
+    return "Adam-Build-JDK${version}-${spec}"
 }
 
 def get_test_job_name(targetName, spec, version) {
-    return "Test-${targetName}-JDK${version}-${spec}"
+    return "Adam-Test-${targetName}-JDK${version}-${spec}"
 }
 
 /*

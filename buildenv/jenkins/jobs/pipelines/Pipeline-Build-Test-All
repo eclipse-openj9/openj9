@@ -300,7 +300,7 @@ def get_value_by_spec(map, release, spec) {
 }
 
 def get_pipeline_name(spec, version) {
-    return "Pipeline-Build-Test-JDK${version}-${spec}"
+    return "Adam-Pipeline-Build-Test-JDK${version}-${spec}"
 }
 
 /*
