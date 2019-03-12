@@ -1443,18 +1443,19 @@ exit:
 	}
 
 	/**
-	 * Checks whether a ROM class enforces the final field setting rules.
+	 * Checks whether a class enforces the final field setting rules.
 	 * Classes which are class file version 53 or above enforce the rule
-	 * unless the class was defined via Unsafe.
+	 * unless the class was defined in a way that exempts it from validation.
 	 *
-	 * @param romClass[in] the J9ROMClass to test
+	 * @param ramClass[in] the J9Class to test
 	 *
 	 * @returns true if the class enforces the rules, false if not
 	 */
 	static VMINLINE bool
-	romClassChecksFinalStores(J9ROMClass *romClass)
+	ramClassChecksFinalStores(J9Class *ramClass)
 	{
-		return (romClass->majorVersion >= 53) && !J9ROMCLASS_IS_UNSAFE(romClass);
+		return (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramClass))
+			&& (ramClass->romClass->majorVersion >= 53);
 	}
 
 };

@@ -97,7 +97,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 				J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
 				J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)));
 #endif
-	if (J9ROMCLASS_IS_UNSAFE(sourceClass->romClass) == 0) {
+	if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(sourceClass)) {
 		if ( modifiers & J9AccPublic ) {
 			/* Public */
 			if ((sourceClass != destClass)

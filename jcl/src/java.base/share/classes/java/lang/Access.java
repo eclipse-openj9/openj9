@@ -279,12 +279,7 @@ final class Access implements JavaLangAccess {
 
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
-/*[IF Java12]
-		// temporary workaround to enable building Java 12 (https://github.com/eclipse/openj9/issues/3641)
-		return jdk.internal.misc.Unsafe.getUnsafe().defineClass(className, classRep, 0, classRep.length, targetClassLoader, protectionDomain);
-/*[ELSE]*/
-		return targetClassLoader.defineClass(className, classRep, 0, classRep.length, protectionDomain);
-/*[ENDIF]*/
+		return targetClassLoader.defineClassInternal(className, classRep, 0, classRep.length, protectionDomain, true /* allowNullProtectionDomain */);
 	}
 
 /*[IF Sidecar19-SE-OpenJ9]*/	

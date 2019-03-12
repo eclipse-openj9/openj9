@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,15 +39,15 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9TranslationBufferSet *dynFuncs;
-	J9ClassLoader *classLoader;
+	J9TranslationBufferSet *dynFuncs = NULL;
+	J9ClassLoader *classLoader = NULL;
 	UDATA retried = FALSE;
 	UDATA utf8Length = 0;
 	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	U_8 *utf8Name = NULL;
 	U_8 *classBytes = NULL;
 	J9Class *clazz = NULL;
-	jclass result;
+	jclass result = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	UDATA isContiguousClassBytes = 0;
 	J9ROMClass *loadedClass = NULL;
@@ -123,6 +123,15 @@ retry:
 	if (vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length) != NULL) {
 		/* Bad, we have already defined this class - fail */
 		omrthread_monitor_exit(vm->classTableMutex);
+
+		if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+			/*
+			 * The caller signalled that the name is invalid.
+			 * Don't set a pending exception - the caller will do that.
+			 */
+			goto invalid_name;
+		}
+
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
 		goto done;
 	}
@@ -209,6 +218,11 @@ done:
 			
 	result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 
+	if ((NULL != result) && J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz)) {
+		vmFuncs->fixUnsafeMethods(currentThread, result);
+	}
+
+invalid_name:
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	if ((U_8*)utf8NameStackBuffer != utf8Name) {
