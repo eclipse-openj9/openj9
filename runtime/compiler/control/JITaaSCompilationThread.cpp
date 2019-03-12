@@ -1746,6 +1746,16 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->sharedCache()->rememberClass(clazz, create));
          }
          break;
+      case J9ServerMessageType::SharedCache_addHint:
+         {
+         auto recv = client->getRecvData<J9Method *, TR_SharedCacheHint>();
+         auto method = std::get<0>(recv);
+         auto hint = std::get<1>(recv);
+         if (fe->sharedCache())
+            fe->sharedCache()->addHint(method, hint);
+         client->write(JITaaS::Void());
+         }
+         break;
       case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
          {
          TR::VMAccessCriticalSection deref(fe);
@@ -3549,7 +3559,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    JITaaS::J9ServerStream *stream = entry._stream;
    setMethodBeingCompiled(&entry); // must have compilation monitor
    entry._compInfoPT = this; // create the reverse link
-   _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SERVER_VM);
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
   
@@ -3559,6 +3568,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
    char * clientOptions = NULL;
    TR_OptimizationPlan *optPlan = NULL;
+   _vm = NULL;
    try
       {
       auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
@@ -3583,6 +3593,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SHARED_CACHE_SERVER_VM);
          }
+      else
+         {
+         _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SERVER_VM);
+         }
+
+      if (_vm->sharedCache())
+         // Set/update stream pointer in shared cache.
+         // Note that if remote-AOT is enabled, even regular J9_SERVER_VM will have a shared cache
+         // This behaviour is consistent with non-JITaaS
+         ((TR_J9JITaaSServerSharedCache *) _vm->sharedCache())->setStream(stream);
 
       if (!ramMethod)
          {

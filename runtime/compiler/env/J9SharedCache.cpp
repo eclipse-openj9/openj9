@@ -775,12 +775,13 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
 TR_J9JITaaSServerSharedCache::TR_J9JITaaSServerSharedCache(TR_J9VMBase *fe)
    : TR_J9SharedCache(fe)
    {
-   _stream = TR::CompilationInfo::getStream();
+   _stream = NULL;
    }
 
 void *
 TR_J9JITaaSServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
    {
+   TR_ASSERT(_stream, "stream must be initialized by now");
    // compute pointer from client's cache start address
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
    return (void *) ((UDATA)offset + vmInfo->_cacheStartAddress);
@@ -789,6 +790,7 @@ TR_J9JITaaSServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
 void *
 TR_J9JITaaSServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
    {
+   TR_ASSERT(_stream, "stream must be initialized by now");
    // return offset from client's cache start address
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
    return (void *) ((UDATA)ptr - vmInfo->_cacheStartAddress);
@@ -797,6 +799,7 @@ TR_J9JITaaSServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
 UDATA *
 TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
    {
+   TR_ASSERT(_stream, "stream must be initialized by now");
    // TODO: might want to keep a per-client cache of (class -> class chain)
    // that were remembered to reduce the number of remote calls
    _stream->write(JITaaS::J9ServerMessageType::SharedCache_rememberClass, clazz, create);
@@ -806,6 +809,7 @@ TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
 UDATA
 TR_J9JITaaSServerSharedCache::getCacheStartAddress()
    {
+   TR_ASSERT(_stream, "stream must be initialized by now");
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
    return vmInfo->_cacheStartAddress;
    }
@@ -813,6 +817,15 @@ TR_J9JITaaSServerSharedCache::getCacheStartAddress()
 uintptrj_t
 TR_J9JITaaSServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
    {
+   TR_ASSERT(_stream, "stream must be initialized by now");
    _stream->write(JITaaS::J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
    return std::get<0>(_stream->read<uintptrj_t>());
+   }
+
+void
+TR_J9JITaaSServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
+   {
+   TR_ASSERT(_stream, "stream must be initialized by now");
+   _stream->write(JITaaS::J9ServerMessageType::SharedCache_addHint, method, theHint);
+   _stream->read<JITaaS::Void>();
    }
