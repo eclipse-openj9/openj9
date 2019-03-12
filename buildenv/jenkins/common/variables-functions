@@ -481,7 +481,9 @@ def set_artifactory_config() {
         println server
         println server.class
         env.ARTIFACTORY_CREDS = server.getCredentialsId()
+        env.ARTIFACTORY_URL = server.getUrl()
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
+        echo "Using artifactory url: ${ARTIFACTORY_URL}"
 
         withCredentials([usernamePassword(credentialsId: ARTIFACTORY_CREDS, passwordVariable: 'PASS', usernameVariable: 'USER')]) {
             JSON = sh returnStdout: true, script: "curl -u ${USER}:${PASS} ${server.getUrl()}/api/system/version"
