@@ -60,13 +60,13 @@ tools should be installed on your test machine to run tests.
   * auto detection:
   
     By default, AUTO_DETECT is turned on. SPEC, JDK_VERSION, and JDK_IMPL do not need to be exported.
-    If you wish to turn off AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can turn off AUTO_DETECT.
+    If you do not wish to use AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can export AUTO_DETECT to false.
     ```
-    export AUTO_DETECT=off
+    export AUTO_DETECT=false
     ```
     e.g.,
     ```
-    export AUTO_DETECT=off
+    export AUTO_DETECT=false
     export SPEC=linux_x86-64_cmprssptrs
     export JDK_VERSION=8
     export JDK_IMPL=openj9
