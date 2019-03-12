@@ -1011,8 +1011,8 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
          TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesEnableStringCompressionFolding;
          TR_ASSERT(node->getDataType() == TR::Int32, "Java_lang_String_enableCompression must be Int32");
-         bool fieldValue = *(int32_t*)sym->castToStaticSymbol()->getStaticAddress() != 0;
-         bool compressionEnabled = IS_STRING_COMPRESSION_ENABLED_VM(static_cast<TR_J9VMBase *>(comp->fe())->getJ9JITConfig()->javaVM);
+         bool fieldValue = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(sym->castToStaticSymbol()->getStaticAddress(), TR::Int32).dataInt32Bit != 0;
+         bool compressionEnabled = comp->fej9()->isStringCompressionEnabledVM();
          TR_ASSERT((fieldValue && compressionEnabled) || (!fieldValue && !compressionEnabled),
             "java/lang/String.enableCompression and javaVM->strCompEnabled must be in sync");
          if (fieldValue)

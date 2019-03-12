@@ -1481,6 +1481,14 @@ TR_J9ServerVM::getClassFromNewArrayTypeNonNull(int32_t arrayType)
    }
 
 bool
+TR_J9ServerVM::isStringCompressionEnabledVM()
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_stringCompressionEnabled;
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"
