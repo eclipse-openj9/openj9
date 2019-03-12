@@ -334,8 +334,9 @@ def archive() {
                         server.upload spec: uploadSpec, buildInfo: buildInfo
                         server.publishBuildInfo buildInfo
                     } catch (e) {
-                        echo "Artifactory server doesn't support buildInfo, uploading without it"
-                        server.upload spec: uploadSpec
+                        println e
+                        println e.class
+                        echo "WARNING: Artifactory server doesn't support buildInfo"
                     }
 
                     // Write URL to env so that we can pull it from the upstream pipeline job
