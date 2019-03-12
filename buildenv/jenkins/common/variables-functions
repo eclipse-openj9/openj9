@@ -478,6 +478,8 @@ def set_artifactory_config() {
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER}/${ARTIFACTORY_REPO}"
 
         def server = Artifactory.server ARTIFACTORY_SERVER
+        println server
+        println server.class
         env.ARTIFACTORY_CREDS = server.getCredentialsId()
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
 
