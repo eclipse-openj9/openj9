@@ -7676,7 +7676,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   (vm->isAOT_DEPRECATED_DO_NOT_USE() || that->_methodBeingCompiled->isAotLoad()),
                   that->getCompThreadId());
 
-
             // JITaaS TODO determine if we care to support annotations
             if (that->_methodBeingCompiled->isRemoteCompReq())
                options->setOption(TR_EnableAnnotations,false);

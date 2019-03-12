@@ -350,6 +350,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    bool  showOptionsInEffect();
    bool  showPID();
    void openLogFiles(J9JITConfig *jitConfig);
+
+   void setupJITaaSOptions();
    };
 
 }
