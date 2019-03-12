@@ -324,8 +324,8 @@ def archive() {
                         ]
                     }"""
 
-                    if (ARTIFACTORY_VERSION == "PRO") {
-                        echo "Adding Artifactory buildInfo"
+                    try {
+                        echo "Try Adding Artifactory buildInfo"
                         def buildInfo = Artifactory.newBuildInfo()
                         buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
                         // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
@@ -333,7 +333,8 @@ def archive() {
                         buildInfo.env.capture = true
                         server.upload spec: uploadSpec, buildInfo: buildInfo
                         server.publishBuildInfo buildInfo
-                    } else {
+                    } catch (e) {
+                        echo "Artifactory server doesn't support buildInfo, uploading without it"
                         server.upload spec: uploadSpec
                     }
 

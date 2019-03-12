@@ -475,33 +475,12 @@ def set_artifactory_config() {
         // Set variables to env so that the parent pipeline can retireve them.
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
         ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+        env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+        ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
+
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER}/${ARTIFACTORY_REPO}"
-
-        def server = Artifactory.server ARTIFACTORY_SERVER
-        println server
-        println server.class
-        env.ARTIFACTORY_CREDS = server.getCredentialsId()
-        env.ARTIFACTORY_URL = server.getUrl()
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
-        echo "Using artifactory url: ${ARTIFACTORY_URL}"
-
-        withCredentials([usernamePassword(credentialsId: ARTIFACTORY_CREDS, passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-            JSON = sh returnStdout: true, script: "curl -u ${USER}:${PASS} ${server.getUrl()}/api/system/version"
-        }
-        def jsonslurper = new groovy.json.JsonSlurper()
-        def JSON_PARSED = jsonslurper.parseText(JSON)
-        def ARTIFACTORY_LICENSE = JSON_PARSED.license
-
-        if (ARTIFACTORY_LICENSE == "Artifactory OSS") {
-            ARTIFACTORY_VERSION = "OSS"
-        } else if (ARTIFACTORY_LICENSE ==~ /^[0-9a-f]+$/) {
-            ARTIFACTORY_VERSION = "PRO"
-            ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
-            echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
-        } else {
-            error "Unknown ARTIFACTORY_LICENSE:${ARTIFACTORY_LICENSE}"
-        }
-        echo "Artifactory server is version: ${ARTIFACTORY_VERSION}"
+        echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
     }
 }
 
