@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@
 
 #include "VerboseHandlerOutput.hpp"
 
-#include "LightweightNonReentrantLock.hpp"
 #include "GCExtensions.hpp"
 
 class MM_EnvironmentBase;
@@ -40,8 +39,7 @@ class MM_WorkPacketStats;
 class MM_VerboseHandlerOutputVLHGC : public MM_VerboseHandlerOutput
 {
 private:
-	MM_LightweightNonReentrantLock _outputLock;	/**< Since VLHGC can sometimes have multiple threads trying to access verbose (one reporting events while another reports exclusive), this lock is required to ensure that the writer only sees each report, atomically */
-
+	
 protected:
 	J9HookInterface** _mmHooks;  /**< Pointers to the Hook interface */
 
@@ -118,9 +116,6 @@ protected:
 	 */	
 	virtual const char *getCycleType(UDATA type);
 
-	virtual void enterAtomicReportingBlock();
-	virtual void exitAtomicReportingBlock();
-
 	virtual bool initialize(MM_EnvironmentBase *env, MM_VerboseManager *manager);
 	virtual void tearDown(MM_EnvironmentBase *env);
 
@@ -129,7 +124,6 @@ protected:
 
 	MM_VerboseHandlerOutputVLHGC(MM_GCExtensions *extensions)
 		: MM_VerboseHandlerOutput(extensions)
-		, _outputLock()
 		, _mmHooks(NULL)
 	{};
 

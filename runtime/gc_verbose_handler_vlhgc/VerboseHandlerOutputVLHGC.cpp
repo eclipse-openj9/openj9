@@ -90,19 +90,12 @@ MM_VerboseHandlerOutputVLHGC::initialize(MM_EnvironmentBase *env, MM_VerboseMana
 
 	_mmHooks = J9_HOOK_INTERFACE(MM_GCExtensions::getExtensions(_extensions)->hookInterface);
 
-	if (initSuccess) {
-		if (!_outputLock.initialize(env, &MM_GCExtensions::getExtensions(env)->lnrlOptions, "MM_VerboseHandlerOutputVLHGC:_outputLock")) {
-			initSuccess = false;
-		}
-	}
-
 	return initSuccess;
 }
 
 void
 MM_VerboseHandlerOutputVLHGC::tearDown(MM_EnvironmentBase *env)
 {
-	_outputLock.tearDown();
 	MM_VerboseHandlerOutput::tearDown(env);
 }
 
@@ -744,20 +737,6 @@ MM_VerboseHandlerOutputVLHGC::getCycleType(UDATA type)
 
 	return cycleType;
 }
-
-void
-MM_VerboseHandlerOutputVLHGC::enterAtomicReportingBlock()
-{
-	_outputLock.acquire();
-}
-
-void
-MM_VerboseHandlerOutputVLHGC::exitAtomicReportingBlock()
-{
-	_outputLock.release();
-}
-
-
 
 void
 verboseHandlerTaxationEntryPoint(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)

@@ -59,19 +59,12 @@ MM_VerboseHandlerOutputRealtime::initialize(MM_EnvironmentBase *env, MM_VerboseM
 
 	_mmHooks = J9_HOOK_INTERFACE(MM_GCExtensions::getExtensions(_extensions)->hookInterface);
 
-	if (initSuccess) {
-		if (!_outputLock.initialize(env, &MM_GCExtensions::getExtensions(env)->lnrlOptions, "MM_VerboseHandlerOutputRealtime:_outputLock")) {
-			initSuccess = false;
-		}
-	}
-
 	return initSuccess;
 }
 
 void
 MM_VerboseHandlerOutputRealtime::tearDown(MM_EnvironmentBase *env)
 {
-	_outputLock.tearDown();
 	MM_VerboseHandlerOutput::tearDown(env);
 }
 
@@ -177,18 +170,6 @@ MM_VerboseHandlerOutputRealtime::getCycleType(UDATA type)
 	}
 
 	return cycleType;
-}
-
-void
-MM_VerboseHandlerOutputRealtime::enterAtomicReportingBlock()
-{
-	_outputLock.acquire();
-}
-
-void
-MM_VerboseHandlerOutputRealtime::exitAtomicReportingBlock()
-{
-	_outputLock.release();
 }
 
 void
