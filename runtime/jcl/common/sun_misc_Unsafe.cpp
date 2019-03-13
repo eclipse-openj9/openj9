@@ -46,28 +46,20 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 	JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject classLoader, jobject protectionDomain)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	jclass result;
 
 	if (NULL == classLoader) {
-		j9object_t classLoaderObject;
+		J9JavaVM *vm = currentThread->javaVM;
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
-		classLoaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, vm->systemClassLoader);
+		j9object_t classLoaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, vm->systemClassLoader);
+
 		classLoader = vmFuncs->j9jni_createLocalRef(env, classLoaderObject);
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
-	result = defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL);
-
-	if (result != NULL) {
-		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-		vm->internalVMFunctions->fixUnsafeMethods(currentThread, result);
-		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-	}
-
-	return result;
+	return defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL);
 }
 
 jclass JNICALL
@@ -116,10 +108,6 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 		throwNewInternalError(env, NULL);
 		return NULL;
 	}
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	vmFuncs->fixUnsafeMethods(currentThread, anonClass);
-	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return anonClass;
 }
@@ -1049,4 +1037,4 @@ illegal:
 	vmFuncs->internalReleaseVMAccess(currentThread);
 }
 
-}
+} /* extern "C" */

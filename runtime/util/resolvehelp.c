@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ isDirectSuperInterface(J9VMThread *vmStruct, J9Class *resolvedClass, J9Class *cu
 	 */
 	BOOLEAN result = FALSE;
 	J9ROMClass *currentROMClass = currentClass->romClass;
-	if (J9ROMCLASS_IS_UNSAFE(currentROMClass)) {
+	if (J9CLASS_IS_EXEMPT_FROM_VALIDATION(currentClass)) {
 		/* If this is an unsafe class, we skip the check so that a lambda "inherit" super interfaces from its host class. */
 		result = TRUE;
 	} else if (J9_ARE_ANY_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface) && (currentClass != resolvedClass)) {

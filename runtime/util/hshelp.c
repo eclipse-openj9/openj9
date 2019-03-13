@@ -2156,7 +2156,7 @@ fixReturnsInUnsafeMethods(J9VMThread * currentThread, J9HashTable * classPairs)
     while (classPair != NULL) {
         J9Class * replacementRAMClass = classPair->replacementClass.ramClass;
 
-        if ((replacementRAMClass != NULL) && J9ROMCLASS_IS_UNSAFE(replacementRAMClass->romClass)) {
+        if ((replacementRAMClass != NULL) && J9CLASS_IS_EXEMPT_FROM_VALIDATION(replacementRAMClass)) {
              vmFuncs->fixUnsafeMethods(currentThread, (jclass) &replacementRAMClass->classObject);
         }
         classPair = hashTableNextDo(&hashTableState);
@@ -3278,7 +3278,7 @@ reloadROMClasses(J9VMThread * currentThread, jint class_count, const jvmtiClassD
 		 * For example, redefined class: sun.reflect.GeneratedMethodAccessor* (unsafe)
 		 * that has a superclass sun.reflect.MethodAccessorImpl */
 
-		if (J9ROMCLASS_IS_UNSAFE(originalRAMClass->romClass)) {
+		if (J9CLASS_IS_EXEMPT_FROM_VALIDATION(originalRAMClass)) {
 			options = options | J9_FINDCLASS_FLAG_UNSAFE;
 		}
 		loadData.classLoader = originalRAMClass->classLoader;
@@ -3385,7 +3385,7 @@ verifyNewClasses(J9VMThread * currentThread, jint class_count, J9JVMTIClassPair 
 	 */
 	for (i = 0; i < class_count; ++i) {
 		/* Do not run bytecode verification on unsafe classes */
-		if (!J9ROMCLASS_IS_UNSAFE(classPairs[i].replacementClass.romClass)) {
+		if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(classPairs[i].originalRAMClass)) {
 			IDATA result = 0;
 
 			verifyData->classLoader = classPairs[i].originalRAMClass->classLoader;
