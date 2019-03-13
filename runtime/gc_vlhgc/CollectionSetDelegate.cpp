@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,9 +165,9 @@ MM_CollectionSetDelegate::createNurseryCollectionSet(MM_EnvironmentVLHGC *env)
 			bool isSelectionForCopyForward = env->_cycleState->_shouldRunCopyForward;
 
 			/* For CopyForwardHybrid mode we allow eden regions, which has jniCritical,to be part of nursery collectionSet, those regions would be marked instead of copyforwarded.
-			 * Would not add any non Eden regions with jniCritical to collectionSet for copyforward
 			 * For Non CopyForwardHybrid mode we do not check Eden regions with jniCritical here, because we have already set MarkCompact PGC mode for the case in early. */
-			if (region->getRememberedSetCardList()->isAccurate() && (!isSelectionForCopyForward || !regionHasCriticalRegions || (regionHasCriticalRegions && region->isEden()))) {
+			if (region->getRememberedSetCardList()->isAccurate() && (!isSelectionForCopyForward || !regionHasCriticalRegions || (regionHasCriticalRegions && (_extensions->tarokEnableCopyForwardHybrid || (0 != _extensions->fvtest_forceCopyForwardHybridRatio)) && region->isEden()))) {
+
 				if(MM_CompactGroupManager::isRegionInNursery(env, region)) {
 					UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 					/* on collection phase, mark all non-overflowed regions and those that RSCL is not being rebuilt */

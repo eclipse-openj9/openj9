@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,8 @@ private:
 	volatile bool _abortFlag;  /**< Flag indicating whether the current copy forward cycle should be aborted due to insufficient heap to complete */
 	bool _abortInProgress;  /**< Flag indicating that the copy forward mechanism is now operating in abort mode, which is attempting to secure integrity of the heap to continue execution */
 
-	UDATA _regionCountCannotBeEvacuated; /**<The number of eden regions, which can not be copyforward */
+	UDATA _regionCountCannotBeEvacuated; /**<The number of regions, which can not be copyforward in collectionSet */
+	UDATA _regionCountReservedNonEvacuated; /** the number of regions need to set Mark only in order to try to avoid abort case */
 
 	UDATA _cacheLineAlignment; /**< The number of bytes per cache line which is used to determine which boundaries in memory represent the beginning of a cache line */
 
@@ -811,9 +812,10 @@ private:
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
 	 * @param objectPtr[in] Object being scanned.
 	 * @param slot the slot to be copied or updated
+	 * @param leafType true if slotObject is leaf Object
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, GC_SlotObject *slotObject);
+	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, GC_SlotObject *slotObject, bool leafType = false);
 
 	/**
 	 * Update the given slot to point at the new location of the object, after copying the object if it was not already.
@@ -836,9 +838,10 @@ private:
 	 *
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
 	 * @param objectPtrIndirect the slot to be copied or updated
+	 * @param leafType true if the slot is leaf Object
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, volatile j9object_t* objectPtrIndirect);
+	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, volatile j9object_t* objectPtrIndirect, bool leafType = false);
 
 	/**
 	 * If class unloading is enabled, copy the specified object's class object and remember the object as an instance.
@@ -855,11 +858,12 @@ private:
 	 * been copied, or the copy is successful, return the updated information.  If the copy is not successful due to insufficient
 	 * heap memory, return the original object pointer and raise the "abort" flag.
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
+	 * @param leafType true if the object is leaf object, default = false
 	 * @note This routine can set the abort flag for a copy forward.
 	 * @note This will respect any alignment requirements due to hot fields etc.
 	 * @return an object pointer representing the new location of the object, or the original object pointer on failure.
 	 */
-	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader);
+	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType = false);
 #if defined(J9VM_GC_ARRAYLETS)
 	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 #endif /* J9VM_GC_ARRAYLETS */
@@ -967,6 +971,12 @@ private:
 	bool isObjectInNoEvacuationRegions(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
 
 	bool randomDecideForceNonEvacuatedRegion(UDATA ratio);
+
+	/**
+	 *  Iterate the slot reference and parse and pass leaf bit of the reference to copy forward
+	 *  to avoid to push leaf object to work stack in case the reference need to be marked instead of copied.
+	 */
+	MMINLINE bool iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr);
 
 protected:
 
@@ -1077,6 +1087,10 @@ public:
 		return (0 != _regionCountCannotBeEvacuated);
 	}
 
+	void setReservedNonEvacuatedRegions(int regionCount)
+	{
+		_regionCountReservedNonEvacuated = regionCount;
+	}
 
 	friend class MM_CopyForwardGMPCardCleaner;
 	friend class MM_CopyForwardNoGMPCardCleaner;

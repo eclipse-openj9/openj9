@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -745,6 +745,10 @@ MM_ReclaimDelegate::runReclaimForAbortedCopyForward(MM_EnvironmentVLHGC *env, MM
 
 	Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Entry(env->getLanguageVMThread(), ((MM_GlobalAllocationManagerTarok *)MM_GCExtensions::getExtensions(env)->globalAllocationManager)->getFreeRegionCount());
 	Assert_MM_true(env->_cycleState->_shouldRunCopyForward);
+
+	/* Perform Atomic Sweep on nonEvacuated regions before compacting in order to maintain accurate projectedLiveByte for the regions
+	 * projectedLiveByte will be used in selecting RateOfReturnCollectionSet in future collection */
+	performAtomicSweep(env, allocDescription, activeSubSpace, gcCode);
 
 	UDATA regionsCompacted = tagRegionsBeforeCompact(env, skippedRegionCountRequiringSweep);
 	MM_CompactGroupPersistentStats::updateStatsBeforeCompact(env, persistentStats);
