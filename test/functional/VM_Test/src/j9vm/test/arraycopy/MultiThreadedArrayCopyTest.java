@@ -82,11 +82,6 @@ public class MultiThreadedArrayCopyTest implements Runnable {
 					System.err.println("dest = " + Arrays.asList(dest));
 				}
 			}
-			
-			if ((loop % (count / 10)) == 0) {
-				System.out.println(name + " - " + Arrays.asList(dest));
-			}
-			
 		}
 	}
 	
