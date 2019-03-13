@@ -26,6 +26,7 @@
 #ifdef WIN32
 #include <malloc.h>
 #elif defined(LINUX) || defined(AIXPPC)
+#include <sched.h>
 #include <alloca.h>
 #elif defined(J9ZOS390)
 #include <stdlib.h>
@@ -316,6 +317,8 @@ private :
 	void		writeCPUinfo				 (void);
 #if defined(LINUX)
 	void 		writeCgroupMetrics(void);
+        void        writeCPUGovernorInfo         (void);
+        void        getCPUGovernorInfo           (struct J9CpuGovernorNode *head, int32_t currentCpu, int32_t foundCpus, int32_t totalCpus, cpu_set_t *cpuSet);
 #endif
 	void 		writeThreadsWithNativeStacks(void);
 	void 		writeThreadsJavaOnly(void);
@@ -1350,6 +1353,8 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 #if defined(LINUX)
 	/* Write section for Cgroup Information */
  	writeCgroupMetrics();
+	/* Write section for CPU Governor information */
+	writeCPUGovernorInfo();
 #endif
 
 	/* Write the section trailer */
@@ -5237,7 +5242,128 @@ JavaCoreDumpWriter::writeCgroupMetrics(void)
 		}
 	}
 }
-#endif
+
+#define CPU_INDEX_LENGTH 5
+char const *cpuGovernorPathPattern = "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor";
+#define CPU_GOVERNOR_PATTERN_SIZE (strlen(cpuGovernorPathPattern) + (CPU_INDEX_LENGTH) + 1)
+#define NUM_AVAILABLE_GOVERNORS 6
+static char governors[NUM_AVAILABLE_GOVERNORS][13] = { "powersave", "performance", "userspace", "ondemand", "conservative", "schedutil" };
+
+void
+JavaCoreDumpWriter::writeCPUGovernorInfo(void)
+{
+	int32_t rc = 0;
+	cpu_set_t cpuSet;
+ 	int32_t size = sizeof(cpuSet); /* Size in bytes */
+ 	pid_t mainProcess = getpid();
+ 	rc = sched_getaffinity(mainProcess, size, &cpuSet);
+	if (0 != rc) {
+		goto _end;
+	}
+	{
+		struct J9CpuGovernorNode head = {0};
+		int32_t result = CPU_COUNT(&cpuSet);
+		if (0 >= result) {
+			goto _end;
+		}
+		getCPUGovernorInfo(&head, 0, 0, result, &cpuSet);
+	}
+_end:
+	return;
+}
+
+void
+JavaCoreDumpWriter::getCPUGovernorInfo(struct J9CpuGovernorNode *head, int32_t currentCpu, int32_t foundCpus, int32_t totalCpus, cpu_set_t *cpuSet)
+{
+	struct J9CpuIdNode currentCpuIdNode = {0};
+	struct J9CpuGovernorNode currentGovNode = {0};
+	if (foundCpus < totalCpus) {
+		if (1 != CPU_ISSET(currentCpu, cpuSet)) {
+			goto _governor;
+		}
+		OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
+		char pathBuffer[CPU_GOVERNOR_PATTERN_SIZE];
+		int32_t cpuGovernorPathLength = 0;
+		cpuGovernorPathLength = omrstr_printf(pathBuffer, sizeof(pathBuffer), cpuGovernorPathPattern, currentCpu);
+		if (0 == cpuGovernorPathLength) {
+			goto _governor;
+		}
+	 	char tempBuff[20];
+		FILE *file = fopen(pathBuffer, "r");
+		if (NULL == file) {
+			goto _governor;
+		}
+		if (NULL == fgets(&tempBuff[0], 20, file)) {
+			goto _governor;
+		} else {
+			int32_t i = 0;
+			for (i = 0; i < NUM_AVAILABLE_GOVERNORS; i++) {
+				if (0 == strncmp(&tempBuff[0], governors[i], strlen(governors[i]))) {
+					struct J9CpuGovernorNode *current = head;
+					if (NULL == current->governorDetails.type) {
+						current->governorDetails.type = governors[i];
+						currentCpuIdNode.cpuId = currentCpu;
+						currentCpuIdNode.nextCpuId = NULL;
+						current->governorDetails.cpuIdNode = &currentCpuIdNode;
+						current->nextGovernor = NULL;
+						foundCpus += 1;
+					} else {
+						struct J9CpuGovernorNode *previousNode = NULL;
+						while (NULL != current) {
+							if (0 == strncmp(current->governorDetails.type, governors[i], strlen(governors[i]))) {
+								struct J9CpuIdNode *curCpuIdNode = current->governorDetails.cpuIdNode;
+								while (NULL != curCpuIdNode->nextCpuId) {
+									curCpuIdNode = curCpuIdNode->nextCpuId;
+								}
+								currentCpuIdNode.cpuId = currentCpu;
+								currentCpuIdNode.nextCpuId = NULL;
+								curCpuIdNode->nextCpuId = &currentCpuIdNode;
+								foundCpus += 1;
+								goto _governor;
+							}
+							previousNode = current;
+							current = current->nextGovernor;
+						}
+						current = previousNode;
+						currentGovNode.governorDetails.type = governors[i];
+						currentCpuIdNode.cpuId = currentCpu;
+						currentCpuIdNode.nextCpuId = NULL;
+						currentGovNode.governorDetails.cpuIdNode = &currentCpuIdNode;
+						currentGovNode.nextGovernor = NULL;
+						current->nextGovernor = &currentGovNode;
+						foundCpus += 1;
+					}
+					break;
+				}
+			}	
+		}
+	} else {
+		_OutputStream.writeCharacters(
+			"NULL           \n");
+		_OutputStream.writeCharacters(
+			"1CICPUINFO     CPU Governor Information\n"
+			"NULL           ------------------------------------------------------------------------\n");
+		struct J9CpuGovernorNode *current = head;
+		while (NULL != current) {
+			_OutputStream.writeCharacters("2CICPUGVNR     ");
+			_OutputStream.writeCharacters(current->governorDetails.type);
+			_OutputStream.writeCharacters(" :");
+			struct J9CpuIdNode *currentNode = current->governorDetails.cpuIdNode;
+			while (NULL != currentNode) {
+				_OutputStream.writeInteger(currentNode->cpuId, " %d");
+				currentNode = currentNode->nextCpuId;
+			}
+			_OutputStream.writeCharacters("\n");
+			current = current->nextGovernor;
+		}
+		goto _end;
+	}
+_governor:
+	getCPUGovernorInfo(head, currentCpu + 1, foundCpus, totalCpus, cpuSet);
+_end:
+	return;
+}
+#endif /* defined(LINUX) */
 
 /**************************************************************************************************/
 /*                                                                                                */
