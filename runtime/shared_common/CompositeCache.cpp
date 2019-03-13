@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3257,6 +3257,14 @@ SH_CompositeCacheImpl::markStale(J9VMThread* currentThread, BlockPtr blockEnd, b
 	}
 	Trc_SHR_Assert_Equals(currentThread, _commonCCInfo->hasWriteMutexThread);
 	Trc_SHR_CC_markStale_Event(currentThread, ih);
+
+	if (0 != _theca->crcValid) {
+		/* _theca->crcValid is set to 0 when locking the cache. isCacheLocked cannot be true here */
+		Trc_SHR_Assert_False(isCacheLocked);
+		unprotectHeaderReadWriteArea(currentThread, false);
+		_theca->crcValid = 0;
+		protectHeaderReadWriteArea(currentThread, false);
+	}
 
 	/* If the cache is locked, don't bother to unprotect the page as the whole metadata area will be unprotected */
 	if (_doMetaProtect && !isCacheLocked) {
