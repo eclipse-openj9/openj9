@@ -431,6 +431,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
          vmInfo._compressedReferenceShift = TR::Compiler->om.compressedReferenceShift();
          vmInfo._cacheStartAddress = fe->sharedCache() ? fe->sharedCache()->getCacheStartAddress() : 0;
+         vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
 
          client->write(vmInfo);
          }

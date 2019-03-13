@@ -8196,6 +8196,12 @@ TR_J9VMBase::setInlineThresholds (TR::Compilation *comp, int32_t &callerWeightLi
    return;
    }
 
+bool
+TR_J9VMBase::isStringCompressionEnabledVM()
+   {
+   return IS_STRING_COMPRESSION_ENABLED_VM(getJ9JITConfig()->javaVM);
+   }
+
 TR_OpaqueClassBlock *
 TR_J9VM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {
