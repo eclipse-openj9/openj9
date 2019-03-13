@@ -20,68 +20,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "j9protos.h"
-#include "j9consts.h"
-#include "modronopt.h"
+#include "omr.h"
+#include "omrcfg.h"
 #include "gcutils.h"
 
-#include "mmhook_internal.h"
-
-
 #include <string.h>
-#include "ModronAssertions.h"
 
 #include "RealtimeGC.hpp"
 
-#include "modronapi.hpp"
-
 #include "AllocateDescription.hpp"
-#include "BarrierSynchronization.hpp"
-#include "ClassLoaderIterator.hpp"
-#include "ClassLoaderLinkedListIterator.hpp"
-#include "ClassLoaderManager.hpp"
-#include "ClassModel.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
-#if defined(J9VM_GC_FINALIZATION)
-#include "FinalizableClassLoaderBuffer.hpp"
-#include "FinalizeListManager.hpp"
-#include "FinalizerSupport.hpp"
-#endif /* J9VM_GC_FINALIZATION */
 #include "GlobalAllocationManagerSegregated.hpp"
 #include "Heap.hpp"
 #include "HeapRegionDescriptorRealtime.hpp"
 #include "MemoryPoolSegregated.hpp"
 #include "MemorySubSpace.hpp"
-#include "MemorySubSpaceMetronome.hpp"
-#include "RealtimeAccessBarrier.hpp"
-#include "RealtimeMarkingScheme.hpp"
-#include "RealtimeMarkTask.hpp"
-#include "RealtimeRootScanner.hpp"
-#include "ReferenceObjectList.hpp"
-#include "ObjectModel.hpp"
+#include "modronapicore.hpp"
 #include "OMRVMInterface.hpp"
 #include "OSInterface.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
+#include "RealtimeMarkingScheme.hpp"
+#include "RealtimeMarkTask.hpp"
 #include "RealtimeSweepTask.hpp"
-#include "ReferenceChainWalker.hpp"
-#include "RegionPoolSegregated.hpp"
-#include "RootScanner.hpp"
+#include "ReferenceChainWalkerMarkMap.hpp"
 #include "Scheduler.hpp"
 #include "SegregatedAllocationInterface.hpp"
 #include "SublistFragment.hpp"
 #include "SweepSchemeRealtime.hpp"
 #include "Task.hpp"
-#include "UnfinalizedObjectList.hpp"
 #include "WorkPacketsRealtime.hpp"
 
 void
-MM_RealtimeGC::setGCThreadPriority(OMR_VMThread *vmThread, UDATA newGCThreadPriority)
+MM_RealtimeGC::setGCThreadPriority(OMR_VMThread *vmThread, uintptr_t newGCThreadPriority)
 {
-	if(newGCThreadPriority == (UDATA) _currentGCThreadPriority) {
+	if(newGCThreadPriority == (uintptr_t) _currentGCThreadPriority) {
 		return;
 	}
 	
@@ -89,10 +62,10 @@ MM_RealtimeGC::setGCThreadPriority(OMR_VMThread *vmThread, UDATA newGCThreadPrio
 	
 	/* Walk through all GC threads and set the priority */
 	omrthread_t* gcThreadTable = _sched->getThreadTable();
-	for (UDATA i = 0; i < _sched->threadCount(); i++) {
+	for (uintptr_t i = 0; i < _sched->threadCount(); i++) {
 		omrthread_set_priority(gcThreadTable[i], newGCThreadPriority);
 	}
-	_currentGCThreadPriority = (IDATA) newGCThreadPriority;
+	_currentGCThreadPriority = (intptr_t) newGCThreadPriority;
 }
 
 /**
@@ -106,10 +79,6 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 	_allowGrowth = false;
 	_unmarkedImpliesCleared = false;
 	_unmarkedImpliesStringsCleared = false;
-
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	_unmarkedImpliesClasses = false;
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 	
 	if (_extensions->gcTrigger == 0) {
 		_extensions->gcTrigger = (_extensions->memoryMax / 2);
@@ -126,7 +95,7 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 		 * The default value for HRT period is 1/3 of the default quanta: 1 msec for HRT period and 3 msec quanta,
 		 * we will attempt to adjust the HRT period to 1/3 of the specified quanta.
 		 */
-		UDATA hrtPeriodMicro = _extensions->beatMicro / 3;
+		uintptr_t hrtPeriodMicro = _extensions->beatMicro / 3;
 		if ((hrtPeriodMicro < METRONOME_DEFAULT_HRT_PERIOD_MICRO) && (METRONOME_DEFAULT_HRT_PERIOD_MICRO < _extensions->beatMicro)) {
 			/* If the adjusted value is too small for the hires clock resolution, we will use the default HRT period provided that
 			 * the default period is smaller than the quanta time specified.
@@ -146,8 +115,8 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 		 * for the GC to do time checking less often inside condYieldFromGC.
 		 */
 		if (METRONOME_DEFAULT_BEAT_MICRO < _extensions->beatMicro) {
-			UDATA intervalToSkipYieldCheckMicro = _extensions->beatMicro - METRONOME_DEFAULT_BEAT_MICRO;
-			UDATA maxInterYieldTimeMicro = INTER_YIELD_MAX_NS / 1000;
+			uintptr_t intervalToSkipYieldCheckMicro = _extensions->beatMicro - METRONOME_DEFAULT_BEAT_MICRO;
+			uintptr_t maxInterYieldTimeMicro = INTER_YIELD_MAX_NS / 1000;
 			_extensions->distanceToYieldTimeCheck = (U_32)(intervalToSkipYieldCheckMicro / maxInterYieldTimeMicro);
 		}
 	}
@@ -161,21 +130,6 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 
 	_workPackets = allocateWorkPackets(env);	
 	if (_workPackets == NULL) {
-		return false;
-	}
-	
-	/* allocate and initialize the global reference object lists */
-	if (!allocateAndInitializeReferenceObjectLists(env)){
-		return false;
-	}
-
-	/* allocate and initialize the global unfinalized object lists */
-	if (!allocateAndInitializeUnfinalizedObjectLists(env)) {
-		return false;
-	}
-
-	/* allocate and initialize the global ownable synchronizer object lists */
-	if (!allocateAndInitializeOwnableSynchronizerObjectLists(env)) {
 		return false;
 	}
 
@@ -193,81 +147,14 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	_stopTracing = false;
-
-	/* create the appropriate access barrier for this configuration of Metronome */
-	MM_RealtimeAccessBarrier *accessBarrier = NULL;
-	accessBarrier = allocateAccessBarrier(env);
-	if (NULL == accessBarrier) {
+	if (!_realtimeDelegate.initialize(env)) {
 		return false;
 	}
-	_extensions->accessBarrier = accessBarrier;
+
+	_stopTracing = false;
 
 	_sched->collectorInitialized(this);
 
-	return true;
-}
-
-bool
-MM_RealtimeGC::allocateAndInitializeReferenceObjectLists(MM_EnvironmentBase *env)
-{
-	const UDATA listCount = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
-	Assert_MM_true(0 < listCount);
-	_extensions->referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate((sizeof(MM_ReferenceObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if (NULL == _extensions->referenceObjectLists) {
-		return false;
-	}
-	for (UDATA index = 0; index < listCount; index++) {
-		new(&_extensions->referenceObjectLists[index]) MM_ReferenceObjectList();
-	}
-	return true;
-}
-
-bool
-MM_RealtimeGC::allocateAndInitializeUnfinalizedObjectLists(MM_EnvironmentBase *env)
-{
-	const UDATA listCount = MM_HeapRegionDescriptorRealtime::getUnfinalizedObjectListCount(env);
-	Assert_MM_true(0 < listCount);
-	MM_UnfinalizedObjectList *unfinalizedObjectLists = (MM_UnfinalizedObjectList *)env->getForge()->allocate((sizeof(MM_UnfinalizedObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if (NULL == unfinalizedObjectLists) {
-		return false;
-	}
-	for (UDATA index = 0; index < listCount; index++) {
-		new(&unfinalizedObjectLists[index]) MM_UnfinalizedObjectList();
-		/* add each list to the global list. we need to maintain the doubly linked list
-		 * to ensure uniformity with SE/Balanced.
-		 */
-		MM_UnfinalizedObjectList *previousUnfinalizedObjectList = (0 == index) ? NULL : &unfinalizedObjectLists[index-1];
-		MM_UnfinalizedObjectList *nextUnfinalizedObjectList = ((listCount - 1) == index) ? NULL : &unfinalizedObjectLists[index+1];
-
-		unfinalizedObjectLists[index].setNextList(nextUnfinalizedObjectList);
-		unfinalizedObjectLists[index].setPreviousList(previousUnfinalizedObjectList);
-	}
-	_extensions->unfinalizedObjectLists = unfinalizedObjectLists;
-	return true;
-}
-
-bool
-MM_RealtimeGC::allocateAndInitializeOwnableSynchronizerObjectLists(MM_EnvironmentBase *env)
-{
-	const UDATA listCount = MM_HeapRegionDescriptorRealtime::getOwnableSynchronizerObjectListCount(env);
-	Assert_MM_true(0 < listCount);
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate((sizeof(MM_OwnableSynchronizerObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if (NULL == ownableSynchronizerObjectLists) {
-		return false;
-	}
-	for (UDATA index = 0; index < listCount; index++) {
-		new(&ownableSynchronizerObjectLists[index]) MM_OwnableSynchronizerObjectList();
-		/* add each list to the global list. we need to maintain the doubly linked list
-		 * to ensure uniformity with SE/Balanced.
-		 */
-		MM_OwnableSynchronizerObjectList *previousOwnableSynchronizerObjectList = (0 == index) ? NULL : &ownableSynchronizerObjectLists[index-1];
-		MM_OwnableSynchronizerObjectList *nextOwnableSynchronizerObjectList = ((listCount - 1) == index) ? NULL : &ownableSynchronizerObjectLists[index+1];
-
-		ownableSynchronizerObjectLists[index].setNextList(nextOwnableSynchronizerObjectList);
-		ownableSynchronizerObjectLists[index].setPreviousList(previousOwnableSynchronizerObjectList);
-	}
-	_extensions->ownableSynchronizerObjectLists = ownableSynchronizerObjectLists;
 	return true;
 }
 
@@ -278,6 +165,7 @@ void
 MM_RealtimeGC::tearDown(MM_EnvironmentBase *env)
 {
 	_delegate.tearDown(env);
+	_realtimeDelegate.tearDown(env);
 
 	if(NULL != _sched) {
 		_sched->kill(env);
@@ -293,21 +181,6 @@ MM_RealtimeGC::tearDown(MM_EnvironmentBase *env)
 		_workPackets->kill(env);
 		_workPackets = NULL;
 	}
-	
-	if (NULL != _extensions->referenceObjectLists) {
-		env->getForge()->free(_extensions->referenceObjectLists);
-		_extensions->referenceObjectLists = NULL;
-	}
-
-	if (NULL != _extensions->unfinalizedObjectLists) {
-		env->getForge()->free(_extensions->unfinalizedObjectLists);
-		_extensions->unfinalizedObjectLists = NULL;
-	}
-
-	if (NULL != _extensions->ownableSynchronizerObjectLists) {
-		env->getForge()->free(_extensions->ownableSynchronizerObjectLists);
-		_extensions->ownableSynchronizerObjectLists = NULL;
-	}
 
 	if (NULL != _markingScheme) {
 		_markingScheme->kill(env);
@@ -318,12 +191,6 @@ MM_RealtimeGC::tearDown(MM_EnvironmentBase *env)
 		_sweepScheme->kill(env);
 		_sweepScheme = NULL;
  	}
-	
-	if (NULL != _extensions->accessBarrier) {
-		_extensions->accessBarrier->kill(env);
-		_extensions->accessBarrier = NULL;
-	}
-
 }
 
 /**
@@ -340,26 +207,7 @@ MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 	/* Clear the gc stats structure */
 	clearGCStats(env);
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	/* Set the dynamic class unloading flag based on command line and runtime state */
-	switch (_extensions->dynamicClassUnloading) {
-		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER:
-			_extensions->runtimeCheckDynamicClassUnloading = false;
-			break;
-		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ALWAYS:
-			_extensions->runtimeCheckDynamicClassUnloading = true;
-			break;
-		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ON_CLASS_LOADER_CHANGES:
-			 _extensions->runtimeCheckDynamicClassUnloading = (_extensions->aggressive || _extensions->classLoaderManager->isTimeForClassUnloading(env));
-			break;
-		default:
-			break;
-	}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
-#if defined(J9VM_GC_FINALIZATION)
-	_finalizationRequired = false;
-#endif /* J9VM_GC_FINALIZATION */
+	_realtimeDelegate.masterSetupForGC(env);
 }
 
 /**
@@ -368,16 +216,7 @@ MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::masterCleanupAfterGC(MM_EnvironmentBase *env)
 {
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	/* flush the dead class segments if their size exceeds the CacheSize mark. 
-	 * Heap fixup should have been completed in this cycle.
-	 */
-	if (_extensions->classLoaderManager->reclaimableMemory() > _extensions->deadClassLoaderCacheSize) {
-		Trc_MM_FlushUndeadSegments_Entry(env->getLanguageVMThread(), "Non-zero reclaimable memory available");
-		_extensions->classLoaderManager->flushUndeadSegments(env);
-		Trc_MM_FlushUndeadSegments_Exit(env->getLanguageVMThread());
-	}
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+	_realtimeDelegate.masterCleanupAfterGC(env);
 }
 
 /**
@@ -394,7 +233,7 @@ void
 MM_RealtimeGC::clearGCStats(MM_EnvironmentBase *env)
 {
 	_extensions->globalGCStats.clear();
-	_extensions->markJavaStats.clear();
+	_realtimeDelegate.clearGCStats(env);
 }
 
 /**
@@ -404,342 +243,13 @@ MM_RealtimeGC::mergeGCStats(MM_EnvironmentBase *env)
 {
 }
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 void
-MM_RealtimeGC::processDyingClasses(MM_EnvironmentRealtime *env, UDATA* classUnloadCountResult, UDATA* anonymousClassUnloadCountResult, UDATA* classLoaderUnloadCountResult, J9ClassLoader** classLoaderUnloadListResult)
-{
-	J9ClassLoader *classLoader = NULL;
-	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
-	UDATA classUnloadCount = 0;
-	UDATA anonymousClassUnloadCount = 0;
-	UDATA classLoaderUnloadCount = 0;
-	J9ClassLoader *unloadLink = NULL;
-	J9Class *classUnloadList = NULL;
-	J9Class *anonymousClassUnloadList = NULL;
-
-	/*
-	 * Walk anonymous classes and set unmarked as dying
-	 *
-	 * Do this walk before classloaders to be unloaded walk to create list of anonymous classes to be unloaded and use it
-	 * as sublist to continue to build general list of classes to be unloaded
-	 *
-	 * Anonymous classes suppose to be allocated one per segment
-	 * This is not relevant here however becomes important at segment removal time
-	 */
-	anonymousClassUnloadList = addDyingClassesToList(env, _javaVM->anonClassLoader, false, anonymousClassUnloadList, &anonymousClassUnloadCount);
-
-	/* class unload list includes anonymous class unload list */
-	classUnloadList = anonymousClassUnloadList;
-	classUnloadCount += anonymousClassUnloadCount;
-	
-	GC_ClassLoaderLinkedListIterator classLoaderIterator(env, _extensions->classLoaderManager);
-	while(NULL != (classLoader = (J9ClassLoader *)classLoaderIterator.nextSlot())) {
-		if (0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
-			Assert_MM_true(NULL == classLoader->unloadLink);
-			if(_markingScheme->isMarked(classLoader->classLoaderObject) ) {
-				classLoader->gcFlags &= ~J9_GC_CLASS_LOADER_SCANNED;
-			} else {
-				/* Anonymous classloader should not be unloaded */
-				Assert_MM_true(0 == (classLoader->flags & J9CLASSLOADER_ANON_CLASS_LOADER));
-
-				classLoaderUnloadCount += 1;
-				classLoader->gcFlags |= J9_GC_CLASS_LOADER_DEAD;
-				
-				/* add this loader to the linked list of loaders being unloaded in this cycle */
-				classLoader->unloadLink = unloadLink;
-				unloadLink = classLoader;
-
-				classUnloadList = addDyingClassesToList(env, classLoader, true, classUnloadList, &classUnloadCount);
-			}
-		}
-		yieldFromClassUnloading(env);
-	}
-	
-	if (0 != classUnloadCount) {
-		/* Call classes unload hook */
-		TRIGGER_J9HOOK_VM_CLASSES_UNLOAD(_javaVM->hookInterface, vmThread, classUnloadCount, classUnloadList);
-		yieldFromClassUnloading(env);
-	}
-	
-	if (0 != anonymousClassUnloadCount) {
-		/* Call anonymous classes unload hook */
-		TRIGGER_J9HOOK_VM_ANON_CLASSES_UNLOAD(_javaVM->hookInterface, vmThread, anonymousClassUnloadCount, anonymousClassUnloadList);
-		yieldFromClassUnloading(env);
-	}
-
-	if (0 != classLoaderUnloadCount) {
-		/* Call classloader unload hook */
-		TRIGGER_J9HOOK_VM_CLASS_LOADERS_UNLOAD(_javaVM->hookInterface, vmThread, unloadLink);
-		yieldFromClassUnloading(env);
-	}
-
-	/* Ensure that the VM has an accurate anonymous class count */
-	_javaVM->anonClassCount -= anonymousClassUnloadCount;
-
-	*classUnloadCountResult = classUnloadCount;
-	*anonymousClassUnloadCountResult = anonymousClassUnloadCount;
-	*classLoaderUnloadCountResult = classLoaderUnloadCount;
-	*classLoaderUnloadListResult = unloadLink;
-}
-
-J9Class *
-MM_RealtimeGC::addDyingClassesToList(MM_EnvironmentRealtime *env, J9ClassLoader * classLoader, bool setAll, J9Class *classUnloadListStart, UDATA *classUnloadCountResult)
-{
-	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
-	J9Class *classUnloadList = classUnloadListStart;
-	UDATA classUnloadCount = 0;
-
-	if (NULL != classLoader) {
-		GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
-		J9MemorySegment *segment = NULL;
-		while(NULL != (segment = segmentIterator.nextSegment())) {
-			GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
-			J9Class *clazz = NULL;
-			while(NULL != (clazz = classHeapIterator.nextClass())) {
-
-				J9CLASS_EXTENDED_FLAGS_CLEAR(clazz, J9ClassGCScanned);
-
-				J9Object *classObject = clazz->classObject;
-				if (setAll || !_markingScheme->isMarked(classObject)) {
-
-					/* with setAll all classes must be unmarked */
-					Assert_MM_true(!_markingScheme->isMarked(classObject));
-
-					classUnloadCount += 1;
-
-					/* Remove the class from the subclass traversal list */
-					_extensions->classLoaderManager->removeFromSubclassHierarchy(env, clazz);
-					/* Mark class as dying */
-					clazz->classDepthAndFlags |= J9AccClassDying;
-
-					/* Call class unload hook */
-					Trc_MM_cleanUpClassLoadersStart_triggerClassUnload(env->getLanguageVMThread(),clazz,
-								(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
-								J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
-					TRIGGER_J9HOOK_VM_CLASS_UNLOAD(_javaVM->hookInterface, vmThread, clazz);
-						
-					/* add class to dying anonymous classes link list */
-					clazz->gcLink = classUnloadList;
-					classUnloadList = clazz;
-				}
-			}
-		}
-	}
-
-	*classUnloadCountResult += classUnloadCount;
-	return classUnloadList;
-}
-
-/**
- * Free classloaders which are being unloaded during this GC cycle.  Also remove all
- * dead classes from the traversal list.  
- * @note the traversal code belongs in its own function or possibly processDyingClasses
- * or possible processDyingClasses.  It is currently here for historic reasons.
- * 
- * @param deadClassLoaders Linked list of classloaders dying during this GC cycle
- */
-void
-MM_RealtimeGC::processUnlinkedClassLoaders(MM_EnvironmentBase *envModron, J9ClassLoader *deadClassLoaders)
-{
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envModron);
-	J9ClassLoader *unloadLink = deadClassLoaders;
-	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
-	J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
-
-	/* Remove dead classes from the traversal list (if necessary) */
-	J9Class *jlObject = J9VMJAVALANGOBJECT_OR_NULL(javaVM);
-	J9Class *previousClass = jlObject;
-	J9Class *nextClass = (NULL != jlObject) ? jlObject->subclassTraversalLink : jlObject;
-	while ((NULL != nextClass) && (jlObject != nextClass)) {
-		if (J9CLASS_FLAGS(nextClass) & J9AccClassDying) {
-			while ((NULL != nextClass->subclassTraversalLink) && (jlObject != nextClass) && (J9CLASS_FLAGS(nextClass) & 0x08000000)) {
-				nextClass = nextClass->subclassTraversalLink;
-			}
-			previousClass->subclassTraversalLink = nextClass;
-		}
-		previousClass = nextClass;
-		nextClass = nextClass->subclassTraversalLink;
-		/* TODO CRGTMP Do we need to yield here?  Is yielding safe? */
-	}
-
-	/* Free memory for dead classloaders */
-	while (NULL != unloadLink) {
-		J9ClassLoader *nextUnloadLink = unloadLink->unloadLink;
-		_javaVM->internalVMFunctions->freeClassLoader(unloadLink, _javaVM, vmThread, 1);
-		unloadLink = nextUnloadLink;
-		yieldFromClassUnloading(env);
-	}
-}
-
-void
-MM_RealtimeGC::updateClassUnloadStats(MM_EnvironmentBase *env, UDATA classUnloadCount, UDATA anonymousClassUnloadCount, UDATA classLoaderUnloadCount)
-{
-	MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
-
-	/* TODO CRGTMP move global stats into super class implementation once it is created */
-	classUnloadStats->_classesUnloadedCount = classUnloadCount;
-	classUnloadStats->_anonymousClassesUnloadedCount = anonymousClassUnloadCount;
-	classUnloadStats->_classLoaderUnloadedCount = classLoaderUnloadCount;
-
-	/* Record increment stats */
-	_extensions->globalGCStats.metronomeStats.classesUnloadedCount = classUnloadCount;
-	_extensions->globalGCStats.metronomeStats.anonymousClassesUnloadedCount = anonymousClassUnloadCount;
-	_extensions->globalGCStats.metronomeStats.classLoaderUnloadedCount = classLoaderUnloadCount;
-}
-
-/**
- * Unload classcloaders that are no longer referenced.  If the classloader has shared
- * libraries open place it on the finalize queue instead of freeing it.
- * 
- */
-void
-MM_RealtimeGC::unloadDeadClassLoaders(MM_EnvironmentBase *envModron)
-{
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envModron);
-	J9ClassLoader *unloadLink = NULL;
-	UDATA classUnloadCount = 0;
-	UDATA anonymousClassUnloadCount = 0;
-	UDATA classLoaderUnloadCount = 0;
-	J9ClassLoader *classLoadersUnloadedList = NULL;
-	J9MemorySegment *reclaimedSegments = NULL;
-
-	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
-	
-	lockClassUnloadMonitor(env);
-	
-	processDyingClasses(env, &classUnloadCount, &anonymousClassUnloadCount, &classLoaderUnloadCount, &classLoadersUnloadedList);
-
-	/* cleanup segments in anonymous classloader */
-	_extensions->classLoaderManager->cleanUpSegmentsInAnonymousClassLoader(env, &reclaimedSegments);
-	
-	/* enqueue all the segments we just salvaged from the dead class loaders for delayed free (this work was historically attributed in the unload end operation so it goes after the timer start) */
-	_extensions->classLoaderManager->enqueueUndeadClassSegments(reclaimedSegments);
-
-	yieldFromClassUnloading(env);
-
-	GC_FinalizableClassLoaderBuffer buffer(_extensions);
-	
-	while (NULL != classLoadersUnloadedList) {
-		/* fetch the next loader immediately, since we will re-use the unloadLink in this loop */
-		J9ClassLoader* classLoader = classLoadersUnloadedList;
-		classLoadersUnloadedList = classLoader->unloadLink;
-		
-		Assert_MM_true(0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED));
-		Assert_MM_true(J9_GC_CLASS_LOADER_DEAD == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD));
-		Assert_MM_true(0 == (classLoader->gcFlags & (J9_GC_CLASS_LOADER_UNLOADING | J9_GC_CLASS_LOADER_ENQ_UNLOAD)));
-
-		/* Class loader died this collection, so do cleanup work */
-		reclaimedSegments = NULL;
-		
-		/* Perform classLoader-specific clean up work, including freeing the classLoader's class hash table and
-		 * class path entries.
-		 */
-		 _javaVM->internalVMFunctions->cleanUpClassLoader((J9VMThread *)env->getLanguageVMThread(), classLoader);
-		 /* free any ROM classes now and enqueue any RAM classes */
-		 _extensions->classLoaderManager->cleanUpSegmentsAlongClassLoaderLink(_javaVM, classLoader->classSegments, &reclaimedSegments);
-		 /* we are taking responsibility for cleaning these here so free them */
-		 classLoader->classSegments = NULL;
-		 /* enqueue all the segments we just salvaged from the dead class loaders for delayed free (this work was historically attributed in the unload end operation so it goes after the timer start) */
-		 _extensions->classLoaderManager->enqueueUndeadClassSegments(reclaimedSegments);
-		 
-		 /* Remove this classloader slot */
-		 _extensions->classLoaderManager->unlinkClassLoader(classLoader);
-
-#if defined(J9VM_GC_FINALIZATION)
-		/* Determine if the classLoader needs to be enqueued for finalization (for shared library unloading),
-		 * otherwise add it to the list of classLoaders to be unloaded by cleanUpClassLoadersEnd.
-		 */
-		if(((NULL != classLoader->sharedLibraries)
-		&& (0 != pool_numElements(classLoader->sharedLibraries)))
-		|| (_extensions->fvtest_forceFinalizeClassLoaders)) {
-			/* Attempt to enqueue the class loader for the finalizer */
-			buffer.add(env, classLoader);
-			classLoader->gcFlags |= J9_GC_CLASS_LOADER_ENQ_UNLOAD;
-			_finalizationRequired = true;
-		} else 
-#endif /* J9VM_GC_FINALIZATION */
-		{
-			/* Add the classLoader to the list of classLoaders to unloaded by cleanUpClassLoadersEnd */
-			classLoader->unloadLink = unloadLink;
-			unloadLink = classLoader;
-		}
-		yieldFromClassUnloading(env);
-	}
-	
-	buffer.flush(env);
-
-	updateClassUnloadStats(env, classUnloadCount, anonymousClassUnloadCount, classLoaderUnloadCount);
-	
-	processUnlinkedClassLoaders(env, unloadLink);
-	
-	unlockClassUnloadMonitor(env);
-	
-	env->popVMstate(vmState);
-}
-
-/**
- * Check to see if it is time to yield.  If it is time to yield the GC
- * must release the classUnloadMonitor before yielding.  Once the GC
- * comes back from the yield it is required to acquire the classUnloadMonitor
- * again.
- */
-void
-MM_RealtimeGC::yieldFromClassUnloading(MM_EnvironmentRealtime *env)
-{
-	if (shouldYield(env)) {
-		unlockClassUnloadMonitor(env);
-		yield(env);
-		lockClassUnloadMonitor(env);
-	}
-}
-
-/**
- * The GC is required to hold the classUnloadMonitor while it is unloading classes.
- * This will ensure that the JIT will abort and ongoing compilations
- */
-void
-MM_RealtimeGC::lockClassUnloadMonitor(MM_EnvironmentRealtime *env)
-{
-	/* Grab the classUnloadMonitor so that the JIT and the GC will not interfere with each other */
-#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
-	if (0 != omrthread_rwmutex_try_enter_write(_javaVM->classUnloadMutex)) {
-#else
-	if (0 != omrthread_monitor_try_enter(_javaVM->classUnloadMutex)) {
-#endif /* J9VM_JIT_CLASS_UNLOAD_RWMONITOR */
-		/* Failed acquire the monitor so interrupt the JIT.  This will allow the GC
-		 * to continue unloading classes.
-		 */
-		TRIGGER_J9HOOK_MM_INTERRUPT_COMPILATION(_extensions->hookInterface, (J9VMThread *)env->getLanguageVMThread());
-#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
-		omrthread_rwmutex_enter_write(_javaVM->classUnloadMutex);
-#else
-		omrthread_monitor_enter(_javaVM->classUnloadMutex);
-#endif /* J9VM_JIT_CLASS_UNLOAD_RWMONITOR */
-	}
-}
-
-/**
- * Release the classUnloadMonitor.  This will allow the JIT to compile new methods.
- */
-void
-MM_RealtimeGC::unlockClassUnloadMonitor(MM_EnvironmentRealtime *env)
-{
-#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
-	omrthread_rwmutex_exit_write(_javaVM->classUnloadMutex);
-#else
-	omrthread_monitor_exit(_javaVM->classUnloadMutex);
-#endif /* J9VM_JIT_CLASS_UNLOAD_RWMONITOR */
-}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
-void
-MM_RealtimeGC::enqueuePointerArraylet(MM_EnvironmentRealtime *env, fj9object_t *arraylet)
+MM_RealtimeGC::enqueuePointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
 {
 	env->getWorkStack()->push(env, (void *)ARRAYLET_TO_ITEM(arraylet));
 }
 
-UDATA
+uintptr_t
 MM_RealtimeGC::verbose(MM_EnvironmentBase *env) {
 	return _sched->verbose();
 }
@@ -747,23 +257,16 @@ MM_RealtimeGC::verbose(MM_EnvironmentBase *env) {
 /**
  * @note only called by master thread.
  */
-void 
+void
 MM_RealtimeGC::doAuxilaryGCWork(MM_EnvironmentBase *env)
 {
-#if defined(J9VM_GC_FINALIZATION)
-	if(isFinalizationRequired()) {
-		omrthread_monitor_enter(_javaVM->finalizeMasterMonitor);
-		_javaVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
-		omrthread_monitor_notify_all(_javaVM->finalizeMasterMonitor);
-		omrthread_monitor_exit(_javaVM->finalizeMasterMonitor);
-	}
-#endif /* J9VM_GC_FINALIZATION */
+	_realtimeDelegate.doAuxilaryGCWork(env);
 	
 	/* Restart the caches for all threads. */
-	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
-	J9VMThread *walkThread;
-	while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
-		MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
+	GC_OMRVMThreadListIterator vmThreadListIterator(_vm);
+	OMR_VMThread *walkThread;
+	while((walkThread = vmThreadListIterator.nextOMRVMThread()) != NULL) {
+		MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread);
 		((MM_SegregatedAllocationInterface *)(walkEnv->_objectAllocationInterface))->restartCache(walkEnv);
 	}
 	
@@ -776,24 +279,22 @@ MM_RealtimeGC::doAuxilaryGCWork(MM_EnvironmentBase *env)
  * also the first (old) value overwritten by all threads (the latter as in a Yuasa barrier).
  * @note only called by master thread.
  */
-void 
+void
 MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	masterSetupForGC(env);
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	_dynamicClassUnloadingEnabled = ((_extensions->runtimeCheckDynamicClassUnloading != 0) ? true : false);
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+	_realtimeDelegate.incrementalCollectStart(env);
 
 	/* Make sure all threads notice GC is ongoing with a barrier. */
 	_extensions->globalGCStats.gcCount++;
 	if (verbose(env) >= 2) {
-		j9tty_printf(PORTLIB, "RealtimeGC::incrementalCollect\n");
+		omrtty_printf("RealtimeGC::incrementalCollect\n");
 	}
 	if (verbose(env) >= 3) {
-		j9tty_printf(PORTLIB, "RealtimeGC::incrementalCollect   setup and root phase\n");
+		omrtty_printf("RealtimeGC::incrementalCollect   setup and root phase\n");
 	}
 	if (env->_cycleState->_gcCode.isOutOfMemoryGC()) {
 		env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_soft_as_weak;
@@ -806,51 +307,8 @@ MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 	_sched->run(env, &markTask);
 	reportMarkEnd(env);
 	
-	/* 
-	 * We have to do class unloading before we turn on GC_UNMARK allocation collor.
-	 */
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	if (_extensions->runtimeCheckDynamicClassUnloading != 0) {
-		MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
-		setCollectorUnloadingClassLoaders();
-		reportClassUnloadingStart(env);
-		classUnloadStats->_startTime = j9time_hires_clock();
-		unloadDeadClassLoaders(env);
-		classUnloadStats->_endTime = j9time_hires_clock();
-		reportClassUnloadingEnd(env);
-		
-		/* If there was dynamic class unloading checks during the run, record the new number of class
-		 * loaders last seen during a DCU pass
-		 */
-		_extensions->classLoaderManager->setLastUnloadNumOfClassLoaders();		
-		_extensions->classLoaderManager->setLastUnloadNumOfAnonymousClasses();
-	}
-	
-	/* Handling of classes done. Return back to "mark if necessary" mode */
-	_unmarkedImpliesClasses = false;
-
-	/* Clear the appropriate flags of all classLoaders */
-	GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
-	J9ClassLoader *classLoader;
-	while((classLoader = classLoaderIterator.nextSlot()) != NULL) {
-		classLoader->gcFlags &= ~J9_GC_CLASS_LOADER_SCANNED;
-	}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-	
-	/* If the J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK flag is set,
-	 * or if we are about to unload classes and free class memory segments
-	 * then fix the heap so that it can be walked by debugging tools
-	 */
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	bool fixupForClassUnload = (_extensions->classLoaderManager->reclaimableMemory() > _extensions->deadClassLoaderCacheSize);
-#else /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
-	bool fixupForClassUnload = false;
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
-	if (J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK == (((J9JavaVM *)env->getLanguageVM())->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK)
-			|| fixupForClassUnload) {
-		_fixHeapForWalk = true;
-	}	
+	_realtimeDelegate.incrementalCollect(env);
 
 	/*
 	 * Sweeping.
@@ -861,7 +319,7 @@ MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 	reportSweepEnd(env);
 
 	doAuxilaryGCWork(env);
-	
+
 	/* Get all components to clean up after themselves at the end of a collect */
 	masterCleanupAfterGC(env);
 
@@ -869,7 +327,7 @@ MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 	setCollectorIdle();
 
 	if (verbose(env) >= 3) {
-		j9tty_printf(PORTLIB, "RealtimeGC::incrementalCollect   gc complete  %d  MB in use\n", _memoryPool->getBytesInUse() >> 20); 
+		omrtty_printf("RealtimeGC::incrementalCollect   gc complete  %d  MB in use\n", _memoryPool->getBytesInUse() >> 20);
 	}
 }
 
@@ -886,12 +344,12 @@ MM_RealtimeGC::flushCachedFullRegions(MM_EnvironmentBase *env)
  * and sets their allocationColor to GC_UNMARK.  It also sets the new thread allocation
  * color to GC_UNMARK.
  **/
-void 
+void
 MM_RealtimeGC::allThreadsAllocateUnmarked(MM_EnvironmentBase *env) {
 	GC_OMRVMInterface::flushCachesForGC(env);
-	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+	GC_OMRVMThreadListIterator vmThreadListIterator(_vm);
 	
-	while(J9VMThread *aThread = vmThreadListIterator.nextVMThread()) {
+	while(OMR_VMThread *aThread = vmThreadListIterator.nextOMRVMThread()) {
 		MM_EnvironmentRealtime *threadEnv = MM_EnvironmentRealtime::getEnvironment(aThread);	
 		assume0(threadEnv->getAllocationColor() == GC_MARK);
 		threadEnv->setAllocationColor(GC_UNMARK);
@@ -946,7 +404,7 @@ MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 
 /**
  */
-void 
+void
 MM_RealtimeGC::setupForGC(MM_EnvironmentBase *env)
 {
 }	
@@ -975,17 +433,17 @@ MM_RealtimeGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *s
 	_fixHeapForWalk = false;
 	
 	/* Check if user overrode the default minimumFreeEntrySize */
-	if (_extensions->minimumFreeEntrySize != (UDATA)-1) {
+	if (_extensions->minimumFreeEntrySize != UDATA_MAX) {
 		_memoryPool->setMinimumFreeEntrySize(_extensions->minimumFreeEntrySize);
 	} else {
 		/* Set it dynamically based on free heap after the end of collection */
 		float percentFreeHeapAfterCollect = _extensions->heap->getApproximateActiveFreeMemorySize() * 100.0f / _extensions->heap->getMaximumMemorySize();
 		_avgPercentFreeHeapAfterCollect = _avgPercentFreeHeapAfterCollect * 0.8f + percentFreeHeapAfterCollect * 0.2f;
-		/* Has percent range changed? (for example from [80,90] down to [70,80]) */ 
-		UDATA minFreeEntrySize = (UDATA)1 << (((UDATA)_avgPercentFreeHeapAfterCollect / 10) + 1);
+		/* Has percent range changed? (for example from [80,90] down to [70,80]) */
+		uintptr_t minFreeEntrySize = (uintptr_t)1 << (((uintptr_t)_avgPercentFreeHeapAfterCollect / 10) + 1);
 		if (minFreeEntrySize != _memoryPool->getMinimumFreeEntrySize()) {
 			/* Yes, it did => make sure it changed enough (more than 1% up or below the range boundary) to accept it (in the example, 78.9 is ok, but 79.1 is not */
-			if ((UDATA)_avgPercentFreeHeapAfterCollect % 10 >= 1 && (UDATA)_avgPercentFreeHeapAfterCollect % 10 < 9) {
+			if ((uintptr_t)_avgPercentFreeHeapAfterCollect % 10 >= 1 && (uintptr_t)_avgPercentFreeHeapAfterCollect % 10 < 9) {
 				if (minFreeEntrySize < 16) {
 					minFreeEntrySize = 0;
 				}
@@ -1017,13 +475,13 @@ MM_RealtimeGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *s
 void
 MM_RealtimeGC::reportGCCycleFinalIncrementEnding(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	MM_CommonGCData commonData;
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_END(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GC_CYCLE_END,
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -1036,13 +494,13 @@ MM_RealtimeGC::reportGCCycleFinalIncrementEnding(MM_EnvironmentBase *env)
  * @ingroup GC_Metronome methodGroup
  */
 void
-MM_RealtimeGC::reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, UDATA reasonParameter) 
+MM_RealtimeGC::reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, uintptr_t reasonParameter)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	UDATA approximateFreeFreeMemorySize;
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	uintptr_t approximateFreeFreeMemorySize;
+#if defined(OMR_GC_DYNAMIC_CLASS_UNLOADING)
 	MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+#endif /* defined(OMR_GC_DYNAMIC_CLASS_UNLOADING) */
 	
 	approximateFreeFreeMemorySize = _extensions->heap->getApproximateActiveFreeMemorySize();
 	
@@ -1054,21 +512,21 @@ MM_RealtimeGC::reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, UDATA
 		0
 	);
 
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	UDATA classLoaderUnloadedCount = isCollectorIdle()?0:classUnloadStats->_classLoaderUnloadedCount;
-	UDATA classesUnloadedCount = isCollectorIdle()?0:classUnloadStats->_classesUnloadedCount;
-	UDATA anonymousClassesUnloadedCount = isCollectorIdle()?0:classUnloadStats->_anonymousClassesUnloadedCount;
-#else /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
-	UDATA classLoaderUnloadedCount = 0;
-	UDATA classesUnloadedCount = 0;
-	UDATA anonymousClassesUnloadedCount = 0;
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+#if defined(OMR_GC_DYNAMIC_CLASS_UNLOADING)
+	uintptr_t classLoaderUnloadedCount = isCollectorIdle()?0:classUnloadStats->_classLoaderUnloadedCount;
+	uintptr_t classesUnloadedCount = isCollectorIdle()?0:classUnloadStats->_classesUnloadedCount;
+	uintptr_t anonymousClassesUnloadedCount = isCollectorIdle()?0:classUnloadStats->_anonymousClassesUnloadedCount;
+#else /* defined(OMR_GC_DYNAMIC_CLASS_UNLOADING) */
+	uintptr_t classLoaderUnloadedCount = 0;
+	uintptr_t classesUnloadedCount = 0;
+	uintptr_t anonymousClassesUnloadedCount = 0;
+#endif /* defined(OMR_GC_DYNAMIC_CLASS_UNLOADING) */
 	
 	/* If master thread was blocked at end of GC, waiting for a new GC cycle,
 	 * globalGCStats are not cleared yet. Thus, if we haven't started GC yet,
 	 * just report 0s for classLoaders unloaded count */
 	TRIGGER_J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START(_extensions->privateHookInterface,
-		env->getOmrVMThread(), j9time_hires_clock(), 
+		env->getOmrVMThread(), omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START, reason, reasonParameter,
 		approximateFreeFreeMemorySize,
 		0,
@@ -1085,59 +543,7 @@ MM_RealtimeGC::reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, UDATA
 void
 MM_RealtimeGC::reportSyncGCEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	UDATA approximateFreeMemorySize = _extensions->heap->getApproximateActiveFreeMemorySize();
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
-	UDATA classLoaderUnloadCount = classUnloadStats->_classLoaderUnloadedCount;
-	UDATA classUnloadCount = classUnloadStats->_classesUnloadedCount;
-	UDATA anonymousClassUnloadCount = classUnloadStats->_anonymousClassesUnloadedCount;
-#else /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
-	UDATA classLoaderUnloadCount = 0;
-	UDATA classUnloadCount = 0;
-	UDATA anonymousClassUnloadCount = 0;
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
-	UDATA weakReferenceCount = _extensions->markJavaStats._weakReferenceStats._cleared;
-	UDATA softReferenceCount = _extensions->markJavaStats._softReferenceStats._cleared;
-	UDATA maxSoftReferenceAge =_extensions->getMaxSoftReferenceAge();
-	UDATA softReferenceAge = _extensions->getDynamicMaxSoftReferenceAge();
-	UDATA phantomReferenceCount = _extensions->markJavaStats._phantomReferenceStats._cleared;
-	UDATA finalizerCount = _extensions->globalGCStats.metronomeStats.getWorkPacketOverflowCount();
-	UDATA packetOverflowCount = _extensions->globalGCStats.metronomeStats.getWorkPacketOverflowCount();
-	UDATA objectOverflowCount = _extensions->globalGCStats.metronomeStats.getObjectOverflowCount();
-			
-	Trc_MM_SynchGCEnd(env->getLanguageVMThread(),
-		approximateFreeMemorySize,
-		0,
-		classLoaderUnloadCount,
-		classUnloadCount,
-		weakReferenceCount,
-		softReferenceCount,
-		maxSoftReferenceAge,
-		softReferenceAge,
-		phantomReferenceCount,
-		finalizerCount,
-		packetOverflowCount,
-		objectOverflowCount
-	);
-	
-	TRIGGER_J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_END(_extensions->privateHookInterface,
-		env->getOmrVMThread(), j9time_hires_clock(), 
-		J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_END,
-		approximateFreeMemorySize,
-		0,
-		classLoaderUnloadCount,
-		classUnloadCount,
-		anonymousClassUnloadCount,
-		weakReferenceCount,
-		softReferenceCount,
-		maxSoftReferenceAge,
-		softReferenceAge,
-		phantomReferenceCount,
-		finalizerCount,
-		packetOverflowCount,
-		objectOverflowCount
-	);		
+	_realtimeDelegate.reportSyncGCEnd(env);
 }
 
 /**
@@ -1147,14 +553,14 @@ MM_RealtimeGC::reportSyncGCEnd(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	/* Let VM know that GC cycle is about to start. JIT, in particular uses it,
 	 * to not compile while GC cycle is on.
 	 */
-	omrthread_monitor_enter(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
-	((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOn = 1;
+	omrthread_monitor_enter(env->getOmrVM()->_gcCycleOnMonitor);
+	env->getOmrVM()->_gcCycleOn = 1;
 
-	UDATA approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
+	uintptr_t approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
 
 	Trc_MM_CycleStart(env->getLanguageVMThread(), env->_cycleState->_type, approximateFreeMemorySize);
 
@@ -1163,13 +569,12 @@ MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_START(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GC_CYCLE_START,
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type
 	);
-
-	omrthread_monitor_exit(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
+	omrthread_monitor_exit(env->getOmrVM()->_gcCycleOnMonitor);
 }
 
 /**
@@ -1179,14 +584,13 @@ MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	omrthread_monitor_enter(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	omrthread_monitor_enter(env->getOmrVM()->_gcCycleOnMonitor);
 
-
-	UDATA approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
+	uintptr_t approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
 
 	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(_extensions->privateHookInterface,
-		env->getOmrVMThread(), j9time_hires_clock(),
+		env->getOmrVMThread(), omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
 		_extensions->getForge()->getCurrentStatistics()
 	);
@@ -1198,7 +602,7 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END,
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -1213,7 +617,7 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	if (_memoryPool->getBytesInUse() < _extensions->gcInitialTrigger) {
 		_previousCycleBelowTrigger = true;
 		TRIGGER_J9HOOK_MM_PRIVATE_METRONOME_TRIGGER_END(_extensions->privateHookInterface,
-			env->getOmrVMThread(), j9time_hires_clock(),
+			env->getOmrVMThread(), omrtime_hires_clock(),
 			J9HOOK_MM_PRIVATE_METRONOME_TRIGGER_END
 		);
 	}
@@ -1221,10 +625,10 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	/* Let VM (JIT, in particular) GC cycle is finished. Do a monitor notify, to
 	 * unblock parties that waited for the cycle to complete
 	 */
-	((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOn = 0;
-	omrthread_monitor_notify_all(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
-
-	omrthread_monitor_exit(((J9JavaVM *)env->getLanguageVM())->omrVM->_gcCycleOnMonitor);
+	env->getOmrVM()->_gcCycleOn = 0;
+	omrthread_monitor_notify_all(env->getOmrVM()->_gcCycleOnMonitor);
+	
+	omrthread_monitor_exit(env->getOmrVM()->_gcCycleOnMonitor);
 }
 
 /**
@@ -1232,7 +636,7 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
  * @ingroup GC_Metronome methodGroup
  */
 bool
-MM_RealtimeGC::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress)
+MM_RealtimeGC::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress)
 {
 	bool result = _markingScheme->heapAddRange(env, subspace, size, lowAddress, highAddress);
 
@@ -1254,7 +658,7 @@ MM_RealtimeGC::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace
  */
 bool
 MM_RealtimeGC::heapRemoveRange(
-	MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress,
+	MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress,
 	void *lowValidAddress, void *highValidAddress)
 {
 	bool result = _markingScheme->heapRemoveRange(env, subspace, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
@@ -1293,12 +697,12 @@ MM_RealtimeGC::collectorShutdown(MM_GCExtensionsBase *extensions)
 {
 }
 
-/** 
- * Factory method for creating the work packets structure .
+/**
+ * Factory method for creating the work packets structure.
  * 
  * @return the WorkPackets to be used for this Collector.
  */
-MM_WorkPacketsRealtime* 
+MM_WorkPacketsRealtime*
 MM_RealtimeGC::allocateWorkPackets(MM_EnvironmentBase *env)
 {
 	return MM_WorkPacketsRealtime::newInstance(env);
@@ -1307,7 +711,7 @@ MM_RealtimeGC::allocateWorkPackets(MM_EnvironmentBase *env)
 /**
  * Calls the Scheduler's yielding API to determine if the GC should yield.
  * @return true if the GC should yield, false otherwise
- */ 
+ */
 bool
 MM_RealtimeGC::shouldYield(MM_EnvironmentBase *env)
 {
@@ -1326,7 +730,7 @@ MM_RealtimeGC::yield(MM_EnvironmentBase *env)
 /**
  * Yield only if the Scheduler deems yielding should occur at the time of the
  * call to this method.
- */ 
+ */
 bool
 MM_RealtimeGC::condYield(MM_EnvironmentBase *env, U_64 timeSlackNanoSec)
 {
@@ -1336,111 +740,72 @@ MM_RealtimeGC::condYield(MM_EnvironmentBase *env, U_64 timeSlackNanoSec)
 bool
 MM_RealtimeGC::isMarked(void *objectPtr)
 {
-	return _markingScheme->isMarked(static_cast<J9Object*>(objectPtr));
+	return _markingScheme->isMarked((omrobjectptr_t)(objectPtr));
 }
 
 void
 MM_RealtimeGC::reportMarkStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_MarkStart(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_MARK_START(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_MARK_START);
 }
 
 void
 MM_RealtimeGC::reportMarkEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_MarkEnd(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_MARK_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_MARK_END);
 }
 
 void
 MM_RealtimeGC::reportSweepStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_SweepStart(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_SWEEP_START(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_SWEEP_START);
 }
 
 void
 MM_RealtimeGC::reportSweepEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_SweepEnd(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_SWEEP_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_SWEEP_END);
 }
-
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-void
-MM_RealtimeGC::reportClassUnloadingStart(MM_EnvironmentBase *env)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	Trc_MM_ClassUnloadingStart(env->getLanguageVMThread());
-
-	TRIGGER_J9HOOK_MM_PRIVATE_CLASS_UNLOADING_START(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(),
-		j9time_hires_clock(),
-		J9HOOK_MM_PRIVATE_CLASS_UNLOADING_START);
-}
-
-void
-MM_RealtimeGC::reportClassUnloadingEnd(MM_EnvironmentBase *env)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
-
-	Trc_MM_ClassUnloadingEnd(env->getLanguageVMThread(),
-							classUnloadStats->_classLoaderUnloadedCount,
-							classUnloadStats->_classesUnloadedCount);
-
-	TRIGGER_J9HOOK_MM_CLASS_UNLOADING_END(
-		_extensions->hookInterface,
-		(J9VMThread *)env->getLanguageVMThread(),
-		j9time_hires_clock(),
-		J9HOOK_MM_CLASS_UNLOADING_END,
-		classUnloadStats->_endTime - classUnloadStats->_startTime,
-		classUnloadStats->_classLoaderUnloadedCount,
-		classUnloadStats->_classesUnloadedCount,
-		classUnloadStats->_classUnloadMutexQuiesceTime,
-		classUnloadStats->_endSetupTime - classUnloadStats->_startSetupTime,
-		classUnloadStats->_endScanTime - classUnloadStats->_startScanTime,
-		classUnloadStats->_endPostTime - classUnloadStats->_startPostTime);
-}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 void
 MM_RealtimeGC::reportGCStart(MM_EnvironmentBase *env)
 {
-	UDATA scavengerCount = 0;
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	uintptr_t scavengerCount = 0;
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_GlobalGCStart(env->getLanguageVMThread(), _extensions->globalGCStats.gcCount);
 
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_START(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GLOBAL_GC_START,
 		_extensions->globalGCStats.gcCount,
 		scavengerCount,
@@ -1452,17 +817,17 @@ MM_RealtimeGC::reportGCStart(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::reportGCEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	UDATA approximateNewActiveFreeMemorySize = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_NEW);
-	UDATA newActiveMemorySize = _extensions->heap->getActiveMemorySize(MEMORY_TYPE_NEW);
-	UDATA approximateOldActiveFreeMemorySize = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
-	UDATA oldActiveMemorySize = _extensions->heap->getActiveMemorySize(MEMORY_TYPE_OLD);
-	UDATA approximateLoaActiveFreeMemorySize = (_extensions->largeObjectArea ? _extensions->heap->getApproximateActiveFreeLOAMemorySize(MEMORY_TYPE_OLD) : 0 );
-	UDATA loaActiveMemorySize = (_extensions->largeObjectArea ? _extensions->heap->getActiveLOAMemorySize(MEMORY_TYPE_OLD) : 0 );
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	uintptr_t approximateNewActiveFreeMemorySize = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_NEW);
+	uintptr_t newActiveMemorySize = _extensions->heap->getActiveMemorySize(MEMORY_TYPE_NEW);
+	uintptr_t approximateOldActiveFreeMemorySize = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
+	uintptr_t oldActiveMemorySize = _extensions->heap->getActiveMemorySize(MEMORY_TYPE_OLD);
+	uintptr_t approximateLoaActiveFreeMemorySize = (_extensions->largeObjectArea ? _extensions->heap->getApproximateActiveFreeLOAMemorySize(MEMORY_TYPE_OLD) : 0 );
+	uintptr_t loaActiveMemorySize = (_extensions->largeObjectArea ? _extensions->heap->getActiveLOAMemorySize(MEMORY_TYPE_OLD) : 0 );
 
 	/* not including LOA in total (already accounted by OLD */
-	UDATA approximateTotalActiveFreeMemorySize = approximateNewActiveFreeMemorySize + approximateOldActiveFreeMemorySize;
-	UDATA totalActiveMemorySizeTotal = newActiveMemorySize + oldActiveMemorySize;
+	uintptr_t approximateTotalActiveFreeMemorySize = approximateNewActiveFreeMemorySize + approximateOldActiveFreeMemorySize;
+	uintptr_t totalActiveMemorySizeTotal = newActiveMemorySize + oldActiveMemorySize;
 
 
 	Trc_MM_GlobalGCEnd(env->getLanguageVMThread(),
@@ -1473,13 +838,13 @@ MM_RealtimeGC::reportGCEnd(MM_EnvironmentBase *env)
 	);
 
 	/* these are assigned to temporary variable out-of-line since some preprocessors get confused if you have directives in macros */
-	UDATA approximateActiveFreeMemorySize = 0;
-	UDATA activeMemorySize = 0;
+	uintptr_t approximateActiveFreeMemorySize = 0;
+	uintptr_t activeMemorySize = 0;
 
 	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
 		_extensions->getForge()->getCurrentStatistics()
 	);
@@ -1487,7 +852,7 @@ MM_RealtimeGC::reportGCEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_END(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GLOBAL_GC_END,
 		_extensions->globalGCStats.workPacketStats.getSTWWorkStackOverflowOccured(),
 		_extensions->globalGCStats.workPacketStats.getSTWWorkStackOverflowCount(),

@@ -393,6 +393,11 @@ extern "C" {
 #define J9_FINDCLASS_FLAG_NO_ISOLATION 0x2000
 #define J9_FINDCLASS_FLAG_ANON 0x4000
 #define J9_FINDCLASS_FLAG_FIND_MODULE_ON_FAIL 0x8000
+/*
+ * The class name supplied by the caller is invalid. If the class is not exempt
+ * (see J9ClassIsExemptFromValidation), a NoClassDefFoundError will be thrown.
+ */
+#define J9_FINDCLASS_FLAG_NAME_IS_INVALID 0x10000
 
 #define J9_FINDKNOWNCLASS_FLAG_INITIALIZE 0x1
 #define J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY 0x2
