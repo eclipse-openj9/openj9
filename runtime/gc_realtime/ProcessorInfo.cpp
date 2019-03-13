@@ -20,29 +20,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "j9protos.h"
-#include "j9consts.h"
-#include "modronopt.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include <string.h>
-#include <math.h>
 
-#include "AtomicOperations.hpp"
-#include "ClassModel.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
-#include "GCExtensions.hpp"
-#include "Heap.hpp"
-#include "MemoryPoolSegregated.hpp"
-#include "MemorySubSpace.hpp"
-#include "modronapi.hpp"
-#include "ObjectModel.hpp"
-#include "RootScanner.hpp"
-#include "Task.hpp"
 #include "ProcessorInfo.hpp"
-#include "RealtimeGC.hpp"
 
 /**
  * Initialization.
@@ -50,7 +34,7 @@
 MM_ProcessorInfo*
 MM_ProcessorInfo::newInstance(MM_EnvironmentBase *env)
 {
-	MM_ProcessorInfo *processorInfo = (MM_ProcessorInfo *)env->getForge()->allocate(sizeof(MM_ProcessorInfo), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	MM_ProcessorInfo *processorInfo = (MM_ProcessorInfo *)env->getForge()->allocate(sizeof(MM_ProcessorInfo), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (processorInfo) {
 		new(processorInfo) MM_ProcessorInfo();
 		if (!processorInfo->initialize(env)) {
