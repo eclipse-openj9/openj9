@@ -212,3 +212,26 @@ RULE.spp=$(eval $(DEF_RULE.spp))
 
 endif # ($(HOST_ARCH),arm)
 ##### END ARM SPECIFIC RULES #####
+
+##### START AARCH64 SPECIFIC RULES #####
+ifeq ($(HOST_ARCH),aarch64)
+
+#
+# Preprocess .spp file into .s file
+#
+define DEF_RULE.spp
+$(1).s: $(2) | jit_createdirs
+	$$(SPP_CMD) $$(SPP_FLAGS) $$(patsubst %,-D%,$$(SPP_DEFINES)) $$(patsubst %,-I'%',$$(SPP_INCLUDES)) -o $$@ -x assembler-with-cpp -E -P $$<
+
+JIT_DIR_LIST+=$(dir $(1))
+
+jit_cleanobjs::
+	rm -f $(1).s
+
+$(call RULE.s,$(1),$(1).s)
+endef # DEF_RULE.spp
+
+RULE.spp=$(eval $(DEF_RULE.spp))
+
+endif # ($(HOST_ARCH),aarch64)
+##### END AARCH64 SPECIFIC RULES #####
