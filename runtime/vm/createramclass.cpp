@@ -277,43 +277,44 @@ addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClas
 		J9Method *interfaceRamMethod = interfaceClass->ramMethods;
 		while (count-- > 0) {
 			J9ROMMethod *interfaceRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceRamMethod);
-			J9UTF8 *interfaceMethodName = J9ROMMETHOD_NAME(interfaceRomMethod);
-			J9UTF8 *interfaceMethodSig = J9ROMMETHOD_SIGNATURE(interfaceRomMethod);
-			UDATA vTableOffset = 0;
-			UDATA searchIndex = 0;
+			if (J9ROMMETHOD_IN_ITABLE(interfaceRomMethod)) {
+				J9UTF8 *interfaceMethodName = J9ROMMETHOD_NAME(interfaceRomMethod);
+				J9UTF8 *interfaceMethodSig = J9ROMMETHOD_SIGNATURE(interfaceRomMethod);
+				UDATA vTableOffset = 0;
+				UDATA searchIndex = 0;
 			
-			/* Search the vTable for a public method of the correct name. */
-			while (searchIndex < vTableSize) {
-				J9Method *vTableRamMethod = vTable[searchIndex];
-				J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableRamMethod);
+				/* Search the vTable for a public method of the correct name. */
+				while (searchIndex < vTableSize) {
+					J9Method *vTableRamMethod = vTable[searchIndex];
+					J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableRamMethod);
 
-				if (J9ROMMETHOD_IN_ITABLE(vTableRomMethod)) {
-					J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
-					J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
+					if (J9ROMMETHOD_IN_ITABLE(vTableRomMethod)) {
+						J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
+						J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
 
-					if ((J9UTF8_LENGTH(interfaceMethodName) == J9UTF8_LENGTH(vTableMethodName))
-					&& (J9UTF8_LENGTH(interfaceMethodSig) == J9UTF8_LENGTH(vTableMethodSig))
-					&& (memcmp(J9UTF8_DATA(interfaceMethodName), J9UTF8_DATA(vTableMethodName), J9UTF8_LENGTH(vTableMethodName)) == 0)
-					&& (memcmp(J9UTF8_DATA(interfaceMethodSig), J9UTF8_DATA(vTableMethodSig), J9UTF8_LENGTH(vTableMethodSig)) == 0)
-					) {
-						/* fill in interface index --> vTableOffset mapping */
-						vTableOffset = J9VTABLE_OFFSET_FROM_INDEX(searchIndex);
-						**currentSlot = vTableOffset;
-						(*currentSlot)++;
-						break;
+						if ((J9UTF8_LENGTH(interfaceMethodName) == J9UTF8_LENGTH(vTableMethodName))
+						&& (J9UTF8_LENGTH(interfaceMethodSig) == J9UTF8_LENGTH(vTableMethodSig))
+						&& (memcmp(J9UTF8_DATA(interfaceMethodName), J9UTF8_DATA(vTableMethodName), J9UTF8_LENGTH(vTableMethodName)) == 0)
+						&& (memcmp(J9UTF8_DATA(interfaceMethodSig), J9UTF8_DATA(vTableMethodSig), J9UTF8_LENGTH(vTableMethodSig)) == 0)
+						) {
+							/* fill in interface index --> vTableOffset mapping */
+							vTableOffset = J9VTABLE_OFFSET_FROM_INDEX(searchIndex);
+							**currentSlot = vTableOffset;
+							(*currentSlot)++;
+							break;
+						}
 					}
+					searchIndex++;
 				}
-				searchIndex++;
-			}
 
 #if defined(J9VM_TRACE_ITABLE)
-			{
-				PORT_ACCESS_FROM_VMC(vmStruct);
-				j9tty_printf(PORTLIB, "\n  map %.*s%.*s to vTableOffset=%d (%d)", J9UTF8_LENGTH(interfaceMethodName),
-						J9UTF8_DATA(interfaceMethodName), J9UTF8_LENGTH(interfaceMethodSig), J9UTF8_DATA(interfaceMethodSig), vTableOffset, searchIndex);
-			}
+				{
+					PORT_ACCESS_FROM_VMC(vmStruct);
+					j9tty_printf(PORTLIB, "\n  map %.*s%.*s to vTableOffset=%d (%d)", J9UTF8_LENGTH(interfaceMethodName),
+							J9UTF8_DATA(interfaceMethodName), J9UTF8_LENGTH(interfaceMethodSig), J9UTF8_DATA(interfaceMethodSig), vTableOffset, searchIndex);
+				}
 #endif
-
+			}
 			interfaceRamMethod++;
 		}
 	}
@@ -442,7 +443,7 @@ addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *i
 		for (j=0; j < count; j++) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceMethod);
 			/* Ignore the <clinit> from the interface class. */
-			if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9_JAVA_PRIVATE | J9_JAVA_STATIC)) {
+			if (J9ROMMETHOD_IN_ITABLE(romMethod)) {
 				J9UTF8 *interfaceMethodNameUTF = J9ROMMETHOD_NAME(romMethod);
 				J9UTF8 *interfaceMethodSigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 				UDATA tempIndex = vTableMethodCount;
