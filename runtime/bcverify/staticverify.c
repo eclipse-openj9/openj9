@@ -1313,6 +1313,12 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					slotCount = 0;
 					if ((frameType >= CFR_STACKMAP_SAME_LOCALS_1_STACK) && (frameType <= CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED)) {
 						slotCount = 1;
+
+						/* The stackmap entry is invalid if the size of stack (1 slot) exceeds the size of the max stack.*/
+						if (code->maxStack < slotCount) {
+							errorCode = FATAL_CLASS_FORMAT_ERROR;
+							goto _failedCheck;
+						}
 					}
 					if (frameType >= CFR_STACKMAP_CHOP_3) {
 						slotCount = (IDATA) frameType - CFR_STACKMAP_APPEND_BASE;
