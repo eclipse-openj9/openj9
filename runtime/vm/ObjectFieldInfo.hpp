@@ -342,11 +342,15 @@ public:
 	{
 		U_32 fieldDataStart = 0;
 		if (!isContendedClassLayout()) {
-			fieldDataStart = getSuperclassFieldsSize();
+			bool doubleAlignment = (_totalDoubleCount > 0);
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+			doubleAlignment = doubleAlignment || (_totalFlatFieldDoubleBytes > 0);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
+			fieldDataStart = getSuperclassFieldsSize();
 			if (
 					((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
-					((_totalDoubleCount > 0) || (!_objectCanUseBackfill && (_totalObjectCount > 0)))
+					(doubleAlignment || (!_objectCanUseBackfill && (_totalObjectCount > 0)))
 			){ /* our fields start on a 8-byte boundary */
 				fieldDataStart += BACKFILL_SIZE;
 			}
