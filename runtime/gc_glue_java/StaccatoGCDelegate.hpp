@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,55 +20,51 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if !defined(STACCATOGC_HPP_)
-#define STACCATOGC_HPP_
+#if !defined(STACCATOGCDELEGATE_HPP_)
+#define STACCATOGCDELEGATE_HPP_
 
-#include "omrcfg.h"
-#include "modronopt.h"
-#include "StaccatoGCDelegate.hpp"
+#include "j9.h"
+#include "j9cfg.h"
 
-#include "RealtimeGC.hpp"
+#if defined(J9VM_GC_REALTIME)
 
-/**
- * @todo Provide class documentation
- * @ingroup GC_Staccato
- */
-class MM_StaccatoGC : public MM_RealtimeGC
+#include "omr.h"
+#include "BaseNonVirtual.hpp"
+#include "EnvironmentRealtime.hpp"
+#include "RealtimeAccessBarrier.hpp"
+#include "RealtimeGCDelegate.hpp"
+
+class MM_StaccatoGC;
+
+class MM_StaccatoGCDelegate : public MM_BaseNonVirtual
 {
-/* Data members & types */
-public:
-protected:
 private:
-	bool _moreTracingRequired; /**< Is used to decide if there needs to be another pass of the tracing loop. */
-	MM_StaccatoGCDelegate _staccatoDelegate;
+	J9JavaVM *_vm;
+	MM_StaccatoGC *_staccatoGC;
 
-/* Methods */
 public:
-	/* Constructors & destructors */
-	static MM_StaccatoGC *newInstance(MM_EnvironmentBase *env);
-	virtual void kill(MM_EnvironmentBase *env);
-	bool initialize(MM_EnvironmentBase *env);
-	void tearDown(MM_EnvironmentBase *env);
+	MM_StaccatoGCDelegate(MM_EnvironmentBase *env) :
+		_vm((J9JavaVM *)env->getOmrVM()->_language_vm),
+		_staccatoGC(NULL) {}
 
-	MM_StaccatoGC(MM_EnvironmentBase *env) :
-		MM_RealtimeGC(env),
-		_moreTracingRequired(false),
-		_staccatoDelegate(env)
-	{
-		_typeId = __FUNCTION__;
-		_staccatoDelegate._staccatoGC = this;
-	}
-	
-	/* Inherited from MM_RealtimeGC */
 	virtual MM_RealtimeAccessBarrier* allocateAccessBarrier(MM_EnvironmentBase *env);
-	virtual void doTracing(MM_EnvironmentRealtime* env);
-	virtual void enableWriteBarrier(MM_EnvironmentBase* env);
-	virtual void disableWriteBarrier(MM_EnvironmentBase* env);
 	virtual void enableDoubleBarrier(MM_EnvironmentBase* env);
-	virtual void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread *vmThread);
+	virtual void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread* vmThread);
 	virtual void disableDoubleBarrier(MM_EnvironmentBase* env);
 
-	void flushRememberedSet(MM_EnvironmentRealtime *env);
+	/* New methods */
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+	bool doClassTracing(MM_EnvironmentRealtime* env);
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+	virtual bool doTracing(MM_EnvironmentRealtime* env);
+
+	/*
+	 * Friends
+	 */
+	friend class MM_StaccatoGC;
 };
 
-#endif /* STACCATOGC_HPP_ */
+#endif /* defined(J9VM_GC_REALTIME) */
+
+#endif /* defined(STACCATOGCDELEGATE_HPP_) */	
+
