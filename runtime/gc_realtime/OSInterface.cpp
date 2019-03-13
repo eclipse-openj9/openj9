@@ -20,15 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9socket.h"
-#include "portsock.h"
-#include "j9cfg.h"
-#include "j9protos.h"
-#include "j9consts.h"
-#include "modronopt.h"
-#include "j9port.h"
-#include "modronnls.h"
+#include "omr.h"
+#include "omrcfg.h"
+#include "omrport.h"
 
 #include <string.h>
 #include <math.h>
@@ -41,21 +35,6 @@
 #include <time.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <sys/mman.h>
-#include <sched.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/resource.h>
 #endif /* #if defined(LINUX) */
 
 #if defined(LINUX) && !defined(J9ZTPF)
@@ -66,30 +45,19 @@
 #include <signal.h>
 #endif /* defined(LINUX) && !defined(J9ZTPF) */
 
-#include "OSInterface.hpp"
 #include "ProcessorInfo.hpp"
-#include "AtomicOperations.hpp"
-#include "ClassModel.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
-#include "GCExtensions.hpp"
-#include "Heap.hpp"
-#include "MemoryPoolSegregated.hpp"
-#include "MemorySubSpace.hpp"
-#include "modronapi.hpp"
-#include "ObjectModel.hpp"
-#include "RootScanner.hpp"
-#include "Task.hpp"
-#include "OSInterface.hpp"
-#include "RealtimeGC.hpp"
+#include "GCExtensionsBase.hpp"
+#include "modronnls.h"
 
+#include "OSInterface.hpp"
 /**
  * Initialization.
  */
 MM_OSInterface*
 MM_OSInterface::newInstance(MM_EnvironmentBase *env)
 {
-	MM_OSInterface *osInterface = (MM_OSInterface *)env->getForge()->allocate(sizeof(MM_OSInterface), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	MM_OSInterface *osInterface = (MM_OSInterface *)env->getForge()->allocate(sizeof(MM_OSInterface), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (osInterface) {
 		new(osInterface) MM_OSInterface();
 		if (!osInterface->initialize(env)) {
@@ -106,15 +74,15 @@ MM_OSInterface::newInstance(MM_EnvironmentBase *env)
 bool
 MM_OSInterface::initialize(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	_vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
-	_extensions = MM_GCExtensions::getExtensions(_vm);
-	_numProcessors = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-	_physicalMemoryBytes = j9sysinfo_get_physical_memory();
+	_vm = env->getOmrVM();
+	_extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
+	_numProcessors = omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_ONLINE);
+	_physicalMemoryBytes = omrsysinfo_get_physical_memory();
 
-	_j9time_hires_clock_nanoSecondMultiplyFactor = 1000000000 / j9time_hires_frequency();
-	_j9time_hires_clock_nanoSecondDivideFactor = j9time_hires_frequency() / 1000000000;
+	_omrtime_hires_clock_nanoSecondMultiplyFactor = 1000000000 / omrtime_hires_frequency();
+	_omrtime_hires_clock_nanoSecondDivideFactor = omrtime_hires_frequency() / 1000000000;
 
 	if (NULL == (_processorInfo = MM_ProcessorInfo::newInstance(env))) {
 		return false;
@@ -124,9 +92,9 @@ MM_OSInterface::initialize(MM_EnvironmentBase *env)
 
 	if (_extensions->verbose >= 1) {
 		if (0 == _ticksPerMicroSecond) {
-			j9tty_printf(PORTLIB, "Use OS high resolution timer instead of CPU tick-based timer\n");
+			omrtty_printf("Use OS high resolution timer instead of CPU tick-based timer\n");
 		} else {
-			j9tty_printf(PORTLIB, "ticksPerMicro = %llu\n", _ticksPerMicroSecond);
+			omrtty_printf("ticksPerMicro = %llu\n", _ticksPerMicroSecond);
 		}
 	}
 	return true;
@@ -182,26 +150,26 @@ MM_OSInterface::itTimerAvailable() {
 bool
 MM_OSInterface::hiresTimerAvailable() {
 #if (defined(LINUX) && !defined(J9ZTPF)) || defined (AIXPPC)
-	PORT_ACCESS_FROM_JAVAVM(_vm);
+	OMRPORT_ACCESS_FROM_OMRVM(_vm);
 	struct timespec ts;
 	if (clock_getres(CLOCK_REALTIME, &ts)) {
 		if (_extensions->verbose >= 2) {
-			j9tty_printf(PORTLIB, "POSIX High Resolution Clock not available\n");
+			omrtty_printf("POSIX High Resolution Clock not available\n");
 		}
 		return false;
 	} else {
 		if (_extensions->verbose >= 2) {
-			j9tty_printf(PORTLIB, "POSIX High Resolution Clock has resolution %d nanoseconds\n", ts.tv_nsec);
+			omrtty_printf("POSIX High Resolution Clock has resolution %d nanoseconds\n", ts.tv_nsec);
 		}
-		bool returnValue = ((ts.tv_sec == 0) && ((UDATA)ts.tv_nsec < (_extensions->hrtPeriodMicro * 1000)));
+		bool returnValue = ((ts.tv_sec == 0) && ((uintptr_t)ts.tv_nsec < (_extensions->hrtPeriodMicro * 1000)));
 		if (!returnValue && _extensions->overrideHiresTimerCheck) {
-			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES);
+			omrnls_printf(J9NLS_INFO, J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES);
 			returnValue = true;
 		}
 		return returnValue;
 	}
 #elif defined(WIN32)
-	/* On Win32, we don't have a HRT  and it is safe to use our ITimer implementation so we can return false */
+	/* On Win32, we don't have a HRT and it is safe to use our ITimer implementation so we can return false */
 	return false;
 #else
 	/* No high res time available so try your luck with ITAlarm instead */
@@ -212,12 +180,12 @@ MM_OSInterface::hiresTimerAvailable() {
 U_64
 MM_OSInterface::nanoTime()
 {
-	PORT_ACCESS_FROM_JAVAVM(_vm);
-	U_64 hiresTime = j9time_hires_clock();
-	if (_j9time_hires_clock_nanoSecondMultiplyFactor != 0) {
-		return hiresTime * _j9time_hires_clock_nanoSecondMultiplyFactor;
+	OMRPORT_ACCESS_FROM_OMRVM(_vm);
+	U_64 hiresTime = omrtime_hires_clock();
+	if (_omrtime_hires_clock_nanoSecondMultiplyFactor != 0) {
+		return hiresTime * _omrtime_hires_clock_nanoSecondMultiplyFactor;
 	}
-	return hiresTime / _j9time_hires_clock_nanoSecondDivideFactor;
+	return hiresTime / _omrtime_hires_clock_nanoSecondDivideFactor;
 }
 
 void
