@@ -367,8 +367,8 @@ def build_all() {
                 archive()
             }
         } finally {
-            // Temporarily turn off disableDeferredWipeout. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-            cleanWs notFailBuild: true, disableDeferredWipeout: false
+            // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+            cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
         }
     }
 }
