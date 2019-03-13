@@ -396,7 +396,29 @@ ifeq ($(HOST_ARCH),arm)
 
     SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
     SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
-endif
+endif # HOST_ARCH == arm
+
+#
+# Setup CPP to preprocess AArch64 Assembly Files
+#
+ifeq ($(HOST_ARCH),aarch64)
+    SPP_CMD=$(CC)
+
+    SPP_INCLUDES=$(PRODUCT_INCLUDES)
+    SPP_DEFINES+=$(CX_DEFINES)
+    SPP_FLAGS+=$(CX_FLAGS)
+
+    ifeq ($(BUILD_CONFIG),debug)
+        SPP_FLAGS+=$(SPP_FLAGS_DEBUG)
+    endif
+
+    ifeq ($(BUILD_CONFIG),prod)
+        SPP_FLAGS+=$(SPP_FLAGS_PROD)
+    endif
+
+    SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
+    SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
+endif # HOST_ARCH == aarch64
 
 #
 # Finally setup the linker
