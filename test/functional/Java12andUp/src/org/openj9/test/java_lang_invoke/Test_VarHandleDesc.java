@@ -217,7 +217,7 @@ public class Test_VarHandleDesc {
 
 	private void resolveConstantDescTestGeneric(String testName, VarHandle handle) throws Throwable {
 		VarHandleDesc handleDesc = handle.describeConstable().orElseThrow();
-		VarHandle resolvedHandle = resolvedHandle = handleDesc.resolveConstantDesc(MethodHandles.lookup());
+		VarHandle resolvedHandle = handleDesc.resolveConstantDesc(MethodHandles.lookup());
 
 		logger.debug(testName + " is running.");
 		Assert.assertTrue(handle.equals(resolvedHandle));
