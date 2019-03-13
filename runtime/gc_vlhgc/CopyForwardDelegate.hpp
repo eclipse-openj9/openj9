@@ -120,7 +120,7 @@ public:
 	/**
 	 * Set the number of regions, which are need to be reserved for Mark/Compact only in CollectionSet due to short of survivor regions for CopyForward
 	 */
-	void setReservedNonEvacuatedRegions(int regionCount)
+	void setReservedNonEvacuatedRegions(UDATA regionCount)
 	{
 		if (NULL != _breadthFirstCopyForwardScheme) {
 			_breadthFirstCopyForwardScheme->setReservedNonEvacuatedRegions(regionCount);
