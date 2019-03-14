@@ -64,6 +64,7 @@
 #define J9ROMCLASS_FINALIZE_NEEDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassFinalizeNeeded)
 #define J9ROMCLASS_IS_CLONEABLE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassCloneable)
 #define J9ROMCLASS_ANNOTATION_REFERS_DOUBLE_SLOT_ENTRY(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassAnnnotionRefersDoubleSlotEntry)
+#define J9ROMCLASS_IS_UNMODIFIABLE(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsUnmodifiable)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.

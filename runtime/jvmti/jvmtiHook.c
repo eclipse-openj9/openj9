@@ -2231,26 +2231,59 @@ jvmtiHookGCCycleEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 }
 
 /**
- * Determines if the class described by <tt>classLoadData</tt> can 
+ * Determines if the class described by <tt>data</tt> can 
  * be instrumented.
- * @param classLoadData 
+ * @param data The class file load hook event data
  * @return TRUE if the class can be instrumented. 
  */
 static BOOLEAN
-canClassBeInstrumented(J9VMClassLoadHookEvent* classLoadData)
+canClassBeInstrumented(J9VMClassLoadHookEvent* data)
 {
-	BOOLEAN result = TRUE;
-
-	/* Skip any class that does not have a name specified */
-	if (classLoadData->className == NULL) {
-		result = FALSE;
-	} else if (strcmp(classLoadData->className, "java/lang/J9VMInternals") == 0) {
-		result = FALSE;
-	} else if (strcmp(classLoadData->className, "java/lang/invoke/VarHandleInternal") == 0) {
-		result = FALSE;
+	BOOLEAN modifiable = TRUE;
+	/* Only clasess on the bootpath may be marked unmodifiable */
+	if (data->classLoader == data->currentThread->javaVM->systemClassLoader) {
+		U_8 *classData = data->classData;
+		UDATA const classDataLength = data->classDataLength;
+		UDATA const annotationLength = sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA);
+		/* Before the constant pool in the class file, there's at least:
+		 *
+		 *	u4 magic
+		 *	u2 minor_version
+		 *	u2 major_version
+		 *	u2 constant_pool_count
+		 *
+ 		 * Totalling 10 bytes.
+		 */
+		UDATA const minimumSize = 10;
+		if (classDataLength > (annotationLength + minimumSize)) {
+			/* Make sure this at least looks like a class file */
+			if ((0xCA == classData[0]) && (0xFE == classData[1]) && (0xBA == classData[2]) && (0xBE == classData[3])) {
+				U_8 *dataEnd = classData + classDataLength - annotationLength;
+				classData += minimumSize;
+				/* Search for the bytes representing the UTF8 annotation name */
+				while (classData < dataEnd) {
+					static J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA annotBytes = {
+						(char)1, /* tag byte for UTF8 in the constant pool */
+						(char)(LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) >> 8), /* high byte of size (big endian) */
+						(char)(LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) & 0xFF), /* low byte of size (big endian) */
+						J9_UNMODIFIABLE_CLASS_ANNOTATION /* UTF8 data */
+					};
+					UDATA scanSize = annotationLength;
+					U_8 *scanBytes = (U_8*)&annotBytes;
+					do {
+						if (*scanBytes++ != *classData++) {
+							goto notFound;
+						}
+						scanSize -= 1;
+					} while (0 != scanSize);
+					modifiable = FALSE;
+					break;
+notFound: ;
+				}
+			}
+		}
 	}
-
-	return result;
+	return modifiable;
 }
 
 
