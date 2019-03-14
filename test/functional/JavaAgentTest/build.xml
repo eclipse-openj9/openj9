@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,11 +45,22 @@
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
+			<matches string="${JDK_VERSION}" pattern="^(8|9|10|11)$$" />
+			<then>
+				<property name="src_version" location="./src_java8" />
+			</then>
+			<else> 
+				<!-- Java 12+ -->
+				<property name="src_version" location="./src_java12" />
+			</else>
+		</if>
+		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />							
-					<src path="${transformerListener}" />							
+					<src path="${src}" />
+					<src path="${src_version}" />
+					<src path="${transformerListener}" />
 					<classpath>
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
@@ -61,14 +72,15 @@
 				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.tree=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.util=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED"/>				
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
-					<src path="${transformerListener}" />							
+					<src path="${src_version}" />
+					<src path="${transformerListener}" />
 					<compilerarg line='${addExports}' />
 					<classpath>
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar"/>
 					</classpath>
-				</javac>										
+				</javac>
 			</else>
 		</if>
 	</target>

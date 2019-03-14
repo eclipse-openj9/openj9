@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,28 +25,22 @@ import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.commons.AdviceAdapter;
 import org.openj9.test.javaagenttest.AgentMain;
 
-public class MethodInstrumentAdapter_InitializeNewStatic extends AdviceAdapter
-{
+public class MethodInstrumentAdapter_CallNewMethod extends AdviceAdapter {
+	String methodName = null;
 
-	private String _methodName = null;
-	private String _className = null;
-
-	public MethodInstrumentAdapter_InitializeNewStatic(int access, String name, String desc, MethodVisitor mv, String className)
-	{
-		super(ASM4, mv, access, name, desc);
-		_methodName = name;
-		_className = className;
+	public MethodInstrumentAdapter_CallNewMethod( int access, String name, String desc, MethodVisitor mv ) {
+		super(ASM7, mv, access, name, desc );
+		methodName = name;
 	}
 
+	/* Add a call to the added method at the beginning of this method
+	 * (non-Javadoc)
+	 * @see jdk.internal.org.objectweb.asm.commons.AdviceAdapter#onMethodEnter()
+	 */
 	@Override
-	protected void onMethodEnter()
-	{
-		AgentMain.logger.debug("Class: MethodInstrumentAdapter_InitializeNewStatic is attempting to initialize new static field : " + _methodName);
+	protected void onMethodEnter() {
+		AgentMain.logger.debug("Class: MethodInstrumentAdapter_CallNewMethod is attempting to add call in method : " + methodName);
 		mv.visitLabel(new Label());
-
-		/* initialize new integer array */
-		mv.visitInsn(ICONST_5);
-		mv.visitIntInsn(NEWARRAY, T_INT);
-		mv.visitFieldInsn(PUTSTATIC, _className, "new_static_int_array", "[I");
+		mv.visitMethodInsn( INVOKESTATIC, "java/lang/ClassLoader", "myAddedMethod", "()V" );
 	}
 }
