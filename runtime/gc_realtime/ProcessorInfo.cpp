@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "EnvironmentBase.hpp"
+#include "ModronAssertions.h"
 #include "ProcessorInfo.hpp"
 
 /**
