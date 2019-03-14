@@ -73,6 +73,7 @@ static bool supportsFastJNI(TR_FrontEnd *fe)
 #endif
    }
 
+UDATA getFieldType(J9ROMConstantPoolItem * cp, I_32 cpIndex);
 inline char *nextSignatureArgument(char *currentArgument)
    {
    char *result = currentArgument;
@@ -596,6 +597,7 @@ public:
 
    virtual bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
+   static void                   setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
 protected:
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
@@ -607,7 +609,6 @@ protected:
 
    bool                          unresolvedFieldAttributes (int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
    bool                          unresolvedStaticAttributes(int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
-   void                          setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
    virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len);
 
    J9ExceptionHandler * exceptionHandler();

@@ -1597,6 +1597,54 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(clazz, definingClass, classChain);
          }
          break;
+      case J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes:
+         {
+         UDATA ltype = 0;
+         J9ROMFieldShape * fieldShape = 0;
+         auto recv = client->getRecvData<J9Method *, TR_ResolvedJ9Method*, int32_t, bool, J9ConstantPool *>();
+         auto ramMethod = std::get<0>(recv);
+         TR_ResolvedJ9Method *method= std::get<1>(recv);
+         auto cpIndex = std::get<2>(recv);
+         bool isStore = std::get<3>(recv);
+         auto constantPool = std::get<4>(recv);
+
+         J9Class *definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, false);
+         IDATA offset = jitCTResolveInstanceFieldRefWithMethod(fe->vmThread(), ramMethod, cpIndex, isStore, &fieldShape);
+         bool unresolvedInCP = method->getUnresolvedFieldInCP(cpIndex);
+         if (offset >= 0)
+            ltype = fieldShape->modifiers;
+         client->write((IDATA)offset, unresolvedInCP, ltype, definingClass);
+         }
+         break;
+      case J9ServerMessageType::ResolvedRelocatableMethod_getFieldType:
+         {
+         auto recv = client->getRecvData<int32_t, TR_ResolvedJ9Method *>();
+         auto cpIndex = std::get<0>(recv);
+         TR_ResolvedJ9Method *method= std::get<1>(recv);
+         UDATA ltype = getFieldType((J9ROMConstantPoolItem *)(method->romLiterals()), cpIndex);
+         client->write(ltype);
+         }
+         break;
+      case J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes:
+         {
+         J9ROMFieldShape * fieldShape = 0;
+         UDATA ltype = 0;
+         auto recv = client->getRecvData<J9Method *, TR_ResolvedJ9Method*, int32_t, bool, J9ConstantPool *>();
+         auto ramMethod = std::get<0>(recv);
+         TR_ResolvedJ9Method *method= std::get<1>(recv);
+         int32_t cpIndex = std::get<2>(recv);
+         bool isStore = std::get<3>(recv);
+         auto constantPool = std::get<4>(recv);
+
+         J9Class *definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, true);
+         void * offset = jitCTResolveStaticFieldRefWithMethod(fe->vmThread(), ramMethod, cpIndex, isStore, &fieldShape);
+         bool unresolvedInCP = method->getUnresolvedFieldInCP(cpIndex);
+         if (offset)
+            ltype = fieldShape->modifiers;
+         client->write(offset, unresolvedInCP, ltype, definingClass);
+         }
+         break;
+
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());

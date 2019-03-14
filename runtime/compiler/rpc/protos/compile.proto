@@ -105,7 +105,9 @@ enum J9ServerMessageType
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 150;
    ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 151;
-
+   ResolvedRelocatableMethod_fieldAttributes = 152;
+   ResolvedRelocatableMethod_staticAttributes = 153;
+   ResolvedRelocatableMethod_getFieldType = 154;
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
    VM_isClassLibraryMethod = 201;

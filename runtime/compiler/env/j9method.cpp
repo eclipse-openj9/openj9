@@ -137,7 +137,7 @@ static TR::DataType decodeType(U_32 inType)
       }
    }
 
-static inline UDATA getFieldType(J9ROMConstantPoolItem * cp, I_32 cpIndex)
+UDATA getFieldType(J9ROMConstantPoolItem * cp, I_32 cpIndex)
    {
    J9ROMFieldRef * ref = (J9ROMFieldRef *) (&cp[cpIndex]);
    J9ROMNameAndSignature * nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
