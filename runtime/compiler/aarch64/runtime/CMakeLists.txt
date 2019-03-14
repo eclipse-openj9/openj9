@@ -1,3 +1,4 @@
+################################################################################
 # Copyright (c) 2019, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
@@ -17,10 +18,9 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+################################################################################
 
-JIT_PRODUCT_BACKEND_SOURCES+= \
-    omr/compiler/aarch64/runtime/CodeSync.cpp
-
-JIT_PRODUCT_SOURCE_FILES+= \
-    compiler/aarch64/runtime/Recomp.cpp \
-    compiler/aarch64/runtime/Recompilation.spp
+j9jit_files(
+	aarch64/runtime/Recomp.cpp
+	aarch64/runtime/Recompilation.spp
+)

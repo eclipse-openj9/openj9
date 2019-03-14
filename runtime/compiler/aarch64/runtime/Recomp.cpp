@@ -20,9 +20,45 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/TreeEvaluator.hpp"
+#include "control/Recompilation.hpp"
 
-void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
+// Called at runtime to get the body info from the start PC
+//
+TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *startPC)
+   {
+   TR_UNIMPLEMENTED();
+   return NULL;
+   }
+
+bool J9::Recompilation::isAlreadyPreparedForRecompile(void *startPC)
+   {
+   TR_UNIMPLEMENTED();
+   return FALSE;
+   }
+
+void J9::Recompilation::fixUpMethodCode(void *startPC)
    {
    TR_UNIMPLEMENTED();
    }
+
+void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStartPC, TR_FrontEnd *fe)
+   {
+   TR_UNIMPLEMENTED();
+   }
+
+void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *fe)
+   {
+   TR_UNIMPLEMENTED();
+   }
+
+void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)
+   {
+   TR_UNIMPLEMENTED();
+   }
+
+#if defined(TR_HOST_ARM64)
+void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo)
+   {
+   TR_UNIMPLEMENTED();
+   }
+#endif
