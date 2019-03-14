@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,16 +21,10 @@
  *******************************************************************************/
 
 #include "BarrierSynchronization.hpp"
-#include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
-#include "HeapRegionDescriptorRealtime.hpp"
+#include "GCExtensionsBase.hpp"
 #include "MarkMap.hpp"
 #include "MemoryPoolSegregated.hpp"
 #include "RealtimeGC.hpp"
-#include "RealtimeMarkingScheme.hpp"
-#include "RegionPoolSegregated.hpp"
-
-#include "Scheduler.hpp"
 
 #include "SweepSchemeRealtime.hpp"
 
@@ -43,7 +37,7 @@ MM_SweepSchemeRealtime::newInstance(MM_EnvironmentBase *env, MM_RealtimeGC *real
 {
 	MM_SweepSchemeRealtime *instance;
 
-	instance = (MM_SweepSchemeRealtime *)env->getForge()->allocate(sizeof(MM_SweepSchemeRealtime), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	instance = (MM_SweepSchemeRealtime *)env->getForge()->allocate(sizeof(MM_SweepSchemeRealtime), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL != instance) {
 		new(instance) MM_SweepSchemeRealtime(env, realtimeGC, scheduler, markMap);
 		if (!instance->initialize(env)) {
@@ -71,11 +65,11 @@ MM_SweepSchemeRealtime::preSweep(MM_EnvironmentBase *env)
 	_realtimeGC->setCollectorSweeping();
 	_scheduler->condYieldFromGC(env, _scheduler->beatNanos);
 
-	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensionsBase *ext = env->getExtensions();
 	MM_SweepSchemeSegregated::preSweep(env);
 
 	_realtimeGC->allThreadsAllocateUnmarked(env);
-	if (ext->concurrentSweepingEnabled) {
+	if (ext->isConcurrentSweepEnabled()) {
 		_realtimeGC->setCollectorConcurrentSweeping();
 		_scheduler->_barrierSynchronization->releaseExclusiveVMAccess(env, _scheduler->_exclusiveVMAccessRequired);
 	}
@@ -84,8 +78,8 @@ MM_SweepSchemeRealtime::preSweep(MM_EnvironmentBase *env)
 void
 MM_SweepSchemeRealtime::postSweep(MM_EnvironmentBase *env)
 {
-	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
-	if (ext->concurrentSweepingEnabled) {
+	MM_GCExtensionsBase *ext = env->getExtensions();
+	if (ext->isConcurrentSweepEnabled()) {
 		_scheduler->_barrierSynchronization->acquireExclusiveVMAccess(env, _scheduler->_exclusiveVMAccessRequired);
 		_realtimeGC->setCollectorSweeping(); /* It might have been in ConcurrentSweep mode before. */
 	}
@@ -108,12 +102,12 @@ MM_SweepSchemeRealtime::incrementalSweepArraylet(MM_EnvironmentBase *env)
 
 
 void
-MM_SweepSchemeRealtime::yieldFromSweep(MM_EnvironmentBase *env, UDATA yieldSlackTime)
+MM_SweepSchemeRealtime::yieldFromSweep(MM_EnvironmentBase *env, uintptr_t yieldSlackTime)
 {
 	_scheduler->condYieldFromGC(env, yieldSlackTime);
 }
 
-UDATA
+uintptr_t
 MM_SweepSchemeRealtime::resetCoalesceFreeRegionCount(MM_EnvironmentBase *env)
 {
 	_coalesceFreeRegionCount = 0;
@@ -121,7 +115,7 @@ MM_SweepSchemeRealtime::resetCoalesceFreeRegionCount(MM_EnvironmentBase *env)
 }
 
 bool
-MM_SweepSchemeRealtime::updateCoalesceFreeRegionCount(UDATA range)
+MM_SweepSchemeRealtime::updateCoalesceFreeRegionCount(uintptr_t range)
 {
 	bool mustYield = false;
 	_coalesceFreeRegionCount += range;
@@ -132,8 +126,8 @@ MM_SweepSchemeRealtime::updateCoalesceFreeRegionCount(UDATA range)
 	return mustYield;
 }
 
-UDATA
-MM_SweepSchemeRealtime::resetSweepSmallRegionCount(MM_EnvironmentBase *env, UDATA sweepSmallRegionsPerIteration)
+uintptr_t
+MM_SweepSchemeRealtime::resetSweepSmallRegionCount(MM_EnvironmentBase *env, uintptr_t sweepSmallRegionsPerIteration)
 {
 	_sweepSmallRegionCount = 0;
 	_yieldSmallRegionCount = sweepSmallRegionsPerIteration >> 3;
