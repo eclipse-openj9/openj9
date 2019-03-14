@@ -1001,7 +1001,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
-         client->write(JITaaSHelpers::packRemoteROMClassInfo(clazz, fe, trMemory));
+         client->write(JITaaSHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
@@ -2254,7 +2254,7 @@ remoteCompile(
 
    if (compiler->isOptServer())
       compiler->setOption(TR_Server);
-   auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm(), compiler->trMemory());
+   auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory());
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
@@ -3207,8 +3207,14 @@ JITaaSHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J
    }
 
 JITaaSHelpers::ClassInfoTuple
-JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *trMemory)
+JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory)
    {
+   // Always use the base VM here.
+   // If this method is called inside AOT compilation, TR_J9SharedCacheVM will
+   // attempt validation and return NULL for many methods invoked here.
+   // We do not want that, because these values will be cached and later used in non-AOT
+   // compilations, where we always need a non-NULL result.
+   TR_J9VM *fe = (TR_J9VM *) TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
    J9Method *methodsOfClass = (J9Method*) fe->getMethods((TR_OpaqueClassBlock*) clazz);
    int32_t numDims = 0;
    TR_OpaqueClassBlock *baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *) clazz, numDims);
