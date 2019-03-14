@@ -38,6 +38,8 @@ define({DECLARE_PUBLIC},{
 	.type FUNC_LABEL($1),function
 })
 
+define({DECLARE_EXTERN},{.extern $1})
+
 define({START_PROC},{
 	.text
 	DECLARE_PUBLIC($1)
@@ -47,7 +49,7 @@ FUNC_LABEL($1):
 
 define({END_PROC})
 
-define({BRANCH_SYMBOL},{FUNC_LABEL($1)(PLT)})
+define({BRANCH_SYMBOL},{FUNC_LABEL($1)})
 
 define({CALL_DIRECT},{bl BRANCH_SYMBOL($1)})
 
