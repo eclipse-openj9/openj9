@@ -21,6 +21,7 @@
 JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/codegen/ARM64BinaryEncoding.cpp \
     omr/compiler/aarch64/codegen/ARM64Debug.cpp \
+    omr/compiler/aarch64/codegen/ARM64HelperCallSnippet.cpp \
     omr/compiler/aarch64/codegen/ARM64Instruction.cpp \
     omr/compiler/aarch64/codegen/ARM64OutOfLineCodeSection.cpp \
     omr/compiler/aarch64/codegen/ARM64SystemLinkage.cpp \
