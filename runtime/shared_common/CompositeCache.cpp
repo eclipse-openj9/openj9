@@ -306,7 +306,7 @@ SH_CompositeCacheImpl::getFreeBlockBytes(void)
 	I_32 minJIT = _theca->minJIT;
 	I_32 aotBytes = (I_32)_theca->aotBytes;
 	I_32 jitBytes = (I_32)_theca->jitBytes;
-    I_32 freeBytes = (I_32) FREEBYTES(_theca);
+	I_32 freeBytes = (I_32) FREEBYTES(_theca);
 
 
 	if (((-1 == minAOT) && (-1 == minJIT)) ||
@@ -584,7 +584,7 @@ SH_CompositeCacheImpl::setCorruptCache(J9VMThread* currentThread)
 
 	if (_started) {
 		ccToUse->unprotectHeaderReadWriteArea(currentThread, false);
-    }
+	}
 
 	getCorruptionContext(&ccToUse->_theca->corruptionCode, &ccToUse->_theca->corruptValue);
 
@@ -595,8 +595,8 @@ SH_CompositeCacheImpl::setCorruptCache(J9VMThread* currentThread)
 		 */
 		ccToUse->_theca->corruptFlag = 1;
 	}
-    if (_started) {
-        ccToUse->protectHeaderReadWriteArea(currentThread, false);
+	if (_started) {
+		ccToUse->protectHeaderReadWriteArea(currentThread, false);
 	}
 	Trc_SHR_CC_setCorruptCache_Exit();
 }
@@ -1229,7 +1229,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 		if (cacheMemory != NULL) {
 			_theca = (J9SharedCacheHeader*)cacheMemory;
 		} else {
-	    	_theca = (J9SharedCacheHeader*)_oscache->attach(currentThread, &versionData);
+			_theca = (J9SharedCacheHeader*)_oscache->attach(currentThread, &versionData);
 #ifndef J9SHR_CACHELET_SUPPORT
 			/* Verify that a non-realtime VM is not attaching to a Realtime cache when printing stats */
 			if ((_theca != 0) && getContainsCachelets() &&
@@ -1330,7 +1330,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				
 				/* If we're running read-only, we have no write mutex. Resolve this race by waiting for ccInitComplete flag */
 				if (!_readOnlyOSCache) {
-	                /* The cache is about to undergo change, so mark the CRC as invalid */
+					/* The cache is about to undergo change, so mark the CRC as invalid */
 					_theca->crcValid = 0;
 				} else {
 					while ((isCacheInitComplete() == false) && (retryCntr < J9SH_OSCACHE_READONLY_RETRY_COUNT)) {
@@ -3088,7 +3088,7 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 
 	/* The cache is changing and so mark the CRC as invalid. */
 	/* TODO: This will not work for cachelets - need to reorganised how the CRCing is done */
-    _theca->crcValid = 0;
+	_theca->crcValid = 0;
 
 	if (_storedSegmentUsedBytes) {
 		BlockPtr startAddress = SEGUPDATEPTR(_theca);
@@ -4088,11 +4088,11 @@ SH_CompositeCacheImpl::exitReadWriteAreaMutex(J9VMThread* currentThread, UDATA r
 		 * _headerProtectCntr and _readWriteProtectCntr
 		 */
 		if (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL)) {
-	    	Trc_SHR_Assert_Equals(_headerProtectCntr, 0);
-	    } else {
-	    	/* If mprotect=all is not set, _headerProtectCntr should be same as initial value (= 1). */
-	    	Trc_SHR_Assert_Equals(_headerProtectCntr, 1);
-	    }
+			Trc_SHR_Assert_Equals(_headerProtectCntr, 0);
+		} else {
+			/* If mprotect=all is not set, _headerProtectCntr should be same as initial value (= 1). */
+			Trc_SHR_Assert_Equals(_headerProtectCntr, 1);
+		}
 		Trc_SHR_Assert_Equals(_readWriteProtectCntr, 0);
 
 		/* Clear hasReadWriteMutexThread just before calling releaseWriteLock() */
