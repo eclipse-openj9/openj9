@@ -215,8 +215,7 @@ TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMet
       J9Method *, TR::IlGeneratorMethodDetails &, TR::CompilationInfoPerThreadBase *);
 TR_MethodMetaData *remoteCompilationEnd(J9VMThread * vmThread, TR::Compilation *comp, TR_ResolvedMethod * compilee, J9Method * method,
                           TR::CompilationInfoPerThreadBase *compInfoPT, const std::string& codeCacheStr, const std::string& dataCacheStr);
-void outOfProcessCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig,
-      TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp);
+void outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
 void printJITaaSMsgStats(J9JITConfig *);
 void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
 void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);

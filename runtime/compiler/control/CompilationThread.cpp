@@ -9585,7 +9585,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
          J9Class *clazz = mhDetails.classNeedingThunk();
 
-         outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
+         outOfProcessCompilationEnd(entry, comp);
          }
       else
          {
@@ -9623,7 +9623,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       if (startPC)
          {
          if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
-            outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
+            outOfProcessCompilationEnd(entry, comp);
          else
             {
             J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
@@ -9662,7 +9662,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          {
          if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             {
-            outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
+            outOfProcessCompilationEnd(entry, comp);
             }
          else
             {
@@ -9703,7 +9703,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
       if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
-         outOfProcessCompilationEnd(details, jitConfig, fe, entry, comp);
+         outOfProcessCompilationEnd(entry, comp);
          }
       else if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
          {
@@ -9746,7 +9746,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
 
-               TR_Debug *debug = TR::Options::getDebug();
                bool canRelocateMethod = TR::CompilationInfo::canRelocateMethod(comp);
 
                if (canRelocateMethod)
