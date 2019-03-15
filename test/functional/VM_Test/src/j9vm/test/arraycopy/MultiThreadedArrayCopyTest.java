@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,11 +82,6 @@ public class MultiThreadedArrayCopyTest implements Runnable {
 					System.err.println("dest = " + Arrays.asList(dest));
 				}
 			}
-			
-			if ((loop % (count / 10)) == 0) {
-				System.out.println(name + " - " + Arrays.asList(dest));
-			}
-			
 		}
 	}
 	
