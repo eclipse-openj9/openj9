@@ -191,10 +191,10 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 						 */
 						doVisibilityCheck = FALSE;
 					} else {
-							*exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
-							*exceptionClass = methodClass;
-							*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
-							return NULL;
+						*exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
+						*exceptionClass = methodClass;
+						*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
+						return NULL;
 					}
 				}
 			}
@@ -213,9 +213,9 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 
 	/* Check that we find the right kind of method (static / virtual / interface) */
 
-	if (((lookupOptions & J9_LOOK_STATIC) && ((modifiers & J9AccStatic) == 0)) ||
-		((lookupOptions & J9_LOOK_VIRTUAL) && (modifiers & J9AccStatic)))
-	{
+	if (((lookupOptions & J9_LOOK_STATIC) && ((modifiers & J9AccStatic) == 0))
+	|| ((lookupOptions & J9_LOOK_VIRTUAL) && (modifiers & J9AccStatic))
+	) {
 		*exception = J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR;
 		*exceptionClass = methodClass;
 		*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
@@ -1071,8 +1071,8 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 	 * 		J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR
 	 */
 	if ((J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR == errorType)
-			|| (J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR == errorType)
-			|| (J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR == errorType)
+	|| (J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR == errorType)
+	|| (J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR == errorType)
 	) {
 		J9Class *unverifiedNestMemberClass = NULL;
 		J9ROMClass *romClass = NULL;
