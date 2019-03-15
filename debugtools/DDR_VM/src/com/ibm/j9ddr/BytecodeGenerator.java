@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -631,7 +631,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer add(long count)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "add", abstractPointerFromLong, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "add", abstractPointerFromLong, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -656,7 +656,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer add(Scalar count)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "add", abstractPointerFromScalar, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "add", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -682,7 +682,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer addOffset(long offset)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "addOffset", abstractPointerFromLong, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "addOffset", abstractPointerFromLong, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -707,7 +707,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer addOffset(Scalar offset)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "addOffset", abstractPointerFromScalar, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "addOffset", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -733,7 +733,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer sub(long count)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "sub", abstractPointerFromLong, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "sub", abstractPointerFromLong, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -758,7 +758,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer sub(Scalar count)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "sub", abstractPointerFromScalar, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "sub", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -784,7 +784,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer subOffset(long offset)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "subOffset", abstractPointerFromLong, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "subOffset", abstractPointerFromLong, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -809,7 +809,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer subOffset(Scalar offset)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "subOffset", abstractPointerFromScalar, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "subOffset", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -838,7 +838,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer untag(long tagBits)
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "untag", abstractPointerFromLong, null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "untag", abstractPointerFromLong, null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
@@ -864,7 +864,7 @@ final class PointerHelper extends HelperBase {
 			method.visitEnd();
 
 			// bridge: AbstractPointer untag()
-			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE, "untag", Type.getMethodDescriptor(abstractPointerType), null, null);
+			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "untag", Type.getMethodDescriptor(abstractPointerType), null, null);
 
 			method.visitCode();
 			method.visitVarInsn(ALOAD, 0);
