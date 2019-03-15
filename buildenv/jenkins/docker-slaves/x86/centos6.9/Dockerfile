@@ -40,7 +40,6 @@ RUN yum -y update \
     bzip2 \
     ca-certificates \
     cups-devel \
-    cmake \
     cpio \
     curl-devel `# This is being used for git` \
     elfutils-libelf-devel \
@@ -136,6 +135,16 @@ RUN cd /tmp \
   && ./configure -prefix=/usr/local \
   && make install \
   && rm -rf /tmp/nasm-2.13.03
+
+# Install cmake version 3.11.4
+RUN cd /tmp \
+  && wget https://cmake.org/files/v3.11/cmake-3.11.4.tar.gz \
+  && tar xzf cmake-3.11.4.tar.gz \
+  && rm cmake-3.11.4.tar.gz \
+  && cd /tmp/cmake-3.11.4 \
+  && ./configure \
+  && make \
+  && make install
 
 #Building and setting up git version 2.5.3
 RUN cd /usr/src \
