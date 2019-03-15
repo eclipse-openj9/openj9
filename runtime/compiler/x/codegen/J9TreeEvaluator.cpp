@@ -8015,42 +8015,47 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       // -------------------------------------------------------------------------
       //
       // If the component type is java.lang.Object then the store always succeeds.
+      // On AOT, only do this when using the SVM; otherwise, it's safer to just
+      // skip this check than 1) incorrectly relocate the java/lang/Object class
+      // or 2) crash while trying to relocate.
       //
       // -------------------------------------------------------------------------
-
-      TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-
-      if (TR::Compiler->target.is64Bit())
+      if (!cg->needClassAndMethodPointerRelocations() || comp->getOption(TR_UseSymbolValidationManager))
          {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
-         TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
+         TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
+         objectClass = fej9->getArrayClassFromComponentClass(objectClass);
 
-#else // 64 bit but no class pointer compression
-
-         if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
+         if (TR::Compiler->target.is64Bit())
             {
-            instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
+            TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
+
+            if (cg->needClassAndMethodPointerRelocations())
+               {
+               TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
+               // MOV8RegImm64 because the relocation infrastructure can't currently relocate a 32-bit pointer
+               instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg, TR_ClassPointer);
+               generateRegRegInstruction(CMP4RegReg, node, destComponentClassReg, objectClassReg, cg);
+               scratchRegisterManager->reclaimScratchRegister(objectClassReg);
+               }
+            else
+               {
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
+               }
             }
          else
             {
-            TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
-            generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
-            scratchRegisterManager->reclaimScratchRegister(objectClassReg);
+            if (cg->needClassAndMethodPointerRelocations())
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg, TR_ClassPointer);
+            else
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
             }
-#endif
-         }
-      else
-         {
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
-         }
 
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+         generateLabelInstruction(JE4, node, wrtbarLabel, cg);
 
-      // HCR in VMarrayStoreCHKEvaluator
-      if (cg->wantToPatchClassPointer(objectClass, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
+         // HCR in VMarrayStoreCHKEvaluator
+         if (cg->wantToPatchClassPointer(objectClass, node))
+            comp->getStaticHCRPICSites()->push_front(instr);
+         }
 
       // here we may have to convert the TR_OpaqueClassBlock into a J9Class pointer
       // and store it in destComponentClassReg
@@ -8113,51 +8118,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       generateLabelInstruction(JE4, node, wrtbarLabel, cg);
 
       instr = NULL;
-      /*
-      TR::Instruction *instr;
-
-
-      // -------------------------------------------------------------------------
-      //
-      // If the component type is java.lang.Object then the store always succeeds.
-      //
-      // -------------------------------------------------------------------------
-
-      TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-
-      if (TR::Compiler->target.is64Bit())
-         {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
-         TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
-
-#else // 64 bit but no class pointer compression
-
-         if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
-            {
-            instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
-            }
-         else
-            {
-            TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
-            generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
-            scratchRegisterManager->reclaimScratchRegister(objectClassReg);
-            }
-#endif
-         }
-      else
-         {
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
-         }
-
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
-
-      // HCR in VMarrayStoreCHKEvaluator
-      if (cg->wantToPatchClassPointer(objectClass, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
-      */
-
 
       // ---------------------------------------------
       //
