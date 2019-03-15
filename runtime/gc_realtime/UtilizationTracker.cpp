@@ -20,23 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "j9protos.h"
-#include "j9consts.h"
-#include "modronopt.h"
-#include "ModronAssertions.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include <string.h>
 
-#include "AtomicOperations.hpp"
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
-#include "Metronome.hpp"
-#include "RealtimeGC.hpp"
-#include "modronapi.hpp"
-#include "ProcessorInfo.hpp"
+#include "GCExtensionsBase.hpp"
 #include "Timer.hpp"
+#include "ut_j9mm.h"
+
 #include "UtilizationTracker.hpp"
 
 /**
@@ -47,7 +40,7 @@ MM_UtilizationTracker::newInstance(MM_EnvironmentBase *env, double timeWindow, U
 {
 	MM_UtilizationTracker *tracker;
 	
-	tracker = (MM_UtilizationTracker *)env->getForge()->allocate(sizeof(MM_UtilizationTracker), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	tracker = (MM_UtilizationTracker *)env->getForge()->allocate(sizeof(MM_UtilizationTracker), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (tracker) {
 		new(tracker) MM_UtilizationTracker(env, timeWindow, maxSliceNano, targetUtil);
 		if (!tracker->initialize(env)) {
@@ -175,9 +168,9 @@ MM_UtilizationTracker::addTimeSlice(MM_EnvironmentRealtime *env, MM_Timer *timer
 	
 	/* Check for and report overflow. */
 	if (_timeSliceCursor >= _totalSlices) {
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		Trc_MM_UtilizationTrackerOverFlow(env->getLanguageVMThread(), this, &_timeSliceDuration);
-		TRIGGER_J9HOOK_MM_PRIVATE_UTILIZATION_TRACKER_OVERFLOW(MM_GCExtensions::getExtensions(env)->privateHookInterface, env->getOmrVMThread(), j9time_hires_clock(),
+		TRIGGER_J9HOOK_MM_PRIVATE_UTILIZATION_TRACKER_OVERFLOW(env->getExtensions()->privateHookInterface, env->getOmrVMThread(), omrtime_hires_clock(),
 		                                               J9HOOK_MM_PRIVATE_UTILIZATION_TRACKER_OVERFLOW, this, &_timeSliceDuration, _timeSliceCursor);
 		compactTimeSliceWindowAndUpdateCurrentUtil(env);
 	} else {
