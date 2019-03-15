@@ -116,9 +116,10 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr335_interfacePrivateMethod_mode100</testCaseName>
+		<testCaseName>jsr335_interfacePrivateMethod</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
