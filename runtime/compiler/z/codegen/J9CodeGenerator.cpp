@@ -3811,7 +3811,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
       TR::Register *&resultReg)
    {
    TR::CodeGenerator *cg = self();
-   PRINT_ME("directCall", node, cg);
 
    TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
 

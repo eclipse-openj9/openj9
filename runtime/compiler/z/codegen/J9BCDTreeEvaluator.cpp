@@ -2543,7 +2543,6 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
 TR::Register *
 J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("BCDCHK", node, cg);
    TR::Node* pdopNode = node->getFirstChild();
    TR::Register* resultReg = pdopNode->getRegister();
    bool isResultPD = pdopNode->getDataType() == TR::PackedDecimal;

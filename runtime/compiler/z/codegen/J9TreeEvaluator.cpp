@@ -1912,7 +1912,6 @@ VMwrtbarEvaluator(
 TR::Register *
 J9::Z::TreeEvaluator::awrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("wrtbar", node, cg);
    TR::Node * owningObjectChild = node->getSecondChild();
    TR::Node * sourceChild = node->getFirstChild();
    TR::Compilation * comp = cg->comp();
@@ -1984,7 +1983,6 @@ J9::Z::TreeEvaluator::awrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("awrtbari", node, cg);
    TR::Node * owningObjectChild = node->getChild(2);
    TR::Node * sourceChild = node->getSecondChild();
    TR::Compilation *comp = cg->comp();
@@ -2127,8 +2125,6 @@ J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::monentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("monent", node, cg);
-
    return TR::TreeEvaluator::VMmonentEvaluator(node, cg);
    }
 
@@ -2138,7 +2134,6 @@ J9::Z::TreeEvaluator::monentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::monexitEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("monexit", node, cg);
    return TR::TreeEvaluator::VMmonexitEvaluator(node, cg);
    }
 
@@ -2148,7 +2143,6 @@ J9::Z::TreeEvaluator::monexitEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::monexitfenceEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("monexitfence", node, cg);
    return NULL;
    }
 
@@ -2158,7 +2152,6 @@ J9::Z::TreeEvaluator::monexitfenceEvaluator(TR::Node * node, TR::CodeGenerator *
 TR::Register *
 J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("asynccheck", node, cg);
    // used by asynccheck
    // The child contains an inline test.
    //
@@ -2372,7 +2365,6 @@ TR::Register *
 J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
-   PRINT_ME("instanceof", node, cg);
    if (comp->getOption(TR_OptimizeForSpace) || comp->getOption(TR_DisableInlineInstanceOf))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -2411,7 +2403,6 @@ TR::Register *
 J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
-   PRINT_ME("checkcast", node, cg);
    if (comp->getOption(TR_OptimizeForSpace) || comp->getOption(TR_DisableInlineCheckCast))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -2536,7 +2527,6 @@ J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::C
 TR::Register *
 J9::Z::TreeEvaluator::newObjectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("newObject", node, cg);
    if (cg->comp()->suppressAllocationInlining())
       return generateHelperCallForVMNewEvaluators(node, cg);
    else
@@ -2549,7 +2539,6 @@ J9::Z::TreeEvaluator::newObjectEvaluator(TR::Node * node, TR::CodeGenerator * cg
 TR::Register *
 J9::Z::TreeEvaluator::newArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("newArray", node, cg);
    if (cg->comp()->suppressAllocationInlining())
       return generateHelperCallForVMNewEvaluators(node, cg);
    else
@@ -2562,7 +2551,6 @@ J9::Z::TreeEvaluator::newArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("anewArray", node, cg);
    if (cg->comp()->suppressAllocationInlining())
       return generateHelperCallForVMNewEvaluators(node, cg);
    else
@@ -2575,7 +2563,6 @@ J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg
 TR::Register *
 J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("multianewArray", node, cg);
    TR::ILOpCodes opCode = node->getOpCodeValue();
    TR::Node::recreate(node, TR::acall);
    TR::Register * targetRegister = directCallEvaluator(node, cg);
@@ -2649,7 +2636,6 @@ J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::Register *
 J9::Z::TreeEvaluator::resolveCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("resolveCHK", node, cg);
    // No code is generated for the resolve check. The child will reference an
    // unresolved symbol and all check handling is done via the corresponding
    // snippet.
@@ -2685,7 +2671,6 @@ J9::Z::TreeEvaluator::resolveCHKEvaluator(TR::Node * node, TR::CodeGenerator * c
 TR::Register *
 J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("DIVCHK", node, cg);
    TR::Compilation *comp = cg->comp();
    TR::Node * secondChild = node->getFirstChild()->getSecondChild();
    TR::DataType dtype = secondChild->getType();
@@ -2820,7 +2805,6 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("BNDCHK", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
    TR::LabelSymbol * boundCheckFailureLabel = generateLabelSymbol(cg);
@@ -3141,7 +3125,6 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ArrayCopyBNDCHK", node, cg);
    // Check that first child >= second child
    //
    // If the first child is a constant and the second isn't, swap the children.
@@ -4334,16 +4317,12 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
 TR::Register *
 J9::Z::TreeEvaluator::ArrayCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ArrayCHK", node, cg);
    return TR::TreeEvaluator::VMarrayCheckEvaluator(node, cg);
    }
-
-
 
 TR::Register *
 J9::Z::TreeEvaluator::conditionalHelperEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("conditionalHelper", node, cg);
    // used by methodEnterhook, and methodExitHook
    // Decrement the reference count on the constant placeholder parameter to
    // the MethodEnterHook call.  An evaluation isn't necessary because the
@@ -11766,8 +11745,6 @@ TR::Register *
 J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
 #ifndef PUBLIC_BUILD
-   PRINT_ME("tstart", node, cg);
-
    //   [0x00000000803797c8] (  0)  tstart
    //   [0x0000000080379738] (  1)    branch --> block 28 BBStart at [0x0000000080378bc8]
    //   [0x00000000803f15f8] (  1)      GlRegDeps
@@ -11930,7 +11907,6 @@ TR::Register *
 J9::Z::TreeEvaluator::tfinishEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
 #ifndef PUBLIC_BUILD
-   PRINT_ME("tfinish", node, cg);
    TR::MemoryReference * tempMR1 = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg);
    TR::Instruction * cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, tempMR1);
 #endif

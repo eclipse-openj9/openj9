@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,49 +34,7 @@ namespace J9 { typedef J9::Z::TreeEvaluator TreeEvaluatorConnector; }
 #error J9::Z::TreeEvaluator expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
-
-
-
-//#define TRACE_EVAL
-#if defined(TRACE_EVAL)
-//
-// this is a handy thing to turn on if you want to figure out what the common
-// code generator is mapping nodes to and what is really being driven through
-// evaluation.
-// It is not on by default (too noisy and expensive) but can be enabled
-// by just defining TRACE_EVAL for this file
-//
-// If we wanted to enable this by default, it would make sense to create a
-// new 'phase' for debugging that could be queried and to have the macro
-// be a test of the tracing before making a function call out, e.g.
-// instead of PRINT_ME(...) we would have:
-// if (compilation->getOutFile() != NULL && compilation->getTraceEval())
-//   {
-//     print("iadd", compilation->getOutFile());
-//   }
-// and then traceEval would be a forced no-inline method
-//
-// Add another version of PRINT_ME, undef EVAL_BLOCK to go back to the old one
-#define EVAL_BLOCK
-#if defined (EVAL_BLOCK)
-#define PRINT_ME(string,node,cg) TR::Delimiter evalDelimiter(cg->comp(), cg->comp()->getOption(TR_TraceCG), "EVAL", string)
-#else
-void
-PRINT_ME(char * string, TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Compilation * compilation = cg->comp();
-   TR::FILE *outFile = compilation->getOutFile();
-   if (outFile != NULL)
-      {
-      diagnostic("EVAL: %s\n", string);
-      }
-   }
-#endif
-#else
-#define PRINT_ME(string,node,cg)
-#endif
 
 #define INSN_HEAP cg->trHeapMemory()
 
