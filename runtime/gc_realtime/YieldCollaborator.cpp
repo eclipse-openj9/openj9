@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
 #include "YieldCollaborator.hpp"
 
 #include "Task.hpp"
@@ -33,13 +34,14 @@ MM_YieldCollaborator::resumeSlavesFromYield(MM_EnvironmentBase *env)
 	omrthread_monitor_notify_all(*_mutex);
 	omrthread_monitor_exit(*_mutex);
 }
+
 void
 MM_YieldCollaborator::yield(MM_EnvironmentBase *env)
 {
 	omrthread_monitor_enter(*_mutex);
 
 	_yieldCount += 1;
-	UDATA index = _yieldIndex;
+	uintptr_t index = _yieldIndex;
 	
 	/* because of sync sections nesting we have to do >= (instead of ==) */
 	if (_yieldCount + *_count >= env->_currentTask->getThreadCount() || env->_currentTask->isSynchronized() /* only master active */) {
