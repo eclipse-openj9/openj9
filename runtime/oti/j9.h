@@ -353,6 +353,7 @@ typedef struct {
 	char data[LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION)];
 } J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA;
 
+#if 0 /* Until compile error are resolved */
 #if defined(__cplusplus)
 /* Hide the asserts from DDR */
 #if !defined(TYPESTUBS_H)
@@ -365,5 +366,6 @@ static_assert((sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA) == (3 + LITERAL_STR
 static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), "Annotation contains invalid characters");
 #endif /* !TYPESTUBS_H */
 #endif /* __cplusplus */
+#endif /* 0 */
 
 #endif /* J9_H */
