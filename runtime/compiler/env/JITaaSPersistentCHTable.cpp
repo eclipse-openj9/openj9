@@ -51,7 +51,7 @@ bool
 TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    {
       {
-      TR::ClassTableCriticalSection doUpdate(fej9);
+      TR::ClassTableCriticalSection initializeIfNeeded(fej9);
       auto& data = getData();
       if (!data.empty())
          return false; // this is the most frequent path
@@ -62,7 +62,7 @@ TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    std::string rawData = std::get<0>(stream->read<std::string>());
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
       {
-      TR::ClassTableCriticalSection doUpdate(fej9);
+      TR::ClassTableCriticalSection initializeIfNeeded(fej9);
       auto& data = getData();
       if (data.empty()) // check again to prevent races
          {
@@ -167,11 +167,15 @@ TR_JITaaSServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
    auto& data = getData();
-   TR_ASSERT(!data.empty(), "CHTable at the server should be initialized by now");
-   auto it = data.find(classId);
-   if (it != data.end())
-      return it->second;
-   return nullptr;
+   // It is possible that the persistentCHTable on the client side is not populated,
+   // such as when recompilation is not allowed on the client side.
+   if (!data.empty())
+      {
+      auto it = data.find(classId);
+      if (it != data.end())
+         return it->second;
+      }
+   return NULL;
    }
 
 TR_PersistentClassInfo *
