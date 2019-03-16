@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -716,7 +716,7 @@ public class StructureReader {
 			declaredType = stripUnderscore(declaredType);
 		}
 
-		private static final Pattern QualifierPattern = Pattern.compile("\\s*\\b(const|volatile)\\s+");
+		private static final Pattern QualifierPattern = Pattern.compile("\\s*\\b(const|volatile)\\b\\s*");
 
 		private static String stripTypeQualifiers(String type) {
 			return filterOutPattern(type, QualifierPattern).trim();
