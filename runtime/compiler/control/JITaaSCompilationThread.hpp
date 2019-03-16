@@ -276,7 +276,7 @@ class JITaaSHelpers
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.
    using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<uint8_t>, bool, uintptrj_t , bool, uint32_t, TR_OpaqueClassBlock *, void *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, uintptrj_t, J9ROMClass *>;
-   static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *trMemory);
+   static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
