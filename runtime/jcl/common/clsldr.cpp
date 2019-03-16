@@ -61,6 +61,15 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 	}
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
 
+	if (NULL == protectionDomain) {
+		/*
+		 * Only trusted code has access to JavaLangAccess.defineClass();
+		 * callers only provide a NULL protectionDomain when exemptions
+		 * are required.
+		 */
+		options |= J9_FINDCLASS_FLAG_UNSAFE;
+	}
+
 	jclass result = defineClassCommon(env, receiver, className, classRep, offset, length, protectionDomain, options, NULL);
 
 	if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID) && (NULL == result) && (NULL == currentThread->currentException)) {
