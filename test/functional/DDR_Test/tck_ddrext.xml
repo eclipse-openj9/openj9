@@ -29,6 +29,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="TEST_RESROOT" value="${TEST_RESROOT}" />
 	<property name="REPORTDIR" value="${REPORTDIR}" />
 	<property name="JDK_VERSION" value="${JDK_VERSION}" />
+	<property name="EXTRADUMPOPT" value="" />
+	<property name="ADDITIONALEXPORTS" value="" />
+	<property name="TCK_CR_VM_ARG" value="${TCK_CR_VM_ARG}"/>
+	<property name="TESTNUM" value="${TESTNUM}"/>
+
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8"/>
 		<then>
@@ -43,8 +48,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<if>
 		<equals arg1="${OS}" arg2="os.zos"/>
 		<then>
-			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
-				<if>
+			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
+			<if>
 				<equals arg1="${BITS}" arg2="bits.64"/>
 				<then>
 					<property name="zos.core.suffix" value=".X001" />
@@ -55,7 +60,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</if>
 		</then>
 		<else>
-			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
+			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
 		</else>
 	</if>
 
@@ -102,11 +107,40 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</java>
 	</target>
 
-	<target name="TCK.generate.dump">
+	<target name="TCK.initialize.cache" description="Destroy the old cache and create a new one">
+		<echo>Initializing cache</echo>
+		<!-- Initialize the cache so that addtestjithints option adds jithints to the shared cache in TCK.generate.dump-->
+		<echo>Running j9vm.test.corehelper.StackMapCoreGenerator to create a new cache</echo>
+		<echo>Using JVM : ${sdk.executable}${sdk.executable.ext}</echo>
+		<echo>classname = "j9vm.test.corehelper.StackMapCoreGenerator"</echo>
+		<echo>Java VM Args:</echo>
+		<echo>	jvmarg = -Xshareclasses:name=ddrextjunitSCC,reset,modified=mod1</echo>
+		<echo>
+		</echo>
+		<java fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.corehelper.StackMapCoreGenerator" timeout="1200000" failonerror="true">
+			<jvmarg value="-Xshareclasses:name=ddrextjunitSCC,reset,modified=mod1" />
+			<jvmarg value="-Xitsn1000" />
+			
+			<classpath refid="tck.class.path" />
+		</java>
+	</target>
+
+	<target name="TCK.generate.dump" depends="TCK.initialize.cache">
 		<echo>Generate dump file</echo>
+		<echo>JAVA_COMMAND: ${JAVA_COMMAND}</echo>
+		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
+		<echo>EXTRADUMPOPT: ${EXTRADUMPOPT}</echo>
+
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
 			<arg line="${DUMP_OPTION}" />
+			<arg line="-Xitsn1000" />
+			<arg line="${EXTRADUMPOPT}" />
+			<arg value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)"/>
+			<arg value="-cp" />
+			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
+			<arg value="j9vm.test.corehelper.CoreGen" />
 		</exec>
+
 		<if>
 			<equals arg1="${OS}" arg2="os.zos"/>
 			<then>
@@ -118,11 +152,74 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="TCK.move.dump.ddrext" description="Move core file from MVS to HFS">
 			<echo>Moving core file from MVS [${dump.name}${zos.core.suffix}] to HFS [${system.dump}]</echo>
 			<exec executable="/bin/mv" failonerror="true">
-				<arg line="&quot;//${dump.name}${zos.core.suffix}&quot; ${system.dump}"/>
+				<arg value="//${dump.name}${zos.core.suffix}"/>
+				<arg value="${system.dump}"/>
 			</exec>
 	</target>
 
 	<target name="clean" depends="TCK.run.tests.ddrext" description="clean">
 		<delete file="${system.dump}" />
 	</target>
+
+	<target name="ddrext.setup" description="Create the required directories">
+		<!-- do not invoke this target with antcall as the properties defined here need to be visible to all subsequent targets -->
+		<echo>Setting up TCK</echo>
+		<mkdir dir="${tck.output.dir}"/>
+		<mkdir dir="${tck.output.dir}_${tck.type}"/>
+		<echo>Recording Java version</echo>
+		<java fork="true" jvm="${sdk.executable}${sdk.executable.ext}" classname="com.ibm.dtfj.tck.harness.TCKLauncher" 
+			failonerror="true" outputproperty="jvm.version" newenvironment="true">
+			<jvmarg value="-XshowSettings:properties" />
+			<jvmarg value="-version" />
+		</java>
+		<condition property="java.is64bit">
+			<matches pattern="sun\.arch\.data\.model = 64" string="${jvm.version}" multiline="true"/>
+		</condition>
+
+		<!--real-time specific setup-->
+		<java fork="true" jvm="${sdk.executable}${sdk.executable.ext}" classname="com.ibm.dtfj.tck.harness.TCKLauncher" 
+			failonerror="false" outputproperty="jvm.version.realtime" newenvironment="true">
+			<jvmarg value="-Xrealtime" />
+			<jvmarg value="-version" />
+		</java>
+		<condition property="env.isrealtime">
+			<matches pattern=" real-time" string="${jvm.version.realtime}" multiline="true"/>
+		</condition>
+
+		<!-- z/OS specific setup -->
+		<condition property="tck.zos.core.suffix" value=".X001" else="">
+			<and>
+				<os family="z/os" />
+				<isset property="java.is64bit" />
+			</and>
+		</condition>
+	</target>
+
+	<target name="ddrext.setup.dump.dynamic" description="Create dump options for dynamic ddr ext test">
+		<!-- create dump options, different for z/OS -->
+		<condition property="system.dump" value="${user.name}.${tck.core.file.mvs}" else="${tck.core.file.ddrext}">
+			<os family="z/os" />
+		</condition>
+
+		<condition property="isWindows">
+			<os family="windows" />
+		</condition>
+		<condition property="isZOS">
+			<os family="z/os" />
+		</condition>
+	
+		<if>
+			<isset property="isZOS" />
+			<then>
+				<property name="system.dump.location" value="${dump.name}${zos.core.suffix}" />
+			</then>
+			<else>
+				<property name="system.dump.location" location="${system.dump}" />
+			</else>
+		</if>
+		<property name="tck.config.dump.opt.1" value="-Xdump:system:defaults:label=${system.dump.location},request=exclusive+compact+prepwalk" />
+
+		<property name="tck.config.dump.opts" value="${tck.config.dump.opt.1} ${tck.config.dump.opt.2} ${tck.config.dump.opt.3} ${tck.config.dump.opt.4} ${tck.core.xmx} ${tck.config.dump.opt.extra}"/>
+	</target>
+
 </project>
