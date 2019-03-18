@@ -595,6 +595,8 @@ public:
    static void disableAOTCompilations();
 #endif
 
+   static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
+
    void * operator new(size_t s, void * p) throw() { return p; }
    CompilationInfo (J9JITConfig *jitConfig);
    TR::Monitor *getCompilationMonitor() {return _compilationMonitor;}
