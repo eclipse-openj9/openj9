@@ -266,14 +266,16 @@ public class ValueTypeGenerator extends ClassLoader {
 	
 	private static void makeRef(ClassWriter cw, String className, String makeValueSig, String makeValueGenericSig, String[]fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
+		int makeRefArgsAndLocals = makeMaxLocal + 1; //extra slot is to store the ref being created
+		
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeRef", "(" + makeValueSig + ")L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
-		mv.visitVarInsn(ASTORE, fields.length);
+		mv.visitVarInsn(ASTORE, makeMaxLocal);
 		for (int i = 0, count = 0; i < fields.length; i++) {
-			mv.visitVarInsn(ALOAD, fields.length);
+			mv.visitVarInsn(ALOAD, makeMaxLocal);
 			String nameAndSigValue[] = fields[i].split(":");
 			switch (nameAndSigValue[1]) {
 			case "D":
@@ -305,11 +307,11 @@ public class ValueTypeGenerator extends ClassLoader {
 			}
 			mv.visitFieldInsn(PUTFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
 		}
-		mv.visitVarInsn(ALOAD, fields.length);
+		mv.visitVarInsn(ALOAD, makeMaxLocal);
 		mv.visitInsn(ARETURN);
 		
 		int maxStack = (doubleDetected) ? 3 : 2;
-		mv.visitMaxs(maxStack, makeMaxLocal);
+		mv.visitMaxs(maxStack, makeRefArgsAndLocals);
 		mv.visitEnd();
 	}
 
