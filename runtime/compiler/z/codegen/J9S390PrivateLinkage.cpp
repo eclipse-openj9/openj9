@@ -3259,12 +3259,10 @@ TR::S390PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    switch (callNode->getOpCodeValue())
       {
       case TR::icall:
-      case TR::iucall:
       case TR::acall:
          returnRegister = dependencies->searchPostConditionRegister(getIntegerReturnRegister());
          break;
       case TR::lcall:
-      case TR::lucall:
             {
             if (TR::Compiler->target.is64Bit())
                {
@@ -3346,12 +3344,10 @@ TR::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    switch (callNode->getOpCodeValue())
       {
       case TR::icalli:
-      case TR::iucalli:
       case TR::acalli:
          returnRegister = dependencies->searchPostConditionRegister(getIntegerReturnRegister());
          break;
       case TR::lcalli:
-      case TR::lucalli:
             {
             if (TR::Compiler->target.is64Bit())
                {
