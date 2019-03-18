@@ -349,18 +349,11 @@ public abstract class MethodHandle
 	 */
 	public final native @PolymorphicSignature Object invoke(Object... args) throws Throwable, WrongMethodTypeException, ClassCastException;
 	
-	/*
-	 * Lookup all the VMDispatchTargets and store them into 'targets' array.
-	 * 'targets' must be large enough to hold all the dispatch targets.
-	 * 
-	 */
-	private static native boolean lookupVMDispatchTargets(long[] targets);
-	
 	/**
-     * The MethodType of the MethodHandle.  Invocation must match this MethodType.
-     *   
+	 * The MethodType of the MethodHandle.  Invocation must match this MethodType.
+	 *
 	 * @return the MethodType of the MethodHandle.  
-     */
+	 */
 	public MethodType type() {
 		return type;
 	}
