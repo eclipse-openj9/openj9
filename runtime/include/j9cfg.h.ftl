@@ -63,6 +63,8 @@ extern "C" {
 #define J9VM_OPT_VALHALLA_NESTMATES
 #endif
 
+#define J9VM_OPT_VALHALLA_VALUE_TYPES
+
 #ifdef __cplusplus
 }
 #endif

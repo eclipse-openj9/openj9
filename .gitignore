@@ -43,3 +43,4 @@ com.ibm.jvmti.tests
 # Default test directory (BUILD_ROOT)
 /jvmtest/
 /build/
+/bin/

@@ -54,7 +54,7 @@
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<src path="${transformerListener}" />
-			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+            <compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED -XDignore.symbol.file' />
 			<classpath>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
