@@ -31,9 +31,10 @@ Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getNameImpl(JNIEnv 
 	char hostname[256];
 	char result[256];
 	PORT_ACCESS_FROM_ENV( env );
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	pid = j9sysinfo_get_pid();
-	j9sock_gethostname( hostname, 256 );
+	omrsysinfo_get_hostname( hostname, 256 );
 	j9str_printf( PORTLIB, result, 256, "%zu@%s", pid, hostname );
 
 	return (*env)->NewStringUTF( env, result );
