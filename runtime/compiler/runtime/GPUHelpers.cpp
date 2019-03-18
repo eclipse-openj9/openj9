@@ -207,7 +207,7 @@ static void restoreSignalHandlers(struct sigaction sigactionArray[], bool trace)
 #define     FILENAMELEN     255
 #define     EXTENSIONLEN    16
 
-static void writeDebugFile(const char *ptxSource, void *data, size_t dataSize, char *extension, char *fileoption) 
+static void writeDebugFile(const char *ptxSource, void *data, size_t dataSize, char *extension, char *fileoption)
    {
    int fnpos = 0;
    char filename[FILENAMELEN+EXTENSIONLEN+1];
@@ -235,7 +235,7 @@ static void writeDebugFile(const char *ptxSource, void *data, size_t dataSize, c
                if (c == '\n') { status = prevstatus; }
                continue;
                }
-            if (status == -1) 
+            if (status == -1)
                {
                if (strncmp(&ptxSource[i], "*/", 2) == 0) { status = prevstatus; i++; }
                continue;
@@ -282,7 +282,7 @@ static void writeDebugFile(const char *ptxSource, void *data, size_t dataSize, c
          fclose(fp);
          }
       }
-   }  
+   }
 
 //On Windows we need to check if the library or function pointer is null
 //Function pointers can not be cast to a void* so currently the check is done outside of the function
@@ -329,7 +329,7 @@ static bool loadNVVMlibrary(int tracing)
 #endif
 
    if (checkDlError(tracing, !libNvvmPointer)) return false;
-   
+
    jitNvvmCreateProgram = (nvvmResult (*)(nvvmProgram*))GET_FUNCTION(libNvvmPointer, stringMacro(nvvmCreateProgram));
    if (checkDlError(tracing, !jitNvvmCreateProgram)) return false;
 
@@ -408,7 +408,7 @@ static bool loadCudaRuntimeLibrary(int tracing)
 
    jitCudaGetErrorString = (const char* (*)(cudaError_t))GET_FUNCTION(libCudartPointer, stringMacro(cudaGetErrorString));
    if (checkDlError(tracing, !jitCudaGetErrorString)) return false;
-   
+
    return true;
    }
 
@@ -496,7 +496,7 @@ static bool loadNVMLLibrary(int tracing)
    {
 #if (defined(LINUX) || !defined(TR_TARGET_X86))
    dlerror(); //clear preexisting error flags.
-   
+
    char path[PATH_MAX];
    int path_len;
    void* libNvmlPointer;
@@ -515,7 +515,7 @@ static bool loadNVMLLibrary(int tracing)
          break;
          }
       }
-   
+
    if (!found)
       {
       char *dirname = "/usr/lib";
@@ -553,7 +553,7 @@ static bool loadNVMLLibrary(int tracing)
 
    jitNvmlInit = (nvmlReturn_t (*)())GET_FUNCTION(libNvmlPointer, stringMacro(nvmlInit));
    if (checkDlError(tracing, !jitNvmlInit)) return false;
-   
+
    jitNvmlDeviceGetHandleByIndex = (nvmlReturn_t (*)(unsigned int, nvmlDevice_t*))GET_FUNCTION(libNvmlPointer, stringMacro(nvmlDeviceGetHandleByIndex));
    if (checkDlError(tracing, !jitNvmlDeviceGetHandleByIndex)) return false;
 
@@ -617,7 +617,7 @@ int getGpuDeviceCount(TR::PersistentInfo * persistentInfo, int tracing)
       persistentInfo->getGpuInitializationMonitor()->exit(); //release the lock
       return 0; //failed
       }
-   
+
    //Attempt to load and initialize the NVML library
    loadNVMLLibrary(tracing);
 
@@ -666,7 +666,7 @@ int getGpuDeviceCount(TR::PersistentInfo * persistentInfo, int tracing)
          fflush(NULL);
          }
       deviceCCs[deviceId] = (major << 16) | minor;
-      
+
       if (deviceCCs[deviceId] != deviceCCs[0])
          {
          if (tracing > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "GPU compute capability mismatch detected. Disabling multi GPU use");
@@ -710,16 +710,16 @@ public:
 
    uint32_t   hashSize;
    HashEntry  *hashTable;
-   
+
    uint16_t    tracing;
    uint16_t    device;
    unsigned long long availableMemory;
    CUdeviceptr exceptionPointer;
-   
+
    TR::CodeGenerator::GPUScopeType regionType;
    CUresult    ffdcCuError;
    cudaError_t ffdcCudaError;
-   bool        sessionFailed; 
+   bool        sessionFailed;
 };
 
 #define returnOnTrue(result,errorCode) \
@@ -728,18 +728,18 @@ public:
       return errorCode; \
    }
 
-bool isGPUFailed(CudaInfo* cudaInfo) 
+bool checkForGPUFailure(CudaInfo* cudaInfo)
      {
      if (!cudaInfo) return true;
 
      TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
-     return cudaInfo->sessionFailed; 
+     return cudaInfo->sessionFailed;
      }
 
 bool captureCudaError(cudaError_t result, CudaInfo* cudaInfo, char* functionName)
     {
-    if (isGPUFailed(cudaInfo))
+    if (checkForGPUFailure(cudaInfo))
        return true;
 
     TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
@@ -749,17 +749,17 @@ bool captureCudaError(cudaError_t result, CudaInfo* cudaInfo, char* functionName
       cudaInfo->ffdcCudaError = result;
       cudaInfo->sessionFailed = true;
 
-      if (cudaInfo->tracing > 0) 
+      if (cudaInfo->tracing > 0)
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "CUDA Runtime error %d at %s (%p)", result, functionName, cudaInfo);
 
       }
 
-    return cudaInfo->sessionFailed; 
+    return cudaInfo->sessionFailed;
     }
 
 bool captureCuError(CUresult result, CudaInfo* cudaInfo, char* functionName, bool print = true)
     {
-    if (isGPUFailed(cudaInfo))
+    if (checkForGPUFailure(cudaInfo))
        return true;
 
     TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
@@ -769,16 +769,16 @@ bool captureCuError(CUresult result, CudaInfo* cudaInfo, char* functionName, boo
       cudaInfo->ffdcCuError = result;
       cudaInfo->sessionFailed = true;
 
-      if (cudaInfo->tracing > 0 && print) 
+      if (cudaInfo->tracing > 0 && print)
           TR_VerboseLog::writeLine(TR_Vlog_GPU, "CUDA Driver error %d at %s (%p)", result, functionName, cudaInfo);
       }
 
-    return cudaInfo->sessionFailed; 
+    return cudaInfo->sessionFailed;
     }
 
 bool captureJITError(char* errorText, CudaInfo* cudaInfo, bool print = true)
     {
-    if (isGPUFailed(cudaInfo))
+    if (checkForGPUFailure(cudaInfo))
        return true;
 
     TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
@@ -794,7 +794,7 @@ bool captureJITError(char* errorText, CudaInfo* cudaInfo, bool print = true)
     return true;
     }
 
-static HashEntry* cudaInfoHashGet(CudaInfo *cudaInfo, void **hostref) 
+static HashEntry* cudaInfoHashGet(CudaInfo *cudaInfo, void **hostref)
    {
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
@@ -810,8 +810,8 @@ static HashEntry* cudaInfoHashGet(CudaInfo *cudaInfo, void **hostref)
    return NULL;
    }
 
-static HashEntry* 
-cudaInfoHashPut(CudaInfo *cudaInfo, void **hostref, int32_t elementSize, CUdeviceptr deviceArray, uint32_t accessMode) 
+static HashEntry*
+cudaInfoHashPut(CudaInfo *cudaInfo, void **hostref, int32_t elementSize, CUdeviceptr deviceArray, uint32_t accessMode)
    {
    bool detailsTrace = (cudaInfo->tracing > 1);
 
@@ -845,7 +845,7 @@ cudaInfoHashPut(CudaInfo *cudaInfo, void **hostref, int32_t elementSize, CUdevic
       memcpy(cudaInfo->hashTable, oldHashTable, oldHashSize * sizeof(HashEntry));
 
       TR_Memory::jitPersistentFree(oldHashTable);
-       
+
       if (detailsTrace)
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "EXTENDED hash table: %d", cudaInfo->hashSize);
       }
@@ -859,13 +859,13 @@ cudaInfoHashPut(CudaInfo *cudaInfo, void **hostref, int32_t elementSize, CUdevic
       cudaInfo->hashTable[i].cpOutIsNoCopyDtoH = 1; //this will be cleared if the array needs to be copied back
       return &(cudaInfo->hashTable[i]);
       }
-   
+
 
    return NULL;
    }
 
 static CUdeviceptr
-cudaInfoHashRemove(CudaInfo *cudaInfo, void **hostref, int32_t elementSize) 
+cudaInfoHashRemove(CudaInfo *cudaInfo, void **hostref, int32_t elementSize)
    {
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
@@ -918,12 +918,12 @@ cudaModuleLoadData(CUlinkState *lState, CudaInfo *cudaInfo, const char *ptxSourc
    returnOnTrue(captureCuError(jitCuLinkCreate(OPTIONSNUM, optionCmds, optionVals, lState), cudaInfo, "cudaModuleLoadData - jitCuLinkCreate"), ERROR_CODE);
    returnOnTrue(captureCuError(jitCuLinkAddData(*lState, CU_JIT_INPUT_PTX, (void*)ptxSource, strlen(ptxSource)+1, 0, 0, 0, 0), cudaInfo, "cudaModuleLoadData - jitCuLinkAddData"), ERROR_CODE);
    returnOnTrue(captureCuError(jitCuLinkComplete(*lState, &cubin, &cubinSize), cudaInfo, "cudaModuleLoadData - jitCuLinkComplete"), ERROR_CODE);
- 
+
    if (writeLINKER)
       writeDebugFile(ptxSource, info_log, strlen(info_log), ".linker", "wb");
    if (writeCUBIN)
       writeDebugFile(ptxSource, cubin, cubinSize, ".cubin", "wb");
-   
+
    // Load resulting cuBin into module
    returnOnTrue(captureCuError(jitCuModuleLoadData(&(cudaInfo->module), cubin), cudaInfo, "cudaModuleLoadData - jitCuModuleLoadData"), ERROR_CODE);
 
@@ -982,10 +982,10 @@ void *initGPUThread(J9VMThread *vmThread, TR::PersistentInfo *persistentInfo, bo
       TR_Memory::jitPersistentFree(threadGPUInfo);
       return NULL;
       }
-   
+
    threadGPUInfo->nDevices = nDevices;
    TR_ASSERT(nDevices > 0, "nDevices must be greater than 0 at initGPUThread()");
-   
+
    uintptr_t shiftval = GETSHIFTVAL(J9VMTHREAD_ALIGNMENT);
    threadGPUInfo->threadID = (int)(((uintptr_t)vmThread >> shiftval) & 0x7FFFFFFF);
 
@@ -1043,7 +1043,7 @@ initCUDA(J9VMThread *vmThread, int tracing, const char *ptxSource, int deviceId,
       threadGPUInfo = (ThreadGPUInfo *)initGPUThread(vmThread, NULL, true);
       if (threadGPUInfo == NULL)
          {
-         return 0;
+         return NULL;
          }
       }
 
@@ -1052,10 +1052,10 @@ initCUDA(J9VMThread *vmThread, int tracing, const char *ptxSource, int deviceId,
    if (!cudaInfo)
       {
       if (trace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tFAILED to allocate persistent memory for CudaInfo object.");
-      return 0;
+      return NULL;
       }
-   
-   cudaInfo->sessionFailed = false; 
+
+   cudaInfo->sessionFailed = false;
    cudaInfo->ffdcCuError = CUDA_SUCCESS;
    cudaInfo->ffdcCudaError = cudaSuccess;
    cudaInfo->tracing = (uint16_t)tracing;
@@ -1071,7 +1071,7 @@ initCUDA(J9VMThread *vmThread, int tracing, const char *ptxSource, int deviceId,
       {
       TR_Memory::jitPersistentFree(cudaInfo);
       if (trace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tFAILED to allocate persistent memory for cudaInfo hashTable.");
-      return 0;
+      return NULL;
       }
    memset(cudaInfo->hashTable, 0, cudaInfo->hashSize * sizeof(HashEntry));
 
@@ -1311,7 +1311,7 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
 #if (defined(LINUX) || !defined(TR_TARGET_X86))
    struct sigaction sigactionArray[31];
 #endif
-   
+
    //Currently only device ids in the range of [0,MAX_DEVICE_NUM-1] are supported. Compilation fails for ids above MAX_DEVICE_NUM-1.
    if (deviceId >= MAX_DEVICE_NUM)
       {
@@ -1364,7 +1364,7 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
    //nvvm version 1.1 is untested. -opt=0 is used since it might have the same problem as version 1.2
    //nvvm version 1.2 sometimes segfaults in nvvmCompileProgram with -opt=3 so -opt=0 is used instead
    //1.2 is the latest version as of this comment. -opt=0 is default for future versions for safety
-   int nvvmVersionMajor, nvvmVersionMinor; 
+   int nvvmVersionMajor, nvvmVersionMinor;
    checkNVVMError(jitNvvmVersion(&nvvmVersionMajor, &nvvmVersionMinor), tracing);
    if (detailsTrace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tNVVM Version: %d.%d", nvvmVersionMajor, nvvmVersionMinor);
    if ( (nvvmVersionMajor == 1) && (nvvmVersionMinor == 0) )
@@ -1460,7 +1460,7 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
    }
 
 static TR::CodeGenerator::GPUResult
-launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gridDimZ, 
+launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gridDimZ,
                                          int blockDimX, int blockDimY, int blockDimZ,
                                          int argCount, bool needExtraArg, void** args, int kernelID, int hasExceptionChecks)
    {
@@ -1482,16 +1482,16 @@ launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gr
       if (cudaInfo->exceptionPointer == NULL_DEVICE_PTR)
          {
          returnOnTrue(captureCuError(jitCuMemAlloc(&(cudaInfo->exceptionPointer), sizeof(int32_t)), cudaInfo, "launchKernel - jitCuMemAlloc"), TR::CodeGenerator::GPUHelperError);
-         
+
          if (tracing > 1)
             TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tallocated %d bytes at %p for GPU exceptions (%p)", sizeof(int32_t), cudaInfo->exceptionPointer, cudaInfo);
          }
-   
+
       returnOnTrue(captureCuError(!disableAsyncOps ? jitCuMemcpyHtoDAsync(cudaInfo->exceptionPointer, &ExceptionKind, sizeof(int32_t), stream)
                                      : jitCuMemcpyHtoD(cudaInfo->exceptionPointer, &ExceptionKind, sizeof(int32_t)), cudaInfo, "launchKernel - jitCuMemcpyHtoD"),
                                        TR::CodeGenerator::GPUHelperError);
-      
-      if (tracing > 1) 
+
+      if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tperforming a copy to GPU %d bytes for GPU exceptions. Device: %p (%p)", sizeof(int32_t), cudaInfo->exceptionPointer, cudaInfo);
       }
 
@@ -1509,11 +1509,11 @@ launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gr
       argCount++;
       }
    _args[argCount-1] = &(cudaInfo->exceptionPointer);
-   
+
    if (tracing > 1)
       {
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "Args dump:");
-      for (int i = 0; i < argCount; i++) 
+      for (int i = 0; i < argCount; i++)
           {
           TR_VerboseLog::writeLine(TR_Vlog_GPU, "Arg %d: %p",i,*((long*)_args[i]));
           }
@@ -1522,14 +1522,14 @@ launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gr
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "_args: %p",_args);
       }
    time = currentTime();
-   
+
    returnOnTrue(captureCuError(jitCuLaunchKernel(
                                   cudaInfo->kernel,
                                   gridDimX, gridDimY, gridDimZ,
                                   blockDimX, blockDimY, blockDimZ,
                                   0, stream, _args, NULL),
                                   cudaInfo, "launchKernel - jitCuLaunchKernel"),
-                                  TR::CodeGenerator::GPUHelperError);  // TODO: used to be GPULaunchError
+                                  TR::CodeGenerator::GPUHelperError);
 
    if (tracing > 1)
       {
@@ -1546,10 +1546,10 @@ launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gr
       returnOnTrue(captureCuError(!disableAsyncOps ? jitCuMemcpyDtoHAsync(&ExceptionKind, cudaInfo->exceptionPointer, sizeof(int32_t), stream)
                                     : jitCuMemcpyDtoH(&ExceptionKind, cudaInfo->exceptionPointer, sizeof(int32_t)),
                                        cudaInfo, "launchKernel - jitCuMemcpyDtoH"), TR::CodeGenerator::GPUHelperError);
-      
+
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tCopy out %d bytes for exceptions. Device: %p (%p)", sizeof(int32_t), cudaInfo->exceptionPointer, cudaInfo);
-      
+
       if (disableAsyncOps)
          {
          returnOnTrue(captureCudaError(jitCudaDeviceSynchronize(), cudaInfo, "launchKernel - jitCudaDeviceSynchronize"), TR::CodeGenerator::GPUHelperError);
@@ -1571,15 +1571,21 @@ launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gr
 
 // GPU helpers (called from generated code)
 
-int flushGPUDatatoCPU(CudaInfo *cudaInfo);
+bool flushGPUDatatoCPU(CudaInfo *cudaInfo);
 bool freeGPUScope(CudaInfo *cudaInfo);
 
+
+
+#define SELECT_GPU_PATH 0
+#define SELECT_CPU_PATH 1
 extern "C" int
 estimateGPU(CudaInfo *cudaInfo, int ptxSourceID, uint8_t *startPC, int lambdaCost, int dataSize, int startInclusive, int endExclusive)
    {
-   returnOnTrue(!cudaInfo,0); // if cudaInfo is not defined, there is an error condition so pass through
-                              // to enable the error handler to kick in 
-   
+   /*
+    * If cudaInfo is not defined, continue down the GPU path until the error check after getStateGPU is reached.
+    */
+   returnOnTrue(!cudaInfo, SELECT_GPU_PATH);
+
    char *methodSignature;
    int lineNumber;
    int trace = cudaInfo->tracing;
@@ -1609,22 +1615,21 @@ estimateGPU(CudaInfo *cudaInfo, int ptxSourceID, uint8_t *startPC, int lambdaCos
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "[time.ms=%lld]: Sent forEach in %s at line %d to CPU based on performance heuristics", (int64_t)(currentTime()/1000), methodSignature, lineNumber);
 
       switch(cudaInfo->regionType)
-      {
-      case TR::CodeGenerator::singleKernelScope:
-         
-         // no need to flush for single kernel scope
-         // since the GPU doesn't contain any valid data
-         freeGPUScope(cudaInfo);
-         break;
-      case TR::CodeGenerator::naturalLoopScope:
-         flushGPUDatatoCPU(cudaInfo);
-         break;
-      }
-            
-      return 1;
+         {
+         case TR::CodeGenerator::singleKernelScope:
+            // no need to flush for single kernel scope
+            // since the GPU doesn't contain any valid data
+            freeGPUScope(cudaInfo);
+            break;
+         case TR::CodeGenerator::naturalLoopScope:
+            flushGPUDatatoCPU(cudaInfo);
+            break;
+         }
+
+      return SELECT_CPU_PATH;
       }
 
-   return 0;
+   return SELECT_GPU_PATH;
    }
 
 static int selectGPUDevice(J9VMThread *vmThread, int tracing, unsigned long long *availableMemory, bool enforceGPU)
@@ -1633,13 +1638,13 @@ static int selectGPUDevice(J9VMThread *vmThread, int tracing, unsigned long long
       {
       return 0;
       }
-   
+
    static bool disableGPUHighUtilRedirect = enforceGPU || feGetEnv("TR_disableGPUHighUtilRedirect") ? true : false;
    static int gpuUtilThreshold = feGetEnv("TR_GPUUtilThreshold") ? atoi(feGetEnv("TR_GPUUtilThreshold")) : 90;
 
    int deviceId = 0;
    ThreadGPUInfo *threadGPUInfo = getThreadGPUInfo(vmThread);
-   
+
    if (threadGPUInfo == NULL)
       {
       threadGPUInfo = (ThreadGPUInfo *)initGPUThread(vmThread, NULL, true);
@@ -1658,7 +1663,7 @@ static int selectGPUDevice(J9VMThread *vmThread, int tracing, unsigned long long
    int gpuUtilization = INT_MAX;
    bool foundDevice = false;
    int localGPUdeviceNumber = threadGPUInfo->threadID;
-   
+
    for (uint32_t i = 0; i < deviceCount; i++)
       {
       nvmlDevice_t device;
@@ -1668,24 +1673,24 @@ static int selectGPUDevice(J9VMThread *vmThread, int tracing, unsigned long long
 
       result = jitNvmlDeviceGetHandleByIndex(devId, &device);
       if (NVML_SUCCESS != result)
-         { 
+         {
          if (tracing > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "Failed to get handle for device %d: %s", devId, jitNvmlErrorString(result));
          return 0;
          }
       result = jitNvmlDeviceGetUtilizationRates(device, &utilization);
       if (NVML_SUCCESS != result)
-         { 
+         {
          if (tracing > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "Failed to get GPU utilization for device %d: %s", devId, jitNvmlErrorString(result));
          return 0;
          }
       result = jitNvmlDeviceGetMemoryInfo(device, &memory);
       if (NVML_SUCCESS != result)
-         { 
+         {
          if (tracing > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "Failed to get memory information for device %d: %s", devId, jitNvmlErrorString(result));
          return 0;
          }
       if (tracing > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "[%16p]   device%3d: GPUutilization=%4d, freemem=%lld", vmThread, devId, utilization.gpu, memory.free);
-      
+
       if ((utilization.gpu <= gpuUtilThreshold || disableGPUHighUtilRedirect) && (utilization.gpu < gpuUtilization))
          {
          gpuUtilization = utilization.gpu;
@@ -1705,8 +1710,8 @@ static int selectGPUDevice(J9VMThread *vmThread, int tracing, unsigned long long
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "[%16p] GPUdevice is not selected due to high utilization", vmThread);
          }
       }
-   
-   return foundDevice ? deviceId : -1; 
+
+   return foundDevice ? deviceId : -1;
    }
 
 static CudaInfo *
@@ -1717,7 +1722,7 @@ initGPUData(int trace, int ptxSourceID, uint8_t *startPC, bool enforceGPU)
 
    char *methodSignature = gpuMetaData->methodSignature;
    int lineNumber = (gpuMetaData->lineNumberArray)[ptxSourceID];
-   
+
    int deviceId = 0;  //default device number if multiple GPU is disabled or unavailable
    unsigned long long availableMemory = 0;
    static bool disableMultipleGPU = (feGetEnv("TR_disableMultipleGPU") ? true : false) || !enableMultiGPU;
@@ -1741,7 +1746,7 @@ initGPUData(int trace, int ptxSourceID, uint8_t *startPC, bool enforceGPU)
       {
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "[time.ms=%lld]: Redirected parallel forEach in %s at line %d to CPU", (int64_t)(currentTime()/1000), methodSignature, lineNumber);
       }
-   
+
    if (!disableMultipleGPU && (info != NULL))
       {
       info->availableMemory = availableMemory;
@@ -1750,7 +1755,7 @@ initGPUData(int trace, int ptxSourceID, uint8_t *startPC, bool enforceGPU)
    return info;
    }
 
-extern "C" CudaInfo * 
+extern "C" CudaInfo *
 regionEntryGPU(int trace, int ptxSourceID, uint8_t *startPC, TR::CodeGenerator::GPUScopeType regionType, bool enforceGPU)
    {
    if (trace > 1)
@@ -1764,7 +1769,7 @@ regionEntryGPU(int trace, int ptxSourceID, uint8_t *startPC, TR::CodeGenerator::
       }
 
    if (trace > 1)
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tCreated GPU scope handle (%p)",cudaInfo);
+      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tCreated GPU scope handle (%p)", cudaInfo);
 
    return cudaInfo;
    }
@@ -1773,30 +1778,30 @@ static int
 copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32_t elementSize, int32_t isNoCopyDtoH,
               void *startAddress, void *endAddress, bool forceCopy);
 
-int flushGPUDatatoCPU(CudaInfo *cudaInfo)
+bool flushGPUDatatoCPU(CudaInfo *cudaInfo)
    {
-   returnOnTrue(!cudaInfo,1);
-   returnOnTrue(!(cudaInfo->hashTable),1);
+   returnOnTrue(!cudaInfo, false);
+   returnOnTrue(!(cudaInfo->hashTable), false);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
    //////////////////////////////////////////////////////////////////////
-   // Copy back from GPU all data that is CPU stale 
+   // Copy back from GPU all data that is CPU stale
    //////////////////////////////////////////////////////////////////////
-   
+
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
-      if (cudaInfo->hashTable[i].hostRef != 0 
-          && cudaInfo->hashTable[i].hostRef != (void **)DELETED_HOSTREF 
+      if (cudaInfo->hashTable[i].hostRef != 0
+          && cudaInfo->hashTable[i].hostRef != (void **)DELETED_HOSTREF
           && cudaInfo->hashTable[i].deviceArray != NULL_DEVICE_PTR
           && cudaInfo->hashTable[i].deviceArray != BAD_DEVICE_PTR
           && cudaInfo->hashTable[i].valid)
          {
          cudaInfo->hashTable[i].valid = false; // invalidate GPU data
-         
+
          void *startAddress = ((char*)*(cudaInfo->hashTable[i].hostRef)) + cudaInfo->hashTable[i].cpOutStartAddressOffset;
          void *endAddress   = ((char*)*(cudaInfo->hashTable[i].hostRef)) + cudaInfo->hashTable[i].cpOutEndAddressOffset;
-         
+
          copyGPUtoHost(cudaInfo,
                        cudaInfo->hashTable[i].hostRef,
                        cudaInfo->hashTable[i].cpOutdevArray,
@@ -1808,22 +1813,22 @@ int flushGPUDatatoCPU(CudaInfo *cudaInfo)
          }
       }
 
-   return 0; 
+   return true;
    }
 
-int resetAccessModeFlags(CudaInfo *cudaInfo)
+bool resetAccessModeFlags(CudaInfo *cudaInfo)
    {
-   returnOnTrue(!cudaInfo,1);
+   returnOnTrue(!cudaInfo, false);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
    //////////////////////////////////////////////////////////////////////
    //////////////////////////////////////////////////////////////////////
-   
+
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
-      if (cudaInfo->hashTable[i].hostRef != 0 
-          && cudaInfo->hashTable[i].hostRef != (void **)DELETED_HOSTREF 
+      if (cudaInfo->hashTable[i].hostRef != 0
+          && cudaInfo->hashTable[i].hostRef != (void **)DELETED_HOSTREF
           && cudaInfo->hashTable[i].deviceArray != NULL_DEVICE_PTR
           && cudaInfo->hashTable[i].deviceArray != BAD_DEVICE_PTR)
          {
@@ -1831,20 +1836,20 @@ int resetAccessModeFlags(CudaInfo *cudaInfo)
          }
       }
 
-   return 0; 
+   return true;
    }
 
 bool freeGPUScope(CudaInfo *cudaInfo)
    {
-   returnOnTrue(!cudaInfo,1);
+   returnOnTrue(!cudaInfo, false);
 
    int tracing = cudaInfo->tracing;
 
    // free all GPU memory
    for (int32_t i = 0; i < cudaInfo->hashSize; i++)
       {
-      if (cudaInfo->hashTable[i].hostRef != 0 
-          && cudaInfo->hashTable[i].hostRef != (void **)DELETED_HOSTREF 
+      if (cudaInfo->hashTable[i].hostRef != 0
+          && cudaInfo->hashTable[i].hostRef != (void **)DELETED_HOSTREF
           && cudaInfo->hashTable[i].deviceArray != NULL_DEVICE_PTR
           && cudaInfo->hashTable[i].deviceArray != BAD_DEVICE_PTR)
          {
@@ -1855,14 +1860,14 @@ bool freeGPUScope(CudaInfo *cudaInfo)
 
          // TODO: add error handling here
          CUresult res = jitCuMemFree(cudaInfo->hashTable[i].cpOutdevArray);
-         
+
          if (res != CUDA_SUCCESS && tracing > 1)
             {
             TR_VerboseLog::writeLine(TR_Vlog_GPU,"\terror de-allocating GPU memory. Host: %p, Device: %p (%p)", *(cudaInfo->hashTable[i].hostRef), cudaInfo->hashTable[i].cpOutdevArray, cudaInfo);
             }
          }
       }
-   
+
    // free GPU memory used for exception info
    if (cudaInfo->exceptionPointer != NULL_DEVICE_PTR)
       {
@@ -1870,7 +1875,7 @@ bool freeGPUScope(CudaInfo *cudaInfo)
          {
          TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tFree GPU Exception memory %p (%p)", cudaInfo->exceptionPointer, cudaInfo);
          }
-      
+
       CUresult res = jitCuMemFree(cudaInfo->exceptionPointer);
 
       if (res != CUDA_SUCCESS && tracing > 1)
@@ -1882,9 +1887,6 @@ bool freeGPUScope(CudaInfo *cudaInfo)
    //////////////////////////////////////////////////////////////////////
    // Free hash table and cudaInfo handle
    //////////////////////////////////////////////////////////////////////
-
-   bool failedGPUSession = isGPUFailed(cudaInfo);
-
    if (cudaInfo)
       {
       if (cudaInfo->hashTable)
@@ -1894,18 +1896,20 @@ bool freeGPUScope(CudaInfo *cudaInfo)
       TR_Memory::jitPersistentFree(cudaInfo);
       }
 
-   return failedGPUSession;
+   return true;
    }
 
+#define REGION_EXIT_GPU_SUCCESS 0
+#define REGION_EXIT_GPU_FAILED 1
 extern "C" int
 regionExitGPU(CudaInfo *cudaInfo, uint8_t *startPC, int ptxSourceID, void **liveRef)
    {
-   returnOnTrue(!cudaInfo, 1);
+   returnOnTrue(!cudaInfo, REGION_EXIT_GPU_FAILED);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
    int tracing = cudaInfo->tracing;
-   bool failedGPUSession = isGPUFailed(cudaInfo);
+   bool failedGPUSession = checkForGPUFailure(cudaInfo);
 
    if (tracing > 1)
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tEntered regionExitGPU method (%p) - %p", cudaInfo, liveRef);
@@ -1915,7 +1919,7 @@ regionExitGPU(CudaInfo *cudaInfo, uint8_t *startPC, int ptxSourceID, void **live
       {
       flushGPUDatatoCPU(cudaInfo);
       }
-   
+
    /*
     * In the naturalLoopScope case, regionExitGPU is the last call that uses cudaInfo.
     * cudaInfo and the allocated GPU device arrays can be freed at this point.
@@ -1925,12 +1929,15 @@ regionExitGPU(CudaInfo *cudaInfo, uint8_t *startPC, int ptxSourceID, void **live
       freeGPUScope(cudaInfo);
       }
 
-   return (failedGPUSession ? 1 : 0);
+   return (failedGPUSession ? REGION_EXIT_GPU_FAILED : REGION_EXIT_GPU_SUCCESS);
    }
 
-extern "C" int flushGPU(CudaInfo *cudaInfo, int blockId) 
+#define FLUSH_GPU_SUCCESS 0
+#define FLUSH_GPU_FAILED 1
+extern "C" int
+flushGPU(CudaInfo *cudaInfo, int blockId)
    {
-   returnOnTrue(!cudaInfo, 1);
+   returnOnTrue(!cudaInfo, FLUSH_GPU_FAILED);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
@@ -1940,21 +1947,21 @@ extern "C" int flushGPU(CudaInfo *cudaInfo, int blockId)
      TR_VerboseLog::writeLine(TR_Vlog_GPU, "Flushing GPU at block %d (%p)", blockId, cudaInfo);
 
    flushGPUDatatoCPU(cudaInfo);
-   return 0;
+   return FLUSH_GPU_SUCCESS;
    }
 
 extern "C" CUdeviceptr
-copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t accessMode, int32_t isNoCopyHtoD, int32_t isNoCopyDtoH, 
+copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t accessMode, int32_t isNoCopyHtoD, int32_t isNoCopyDtoH,
           void *startAddressHtoD, void *endAddressHtoD, void *startAddressDtoH, void *endAddressDtoH)
    {
-   returnOnTrue(!cudaInfo,NULL_DEVICE_PTR);
-   returnOnTrue(isGPUFailed(cudaInfo),NULL_DEVICE_PTR);
+   returnOnTrue(!cudaInfo, NULL_DEVICE_PTR);
+   returnOnTrue(checkForGPUFailure(cudaInfo), NULL_DEVICE_PTR);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
    int tracing = cudaInfo->tracing;
 
-   if (hostRef == NULL) 
+   if (hostRef == NULL)
       {
       returnOnTrue(captureJITError("copyToGPU - host array pointer is NULL", cudaInfo, tracing > 1), NULL_DEVICE_PTR);
       }
@@ -1978,7 +1985,7 @@ copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t acces
    bool doAllocate = false;
    bool doCopy = false;
 
-   if (parm_entry == NULL) 
+   if (parm_entry == NULL)
       {
       doAllocate = true;
       doCopy = true;
@@ -2013,7 +2020,7 @@ copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t acces
       offset = ((char*)startAddressHtoD - (char*)*hostRef) - OBJECT_HEADER_SIZE;
       }
 
-   if (doAllocate) 
+   if (doAllocate)
       {
       size_t arrayNumBytes = (size_t)arrayLength*elementSize + OBJECT_HEADER_SIZE;
       size_t allocNumBytes = arrayNumBytes + HEADER_PADDING;
@@ -2053,7 +2060,7 @@ copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t acces
    parm_entry->cpOutdevArray      = deviceArray;
    parm_entry->cpOutElementSize   = elementSize;
    parm_entry->cpOutIsNoCopyDtoH &= isNoCopyDtoH; //clears the setting if the array needs to be copied back
-   
+
    //NULL start/end address is used to indicate that the entire array should be copied. Offsets are set to
    //point to the start and end of the array data in this case
    if (!startAddressDtoH || !endAddressDtoH)
@@ -2069,7 +2076,7 @@ copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t acces
 
    if (doCopy)
       {
-      if (tracing > 1) 
+      if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tperforming a copy to GPU %d bytes: %p -> %p (%p)",transNumBytes,*hostRef,deviceArray,cudaInfo);
 
       CUresult result;
@@ -2111,7 +2118,7 @@ copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t acces
          if (tracing > 0)
             TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tnon-trivial array access");
 
-         returnOnTrue(captureJITError("copyToGPU - non-trivial array access", cudaInfo, tracing > 1), BAD_DEVICE_PTR);   // TODO: better handling helper error conditions
+         returnOnTrue(captureJITError("copyToGPU - non-trivial array access", cudaInfo, tracing > 1), BAD_DEVICE_PTR);
          }
       }
 
@@ -2133,32 +2140,34 @@ copyToGPU(CudaInfo *cudaInfo, void **hostRef, int32_t elementSize, int32_t acces
    return deviceArray;
    }
 
+#define COPY_GPU_TO_HOST_SUCCESS 0
+#define COPY_GPU_TO_HOST_FAILED 1
 static int
 copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32_t elementSize, int32_t isNoCopyDtoH,
             void *startAddress, void *endAddress, bool forceCopy)
    {
-   returnOnTrue(!cudaInfo, 0);
+   returnOnTrue(!cudaInfo, COPY_GPU_TO_HOST_FAILED);
 
    // if forcing the copy, ignore error state
    if (!forceCopy)
-      returnOnTrue(isGPUFailed(cudaInfo), 0);
+      returnOnTrue(checkForGPUFailure(cudaInfo), COPY_GPU_TO_HOST_FAILED);
 
    int tracing = cudaInfo->tracing;
 
-   if (hostRef == NULL) 
+   if (hostRef == NULL)
       {
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "\thost array is NULL");
 
-      returnOnTrue(captureJITError("copyGPUtoHost - host array pointer is NULL", cudaInfo, tracing > 1), 0);   // TODO: better handling helper error conditions
+      returnOnTrue(captureJITError("copyGPUtoHost - host array pointer is NULL", cudaInfo, tracing > 1), COPY_GPU_TO_HOST_FAILED);
       }
 
-   if ((*hostRef) == NULL) 
+   if ((*hostRef) == NULL)
       {
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "\thost array is NULL");
 
-      returnOnTrue(captureJITError("copyGPUtoHost - host array is NULL", cudaInfo, tracing > 1), 0);   // TODO: better handling helper error conditions
+      returnOnTrue(captureJITError("copyGPUtoHost - host array is NULL", cudaInfo, tracing > 1), COPY_GPU_TO_HOST_FAILED);
       }
 
    double time;
@@ -2190,26 +2199,26 @@ copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32
 
    if (parm_entry == NULL)
       {
-      returnOnTrue(captureJITError("copyGPUtoHost - hashtable entry doesn't exist", cudaInfo, tracing > 1), 0);
+      returnOnTrue(captureJITError("copyGPUtoHost - hashtable entry doesn't exist", cudaInfo, tracing > 1), COPY_GPU_TO_HOST_FAILED);
       }
 
    CUdeviceptr deviceArrayInHash = parm_entry->deviceArray;
    bool isPinned = parm_entry->accessMode & ACCESS_PINNED;
 
    // do copy only if (entry not valid OR overridden by forceCopy) AND data is modified in the GPU
-   bool doCopy = ((!parm_entry->valid || forceCopy) && isNoCopyDtoH == 0)                       
+   bool doCopy = ((!parm_entry->valid || forceCopy) && isNoCopyDtoH == 0)
                  && (deviceArrayInHash != NULL_DEVICE_PTR) && (deviceArrayInHash != BAD_DEVICE_PTR); // only when pointers are valid
 
-   if (doCopy) 
+   if (doCopy)
       {
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tCopy out %d bytes: %p -> %p",numBytes,deviceArray + offset + (isalign ? HEADER_PADDING : 0),(char*)*hostRef + offset);
 
-      CUresult result = 
+      CUresult result =
          !disableAsyncOps ? jitCuMemcpyDtoHAsync((char*)*hostRef + offset, deviceArray + offset + (isalign ? HEADER_PADDING : 0), numBytes, stream)
                                : jitCuMemcpyDtoH((char*)*hostRef + offset, deviceArray + offset + (isalign ? HEADER_PADDING : 0), numBytes);
-      returnOnTrue(captureCuError(result, cudaInfo, "copyGPUtoHost - jitCuMemcpyDtoH"), TR::CodeGenerator::GPUHelperError);
-      
+      returnOnTrue(captureCuError(result, cudaInfo, "copyGPUtoHost - jitCuMemcpyDtoH"), COPY_GPU_TO_HOST_FAILED);
+
       parm_entry->cpOutIsNoCopyDtoH = 1; //resets flag. array was copied back and does not need to be copied back again until this flag is cleared.
 
       if (isPinned)
@@ -2243,24 +2252,24 @@ copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32
 
       }
 
-   return 0;
+   return COPY_GPU_TO_HOST_SUCCESS;
    }
 
 extern "C" int
 copyFromGPU(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32_t elementSize, int32_t isNoCopyDtoH,
             void *startAddress, void *endAddress)
    {
-   returnOnTrue(!cudaInfo, 0);
-   returnOnTrue(isGPUFailed(cudaInfo), 0);
+   returnOnTrue(!cudaInfo, COPY_GPU_TO_HOST_FAILED);
+   returnOnTrue(checkForGPUFailure(cudaInfo), COPY_GPU_TO_HOST_FAILED);
 
-   return copyGPUtoHost(cudaInfo,hostRef,deviceArray,elementSize,isNoCopyDtoH,startAddress,endAddress,true);
+   return copyGPUtoHost(cudaInfo, hostRef, deviceArray, elementSize, isNoCopyDtoH, startAddress, endAddress, true);
    }
 
 extern "C" CudaInfo *
-invalidateGPU(CudaInfo *cudaInfo, void **hostRef) 
+invalidateGPU(CudaInfo *cudaInfo, void **hostRef)
    {
-   returnOnTrue(!cudaInfo,NULL);
-   returnOnTrue(isGPUFailed(cudaInfo),NULL);
+   returnOnTrue(!cudaInfo, NULL);
+   returnOnTrue(checkForGPUFailure(cudaInfo), NULL);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
@@ -2275,12 +2284,12 @@ invalidateGPU(CudaInfo *cudaInfo, void **hostRef)
 
    HashEntry* parm_entry = cudaInfoHashGet(cudaInfo, hostRef);
 
-   // if entry exists, invalidate it       
+   // if entry exists, invalidate it
    if (parm_entry != NULL)
       {
       parm_entry->valid = false;
       }
-   
+
    return cudaInfo;
    }
 
@@ -2288,15 +2297,15 @@ extern "C" int
 getStateGPU(CudaInfo *cudaInfo, uint8_t *startPC)
    {
    // TODO: pass tracing level outside cudaInfo so can print if required
-   returnOnTrue(!cudaInfo,GPU_EXEC_FAIL_RECOVERABLE); 
+   returnOnTrue(!cudaInfo, GPU_EXEC_FAIL_RECOVERABLE);
 
    int tracing = cudaInfo->tracing;
    int returnValue = GPU_EXEC_SUCCESS;
 
-   if (isGPUFailed(cudaInfo)) 
+   if (checkForGPUFailure(cudaInfo))
       {
       if (tracing > 1)
-         TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tgetStateGPU called: session failure-recoverable (%p)",cudaInfo);
+         TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tgetStateGPU called: session failure-recoverable (%p)", cudaInfo);
 
       if (tracing > 0)
          {
@@ -2327,8 +2336,8 @@ getStateGPU(CudaInfo *cudaInfo, uint8_t *startPC)
    else
       {
       if (tracing > 1)
-         TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tgetStateGPU called: session successful (%p)",cudaInfo);
-      
+         TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tgetStateGPU called: session successful (%p)", cudaInfo);
+
       // returnValue will keep the default of GPU_EXEC_SUCCESS in this case.
       }
 
@@ -2348,7 +2357,8 @@ getStateGPU(CudaInfo *cudaInfo, uint8_t *startPC)
 // NUMEXTRAPARMS is set to 3. 2 extra parms for loop range and 1 extra parm is for exceptionKind in launchKernel.
 #define NUMEXTRAPARMS    3
 
-extern "C" void** allocateGPUKernelParms(int trace, int argCount)
+extern "C" void**
+allocateGPUKernelParms(int trace, int argCount)
    {
    //allocate space for the GPU parameters along with space for the extra parameters
    void **args = (void **)TR_Memory::jitPersistentAlloc(sizeof(void *)*(argCount + NUMEXTRAPARMS), TR_Memory::GPUHelpers);
@@ -2356,25 +2366,26 @@ extern "C" void** allocateGPUKernelParms(int trace, int argCount)
    if (!args)
       {
       if (trace > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tFAILED to allocate persistent memory for GPU args array.");
-      return 0;
+      return NULL;
       }
    else
       {
-      if (trace > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tAllocated %d parms + %d parms for GPU args array",argCount,NUMEXTRAPARMS);
+      if (trace > 1) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tAllocated %d parms + %d parms for GPU args array", argCount, NUMEXTRAPARMS);
       }
 
    return args;
    }
 
-extern "C" int launchGPUKernel(CudaInfo *cudaInfo, int startInclusive, int endExclusive, int argCount, void **args, int kernelId, uint8_t *startPC, int hasExceptionChecks)
+extern "C" int
+launchGPUKernel(CudaInfo *cudaInfo, int startInclusive, int endExclusive, int argCount, void **args, int kernelId, uint8_t *startPC, int hasExceptionChecks)
    {
    if (!cudaInfo)
       {
       if (args) TR_Memory::jitPersistentFree(args);
       return TR::CodeGenerator::GPULaunchError;
       }
-   
-   returnOnTrue(isGPUFailed(cudaInfo), 0);
+
+   returnOnTrue(checkForGPUFailure(cudaInfo), TR::CodeGenerator::GPUHelperError);
 
    double time;
    TR::CodeGenerator::GPUResult result;
@@ -2390,7 +2401,7 @@ extern "C" int launchGPUKernel(CudaInfo *cudaInfo, int startInclusive, int endEx
    if (tracing > 1)
       {
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tlaunchGPUKernel: start=%d end=%d range=%lld argCount=%d", startInclusive, endExclusive, range, argCount);
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tlaunchGPUKernel: kernelID=%d startPC=%p", kernelId, startPC); 
+      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tlaunchGPUKernel: kernelID=%d startPC=%p", kernelId, startPC);
       }
 
    if (range <= 0)
@@ -2424,7 +2435,7 @@ extern "C" int launchGPUKernel(CudaInfo *cudaInfo, int startInclusive, int endEx
    int blockDimX = (range > 1024) ? 1024 : ((range + 31) / 32) * 32;
    int blockDimY = 1;
    int blockDimZ = 1;
-   int gridDimX = (range % blockDimX) == 0 ? (range / blockDimX) : (range / blockDimX) + 1; 
+   int gridDimX = (range % blockDimX) == 0 ? (range / blockDimX) : (range / blockDimX) + 1;
    int gridDimY = 1;
    int gridDimZ = 1;
 
