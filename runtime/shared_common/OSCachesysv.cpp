@@ -2667,7 +2667,7 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_OSC_Sysv_restoreFromSnapshot_getCacheDirFailed();
-		OSC_ERR_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		rc = -1;
 		goto done;
 	}

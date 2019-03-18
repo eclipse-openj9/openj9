@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -653,7 +653,7 @@ j9shr_destroy_all_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA g
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_all_snapshot_getCacheDirFailed();
-		CLM_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
+		/* NLS meesge has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		return -1;
 	}
 	j9tty_printf(PORTLIB, "\n");
@@ -975,7 +975,7 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_snapshot_getCacheDirFailed();
-		CLM_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		returnVal = J9SH_DESTROYED_NONE;
 		goto done;
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,6 +69,7 @@ void j9shr_jvmPhaseChange(J9VMThread* currentThread, UDATA phase);
 void j9shr_storeGCHints(J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, BOOLEAN forceReplace);
 IDATA j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2);
 const U_8* storeStartupHintsToSharedCache(J9VMThread* currentThread);
+IDATA j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType);
 
 typedef struct J9SharedClassesHelpText {
 	const char* option;

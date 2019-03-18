@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -335,7 +335,14 @@ j9shmem_handle_stat(struct J9PortLibrary *portLibrary, struct j9shmem_handle *ha
  * @param[out] buffer Pointer to a buffer to hold the returned path
  * @param[in] length the length of the buffer
  *
- * Returns -1 for error, >=0 for success
+ * @return 0 for success
+ * J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW The cache directory is too long
+ * J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME Cannot get the home directory
+ * J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW The home directory is too long
+ * J9PORT_ERROR_SHMEM_GET_DIR_HOME_ON_NFS The home directory is on network file system
+ * J9PORT_ERROR_SHMEM_GET_DIR_CANNOT_STAT_HOME Failed to stat the home directory
+ * J9PORT_ERROR_SHMEM_NOSPACE Cannot allocate native memory
+ *  
  */
 intptr_t
 j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t length)
