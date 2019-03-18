@@ -473,13 +473,26 @@ def set_artifactory_config() {
     if (ARTIFACTORY_SERVER) {
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
         env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+        env.JENKINS_DOMAIN = get_jenkins_domain()
         // Set Creds to env so that the parent pipeline can retireve them.
         env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+        echo "JENKINS_DOMAIN: ${JENKINS_DOMAIN}"
     }
+}
+
+def get_jenkins_domain() {
+    String regex = env.JENKINS_URL
+    def m = regex =~ /:\/\/(.*)\/?/
+    def match = m[0][1]
+    def domainName = "undefined"
+    if (match) {
+        domainName = match
+    }
+    return domainName
 }
 
 def set_restart_timeout() {
