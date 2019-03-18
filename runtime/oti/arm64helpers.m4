@@ -82,23 +82,77 @@ define({CALL_C_WITH_VMTHREAD},{
 	CALL_DIRECT($1)
 })
 
-dnl No need to save/restore D8-D31 - the stack walker will never need to read
+define({SAVE_C_VOLATILE_REGS},{
+	stp x0,x1,JIT_GPR_SAVE_SLOT(0)
+	stp x2,x3,JIT_GPR_SAVE_SLOT(2)
+	stp x4,x5,JIT_GPR_SAVE_SLOT(4)
+	stp x6,x7,JIT_GPR_SAVE_SLOT(6)
+	stp x8,x9,JIT_GPR_SAVE_SLOT(8)
+	stp x10,x11,JIT_GPR_SAVE_SLOT(10)
+	stp x12,x13,JIT_GPR_SAVE_SLOT(12)
+	stp x14,x15,JIT_GPR_SAVE_SLOT(14)
+	stp x16,x17,JIT_GPR_SAVE_SLOT(16)
+	str x18,JIT_GPR_SAVE_SLOT(18)
+	stp d0,d1,JIT_FPR_SAVE_SLOT(0)
+	stp d2,d3,JIT_FPR_SAVE_SLOT(2)
+	stp d4,d5,JIT_FPR_SAVE_SLOT(4)
+	stp d6,d7,JIT_FPR_SAVE_SLOT(6)
+	add x15, sp, JIT_FPR_SAVE_OFFSET(16)
+	stp d16,d17,[x15,#0]
+	stp d18,d19,[x15,#16]
+	stp d20,d21,[x15,#32]
+	stp d22,d23,[x15,#48]
+	stp d24,d25,[x15,#64]
+	stp d26,d27,[x15,#80]
+	stp d28,d29,[x15,#96]
+	stp d30,d31,[x15,#112]
+})
+
+define({RESTORE_C_VOLATILE_REGS},{
+	ldp d0,d1,JIT_FPR_SAVE_SLOT(0)
+	ldp d2,d3,JIT_FPR_SAVE_SLOT(2)
+	ldp d4,d5,JIT_FPR_SAVE_SLOT(4)
+	ldp d6,d7,JIT_FPR_SAVE_SLOT(6)
+	add x15, sp, JIT_FPR_SAVE_OFFSET(16)
+	ldp d16,d17,[x15,#0]
+	ldp d18,d19,[x15,#16]
+	ldp d20,d21,[x15,#32]
+	ldp d22,d23,[x15,#48]
+	ldp d24,d25,[x15,#64]
+	ldp d26,d27,[x15,#80]
+	ldp d28,d29,[x15,#96]
+	ldp d30,d31,[x15,#112]
+	ldp x0,x1,JIT_GPR_SAVE_SLOT(0)
+	ldp x2,x3,JIT_GPR_SAVE_SLOT(2)
+	ldp x4,x5,JIT_GPR_SAVE_SLOT(4)
+	ldp x6,x7,JIT_GPR_SAVE_SLOT(6)
+	ldp x8,x9,JIT_GPR_SAVE_SLOT(8)
+	ldp x10,x11,JIT_GPR_SAVE_SLOT(10)
+	ldp x12,x13,JIT_GPR_SAVE_SLOT(12)
+	ldp x14,x15,JIT_GPR_SAVE_SLOT(14)
+	ldp x16,x17,JIT_GPR_SAVE_SLOT(16)
+	ldr x18,JIT_GPR_SAVE_SLOT(18)
+})
+
+dnl No need to save/restore d8-15 - the stack walker will never need to read
 dnl or modify them (no preserved FPRs in the JIT private linkage).
 
-dnl To be filled
-define({SAVE_C_VOLATILE_REGS},{
-})
-
-dnl To be filled
-define({RESTORE_C_VOLATILE_REGS},{
-})
-
-dnl To be filled
 define({SAVE_C_NONVOLATILE_REGS},{
+	str x19,JIT_GPR_SAVE_SLOT(19)
+	stp x20,x21,JIT_GPR_SAVE_SLOT(20)
+	stp x22,x23,JIT_GPR_SAVE_SLOT(22)
+	stp x24,x25,JIT_GPR_SAVE_SLOT(24)
+	stp x26,x27,JIT_GPR_SAVE_SLOT(26)
+	stp x28,x29,JIT_GPR_SAVE_SLOT(28)
 })
 
-dnl To be filled
 define({RESTORE_C_NONVOLATILE_REGS},{
+	ldr x19,JIT_GPR_SAVE_SLOT(19)
+	ldp x20,x21,JIT_GPR_SAVE_SLOT(20)
+	ldp x22,x23,JIT_GPR_SAVE_SLOT(22)
+	ldp x24,x25,JIT_GPR_SAVE_SLOT(24)
+	ldp x26,x27,JIT_GPR_SAVE_SLOT(26)
+	ldp x28,x29,JIT_GPR_SAVE_SLOT(28)
 })
 
 define({SAVE_ALL_REGS},{
@@ -106,17 +160,32 @@ define({SAVE_ALL_REGS},{
 	SAVE_C_NONVOLATILE_REGS
 })
 
-dnl To be filled
-define({SAVE_PRESERVED_REGS},{
-})
-
 define({RESTORE_ALL_REGS},{
 	RESTORE_C_VOLATILE_REGS
 	RESTORE_C_NONVOLATILE_REGS
 })
 
-dnl To be filled
+define({SAVE_PRESERVED_REGS},{
+	str x19,JIT_GPR_SAVE_SLOT(19)
+	stp x20,x21,JIT_GPR_SAVE_SLOT(20)
+	stp x22,x23,JIT_GPR_SAVE_SLOT(22)
+	stp x24,x25,JIT_GPR_SAVE_SLOT(24)
+	stp x26,x27,JIT_GPR_SAVE_SLOT(26)
+	stp x28,x29,JIT_GPR_SAVE_SLOT(28)
+})
+
 define({RESTORE_PRESERVED_REGS},{
+	ldr x19,JIT_GPR_SAVE_SLOT(19)
+	ldp x20,x21,JIT_GPR_SAVE_SLOT(20)
+	ldp x22,x23,JIT_GPR_SAVE_SLOT(22)
+	ldp x24,x25,JIT_GPR_SAVE_SLOT(24)
+	ldp x26,x27,JIT_GPR_SAVE_SLOT(26)
+	ldp x28,x29,JIT_GPR_SAVE_SLOT(28)
+})
+
+define({BRANCH_VIA_VMTHREAD},{
+	ldr x0,[J9VMTHREAD,{#}$1]
+	br x0
 })
 
 define({SWITCH_TO_JAVA_STACK},{ldr J9SP,[J9VMTHREAD,{#}J9TR_VMThread_sp]})
