@@ -44,7 +44,7 @@ import org.testng.annotations.BeforeClass;
  * 5) export JDK_VERSION=Valhalla
  * 6) export SPEC=linux_x86-64_cmprssptrs
  * 7) export BUILD_LIST=functional/Valhalla
- * 8) export AUTO_DETECT=off
+ * 8) export AUTO_DETECT=false
  * 9) export JDK_IMPL=openj9
  * 10) make -f run_configure.mk && make compile && make _sanity
  */
@@ -170,6 +170,9 @@ public class ValueTypeTests {
 		
 		assertEquals(getX.invoke(point2D), xNew);
 		assertEquals(getY.invoke(point2D), yNew);
+		
+		assertEquals(getFieldOffset(point2DClass, "x"), 4);
+		assertEquals(getFieldOffset(point2DClass, "y"), 8);
 	}
 
 	/*
@@ -241,6 +244,9 @@ public class ValueTypeTests {
 		point2D = withJGeneric.invoke(point2D, j);
 		assertEquals(getDGeneric.invoke(point2D), d);
 		assertEquals(getJGeneric.invoke(point2D), j);
+
+		assertEquals(getFieldOffset(point2DComplexClass, "d"), 8);
+		assertEquals(getFieldOffset(point2DComplexClass, "j"), 16);
 	}
 
 	/*
@@ -298,6 +304,9 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(getSt.invoke(line2D)), yNew);
 		assertEquals(getX.invoke(getEn.invoke(line2D)), x2New);
 		assertEquals(getY.invoke(getEn.invoke(line2D)), y2New);
+		
+		assertEquals(getFieldOffset(line2DClass, "st"), 4);
+		assertEquals(getFieldOffset(line2DClass, "en"), 8);
 	}
 	
 	/*
@@ -355,6 +364,8 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(getFlatSt.invoke(line2D)), yNew);
 		assertEquals(getX.invoke(getFlatEn.invoke(line2D)), x2New);
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D)), y2New);
+		assertEquals(getFieldOffset(flattenedLine2DClass, "st"), 4);
+		assertEquals(getFieldOffset(flattenedLine2DClass, "en"), 12);
 	}
 
 	/*
@@ -683,6 +694,10 @@ public class ValueTypeTests {
 		MethodHandle[][] getterAndWither = {{getV1, withV1}, {getV2, withV2}, {getV3, withV3}};
 		Object triangle2D = createTriangle2D(defaultTrianglePositions);
 		checkFieldAccessMHOfAssortedType(getterAndWither, triangle2D, fields, true);
+		
+		assertEquals(getFieldOffset(triangle2DClass, "v1"), 4);
+		assertEquals(getFieldOffset(triangle2DClass, "v2"), 20);
+		assertEquals(getFieldOffset(triangle2DClass, "v3"), 36);
 	}
 
 	/*
@@ -710,6 +725,8 @@ public class ValueTypeTests {
 
 		valueLong = withLong.invoke(valueLong, jNew);
 		assertEquals(getLong.invoke(valueLong), jNew);
+		
+		assertEquals(getFieldOffset(valueLongClass, "j"), 8);
 	}
 
 	/*
@@ -737,6 +754,8 @@ public class ValueTypeTests {
 
 		valueInt = withInt.invoke(valueInt, iNew);
 		assertEquals(getInt.invoke(valueInt), iNew);
+		
+		assertEquals(getFieldOffset(valueIntClass, "i"), 4);
 	}
 
 	/*
@@ -765,6 +784,8 @@ public class ValueTypeTests {
 
 		valueDouble = withDouble.invoke(valueDouble, dNew);
 		assertEquals(getDouble.invoke(valueDouble), dNew);
+		
+		assertEquals(getFieldOffset(valueDoubleClass, "d"), 8);
 	}
 
 	/*
@@ -793,6 +814,8 @@ public class ValueTypeTests {
 
 		valueFloat = withFloat.invoke(valueFloat, fNew);
 		assertEquals(getFloat.invoke(valueFloat), fNew);
+		
+		assertEquals(getFieldOffset(valueFloatClass, "f"), 4);
 	}
 
 	/*
@@ -823,6 +846,8 @@ public class ValueTypeTests {
 
 		valueObject = withObject.invoke(valueObject, valNew);
 		assertEquals(getObject.invoke(valueObject), valNew);
+		
+		assertEquals(getFieldOffset(valueObjectClass, "val"), 4);
 	}
 
 	/*
@@ -860,6 +885,14 @@ public class ValueTypeTests {
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(assortedValueWithLongAlignmentClass, fields);
 		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, fields);
 		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithLongAlignment, fields, true);
+		
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "l"), 4);
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "d"), 12);
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "o"), 24);
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "point"), 28);
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "line"), 36);
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "i"), 52);
+		assertEquals(getFieldOffset(assortedValueWithLongAlignmentClass, "tri"), 56);
 	}
 
 	/*
@@ -898,6 +931,14 @@ public class ValueTypeTests {
 		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithLongAlignmentClass, fields);
 		Object assortedRefWithLongAlignment = createAssorted(makeAssortedRefWithLongAlignment, fields);
 		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithLongAlignment, fields, false);
+		
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "l"), 4);
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "d"), 12);
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "o"), 24);
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "point"), 28);
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "line"), 36);
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "i"), 52);
+		assertEquals(getFieldOffset(assortedRefWithLongAlignmentClass, "tri"), 56);
 	}
 
 	/*
@@ -937,6 +978,13 @@ public class ValueTypeTests {
 
 		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, fields);
 		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithObjectAlignment, fields, true);
+		
+		assertEquals(getFieldOffset(assortedValueWithObjectAlignmentClass, "o"), 4);
+		assertEquals(getFieldOffset(assortedValueWithObjectAlignmentClass, "tri"), 8);
+		assertEquals(getFieldOffset(assortedValueWithObjectAlignmentClass, "point"), 56);
+		assertEquals(getFieldOffset(assortedValueWithObjectAlignmentClass, "line"), 64);
+		assertEquals(getFieldOffset(assortedValueWithObjectAlignmentClass, "i"), 80);
+		assertEquals(getFieldOffset(assortedValueWithObjectAlignmentClass, "f"), 84);
 	}
 
 	/*
@@ -975,6 +1023,13 @@ public class ValueTypeTests {
 
 		Object assortedRefWithObjectAlignment = createAssorted(makeAssortedRefWithObjectAlignment, fields);
 		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithObjectAlignment, fields, false);
+		
+		assertEquals(getFieldOffset(assortedRefWithObjectAlignmentClass, "o"), 8);
+		assertEquals(getFieldOffset(assortedRefWithObjectAlignmentClass, "tri"), 12);
+		assertEquals(getFieldOffset(assortedRefWithObjectAlignmentClass, "point"), 60);
+		assertEquals(getFieldOffset(assortedRefWithObjectAlignmentClass, "line"), 68);
+		assertEquals(getFieldOffset(assortedRefWithObjectAlignmentClass, "i"), 84);
+		assertEquals(getFieldOffset(assortedRefWithObjectAlignmentClass, "f"), 88);
 	}
 
 	/*
@@ -1011,6 +1066,13 @@ public class ValueTypeTests {
 
 		Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, fields);
 		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithSingleAlignment, fields, true);
+		
+		assertEquals(getFieldOffset(assortedValueWithSingleAlignmentClass, "tri"), 4);
+		assertEquals(getFieldOffset(assortedValueWithSingleAlignmentClass, "point"), 52);
+		assertEquals(getFieldOffset(assortedValueWithSingleAlignmentClass, "line"), 60);
+		assertEquals(getFieldOffset(assortedValueWithSingleAlignmentClass, "i"), 76);
+		assertEquals(getFieldOffset(assortedValueWithSingleAlignmentClass, "f"), 80);
+		assertEquals(getFieldOffset(assortedValueWithSingleAlignmentClass, "tri2"), 84);
 	}
 
 	/*
@@ -1047,6 +1109,13 @@ public class ValueTypeTests {
 
 		Object assortedRefWithSingleAlignment = createAssorted(makeAssortedRefWithSingleAlignment, fields);
 		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithSingleAlignment, fields, false);
+		
+		assertEquals(getFieldOffset(assortedRefWithSingleAlignmentClass, "tri"), 8);
+		assertEquals(getFieldOffset(assortedRefWithSingleAlignmentClass, "point"), 56);
+		assertEquals(getFieldOffset(assortedRefWithSingleAlignmentClass, "line"), 64);
+		assertEquals(getFieldOffset(assortedRefWithSingleAlignmentClass, "i"), 80);
+		assertEquals(getFieldOffset(assortedRefWithSingleAlignmentClass, "f"), 84);
+		assertEquals(getFieldOffset(assortedRefWithSingleAlignmentClass, "tri2"), 88);
 	}
 
 	/*
@@ -1105,6 +1174,13 @@ public class ValueTypeTests {
 		Object largeObjectValue = createAssorted(makeLargeObjectValue, largeFields);
 		checkFieldAccessMHOfAssortedType(getterAndWither, largeObjectValue, largeFields, true);
 
+		long offset = 4L;
+		for (int i = 0; i < 16; i++) {
+			String field = largeFields[i].split(":")[0];
+			assertEquals(getFieldOffset(largeObjectValueClass, field), offset);
+			offset = 4 + offset;
+		}
+		
 		/*
 		 * create MegaObject
 		 */
@@ -1138,6 +1214,13 @@ public class ValueTypeTests {
 		MethodHandle[][] megaGetterAndWither = generateGenericGetterAndWither(megaObjectClass, megaFields);
 		Object megaObject = createAssorted(makeMega, megaFields);
 		checkFieldAccessMHOfAssortedType(megaGetterAndWither, megaObject, megaFields, true);
+		
+		offset = 4L;
+		for (int i = 0; i < 16; i++) {
+			String field = megaFields[i].split(":")[0];
+			assertEquals(getFieldOffset(megaObjectClass, field), offset);
+			offset = 64 + offset;
+		}
 	}
 
 	/*
@@ -1195,6 +1278,13 @@ public class ValueTypeTests {
 
 		Object largeObjectRef = createAssorted(makeLargeObjectRef, largeFields);
 		checkFieldAccessMHOfAssortedType(getterAndSetter, largeObjectRef, largeFields, false);
+		
+		long offset = 8L;
+		for (int i = 0; i < 16; i++) {
+			String field = largeFields[i].split(":")[0];
+			assertEquals(getFieldOffset(largeRefClass, field), offset);
+			offset = 4 + offset;
+		}
 
 		/*
 		 * create MegaObject
@@ -1235,6 +1325,13 @@ public class ValueTypeTests {
 
 		Object megaObjectRef = createAssorted(makeMegaObjectRef, megaFields);
 		checkFieldAccessMHOfAssortedType(megaGetterAndSetter, megaObjectRef, megaFields, false);
+		
+		offset = 8L;
+		for (int i = 0; i < 16; i++) {
+			String field = megaFields[i].split(":")[0];
+			assertEquals(getFieldOffset(megaObjectClass, field), offset);
+			offset = 64 + offset;
+		}
 	}
 
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
