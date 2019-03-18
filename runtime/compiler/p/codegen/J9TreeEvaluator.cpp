@@ -338,8 +338,6 @@ extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::dcall]  = TR::TreeEvaluator::directCallEvaluator;
    tet[TR::acall]  = TR::TreeEvaluator::directCallEvaluator;
    tet[TR::call]   = TR::TreeEvaluator::directCallEvaluator;
-   tet[TR::iucall] = TR::TreeEvaluator::directCallEvaluator;
-   tet[TR::lucall] = TR::TreeEvaluator::directCallEvaluator;
    tet[TR::vcall]  = TR::TreeEvaluator::directCallEvaluator;
 
    tet[TR::tstart] = TR::TreeEvaluator::tstartEvaluator;
