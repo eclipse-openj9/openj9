@@ -125,7 +125,21 @@ RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm Text::CSV \
   && cpanm JSON \
   && cpanm XML::Parser
-  
+
+# Install make 4.1
+RUN cd /tmp \
+  && wget -O make-4.1.tar.gz "http://ftp.gnu.org/gnu/make/make-4.1.tar.gz" \
+  && tar xvf make-4.1.tar.gz \
+  && rm -f make-4.1.tar.gz \
+  && cd make-4.1/ \
+  && ./configure \
+  && make \
+  && make install \
+  && rm -f /usr/local/bin/gmake \
+  && ln -s /usr/local/bin/make /usr/local/bin/gmake \
+  && cd .. \
+  && rm -rf /tmp/make-4.1
+
 # Install nasm-2.13.03
 RUN cd /tmp \
   && wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.03/nasm-2.13.03.tar.gz \
