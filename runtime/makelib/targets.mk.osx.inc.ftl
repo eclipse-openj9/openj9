@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2018 IBM Corp. and others
+Copyright (c) 1998, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,9 +116,9 @@ ifdef j9vm_uma_supportsIpv6
 endif
 
 <#if uma.spec.processor.amd64>
-  CFLAGS += -DJ9HAMMER -m64
-  CXXFLAGS += -DJ9HAMMER -m64
-  CPPFLAGS += -DJ9HAMMER -m64
+  CFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CXXFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CPPFLAGS += -DJ9HAMMER -m64 -fstack-protector
 </#if>
 
 # https://stackoverflow.com/questions/21907504/how-to-compile-shared-lib-with-clang-on-osx

@@ -94,7 +94,7 @@ endif
 
 ifeq ($(HOST_BITS),64)
     CX_DEFINES+=PPC64
-    CX_FLAGS+=-q64
+    CX_FLAGS+=-q64 -qstackprotect
     # On AIX we don't expect to see any 64-bit POWER processors that don't support Graphics (gr) and Square Root (sq)
     # instructions, so we can use this more aggressive option rather than the plain -qarch=ppc64.
     CX_ARCH?=ppc64grsq
