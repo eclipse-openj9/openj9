@@ -2337,6 +2337,18 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 			if (comma) nameBuilder.append(',');
 			nameBuilder.append(t);
 			comma = true;
+/*[IF Java12]*/
+			Type[] types = t.getBounds();
+			if (types.length == 1 && types[0].equals(Object.class)) {
+				// skip in case the only bound is java.lang.Object
+			} else {
+				String prefix = " extends "; //$NON-NLS-1$
+				for (Type type : types) {
+					nameBuilder.append(prefix).append(type.getTypeName());
+					prefix = " & "; //$NON-NLS-1$
+				}
+			}
+/*[ENDIF] Java12 */
 		}
 		nameBuilder.append('>');
 	}
