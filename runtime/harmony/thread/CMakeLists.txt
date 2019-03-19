@@ -34,6 +34,16 @@ target_compile_definitions(hythr
 		-DHYTHREAD_LIBRARY_DEFINE
 )
 
+omr_add_exports(hythr
+	hythread_allocate_library
+	hythread_create_library
+	hythread_getSize
+	hythread_getVersion
+	hythread_init_library
+	hythread_isCompatible
+	hythread_startup_library
+)
+
 install(
 	TARGETS hythr
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -32,6 +32,12 @@ target_link_libraries(balloon
 		tools_agentbase
 )
 
+omr_add_exports(balloon
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS balloon
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

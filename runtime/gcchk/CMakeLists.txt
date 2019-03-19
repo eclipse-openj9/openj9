@@ -44,6 +44,8 @@ target_link_libraries(j9gcchk
 		omrgc
 )
 
+omr_add_exports(j9gcchk J9VMDllMain)
+
 install(
 	TARGETS j9gcchk
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -45,6 +45,8 @@ target_link_libraries(j9jnichk
 		j9pool
 )
 
+omr_add_exports(j9jnichk J9VMDllMain)
+
 install(
 	TARGETS j9jnichk
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

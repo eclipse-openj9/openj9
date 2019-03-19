@@ -43,6 +43,8 @@ target_link_libraries(cuda4j
 		j9util
 )
 
+include(exports.cmake)
+
 install(
 	TARGETS cuda4j
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

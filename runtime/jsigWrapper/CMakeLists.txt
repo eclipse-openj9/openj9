@@ -38,6 +38,32 @@ target_link_libraries(jsig
 
 target_include_directories(jsig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+omr_add_exports(jsig
+	signal
+	jsig_handler
+	jsig_primary_signal
+)
+if(NOT OMR_OS_WINDOWS)
+	omr_add_exports(jsig
+		sigaction
+		sigset
+		sigignore
+		bsd_signal
+		jsig_primary_sigaction
+	)
+	if(NOT OMR_OS_ZOS)
+		omr_add_exports(jsig
+			sysv_signal
+		)
+	endif()
+endif()
+if(OMR_OS_LINUX)
+	omr_add_exports(jsig
+		__sysv_signal
+		ssignal
+	)
+endif()
+
 install(
 	TARGETS jsig
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -33,6 +33,8 @@ target_link_libraries(j9shr
 		j9zip
 )
 
+omr_add_exports(j9shr J9VMDllMain)
+
 install(
 	TARGETS j9shr
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

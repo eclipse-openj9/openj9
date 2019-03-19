@@ -39,6 +39,16 @@ target_link_libraries(hyprtshim
 		j9thr
 )
 
+omr_add_exports(hyprtshim
+	hyport_allocate_library
+	hyport_create_library
+	hyport_getSize
+	hyport_getVersion
+	hyport_init_library
+	hyport_isCompatible
+	hyport_startup_library
+)
+
 install(
 	TARGETS hyprtshim
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
