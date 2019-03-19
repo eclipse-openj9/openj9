@@ -300,6 +300,40 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     *    per node.
     */
    int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 45; }
+
+   /** \brief
+    *     Sets whether decimal overflow or fixed point overflow checks should be generated for instructions which
+    *     support such by-passes.
+    *
+    *  \note
+    *     This is applicable to z15 hardware accelerated vector packed decimal operations and is typically used to
+    *     control whether the ignore overflow mask (IOM) bit is set in vector packed decimal instructions.
+    */
+   void setIgnoreDecimalOverflowException(bool v)
+      {
+      _ignoreDecimalOverflowException = v;
+      }
+
+   /** \brief
+    *     Gets whether decimal overflow or fixed point overflow checks should be generated for instructions which
+    *     support such by-passes.
+    *
+    *  \note
+    *     This is applicable to z15 hardware accelerated vector packed decimal operations and is typically used to
+    *     control whether the ignore overflow mask (IOM) bit is set in vector packed decimal instructions.
+    */
+   bool getIgnoreDecimalOverflowException()
+      {
+      return _ignoreDecimalOverflowException;
+      }
+
+   private:
+
+   /** \brief
+    *     Determines whether decimal overflow or fixed point overflow checks should be generated for instructions which
+    *     support such by-passes.
+    */
+   bool _ignoreDecimalOverflowException;
    };
 
 }

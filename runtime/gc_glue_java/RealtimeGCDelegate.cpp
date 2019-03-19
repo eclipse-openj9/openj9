@@ -93,7 +93,7 @@ MM_RealtimeGCDelegate::initialize(MM_EnvironmentBase *env)
 bool
 MM_RealtimeGCDelegate::allocateAndInitializeReferenceObjectLists(MM_EnvironmentBase *env)
 {
-	const UDATA listCount = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
+	const UDATA listCount = getReferenceObjectListCount(env);
 	Assert_MM_true(0 < listCount);
 	_extensions->referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate((sizeof(MM_ReferenceObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL == _extensions->referenceObjectLists) {
@@ -108,7 +108,7 @@ MM_RealtimeGCDelegate::allocateAndInitializeReferenceObjectLists(MM_EnvironmentB
 bool
 MM_RealtimeGCDelegate::allocateAndInitializeUnfinalizedObjectLists(MM_EnvironmentBase *env)
 {
-	const UDATA listCount = MM_HeapRegionDescriptorRealtime::getUnfinalizedObjectListCount(env);
+	const UDATA listCount = getUnfinalizedObjectListCount(env);
 	Assert_MM_true(0 < listCount);
 	MM_UnfinalizedObjectList *unfinalizedObjectLists = (MM_UnfinalizedObjectList *)env->getForge()->allocate((sizeof(MM_UnfinalizedObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL == unfinalizedObjectLists) {
@@ -132,7 +132,7 @@ MM_RealtimeGCDelegate::allocateAndInitializeUnfinalizedObjectLists(MM_Environmen
 bool
 MM_RealtimeGCDelegate::allocateAndInitializeOwnableSynchronizerObjectLists(MM_EnvironmentBase *env)
 {
-	const UDATA listCount = MM_HeapRegionDescriptorRealtime::getOwnableSynchronizerObjectListCount(env);
+	const UDATA listCount = getOwnableSynchronizerObjectListCount(env);
 	Assert_MM_true(0 < listCount);
 	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate((sizeof(MM_OwnableSynchronizerObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL == ownableSynchronizerObjectLists) {
