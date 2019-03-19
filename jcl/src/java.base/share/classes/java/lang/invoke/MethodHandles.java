@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
+import java.lang.reflect.Array;
 /*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
 /*[IF Java12]*/
@@ -3451,28 +3452,31 @@ public class MethodHandles {
 		
 		MethodHandle arrayConstructorHandle = null;
 		Class<?> componentType = arrayType.getComponentType();
-		MethodType realArrayType = MethodType.methodType(arrayType, int.class);
-		
+
 		try {
 			/* Directly look up the appropriate helper method for the given primitive type */
 			if (componentType.isPrimitive()) {
+				MethodType realArrayType = MethodType.methodType(arrayType, int.class);
 				String typeName = componentType.getCanonicalName();
 				arrayConstructorHandle = Lookup.internalPrivilegedLookup.findStatic(MethodHandles.class, typeName + "ArrayConstructor", realArrayType); //$NON-NLS-1$
 			} else {
-				/* Look up the "Object[]" case and convert the corresponding handle to the one with the correct MethodType */
-				MethodType objectArrayType = MethodType.methodType(Object[].class, int.class);
-				arrayConstructorHandle = Lookup.internalPrivilegedLookup.findStatic(MethodHandles.class, "objectArrayConstructor", objectArrayType); //$NON-NLS-1$
-				if (Object[].class != arrayType) {
-					arrayConstructorHandle = arrayConstructorHandle.cloneWithNewType(realArrayType);
-				}
+				/* The target handle wraps up Array.newInstance() to create an array with the given type.
+				 * Meanwhile, the handle has to be converted to ensure its return type remains consistent 
+				 * with the passed-in array type so as to match Reference Implementation.
+				 */
+				MethodType realArrayType = MethodType.methodType(Object.class, Class.class, int.class);
+				arrayConstructorHandle = Lookup.internalPrivilegedLookup.findStatic(Array.class, "newInstance", realArrayType); //$NON-NLS-1$
+				arrayConstructorHandle = arrayConstructorHandle.cloneWithNewType(realArrayType.changeReturnType(arrayType)).bindTo(componentType);
 			}
 		} catch(IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError("The method retrieved by lookup doesn't exit or it fails in the access checking", e); //$NON-NLS-1$
+		} catch(ClassCastException e) {
+			throw new IllegalArgumentException(e.getMessage());
 		}
 		
 		return arrayConstructorHandle;
 	}
-	
+
 	private static boolean[] booleanArrayConstructor(int arraySize) {
 		return new boolean[arraySize];
 	}
@@ -3503,10 +3507,6 @@ public class MethodHandles {
 	
 	private static double[] doubleArrayConstructor(int arraySize) {
 		return new double[arraySize];
-	}
-	
-	private static Object[] objectArrayConstructor(int arraySize) {
-		return new Object[arraySize];
 	}
 	
 	/**
