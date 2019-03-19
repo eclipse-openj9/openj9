@@ -1711,13 +1711,11 @@ typedef struct J9ModuleExtraInfo {
 	UDATA patchPathCount;
 } J9ModuleExtraInfo;
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 typedef struct J9FlattenedClassCache {
 	struct J9Class* clazz;
 	struct J9ROMNameAndSignature* nameAndSignature;
 	UDATA offset;
 } J9FlattenedClassCache;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 struct J9TranslationBufferSet;
 typedef struct J9VerboseStruct {
@@ -2946,9 +2944,7 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	struct J9FlattenedClassCache* flattenedClassCache;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9Class;
 
 /* Interface classes can never be instantiated - overload the totalInstanceSize slot to hold the iTable method count */
