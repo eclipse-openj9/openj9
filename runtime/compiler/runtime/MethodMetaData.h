@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,6 @@
 #define getFirstInternalPtrMapPinningArrayCursor getFirstInternalPtrMapPinningArrayCursorVerbose
 #define getNextInternalPtrMapPinningArrayCursor getNextInternalPtrMapPinningArrayCursorVerbose
 #define getJitRegisterMap getJitRegisterMapVerbose
-#define getJitHighWordRegisterMap getJitHighWordRegisterMapVerbose
 #define getNextDecriptionCursor getNextDecriptionCursorVerbose
 #define getJitStackSlots getJitStackSlotsVerbose
 #define getJitLiveMonitors getJitLiveMonitorsVerbose
@@ -215,18 +214,10 @@ typedef struct TR_MapIterator
 
 #define GET_BYTECODEINFO_VALUE(fourByteOffset, stackMap) (*((U_32 *)((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset))))
 
-#ifdef TR_HOST_S390
-#define GET_REGISTER_MAP_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 3*sizeof(U_32))
-#define GET_SIZEOF_STACK_MAP_HEADER(fourByteOffset) 4*sizeof(U_32) + SIZEOF_MAP_OFFSET(fourByteOffset)
-#define GET_REGISTER_SAVE_DESCRIPTION_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 2*sizeof(U_32))
-#define GET_HIGHWORD_REGISTER_MAP_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + sizeof(U_32))
-#define ADDRESS_OF_REGISTERMAP(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 3*sizeof(U_32))
-#else
 #define GET_REGISTER_MAP_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 2*sizeof(U_32))
 #define GET_SIZEOF_STACK_MAP_HEADER(fourByteOffset) 3*sizeof(U_32) + SIZEOF_MAP_OFFSET(fourByteOffset)
 #define GET_REGISTER_SAVE_DESCRIPTION_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + sizeof(U_32))
 #define ADDRESS_OF_REGISTERMAP(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 2*sizeof(U_32))
-#endif
 
 #define GET_LOW_PC_OFFSET_VALUE(fourByteOffset, stackMap) (fourByteOffset ? *((U_32 *)ADDRESS_OF_LOW_PC_OFFSET_IN_STACK_MAP(fourByteOffset, stackMap)) : *((U_16 *)ADDRESS_OF_LOW_PC_OFFSET_IN_STACK_MAP(fourByteOffset, stackMap)))
 
@@ -355,7 +346,6 @@ U_8 * getNextInternalPtrMapPinningArrayCursor(U_8 * internalPtrMapPinningArrayCu
 UDATA hasFourByteOffset(J9TR_MethodMetaData * md);
 
 U_32 getJitRegisterMap(J9TR_MethodMetaData *md, void * stackMap);
-U_32 getJitHighWordRegisterMap(J9TR_MethodMetaData *md, void * stackMap);
 U_8 * getNextDecriptionCursor(J9TR_MethodMetaData * md, void * stackMap, U_8 * jitDescriptionCursor);
 U_8 * getJitStackSlots(J9TR_MethodMetaData * metadata, void * stackMap);
 U_8 * getJitLiveMonitors(J9TR_MethodMetaData * metaData, void * stackMap);

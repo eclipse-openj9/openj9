@@ -3914,10 +3914,11 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() &&
-             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
             {
-            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
+            // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
+            // has a compare and swap fallback path
+            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);
             return true;
             }
          break;
@@ -3928,10 +3929,11 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() &&
-             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
             {
-            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
+            // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
+            // has a compare and swap fallback path
+            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);
             return true;
             }
          break;

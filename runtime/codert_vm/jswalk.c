@@ -731,18 +731,16 @@ static void walkJITFrameSlots(J9StackWalkState * walkState, U_8 * jitDescription
 static void jitWalkRegisterMap(J9StackWalkState *walkState, void *stackMap, J9JITStackAtlas *gcStackAtlas)
 {
 	UDATA registerMap = getJitRegisterMap(walkState->jitInfo, stackMap) & J9SW_REGISTER_MAP_MASK;
-	UDATA highWordRegisterMap = getJitHighWordRegisterMap(walkState->jitInfo, stackMap);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 3, "\tJIT-RegisterMap = %p\n", registerMap);
-	swPrintf(walkState, 3, "\tJIT-HighWordRegisterMap = %p\n", highWordRegisterMap);
 #endif
 
 	if (gcStackAtlas->internalPointerMap) {
 		registerMap &= ~INTERNAL_PTR_REG_MASK;
 	}
 
-	if (registerMap || highWordRegisterMap) {
+	if (registerMap) {
 		UDATA count = J9SW_POTENTIAL_SAVED_REGISTERS;
 		UDATA ** mapCursor;
 
@@ -784,75 +782,6 @@ static void jitWalkRegisterMap(J9StackWalkState *walkState, void *stackMap, J9JI
 
 #endif
 			}
-#if defined(J9VM_JIT_HIGH_WORD_REGISTERS) && defined(J9VM_GC_COMPRESSED_POINTERS)
-			else if (highWordRegisterMap & 3) {
-				UDATA compressedPointersShift = walkState->walkThread->javaVM->compressedPointersShift;
-
-				/* check low word and high word registers seperately */
-				if (highWordRegisterMap & 1) {
-					/* we have a 32-bit compressed reference living in the low word of GPR */
-					U_32* targetCompressedObject = *(((U_32 **) mapCursor) + sizeof (U_32));
-					/* decompress the low word object to a temp and pass it to the WalkFunction */
-					UDATA decompressedObject = *targetCompressedObject << compressedPointersShift;
-					j9object_t * targetDecompressedObject = (j9object_t *)(&decompressedObject);
-#ifdef J9VM_INTERP_STACKWALK_TRACING
-#ifdef J9VM_OUT_OF_PROCESS
-					U_32 oldCompressedObject = (targetCompressedObject == NULL) ? 0 : *targetCompressedObject;
-#else
-					U_32 oldCompressedObject = *targetCompressedObject;
-#endif
-					U_32 newObject;
-					swPrintf(walkState, 4, "\t\tJIT-RegisterMap-O-Slot (Low word) [%p] = 0x%x (%s)\n",REMOTE_ADDR(targetCompressedObject), oldCompressedObject, jitRegisterNames[mapCursor - ((UDATA **) &(walkState->registerEAs))]);
-#endif
-
-					walkState->objectSlotWalkFunction(walkState->walkThread, walkState, targetDecompressedObject, REMOTE_ADDR(targetDecompressedObject));
-
-					/* compress the new object in temp */
-					*targetCompressedObject = (U_32)(decompressedObject >> compressedPointersShift);
-#ifdef J9VM_INTERP_STACKWALK_TRACING
-#ifdef J9VM_OUT_OF_PROCESS
-					newObject = (targetCompressedObject == NULL) ? 0 : *targetCompressedObject;
-#else
-					newObject = *targetCompressedObject;
-#endif
-					if (oldCompressedObject != newObject) {
-						swPrintf(walkState, 4, "\t\t\t-> 0x%x\n", newObject);
-					}
-#endif
-				}
-				if (highWordRegisterMap & 2) {
-					/* we have a 32-bit compressed reference living in the high word of GPR */
-					U_32* targetCompressedObject = *( ((U_32 **) mapCursor));
-					/* decompress the high word object to a temp and pass it to the WalkFunction */
-					UDATA decompressedObject = *targetCompressedObject << compressedPointersShift;
-					j9object_t * targetDecompressedObject = (j9object_t *)(&decompressedObject);
-#ifdef J9VM_INTERP_STACKWALK_TRACING
-#ifdef J9VM_OUT_OF_PROCESS
-					U_32 oldCompressedObject = (targetCompressedObject == NULL) ? 0 : *targetCompressedObject;
-#else
-					U_32 oldCompressedObject = *targetCompressedObject;
-#endif
-					U_32 newObject;
-					swPrintf(walkState, 4, "\t\tJIT-RegisterMap-O-Slot (High word)[%p] = 0x%x (%s)\n", REMOTE_ADDR(targetCompressedObject), oldCompressedObject, jitRegisterNames[mapCursor - ((UDATA **) &(walkState->registerEAs))]);
-#endif
-
-					walkState->objectSlotWalkFunction(walkState->walkThread, walkState, targetDecompressedObject, REMOTE_ADDR(targetDecompressedObject));
-	
-					/* compress the new object in temp */
-					*targetCompressedObject = (U_32)(decompressedObject >> compressedPointersShift);
-#ifdef J9VM_INTERP_STACKWALK_TRACING
-#ifdef J9VM_OUT_OF_PROCESS
-					newObject = (targetCompressedObject == NULL) ? 0 : *targetCompressedObject;
-#else
-					newObject = *targetCompressedObject;
-#endif
-					if (oldCompressedObject != newObject) {
-						swPrintf(walkState, 4, "\t\t\t-> 0x%x\n", newObject);
-					}
-#endif
-				}
-			}
-#endif
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 			else {
 				UDATA * targetSlot = *((UDATA **) mapCursor);
@@ -869,7 +798,6 @@ static void jitWalkRegisterMap(J9StackWalkState *walkState, void *stackMap, J9JI
 			++(walkState->slotIndex);
 			--count;
 			registerMap >>= 1;
-			highWordRegisterMap >>=2;
 #ifdef J9SW_REGISTER_MAP_WALK_REGISTERS_LOW_TO_HIGH
 			++mapCursor;
 #else

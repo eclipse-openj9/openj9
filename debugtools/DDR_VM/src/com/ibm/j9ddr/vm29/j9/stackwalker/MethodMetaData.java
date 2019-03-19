@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,11 +166,6 @@ public class MethodMetaData
 	{
 		return getImpl().getJitRegisterMap(methodMetaData,stackMap);
 	}
-
-	public static U32 getJitHighWordRegisterMap(J9JITExceptionTablePointer methodMetaData, VoidPointer stackMap) throws CorruptDataException
-	{
-		return getImpl().getJitHighWordRegisterMap(methodMetaData,stackMap);		
-	}
 	
 	public static U8Pointer getNextDescriptionCursor(J9JITExceptionTablePointer metadata, VoidPointer stackMap, U8Pointer jitDescriptionCursor) throws CorruptDataException
 	{
@@ -298,8 +293,6 @@ public class MethodMetaData
 		public U8Pointer getNextDescriptionCursor(J9JITExceptionTablePointer metadata, VoidPointer stackMap,U8Pointer jitDescriptionCursor) throws CorruptDataException;
 
 		public U32 getJitRegisterMap(J9JITExceptionTablePointer methodMetaData,VoidPointer stackMap) throws CorruptDataException;
-
-		public U32 getJitHighWordRegisterMap(J9JITExceptionTablePointer methodMetaData,VoidPointer stackMap) throws CorruptDataException;
 
 		public U16 getJitNumberOfMapBytes(J9JITStackAtlasPointer sa) throws CorruptDataException;
 
@@ -529,11 +522,7 @@ public class MethodMetaData
 		
 		private U8Pointer GET_REGISTER_SAVE_DESCRIPTION_CURSOR(boolean fourByteOffset, VoidPointer stackMap)
 		{
-			if (J9ConfigFlags.arch_s390) {
-				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(U32.SIZEOF * 2);
-			} else {
-				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(U32.SIZEOF);
-			}
+			return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(U32.SIZEOF);
 		}
 
 		public U16 getJitProloguePushes(J9JITExceptionTablePointer md) throws CorruptDataException
@@ -730,11 +719,7 @@ public class MethodMetaData
 		@SuppressWarnings("unused")
 		private static U8Pointer ADDRESS_OF_REGISTERMAP(boolean fourByteOffset, U8Pointer stackMap)
 		{
-			if (J9ConfigFlags.arch_s390) {
-				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(3 * U32.SIZEOF);
-			} else {
-				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(2 * U32.SIZEOF);
-			}
+			return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(2 * U32.SIZEOF);
 		}
 		
 		private static boolean RANGE_NEEDS_FOUR_BYTE_OFFSET(Scalar s)
@@ -766,11 +751,7 @@ public class MethodMetaData
 		//#define GET_REGISTER_MAP_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 2*sizeof(U_32))
 		private static U8Pointer GET_REGISTER_MAP_CURSOR(boolean fourByteOffset, U8Pointer stackMap)
 		{
-			if (J9ConfigFlags.arch_s390) {
-				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset).add(3 * U32.SIZEOF));
-			} else {
-				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset).add(2 * U32.SIZEOF));
-			}
+			return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset).add(2 * U32.SIZEOF));
 		}
 		
 		/* Note: this differs from the native version in that nextStackMap is returned - not passed by reference */
@@ -967,15 +948,6 @@ public class MethodMetaData
 		public U32 getJitRegisterMap(J9JITExceptionTablePointer methodMetaData, VoidPointer stackMap) throws CorruptDataException
 		{
 			return U32Pointer.cast(GET_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap)).at(0);
-		}
-
-		public U32 getJitHighWordRegisterMap(J9JITExceptionTablePointer methodMetaData, VoidPointer stackMap) throws CorruptDataException
-		{
-			if (J9ConfigFlags.arch_s390) {
-				return U32Pointer.cast(GET_HIGHWORD_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap)).at(0);
-			} else {
-				return new U32(0);	
-			}
 		}		
 		
 		public U8Pointer getNextDescriptionCursor(J9JITExceptionTablePointer metadata, VoidPointer stackMap, U8Pointer jitDescriptionCursor) throws CorruptDataException
@@ -1301,12 +1273,9 @@ public class MethodMetaData
 
 						swPrintf(walkState, 6, "\tJIT-RegisterMap = {0}", registerMap);
 						tempJitDescriptionCursorForRegs = U8Pointer.cast(stackMap);
-
-						if (J9ConfigFlags.arch_s390) {
-							tempJitDescriptionCursorForRegs = tempJitDescriptionCursorForRegs.add(12); /*skip register map, register save description word and high word register map*/
-						} else {						
-							tempJitDescriptionCursorForRegs = tempJitDescriptionCursorForRegs.add(8); /*skip register map and register save description word */
-						}
+					
+						/* Skip the register map and register save description word */
+						tempJitDescriptionCursorForRegs = tempJitDescriptionCursorForRegs.add(8);
 
 						if (((walkState.jitInfo.endPC().sub(walkState.jitInfo.startPC()).gte(new UDATA(65535)) || (alignStackMaps))))
 						{
@@ -1434,16 +1403,7 @@ public class MethodMetaData
 		
 		private U8Pointer GET_REGISTER_MAP_CURSOR(boolean fourByteOffset, VoidPointer stackMap) 
 		{
-			if (J9ConfigFlags.arch_s390) {
-				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset).add(U32.SIZEOF * 3));
-			} else {
-				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset).add(U32.SIZEOF * 2));
-			}
-		}
-		
-		private static U8Pointer GET_HIGHWORD_REGISTER_MAP_CURSOR(boolean fourByteOffset, VoidPointer stackMap)
-		{
-			return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset).add(U32.SIZEOF));			
+			return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset).add(U32.SIZEOF * 2));
 		}
 
 		private U32 getNumInlinedCallSites(J9JITExceptionTablePointer methodMetaData) throws CorruptDataException

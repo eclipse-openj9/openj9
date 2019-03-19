@@ -95,10 +95,8 @@ public:
 
    virtual int32_t calculateRegisterSaveSize(TR::RealRegister::RegNum f,
                                              TR::RealRegister::RegNum l,
-                                             TR::RealRegister::RegNum fh,
-                                             TR::RealRegister::RegNum lh,
                                              int32_t &rsd,
-                                             int32_t &numInts, int32_t &numFloats, int32_t &numHigh);
+                                             int32_t &numInts, int32_t &numFloats);
 
 protected:
 

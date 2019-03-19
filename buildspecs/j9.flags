@@ -1098,13 +1098,6 @@ Only available on zOS</description>
 			<require flag="interp_nativeSupport"/>
 		</requires>
 	</flag>
-	<flag id="jit_highWordRegisters">
-		<description>Controls whether JIT supports two values in a single wide register.</description>
-		<ifRemoved>Each register can contain only a single value.</ifRemoved>
-		<requires>
-			<require flag="interp_nativeSupport"/>
-		</requires>
-	</flag>
 	<flag id="jit_ia32FixedFrame">
 		<description>Temp flag to enable IA32 fixed frame linkage</description>
 		<ifRemoved>JIT works as normal</ifRemoved>

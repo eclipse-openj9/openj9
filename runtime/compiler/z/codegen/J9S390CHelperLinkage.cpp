@@ -65,17 +65,6 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setRegisterFlag(TR::RealRegister::GPR13, Preserved);
    setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
-   if (TR::Compiler->target.is64Bit())
-      {
-      setRegisterFlag(TR::RealRegister::HPR8, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR9, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR10, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR11, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR13, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR15, Preserved);
-      }
-
 #if defined(ENABLE_PRESERVED_FPRS)
    // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
    // preserved. 
@@ -104,13 +93,6 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
       setRegisterFlag(TR::RealRegister::GPR12, Preserved);
 
-      if (TR::Compiler->target.is64Bit())
-         {
-         setRegisterFlag(TR::RealRegister::HPR6, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR7, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-         }
-
       setReturnAddressRegister(TR::RealRegister::GPR14);
       setIntegerReturnRegister(TR::RealRegister::GPR2);
       setLongReturnRegister(TR::RealRegister::GPR2);
@@ -137,8 +119,6 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       if (TR::Compiler->target.is64Bit())
          {
          setRegisterFlag(TR::RealRegister::GPR12, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR14, Preserved);
 
          setPreservedRegisterMapForGC(0x0000FF00); 
          }
@@ -283,7 +263,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
    bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof;
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
-   for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastHPR; i++)
+   for (int i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters; i++)
       {
       if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
          {

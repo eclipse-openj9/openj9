@@ -1879,16 +1879,6 @@ J9::Options::fePreProcess(void * base)
       {
       self()->setOption(TR_InlineVeryLargeCompiledMethods);
       }
-
-   // Disable HPR support in preparation for it's removal. After nearly a decade of struggles we are ready to give up
-   // on this feature due to being unable to mould it into a state where it provides general benefit. See issue #4609
-   // for a detailed justification and disucssion on this topic.
-   // 
-   // In preparation for codebase-wide deprecation of this feature, which has founds it's way into many locations, we
-   // first disable the support here such that the mere act of cleanup does not introduce unwanted problems.
-   self()->setOption(TR_DisableHighWordRA);
-   self()->setOption(TR_DisableHPRSpill);
-   self()->setOption(TR_DisableHPRUpgrade);
 #endif
 
    // On big machines we can afford to spend more time compiling

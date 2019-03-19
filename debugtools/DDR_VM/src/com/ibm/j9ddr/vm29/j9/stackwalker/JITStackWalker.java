@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1249,18 +1249,16 @@ public class JITStackWalker
 		private void jitWalkRegisterMap(WalkState walkState, VoidPointer stackMap, J9JITStackAtlasPointer gcStackAtlas) throws CorruptDataException
 		{
 			UDATA registerMap = new UDATA(getJitRegisterMap(walkState.jitInfo, stackMap).bitAnd(J9SW_REGISTER_MAP_MASK));
-			UDATA highWordRegisterMap = new UDATA(getJitHighWordRegisterMap(walkState.jitInfo, stackMap));
 
 			swPrintf(walkState, 200, "\tIn jitWalkRegisterMap. stackMap={0}, gcStackAtlas={1}", Long.toHexString(stackMap.getAddress()), Long.toHexString(gcStackAtlas.getAddress()));
 			
 			swPrintf(walkState, 3, "\tJIT-RegisterMap = {0}", registerMap);
-			swPrintf(walkState, 3, "\tJIT-HighWordRegisterMap = {0}", highWordRegisterMap);
 
 			if (gcStackAtlas.internalPointerMap().notNull()) {
 				registerMap = registerMap.bitAnd(new UDATA(INTERNAL_PTR_REG_MASK).bitNot());
 			}
 
-			if (! registerMap.eq(0) || ! highWordRegisterMap.eq(0)) {
+			if (! registerMap.eq(0)) {
 				int count = (int)J9SW_POTENTIAL_SAVED_REGISTERS;
 				int mapCursor = 0;
 
@@ -1289,54 +1287,6 @@ public class JITStackWalker
 						if (! oldObject.eq(newObject)) {
 							swPrintf(walkState, 4, "\t\t\t-> {0}\n", newObject);
 						}
-					} else if (J9BuildFlags.jit_highWordRegisters && J9BuildFlags.gc_compressedPointers && highWordRegisterMap.anyBitsIn(3)) {
-						/* check low word and high word registers separately */
-						if (highWordRegisterMap.anyBitsIn(1)) {
-							/* we have a 32-bit compressed reference living in the low word of GPR */
-							/* low word is at higher offset*/							
-							ObjectReferencePointer targetObject = ObjectReferencePointer.cast(walkState.registerEAs[mapCursor].addOffset(4));
-							J9ObjectPointer oldObject = targetObject.isNull() ? J9ObjectPointer.NULL : J9ObjectPointer.cast(targetObject.at(0));
-							J9ObjectPointer newObject;
-							swPrintf(walkState, 4, "\t\tJIT-RegisterMap-O-Slot[{0}] = {1} ({2}) (Low word)", targetObject.getHexAddress(), oldObject.getHexAddress(), jitRegisterNames[mapCursor]);
-							walkState.callBacks.objectSlotWalkFunction(walkState.walkThread, walkState, PointerPointer.cast(targetObject), VoidPointer.NULL);
-							
-							newObject = targetObject.isNull() ? J9ObjectPointer.NULL : J9ObjectPointer.cast(targetObject.at(0));
-							
-							if (! oldObject.eq(newObject)) {
-								swPrintf(walkState, 4, "\t\t\t-> {0}\n", newObject);
-							}
-							/* check high word for I-slot */
-							if (!highWordRegisterMap.anyBitsIn(2)) {	
-								U32Pointer targetSlot = U32Pointer.cast(walkState.registerEAs[mapCursor]);
-								
-								if (targetSlot.notNull()) {
-									swPrintf(walkState, 5, "\t\tJIT-RegisterMap-I-Slot[{0}] = {1} ({2}) (High word)", targetSlot.getHexAddress(), targetSlot.at(0), jitRegisterNames[mapCursor]);
-								}
-							}	
-						}
-						if (highWordRegisterMap.anyBitsIn(2)) {
-							/* we have a 32-bit compressed reference living in the high word of GPR */													
-							ObjectReferencePointer targetObject = ObjectReferencePointer.cast(walkState.registerEAs[mapCursor]);
-							J9ObjectPointer oldObject = targetObject.isNull() ? J9ObjectPointer.NULL : J9ObjectPointer.cast(targetObject.at(0));
-							J9ObjectPointer newObject;
-							swPrintf(walkState, 4, "\t\tJIT-RegisterMap-O-Slot[{0}] = {1} ({2}) (High word)", targetObject.getHexAddress(), oldObject.getHexAddress(), jitRegisterNames[mapCursor]);
-							walkState.callBacks.objectSlotWalkFunction(walkState.walkThread, walkState, PointerPointer.cast(targetObject), VoidPointer.NULL);
-							
-							newObject = targetObject.isNull() ? J9ObjectPointer.NULL : J9ObjectPointer.cast(targetObject.at(0));
-							
-							if (! oldObject.eq(newObject)) {
-								swPrintf(walkState, 4, "\t\t\t-> {0}\n", newObject);
-							}
-							
-							/* check low word for I-slot */
-							if (!highWordRegisterMap.anyBitsIn(1)) {	
-								U32Pointer targetSlot = U32Pointer.cast(walkState.registerEAs[mapCursor].addOffset(4));
-								
-								if (targetSlot.notNull()) {
-									swPrintf(walkState, 5, "\t\tJIT-RegisterMap-I-Slot[{0}] = {1} ({2}) (Low word)", targetSlot.getHexAddress(), targetSlot.at(0), jitRegisterNames[mapCursor]);
-								}
-							}								
-						}
 					} else {
 						UDATAPointer targetSlot = walkState.registerEAs[mapCursor];
 
@@ -1349,7 +1299,6 @@ public class JITStackWalker
 					++(walkState.slotIndex);
 					--count;
 					registerMap = registerMap.rightShift(1);
-					highWordRegisterMap = highWordRegisterMap.rightShift(2);
 					
 					if (J9SW_REGISTER_MAP_WALK_REGISTERS_LOW_TO_HIGH) {
 						++mapCursor;
