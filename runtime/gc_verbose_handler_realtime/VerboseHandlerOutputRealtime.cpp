@@ -25,6 +25,7 @@
 #include "CycleState.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
+#include "Heap.hpp"
 #include "VerboseHandlerRealtime.hpp"
 #include "VerboseManager.hpp"
 #include "VerboseWriterChain.hpp"
@@ -361,6 +362,7 @@ MM_VerboseHandlerOutputRealtime::handleEvent(MM_MetronomeIncrementEndEvent* even
 	/* process only if we are in a heartbeat */
 	if (0 != _heartbeatStartTime) {
 		MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(eventData->currentThread);
+		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
 
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
 
@@ -374,35 +376,35 @@ MM_VerboseHandlerOutputRealtime::handleEvent(MM_MetronomeIncrementEndEvent* even
 		_incrementStartTime = 0;
 		_minIncrementTime = OMR_MIN(incrementTime, _minIncrementTime);
 
-		_classLoadersUnloadedTotal += eventData->classLoadersUnloaded;
-		_classesUnloadedTotal += eventData->classesUnloaded;
-		_anonymousClassesUnloadedTotal += eventData->anonymousClassesUnloaded;
+		_classLoadersUnloadedTotal += extensions->globalGCStats.metronomeStats.classLoaderUnloadedCount;
+		_classesUnloadedTotal += extensions->globalGCStats.metronomeStats.classesUnloadedCount;
+		_anonymousClassesUnloadedTotal += extensions->globalGCStats.metronomeStats.anonymousClassesUnloadedCount;
 
-		_weakReferenceClearCountTotal += eventData->weakReferenceClearCount;
-		_softReferenceClearCountTotal += eventData->softReferenceClearCount;
-		_softReferenceThreshold = eventData->softReferenceThreshold;
-		_dynamicSoftReferenceThreshold = eventData->dynamicSoftReferenceThreshold;
-		_phantomReferenceClearCountTotal += eventData->phantomReferenceClearCount;
+		_weakReferenceClearCountTotal += extensions->markJavaStats._weakReferenceStats._cleared;
+		_softReferenceClearCountTotal += extensions->markJavaStats._softReferenceStats._cleared;
+		_softReferenceThreshold = extensions->getMaxSoftReferenceAge();
+		_dynamicSoftReferenceThreshold = extensions->getDynamicMaxSoftReferenceAge();
+		_phantomReferenceClearCountTotal += extensions->markJavaStats._phantomReferenceStats._cleared;
 
-		_finalizableCountTotal += eventData->finalizableCount;
+		_finalizableCountTotal += extensions->markJavaStats._unfinalizedEnqueued;
 
-		_workPacketOverflowCountTotal += eventData->workPacketOverflowCount;
-		_objectOverflowCountTotal += eventData->objectOverflowCount;
+		_workPacketOverflowCountTotal += extensions->globalGCStats.metronomeStats.getWorkPacketOverflowCount();
+		_objectOverflowCountTotal += extensions->globalGCStats.metronomeStats.getObjectOverflowCount();
 
-		_nonDeterministicSweepTotal += eventData->nonDeterministicSweepCount;
-		_nonDeterministicSweepConsecutiveMax = OMR_MAX(_nonDeterministicSweepConsecutiveMax, eventData->nonDeterministicSweepConsecutive);
-		_nonDeterministicSweepDelayMax = OMR_MAX(_nonDeterministicSweepDelayMax, eventData->nonDeterministicSweepDelay);
+		_nonDeterministicSweepTotal += extensions->globalGCStats.metronomeStats.nonDeterministicSweepCount;
+		_nonDeterministicSweepConsecutiveMax = OMR_MAX(_nonDeterministicSweepConsecutiveMax, extensions->globalGCStats.metronomeStats.nonDeterministicSweepConsecutive);
+		_nonDeterministicSweepDelayMax = OMR_MAX(_nonDeterministicSweepDelayMax, extensions->globalGCStats.metronomeStats.nonDeterministicSweepDelay);
 
-		_maxHeapFree = OMR_MAX(_maxHeapFree, eventData->heapFree);
-		_totalHeapFree += eventData->heapFree;
-		_minHeapFree = OMR_MIN(_minHeapFree, eventData->heapFree);
+		_maxHeapFree = OMR_MAX(_maxHeapFree, _extensions->heap->getApproximateActiveFreeMemorySize());
+		_totalHeapFree += _extensions->heap->getApproximateActiveFreeMemorySize();
+		_minHeapFree = OMR_MIN(_minHeapFree, _extensions->heap->getApproximateActiveFreeMemorySize());
 
 		UDATA startPriority = omrthread_get_priority(eventData->currentThread->_os_thread);
 		_maxStartPriority = OMR_MAX(_maxStartPriority, startPriority);
 		_minStartPriority = OMR_MIN(_minStartPriority, startPriority);
 
 		U_64 timeSinceHeartbeatStart = j9time_hires_delta(_heartbeatStartTime, eventData->timestamp, J9PORT_TIME_DELTA_IN_MICROSECONDS);
-		if (((timeSinceHeartbeatStart / 1000) >= MM_GCExtensions::getExtensions(env->getOmrVM())->verbosegcCycleTime)
+		if (((timeSinceHeartbeatStart / 1000) >= extensions->verbosegcCycleTime)
 			|| (incrementStartsInPreviousGCPhase())) {
 			writeHeartbeatDataAndResetHeartbeatStats(env, eventData->timestamp);
 		}

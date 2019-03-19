@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +61,7 @@ internalAllocateMemorySpaceWithMaximum(J9JavaVM * javaVM, UDATA minimumSpaceSize
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	if (extensions->isMetronomeGC()) {
 #if defined(J9VM_GC_REALTIME)
-		MM_EnvironmentRealtime env(javaVM);
+		MM_EnvironmentRealtime env(javaVM->omrVM);
 		result = internalAllocateMemorySpaceWithMaximumWithEnv(&env, javaVM, minimumSpaceSize, minimumNewSpaceSize, initialNewSpaceSize, maximumNewSpaceSize, minimumTenureSpaceSize, initialTenureSpaceSize, maximumTenureSpaceSize, memoryMax, baseAddress, tenureFlags);
 #endif /* J9VM_GC_REALTIME */
 	} else {

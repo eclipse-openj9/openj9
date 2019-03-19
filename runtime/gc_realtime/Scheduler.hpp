@@ -1,6 +1,5 @@
- 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,31 +28,26 @@
 #if !defined(SCHEDULER_HPP_)
 #define SCHEDULER_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "Base.hpp"
 #include "GCCode.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "Metronome.hpp"
 #include "ParallelDispatcher.hpp"
 #include "YieldCollaborator.hpp"
 
 class MM_OSInterface;
-class MM_AllocateDescription;
 class MM_BarrierSynchronization;
 class MM_EnvironmentBase;
 class MM_EnvironmentRealtime;
-class MM_MemoryPool;
 class MM_MemorySubSpaceMetronome;
-class MM_MemorySpace;
 class MM_Metronome;
 class MM_RealtimeGC;
-class MM_Scheduler;
 class MM_MetronomeAlarmThread;
 class MM_Timer;
 class MM_UtilizationTracker;
-class ILogger;
 
 #define METRONOME_GC_ON 1
 #define METRONOME_GC_OFF 0
@@ -71,13 +65,14 @@ private:
 	U_64 _mutatorStartTimeInNanos; /**< Time in nanoseconds when the mutator slice started.  This is updated at increment end and when a GC quantum is skipped due to shouldMutatorDoubleBeat */
 	U_64 _incrementStartTimeInNanos; /**< Time in nanoseconds when the last gc increment started */
 	MM_GCCode _gcCode; /**< The gc code that will be used for the next GC cycle.  If this is modified during a collect it will be unused.  This variable is reset at the end of every cycle to the default collection type */
+
 protected:
 public:
 	bool _isInitialized; /**< Set to true when all threads have been started */
-	volatile UDATA _sharedBarrierState;
-	
+	volatile uintptr_t _sharedBarrierState;
+
 	MM_YieldCollaborator *_yieldCollaborator;
-	
+
 	/*
 	 * Cached value for shouldGCYield()
 	 */
@@ -88,9 +83,9 @@ public:
 	 * We must keep track of the number of consecutive beats dynamically to ensure this.
 	 */
 	I_32 _currentConsecutiveBeats;
-	
+
 	bool *_threadResumedTable; /**< Used to keep track of threads taken out of the suspended state when wakeUpThreads is called */
-	
+
 	bool _masterThreadMustShutDown; /**< Set when the master thread must shutdown */
 	
 	bool _exclusiveVMAccessRequired; /**< This flag is used by the master thread to see if it needs to get exclusive vm access */
@@ -98,31 +93,31 @@ public:
 	MM_BarrierSynchronization *_barrierSynchronization;
 	MM_MetronomeAlarmThread *_alarmThread;
 	MM_EnvironmentRealtime *_threadWaitingOnMasterThreadMonitor;
-	UDATA _mutatorCount;
+	uintptr_t _mutatorCount;
 
 	MM_RealtimeGC *_gc;
-	J9JavaVM *_vm;
-	MM_GCExtensions *_extensions;
+	OMR_VM *_vm;
+	MM_GCExtensionsBase *_extensions;
  	bool _doSchedulingBarrierEvents;
 
 	U_32 _gcOn;      /* Are we in some long GC cycle? */
-	typedef enum { 
+	typedef enum {
 		MUTATOR = 0,  /* master blocked on a monitor, mutators running */
 		WAKING_GC,
 		STOP_MUTATOR, /* master thread awake - waiting for mut threads to reach safe point */
 		AWAIT_GC, /* waiting for other gc threads to reach initial barrier */
 		RUNNING_GC,
 		WAKING_MUTATOR, /* master thread still awake, mutators running */
-		NUM_MODES 
+		NUM_MODES
 	} Mode;
-	Mode _mode; 
-	UDATA _gcPhaseSet;
+	Mode _mode;
+	uintptr_t _gcPhaseSet;
 	/* requests (typically by a mutator) to complete GC synchronously */
 	bool _completeCurrentGCSynchronously;
 	/* copy of the request made by Master Thread at the begining of very next GC increment */
 	bool _completeCurrentGCSynchronouslyMasterThreadCopy;
 	GCReason _completeCurrentGCSynchronouslyReason;
-	UDATA _completeCurrentGCSynchronouslyReasonParameter;	
+	uintptr_t _completeCurrentGCSynchronouslyReasonParameter;
 	/* monitor used to suspend/resume master thread,
 	 * but also to ensure atomic access/change of _completeCurrentGCSynchronously/_mode */
 	omrthread_monitor_t _masterThreadMonitor;
@@ -134,20 +129,20 @@ public:
 	double beat;
 	U_64 beatNanos;
 	double _staticTargetUtilization;
-	
+
 	MM_UtilizationTracker* _utilTracker;
-	
+
 	/*
 	 * Function members
-	 */	
+	 */
 private:
-	
+
 protected:
 	/**
 	 * Overrides of functionality in MM_ParallelDispatcher
 	 * @{
 	 */
-	virtual UDATA getThreadPriority();
+	virtual uintptr_t getThreadPriority();
 
 	/**
 	 * @copydoc MM_ParallelDispatcher::useSeparateMasterThread()
@@ -157,17 +152,17 @@ protected:
 	 * mutator threads.
 	 */
 	virtual bool useSeparateMasterThread() { return true; }
-	
-	virtual void wakeUpThreads(UDATA count);
-	void wakeUpSlaveThreads(UDATA count);
+
+	virtual void wakeUpThreads(uintptr_t count);
+	void wakeUpSlaveThreads(uintptr_t count);
 
 	virtual void slaveEntryPoint(MM_EnvironmentBase *env);
 	virtual void masterEntryPoint(MM_EnvironmentBase *env);
-	
+
 	bool internalShouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack);
 
 	/** @} */
-	
+
 public:
 	void pushYieldCollaborator(MM_YieldCollaborator *yieldCollaborator) {
 		_yieldCollaborator = yieldCollaborator->push(_yieldCollaborator);
@@ -175,36 +170,36 @@ public:
 	void popYieldCollaborator() {
 		_yieldCollaborator = _yieldCollaborator->pop();
 	}
-	
+
 	void shutDownSlaveThreads();
 	void shutDownMasterThread();
 	void startGCIfTimeExpired(MM_EnvironmentBase *env);
 
 	virtual bool condYieldFromGCWrapper(MM_EnvironmentBase *env, U_64 timeSlack = 0);
-	
-	UDATA incrementMutatorCount();
-	
-	UDATA getParameter(UDATA which, char *keyBuffer, I_32 keyBufferSize, char *valueBuffer, I_32 valueBufferSize);
+
+	uintptr_t incrementMutatorCount();
+
+	uintptr_t getParameter(uintptr_t which, char *keyBuffer, I_32 keyBufferSize, char *valueBuffer, I_32 valueBufferSize);
 	void showParameters(MM_EnvironmentBase *env);
-	
-	/** 
-	 * Set scheduling paramters on argument extensions object to 
+
+	/**
+	 * Set scheduling paramters on argument extensions object to
 	 * simulate Stop-The-World GC.  We simulate STW by running time-based,
-	 * with MMU, etc. parameters chosen so that the GC will not yield to the 
-	 * mutator until an entire GC cycle has completed. 
+	 * with MMU, etc. parameters chosen so that the GC will not yield to the
+	 * mutator until an entire GC cycle has completed.
 	 */
-	static void initializeForVirtualSTW(MM_GCExtensions *ext);
+	static void initializeForVirtualSTW(MM_GCExtensionsBase *ext);
 
 	bool isInitialized() { return _isInitialized; }
 
-	static MM_Scheduler *newInstance(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, UDATA defaultOSStackSize);
+	static MM_Scheduler *newInstance(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize);
 	bool initialize(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
-	
+
 	virtual bool startUpThreads();
-	virtual void shutDownThreads();	
-	
+	virtual void shutDownThreads();
+
 	virtual void prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount);
 	virtual void completeTask(MM_EnvironmentBase *env);
 
@@ -223,12 +218,12 @@ public:
 	void yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked = false);
 	void waitForMutatorsToStop(MM_EnvironmentRealtime *env);
 	void startMutators(MM_EnvironmentRealtime *env);
-	bool continueGC(MM_EnvironmentRealtime *, GCReason reason, UDATA reasonParameter, J9VMThread *_vmThread, bool doRequestExclusiveVMAccess);  /* Non-blocking and typicallly called by an alarm handler.  Returns 1 if we did resume GC (non-recursive). */
-	void setGCPriority(MM_EnvironmentBase *env, UDATA priority); /* sets the priority for all gc threads */
-	void completeCurrentGCSynchronously(MM_EnvironmentRealtime *env = NULL);	
-	
-	UDATA verbose() { return _extensions->verbose; }
-	UDATA debug() { return _extensions->debug; }
+	bool continueGC(MM_EnvironmentRealtime *, GCReason reason, uintptr_t reasonParameter, OMR_VMThread *_vmThread, bool doRequestExclusiveVMAccess);  /* Non-blocking and typicallly called by an alarm handler.  Returns 1 if we did resume GC (non-recursive). */
+	void setGCPriority(MM_EnvironmentBase *env, uintptr_t priority); /* sets the priority for all gc threads */
+	void completeCurrentGCSynchronously(MM_EnvironmentRealtime *env = NULL);
+
+	uintptr_t verbose() { return _extensions->verbose; }
+	uintptr_t debug() { return _extensions->debug; }
 
 	virtual void recomputeActiveThreadCount(MM_EnvironmentBase *env);
 
@@ -240,13 +235,13 @@ public:
 	U_64 getStartTimeOfCurrentGCSlice() {return _incrementStartTimeInNanos;}
 	void setStartTimeOfCurrentGCSlice(U_64 time) {_incrementStartTimeInNanos = time;}
 
-	UDATA getActiveThreadCount() { return _activeThreadCount; }
-	UDATA getTaskThreadCount(MM_EnvironmentBase *env);
+	uintptr_t getActiveThreadCount() { return _activeThreadCount; }
+	uintptr_t getTaskThreadCount(MM_EnvironmentBase *env);
 	void setGCCode(MM_GCCode gcCode) {_gcCode = gcCode;}
-	
+
 	void collectorInitialized(MM_RealtimeGC *gc);
 
-	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, UDATA defaultOSStackSize) :
+	MM_Scheduler(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize) :
 		MM_ParallelDispatcher(env, handler, handler_arg, defaultOSStackSize),
 		_mutatorStartTimeInNanos(J9CONST64(0)),
 		_incrementStartTimeInNanos(J9CONST64(0)),
@@ -263,8 +258,8 @@ public:
 		_threadWaitingOnMasterThreadMonitor(NULL),
 		_mutatorCount(0),
 		_gc(NULL),
-		_vm((J9JavaVM *)env->getOmrVM()->_language_vm),
-		_extensions(MM_GCExtensions::getExtensions(_vm)),
+		_vm(env->getOmrVM()),
+		_extensions(MM_GCExtensionsBase::getExtensions(_vm)),
 		_doSchedulingBarrierEvents(false),
 		_gcOn(METRONOME_GC_OFF),
 		_mode(MUTATOR),
@@ -272,7 +267,7 @@ public:
 		_completeCurrentGCSynchronously(false),
 		_completeCurrentGCSynchronouslyMasterThreadCopy(false),
 		_completeCurrentGCSynchronouslyReason(UNKOWN_REASON),
-		_completeCurrentGCSynchronouslyReasonParameter(0),		
+		_completeCurrentGCSynchronouslyReasonParameter(0),
 		_masterThreadMonitor(NULL),
 		_osInterface(NULL),
 		window(),
@@ -283,7 +278,7 @@ public:
 	{
 		_typeId = __FUNCTION__;
 	}
-	
+
 	/*
 	 * Friends
 	 */
@@ -291,3 +286,4 @@ public:
 };
 
 #endif /* SCHEDULER_HPP_ */
+

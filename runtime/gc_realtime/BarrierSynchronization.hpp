@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,8 +67,8 @@ public:
 	 * also transitionally used for the parts of Staccato that have not
 	 * been made concurrent.
 	 */
-	void preRequestExclusiveVMAccess(J9VMThread *threadRequestingExclusive);
-	void postRequestExclusiveVMAccess(J9VMThread *threadRequestingExclusive);
+	void preRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive);
+	void postRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive);
 	UDATA requestExclusiveVMAccess(MM_EnvironmentBase *env, UDATA block, UDATA *gcPriority);
 	void waitForExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired);
 	void acquireExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired);
