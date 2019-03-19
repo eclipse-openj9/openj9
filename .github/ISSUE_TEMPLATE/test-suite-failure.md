@@ -13,13 +13,14 @@ If the link is not public, instead include
 - test suite name: 
 - OS/architecture (i.e. Ubuntu 16.04 x64): 
 - OpenJDK version (i.e. 8u202-b08): 
-- build level (i.e. -version output, with public shas): 
+- public build SHAs (i.e. -version output): 
 
 Optional info
 -------------
 
 - intermittent failure (yes|no): 
 - regression or new test:  
+- if regression, what are the last passing / first failing public SHAs (OpenJ9, OMR, JCL) :
 
 Failure output
 --------------
