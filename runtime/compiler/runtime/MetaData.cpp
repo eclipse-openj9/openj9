@@ -506,12 +506,6 @@ createStackMap(
    memcpy(location, &byteCodeInfo, sizeof(TR_ByteCodeInfo));
    location += sizeof(int32_t);
 
-#ifdef TR_HOST_S390
-   //traceMsg(comp, "hprmap %p : %x location %p\n", map, location, map->getHighWordRegisterMap());
-   *(int32_t *)location = map->getHighWordRegisterMap();
-   location += sizeof(int32_t);
-#endif
-
    ///traceMsg(comp, "map %p rsd %x location %p\n", map, location, map->getRegisterSaveDescription());
    *(int32_t *)location = map->getRegisterSaveDescription();
    location += sizeof(int32_t);
@@ -675,9 +669,6 @@ mapsAreIdentical(
        mapCursor->getRegisterMap() == nextMapCursor->getRegisterMap() &&
        !memcmp(mapCursor->getMapBits(), nextMapCursor->getMapBits(), mapCursor->getMapSizeInBytes()) &&
        (mapCursor->isByteCodeInfoIdenticalTo(nextMapCursor) || nonmergeableBCI.find(mapCursor) == nonmergeableBCI.end()) &&
-#ifdef TR_HOST_S390
-       (mapCursor->getHighWordRegisterMap() == nextMapCursor->getHighWordRegisterMap()) &&
-#endif
        (comp->getOption(TR_DisableLiveMonitorMetadata) ||
         ((mapCursor->getLiveMonitorBits() != 0) == (nextMapCursor->getLiveMonitorBits() != 0) &&
          (mapCursor->getLiveMonitorBits() == 0 ||
@@ -706,11 +697,9 @@ calculateSizeOfStackAtlas(
 
    uint32_t mapSize;
    uint32_t sizeOfMapOffset = (comp->isAlignStackMaps() || fourByteOffsets) ? 4 : 2;
-#ifdef TR_HOST_S390
-   uint32_t sizeOfStackMap = 4*sizeof(U_32) + sizeOfMapOffset; //4 words in header
-#else
-   uint32_t sizeOfStackMap = 3*sizeof(U_32) + sizeOfMapOffset; //3 words in header
-#endif
+
+   // ByteCodeInfo, RegisterSaveDescription, RegisterMap
+   uint32_t sizeOfStackMap = 3*sizeof(U_32) + sizeOfMapOffset;
 
    uint32_t sizeOfByteCodeInfoMap = sizeof(U_32) + sizeOfMapOffset;
 
@@ -866,14 +855,13 @@ createStackAtlas(
 
    trStackAtlas->setAtlasBits(atlasBits);
 
+   // TODO: Seems to be quite a bit of overlap/duplication between the code here and calculateSizeOfStackAtlas. Are we
+   // able to consolidate this somehow?
    uint32_t mapSizeInBytes;
    uint32_t sizeOfMapOffset = (comp->isAlignStackMaps() || fourByteOffsets) ? 4 : 2;
 
-#ifdef TR_HOST_S390
-   uint32_t sizeOfStackMapInBytes = 4*sizeof(U_32) + sizeOfMapOffset; // 4 words in header
-#else
+   // ByteCodeInfo, RegisterSaveDescription, RegisterMap
    uint32_t sizeOfStackMapInBytes = 3*sizeof(U_32) + sizeOfMapOffset; // 3 words in header
-#endif
 
    uint32_t sizeOfByteCodeInfoMap = sizeof(U_32) + sizeOfMapOffset;
 

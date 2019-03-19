@@ -83,7 +83,7 @@ enum // flags
    SupportsScaledIndexAddressing            = 0x00000080,
    S390SupportsDFP                          = 0x00000100,
    S390SupportsFPE                          = 0x00000200,
-   S390SupportsHPRDebug                     = 0x00001000,
+   S390SupportsHPR                          = 0x00001000,
    IsInZOSSupervisorState                   = 0x00008000,
    S390SupportsTM                           = 0x00010000,
    S390SupportsRI                           = 0x00020000,
@@ -146,8 +146,8 @@ public:
    bool getS390SupportsZNext() {return getS390SupportsArch(S390SupportsZNext);}
    void setS390SupportsZNext() { setS390SupportsArch(S390SupportsZNext);}
 
-   bool getS390SupportsHPRDebug() {return _flags.testAny(S390SupportsHPRDebug);}
-   void setS390SupportsHPRDebug() { _flags.set(S390SupportsHPRDebug);}
+   bool getS390SupportsHPR() {return _flags.testAny(S390SupportsHPR);}
+   void setS390SupportsHPR() { _flags.set(S390SupportsHPR);}
 
    bool getS390SupportsDFP() {return _flags.testAny(S390SupportsDFP);}
    void setS390SupportsDFP() { _flags.set(S390SupportsDFP);}
