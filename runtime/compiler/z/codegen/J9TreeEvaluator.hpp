@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,6 +225,36 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static TR::Register *pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+
+   /** \brief
+    *     Helper to generate a VPSOP instruction.
+    *
+    *  \param node 
+    *     The node to which the instruction is associated.
+    *  \param cg 
+    *     The codegen object.
+    *  \param setPrecision
+    *     Determines whether the VPSOP instruction will set precision.
+    *  \param precision
+    *     The new precision value.
+    *  \param signedStatus
+    *     Determines whether positive results will carry the preferred positive sign 0xC if true or 0xF if false.
+    *  \param signOpType
+    *     See enum SignOperationType.
+    *  \param signValidityCheck
+    *     Checks if originalSignCode is a valid sign.
+    *  \param digitValidityCheck
+    *     Validate the input digits
+    *  \param sign
+    *     The new sign. Used if signOpType is SignOperationType::setSign. Possible values inclue:
+    *       - positive: 0xA, 0xC 
+    *       - negative: 0xB, 0xD
+    *       - unsigned: 0xF
+    *  \param setConditionCode
+    *     Determines if this instruction sets ConditionCode or not.
+    *  \param ignoreDecimalOverflow
+    *     Turns on the Instruction Overflow Mask (IOM) so no decimal overflow is triggered
+    */
    static TR::Register *vectorPerformSignOperationHelper(TR::Node *node,
                                                          TR::CodeGenerator *cg,
                                                          bool setPrecision,
@@ -232,8 +262,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
                                                          bool signedStatus,
                                                          SignOperationType soType,
                                                          bool signValidityCheck = false,
+                                                         bool digitValidityCheck = true,
                                                          int32_t sign = 0,
-                                                         bool setConditionCode = true);
+                                                         bool setConditionCode = true,
+                                                         bool ignoreDecimalOverflow = false);
 
    static TR::Register *pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 

@@ -89,7 +89,6 @@
 #define TR_MAX_DFP_PACKED_FAST_SIZE  (32) ///< these conversion instructions slow down when the actual length is > 32
 #define TR_MAX_DFP_PACKED_SIZE       (34) ///< max actual length (<=34) these conversion instructions can handle
 
-
 TR::MemoryReference *
 J9::Z::TreeEvaluator::asciiAndUnicodeToPackedHelper(TR::Node *node,
                                                     TR_PseudoRegister *targetReg,
@@ -2564,15 +2563,24 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case TR::pdcmple:
       case TR::pdcmpeq:
       case TR::pdcmpne:
+         break;
+      case TR::i2pd:
+      case TR::l2pd:
       case TR::pd2l:
       case TR::pd2i:
       case TR::pd2iOverflow:
       case TR::pd2lOverflow:
-      case TR::i2pd:
-      case TR::l2pd:
+      case TR::pdadd:
+      case TR::pdsub:
+      case TR::pdmul:
+      case TR::pddiv:
+      case TR::pdrem:
       case TR::pdshlOverflow:
       case TR::pdshr:
+         {
+         cg->setIgnoreDecimalOverflowException(node->getLastChild()->getInt() == 0);
          break;
+         }
       case TR::lcall:
       case TR::icall:
          {
@@ -2584,6 +2592,10 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_:
                {
                isVariableParam = true;
+
+               // Need a parameter check because variable PD2L and PD2I could have non-constant 'checkOverflow' (see IS_VARIABLE_PD2I macro).
+               TR::Node* checkOverflowNode = pdopNode->getLastChild();
+               cg->setIgnoreDecimalOverflowException(checkOverflowNode->getOpCode().isLoadConst() && (checkOverflowNode->getInt() == 0));
                break;
                }
 
@@ -2675,6 +2687,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cg->setCurrentCheckNodeBeingEvaluated(NULL);
       }
 
+   cg->setIgnoreDecimalOverflowException(false);
    return resultReg;
    }
 
@@ -3797,7 +3810,14 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
                                        node, cg->getCurrentBCDCHKHandlerLabel());
          }
 
-      generateVRRiInstruction(cg, conversionOp, node, returnReg, vPDReg, 1);      // set CC for overflow
+      uint8_t ignoreOverflowMask = 0;
+
+      if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
+         {
+         ignoreOverflowMask = 0x8;
+         }
+
+      generateVRRiInstruction(cg, conversionOp, node, returnReg, vPDReg, 1, ignoreOverflowMask);
       cg->stopUsingRegister(vPDReg);
       }
    else
@@ -3924,8 +3944,15 @@ J9::Z::TreeEvaluator::generateVectorPackedToBinaryConversion(TR::Node * node, TR
                                     cg->getCurrentBCDCHKHandlerLabel());
       }
 
+   uint8_t ignoreOverflowMask = 0;
+
+   if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
+      {
+      ignoreOverflowMask = 0x8;
+      }
+
    // Convert to signed binary of either 32-bit or 64-bit long
-   generateVRRiInstruction(cg, op, node, rResultReg, vPdValueReg, 0x1);
+   generateVRRiInstruction(cg, op, node, rResultReg, vPdValueReg, 0x1, ignoreOverflowMask);
 
    cg->decReferenceCount(pdValueNode);
    node->setRegister(rResultReg);
@@ -6122,14 +6149,7 @@ J9::Z::TreeEvaluator::pdSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
-      targetReg = vectorPerformSignOperationHelper(node,
-                                                   cg,
-                                                   false,       // change precision
-                                                   0,
-                                                   node->hasKnownOrAssumedCleanSign(),
-                                                   SignOperationType::setSign,
-                                                   false,       // signValidityCheck
-                                                   sign);
+      targetReg = vectorPerformSignOperationHelper(node, cg, false, 0, node->hasKnownOrAssumedCleanSign(), SignOperationType::setSign, false, true, sign);
       }
    else
       {
@@ -6454,7 +6474,12 @@ J9::Z::TreeEvaluator::pdArithmeticVectorEvaluatorHelper(TR::Node * node, TR::Ins
          break;
       }
 
-   TR_ASSERT((immediateValue >> 8) == 0, "Decimal precision or adjustment value exceeds 1 byte");
+   TR_ASSERT_FATAL((immediateValue >> 8) == 0, "Decimal precision or adjustment value (%d) exceeds 1 byte", immediateValue);
+
+   if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
+      {
+      immediateValue |= 0x80;
+      }
 
    TR::Node* firstChild = node->getFirstChild();
    TR::Node* secondChild = node->getSecondChild();
@@ -7138,23 +7163,33 @@ J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenera
       int32_t targetPrec = node->getDecimalPrecision();
       targetReg = cg->allocateRegister(TR_VRF);
 
-      int32_t imm = 0x0FFFF >> (TR_VECTOR_REGISTER_SIZE - TR::DataType::packedDecimalPrecisionToByteLength(targetPrec));
-      TR::Register* pdReg = cg->evaluate(node->getFirstChild());
-      TR::Register* maskReg = cg->allocateRegister(TR_VRF);
-      generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, maskReg, imm, 0);
-
-      if (targetPrec % 2 == 0)
+      if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement())
          {
-         TR::Register* shiftAmountReg = cg->allocateRegister(TR_VRF);
-         generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, shiftAmountReg, 4, 0);
-         generateVRRcInstruction(cg, TR::InstOpCode::VSRL, node, maskReg, maskReg, shiftAmountReg, 0, 0, 0);
-         cg->stopUsingRegister(shiftAmountReg);
+         // Overflow exceptions can be ignored for z15 vector packed decimal VRI-i,f,g and VRR-i instructions. Given
+         // this, VPSOP now becomes suitable for data truncations without incurring excptions which eventually lead to
+         // performance degradations. This is usually used to truncate high nibble of an even precision PD.
+         targetReg = vectorPerformSignOperationHelper(node, cg, true, targetPrec, true, SignOperationType::maintain, false, false, 0, false, true);
          }
+      else
+         {
+         int32_t imm = 0x0FFFF >> (TR_VECTOR_REGISTER_SIZE - TR::DataType::packedDecimalPrecisionToByteLength(targetPrec));
+         TR::Register* pdReg = cg->evaluate(node->getFirstChild());
+         TR::Register* maskReg = cg->allocateRegister(TR_VRF);
+         generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, maskReg, imm, 0);
 
-      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, targetReg, pdReg, maskReg, 0, 0, 0);
+         if (targetPrec % 2 == 0)
+            {
+            TR::Register* shiftAmountReg = cg->allocateRegister(TR_VRF);
+            generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, shiftAmountReg, 4, 0);
+            generateVRRcInstruction(cg, TR::InstOpCode::VSRL, node, maskReg, maskReg, shiftAmountReg, 0, 0, 0);
+            cg->stopUsingRegister(shiftAmountReg);
+            }
 
-      cg->stopUsingRegister(maskReg);
-      cg->decReferenceCount(node->getFirstChild());
+         generateVRRcInstruction(cg, TR::InstOpCode::VN, node, targetReg, pdReg, maskReg, 0, 0, 0);
+
+         cg->stopUsingRegister(maskReg);
+         cg->decReferenceCount(node->getFirstChild());
+         }
       }
    else
       {
@@ -7393,16 +7428,6 @@ J9::Z::TreeEvaluator::pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
    return targetReg;
    }
 
-/**
- * Helper to create VPSOP instruction.
- *
- * @param setPrecision true if the VPSOP will set precision.
- * @param signedStatus true if this is this node is signed false if unsigned (0xF)
- * @param soType see enum SignOperationType
- * @param signValidityCheck checks if originalSignCode is a valid sign
- * @param sign sign to set to. (0xA,0xC positive) (0xB,0xD negative) (0xF unsigned)
- * @param setConditionCode determines if this instruction sets ConditionCode or not. (by default this is false)
- */
 TR::Register*
 J9::Z::TreeEvaluator::vectorPerformSignOperationHelper(TR::Node *node,
                                                        TR::CodeGenerator *cg,
@@ -7411,26 +7436,35 @@ J9::Z::TreeEvaluator::vectorPerformSignOperationHelper(TR::Node *node,
                                                        bool signedStatus,
                                                        SignOperationType signOpType,
                                                        bool signValidityCheck,
+                                                       bool digitValidityCheck,
                                                        int32_t sign,
-                                                       bool setConditionCode)
+                                                       bool setConditionCode,
+                                                       bool ignoreDecimalOverflow)
    {
-   TR::Register *targetReg = NULL;
+   TR::Register *targetReg = cg->allocateRegister(TR_VRF);
    TR::Node *pdNode = node->getFirstChild();
 
    TR::Register *childReg = cg->evaluate(pdNode);
-   targetReg = cg->allocateRegister(TR_VRF);
 
    int32_t numPrecisionDigits = setPrecision ? precision : TR_MAX_INPUT_PACKED_DECIMAL_PRECISION;
-   if(numPrecisionDigits > TR_MAX_INPUT_PACKED_DECIMAL_PRECISION)
+   if (numPrecisionDigits > TR_MAX_INPUT_PACKED_DECIMAL_PRECISION)
       {
       numPrecisionDigits = TR_MAX_INPUT_PACKED_DECIMAL_PRECISION;
       }
 
-   uint8_t constImm4 = signOpType << 2; //bit 4-5 Sign Operation, 6 Positive Sign code, 7 Sign validation on V2
+   uint8_t constImm3 = numPrecisionDigits;
 
-   if(signOpType == SignOperationType::setSign)
+   if (ignoreDecimalOverflow)
       {
-      switch(sign)
+      constImm3 |= 0x80;
+      }
+
+   // Bit 4-5 Sign Operation, 6 Positive Sign code, 7 Sign validation on V2
+   uint8_t constImm4 = signOpType << 2; 
+
+   if (signOpType == SignOperationType::setSign)
+      {
+      switch (sign)
          {
          case TR_PREFERRED_PLUS_CODE:
          case TR_ALTERNATE_PLUS_CODE:
@@ -7441,16 +7475,21 @@ J9::Z::TreeEvaluator::vectorPerformSignOperationHelper(TR::Node *node,
          case TR_ALTERNATE_MINUS_CODE:
             break;
          default:
-            TR_ASSERT(0, "Sign code 0x%x is invalid", sign);
+            TR_ASSERT_FATAL(false, "Packed Decimal sign code 0x%x is invalid", sign);
             break;
          }
       }
 
-   constImm4 |= (signedStatus ? 0x0 : 0x2 ); //if signedStatus is true it means signed so use 0xC instead of 0xF
+   // If signedStatus is true it means signed so use 0xC instead of 0xF
+   constImm4 |= (signedStatus ? 0x0 : 0x2 );
    constImm4 |= (signValidityCheck ? 0x1 : 0x0);
-   //current use of pdclean does not want to modifyprecision or set condition code.
-   //todo: we can probably come up with more complex optimization that will collapse modify precision and setsign/pdclean to one instruction.
-   generateVRIgInstruction(cg, TR::InstOpCode::VPSOP, node, targetReg, childReg, numPrecisionDigits, constImm4, setConditionCode);
+   constImm4 |= (digitValidityCheck ? 0x0 : 0x80);
+
+   // Current use of TR::pdclean does not want to modifyprecision or set condition code.
+   // TODO: We can probably come up with more complex optimization that will collapse modify precision and TR::setsign
+   // or TR::pdclean to one instruction.
+   generateVRIgInstruction(cg, TR::InstOpCode::VPSOP, node, targetReg, childReg, constImm3, constImm4, setConditionCode);
+
    node->setRegister(targetReg);
    cg->decReferenceCount(pdNode);
    return targetReg;
@@ -7475,8 +7514,14 @@ J9::Z::TreeEvaluator::generateVectorBinaryToPackedConversion(TR::Node * node, TR
       sourceReg = tempReg;
       }
 
-   uint8_t precision = node->getDecimalPrecision();
-   generateVRIiInstruction(cg, op, node, vTargetReg, sourceReg, precision, 0x1);
+   uint8_t decimalPrecision = node->getDecimalPrecision();
+
+   if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
+      {
+      decimalPrecision |= 0x80;
+      }
+
+   generateVRIiInstruction(cg, op, node, vTargetReg, sourceReg, decimalPrecision, 0x1);
 
    if (isUseRegPair)
       {
@@ -7514,14 +7559,14 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    int32_t shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
    uint8_t decimalPrecision = node->getDecimalPrecision();
 
-   if(isSkipShift)
+   if (isSkipShift)
       {
       firstChild->setDecimalPrecision(decimalPrecision);
       }
 
    TR::Register * sourceReg = cg->evaluate(firstChild);
 
-   if(isSkipShift)
+   if (isSkipShift)
       {
       // Passthrough. Assign register to node before decrementing refCount of the firstChild
       // to avoid killing this live register
@@ -7529,18 +7574,15 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
       }
    else
       {
-      TR_ASSERT((shiftAmount >= -32 && shiftAmount <= 31),"TR::pdshl/r shift amount %d not in range [-32, 31]\n", shiftAmount);
-
-      // VSRP mask 5: bit 0, force source positive (P2).
-      //              bit 1, no used, set to 0
-      //              bit 2, force target positive (P1) use alternative positive sign 0xF (Unsigned)
-      //              bit 3, set condition code
-      //
-      // Default mask5 to 0x1 to set condition code
-      uint8_t mask5 = 0x1;
+      TR_ASSERT_FATAL((shiftAmount >= -32 && shiftAmount <= 31), "TR::pdshl/r shift amount (%d )not in range [-32, 31]", shiftAmount);
+      
+      if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
+         {
+         decimalPrecision |= 0x80;
+         }
 
       targetReg = cg->allocateRegister(TR_VRF);
-      generateVRIgInstruction(cg, TR::InstOpCode::VSRP, node, targetReg, sourceReg, decimalPrecision, shiftAmount, mask5);
+      generateVRIgInstruction(cg, TR::InstOpCode::VSRP, node, targetReg, sourceReg, decimalPrecision, shiftAmount, 0x01);
       }
 
    node->setRegister(targetReg);
@@ -7577,12 +7619,15 @@ J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    // Get PD value
    TR::Register * pdValueReg = cg->evaluate(srcNode);
    TR::Register* targetReg = cg->allocateRegister(TR_VRF);
+   uint8_t decimalPrecision = node->getDecimalPrecision();
+
+   if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
+      {
+      decimalPrecision |= 0x80;
+      }
 
    // Perform shift and set condition code on overflows
-   generateVRIgInstruction(cg, TR::InstOpCode::VSRP, node,
-                           targetReg, pdValueReg,
-                           node->getDecimalPrecision(),
-                           shiftAmount, 0x1);
+   generateVRIgInstruction(cg, TR::InstOpCode::VSRP, node, targetReg, pdValueReg, decimalPrecision, shiftAmount, 0x1);
 
    node->setRegister(targetReg);
 
