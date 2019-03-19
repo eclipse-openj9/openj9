@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,15 +23,13 @@
 #if !defined(HEAPREGIONDESCRIPTORREALTIME_HPP)
 #define HEAPREGIONDESCRIPTORREALTIME_HPP
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "HeapRegionDescriptorSegregated.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
-#include "ReferenceObjectList.hpp"
-#include "UnfinalizedObjectList.hpp"
+#include "GCExtensionsBase.hpp"
 
-#if defined(J9VM_GC_REALTIME)
+#if defined(OMR_GC_REALTIME)
 
 class MM_EnvironmentBase;
 
@@ -52,14 +49,11 @@ public:
 	
 	static bool initializer(MM_EnvironmentBase *env, MM_HeapRegionManager *regionManager, MM_HeapRegionDescriptor *descriptor, void *lowAddress, void *highAddress);
 	static void destructor(MM_EnvironmentBase *env, MM_HeapRegionManager *regionManager, MM_HeapRegionDescriptor *descriptor);
-	static UDATA getUnfinalizedObjectListCount(MM_EnvironmentBase *env) {return MM_GCExtensions::getExtensions(env)->gcThreadCount;}
-	static UDATA getOwnableSynchronizerObjectListCount(MM_EnvironmentBase *env) {return MM_GCExtensions::getExtensions(env)->gcThreadCount;}
-	static UDATA getReferenceObjectListCount(MM_EnvironmentBase *env) {return MM_GCExtensions::getExtensions(env)->gcThreadCount;}
 
 	MM_HeapRegionDescriptorRealtime *getNextOverflowRegion() {return _nextOverflowedRegion;}
 	void setNextOverflowRegion(MM_HeapRegionDescriptorRealtime *region) {_nextOverflowedRegion = region;}
 };
 
-#endif /* J9VM_GC_REALTIME */
+#endif /* OMR_GC_REALTIME */
 
 #endif /* HEAPREGIONDESCRIPTORREALTIME_HPP */
