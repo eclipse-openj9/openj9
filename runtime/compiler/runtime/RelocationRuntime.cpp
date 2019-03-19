@@ -188,7 +188,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    uint8_t *oldDataStart, *oldCodeStart, *newCodeStart;
    tempDataStart = (uint8_t *)cacheEntry;
 
-   //Check method header is valid
+   // Check method header is valid
    _aotMethodHeaderEntry = (TR_AOTMethodHeader *)(cacheEntry + 1); // skip the header J9JITDataCacheHeader
    if (!aotMethodHeaderVersionsMatch())
       return NULL;

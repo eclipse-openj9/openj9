@@ -405,6 +405,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   addThunkToBeRelocated(void *thunk, std::string signature);
    void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
    void                   relocateThunks();
+   void                   persistThunksToSCC(const J9JITDataCacheHeader *cacheEntry, uint8_t * existingCode);
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getCustomClassByNameMap() { return _customClassByNameMap; }
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended; }
    uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
