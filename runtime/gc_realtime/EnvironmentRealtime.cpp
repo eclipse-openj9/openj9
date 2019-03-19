@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +45,7 @@ MM_EnvironmentRealtime::newInstance(MM_GCExtensionsBase *extensions, OMR_VMThrea
 		if (omrVMThread) {
 			env = new(envPtr) MM_EnvironmentRealtime(omrVMThread);
 		} else {
-			env = new(envPtr) MM_EnvironmentRealtime((J9JavaVM *)extensions->getOmrVM()->_language_vm);
+			env = new(envPtr) MM_EnvironmentRealtime(extensions->getOmrVM());
 		}
 		if (!env->initialize(extensions)) {
 			env->kill();
