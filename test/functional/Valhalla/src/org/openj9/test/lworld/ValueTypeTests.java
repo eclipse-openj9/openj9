@@ -952,7 +952,7 @@ public class ValueTypeTests {
 	 * }
 	 */
 	@Test(priority = 4)
-	static public void testCreateAssortedReftWithLongAlignment() throws Throwable {
+	static public void testCreateAssortedRefWithLongAlignment() throws Throwable {
 		String fields[] = {
 				"point:QPoint2D;:value",
 				"line:QFlattenedLine2D;:value",
