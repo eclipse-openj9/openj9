@@ -295,26 +295,26 @@ ifdef j9vm_uma_supportsIpv6
 endif
 
 <#if uma.spec.processor.amd64>
-  CFLAGS += -DJ9HAMMER -m64
-  CXXFLAGS += -DJ9HAMMER -m64
-  CPPFLAGS += -DJ9HAMMER -m64
+  CFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CXXFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CPPFLAGS += -DJ9HAMMER -m64 -fstack-protector
 <#elseif uma.spec.processor.arm>
   CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
   CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics
   CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
 <#elseif uma.spec.processor.aarch64>
-  CFLAGS += -DJ9AARCH64
-  CXXFLAGS += -DJ9AARCH64
-  CPPFLAGS += -DJ9AARCH64
+  CFLAGS += -DJ9AARCH64 -fstack-protector
+  CXXFLAGS += -DJ9AARCH64 -fstack-protector
+  CPPFLAGS += -DJ9AARCH64 -fstack-protector
 <#elseif uma.spec.processor.ppc>
   CFLAGS += -DLINUXPPC
   CXXFLAGS += -DLINUXPPC
   CPPFLAGS += -DLINUXPPC
   <#if uma.spec.flags.env_gcc.enabled>
     ifdef j9vm_env_data64
-      CFLAGS += -m64 -DLINUXPPC64 -DPPC64
-      CXXFLAGS += -m64 -DLINUXPPC64 -DPPC64
-      CPPFLAGS += -m64 -DLINUXPPC64 -DPPC64
+      CFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
+      CXXFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
+      CPPFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
     else
       CFLAGS += -m32
       CXXFLAGS += -m32
@@ -331,9 +331,9 @@ endif
       CFLAGS += -qarch=ppc64
       CXXFLAGS += -qarch=ppc64
     </#if>
-      CFLAGS += -q64 -DLINUXPPC64 -DPPC64
-      CXXFLAGS += -q64 -DLINUXPPC64 -DPPC64
-      CPPFLAGS += -DLINUXPPC64 -DPPC64
+      CFLAGS += -q64 -DLINUXPPC64 -DPPC64 -qstackprotect
+      CXXFLAGS += -q64 -DLINUXPPC64 -DPPC64 -qstackprotect
+      CPPFLAGS += -DLINUXPPC64 -DPPC64 -qstackprotect
     else
       CFLAGS += -qarch=ppc
       CXXFLAGS += -qarch=ppc
@@ -341,7 +341,7 @@ endif
   </#if>
   ifdef j9vm_env_data64
     ifdef USE_PPC_GCC
-      PPC_GCC_CXXFLAGS += -DLINUXPPC -DLINUXPPC64 -DPPC64 -m64
+      PPC_GCC_CXXFLAGS += -DLINUXPPC -DLINUXPPC64 -DPPC64 -m64 -fstack-protector
     endif
   else
     ifdef USE_PPC_GCC
@@ -353,9 +353,9 @@ endif
   CXXFLAGS += $(J9M31) -DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE -fno-strict-aliasing
   CPPFLAGS += -DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE
   ifdef j9vm_env_data64
-    CFLAGS += -DS39064
-    CXXFLAGS += -DS39064
-    CPPFLAGS += -DS39064
+    CFLAGS += -DS39064 -fstack-protector
+    CXXFLAGS += -DS39064 -fstack-protector
+    CPPFLAGS += -DS39064 -fstack-protector
   endif
 <#elseif uma.spec.processor.x86>
   CFLAGS += -DJ9X86 -m32 -msse2
