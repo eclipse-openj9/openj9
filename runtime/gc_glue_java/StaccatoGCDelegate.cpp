@@ -230,5 +230,20 @@ MM_StaccatoGCDelegate::doTracing(MM_EnvironmentRealtime* env)
 	return false;
 }
 
+
+bool
+MM_StaccatoGCDelegate::initialize(MM_EnvironmentBase *env)
+{
+	/* create the appropriate access barrier for this configuration of Metronome */
+	MM_RealtimeAccessBarrier *accessBarrier = NULL;
+	accessBarrier = allocateAccessBarrier(env);
+	if (NULL == accessBarrier) {
+		return false;
+	}
+	MM_GCExtensions::getExtensions(_vm)->accessBarrier = (MM_ObjectAccessBarrier *)accessBarrier;
+
+	return true;
+}
+
 #endif /* defined(J9VM_GC_REALTIME) */
 

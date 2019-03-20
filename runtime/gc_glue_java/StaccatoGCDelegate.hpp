@@ -47,6 +47,8 @@ public:
 		_vm((J9JavaVM *)env->getOmrVM()->_language_vm),
 		_staccatoGC(NULL) {}
 
+	bool initialize(MM_EnvironmentBase *env);
+
 	virtual MM_RealtimeAccessBarrier* allocateAccessBarrier(MM_EnvironmentBase *env);
 	virtual void enableDoubleBarrier(MM_EnvironmentBase* env);
 	virtual void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread* vmThread);

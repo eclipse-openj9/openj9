@@ -61,7 +61,6 @@ public:
 	}
 	
 	/* Inherited from MM_RealtimeGC */
-	virtual MM_RealtimeAccessBarrier* allocateAccessBarrier(MM_EnvironmentBase *env);
 	virtual void doTracing(MM_EnvironmentRealtime* env);
 	virtual void enableWriteBarrier(MM_EnvironmentBase* env);
 	virtual void disableWriteBarrier(MM_EnvironmentBase* env);
