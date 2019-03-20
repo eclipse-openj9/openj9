@@ -60,7 +60,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _priority = p;
    _numThreadsWaiting = 0;
    _compErrCode = compilationOK;
-   _compilationAttemptsLeft = MAX_COMPILE_ATTEMPTS;
+   _compilationAttemptsLeft = (TR::Options::canJITCompile()) ? MAX_COMPILE_ATTEMPTS : 1;
    _unloadedMethod = false;
    _doAotLoad = false;
    _useAotCompilation = false;

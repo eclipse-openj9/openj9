@@ -6904,73 +6904,78 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       }
    else if (!entry->isOutOfProcessCompReq())
       {
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      // This is used for JIT compilations and AOT loads on the client side or non-JITaaS
+      _vm = TR_J9VMBase::get(_jitConfig, vmThread);
+      entry->_useAotCompilation = false;
+
+      // When both canDoRelocatableCompile and TR::Options::canJITCompile() are false,
+      // remote compilation request should not be used.
+      if ((_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) &&
+          TR::Options::canJITCompile())
          {
          bool doLocalCompilation = false;
-         if (TR::Options::canJITCompile())
-            {
-            static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
-            // We could perform JIT compilations locally or remotely
-            // As a heuristic, cold compilations should be performed locally because
-            // they are supposed to be cheap with respect to memory and CPU.
-            //
-            if (entry->_optimizationPlan->getOptLevel() <= cold && 
-               (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
-               doLocalCompilation = true;
+         static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+         // We could perform JIT compilations locally or remotely
+         // As a heuristic, cold compilations should be performed locally because
+         // they are supposed to be cheap with respect to memory and CPU.
+         //
+         if (entry->_optimizationPlan->getOptLevel() <= cold &&
+            (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
+            doLocalCompilation = true;
 
-            // If this is a remote sync compilation, change it to a local sync compilation.
-            // After the local compilation is completed successfully, a remote async compilation
-            // will be scheduled in compileOnSeparateThread().
-            TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
-            if (!doLocalCompilation &&
-                !entry->_async &&
-                !entry->isJNINative() &&
-                !details.isNewInstanceThunk() &&
-                !details.isMethodHandleThunk() &&
-                TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) &&
-                !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
-                TR::Options::getCmdLineOptions()->allowRecompilation())
+         // If this is a remote sync compilation, change it to a local sync compilation.
+         // After the local compilation is completed successfully, a remote async compilation
+         // will be scheduled in compileOnSeparateThread().
+         TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
+         if (!doLocalCompilation &&
+             !entry->_async &&
+             !entry->isJNINative() &&
+             !details.isNewInstanceThunk() &&
+             !details.isMethodHandleThunk() &&
+             TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) &&
+             !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
+             TR::Options::getCmdLineOptions()->allowRecompilation())
+            {
+            doLocalCompilation = true;
+            entry->_origOptLevel = entry->_optimizationPlan->getOptLevel();
+            entry->_optimizationPlan->setOptLevel(cold);
+            entry->_optimizationPlan->setOptLevelDowngraded(true);
+
+            if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
+               entry->getMethodDetails().getMethod());
+            }
+
+         //TODO: Do we still need the following?
+         // In another heuristic we could downgrade all first time compilations
+         // that happen during startup.
+         if (false)
+            {
+            if (!TR::CompilationInfo::isCompiled(method) &&  //recompilations should be sent remotely
+               !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
+               !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
+               TR::Options::getCmdLineOptions()->allowRecompilation() &&
+               entry->_optimizationPlan->getOptLevel() == warm)
                {
                doLocalCompilation = true;
-               entry->_origOptLevel = entry->_optimizationPlan->getOptLevel();
                entry->_optimizationPlan->setOptLevel(cold);
                entry->_optimizationPlan->setOptLevelDowngraded(true);
-
-               if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
-                  entry->getMethodDetails().getMethod());
-               }
-
-            //TODO: Do we still need the following?
-            // In another heuristic we could downgrade all first time compilations
-            // that happen during startup.
-            if (false)
-               {
-               if (!TR::CompilationInfo::isCompiled(method) &&  //recompilations should be sent remotely
-                  !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
-                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
-                  TR::Options::getCmdLineOptions()->allowRecompilation() &&
-                  entry->_optimizationPlan->getOptLevel() == warm)
-                  {
-                  doLocalCompilation = true;
-                  entry->_optimizationPlan->setOptLevel(cold);
-                  entry->_optimizationPlan->setOptLevelDowngraded(true);
-                  // JITaaS TODO: queue a remote upgrade right away, but at a lower priority
-                  // If so, disable GCR trees for those cold compilations.
-                  }
+               // JITaaS TODO: queue a remote upgrade right away, but at a lower priority
+               // If so, disable GCR trees for those cold compilations.
                }
             }
+
          if (!doLocalCompilation)
             entry->setRemoteCompReq();
          }
- 
-      _vm = TR_J9VMBase::get(_jitConfig, vmThread); // This is used for JIT compilations and AOT loads
-      entry->_useAotCompilation = false;
       }
-   // else if (entry->isOutOfProcessCompReq()) is the only case left
-   // its _vm has been set in TR::CompilationInfoPerThreadRemote::processEntry
-   // entry->_useAotCompilation is also set in TR::CompilationInfoPerThreadRemote::processEntry
-  
+   else
+      {
+      // (entry->isOutOfProcessCompReq() && !canDoRelocatableCompile
+      // AOT loads or JIT compilation on the server side.
+      // Its _vm and entry->_useAotCompilation have been set in TR::CompilationInfoPerThreadRemote::processEntry
+      TR_ASSERT(!entry->_useAotCompilation, "Client requests AOT compilation but server cannot do remote AOT compilation\n");
+      }
    }
 
 /**
