@@ -234,14 +234,6 @@ ifneq (,$(findstring _gcc,$(SPEC)))
 	endif
 	CONFIGURE_ARGS += 'OMR_TOOLCHAIN=gcc'
 	CONFIGURE_ARGS += 'CXXLINKSHARED=$(CXX)'
-
-	# Add stack protect option for 64bit platform
-	ifneq (,$(findstring -64,$(SPEC)))
-		CONFIGURE_ARGS+= \
-			'GLOBAL_CFLAGS=-fstack-protector' \
-			'GLOBAL_CXXFLAGS=-fstack-protector' \
-			'GLOBAL_CPPFLAGS=-fstack-protector'
-	endif
 else
 	ifeq (default,$(origin AS))
 		AS = xlc_r
@@ -255,13 +247,6 @@ else
 	CONFIGURE_ARGS += 'OMR_TOOLCHAIN=xlc'
 	CONFIGURE_ARGS += 'CXXLINKSHARED=$(CC)'
 	# CPP is unused: 'CPP=cpp'
-
-	# Add stack protect option for 64bit platform
-	ifneq (,$(findstring -64,$(SPEC)))
-		CONFIGURE_ARGS+= \
-			'GLOBAL_CFLAGS=-qstackprotect' \
-			'GLOBAL_CXXFLAGS=-qstackprotect'
-	endif
 endif
 
 CONFIGURE_ARGS += 'AR=$(AR)'
