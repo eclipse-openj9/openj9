@@ -669,6 +669,12 @@ typedef struct J9AOTCallbackFunctionTable {
 	IDATA  ( *staticAttributesNoOffset)(struct J9AOTConfig *jitConfig, void *methodCookie, I_32 cpIndex, U_32 *ltype, I_32 *myVolatile, I_32 * finalP, I_32 *privateP) ;
 } J9AOTCallbackFunctionTable;
 
+typedef struct J9HotField {
+	UDATA hotFieldOffset;
+	int32_t hotFieldMethodHotness;
+	int32_t hotFieldThreshold;
+} J9HotField;
+
 typedef struct J9ROMNameAndSignature {
 	J9SRP name;
 	J9SRP signature;
@@ -3018,6 +3024,8 @@ typedef struct J9Class {
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 	struct J9FlattenedClassCache* flattenedClassCache;
+	struct J9HotField hotField1;
+	struct J9HotField hotField2; 
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3087,6 +3095,8 @@ typedef struct J9ArrayClass {
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
+	struct J9HotField hotField1;
+	struct J9HotField hotField2; 
 } J9ArrayClass;
 
 
@@ -4281,6 +4291,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_dynamic_breadth_first_scan_ordering_enabled)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_getHeapBase)(struct J9JavaVM *javaVM) ;

@@ -93,6 +93,7 @@ extern J9_CFUNC UDATA mergeMemorySpaces(J9VMThread *vmThread, void *destinationM
 extern J9_CFUNC UDATA j9gc_scavenger_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_concurrent_scavenger_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_software_read_barrier_enabled(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_dynamic_breadth_first_scan_ordering_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC void j9gc_objaccess_indexableStoreAddress(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, void *value, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreAddress(J9VMThread *vmThread, j9object_t destObject, UDATA offset, void *value, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_cloneObject(J9VMThread *vmThread, j9object_t srcObject, j9object_t destObject);

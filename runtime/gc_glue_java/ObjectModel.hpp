@@ -166,6 +166,18 @@ private:
 	}
 
 public:
+	MMINLINE UDATA
+	getHotFieldOffset(MM_ForwardedHeader *forwardedHeader)
+	{
+		return getPreservedClass(forwardedHeader)->hotField1.hotFieldOffset;
+	}
+
+	MMINLINE UDATA
+	getHotFieldOffset2(MM_ForwardedHeader *forwardedHeader)
+	{
+		return getPreservedClass(forwardedHeader)->hotField2.hotFieldOffset;
+	}
+
 	/**
 	 * Determine the ScanType code for objects of the specified class. This code determines how instances should be scanned.
 	 * @param clazz[in] the class of the object to be scanned
