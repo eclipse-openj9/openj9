@@ -1,5 +1,5 @@
 <#-- 
-	Copyright (c) 1998, 2019 IBM Corp. and others
+	Copyright (c) 1998, 2017 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,12 +113,6 @@ ASFLAGS+=-Wa,goff -Wa,SYSPARM\(BIT64\)
 CFLAGS+=-Wc,"langlvl(extc99)" $(UMA_ZOS_FLAGS)
 CPPFLAGS+=-Wc,"langlvl(extc99)" 
 CXXFLAGS+=-Wc,"langlvl(extended)" $(UMA_WC_64) -+ $(UMA_ZOS_FLAGS)
-
-ifdef j9vm_env_data64
-  CFLAGS+= -Wc,stackprotect
-  CPPFLAGS+= -Wc,stackprotect
-  CXXFLAGS+= -Wc,stackprotect
-endif
 
 UMA_ZOS_CXX_LD_FLAGS+=-Wc,"langlvl(extended)" $(UMA_WC_64) -+
 
