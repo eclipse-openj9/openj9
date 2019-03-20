@@ -51,7 +51,7 @@ private:
 	
 /* Methods */
 public:
-	virtual MM_GlobalCollector *createGlobalCollector(MM_EnvironmentBase *env) = 0;
+	virtual MM_GlobalCollector *createGlobalCollector(MM_EnvironmentBase *env);
 	virtual MM_Heap *createHeapWithManager(MM_EnvironmentBase *env, uintptr_t heapBytesRequested, MM_HeapRegionManager *regionManager);
 	virtual MM_HeapRegionManager *createHeapRegionManager(MM_EnvironmentBase *env);
 	virtual MM_MemorySpace *createDefaultMemorySpace(MM_EnvironmentBase *env, MM_Heap *heap, MM_InitializationParameters *parameters);
@@ -65,6 +65,8 @@ public:
 	{
 		_typeId = __FUNCTION__;
 	};
+
+	static MM_Configuration *newInstance(MM_EnvironmentBase *env);
 
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);

@@ -212,3 +212,23 @@ MM_ConfigurationRealtime::createDispatcher(MM_EnvironmentBase *env, omrsig_handl
 {
 	return MM_Scheduler::newInstance(env, handler, handler_arg, defaultOSStackSize);
 }
+
+MM_Configuration *
+MM_ConfigurationRealtime::newInstance(MM_EnvironmentBase *env)
+{
+	MM_ConfigurationRealtime *configuration = (MM_ConfigurationRealtime *) env->getForge()->allocate(sizeof(MM_ConfigurationRealtime), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
+	if (NULL != configuration) {
+		new(configuration) MM_ConfigurationRealtime(env);
+		if(!configuration->initialize(env)) {
+			configuration->kill(env);
+			configuration = NULL;
+		}
+	}
+	return configuration;
+}
+
+MM_GlobalCollector *
+MM_ConfigurationRealtime::createGlobalCollector(MM_EnvironmentBase *env)
+{
+	return MM_RealtimeGC::newInstance(env);
+}
