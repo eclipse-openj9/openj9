@@ -876,7 +876,11 @@ TR_SharedCacheRelocationRuntime::useDFPHardware(TR_FrontEnd *fe)
 void
 TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason, char *assumeMessage)
    {
-   TR_ASSERT(false, assumeMessage);
+   if (TR::Options::isAnyVerboseOptionSet())
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "%s\n", assumeMessage);
+      }
+
    if (javaVM()->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
       {
       PORT_ACCESS_FROM_JAVAVM(javaVM());
@@ -887,7 +891,6 @@ TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason
 bool
 TR_SharedCacheRelocationRuntime::generateError(char *assumeMessage)
    {
-   TR_ASSERT(false, assumeMessage);
    incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE, assumeMessage);
    return false;
    }
