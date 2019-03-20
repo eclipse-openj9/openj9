@@ -178,7 +178,6 @@ OMRGLUE_INCLUDES = \
   ../gc_structs \
   ../gc_stats \
   ../gc_modron_standard \
-  ../gc_staccato \
   ../gc_realtime \
   ../gc_trace \
   ../gc_vlhgc

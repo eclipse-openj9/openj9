@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -101,11 +100,9 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 		if (try_scan(&scan_start, "stw")) {
 			MM_Scheduler::initializeForVirtualSTW(extensions);
-#if defined(J9VM_GC_STACCATO)
 			/* Stop the world collects should not do any concurrent work */
 			extensions->concurrentSweepingEnabled = false;
 			extensions->concurrentTracingEnabled = false;
-#endif /* J9VM_GC_STACCATO */
 			continue;
 		}
 		if (try_scan(&scan_start, "headroom=")) {
@@ -198,7 +195,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			}
 			continue;
 		}
-#if defined(J9VM_GC_STACCATO)
 		if(try_scan(&scan_start, "noConcurrentSweep")) {
 			extensions->concurrentSweepingEnabled = false;
 			continue;
@@ -215,7 +211,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->concurrentTracingEnabled = true;
 			continue;
 		}
-#endif /* J9VM_GC_STACCATO */
 
 		if (try_scan(&scan_start, "allocationContextCount=")) {
 			if(!scan_udata_helper(vm, &scan_start, &(extensions->managedAllocationContextCount), "allocationContextCount=")) {

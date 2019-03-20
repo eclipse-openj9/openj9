@@ -134,7 +134,6 @@ extern "C" {
 #cmakedefine J9VM_GC_OBJECT_ACCESS_BARRIER
 #cmakedefine J9VM_GC_REALTIME
 #cmakedefine J9VM_GC_SEGREGATED_HEAP
-#cmakedefine J9VM_GC_STACCATO
 #cmakedefine J9VM_GC_STRICT_OMR
 #cmakedefine J9VM_GC_SUBPOOLS
 #cmakedefine J9VM_GC_SUBPOOLS_ALIAS

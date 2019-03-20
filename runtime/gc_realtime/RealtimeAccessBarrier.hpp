@@ -109,9 +109,32 @@ protected:
 	void validateWriteBarrier(J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject);
 	virtual void rememberObjectImpl(MM_EnvironmentBase *env, J9Object *object);
 
+private:
 	/* New methods */
 	void rememberObject(MM_EnvironmentBase *env, J9Object *object);
 	void rememberObjectIfBarrierEnabled(J9VMThread *vmThread, J9Object* object);
+
+	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object *destClass, J9Object **destAddress, J9Object *value, bool isVolatile);
+	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile);
+	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile);
+
+	MMINLINE bool isBarrierActive(MM_EnvironmentBase* env)
+	{
+		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
+		return !extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved(env);
+	}
+
+	MMINLINE bool isDoubleBarrierActiveOnThread(J9VMThread *vmThread)
+	{
+		/* The double barrier is enabled in realtime by setting the threads remembered set fragment index
+		 * to the special value, this ensures the JIT will go out-of line. We can determine if the double
+		 * barrier is active simply by checking if the fragment index corresponds to the special value.
+		 */
+		return (J9GC_REMEMBERED_SET_RESERVED_INDEX == vmThread->sATBBarrierRememberedSetFragment.localFragmentIndex);
+	}
+
+	bool markAndScanContiguousArray(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr);
+	void scanContiguousArray(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr);
 
 public:
 	static MM_RealtimeAccessBarrier *newInstance(MM_EnvironmentBase *env);
@@ -128,28 +151,6 @@ public:
 
 	virtual I_32 backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
 	virtual I_32 forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
-
-	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object *destClass, J9Object **destAddress, J9Object *value, bool isVolatile);
-	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile);
-	bool preObjectStoreInternal(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile);
-
-	MMINLINE bool isBarrierActive(MM_EnvironmentBase* env)
-	{
-		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-		return !extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved(env);
-	}
-
-	MMINLINE bool isDoubleBarrierActiveOnThread(J9VMThread *vmThread)
-	{
-		/* The double barrier is enabled in staccato by setting the threads remembered set fragment index
-		 * to the special value, this ensures the JIT will go out-of line. We can determine if the double
-		 * barrier is active simply by checking if the fragment index corresponds to the special value.
-		 */
-		return (J9GC_REMEMBERED_SET_RESERVED_INDEX == vmThread->sATBBarrierRememberedSetFragment.localFragmentIndex);
-	}
-
-	bool markAndScanContiguousArray(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr);
-	void scanContiguousArray(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr);
 
 	/**
 	 * Remember objects that are forced onto the finalizable list at shutdown.

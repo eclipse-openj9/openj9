@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,7 +120,7 @@ extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_
 
 #endif /* J9VM_GC_COMPRESSED_POINTERS */
 
-#if defined(J9VM_GC_STACCATO)
+#if defined(J9VM_GC_REALTIME)
 /* Note that the "reserved" index is used for 2 different purposes with the
  * sATBBarrierRememberedSet:
  * 1) As a per-thread flag indicating the double barrier is on.
@@ -132,7 +131,7 @@ extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_
  * check, we must ensure that both indexes aren't preserved at the same time.
  */
 #define J9GC_REMEMBERED_SET_RESERVED_INDEX 0
-#endif /* J9VM_GC_STACCATO */
+#endif /* J9VM_GC_REALTIME */
 
 /*
  * True if the given JLClass instance is fully initialized and known to be a JLClass instance.  This must be called
