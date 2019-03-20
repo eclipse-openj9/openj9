@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -25,7 +24,6 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "StaccatoAccessBarrier.hpp"
-#include "StaccatoGC.hpp"
 
 #include "RealtimeMarkingScheme.hpp"
 
