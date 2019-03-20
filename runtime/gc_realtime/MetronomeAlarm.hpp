@@ -33,11 +33,11 @@ class MM_EnvironmentBase;
 class MM_ProcessorInfo;
 class MM_MetronomeAlarmThread;
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "Base.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 
 #if defined(WIN32)
 #include "omrmutex.h"
@@ -67,7 +67,7 @@ protected:
 	}
 	virtual void tearDown(MM_EnvironmentBase *env);
 
-	MM_GCExtensions *_extensions;
+	MM_GCExtensionsBase *_extensions;
 
 public:
 	virtual void kill(MM_EnvironmentBase *envModron);
