@@ -337,8 +337,8 @@ def get_user_credentials_id(KEY) {
 * to run a Jenkins job.
 * Fetches the labels from the variables file when the node is not set as build
 * parameter.
-* The node's labels could be a single label - e.g. label1 - or a boolean 
-* expression - e.g. label1 && label2 || label3. 
+* The node's labels could be a single label - e.g. label1 - or a boolean
+* expression - e.g. label1 && label2 || label3.
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
@@ -507,7 +507,7 @@ def set_build_identifier() {
                 BUILD_IDENTIFIER = "${BUILD_USER_EMAIL}"
             }
         } else {
-            echo "WARNING: Can't determine appropriate BUILD_DENTIFIER automatically. Please add it as a build parameter if you would like it set."
+            echo "WARNING: Can't determine appropriate BUILD_IDENTIFIER automatically. Please add it as a build parameter if you would like it set."
         }
     }
     if (BUILD_IDENTIFIER) {
@@ -609,6 +609,27 @@ def validate_arguments(ARGS) {
             // exported as environment variables and it will overwrite the
             // make SPEC variable set in the configure phase in build.build() method
             SPEC = params.get(arg)
+
+            // TEMPORARILY MAP old spec names to new spec names for PR builds.
+            // This can be removed in #2836.
+            def REVERSE_SPEC_MAP = [
+                    'aix_ppc-64_cmprssptrs' : 'ppc64_aix',
+                    'linux_ppc-64_cmprssptrs_le' : 'ppc64le_linux',
+                    'linux_390-64_cmprssptrs' : 's390x_linux',
+                    'zos_390-64_cmprssptrs' : 's390x_zos',
+                    'linux_x86-64_cmprssptrs' : 'x86-64_linux',
+                    'linux_x86-64' : 'x86-64_linux_xl',
+                    'linux_x86-64_cmprssptrs_cmake' : 'x86-64_linux_cm',
+                    'win_x86' : 'x86-32_windows',
+                    'win_x86-64_cmprssptrs' : 'x86-64_windows',
+                    'osx_x86-64': 'x86-64_mac_xl',
+                    'osx_x86-64_cmprssptrs' : 'x86-64_mac']
+
+            if (REVERSE_SPEC_MAP.keySet().contains(SPEC)) {
+                echo "Converting SPEC:'${SPEC}'..."
+                SPEC = REVERSE_SPEC_MAP[SPEC]
+                echo "to SPEC:'${SPEC}'"
+            }
         }
     }
 }
@@ -715,7 +736,7 @@ def set_vendor_variables() {
         // fetch from variables file
 
         if (VARIABLES.vendor_source && VARIABLES.vendor_source.test) {
-            // parse the vendor source multi-map 
+            // parse the vendor source multi-map
             // and populate the VENDOR_TEST_* maps
 
              VARIABLES.vendor_source.test.each { entry ->
@@ -773,7 +794,7 @@ def get_repo_name_from_url(URL) {
 */
 def get_build_releases(releases_by_specs) {
     def build_releases = []
-    
+
     // find releases to build based on given specs
     releases_by_specs.values().each { versions ->
         build_releases.addAll(versions)
@@ -997,7 +1018,7 @@ def set_adoptopenjdk_tests_repository(build_releases=null) {
 }
 
 // Creates a job using the job DSL plugin on Jenkins
-def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
+def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
 
     // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
     // This allows us to know what the default values are without being told explicitly.
@@ -1017,8 +1038,7 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
 
     // Configruing the build discarder in the downstream project
 
-    DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, downstreamJobType)
-    DISCARDER_NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, downstreamJobType)
+    DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, id)
 
     def params = [:]
     params.put('JOB_NAME', JOB_NAME)
@@ -1030,7 +1050,6 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
     params.put('VENDOR_CREDENTIALS_ID_DEFAULT', VENDOR_CREDENTIALS_ID_DEFAULT)
     params.put('jobType', downstreamJobType)
     params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
-    params.put('DISCARDER_NUM_ARTIFACTS', DISCARDER_NUM_ARTIFACTS)
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
 

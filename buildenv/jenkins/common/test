@@ -51,7 +51,7 @@ def configure() {
     stage('Configure Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make -f run_configure.mk'
                 }
             }
@@ -71,7 +71,7 @@ def compile() {
     stage('Compile Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make compile'
                 }
             }
@@ -83,7 +83,7 @@ def test() {
     stage('Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh "make ${TEST_TARGET}"
                 }
             }

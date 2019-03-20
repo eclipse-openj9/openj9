@@ -367,7 +367,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 name -= '+jitaas'
                 TEST_FLAG = 'JITAAS'
             }
-            def TEST_JOB_NAME = get_test_job_name(name, SPEC, SDK_VERSION)
+            def TEST_JOB_NAME = get_test_job_name(name, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             testjobs["${TEST_JOB_NAME}"] = {
                 if (ARTIFACTORY_CREDS) {
@@ -405,14 +405,29 @@ def get_test_target_names() {
     return targetNames
 }
 
-def get_build_job_name(spec, version) {
-    return "Build-JDK${version}-${spec}"
+def get_build_job_name(spec, version, identifier) {
+    id = convert_build_identifier(identifier)
+    return "Build_JDK${version}_${spec}_${id}"
 }
 
-def get_test_job_name(targetName, spec, version) {
-    return "Test-${targetName}-JDK${version}-${spec}"
+def get_test_job_name(targetName, spec, version, identifier) {
+    id = convert_build_identifier(identifier)
+    return "Test_openjdk${version}_j9_${targetName}_${spec}_${id}"
 }
 
+def convert_build_identifier(val) {
+    switch (val) {
+        case "Nightly":
+        case "Release":
+            return val
+            break
+        case ~/^.*-Acceptance$/:
+            return val.substring(0,val.indexOf('-'))
+            break
+        default:
+            return "Personal"
+    }
+}
 /*
 * Finds the downstream builds of a build.
 * Limits the search only to the downstream builds with given names.
@@ -465,7 +480,7 @@ def get_build_embedded_status_link(build) {
 /*
 * Returns a map storing the downstream job names for given version and spec.
 */
-def get_downstream_job_names(spec, version) {
+def get_downstream_job_names(spec, version, identifier) {
     /* e.g. [build:                 Build-JDK11-linux_390-64_cmprssptrs,
              extended.functional:   Test-extended.functional-JDK11-linux_390-64_cmprssptrs,
              extended.system:       Test-extended.system-JDK11-linux_390-64_cmprssptrs,
@@ -474,10 +489,10 @@ def get_downstream_job_names(spec, version) {
     */
 
     downstreamJobNames = [:]
-    downstreamJobNames.put('build', get_build_job_name(spec, version))
+    downstreamJobNames.put('build', get_build_job_name(spec, version, identifier))
 
     for (target in get_test_target_names().sort()) {
-        downstreamJobNames.put(target, get_test_job_name(target, spec, version))
+        downstreamJobNames.put(target, get_test_job_name(target, spec, version, identifier))
     }
 
     return downstreamJobNames
