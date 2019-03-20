@@ -5557,12 +5557,12 @@ SH_CompositeCacheImpl::shutdownForStats(J9VMThread* currentThread)
 			notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, false);
 		}
 
-		_started = false;
-
-		if (exitWriteMutex(currentThread, fnName) != 0) {
+		if (exitWriteMutex(currentThread, fnName, false) != 0) {
+			_started = false;
 			retval = -1;
 			goto done;
 		}
+		_started = false;
 	}
 
 	if (_commonCCInfo->writeMutexEntryCount != 0) {
