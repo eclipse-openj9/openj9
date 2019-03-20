@@ -83,6 +83,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="omrutil" type="external"/>
 			<library name="dl" type="system">
 				<exclude-if condition="spec.win_.*"/>
+				<exclude-if condition="spec.zos_.*"/>
 			</library>
 		</libraries>
 	</artifact>
