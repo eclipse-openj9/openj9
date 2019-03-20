@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@ import org.openj9.test.javaagenttest.AgentMain;
 import static jdk.internal.org.objectweb.asm.Opcodes.ASM4;
 
 public class CustomClassVisitor extends ClassVisitor {
-
 	String className = null;
 
 	public CustomClassVisitor(ClassVisitor cv, String className) {
