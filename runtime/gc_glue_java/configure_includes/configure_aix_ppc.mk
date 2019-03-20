@@ -144,11 +144,3 @@ CONFIGURE_ARGS += 'OMR_HOST_OS=aix'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=ppc'
 CONFIGURE_ARGS += 'OMR_TARGET_DATASIZE=$(TEMP_TARGET_DATASIZE)'
 CONFIGURE_ARGS += 'OMR_TOOLCHAIN=xlc'
-
-# Add stack protect option for 64bit platform
-ifneq (,$(findstring -64,$(SPEC)))
-	CONFIGURE_ARGS+= \
-		'GLOBAL_CFLAGS=-qstackprotect' \
-		'GLOBAL_CXXFLAGS=-qstackprotect' \
-		'GLOBAL_CPPFLAGS=-qstackprotect'
-endif

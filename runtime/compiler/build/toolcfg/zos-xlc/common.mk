@@ -117,7 +117,7 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG) -Wc,INLINE\(auto,noreport,600,5000\)
 
 ifeq ($(HOST_BITS),64)
-    CX_FLAGS+=-Wc,lp64 -Wc,stackprotect
+    CX_FLAGS+=-Wc,lp64
 endif
 
 #
