@@ -599,6 +599,8 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
    // counter to the method, not the compiled-method)
    //
    _cpoSampleCounter = 1;
+   _cpuUtil = 1; 
+   
 
    uint64_t tempTimeStamp = comp->getPersistentInfo()->getElapsedTime();
    if (tempTimeStamp < (uint64_t)0x0FFFF)

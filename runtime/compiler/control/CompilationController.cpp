@@ -689,6 +689,31 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                scorchingSampleInterval, hotSampleInterval, crtSampleIntervalCount);
 
          bool dontSwitchToProfiling = false;
+
+    //********************************************************** */
+         if (hotSamplingWindowComplete) {
+            /*
+            bool useSampling = (bodyInfo->getHotness() != scorching && bodyInfo->getHotness() != veryHot && !useProfiling);
+            plan = TR_OptimizationPlan::alloc(bodyInfo->getHotness(), useProfiling, useSampling);
+            if (plan)
+               {
+               int32_t measuredCpuUtil = crtSampleIntervalCount == 0 ? // scorching interval done?
+                  (globalSamples != 0 ? scorchingSampleInterval * 1000 / globalSamples : 0) :
+                  (globalSamplesInHotWindow != 0 ? hotSampleInterval * 1000 / globalSamplesInHotWindow : 0);
+               plan->setPerceivedCPUUtil(measuredCpuUtil);
+               printf("CONTROLLER0A: cpu until: %.2f%% ; method hotness: %d ; \n", measuredCpuUtil / 10.0, bodyInfo->getHotness());
+               }
+            */
+        
+            int32_t measuredCpuUtil = crtSampleIntervalCount == 0 ? // scorching interval done?
+                  scorchingSampleInterval * 1000 / globalSamples :
+                  hotSampleInterval * 1000 / globalSamplesInHotWindow;
+
+            if (measuredCpuUtil > 0) methodInfo->setCpuUtil(measuredCpuUtil * 10.0);
+            printf("CONTROLLERRR: hotfield cpu util value: %d; CPU% Util: %.2f%%; OptLevel: %u  \n", methodInfo->getCpuUtil(), measuredCpuUtil / 10.0, (U_8)bodyInfo->getHotness());  //1.00% == 100    
+         } 
+
+
          if (count <= 0)
             {
             if (!isAlreadyBeingCompiled)

@@ -1011,7 +1011,8 @@ public:
 
    uint32_t getInstanceFieldOffsetIncludingHeader(char* classSignature, char * fieldName, char * fieldSig, TR_ResolvedMethod* method);
 
-   virtual void markHotField( TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool);
+   virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool, int32_t frequency);
+   virtual void printAllClassesAndFields(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool, int32_t frequency);
    virtual void markClassForTenuredAlignment( TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart);
 
    virtual bool shouldDelayAotLoad() { return false; }

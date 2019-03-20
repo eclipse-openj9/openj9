@@ -1502,6 +1502,17 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
    MM_LocalGCStartEvent * localGCStartEventData = (MM_LocalGCStartEvent *)eventData;
    J9VMThread * vmThread = (J9VMThread *)localGCStartEventData->currentThread->_language_vmthread;
    J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   
+   /*
+   printf("GC Start: HookedByTheJit \n");
+   
+   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(vmThread->javaVM->hotMethod->extra);
+   
+   if (bodyInfo) {
+      printf("Method Start PC: Method Name: Method Hotness: CPU Util \n", );
+      //printf("\nVMJ9: cpu until: %.2f%% ; method hotness: %d ; \n",comp()->getOptimizationPlan()->getPerceivedCPUUtil() / 10.0, _comp->getMethodHotness());
+   }
+   */
 
    if(TR::Options::getCmdLineOptions()->getStackPCDumpNumberOfBuffers() && TR::Options::getCmdLineOptions()->getStackPCDumpNumberOfFrames())
       initJitPrivateThreadData(vmThread);
@@ -3436,6 +3447,16 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
             }
          }
       }
+
+   /* initialize class hot field values
+   cl->hotField1.hotFieldOffset =  UDATA_MAX;
+   cl->hotField1.hotFieldMethodHotness = warm; 
+   cl->hotField1.hotFieldThreshold = TR::Options::_hotFieldThreshold;
+   cl->hotField2.hotFieldOffset =  UDATA_MAX;
+   cl->hotField2.hotFieldMethodHotness = warm; 
+   cl->hotField2.hotFieldThreshold = TR::Options::_hotFieldThreshold;*/
+
+   cl->hotFieldsInfo = NULL;
 
    // todo: why is the override bit on already....temporarily reset it
    // ALI 20031015: I think I have fixed the above todo - we should never

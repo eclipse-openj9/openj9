@@ -94,6 +94,7 @@ extern J9_CFUNC UDATA mergeMemorySpaces(J9VMThread *vmThread, void *destinationM
 extern J9_CFUNC UDATA j9gc_scavenger_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_concurrent_scavenger_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_software_read_barrier_enabled(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_hot_reference_field_required(J9JavaVM *javaVM);
 extern J9_CFUNC void j9gc_objaccess_indexableStoreAddress(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, void *value, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreAddress(J9VMThread *vmThread, j9object_t destObject, UDATA offset, void *value, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_cloneObject(J9VMThread *vmThread, j9object_t srcObject, j9object_t destObject);
@@ -251,6 +252,7 @@ extern J9_CFUNC const jchar* j9gc_objaccess_jniGetStringCritical(J9VMThread* vmT
 extern J9_CFUNC void j9gc_objaccess_jniReleaseStringCritical(J9VMThread* vmThread, jstring str, const jchar * elems);
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafSize(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafLogSize(J9JavaVM* javaVM);
+extern J9_CFUNC void j9gc_report_j9_hot_field_info(int32_t reducedCpuUtil, J9Class* clazz, U_8 fieldOffset,  U_32 reducedFrequency);
 extern J9_CFUNC void j9gc_get_CPU_times(J9JavaVM *javaVM, U_64* mainCpuMillis, U_64* workerCpuMillis, U_32* maxThreads, U_32* currentThreads);
 
 

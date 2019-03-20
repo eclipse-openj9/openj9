@@ -150,6 +150,12 @@ j9gc_software_read_barrier_enabled(J9JavaVM *javaVM)
 	return MM_GCExtensions::getExtensions(javaVM)->isSoftwareRangeCheckReadBarrierEnabled() ? 1 : 0;
 }
 
+UDATA
+j9gc_hot_reference_field_required(J9JavaVM *javaVM)
+{
+	return MM_GCExtensions::getExtensions(javaVM)->scavengerScanOrdering == MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST;
+}
+
 /**
  * Depending on the configuration (scav vs concurr etc) returns the type of the write barrier
  * @return write barrier type

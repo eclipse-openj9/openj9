@@ -101,6 +101,7 @@ private:
 	 * The class unloading occurs after a user defined number of cycles.
 	 */
 	bool private_shouldPercolateGarbageCollect_classUnloading(MM_EnvironmentBase *envBase);
+	void private_SortAllHotField();
 
 	/**
 	 * Decide if GC percolation should occur due to active JNI critical

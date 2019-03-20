@@ -233,6 +233,8 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	switch (_extensions->scavengerScanOrdering) {
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST:
 		break;
+	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST:
+		break;	
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL:
 		cachesPerThread += DEFERRED_CACHES_PER_THREAD;
 		break;
@@ -3287,6 +3289,7 @@ MM_CopyForwardScheme::completeScan(MM_EnvironmentVLHGC *env)
 
 			switch (_extensions->scavengerScanOrdering) {
 			case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST:
+			case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST:
 				completeScanCache(env);
 				break;
 			case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL:

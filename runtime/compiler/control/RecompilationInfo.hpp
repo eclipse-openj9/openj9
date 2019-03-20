@@ -169,6 +169,8 @@ class TR_PersistentMethodInfo
    int32_t cpoIncCounter()                {return ++_cpoSampleCounter;}
    int32_t cpoSetCounter(int newCount)    {return _cpoSampleCounter = newCount;}
 
+   int32_t getCpuUtil() { return _cpuUtil; }
+   int32_t setCpuUtil(int cpuUtil)    {return _cpuUtil = cpuUtil;}
    uint16_t getTimeStamp() { return _timeStamp; }
 
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
@@ -295,6 +297,7 @@ class TR_PersistentMethodInfo
 
    int32_t                         _cpoSampleCounter; // TODO remove this field
    uint16_t                        _timeStamp;
+   uint32_t                        _cpuUtil;
    uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
    uint8_t                         _numberOfInlinedMethodRedefinition; // how many times this method triggers recompilation because of its inlined callees being redefined
    int16_t                         _numPrexAssumptions;
