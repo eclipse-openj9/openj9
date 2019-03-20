@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,28 +20,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package org.openj9.test.javaagenttest.util;
+
 import jdk.internal.org.objectweb.asm.Label;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.commons.AdviceAdapter;
 import org.openj9.test.javaagenttest.AgentMain;
 
-public class MethodInstrumentAdapter_CallNewMethod extends AdviceAdapter {
-
+public class MethodInstrumentAdapter_AddPrintOut extends AdviceAdapter {
 	String methodName = null;
 
-	public MethodInstrumentAdapter_CallNewMethod( int access, String name, String desc, MethodVisitor mv ) {
-		super( ASM4, mv, access, name, desc );
+	public MethodInstrumentAdapter_AddPrintOut( int access, String name, String desc, MethodVisitor mv ) {
+		super(ASM7, mv, access, name, desc );
 		methodName = name;
 	}
 
-	/* Add a call to the added method at the beginning of this method
+	/*
+	 * Add some logic at the beginning of this method
 	 * (non-Javadoc)
 	 * @see jdk.internal.org.objectweb.asm.commons.AdviceAdapter#onMethodEnter()
 	 */
 	@Override
 	protected void onMethodEnter() {
-		AgentMain.logger.debug("Class: MethodInstrumentAdapter_CallNewMethod is attempting to add call in method : " + methodName);
+		AgentMain.logger.debug("Class: MethodInstrumentAdapter_AddPrintOut is attempting to add call in method : " + methodName);
 		mv.visitLabel(new Label());
-		mv.visitMethodInsn( INVOKESTATIC, "java/lang/ClassLoader", "myAddedMethod", "()V" );
+		mv.visitFieldInsn( GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;" );
+		mv.visitLdcInsn( "**IN INSTRUMENTED METHOD**");
+		mv.visitMethodInsn( INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V" );
 	}
 }

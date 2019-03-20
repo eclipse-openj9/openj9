@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +27,6 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 
-
-
-
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -47,11 +44,9 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
-import static jdk.internal.org.objectweb.asm.Opcodes.ASM4;
-
+import static jdk.internal.org.objectweb.asm.Opcodes.ASM7;
 
 public class Cmvc196982 {
-
 	private static final Logger logger = Logger.getLogger(Cmvc196982.class);
 
 	@Retention(value=RUNTIME)
@@ -70,35 +65,40 @@ public class Cmvc196982 {
 	}
 
 	private Field annotationCacheField;
-	private Field methodAnnotationsField;
-	private Field fieldAnnotationsField;
-	private Field constructorAnnotationsField;
+	private Method getMethodAnnotationBytes;
+	private Method getConstructorAnnotationBytes;
 	private Field reflectCacheField;
-	private Field reflectFieldRoot;
-	private Field reflectMethodRoot;
-	private Field reflectConstructorRoot;
+	private Method reflectFieldRoot;
+	private Method reflectMethodRoot;
+	private Method reflectConstructorRoot;
 
 	@BeforeMethod(groups = { "level.sanity" })
 	protected void setUp() throws Exception {
 		logger.info("Cmvc196982 is setting up... ");
 
-		methodAnnotationsField = Method.class.getDeclaredField("annotations");
-		fieldAnnotationsField = Field.class.getDeclaredField("annotations");
-		constructorAnnotationsField = Constructor.class.getDeclaredField("annotations");
+		/* Java 12 disallows direct field reflection on java.lang.reflect.Method
+		 * (refer https://github.com/eclipse/openj9/issues/4658#issuecomment-461913909 for details), 
+		 * this is a workaround via reflection of package access methods.
+		 */
+		getMethodAnnotationBytes = Method.class.getDeclaredMethod("getAnnotationBytes");
+		getMethodAnnotationBytes.setAccessible(true);
+		/* java.lang.reflect.Field doesn't have method getAnnotationBytes()*/
+		getConstructorAnnotationBytes = Constructor.class.getDeclaredMethod("getAnnotationBytes");
+		getConstructorAnnotationBytes.setAccessible(true);
+
 		annotationCacheField = Class.class.getDeclaredField("annotationCache");
-		methodAnnotationsField.setAccessible(true);
-		fieldAnnotationsField.setAccessible(true);
-		constructorAnnotationsField.setAccessible(true);
 		annotationCacheField.setAccessible(true);
 
 		reflectCacheField = Class.class.getDeclaredField("reflectCache");
 		reflectCacheField.setAccessible(true);
 
-		reflectFieldRoot = Field.class.getDeclaredField("root");
-		reflectMethodRoot = Method.class.getDeclaredField("root");
-		reflectConstructorRoot = Constructor.class.getDeclaredField("root");
+		reflectFieldRoot = Field.class.getDeclaredMethod("getRoot");
 		reflectFieldRoot.setAccessible(true);
+		
+		reflectMethodRoot = Method.class.getDeclaredMethod("getRoot");
 		reflectMethodRoot.setAccessible(true);
+		
+		reflectConstructorRoot = Constructor.class.getDeclaredMethod("getRoot");
 		reflectConstructorRoot.setAccessible(true);
 	}
 
@@ -118,7 +118,6 @@ public class Cmvc196982 {
 	 */
 	@Test(groups = { "level.sanity", "level.extended" })
 	public void testAddingAnnotationsFlushesReflectCache() throws ReflectiveOperationException, SecurityException, IOException {
-
 		logger.info("Cmvc196982 is testing testAddingAnnotationsFlushesReflectCache()... ");
 
 		Class<?> clazz = C.class;
@@ -135,9 +134,8 @@ public class Cmvc196982 {
 		checkRoots();
 
 		/* Fetch annotations byte arrays before redefining */
-		byte[] methodBeforeRedefine = (byte[]) methodAnnotationsField.get(m);
-		byte[] fieldBeforeRedefine = (byte[]) fieldAnnotationsField.get(f);
-		byte[] constructorBeforeRedefine = (byte[]) constructorAnnotationsField.get(c);
+		byte[] methodBeforeRedefine = (byte[]) getMethodAnnotationBytes.invoke(m);
+		byte[] constructorBeforeRedefine = (byte[]) getConstructorAnnotationBytes.invoke(c);
 
 		/* Parse original annotations byte arrays */
 		Annotation[] methodOriginalAnnotations = m.getAnnotations();
@@ -154,9 +152,8 @@ public class Cmvc196982 {
 		checkRoots();
 
 		/* Fetch annotations byte arrays after redefining */
-		byte[] methodAfterRedefine = (byte[]) methodAnnotationsField.get(m);
-		byte[] fieldAfterRedefine = (byte[]) fieldAnnotationsField.get(f);
-		byte[] constructorAfterRedefine = (byte[]) constructorAnnotationsField.get(c);
+		byte[] methodAfterRedefine = (byte[]) getMethodAnnotationBytes.invoke(m);
+		byte[] constructorAfterRedefine = (byte[]) getConstructorAnnotationBytes.invoke(c);
 
 		/* Refetch reflect objects */
 		m = clazz.getMethod("m");
@@ -164,12 +161,10 @@ public class Cmvc196982 {
 		c = clazz.getConstructor();
 
 		/* Fetch annotations byte arrays from refetched reflect objects */
-		byte[] methodAfterRefetch = (byte[]) methodAnnotationsField.get(m);
-		byte[] fieldAfterRefetch = (byte[]) fieldAnnotationsField.get(f);
-		byte[] constructorAfterRefetch = (byte[]) constructorAnnotationsField.get(c);
+		byte[] methodAfterRefetch = (byte[]) getMethodAnnotationBytes.invoke(m);
+		byte[] constructorAfterRefetch = (byte[]) getConstructorAnnotationBytes.invoke(c);
 
 		checkAnnotations(methodBeforeRedefine, methodAfterRedefine, methodAfterRefetch, methodOriginalAnnotations, m.getAnnotations());
-		checkAnnotations(fieldBeforeRedefine, fieldAfterRedefine, fieldAfterRefetch, fieldOriginalAnnotations, f.getAnnotations());
 		checkAnnotations(constructorBeforeRedefine, constructorAfterRedefine, constructorAfterRefetch, constructorOriginalAnnotations, c.getAnnotations());
 	}
 
@@ -179,19 +174,19 @@ public class Cmvc196982 {
 
 		Field f1 = clazz.getField("f");
 		Field f2 = clazz.getField("f");
-		AssertJUnit.assertNotNull("Field instances not cached ", reflectFieldRoot.get(f1));
-		AssertJUnit.assertEquals(reflectFieldRoot.get(f2), reflectFieldRoot.get(f1));
+		AssertJUnit.assertNotNull("Field instances not cached ", reflectFieldRoot.invoke(f1));
+		AssertJUnit.assertEquals(reflectFieldRoot.invoke(f2), reflectFieldRoot.invoke(f1));
 
 
 		Method m1 = clazz.getMethod("m");
 		Method m2 = clazz.getMethod("m");
-		AssertJUnit.assertNotNull("Field instances not cached ", reflectMethodRoot.get(m1));
-		AssertJUnit.assertEquals(reflectMethodRoot.get(m2), reflectMethodRoot.get(m1));
+		AssertJUnit.assertNotNull("Field instances not cached ", reflectMethodRoot.invoke(m1));
+		AssertJUnit.assertEquals(reflectMethodRoot.invoke(m2), reflectMethodRoot.invoke(m1));
 
 		Constructor<?> c1 = clazz.getConstructor();
 		Constructor<?> c2 = clazz.getConstructor();
-		AssertJUnit.assertNotNull("Field instances not cached ", reflectConstructorRoot.get(c1));
-		AssertJUnit.assertEquals(reflectConstructorRoot.get(c2), reflectConstructorRoot.get(c1));
+		AssertJUnit.assertNotNull("Field instances not cached ", reflectConstructorRoot.invoke(c1));
+		AssertJUnit.assertEquals(reflectConstructorRoot.invoke(c2), reflectConstructorRoot.invoke(c1));
 	}
 
 	private void checkAnnotations(byte[] beforeRedefine, byte[] afterRedefine, byte[] afterRefetch, Annotation[] originalAnnotations, Annotation[] refetchedAnnotations) {
@@ -207,10 +202,10 @@ public class Cmvc196982 {
 	 */
 	private byte[] addAnnotation(Class<?> classToTransform, final Class<?> annotation) throws IOException {
 		ClassWriter writer = new ClassWriter(0);
-		new ClassReader(Type.getInternalName(classToTransform)).accept(new ClassVisitor(ASM4, writer) {
+		new ClassReader(Type.getInternalName(classToTransform)).accept(new ClassVisitor(ASM7, writer) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-				return new MethodVisitor(ASM4, cv.visitMethod(access, name, desc, signature, exceptions)) {
+				return new MethodVisitor(ASM7, cv.visitMethod(access, name, desc, signature, exceptions)) {
 					@Override
 					public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 						mv.visitAnnotation(Type.getDescriptor(annotation), true).visitEnd();
@@ -220,7 +215,7 @@ public class Cmvc196982 {
 			}
 			@Override
 			public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-				return new FieldVisitor(ASM4, cv.visitField(access, name, desc, signature, value)) {
+				return new FieldVisitor(ASM7, cv.visitField(access, name, desc, signature, value)) {
 					@Override
 					public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 						fv.visitAnnotation(Type.getDescriptor(annotation), true).visitEnd();

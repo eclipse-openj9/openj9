@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,31 +21,33 @@
  *******************************************************************************/
 package org.openj9.test.javaagenttest.util;
 
-import jdk.internal.org.objectweb.asm.Label;
+import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.commons.AdviceAdapter;
 import org.openj9.test.javaagenttest.AgentMain;
+import static jdk.internal.org.objectweb.asm.Opcodes.ASM7;
 
-public class MethodInstrumentAdapter_AddPrintOut extends AdviceAdapter {
+public class CustomClassVisitor extends ClassVisitor {
+	String className = null;
 
-	String methodName = null;
-
-	public MethodInstrumentAdapter_AddPrintOut( int access, String name, String desc, MethodVisitor mv ) {
-		super( ASM4, mv, access, name, desc );
-		methodName = name;
+	public CustomClassVisitor(ClassVisitor cv, String className) {
+		super(ASM7);
+		super.cv = cv;
+		this.className = className;
 	}
 
 	/*
-	 * Add some logic at the beginning of this method
-	 * (non-Javadoc)
-	 * @see jdk.internal.org.objectweb.asm.commons.AdviceAdapter#onMethodEnter()
-	 */
+	* Used for instrumenting a method in java/lang/ClassLoader
+	* (non-Javadoc)
+	* @see jdk.internal.org.objectweb.asm.ClassVisitor#visitMethod(int, java.lang.String, java.lang.String, java.lang.String, java.lang.String[])
+	*/
 	@Override
-	protected void onMethodEnter() {
-		AgentMain.logger.debug("Class: MethodInstrumentAdapter_AddPrintOut is attempting to add call in method : " + methodName);
-		mv.visitLabel(new Label());
-		mv.visitFieldInsn( GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;" );
-		mv.visitLdcInsn( "**IN INSTRUMENTED METHOD**");
-		mv.visitMethodInsn( INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V" );
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		AgentMain.logger.debug("CustomClassVisitor.visitMethod get name is: " + name);
+		if (name.equals("getResource")) {
+			return new MethodInstrumentAdapter_AddPrintOut(access, name, desc,
+					super.visitMethod(access, name, desc, signature, exceptions));
+		} else {
+			return super.visitMethod(access, name, desc, signature, exceptions);
+		}
 	}
 }
