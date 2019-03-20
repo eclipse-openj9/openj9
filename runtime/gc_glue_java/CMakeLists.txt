@@ -54,7 +54,6 @@ target_link_libraries(j9vm_gc_glue
 target_include_directories(j9vm_gc_glue
 	INTERFACE
 		${j9vm_SOURCE_DIR}/gc_modron_standard
-		${j9vm_SOURCE_DIR}/gc_staccato
 		${j9vm_SOURCE_DIR}/gc_realtime
 		${j9vm_SOURCE_DIR}/gc_trace
 		${j9vm_SOURCE_DIR}/gc_vlhgc
