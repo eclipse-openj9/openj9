@@ -21,7 +21,6 @@
 ################################################################################
 
 add_library(j9staccato STATIC
-	EnvironmentStaccato.cpp
 	StaccatoAccessBarrier.cpp
 )
 
