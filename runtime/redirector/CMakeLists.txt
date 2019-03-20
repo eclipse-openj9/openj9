@@ -35,7 +35,7 @@ add_library(jvm_redirect SHARED
 target_link_libraries(jvm_redirect
 	PRIVATE
 		j9vm_interface
-		dl
+		${CMAKE_DL_LIBS}
 )
 target_include_directories(jvm_redirect
 	PRIVATE

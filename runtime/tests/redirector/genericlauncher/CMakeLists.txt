@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,5 @@ target_link_libraries(glaunch
     PRIVATE
         j9vm_interface
 
-        #TODO platform specific
-        dl
+        ${CMAKE_DL_LIBS}
 )
