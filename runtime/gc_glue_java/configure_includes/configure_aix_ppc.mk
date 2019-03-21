@@ -45,6 +45,7 @@ ifeq (aix_ppc-64_cmprssptrs_sp, $(SPEC))
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
+		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
 		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
@@ -83,6 +84,7 @@ ifeq (aix_ppc-64_sp, $(SPEC))
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
