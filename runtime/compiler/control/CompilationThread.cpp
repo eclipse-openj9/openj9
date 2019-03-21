@@ -698,6 +698,8 @@ j9ThunkInvokeExactHelperFromTerseSignature(void * jitConfig, UDATA signatureLeng
 void
 TR::CompilationInfoPerThread::relocateThunks()
    {
+   TR_ASSERT(_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE, "Should be called in JITaaS client mode only");
+
    TR_J9VMBase *fe = _vm;
    for (auto p : _thunksToBeRelocated)
       {
@@ -719,6 +721,28 @@ TR::CompilationInfoPerThread::relocateThunks()
       void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(fe->_jitConfig, strlen(signature), signature);
       *(UDATA *)(realThunk->entryPoint() + 2) = (UDATA) vmHelper; // JITaaS TODO: This is amd64 specific
       fe->setInvokeExactJ2IThunk(realThunk, TR::comp());
+      }
+   _invokeExactThunksToBeRelocated.clear();
+   }
+
+void
+TR::CompilationInfoPerThread::persistThunksToSCC(const J9JITDataCacheHeader *cacheEntry, uint8_t *existingCode)
+   {
+   TR_ASSERT(_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE, "Should be called in JITaaS client mode only");
+   TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "Should be for AOT mode only");
+
+   TR_AOTMethodHeader * aotMethodHeaderEntry = (TR_AOTMethodHeader *)(cacheEntry + 1); // skip the header J9JITDataCacheHeader
+   for (auto p : _thunksToBeRelocated)
+      {
+      void *thunk = (U_8 *)p.first - (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC + (U_8 *)existingCode;
+      std::string signature = p.second;
+      _vm->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
+      }
+   _thunksToBeRelocated.clear();
+   for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)
+      {
+      TR_J2IThunk *realThunk = (TR_J2IThunk *)((U_8 *)thunk - (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC + (U_8 *)existingCode);
+      _vm->setInvokeExactJ2IThunk(realThunk, TR::comp());
       }
    _invokeExactThunksToBeRelocated.clear();
    }

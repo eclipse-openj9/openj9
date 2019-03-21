@@ -2377,7 +2377,16 @@ remoteCompile(
                }
             }
 
-         TR::compInfoPT->relocateThunks();
+         if (metaData)
+            {
+            TR::compInfoPT->relocateThunks();
+            }
+         else
+            {
+            // metaData == NULL indicates AOT relocation is delayed
+            // we need to persist the thunks to SCC
+            TR::compInfoPT->persistThunksToSCC((J9JITDataCacheHeader *)&dataCacheStr[0], (uint8_t *)&codeCacheStr[0]);
+            }
 
          TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
