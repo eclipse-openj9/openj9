@@ -76,6 +76,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				char* methodSpecs = NULL;
 #if !defined(WIN32) && !defined(WIN64)
 				char defaultCacheDir[J9SH_MAXPATH];
+				IDATA ret = 0;
 #endif
 				IDATA argIndex1 = -1;
 				IDATA argIndex2 = -1;
@@ -189,13 +190,12 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 #if !defined(WIN32) && !defined(WIN64)
 				/* Get platform default cache directory */
-				if (-1 == j9shr_getCacheDir(vm, NULL, defaultCacheDir, J9SH_MAXPATH, vm->sharedCacheAPI->cacheType)) {
-					SHRCLSSUP_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED);
-					Trc_SHR_Assert_ShouldNeverHappen();
-					return J9VMDLLMAIN_FAILED;
-				}
+				ret = j9shr_getCacheDir(vm, NULL, defaultCacheDir, J9SH_MAXPATH, vm->sharedCacheAPI->cacheType);
 
-				if ((NULL != ctrlDirName) && (0 != (strcmp(defaultCacheDir, ctrlDirName)))) {
+				if ((NULL != ctrlDirName)
+					&& (0 == ret)
+					&& (0 != (strcmp(defaultCacheDir, ctrlDirName)))
+				) {
 					vm->sharedCacheAPI->cacheDirPerm = convertPermToDecimal(vm, cacheDirPermStr);
 					if ((UDATA)-1 == vm->sharedCacheAPI->cacheDirPerm) {
 						return J9VMDLLMAIN_FAILED;
