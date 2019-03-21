@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package java.lang.management;
 
+import java.lang.Thread.State;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
@@ -33,6 +34,7 @@ import com.ibm.java.lang.management.internal.ManagementAccessControl;
 import com.ibm.java.lang.management.internal.MonitorInfoUtil;
 import com.ibm.java.lang.management.internal.StackTraceElementUtil;
 import com.ibm.java.lang.management.internal.ThreadInfoUtil;
+import com.ibm.oti.util.Util;
 
 /**
  * Information about a snapshot of the state of a thread.
@@ -755,17 +757,44 @@ public class ThreadInfo {
 	public String toString() {
 		// Since ThreadInfos are immutable the string value need only be
 		// calculated the one time
+		final String ls = System.lineSeparator();
 		if (TOSTRING_VALUE == null) {
 			StringBuilder result = new StringBuilder();
-			result.append(threadName + " " + threadId + " " + threadState); //$NON-NLS-1$ //$NON-NLS-2$
+/*[IF Java11]*/
+			result.append(String.format("\"%s\" prio=%d Id=%d %s",  //$NON-NLS-1$
+					threadName, Integer.valueOf(priority), Long.valueOf(threadId), threadState));
+/*[ELSE]*/
+			result.append(String.format("\"%s\" Id=%d %s",  //$NON-NLS-1$
+					threadName, Long.valueOf(threadId), threadState));
+/*[ENDIF]*/
+			if (State.BLOCKED == threadState) {
+				result.append(String.format(" on %s owned by \"%s\" Id=%d",  //$NON-NLS-1$
+						lockName, lockOwnerName, Long.valueOf(lockOwnerId)));
+			}
 			if (stackTraces != null && stackTraces.length > 0) {
-				result.append("\n"); //$NON-NLS-1$
+				result.append(ls);
+				MonitorInfo[] lockList = getLockedMonitors();
+				MonitorInfo[] lockArray = new MonitorInfo[stackTraces.length];
+				for (MonitorInfo mi: lockList) {
+					int lockDepth = mi.getLockedStackDepth();
+					lockArray[lockDepth] = mi;
+				}
+				int stackDepth = 0;
 				for (StackTraceElement element : stackTraces) {
-					result.append(element.toString());
-					result.append("\n"); //$NON-NLS-1$
+					result.append("\tat "); //$NON-NLS-1$
+					Util.printStackTraceElement(element,
+							null, result, true);
+					result.append(ls);
+					if (null != lockArray[stackDepth]) {
+						MonitorInfo mi = lockArray[stackDepth];
+						result.append(String.format("\t- locked %s%n",  //$NON-NLS-1$
+								mi.toString()));
+					}
+					++stackDepth;
 				}
 			} else {
-				result.append(" null\n"); //$NON-NLS-1$
+				result.append(" null"); //$NON-NLS-1$
+				result.append(ls);
 			}
 			TOSTRING_VALUE = result.toString();
 		}

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,9 @@ import java.util.Collections;
 import java.util.List;
 
 import com.ibm.oti.util.Msg;
+import com.ibm.oti.util.Util;
+import static com.ibm.oti.util.Util.appendTo;
+import static com.ibm.oti.util.Util.appendLnTo;
  
 /**
  * This class is the superclass of all classes which
@@ -457,39 +460,6 @@ private void readObject(ObjectInputStream s)
  */
 
 /**
- * Helper method for output with PrintStream and PrintWriter
- */
-static void appendTo(Appendable buf, CharSequence s) {
-	StackTraceElement.appendTo(buf, s);
-}
-
-/**
- * Helper method for output with PrintStream and PrintWriter
- */
-static void appendTo(Appendable buf, CharSequence s, int indents) {
-	for (int i=0; i<indents; i++) {
-		StackTraceElement.appendTo(buf, "\t"); //$NON-NLS-1$
-	}
-	StackTraceElement.appendTo(buf, s);
-}
-
-/**
- * Helper method for output with PrintStream and PrintWriter
- */
-static void appendTo(Appendable buf, int i) {
-	StackTraceElement.appendTo(buf, i);
-}
-
-/**
- * Helper method for output with PrintStream and PrintWriter
- */
-static void appendLnTo(Appendable buf) {		
-	if (buf instanceof PrintStream) ((PrintStream)buf).println();
-	else if (buf instanceof PrintWriter) ((PrintWriter)buf).println();
-	else appendTo(buf, "\n"); //$NON-NLS-1$
-}
-
-/**
  * Print stack trace
  *  
  * @param	err	
@@ -562,7 +532,7 @@ private StackTraceElement[] printStackTrace(
         }
 		if (outOfMemory) {
 			appendTo(err, "\tat ", indents); //$NON-NLS-1$
-			stack[i].appendTo(err);
+			Util.printStackTraceElement(stack[i], null, err, false);
         }
 		appendLnTo(err);		
     }
