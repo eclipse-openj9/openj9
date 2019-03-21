@@ -178,10 +178,18 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 					memcpy(vm->sharedCacheAPI->methodSpecs, methodSpecs, strlen(methodSpecs) + 1);
 				}
 
+				if (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) {
+					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
+				} else {
+					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
+				}
+				/* set runtimeFlags and verboseFlags here as they will be used later in SH_OSCache::getCacheDir() */
+				vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
+				vm->sharedCacheAPI->verboseFlags = verboseFlags;
+
 #if !defined(WIN32) && !defined(WIN64)
 				/* Get platform default cache directory */
-				rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, defaultCacheDir, J9SH_MAXPATH);
-				if (-1 == rc) {
+				if (-1 == j9shr_getCacheDir(vm, NULL, defaultCacheDir, J9SH_MAXPATH, vm->sharedCacheAPI->cacheType)) {
 					SHRCLSSUP_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED);
 					Trc_SHR_Assert_ShouldNeverHappen();
 					return J9VMDLLMAIN_FAILED;
@@ -206,13 +214,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 #else
 				vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT;
 #endif
-				if (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) {
-					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
-				} else {
-					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
-				}
-				vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
-				vm->sharedCacheAPI->verboseFlags = verboseFlags;
 				vm->sharedCacheAPI->printStatsOptions = printStatsOptions;
 				vm->sharedCacheAPI->storageKeyTesting = storageKeyTesting;
 			} else {

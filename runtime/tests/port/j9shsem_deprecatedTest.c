@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,7 @@ j9shsem_deprecated_test1(J9PortLibrary *portLibrary)
 	reportTestEntry(portLibrary, testName);
 	
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto exit;
 	}
@@ -153,7 +153,7 @@ j9shsem_deprecated_test2(J9PortLibrary *portLibrary)
 	reportTestEntry(PORTLIB, testName);
  
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -248,7 +248,7 @@ j9shsem_deprecated_test3(J9PortLibrary* portLibrary)
 	reportTestEntry(portLibrary, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -305,7 +305,7 @@ j9shsem_deprecated_test4(J9PortLibrary *portLibrary, char* argv0)
 	reportTestEntry(portLibrary, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -387,7 +387,7 @@ j9shsem_deprecated_test4_child(J9PortLibrary *portLibrary)
 	reportTestEntry(portLibrary, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -459,7 +459,7 @@ j9shsem_deprecated_test5(J9PortLibrary *portLibrary)
 	reportTestEntry(PORTLIB, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -530,7 +530,7 @@ j9shsem_deprecated_test6(J9PortLibrary *portLibrary, const char* argv0)
 	reportTestEntry(PORTLIB, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -582,7 +582,7 @@ j9shsem_deprecated_test6_child(J9PortLibrary *portLibrary)
 	reportTestEntry(PORTLIB, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -1050,7 +1050,7 @@ j9shsem_deprecated_test7_testchild(J9PortLibrary *portLibrary) {
 	rc = J9PORT_ERROR_SHSEM_OPFAILED;
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -1094,7 +1094,7 @@ j9shsem_deprecated_test8(struct J9PortLibrary *portLibrary)
 	reportTestEntry(portLibrary, testName);
 
 	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
@@ -1154,7 +1154,7 @@ j9shsem_deprecated_runTests(struct J9PortLibrary *portLibrary, char* argv0, char
 
 	/* Ensure that any Testsem files from failing tests are deleted prior to starting */
 	rc2 = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, basedir, J9SH_MAXPATH);
-	if (rc2 == -1) {
+	if (rc2 < 0) {
 		j9tty_printf(PORTLIB, "Cannot get a directory\n");
 		return -1;
 	}

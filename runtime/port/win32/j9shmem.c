@@ -787,12 +787,12 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 		if (appendBaseDir) {
 			if (omrstr_printf(shmemdir, bufLength, "%s\\%s", ctrlDirName, J9SH_BASEDIR) == bufLength - 1) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-				return -1;
+				return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
 		} else {
 			if (omrstr_printf(shmemdir, bufLength, "%s\\", ctrlDirName) == bufLength - 1) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-				return -1;
+				return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
 		}
 	} else {
@@ -801,7 +801,7 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 		appdatadir = omrmem_allocate_memory((J9SH_MAXPATH+1) * 2, OMRMEM_CATEGORY_PORT_LIBRARY);
 		if (NULL == appdatadir) {
 			Trc_PRT_j9shmem_getDir_ExitNoMemory();
-			return -1;
+			return J9PORT_ERROR_SHMEM_NOSPACE;
 		}
 
 		/* The sequence for which we look for the shared memory directory:
@@ -813,12 +813,12 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			if (appendBaseDir) {
 				if (omrstr_printf(shmemdir, bufLength, "%ls\\%s", appdatadir, J9SH_BASEDIR) == bufLength - 1) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-					return -1;
+					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
 			} else {
 				if (omrstr_printf(shmemdir, bufLength, "%ls\\", appdatadir) == bufLength - 1) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-					return -1;
+					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
 			}
 		} else {
@@ -838,12 +838,12 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			if (appendBaseDir) {
 				if (omrstr_printf(shmemdir, bufLength, "%s\\%s", appdatadir, J9SH_BASEDIR) == bufLength - 1) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-					return -1;
+					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
 			} else {
 				if (omrstr_printf(shmemdir, bufLength, "%s\\", appdatadir) == bufLength - 1) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-					return -1;
+					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
 			}
 		}

@@ -4358,7 +4358,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 
 	if (-1 == SH_OSCache::getCacheDir(vm, vm->sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_INIT_j9shr_createCacheSnapshot_getCacheDirFailed();
-		SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		rc = -1;
 	} else {
 		IDATA fd = 0;
@@ -4806,10 +4806,8 @@ static IDATA
 checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType)
 {
 	IDATA ret = -1;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType)) {
-		SHRINIT_ERR_TRACE(vm->sharedCacheAPI->verboseFlags, J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 	} else {
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), versionData);
 		versionData->cacheType = cacheType;
@@ -5126,6 +5124,23 @@ j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2)
 		returnVal = 0;
 	}
 	return returnVal;
+}
+
+/**
+ * Determine the directory to use for the cache file or control file(s)
+ *
+ * @param [in] vm  A J9JavaVM
+ * @param [in] ctrlDirName  The control dir name
+ * @param [out] buffer  The buffer to write the result into
+ * @param [in] bufferSize  The size of the buffer in bytes
+ * @param [in] cacheType  The Type of cache
+ *
+ * @return 0 on success or -1 for failure
+ */
+IDATA
+j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType)
+{
+	return SH_OSCache::getCacheDir(vm, ctrlDirName, buffer, bufferSize, cacheType);
 }
 
 } /* extern "C" */
