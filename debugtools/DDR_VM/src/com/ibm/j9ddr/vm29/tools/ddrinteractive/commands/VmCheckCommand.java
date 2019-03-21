@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@ import com.ibm.j9ddr.vm29.j9.walkers.MemorySegmentIterator;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
@@ -70,7 +71,6 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 public class VmCheckCommand extends Command 
 {
 	private static final String nl = System.getProperty("line.separator");
-	private static final int J9_XACCESS_EXCLUSIVE = 2; /* TODO: Should be refactored out of here. */
 
 	public VmCheckCommand()
 	{
@@ -126,7 +126,7 @@ public class VmCheckCommand extends Command
 	}
 
 	/*
-	 *  Based on vmchk/checkthreads.c r1.5
+	 *  Based on runtime/vmchk/checkthreads.c
 	 *
 	 *	J9VMThread sanity:
 	 *		Valid VM check:
@@ -140,7 +140,7 @@ public class VmCheckCommand extends Command
 
 		int count = 0;
 		int numberOfThreadsWithVMAccess = 0;
-		boolean exclusiveVMAccess = javaVM.exclusiveAccessState().eq(J9_XACCESS_EXCLUSIVE);
+		boolean exclusiveVMAccess = javaVM.exclusiveAccessState().eq(J9Consts.J9_XACCESS_EXCLUSIVE);
 
 		reportMessage(out, "Checking threads");
 		
@@ -149,11 +149,13 @@ public class VmCheckCommand extends Command
 
 			verifyJ9VMThread(out, thread, javaVM);
 
-			if (thread.publicFlags().allBitsIn(J9Consts.J9_PUBLIC_FLAGS_VM_ACCESS)) {
-				numberOfThreadsWithVMAccess++;
+			if (thread.inNative().eq(0)) {
+				if (thread.publicFlags().allBitsIn(J9Consts.J9_PUBLIC_FLAGS_VM_ACCESS)) {
+					numberOfThreadsWithVMAccess += 1;
+				}
 			}
 
-			count++;
+			count += 1;
 		}
 
 		if (exclusiveVMAccess && numberOfThreadsWithVMAccess > 1) {
@@ -743,10 +745,10 @@ public class VmCheckCommand extends Command
 	}
 
 	/*
-	 *  Based on vmchk/checkinterntable.c r1.3
+	 *  Based on runtime/vmchk/checkinterntable.c
 	 * 
 	 *	J9LocalInternTableSanity sanity:
-	 *		if J9JavaVM->dynamicLoadBuffers != NULL
+	 *		if (J9JavaVM->dynamicLoadBuffers != NULL) && (J9JavaVM->dynamicLoadBuffers->romClassBuilder != NULL)
 	 *			invariantInternTree check:
 	 *				For each J9InternHashTableEntry
 	 *					Ensure J9InternHashTableEntry->utf8 is valid
@@ -754,28 +756,30 @@ public class VmCheckCommand extends Command
 	 */
 	private void checkLocalInternTableSanity(J9JavaVMPointer vm, PrintStream out) throws CorruptDataException {
 		int count = 0;
-		
+
 		reportMessage(out, "Checking ROM intern string nodes");
-		
+
 		J9TranslationBufferSetPointer dynamicLoadBuffers = vm.dynamicLoadBuffers();
-		if(!dynamicLoadBuffers.isNull()) {
+		if (dynamicLoadBuffers.notNull()) {
 			J9DbgROMClassBuilderPointer romClassBuilder = J9DbgROMClassBuilderPointer.cast(dynamicLoadBuffers.romClassBuilder());
-			J9DbgStringInternTablePointer stringInternTable = romClassBuilder.stringInternTable();
-			J9InternHashTableEntryPointer node = stringInternTable.headNode();
-			while(!node.isNull()) {
-				J9UTF8Pointer utf8 = node.utf8();
-				J9ClassLoaderPointer classLoader = node.classLoader();
-				if(!verifyUTF8(utf8)) {
-					reportError(out, "invalid utf8=0x%s for node=0x%s",
-						Long.toHexString(utf8.getAddress()), Long.toHexString(node.getAddress()));
+			if (romClassBuilder.notNull()) {
+				J9DbgStringInternTablePointer stringInternTable = romClassBuilder.stringInternTable();
+				J9InternHashTableEntryPointer node = stringInternTable.headNode();
+				while (node.notNull()) {
+					J9UTF8Pointer utf8 = node.utf8();
+					J9ClassLoaderPointer classLoader = node.classLoader();
+					if (!verifyUTF8(utf8)) {
+						reportError(out, "invalid utf8=0x%s for node=0x%s",
+								Long.toHexString(utf8.getAddress()), Long.toHexString(node.getAddress()));
+					}
+					if (!verifyJ9ClassLoader(vm, classLoader)) {
+						reportError(out, "invalid classLoader=0x%s for node=0x%s",
+								Long.toHexString(classLoader.getAddress()), Long.toHexString(node.getAddress()));
+					}
+					count += 1;
+					node = node.nextNode();
 				}
-				if(!verifyJ9ClassLoader(vm, classLoader)) {					
-					reportError(out, "invalid classLoader=0x%s for node=0x%s",
-						Long.toHexString(classLoader.getAddress()), Long.toHexString(node.getAddress()));
-				}
-				count++;
-				node = node.nextNode();
-			}			
+			}
 		}
 		reportMessage(out, "Checking %d ROM intern string nodes done", count);
 	}
