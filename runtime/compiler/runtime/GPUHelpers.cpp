@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1887,41 +1887,50 @@ bool freeGPUScope(CudaInfo *cudaInfo)
 
    if (cudaInfo)
       {
-         if (cudaInfo->hashTable)
-            {
-            TR_Memory::jitPersistentFree(cudaInfo->hashTable);
-            }
-
-         TR_Memory::jitPersistentFree(cudaInfo);
+      if (cudaInfo->hashTable)
+         {
+         TR_Memory::jitPersistentFree(cudaInfo->hashTable);
+         }
+      TR_Memory::jitPersistentFree(cudaInfo);
       }
 
    return failedGPUSession;
    }
 
 extern "C" int
-regionExitGPU(CudaInfo *cudaInfo, uint8_t *startPC, int ptxSourceID, int flushBlock, void **liveRef)
+regionExitGPU(CudaInfo *cudaInfo, uint8_t *startPC, int ptxSourceID, void **liveRef)
    {
-   returnOnTrue(!cudaInfo, NULL_DEVICE_PTR);
+   returnOnTrue(!cudaInfo, 1);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
    int tracing = cudaInfo->tracing;
+   bool failedGPUSession = isGPUFailed(cudaInfo);
 
    if (tracing > 1)
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tEntered regionExitGPU method (%p) - %p", cudaInfo, liveRef);
 
-   // flush GPU data to the CPU
-   flushGPUDatatoCPU(cudaInfo);
+   // if the GPU region did not have any errors, flush GPU data to the CPU
+   if (!failedGPUSession)
+      {
+      flushGPUDatatoCPU(cudaInfo);
+      }
    
-   // free GPU scope
-   bool failedGPUSession = freeGPUScope(cudaInfo);
+   /*
+    * In the naturalLoopScope case, regionExitGPU is the last call that uses cudaInfo.
+    * cudaInfo and the allocated GPU device arrays can be freed at this point.
+    */
+   if (cudaInfo->regionType == TR::CodeGenerator::naturalLoopScope)
+      {
+      freeGPUScope(cudaInfo);
+      }
 
    return (failedGPUSession ? 1 : 0);
    }
 
 extern "C" int flushGPU(CudaInfo *cudaInfo, int blockId) 
    {
-   returnOnTrue(!cudaInfo,1);
+   returnOnTrue(!cudaInfo, 1);
 
    TR_ASSERT(cudaInfo, "cudaInfo should not be NULL");
 
@@ -2128,11 +2137,11 @@ static int
 copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32_t elementSize, int32_t isNoCopyDtoH,
             void *startAddress, void *endAddress, bool forceCopy)
    {
-   returnOnTrue(!cudaInfo,NULL_DEVICE_PTR);
+   returnOnTrue(!cudaInfo, 0);
 
    // if forcing the copy, ignore error state
    if (!forceCopy)
-      returnOnTrue(isGPUFailed(cudaInfo),NULL_DEVICE_PTR);
+      returnOnTrue(isGPUFailed(cudaInfo), 0);
 
    int tracing = cudaInfo->tracing;
 
@@ -2141,7 +2150,7 @@ copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "\thost array is NULL");
 
-      returnOnTrue(captureJITError("copyGPUtoHost - host array pointer is NULL", cudaInfo, tracing > 1), NULL_DEVICE_PTR);   // TODO: better handling helper error conditions
+      returnOnTrue(captureJITError("copyGPUtoHost - host array pointer is NULL", cudaInfo, tracing > 1), 0);   // TODO: better handling helper error conditions
       }
 
    if ((*hostRef) == NULL) 
@@ -2149,7 +2158,7 @@ copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU, "\thost array is NULL");
 
-      returnOnTrue(captureJITError("copyGPUtoHost - host array is NULL", cudaInfo,  tracing > 1), NULL_DEVICE_PTR);   // TODO: better handling helper error conditions
+      returnOnTrue(captureJITError("copyGPUtoHost - host array is NULL", cudaInfo, tracing > 1), 0);   // TODO: better handling helper error conditions
       }
 
    double time;
@@ -2181,7 +2190,7 @@ copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32
 
    if (parm_entry == NULL)
       {
-      returnOnTrue(captureJITError("copyGPUtoHost - hashtable entry doesn't exist", cudaInfo, tracing > 1), NULL_DEVICE_PTR);
+      returnOnTrue(captureJITError("copyGPUtoHost - hashtable entry doesn't exist", cudaInfo, tracing > 1), 0);
       }
 
    CUdeviceptr deviceArrayInHash = parm_entry->deviceArray;
@@ -2241,8 +2250,8 @@ extern "C" int
 copyFromGPU(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32_t elementSize, int32_t isNoCopyDtoH,
             void *startAddress, void *endAddress)
    {
-   returnOnTrue(!cudaInfo,NULL_DEVICE_PTR);
-   returnOnTrue(isGPUFailed(cudaInfo),NULL_DEVICE_PTR);
+   returnOnTrue(!cudaInfo, 0);
+   returnOnTrue(isGPUFailed(cudaInfo), 0);
 
    return copyGPUtoHost(cudaInfo,hostRef,deviceArray,elementSize,isNoCopyDtoH,startAddress,endAddress,true);
    }
@@ -2275,12 +2284,14 @@ invalidateGPU(CudaInfo *cudaInfo, void **hostRef)
    return cudaInfo;
    }
 
-extern "C" int getStateGPU (CudaInfo *cudaInfo, uint8_t *startPC)
+extern "C" int
+getStateGPU(CudaInfo *cudaInfo, uint8_t *startPC)
    {
    // TODO: pass tracing level outside cudaInfo so can print if required
    returnOnTrue(!cudaInfo,GPU_EXEC_FAIL_RECOVERABLE); 
 
    int tracing = cudaInfo->tracing;
+   int returnValue = GPU_EXEC_SUCCESS;
 
    if (isGPUFailed(cudaInfo)) 
       {
@@ -2311,15 +2322,26 @@ extern "C" int getStateGPU (CudaInfo *cudaInfo, uint8_t *startPC)
             }
          }
 
-      return GPU_EXEC_FAIL_RECOVERABLE;
-     }
+      returnValue = GPU_EXEC_FAIL_RECOVERABLE;
+      }
    else
       {
       if (tracing > 1)
          TR_VerboseLog::writeLine(TR_Vlog_GPU,"\tgetStateGPU called: session successful (%p)",cudaInfo);
       
-      return GPU_EXEC_SUCCESS;
+      // returnValue will keep the default of GPU_EXEC_SUCCESS in this case.
       }
+
+   /*
+    * In the singleKernelScope case, getStateGPU is the last call that uses cudaInfo.
+    * cudaInfo and the allocated GPU device arrays can be freed at this point.
+    */
+   if (cudaInfo->regionType == TR::CodeGenerator::singleKernelScope)
+      {
+      freeGPUScope(cudaInfo);
+      }
+
+   return returnValue;
    }
 
 
@@ -2352,7 +2374,7 @@ extern "C" int launchGPUKernel(CudaInfo *cudaInfo, int startInclusive, int endEx
       return TR::CodeGenerator::GPULaunchError;
       }
    
-   returnOnTrue(isGPUFailed(cudaInfo),NULL_DEVICE_PTR);
+   returnOnTrue(isGPUFailed(cudaInfo), 0);
 
    double time;
    TR::CodeGenerator::GPUResult result;
