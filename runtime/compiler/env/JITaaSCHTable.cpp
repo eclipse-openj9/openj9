@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -221,6 +221,8 @@ bool JITaaSCHTableCommit(
       TR_MethodMetaData *metaData,
       CHTableCommitData &data)
    {
+   TR_ASSERT(!comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE(), "CHTable is not expected to be used in AOT mode");
+
    std::vector<TR_OpaqueClassBlock*> &classes = std::get<0>(data);
    std::vector<TR_OpaqueClassBlock*> &classesThatShouldNotBeNewlyExtended = std::get<1>(data);
    std::vector<TR_ResolvedMethod*> &preXMethods = std::get<2>(data);
@@ -231,9 +233,7 @@ bool JITaaSCHTableCommit(
    std::vector<TR_OpaqueClassBlock*> &classesForOSRRedefinition = std::get<7>(data);
    uint8_t *serverStartPC = std::get<8>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
-
-   if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-      return true;
+   
    if (vguards.empty() && sideEffectPatchSites.empty() && preXMethods.empty() && classes.empty() && classesThatShouldNotBeNewlyExtended.empty())
       return true;
 

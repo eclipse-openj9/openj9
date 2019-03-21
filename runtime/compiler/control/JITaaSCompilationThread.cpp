@@ -2345,7 +2345,7 @@ remoteCompile(
          // relocate the received compiled code
          metaData = remoteCompilationEnd(vmThread, compiler, compilee, method, compInfoPT, codeCacheStr, dataCacheStr);
 
-         if (!TR::comp()->getOption(TR_DisableCHOpts))
+         if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation)
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
 
@@ -2581,9 +2581,6 @@ remoteCompilationEnd(
 
 void
 outOfProcessCompilationEnd(
-   TR::IlGeneratorMethodDetails &details,
-   J9JITConfig *jitConfig,
-   TR_FrontEnd *fe,
    TR_MethodToBeCompiled *entry,
    TR::Compilation *comp)
    {
@@ -2615,7 +2612,7 @@ outOfProcessCompilationEnd(
    std::string dataCacheStr((char*) dataCacheHeader, dataSize);
 
    CHTableCommitData chTableData;
-   if (!comp->getOption(TR_DisableCHOpts))
+   if (!comp->getOption(TR_DisableCHOpts) && !entry->_useAotCompilation)
       {
       TR_CHTable *chTable = comp->getCHTable();
       chTableData = chTable->computeDataForCHTableCommit(comp);
