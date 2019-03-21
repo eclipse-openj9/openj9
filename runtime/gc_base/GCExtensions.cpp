@@ -183,10 +183,17 @@ MM_GCExtensions::identityHashDataAddRange(MM_EnvironmentBase *env, MM_MemorySubS
 	J9IdentityHashData* hashData = getJavaVM()->identityHashData;
 	if (J9_IDENTITY_HASH_SALT_POLICY_STANDARD == hashData->hashSaltPolicy) {
 		if (MEMORY_TYPE_NEW == (subspace->getTypeFlags() & MEMORY_TYPE_NEW)) {
-			if ((UDATA)lowAddress < hashData->hashData1) {
+			if (hashData->hashData1 == (UDATA)highAddress) {
+				/* Expanding low bound */
 				hashData->hashData1 = (UDATA)lowAddress;
-			}
-			if ((UDATA)highAddress > hashData->hashData2) {
+			} else if (hashData->hashData2 == (UDATA)lowAddress) {
+				/* Expanding high bound */
+				hashData->hashData2 = (UDATA)highAddress;
+			} else {
+				/* First expand */
+				Assert_MM_true(UDATA_MAX == hashData->hashData1);
+				Assert_MM_true(0 == hashData->hashData2);
+				hashData->hashData1 = (UDATA)lowAddress;
 				hashData->hashData2 = (UDATA)highAddress;
 			}
 		}
@@ -199,11 +206,18 @@ MM_GCExtensions::identityHashDataRemoveRange(MM_EnvironmentBase *env, MM_MemoryS
 	J9IdentityHashData* hashData = getJavaVM()->identityHashData;
 	if (J9_IDENTITY_HASH_SALT_POLICY_STANDARD == hashData->hashSaltPolicy) {
 		if (MEMORY_TYPE_NEW == (subspace->getTypeFlags() & MEMORY_TYPE_NEW)) {
-			if ((UDATA)lowAddress > hashData->hashData1) {
-				hashData->hashData1 = (UDATA)lowAddress;
-			}
-			if ((UDATA)highAddress < hashData->hashData2) {
-				hashData->hashData2 = (UDATA)highAddress;
+			if (hashData->hashData1 == (UDATA)lowAddress) {
+				/* Contracting low bound */
+				Assert_MM_true(hashData->hashData1 <= (UDATA)highAddress);
+				Assert_MM_true((UDATA)highAddress <= hashData->hashData2);
+				hashData->hashData1 = (UDATA)highAddress;
+			} else if (hashData->hashData2 == (UDATA)highAddress) {
+				/* Contracting high bound */
+				Assert_MM_true(hashData->hashData1 <= (UDATA)lowAddress);
+				Assert_MM_true((UDATA)lowAddress <= hashData->hashData2);
+				hashData->hashData2 = (UDATA)lowAddress;
+			} else {
+				Assert_MM_unreachable();
 			}
 		}
 	}
