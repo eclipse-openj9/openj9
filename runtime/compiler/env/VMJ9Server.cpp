@@ -781,9 +781,24 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass)
    {
-   TR_OpaqueClassBlock *arrayClass = nullptr;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   TR_OpaqueClassBlock *arrayClass = NULL;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)componentClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ARRAY_CLASS, (void *)&arrayClass);
+   if (!arrayClass)
+      {
+      stream->write(JITaaS::J9ServerMessageType::VM_getArrayClassFromComponentClass, componentClass);
+      arrayClass = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      if (arrayClass)
+         {
+         // if client initialized arrayClass, cache the new value
+         OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+         auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) componentClass);
+         if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+            {
+            it->second.arrayClass = arrayClass;
+            }
+         }
+      }
    return arrayClass;
    }
 
