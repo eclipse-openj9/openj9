@@ -33,6 +33,9 @@
 
 #include "EnvironmentBase.hpp"
 #include "Forge.hpp"
+#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+ #include  "IdleGCManager.hpp"
+#endif /* defined(J9VM_GC_IDLE_HEAP_MANAGER) */
 #include "MemorySubSpace.hpp"
 #include "ObjectModel.hpp"
 #include "ReferenceChainWalkerMarkMap.hpp"
@@ -173,6 +176,13 @@ MM_GCExtensions::tearDown(MM_EnvironmentBase *env)
 		(*tmpHookInterface)->J9HookShutdownInterface(tmpHookInterface);
 		*tmpHookInterface = NULL; /* avoid issues with double teardowns */
 	}
+
+#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+	if (NULL != idleGCManager) {
+		idleGCManager->kill(env);
+		idleGCManager = NULL;
+	}
+#endif /* defined(J9VM_GC_IDLE_HEAP_MANAGER) */
 
 	MM_GCExtensionsBase::tearDown(env);
 }
