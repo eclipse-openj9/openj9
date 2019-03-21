@@ -74,11 +74,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	static {
 /*[IF Sidecar19-SE]*/
 		try {
-/*[IF Sidecar19-SE-OpenJ9]*/
 			Module openj9_jvm = ModuleLayer.boot().findModule("openj9.jvm").get(); //$NON-NLS-1$
-/*[ELSE]
-			Module openj9_jvm = Layer.boot().findModule("openj9.jvm").get(); //$NON-NLS-1$
-/*[ENDIF]*/
 			Class<?>[] classes = AccessController.doPrivileged((PrivilegedAction<Class<?>[]>)
 				() -> new Class[] {
 					Class.forName(openj9_jvm, "com.ibm.jvm.Dump"), //$NON-NLS-1$

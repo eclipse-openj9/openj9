@@ -96,11 +96,7 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		/* OpenJ9DiagnosticsMXBeanImpl depends on openj9.jvm. If openj9.jvm is not
 		 * available exclude this component.
 		 */
-/*[IF Sidecar19-SE-OpenJ9]*/
 		if (ModuleLayer.boot().findModule("openj9.jvm").isPresent()) { //$NON-NLS-1$
-/*[ELSE]
-		if (Layer.boot().findModule("openj9.jvm").isPresent()) { //$NON-NLS-1$
-/*[ENDIF]*/
 			ComponentBuilder.create(OpenJ9DiagnosticsMXBeanImpl.getInstance())
 				.addInterface(OpenJ9DiagnosticsMXBean.class)
 				.register(allComponents);
