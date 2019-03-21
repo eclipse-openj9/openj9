@@ -1,10 +1,10 @@
 /*[INCLUDE-IF Sidecar16]*/
 package java.lang;
 
-import java.security.ProtectionDomain;
+import com.ibm.oti.util.Util;
 
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -248,94 +248,8 @@ public boolean isNativeMethod() {
 /*[ENDIF]*/
 public String toString() {
 	StringBuilder buf = new StringBuilder(80);
-
-	appendTo(buf);
+	Util.printStackTraceElement(this, source, buf, false);
 	return buf.toString();
 }
 
-/**
- * Helper method for toString and for Throwable.print output with PrintStream and PrintWriter
- */
-void appendTo(Appendable buf) {
-	/*[IF Sidecar19-SE]*/
-	if (null != moduleName) {
-		appendTo(buf, moduleName);
-		appendTo(buf, "/"); //$NON-NLS-1$
-	}
-	/*[ENDIF] Sidecar19-SE*/
-	/*[PR CMVC 90361] print "\tat " in Throwable.printStackTrace() for compatibility */
-	appendTo(buf, getClassName());
-	/*[PR CMVC 121726] Exception traces print '46' instead of '.' */
-	appendTo(buf, "."); //$NON-NLS-1$
-	appendTo(buf, getMethodName());
-  
-	appendTo(buf, "("); //$NON-NLS-1$
-	if (isNativeMethod()) {
-		appendTo(buf, "Native Method"); //$NON-NLS-1$
-	} else {
-		String fileName = getFileName();
-
-		if (fileName == null) {
-			appendTo(buf, "Unknown Source"); //$NON-NLS-1$
-		} else {
-			int lineNumber = getLineNumber();
-			
-			appendTo(buf, fileName);
-			if (lineNumber >= 0) {
-				appendTo(buf, ":"); //$NON-NLS-1$
-				appendTo(buf, lineNumber);
-			}
-		}
-	}
-	appendTo(buf, ")"); //$NON-NLS-1$
-	
-	/* Support for -verbose:stacktrace */
-	if (source != null) {
-		appendTo(buf, " from "); //$NON-NLS-1$
-		if (source instanceof String) {
-			appendTo(buf, (String)source);			
-		} else if (source instanceof ProtectionDomain) {
-			ProtectionDomain pd = (ProtectionDomain)source;
-			appendTo(buf, pd.getClassLoader().toString());			
-			appendTo(buf, "(");			 //$NON-NLS-1$
-			appendTo(buf, pd.getCodeSource().getLocation().toString());			
-			appendTo(buf, ")");			 //$NON-NLS-1$
-		}
-	}
-}
-
-/* 
- * CMVC 97756 provide a way of printing this stack trace element without
- *            allocating memory, in particular without String concatenation.
- *            Used when printing a stack trace for an OutOfMemoryError.
- */
-
-/**
- * Helper method for output with PrintStream and PrintWriter
- */
-static void appendTo(Appendable buf, CharSequence s) {
-	try {
-		buf.append(s);
-	} catch (java.io.IOException e) {
-	}
-}
-@SuppressWarnings("all")
-private static final String digits[]={"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ 
-/**
- * Helper method for output with PrintStream and PrintWriter
- */
-static void appendTo(Appendable buf, int number) {
-	int i;
-	int j = 1;
-	for (i = number; i >= 10; i /= 10) {
-		j *= 10;
-	}
-	appendTo(buf, digits[i]);
-	while (j >= 10) {
-		number -= j * i;
-		j /= 10;
-		i = number / j;
-		appendTo(buf, digits[i]);
-	}
-}
 }
