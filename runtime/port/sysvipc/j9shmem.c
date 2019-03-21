@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1249,6 +1249,7 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 	const char* rootDir = NULL;
 	char homeDirBuf[J9SH_MAXPATH];
 	const char* homeDir = NULL;
+	intptr_t rc = 0;
 	BOOLEAN appendBaseDir = J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_APPEND_BASEDIR);
 
 	Trc_PRT_j9shmem_getDir_Entry();
@@ -1286,9 +1287,11 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 					{
 						homeDir = pwent->pw_dir;
 					} else {
+						rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW;
 						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, bufLength - baseDirLen);
 					}
 				} else {
+					rc = J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME;
 					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed();
 				}
 			}
@@ -1298,9 +1301,11 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 					if (!statBuf.isRemote) {
 						rootDir = homeDir;
 					} else {
+						rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_ON_NFS;
 						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS(homeDir);
 					}
 				} else {
+					rc = J9PORT_ERROR_SHMEM_GET_DIR_CANNOT_STAT_HOME;
 					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_cannotStat(homeDir);
 				}
 			}
@@ -1310,12 +1315,12 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 	}
 	if (NULL == rootDir) {
 		Assert_PRT_true(J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_USE_USERHOME));
-		return -1;
+		Assert_PRT_true(rc < 0);
 	} else {
 		if (appendBaseDir) {
 			if (omrstr_printf(buffer, bufLength, "%s/%s", rootDir, J9SH_BASEDIR) == bufLength - 1) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-				return -1;
+				rc = J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
 		} else {
 			/* Avoid appending two slashes; this leads to problems in matching full file names. */
@@ -1324,13 +1329,13 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 								('/' == rootDir[strlen(rootDir)-1]) ? "%s" : "%s/",
 										rootDir) == bufLength - 1) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-				return -1;
+				rc = J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
 		}
 	}
 
 	Trc_PRT_j9shmem_getDir_Exit(buffer);
-	return 0;
+	return rc;
 }
 
 intptr_t

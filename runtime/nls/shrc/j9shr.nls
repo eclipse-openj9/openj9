@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6693,4 +6693,47 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW=The shared cache directory path is too long.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.explanation=The directory path requested is bigger than the internal buffer space
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Failed to use user's home as the default shared cache directory. Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Failed to use user's home as the default shared cache directory. The path is too long. Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Failed to use user's home as the default shared cache directory. It is on a Network File System. Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Failed to use user's home as the default shared cache directory. Error code is %1$d.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.user_response=Please fix the setting of home directory according to the error code and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_NO_SPACE=Failed to allocate native memory required to get the shared cache directory.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_NO_SPACE.explanation=Cannot allocate native memory.
+J9NLS_SHRC_GET_DIR_NO_SPACE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_NO_SPACE.user_response=Ensure the process has enough native memory to run.
 # END NON-TRANSLATABLE

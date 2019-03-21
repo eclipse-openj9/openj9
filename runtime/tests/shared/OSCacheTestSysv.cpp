@@ -64,7 +64,7 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
@@ -197,7 +197,7 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	}
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		return FAIL;
 	}
 
@@ -335,7 +335,7 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	}
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
@@ -418,7 +418,7 @@ SH_OSCacheTestSysv::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	}
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
@@ -504,7 +504,7 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 #endif /* defined(OPENJ9_BUILD) */
 
 	ret = j9shmem_getDir(ctrlDirName, flags, cacheDirName, J9SH_MAXPATH);
-	if (-1 == ret) {
+	if (0 > ret) {
 		j9tty_printf(PORTLIB, "testGetAllCacheStatistics: j9shmem_getDir() failed \n");
 		goto cleanup;
 	}
@@ -631,7 +631,7 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	}
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		return FAIL;
 	}
 
@@ -730,7 +730,7 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	}
 	
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
@@ -816,7 +816,7 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	}
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (rc == -1) {
+	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
@@ -971,7 +971,7 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	}
 
 	ret = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
-	if (-1 == ret) {
+	if (0 > ret) {
 	j9tty_printf(PORTLIB, "testDestroy: j9shmem_getDir() failed \n");
 		goto cleanup;
 	}
