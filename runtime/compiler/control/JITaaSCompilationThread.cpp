@@ -2388,7 +2388,7 @@ remoteCompile(
             TR::compInfoPT->persistThunksToSCC((J9JITDataCacheHeader *)&dataCacheStr[0], (uint8_t *)&codeCacheStr[0]);
             }
 
-         TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
+         TR_ASSERT(!metaData || !metaData->startColdPC, "coldPC should be null");
 
          int compilationSequenceNumber = compiler->getOptions()->writeLogFileFromServer(logFileStr);
          if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSDoLocalCompilesForRemoteCompiles) && compilationSequenceNumber)
@@ -2581,6 +2581,13 @@ remoteCompilationEnd(
                }
             comp->failCompilation<J9::AOTRelocationFailed>("Failed to relocate");
             }
+         }
+      else
+         {
+         // AOT compilations can fail on purpose because we want to load
+         // the AOT body later on. This case is signalled by having a successful compilation 
+         // but canRelocateMethod == false
+         TR::CompilationInfo::replenishInvocationCount(method, comp);
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
       }

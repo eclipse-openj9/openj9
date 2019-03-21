@@ -109,9 +109,9 @@
 #endif
 
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable* metaData);
-extern "C" {
-   int32_t getCount(J9ROMMethod *romMethod, TR::Options *optionsJIT, TR::Options *optionsAOT);
-   int32_t encodeCount(int32_t count);
+extern "C" {   
+   int32_t getCount(J9ROMMethod *romMethod, TR::Options *optionsJIT, TR::Options *optionsAOT);  
+   int32_t encodeCount(int32_t count); 
    }
 static void printCompFailureInfo(TR::Compilation * comp, const char * reason);
 
@@ -7155,36 +7155,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "compilationEnd() can fail only for relocating AOT compilations\n");
          TR_ASSERT(!entry->_oldStartPC, "We expect compilationEnd() to fail only for AOT compilations which are first time compilations\n");
 
-         // Replenish the counts of the method
-         // We are holding the compilation monitor at this point
-         //
-         J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-         if (!(romMethod->modifiers & J9AccNative))// Never change the extra field of a native method
-            {
-            int32_t methodVMExtra = TR::CompilationInfo::getJ9MethodVMExtra(method);
-            if (methodVMExtra == 1 || methodVMExtra == J9_JIT_QUEUED_FOR_COMPILATION)
-               {
-               // We want to use high counts unless the user specified counts on the command line
-               // or he used useLowerMethodCounts (or Xquickstart)
-               int32_t count;
-               if (TR::Options::getCountsAreProvidedByUser() || TR::Options::startupTimeMatters() == TR_yes)
-                  count = getCount(romMethod, _compiler->getOptions(), _compiler->getOptions());
-               else
-                  count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
-
-               TR::CompilationInfo::setInvocationCount(method, count);
-               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                  {
-                  // compiler must exist because startPC != NULL
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Reencoding count=%d for %s j9m=%p ", count, _compiler->signature(), method);
-                  }
-               }
-            else
-               {
-               if (_compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
-                  TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
-               }
-            }
+         TR::CompilationInfo::replenishInvocationCount(method, _compiler);
          }
 
       if (!metaData && !entry->_oldStartPC && // First time compilation failed
@@ -10313,6 +10284,18 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                  compiler->isProfilingCompilation() ? "profiled " : ""
                 );
 
+         UDATA startPC = 0;
+         UDATA endWarmPC = 0;
+         UDATA startColdPC = 0;
+         UDATA endPC = 0;
+         if (metaData)
+            {
+            startPC = metaData->startPC;
+            startColdPC = metaData->startColdPC;
+            endWarmPC = metaData->endWarmPC;
+            endPC = metaData->endPC;
+            }
+
          TR_Hotness h = compiler->getMethodHotness();
          if (h < numHotnessLevels)
             _compInfo._statsOptLevels[(int32_t)h]++;
@@ -10387,12 +10370,12 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                compilationTypeString,
                hotnessString,
                compiler->signature(),
-               metaData->startPC,
-               metaData->startColdPC ? metaData->endWarmPC : metaData->endPC
+               startPC,
+               startColdPC ? endWarmPC : endPC
                );
-            if (metaData->startColdPC)
+            if (startColdPC)
                {
-               TR_VerboseLog::write("/" POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startColdPC, metaData->endPC);
+               TR_VerboseLog::write("/" POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, startColdPC, endPC);
                }
 
             j9jit_printf(_jitConfig, " %s", _methodBeingCompiled->getMethodDetails().name());
@@ -10521,16 +10504,15 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          // We should add the null terminator just in case
          * (compilationAttributes + sizeof(compilationAttributes)-1) = '\0';
 #endif
-
+         
          Trc_JIT_compileEnd15(vmThread, compilationTypeString, hotnessString, compiler->signature(),
-                               metaData->startPC, metaData->endWarmPC, metaData->startColdPC, metaData->endPC,
+                               startPC, endWarmPC, startColdPC, endPC,
                                translationTime, method, metaData,
                                recompReason, _compInfo.getMethodQueueSize(), TR::CompilationInfo::getMethodBytecodeSize(method),
                                static_cast<uint32_t>(
                                     (scratchSegmentProvider.systemBytesAllocated() / 1024) & static_cast<uint32_t>(-1)
                                     ),
                               compilationAttributes);
-
 
 #ifdef TR_HOST_S390
          if (TR::Options::getVerboseOption(TR_VerboseMMap))
@@ -11418,6 +11400,40 @@ TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
          canRelocateMethod = true;
       }
    return canRelocateMethod;
+   }
+
+void
+TR::CompilationInfo::replenishInvocationCount(J9Method* method, TR::Compilation* comp)
+   {
+   // Replenish the counts of the method
+   // We are holding the compilation monitor at this point
+   //
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   if (!(romMethod->modifiers & J9AccNative))// Never change the extra field of a native method
+      {
+      int32_t methodVMExtra = TR::CompilationInfo::getJ9MethodVMExtra(method);
+      if (methodVMExtra == 1 || methodVMExtra == J9_JIT_QUEUED_FOR_COMPILATION)
+         {
+         // We want to use high counts unless the user specified counts on the command line
+         // or he used useLowerMethodCounts (or Xquickstart)
+         int32_t count;
+         if (TR::Options::getCountsAreProvidedByUser() || TR::Options::startupTimeMatters() == TR_yes)
+            count = getCount(romMethod, comp->getOptions(), comp->getOptions());
+         else
+            count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
+
+         TR::CompilationInfo::setInvocationCount(method, count);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            {
+            // compiler must exist because startPC != NULL
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Reencoding count=%d for %s j9m=%p ", count, comp->signature(), method);
+            }
+         }
+      else
+         {
+         TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
+         }
+      }
    }
 
 //===========================================================
