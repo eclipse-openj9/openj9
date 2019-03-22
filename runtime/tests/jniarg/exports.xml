@@ -1,5 +1,5 @@
 <!--
-   Copyright (c) 1991, 2017 IBM Corp. and others
+   Copyright (c) 1991, 2019 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -464,4 +464,9 @@
 	<export name="Java_JniArgTests_nativeFDFDFDFDFDFDrJ" />
 	<export name="Java_JniArgTests_nativeDFDFDFDFDFDFrJ" />
 	<export name="Java_JniArgTests_nativeBBSSIJFDIFDFDFDBBSSIJFDrJ" />
+	<export name="Java_JniArgTests_nativeIZrZ" />
+	<export name="Java_JniArgTests_nativeZIZIZIZIZIrZ" />
+	<export name="Java_JniArgTests_nativeIZIZIZIZIZrZ" />
+	<export name="Java_JniArgTests_nativeZZZZZZZZZZrZ" />
+	<export name="Java_JniArgTests_nativeIIIIIZZZZZrZ" />
 </exports>
