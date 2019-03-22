@@ -21,6 +21,7 @@
 ################################################################################
 
 j9jit_files(
+	aarch64/runtime/PicBuilder.spp
 	aarch64/runtime/Recomp.cpp
 	aarch64/runtime/Recompilation.spp
 )

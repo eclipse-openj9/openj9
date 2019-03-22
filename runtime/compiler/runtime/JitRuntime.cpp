@@ -1136,6 +1136,9 @@ JIT_HELPER(_countingRecompileMethod);
 JIT_HELPER(_induceRecompilation);
 JIT_HELPER(_revertToInterpreterGlue);
 
+#elif defined(TR_HOST_ARM64)
+JIT_HELPER(_revertToInterpreterGlue);
+
 #elif defined(TR_HOST_S390)
 
 JIT_HELPER(_countingRecompileMethod);
@@ -1238,6 +1241,9 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_ARMcountingPatchCallSite,             (void *)_countingPatchCallSite,   TR_Helper);
    SET(TR_ARMinduceRecompilation,               (void *)_induceRecompilation,     TR_Helper);
    SET(TR_ARMrevertToInterpreterGlue,           (void *)_revertToInterpreterGlue, TR_Helper);
+
+#elif defined(TR_HOST_ARM64)
+   SET(TR_ARM64revertToInterpreterGlue,           (void *)_revertToInterpreterGlue, TR_Helper);
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390samplingRecompileMethod,          (void *)_samplingRecompileMethod,   TR_Helper);

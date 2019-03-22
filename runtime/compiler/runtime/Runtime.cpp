@@ -576,6 +576,37 @@ JIT_HELPER(icallVMprJavaSendStaticSync1);
 JIT_HELPER(icallVMprJavaSendStaticSyncJ);
 JIT_HELPER(icallVMprJavaSendStaticSyncF);
 JIT_HELPER(icallVMprJavaSendStaticSyncD);
+
+#elif defined(TR_HOST_ARM64)
+JIT_HELPER(_interpreterUnresolvedStaticGlue);
+JIT_HELPER(_interpreterUnresolvedSpecialGlue);
+JIT_HELPER(_interpreterUnresolvedDirectVirtualGlue);
+JIT_HELPER(_interpreterUnresolvedClassGlue);
+JIT_HELPER(_interpreterUnresolvedClassGlue2);
+JIT_HELPER(_interpreterUnresolvedStringGlue);
+JIT_HELPER(_interpreterUnresolvedStaticDataGlue);
+JIT_HELPER(_interpreterUnresolvedStaticDataStoreGlue);
+JIT_HELPER(_interpreterUnresolvedInstanceDataGlue);
+JIT_HELPER(_interpreterUnresolvedInstanceDataStoreGlue);
+JIT_HELPER(_virtualUnresolvedHelper);
+JIT_HELPER(_interfaceCallHelper);
+JIT_HELPER(icallVMprJavaSendVirtual0);
+JIT_HELPER(icallVMprJavaSendVirtual1);
+JIT_HELPER(icallVMprJavaSendVirtualJ);
+JIT_HELPER(icallVMprJavaSendVirtualF);
+JIT_HELPER(icallVMprJavaSendVirtualD);
+JIT_HELPER(_interpreterVoidStaticGlue);
+JIT_HELPER(_interpreterSyncVoidStaticGlue);
+JIT_HELPER(_interpreterIntStaticGlue);
+JIT_HELPER(_interpreterSyncIntStaticGlue);
+JIT_HELPER(_interpreterLongStaticGlue);
+JIT_HELPER(_interpreterSyncLongStaticGlue);
+JIT_HELPER(_interpreterFloatStaticGlue);
+JIT_HELPER(_interpreterSyncFloatStaticGlue);
+JIT_HELPER(_interpreterDoubleStaticGlue);
+JIT_HELPER(_interpreterSyncDoubleStaticGlue);
+JIT_HELPER(_nativeStaticHelper);
+
 #elif defined(TR_HOST_S390)
 JIT_HELPER(outlinedNewObject);
 JIT_HELPER(outlinedNewArray);
@@ -1519,6 +1550,36 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ARMjitMathHelperDoubleCompareGE,      (void *) jitMathHelperDoubleCompareGE,  TR_Helper);
    SET(TR_ARMjitMathHelperDoubleCompareGEU,     (void *) jitMathHelperDoubleCompareGEU, TR_Helper);
    SET(TR_ARMjitCollapseJNIReferenceFrame,      (void *) jitCollapseJNIReferenceFrame,  TR_Helper);
+
+#elif defined(TR_HOST_ARM64)
+   SET(TR_ARM64interpreterUnresolvedStaticGlue,            (void *) _interpreterUnresolvedStaticGlue,               TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedSpecialGlue,           (void *) _interpreterUnresolvedSpecialGlue,              TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedDirectVirtualGlue,     (void *) _interpreterUnresolvedDirectVirtualGlue,        TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedClassGlue,             (void *) _interpreterUnresolvedClassGlue,                TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedClassGlue2,            (void *) _interpreterUnresolvedClassGlue2,               TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedStringGlue,            (void *) _interpreterUnresolvedStringGlue,               TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedStaticDataGlue,        (void *) _interpreterUnresolvedStaticDataGlue,           TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedStaticDataStoreGlue,   (void *) _interpreterUnresolvedStaticDataStoreGlue,      TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedInstanceDataGlue,      (void *) _interpreterUnresolvedInstanceDataGlue,         TR_Helper);
+   SET(TR_ARM64interpreterUnresolvedInstanceDataStoreGlue, (void *) _interpreterUnresolvedInstanceDataStoreGlue,    TR_Helper);
+   SET(TR_ARM64virtualUnresolvedHelper,                    (void *) _virtualUnresolvedHelper,                       TR_Helper);
+   SET(TR_ARM64interfaceCallHelper,                        (void *) _interfaceCallHelper,                           TR_Helper);
+   SET(TR_ARM64icallVMprJavaSendVirtual0,         (void *) icallVMprJavaSendVirtual0,        TR_Helper);
+   SET(TR_ARM64icallVMprJavaSendVirtual1,         (void *) icallVMprJavaSendVirtual1,        TR_Helper);
+   SET(TR_ARM64icallVMprJavaSendVirtualJ,         (void *) icallVMprJavaSendVirtualJ,        TR_Helper);
+   SET(TR_ARM64icallVMprJavaSendVirtualF,         (void *) icallVMprJavaSendVirtualF,        TR_Helper);
+   SET(TR_ARM64icallVMprJavaSendVirtualD,         (void *) icallVMprJavaSendVirtualD,        TR_Helper);
+   SET(TR_ARM64interpreterVoidStaticGlue,         (void *) _interpreterVoidStaticGlue,       TR_Helper);
+   SET(TR_ARM64interpreterSyncVoidStaticGlue,     (void *) _interpreterSyncVoidStaticGlue,   TR_Helper);
+   SET(TR_ARM64interpreterIntStaticGlue,          (void *) _interpreterIntStaticGlue,        TR_Helper);
+   SET(TR_ARM64interpreterSyncIntStaticGlue,      (void *) _interpreterSyncIntStaticGlue,    TR_Helper);
+   SET(TR_ARM64interpreterLongStaticGlue,         (void *) _interpreterLongStaticGlue,       TR_Helper);
+   SET(TR_ARM64interpreterSyncLongStaticGlue,     (void *) _interpreterSyncLongStaticGlue,   TR_Helper);
+   SET(TR_ARM64interpreterFloatStaticGlue,        (void *) _interpreterFloatStaticGlue,      TR_Helper);
+   SET(TR_ARM64interpreterSyncFloatStaticGlue,    (void *) _interpreterSyncFloatStaticGlue,  TR_Helper);
+   SET(TR_ARM64interpreterDoubleStaticGlue,       (void *) _interpreterDoubleStaticGlue,     TR_Helper);
+   SET(TR_ARM64interpreterSyncDoubleStaticGlue,   (void *) _interpreterSyncDoubleStaticGlue, TR_Helper);
+   SET(TR_ARM64nativeStaticHelper,                (void *) _nativeStaticHelper,              TR_Helper);
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390double2Long,                                (void *) 0,                                              TR_Helper);
