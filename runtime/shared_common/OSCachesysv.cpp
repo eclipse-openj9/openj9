@@ -145,7 +145,7 @@ bool
 SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks, UDATA create,
 		UDATA verboseFlags_, U_64 runtimeFlags_, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitializer* i, UDATA reason)
 {
-	IDATA retryCount;
+	IDATA retryCount = 0;
 	IDATA shsemrc = 0;
 	IDATA semLength = 0;
 	LastErrorInfo lastErrorInfo;
@@ -155,7 +155,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 #if defined(OPENJ9_BUILD)
 	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 #else /* OPENJ9_BUILD */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
 #endif /* OPENJ9_BUILD */
@@ -2662,7 +2662,7 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 	Trc_SHR_OSC_Sysv_restoreFromSnapshot_Entry();
 
 	_verboseFlags = vm->sharedClassConfig->verboseFlags;
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {

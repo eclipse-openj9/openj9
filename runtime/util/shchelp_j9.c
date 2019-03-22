@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,15 +29,14 @@
  * Populate a J9PortShcVersion struct with the version data of the running JVM
  *
  * @param [in] vm  pointer to J9JavaVM structure.*
- * @param [in] j2seVersion  The j2se version the JVM is running
  * @param [out] result  The struct to populate
  */
 void
-setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion* result)
+setCurrentCacheVersion(J9JavaVM *vm, J9PortShcVersion* result)
 {
 	result->esVersionMajor = EsVersionMajor;
 	result->esVersionMinor = EsVersionMinor;
-	result->modlevel = getShcModlevelForJCL(j2seVersion);
+	result->modlevel = getShcModlevelForJCL();
 	result->addrmode = J9SH_ADDRMODE;
 	result->cacheType = 0;			/* initialize to 0 */
 	result->feature = getJVMFeature(vm);

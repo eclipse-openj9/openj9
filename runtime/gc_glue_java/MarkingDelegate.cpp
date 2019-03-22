@@ -476,8 +476,7 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 				referenceStats->_cleared += 1;
 
 				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
-				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
-				if ((J9AccClassReferencePhantom == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+				if ((J9AccClassReferencePhantom == referenceObjectType) && (JAVA_SPEC_VERSION <= J2SE_18)) {
 					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
 					_markingScheme->inlineMarkObject(env, referent);
 				} else {

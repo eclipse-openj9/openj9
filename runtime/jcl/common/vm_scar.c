@@ -257,7 +257,6 @@ scarInit(J9JavaVM * vm)
 	jint result = 0;
 #if defined(WIN32)
 	char *dbgwrapperStr = NULL;
-	UDATA jclVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 #endif
 
 	/* We need to overlay java.dll functions */
@@ -276,11 +275,9 @@ scarInit(J9JavaVM * vm)
 #endif
 
 #if defined(WIN32) && !defined(OPENJ9_BUILD)
-	switch (jclVersion) {
-	case J2SE_18:
+	if (JAVA_SPEC_VERSION == J2SE_18) {
 		dbgwrapperStr = "dbgwrapper80";
-		break;
-	default:
+	} else {
 		Assert_JCL_unreachable();
 	}
 
@@ -447,7 +444,7 @@ scarPreconfigure(J9JavaVM * vm)
 		return JNI_ERR;
 	}
 
-	if (J2SE_VERSION(vm) < J2SE_V11) {
+	if (JAVA_SPEC_VERSION < J2SE_V11) {
 		char *vmSpecificDirectoryPath = "jclSC180";
 
 		rc = addVMSpecificDirectories(vm, &i, vmSpecificDirectoryPath);
@@ -586,7 +583,7 @@ addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char * subdirName)
 
 #define VM_JAR "vm.jar"
 
-	if ((NULL != vm->j2seRootDirectory) && (J2SE_LAYOUT(vm) & J2SE_LAYOUT_VM_IN_SUBDIR)) {
+	if ((NULL != vm->j2seRootDirectory) && J2SE_IS_LAYOUT_VM_IN_SUBDIR(vm)) {
 		/* 3 +1s from: dir sep, !, dir sep*/
 		int subDirPathLength = 1 + j2seRootPathLength + 1 + (int)strlen(subdirName) + 1;
 		/* +1 for NUL-terminator */

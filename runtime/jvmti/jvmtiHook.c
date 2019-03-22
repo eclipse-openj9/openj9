@@ -586,12 +586,11 @@ jvmtiHookVMStarted(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 
 	if (callback != NULL) {
 		J9VMThread *currentThread = data->vmThread;
-		J9JavaVM *vm = currentThread->javaVM;
-		UDATA hadVMAccess;
+		UDATA hadVMAccess = 0;
 		UDATA javaOffloadOldState = 0;
 		BOOLEAN reportEvent = TRUE;
 
-	 	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	 	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 	 		if (j9env->capabilities.can_generate_early_vmstart == 0) {
 	 			reportEvent = FALSE;
 	 		}
@@ -618,7 +617,7 @@ jvmtiHookModuleSystemStarted(J9HookInterface** hook, UDATA eventNum, void* event
 	Trc_JVMTI_jvmtiHookModuleSystemStarted_Entry();
 
 	Assert_JVMTI_true(J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED));
-	Assert_JVMTI_true(J2SE_VERSION(vm) >= J2SE_V11);
+	Assert_JVMTI_true(JAVA_SPEC_VERSION >= J2SE_V11);
 
 	/*
 	 * In Java9 the VMStart event can be triggered from either the J9HOOK_VM_STARTED
@@ -2293,11 +2292,10 @@ jvmtiHookClassFileLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventDa
 	J9VMClassLoadHookEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventClassFileLoadHook callback = j9env->callbacks.ClassFileLoadHook;
-	J9JavaVM * vm = j9env->vm;
 
 	Trc_JVMTI_jvmtiHookClassFileLoadHook_Entry();
 
-	if ((J2SE_VERSION(vm) >= J2SE_V11)
+	if ((JAVA_SPEC_VERSION >= J2SE_V11)
 		&& (j9env->capabilities.can_generate_early_class_hook_events == 0)
 	) {
 		ENSURE_EVENT_PHASE_START_OR_LIVE(jvmtiHookClassFileLoadHook, j9env);

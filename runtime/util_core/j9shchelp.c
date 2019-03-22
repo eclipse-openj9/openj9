@@ -155,23 +155,18 @@ getModLevelFromName(const char* cacheNameWithVGen)
 }
 
 /**
- * Return the modification level for a given j2se version
+ * Return the modification level according to JAVA_SPEC_VERSION
  * 
- * @param [in] j2seVersion  The j2se version
- * 
- * @return the modification level or 0 if one cannot be found
+ * @return the modification level
  */
 uint32_t
-getShcModlevelForJCL(uintptr_t j2seVersion)
+getShcModlevelForJCL()
 {
 	uint32_t modLevel = 0;
-	switch (j2seVersion) {
-	case J2SE_18 :
+	if (JAVA_SPEC_VERSION == J2SE_18) {
 		modLevel = J9SH_MODLEVEL_JAVA8;
-		break;
-	default: 
-		modLevel = JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion);
-		break;
+	} else {
+		modLevel = JAVA_SPEC_VERSION;
 	}
 	return modLevel;
 }

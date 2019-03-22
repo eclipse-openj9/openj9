@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,9 +72,9 @@ UDATA loadJ9DLLWithPath(J9JavaVM * vm, J9VMDllLoadInfo* info, char *dllName) {
 
 	if (NULL != dllDirectory) {
 		UDATA superSeparatorIndex = -1;
-		UDATA bufferSize;
+		UDATA bufferSize = 0;
 
-		if((info->loadFlags & XRUN_LIBRARY) && (J2SE_LAYOUT(vm) & J2SE_LAYOUT_VM_IN_SUBDIR)) {
+		if((info->loadFlags & XRUN_LIBRARY) && J2SE_IS_LAYOUT_VM_IN_SUBDIR(vm)) {
 			/* load the DLL from the parent of the j2seRootDir - find the last dir separator and declare that the end. */
 			superSeparatorIndex = strrchr(dllDirectory, DIR_SEPARATOR) - dllDirectory;
 			bufferSize = superSeparatorIndex + 1 + sizeof(DIR_SEPARATOR_STR) + strlen(dllName);  /* +1 for NUL */

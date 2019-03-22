@@ -68,9 +68,9 @@ jint computeFullVersionString(J9JavaVM* vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	const char *osarch = NULL;
 	const char *osname = NULL;
-	const char *j2se_version_info = NULL;
 	const char *jitEnabled = "";
 	const char *aotEnabled = "";
+	UDATA bufLen = 0;
 #define BUFFER_SIZE 512
 
 	/* The actual allowed BUFFER_SIZE is 512, the extra 1 char is added to check for overflow */
@@ -93,39 +93,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 #else
 	#define JIT_INFO "%s%s"
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
-
-	switch(J2SE_VERSION(vm) & J2SE_VERSION_MASK) {
-	case J2SE_18:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
-			j2se_version_info = "1.8.0";
-		} else {
-			j2se_version_info = "1.8.?";
-		}
-		break;
-	case J2SE_V11:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
-			j2se_version_info = "11";
-		} else {
-			j2se_version_info = "11.?";
-		}
-		break;
-	case J2SE_V12:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {
-			j2se_version_info = "12";
-		} else {
-			j2se_version_info = "12.?";
-		}
-		break;
-	case J2SE_V13:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V13) {
-			j2se_version_info = "13";
-		} else {
-			j2se_version_info = "13.?";
-		}
-		break;
-	default:
-		j2se_version_info = "?.?.?";
-	}
 
 	osname = j9sysinfo_get_OS_type();
 	osarch = j9sysinfo_get_CPU_architecture();
@@ -162,18 +129,29 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define VENDOR_INFO ""
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
-	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
+	if (JAVA_SPEC_VERSION == 8) {
+		bufLen = j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
 			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
-			j2se_version_info,
+			"1.8.0",
 			(NULL != osname ? osname : " "),
 			osarch,
 			EsBuildVersionString,
 			jitEnabled,
-			aotEnabled)) {
+			aotEnabled);
+	} else {
+		bufLen = j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
+			"JRE %d %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
+			JAVA_SPEC_VERSION,
+			(NULL != osname ? osname : " "),
+			osarch,
+			EsBuildVersionString,
+			jitEnabled,
+			aotEnabled);
+	}
+	if (bufLen >= BUFFER_SIZE) {
 		j9tty_err_printf(PORTLIB, "\n%s - %d: %s: Error: Java VM info string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
 		return JNI_ERR;
 	}
-
 #undef BUFFER_SIZE
 #undef JIT_INFO
 #undef MEM_INFO
@@ -567,7 +545,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 	   vm->runtimeFlags |= J9_RUNTIME_STRING_BYTE_ARRAY;
 	}
 

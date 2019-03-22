@@ -375,7 +375,7 @@ SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9Sh
 	Trc_SHR_CC_initialize_Entry1(memForConstructor, sharedClassConfig, cacheName, cacheTypeRequired, UnitTest::unitTest);
 
 	commonInit(vm);
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = cacheTypeRequired;
 
 	if ((UnitTest::NO_TEST != UnitTest::unitTest) && (UnitTest::CORRUPT_CACHE_TEST != UnitTest::unitTest)) {
@@ -1139,10 +1139,10 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			}
 		}
 	} else {
-		IDATA lockID;
+		IDATA lockID = 0;
 		bool OSCStarted = false;
 
-		setCurrentCacheVersion(vm, J2SE_VERSION(currentThread->javaVM), &versionData);
+		setCurrentCacheVersion(vm, &versionData);
 
 		/* Note that OSCache startup does not leave any kind of lock on the cache, so the cache file could in theory
 		 * be recreated by another process whenever we're not holding a lock on it. This can happen until attach() is called */

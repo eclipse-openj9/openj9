@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,10 +115,12 @@ jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propInd
 {
 	PORT_ACCESS_FROM_ENV(env);
 	I_32 result = 0;
-	char *charResult = NULL, *envSpace = NULL;
-	jobject plist;
+	char *charResult = NULL;
+	char *envSpace = NULL;
+	jobject plist = NULL;
 	char userdir[EsMaxPath];
-	char home[EsMaxPath], *homeAlloc = NULL;
+	char home[EsMaxPath];
+	char *homeAlloc = NULL;
 #if defined(J9PWENT)
 	struct passwd *pwentry = NULL;
 #endif
@@ -126,13 +128,11 @@ jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propInd
 	/* Hard coded file/path separators and other values */
 
 #if defined(J9ZOS390)
-	if (J2SE_VERSION_FROM_ENV(env)) {
-		strings[propIndex++] = "platform.notASCII";
-		strings[propIndex++] = "true";
+	strings[propIndex++] = "platform.notASCII";
+	strings[propIndex++] = "true";
 
-		strings[propIndex++] = "os.encoding";
-		strings[propIndex++] = "ISO8859_1";
-	}
+	strings[propIndex++] = "os.encoding";
+	strings[propIndex++] = "ISO8859_1";
 #endif
 
 	strings[propIndex++] = "file.separator";

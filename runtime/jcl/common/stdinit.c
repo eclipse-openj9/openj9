@@ -80,7 +80,7 @@ computeJCLRuntimeFlags(J9JavaVM *vm)
 #endif
 
 #ifdef J9VM_OPT_MODULE
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		flags |= JCL_RTFLAG_OPT_MODULE;
 	}
 #endif
@@ -116,7 +116,7 @@ standardInit( J9JavaVM *vm, char *dllName)
 	jclConstantPool->romConstantPool = J9_ROM_CP_FROM_ROM_CLASS(jclROMClass);
 
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-	if (J2SE_VERSION(vm) < J2SE_V11) {
+	if (JAVA_SPEC_VERSION < J2SE_V11) {
 		/* Process the command-line bootpath additions/modifications */
 		if (computeFinalBootstrapClassPath(vm)) {
 			goto _fail;
@@ -210,7 +210,7 @@ standardInit( J9JavaVM *vm, char *dllName)
 	internalInitializeJavaLangClassLoader((JNIEnv*)vmThread);
 	if (vmThread->currentException) goto _fail;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		result = registerJdkInternalReflectConstantPoolNatives((JNIEnv*)vmThread);
 		if (JNI_OK != result) {
 			fprintf(stderr, "Failed to register natives for jdk.internal.reflect.ConstantPool\n");
@@ -296,7 +296,7 @@ standardPreconfigure(JavaVM *jvm)
 	J9JavaVM* vm = (J9JavaVM*)jvm;
 
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-	if (J2SE_VERSION(vm) < J2SE_V11) {
+	if (JAVA_SPEC_VERSION < J2SE_V11) {
 		/* Now, based on java.home we can compute the default bootpath */
 		if (initializeBootClassPathSystemProperty(vm)) {
 			goto _fail;
@@ -527,7 +527,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	BOOLEAN initClassPathEntry = FALSE;
 
 	/* Get the BP from the VM sysprop */
-	if (J2SE_VERSION(vm) < J2SE_V11) {
+	if (JAVA_SPEC_VERSION < J2SE_V11) {
 		(*VMI)->GetSystemProperty(VMI, BOOT_PATH_SYS_PROP, &path);
 	} else {
 		(*VMI)->GetSystemProperty(VMI, BOOT_CLASS_PATH_APPEND_PROP, &path);

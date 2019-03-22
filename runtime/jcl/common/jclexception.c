@@ -117,12 +117,11 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 		if (romMethod != NULL) {
 			J9UTF8 * utf = NULL;
 			j9object_t string = NULL;
-			UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
 
 			/* Fill in module name and version */
-			if (j2seVersion >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				J9Module *module = NULL;
 				U_8 *classNameUTF = NULL;
 				UDATA length = 0;

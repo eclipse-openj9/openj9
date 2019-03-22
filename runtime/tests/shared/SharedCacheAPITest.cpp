@@ -39,7 +39,7 @@ static CacheInfo cacheInfoList[NUM_CACHE + NUM_SNAPSHOT];
 I_32 cacheCount;
 I_32 testCacheCount;
 
-void setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion *versionData);
+void setCurrentCacheVersion(J9JavaVM *vm, J9PortShcVersion *versionData);
 IDATA j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName);
 
 void
@@ -211,8 +211,8 @@ countSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *userD
 IDATA
 validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *userData)
 {
-	I_32 i;
-	UDATA cacheSize;
+	I_32 i = 0;
+	UDATA cacheSize = 0;
 	UDATA addrMode = J9SH_ADDRMODE;
 
 	cacheCount++;
@@ -236,7 +236,7 @@ validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *us
 			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->isCorrupt)
 			&& (1 == cacheInfo->isCompatible)
 			&& (addrMode == cacheInfo->addrMode)
-			&& (getShcModlevelForJCL(J2SE_VERSION(vm)) == cacheInfo->modLevel)
+			&& (getShcModlevelForJCL() == cacheInfo->modLevel)
 			&& (J9SH_OSCACHE_UNKNOWN == cacheInfo->lastDetach)
 			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->os_shmid)
 			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->os_semid)
@@ -260,7 +260,7 @@ validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *us
 				(CACHE_SIZE != cacheInfo->softMaxBytes) ||
 				(cacheInfo->freeBytes != (cacheSize - cacheInfoList[i].debugBytes)) ||
 				(cacheInfo->addrMode != addrMode) ||
-				(cacheInfo->modLevel != getShcModlevelForJCL(J2SE_VERSION(vm)) ||
+				(cacheInfo->modLevel != getShcModlevelForJCL() ||
 				(cacheInfo->lastDetach <= 0))) {
 				continue;
 			}

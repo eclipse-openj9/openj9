@@ -59,12 +59,11 @@ Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getUptimeImpl(JNIEn
 jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_isBootClassPathSupportedImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	if (J2SE_VERSION(javaVM) < J2SE_V11) {
-		return JNI_TRUE;
-	} else {
-		return JNI_FALSE;
+	jboolean ret = JNI_FALSE;
+	if (JAVA_SPEC_VERSION < J2SE_V11) {
+		ret = JNI_TRUE;
 	}
+	return ret;
 }
 
 /**

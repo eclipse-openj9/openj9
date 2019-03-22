@@ -548,11 +548,11 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 {
 	J9JavaVM *vm = vmThread->javaVM;
 	MM_StringTable *stringTable = MM_GCExtensions::getExtensions(vm->omrVM)->getStringTable();
-	J9Class *stringClass;
+	J9Class *stringClass = NULL;
 	j9object_t result = NULL;
-	j9object_t charArray;
+	j9object_t charArray = NULL;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
-	UDATA unicodeLength;
+	UDATA unicodeLength = 0;
 	bool isCompressable = false;
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
@@ -644,13 +644,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 			if (isCompressable) {
-				if (J2SE_VERSION(vm) >= J2SE_V11) {
+				if (JAVA_SPEC_VERSION >= J2SE_V11) {
 					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
 				} else {
 					J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
 				}
 			} else {
-				if (J2SE_VERSION(vm) >= J2SE_V11) {
+				if (JAVA_SPEC_VERSION >= J2SE_V11) {
 					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
 				} else {
 					J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength | (I_32)0x80000000);
@@ -677,7 +677,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				}
 			}
 		} else {
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
 			} else {
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
@@ -765,7 +765,7 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 
 		J9VMJAVALANGSTRING_SET_VALUE(vmThread, newString, newChars);
 
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, J9VMJAVALANGSTRING_CODER(vmThread, sourceString));
 		} else {
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, J9VMJAVALANGSTRING_COUNT(vmThread, sourceString));
@@ -917,13 +917,13 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 
 	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 		if (isCompressable) {
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 0);
 			} else {
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength);
 			}
 		} else {
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
 			} else {
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength | (I_32)0x80000000);
@@ -950,7 +950,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 			}
 		}
 	} else {
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
 		} else {
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength);

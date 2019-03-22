@@ -27,45 +27,15 @@
 /**
  * Constants for supported J2SE versions.
  */
-#define J2SE_18   0x0800
-#define J2SE_V11  0x0B00            /* This refers Java 11 */
-#define J2SE_V12  0x0C00            /* This refers Java 12 */
-#define J2SE_V13  0x0D00            /* This refers Java 13 */
-/* Shared class cache is using JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) to get the Java version.
- * So bits 9 to 16 of the J2SE constant should match the java version number.
- */
+#define J2SE_18   0x08
+#define J2SE_V11  0x0B            /* This refers Java 11 */
+#define J2SE_V12  0x0C            /* This refers Java 12 */
+#define J2SE_V13  0x0D            /* This refers Java 13 */
 
 /**
- * Masks for extracting major and full versions.
+ * Constant and Macro checking if JVM is in subdir
  */
-#define J2SE_VERSION_MASK 0xFF00
-#define J2SE_RELEASE_MASK 0xFFF0
-#define J2SE_SERVICE_RELEASE_MASK 0xFFFF
-
-#define J2SE_JAVA_SPEC_VERSION_SHIFT 8
-/* J2SE_CURRENT_VERSION is the current Java version supported by VM for a JCL level. */
-#define J2SE_CURRENT_VERSION (JAVA_SPEC_VERSION << J2SE_JAVA_SPEC_VERSION_SHIFT)
-
-/**
- * Masks and constants for describing J2SE shapes.
- */
-#define J2SE_LAYOUT_VM_IN_SUBDIR 0x100000
-#define J2SE_LAYOUT_MASK 		0xF00000
-#define J2SE_LAYOUT(javaVM) 	((javaVM)->j2seVersion & J2SE_LAYOUT_MASK)
-
-/**
- * Macro to extract the J2SE version given a J9JavaVM.
- */
-#define J2SE_VERSION(javaVM) 	((javaVM)->j2seVersion & J2SE_SERVICE_RELEASE_MASK)
-
-/**
- * Macro to extract J2SE version given a JNIEnv.
- */
-#define J2SE_VERSION_FROM_ENV(env) J2SE_VERSION(((J9VMThread*)env)->javaVM)
-
-/**
- * Macro to extract java spec version from J2SE version.
- */
-#define JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) 	((j2seVersion) >> J2SE_JAVA_SPEC_VERSION_SHIFT)
+#define J2SE_LAYOUT_VM_IN_SUBDIR 0x01
+#define J2SE_IS_LAYOUT_VM_IN_SUBDIR(javaVM)        (J2SE_LAYOUT_VM_IN_SUBDIR == ((javaVM)->j2seVersion & J2SE_LAYOUT_VM_IN_SUBDIR))
 
 #endif /* j2sever_h */

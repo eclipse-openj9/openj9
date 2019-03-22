@@ -29,6 +29,7 @@
 #include "j2sever.h"
 #include "omrlinkedlist.h"
 #include "j9version.h"
+#include "ut_j9vm.h"
 
 #if defined(J9ZOS390)
 #include "atoe.h"
@@ -367,9 +368,8 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	 *   |         osname
 	 *   javaVersion
 	 */
-	const char *formatString = "%s %s %s-%s%s%s%s";
-	size_t size = strlen(formatString) - (7 * 2); /* exclude 7 copies of "%s" */
-	const char *javaVersion = "";
+	const char *formatString = NULL;
+	size_t size = 0;
 	const char *osname = (const char *)(vm->j9ras->osname);
 	const char *osarch = (const char *)(vm->j9ras->osarch);
 #if defined(J9VM_ENV_DATA64)
@@ -384,17 +384,19 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	char *serviceLevel = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
-		javaVersion = "JRE 1.8.0";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
-		javaVersion = "JRE 11";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {
-		javaVersion = "JRE 12";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V13) {
-		javaVersion = "JRE 13";
+	if (JAVA_SPEC_VERSION == J2SE_18) {
+		formatString = "%s %s %s-%s%s%s%s";
+#define JAVA_VERSION "JRE 1.8.0"
+		size += strlen(JAVA_VERSION);
 	} else {
-		javaVersion = "UNKNOWN";
+		formatString = "JRE %d %s %s-%s%s%s%s";
+		/* LTS version after Java 8 is Java 11, Java 99 is ~43 years away assuming Java version 
+		 * increases by 1 every six months as per current release schedule.
+		 */
+		size += 2;
+		Assert_VM_true(JAVA_SPEC_VERSION < 100);
 	}
+	size = strlen(formatString) - (7 * 2); /* exclude 7 copies of "%s" or "%d" */
 
 	if ((NULL == runtimeVersion) || ('\0' == *runtimeVersion)) {
 		runtimeVersion = "";
@@ -403,7 +405,6 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 		closeBracket = ")";
 	}
 
-	size += strlen(javaVersion);
 	size += strlen(osname);
 	size += strlen(osarch);
 	size += strlen(ossize);
@@ -413,8 +414,14 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 
 	serviceLevel = j9mem_allocate_memory((UDATA)(size + 1), OMRMEM_CATEGORY_VM);
 	if (NULL != serviceLevel) {
-		j9str_printf(PORTLIB, serviceLevel, size + 1, formatString,
-				javaVersion, osname, osarch, ossize, openBracket, runtimeVersion, closeBracket);
+		if (JAVA_SPEC_VERSION == J2SE_18) {
+			j9str_printf(PORTLIB, serviceLevel, size + 1, formatString,
+				JAVA_VERSION, osname, osarch, ossize, openBracket, runtimeVersion, closeBracket);
+#undef	JAVA_VERSION
+		} else {
+			j9str_printf(PORTLIB, serviceLevel, size + 1, formatString,
+				JAVA_SPEC_VERSION, osname, osarch, ossize, openBracket, runtimeVersion, closeBracket);
+		}
 		serviceLevel[size] = '\0';
 
 		if (NULL != vm->j9ras->serviceLevel) {

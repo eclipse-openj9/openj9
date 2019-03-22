@@ -1357,7 +1357,7 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 		return CPE_TYPE_DIRECTORY;
 	}
 
-	if ((EsIsFile == attr) && (J2SE_VERSION(javaVM) >= J2SE_V11)) {
+	if ((EsIsFile == attr) && (JAVA_SPEC_VERSION >= J2SE_V11)) {
 		J9JImageIntf *jimageIntf = javaVM->jimageIntf;
 		if (NULL != jimageIntf) {
 			UDATA jimageHandle = 0;
@@ -1591,14 +1591,15 @@ j9print_internal_version(J9PortLibrary *portLib) {
 /* The equivalent of a J9VMDllMain for the VM init module */
 
 IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
-	J9VMDllLoadInfo *loadInfo;
+	J9VMDllLoadInfo *loadInfo = NULL;
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	IDATA argIndex = -1;
 	IDATA argIndex2 = -1;
 	IDATA optionValueSize = 0;
-	char* optionValue, *optionExtra;
+	char* optionValue = NULL;
+	char* optionExtra = NULL;
 	char* parseErrorOption = NULL;
-	IDATA parseError;
+	IDATA parseError = 0;
 	BOOLEAN lockwordWhat = FALSE;
 	UDATA rc = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1849,7 +1850,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					enableGcOnIdle = TRUE;
 				} else if (-1 == argIndexGcOnIdleDisable) {
 					if (inContainer
-						|| ((J2SE_VERSION(vm) >= J2SE_V11) && J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_TUNE_VIRTUALIZED))
+						|| ((JAVA_SPEC_VERSION >= J2SE_V11) && J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_TUNE_VIRTUALIZED))
 					) {
 						enableGcOnIdle = TRUE;
 					}
@@ -2041,7 +2042,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 
 			if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package),sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
 				if (NULL == vm->modularityPool) {
 					goto _error;
@@ -2171,7 +2172,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			break;
 
 		case BYTECODE_TABLE_SET:
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				rc = initializeModulesPath(vm);
 				if (0 != rc) {
 					loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_VM_INIT );
@@ -2190,7 +2191,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				goto _error;
 			}
 
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				BOOLEAN patchPathResult = FALSE;
 
 				vm->javaBaseModule = pool_newElement(vm->modularityPool);
@@ -2496,7 +2497,7 @@ static void consumeVMArgs(J9JavaVM* vm, J9VMInitArgs* j9vm_args) {
 	findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XNOJIT, NULL, TRUE);
 	findArgInVMArgs( PORTLIB, j9vm_args, STARTSWITH_MATCH, VMOPT_XRUN, NULL, TRUE);
 
-	if (J2SE_VERSION(vm) < J2SE_V11) {
+	if (JAVA_SPEC_VERSION < J2SE_V11) {
 		findArgInVMArgs( PORTLIB, j9vm_args, STARTSWITH_MATCH, VMOPT_XBOOTCLASSPATH_COLON, NULL, TRUE);
 		findArgInVMArgs( PORTLIB, j9vm_args, STARTSWITH_MATCH, VMOPT_XBOOTCLASSPATH_P_COLON, NULL, TRUE);
 	}
@@ -2907,7 +2908,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_CLASSLOADER_LOCKING_ENABLED | J9_EXTENDED_RUNTIME_REDUCE_CPU_MONITOR_OVERHEAD; /* enabled by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ENABLE_CPU_MONITOR; /* Cpu monitoring is enabled by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ALLOW_CONTENDED_FIELDS; /* Allow contended fields on bootstrap classes */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_RESTRICT_IFA; /* Enable zAAP switching for Registered Natives and JVMTI callbacks by default in Java 9 and later. */
 	}
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_OSR_SAFE_POINT; /* Enable OSR safe point by default */
@@ -3150,7 +3151,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 
 	/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		if (FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XBOOTCLASSPATH_COLON, NULL) != -1) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, "-Xbootclasspath");
@@ -3584,7 +3585,7 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 IDATA
 zeroInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 {
-	J9VMDllLoadInfo* loadInfo;
+	J9VMDllLoadInfo* loadInfo = NULL;
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	IDATA argIndex1 = -1;
 	BOOLEAN describe = FALSE;
@@ -3594,7 +3595,7 @@ zeroInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 	switch(stage) {
 		case PORT_LIBRARY_GUARANTEED :
 			/* -Xzero option is removed from Java 9 */
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				vm->zeroOptions = 0;
 			} else {
 				vm->zeroOptions = J9VM_ZERO_SHAREBOOTZIPCACHE;
@@ -6451,7 +6452,6 @@ shutDownHookWrapper(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo
 static void
 signalDispatch(J9VMThread *vmThread, I_32 signal)
 {
-	J9JavaVM *vm = vmThread->javaVM;
 	J9NameAndSignature nas = {0};
 	I_32 args[] = {signal};
 
@@ -6462,7 +6462,7 @@ signalDispatch(J9VMThread *vmThread, I_32 signal)
 
 	enterVMFromJNI(vmThread);
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		runStaticMethod(vmThread, (U_8 *)"jdk/internal/misc/Signal", &nas, 1, (UDATA *)args);
 	} else {
 		runStaticMethod(vmThread, (U_8 *)"sun/misc/Signal", &nas, 1, (UDATA *)args);
@@ -6576,14 +6576,14 @@ static jint
 initializeDDR(J9JavaVM * vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	I_64 ddrFileLength;
+	I_64 ddrFileLength = 0;
 	char * filename = J9DDR_DAT_FILE;
 	char * j9ddrDatDir = NULL;
 	jint rc = JNI_OK;
 
 #if defined(J9VM_OPT_SIDECAR)
 	/* Append the VM path to the filename if it's available */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		j9ddrDatDir = vm->j9libvmDirectory;
 	} else {
 		j9ddrDatDir = vm->j2seRootDirectory;

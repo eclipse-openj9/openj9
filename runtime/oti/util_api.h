@@ -2207,11 +2207,10 @@ j9cached_file_sync(struct J9PortLibrary *portLibrary, IDATA fd);
  * Populate a J9PortShcVersion struct with the version data of the running JVM
  *
  * @param [in] vm  pointer to J9JavaVM structure
- * @param [in] j2seVersion  The j2se version the JVM is running
  * @param [out] result  The struct to populate
  */
 void
-setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion* result);
+setCurrentCacheVersion(J9JavaVM *vm, J9PortShcVersion* result);
 
 /**
  * Get the running JVM feature

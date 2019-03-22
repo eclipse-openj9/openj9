@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ uintptr_t
 getValuesFromShcFilePrefix(struct J9PortLibrary* portLibrary, const char* filename, struct J9PortShcVersion* versionData);
 
 uint32_t
-getShcModlevelForJCL(uintptr_t j2seVersion);
+getShcModlevelForJCL();
 
 uint32_t
 getJCLForShcModlevel(uintptr_t modlevel);

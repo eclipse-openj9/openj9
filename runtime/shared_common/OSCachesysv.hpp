@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,7 +154,7 @@ public:
 
 	static UDATA getHeaderSize(void);
 
-	static IDATA findAllKnownCaches(struct J9PortLibrary* portlib, UDATA j2seVersion, struct J9Pool* cacheList);
+	static IDATA findAllKnownCaches(struct J9PortLibrary* portlib, struct J9Pool* cacheList);
 
 	static UDATA findfirst(struct J9PortLibrary *portLibrary, char *cacheDir, char *resultbuf);
 	

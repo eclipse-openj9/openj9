@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -181,7 +181,7 @@ dumpMemorySizes(J9JavaVM *jvm)
 #endif /* J9VM_INTERP_GROWABLE_STACKS */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	if (J2SE_VERSION(jvm) && jvm->sharedClassPreinitConfig) {				/* Only show for J2SE */
+	if (jvm->sharedClassPreinitConfig) {
 		/* Init updatedWithDefaults to the current values in jvm->sharedClassPreinitConfig, 
 		 * b/c if new members are added to J9SharedClassPreinitConfig this will cause the 
 		 * default value (set by VMInitStages() in jvminit.c) to be used.

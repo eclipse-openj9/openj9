@@ -1829,7 +1829,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 		 */
 		/* Leave this here to find usages of the following check:
 		 * J2SE_19 has been deprecated and replaced with J2SE_V11
-		 * if (J2SE_VERSION(vm) >= J2SE_V11) {
+		 * if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		 */
 		if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
 			if (classfile->majorVersion >= 51) {

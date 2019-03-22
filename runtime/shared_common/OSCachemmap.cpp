@@ -157,8 +157,8 @@ bool
 SH_OSCachemmap::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
 		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer, UDATA reason)
 {
-	I_32 mmapCapabilities;
-	IDATA retryCntr;
+	I_32 mmapCapabilities = 0;
+	IDATA retryCntr = 0;
 	bool creatingNewCache = false;
 	struct J9FileStat statBuf;
 	IDATA errorCode = J9SH_OSCACHE_FAILURE;
@@ -169,7 +169,7 @@ SH_OSCachemmap::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 #if defined(OPENJ9_BUILD)
 	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 #else /* OPENJ9_BUILD */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
 #endif /* OPENJ9_BUILD */

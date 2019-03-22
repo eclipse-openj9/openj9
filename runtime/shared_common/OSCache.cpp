@@ -585,7 +585,6 @@ SH_OSCache::setEnableVerbose(J9PortLibrary* portLib, J9JavaVM* vm, J9PortShcVers
  * @param[in] ctrlDirName  Cache directory
  * @param[in] groupPerm  Group permissions to open the cache directory
  * @param[in] localVerboseFlags  Flags indicating the level of verbose output in use
- * @param[in] j2seVersion  The j2se version that the VM is running
  * @param[in] includeOldGenerations  If true, include caches of older generations  
  * @param[in] ignoreCompatible  If true, only gets cache/snapshot statistics of incompatible caches
  * @param [in] reason Indicates the reason for getting cache/snapshot stats. Refer sharedconsts.h for valid values.
@@ -595,7 +594,7 @@ SH_OSCache::setEnableVerbose(J9PortLibrary* portLib, J9JavaVM* vm, J9PortShcVers
  *
  */
 J9Pool* 
-SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, bool includeOldGenerations, bool ignoreCompatible, UDATA reason, bool isCache)
+SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, UDATA localVerboseFlags, bool includeOldGenerations, bool ignoreCompatible, UDATA reason, bool isCache)
 {
 	J9PortLibrary* portlib = vm->portLibrary;
 	PORT_ACCESS_FROM_PORT(portlib);
@@ -712,7 +711,7 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 
 	/* Walk all the cache files in the j9shmem dir and (optionally) the persistent cacheDir */
 	do {
-		if (getCacheStatistics(vm, ctrlDirName, (const char*)nameWithVGen, groupPerm, localVerboseFlags, j2seVersion, &tempInfo, reason) != -1) {
+		if (getCacheStatistics(vm, ctrlDirName, (const char*)nameWithVGen, groupPerm, localVerboseFlags, &tempInfo, reason) != -1) {
 			if (includeOldGenerations || !tempInfo.isCompatible || (getCurrentCacheGen() == tempInfo.generation)) {
 				if (tempInfo.isCompatible) {
 					if (!ignoreCompatible) {
@@ -795,14 +794,13 @@ cleanup:
  * @param[in] cacheNameWithVGen  The filename of the cache/snapshot to query
  * @param[in] groupPerm  Group permissions to open the cache directory
  * @param[in] localVerboseFlags  Flags indicating the level of verbose output in use
- * @param[in] j2seVersion  The j2se version that the JVM is running
  * @param[out] result  A pointer to a SH_OSCache_Info should be provided, which is filled in with the results
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
  * 
  * @return 0 if the operations has been successful, -1 if an error has occured
  */
 IDATA 
-SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char* cacheNameWithVGen, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, SH_OSCache_Info* result, UDATA reason)
+SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char* cacheNameWithVGen, UDATA groupPerm, UDATA localVerboseFlags, SH_OSCache_Info* result, UDATA reason)
 {
 	J9PortLibrary* portlib = vm->portLibrary;
 	PORT_ACCESS_FROM_PORT(portlib);
@@ -843,7 +841,7 @@ SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char
 		return -1;
 	}
 
-	setCurrentCacheVersion(vm, j2seVersion, &currentVersionData);
+	setCurrentCacheVersion(vm, &currentVersionData);
 	
 	fileVMVersion = SH_OSCache::getCacheVersionToU64(result->versionData.esVersionMajor, result->versionData.esVersionMinor);
 	curVMVersion = SH_OSCache::getCacheVersionToU64(currentVersionData.esVersionMajor, currentVersionData.esVersionMinor);
@@ -853,7 +851,7 @@ SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char
 		 * - Equal or lower JVM versions
 		 * - Equal or lower JCL versions 
 		 */
-		if (getShcModlevelForJCL(j2seVersion) < result->versionData.modlevel) {
+		if (getShcModlevelForJCL() < result->versionData.modlevel) {
 			Trc_SHR_OSC_getCacheStatistics_badModLevel_Exit(result->versionData.modlevel);
 			return -1;
 		}
@@ -863,7 +861,7 @@ SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char
 		return -1;
 	}
 
-	result->isCompatible = (isCurrentGen && isCompatibleShcFilePrefix(portlib, (U_32)JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion), getJVMFeature(vm), cacheNameWithVGen));
+	result->isCompatible = (isCurrentGen && isCompatibleShcFilePrefix(portlib, JAVA_SPEC_VERSION, getJVMFeature(vm), cacheNameWithVGen));
 
 	/* isCorrupt is only valid if SHR_STATS_REASON_ITERATE is specified */
 	result->isCorrupt = 0;

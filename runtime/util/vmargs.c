@@ -667,13 +667,12 @@ addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 }
 
 IDATA
-addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2seVersion)
+addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList)
 {
 	char *dllName = J9_JAVA_SE_DLL_NAME;
 	size_t dllNameLength = sizeof(J9_JAVA_SE_DLL_NAME);
 	size_t argumentLength = -1;
 	char *argString = NULL;
-	UDATA j2seReleaseValue = j2seVersion & J2SE_RELEASE_MASK;
 	J9JavaVMArgInfo *optArg = NULL;
 	
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -1003,7 +1002,7 @@ addJavaHome(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA 
 }
 
 IDATA
-addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs, UDATA j2seVersion)
+addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs)
 {
 	char *javaHomeEnd = strrchr(jrelibPath, DIR_SEPARATOR);
 	size_t argumentLength = 1; /* add the \0 */

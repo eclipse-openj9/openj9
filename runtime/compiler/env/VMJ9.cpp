@@ -6015,9 +6015,7 @@ static TrustedMethod untrustedMethods[] =
 bool
 TR_J9VMBase::argumentCanEscapeMethodCall(TR::MethodSymbol * method, int32_t argIndex)
    {
-   int32_t numberOfTrustedClasses = INT_MAX;
-   if (_jitConfig->javaVM->j2seVersion != 0)
-      numberOfTrustedClasses = 4;
+   int32_t numberOfTrustedClasses = 4;
 
    int32_t i;
    TR::RecognizedMethod methodId = method->getRecognizedMethod();

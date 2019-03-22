@@ -32,7 +32,7 @@ extern "C" {
 #include <string.h>
 
 extern "C" {
-void setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion *versionData);
+void setCurrentCacheVersion(J9JavaVM *vm, J9PortShcVersion *versionData);
 }
 
 J9VMThread *SH_OSCacheTestMmap::currentThread = NULL;
@@ -50,8 +50,8 @@ SH_OSCacheTestMmap::testBasic(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	Init *init = NULL;
 	SH_OSCache *osc = NULL;
 	char cacheDir[J9SH_MAXPATH];
-	UDATA cacheSize;
-	char *q;
+	UDATA cacheSize = 0;
+	char *q = NULL;
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
@@ -59,7 +59,7 @@ SH_OSCacheTestMmap::testBasic(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 	
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 	
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
@@ -146,7 +146,7 @@ SH_OSCacheTestMmap::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 	
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
@@ -210,7 +210,7 @@ SH_OSCacheTestMmap::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	SH_OSCachemmap *osc = NULL;
 	char cacheDir[J9SH_MAXPATH];
 	IDATA rc = PASS;
-	J9SharedClassPreinitConfig *piconfig;
+	J9SharedClassPreinitConfig *piconfig = NULL;
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
@@ -218,7 +218,7 @@ SH_OSCacheTestMmap::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	if (NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
@@ -300,16 +300,16 @@ SH_OSCacheTestMmap::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	J9ProcessHandle pid[MAX_PROCESS];
 	IDATA rc = PASS;
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	struct j9shsem_handle *launchsem;
-	SH_OSCachemmap *oscHandle;
+	struct j9shsem_handle *launchsem = NULL;
+	SH_OSCachemmap *oscHandle = NULL;
 	char cacheDir[J9SH_MAXPATH];
 	Init *init = NULL;
-	J9SharedClassPreinitConfig *piconfig;
-	IDATA semhandle;
+	J9SharedClassPreinitConfig *piconfig = NULL;
+	IDATA semhandle = 0;
 	J9PortShcVersion versionData;
 	int argc = arg->argc;
 	char **argv = arg->argv;
-	char * childargv[SHRTEST_MAX_CMD_OPTS];
+	char * childargv[SHRTEST_MAX_CMD_OPTS] = {NULL};
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
@@ -317,7 +317,7 @@ SH_OSCacheTestMmap::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 	
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	if (NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
@@ -446,12 +446,12 @@ SH_OSCacheTestMmap::testGetAllCacheStatistics(J9JavaVM* vm)
 	J9Pool *cacheStat = NULL;
 	IDATA rc = FAIL;
 	IDATA ret = 0;
-	J9SharedClassPreinitConfig *piconfig;
+	J9SharedClassPreinitConfig *piconfig = NULL;
 	UDATA numCacheBeforeTest = 0;
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	if(NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
@@ -498,7 +498,7 @@ SH_OSCacheTestMmap::testGetAllCacheStatistics(J9JavaVM* vm)
 		}
 	}
 
-	cacheStat = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, 0, 1, J2SE_CURRENT_VERSION, false, false, SHR_STATS_REASON_TEST, true);
+	cacheStat = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, 0, 1, false, false, SHR_STATS_REASON_TEST, true);
 
 	if(cacheStat != NULL) {
 		numCacheBeforeTest += pool_numElements(cacheStat);
@@ -520,7 +520,7 @@ SH_OSCacheTestMmap::testGetAllCacheStatistics(J9JavaVM* vm)
 		}
 	}
 
-	cacheStat = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, 0, 1, J2SE_CURRENT_VERSION, false, false, SHR_STATS_REASON_TEST, true);
+	cacheStat = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, 0, 1, false, false, SHR_STATS_REASON_TEST, true);
 	if(cacheStat == NULL) {
 		j9tty_printf(PORTLIB, "testGetAllCacheStatistics: failed to get cache statistics - there should be at least one cache!\n");
 		goto cleanup;
@@ -558,15 +558,15 @@ IDATA
 SH_OSCacheTestMmap::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j9cmdlineOptions *arg, UDATA child)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	SH_OSCachemmap *osc;
+	SH_OSCachemmap *osc = NULL;
 	char cacheDir[J9SH_MAXPATH];
-	J9SharedClassPreinitConfig* piconfig;
-	J9ProcessHandle pid;
-	IDATA rc;
+	J9SharedClassPreinitConfig* piconfig = NULL;
+	J9ProcessHandle pid = NULL;
+	IDATA rc = 0;
 	J9PortShcVersion versionData;
 	int argc = arg->argc;
 	char **argv = arg->argv;
-	char * childargv[SHRTEST_MAX_CMD_OPTS];
+	char * childargv[SHRTEST_MAX_CMD_OPTS] = {NULL};
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
@@ -574,7 +574,7 @@ SH_OSCacheTestMmap::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	if (NULL == (osc = (SH_OSCachemmap *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES))) {
@@ -653,13 +653,13 @@ SH_OSCacheTestMmap::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	SH_OSCachemmap *osc = NULL;
 	char cacheDir[J9SH_MAXPATH];
-	J9ProcessHandle pid;
+	J9ProcessHandle pid = NULL;
 	IDATA rc = PASS;
-	J9SharedClassPreinitConfig *piconfig;
+	J9SharedClassPreinitConfig *piconfig = NULL;
 	J9PortShcVersion versionData;
 	int argc = arg->argc;
 	char **argv = arg->argv;
-	char * childargv[SHRTEST_MAX_CMD_OPTS];
+	char * childargv[SHRTEST_MAX_CMD_OPTS] = {NULL};
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
@@ -667,7 +667,7 @@ SH_OSCacheTestMmap::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 	
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	if (NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
@@ -749,11 +749,11 @@ SH_OSCacheTestMmap::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	J9ProcessHandle pid;
 	IDATA rc = FAIL;
 	IDATA ret = 0;
-	J9SharedClassPreinitConfig *piconfig;
+	J9SharedClassPreinitConfig *piconfig = NULL;
 	J9PortShcVersion versionData;
 	int argc = arg->argc;
 	char **argv = arg->argv;
-	char * childargv[SHRTEST_MAX_CMD_OPTS];
+	char * childargv[SHRTEST_MAX_CMD_OPTS] = {NULL};
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
@@ -761,7 +761,7 @@ SH_OSCacheTestMmap::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
 #endif /* defined(OPENJ9_BUILD) */
 
-	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
 	if (NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {

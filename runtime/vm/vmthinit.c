@@ -35,7 +35,7 @@
 #include "j2sever.h"
 
 /* processReferenceMonitor is only used for Java 9 and later */
-#define J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_V11)
+#define J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) (JAVA_SPEC_VERSION >= J2SE_V11)
 
 UDATA initializeVMThreading(J9JavaVM *vm)
 {

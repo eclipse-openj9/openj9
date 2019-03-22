@@ -1466,7 +1466,7 @@ obj:;
 						 * superclass/superinterfaces, so AbstractMethodError is the correct error to throw.
 						 * For default or protected methods or JDK levels prior to 11, throw IllegalAccessError.
 						 */
-						if ((J2SE_VERSION(_vm) < J2SE_V11) || (J9_ARE_NO_BITS_SET(modifiers, J9AccPrivate))) {
+						if ((JAVA_SPEC_VERSION < J2SE_V11) || (J9_ARE_NO_BITS_SET(modifiers, J9AccPrivate))) {
 							exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
 							_sendMethod = method;
 						}

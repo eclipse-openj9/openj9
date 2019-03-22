@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -434,7 +434,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 	case VM_INITIALIZATION_COMPLETE:
 		tempThr = UT_THREAD_FROM_VM_THREAD(vm->mainThread);
 #ifdef J9VM_OPT_SIDECAR
-		if (J2SE_VERSION(vm)) {
+		{
 			/* Force loading of the Trace class. See defect 162723, this is required because of some nuance
 			 * in the early initialization of DB/2 (which uses the Trace class).
 			 */
@@ -444,7 +444,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			(*env)->ExceptionClear(env);
 		}
 #endif
-		/* overwrite the header settings now that we have full vm->j2seVersion info */
+		/* overwrite the header settings now */
 		if (OMR_ERROR_NONE != populateTraceHeaderInfo(vm)) {
 			return J9VMDLLMAIN_FAILED;
 		}
@@ -1029,14 +1029,14 @@ runtimeSetTraceOptions(J9VMThread * thr,const char * traceOptions)
 static omr_error_t
 populateTraceHeaderInfo(J9JavaVM *vm)
 {
-	JavaVMInitArgs  *vmInitArgs;
-	char *options;
-	char *fullversion;
+	JavaVMInitArgs  *vmInitArgs = NULL;
+	char *options = NULL;
+	char *fullversion = NULL;
 	omr_error_t ret = OMR_ERROR_NONE;
 
 	PORT_ACCESS_FROM_JAVAVM( vm );
 
-	/* overwrite the header settings now that we have full vm->j2seVersion info */
+	/* overwrite the header settings now */
 	vmInitArgs = (JavaVMInitArgs  *) vm->vmArgsArray->actualVMArgs;
 	if (vmInitArgs) {
 		int i;

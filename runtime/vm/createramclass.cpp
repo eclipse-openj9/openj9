@@ -2016,15 +2016,15 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	UDATA vTableSlots = 0;
 	UDATA jitVTableSlots = 0;
 	UDATA *vTable = NULL;
-	UDATA classSize;
-	UDATA result;
-	J9Class *interfaceHead;
+	UDATA classSize = 0;
+	UDATA result = 0;
+	J9Class *interfaceHead = NULL;
 	BOOLEAN foundCloneable = FALSE;
 	UDATA extendedMethodBlockSize = 0;
-	UDATA totalStaticSlots;
+	UDATA totalStaticSlots = 0;
 	UDATA interfaceCount = 0;
 	J9ROMFieldOffsetWalkState romWalkState;
-	J9ROMFieldOffsetWalkResult *romWalkResult;
+	J9ROMFieldOffsetWalkResult *romWalkResult = NULL;
 	BOOLEAN hotswapping = (0 != (options & J9_FINDCLASS_FLAG_NO_DEBUG_EVENTS));
 	BOOLEAN fastHCR = (0 != (options & J9_FINDCLASS_FLAG_FAST_HCR));
 	UDATA *iTable = NULL;
@@ -2071,7 +2071,7 @@ fail:
 
 			/* If the lock class is not yet loaded, skip allocating the instance - will be fixed up once the class is loaded */
 			if (lockClass != NULL) {
-				j9object_t lockObject;
+				j9object_t lockObject = NULL;
 				UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 
 				PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, (j9object_t)state->classObject);
@@ -2249,7 +2249,7 @@ fail:
 		Trc_VM_CreateRAMClassFromROMClass_overriddenFinalMethod(vmThread, J9UTF8_LENGTH(badName), J9UTF8_DATA(badName), J9UTF8_LENGTH(badSig), J9UTF8_DATA(badSig));
 		
 		if (!hotswapping) {
-			U_8 *verifyErrorString;
+			U_8 *verifyErrorString = NULL;
 
 			popFromClassLoadingStack(vmThread);
 			omrthread_monitor_exit(javaVM->classTableMutex);
@@ -2293,7 +2293,7 @@ fail:
 	}
 	if (classSize != 0) {
 		if (ramClass == NULL) {
-			J9MemorySegment *segment;
+			J9MemorySegment *segment = NULL;
 			RAMClassAllocationRequest allocationRequests[RAM_CLASS_FRAGMENT_COUNT];
 			UDATA minimumSuperclassArraySizeBytes = (sizeof(UDATA) * javaVM->minimumSuperclassArraySize);
 			UDATA superclassSizeBytes = 0;
@@ -2494,7 +2494,7 @@ fail:
 			/* Initialize the methods. */
 			if (romClass->romMethodCount != 0) {
 				J9Method *currentRAMMethod = ramClass->ramMethods;
-				UDATA i;
+				UDATA i = 0;
 				UDATA methodCount = romClass->romMethodCount;
 				J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
 				for (i = 0; i < methodCount; i++) {
@@ -2722,7 +2722,7 @@ fail:
 						J9VMCONSTANTPOOL_JAVALANGCLASSLOADER,
 						J9VMCONSTANTPOOL_JAVALANGTHREAD,
 				};
-				UDATA i;
+				UDATA i = 0;
 
 				for (i = 0; i < sizeof(uncloneableClasses) / sizeof(UDATA); i++) {
 					J9Class * uncloneableClass = J9VMCONSTANTPOOL_CLASSREF_AT(javaVM, uncloneableClasses[i])->value;
@@ -2819,7 +2819,7 @@ fail:
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				}
 			}
-			if ((J2SE_VERSION(javaVM) >= J2SE_V11) && (NULL == classBeingRedefined)) {
+			if ((JAVA_SPEC_VERSION >= J2SE_V11) && (NULL == classBeingRedefined)) {
 				ramClass->module = module;
 				if (TrcEnabled_Trc_MODULE_setPackage) {
 					trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
@@ -2828,8 +2828,8 @@ fail:
 		} else {
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 				/* fill in the special array class fields */
-				UDATA arity;
-				J9Class *leafComponentType;
+				UDATA arity = 0;
+				J9Class *leafComponentType = NULL;
 				J9ArrayClass *ramArrayClass = (J9ArrayClass *)ramClass;
 				J9ArrayClass *elementArrayClass = (J9ArrayClass *)elementClass;
 				/* Is the elementClass an array or an object? */
@@ -2943,8 +2943,7 @@ retry:
 
 	/* To prevent deadlock, release the classTableMutex before loading the classes required for the new class. */
 	omrthread_monitor_exit(javaVM->classTableMutex);
-
-	if (J2SE_VERSION(javaVM) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		if (NULL == classBeingRedefined) {
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 				/* At this point the elementClass has been loaded. No

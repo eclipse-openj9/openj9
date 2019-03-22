@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,11 +120,10 @@ addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
  * This allocates memory for the options string and adds the argument to the list.
  * @param portLib port library
  * @param vmArgumentsList current list of arguments
- * @param j2seVersion java version number
  * @return 0 on success, negative value on failure
  */
 IDATA
-addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2seVersion);
+addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList);
 
 /*
  * Add argument to set com.ibm.oti.vm.bootstrap.library.path or sun.boot.library.path
@@ -176,11 +175,10 @@ addJavaHome(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA 
  * @param vmArgumentsList current list of arguments
  * @param jrelibPath path to library directory
  * @param launcherArgs JavaVMInitArgs passed in from the launcher
- * @param j2seVersion java version number
  * @return 0 on success, negative value on failure
  */
 IDATA
-addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs, UDATA j2seVersion);
+addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrelibPath, JavaVMInitArgs *launcherArgs);
 
 /**
  * Add argument to set user.dir

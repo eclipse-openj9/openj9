@@ -100,7 +100,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 /* assumes VM access */
 static UDATA
 printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader) {
-	const char* format;
+	const char* format = NULL;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -122,9 +122,8 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 		char versionBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		BOOLEAN freeModuleName = FALSE;
 		BOOLEAN freeModuleVersion = FALSE;
-		UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 
-		if (j2seVersion >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			moduleNameUTF = JAVA_BASE_MODULE;
 			moduleVersionUTF = JAVA_MODULE_VERSION;
 

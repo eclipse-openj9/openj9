@@ -1405,7 +1405,7 @@ setNLSCatalog(struct J9PortLibrary* portLib)
 	const char *nlsSearchPaths = NULL;
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	if (J2SE_CURRENT_VERSION >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		/*
 		 * j9libBuffer doesn't end in a slash, but j9nls_set_catalog ignores everything after
 		 * the last slash. Append a slash to our local copy of j9libBuffer
@@ -1510,7 +1510,7 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 	}
 
 	if (includeAccessors) {
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
 			clazzMethodAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/MethodAccessorImpl");
 		} else {
@@ -1792,7 +1792,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	/* Register the J9 memory categories with the port library */
 	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
 
-	Assert_SC_true(J2SE_CURRENT_VERSION >= J2SE_18);
+	Assert_SC_true(JAVA_SPEC_VERSION >= J2SE_18);
 	setNLSCatalog(&j9portLibrary);
 
 
@@ -1854,7 +1854,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 			zipFuncs = (J9ZipFunctionTable*) J9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 		}
-		if (J2SE_CURRENT_VERSION >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			optionsDefaultFileLocation = jvmBufferData(j9libBuffer);
 		} else {
 			optionsDefaultFileLocation = jvmBufferData(j9binBuffer);
@@ -1864,7 +1864,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		if (
 				/* Add the default options file */
 				(0 != addOptionsDefaultFile(&j9portLibrary, &vmArgumentsList, optionsDefaultFileLocation, localVerboseLevel))
-				|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, J2SE_CURRENT_VERSION))
+				|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList))
 				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dcom.ibm.oti.vm.bootstrap.library.path=",
 						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
 				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dsun.boot.library.path=",
@@ -1873,7 +1873,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
 						libpathValue, ldLibraryPathValue))
 				|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
-				|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
+				|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args)))
 				|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
 				|| (0 != addJavaPropertiesOptions(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
 				|| (0 != addJarArguments(&j9portLibrary, &vmArgumentsList, specialArgs.executableJarPath, zipFuncs, localVerboseLevel))
@@ -1912,7 +1912,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		}
 	}
 
-	createParams.j2seVersion = J2SE_CURRENT_VERSION;
+	createParams.j2seVersion = JAVA_SPEC_VERSION;
 	if (jvmInSubdir) {
 		createParams.j2seVersion |= J2SE_LAYOUT_VM_IN_SUBDIR;
 	}
@@ -5349,7 +5349,7 @@ JVM_GetInterfaceVersion(void)
 	jint result = 4;	/* JDK8 */
 
 	Trc_SC_GetInterfaceVersion_Entry();
-	if (J2SE_CURRENT_VERSION >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		result = 6;
 	}
 	Trc_SC_GetInterfaceVersion_Exit(result);

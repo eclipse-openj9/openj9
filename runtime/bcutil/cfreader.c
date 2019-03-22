@@ -1556,13 +1556,13 @@ _errorFound:
 static I_32 
 checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
 {
-	J9CfrMethod* method;
+	J9CfrMethod* method = NULL;
 	U_32 value = 0;
 	U_32 maskedValue = 0;
 	U_32 errorCode = 0;
 	U_32 offset = 0;
-	U_32 i;
-	BOOLEAN nameIndexOK;
+	U_32 i = 0;
+	BOOLEAN nameIndexOK = FALSE;
 	U_32 classfileVersion = flags & BCT_MajorClassFileVersionMask;
 
 	for (i = 0; i < classfile->methodsCount; i++) {
@@ -1609,7 +1609,7 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_3
 
 			/* Leave this here to find usages of the following check:
 			 * J2SE_19 has been deprecated and replaced with J2SE_V11
-			 * if (J2SE_VERSION(vm) >= J2SE_V11) { 
+			 * if (JAVA_SPEC_VERSION >= J2SE_V11) { 
 			 */
 			} else if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
 				if (J9_ARE_NO_BITS_SET(method->accessFlags, CFR_ACC_STATIC)) {

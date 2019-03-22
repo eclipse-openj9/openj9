@@ -148,7 +148,7 @@ BOOLEAN
 requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass)
 {
 	BOOLEAN checkFlag = TRUE;
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		if (srcModule == targetClass->module) {
 			if (NULL != srcModule) {
 				/* same named module */
@@ -449,10 +449,10 @@ bail:
 J9Method *   
 resolveStaticMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMStaticMethodRef *ramCPEntry)
 {
-	J9ROMMethodRef *romMethodRef;
-	J9Class *resolvedClass;
+	J9ROMMethodRef *romMethodRef = NULL;
+	J9Class *resolvedClass = NULL;
 	J9Method *method = NULL;
-	J9Class *cpClass;
+	J9Class *cpClass = NULL;
 	J9Class *methodClass = NULL;
 	BOOLEAN isResolvedClassAnInterface = FALSE;
 	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
@@ -489,7 +489,7 @@ tryAgain:
 		cpClass = J9_CLASS_FROM_CP(ramCP);
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 
-		if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			/* This check is only required in Java9 and there have been applications that
 			 * fail when this check is enabled on Java8.
 			 */
@@ -1025,11 +1025,11 @@ J9Method *
 resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMInterfaceMethodRef *ramCPEntry)
 {
 	J9Method *returnValue = NULL;
-	J9ROMMethodRef *romMethodRef;
-	J9Class *interfaceClass;
-	J9ROMNameAndSignature *nameAndSig;
-	J9Method *method;
-	J9Class *cpClass;
+	J9ROMMethodRef *romMethodRef = NULL;
+	J9Class *interfaceClass = NULL;
+	J9ROMNameAndSignature *nameAndSig = NULL;
+	J9Method *method = NULL;
+	J9Class *cpClass = NULL;
 	J9JavaVM *vm = vmStruct->javaVM;
 	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
 	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
@@ -1094,7 +1094,7 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 					 * vTable or iTable.  Use the index into ramMethods in interfaceClass. This is
 					 * only allowed in JDK11 and beyond.
 					 */
-					if (J2SE_VERSION(vm) < J2SE_V11) {
+					if (JAVA_SPEC_VERSION < J2SE_V11) {
 nonpublic:
 						if (throwException) {
 							setIllegalAccessErrorNonPublicInvokeInterface(vmStruct, method);
@@ -1158,10 +1158,10 @@ resolveInterfaceMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpI
 J9Method *   
 resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMSpecialMethodRef *ramCPEntry)
 {
-	J9ROMMethodRef *romMethodRef;
-	J9Class *resolvedClass;
-	J9Class *currentClass;
-	J9ROMNameAndSignature *nameAndSig;
+	J9ROMMethodRef *romMethodRef = NULL;
+	J9Class *resolvedClass = NULL;
+	J9Class *currentClass = NULL;
+	J9ROMNameAndSignature *nameAndSig = NULL;
 	J9Method *method = NULL;
 	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
 	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
@@ -1210,7 +1210,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 	}
 
-	if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		/* This check is only required in Java9 and there have been applications that
 		 * fail when this check is enabled on Java8.
 		 */

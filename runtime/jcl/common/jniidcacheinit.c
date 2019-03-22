@@ -135,7 +135,7 @@ initializeSunReflectConstantPoolIDCache(JNIEnv* env)
 	if (!isClassIDAlreadyCached) {	
 
 		/* Load sun/reflect/ConstantPool */
-		if (J2SE_VERSION(javaVM) >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			sunReflectConstantPool = (*env)->FindClass(env, "jdk/internal/reflect/ConstantPool");
 		} else {
 			sunReflectConstantPool = (*env)->FindClass(env, "sun/reflect/ConstantPool");

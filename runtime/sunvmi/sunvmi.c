@@ -94,7 +94,7 @@ latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * w
 	 * In Java 9+, vm->extensionClassLoader is the PlatformClassLoader.
 	 */
 	BOOLEAN isPlatformClassLoader = FALSE;
-	if ((J2SE_VERSION(vm) >= J2SE_V11) && (classLoader == vm->extensionClassLoader)) {
+	if ((JAVA_SPEC_VERSION >= J2SE_V11) && (classLoader == vm->extensionClassLoader)) {
 		isPlatformClassLoader = TRUE;
 	}
 
@@ -399,7 +399,9 @@ static jint
 initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM * vm = vmThread->javaVM;
-	jclass clazz, clazzConstructorAccessorImpl, clazzMethodAccessorImpl;
+	jclass clazz = NULL;
+	jclass clazzConstructorAccessorImpl = NULL;
+	jclass clazzMethodAccessorImpl = NULL;
 
 	clazz = (*env)->FindClass(env, "java/lang/Class");
 	if (NULL == clazz) {
@@ -422,7 +424,7 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	}
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) && !defined(J9VM_IVE_RAW_BUILD) */
 	
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
 		clazzMethodAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/MethodAccessorImpl");
 	} else {
@@ -721,10 +723,10 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 				result = (*env)->NewObjectArray(env, (jsize) packageCount, jlsClass, NULL);
 				if (result) {
 					for (i = 0; i < packageCount; i++) {
-						j9object_t packageString;
+						j9object_t packageString = NULL;
 						jobject packageStringRef = NULL;
 						const U_8* packageName = NULL;
-						UDATA packageNameLength;
+						UDATA packageNameLength = 0;
 
 						funcs->internalEnterVMFromJNI(vmThread);
 						packageName = getPackageName(packageIDList[i], &packageNameLength);
@@ -732,7 +734,7 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 						 * java.lang.Package.getSystemPackages() expects a trailing slash in Java 8
 						 * but no trailing slash in Java 9.
 						 */
-						if (J2SE_VERSION(vm) >= J2SE_V11) {
+						if (JAVA_SPEC_VERSION >= J2SE_V11) {
 							packageString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread,
 									(U_8*) packageName, packageNameLength, 0);
 						} else {

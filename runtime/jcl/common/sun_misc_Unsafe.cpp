@@ -913,11 +913,9 @@ registerJdkInternalMiscUnsafeNativesJava10(JNIEnv *env, jclass clazz) {
 void JNICALL
 Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-
 	Java_sun_misc_Unsafe_registerNatives(env, clazz);
 	registerJdkInternalMiscUnsafeNativesCommon(env, clazz);
-	if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		registerJdkInternalMiscUnsafeNativesJava10(env, clazz);
 	}
 }

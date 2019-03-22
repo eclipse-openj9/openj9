@@ -473,7 +473,7 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 		IDATA helperID = 0;
 		U_16 cpType = CP_TYPE_CLASSPATH;
 
-		if ((J2SE_VERSION(vm) >= J2SE_V11)
+		if ((JAVA_SPEC_VERSION >= J2SE_V11)
 			|| ((NULL != classPathEntries) && (-1 != obj->entryIndex))
 		) {
 			/* For class loaded from modules that entryIndex is -1. classPathEntries can be NULL. */
@@ -489,7 +489,7 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 			if (!classpath && !infoFound) {
 				UDATA pathEntryCount = cpEntryCount;
 
-				if (J2SE_VERSION(vm) >= J2SE_V11) {
+				if (JAVA_SPEC_VERSION >= J2SE_V11) {
 					if (classloader == vm->systemClassLoader) {
 						if (J9_ARE_NO_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES)) {
 							/* User specified noBootclasspath - do not continue */

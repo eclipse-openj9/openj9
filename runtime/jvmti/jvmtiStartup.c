@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,9 +290,9 @@ prependSystemAgentPath(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char *
 
 	if(vm->j2seRootDirectory) {
 		UDATA superSeparatorIndex = -1;
-		UDATA bufferSize;
+		UDATA bufferSize = 0;
 
-		if(J2SE_LAYOUT(vm) & J2SE_LAYOUT_VM_IN_SUBDIR) {
+		if(J2SE_IS_LAYOUT_VM_IN_SUBDIR(vm)) {
 			/* load the DLL from the parent of the j2seRootDir - find the last dir separator and declare that the end. */
 			superSeparatorIndex = strrchr(vm->j2seRootDirectory, DIR_SEPARATOR) - vm->j2seRootDirectory;
 			bufferSize = superSeparatorIndex + 1 + sizeof(DIR_SEPARATOR_STR) + strlen(dllName);  /* +1 for NUL */

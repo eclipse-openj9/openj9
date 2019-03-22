@@ -120,9 +120,9 @@ bcutil_J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	I_32 rc = J9JIMAGE_NO_ERROR;
-	J9VMDllLoadInfo* loadInfo;
+	J9VMDllLoadInfo* loadInfo = NULL;
 	J9JImageIntf *jimageIntf = NULL;
-	J9TranslationBufferSet* translationBuffers;
+	J9TranslationBufferSet* translationBuffers = NULL;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
@@ -134,7 +134,7 @@ bcutil_J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		/* Note that verbose support should have already been initialized in an earlier stage */
 		case BUFFERS_ALLOC_STAGE :
 			loadInfo = FIND_DLL_TABLE_ENTRY( THIS_DLL_NAME );
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
+			if (JAVA_SPEC_VERSION >= J2SE_V11) {
 				rc = initJImageIntf(&jimageIntf, vm, PORTLIB);
 				if (J9JIMAGE_NO_ERROR != rc) {
 					loadInfo->fatalErrorStr = "failed to initialize JImage interface";

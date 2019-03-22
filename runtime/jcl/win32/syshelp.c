@@ -176,13 +176,13 @@ jobject getPlatformPropertyList(JNIEnv *env, const char *strings[], int propInde
 
 char* getPlatformFileEncoding(JNIEnv *env, char *codepage, int size, int encodingType) {
 	PORT_ACCESS_FROM_ENV(env);
-	LCID threadLocale;
+	LCID threadLocale = 0;
 	CPINFO cpInfo;
-	int cp;
+	int cp = 0;
 #ifdef UNICODE
-	int i;
+	int i = 0;
 #endif
-	int length;
+	int length = 0;
 
 	/* Called with codepage == NULL to initialize the locale */
 	if (!codepage) return NULL;
@@ -218,7 +218,7 @@ char* getPlatformFileEncoding(JNIEnv *env, char *codepage, int size, int encodin
 	if (GetCPInfo(cp, &cpInfo) && cpInfo.MaxCharSize > 1) {
 		if (cp == 936) {
 			J9JavaVM* vm = ((J9VMThread *)env)->javaVM;
-			if (J2SE_VERSION(vm) < J2SE_V11) {
+			if (JAVA_SPEC_VERSION < J2SE_V11) {
 				if (IsValidCodePage(54936)) {
 					return "GB18030";
 				}

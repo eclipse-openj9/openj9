@@ -1316,13 +1316,13 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 	ClasspathItem* classpath = NULL;
 	UDATA infoFound = 0;
 	UDATA realClassNameLength = eventData->classNameLength;
-	U_64 localRuntimeFlags;
-	UDATA localVerboseFlags;
+	U_64 localRuntimeFlags = 0;
+	UDATA localVerboseFlags = 0;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
 	bool isBootLoader = false;
 	IDATA* entryIndex = eventData->foundAtIndex;
 #ifdef LINUXPPC
-	U_64 compilerBugWorkaround;
+	U_64 compilerBugWorkaround = 0;
 #endif
 
 	/* default values for bootstrap: */
@@ -1345,7 +1345,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 	}
 
 	J9Module* module = eventData->j9module;
-	if ((J2SE_VERSION(vm) >= J2SE_V11)
+	if ((JAVA_SPEC_VERSION >= J2SE_V11)
 		&& (NULL == module)
 	) {
 		module = getModule(currentThread, (U_8*)eventData->className, realClassNameLength, eventData->classloader);
@@ -1394,7 +1394,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 	if (!classpath && !infoFound) {
 		UDATA pathEntryCount = eventData->entryCount;
 
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
+		if (JAVA_SPEC_VERSION >= J2SE_V11) {
 			if (eventData->classloader == vm->systemClassLoader) {
 				isBootLoader = true;
 				pathEntryCount += 1;
@@ -2276,14 +2276,14 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 	J9PortShcVersion versionData;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char cacheDirName[J9SH_MAXPATH];
-	const char *optionName;
+	const char *optionName = NULL;
 	UDATA groupPerm = 0;
 
 	if ((runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS) != 0) {
 		groupPerm = 1;
 	}
 	
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	if ((runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) != 0) {
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 	} else {
@@ -2376,7 +2376,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 		break;
 	case RESULT_DO_DESTROY: 
 	case RESULT_DO_RESET:
-		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+		setCurrentCacheVersion(vm, &versionData);
 		versionData.cacheType = cacheType;
 		j9shr_destroy_cache(vm, sharedClassConfig->ctrlDirName, verboseFlags, cacheName, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, (RESULT_DO_RESET == command));
 		if (command == RESULT_DO_RESET) {
@@ -2389,7 +2389,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 		break;
 #if !defined(WIN32)
 	case RESULT_DO_DESTROYSNAPSHOT:
-		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+		setCurrentCacheVersion(vm, &versionData);
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
 		j9shr_destroy_snapshot(vm, sharedClassConfig->ctrlDirName, verboseFlags, cacheName, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData);
 		break;
@@ -2726,7 +2726,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 #if defined(OPENJ9_BUILD)
 	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 #else /* OPENJ9_BUILD */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
 #endif /* OPENJ9_BUILD */
@@ -3729,7 +3729,7 @@ j9shr_print_cache_filename(J9JavaVM* vm, const char* cacheDirName, U_64 runtimeF
 	
 	memset(cacheNameWithVGen, 0, J9SH_MAXPATH);	
 		
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	
 	versionData.cacheType = getCacheTypeFromRuntimeFlags(runtimeFlags);
 
@@ -4367,7 +4367,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 		char pathFileName[J9SH_MAXPATH];		/* J9SH_MAXPATH defined to be EsMaxPath which is 1024 */
 		I_32 mode = (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS)) ? J9SH_CACHE_FILE_MODE_DEFAULTDIR_WITH_GROUPACCESS : J9SH_CACHE_FILE_MODE_DEFAULTDIR_WITHOUT_GROUPACCESS;
 
-		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+		setCurrentCacheVersion(vm, &versionData);
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
 		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false);
 		/* No check for the return value of getCachePathName() as it always returns 0 */
@@ -4634,7 +4634,7 @@ j9shr_print_snapshot_filename(J9JavaVM* vm, const char* cacheDirName, const char
 	J9PortShcVersion versionData;
 
 	memset(snapshotNameWithVGen, 0, J9SH_MAXPATH);
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
 
 	SH_OSCache::getCacheVersionAndGen(
@@ -4809,7 +4809,7 @@ checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, co
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType)) {
 		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 	} else {
-		setCurrentCacheVersion(vm, J2SE_VERSION(vm), versionData);
+		setCurrentCacheVersion(vm, versionData);
 		versionData->cacheType = cacheType;
 		ret = j9shr_stat_cache(vm, cacheDirName, vm->sharedCacheAPI->verboseFlags, cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN);
 	}

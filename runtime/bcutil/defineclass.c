@@ -144,7 +144,7 @@ internalDefineClass(
 		/* Host class can only be set for anonymous classes, which are defined by Unsafe.defineAnonymousClass.
 		 * For other cases, host class is set to NULL.
 		 */
-		if ((NULL != hostClass) && (J2SE_VERSION(vm) >= J2SE_V11)) {
+		if ((NULL != hostClass) && (JAVA_SPEC_VERSION >= J2SE_V11)) {
 			J9ROMClass *hostROMClass = hostClass->romClass;
 			/* This error-check should only be done for anonymous classes. */
 			Trc_BCU_Assert_True(isAnonFlagSet);
@@ -532,13 +532,13 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V13) {
+	if (JAVA_SPEC_VERSION >= J2SE_V13) {
 		translationFlags |= BCT_Java13MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V12) {
+	} else if (JAVA_SPEC_VERSION >= J2SE_V12) {
 		translationFlags |= BCT_Java12MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V11) {
+	} else if (JAVA_SPEC_VERSION >= J2SE_V11) {
 		translationFlags |= BCT_Java11MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_18) {
+	} else if (JAVA_SPEC_VERSION >= J2SE_18) {
 		translationFlags |= BCT_Java8MajorVersionShifted;
 	}
 #endif
@@ -747,7 +747,7 @@ callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediat
 			localBuffer);
 
 	/* The module of a class transformed by a JVMTI agent needs access to unnamed modules */
-	if ((J2SE_VERSION(vm) >= J2SE_V11)
+	if ((JAVA_SPEC_VERSION >= J2SE_V11)
 		&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
 		&& (NULL != loadData->romClass)
 	) {

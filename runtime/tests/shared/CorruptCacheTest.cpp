@@ -808,9 +808,9 @@ zeroOutCache(J9JavaVM *vm, I_32 cacheType)
 	char cacheName[J9SH_MAXPATH];
 	char fullPath[J9SH_MAXPATH];
 	J9PortShcVersion versionData;
-	J9MmapHandle *mapFileHandle;
-	I_64 cacheSize;
-	IDATA fd;
+	J9MmapHandle *mapFileHandle = NULL;
+	I_64 cacheSize = 0;
+	IDATA fd = 0;
 	IDATA rc = PASS;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -823,7 +823,7 @@ zeroOutCache(J9JavaVM *vm, I_32 cacheType)
 	if (rc < 0) {
 		ERRPRINTF("Cannot get a directory\n");
 	}
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = cacheType;
 	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, cacheName, J9SH_MAXPATH, BROKEN_TEST_CACHE, &versionData, OSCACHE_CURRENT_CACHE_GEN, true);
 	j9str_printf(PORTLIB, fullPath, J9SH_MAXPATH, "%s%s", baseDir, cacheName);
@@ -876,7 +876,7 @@ truncateCache(J9JavaVM *vm, I_32 cacheType)
 	char cacheName[J9SH_MAXPATH];
 	char fullPath[J9SH_MAXPATH];
 	J9PortShcVersion versionData;
-	IDATA fd;
+	IDATA fd = 0;
 	IDATA rc = PASS;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -889,7 +889,7 @@ truncateCache(J9JavaVM *vm, I_32 cacheType)
 	if (rc < 0) {
 		ERRPRINTF("Cannot get a directory\n");
 	}
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	versionData.cacheType = cacheType;
 	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, cacheName, J9SH_MAXPATH, BROKEN_TEST_CACHE, &versionData, OSCACHE_CURRENT_CACHE_GEN, true);
 	j9str_printf(PORTLIB, fullPath, J9SH_MAXPATH, "%s%s", baseDir, cacheName);

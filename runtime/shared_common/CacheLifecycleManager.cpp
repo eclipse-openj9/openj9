@@ -113,7 +113,7 @@ j9shr_iterateSharedCaches(J9JavaVM *vm,	const char *ctrlDirName, UDATA groupPerm
  		void *user_data)
 {
 	J9SharedCacheInfo callbackData;
-	SH_OSCache_Info *cacheInfo;
+	SH_OSCache_Info *cacheInfo = NULL;
 	J9Pool *cacheList = NULL;
 	J9Pool *snapshotList = NULL;
 	pool_state state;
@@ -127,11 +127,11 @@ j9shr_iterateSharedCaches(J9JavaVM *vm,	const char *ctrlDirName, UDATA groupPerm
 		}
 		/* Don't include old generations */
 		cacheList = getCacheList(vm, vm->sharedCacheAPI->ctrlDirName, vmGroupPerm, false, SHR_STATS_REASON_ITERATE); 
-		snapshotList = SH_OSCache::getAllCacheStatistics(vm, vm->sharedCacheAPI->ctrlDirName, vmGroupPerm, 0, J2SE_VERSION(vm), false, false, SHR_STATS_REASON_ITERATE, false);
+		snapshotList = SH_OSCache::getAllCacheStatistics(vm, vm->sharedCacheAPI->ctrlDirName, vmGroupPerm, 0, false, false, SHR_STATS_REASON_ITERATE, false);
 	} else {
 		/* Don't include old generations */
 		cacheList = getCacheList(vm, ctrlDirName, groupPerm, false, SHR_STATS_REASON_ITERATE);
-		snapshotList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, J2SE_VERSION(vm), false, false, SHR_STATS_REASON_ITERATE, false);
+		snapshotList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, false, false, SHR_STATS_REASON_ITERATE, false);
 	}
 
 	if (NULL == cacheList || pool_numElements(cacheList) == 0) {
@@ -409,12 +409,12 @@ deleteExpiredSharedCache(void *element, void *param)
 static J9Pool*
 getCacheList(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, bool includeOldGenerations, UDATA reason)
 {
-	J9Pool* cacheList;
+	J9Pool* cacheList = NULL;
 	
 	Trc_SHR_CLM_getCacheList_Entry();
 
 	/* Verbose flags not required - do not want to see permissions error accessing all caches */
-	cacheList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, J2SE_VERSION(vm), includeOldGenerations, false, reason, true);
+	cacheList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, includeOldGenerations, false, reason, true);
 	
 	Trc_SHR_CLM_getCacheList_Exit();
 	return cacheList;
@@ -425,12 +425,12 @@ getCacheList(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, bool
 static J9Pool*
 findIncompatibleCachesForName(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char* name)
 {
-	J9Pool* cacheList;
+	J9Pool* cacheList = NULL;
 
 	Trc_SHR_CLM_findIncompatibleCachesForName_Entry(name);
 	
 	/* Verbose flags not required - do not want to see permissions error accessing all caches */
-	cacheList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, J2SE_VERSION(vm), true, true, SHR_STATS_REASON_GETNAME, true);
+	cacheList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, true, true, SHR_STATS_REASON_GETNAME, true);
 	
 	Trc_SHR_CLM_findIncompatibleCachesForName_Exit();
 	return cacheList;
@@ -461,7 +461,7 @@ j9shr_list_caches(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm,
 	
 	/* Don't include old generations, don't populate javacore data */
 	cacheList = getCacheList(vm, ctrlDirName, groupPerm, false, SHR_STATS_REASON_LIST);
-	snapshotList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, J2SE_VERSION(vm), false, false, SHR_STATS_REASON_LIST, false);
+	snapshotList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, false, false, SHR_STATS_REASON_LIST, false);
 
 	noCacheExist = (NULL == cacheList) || (0 == pool_numElements(cacheList));
 	noSnapshotExist = (NULL == snapshotList) || (0 == pool_numElements(snapshotList));
@@ -643,7 +643,7 @@ j9shr_destroy_all_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA g
 	param.groupPerm = groupPerm;
 	param.ctrlDirName = ctrlDirName;
 
-	snapshotList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, J2SE_VERSION(vm), true, false, SHR_STATS_REASON_DESTROY, false);
+	snapshotList = SH_OSCache::getAllCacheStatistics(vm, ctrlDirName, groupPerm, 0, true, false, SHR_STATS_REASON_DESTROY, false);
 
 	if ((NULL == snapshotList) || (0 == pool_numElements(snapshotList))) {
 		Trc_SHR_CLM_j9shr_destroy_all_snapshot_noSnapshots();
@@ -693,14 +693,14 @@ IDATA
 j9shr_destroySharedCache(J9JavaVM *vm, const char *ctrlDirName, const char *name, U_32 cacheType, BOOLEAN useCommandLineValues)
 {
 	J9PortShcVersion versionData;
-	const char *cacheName;
+	const char *cacheName = NULL;
 	char modifiedCacheName[CACHE_ROOT_MAXLEN];
 	char *modifiedCacheNamePtr = modifiedCacheName;
-	const char *ctrlDir;
+	const char *ctrlDir = NULL;
 	UDATA verboseFlags = 0;
 	IDATA rc = 0;
 
-	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	setCurrentCacheVersion(vm, &versionData);
 	if (useCommandLineValues == TRUE){
 		cacheName = vm->sharedCacheAPI->cacheName;
 		versionData.cacheType = (U_32) vm->sharedCacheAPI->cacheType;

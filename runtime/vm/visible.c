@@ -101,7 +101,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 		if ( modifiers & J9AccPublic ) {
 			/* Public */
 			if ((sourceClass != destClass)
-				&& (J2SE_VERSION(vm) >= J2SE_V11) 
+				&& (JAVA_SPEC_VERSION >= J2SE_V11) 
 				&& J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(destClass->romClass)
 			) {

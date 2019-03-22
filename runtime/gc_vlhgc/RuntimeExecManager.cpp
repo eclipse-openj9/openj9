@@ -103,7 +103,7 @@ MM_RuntimeExecManager::jniNativeBindHook(J9HookInterface** hook, UDATA eventNum,
 		J9UTF8 *methodSignature = J9ROMMETHOD_SIGNATURE(romMethod);
 		BOOLEAN literalCheck = FALSE;
 		
-		if ((J2SE_VERSION(vmThread->javaVM) & J2SE_VERSION_MASK) <= J2SE_18) {
+		if (JAVA_SPEC_VERSION <= J2SE_18) {
 			/* Assuming J2SE_18, no other lower level supported */
 			literalCheck = J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(classNameUTF8), J9UTF8_LENGTH(classNameUTF8), CLASS_NAME1);
 		} else {
