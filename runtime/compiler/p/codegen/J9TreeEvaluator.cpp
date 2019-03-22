@@ -11782,15 +11782,15 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, startIndex, endIndex);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
 
+   // IMPORTANT: The upper 32 bits of a 64-bit register containing an int are undefined. Since the
+   // indices are being passed in as ints, we must ensure that their upper 32 bits are not garbage.
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, result, startIndex);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endAddress, endIndex);
+
    if (!isLatin1)
       {
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, startIndex, startIndex);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endIndex, endIndex);
-      }
-   else
-      {
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, result, startIndex);
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, endAddress, endIndex);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, result, result);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endAddress, endAddress);
       }
 
    if (node->getChild(3)->getReferenceCount() == 1)
