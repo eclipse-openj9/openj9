@@ -22,5 +22,6 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/runtime/CodeSync.cpp
 
 JIT_PRODUCT_SOURCE_FILES+= \
+    compiler/aarch64/runtime/PicBuilder.spp \
     compiler/aarch64/runtime/Recomp.cpp \
     compiler/aarch64/runtime/Recompilation.spp
