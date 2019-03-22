@@ -338,7 +338,7 @@ def archive() {
                     currentBuild.description += "<br><a href=${SDK_URL}>${SDK_FILENAME}</a>"
                     if (fileExists("${TEST_FILENAME}")) {
                         TEST_LIB_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
-                        env.CUSTOMIZED_SDK_URL += " " TEST_LIB_URL
+                        env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
                         currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
                     }
                     echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
