@@ -138,13 +138,13 @@ TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 c
       }
    // access attributes from the cache
    auto attrs = gotAttrs->second;
-   *address = attrs.address;
-   *type = attrs.type;
-   *volatileP = attrs.volatileP;
-   if (isFinal) *isFinal = attrs.isFinal;
-   if (isPrivate) *isPrivate = attrs.isPrivate;
-   if (unresolvedInCP) *unresolvedInCP = attrs.unresolvedInCP;
-   return attrs.result;
+   *address = attrs.resolvedFieldAttribute.address;
+   *type = attrs.resolvedFieldAttribute.type;
+   *volatileP = attrs.resolvedFieldAttribute.volatileP;
+   if (isFinal) *isFinal = attrs.resolvedFieldAttribute.isFinal;
+   if (isPrivate) *isPrivate = attrs.resolvedFieldAttribute.isPrivate;
+   if (unresolvedInCP) *unresolvedInCP = attrs.resolvedFieldAttribute.unresolvedInCP;
+   return attrs.resolvedFieldAttribute.result;
    }
 
 TR_OpaqueClassBlock *
@@ -423,13 +423,13 @@ TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cp
    
    // access attributes from the cache
    auto attrs = gotAttrs->second;
-   *fieldOffset = attrs.fieldOffset;
-   *type = attrs.type;
-   *volatileP = attrs.volatileP;
-   if (isFinal) *isFinal = attrs.isFinal;
-   if (isPrivate) *isPrivate = attrs.isPrivate;
-   if (unresolvedInCP) *unresolvedInCP = attrs.unresolvedInCP;
-   return attrs.result;
+   *fieldOffset = attrs.resolvedFieldAttribute.fieldOffset;
+   *type = attrs.resolvedFieldAttribute.type;
+   *volatileP = attrs.resolvedFieldAttribute.volatileP;
+   if (isFinal) *isFinal = attrs.resolvedFieldAttribute.isFinal;
+   if (isPrivate) *isPrivate = attrs.resolvedFieldAttribute.isPrivate;
+   if (unresolvedInCP) *unresolvedInCP = attrs.resolvedFieldAttribute.unresolvedInCP;
+   return attrs.resolvedFieldAttribute.result;
    }
 
 TR_ResolvedMethod *
@@ -1974,28 +1974,42 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::getUnresolvedVirtualMethodInCP(int32
    return false;
    }
 
+UDATA
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex)
+   {
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_getFieldType, cpIndex, getRemoteMirror());
+   auto recv = _stream->read<UDATA>();
+   return (std::get<0>(recv));
+   }
+
 bool
 TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   UDATA ltype;
    I_32 volatileFlag = 0, finalFlag = 0, privateFlag = 0;
-
-   bool result = false;
    bool theFieldIsFromLocalClass = false;
    J9ConstantPool *constantPool = (J9ConstantPool *)literals();
 
-   IDATA offset;
    bool fieldInfoCanBeUsed = false;
    bool resolveField = true;
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes, ramMethod(), getRemoteMirror(), cpIndex, isStore, constantPool);
-   auto recv = _stream->read<IDATA, bool, UDATA, J9Class *>();
-   offset = std::get<0>(recv);
-   *unresolvedInCP = std::get<1>(recv);
-   ltype = std::get<2>(recv);
-   J9Class *clazz = std::get<3>(recv);
+   // look up attributes in a cache, make a query only if they are not cached
+   auto gotAttrs = _fieldAttributesCache.find(cpIndex);
+   if (gotAttrs == _fieldAttributesCache.end())
+      {
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes, ramMethod(), getRemoteMirror(), cpIndex, isStore, constantPool);
+      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+      gotAttrs = _fieldAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      }
+
+   // access attributes from the cache
+   auto attrs = gotAttrs->second;
+   IDATA offset = attrs.resolvedRelocatableFieldAttribute.fieldOffset;
+   *unresolvedInCP = attrs.resolvedRelocatableFieldAttribute.unresolvedInCP;
+   UDATA ltype = attrs.resolvedRelocatableFieldAttribute.ltype;
+   J9Class *clazz = attrs.resolvedRelocatableFieldAttribute.definingClass;
+
    if (comp->getOption(TR_DisableAOTInstanceFieldResolution))
       resolveField = false;
    else
@@ -2061,13 +2075,6 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * co
 
    return theFieldIsFromLocalClass;
    }
-UDATA
-TR_ResolvedRelocatableJ9JITaaSServerMethod::getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex)
-   {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_getFieldType, cpIndex, getRemoteMirror());
-   auto recv = _stream->read<UDATA>();
-   return (std::get<0>(recv));
-   }
 bool
 TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp,
                                                  int32_t cpIndex,
@@ -2082,21 +2089,27 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   UDATA ltype;
-   void *offset;
    I_32 volatileFlag = 0, finalFlag = 0, privateFlag = 0;
-   bool result = false;
    bool theFieldIsFromLocalClass = false;
    J9ConstantPool *constantPool = (J9ConstantPool *)literals();
 
    bool fieldInfoCanBeUsed = false;
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes, ramMethod(), getRemoteMirror(), cpIndex, isStore, constantPool);
-   auto recv = _stream->read<void *, bool, UDATA, J9Class *>();
-   offset = std::get<0>(recv);
-   *unresolvedInCP = std::get<1>(recv);
-   ltype = std::get<2>(recv);
-   J9Class *clazz = std::get<3>(recv);
+   // only make a query if it's not in the cache
+   auto gotAttrs = _staticAttributesCache.find(cpIndex);
+   if (gotAttrs == _staticAttributesCache.end())
+      {
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes, ramMethod(), getRemoteMirror(), cpIndex, isStore, constantPool);
+      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+      gotAttrs = _staticAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      }
+
+   // access attributes from the cache
+   auto attrs = gotAttrs->second;
+   void *offset = attrs.resolvedRelocatableFieldAttribute.address;
+   *unresolvedInCP = attrs.resolvedRelocatableFieldAttribute.unresolvedInCP;
+   UDATA ltype = attrs.resolvedRelocatableFieldAttribute.ltype;
+   J9Class *clazz = attrs.resolvedRelocatableFieldAttribute.definingClass;
 
    if (needAOTValidation)
       {

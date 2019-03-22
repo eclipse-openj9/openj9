@@ -1026,9 +1026,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          void *address;
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
-         bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal,
-               &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
-         TR_J9MethodFieldAttributes attrs = {{.address = address}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result};
+         bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
+         TR_J9MethodFieldAttributes attrs = {.resolvedFieldAttribute = {{.address = address}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result}};
          client->write(attrs);
          }
          break;
@@ -1068,9 +1067,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          U_32 fieldOffset;
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
-         bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal,
-               &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
-         TR_J9MethodFieldAttributes attrs = {{.fieldOffset = fieldOffset}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result};
+         bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
+         TR_J9MethodFieldAttributes attrs = {.resolvedFieldAttribute = {{.fieldOffset = fieldOffset}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result}};
          client->write(attrs);
          }
          break;
@@ -1597,6 +1595,15 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(clazz, definingClass, classChain);
          }
          break;
+      case J9ServerMessageType::ResolvedRelocatableMethod_getFieldType:
+         {
+         auto recv = client->getRecvData<int32_t, TR_ResolvedJ9Method *>();
+         auto cpIndex = std::get<0>(recv);
+         TR_ResolvedJ9Method *method= std::get<1>(recv);
+         UDATA ltype = getFieldType((J9ROMConstantPoolItem *)(method->romLiterals()), cpIndex);
+         client->write(ltype);
+         }
+         break;
       case J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes:
          {
          UDATA ltype = 0;
@@ -1613,16 +1620,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool unresolvedInCP = method->getUnresolvedFieldInCP(cpIndex);
          if (offset >= 0)
             ltype = fieldShape->modifiers;
-         client->write((IDATA)offset, unresolvedInCP, ltype, definingClass);
-         }
-         break;
-      case J9ServerMessageType::ResolvedRelocatableMethod_getFieldType:
-         {
-         auto recv = client->getRecvData<int32_t, TR_ResolvedJ9Method *>();
-         auto cpIndex = std::get<0>(recv);
-         TR_ResolvedJ9Method *method= std::get<1>(recv);
-         UDATA ltype = getFieldType((J9ROMConstantPoolItem *)(method->romLiterals()), cpIndex);
-         client->write(ltype);
+         TR_J9MethodFieldAttributes attrs = {.resolvedRelocatableFieldAttribute = {{.fieldOffset = offset}, definingClass, ltype, unresolvedInCP}};
+         client->write(attrs);
          }
          break;
       case J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes:
@@ -1641,7 +1640,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool unresolvedInCP = method->getUnresolvedFieldInCP(cpIndex);
          if (offset)
             ltype = fieldShape->modifiers;
-         client->write(offset, unresolvedInCP, ltype, definingClass);
+         TR_J9MethodFieldAttributes attrs = {.resolvedRelocatableFieldAttribute = {{.address = offset}, definingClass, ltype, unresolvedInCP}};
+         client->write(attrs);
          }
          break;
 

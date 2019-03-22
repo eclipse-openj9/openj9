@@ -181,7 +181,7 @@ public:
 
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
 
-   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return 0;}
    virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT(false, "called"); return NULL;}
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT(false, "called"); return false;}

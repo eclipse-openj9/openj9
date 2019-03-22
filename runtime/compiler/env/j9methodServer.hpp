@@ -29,7 +29,7 @@
 #include "runtime/JITaaSIProfiler.hpp"
 
 struct
-TR_J9MethodFieldAttributes
+TR_J9MethodResolvedFieldAttributes
    {
    // for field attributes, use fieldOffset,
    // for static attributes, use address
@@ -44,6 +44,27 @@ TR_J9MethodFieldAttributes
    bool isPrivate;
    bool unresolvedInCP;
    bool result;
+   };
+struct
+TR_J9MethodResolvedRelocatableFieldAttributes
+   {
+   // for field attributes, use fieldOffset,
+   // for static attributes, use address
+   union
+      {
+      IDATA fieldOffset;
+      void *address;
+      };
+   J9Class *definingClass;
+   UDATA ltype;
+   bool unresolvedInCP;
+   };
+
+union
+TR_J9MethodFieldAttributes
+   {
+   TR_J9MethodResolvedFieldAttributes resolvedFieldAttribute;
+   TR_J9MethodResolvedRelocatableFieldAttributes resolvedRelocatableFieldAttribute;
    };
 
 struct
@@ -211,6 +232,8 @@ public:
 protected:
    JITaaS::J9ServerStream *_stream;
    static void packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache;
+   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache;
 
 private:
 
@@ -227,8 +250,6 @@ private:
    bool _virtualMethodIsOverridden; // cached information coming from client
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
-   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache; 
-   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache; 
    UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry> _resolvedMethodsCache;
    TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
 
