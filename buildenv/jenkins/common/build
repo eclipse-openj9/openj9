@@ -333,9 +333,13 @@ def archive() {
                     server.publishBuildInfo buildInfo
                     // Write URL to env so that we can pull it from the upstream pipeline job
                     ARTIFACTORY_URL = server.getUrl()
-                    env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
+                    SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
+                    env.CUSTOMIZED_SDK_URL = SDK_URL
+                    currentBuild.description += "<br><a href=${SDK_URL}>${SDK_FILENAME}</a>"
                     if (fileExists("${TEST_FILENAME}")) {
-                        env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
+                        TEST_LIB_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
+                        env.CUSTOMIZED_SDK_URL += " " TEST_LIB_URL
+                        currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
                     }
                     echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
                     echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
