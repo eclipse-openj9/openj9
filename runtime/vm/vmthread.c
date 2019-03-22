@@ -1973,10 +1973,10 @@ setFailedToForkThreadException(J9VMThread *currentThread, IDATA retVal, omrthrea
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	errorMessage = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-			J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2, NULL);
+			J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2, NULL);
 
 	if (errorMessage) {
-		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMessage, retVal, os_errno, os_errno, os_errno2, os_errno2);
+		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMessage, retVal, os_errno, os_errno, (U_32)(UDATA)os_errno2);
 		if (bufLen > 0) {
 			buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 			if (buf) {
