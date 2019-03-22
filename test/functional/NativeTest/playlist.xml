@@ -65,6 +65,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<testCaseName>jniargtests</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
+			<variation>-Xjit:count=0</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \

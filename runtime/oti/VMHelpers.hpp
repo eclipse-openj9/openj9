@@ -1353,7 +1353,15 @@ exit:
 			}
 			break;
 		case J9NtcBoolean:
-			*returnStorage = ((UDATA)(U_8)(0 != *returnStorage));
+		{
+			U_32 returnValue = (U_32)*returnStorage;
+			U_8 * returnAddress = (U_8 *)&returnValue;
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+			*returnStorage = (UDATA)(0 != returnAddress[0]);
+#else
+			*returnStorage = (UDATA)(0 != returnAddress[3]);
+#endif /*J9VM_ENV_LITTLE_ENDIAN */
+		}
 			break;
 		case J9NtcByte:
 			*returnStorage = (UDATA)(IDATA)(I_8)*returnStorage;
