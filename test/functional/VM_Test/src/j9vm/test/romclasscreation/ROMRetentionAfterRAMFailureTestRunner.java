@@ -1,7 +1,7 @@
 package j9vm.test.romclasscreation;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,13 +41,6 @@ public class ROMRetentionAfterRAMFailureTestRunner extends Runner {
 
 	public ROMRetentionAfterRAMFailureTestRunner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion)  {
 		super(className, exeName, bootClassPath, userClassPath, javaVersion);
-	}
-
-	/* Overrides method in Runner. */
-	public String getCustomCommandLineOptions() {
-		String customOptions = super.getCustomCommandLineOptions();
-		customOptions += " -Xtrace:print=tpnid{j9bcu.205} -Xtrace:print=tpnid{j9bcu.31}";
-		return customOptions;
 	}
 
 	/* Overrides method in j9vm.runner.Runner. */
