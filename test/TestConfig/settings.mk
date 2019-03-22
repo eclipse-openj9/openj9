@@ -152,6 +152,9 @@ ifeq ($(JDK_VERSION),8)
 JDK_HOME := $(JAVA_BIN_TMP)$(D)..$(D)..
 endif
 
+OLD_JAVA_HOME := $(JAVA_HOME)
+export JAVA_HOME := $(JDK_HOME)
+
 #######################################
 # Set OS, ARCH and BITS based on SPEC
 #######################################
@@ -291,6 +294,10 @@ setup_%: testEnvSetup
 	@$(ECHO) set JDK_IMPL to $(JDK_IMPL)
 	@$(ECHO) set JVM_VERSION to $(JVM_VERSION)
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
+	@if [ $(OLD_JAVA_HOME) ]; then \
+		$(ECHO) JAVA_HOME was originally set to $(OLD_JAVA_HOME); \
+	fi
+	@$(ECHO) set JAVA_HOME to $(JAVA_HOME)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
 	@$(MKTREE) $(Q)$(TESTOUTPUT)$(Q)
