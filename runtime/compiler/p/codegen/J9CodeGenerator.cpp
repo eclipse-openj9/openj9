@@ -73,11 +73,10 @@ J9::Power::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
 
-#if 0   
    if (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() &&
-      !comp->getOption(TR_DisableFastStringIndexOf) && !TR::Compiler->om.canGenerateArraylets())
+      TR::Compiler->target.is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
+      !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringIndexOf();
-#endif
    
    if (!comp->getOption(TR_DisableReadMonitors))
       cg->setSupportsReadOnlyLocks();
