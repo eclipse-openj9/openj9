@@ -75,7 +75,7 @@ ZASM_SCRIPT?=$(JIT_SCRIPT_DIR)/s390m4check.pl
 
 # Set up z/TPF directories and flags
 # Note: -isystem $(TPF_ROOT) is used for a2e calls to opensource functions
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/redhat/all /ztpf/commit
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 TPF_INCLUDES := $(foreach d,$(TPF_ROOT),-I$d/base/a2e/headers)
 TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/base/include)
@@ -267,6 +267,7 @@ SOLINK_EXTRA_ARGS+=-Wl,-soname=libj9jit29.so
 SOLINK_EXTRA_ARGS+=-Wl,--as-needed
 SOLINK_EXTRA_ARGS+=-Wl,--eh-frame-hdr
 SOLINK_EXTRA_ARGS+=$(foreach d,$(TPF_ROOT),-L$d/base/lib)
+SOLINK_EXTRA_ARGS+=$(foreach d,$(TPF_ROOT),-L$d/base/stdlib)
 SOLINK_EXTRA_ARGS+=$(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)

@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2018 IBM Corp. and others
+Copyright (c) 1998, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,8 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	-o $@ $(UMA_EXE_POSTFIX_FLAGS)
 </#assign>
 
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/redhat/all /ztpf/commit
+# Use updated svt build environment
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 ifndef j9vm_env_data64
   J9M31 = -m31

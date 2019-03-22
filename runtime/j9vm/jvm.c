@@ -3994,11 +3994,11 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #endif
 
 #if defined(J9UNIX) || defined(J9ZOS390)
-#if defined(OSX)
+#if defined(OSX) || defined(J9ZTPF)
 #define EXTRA_OPEN_FLAGS 0
 #else
 #define EXTRA_OPEN_FLAGS O_LARGEFILE
-#endif /* defined(OSX) */
+#endif /* defined(OSX) || defined(J9ZTPF) */
 
 #ifndef O_DSYNC
 #define O_DSYNC O_SYNC
