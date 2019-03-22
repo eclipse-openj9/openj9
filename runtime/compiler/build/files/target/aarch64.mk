@@ -44,7 +44,11 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/env/OMRDebugEnv.cpp
 
 JIT_PRODUCT_SOURCE_FILES+= \
+    compiler/aarch64/codegen/ARM64JNILinkage.cpp \
+    compiler/aarch64/codegen/ARM64PrivateLinkage.cpp \
+    compiler/aarch64/codegen/ARM64Recompilation.cpp \
     compiler/aarch64/codegen/J9ARM64Snippet.cpp \
+    compiler/aarch64/codegen/J9AheadOfTimeCompile.cpp \
     compiler/aarch64/codegen/J9CodeGenerator.cpp \
     compiler/aarch64/codegen/J9TreeEvaluator.cpp \
     compiler/aarch64/codegen/J9UnresolvedDataSnippet.cpp \
