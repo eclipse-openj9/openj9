@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,18 +97,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</target>
 
 	<!-- Temporarily disable compilation on zos until ddr is supported; github.com/eclipse/openj9/issues/1511 -->
-	<!-- Temporarily disable compilation osx until ddr is supported; github.com/eclipse/openj9/issues/3366 -->
 	<target name="build" >
 		<echo>os.name: ${os.name}</echo>
 		<if>
-			<and>
-				<not>
-					<equals arg1="${os.name}" arg2="z/OS" />
-				</not>
-				<not>
-					<matches string="${os.name}" pattern="(Mac OS X)" />
-				</not>
-			</and>
+			<not>
+				<equals arg1="${os.name}" arg2="z/OS" />
+			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>
