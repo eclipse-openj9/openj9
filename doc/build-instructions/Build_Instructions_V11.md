@@ -712,6 +712,13 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl=path_to_library`
+
+  where:
+
+  - `path_to_library` uses a custom OpenSSL v1.1.x library that's already built.
+  - Use of `fetched`/`system` options for `--with-openssl=` is not tested.
+
 ### 5. Build
 :penguin:
 Now you're ready to build OpenJDK with OpenJ9:
@@ -751,3 +758,10 @@ JCL      - fd5cc89 based on jdk-11.0.2+7)
 ```
 
 :pencil: The JIT compiler for AArch64 is not supported at the time of writing this.  If you don't disable the JIT compiler with the `-Xint` option, you will see a warning for `libj9jit29.so`.
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+:penguin: *Congratulations!* :tada:
