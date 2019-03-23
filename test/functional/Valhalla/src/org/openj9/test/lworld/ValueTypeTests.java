@@ -397,7 +397,116 @@ public class ValueTypeTests {
 	 *
 	 *	Assert.assertFalse((refType != refType), "An identity (!=) comparison on the same refType should always return false");
 	 *	}
-	 */	
+	 */
+
+    /*    
+	 * Test monitorEnter on valueType
+	 * 
+	 * class TestMonitorEnterOnValueType {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=2)
+	static public void testMonitorEnterOnValueType() throws Throwable {
+		int x = 0;
+		int y = 0;
+		Object valueType = makePoint2D.invoke(x, y);
+
+		String fields[] = {"longField:J"};
+		Class<?> testMonitorEnterOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorEnterOnValueType", fields);
+		MethodHandle monitorEnterOnValueType = lookup.findStatic(testMonitorEnterOnValueType, "testMonitorEnterOnObject", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorEnterOnValueType.invoke(valueType);
+			Assert.fail("should throw exception. MonitorEnter cannot be used with ValueType");
+		} catch (IllegalMonitorStateException e) {}
+	}
+
+	/*
+	 * Test monitorExit on valueType
+	 * 
+	 * class TestMonitorExitOnValueType {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=2)
+	static public void testMonitorExitOnValueType() throws Throwable {
+		int x = 1;
+		int y = 1;
+		Object valueType = makePoint2D.invoke(x, y);
+
+		String fields[] = {"longField:J"};
+		Class<?> testMonitorExitOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorExitOnValueType", fields);
+		MethodHandle monitorExitOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorExitOnObject", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorExitOnValueType.invoke(valueType);
+			Assert.fail("should throw exception. MonitorExit cannot be used with ValueType");
+		} catch (IllegalMonitorStateException e) {}
+	}
+
+	/*
+	 * Test monitorEnter with refType
+	 * 
+	 * class TestMonitorEnterWithRefType {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testMonitorEnterWithRefType() throws Throwable {
+		int x = 0;
+		Object refType = (Object) x;
+		
+		String fields[] = {"longField:J"};
+		Class<?> testMonitorEnterWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorEnterWithRefType", fields);
+		MethodHandle monitorEnterWithRefType = lookup.findStatic(testMonitorEnterWithRefType, "testMonitorEnterOnObject", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorEnterWithRefType.invoke(refType);
+		} catch (IllegalMonitorStateException e) { 
+			Assert.fail("shouldn't throw exception. MonitorEnter should be used with refType");
+		}
+	}
+
+	/*
+	 * Test monitorExit with refType
+	 * 
+	 * class TestMonitorExitWithRefType {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testMonitorExitWithRefType() throws Throwable {
+		int x = 1;
+		Object refType = (Object) x;
+		
+		String fields[] = {"longField:J"};
+		Class<?> testMonitorExitWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorExitWithRefType", fields);
+		MethodHandle monitorExitWithRefType = lookup.findStatic(testMonitorExitWithRefType, "testMonitorExitOnObject", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorExitWithRefType.invoke(refType);
+			Assert.fail("should throw exception. MonitorExit doesn't have a matching MonitorEnter");
+		} catch (IllegalMonitorStateException e) {}
+	}
+
+	/*
+	 * Test monitorEnterAndExit with refType
+	 * 
+	 * class TestMonitorEnterAndExitWithRefType {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testMonitorEnterAndExitWithRefType() throws Throwable {
+		int x = 2;
+		Object refType = (Object) x;
+		
+		String fields[] = {"longField:J"};
+		Class<?> testMonitorEnterAndExitWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorEnterAndExitWithRefType", fields);
+		MethodHandle monitorEnterAndExitWithRefType = lookup.findStatic(testMonitorEnterAndExitWithRefType, "testMonitorEnterAndExitWithRefType", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorEnterAndExitWithRefType.invoke(refType);
+		} catch (IllegalMonitorStateException e) {
+			Assert.fail("shouldn't throw exception. MonitorEnter and MonitorExit should be used with refType");
+		}
+	}
 	
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
