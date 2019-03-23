@@ -40,7 +40,7 @@
 	 -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<!-- disable on AIX https://github.com/eclipse/openj9/issues/3562 -->
-		<platformRequirements>^os.aix,^os.osx</platformRequirements>
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
