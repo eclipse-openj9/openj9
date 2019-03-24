@@ -49,6 +49,7 @@ add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h
 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h" "${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h"
+	VERBATIM
 )
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
 
