@@ -7166,7 +7166,7 @@ J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenera
       if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement())
          {
          // Overflow exceptions can be ignored for z15 vector packed decimal VRI-i,f,g and VRR-i instructions. Given
-         // this, VPSOP now becomes suitable for data truncations without incurring excptions which eventually lead to
+         // this, VPSOP now becomes suitable for data truncations without incurring exceptions which eventually lead to
          // performance degradations. This is usually used to truncate high nibble of an even precision PD.
          targetReg = vectorPerformSignOperationHelper(node, cg, true, targetPrec, true, SignOperationType::maintain, false, false, 0, false, true);
          }

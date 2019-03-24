@@ -239,14 +239,14 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     *     The new precision value.
     *  \param signedStatus
     *     Determines whether positive results will carry the preferred positive sign 0xC if true or 0xF if false.
-    *  \param signOpType
+    *  \param soType
     *     See enum SignOperationType.
     *  \param signValidityCheck
     *     Checks if originalSignCode is a valid sign.
     *  \param digitValidityCheck
     *     Validate the input digits
     *  \param sign
-    *     The new sign. Used if signOpType is SignOperationType::setSign. Possible values inclue:
+    *     The new sign. Used if signOpType is SignOperationType::setSign. Possible values include:
     *       - positive: 0xA, 0xC 
     *       - negative: 0xB, 0xD
     *       - unsigned: 0xF
