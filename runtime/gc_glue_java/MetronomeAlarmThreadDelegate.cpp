@@ -41,7 +41,7 @@ MM_MetronomeAlarmThreadDelegate::signalProtectedFunction(J9PortLibrary *privateP
 		return 0;
 	}
 	
-	env = MM_EnvironmentRealtime::getEnvironment(vmThread);
+	env = MM_EnvironmentRealtime::getEnvironment(vmThread->omrVMThread);
 	
 	alarmThread->run(env);
 	

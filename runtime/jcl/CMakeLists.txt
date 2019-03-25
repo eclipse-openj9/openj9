@@ -69,6 +69,7 @@ if(J9VM_GEN_CP)
 	add_custom_command(
 		OUTPUT parsed_cache.txt
 		COMMAND "${CMAKE_COMMAND}" -N -L > "${CMAKE_CURRENT_BINARY_DIR}/parsed_cache.txt"
+		VERBATIM
 		WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 	)
 	add_custom_command(
@@ -81,6 +82,7 @@ if(J9VM_GEN_CP)
 				-outputDir "${CONST_POOL_OUT_DIR}"
 				-cmakeCache "${CMAKE_CURRENT_BINARY_DIR}/parsed_cache.txt"
 				-version ${JAVA_SPEC_VERSION}
+		VERBATIM
 		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/parsed_cache.txt" j9vmcp objectmodel
 	)
 	add_custom_target(run_cptool

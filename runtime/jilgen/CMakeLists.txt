@@ -37,6 +37,7 @@ add_custom_command(
 	OUTPUT ${j9vm_BINARY_DIR}/oti/jilconsts.inc ${j9vm_BINARY_DIR}/oti/jilvalues.m4
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${j9vm_BINARY_DIR}/oti
 	COMMAND  constgen
+	VERBATIM
 	WORKING_DIRECTORY ${j9vm_BINARY_DIR}
 )
 add_custom_target(run_constgen

@@ -88,7 +88,7 @@ public:
 	virtual void
 	scanOneThreadImpl(MM_EnvironmentRealtime *env, J9VMThread* walkThread, void* localData)
 	{
-		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread);
+		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		MM_RealtimeGC* realtimeGC = (MM_RealtimeGC*)_realtimeGC;
 		/* Scan the thread by invoking superclass */
 		MM_RootScanner::scanOneThread(env, walkThread, localData);

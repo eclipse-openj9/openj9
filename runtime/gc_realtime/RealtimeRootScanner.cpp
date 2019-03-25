@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +101,7 @@ MM_RealtimeRootScanner::scanThreads(MM_EnvironmentBase *env)
 	localData.env = env;
 
 	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
- 		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread);
+		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (GC_UNMARK == walkThreadEnv->_allocationColor) {
 			if (GC_UNMARK == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_allocationColor, GC_UNMARK, GC_MARK)) {
 				if (scanOneThread(env, walkThread, (void*) &localData)) {
@@ -289,7 +288,7 @@ MM_RealtimeRootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 	reportScanningStarted(RootScannerEntity_MonitorLookupCaches);
 	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
 	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
-		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread);
+		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (FALSE == walkThreadEnv->_monitorCacheCleared) {
 			if (FALSE == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_monitorCacheCleared, FALSE, TRUE)) {
 #if defined(J9VM_THR_LOCK_NURSERY)

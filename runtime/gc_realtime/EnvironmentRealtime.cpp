@@ -20,14 +20,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "HeapRegionQueue.hpp"
-#include "RegionPoolSegregated.hpp"
-#include "Metronome.hpp"
 #include "OSInterface.hpp"
 #include "RealtimeGC.hpp"
 #include "RealtimeRootScanner.hpp"
@@ -63,10 +61,8 @@ MM_EnvironmentRealtime::kill()
 }
 
 bool
-MM_EnvironmentRealtime::initialize(MM_GCExtensionsBase *extensionsBase)
+MM_EnvironmentRealtime::initialize(MM_GCExtensionsBase *extensions)
 {
-	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(extensionsBase);
-
 	/* initialize base class */
 	if(!MM_EnvironmentBase::initialize(extensions)) {
 		return false;
@@ -80,7 +76,7 @@ MM_EnvironmentRealtime::initialize(MM_GCExtensionsBase *extensionsBase)
 	
 	_distanceToYieldTimeCheck = extensions->distanceToYieldTimeCheck;
 
-	_overflowCache = (MM_HeapRegionDescriptorRealtime**)getForge()->allocate(sizeof(MM_HeapRegionDescriptorRealtime *) * extensions->overflowCacheCount, MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	_overflowCache = (MM_HeapRegionDescriptorRealtime**)getForge()->allocate(sizeof(MM_HeapRegionDescriptorRealtime *) * extensions->overflowCacheCount, MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL == _overflowCache) {
 		return false;
 	}
