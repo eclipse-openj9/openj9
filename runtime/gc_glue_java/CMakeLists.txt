@@ -37,6 +37,7 @@ target_sources(j9vm_gc_glue
 		${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootClearer.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootMarker.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/MemorySubSpaceMetronomeDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MetronomeAlarmThreadDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MixedObjectModel.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModel.cpp
