@@ -5348,11 +5348,7 @@ JVM_GetInterfaceVersion(void)
 
 	Trc_SC_GetInterfaceVersion_Entry();
 	if (J2SE_CURRENT_VERSION >= J2SE_V11) {
-		if (J2SE_CURRENT_VERSION == J2SE_V12) {
-			result = 5; /* JDK12 hasn't got same update as JDK11 & HEAD */
-		} else {
-			result = 6; /* JDK11 & HEAD */
-		}
+		result = 6;
 	}
 	Trc_SC_GetInterfaceVersion_Exit(result);
 
