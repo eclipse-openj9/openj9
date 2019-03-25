@@ -716,7 +716,7 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 
   where:
 
-  - `path_to_library` uses a custom OpenSSL v1.1.x library that's already built.
+  - `path_to_library` uses an OpenSSL v1.1.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
   - Use of `fetched`/`system` options for `--with-openssl=` is not tested.
 
 ### 5. Build
