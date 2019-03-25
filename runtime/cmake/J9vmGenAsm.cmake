@@ -69,6 +69,7 @@ function(j9vm_gen_asm)
 			OUTPUT ${base_name}.s
 			DEPENDS ${m4_file} run_constgen
 			COMMAND m4 ${m4_includes} ${m4_defines} ${CMAKE_CURRENT_SOURCE_DIR}/${m4_file} > ${base_name}.s
+			VERBATIM
 		)
 	endforeach()
 endfunction(j9vm_gen_asm)

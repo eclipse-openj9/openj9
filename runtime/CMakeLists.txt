@@ -122,6 +122,7 @@ if(J9VM_GEN_NLS)
 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/java.properties"
 		DEPENDS j9nls
 		COMMAND "${Java_JAVA_EXECUTABLE}" -cp "$<TARGET_PROPERTY:j9nls,JAR_FILE>" com.ibm.oti.NLSTool.J9NLS -source "${CMAKE_CURRENT_SOURCE_DIR}"
+		VERBATIM
 	)
 	add_custom_target(j9vm_nlsgen
 		DEPENDS
@@ -138,11 +139,13 @@ endif()
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
 	DEPENDS oti/helpers.m4 redirector/generated.c.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/redirector/generated.c.m4" > generated.c
+	VERBATIM
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/redirector"
 )
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
 	DEPENDS oti/helpers.m4 redirector/forwarders.m4 j9vm/generated.h.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/j9vm/generated.h.m4" > generated.h
+	VERBATIM
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/j9vm"
 )
 
