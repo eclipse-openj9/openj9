@@ -610,7 +610,7 @@ public class ThreadInfo {
 				daemonVal = ((Boolean) cd.get("daemon")).booleanValue(); //$NON-NLS-1$
 				priorityVal = ((Integer) cd.get("priority")).intValue(); //$NON-NLS-1$
 				/*[ENDIF]*/
-			} catch (InvalidKeyException e) {
+			} catch (NullPointerException | InvalidKeyException e) {
 				// throw an IllegalArgumentException as the CompositeData
 				// object does not contain an expected key
 				/*[MSG "K05E6", "CompositeData object does not contain expected key."]*/
