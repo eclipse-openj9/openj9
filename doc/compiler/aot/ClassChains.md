@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,19 +93,38 @@ inlined methods however, the AOT load doesn't necessarily fail, rather,
 the AOT infrastructure disables a particular inlined call site.
 
 ## Finding a candidate J9Class
-Finding a candidate J9Class with which to perform the validation is 
-non-trivial. Java uses Class Loaders to load classes. Two class loaders 
-can load the same "C extends B extends A" class twice, and this will 
-result in two different `J9Class` pointers; the difference comes from 
-the fact the two class loaders are different. Frameworks such as OSGI 
-use different class loaders for different modules, and Java 
-applications can use several OSGI modules. Even if there weren't 
-multiple instances of a particular class in the current JVM instance, 
-having to go through every possible class loader to check if it already 
-has that particular class loaded would be extremely slow. If there were 
-multiple instances, then the AOT infrastructure would additionally need 
-to validate every single one. All this would effectively defeat the 
-purpose of AOT code, which is to facilitate fast application startup.
+For classes that are directly referenced in a method's code, there is a 
+Constant Pool entry in the romclass. For example, in `C.foo()` there is a
+call to `D.bar()`; if `D.bar()` is a static call, there will be an entry
+in `romclass(C)`'s constant pool containing a reference to `romclass(D)`.
+The VM can directly be asked what `J9Class` that constant pool entry 
+would resolve to. If that class has already been loaded and is visible 
+to class `C`, the VM will return the `J9Class` for class `D` directly, 
+and this can be validated by a constant pool index. Strictly speaking, 
+this does not require checking the class chains, but in AOT w/ SVM, this
+is done anyway for consistency.
+
+On the other hand, finding a candidate class that was, during compilation,
+acquired from profiling, is non-trivial. In the example above, `d`, 
+a reference of type `D`, may be a reference to an object of type `D`, or 
+it may be a reference to some subclass of `D` (eg. `E` extends `D`) that 
+isn't directly referenced by `C`. In this case, due to information from 
+the IProfiler, it might be known that `E` is the primary class of the `D` 
+that's returned. In that case, the JIT will insert a Profiled Inlined 
+Guard that ensures that `d.class == E` before executing the inlined code. 
+ 
+Because Java uses Class Loaders to load classes, two class loaders can 
+load the same "C extends B extends A" class twice, and this will result 
+in two different `J9Class` pointers; the difference comes from the fact 
+the two class loaders are different. Frameworks such as OSGI use different 
+class loaders for different modules, and Java applications can use several 
+OSGI modules. Even if there weren't multiple instances of a particular 
+class in the current JVM instance, having to go through every possible 
+class loader to check if it already has that particular class loaded would 
+be extremely slow. If there were multiple instances, then the AOT 
+infrastructure would additionally need to validate every single one. All 
+this would effectively defeat the purpose of AOT code, which is to 
+facilitate fast application startup.
 
 Finding a particular `J9Class` in the current JVM instance requires 
 a Class Loader and a Class Name. The Class Name can be obtained from 
@@ -131,29 +150,3 @@ It then asks the Class Loader to provide the `J9Class` pointer
 corresponding to the Class Name. It is worth noting that this `J9Class`
 may not yet be loaded. The validation is then performed using this `J9Class`
 pointer, if it exists.
-
-## Subtleties
-For classes that are directly referenced in a method's code, there is a 
-Constant Pool entry in the romclass. For example, in `C.foo()` there is a
-call to `D.bar()`; if `D.bar()` is a static call, there will be an entry
-in `romclass(C)`'s constant pool containing a reference to `romclass(D)`.
-The VM can directly be asked what `J9Class` that constant pool entry 
-would resolve to. If that class has already been loaded and is visible 
-to class `C`, the VM will return the `J9Class` for class `D` directly, 
-and this can be validated by a constant pool index; the 
-`validateClassFromConstantPool` function is used to do this. This type of 
-validation does **NOT** require validation via the Class Chains.
-
-In other cases, there isn't any guarantee that a constant pool entry for 
-a particular class exists. In the example above, `d`, a reference of type 
-`D`, may be a reference to an object of type `D`, or it may be a 
-reference to some subclass of `D` (eg. `E` extends `D`) that isn't directly 
-referenced by `C`. In this case, due to information from the IProfiler, 
-it might be known that `E` is the primary class of the `D` that's returned. 
-In that case, the JIT will insert a Profiled Inlined Guard that ensures 
-that `d.class == E` before executing the inlined code. In this scenario, 
-when performing an AOT load, the AOT infrastructure needs to not only 
-validate `E` using the Class Chains, but it also needs to relocate the 
-constant `J9Class` pointer for `E` that is embedded in the Profiled 
-Inlined Guard.
-
