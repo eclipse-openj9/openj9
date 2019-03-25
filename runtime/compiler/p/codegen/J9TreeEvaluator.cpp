@@ -11782,15 +11782,15 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, startIndex, endIndex);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
 
+   // IMPORTANT: The upper 32 bits of a 64-bit register containing an int are undefined. Since the
+   // indices are being passed in as ints, we must ensure that their upper 32 bits are not garbage.
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, result, startIndex);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endAddress, endIndex);
+
    if (!isLatin1)
       {
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, startIndex, startIndex);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endIndex, endIndex);
-      }
-   else
-      {
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, result, startIndex);
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, endAddress, endIndex);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, result, result);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endAddress, endAddress);
       }
 
    if (node->getChild(3)->getReferenceCount() == 1)
@@ -11808,15 +11808,21 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    // to each String.indexOf call is ' ', which is the most common whitespace character.
       {
       TR::Register *value = srm->findOrCreateScratchRegister();
+      TR::Register *zxTargetScalar = srm->findOrCreateScratchRegister();
+
+      // Since we're going to do a load followed immediately by a comparison, we need to ensure that
+      // the target scalar is zero-extended and *not* sign-extended.
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, zxTargetScalar, targetScalar, 0, isLatin1 ? 0xff : 0xffff);
 
       generateTrg1MemInstruction(cg, scalarLoadOp, node, value, new (cg->trHeapMemory()) TR::MemoryReference(result, arrAddress, isLatin1 ? 1 : 2, cg));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, value, targetScalar);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, value, zxTargetScalar);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, foundExactLabel, cr0);
 
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, result, result, isLatin1 ? 1 : 2);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, result, endAddress);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
 
+      srm->reclaimScratchRegister(zxTargetScalar);
       srm->reclaimScratchRegister(value);
       }
 
