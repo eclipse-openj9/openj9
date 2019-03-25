@@ -348,7 +348,7 @@ void
 MM_RealtimeGC::allThreadsAllocateUnmarked(MM_EnvironmentBase *env) {
 	GC_OMRVMInterface::flushCachesForGC(env);
 	GC_OMRVMThreadListIterator vmThreadListIterator(_vm);
-	
+
 	while(OMR_VMThread *aThread = vmThreadListIterator.nextOMRVMThread()) {
 		MM_EnvironmentRealtime *threadEnv = MM_EnvironmentRealtime::getEnvironment(aThread);	
 		assume0(threadEnv->getAllocationColor() == GC_MARK);

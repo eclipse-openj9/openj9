@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,14 +32,14 @@
 void
 MM_RealtimeSweepTask::run(MM_EnvironmentBase *envBase)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
 	_sweepScheme->sweep(env);
 }
 
 void
 MM_RealtimeSweepTask::setup(MM_EnvironmentBase *envBase)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
 
 	env->_sweepStats.clear();
 
@@ -51,7 +50,7 @@ MM_RealtimeSweepTask::setup(MM_EnvironmentBase *envBase)
 void
 MM_RealtimeSweepTask::cleanup(MM_EnvironmentBase *envBase)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	MM_GlobalGCStats *finalGCStats = &MM_GCExtensions::getExtensions(env)->globalGCStats;

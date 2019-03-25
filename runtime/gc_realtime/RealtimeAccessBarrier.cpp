@@ -357,7 +357,7 @@ MM_RealtimeAccessBarrier::storeObjectToInternalVMSlot(J9VMThread *vmThread, J9Ob
 void
 MM_RealtimeAccessBarrier::rememberObjectIfBarrierEnabled(J9VMThread *vmThread, J9Object* object)
 {
-	MM_EnvironmentRealtime* env = MM_EnvironmentRealtime::getEnvironment(vmThread);
+	MM_EnvironmentRealtime* env = MM_EnvironmentRealtime::getEnvironment(vmThread->omrVMThread);
 	if (_realtimeGC->isBarrierEnabled()) {
 		rememberObject(env, object);
 	}

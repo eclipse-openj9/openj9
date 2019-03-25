@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -314,7 +313,7 @@ MM_StaccatoAccessBarrier::markAndScanContiguousArray(MM_EnvironmentRealtime *env
 I_32
 MM_StaccatoAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(vmThread);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(vmThread->omrVMThread);
 	
 	/* a high level caller ensured destObject == srcObject */
 		
@@ -341,7 +340,7 @@ MM_StaccatoAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, 
 I_32
 MM_StaccatoAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(vmThread);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(vmThread->omrVMThread);
 
 	if (_extensions->indexableObjectModel.isInlineContiguousArraylet(destObject)
 			&& _extensions->indexableObjectModel.isInlineContiguousArraylet(srcObject)) {
