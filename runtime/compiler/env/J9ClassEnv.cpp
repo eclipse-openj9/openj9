@@ -287,6 +287,11 @@ J9::ClassEnv::isClassInitialized(TR::Compilation *comp, TR_OpaqueClassBlock *cla
 bool
 J9::ClassEnv::classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer)
    {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classHasIllegalStaticFinalFieldModification, clazzPointer);
+      return std::get<0>(stream->read<bool>());
+      }
    J9Class* j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer);
    return J9_ARE_ANY_BITS_SET(j9clazz->classFlags, J9ClassHasIllegalFinalFieldModifications);
    }
