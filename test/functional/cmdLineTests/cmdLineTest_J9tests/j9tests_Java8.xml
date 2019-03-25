@@ -540,5 +540,10 @@
   <output regex="no" type="success">version</output>
  </test>
 
+ <test id="Test option -Xjit:count=0,disableZ15">
+  <command>$EXE$ -Xjit:count=0,disableZ15 -version</command>
+  <output regex="no" type="success">version</output>
+ </test>
+
 </suite>
 
