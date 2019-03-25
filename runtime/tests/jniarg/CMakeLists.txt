@@ -44,4 +44,5 @@ include("exports.cmake")
 install(
 	TARGETS jniargtests
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
