@@ -101,17 +101,21 @@ add a line to `TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt`
 
 ## 4) How to execute a different group of tests?
 
-Test can be run with different levels, groups or combination of
-level.group.
+Test can be run with different levels, groups and types or combination of two 
+(i.e., level.group, level.type, group.type) or three (i.e., level.group.type)
 
 Supported levels are `sanity|extended`
 
 Supported groups  are `functional|system|openjdk|external|perf|jck`
 
+Supported groups  are `regular|native`
+
 ```
     make _sanity
     make _functional
     make _extended.perf
+    make _sanity.native
+    make _extended.functional.native
 ```
 
 ## 5) How to execute a directory of tests?
