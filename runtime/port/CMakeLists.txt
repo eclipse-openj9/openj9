@@ -136,4 +136,5 @@ target_include_directories(j9prt
 install(
 	TARGETS j9prt
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

@@ -83,4 +83,5 @@ add_dependencies(jvm omrgc_hookgen)
 install(
 	TARGETS jvm
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

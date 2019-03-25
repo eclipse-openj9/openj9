@@ -47,4 +47,5 @@ set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
 install(
 	TARGETS jvm_redirect
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}/redirector
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}/redirector
 )
