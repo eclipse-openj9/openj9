@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,8 @@
 
 /* required for memset */
 #include <string.h>
+
+#include "ut_j9jcl.h"
 
 typedef enum {
 	CLASS_MEMORY=0,
@@ -754,10 +756,10 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 		gcInfo->initialSize[idx] = nonHeapMemory->initialSize;
 		gcInfo->preUsed[idx] = nonHeapMemory->preCollectionUsed;
 		gcInfo->preCommitted[idx] = nonHeapMemory->preCollectionSize;
-		gcInfo->preMax[idx] = -1;
+		gcInfo->preMax[idx] = nonHeapMemory->maxSize;
 		gcInfo->postUsed[idx] = nonHeapMemory->postCollectionUsed;
 		gcInfo->postCommitted[idx] = nonHeapMemory->postCollectionSize;
-		gcInfo->postMax[idx] = -1;
+		gcInfo->postMax[idx] = nonHeapMemory->maxSize;
 	}
 
 	/* garbage collection notification */
@@ -886,23 +888,29 @@ initMemoryManagement(J9JavaVM *vm)
 			mgmt->nonHeapMemoryPools[idx].id = J9VM_MANAGEMENT_POOL_NONHEAP_SEG_CLASSES;
 			strcpy(mgmt->nonHeapMemoryPools[idx].name, J9VM_MANAGEMENT_NONHEAPPOOL_NAME_CLASSES);
 			segList = vm->classMemorySegments;
+			mgmt->nonHeapMemoryPools[idx].maxSize = -1;
 			break;
 		case MISC_MEMORY:
 			mgmt->nonHeapMemoryPools[idx].id = J9VM_MANAGEMENT_POOL_NONHEAP_SEG_MISC;
 			strcpy(mgmt->nonHeapMemoryPools[idx].name, J9VM_MANAGEMENT_NONHEAPPOOL_NAME_MISC);
 			segList = vm->memorySegments;
+			mgmt->nonHeapMemoryPools[idx].maxSize = -1;
 			break;
 		case JIT_CODECACHE:
 			mgmt->nonHeapMemoryPools[idx].id = J9VM_MANAGEMENT_POOL_NONHEAP_SEG_JIT_CODE;
 			strcpy(mgmt->nonHeapMemoryPools[idx].name, J9VM_MANAGEMENT_NONHEAPPOOL_NAME_JITCODE);
 			segList = vm->jitConfig->codeCacheList;
+			mgmt->nonHeapMemoryPools[idx].maxSize = vm->jitConfig->codeCacheTotalKB * 1024;
 			break;
 		case JIT_DATACACHE:
-		default:
 			mgmt->nonHeapMemoryPools[idx].id = J9VM_MANAGEMENT_POOL_NONHEAP_SEG_JIT_DATA;
 			strcpy(mgmt->nonHeapMemoryPools[idx].name, J9VM_MANAGEMENT_NONHEAPPOOL_NAME_JITDATA);
 			segList = vm->jitConfig->dataCacheList;
+			mgmt->nonHeapMemoryPools[idx].maxSize = vm->jitConfig->dataCacheTotalKB * 1024;
 			break;
+		default:
+			/* Unreachable */
+			Assert_JCL_unreachable();
 		}
 		getSegmentSizes(vm, segList, &mgmt->nonHeapMemoryPools[idx].initialSize, &used, &mgmt->nonHeapMemoryPools[idx].peakSize, &mgmt->nonHeapMemoryPools[idx].peakUsed);
 	}
@@ -981,9 +989,11 @@ updateNonHeapMemoryPoolSizes(J9JavaVM *vm, J9JavaLangManagementData *mgmt, BOOLE
 			segList = vm->jitConfig->codeCacheList;
 			break;
 		case JIT_DATACACHE:
-		default:
 			segList = vm->jitConfig->dataCacheList;
 			break;
+		default:
+			/* Unreachable */
+			Assert_JCL_unreachable();
 		}
 		if (isGCEND) {
 			storedSize = &mgmt->nonHeapMemoryPools[idx].postCollectionSize;
