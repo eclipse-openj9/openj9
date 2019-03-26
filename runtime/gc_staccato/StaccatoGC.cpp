@@ -68,6 +68,10 @@ MM_StaccatoGC::initialize(MM_EnvironmentBase *env)
  	if (NULL == _extensions->sATBBarrierRememberedSet) {
  		return false;
  	}
+
+	if (!_staccatoDelegate.initialize(env)) {
+		return false;
+	}
  	
  	return true;
 }
@@ -166,12 +170,6 @@ MM_StaccatoGC::doTracing(MM_EnvironmentRealtime *env)
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
 	} while(_moreTracingRequired);
-}
-
-MM_RealtimeAccessBarrier* 
-MM_StaccatoGC::allocateAccessBarrier(MM_EnvironmentBase *env)
-{
-	return _staccatoDelegate.allocateAccessBarrier(env);
 }
 
 void

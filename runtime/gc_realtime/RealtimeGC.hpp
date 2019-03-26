@@ -45,7 +45,6 @@
 class MM_Dispatcher;
 class MM_EnvironmentBase;
 class MM_MemorySubSpaceMetronome;
-class MM_RealtimeAccessBarrier;
 class MM_RealtimeMarkingScheme;
 class MM_SweepSchemeRealtime;
 class MM_FreeHeapRegionList;
@@ -223,7 +222,6 @@ public:
 	void flushCachedFullRegions(MM_EnvironmentBase *env);
 	virtual void setGCThreadPriority(OMR_VMThread *vmThread, uintptr_t priority);
 	/* Create the access barrier */
-	virtual MM_RealtimeAccessBarrier* allocateAccessBarrier(MM_EnvironmentBase *env) = 0;
 	MM_WorkPacketsRealtime* allocateWorkPackets(MM_EnvironmentBase *env);
 	/* Create an EventTypeSpaceVersion object for TuningFork tracing */
 	virtual void doTracing(MM_EnvironmentRealtime* env) = 0;
