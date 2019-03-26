@@ -806,7 +806,7 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass,
 {
 	omrobjectptr_t object = *(volatile omrobjectptr_t *)srcAddress;
 
-	if (_extensions->scavenger->isObjectInEvacuateMemory(object)) {
+	if ((NULL !=_extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
 		Assert_MM_true(_extensions->scavenger->isConcurrentInProgress());
 		Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));

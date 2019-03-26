@@ -1592,17 +1592,21 @@ MM_ObjectAccessBarrier::compareAndSwapObject(J9VMThread *vmThread, J9Object *des
 bool
 MM_ObjectAccessBarrier::staticCompareAndSwapObject(J9VMThread *vmThread, J9Class *destClass, j9object_t *destAddress, J9Object *compareObject, J9Object *swapObject)
 {
-	/* Note: This is a bit of a special case -- we call preObjectStore even though the store
-	 * may not actually occur. This is safe and correct for Metronome.
-	 */
-	preObjectStore(vmThread, (J9Object *)J9VM_J9CLASS_TO_HEAPCLASS(destClass), destAddress, swapObject, true);
-	protectIfVolatileBefore(vmThread, true, false, false);
+	bool result = false;
 
-	bool result = ((UDATA)compareObject == MM_AtomicOperations::lockCompareExchange((UDATA *)destAddress, (UDATA)compareObject, (UDATA)swapObject));
+	if (preObjectRead(vmThread, destClass, destAddress)) {
+		/* Note: This is a bit of a special case -- we call preObjectStore even though the store
+		 * may not actually occur. This is safe and correct for Metronome.
+		 */
+		preObjectStore(vmThread, (J9Object *)J9VM_J9CLASS_TO_HEAPCLASS(destClass), destAddress, swapObject, true);
+		protectIfVolatileBefore(vmThread, true, false, false);
 
-	protectIfVolatileAfter(vmThread, true, false, false);
-	if (result) {
-		postObjectStore(vmThread, destClass, destAddress, swapObject, true);
+		result = ((UDATA)compareObject == MM_AtomicOperations::lockCompareExchange((UDATA *)destAddress, (UDATA)compareObject, (UDATA)swapObject));
+
+		protectIfVolatileAfter(vmThread, true, false, false);
+		if (result) {
+			postObjectStore(vmThread, destClass, destAddress, swapObject, true);
+		}
 	}
 
 	return result;
@@ -1738,17 +1742,21 @@ MM_ObjectAccessBarrier::compareAndExchangeObject(J9VMThread *vmThread, J9Object 
 J9Object *
 MM_ObjectAccessBarrier::staticCompareAndExchangeObject(J9VMThread *vmThread, J9Class *destClass, j9object_t *destAddress, J9Object *compareObject, J9Object *swapObject)
 {
-	/* Note: This is a bit of a special case -- we call preObjectStore even though the store
-	 * may not actually occur. This is safe and correct for Metronome.
-	 */
-	preObjectStore(vmThread, (J9Object *)J9VM_J9CLASS_TO_HEAPCLASS(destClass), destAddress, swapObject, true);
-	protectIfVolatileBefore(vmThread, true, false, false);
+	J9Object *result = NULL;
 
-	J9Object *result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)destAddress, (UDATA)compareObject, (UDATA)swapObject);
+	if (preObjectRead(vmThread, destClass, destAddress)) {
+		/* Note: This is a bit of a special case -- we call preObjectStore even though the store
+		 * may not actually occur. This is safe and correct for Metronome.
+		 */
+		preObjectStore(vmThread, (J9Object *)J9VM_J9CLASS_TO_HEAPCLASS(destClass), destAddress, swapObject, true);
+		protectIfVolatileBefore(vmThread, true, false, false);
 
-	protectIfVolatileAfter(vmThread, true, false, false);
-	if (result) {
-		postObjectStore(vmThread, destClass, destAddress, swapObject, true);
+		J9Object *result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)destAddress, (UDATA)compareObject, (UDATA)swapObject);
+
+		protectIfVolatileAfter(vmThread, true, false, false);
+		if (result) {
+			postObjectStore(vmThread, destClass, destAddress, swapObject, true);
+		}
 	}
 
 	return result;

@@ -991,6 +991,7 @@ public:
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 
+			preStaticReadObject(vmThread, clazz, destAddress);
 			preStaticStoreObject(vmThread, classObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -1032,6 +1033,7 @@ public:
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 
+			preStaticReadObject(vmThread, clazz, destAddress);
 			preStaticStoreObject(vmThread, classObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -2134,7 +2136,6 @@ protected:
 		internalPreReadObject(vmThread, object, srcAddress);
 	}
 	
-
 	/**
 	 * Read a non-object address (pointer to internal VM data) from an object.
 	 * This function is only concerned with moving the actual data. Do not re-implement
