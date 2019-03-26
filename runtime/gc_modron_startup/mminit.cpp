@@ -856,19 +856,6 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 
 	/* Number of GC threads must be initialized at this point */
 	Assert_MM_true(0 < extensions->gcThreadCount);
-#if defined (J9VM_GC_REALTIME)
-	/*
-	 * The split available lists are populated during sweep by GC threads,
-	 * each slave inserts into its corresponding split list as it finishes sweeping a region,
-	 * which also removes the contention when inserting to a global list.
-	 * So the split count equals the number of gc threads.
-	 * NOTE: The split available list mechanism assumes the slave IDs are in the range of [0, gcThreadCount-1].
-	 * This is currently the case, as _statusTable in ParallelDispacher also replies on slave IDs be in this range
-	 * as it uses the slave ID as index into the status array. If slave IDs ever fall out of the above range,
-	 * split available list would likely loose the performance advantage.
-	 */
-	extensions->splitAvailableListSplitAmount = extensions->gcThreadCount;
-#endif /* J9VM_GC_REALTIME */
 
 	/* initialize packet lock splitting factor */
 	if (0 == extensions->packetListSplit) {
