@@ -230,7 +230,6 @@ JCL      - 98f2038 based on jdk-11+28)
   - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
-
 :penguin: *Congratulations!* :tada:
 
 ----------------------------------
@@ -353,7 +352,6 @@ JCL      - e5c64f5 based on jdk-11+21)
   - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
-
 :blue_book: *Congratulations!* :tada:
 
 ----------------------------------
@@ -462,7 +460,6 @@ Note: there is no need to specify --with-toolchain-version for 2017 as it will b
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
-
 ### 4. build
 :ledger:
 Now you're ready to build OpenJDK with OpenJ9:
@@ -504,7 +501,6 @@ JCL      - a786f96b13 based on jdk-11+21)
   - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
-
 :ledger: *Congratulations!* :tada:
 
 ----------------------------------
@@ -524,6 +520,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
+- [binutils 2.32](https://formulae.brew.sh/formula/binutils)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
