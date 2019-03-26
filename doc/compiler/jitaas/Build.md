@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,12 +124,20 @@ See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only diff
 ## JIT
 
 ```
-$ cd runtime/compiler
-$ make -f compiler.mk -C . -j$(nproc) J9SRC=$JAVA_HOME/jre/lib/amd64/compressedrefs/ JIT_SRCBASE=.. BUILD_CONFIG=debug J9_VERSION=29 JIT_OBJBASE=../objs
+export JAVA_HOME=/your/sdk
+export J9SRC="$JAVA_HOME"/jre/lib/amd64/compressedrefs
+export JIT_SRCBASE=/your/openj9/runtime
+export OMR_SRCBASE=/your/omr
 
+ln -s "$OMR_SRCBASE" "$JIT_SRCBASE"/omr
+cp "$J9SRC"/compiler/env/ut_j9jit.* "$JIT_SRCBASE"/compiler/env/
+
+cd "$JIT_SRCBASE"/runtime/compiler
+make -f compiler.mk -C "$JIT_SRCBASE"/compiler -j$(nproc) J9SRC="$JAVA_HOME"/jre/lib/amd64/compressedrefs/ JIT_SRCBASE=.. BUILD_CONFIG=debug J9_VERSION=29 JIT_OBJBASE=../objs
+cp "$JIT_SRCBASE"/compiler/../objs/libj9jit29.so "$J9SRC"
 ```
 
-The only new addition to the build process for JITaaS is to protbuf schema files. These are supposed to be build automatically, but it keeps getting broken by upstream changes to openJ9. So, if you get errors about missing files named like `compile.pb.h`, try building the make target `proto` by adding the word `proto` to the end of the make command above.
+The only new addition to the build process for JITaaS is to protobuf schema files. These are supposed to be build automatically, but it keeps getting broken by upstream changes to openJ9. So, if you get errors about missing files named like `compile.pb.h`, try building the make target `proto` by adding the word `proto` to the end of the make command above.
 
 ## DOCKER
 
