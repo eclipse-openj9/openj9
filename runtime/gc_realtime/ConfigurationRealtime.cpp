@@ -25,32 +25,25 @@
  * @ingroup GC_Modron_Metronome
  */
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "MemorySpacesAPI.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "ConfigurationRealtime.hpp"
 
 #include "EnvironmentRealtime.hpp"
 #include "GlobalAllocationManagerRealtime.hpp"
-#include "GlobalCollector.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "HeapVirtualMemory.hpp"
 #include "HeapRegionDescriptorRealtime.hpp"
 #include "HeapRegionManagerTarok.hpp"
-#include "MemoryPoolAddressOrderedList.hpp"
 #include "MemoryPoolSegregated.hpp"
 #include "MemorySpace.hpp"
-#include "MemorySubSpaceFlat.hpp"
-#include "MemorySubSpaceGeneric.hpp"
 #include "MemorySubSpaceMetronome.hpp"
-#include "RegionPoolSegregated.hpp"
 #include "PhysicalArenaRegionBased.hpp"
 #include "PhysicalSubArenaRegionBased.hpp"
 #include "RealtimeGC.hpp"
+#include "RegionPoolSegregated.hpp"
 #include "Scheduler.hpp"
-#include "SegregatedAllocationInterface.hpp"
-#include "SegregatedAllocationTracker.hpp"
 #include "SizeClasses.hpp"
 
 #define REALTIME_REGION_SIZE_BYTES 64 * 1024
@@ -65,26 +58,28 @@ class MM_MemoryPoolSegregated;
 bool
 MM_ConfigurationRealtime::initialize(MM_EnvironmentBase *env)
 {
-	J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 
 	bool success = false;
 	if (MM_Configuration::initialize(env)) {
+		/*
+		 * The split available lists are populated during sweep by GC threads,
+		 * each slave inserts into its corresponding split list as it finishes sweeping a region,
+		 * which also removes the contention when inserting to a global list.
+		 * So the split count equals the number of gc threads.
+		 * NOTE: The split available list mechanism assumes the slave IDs are in the range of [0, gcThreadCount-1].
+		 * This is currently the case, as _statusTable in ParallelDispacher also replies on slave IDs be in this range
+		 * as it uses the slave ID as index into the status array. If slave IDs ever fall out of the above range,
+		 * split available list would likely loose the performance advantage.
+		 */
+		extensions->splitAvailableListSplitAmount = extensions->gcThreadCount;
+
 		env->getOmrVM()->_sizeClasses = _delegate.getSegregatedSizeClasses(env);
 		if (NULL != env->getOmrVM()->_sizeClasses) {
 			extensions->setSegregatedHeap(true);
 			extensions->setMetronomeGC(true);
 
-			javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USER_REALTIME_ACCESS_BARRIER;
-			extensions->arrayletsPerRegion = extensions->regionSize / javaVM->arrayletLeafSize;
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-			if (!extensions->dynamicClassUnloadingThresholdForced) {
-				extensions->dynamicClassUnloadingThreshold = 1;
-			}
-			if (!extensions->dynamicClassUnloadingKickoffThresholdForced) {
-				extensions->dynamicClassUnloadingKickoffThreshold = 0;
-			}
-#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+			extensions->arrayletsPerRegion = extensions->regionSize / env->getOmrVM()->_arrayletLeafSize;
 			/* Excessive GC logic does not work with incremental Metronome. */
 			if (!extensions->excessiveGCEnabled._wasSpecified) {
 				extensions->excessiveGCEnabled._valueSpecified = false;
@@ -109,7 +104,7 @@ MM_ConfigurationRealtime::tearDown(MM_EnvironmentBase* env)
 }
 
 MM_Heap *
-MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, UDATA heapBytesRequested, MM_HeapRegionManager *regionManager)
+MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, uintptr_t heapBytesRequested, MM_HeapRegionManager *regionManager)
 {
 	return MM_HeapVirtualMemory::newInstance(env, env->getExtensions()->heapAlignment, heapBytesRequested, regionManager);
 }
@@ -118,7 +113,7 @@ MM_MemorySpace *
 MM_ConfigurationRealtime::createDefaultMemorySpace(MM_EnvironmentBase *envBase, MM_Heap *heap, MM_InitializationParameters *parameters)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 	MM_MemoryPoolSegregated *memoryPool = NULL;
 	MM_MemorySubSpaceMetronome *memorySubSpaceMetronome = NULL;
 	MM_PhysicalSubArenaRegionBased *physicalSubArena = NULL;
@@ -171,11 +166,11 @@ MM_ConfigurationRealtime::allocateNewEnvironment(MM_GCExtensionsBase *extensions
 J9Pool *
 MM_ConfigurationRealtime::createEnvironmentPool(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	uintptr_t numberOfElements = getConfigurationDelegate()->getInitialNumberOfPooledEnvironments(env);
 	/* number of elements, pool flags = 0, 0 selects default pool configuration (at least 1 element, puddle size rounded to OS page size) */
-	return pool_new(sizeof(MM_EnvironmentRealtime), numberOfElements, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(PORTLIB));
+	return pool_new(sizeof(MM_EnvironmentRealtime), numberOfElements, sizeof(U_64), 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(OMRPORTLIB));
 }
 
 bool 
@@ -183,7 +178,7 @@ MM_ConfigurationRealtime::initializeEnvironment(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
 	if (MM_Configuration::initializeEnvironment(env)) {
-		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+		MM_GCExtensionsBase *extensions = env->getExtensions();
 		if (extensions->globalAllocationManager->acquireAllocationContext(env)) {
 			MM_MemoryPoolSegregated *memoryPool = (MM_MemoryPoolSegregated *)extensions->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getMemoryPool();
 			env->_allocationTracker = memoryPool->createAllocationTracker(env);
@@ -199,24 +194,21 @@ MM_ConfigurationRealtime::defaultMemorySpaceAllocated(MM_GCExtensionsBase *exten
 {
 	MM_Configuration::defaultMemorySpaceAllocated(extensions, defaultMemorySpace);
 
-	J9JavaVM* vm = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
-	
-	vm->heapBase = extensions->heap->getHeapBase();
-	vm->heapTop = extensions->heap->getHeapTop();
+	extensions->realtimeGC->getRealtimeDelegate()->defaultMemorySpaceAllocated(extensions, defaultMemorySpace);
 }
 
 MM_HeapRegionManager *
 MM_ConfigurationRealtime::createHeapRegionManager(MM_EnvironmentBase *env)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	UDATA descriptorSize = sizeof(MM_HeapRegionDescriptorRealtime) + sizeof(UDATA *) * extensions->arrayletsPerRegion;
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	uintptr_t descriptorSize = sizeof(MM_HeapRegionDescriptorRealtime) + sizeof(uintptr_t *) * extensions->arrayletsPerRegion;
 	
 	MM_HeapRegionManagerTarok *heapRegionManager = MM_HeapRegionManagerTarok::newInstance(env, extensions->regionSize, descriptorSize, MM_HeapRegionDescriptorRealtime::initializer, MM_HeapRegionDescriptorRealtime::destructor);
 	return heapRegionManager;
 }
 
 MM_Dispatcher *
-MM_ConfigurationRealtime::createDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, UDATA defaultOSStackSize)
+MM_ConfigurationRealtime::createDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize)
 {
 	return MM_Scheduler::newInstance(env, handler, handler_arg, defaultOSStackSize);
 }
