@@ -34,14 +34,19 @@ project(j9vm VERSION ${J9VM_VERSION} LANGUAGES CXX C)
 set(J9VM_OMR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/omr" CACHE PATH "Path to the OMR directory")
 set(CMAKE_MODULE_PATH "${j9vm_SOURCE_DIR}/cmake/modules" "${J9VM_OMR_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 
-enable_language(ASM)
-
 ###
 ### End basic housekeeping
 ###
 
 # Get platform specific configuration stuff
 include(cmake/platform.cmake)
+
+# If we are building on windows, we want ASM_MASM not ASM
+if(OMR_OS_WINDOWS)
+	enable_language(ASM_MASM)
+else()
+	enable_language(ASM)
+endif()
 
 # Pull in definitions for omr_add_hookgen and omr_add_tracegen
 # these will be in omr/cmake/modules
