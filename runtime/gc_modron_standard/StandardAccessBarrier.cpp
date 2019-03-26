@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -748,7 +748,7 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 {
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
 
-	if (_extensions->scavenger->isObjectInEvacuateMemory(object)) {
+	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
 		Assert_MM_true(_extensions->scavenger->isConcurrentInProgress());
 		Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));
@@ -764,20 +764,13 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
 		} else {
-			omrobjectptr_t destinationObjectPtr = _extensions->scavenger->copyObject(env, &forwardHeader);
-			if (NULL == destinationObjectPtr) {
-				/* Failure - the scavenger must back out the work it has done. Attempt to return the original object. */
-				forwardPtr = forwardHeader.setSelfForwardedObject();
-				if (forwardPtr != object) {
-					/* Another thread successfully copied the object. Re-fetch forwarding pointer,
-					 * and ensure the object is fully copied before exposing it. */
-					MM_ForwardedHeader(object).copyOrWait(forwardPtr);
-					*srcAddress = forwardPtr;
-				}
-			} else {
-				/* Update the slot. copyObject() ensures that the object is fully copied. */
-				*srcAddress = destinationObjectPtr;
-			}
+			Assert_MM_unreachable();
+			/* A typical usage of this barrier is to update monitor table slot for blocking object (blockingEnterObject).
+			 * Such object is a hard root, hence copied during initial roots scanning. We should never need to copy it via this barrier.
+			 * If this assert eventually triggers it means the barrier is used for some other objects that are not hard roots
+			 * (for example, iterating monitor table to dump info about all monitors). If so, try using the other API (that's using VM rather
+			 * than Thread argument) instead (since that API expects accessing even dead objects and does not impose the assert).
+			 */
 		}
 	}
 
@@ -789,7 +782,7 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcA
 {
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
 
-	if (_extensions->scavenger->isObjectInEvacuateMemory(object)) {
+	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		Assert_MM_true(_extensions->scavenger->isConcurrentInProgress());
 
 		MM_ForwardedHeader forwardHeader(object);
@@ -800,7 +793,7 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcA
 			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
 		}
-		/* Do nothing if the object is not copied already.
+		/* Do nothing if the object is not copied already, since it might be dead.
 		 * This object is found unintentionally (without real reference to it),
 		 * for example by iterating colliding entries in monitor hash table */
 	}
