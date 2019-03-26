@@ -230,7 +230,9 @@ static char * newPath = NULL;
 J9JavaVM *BFUjavaVM = NULL;
 
 static jclass jlClass = NULL;
+#ifdef J9VM_IVE_RAW_BUILD
 static jfieldID classNameFID = NULL;
+#endif /* J9VM_IVE_RAW_BUILD */
 static jmethodID classDepthMID = NULL;
 static jmethodID classLoaderDepthMID = NULL;
 static jmethodID currentClassLoaderMID = NULL;
@@ -5254,11 +5256,11 @@ J9Class* java_lang_Class_vmRef(JNIEnv* env, jobject clazz);
  * in interface version 6.
  */
 jstring JNICALL
-#if (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12)
+#if JAVA_SPEC_VERSION < 11
 JVM_GetClassName
-#else /* (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12) */
+#else /* JAVA_SPEC_VERSION < 11 */
 JVM_InitClassName
-#endif /* (JAVA_SPEC_VERSION < 11) || (JAVA_SPEC_VERSION == 12) */
+#endif /* JAVA_SPEC_VERSION < 11 */
 (JNIEnv *env, jclass theClass)
 {
 	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
@@ -5312,13 +5314,13 @@ JVM_InitClassName
 
 			result = (*env)->NewStringUTF(env, name);
 			j9mem_free_memory(name);
-#if (JAVA_SPEC_VERSION >= 11) && (JAVA_SPEC_VERSION != 12)
+#if JAVA_SPEC_VERSION >= 11
 			// JVM_InitClassName is expected to also cache the result in the 'name' field
 			(*env)->SetObjectField(env, theClass, classNameFID, result);
 			if ((*env)->ExceptionCheck(env)) {
 				result = NULL;
 			}
-#endif /* (JAVA_SPEC_VERSION >= 11) && (JAVA_SPEC_VERSION != 12) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 			return result;
 		}
 	}
