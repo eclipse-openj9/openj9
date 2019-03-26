@@ -41,4 +41,5 @@ target_include_directories(jsig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 install(
 	TARGETS jsig
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

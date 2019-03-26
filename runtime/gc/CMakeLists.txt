@@ -90,4 +90,5 @@ target_include_directories(j9gc
 install(
 	TARGETS j9gc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
