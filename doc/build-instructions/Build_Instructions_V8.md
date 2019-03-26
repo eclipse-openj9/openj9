@@ -34,7 +34,7 @@ A more complete set of build instructions are included here for multiple platfor
 - [MacOS :apple:](#macos)
 - [ARM :iphone:](#arm)
 
-User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs). 
+User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
 documentation for the next release of OpenJ9 can be found [here](https://eclipse.github.io/openj9-docs/).
 
@@ -295,7 +295,6 @@ where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<
 
     If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-
 ### 4. build
 :blue_book:
 Now you're ready to build OpenJDK with OpenJ9:
@@ -555,6 +554,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
+- [binutils 2.32](https://formulae.brew.sh/formula/binutils)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
@@ -562,7 +562,6 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5 ](https://formulae.brew.sh/formula/wget)
-
 
 [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
 
@@ -604,7 +603,6 @@ typedef void (^dispatch_block_t)(void);
 typedef void* dispatch_block_t;
 #endif
 ```
-
 
 ### 2. Get the source
 :apple:
