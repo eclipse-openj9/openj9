@@ -425,7 +425,7 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 		localTypeOffset = getUnsafe().objectFieldOffset(field);
 		AnnotationVars.annotationTypeOffset = localTypeOffset;
 	}
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF Sidecar19-SE]*/
 	return getUnsafe().compareAndSetObject(localAnnotationVars, localTypeOffset, oldType, newType);
 /*[ELSE]
 	return getUnsafe().compareAndSwapObject(localAnnotationVars, localTypeOffset, oldType, newType);
@@ -4010,7 +4010,7 @@ private ReflectCache acquireReflectCache() {
 		ReflectCache newCache = new ReflectCache(this);
 		do {
 			// Some thread will insert this new cache making it available to all.
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF Sidecar19-SE]*/
 			if (theUnsafe.compareAndSetObject(this, cacheOffset, null, newCache)) {
 /*[ELSE]
 			if (theUnsafe.compareAndSwapObject(this, cacheOffset, null, newCache)) {
