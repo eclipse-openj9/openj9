@@ -68,14 +68,6 @@ MM_RealtimeGCDelegate::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	/* create the appropriate access barrier for this configuration of Metronome */
-	MM_RealtimeAccessBarrier *accessBarrier = NULL;
-	accessBarrier = _realtimeGC->allocateAccessBarrier(env);
-	if (NULL == accessBarrier) {
-		return false;
-	}
-	_extensions->accessBarrier = (MM_ObjectAccessBarrier *)accessBarrier;
-
 	J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
 	javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USER_REALTIME_ACCESS_BARRIER;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
