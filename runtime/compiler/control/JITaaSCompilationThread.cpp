@@ -1780,6 +1780,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::Compiler->cls.superClassesOf(clazz)[index]);
          }
          break;
+      case J9ServerMessageType::ClassEnv_classHasIllegalStaticFinalFieldModification:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(clazz));
+         }
+         break;
       case J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
