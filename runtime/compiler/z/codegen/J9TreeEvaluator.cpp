@@ -256,27 +256,25 @@ doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
 TR::Register*
 inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF16)
    {
-   // Element size is 2-byte if both s1 and s2 are decompressed strings and it is 12 otherwise.
-   // 0 for byte, 1 for halfword
    const uint32_t elementSizeMask = isUTF16 ? 1 : 0;
    const int8_t vectorSize = cg->machine()->getVRFSize();
    const uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   const bool supportsVSTRS = TR::Compiler->target.cpu.getS390SupportsVectorFacilityEnhancement2();
    TR::Compilation* comp = cg->comp();
 
    if (comp->getOption(TR_TraceCG))
       traceMsg(comp, "inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
 
-   // Get call parameters
-   // s1Value and s2Value are byte arrays
-   // This evaluator function handles different indexOf() instrinsics, some of which
-   // are static calls without a receiver. Hence, the need for static call check.
+   // This evaluator function handles different indexOf() instrinsics, some of which are static calls without a 
+   // receiver. Hence, the need for static call check.
    const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
    const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
-
-   TR::Register* s1ValueReg   = cg->evaluate          (node->getChild(firstCallArgIdx));
-   TR::Register* s1LenReg     = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+1));
-   TR::Register* s2ValueReg   = cg->evaluate          (node->getChild(firstCallArgIdx+2));
-   TR::Register* s2LenReg     = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+3));
+   
+   // Get call parameters where s1Value and s2Value are byte arrays
+   TR::Register* s1ValueReg = cg->evaluate(node->getChild(firstCallArgIdx));
+   TR::Register* s1LenReg = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+1));
+   TR::Register* s2ValueReg = cg->evaluate(node->getChild(firstCallArgIdx+2));
+   TR::Register* s2LenReg = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+3));
    TR::Register* fromIndexReg = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+4));
 
    // Registers
@@ -293,36 +291,37 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    TR::Register* tmpVReg            = cg->allocateRegister(TR_VRF);
 
    // Register dependencies
-   TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 13, cg);
-   regDeps->addPostCondition(s1ValueReg  , TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(s1LenReg    , TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(s2ValueReg  , TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(s2LenReg    , TR::RealRegister::AssignAny);
+   TR::RegisterDependencyConditions* regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, supportsVSTRS ? 14 : 13, cg);
+
+   regDeps->addPostCondition(s1ValueReg, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(s1LenReg, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(s2ValueReg, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(s2LenReg, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(fromIndexReg, TR::RealRegister::AssignAny);
 
-   regDeps->addPostCondition(resultReg         , TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(maxIndexReg       , TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(maxIndexReg, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(s2VecStartIndexReg, TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(loadLenReg        , TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(loadLenReg, TR::RealRegister::AssignAny);
 
-   regDeps->addPostCondition(s1PartialVReg , TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(s2PartialVReg , TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(s1PartialVReg, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(s2PartialVReg, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(s2Char1RepVReg, TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(tmpVReg       , TR::RealRegister::AssignAny);
-
+   regDeps->addPostCondition(tmpVReg, TR::RealRegister::AssignAny);
+   
    // Labels
-   TR::LabelSymbol* labelStart               = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelFindS2Head          = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelLoadLen16           = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelLoadLenDone         = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelExtractFirstCharPos = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelMatchS2Loop         = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelMatchS2LoopSetup    = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelS2PartialMatch      = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelLoadResult          = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelResultDone          = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelStringNotFound      = generateLabelSymbol(cg);
-   TR::LabelSymbol* labelDone                = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelStart = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelFindS2Head = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelLoadLen16 = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelLoadLenDone = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelMatchS2Loop = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelMatchS2Residue = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelMatchS2LoopSetup = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelS2PartialMatch  = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelLoadResult = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelResultDone = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelStringNotFound = generateLabelSymbol(cg);
+   TR::LabelSymbol* labelDone = generateLabelSymbol(cg);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelStart);
    labelStart->setStartInternalControlFlow();
@@ -355,15 +354,15 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    static bool enableIndexOfDebugCounter = feGetEnv("TR_EnableIndexOfDebugCounter") != NULL;
    if (enableIndexOfDebugCounter)
       {
-      TR::LabelSymbol* labelS2LenGT10       = generateLabelSymbol(cg);
-      TR::LabelSymbol* labelS2LenGT30       = generateLabelSymbol(cg);
-      TR::LabelSymbol* labelS2LenGT60       = generateLabelSymbol(cg);
-      TR::LabelSymbol* labelS2LenGT100      = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelS2LenGT10 = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelS2LenGT30 = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelS2LenGT60 = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelS2LenGT100 = generateLabelSymbol(cg);
       TR::LabelSymbol* labelS2LenCheckDone  = generateLabelSymbol(cg);
 
-      uint8_t boundary10Char  = isUTF16 ? 20 : 10;
-      uint8_t boundary30Char  = isUTF16 ? 60 : 30;
-      uint8_t boundary60Char  = isUTF16 ? 120 : 60;
+      uint8_t boundary10Char = isUTF16 ? 20 : 10;
+      uint8_t boundary30Char = isUTF16 ? 60 : 30;
+      uint8_t boundary60Char = isUTF16 ? 120 : 60;
       uint8_t boundary100Char = isUTF16 ? 200 : 100;
 
       generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, s2LenReg, boundary10Char, labelS2LenGT10, TR::InstOpCode::COND_BH);
@@ -391,63 +390,164 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelS2LenCheckDone);
       }
 
-   generateVRXInstruction(cg, TR::InstOpCode::VLREP, node, s2Char1RepVReg, generateS390MemoryReference(s2ValueReg, headerSize, cg), elementSizeMask);
+   if (supportsVSTRS)
+      {
+      TR::Register* s2HeadVReg = s2Char1RepVReg;
+      TR::Register* s2LenVReg = cg->allocateRegister(TR_VRF);
 
-   /************************************** 1st char of s2 ******************************************/
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelFindS2Head);
+      regDeps->addPostCondition(s2LenVReg, TR::RealRegister::AssignAny);
 
-   // Determine s1 load length. loadLenReg is either vectorSize-1 (15) or the 1st_char_matching residue length.
-   generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, loadLenReg, s1VecStartIndexReg, vectorSize);
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, loadLenReg, s1LenReg, labelLoadLen16, TR::InstOpCode::COND_BNHR);
-   generateRRRInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, loadLenReg, s1LenReg, s1VecStartIndexReg);
-   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, -1);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelLoadLenDone);
+      // Load the first piece of s2Value (s2 header) which is either 16 bytes or s2Len
+      TR::LabelSymbol* labelLoad16Bytes = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelLoadS2Done = generateLabelSymbol(cg);
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadLen16);
-   generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, loadLenReg, vectorSize-1);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, s2LenReg, (int8_t)vectorSize, labelLoad16Bytes, TR::InstOpCode::COND_BNL);
+      generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, loadLenReg, s2LenReg, -1);
+      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s2HeadVReg, loadLenReg, generateS390MemoryReference(s2ValueReg, headerSize, cg));
+      generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, loadLenReg, s2LenReg);
+      generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, s2LenVReg, s2LenReg, generateS390MemoryReference(7, cg), 0);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelLoadS2Done);
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadLenDone);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoad16Bytes);
+      generateVRXInstruction(cg, TR::InstOpCode::VL, node, s2HeadVReg, generateS390MemoryReference(s2ValueReg, headerSize, cg));
+      generateRIInstruction(cg, TR::InstOpCode::LHI, node, loadLenReg, vectorSize);
+      generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, s2LenVReg, loadLenReg, generateS390MemoryReference(7, cg), 0);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadS2Done);
 
-   TR::Register* tmpReg = char1IndexReg;
-   generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, tmpReg, s1ValueReg, s1VecStartIndexReg);
-   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s1PartialVReg, loadLenReg, generateS390MemoryReference(tmpReg, headerSize, cg));
-   generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, tmpVReg, s1PartialVReg, s2Char1RepVReg, 0x1, elementSizeMask);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, labelExtractFirstCharPos);
+      // Loop to search for s2 header in s1
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelFindS2Head);
 
-   // 1st char not found. Loop back and retry from the next chunk
-   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, loadLenReg);
-   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, s1VecStartIndexReg, 1);
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, s1VecStartIndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelFindS2Head);
+      // Determine s1 load length and load a piece of s1
+      TR::Register* tmpReg = s2VecStartIndexReg;
+      generateRRRInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, loadLenReg, s1LenReg, s1VecStartIndexReg);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, loadLenReg, (int8_t)vectorSize, labelLoadLen16, TR::InstOpCode::COND_BNL);
+      generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, tmpReg, s1ValueReg, s1VecStartIndexReg);
+      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s1PartialVReg, loadLenReg, generateS390MemoryReference(tmpReg, headerSize, cg));
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelLoadLenDone);
 
-   // Found 1st char. check it's byte index in tmpVReg byte 7.
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelExtractFirstCharPos);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadLen16);
+      generateVRXInstruction(cg, TR::InstOpCode::VL, node, s1PartialVReg, generateS390MemoryReference(s1ValueReg, s1VecStartIndexReg, headerSize, cg));
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, loadLenReg, vectorSize);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadLenDone);
 
-   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, char1IndexReg, tmpVReg, generateS390MemoryReference(7, cg), 0);
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, loadLenReg, labelStringNotFound, TR::InstOpCode::COND_BNLR);
+      // VSTRS sets CC with the following values:
+      // CC = 0, no match or partial match, AND (zs = 0 OR no zero byte in source VRF)
+      // CC = 1, no match AND (zs = 1) AND (zero byte in source VRF)
+      // CC = 2, full match
+      // CC = 3, partial match but no full match.
+      TR::LabelSymbol* labelS2HeadFullMatch = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelS2HeadPartMatch = generateLabelSymbol(cg);
 
-   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, char1IndexReg, s1VecStartIndexReg);
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
+      generateVRRdInstruction(cg, TR::InstOpCode::VSTRS, node, tmpVReg, s1PartialVReg, s2HeadVReg, s2LenVReg, 0, elementSizeMask);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, labelS2HeadFullMatch);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC3, node, labelS2HeadPartMatch);
 
-   /************************************** s2 Residue matching ******************************************/
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, s1VecStartIndexReg, char1IndexReg);
+      // s2 header not found in s1
+      // Load the next 16 bytes of s1 and continue
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, loadLenReg);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, s1VecStartIndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelFindS2Head);
+
+      // s2 header full match
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelS2HeadFullMatch);
+
+      // If s2Len <= 16 then we are done, otherwise we continue to check the rest of s2. We first handle residue bytes
+      // of s2, then handle the rest 16-byte chunks.
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, char1IndexReg, tmpVReg, generateS390MemoryReference(7, cg), 0);
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, char1IndexReg, s1VecStartIndexReg);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, s2LenReg, (int8_t)vectorSize, labelLoadResult, TR::InstOpCode::COND_BNH);
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, loadLenReg);
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, s2VecStartIndexReg, vectorSize);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelMatchS2Residue);
+
+      // s2 header partial match
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelS2HeadPartMatch);
+
+      // Starting from the beginning of the partial match, load the next 16 bytes from s1 and redo s2 header search.
+      // This implies that the partial match will be re-matched by the next VSTRS. This can potentially benifit string
+      // search cases where s2 is shorter than 16 bytes. For short s2 strings, string search can potentially be done in
+      // the next VSTRS and can we avoid residue matching which requires several index adjustments that do not provide
+      // performance benefits.
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, char1IndexReg, tmpVReg, generateS390MemoryReference(7, cg), 0);
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, char1IndexReg);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelFindS2Head);
+
+      cg->stopUsingRegister(s2LenVReg);
+      }
+   else
+      {
+      generateVRXInstruction(cg, TR::InstOpCode::VLREP, node, s2Char1RepVReg, generateS390MemoryReference(s2ValueReg, headerSize, cg), elementSizeMask);
+
+      /************************************** 1st char of s2 ******************************************/
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelFindS2Head);
+
+      // Determine s1 load length. loadLenReg is either vectorSize-1 (15) or the 1st_char_matching residue length.
+      generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, loadLenReg, s1VecStartIndexReg, vectorSize);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, loadLenReg, s1LenReg, labelLoadLen16, TR::InstOpCode::COND_BNHR);
+      generateRRRInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, loadLenReg, s1LenReg, s1VecStartIndexReg);
+      generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, -1);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelLoadLenDone);
+
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadLen16);
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, loadLenReg, vectorSize-1);
+
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadLenDone);
+
+      TR::Register* tmpReg = char1IndexReg;
+      TR::LabelSymbol* labelExtractFirstCharPos = generateLabelSymbol(cg);
+
+      generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, tmpReg, s1ValueReg, s1VecStartIndexReg);
+      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s1PartialVReg, loadLenReg, generateS390MemoryReference(tmpReg, headerSize, cg));
+      generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, tmpVReg, s1PartialVReg, s2Char1RepVReg, 0x1, elementSizeMask);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, labelExtractFirstCharPos);
+
+      // 1st char not found. Loop back and retry from the next chunk
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, loadLenReg);
+      generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, s1VecStartIndexReg, 1);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, s1VecStartIndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelFindS2Head);
+
+      // Found 1st char. check it's byte index in tmpVReg byte 7.
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelExtractFirstCharPos);
+
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, char1IndexReg, tmpVReg, generateS390MemoryReference(7, cg), 0);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, loadLenReg, labelStringNotFound, TR::InstOpCode::COND_BNLR);
+
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, char1IndexReg, s1VecStartIndexReg);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
+
+      /************************************** s2 Residue matching ******************************************/
+      generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, s1VecStartIndexReg, char1IndexReg);
+      }
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelMatchS2Residue);
 
    // s2 residue length  = s2LenReg mod 16
    generateRRInstruction(cg, TR::InstOpCode::LLGHR, node, loadLenReg, s2LenReg);
    generateRIInstruction(cg, TR::InstOpCode::NILL, node, loadLenReg, 0x000F);
    generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, loadLenReg, (int8_t)0, labelMatchS2LoopSetup, TR::InstOpCode::COND_BE);
 
-   tmpReg = s2VecStartIndexReg;
+   TR::Register* tmpReg = s2VecStartIndexReg;
    generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, tmpReg, s1ValueReg, s1VecStartIndexReg);
+
    // Vector loads use load index. And [load_index = load_len - 1]
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, -1);
-
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s1PartialVReg, loadLenReg, generateS390MemoryReference(tmpReg, headerSize, cg));
-   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s2PartialVReg, loadLenReg, generateS390MemoryReference(s2ValueReg, headerSize, cg));
+
+   // If VSTRS is supported, the first VSTRS already handled the 1st 16 bytes at this point (full match in the 1st 16
+   // bytes). Hence, residue offset starts at 16.
+   uint32_t s2ResidueDisp = headerSize + (supportsVSTRS ? vectorSize : 0);
+
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, s2PartialVReg, loadLenReg, generateS390MemoryReference(s2ValueReg, s2ResidueDisp, cg));
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, 1);
 
-   generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, tmpVReg, s1PartialVReg, s2PartialVReg, 1, elementSizeMask);       // 1 for set CC
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, labelMatchS2LoopSetup);   // cc == 0 means residue match
+   if (supportsVSTRS)
+      {
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, s2VecStartIndexReg, vectorSize);
+      }
+
+   generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, tmpVReg, s1PartialVReg, s2PartialVReg, 1, elementSizeMask);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, labelMatchS2LoopSetup);
 
    // The residue does not match. Continue to find the 1st char in s1, starting from the next element.
    generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, s1VecStartIndexReg, char1IndexReg, isUTF16 ? 2 : 1);
@@ -458,20 +558,34 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelMatchS2LoopSetup);
    generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, loadLenReg);
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, s2VecStartIndexReg, loadLenReg);
+
+   if (supportsVSTRS)
+      {
+      generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s2VecStartIndexReg, loadLenReg);
+      }
+   else
+      {
+      generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, s2VecStartIndexReg, loadLenReg);
+      }
 
    TR::Register* loopCountReg = loadLenReg;
    generateRSInstruction(cg, TR::InstOpCode::SRLK, node, loopCountReg, s2LenReg, 4);
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, loopCountReg, (int8_t)0, labelLoadResult, TR::InstOpCode::COND_BE);
+
+   if (supportsVSTRS)
+      {
+      generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loopCountReg, -1);
+      }
+
+   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, loopCountReg, static_cast<int8_t>(0), labelLoadResult, TR::InstOpCode::COND_BE);
 
    /************************************** s2 matching loop ******************************************/
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelMatchS2Loop);
 
-   // Start to match the reset of s2.
+   // Start to match the reset of s2
    generateVRXInstruction(cg, TR::InstOpCode::VL, node, s1PartialVReg, generateS390MemoryReference(s1ValueReg, s1VecStartIndexReg, headerSize, cg));
    generateVRXInstruction(cg, TR::InstOpCode::VL, node, s2PartialVReg, generateS390MemoryReference(s2ValueReg, s2VecStartIndexReg, headerSize, cg));
 
-   generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, tmpVReg, s1PartialVReg, s2PartialVReg, 1, elementSizeMask);     // 1 for set CC
+   generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, tmpVReg, s1PartialVReg, s2PartialVReg, 1, elementSizeMask);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, labelS2PartialMatch);
 
    // s2 chunk does not match. Go back to search for 1st char again.
@@ -485,12 +599,15 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loopCountReg, -1);
    generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, loopCountReg, (int8_t)0, labelMatchS2Loop, TR::InstOpCode::COND_BNE);
 
-   // Result handling
-   // Load -1 if s2 is no found in s1; or
-   // load the character-index of the 1st character of s2 in s1.
+   // Load -1 if s2 is no found in s1 or load the character index of the 1st character of s2 in s1
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelLoadResult);
+
    if (isUTF16)
-      generateRSInstruction(cg, TR::InstOpCode::SRA, node, resultReg, 1); // byte-index to char-index conversion
+      {
+      // Byte-index to char-index conversion
+      generateRSInstruction(cg, TR::InstOpCode::SRA, node, resultReg, 1);
+      }
+
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelResultDone);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelStringNotFound);
@@ -498,18 +615,18 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelResultDone);
 
-   // result debug counters
+   // Result debug counters
    if (enableIndexOfDebugCounter)
       {
-      TR::LabelSymbol* labelResultGT10      = generateLabelSymbol(cg);
-      TR::LabelSymbol* labelResultGT30      = generateLabelSymbol(cg);
-      TR::LabelSymbol* labelResultGT60      = generateLabelSymbol(cg);
-      TR::LabelSymbol* labelResultGT100     = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelResultGT10 = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelResultGT30 = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelResultGT60 = generateLabelSymbol(cg);
+      TR::LabelSymbol* labelResultGT100 = generateLabelSymbol(cg);
       TR::LabelSymbol* labelResultCheckDone = generateLabelSymbol(cg);
 
-      uint8_t boundary10Char  = 10;
-      uint8_t boundary30Char  = 30;
-      uint8_t boundary60Char  = 60;
+      uint8_t boundary10Char = 10;
+      uint8_t boundary30Char = 30;
+      uint8_t boundary60Char = 60;
       uint8_t boundary100Char = 100;
 
       generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, s2LenReg, boundary10Char, labelResultGT10, TR::InstOpCode::COND_BH);
@@ -547,15 +664,14 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       cg->decReferenceCount(node->getChild(i));
       }
 
-   // stop using registers
-   cg->stopUsingRegister(maxIndexReg       );
+   cg->stopUsingRegister(maxIndexReg);
    cg->stopUsingRegister(s2VecStartIndexReg);
-   cg->stopUsingRegister(loadLenReg        );
+   cg->stopUsingRegister(loadLenReg);
 
-   cg->stopUsingRegister(s1PartialVReg );
-   cg->stopUsingRegister(s2PartialVReg );
+   cg->stopUsingRegister(s1PartialVReg);
+   cg->stopUsingRegister(s2PartialVReg);
    cg->stopUsingRegister(s2Char1RepVReg);
-   cg->stopUsingRegister(tmpVReg       );
+   cg->stopUsingRegister(tmpVReg);
 
    return resultReg;
    }
@@ -592,6 +708,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
 
    TR::Register* addressOffset = cg->allocateRegister();
    TR::Register* loadLength = cg->allocateRegister();
+
    // Loopcounter register for number of 16 byte conversions, when it is used, the length is not needed anymore
    TR::Register* loopCounter = lengthRegister;
 

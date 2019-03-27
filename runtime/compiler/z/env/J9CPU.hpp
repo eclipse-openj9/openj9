@@ -70,7 +70,8 @@ enum S390SupportsArchitectures
    S390SupportsZEC12       = 6,
    S390SupportsZ13         = 7,
    S390SupportsZ14         = 8,
-   S390SupportsZNext       = 9,
+   S390SupportsZ15         = 9,
+   S390SupportsZNext       = 10,
    S390SupportsLatestArch  = S390SupportsZNext
    };
 
@@ -91,6 +92,9 @@ enum // flags
    S390SupportsVectorPackedDecimalFacility  = 0x00080000,
    S390SupportsGuardedStorageFacility       = 0x00100000,
    S390SupportsSideEffectAccessFacility     = 0x00200000,
+   S390SupportsMIE3                         = 0x00400000,
+   S390SupportsVectorFacilityEnhancement2   = 0x00800000,
+   S390SupportsVectorPDEnhancementFacility  = 0x01000000,
    DummyLastFlag
    };
 
@@ -143,6 +147,9 @@ public:
    bool getS390SupportsZ14() {return getS390SupportsArch(S390SupportsZ14);}
    void setS390SupportsZ14() { setS390SupportsArch(S390SupportsZ14);}
 
+   bool getS390SupportsZ15() {return getS390SupportsArch(S390SupportsZ15);}
+   void setS390SupportsZ15() { setS390SupportsArch(S390SupportsZ15);}
+
    bool getS390SupportsZNext() {return getS390SupportsArch(S390SupportsZNext);}
    void setS390SupportsZNext() { setS390SupportsArch(S390SupportsZNext);}
 
@@ -167,6 +174,17 @@ public:
    bool getS390SupportsVectorPackedDecimalFacility();
    void setS390SupportsVectorPackedDecimalFacility() { _flags.set(S390SupportsVectorPackedDecimalFacility); }
 
+   bool getS390SupportsMIE3();
+   void setS390SupportsMIE3() { _flags.set(S390SupportsMIE3); }
+
+   bool getS390SupportsVectorFacilityEnhancement2();
+   void setS390SupportsVectorFacilityEnhancement2() { _flags.set(S390SupportsVectorFacilityEnhancement2); }
+
+   bool getS390SupportsVectorPDEnhancement();
+   void setS390SupportsVectorPDEnhancement() { _flags.set(S390SupportsVectorPDEnhancementFacility); }
+
+   bool hasPopulationCountInstruction() { return getS390SupportsMIE3(); }
+
    /** \brief
     *     Determines whether the guarded storage facility is available on the current processor.
     *
@@ -180,6 +198,7 @@ public:
 
    static int32_t TO_PORTLIB_get390MachineId();
    static bool TO_PORTLIB_get390_supportsZNext();
+   static bool TO_PORTLIB_get390_supportsZ15();
    static bool TO_PORTLIB_get390_supportsZ14();
    static bool TO_PORTLIB_get390_supportsZ13();
    static bool TO_PORTLIB_get390_supportsZ6();
