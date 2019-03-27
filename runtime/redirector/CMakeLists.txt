@@ -42,7 +42,10 @@ target_include_directories(jvm_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
-set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
+set_target_properties(jvm_redirect PROPERTIES
+	LIBRARY_OUTPUT_NAME jvm
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
 install(
 	TARGETS jvm_redirect
