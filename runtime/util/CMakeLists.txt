@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,10 +104,13 @@ add_library(j9util STATIC
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vmutil.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_module.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_srphashtable.c
-
-	# TODO this is platform specific
-	linux/osinfo.c
 )
+
+if(OMR_OS_LINUX)
+	target_sources(j9util PRIVATE linux/osinfo.c)
+elseif(OMR_OS_WINDOWS)
+	target_sources(j9util PRIVATE win32/openlibrary.c)
+endif()
 
 if(OMR_ARCH_X86)
 	target_sources(j9util
