@@ -40,6 +40,7 @@
 #include "OMRVMInterface.hpp"
 #include "RealtimeGCDelegate.hpp"
 #include "Scheduler.hpp"
+#include "StaccatoGCDelegate.hpp"
 #include "WorkPacketsRealtime.hpp"
 
 class MM_Dispatcher;
@@ -79,6 +80,9 @@ private:
 	uintptr_t _gcPhase; /**< What gc phase are we currently in? */
 	
 	MM_CycleState _cycleState;  /**< Embedded cycle state to be used as the master cycle state for GC activity */
+
+	bool _moreTracingRequired; /**< Is used to decide if there needs to be another pass of the tracing loop. */
+	MM_StaccatoGCDelegate _staccatoDelegate;
 
 protected:
 	MM_RealtimeMarkingScheme *_markingScheme; /**< The marking scheme used to mark objects. */
@@ -168,35 +172,36 @@ public:
 
 	virtual uintptr_t getVMStateID() { return OMRVMSTATE_GC_COLLECTOR_METRONOME; };
 
-	virtual void kill(MM_EnvironmentBase *env) = 0;
+	static MM_RealtimeGC *newInstance(MM_EnvironmentBase *env);
+	virtual void kill(MM_EnvironmentBase *env);
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
 	uintptr_t verbose(MM_EnvironmentBase *env);
 	uintptr_t gcCount() { return  _extensions->globalGCStats.gcCount; }
 
-	MMINLINE bool isBarrierEnabled()			{	return (_gcPhase == GC_PHASE_ROOT || _gcPhase == GC_PHASE_TRACE  || _gcPhase == GC_PHASE_CONCURRENT_TRACE); }
+	MMINLINE bool isBarrierEnabled()			{ return (_gcPhase == GC_PHASE_ROOT || _gcPhase == GC_PHASE_TRACE  || _gcPhase == GC_PHASE_CONCURRENT_TRACE); }
 
-	MMINLINE bool isCollectorIdle()				{	return (_gcPhase == GC_PHASE_IDLE);	 }
-	MMINLINE bool isCollectorRootMarking()		{	return (_gcPhase == GC_PHASE_ROOT);	 }
-	MMINLINE bool isCollectorTracing()			{	return (_gcPhase == GC_PHASE_TRACE); }
-	MMINLINE bool isCollectorUnloadingClassLoaders() {	return (_gcPhase == GC_PHASE_UNLOADING_CLASS_LOADERS); }
-	MMINLINE bool isCollectorSweeping()			{	return (_gcPhase == GC_PHASE_SWEEP); }
-	MMINLINE bool isCollectorConcurrentTracing() {	return (_gcPhase == GC_PHASE_CONCURRENT_TRACE); }
-	MMINLINE bool isCollectorConcurrentSweeping() {	return (_gcPhase == GC_PHASE_CONCURRENT_SWEEP); }	
+	MMINLINE bool isCollectorIdle()				{ return (_gcPhase == GC_PHASE_IDLE);	 }
+	MMINLINE bool isCollectorRootMarking()		{ return (_gcPhase == GC_PHASE_ROOT);	 }
+	MMINLINE bool isCollectorTracing()			{ return (_gcPhase == GC_PHASE_TRACE); }
+	MMINLINE bool isCollectorUnloadingClassLoaders() { return (_gcPhase == GC_PHASE_UNLOADING_CLASS_LOADERS); }
+	MMINLINE bool isCollectorSweeping()			{ return (_gcPhase == GC_PHASE_SWEEP); }
+	MMINLINE bool isCollectorConcurrentTracing() { return (_gcPhase == GC_PHASE_CONCURRENT_TRACE); }
+	MMINLINE bool isCollectorConcurrentSweeping() { return (_gcPhase == GC_PHASE_CONCURRENT_SWEEP); }	
 	MMINLINE bool isCollectorSweepingArraylets() { return _sweepingArraylets; }
 	MMINLINE bool isFixHeapForWalk() { return _fixHeapForWalk; }	
 
-	MMINLINE void setCollectorIdle()			{	_gcPhase = GC_PHASE_IDLE; _sched->_gcPhaseSet |= GC_PHASE_IDLE;	}
-	MMINLINE void setCollectorRootMarking()		{	_gcPhase = GC_PHASE_ROOT; _sched->_gcPhaseSet |= GC_PHASE_ROOT;	}
-	MMINLINE void setCollectorTracing()			{	_gcPhase = GC_PHASE_TRACE; _sched->_gcPhaseSet |= GC_PHASE_TRACE;	}
-	MMINLINE void setCollectorUnloadingClassLoaders()			{	_gcPhase = GC_PHASE_UNLOADING_CLASS_LOADERS; _sched->_gcPhaseSet |= GC_PHASE_UNLOADING_CLASS_LOADERS;	}
-	MMINLINE void setCollectorSweeping()		{	_gcPhase = GC_PHASE_SWEEP; _sched->_gcPhaseSet |= GC_PHASE_SWEEP;	}
-	MMINLINE void setCollectorConcurrentTracing()		{	_gcPhase = GC_PHASE_CONCURRENT_TRACE; _sched->_gcPhaseSet |= GC_PHASE_CONCURRENT_TRACE;	}
-	MMINLINE void setCollectorConcurrentSweeping()		{	_gcPhase = GC_PHASE_CONCURRENT_SWEEP; _sched->_gcPhaseSet |= GC_PHASE_CONCURRENT_SWEEP;	}
+	MMINLINE void setCollectorIdle()			{ _gcPhase = GC_PHASE_IDLE; _sched->_gcPhaseSet |= GC_PHASE_IDLE; }
+	MMINLINE void setCollectorRootMarking()		{ _gcPhase = GC_PHASE_ROOT; _sched->_gcPhaseSet |= GC_PHASE_ROOT; }
+	MMINLINE void setCollectorTracing()			{ _gcPhase = GC_PHASE_TRACE; _sched->_gcPhaseSet |= GC_PHASE_TRACE; }
+	MMINLINE void setCollectorUnloadingClassLoaders()			{ _gcPhase = GC_PHASE_UNLOADING_CLASS_LOADERS; _sched->_gcPhaseSet |= GC_PHASE_UNLOADING_CLASS_LOADERS; }
+	MMINLINE void setCollectorSweeping()		{ _gcPhase = GC_PHASE_SWEEP; _sched->_gcPhaseSet |= GC_PHASE_SWEEP; }
+	MMINLINE void setCollectorConcurrentTracing()		{ _gcPhase = GC_PHASE_CONCURRENT_TRACE; _sched->_gcPhaseSet |= GC_PHASE_CONCURRENT_TRACE; }
+	MMINLINE void setCollectorConcurrentSweeping()		{ _gcPhase = GC_PHASE_CONCURRENT_SWEEP; _sched->_gcPhaseSet |= GC_PHASE_CONCURRENT_SWEEP; }
 	MMINLINE void setCollectorSweepingArraylets(bool sweepingArraylets) { _sweepingArraylets = sweepingArraylets; }
 	MMINLINE void setFixHeapForWalk(bool fixHeapForWalk) { _fixHeapForWalk = fixHeapForWalk; }
 	MMINLINE bool isPreviousCycleBelowTrigger() { return _previousCycleBelowTrigger; }
-	MMINLINE void setPreviousCycleBelowTrigger(bool previousCycleBelowTrigger) { _previousCycleBelowTrigger = previousCycleBelowTrigger ; }
+	MMINLINE void setPreviousCycleBelowTrigger(bool previousCycleBelowTrigger) { _previousCycleBelowTrigger = previousCycleBelowTrigger; }
 		
 	void enqueuePointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet);
 	
@@ -224,15 +229,18 @@ public:
 	/* Create the access barrier */
 	MM_WorkPacketsRealtime* allocateWorkPackets(MM_EnvironmentBase *env);
 	/* Create an EventTypeSpaceVersion object for TuningFork tracing */
-	virtual void doTracing(MM_EnvironmentRealtime* env) = 0;
+	void doTracing(MM_EnvironmentRealtime* env);
 	virtual bool condYield(MM_EnvironmentBase *env, U_64 timeSlackNanoSec);
 	virtual bool shouldYield(MM_EnvironmentBase *env);
 	virtual void yield(MM_EnvironmentBase *env);
-	virtual void enableWriteBarrier(MM_EnvironmentBase* env) = 0;
-	virtual void disableWriteBarrier(MM_EnvironmentBase* env) = 0;
-	virtual void enableDoubleBarrier(MM_EnvironmentBase* env) = 0;
-	virtual void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread *vmThread) = 0;
-	virtual void disableDoubleBarrier(MM_EnvironmentBase* env) = 0;
+	void enableWriteBarrier(MM_EnvironmentBase* env);
+	void disableWriteBarrier(MM_EnvironmentBase* env);
+	void enableDoubleBarrier(MM_EnvironmentBase* env);
+	void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread *vmThread);
+	void disableDoubleBarrier(MM_EnvironmentBase* env);
+
+	void flushRememberedSet(MM_EnvironmentRealtime *env);
+
 	MM_RealtimeMarkingScheme *getMarkingScheme() { return _markingScheme; }
 	MM_SweepSchemeRealtime *getSweepScheme() { return _sweepScheme; }
 	MM_RealtimeGCDelegate *getRealtimeDelegate() { return &_realtimeDelegate; }
@@ -247,6 +255,8 @@ public:
 		, _previousCycleBelowTrigger(true)
 		, _sweepingArraylets(false)
 		, _cycleState()
+		, _moreTracingRequired(false)
+		, _staccatoDelegate(env)
 		, _markingScheme(NULL)
 		, _sweepScheme(NULL)
 		, _memoryPool(NULL)
@@ -261,6 +271,7 @@ public:
 	{
 		_typeId = __FUNCTION__;
 		_realtimeDelegate._realtimeGC = this;
+		_staccatoDelegate._realtimeGC = this;
 	}
 
 	/*

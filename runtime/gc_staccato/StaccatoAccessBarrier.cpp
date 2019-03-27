@@ -24,7 +24,6 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "StaccatoAccessBarrier.hpp"
-#include "StaccatoGC.hpp"
 
 #include "RealtimeMarkingScheme.hpp"
 

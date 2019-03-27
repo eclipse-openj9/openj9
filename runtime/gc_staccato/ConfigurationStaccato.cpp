@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,8 +31,7 @@
 #include "ConfigurationStaccato.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
-#include "StaccatoGC.hpp"
-
+#include "RealtimeGC.hpp"
 
 MM_Configuration *
 MM_ConfigurationStaccato::newInstance(MM_EnvironmentBase *env)
@@ -54,5 +52,5 @@ MM_ConfigurationStaccato::newInstance(MM_EnvironmentBase *env)
 MM_GlobalCollector *
 MM_ConfigurationStaccato::createGlobalCollector(MM_EnvironmentBase *env)
 {
-	return MM_StaccatoGC::newInstance(env);
+	return MM_RealtimeGC::newInstance(env);
 }

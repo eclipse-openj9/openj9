@@ -32,8 +32,6 @@
 #include "Heap.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "StaccatoAccessBarrier.hpp"
-#include "StaccatoGC.hpp"
-
 
 /**
  * Factory method for creating the access barrier. Note that the default staccato access barrier
@@ -118,28 +116,28 @@ MM_StaccatoGCDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 					GC_ClassHeapIterator classHeapIterator(_vm, segment);
 					J9Class *clazz = NULL;
 					while(NULL != (clazz = classHeapIterator.nextClass())) {
-						if((0 == (J9CLASS_EXTENDED_FLAGS(clazz) & J9ClassGCScanned)) && _staccatoGC->getMarkingScheme()->isMarked(clazz->classObject)) {
+						if((0 == (J9CLASS_EXTENDED_FLAGS(clazz) & J9ClassGCScanned)) && _realtimeGC->getMarkingScheme()->isMarked(clazz->classObject)) {
 							J9CLASS_EXTENDED_FLAGS_SET(clazz, J9ClassGCScanned);
 
 							/* Scan class */
 							GC_ClassIterator objectSlotIterator(env, clazz);
 							volatile j9object_t *objectSlotPtr = NULL;
 							while((objectSlotPtr = objectSlotIterator.nextSlot()) != NULL) {
-								didWork |= _staccatoGC->getMarkingScheme()->markObject(env, *objectSlotPtr);
+								didWork |= _realtimeGC->getMarkingScheme()->markObject(env, *objectSlotPtr);
 							}
 
 							GC_ClassIteratorClassSlots classSlotIterator(clazz);
 							J9Class **classSlotPtr;
 							while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-								didWork |= _staccatoGC->getMarkingScheme()->markClass(env, *classSlotPtr);
+								didWork |= _realtimeGC->getMarkingScheme()->markClass(env, *classSlotPtr);
 							}
 						}
 					}
-					_staccatoGC->condYield(env, 0);
+					_realtimeGC->condYield(env, 0);
 				}
 			} else {
 				/* Check if the class loader has not been scanned but the class loader is live */
-				if( !(classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED) && _staccatoGC->getMarkingScheme()->isMarked((J9Object *)classLoader->classLoaderObject)) {
+				if( !(classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED) && _realtimeGC->getMarkingScheme()->isMarked((J9Object *)classLoader->classLoaderObject)) {
 					/* Flag the class loader as being scanned */
 					classLoader->gcFlags |= J9_GC_CLASS_LOADER_SCANNED;
 
@@ -154,16 +152,16 @@ MM_StaccatoGCDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 							GC_ClassIterator objectSlotIterator(env, clazz);
 							volatile j9object_t *objectSlotPtr = NULL;
 							while((objectSlotPtr = objectSlotIterator.nextSlot()) != NULL) {
-								didWork |= _staccatoGC->getMarkingScheme()->markObject(env, *objectSlotPtr);
+								didWork |= _realtimeGC->getMarkingScheme()->markObject(env, *objectSlotPtr);
 							}
 
 							GC_ClassIteratorClassSlots classSlotIterator(clazz);
 							J9Class **classSlotPtr;
 							while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-								didWork |= _staccatoGC->getMarkingScheme()->markClass(env, *classSlotPtr);
+								didWork |= _realtimeGC->getMarkingScheme()->markClass(env, *classSlotPtr);
 							}
 						}
-						_staccatoGC->condYield(env, 0);
+						_realtimeGC->condYield(env, 0);
 					}
 
 					/* CMVC 131487 */
@@ -180,7 +178,7 @@ MM_StaccatoGCDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 					hashTableSetFlag(classLoader->classHashTable, J9HASH_TABLE_DO_NOT_REHASH);
 					clazz = _vm->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState);
 					while (NULL != clazz) {
-						didWork |= _staccatoGC->getMarkingScheme()->markClass(env, clazz);
+						didWork |= _realtimeGC->getMarkingScheme()->markClass(env, clazz);
 						clazz = _vm->internalVMFunctions->hashClassTableNextDo(&walkState);
 
 						/**
@@ -189,7 +187,7 @@ MM_StaccatoGCDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 						 * risk of the mutator not being able to grow to accomodate new elements.
 						 */
 						if (!hashTableIsSpaceOptimized(classLoader->classHashTable)) {
-							_staccatoGC->condYield(env, 0);
+							_realtimeGC->condYield(env, 0);
 						}
 					}
 					/*
@@ -203,16 +201,16 @@ MM_StaccatoGCDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 					while (NULL != modulePtr) {
 						J9Module * const module = *modulePtr;
 
-						didWork |= _staccatoGC->getMarkingScheme()->markObject(env, module->moduleObject);
-						didWork |= _staccatoGC->getMarkingScheme()->markObject(env, module->moduleName);
-						didWork |= _staccatoGC->getMarkingScheme()->markObject(env, module->version);
+						didWork |= _realtimeGC->getMarkingScheme()->markObject(env, module->moduleObject);
+						didWork |= _realtimeGC->getMarkingScheme()->markObject(env, module->moduleName);
+						didWork |= _realtimeGC->getMarkingScheme()->markObject(env, module->version);
 						modulePtr = (J9Module**)hashTableNextDo(&walkState);
 					}
 				}
 			}
 		}
 		/* This yield point is for the case when there are lots of classloaders that will be unloaded */
-		_staccatoGC->condYield(env, 0);
+		_realtimeGC->condYield(env, 0);
 	}
 	return didWork;
 }
@@ -223,7 +221,7 @@ MM_StaccatoGCDelegate::doTracing(MM_EnvironmentRealtime* env)
 {
 	/* TODO CRGTMP make class tracing concurrent */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	if(_staccatoGC->getRealtimeDelegate()->isDynamicClassUnloadingEnabled()) {	
+	if(_realtimeGC->getRealtimeDelegate()->isDynamicClassUnloadingEnabled()) {	
 		return doClassTracing(env);
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */

@@ -29,6 +29,7 @@
 #include "RealtimeGC.hpp"
 
 #include "AllocateDescription.hpp"
+#include "BarrierSynchronization.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
@@ -44,12 +45,39 @@
 #include "RealtimeMarkTask.hpp"
 #include "RealtimeSweepTask.hpp"
 #include "ReferenceChainWalkerMarkMap.hpp"
+#include "RememberedSetSATB.hpp"
 #include "Scheduler.hpp"
 #include "SegregatedAllocationInterface.hpp"
 #include "SublistFragment.hpp"
 #include "SweepSchemeRealtime.hpp"
 #include "Task.hpp"
 #include "WorkPacketsRealtime.hpp"
+
+/* TuningFork name/version information for gc_staccato */
+#define TUNINGFORK_STACCATO_EVENT_SPACE_NAME "com.ibm.realtime.vm.trace.gc.metronome"
+#define TUNINGFORK_STACCATO_EVENT_SPACE_VERSION 200
+
+MM_RealtimeGC *
+MM_RealtimeGC::newInstance(MM_EnvironmentBase *env)
+{
+	MM_RealtimeGC *globalGC = (MM_RealtimeGC *)env->getForge()->allocate(sizeof(MM_RealtimeGC), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
+	if (globalGC) {
+		new(globalGC) MM_RealtimeGC(env);
+		if (!globalGC->initialize(env)) {
+			globalGC->kill(env);
+			globalGC = NULL;
+		}
+	}
+	return globalGC;
+}
+
+
+void
+MM_RealtimeGC::kill(MM_EnvironmentBase *env)
+{
+	tearDown(env);
+	env->getForge()->free(this);
+}
 
 void
 MM_RealtimeGC::setGCThreadPriority(OMR_VMThread *vmThread, uintptr_t newGCThreadPriority)
@@ -151,6 +179,15 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
+	if (!_staccatoDelegate.initialize(env)) {
+		return false;
+	}
+	
+ 	_extensions->sATBBarrierRememberedSet = MM_RememberedSetSATB::newInstance(env, _workPackets);
+ 	if (NULL == _extensions->sATBBarrierRememberedSet) {
+ 		return false;
+ 	}
+
 	_stopTracing = false;
 
 	_sched->collectorInitialized(this);
@@ -191,6 +228,11 @@ MM_RealtimeGC::tearDown(MM_EnvironmentBase *env)
 		_sweepScheme->kill(env);
 		_sweepScheme = NULL;
  	}
+
+	if (NULL != _extensions->sATBBarrierRememberedSet) {
+		_extensions->sATBBarrierRememberedSet->kill(env);
+		_extensions->sATBBarrierRememberedSet = NULL;
+	}
 }
 
 /**
@@ -871,3 +913,107 @@ MM_RealtimeGC::reportGCEnd(MM_EnvironmentBase *env)
 		_extensions->globalGCStats.fixHeapForWalkTime
 	);
 }
+
+/**
+ * Enables the write barrier, this should be called at the beginning of the mark phase.
+ */
+void
+MM_RealtimeGC::enableWriteBarrier(MM_EnvironmentBase* env)
+{
+	MM_GCExtensionsBase* extensions = env->getExtensions();
+	extensions->sATBBarrierRememberedSet->restoreGlobalFragmentIndex(env);
+}
+
+/**
+ * Disables the write barrier, this should be called at the end of the mark phase.
+ */
+void
+MM_RealtimeGC::disableWriteBarrier(MM_EnvironmentBase* env)
+{
+	MM_GCExtensionsBase* extensions = env->getExtensions();
+	extensions->sATBBarrierRememberedSet->preserveGlobalFragmentIndex(env);
+}
+
+void
+MM_RealtimeGC::flushRememberedSet(MM_EnvironmentRealtime *env)
+{
+	if (_workPackets->inUsePacketsAvailable(env)) {
+		_workPackets->moveInUseToNonEmpty(env);
+		_extensions->sATBBarrierRememberedSet->flushFragments(env);
+	}
+}
+
+/**
+ * Perform the tracing phase.  For tracing to be complete the work stack and rememberedSet
+ * have to be empty and class tracing has to complete without marking any objects.
+ * 
+ * If concurrentMarkingEnabled is true then tracing is completed concurrently.
+ */
+void
+MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
+{
+	
+	do {
+		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+			flushRememberedSet(env);
+			if (_extensions->concurrentTracingEnabled) {
+				setCollectorConcurrentTracing();
+				_sched->_barrierSynchronization->releaseExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
+			} else {
+				setCollectorTracing();
+			}
+					
+			_moreTracingRequired = false;
+			
+			/* From this point on the Scheduler collaborates with WorkPacketsRealtime on yielding.
+			 * Strictly speaking this should be done first thing in incrementalConsumeQueue().
+			 * However, it would require another synchronizeGCThreadsAndReleaseMaster barrier.
+			 * So we are just reusing the existing one.
+			 */
+			_sched->pushYieldCollaborator(_workPackets->getYieldCollaborator());
+			
+			env->_currentTask->releaseSynchronizedGCThreads(env);
+		}
+		
+		if(_markingScheme->incrementalConsumeQueue(env, MAX_UINT)) {
+			_moreTracingRequired = true;
+		}
+
+		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+			/* restore the old Yield Collaborator */
+			_sched->popYieldCollaborator();
+			
+			if (_extensions->concurrentTracingEnabled) {
+				_sched->_barrierSynchronization->acquireExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
+				setCollectorTracing();
+			}
+			_moreTracingRequired |= _staccatoDelegate.doTracing(env);
+
+			/* the workStack and rememberedSet use the same workPackets
+			 * as backing store.  If all packets are empty this means the
+			 * workStack and rememberedSet processing are both complete.
+			 */
+			_moreTracingRequired |= !_workPackets->isAllPacketsEmpty();
+			env->_currentTask->releaseSynchronizedGCThreads(env);
+		}
+	} while(_moreTracingRequired);
+}
+
+void
+MM_RealtimeGC::enableDoubleBarrier(MM_EnvironmentBase* env)
+{
+	_staccatoDelegate.enableDoubleBarrier(env);
+}
+
+void
+MM_RealtimeGC::disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread *vmThread)
+{
+	_staccatoDelegate.disableDoubleBarrierOnThread(env, vmThread);
+}
+
+void
+MM_RealtimeGC::disableDoubleBarrier(MM_EnvironmentBase* env)
+{
+	_staccatoDelegate.disableDoubleBarrier(env);
+}
+
