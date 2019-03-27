@@ -34,18 +34,18 @@
 #include "RealtimeAccessBarrier.hpp"
 #include "RealtimeGCDelegate.hpp"
 
-class MM_StaccatoGC;
+class MM_RealtimeGC;
 
 class MM_StaccatoGCDelegate : public MM_BaseNonVirtual
 {
 private:
 	J9JavaVM *_vm;
-	MM_StaccatoGC *_staccatoGC;
+	MM_RealtimeGC *_realtimeGC;
 
 public:
 	MM_StaccatoGCDelegate(MM_EnvironmentBase *env) :
 		_vm((J9JavaVM *)env->getOmrVM()->_language_vm),
-		_staccatoGC(NULL) {}
+		_realtimeGC(NULL) {}
 
 	bool initialize(MM_EnvironmentBase *env);
 
@@ -63,7 +63,7 @@ public:
 	/*
 	 * Friends
 	 */
-	friend class MM_StaccatoGC;
+	friend class MM_RealtimeGC;
 };
 
 #endif /* defined(J9VM_GC_REALTIME) */
