@@ -1311,14 +1311,9 @@ J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.system_action=The JVM continues to r
 J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.user_response=Refer to the IBM SDK documentation
 # END NON-TRANSLATABLE
 
-# retVal, errno and errno2 should not be translated. They refer to internal variables.
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2=Failed to create a thread: retVal %1$zd, errno %2$zd (0x%3$zx), errno2 %4$zd (0x%5$zx)
+# This message is no longer in use.
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2=
 # START NON-TRANSLATABLE
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.sample_input_1=-1
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.sample_input_2=565
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.sample_input_3=235
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.sample_input_4=155
-J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.sample_input_5=9B
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.explanation=NOTAG
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.system_action=
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2.user_response=
@@ -1879,4 +1874,17 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value type but the object on stack is a value type.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IllegalMonitorStateException.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# retVal, errno and errno2 should not be translated. They refer to internal variables.
+# This replaces the J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO2 message
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2=Failed to create a thread: retVal %1$zd, errno %2$zd (0x%3$zx), errno2 0x%4$x
+# START NON-TRANSLATABLE
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.sample_input_1=-1
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.sample_input_2=565
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.sample_input_3=235
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.sample_input_4=9B
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.explanation=NOTAG
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.system_action=
+J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.user_response=
 # END NON-TRANSLATABLE
