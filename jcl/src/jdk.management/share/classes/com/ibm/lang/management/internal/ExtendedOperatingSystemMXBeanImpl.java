@@ -154,7 +154,13 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final long getFreePhysicalMemorySize() {
-		return this.getFreePhysicalMemorySizeImpl();
+		try {
+			memObj = retrieveMemoryUsage(memObj);
+		} catch (MemoryUsageRetrievalException e) {
+			// In case of exception return -1
+			return -1;
+		}
+		return memObj.getFree();
 	}
 
 	/**
@@ -164,7 +170,6 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 *
 	 * @return amount of physical memory available in bytes
 	 */
-	private native long getFreePhysicalMemorySizeImpl();
 
 	/**
 	 * {@inheritDoc}

@@ -32,7 +32,7 @@
  *   max heap memory
  *   softmx heap memory
  *   free physical memory,
- * 	 total physical memory,
+ *   total physical memory,
  *   system load average
  *   cpuTime
  *
@@ -50,8 +50,9 @@ Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj)
 	jlong softmx = 0;
 	jlong free = 0;
 	jlong tot = 0;
-    jdouble sysLoadAvg = -1.0;
-    jlong cpuTime = 0;
+        jdouble sysLoadAvg = -1.0;
+        jlong cpuTime = 0;
+	J9MemoryInfo memInfo = {0};
 
 	/* Access to the current jvm */
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
@@ -78,8 +79,11 @@ Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj)
 		softmx = max;
 	}
 
+
+	j9sysinfo_get_memory_info(&memInfo);
+
 	/* Calculation of free physical memory from existing function in mgmtosext.c*/
-	free = Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getFreePhysicalMemorySizeImpl(env, obj);
+	free = (jlong) memInfo.availPhysical;
 
 	/* Calculation of total physical memory from port lib api */
 	tot = (jlong) j9sysinfo_get_physical_memory();

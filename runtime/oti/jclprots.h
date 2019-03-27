@@ -131,8 +131,6 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_isDLPARE
 extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessCpuTimeImpl (JNIEnv *env, jobject instance);
 extern J9_CFUNC jlong JNICALL
-Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getFreePhysicalMemorySizeImpl (JNIEnv *env, jobject instance);
-extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessVirtualMemorySizeImpl (JNIEnv *env, jobject instance);
 extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl (JNIEnv *env, jobject instance);
