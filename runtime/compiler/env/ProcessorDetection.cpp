@@ -635,6 +635,14 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
             returnValue = snprintf(processorName, stringLength, "z14s (%d)", machineId);
          break;
 
+         case TR_Z15:
+            returnValue = snprintf(processorName, stringLength, "z15 (%d)", machineId);
+         break;
+
+         case TR_Z15s:
+            returnValue = snprintf(processorName, stringLength, "z15 (%d)", machineId);
+         break;
+
          case TR_ZNEXT:
             returnValue = snprintf(processorName, stringLength, "zNext (%d)", machineId);
          break;
@@ -726,6 +734,10 @@ TR_J9VM::initializeProcessorType()
       // For AOT shared classes cache processor compatibility purposes, the following
       // processor settings should not be modified.
       if (TR::Compiler->target.cpu.getS390SupportsZNext())
+         {
+         TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
+         }
+      else if (TR::Compiler->target.cpu.getS390SupportsZ15())
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
          }

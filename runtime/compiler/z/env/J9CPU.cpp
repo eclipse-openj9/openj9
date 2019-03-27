@@ -104,7 +104,16 @@ CPU::TO_PORTLIB_get390_supportsZNext()
    {
 #if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
    J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   //check for ZNext. To be moved to portlib.
+   return (processorDesc->processor >= PROCESSOR_S390_GP14);
+#endif
+   return false;
+   }
+
+bool
+CPU::TO_PORTLIB_get390_supportsZ15()
+   {
+#if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
+   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
    return (processorDesc->processor >= PROCESSOR_S390_GP13);
 #endif
    return false;
@@ -115,7 +124,6 @@ CPU::TO_PORTLIB_get390_supportsZ14()
    {
 #if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
    J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   //check for Z14. To be moved to portlib.
    return (processorDesc->processor >= PROCESSOR_S390_GP12);
 #endif
    return false;
@@ -126,7 +134,6 @@ CPU::TO_PORTLIB_get390_supportsZ13()
    {
 #if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
    J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   //check for Z13. To be moved to portlib.
    return (processorDesc->processor >= PROCESSOR_S390_GP11);
 #endif
    return false;
@@ -138,7 +145,6 @@ CPU::TO_PORTLIB_get390_supportsZ6()
    {
 #if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
    J9ProcessorDesc  *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   //check for Z6, ZGryphon, ZHelix or Z13. To be moved to portlib.
    return (processorDesc->processor >= PROCESSOR_S390_GP8);
 #endif
    return false;
@@ -152,7 +158,6 @@ CPU::TO_PORTLIB_get390_supportsZGryphon()
    // instruction is installed
 #if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
    J9ProcessorDesc  *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   //check for ZGryphon, ZHelix or Z13. To be moved to portlib.
    return (processorDesc->processor >= PROCESSOR_S390_GP9);
 #endif
    return false;
@@ -164,7 +169,6 @@ CPU::TO_PORTLIB_get390_supportsZHelix()
    {
 #if defined(TR_HOST_S390) && (defined(J9ZOS390) || defined(LINUX))
    J9ProcessorDesc  *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   //check for ZHelix or Z13. To be moved to portlib.
    return (processorDesc->processor >= PROCESSOR_S390_GP10);
 #endif
    return false;
@@ -219,6 +223,26 @@ CPU::getS390SupportsGuardedStorageFacility()
            _flags.testAny(S390SupportsSideEffectAccessFacility));
    }
 
+bool
+CPU::getS390SupportsMIE3()
+   {
+   return (_flags.testAny(S390SupportsMIE3) &&
+           !(TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15)));
+   }
+
+bool
+CPU::getS390SupportsVectorFacilityEnhancement2()
+   {
+   return (_flags.testAny(S390SupportsVectorFacilityEnhancement2) &&
+           !(TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15)));
+   }
+bool
+CPU::getS390SupportsVectorPDEnhancement()
+   {
+   return (_flags.testAny(S390SupportsVectorPDEnhancementFacility) &&
+           !(TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15)));
+   }
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void
@@ -233,6 +257,8 @@ CPU::initializeS390ProcessorFeatures()
    // On z10 or higher architectures, we should check for facility bits.
    if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
       TR::Compiler->target.cpu.setS390SupportsZNext();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ15())
+      TR::Compiler->target.cpu.setS390SupportsZ15();
    else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
       TR::Compiler->target.cpu.setS390SupportsZ14();
    else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
@@ -294,6 +320,24 @@ CPU::initializeS390ProcessorFeatures()
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE))
          {
          TR::Compiler->target.cpu.setS390SupportsGuardedStorageFacility();
+         }
+      }
+
+   if (TR::Compiler->target.cpu.getS390SupportsZ15())
+      {
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_3))
+         {
+         TR::Compiler->target.cpu.setS390SupportsMIE3();
+         }
+
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_2))
+         {
+         TR::Compiler->target.cpu.setS390SupportsVectorFacilityEnhancement2();
+         }
+
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY))
+         {
+         TR::Compiler->target.cpu.setS390SupportsVectorPDEnhancement();
          }
       }
    }
