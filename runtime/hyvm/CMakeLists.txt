@@ -41,7 +41,10 @@ target_link_libraries(harmony_jvm
 )
 
 # We actually want the library to be named "jvm.{so|dll}"
-set_target_properties(harmony_jvm PROPERTIES LIBRARY_OUTPUT_NAME "jvm")
+set_target_properties(harmony_jvm PROPERTIES
+	LIBRARY_OUTPUT_NAME "jvm"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
 install(
 	TARGETS harmony_jvm
