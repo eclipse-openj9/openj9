@@ -68,9 +68,9 @@
 #if defined(J9VM_GC_VLHGC)
 #include "ConfigurationIncrementalGenerational.hpp"
 #endif /* J9VM_GC_VLHGC */
-#if defined(J9VM_GC_STACCATO)
-#include "ConfigurationStaccato.hpp"
-#endif /* J9VM_GC_STACCATO */
+#if defined(J9VM_GC_REALTIME)
+#include "ConfigurationRealtime.hpp"
+#endif /* J9VM_GC_REALTIME */
 #include "ClassLoaderManager.hpp"
 #include "Debug.hpp"
 #include "Dispatcher.hpp"
@@ -2825,7 +2825,7 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 	case gc_policy_metronome:
 		extensions->gcModeString = "-Xgcpolicy:metronome";
 		omrVM->gcPolicy = J9_GC_POLICY_METRONOME;
-		result = MM_ConfigurationStaccato::newInstance(&env);
+		result = MM_ConfigurationRealtime::newInstance(&env);
 		break;
 
 	case gc_policy_balanced:
