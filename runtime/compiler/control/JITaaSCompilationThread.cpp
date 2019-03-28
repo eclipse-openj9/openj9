@@ -2447,7 +2447,7 @@ remoteCompile(
                "Client successfully loaded method %s @ %s following compilation request. [metaData=%p, startPC=%p]",
                compiler->signature(),
                compiler->getHotnessName(),
-               metaData, metaData->startPC
+               metaData, (metaData) ? metaData->startPC : NULL
                );
             }
          }
