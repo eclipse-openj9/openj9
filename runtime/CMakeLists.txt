@@ -51,7 +51,11 @@ endif()
 # Pull in definitions for omr_add_hookgen and omr_add_tracegen
 # these will be in omr/cmake/modules
 include(OmrHookgen)
-set(OMR_TRACE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
+if(J9VM_IS_NON_STAGING)
+	set(OMR_TRACE_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
+else()
+	set(OMR_TRACE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
 include(OmrTracegen)
 
 include(cmake/build_tags.cmake)
@@ -83,6 +87,14 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "" FORCE)
 set(OMR_INSTALL_BIN_DIR "${j9vm_SOURCE_DIR}" CACHE PATH "")
 set(OMR_INSTALL_LIB_DIR "${j9vm_SOURCE_DIR}" CACHE PATH "")
 set(OMR_INSTALL_ARCHIVE_DIR "${j9vm_SOURCE_DIR}/lib" CACHE PATH "")
+
+# if this is a non-staging build, we want to put binaries in current source dir
+if(J9VM_IS_NON_STAGING)
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+	# we also want to set the RPATH properly
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
 
 # Generic configuration for omr
 include(cmake/omr_config.cmake)
@@ -122,7 +134,7 @@ add_custom_target(j9vm_hookgen
 )
 
 # Generate NLS headers
-if(J9VM_GEN_NLS)
+if(J9VM_IS_NON_STAGING)
 	add_custom_command(
 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/java.properties"
 		DEPENDS j9nls
@@ -160,6 +172,12 @@ add_custom_target(j9vm_m4gen
 		"${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
 )
 
+if(J9VM_IS_NON_STAGING)
+	add_custom_target(copy_default_options ALL
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/options.default" "${CMAKE_CURRENT_BINARY_DIR}/options.default"
+	)
+endif()
+
 ###
 ### Helper interface libraries
 ###
@@ -174,9 +192,10 @@ target_include_directories(j9vm_interface
 		${J9VM_OMR_DIR}/include_core
 		${CMAKE_CURRENT_BINARY_DIR}/omr
 		${CMAKE_CURRENT_BINARY_DIR}
+		${CMAKE_BINARY_DIR}
 )
 
-if(J9VM_GEN_NLS)
+if(J9VM_IS_NON_STAGING)
 	target_include_directories(j9vm_interface INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/nls)
 else()
 	target_include_directories(j9vm_interface INTERFACE nls)
