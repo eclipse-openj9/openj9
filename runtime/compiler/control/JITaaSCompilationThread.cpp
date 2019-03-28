@@ -982,6 +982,18 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->dereferenceStaticFinalAddress(address, addressType));
          }
          break;
+      case J9ServerMessageType::VM_getClassFromCP:
+         {
+         auto recv = client->getRecvData<J9ConstantPool *>();
+         client->write(fe->getClassFromCP(std::get<0>(recv)));
+         }
+         break;
+      case J9ServerMessageType::VM_getROMMethodFromRAMMethod:
+         {
+         auto recv = client->getRecvData<J9Method *>();
+         client->write(fe->getROMMethodFromRAMMethod(std::get<0>(recv)));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
@@ -1811,6 +1823,17 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JITaaS::Void());
          }
          break;
+      case J9ServerMessageType::SharedCache_storeSharedData:
+         {
+         auto recv = client->getRecvData<std::string, J9SharedDataDescriptor, std::string>();
+         auto key = std::get<0>(recv);
+         auto descriptor = std::get<1>(recv);
+         auto dataStr = std::get<2>(recv);
+         descriptor.address = (U_8 *) &dataStr[0];
+         auto ptr = fe->sharedCache()->storeSharedData(vmThread, (char *) key.data(), &descriptor);
+         client->write(ptr);
+         }
+         break;
       case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
          {
          TR::VMAccessCriticalSection deref(fe);
@@ -2286,6 +2309,7 @@ remoteCompile(
    CHTableCommitData chTableData;
    std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
+   std::string svmSymbolToIdStr;
    try
       {
       // release VM access just before sending the compilation request
@@ -2315,13 +2339,14 @@ remoteCompile(
          }
 
       while(!handleServerMessage(&client, compiler->fej9vm()));
-      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string>();
+      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string, std::string>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
       chTableData = std::get<3>(recv);
       classesThatShouldNotBeNewlyExtended = std::get<4>(recv);
       logFileStr = std::get<5>(recv);
+      svmSymbolToIdStr = std::get<6>(recv);
       if (statusCode >= compilationMaxError)
          throw JITaaS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       }
@@ -2338,11 +2363,13 @@ remoteCompile(
       {
       try
          {
-         if (compiler->getOption(TR_EnableSymbolValidationManager))
+         if (compiler->getOption(TR_UseSymbolValidationManager))
             {
             // compilation is done, now we need client to validate all of the records accumulated by the server,
             // so need to exit heuristic region.
             compiler->exitHeuristicRegion();
+            // populate symbol to id map
+            compiler->getSymbolValidationManager()->deserializeSymbolToIDMap(svmSymbolToIdStr);
             }
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");
@@ -2645,8 +2672,13 @@ outOfProcessCompilationEnd(
    // pack log file to send to client
    std::string logFileStr = TR::Options::packLogFile(comp->getOutFile());
 
+   std::string svmSymbolToIdStr;
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      svmSymbolToIdStr = comp->getSymbolValidationManager()->serializeSymbolToIDMap();
+      }
    entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
-                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()), logFileStr);
+                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()), logFileStr, svmSymbolToIdStr);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
@@ -3607,6 +3639,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    char * clientOptions = NULL;
    TR_OptimizationPlan *optPlan = NULL;
    _vm = NULL;
+   bool useAotCompilation = false;
    try
       {
       auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
@@ -3625,9 +3658,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       std::string clientOptStr  = std::get<9>(req);
       std::string recompInfoStr = std::get<10>(req);
       uint32_t seqNo            = std::get<11>(req); // sequence number at the client
-      entry._useAotCompilation  = std::get<12>(req);
+      useAotCompilation         = std::get<12>(req);
 
-      if (entry._useAotCompilation)
+      if (useAotCompilation)
          {
          _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SHARED_CACHE_SERVER_VM);
          }
@@ -3814,6 +3847,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // weight is irrelevant for JITaaS. 
          // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
          entry._weight = 0;
+         entry._useAotCompilation = useAotCompilation;
          }
       }
    catch (const JITaaS::StreamFailure &e)

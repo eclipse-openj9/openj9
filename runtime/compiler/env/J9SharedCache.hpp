@@ -88,6 +88,8 @@ public:
 
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz);
 
+   virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
+
    enum TR_J9SharedCacheDisabledReason
       {
       UNINITIALIZED,
@@ -201,6 +203,7 @@ public:
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
    void setStream(JITaaS::J9ServerStream *stream) { _stream = stream; }
+   virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
 private:
    JITaaS::J9ServerStream *_stream;

@@ -44,7 +44,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _region(region),
      _comp(TR::comp()),
      _vmThread(_comp->j9VMThread()),
-     _fej9((TR_J9VM *)TR_J9VMBase::get(_vmThread->javaVM->jitConfig, _vmThread)),
+     _fej9((TR_J9VM *)TR_J9VMBase::get(_vmThread->javaVM->jitConfig, _vmThread, TR::CompilationInfo::getStream() ? TR_J9VMBase::J9_SERVER_VM : TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _rootClass(compilee->classOfMethod()),
@@ -59,6 +59,14 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _loadersOkForWellKnownClasses(_region)
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
+
+
+   auto stream = TR::CompilationInfo::getStream();
+   if (stream && _fej9->sharedCache())
+      // because a different VM is used here, a new Shared Cache object was created, so
+      // need to update stream
+      // JITaaS TODO: we update stream in multiple places, better to change it to only one
+      ((TR_J9JITaaSServerSharedCache *) _fej9->sharedCache())->setStream(stream);
 
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
    defineGuaranteedID(_rootClass, TR::SymbolType::typeClass);
@@ -169,10 +177,9 @@ TR::SymbolValidationManager::populateWellKnownClasses()
    dataDescriptor.flags = 0;
 
    _wellKnownClassChainOffsets =
-      _fej9->_jitConfig->javaVM->sharedClassConfig->storeSharedData(
+      _fej9->sharedCache()->storeSharedData(
          _vmThread,
          key,
-         strlen(key),
          &dataDescriptor);
 
    SVM_ASSERT_NONFATAL(
@@ -570,7 +577,7 @@ TR::SymbolValidationManager::addMethodRecord(TR::MethodValidationRecord *record)
       }
 
    ClassChainInfo chainInfo;
-   if (!getClassChainInfo(record->definingClass(), record, chainInfo))
+   if (!getClassChainInfo(record->definingClass(_fej9), record, chainInfo))
       return false;
 
    appendNewRecord(record->_method, record);
@@ -587,10 +594,13 @@ TR::SymbolValidationManager::skipFieldRefClassRecord(
    // If the beholder refers to one of its own fields, or to a field of a
    // well-known class, and if it does so by naming the class that declares the
    // field (not a subclass), then no record is necessary.
+   // JITaaS TODO: make a remote call here.
+   // For now, always return false, as it shouldn't affect correctness.
+   return false;
    if (definingClass == beholder || isWellKnownClass(definingClass))
       {
       J9Class *beholderJ9Class = reinterpret_cast<J9Class*>(beholder);
-      J9ConstantPool *ramCP = J9_CP_FROM_CLASS(beholderJ9Class);
+      J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(_fej9->getConstantPoolFromClass(beholder));
       J9ROMConstantPoolItem *romCP = ramCP->romConstantPool;
       J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
       J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
@@ -652,7 +662,7 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
    if (inHeuristicRegion())
       return true; // to make sure not to modify _classesFromAnyCPIndex
 
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(constantPoolOfBeholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (isWellKnownClass(clazz))
       return true;
@@ -678,7 +688,7 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
 bool
 TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex, bool isStatic)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(constantPoolOfBeholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
       return true;
@@ -689,7 +699,7 @@ TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *c
 bool
 TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(constantPoolOfBeholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
        return true;
@@ -744,7 +754,7 @@ TR::SymbolValidationManager::addSystemClassByNameRecord(TR_OpaqueClassBlock *sys
 bool
 TR::SymbolValidationManager::addClassFromITableIndexCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(constantPoolOfBeholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    return addClassRecord(clazz, new (_region) ClassFromITableIndexCPRecord(clazz, beholder, cpIndex));
    }
@@ -752,7 +762,7 @@ TR::SymbolValidationManager::addClassFromITableIndexCPRecord(TR_OpaqueClassBlock
 bool
 TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(constantPoolOfBeholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
       return true;
@@ -800,7 +810,7 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
 bool
 TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    return addMethodRecord(new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex));
    }
@@ -808,7 +818,7 @@ TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *m
 bool
 TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    return addMethodRecord(new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex));
    }
@@ -816,7 +826,7 @@ TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *
 bool
 TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    return addMethodRecord(new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex));
    }
@@ -846,7 +856,7 @@ TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock
 bool
 TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex)
    {
-   TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    return addMethodRecord(new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex));
    }
@@ -1379,8 +1389,41 @@ static void printClass(TR_OpaqueClassBlock *clazz)
    {
    if (clazz != NULL)
       {
-      J9UTF8 *className = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
+      J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(clazz));
       traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      }
+   }
+
+std::string
+TR::SymbolValidationManager::serializeSymbolToIDMap()
+   {
+   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
+   std::string symbolToIdStr(entrySize * _symbolToIdMap.size(), '\0');
+   uint16_t idx = 0;
+   for (auto it : _symbolToIdMap)
+      {
+      SymbolToIdMap::key_type symbol = it.first;
+      SymbolToIdMap::mapped_type id = it.second;
+      memcpy(&symbolToIdStr[idx * entrySize], &symbol, sizeof(symbol));
+      memcpy(&symbolToIdStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
+      ++idx;
+      }
+   return symbolToIdStr;
+   }
+
+void
+TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolToIdStr)
+   {
+   _symbolToIdMap.clear();
+   
+   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
+   int32_t numEntries = symbolToIdStr.length() / entrySize;
+   for (int32_t idx = 0; idx < numEntries; idx++)
+      {
+      SymbolToIdMap::key_type symbol;
+      memcpy(&symbol, &symbolToIdStr[idx * entrySize], sizeof(symbol));
+      SymbolToIdMap::mapped_type id = (uint16_t) symbolToIdStr[idx * entrySize + sizeof(symbol)];
+      _symbolToIdMap.insert(std::make_pair(symbol, id));
       }
    }
 

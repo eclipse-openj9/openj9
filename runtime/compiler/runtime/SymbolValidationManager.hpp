@@ -371,16 +371,24 @@ struct MethodValidationRecord : public SymbolValidationRecord
    {
    MethodValidationRecord(TR_ExternalRelocationTargetKind kind, TR_OpaqueMethodBlock *method)
       : SymbolValidationRecord(kind),
-        _method(method)
+        _method(method),
+        _definingClass(NULL)
       {}
 
    TR_OpaqueClassBlock *definingClass()
       {
-      return reinterpret_cast<TR_OpaqueClassBlock *>(
-         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(_method)));
+      TR_ASSERT(_definingClass, "defining class must be already cached");
+      return _definingClass;
+      }
+
+   TR_OpaqueClassBlock *definingClass(TR_J9VM *fe)
+      {
+      _definingClass = fe->getClassOfMethod(_method);
+      return _definingClass;
       }
 
    TR_OpaqueMethodBlock *_method;
+   TR_OpaqueClassBlock *_definingClass;
    };
 
 struct MethodFromClassRecord : public MethodValidationRecord
@@ -748,6 +756,9 @@ public:
    bool inHeuristicRegion() { return (_heuristicRegion > 0); }
 
    static bool assertionsAreFatal();
+
+   std::string serializeSymbolToIDMap(); // JITaaS
+   void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
 
 private:
 
