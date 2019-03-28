@@ -129,19 +129,22 @@ add_library(j9vm SHARED
 if(OMR_ARCH_X86)
 	j9vm_gen_asm(xcinterp.m4)
 
-	if(OMR_ENV_DATA64)
+	if(OMR_OS_LINUX AND OMR_ENV_DATA64)
 		j9vm_gen_asm(
 			xa64/stackswap.m4
 			xa64/unsafeHelper.m4
 		)
+		target_sources(j9vm PRIVATE unsafeHelper.s)
+	elseif(OMR_OS_WINDOWS AND OMR_ENV_DATA64)
+		j9vm_gen_asm(wa64/stackswap.m4)
 	else()
-		message(SEND_ERROR "x86-32 is not currently supported")
+		message(SEND_ERROR "Unsupported platform")
 	endif()
+
 	target_sources(j9vm
 		PRIVATE
-		unsafeHelper.s
-		xcinterp.s
-		stackswap.s
+			xcinterp.s
+			stackswap.s
 	)
 elseif(OMR_ARCH_POWER) #TODO check linux and 64bit
 	j9vm_gen_asm(pcinterp.m4)
@@ -154,6 +157,8 @@ elseif(OMR_ARCH_POWER) #TODO check linux and 64bit
 			xl64/unsafeHelper.s
 			pcinterp.s
 	)
+else()
+	message(SEND_ERROR "Unsupported platform")
 endif()
 
 target_include_directories(j9vm
