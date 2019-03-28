@@ -452,3 +452,26 @@ J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int
    return comp->fej9()->getVFTEntry(clazz, offset);
    }
 
+uint8_t *
+J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen)
+   {
+   auto stream = TR::CompilationInfo::getStream();
+   if (stream && comp->isOutOfProcessCompilation())
+      {
+      stream->write(JITaaS::J9ServerMessageType::ClassEnv_getROMClassRefName, clazz, cpIndex);
+      auto classRefNameStr = std::get<0>(stream->read<std::string>());
+      classRefLen = classRefNameStr.length();
+      uint8_t *classRefName = (uint8_t *) comp->trMemory()->allocateHeapMemory(classRefLen);
+      memcpy(classRefName, &classRefNameStr[0], classRefLen);
+      return classRefName;
+      }
+   J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
+   J9ROMConstantPoolItem *romCP = ramCP->romConstantPool;
+   J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
+   J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
+   J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
+   classRefLen = J9UTF8_LENGTH(classRefNameUtf8);
+   uint8_t *classRefName = J9UTF8_DATA(classRefNameUtf8);
+   return classRefName;
+   }
+

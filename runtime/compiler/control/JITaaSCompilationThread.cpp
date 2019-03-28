@@ -1798,6 +1798,16 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(clazz));
          }
          break;
+      case J9ServerMessageType::ClassEnv_getROMClassRefName:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
+         auto clazz = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+         int classRefLen;
+         uint8_t *classRefName = TR::Compiler->cls.getROMClassRefName(comp, clazz, cpIndex, classRefLen);
+         client->write(std::string((char *) classRefName, classRefLen));
+         }
+         break;
       case J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
