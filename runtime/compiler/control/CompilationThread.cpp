@@ -6749,6 +6749,20 @@ bool isMethodIneligibleForAot(J9Method *method)
    return isMethodIneligibleForAot(J9_ROM_METHOD_FROM_RAM_METHOD(method), J9_CLASS_FROM_METHOD(method)->romClass);
    }
 
+bool
+TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry)
+   {
+      bool doLocalComp = false;
+      static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+      // As a heuristic, cold compilations should be performed locally because
+      // they are supposed to be cheap with respect to memory and CPU.
+      //
+      if (entry->_optimizationPlan->getOptLevel() <= cold &&
+         (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
+         doLocalComp = true;
+
+      return doLocalComp;
+   }
 
 /**
  * @brief TR::CompilationInfoPerThreadBase::preCompilationTasks
@@ -6777,7 +6791,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       bool &eligibleForRelocatableCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
-   static bool enableJITaaSRemoteAOT = feGetEnv("TR_EnableJITaaSRemoteAOT") ? true : false;
    // Check to see if we find an AOT version in the shared cache
    //
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
@@ -6867,8 +6880,16 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       //
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
-      eligibleForRelocatableCompile =
-            (enableJITaaSRemoteAOT || !entry->isOutOfProcessCompReq()) && // disable remote JITaaS AOT until it's working
+      if (entry->isOutOfProcessCompReq())
+         {
+         // Since all of the preliminary checks have already been done at the client,
+         // eligibleForRelocatableCompile should be true at the server side if the client
+         // requests AOT.
+         eligibleForRelocatableCompile = entry->_useAotCompilation;
+         }
+      else
+         {
+         eligibleForRelocatableCompile =
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
@@ -6880,6 +6901,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
                TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
+         }
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
          !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
@@ -6915,13 +6937,17 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       }
 
    // If we are allowed to do relocatable compilations, just do it
-   // Note that currently we don't support out-of-process relocatable compilations
    if (canDoRelocatableCompile)
       {
-      _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
       entry->_useAotCompilation = true;
 
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && enableJITaaSRemoteAOT)
+      if (entry->isOutOfProcessCompReq())
+         _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SHARED_CACHE_SERVER_VM);
+      else
+         _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
+
+      if ((_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) &&
+         !shouldPerformLocalComp(entry))
          {
          entry->setRemoteCompReq();
          }
@@ -6937,15 +6963,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       if ((_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) &&
           TR::Options::canJITCompile())
          {
-         bool doLocalCompilation = false;
-         static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
-         // We could perform JIT compilations locally or remotely
-         // As a heuristic, cold compilations should be performed locally because
-         // they are supposed to be cheap with respect to memory and CPU.
-         //
-         if (entry->_optimizationPlan->getOptLevel() <= cold &&
-            (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
-            doLocalCompilation = true;
+         bool doLocalCompilation = shouldPerformLocalComp(entry);
 
          // If this is a remote sync compilation, change it to a local sync compilation.
          // After the local compilation is completed successfully, a remote async compilation

@@ -320,6 +320,7 @@ private:
       );
 #endif
 
+   bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
    }; // CompilationInfoPerThreadBase
 }
 
