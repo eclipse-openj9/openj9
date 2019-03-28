@@ -454,6 +454,8 @@ addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *i
 	J9Method **vTableMethods = J9VTABLE_FROM_HEADER(vTableAddress);
 	J9ROMClass *interfaceROMClass = interfaceClass->romClass;
 	UDATA count = interfaceROMClass->romMethodCount;
+	bool verifierEnabled = J9_ARE_ANY_BITS_SET(vmStruct->javaVM->runtimeFlags, J9_RUNTIME_VERIFY);
+	
 	if (0 != count) {
 		const void * conflictRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT);
 		J9Method *interfaceMethod = interfaceClass->ramMethods;
@@ -596,29 +598,30 @@ add_existing:
 							break;
 						}
 						if (J9AccPublic == (vTableMethod->modifiers & J9AccPublic)) {
-							J9ClassLoader *interfaceLoader = interfaceClass->classLoader;
-							J9ClassLoader *vTableMethodLoader = classLoader;
-							if (NULL != methodClass) {
-								vTableMethodLoader = methodClass->classLoader;
-							}
-							if (interfaceLoader != vTableMethodLoader) {
-								if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, vTableMethodLoader, interfaceLoader, vTableMethodSigUTF, interfaceMethodSigUTF)) {
-									J9UTF8 *vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
-									if (NULL != methodClass) {
-										vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(methodClass->romClass);
-									}
-									J9UTF8 *interfaceClassNameUTF = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
-									/* LinkageError will be thrown */
-									errorData->loader1 = vTableMethodLoader;
-									errorData->class1NameUTF = vTableMethodClassNameUTF;
-									errorData->loader2 = interfaceLoader;
-									errorData->class2NameUTF = interfaceClassNameUTF;
-									errorData->exceptionClassNameUTF = interfaceClassNameUTF;
-									errorData->methodNameUTF = vTableMethodNameUTF;
-									errorData->methodSigUTF = vTableMethodSigUTF;
-									goto fail;
+							if (verifierEnabled) {
+								J9ClassLoader *interfaceLoader = interfaceClass->classLoader;
+								J9ClassLoader *vTableMethodLoader = classLoader;
+								if (NULL != methodClass) {
+									vTableMethodLoader = methodClass->classLoader;
 								}
-
+								if (interfaceLoader != vTableMethodLoader) {
+									if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, vTableMethodLoader, interfaceLoader, vTableMethodSigUTF, interfaceMethodSigUTF)) {
+										J9UTF8 *vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
+										if (NULL != methodClass) {
+											vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(methodClass->romClass);
+										}
+										J9UTF8 *interfaceClassNameUTF = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
+										/* LinkageError will be thrown */
+										errorData->loader1 = vTableMethodLoader;
+										errorData->class1NameUTF = vTableMethodClassNameUTF;
+										errorData->loader2 = interfaceLoader;
+										errorData->class2NameUTF = interfaceClassNameUTF;
+										errorData->exceptionClassNameUTF = interfaceClassNameUTF;
+										errorData->methodNameUTF = vTableMethodNameUTF;
+										errorData->methodSigUTF = vTableMethodSigUTF;
+										goto fail;
+									}
+								}
 							}
 							goto continueInterfaceScan;
 						}
@@ -1183,6 +1186,7 @@ static UDATA
 processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, J9ROMMethod *romMethod, UDATA localPackageID, UDATA vTableMethodCount, void *storeValue, J9OverrideErrorData *errorData)
 {
 	UDATA newModifiers = romMethod->modifiers;
+	bool verifierEnabled = J9_ARE_ANY_BITS_SET(vmThread->javaVM->runtimeFlags, J9_RUNTIME_VERIFY);
 
 	/* Private methods do not appear in the vTable or take part in any overriding decision */
 	if (J9_ARE_NO_BITS_SET(newModifiers, J9AccPrivate)) {
@@ -1248,23 +1252,25 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 						if ((modifiers & J9AccFinal) == J9AccFinal) {
 							vmThread->tempSlot = (UDATA)romMethod;
 						}
-						/* fill in vtable, override parent slot */
-						J9ClassLoader *superclassVTableMethodLoader = superclassVTableMethodClass->classLoader;
-						if (superclassVTableMethodLoader != classLoader) {
-							J9UTF8 *superclassVTableMethodSigUTF = J9ROMMETHOD_SIGNATURE(superclassVTableROMMethod);
-							if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmThread, classLoader, superclassVTableMethodLoader, sigUTF, superclassVTableMethodSigUTF)) {
-								J9UTF8 *superclassVTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(superclassVTableMethodClass->romClass);
-								J9UTF8 *newClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
-								J9UTF8 *superclassVTableMethodNameUTF = J9ROMMETHOD_NAME(superclassVTableROMMethod);
-								errorData->loader1 = classLoader;
-								errorData->class1NameUTF = newClassNameUTF;
-								errorData->loader2 = superclassVTableMethodLoader;
-								errorData->class2NameUTF = superclassVTableMethodClassNameUTF;
-								errorData->exceptionClassNameUTF = superclassVTableMethodClassNameUTF;
-								errorData->methodNameUTF = superclassVTableMethodNameUTF;
-								errorData->methodSigUTF = superclassVTableMethodSigUTF;
-								vTableMethodCount = (UDATA)-1;
-								goto done;
+						if (verifierEnabled) {
+							/* fill in vtable, override parent slot */
+							J9ClassLoader *superclassVTableMethodLoader = superclassVTableMethodClass->classLoader;
+							if (superclassVTableMethodLoader != classLoader) {
+								J9UTF8 *superclassVTableMethodSigUTF = J9ROMMETHOD_SIGNATURE(superclassVTableROMMethod);
+								if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmThread, classLoader, superclassVTableMethodLoader, sigUTF, superclassVTableMethodSigUTF)) {
+									J9UTF8 *superclassVTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(superclassVTableMethodClass->romClass);
+									J9UTF8 *newClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
+									J9UTF8 *superclassVTableMethodNameUTF = J9ROMMETHOD_NAME(superclassVTableROMMethod);
+									errorData->loader1 = classLoader;
+									errorData->class1NameUTF = newClassNameUTF;
+									errorData->loader2 = superclassVTableMethodLoader;
+									errorData->class2NameUTF = superclassVTableMethodClassNameUTF;
+									errorData->exceptionClassNameUTF = superclassVTableMethodClassNameUTF;
+									errorData->methodNameUTF = superclassVTableMethodNameUTF;
+									errorData->methodSigUTF = superclassVTableMethodSigUTF;
+									vTableMethodCount = (UDATA)-1;
+									goto done;
+								}
 							}
 						}
 						vTableMethods[superclassVTableIndex] = (UDATA)storeValue;
