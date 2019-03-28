@@ -128,8 +128,8 @@ TR_S390Recompilation::generatePrePrologue()
    // Associate all generated instructions with the first node
    TR::Node* node = comp->getStartTree()->getNode();
 
-   // Initializing the cursor to NULL ensures instructions will get prepended to the start of the instruction stream
-   TR::Instruction* cursor = NULL;
+   // TODO: We need to modify this API to accept the cursor as an argument
+   TR::Instruction* cursor = cg->getFirstInstruction();
 
    TR::LabelSymbol* vmCallHelperSnippetLabel = generateLabelSymbol(cg);
 
@@ -146,11 +146,7 @@ TR_S390Recompilation::generatePrePrologue()
    if (useSampling())
       {
       TR::LabelSymbol* samplingRecompileMethodSnippetLabel = generateLabelSymbol(cg);
-
-      // Generate the first label by using the placement new operator such that we are guaranteed to call the correct
-      // overload of the constructor which can accept a NULL preceding instruction. If cursor is NULL the generated
-      // label instruction will be prepended to the start of the instruction stream.
-      cursor = new (cg->trHeapMemory()) TR::S390LabelInstruction(TR::InstOpCode::LABEL, node, samplingRecompileMethodSnippetLabel, cursor, cg);
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, samplingRecompileMethodSnippetLabel, cursor);
 
       TR::Instruction* samplingRecompileMethodSnippetLabelInstruction = cursor;
 

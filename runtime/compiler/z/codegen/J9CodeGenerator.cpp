@@ -3534,10 +3534,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    // Associate all generated instructions with the first node
    TR::Node* node = comp->getStartTree()->getNode();
 
-   // Generate the first label by using the placement new operator such that we are guaranteed to call the correct
-   // overload of the constructor which can accept a NULL preceding instruction. If cursor is NULL the generated
-   // label instruction will be prepended to the start of the instruction stream.
-   cursor = new (self()->trHeapMemory()) TR::S390LabelInstruction(TR::InstOpCode::LABEL, node, vmCallHelperSnippetLabel, cursor, self());
+   cursor = generateS390LabelInstruction(self(), TR::InstOpCode::LABEL, node, vmCallHelperSnippetLabel, cursor);
 
    TR::Instruction* vmCallHelperSnippetLabelInstruction = cursor;
 

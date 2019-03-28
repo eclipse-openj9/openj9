@@ -269,7 +269,6 @@ class TR_S390Recompilation : public TR::Recompilation
    TR::Instruction* bodyInfoDataConstant;
    };
 
-uint32_t CalcCodeSize(TR::Instruction *start,TR::Instruction *end);
 #define FOUR_BYTE_JUMP_INSTRUCTION 0xA7F40000
 
 #endif
