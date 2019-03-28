@@ -2052,6 +2052,7 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
       initTree->getNode()->setAndIncChild(0,appendedString[0]);
       }
 
+   removeAllocationFenceOfNew(newTree);
    removePendingPushOfResult(newTree);
    TR::TransformUtil::removeTree(comp(), newTree);
 
@@ -2133,6 +2134,19 @@ void TR_StringPeepholes::removePendingPushOfResult(TR::TreeTop *callTreeTop)
             TR::TransformUtil::removeTree(comp(), cursor);
          cursor = cursor->getNextTreeTop();
          }
+      }
+   }
+
+// If new tree is going to be removed, the allocationfence on the new node
+// has to be removed as well
+void TR_StringPeepholes::removeAllocationFenceOfNew(TR::TreeTop *newTreeTop)
+   {
+   TR::TreeTop *cursor = newTreeTop->getNextTreeTop();
+   if (cursor
+       && cursor->getNode()->getOpCodeValue() == TR::allocationFence
+       && cursor->getNode()->getFirstChild() == newTreeTop->getNode()->getFirstChild())
+      {
+      TR::TransformUtil::removeTree(comp(), cursor);
       }
    }
 
