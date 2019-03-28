@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
  * Copyright (c) 2017, 2019 IBM Corp. and others
  *
