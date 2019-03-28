@@ -2554,6 +2554,9 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                                && !cg->comp()->getOption(TR_DisableVectorBCD)
                                || isVectorBCDEnv;
 
+   // TODO: remove this after DAA test material update
+   cg->setIgnoreDecimalOverflowException(false);
+
    // Validate PD operations under BCDCHK node
    switch (pdopNode->getOpCodeValue())
       {
@@ -2578,7 +2581,8 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case TR::pdshlOverflow:
       case TR::pdshr:
          {
-         cg->setIgnoreDecimalOverflowException(node->getLastChild()->getInt() == 0);
+         // TODO: enable this after DAA test material update
+         //cg->setIgnoreDecimalOverflowException(node->getLastChild()->getInt() == 0);
          break;
          }
       case TR::lcall:
@@ -2595,7 +2599,8 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
                // Need a parameter check because variable PD2L and PD2I could have non-constant 'checkOverflow' (see IS_VARIABLE_PD2I macro).
                TR::Node* checkOverflowNode = pdopNode->getLastChild();
-               cg->setIgnoreDecimalOverflowException(checkOverflowNode->getOpCode().isLoadConst() && (checkOverflowNode->getInt() == 0));
+               // TODO: enable this after DAA test material update
+               // cg->setIgnoreDecimalOverflowException(checkOverflowNode->getOpCode().isLoadConst() && (checkOverflowNode->getInt() == 0));
                break;
                }
 
