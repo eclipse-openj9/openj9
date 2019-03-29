@@ -771,7 +771,7 @@ int32_t TR_UnsafeFastPath::perform()
                if (value)
                   {
                   // This is a store
-                  if (type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
+                  if (!isStatic && type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
                      {
                      node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                      spineCHK->setAndIncChild(0, addrCalc);
@@ -834,7 +834,7 @@ int32_t TR_UnsafeFastPath::perform()
 
                // Anchor the store or load with compressedrefs if needed
                // wrtbari needs to be under a treetop node if not anchored by compressedrefs
-               if (comp()->useCompressedPointers() && (type == TR::Address))
+               if (comp()->useCompressedPointers() && TR::TransformUtil::fieldShouldBeCompressed(node, comp()))
                   {
                   node = TR::Node::createCompressedRefsAnchor(node);
                   newTree = newTree->insertAfter(TR::TreeTop::create(comp(), node));
@@ -863,7 +863,7 @@ int32_t TR_UnsafeFastPath::perform()
                if (value)
                   {
                   // This is a store
-                  if (type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
+                  if (!isStatic && type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
                      node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                   else
                      {
@@ -885,7 +885,7 @@ int32_t TR_UnsafeFastPath::perform()
                   if (trace())
                      traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "]\n", node, value, addrCalc);
 
-                  if (comp()->useCompressedPointers() && type == TR::Address)
+                  if (comp()->useCompressedPointers() && TR::TransformUtil::fieldShouldBeCompressed(node, comp()))
                      node = TR::Node::createCompressedRefsAnchor(node);
                   }
                else
@@ -914,7 +914,7 @@ int32_t TR_UnsafeFastPath::perform()
                   if (trace())
                      traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to load from location [" POINTER_PRINTF_FORMAT "]\n", node, addrCalc);
 
-                  if (comp()->useCompressedPointers() && (type == TR::Address))
+                  if (comp()->useCompressedPointers() && TR::TransformUtil::fieldShouldBeCompressed(node, comp()))
                      node = TR::Node::createCompressedRefsAnchor(node);
                   }
 
