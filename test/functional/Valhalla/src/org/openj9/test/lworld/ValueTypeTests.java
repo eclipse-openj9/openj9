@@ -26,7 +26,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-
+import java.lang.reflect.Array;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
@@ -51,10 +51,19 @@ public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
 	static Class point2DClass = null;
 	static Class line2DClass = null;
+	static Class flattenedLine2DClass = null;
 	static MethodHandle makePoint2D = null;
 	static MethodHandle makeLine2D = null;
+	static MethodHandle makeFlattenedLine2D = null;
 	static MethodHandle getX = null;
 	static MethodHandle getY = null;
+	static MethodHandle withX = null;
+	static MethodHandle withY = null;
+	static MethodHandle getFlatSt = null;
+	static MethodHandle withFlatSt = null;
+ 	static MethodHandle getFlatEn = null;
+ 	static MethodHandle withFlatEn = null;
+
 
 	/*
 	 * Create a value type
@@ -72,9 +81,9 @@ public class ValueTypeTests {
 		makePoint2D = lookup.findStatic(point2DClass, "makeValue", MethodType.methodType(point2DClass, int.class, int.class));
 		
 		getX = generateGetter(point2DClass, "x", int.class);
-		MethodHandle withX = generateWither(point2DClass, "x", int.class);
+		withX = generateWither(point2DClass, "x", int.class);
 		getY = generateGetter(point2DClass, "y", int.class);
-		MethodHandle withY = generateWither(point2DClass, "y", int.class);
+		withY = generateWither(point2DClass, "y", int.class);
 
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -91,6 +100,31 @@ public class ValueTypeTests {
 		
 		assertEquals(getX.invoke(point2D), xNew);
 		assertEquals(getY.invoke(point2D), yNew);
+	}
+
+	/*
+	 * Test array of Point2D
+	 */
+	@Test(priority=2)
+	static public void testCreateArrayPoint2D() throws Throwable {
+		int x1 = 0xFFEEFFEE;
+		int y1 = 0xAABBAABB;
+		int x2 = 0x00000011;
+		int y2 = 0xABCDEF00;
+		
+		Object point2D_1 = makePoint2D.invoke(x1, y1);
+		Object point2D_2 = makePoint2D.invoke(x2, y2);
+
+		Object arrayObject = Array.newInstance(point2DClass, 3);
+		Array.set(arrayObject, 1, point2D_1);
+		Array.set(arrayObject, 2, point2D_2);
+
+		Object point2D_1_check = Array.get(arrayObject, 1);
+		Object point2D_2_check = Array.get(arrayObject, 2);
+		assertEquals(getX.invoke(point2D_1_check), getX.invoke(point2D_1));
+		assertEquals(getY.invoke(point2D_1_check), getY.invoke(point2D_1));
+		assertEquals(getX.invoke(point2D_2_check), getX.invoke(point2D_2));
+		assertEquals(getY.invoke(point2D_2_check), getY.invoke(point2D_2));
 	}
 
 	/*
@@ -208,14 +242,14 @@ public class ValueTypeTests {
 	@Test(priority=2)
 	static public void testCreateFlattenedLine2D() throws Throwable {
 		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
-		Class flattenedLine2DClass = ValueTypeGenerator.generateValueClass("FlattenedLine2D", fields);
+		flattenedLine2DClass = ValueTypeGenerator.generateValueClass("FlattenedLine2D", fields);
 				
-		MethodHandle makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(flattenedLine2DClass, Object.class, Object.class));
+		makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(flattenedLine2DClass, Object.class, Object.class));
 		
-		MethodHandle getSt = generateGenericGetter(flattenedLine2DClass, "st");
- 		MethodHandle withSt = generateGenericWither(flattenedLine2DClass, "st");
- 		MethodHandle getEn = generateGenericGetter(flattenedLine2DClass, "en");
- 		MethodHandle withEn = generateGenericWither(flattenedLine2DClass, "en");
+		getFlatSt = generateGenericGetter(flattenedLine2DClass, "st");
+ 		withFlatSt = generateGenericWither(flattenedLine2DClass, "st");
+ 		getFlatEn = generateGenericGetter(flattenedLine2DClass, "en");
+ 		withFlatEn = generateGenericWither(flattenedLine2DClass, "en");
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -236,22 +270,67 @@ public class ValueTypeTests {
 		
 		Object line2D = makeFlattenedLine2D.invoke(st, en);
 		
-		assertEquals(getX.invoke(getSt.invoke(line2D)), x);
-		assertEquals(getY.invoke(getSt.invoke(line2D)), y);
-		assertEquals(getX.invoke(getEn.invoke(line2D)), x2);
-		assertEquals(getY.invoke(getEn.invoke(line2D)), y2);
+		assertEquals(getX.invoke(getFlatSt.invoke(line2D)), x);
+		assertEquals(getY.invoke(getFlatSt.invoke(line2D)), y);
+		assertEquals(getX.invoke(getFlatEn.invoke(line2D)), x2);
+		assertEquals(getY.invoke(getFlatEn.invoke(line2D)), y2);
 		
 		Object stNew = makePoint2D.invoke(xNew, yNew);
 		Object enNew = makePoint2D.invoke(x2New, y2New);
 		
-		line2D = withSt.invoke(line2D, stNew);
-		line2D = withEn.invoke(line2D, enNew);
+		line2D = withFlatSt.invoke(line2D, stNew);
+		line2D = withFlatEn.invoke(line2D, enNew);
 		
-		assertEquals(getX.invoke(getSt.invoke(line2D)), xNew);
-		assertEquals(getY.invoke(getSt.invoke(line2D)), yNew);
-		assertEquals(getX.invoke(getEn.invoke(line2D)), x2New);
-		assertEquals(getY.invoke(getEn.invoke(line2D)), y2New);
+		assertEquals(getX.invoke(getFlatSt.invoke(line2D)), xNew);
+		assertEquals(getY.invoke(getFlatSt.invoke(line2D)), yNew);
+		assertEquals(getX.invoke(getFlatEn.invoke(line2D)), x2New);
+		assertEquals(getY.invoke(getFlatEn.invoke(line2D)), y2New);
 	}
+
+	/*
+	 * Test array of FlattenedLine2D
+	 * 
+	 * value FlattenedLine2D {
+	 * 	flattened Point2D st;
+	 * 	flattened Point2D en;
+	 * }
+	 * 
+	 */
+	@Test(priority=3)
+	static public void testCreateArrayFlattenedLine2D() throws Throwable {
+		int x = 0xFFEEFFEE;
+		int y = 0xAABBAABB;
+		int x2 = 0xCCDDCCDD;
+		int y2 = 0xAAFFAAFF;
+		int x3 = 0xFFABFFCD;
+		int y3 = 0xBBAABBAA;
+		int x4 = 0xCCBBAADD;
+		int y4 = 0xAABBAACC;
+
+		Object st1 = makePoint2D.invoke(x, y);
+		Object en1 = makePoint2D.invoke(x2, y2);
+		Object line2D_1 = makeFlattenedLine2D.invoke(st1, en1);		
+
+		Object st2 = makePoint2D.invoke(x3, y3);
+		Object en2 = makePoint2D.invoke(x4, y4);
+		Object line2D_2 = makeFlattenedLine2D.invoke(st2, en2);
+
+		Object arrayObject = Array.newInstance(flattenedLine2DClass, 3);
+		Array.set(arrayObject, 1, line2D_1);
+		Array.set(arrayObject, 2, line2D_2);
+
+		Object line2D_1_check = Array.get(arrayObject, 1);
+		Object line2D_2_check = Array.get(arrayObject, 2);
+
+		assertEquals(getX.invoke(getFlatSt.invoke(line2D_1_check)), getX.invoke(getFlatSt.invoke(line2D_1)));
+		assertEquals(getX.invoke(getFlatSt.invoke(line2D_2_check)), getX.invoke(getFlatSt.invoke(line2D_2)));
+		assertEquals(getY.invoke(getFlatSt.invoke(line2D_1_check)), getY.invoke(getFlatSt.invoke(line2D_1)));
+		assertEquals(getY.invoke(getFlatSt.invoke(line2D_2_check)), getY.invoke(getFlatSt.invoke(line2D_2)));
+		assertEquals(getX.invoke(getFlatEn.invoke(line2D_1_check)), getX.invoke(getFlatEn.invoke(line2D_1)));
+		assertEquals(getX.invoke(getFlatEn.invoke(line2D_2_check)), getX.invoke(getFlatEn.invoke(line2D_2)));
+		assertEquals(getY.invoke(getFlatEn.invoke(line2D_1_check)), getY.invoke(getFlatEn.invoke(line2D_1)));
+		assertEquals(getY.invoke(getFlatEn.invoke(line2D_2_check)), getY.invoke(getFlatEn.invoke(line2D_2)));
+	}	
 
 	/*
 	 * Test with nested values
