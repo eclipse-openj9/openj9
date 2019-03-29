@@ -34,6 +34,7 @@ target_link_libraries(j9shr
 )
 
 omr_add_exports(j9shr J9VMDllMain)
+target_enable_ddr(j9shr j9ddr)
 
 install(
 	TARGETS j9shr

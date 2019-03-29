@@ -73,6 +73,8 @@ omr_add_exports(j9trc
 	J9VMDllMain
 )
 
+target_enable_ddr(j9trc j9ddr)
+
 install(
 	TARGETS j9trc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

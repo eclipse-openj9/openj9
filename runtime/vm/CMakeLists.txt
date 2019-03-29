@@ -212,6 +212,8 @@ if(J9VM_INTERP_TRACING)
 	omr_add_exports(j9vm trace)
 endif()
 
+target_enable_ddr(j9vm j9ddr)
+
 install(
 	TARGETS j9vm
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
