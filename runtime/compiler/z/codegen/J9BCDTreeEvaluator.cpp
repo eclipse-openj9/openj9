@@ -6449,42 +6449,16 @@ int32_t getAddSubComputedResultPrecision(TR::Node *node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::pdArithmeticVectorEvaluatorHelper(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator * cg)
    {
-   TR_ASSERT(node->getType().isAnyPacked(), "pd Arithmetic is only valid for Packed types");
-   //for VSDP/VMSP immediate field is shift amount.
-   //for VAP/VDP/VMP/VSP immediate field is precisioninformation,
-   int32_t immediateValue = 0;
-
-   switch (op)
-      {
-      case TR::InstOpCode::VAP:
-      case TR::InstOpCode::VSP:
-      case TR::InstOpCode::VDP:
-      case TR::InstOpCode::VMP:
-      case TR::InstOpCode::VRP:
-         immediateValue = node->getDecimalPrecision();
-         break;
-      case TR::InstOpCode::VSDP:
-         immediateValue = node->getDecimalAdjust();
-         break;
-      case TR::InstOpCode::VMSP:
-         immediateValue = node->getDecimalAdjust() * -1;
-         break;
-      default:
-         TR_ASSERT(0,"Invalid Decimal arithmetic OpCode.");
-         break;
-      }
-
-   TR_ASSERT_FATAL((immediateValue >> 8) == 0, "Decimal precision or adjustment value (%d) exceeds 1 byte", immediateValue);
+   int32_t immediateValue = node->getDecimalPrecision();
+   TR_ASSERT_FATAL((immediateValue >> 8) == 0, "Decimal precision (%d) exceeds 1 byte", immediateValue);
 
    if (TR::Compiler->target.cpu.getS390SupportsVectorPDEnhancement() && cg->getIgnoreDecimalOverflowException())
       {
       immediateValue |= 0x80;
       }
-
    TR::Node* firstChild = node->getFirstChild();
    TR::Node* secondChild = node->getSecondChild();
 
-   // dec before evaluating the second child to avoid an unneeded clobber evaluate
    TR::Register* firstChildReg = cg->evaluate(firstChild);
    TR::Register* secondChildReg = cg->evaluate(secondChild);
 
