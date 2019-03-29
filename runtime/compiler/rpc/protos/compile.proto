@@ -243,6 +243,7 @@ enum J9ServerMessageType
    ClassEnv_iTableRomClass = 508;
    ClassEnv_getITable = 509;
    ClassEnv_classHasIllegalStaticFinalFieldModification = 510;
+   ClassEnv_getROMClassRefName = 511;
 
    // For TR_J9SharedCache
    SharedCache_getClassChainOffsetInSharedCache = 600;

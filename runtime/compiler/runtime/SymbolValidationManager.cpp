@@ -44,7 +44,11 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _region(region),
      _comp(TR::comp()),
      _vmThread(_comp->j9VMThread()),
-     _fej9((TR_J9VM *)TR_J9VMBase::get(_vmThread->javaVM->jitConfig, _vmThread, TR::CompilationInfo::getStream() ? TR_J9VMBase::J9_SERVER_VM : TR_J9VMBase::DEFAULT_VM)),
+     _fej9((TR_J9VM *)TR_J9VMBase::get(
+        _vmThread->javaVM->jitConfig,
+        _vmThread,
+        TR::CompilationInfo::get()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE ?
+           TR_J9VMBase::J9_SERVER_VM : TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _rootClass(compilee->classOfMethod()),
@@ -594,22 +598,11 @@ TR::SymbolValidationManager::skipFieldRefClassRecord(
    // If the beholder refers to one of its own fields, or to a field of a
    // well-known class, and if it does so by naming the class that declares the
    // field (not a subclass), then no record is necessary.
-   // JITaaS TODO: make a remote call here.
-   // For now, always return false, as it shouldn't affect correctness.
-   return false;
    if (definingClass == beholder || isWellKnownClass(definingClass))
       {
-      J9Class *beholderJ9Class = reinterpret_cast<J9Class*>(beholder);
-      J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(_fej9->getConstantPoolFromClass(beholder));
-      J9ROMConstantPoolItem *romCP = ramCP->romConstantPool;
-      J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
-      J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
-      J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
-      int classRefLen = J9UTF8_LENGTH(classRefNameUtf8);
-      uint8_t *classRefName = J9UTF8_DATA(classRefNameUtf8);
-
-      J9Class *definingJ9Class = reinterpret_cast<J9Class*>(definingClass);
-      J9UTF8 *definingClassNameUtf8 = J9ROMCLASS_CLASSNAME(definingJ9Class->romClass);
+      int classRefLen;
+      uint8_t *classRefName = TR::Compiler->cls.getROMClassRefName(_comp, beholder, cpIndex, classRefLen);
+      J9UTF8 *definingClassNameUtf8 = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(definingClass));
       int definingClassLen = J9UTF8_LENGTH(definingClassNameUtf8);
       uint8_t *definingClassName = J9UTF8_DATA(definingClassNameUtf8);
 
