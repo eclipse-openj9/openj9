@@ -205,6 +205,9 @@ abstract class AttachApiTest {
 		cmdLine.add(commandName);
 		cmdLine.addAll(args);
 		ProcessBuilder jpsProcess = new ProcessBuilder(cmdLine);
+		for (String cmd: cmdLine) {
+			log(cmd);
+		}
 		Process proc = jpsProcess.start();
 		List<String> outputLines = Collections.emptyList();
 		try (BufferedReader jpsOutReader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
@@ -234,6 +237,7 @@ abstract class AttachApiTest {
 			assertTrue("Did not find " + commandFile.getAbsolutePath(), commandFile.exists());
 		}
 		commandName = commandFile.getAbsolutePath();
+		log("commandName=" + commandName);
 	}
 	
 }

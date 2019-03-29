@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -695,6 +695,7 @@ Java_com_ibm_oti_vm_VM_setDaemonThreadImpl (JNIEnv *env, jobject recv, jobject a
 void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
+jobjectArray JNICALL Java_com_ibm_lang_management_internal_ExtendedMemoryMXBeanImpl_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
 
 /* J9SourceJclCommonInit*/
 jint computeFullVersionString (J9JavaVM* vm);

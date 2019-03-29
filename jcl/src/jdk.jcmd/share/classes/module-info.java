@@ -29,4 +29,5 @@ module jdk.jcmd {
   requires java.base;
   requires java.management;
   requires jdk.attach;
+  requires jdk.management;
 }

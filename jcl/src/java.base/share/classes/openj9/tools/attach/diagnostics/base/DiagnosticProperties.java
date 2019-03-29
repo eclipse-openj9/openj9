@@ -29,6 +29,8 @@ import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.Properties;
 
+import com.ibm.tools.attach.target.IPC;
+
 /**
  * Augments Properties with convenience methods to add ints, booleans, and
  * longs.
@@ -163,6 +165,18 @@ public class DiagnosticProperties {
 	 * Return a property value for the given key.
 	 * 
 	 * @param key property name
+	 * @return property value as a String
+	 * @throws IOException if the property is missing
+	 */
+	public String getString(String key) throws IOException {
+		checkExists(key);
+		return baseProperties.getProperty(key);
+	}
+
+	/**
+	 * Return a property value for the given key.
+	 * 
+	 * @param key property name
 	 * @return property value or null if the property is not found
 	 */
 	public String getPropertyOrNull(String key) {
@@ -274,4 +288,36 @@ public class DiagnosticProperties {
 	public Properties toProperties() {
 		return baseProperties;
 	}
+
+	/**
+	 * Encode information about an exception into properties.
+	 * @param e Exception object
+	 * @return Properties object
+	 */
+	public static Properties makeExceptionProperties(Exception e) {
+		Properties props = new Properties();
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(true));
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, e.getClass().getName());
+		String msg = e.getMessage();
+		if (null != msg) {
+			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		}
+		return props;
+	}
+	
+	/**
+	 * Report the status of a command execution.
+	 * @param error true if the command failed
+	 * @param msg status message
+	 * @return properties file encoding the status and message
+	 */
+	public static DiagnosticProperties makeStatusProperties(boolean error, String msg) {
+		DiagnosticProperties props = new DiagnosticProperties();
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(error));
+		if (null != msg) {
+			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		}
+		return props;
+	}
+
 }

@@ -277,6 +277,19 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		return IPC.receiveProperties(responseStream, true);
 	}
 
+	/**
+	 * Execute a diagnostic command on a target VM.
+	 * 
+	 * @param diagnosticCommand name of command to execute
+	 * @return properties object containing serialized result
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
+		IPC.logMessage("enter executeDiagnosticCommand"); //$NON-NLS-1$
+		AttachmentConnection.streamSend(commandStream, Command.ATTACH_DIAGNOSTICS_PREFIX + diagnosticCommand);
+		return IPC.receiveProperties(responseStream, true);
+	}
+
 	private void lockAllAttachNotificationSyncFiles(
 			List<VirtualMachineDescriptor> vmds) {
 

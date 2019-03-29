@@ -24,7 +24,6 @@
 package openj9.tools.attach.diagnostics.spi;
 
 import java.io.IOException;
-
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 
 /**
@@ -42,5 +41,13 @@ public interface TargetDiagnosticsProvider {
 	 * @throws IOException on communication error
 	 */
 	public DiagnosticProperties getThreadGroupInfo() throws IOException;
+
+	/**
+	 * Perform a diagnostic operation as specified by an attacher.
+	 * 
+	 * @param diagnosticCommand text of the command, with arguments if any
+	 * @return properties object
+	 */
+	public DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand);
 
 }

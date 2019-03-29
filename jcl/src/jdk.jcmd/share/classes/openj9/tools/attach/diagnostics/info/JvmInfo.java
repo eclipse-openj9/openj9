@@ -24,6 +24,7 @@
 package openj9.tools.attach.diagnostics.info;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Set;
 
 import javax.management.openmbean.ArrayType;
@@ -37,6 +38,7 @@ import javax.management.openmbean.SimpleType;
 import com.ibm.java.lang.management.internal.LockInfoUtil;
 import com.ibm.java.lang.management.internal.MonitorInfoUtil;
 import com.ibm.java.lang.management.internal.StackTraceElementUtil;
+import com.ibm.lang.management.MemoryMXBean;
 
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 
@@ -165,5 +167,17 @@ public class JvmInfo {
 
 	static boolean isSimpleType(OpenType<?> valueType) {
 		return SimpleType.class.isAssignableFrom(valueType.getClass());
+	}
+
+	/**
+	 * @return com.ibm.lang.management.MemoryMXBean or null
+	 */
+	protected static MemoryMXBean getMemoryMXBean() {
+		java.lang.management.MemoryMXBean genericBean = ManagementFactory.getMemoryMXBean();
+		MemoryMXBean memBean = null;
+		if (genericBean instanceof com.ibm.lang.management.MemoryMXBean) {
+			 memBean = (com.ibm.lang.management.MemoryMXBean) genericBean;
+		}
+		return memBean;
 	}
 }

@@ -23,37 +23,46 @@
 
 package openj9.tools.attach.diagnostics.tools;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.IPC;
 
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticsInfo;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
- * JStack 
- * A tool for listing thread information about another Java process
+ * JMap 
+ * A tool for listing heap information about another Java process
  *
  */
-public class Jstack {
+public class Jmap {
 
 	private static List<String> vmids;
-	private static boolean printProperties;
-	private static boolean printSynchronizers;
+	private static boolean config;
+	private static boolean histo;
+	private static boolean live;
+	@SuppressWarnings("nls")
+	private static String HELPTEXT = "jstack: listing thread information about another Java process%n"
+			+ " Usage:%n"
+			+ "    jmap <option>* <vmid>%n"
+			+ "        <vmid>: Attach API VM ID as shown in jps or other Attach API-based tools%n"
+			+ "        <vmid>s are read from stdin if none are supplied as arguments%n"
+			+ "    -heap: print the heap configuration%n"
+			+ "    -histo: print statistics about classes on the heap, including number of objects and aggregate size%n"
+			+ "    -histo:live : Print only live objects%n"
+			+ "    -J: supply arguments to the Java VM running jps%n"
+			+ " NOTE: this utility may significantly affect the performance of the target JVM.%n"
+			+ "At least one option must be selected.";
 	/**
+	 * Print a list of Java processes and information about them.
 	 * @param args Arguments to the application
 	 */
 	public static void main(String[] args) {
-		PrintStream out = System.out;
 
 		if (!parseArguments(args)) {
 			System.exit(1);
@@ -61,7 +70,6 @@ public class Jstack {
 		AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
 
 		String myId = AttachHandler.getVmId();
-		out.println(LocalDateTime.now());
 		for (String vmid: vmids) {
 			if (vmid.equals(myId)) {
 				continue;
@@ -75,14 +83,19 @@ public class Jstack {
 			}
 			try {
 				diagProvider.attach(vmid);
-				DiagnosticsInfo groupInfo = diagProvider.getThreadGroupInfo(printSynchronizers);
-				out.printf("Virtual machine: %s JVM information %s%n", vmid, groupInfo.getJavaInfo()); //$NON-NLS-1$
-				out.println(groupInfo.toString());
-				if (printProperties) {
-					out.println("System properties:"); //$NON-NLS-1$
-					out.println(diagProvider.getSystemProperties());
-					out.println("Agent properties:"); //$NON-NLS-1$
-					out.println(diagProvider.getAgentProperties());
+				if (histo) {
+					String cmd = DiagnosticUtils.makeHeapHistoCommand(live);
+					Properties props = diagProvider.executeDiagnosticCommand(cmd);
+					DiagnosticProperties.dumpPropertiesIfDebug("jmap result:", props); //$NON-NLS-1$
+					System.out.printf("Heap class statistics for %s\n", vmid); //$NON-NLS-1$
+					System.out.print(AttacherDiagnosticsProvider.resultToString(props));
+				} else if (config) {
+					String cmd = DiagnosticUtils.DIAGNOSTICS_GC_CONFIG;
+					Properties props = diagProvider.executeDiagnosticCommand(cmd);
+					DiagnosticProperties.dumpPropertiesIfDebug("jmap result:", props); //$NON-NLS-1$
+					System.out.printf("Heap configuration for %s\n", vmid); //$NON-NLS-1$
+					System.out.print(AttacherDiagnosticsProvider.resultToString(props));
+					
 				}
 			} catch (Exception e) {
 				System.err.printf("Error getting data from %s", vmid); //$NON-NLS-1$
@@ -112,43 +125,47 @@ public class Jstack {
 	@SuppressWarnings("nls")
 	private static boolean parseArguments(String[] args) {
 		boolean okay = true;
-		printProperties = DiagnosticProperties.isDebug;
-		printSynchronizers = false;
-		final String HELPTEXT = "jstack: listing thread information about another Java process%n"
-				+ " Usage:%n"
-				+ "    jstack <vmid>*%n"
-				+ "        <vmid>: Attach API VM ID as shown in jps or other Attach API-based tools%n"
-				+ "        <vmid>s are read from stdin if none are supplied as arguments%n"
-				+ "    -p: print the target's system and agent properties%n"
-				+ "    -l: Long format. Print the thread's ownable synchronizers%n"
-				+ "    -J: supply arguments to the Java VM running jps%n"
-				;
+		vmids = new ArrayList<>();
+		config = false;
+		histo = false;
+		live = false;
+		int optionsSelected = 0;
+		String errorMessage = "";
 		vmids = new ArrayList<>();
 		for (String a: args) {
 			if (!a.startsWith("-")) {
 				vmids.add(a);
-			} else if (a.equals("-p")) {
-				printProperties = true;
-			} else if (a.equals("-l")) {
-				printSynchronizers = true;
+			} else if (a.startsWith("-histo")) {
+				histo = true;
+				optionsSelected +=1;
+				if (a.endsWith(":live")) {
+					live = true;
+				}
+			} else if (a.startsWith("-heap")) {
+				config = true;
+				optionsSelected +=1;
+				if (a.endsWith(":live")) {
+					live = true;
+				}
 			} else {
-				System.err.printf(HELPTEXT);
 				okay = false;
+				errorMessage = "unrecognized option " + a;
 				break;
 			}
 		}
-
+		if (1 != optionsSelected) {
+			okay = false;
+			errorMessage = "exactly one option must be selected";
+		}
+		if (!okay) {
+			System.err.printf("%s.%n", errorMessage); //$NON-NLS-1$
+			System.err.printf(HELPTEXT);
+			okay = false;
+		}
 		if (okay && vmids.isEmpty()) {
 			/* grab the VMIDs from stdin. */
-			try (BufferedReader jpsOutReader = new BufferedReader(new InputStreamReader(System.in))) {
-				vmids = jpsOutReader.lines()
-						.map(s -> s.trim())
-						.filter(s -> !s.isEmpty())
-						.collect(Collectors.toList());
-				okay = true;
-			} catch (IOException e) {
-				/* ignore */
-			}
+			vmids = DiagnosticUtils.stdinToStringList();
+			okay = !vmids.isEmpty();
 		}
 		return okay;
 	}

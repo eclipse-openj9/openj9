@@ -24,9 +24,20 @@
 package openj9.tools.attach.diagnostics.attacher;
 
 import static com.ibm.oti.util.Msg.getString;
+import static openj9.tools.attach.diagnostics.base.DiagnosticUtils.COMMAND_STRING;
+import static openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_CLASS_HISTOGRAM;
+import static openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_CONFIG;
+import static openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_OPTION_SEPARATOR;
+import static openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_THREAD_PRINT;
+import static openj9.tools.attach.diagnostics.base.DiagnosticUtils.LOCKS_OPTION;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import com.ibm.tools.attach.attacher.OpenJ9AttachProvider;
 import com.ibm.tools.attach.attacher.OpenJ9VirtualMachine;
@@ -34,7 +45,10 @@ import com.ibm.tools.attach.target.IPC;
 import com.sun.tools.attach.AttachNotSupportedException;
 
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 import openj9.tools.attach.diagnostics.base.DiagnosticsInfo;
+import openj9.tools.attach.diagnostics.info.HeapClassInfo;
+import openj9.tools.attach.diagnostics.info.HeapConfigInfo;
 import openj9.tools.attach.diagnostics.info.ThreadGroupInfo;
 
 /**
@@ -46,6 +60,15 @@ import openj9.tools.attach.diagnostics.info.ThreadGroupInfo;
 public class AttacherDiagnosticsProvider {
 
 	private OpenJ9VirtualMachine vm;
+	static final Map<String, BiFunction<String, DiagnosticProperties, String>> toStringTable;
+	static {
+		toStringTable = new HashMap<>();
+		toStringTable.put(DIAGNOSTICS_GC_CLASS_HISTOGRAM, (s, p) -> formatHeapStatistics(s, p));
+		toStringTable.put(DIAGNOSTICS_GC_CONFIG, (s, p) -> formatHeapConfig(s, p));
+		toStringTable.put(DIAGNOSTICS_THREAD_PRINT, (s, p) -> formatThreadInfo(s, p));
+		toStringTable.put(DIAGNOSTICS_THREAD_PRINT, (s, p) -> printStatus(s, p));
+	}
+
 
 	/**
 	 * Acquire the stacks of all running threads in the current VM and encode them
@@ -63,6 +86,101 @@ public class AttacherDiagnosticsProvider {
 		ThreadGroupInfo info = new ThreadGroupInfo(threadInfo, printSynchronizers);
 		IPC.logMessage("exit getRemoteThreadGroupInfo"); //$NON-NLS-1$
 		return info;
+	}
+
+	private static String formatHeapStatistics(@SuppressWarnings("unused") String unused, DiagnosticProperties props) {
+		String result;
+		try {
+			HeapClassInfo info = new HeapClassInfo(props.toProperties());
+			result = info.toString();
+		} catch (IOException e) {
+			DiagnosticProperties.dumpPropertiesIfDebug("HeapClassInfo properties", props); //$NON-NLS-1$
+			result = "error in heap information: " + e.getMessage(); //$NON-NLS-1$
+		}
+		return result;
+	}
+
+	private static String formatHeapConfig(@SuppressWarnings("unused") String unused, DiagnosticProperties props) {
+		String result;
+		try {
+			HeapConfigInfo info = new HeapConfigInfo(props.toProperties());
+			result = info.toString();
+		} catch (IOException e) {
+			DiagnosticProperties.dumpPropertiesIfDebug("HeapConfigInfo properties", props); //$NON-NLS-1$
+			result = "error in heap information: " + e.getMessage(); //$NON-NLS-1$
+		}
+		return result;
+	}
+
+	private static String printStatus(String commandString, DiagnosticProperties props) {
+		String result = null;
+			try {
+				if (props.containsField(IPC.PROPERTY_DIAGNOSTICS_ERROR)
+						&& props.getBoolean(IPC.PROPERTY_DIAGNOSTICS_ERROR)) {
+					String targetMsg = props.getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG);
+					String msg = props.getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE);
+					if ((null != targetMsg) && !targetMsg.isEmpty()) {
+						msg = msg + ": " + targetMsg; //$NON-NLS-1$
+					}
+					result = msg;
+				}
+			} catch (IOException e) {
+				/* ignore */
+			}
+			if (null == result) {
+				result = commandString + ": command failed"; //$NON-NLS-1$
+			}
+		return result;
+	}
+
+	private static String formatThreadInfo(String commandString, DiagnosticProperties props) {
+		String result;
+		try {
+			boolean doLocks = Arrays.stream(commandString
+					.split(DIAGNOSTICS_OPTION_SEPARATOR))
+					.anyMatch(Predicate.isEqual(LOCKS_OPTION));
+			result = new ThreadGroupInfo(props.toProperties(), doLocks).toString();
+		} catch (IOException e) {
+			DiagnosticProperties.dumpPropertiesIfDebug("ThreadGroupInfo properties", props); //$NON-NLS-1$
+			result = "error in thread information: " + e.getMessage(); //$NON-NLS-1$
+		}
+		return result;
+	}
+
+	/**
+	 * Request thread information, including stack traces, from a target VM.
+	 * 
+	 * @param diagnosticCommand name of command to execute
+	 * @return properties object containing serialized thread information
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
+		IPC.logMessage("enter executeDiagnosticCommand", diagnosticCommand); //$NON-NLS-1$
+		checkAttached();
+		Properties info = vm.executeDiagnosticCommand(diagnosticCommand);
+		DiagnosticProperties.dumpPropertiesIfDebug("Properties from target:", info); //$NON-NLS-1$
+		IPC.logMessage("exit getRemoteThreadGroupInfo"); //$NON-NLS-1$
+		return info;
+	}
+
+	/**
+	 * Produce a formatted copy of the results produced by executeDiagnosticCommand.
+	 * 
+	 * @param props            properties object containing the results
+	 * @return formatted version of the results
+	 */
+	public static String resultToString(Properties props) {
+		String result;
+		String diagnosticCommand = props.getProperty(COMMAND_STRING, DiagnosticUtils.EMPTY_STRING); //$NON-NLS-1$
+
+		String[] commandRoot = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		BiFunction<String, DiagnosticProperties, String> cmd = toStringTable.get(commandRoot[0]);
+		if (null == cmd) {
+			result = "Command " + cmd + "not recognized"; //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			result = cmd.apply(diagnosticCommand, new DiagnosticProperties(props));
+		}
+		return result;
 	}
 
 	/**

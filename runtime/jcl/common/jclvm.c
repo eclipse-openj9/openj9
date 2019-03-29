@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,10 @@
 #include "j9port.h"
 #include "j9protos.h"
 #include "jclglob.h"
+#include "jcl_internal.h"
 #include "jclprots.h"
 #include "jni.h"
+#include "objhelp.h"
 #include "ut_j9jcl.h"
 
 /* require for new string merging primitives */
@@ -51,11 +53,20 @@ typedef struct AllInstancesData {
 	UDATA instanceCount;        /* count of instances found regardless if they are being collected in the array or not */
 } AllInstancesData;
 
+typedef struct J9HeapStatisticsTableEntry {
+	J9Class *klass; /* hash table key */
+	UDATA objectCount; /* number of instances of the class */
+	UDATA objectSize;
+} J9HeapStatisticsTableEntry;
+
 static UDATA hasConstructor(J9VMThread *vmThread, J9StackWalkState *state);
 static jvmtiIterationControl collectInstances(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *state);
 static int hasActiveConstructor(J9VMThread *vmThread, J9Class *clazz);
 static UDATA allInstances (JNIEnv * env, jclass clazz, jobjectArray target);
-
+static J9HashTable *collectHeapStatistics(J9VMThread *vmThread);
+static jvmtiIterationControl updateHeapStatistics (J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *state);
+static UDATA heapStatisticsHashEqualFn (void *leftKey, void *rightKey, void *userData);
+static UDATA heapStatisticsHashFn (void *key, void *userData);
 
 void JNICALL
 Java_com_ibm_oti_vm_VM_localGC(JNIEnv *env, jclass clazz)
@@ -138,6 +149,63 @@ Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, j
 	return count;
 }
 
+/**
+ *
+ */
+jobjectArray JNICALL
+Java_com_ibm_lang_management_internal_ExtendedMemoryMXBeanImpl_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused)
+{
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9HashTable *statsTable = NULL;
+	J9HashTableState hashTableState;
+	J9Class *statsClass = J9VMOPENJ9TOOLSATTACHDIAGNOSTICSBASEHEAPCLASSINFORMATION_OR_NULL(vm);
+	jobject statsArrayRef = NULL;
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+
+	vmFuncs->acquireExclusiveVMAccess(vmThread);
+	statsTable = collectHeapStatistics(vmThread);
+	vmFuncs->releaseExclusiveVMAccess(vmThread);
+
+	if (NULL != statsClass) {
+		J9Class *arrayClass = fetchArrayClass(vmThread, statsClass);
+		if (NULL != arrayClass) {
+			J9MemoryManagerFunctions * mmFuncs = vm->memoryManagerFunctions;
+			U_32 numClasses = hashTableGetCount(statsTable);
+			j9object_t statsArray = mmFuncs->J9AllocateIndexableObject(vmThread, arrayClass,
+					numClasses, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (NULL != statsArray) {
+				I_32 cursor = 0;
+				J9HeapStatisticsTableEntry *entry = (J9HeapStatisticsTableEntry *) hashTableStartDo(statsTable, &hashTableState);
+				while (NULL != entry) {
+					j9object_t statsObject = NULL;
+					PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, statsArray);
+					statsObject = mmFuncs->J9AllocateObject(vmThread, statsClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+					statsArray = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+					if (NULL == statsObject) {
+						vmFuncs->setHeapOutOfMemoryError(vmThread);
+						break;
+					}
+					j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(entry->klass);
+					J9VMOPENJ9TOOLSATTACHDIAGNOSTICSBASEHEAPCLASSINFORMATION_SET_KLASS(vmThread, statsObject, classObject);
+					J9VMOPENJ9TOOLSATTACHDIAGNOSTICSBASEHEAPCLASSINFORMATION_SET_OBJECTCOUNT(vmThread, statsObject, entry->objectCount);
+					J9VMOPENJ9TOOLSATTACHDIAGNOSTICSBASEHEAPCLASSINFORMATION_SET_OBJECTSIZE(vmThread, statsObject, entry->objectSize);
+					J9JAVAARRAYOFOBJECT_STORE_VM(vm, statsArray, cursor, statsObject);
+					cursor += 1;
+					entry = (J9HeapStatisticsTableEntry *) hashTableNextDo(&hashTableState);
+				}
+				statsArrayRef = vmFuncs->j9jni_createLocalRef(env, statsArray);
+			} else {
+				vmFuncs->setHeapOutOfMemoryError(vmThread);
+			}
+		}
+	}
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
+
+	return (jobjectArray) statsArrayRef;
+}
 
 /* The string that keeps its original bytes is string1.
  * String2 has its bytes set to be string1-> bytes if the offsets already match and the bytes are not already set to the same value
@@ -300,6 +368,68 @@ hasConstructor(J9VMThread *vmThread, J9StackWalkState *state)
 	}
 }
 
+static J9HashTable *
+collectHeapStatistics(J9VMThread *vmThread) {
+	J9JavaVM *vm = vmThread->javaVM;
+	J9HashTable *hashTable = hashTableNew(
+			OMRPORT_FROM_J9PORT(vm->portLibrary),
+			J9_GET_CALLSITE(),
+			64,
+			sizeof(J9HeapStatisticsTableEntry),
+			sizeof(U_8*),
+			0,
+			J9MEM_CATEGORY_CLASSES,
+			heapStatisticsHashFn,
+			heapStatisticsHashEqualFn,
+			NULL,
+			vm
+	);
+
+	vm->memoryManagerFunctions->j9mm_iterate_all_objects(vmThread->javaVM,
+			vm->portLibrary, 0, updateHeapStatistics, hashTable);
+	return hashTable;
+}
+
+static jvmtiIterationControl
+updateHeapStatistics(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *state)
+{
+	J9HashTable *hashTable = (J9HashTable *) state;
+	j9object_t obj = objDesc->object;
+	J9Class *klass = J9OBJECT_CLAZZ_VM(vm, obj);
+	struct J9HeapStatisticsTableEntry query;
+	struct J9HeapStatisticsTableEntry *result;
+
+	query.klass = klass;
+	result = hashTableFind(hashTable, &query);
+	if (NULL == result) {
+		query.objectCount = 1;
+		query.objectSize = vm->memoryManagerFunctions->j9gc_get_object_size_in_bytes(vm, obj);
+		result = hashTableAdd(hashTable,  &query);
+		if (NULL == result) {
+			J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+			Trc_JCL_heapStatisticsTableAddFail(vmThread);
+			vm->internalVMFunctions->setNativeOutOfMemoryError(vmThread, 0, 0);
+		}
+	} else {
+		result->objectCount += 1;
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+static UDATA
+heapStatisticsHashEqualFn (void *leftKey, void *rightKey, void *userData)
+{
+	J9HeapStatisticsTableEntry *entryA = leftKey;
+	J9HeapStatisticsTableEntry *entryB = rightKey;
+	return (entryA->klass == entryB->klass);
+}
+
+static UDATA
+heapStatisticsHashFn (void *key, void *userData)
+{
+	J9HeapStatisticsTableEntry *entry = key;
+	return (UDATA) entry->klass;
+}
 
 
 /*
