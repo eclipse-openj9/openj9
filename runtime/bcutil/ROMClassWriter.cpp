@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -428,7 +428,8 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeVarHandleMethodTypeLookupTable(cursor, markAndCountOnly);
 	writeStaticSplitTable(cursor, markAndCountOnly);
 	writeSpecialSplitTable(cursor, markAndCountOnly);
-	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC); // TODO why U_64 alignment and not U_32
+	/* aligned to U_64 required by the shared classes */
+	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC);
 
 	/*
 	 * Write UTF8s
@@ -448,7 +449,8 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	) {
 		classDataCursor->mark(_intermediateClassDataSRPKey);
 		classDataCursor->writeData(_context->intermediateClassData(), _context->intermediateClassDataLength(), Cursor::INTERMEDIATE_CLASS_DATA);
-		classDataCursor->padToAlignment(sizeof(U_64), Cursor::GENERIC); // TODO why U_64 alignment and not U_32
+		/* aligned to U_64 required by the shared classes */
+		classDataCursor->padToAlignment(sizeof(U_64), Cursor::GENERIC);
 	}
 }
 
@@ -1104,7 +1106,8 @@ void
 ROMClassWriter::writeUTF8s(Cursor *cursor)
 {
 	Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0).writeUTF8Block();
-	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC); // TODO why U_64 alignment and not U_32
+	/* aligned to U_64 required by the shared classes */
+	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC);
 }
 
 void
