@@ -35,6 +35,12 @@ target_link_libraries(vmruntimestateagent
 		tools_agentbase
 )
 
+omr_add_exports(vmruntimestateagent
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS vmruntimestateagent
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

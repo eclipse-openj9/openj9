@@ -28,6 +28,8 @@ target_link_libraries(bcproftest
 		j9vm_interface
 )
 
+omr_add_exports(bcproftest JVM_OnLoad)
+
 install(
 	TARGETS bcproftest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

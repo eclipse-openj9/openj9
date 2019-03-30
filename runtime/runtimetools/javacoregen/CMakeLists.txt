@@ -35,6 +35,12 @@ target_link_libraries(jcoregen
 		tools_agentbase
 )
 
+omr_add_exports(jcoregen
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS jcoregen
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -202,6 +202,16 @@ target_link_libraries(j9vm
 		j9thr
 )
 
+omr_add_exports(j9vm
+	J9_CreateJavaVM
+	J9_GetCreatedJavaVMs
+	J9_GetInterface
+)
+
+if(J9VM_INTERP_TRACING)
+	omr_add_exports(j9vm trace)
+endif()
+
 install(
 	TARGETS j9vm
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -39,6 +39,12 @@ target_link_libraries(softmxtest
 		tools_agentbase
 )
 
+omr_add_exports(softmxtest
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS softmxtest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -61,6 +61,13 @@ target_include_directories(j9dmp
 		${CMAKE_CURRENT_BINARY_DIR}
 		../shared_common
 )
+
+omr_add_exports(j9dmp
+	JVM_OnUnload
+	JVM_OnLoad
+	J9VMDllMain
+)
+
 install(
 	TARGETS j9dmp
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

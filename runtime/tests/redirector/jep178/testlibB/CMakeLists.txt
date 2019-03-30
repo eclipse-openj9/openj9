@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,3 +22,9 @@
 
 add_library(testlibB SHARED testlibB.c)
 target_link_libraries(testlibB PRIVATE j9vm_interface)
+
+omr_add_exports(testlibB
+    JNI_OnLoad
+    JNI_OnUnload
+    Java_com_ibm_j9_tests_jeptests_StaticLinking_barImpl
+)

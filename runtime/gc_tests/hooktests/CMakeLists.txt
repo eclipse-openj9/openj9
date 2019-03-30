@@ -30,6 +30,8 @@ target_link_libraries(hooktests
 		j9vm_gc_includes
 )
 
+omr_add_exports(hooktests JVM_OnLoad)
+
 install(
 	TARGETS hooktests
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

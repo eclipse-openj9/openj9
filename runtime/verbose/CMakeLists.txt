@@ -102,6 +102,12 @@ target_compile_definitions(j9vrb
 		-DJ9VM_INTERP_LINEAR_STACKWALK_TRACING
 )
 
+omr_add_exports(j9vrb
+	JVM_OnLoad
+	JVM_OnUnload
+	J9VMDllMain
+)
+
 install(
 	TARGETS j9vrb
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

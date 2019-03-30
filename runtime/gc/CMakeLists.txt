@@ -87,6 +87,11 @@ target_include_directories(j9gc
 		$<TARGET_PROPERTY:omrgc,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
+omr_add_exports(j9gc
+	JVM_OnLoad
+	J9VMDllMain
+)
+
 install(
 	TARGETS j9gc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
