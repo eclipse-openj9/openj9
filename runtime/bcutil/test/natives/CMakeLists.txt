@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,3 +49,5 @@ target_link_libraries(bcuwhite_test
 		#endif
 		j9bcv
 )
+
+omr_add_exports(bcuwhite_test Java_com_ibm_j9_test_bcutil_TestNatives_verifyCanonisizeAndCopyUTF8)

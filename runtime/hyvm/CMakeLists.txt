@@ -46,6 +46,12 @@ set_target_properties(harmony_jvm PROPERTIES
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
+omr_add_exports(harmony_jvm
+	JNI_CreateJavaVM
+	JNI_GetCreatedJavaVMs
+	JNI_GetDefaultJavaVMInitArgs
+)
+
 install(
 	TARGETS harmony_jvm
 	LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}

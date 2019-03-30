@@ -74,6 +74,11 @@ target_link_libraries(j9jvmti
 		j9zip
 )
 
+omr_add_exports(j9jvmti
+	JVM_OnLoad
+	J9VMDllMain
+)
+
 install(
 	TARGETS j9jvmti
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

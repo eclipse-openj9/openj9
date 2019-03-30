@@ -39,6 +39,11 @@ target_link_libraries(j9jextract
 		j9pool
 )
 
+omr_add_exports(j9jextract
+	Java_com_ibm_jvm_j9_dump_extract_Main_doCommand
+	Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer
+)
+
 install(
 	TARGETS j9jextract
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

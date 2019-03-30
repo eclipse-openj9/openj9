@@ -35,6 +35,12 @@ target_link_libraries(memorywatcher
 		tools_agentbase
 )
 
+omr_add_exports(memorywatcher
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS memorywatcher
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

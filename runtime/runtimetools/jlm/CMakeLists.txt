@@ -35,6 +35,12 @@ target_link_libraries(jlmagent
 		tools_agentbase
 )
 
+omr_add_exports(jlmagent
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS jlmagent
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

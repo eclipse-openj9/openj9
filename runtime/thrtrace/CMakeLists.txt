@@ -32,6 +32,8 @@ target_link_libraries(thrtrace
 		j9vm_interface
 )
 
+omr_add_exports(thrtrace Java_com_ibm_oti_vm_thread_Tracing_reset)
+
 install(
 	TARGETS thrtrace
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -38,6 +38,12 @@ target_link_libraries(migration
 		tools_agentbase
 )
 
+omr_add_exports(migration
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS migration
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

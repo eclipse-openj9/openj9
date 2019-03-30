@@ -35,6 +35,12 @@ target_link_libraries(osmemory
 		tools_agentbase
 )
 
+omr_add_exports(osmemory
+	Agent_OnUnload
+	Agent_OnLoad
+	Agent_OnAttach
+)
+
 install(
 	TARGETS osmemory
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

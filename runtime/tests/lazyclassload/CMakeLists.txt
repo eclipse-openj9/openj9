@@ -29,6 +29,12 @@ target_link_libraries(j9lazyClassLoad
 		jvm
 )
 
+omr_add_exports(j9lazyClassLoad
+	Java_j9vm_test_classloader_LazyClassLoaderInitTest_jniDefineClass
+	Java_j9vm_test_classloader_LazyClassLoaderInitTest_jvmFindClass
+	Java_j9vm_test_classloader_LazyClassLoaderInitTest_jvmtiCountLoadedClasses
+)
+
 install(
 	TARGETS j9lazyClassLoad
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
