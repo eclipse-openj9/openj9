@@ -27,8 +27,8 @@
 #include "ReferenceObjectBufferRealtime.hpp"
 
 #include "GCExtensions.hpp"
+#include "MetronomeDelegate.hpp"
 #include "RealtimeGC.hpp"
-#include "RealtimeGCDelegate.hpp"
 #include "ReferenceObjectList.hpp"
 
 MM_ReferenceObjectBufferRealtime::MM_ReferenceObjectBufferRealtime(UDATA maxObjectCount)

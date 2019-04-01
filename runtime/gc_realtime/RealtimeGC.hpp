@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -36,11 +35,10 @@
 #include "IncrementalOverflow.hpp"
 #include "MemorySubSpace.hpp"
 #include "MemoryPoolSegregated.hpp"
+#include "MetronomeDelegate.hpp"
 #include "omrmodroncore.h"
 #include "OMRVMInterface.hpp"
-#include "RealtimeGCDelegate.hpp"
 #include "Scheduler.hpp"
-#include "StaccatoGCDelegate.hpp"
 #include "WorkPacketsRealtime.hpp"
 
 class MM_Dispatcher;
@@ -82,7 +80,6 @@ private:
 	MM_CycleState _cycleState;  /**< Embedded cycle state to be used as the master cycle state for GC activity */
 
 	bool _moreTracingRequired; /**< Is used to decide if there needs to be another pass of the tracing loop. */
-	MM_StaccatoGCDelegate _staccatoDelegate;
 
 protected:
 	MM_RealtimeMarkingScheme *_markingScheme; /**< The marking scheme used to mark objects. */
@@ -103,7 +100,7 @@ public:
 	MM_WorkPacketsRealtime *_workPackets;
 
 	bool _stopTracing;
-	MM_RealtimeGCDelegate _realtimeDelegate;
+	MM_MetronomeDelegate _realtimeDelegate;
 
 	/*
 	 * Function members
@@ -243,7 +240,7 @@ public:
 
 	MM_RealtimeMarkingScheme *getMarkingScheme() { return _markingScheme; }
 	MM_SweepSchemeRealtime *getSweepScheme() { return _sweepScheme; }
-	MM_RealtimeGCDelegate *getRealtimeDelegate() { return &_realtimeDelegate; }
+	MM_MetronomeDelegate *getRealtimeDelegate() { return &_realtimeDelegate; }
 
 	virtual bool isMarked(void *objectPtr);
 
@@ -256,7 +253,6 @@ public:
 		, _sweepingArraylets(false)
 		, _cycleState()
 		, _moreTracingRequired(false)
-		, _staccatoDelegate(env)
 		, _markingScheme(NULL)
 		, _sweepScheme(NULL)
 		, _memoryPool(NULL)
@@ -271,7 +267,6 @@ public:
 	{
 		_typeId = __FUNCTION__;
 		_realtimeDelegate._realtimeGC = this;
-		_staccatoDelegate._realtimeGC = this;
 	}
 
 	/*
@@ -279,7 +274,7 @@ public:
 	 */
 	friend class MM_MemoryPoolSegregated;
 	friend class MM_Scheduler;
-	friend class MM_RealtimeGCDelegate;
+	friend class MM_MetronomeDelegate;
 };
 
 #endif /* REALTIMEGC_HPP_ */

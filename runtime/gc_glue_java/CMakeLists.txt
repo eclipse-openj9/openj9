@@ -37,17 +37,14 @@ target_sources(j9vm_gc_glue
 		${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootClearer.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootMarker.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MemorySubSpaceMetronomeDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MetronomeAlarmThreadDelegate.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/MetronomeDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/MixedObjectModel.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModel.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModelDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/RealtimeGCDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerBackOutScanner.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerDelegate.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootClearer.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootScanner.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/StaccatoGCDelegate.cpp
 )
 target_link_libraries(j9vm_gc_glue
 	INTERFACE
