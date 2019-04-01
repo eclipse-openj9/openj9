@@ -247,6 +247,7 @@ class TR_RelocationRuntime {
       uint32_t getNumInlinedAllocRelos() { return 0; }
       uint32_t getNumFailedAllocInlinedRelos() { return 0; }
 #endif
+      virtual J9JITExceptionTable *copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader);
 
    private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)                           { return NULL; }
