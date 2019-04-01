@@ -24,20 +24,30 @@ package com.ibm.j9ddr.vm29.j9;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
-
+import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccValueType;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9FlattenedClassCachePointer;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
+import static com.ibm.j9ddr.vm29.structure.J9JavaClassFlags.J9ClassIsFlattened;
+import static com.ibm.j9ddr.vm29.structure.J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble;
+import static com.ibm.j9ddr.vm29.structure.J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference;
 
 public class ObjectFieldInfo {
 	J9ROMClassPointer romClass;
@@ -60,6 +70,11 @@ public class ObjectFieldInfo {
 	int superclassBackfillOffset; /* inherited backfill */
 	int myBackfillOffset; /* backfill available for this class's fields */
 	int subclassBackfillOffset; /* backfill available to subclasses */
+	boolean isValue = false;
+	J9FlattenedClassCachePointer flattenedClassCache = J9FlattenedClassCachePointer.NULL;
+	int totalFlatFieldDoubleBytes = 0;
+	int totalFlatFieldRefBytes = 0;
+	int totalFlatFieldSingleBytes = 0;
 
 	public static final int	NO_BACKFILL_AVAILABLE = -1;
 	public static final int		BACKFILL_SIZE = U32.SIZEOF;
@@ -81,6 +96,15 @@ public class ObjectFieldInfo {
 		subclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 		objectCanUseBackfill = (fj9object_t_SizeOf == BACKFILL_SIZE);
 		instanceFieldBackfillEligible = false;
+	}
+
+	ObjectFieldInfo(J9ROMClassPointer romClass, J9FlattenedClassCachePointer cache) throws CorruptDataException {
+		this(romClass);
+		flattenedClassCache = cache;
+		isValue = romClass.modifiers().allBitsIn(J9AccValueType);
+		totalFlatFieldDoubleBytes = 0;
+		totalFlatFieldRefBytes = 0;
+		totalFlatFieldSingleBytes = 0;
 	}
 
 	int getTotalDoubleCount() {
@@ -213,9 +237,13 @@ public class ObjectFieldInfo {
 	 */
 	int calculateFieldDataStart() {
 		int fieldDataStart = getSuperclassFieldsSize();
+		boolean doubleAlignment = (totalDoubleCount > 0);
+		if (ValueTypeHelper.valueTypeFlag()) {
+			doubleAlignment = doubleAlignment || (totalFlatFieldDoubleBytes > 0);
+		}
 		if (
 				((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0) && /* superclass is not end-aligned */
-				((totalDoubleCount > 0) || (!objectCanUseBackfill && (totalObjectCount > 0)))
+				(doubleAlignment || (!objectCanUseBackfill && (totalObjectCount > 0)))
 				){ /* our fields start on a 8-byte boundary */
 			fieldDataStart += BACKFILL_SIZE;
 		}
@@ -284,8 +312,39 @@ public class ObjectFieldInfo {
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
-					instanceObjectCount += 1;
-					totalObjectCount += 1;
+					if (ValueTypeHelper.valueTypeFlag()) {
+						String sigName = J9ROMFieldShapeHelper.getSignature(f);
+						if (sigName.substring(0, 1).equals("Q")) {
+							J9ClassPointer fieldClass = J9ClassPointer.NULL;
+							fieldClass = ValueTypeHelper.findJ9ClassInFlattenedClassCache(flattenedClassCache,
+									sigName.substring(1, sigName.length() - 1));
+							if (!((J9ClassHelper.extendedClassFlags(fieldClass)).anyBitsIn(J9ClassIsFlattened))) {
+								instanceObjectCount += 1;
+								totalObjectCount += 1;
+							} else if ((J9ClassHelper.extendedClassFlags(fieldClass))
+									.allBitsIn(J9ClassLargestAlignmentConstraintDouble)) {
+								totalFlatFieldDoubleBytes += Scalar
+										.roundToSizeofU64(
+												fieldClass.totalInstanceSize().sub(fieldClass.backfillOffset()))
+										.intValue();
+							} else if ((J9ClassHelper.extendedClassFlags(fieldClass))
+									.allBitsIn(J9ClassLargestAlignmentConstraintReference)) {                                                                               
+								totalFlatFieldRefBytes += Scalar
+										.roundToSizeToFJ9object(
+												fieldClass.totalInstanceSize().sub(fieldClass.backfillOffset()))
+										.intValue();
+							} else {
+								totalFlatFieldSingleBytes += fieldClass.totalInstanceSize()
+										.sub(fieldClass.backfillOffset()).intValue();
+							}
+						} else {
+							instanceObjectCount += 1;
+							totalObjectCount += 1;
+						}
+					} else {
+						instanceObjectCount += 1;
+						totalObjectCount += 1;
+					}
 				} else if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 					instanceDoubleCount += 1;
 					totalDoubleCount += 1;
@@ -321,29 +380,91 @@ public class ObjectFieldInfo {
 	}
 
 	int calculateTotalFieldsSizeAndBackfill() { /* TODO update to handle contended fields */
-		long accumulator = superclassFieldsSize + 
-				(totalObjectCount * J9Object.SIZEOF) + (totalSingleCount * U32.SIZEOF) + (totalDoubleCount * U64.SIZEOF);
-		/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
-		if (
-				((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0) && /* superclass is not end-aligned */
-				((totalDoubleCount > 0) || (!objectCanUseBackfill && (totalObjectCount > 0)))
-				){ /* our fields start on a 8-byte boundary */
-			superclassBackfillOffset = getSuperclassFieldsSize();
-			accumulator += BACKFILL_SIZE;
-		}
-		if (isSuperclassBackfillSlotAvailable() && isBackfillSuitableFieldAvailable()) {
-			accumulator -= BACKFILL_SIZE;
-			myBackfillOffset = superclassBackfillOffset;
-			superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
-		}
-		if (((accumulator + J9Object.SIZEOF) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
-			/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
-			subclassBackfillOffset = (int) accumulator;
-			accumulator += BACKFILL_SIZE;
+		long accumulator = superclassFieldsSize + (totalObjectCount * J9Object.SIZEOF) + (totalSingleCount * U32.SIZEOF)
+				+ (totalDoubleCount * U64.SIZEOF);
+		if (ValueTypeHelper.valueTypeFlag()) {
+			accumulator += totalFlatFieldDoubleBytes + totalFlatFieldRefBytes + totalFlatFieldSingleBytes;
+
+			/* ValueTypes cannot be subtyped and their superClass contains no fields */
+			if (!isValue) {
+				if (((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0)
+						&& /* superclass is not end-aligned */
+						((totalDoubleCount > 0) || (!objectCanUseBackfill
+								&& (totalObjectCount > 0)))) { /* our fields start on a 8-byte boundary */
+					superclassBackfillOffset = getSuperclassFieldsSize();
+					accumulator += BACKFILL_SIZE;
+				}
+				if (isSuperclassBackfillSlotAvailable() && isBackfillSuitableFieldAvailable()) {
+					accumulator -= BACKFILL_SIZE;
+					myBackfillOffset = superclassBackfillOffset;
+					superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
+				}
+				if (((accumulator + J9Object.SIZEOF) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
+					/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
+					subclassBackfillOffset = (int)accumulator;
+					accumulator += BACKFILL_SIZE;
+				} else {
+					subclassBackfillOffset = superclassBackfillOffset;
+				}
+			} else {
+				int firstFieldOffset = calculateFieldDataStart();
+				accumulator += firstFieldOffset;
+				subclassBackfillOffset = firstFieldOffset;
+			}
 		} else {
-			subclassBackfillOffset = superclassBackfillOffset;
+			/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
+			if (((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0)
+					&& /* superclass is not end-aligned */
+					((totalDoubleCount > 0) || (!objectCanUseBackfill
+							&& (totalObjectCount > 0)))) { /* our fields start on a 8-byte boundary */
+				superclassBackfillOffset = getSuperclassFieldsSize();
+				accumulator += BACKFILL_SIZE;
+			}
+			if (isSuperclassBackfillSlotAvailable() && isBackfillSuitableFieldAvailable()) {
+				accumulator -= BACKFILL_SIZE;
+				myBackfillOffset = superclassBackfillOffset;
+				superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
+			}
+			if (((accumulator + J9Object.SIZEOF) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
+				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
+				subclassBackfillOffset = (int)accumulator;
+				accumulator += BACKFILL_SIZE;
+			} else {
+				subclassBackfillOffset = superclassBackfillOffset;
+			}
 		}
 		return (int) accumulator;
 	}
 
+
+
+	/**
+	 * @param start end of previous field area, which should be the first field area
+	 * @return offset to end of the flat doubles area
+	 */
+	int
+	addFlatDoublesArea(int start)
+	{
+		return start + totalFlatFieldDoubleBytes;
+	}
+
+	/**
+	 * @param start end of previous field area, which should be after doubles
+	 * @return offset to end of the flat doubles area
+	 */
+	int
+	addFlatObjectsArea(int start)
+	{
+		return start + totalFlatFieldRefBytes;
+	}
+
+	/**
+	 * @param start end of previous field area, which should be after objects
+	 * @return offset to end of the flat doubles area
+	 */
+	int
+	addFlatSinglesArea(int start)
+	{
+		return start + totalFlatFieldSingleBytes;
+	}
 }

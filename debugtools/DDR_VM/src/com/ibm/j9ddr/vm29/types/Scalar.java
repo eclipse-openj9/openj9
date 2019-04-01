@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@ package com.ibm.j9ddr.vm29.types;
 
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 
 public abstract class Scalar extends DataType {
 	protected long data;
@@ -193,6 +194,17 @@ public abstract class Scalar extends DataType {
 	public static UDATA roundToSizeofU32(UDATA value)
 	{
 		return roundTo(value, U32.SIZEOF);
+	}
+	
+	public static UDATA roundToSizeofU64(UDATA value)
+	{
+		return roundTo(value, U64.SIZEOF);
+	}
+
+	public static UDATA roundToSizeToFJ9object(UDATA value)
+	{
+		int fj9object_t_SizeOf = (J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF);
+		return roundTo(value, fj9object_t_SizeOf);
 	}
 	
 	protected static UDATA roundTo(UDATA value, long size) 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,6 +99,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.VMConstantPoolCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.VmCheckCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.WalkInternTableCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.WalkJ9PoolCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FlatObjectCommand;
 
 /**
  * @author andhall
@@ -195,6 +196,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindModulesCommand());
 		toPassBack.add(new DumpModuleCommand());
 		toPassBack.add(new DumpPackageCommand());
+		toPassBack.add(new FlatObjectCommand());
 
 		loadPlugins(toPassBack, loader);
 

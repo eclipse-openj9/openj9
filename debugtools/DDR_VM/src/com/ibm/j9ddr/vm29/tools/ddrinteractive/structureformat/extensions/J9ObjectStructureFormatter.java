@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,6 +63,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -101,7 +102,7 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				U8Pointer dataStart =  U8Pointer.cast(object).add(ObjectModel.getHeaderSize(object));
 				
 				if (className.equals("java/lang/String")) {
-					formatStringObject(out, 0, clazz, dataStart, object);
+					formatStringObject(out, 0, clazz, dataStart, object, address);
 				} else if (isArray) {
 					int begin = DEFAULT_ARRAY_FORMAT_BEGIN;
 					int end = DEFAULT_ARRAY_FORMAT_END;
@@ -115,7 +116,7 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 
 					formatArrayObject(out, clazz, dataStart, J9IndexableObjectPointer.cast(object), begin, end);
 				} else {
-					formatObject(out, clazz, dataStart, object);
+					formatObject(out, clazz, dataStart, object, address);
 				}
 			} catch (MemoryFault ex2) {
 				out.println("Unable to read object clazz at " + object.getHexAddress() + " (clazz = "  + clazz.getHexAddress() + ")");
@@ -129,12 +130,12 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		}
 	}
 	
-	private void formatObject(PrintStream out, J9ClassPointer localClazz, U8Pointer dataStart, J9ObjectPointer localObject) throws CorruptDataException
+	private void formatObject(PrintStream out, J9ClassPointer localClazz, U8Pointer dataStart, J9ObjectPointer localObject, long address) throws CorruptDataException
 	{
 		out.print(String.format("!J9Object %s {", localObject.getHexAddress()));
 		out.println();
 
-		printJ9ObjectFields(out, 1, localClazz, dataStart, localObject);
+		printJ9ObjectFields(out, 1, localClazz, dataStart, localObject, address);
 		out.println("}");
 	}
 	
@@ -248,16 +249,16 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		}
 	}
 	
-	private void formatStringObject(PrintStream out, int tabLevel, J9ClassPointer localClazz, U8Pointer dataStart, J9ObjectPointer localObject) throws CorruptDataException 
+	private void formatStringObject(PrintStream out, int tabLevel, J9ClassPointer localClazz, U8Pointer dataStart, J9ObjectPointer localObject, long address) throws CorruptDataException 
 	{
 		out.println(String.format("J9VMJavaLangString at %s {\n", localObject.getHexAddress()));
-		printJ9ObjectFields(out, tabLevel, localClazz, dataStart, localObject);
+		printJ9ObjectFields(out, tabLevel, localClazz, dataStart, localObject, address);
 		padding(out, tabLevel);
 		out.println(String.format("\"%s\"\n", J9ObjectHelper.stringValue(localObject)));
 		out.println("}");		
 	}
 	
-	private void printJ9ObjectFields(PrintStream out, int tabLevel, J9ClassPointer localClazz, U8Pointer dataStart, J9ObjectPointer localObject) throws CorruptDataException 
+	private void printJ9ObjectFields(PrintStream out, int tabLevel, J9ClassPointer localClazz, U8Pointer dataStart, J9ObjectPointer localObject, long address) throws CorruptDataException 
 	{
 		J9ClassPointer instanceClass = localClazz;
 		long superclassIndex;
@@ -296,6 +297,7 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 			U32 flags = new U32(J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
 			Iterator<J9ObjectFieldOffset> iterator = J9ObjectFieldOffsetIterator.J9ObjectFieldOffsetIteratorFor(superclass.romClass(), instanceClass, previousSuperclass, flags);
 
+			int index = 0;
 			while (iterator.hasNext()) 
 			{
 				J9ObjectFieldOffset result = iterator.next();
@@ -314,15 +316,16 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				}
 				
 				if (printField) {
-					printObjectField(out, tabLevel, localClazz, dataStart, superclass, result);
+					printObjectField(out, tabLevel, localClazz, dataStart, superclass, result, address, index);
 					out.println();
 				}
+				index++;
 			}
 			previousSuperclass = superclass;
 		}
 	}
 	
-	public void printObjectField(PrintStream out, int tabLevel, J9ClassPointer localClazz, U8Pointer dataStart, J9ClassPointer fromClass, J9ObjectFieldOffset objectFieldOffset) throws CorruptDataException 
+	public void printObjectField(PrintStream out, int tabLevel, J9ClassPointer localClazz, U8Pointer dataStart, J9ClassPointer fromClass, J9ObjectFieldOffset objectFieldOffset, long address, int index) throws CorruptDataException 
 	{
 		J9ROMFieldShapePointer fieldShape = objectFieldOffset.getField();
 		UDATA fieldOffset = objectFieldOffset.getOffsetOrAddress();
@@ -341,14 +344,22 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		if (fieldShape.modifiers().anyBitsIn(J9FieldSizeDouble)) {
 			out.print(U64Pointer.cast(valuePtr).at(0).getHexValue());
 		} else if (fieldShape.modifiers().anyBitsIn(J9FieldFlagObject)) {
-			AbstractPointer ptr = J9BuildFlags.gc_compressedPointers ? U32Pointer.cast(valuePtr) : UDATAPointer.cast(valuePtr);
-			out.print(String.format("!fj9object 0x%x", ptr.at(0).longValue()));
+			if(ValueTypeHelper.ifClassIsFlattened(localClazz.flattenedClassCache(), fieldName)) {
+				J9ObjectPointer object = J9ObjectPointer.cast(address);
+                		out.print(String.format("!flatobject 0x%x,%d", object.getAddress(), index));
+			} else {
+				AbstractPointer ptr = J9BuildFlags.gc_compressedPointers ? U32Pointer.cast(valuePtr) : UDATAPointer.cast(valuePtr);
+				out.print(String.format("!fj9object 0x%x", ptr.at(0).longValue()));
+			}
 		} else {
 			out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
 		}
-		
-		out.print(String.format(" (offset=%d) (%s)", fieldOffset.longValue(), className));
-				
+		if(ValueTypeHelper.ifClassIsFlattened(localClazz.flattenedClassCache(), fieldName)) {
+			out.print(String.format(" (offset=%d) (%s)", fieldOffset.longValue(), fieldSignature.substring(1, fieldSignature.length() - 1)));
+		} else {
+			out.print(String.format(" (offset=%d) (%s)", fieldOffset.longValue(), className));
+		}
+			
 		if (isHiddenField) {
 			out.print(" <hidden>");
 		}
