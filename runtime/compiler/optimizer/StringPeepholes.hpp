@@ -104,6 +104,7 @@ class TR_StringPeepholes : public TR::Optimization
    bool skipNodeUnderOSR(TR::Node *node);
    bool invalidNodeUnderOSR(TR::Node *node);
    void removePendingPushOfResult(TR::TreeTop *callTreeTop);
+   void removeAllocationFenceOfNew(TR::TreeTop *newTreeTop);
    void postProcessTreesForOSR(TR::TreeTop *startTree, TR::TreeTop *endTree);
 
    bool _stringClassesRedefined;
