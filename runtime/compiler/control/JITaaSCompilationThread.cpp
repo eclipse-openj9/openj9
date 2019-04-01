@@ -1198,6 +1198,20 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             }
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethod:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, I_32, bool, TR_ResolvedJ9Method *>();
+         auto clazz = std::get<0>(recv);
+         auto offset = std::get<1>(recv);
+         auto ignoreRTResolve = std::get<2>(recv);
+         auto owningMethod = std::get<3>(recv);
+         TR_OpaqueMethodBlock *ramMethod = fe->getResolvedVirtualMethod(clazz, offset, ignoreRTResolve);
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         if (ramMethod)
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodMirror(methodInfo, ramMethod, 0, owningMethod, fe, trMemory);
+         client->write(ramMethod, methodInfo);
+         }
+         break;
       case J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());

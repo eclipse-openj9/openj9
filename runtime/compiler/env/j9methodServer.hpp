@@ -120,7 +120,7 @@ namespace std
 // Since one cache contains different types of resolved methods, need to uniquely identify
 // each type. Apparently, the same cpIndex may refer to both virtual or special method,
 // for different method calls, so using TR_ResolvedMethodType is necessary.
-enum TR_ResolvedMethodType {Virtual, Interface, Static, Special};
+enum TR_ResolvedMethodType {VirtualFromCP, VirtualFromOffset, Interface, Static, Special};
 struct
 TR_ResolvedMethodKey
    {
@@ -257,8 +257,8 @@ private:
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
-   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod *resolvedMethod, bool *unresolvedInCP);
-   bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP);
+   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod *resolvedMethod, bool *unresolvedInCP = NULL);
+   bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
    };
 
 class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSServerMethod

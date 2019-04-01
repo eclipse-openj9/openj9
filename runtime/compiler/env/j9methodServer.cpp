@@ -246,7 +246,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
    return 0;
 #else
    TR_ResolvedMethod *resolvedMethod = nullptr;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Virtual, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    // See if the constant pool entry is already resolved or not
@@ -310,7 +310,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
       
       }
-   cacheResolvedMethod({TR_ResolvedMethodType::Virtual, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
+   cacheResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
 #endif
@@ -735,20 +735,32 @@ TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-   // the frontend method performs a RPC
-   void * ramMethod = fej9->getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
-   TR_ResolvedMethod *m;
+   if (fej9->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE && !ignoreRtResolve)
+      return NULL;
+
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   // If method is already cached, return right away
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::VirtualFromOffset, virtualCallOffset, classObject}, &resolvedMethod)) 
+      return resolvedMethod;
+
+   // Remote call finds RAM method at offset and creates a resolved method at the client
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve, (TR_ResolvedJ9Method *) getRemoteMirror());
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITaaSServerMethodInfo>();
+   auto ramMethod = std::get<0>(recv);
+   auto &methodInfo = std::get<1>(recv);
+
    // it seems better to override this method for AOT but that's what baseline is doing
    // maybe there is a reason for it
    if (_fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
+      resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
       }
    else
       {
-      m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
+      resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
       }
-   return m;
+   cacheResolvedMethod({TR_ResolvedMethodType::VirtualFromOffset, virtualCallOffset, classObject}, resolvedMethod);
+   return resolvedMethod;
    }
 
 bool

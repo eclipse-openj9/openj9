@@ -102,12 +102,15 @@ enum J9ServerMessageType
    ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror = 147;
    ResolvedMethod_isUnresolvedString = 148;
    ResolvedMethod_stringConstant = 149;
+   ResolvedMethod_getResolvedVirtualMethod = 150;
 
-   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 150;
-   ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 151;
-   ResolvedRelocatableMethod_fieldAttributes = 152;
-   ResolvedRelocatableMethod_staticAttributes = 153;
-   ResolvedRelocatableMethod_getFieldType = 154;
+   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 160;
+   ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 161;
+   ResolvedRelocatableMethod_fieldAttributes = 162;
+   ResolvedRelocatableMethod_staticAttributes = 163;
+   ResolvedRelocatableMethod_getFieldType = 164;
+
+
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
    VM_isClassLibraryMethod = 201;
