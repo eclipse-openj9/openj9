@@ -4908,7 +4908,8 @@ isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
 	bool ret = true;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (-1 == SH_OSCache::getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
+	if (-1 == j9shr_getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
+		/* use j9shr_getCacheDir() instead of SH_OSCache::getCacheDir() to avoid dupliated NLS message if SH_OSCache::getCacheDir() failed */
 		Trc_SHR_INIT_isFreeDiskSpaceLow_getDirFailed();
 		goto done;
 	}
@@ -5140,7 +5141,7 @@ j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2)
 IDATA
 j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType)
 {
-	return SH_OSCache::getCacheDir(vm, ctrlDirName, buffer, bufferSize, cacheType);
+	return SH_OSCache::getCacheDir(vm, ctrlDirName, buffer, bufferSize, cacheType, false);
 }
 
 } /* extern "C" */

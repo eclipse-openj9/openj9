@@ -77,6 +77,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 #if !defined(WIN32) && !defined(WIN64)
 				char defaultCacheDir[J9SH_MAXPATH];
 				IDATA ret = 0;
+				BOOLEAN usingDefaultDir = TRUE;
 #endif
 				IDATA argIndex1 = -1;
 				IDATA argIndex2 = -1;
@@ -184,18 +185,22 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				} else {
 					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 				}
-				/* set runtimeFlags and verboseFlags here as they will be used later in SH_OSCache::getCacheDir() */
+				/* set runtimeFlags and verboseFlags here as they will be used later in j9shr_getCacheDir() */
 				vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
 				vm->sharedCacheAPI->verboseFlags = verboseFlags;
 
 #if !defined(WIN32) && !defined(WIN64)
-				/* Get platform default cache directory */
-				ret = j9shr_getCacheDir(vm, NULL, defaultCacheDir, J9SH_MAXPATH, vm->sharedCacheAPI->cacheType);
+				if (NULL != ctrlDirName) {
+					/* Get platform default cache directory */
+					ret = j9shr_getCacheDir(vm, NULL, defaultCacheDir, J9SH_MAXPATH, vm->sharedCacheAPI->cacheType);
+					if ((0 == ret)
+						&& (0 != strcmp(defaultCacheDir, ctrlDirName))
+					) {
+						usingDefaultDir = FALSE;
+					}
+				}
 
-				if ((NULL != ctrlDirName)
-					&& (0 == ret)
-					&& (0 != (strcmp(defaultCacheDir, ctrlDirName)))
-				) {
+				if (FALSE == usingDefaultDir) {
 					vm->sharedCacheAPI->cacheDirPerm = convertPermToDecimal(vm, cacheDirPermStr);
 					if ((UDATA)-1 == vm->sharedCacheAPI->cacheDirPerm) {
 						return J9VMDLLMAIN_FAILED;
