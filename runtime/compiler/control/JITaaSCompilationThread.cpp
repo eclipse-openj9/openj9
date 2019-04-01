@@ -419,7 +419,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getVMInfo:
          {
-         ClientSessionData::VMInfo vmInfo;
+         ClientSessionData::VMInfo vmInfo = {};
          vmInfo._systemClassLoader = fe->getSystemClassLoader();
          vmInfo._processID = fe->getProcessID();
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
@@ -432,7 +432,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._compressedReferenceShift = TR::Compiler->om.compressedReferenceShift();
          vmInfo._cacheStartAddress = fe->sharedCache() ? fe->sharedCache()->getCacheStartAddress() : 0;
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
-
+         vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
+         vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : NULL;
          client->write(vmInfo);
          }
          break;

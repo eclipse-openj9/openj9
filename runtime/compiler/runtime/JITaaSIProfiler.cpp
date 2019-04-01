@@ -763,6 +763,11 @@ TR_JITaaSIProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, 
    // resolvedMethodSymbol is only used for debugging on the client, so we don't have to send it
    auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method);
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITaaS::J9ServerMessageType::IProfiler_persistIprofileInfo, serverMethod->getRemoteMirror());
-   auto recv = stream->read<JITaaS::Void>();
+   ClientSessionData *clientSessionData = comp->fej9()->_compInfoPT->getClientData();
+
+   if (clientSessionData->getOrCacheVMInfo(stream)->_elgibleForPersistIprofileInfo)
+      {
+      stream->write(JITaaS::J9ServerMessageType::IProfiler_persistIprofileInfo, serverMethod->getRemoteMirror());
+      auto recv = stream->read<JITaaS::Void>();
+      }
    }

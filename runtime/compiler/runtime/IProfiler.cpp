@@ -345,6 +345,13 @@ TR_IProfiler::walkILTreeForEntries(uintptrj_t *pcEntries, uint32_t &numEntries, 
    return bytesFootprint;
    }
 
+bool
+TR_IProfiler::elgibleForPersistIprofileInfo(TR::Compilation *comp) const
+   {
+      return (TR::Options::sharedClassCache() &&
+             !comp->getOption(TR_DisablePersistIProfile) &&
+             isIProfilingEnabled());
+   }
 
 void
 TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol, TR_ResolvedMethod *resolvedMethod, TR::Compilation *comp)
@@ -367,9 +374,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
    fprintf(stderr, "persistIprofileInfo for %s while compiling %s\n", methodSig, comp->signature());
 #endif
 
-   if (TR::Options::sharedClassCache()        // shared classes must be enabled
-      && !comp->getOption(TR_DisablePersistIProfile) &&
-      isIProfilingEnabled() &&
+   if (elgibleForPersistIprofileInfo(comp) &&
       (!SCfull || !comp->getOption(TR_DisableUpdateJITBytesSize)))
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)_vm;
