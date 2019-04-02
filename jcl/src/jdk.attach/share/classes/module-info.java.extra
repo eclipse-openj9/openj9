@@ -24,3 +24,4 @@
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
 provides com.sun.tools.attach.spi.AttachProvider with com.ibm.tools.attach.attacher.OpenJ9AttachProvider;
+exports com.ibm.tools.attach.attacher to jdk.jcmd;

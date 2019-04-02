@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.target;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.security.SecureRandom;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
@@ -45,13 +46,14 @@ import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_READ;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
+import static openj9.tools.attach.diagnostics.base.DiagnosticsInfo.OPENJ9_DIAGNOSTICS_PREFIX;
 
 /**
  * Utility class for operating system calls
  */
 public class IPC {
 
-	private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
+	private static final String JAVA_IO_TMPDIR = "java.io.tmpdir"; //$NON-NLS-1$
 	/**
 	 * Successful return code from natives.
 	 */
@@ -67,6 +69,13 @@ public class IPC {
 	static final int LOGGING_UNKNOWN = 0;
 	static final int LOGGING_DISABLED = 1;
 	static final int LOGGING_ENABLED = 2;
+	/**
+	 * Prefixes and names for Diagnostics properties
+	 */
+	public static final String INCOMPATIBLE_JAVA_VERSION = "OPENJ9_INCOMPATIBLE_JAVA_VERSION"; //$NON-NLS-1$
+	public final static String PROPERTY_DIAGNOSTICS_ERROR = OPENJ9_DIAGNOSTICS_PREFIX + "error"; //$NON-NLS-1$
+	public final static String PROPERTY_DIAGNOSTICS_ERRORTYPE = OPENJ9_DIAGNOSTICS_PREFIX + "errortype"; //$NON-NLS-1$
+	public final static String PROPERTY_DIAGNOSTICS_ERRORMSG = OPENJ9_DIAGNOSTICS_PREFIX + "errormsg"; //$NON-NLS-1$
 	/**
 	 * True if operating system is Windows.
 	 */
@@ -483,6 +492,13 @@ public class IPC {
 		defaultVmId = id;
 	}
 
+	/**
+	 * Send a properties file as a stream of bytes
+	 * 
+	 * @param props     Properties file
+	 * @param outStream destination of the bytes
+	 * @throws IOException on communication error
+	 */
 	public static void sendProperties(Properties props, OutputStream outStream)
 			throws IOException {
 		ByteArrayOutputStream propsBuffer = new ByteArrayOutputStream();
@@ -492,14 +508,20 @@ public class IPC {
 	}
 
 	/**
-	 * @param inStream  Source for the properties
-	 * @param requireNull Indicates if the input message must be null-terminated (typically for socket input) or end of file (typically for re-parsing an already-received message) 
+	 * @param inStream    Source for the properties
+	 * @param requireNull Indicates if the input message must be null-terminated
+	 *                    (typically for socket input) or end of file (typically for
+	 *                    re-parsing an already-received message)
 	 * @return properties object
-	 * @throws IOException
+	 * @throws IOException on communication error
 	 */
 	public static Properties receiveProperties(InputStream inStream, boolean requireNull)
 			throws IOException {
 		byte msgBuff[] = AttachmentConnection.streamReceiveBytes(inStream, 0, requireNull);
+		if (IPC.isLoggingEnabled()) {
+			String propsString = new String(msgBuff, StandardCharsets.UTF_8);
+			IPC.logMessage("Received properties file:", propsString); //$NON-NLS-1$
+		}
 		Properties props = new Properties();
 		props.load(new ByteArrayInputStream(msgBuff));
 		return props;

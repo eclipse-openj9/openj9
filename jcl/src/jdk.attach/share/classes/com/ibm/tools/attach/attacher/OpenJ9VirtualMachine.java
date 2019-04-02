@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.attacher;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -263,6 +263,18 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				options, true));
 		String response = AttachmentConnection.streamReceiveString(responseStream);
 		parseResponse(response);
+	}
+
+	/**
+	 * Request thread information, including stack traces, from a target VM.
+	 * 
+	 * @return properties object containing serialized thread information
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties getThreadInfo() throws IOException {
+		IPC.logMessage("enter getThreadInfo"); //$NON-NLS-1$
+		AttachmentConnection.streamSend(commandStream, Command.GET_THREAD_GROUP_INFO);
+		return IPC.receiveProperties(responseStream, true);
 	}
 
 	private void lockAllAttachNotificationSyncFiles(

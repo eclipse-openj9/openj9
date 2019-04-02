@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,5 +23,10 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
-exports com.ibm.java.lang.management.internal to jdk.jcmd, jdk.management;
-uses com.ibm.sharedclasses.spi.SharedClassProvider;
+module jdk.jcmd {
+  exports openj9.tools.attach.diagnostics.info;
+  provides openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider with openj9.tools.attach.diagnostics.target.TargetDiagnosticsProviderImpl;
+  requires java.base;
+  requires java.management;
+  requires jdk.attach;
+}
