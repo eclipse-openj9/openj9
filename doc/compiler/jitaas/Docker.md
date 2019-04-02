@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,21 +22,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Guidelines on the JITaaS Dockerfiles
 
-## build/Dockerfile
-- produces `openj9-jitaas-build` image
-- **prerequisite**: `openj9` image
-  - to obtain `openj9` image do the following:
-  - ```
-     docker build -f \ 
-     buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile \
-     -t=openj9 .
-      ```
-- What the image does:
-   - sets up the build environment for JITaaS
-   - pulls source from openjdk & OpenJ9/OMR jitaas branch by default and runs make commands to build JITaaS
-
-- to obtain `openj9-jitaas-build` image do the following:
-  ```
+## [build/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/build/Dockerfile)
+- **Prerequisite**: obtain `openj9` image first as below:
+   ```
+   docker build -f \
+   openj9/buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile \
+   -t=openj9 .
+   ```
+- <a name="openj9-jitaas-build"></a>`openj9-jitaas-build` image
+   - Sets up the build environment for JITaaS
+   - Pulls source from OpenJDK and OpenJ9 & OMR `jitaas` branch by default and runs make commands to build JITaaS
+- Build `openj9-jitaas-build` image as below:
+   ```
   docker build -f \ 
   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/build/Dockerfile \ 
   --build-arg openj9_repo=<your-openj9-repo> \ 
@@ -45,76 +42,69 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
   --build-arg omr_branch=<your-omr-branch> \
   -t=openj9-jitaas-build .
   ```
-  or without specifying repos and default to OpenJ9/OMR jitaas branch (latest jitaas changes)
+  Or without specifying repos and using the default latest `jitaas` branch for OpenJ9 and OMR
   ```
   docker build -f \ 
   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/build/Dockerfile \ 
   -t=openj9-jitaas-build .
   ```
 
-## run/Dockerfile
-- produces `openj9-jitaas-run` image
-- what the image does:
-   - starts up a JITaaS Server
-
-- **prerequisite**: `openj9-jitass-build` image
-- to build this Dockerfile, do:
+## [run/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/run/Dockerfile)
+- **Prerequisite**: [`openj9-jitaas-build` image](#openj9-jitaas-build)
+- `openj9-jitaas-run` image starts up a JITaaS Server. Build it as below:
    ```
    docker build -f \
    buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/run/Dockerfile \
    -t=openj9-jitaas-run .
    ```
-- to use the image to start up a JITaaS server:
+- <a name="openj9-jitaas-run"></a>To use the image to start up a JITaaS server:
    ```
    docker run -it -d openj9-jitaas-run
    ```
-- to find out its IPAddress
+- To find out its IPAddress
    ```
    docker inspect <openj9-jitaas-run-container-id> | grep "IPAddress"
    ```
-- to look at jitaas verbose logs
+- To look at jitaas verbose logs
    ```
    docker logs -f <openj9-jitaas-run-container-id>
    ```
 
-## test/Dockerfile
-- produces `openj9-jitaas-test` image
-- what the image does:
-   - sets up environment for openj9 tests for JITaaS
-
-- **prerequisite**: `openj9-jitaas-build` image
-- **prerequisite**: a running `openj9-jitaas-run` container and its IPAddress
-- to build the image:
+## [test/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/test/Dockerfile)
+- **Prerequisite**:
+   - [`openj9-jitaas-build` image](#openj9-jitaas-build)
+   - A running [`openj9-jitaas-run` container](#openj9-jitaas-run) (server) and its IPAddress
+- `openj9-jitaas-test` image (client) sets up the OpenJ9 test environment for JITaaS. Build it as below:
    ```
    docker build -f \
    buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/test/Dockerfile \
    -t=openj9-jitaas-test .
    ```
-- to use the image for testing:
+- To use the image for testing:
    ```
    docker run -it openj9-jitaas-test
    // once you're inside the container
    make _sanity EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> " 
-   // make sure to put spaces before and after "-XX:JITaaSClient:server=<IPAddress>"
+   // make sure to put spaces before and after " -XX:JITaaSClient:server=<IPAddress> "
 
    // to rerun failed tests
    make _failed EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> "
+
    // to run individual testcase
    make _<test_name> EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> " 
    ```
 
-## buildenv/Dockerfile
-- what the image does:
-    - similar to `build/Dockerfile`
-    - difference is it does not produce a jitaas build, it only sets up the environment for jitaas build
-- produces `openj9-jitaas-buildenv` image
-- to obtain the image do the following
+## [buildenv/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/buildenv/Dockerfile)
+- `openj9-jitaas-buildenv` image:
+    - Similar to `openj9-jitaas-build` built from `build/Dockerfile`
+    - The difference is that it does not produce a JITaaS build. It sets up only the environment for JITaaS build
+- Build `openj9-jitaas-buildenv` image as blow:
    ```
    docker build -f \
    buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/buildenv/Dockerfile \
    -t=openj9-jitaas-buildenv .
    ```
-- to use the image
+- To use the image
    ```
    docker run -it openj9-jitaas-buildenv
    // then you can build your jitaas binaries inside this container
