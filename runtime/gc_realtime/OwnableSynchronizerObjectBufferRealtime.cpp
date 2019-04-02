@@ -28,7 +28,7 @@
 
 #include "OwnableSynchronizerObjectList.hpp"
 #include "RealtimeGC.hpp"
-#include "RealtimeGCDelegate.hpp"
+#include "MetronomeDelegate.hpp"
 
 MM_OwnableSynchronizerObjectBufferRealtime::MM_OwnableSynchronizerObjectBufferRealtime(MM_GCExtensions *extensions, UDATA maxObjectCount)
 	: MM_OwnableSynchronizerObjectBuffer(extensions, maxObjectCount)

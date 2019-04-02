@@ -28,8 +28,6 @@
 
 #include "MemorySubSpaceSegregated.hpp"
 
-#include "MemorySubSpaceMetronomeDelegate.hpp"
-
 class MM_AllocateDescription;
 class MM_EnvironmentBase;
 class MM_GCCode;
@@ -42,14 +40,12 @@ class MM_MemoryPool;
 class MM_MemorySubSpaceMetronome : public MM_MemorySubSpaceSegregated
 {
 private:
-	MM_MemorySubSpaceMetronomeDelegate _delegate;
-
 	/* TODO: this is temporary as a way to avoid dup code in MemorySubSpaceMetronome::allocate. 
 	 * We will specifically fix this allocate method in a separate design.
 	 */
 	void *allocateMixedObjectOrArraylet(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, AllocateType allocType);
 	void collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCode, MM_AllocateDescription *allocDescription);
-	
+
 protected:
 	bool initialize(MM_EnvironmentBase *env);
 

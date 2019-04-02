@@ -93,7 +93,7 @@ public:
 	 * Friends
 	 */
 	friend class MM_Scheduler;
-	friend class MM_MetronomeAlarmThreadDelegate;
+	friend class MM_MetronomeDelegate;
 };
 
 #endif /* METRONOMEALARMTHREAD_HPP_ */

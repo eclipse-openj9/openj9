@@ -178,10 +178,6 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 	if (!_realtimeDelegate.initialize(env)) {
 		return false;
 	}
-
-	if (!_staccatoDelegate.initialize(env)) {
-		return false;
-	}
 	
  	_extensions->sATBBarrierRememberedSet = MM_RememberedSetSATB::newInstance(env, _workPackets);
  	if (NULL == _extensions->sATBBarrierRememberedSet) {
@@ -987,7 +983,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 				_sched->_barrierSynchronization->acquireExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
 				setCollectorTracing();
 			}
-			_moreTracingRequired |= _staccatoDelegate.doTracing(env);
+			_moreTracingRequired |= _realtimeDelegate.doTracing(env);
 
 			/* the workStack and rememberedSet use the same workPackets
 			 * as backing store.  If all packets are empty this means the
@@ -1002,18 +998,18 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 void
 MM_RealtimeGC::enableDoubleBarrier(MM_EnvironmentBase* env)
 {
-	_staccatoDelegate.enableDoubleBarrier(env);
+	_realtimeDelegate.enableDoubleBarrier(env);
 }
 
 void
 MM_RealtimeGC::disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread *vmThread)
 {
-	_staccatoDelegate.disableDoubleBarrierOnThread(env, vmThread);
+	_realtimeDelegate.disableDoubleBarrierOnThread(env, vmThread);
 }
 
 void
 MM_RealtimeGC::disableDoubleBarrier(MM_EnvironmentBase* env)
 {
-	_staccatoDelegate.disableDoubleBarrier(env);
+	_realtimeDelegate.disableDoubleBarrier(env);
 }
 
