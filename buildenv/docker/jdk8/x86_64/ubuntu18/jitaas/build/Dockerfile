@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,9 @@
 
 FROM openj9:latest
 
-ARG openj9_repo=git@github.com:eclipse/openj9.git
+ARG openj9_repo=https://github.com/eclipse/openj9.git
 ARG openj9_branch=jitaas
-ARG omr_repo=git@github.com:eclipse/openj9-omr.git
+ARG omr_repo=https://github.com/eclipse/openj9-omr.git
 ARG omr_branch=jitaas
 
 RUN apt-get update \
@@ -51,6 +51,7 @@ RUN apt-get update \
     build-essential \ 
     autoconf \
     pkg-config \
+    libfontconfig1-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # JITaaS needs to be built with a newer GCC
