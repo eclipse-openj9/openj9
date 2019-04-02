@@ -228,6 +228,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<preclude flag="env_sharedLibsUseGlobalTable"/>
 		</precludes>
 	</flag>
+	<flag id="env_crossbuild">
+		<description>Use toolchain for cross build.</description>
+		<ifRemoved>Build uses native build environment.</ifRemoved>
+	</flag>
 	<flag id="env_data64">
 		<description>Default register width is 64-bits.</description>
 		<ifRemoved>Default register width is 32-bits.</ifRemoved>
