@@ -331,6 +331,23 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     // compile the source and build the SDK
     jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR)
 
+    // Determine if Build job archived to Artifactory
+    def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
+    ARTIFACTORY_CREDS = ''
+    echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
+    if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
+        CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
+        ARTIFACTORY_CREDS = BUILD_JOB_ENV['ARTIFACTORY_CREDS']
+        ARTIFACTORY_SERVER = BUILD_JOB_ENV['ARTIFACTORY_SERVER']
+        ARTIFACTORY_REPO = BUILD_JOB_ENV['ARTIFACTORY_REPO']
+        ARTIFACTORY_NUM_ARTIFACTS = BUILD_JOB_ENV['ARTIFACTORY_NUM_ARTIFACTS']
+        echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
+        echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
+        echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
+
+        cleanup_artifactory(BUILD_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
+    }
+
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
         def TARGET_NAMES = get_test_target_names()
@@ -343,18 +360,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
         echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
 
-        // Determine if Build job archived to Artifactory
-        def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
-        ARTIFACTORY_CREDS = ''
-        echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
-        if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
-            CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
-            ARTIFACTORY_CREDS = BUILD_JOB_ENV['ARTIFACTORY_CREDS']
-            ARTIFACTORY_SERVER = BUILD_JOB_ENV['ARTIFACTORY_SERVER']
-            echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
-            echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
-            echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
-        }
         for (name in TARGET_NAMES) {
             def TEST_FLAG = ''
             if (name.contains('+jitaas')) {
@@ -365,6 +370,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
             testjobs["${TEST_JOB_NAME}"] = {
                 if (ARTIFACTORY_CREDS) {
+                    cleanup_artifactory(TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
                 } else {
                     jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
@@ -474,6 +480,21 @@ def get_downstream_job_names(spec, version) {
     }
 
     return downstreamJobNames
+}
+
+def cleanup_artifactory(job_name, artifactory_server, artifactory_repo, artifactory_num_artifacts){
+    try {
+        def cleanup_job_params = [
+            string(name: 'JOB_TYPE', value: 'COUNT'),
+            string(name: 'JOB_TO_CHECK', value: job_name),
+            string(name: 'ARTIFACTORY_SERVER', value: artifactory_repo),
+            string(name: 'ARTIFACTORY_REPO', value: artifactory_repo),
+            string(name: 'ARTIFACTORY_NUM_ARTIFACTS', value: artifactory_num_artifacts)]
+
+        build job: 'Cleanup_Artifactory', parameters: cleanup_job_params, wait: false
+    } catch (any){
+        echo 'The Cleanup_Artifactory job is not availible'
+    }
 }
 
 return this
