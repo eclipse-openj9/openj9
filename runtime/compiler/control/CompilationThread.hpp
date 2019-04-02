@@ -68,6 +68,7 @@ struct TR_MethodToBeCompiled;
 class TR_ResolvedMethod;
 class TR_RelocationRuntime;
 class ClientSessionData;
+namespace JITaaS { class J9ClientStream; }
 
 enum CompilationThreadState
    {
@@ -247,6 +248,9 @@ class CompilationInfoPerThreadBase
    void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
    ClientSessionData     *getClientData() { return _cachedClientDataPtr; }
 
+   void                   setClientStream(JITaaS::J9ClientStream *stream) { _clientStream = stream; }
+   JITaaS::J9ClientStream *getClientStream() { return _clientStream; }
+
    protected:
 
    TR::CompilationInfo &        _compInfo;
@@ -275,6 +279,7 @@ class CompilationInfoPerThreadBase
 
    // JITaaS
    ClientSessionData * _cachedClientDataPtr;
+   JITaaS::J9ClientStream * _clientStream;
 
 private:
    void logCompilationSuccess(

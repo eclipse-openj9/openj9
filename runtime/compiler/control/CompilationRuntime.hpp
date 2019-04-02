@@ -612,9 +612,10 @@ public:
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
       bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache);
-   TR_MethodToBeCompiled *addRemoteMethodToBeCompiled(JITaaS::J9ServerStream *stream);
+   TR_MethodToBeCompiled *addOutOfProcessMethodToBeCompiled(JITaaS::J9ServerStream *stream);
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
+   void                   requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry);
    TR_MethodToBeCompiled *adjustCompilationEntryAndRequeue(TR::IlGeneratorMethodDetails &details,
                                                            TR_PersistentMethodInfo *methodInfo,
                                                            TR_Hotness newOptLevel, bool useProfiling,

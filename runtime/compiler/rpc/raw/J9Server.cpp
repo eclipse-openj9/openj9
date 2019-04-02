@@ -41,8 +41,11 @@
 #include "rpc/SSLProtobufStream.hpp"
 #include <openssl/err.h>
 
+
 namespace JITaaS
 {
+int J9ServerStream::_numConnectionsOpened = 0;
+int J9ServerStream::_numConnectionsClosed = 0;
 
 bool useSSL(TR::PersistentInfo *info)
    {
@@ -54,6 +57,7 @@ J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    _msTimeout(timeout)
    {
    initStream(connfd, ssl);
+   _numConnectionsOpened++;
    }
 
 // J9Stream destructor is used instead
