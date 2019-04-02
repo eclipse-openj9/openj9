@@ -126,16 +126,6 @@ public class TestJps extends AttachApiTest {
 		tgtMgr.terminateTarget();
 	}
 
-	/**
-	 * Look for a string in a list of strings using case sensitive substring searching
-	 * @param needle string for which to search
-	 * @param haystack list of strings in which to search
-	 * @return first string in haystack containing needle
-	 */
-	static Optional<String> search(String needle, List<String> haystack) {
-		return haystack.stream().filter(s -> s.contains(needle)).findFirst();
-	}
-
 	@BeforeMethod
 	protected void setUp(Method testMethod) {
 		testName = testMethod.getName();
