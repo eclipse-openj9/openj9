@@ -170,7 +170,7 @@ public final class StackWalker {
 	 */
 	public Class<?> getCallerClass() {
 		if (!walkerOptions.contains(Option.RETAIN_CLASS_REFERENCE)) {
-			/* [MSG "K0639", "Stack walker not configured with RETAIN_CLASS_REFERENCE"]*/
+			/*[MSG "K0639", "Stack walker not configured with RETAIN_CLASS_REFERENCE"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0639")); //$NON-NLS-1$
 		}
 		/*
@@ -184,7 +184,7 @@ public final class StackWalker {
 			throw new IllegalCallerException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$
 		}
 		if (((StackFrameImpl)result.get(0)).callerSensitive) {
-			/* [MSG "K0644", "Caller-sensitive method called StackWalker.getCallerClass()"]*/
+			/*[MSG "K0644", "Caller-sensitive method called StackWalker.getCallerClass()"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0644")); //$NON-NLS-1$
 		}
 		StackFrame clientsCaller = result.get(1);
@@ -424,7 +424,6 @@ public final class StackWalker {
 	}
 
 	static class PermissionSingleton {
-		/*[PR 125815 use RuntimePermission in lieu of StackFramePermission]*/
 		static final Permission perm =
 				new RuntimePermission("getStackWalkerWithClassReference"); //$NON-NLS-1$
 	}
