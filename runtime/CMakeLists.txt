@@ -176,6 +176,14 @@ if(J9VM_IS_NON_STAGING)
 	add_custom_target(copy_default_options ALL
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/options.default" "${CMAKE_CURRENT_BINARY_DIR}/options.default"
 	)
+
+	# Copy jvmti.h, later this will actually be generated
+	add_custom_target(copy_jvmti_h
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h" "${CMAKE_CURRENT_BINARY_DIR}/include/jvmti.h"
+	)
+else()
+	# just  create a dummy target that does noting
+	add_custom_target(copy_jvmti_h)
 endif()
 
 ###
@@ -206,6 +214,7 @@ add_dependencies(j9vm_interface
 	j9vm_hookgen
 	j9vm_m4gen
 	j9vm_nlsgen
+	copy_jvmti_h
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components
