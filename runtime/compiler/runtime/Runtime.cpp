@@ -1933,24 +1933,34 @@ char * feGetEnv2(const char * s, const void * vm)
    if (TR::Options::_doNotProcessEnvVars)
       return 0;
 
-   char * envSpace = 0;
+   char * envSpace = NULL;
    PORT_ACCESS_FROM_PORT(((J9JavaVM *)vm)->portLibrary);
-   int32_t envSize = j9sysinfo_get_env((char *)s, 0, 0);
+   int32_t envSize = j9sysinfo_get_env((char *)s, NULL, 0);
    if (envSize != -1)
       {
-      // this is leaky....but should happen so seldomly in a prod build...that I'm not
-      // motivated to fix it...
-      //
       envSpace = (char *)j9mem_allocate_memory(envSize, J9MEM_CATEGORY_JIT);
 
-      int32_t res = j9sysinfo_get_env("TR_silentEnv", envSpace, envSize);
-      // If TR_silentEnv is found the result is 0 indicating success
-      bool verboseQuery = (res == 0 ? false : true);
+      if (NULL != envSpace)
+         {
+         envSize = j9sysinfo_get_env((char *)s, envSpace, envSize);
+         if (envSize != 0)
+            {
+            // failed to read the env: either mis-sized buffer or no env set
+            j9mem_free_memory(envSpace);
+            envSpace = NULL;
+            } 
+          else
+            {
+            int32_t res = j9sysinfo_get_env("TR_silentEnv", NULL, 0);
+            // If TR_silentEnv is found the result is not -1, then the env var was found
+            bool verboseQuery = (res == -1 ? false : true);
 
-      j9sysinfo_get_env((char *)s, envSpace, envSize);
-
-      if (verboseQuery)
-         j9tty_printf(PORTLIB, "JIT: env var %s is set to %s\n", s, envSpace);
+            if (verboseQuery)
+               {
+               j9tty_printf(PORTLIB, "JIT: env var %s is set to %s\n", s, envSpace);
+               }
+            }
+         }
       }
    return envSpace;
    }
