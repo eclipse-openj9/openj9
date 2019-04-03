@@ -30,9 +30,6 @@ CONFIGURE_ARGS += \
 OPENJ9_CC_PREFIX ?= aarch64-linux-gnu
 
 CONFIGURE_ARGS += \
-	--host=$(OPENJ9_CC_PREFIX) \
-	--build=x86_64-pc-linux-gnu \
-	'OMR_CROSS_CONFIGURE=yes' \
 	--enable-OMRTHREAD_LIB_UNIX \
 	--enable-OMR_ARCH_AARCH64 \
 	--enable-OMR_ENV_DATA64 \
@@ -40,11 +37,18 @@ CONFIGURE_ARGS += \
 	--enable-OMR_GC_TLH_PREFETCH_FTA \
 	--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 
-ifeq (linux_aarch64_cmprssptrs, $(SPEC))
+ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 	CONFIGURE_ARGS += \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
 		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
+endif
+
+ifneq (,$(findstring _cross,$(SPEC)))
+	CONFIGURE_ARGS += \
+	--host=$(OPENJ9_CC_PREFIX) \
+	--build=x86_64-pc-linux-gnu \
+	'OMR_CROSS_CONFIGURE=yes'
 endif
 
 ifeq (default,$(origin AS))
