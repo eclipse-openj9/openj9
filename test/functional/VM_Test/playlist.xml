@@ -45,6 +45,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 	<test>
 		<testCaseName>jvmnativestest</testCaseName>

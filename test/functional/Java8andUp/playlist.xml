@@ -196,6 +196,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -218,6 +221,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
@@ -323,6 +329,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -346,6 +355,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
@@ -705,6 +717,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -733,6 +748,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
@@ -1144,6 +1162,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1264,6 +1285,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1343,6 +1367,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1366,6 +1393,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1388,6 +1418,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1507,6 +1540,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1530,6 +1566,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -1582,6 +1621,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
