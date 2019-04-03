@@ -255,6 +255,10 @@ add_subdirectory(gc_glue_java)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory("${J9VM_OMR_DIR}" omr)
 
+# Due to CMake technical limitations we can't properly propagate dependencies
+# to omrutil via the glue.
+add_dependencies(omrutil_obj j9vm_nlsgen)
+
 ###
 ### Share library version suffixing
 ###
