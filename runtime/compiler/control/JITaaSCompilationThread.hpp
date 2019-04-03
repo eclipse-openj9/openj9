@@ -91,6 +91,8 @@ class ClientSessionData
       int32_t _compressedReferenceShift;
       UDATA _cacheStartAddress;
       bool _stringCompressionEnabled;
+      bool _hasSharedClassCache;
+      bool _elgibleForPersistIprofileInfo;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
