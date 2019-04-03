@@ -23,20 +23,10 @@
 set(J9VM_JCL_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_tracegen(j9jcl.tdf)
-add_library(j9vm_jcl_trace INTERFACE)
-target_sources(j9vm_jcl_trace
-	INTERFACE
-		${CMAKE_CURRENT_BINARY_DIR}/ut_j9jcl.c
-)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/ut_j9jcl.c PROPERTIES GENERATED TRUE)
-target_include_directories(j9vm_jcl_trace
-	INTERFACE
-		${CMAKE_CURRENT_BINARY_DIR}
-)
-# Workaround for cmake's broken dependency tracking for generated files
-add_dependencies(j9vm_jcl_trace trc_j9jcl)
 
-add_library(jclse SHARED)
+add_library(jclse SHARED
+	${CMAKE_CURRENT_BINARY_DIR}/ut_j9jcl.c
+)
 
 target_include_directories(jclse
 	PRIVATE
@@ -100,7 +90,6 @@ target_link_libraries(jclse
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
-		j9vm_jcl_trace
 
 		omrsig
 		j9hookable
