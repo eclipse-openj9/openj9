@@ -191,7 +191,7 @@ RUN cd /tmp \
 # Setup boot JDK for building Java 8
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
   && cd /usr/lib/jvm/adoptojdk-java-80 \
-  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/nightly/openjdk8?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
+  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
   && tar -xzf bootjdk8.tar.gz \
   && rm -f bootjdk8.tar.gz \
   && mv $(ls | grep -i jdk8) bootjdk8 \
@@ -201,15 +201,25 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
 # Allow jenkins to find JDK8
 RUN ln -s /usr/lib/jvm/adoptojdk-java-80/bin/java /usr/bin/java
 
-# Setup boot JDK for building Java 11
+# Setup boot JDK for building Java 11 and 12
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && cd /usr/lib/jvm/adoptojdk-java-11 \
-  && wget -O bootjdk11.tar.gz "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk11u-2018-11-26-07-41/OpenJDK11U-jdk_ppc64le_linux_openj9_2018-11-26-07-41.tar.gz" \
+  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
   && tar -xzf bootjdk11.tar.gz \
   && rm -f bootjdk11.tar.gz \
   && mv $(ls | grep -i jdk-11) bootjdk11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
+
+# Setup boot JDK for building Java 13 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
+  && cd /usr/lib/jvm/adoptojdk-java-12 \
+  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
+  && tar -xzf bootjdk12.tar.gz \
+  && rm -f bootjdk12.tar.gz \
+  && mv $(ls | grep -i jdk-12) bootjdk12 \
+  && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
+  && rm -rf bootjdk12
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \

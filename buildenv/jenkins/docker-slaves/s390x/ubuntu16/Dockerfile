@@ -149,6 +149,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
 
+# Download and install boot JDK from AdoptOpenJDK for java 13 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
+  && cd /usr/lib/jvm/adoptojdk-java-12 \
+  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
+  && tar -xzf bootjdk12.tar.gz \
+  && rm -f bootjdk12.tar.gz \
+  && mv $(ls | grep -i jdk-12) bootjdk12 \
+  && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
+  && rm -rf bootjdk12
+
 # Set up sshd config
 RUN mkdir /var/run/sshd \
   && sed -i 's/#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config \
