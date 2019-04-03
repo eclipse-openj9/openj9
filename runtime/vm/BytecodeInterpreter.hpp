@@ -5783,6 +5783,33 @@ done:
 				rc = THROW_AIOB;
 			} else {
 				j9object_t value = _objectAccessBarrier.inlineIndexableObjectReadObject(_currentThread, arrayref, index);
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+				J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
+				if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass) && J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+					j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, false, false);
+
+					if (NULL == newObjectRef) {
+						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+						pushObjectInSpecialFrame(REGISTER_ARGS, arrayref);
+						updateVMStruct(REGISTER_ARGS);
+						newObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						arrayref = popObjectInSpecialFrame(REGISTER_ARGS);
+						restoreGenericSpecialStackFrame(REGISTER_ARGS);
+						if (J9_UNEXPECTED(NULL == newObjectRef)) {
+							rc = THROW_HEAP_OOM;
+							return rc;
+						}
+						arrayrefClass = VM_VMHelpers::currentClass(arrayrefClass);
+					}
+
+					UDATA stride = J9ARRAYCLASS_GET_STRIDE(arrayrefClass);
+					/* There is only support for contiguous arrays and only -Xgcpolicy:nogc has support. Support for discontiguous arrays and the other GC policies will come later. */
+					UDATA headerSize = ((MM_GCExtensionsBase *)vm->gcExtensions)->indexableObjectModel.getHeaderSize();
+					_objectAccessBarrier.copyObjectFields(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, arrayref, ((index * stride) + headerSize), newObjectRef, headerSize);
+					value = newObjectRef;
+				}
+#endif /* ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
 				_pc += 1;
 				_sp += 1;
 				*(j9object_t*)_sp = value;
@@ -5814,7 +5841,18 @@ done:
 				if (false == objectArrayStoreAllowed(arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
 				} else {
-					_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+					J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
+					if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass) && J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+						UDATA stride = J9ARRAYCLASS_GET_STRIDE(arrayrefClass);
+						/* There is only support for contiguous arrays and only -Xgcpolicy:nogc has support. Support for discontiguous arrays and the other GC policies will come later. */
+						UDATA headerSize = ((MM_GCExtensionsBase *)vm->gcExtensions)->indexableObjectModel.getHeaderSize();
+						_objectAccessBarrier.copyObjectFields(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, value, headerSize, arrayref, ((index * stride) + headerSize));
+					} else 
+#endif /* ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
+					{
+						_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
+					}
 					_pc += 1;
 					_sp += 3;
 				}
