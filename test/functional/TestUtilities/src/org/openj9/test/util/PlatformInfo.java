@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,10 @@
 package org.openj9.test.util;
 
 public class PlatformInfo {
-	private static final String OS_NAME = "os.name";
+	private static final String OS_NAME = "os.name"; //$NON-NLS-1$
 	private static final String osName = System.getProperty(OS_NAME);
+	private	static final boolean isOpenJ9Status = 
+			System.getProperty("java.vm.vendor").contains("OpenJ9"); //$NON-NLS-1$ //$NON-NLS-2$
 
 	public static boolean isWindows() {
 		return ((null != osName) && osName.startsWith("Windows"));
@@ -31,6 +33,16 @@ public class PlatformInfo {
 
 	public static boolean isMacOS() {
 		return ((null != osName) && osName.startsWith("Mac OS"));
+	}
+
+	/**
+	 * Test if this is a pure OpenJ9 JDK, not a derivative or alternate VM.
+	 * This is used by tests which require specific tools or packages with the JVM.
+	 *
+	 * @return true if this is a stock OpenJ9 JDK
+	 */
+	public static boolean isOpenJ9() {
+		return isOpenJ9Status;
 	}
 
 	public static String getLibrarySuffix() {
@@ -42,4 +54,5 @@ public class PlatformInfo {
 		}
 		return librarySuffix;
 	}
+
 }
