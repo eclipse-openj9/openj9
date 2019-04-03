@@ -762,6 +762,21 @@ TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9JavaVM *pjavaVM, J9
    return NULL;
    }
 
+J9JITExceptionTable *
+TR_RelocationRuntime::copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader)
+   {
+   TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *) (dataCacheHeader + 1);
+   J9JITDataCacheHeader *exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *) dataCacheHeader + aotMethodHeaderEntry->offsetToExceptionTable);
+   uint8_t *newExceptionTableStart = allocateSpaceInDataCache(exceptionTableCacheEntry->size, exceptionTableCacheEntry->type);
+   J9JITExceptionTable *metaData = NULL;
+   if (newExceptionTableStart)
+      {
+      TR_DataCacheManager::copyDataCacheAllocation(reinterpret_cast<J9JITDataCacheHeader *>(newExceptionTableStart), exceptionTableCacheEntry);
+      metaData = reinterpret_cast<J9JITExceptionTable *>(newExceptionTableStart + sizeof(J9JITDataCacheHeader)); // Get new exceptionTable location
+      }
+   return metaData;
+   }
+
 bool TR_RelocationRuntime::_globalValuesInitialized=false;
 
 uintptr_t TR_RelocationRuntime::_globalValueList[TR_NumGlobalValueItems] =

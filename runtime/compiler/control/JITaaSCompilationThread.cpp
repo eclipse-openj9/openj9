@@ -2435,7 +2435,7 @@ remoteCompile(
                }
             }
 
-         if (metaData)
+         if (!useAotCompilation || TR::CompilationInfo::canRelocateMethod(compiler))
             {
             TR::compInfoPT->relocateThunks();
             }
@@ -2551,7 +2551,6 @@ remoteCompilationEnd(
       {
       TR_ASSERT(entry->_useAotCompilation, "entry must be an AOT compilation");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
-      
       J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       TR::CompilationInfo::storeAOTInSharedCache(
          vmThread,
@@ -2645,7 +2644,16 @@ remoteCompilationEnd(
          // AOT compilations can fail on purpose because we want to load
          // the AOT body later on. This case is signalled by having a successful compilation 
          // but canRelocateMethod == false
+         // We still need metadata, because metaData->startPC != 0 indicates that compilation
+         // didn't actually fail.
+         J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *) &dataCacheStr[0];
+         J9JITExceptionTable *metaData = compInfoPT->reloRuntime()->copyMethodMetaData(dataCacheHeader);
+         // Temporarily store meta data pointer.
+         // This is not exactly how it's used in baseline, but in remote AOT we do not use
+         // AOT method data start for anything else, so should be fine.
+         comp->setAotMethodDataStart(metaData);
          TR::CompilationInfo::replenishInvocationCount(method, comp);
+         return metaData;
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
       }

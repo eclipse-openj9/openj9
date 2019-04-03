@@ -7173,7 +7173,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       // AOT compilations can fail on purpose because we want to load
       // the AOT body later on. This case is signalled by having a metaData != 0
       // but a startPC == entry->_oldStartPC == 0
-      if (metaData && !entry->_oldStartPC && !startPC && _compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+      if (metaData && !entry->_oldStartPC && !startPC && !entry->isOutOfProcessCompReq() && !entry->isRemoteCompReq())
          {
          TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "compilationEnd() can fail only for relocating AOT compilations\n");
          TR_ASSERT(!entry->_oldStartPC, "We expect compilationEnd() to fail only for AOT compilations which are first time compilations\n");
@@ -9957,7 +9957,28 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          else // Non-AOT compilation and JITaaS remote JIT/AOT compilations
             {
-            jitMethodTranslated(vmThread, method, startPC);
+            if (trvm->isAOT_DEPRECATED_DO_NOT_USE() && !TR::CompilationInfo::canRelocateMethod(comp))
+               {
+               // Handle the case when relocations are delayed.
+               // Delete any assumptions that might still exist in persistent memory
+               // The metadata parameter is NULL meaning that we want to delete ALL assumptions, including those for JBI
+               J9JITExceptionTable *metaData = (J9JITExceptionTable *) comp->getAotMethodDataStart();
+               if (metaData)
+                  {
+                  compInfo->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(comp->getMetadataAssumptionList(), NULL);
+                  metaData->runtimeAssumptionList = NULL;
+
+                  metaData->constantPool = 0; // mark metadata as unloaded
+                  }
+
+               if (entry->_compInfoPT)
+                  entry->_compInfoPT->setMetadata(NULL);
+               startPC = oldStartPC;
+               }
+            else
+               {
+               jitMethodTranslated(vmThread, method, startPC);
+               }
             }
          }
 
