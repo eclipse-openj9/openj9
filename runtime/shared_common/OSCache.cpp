@@ -178,11 +178,12 @@ SH_OSCache::removeCacheVersionAndGen(char* buffer, UDATA bufferSize, UDATA versi
  * @param [out] buffer  The buffer to write the result into
  * @param [in] bufferSize  The size of the buffer in bytes
  * @param [in] cacheType  The Type of cache
+ * @param [in] allowVerbose Whether to allow verbose message.
  *
  * @return 0 on success or -1 for failure  
  */
 IDATA
-SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType)
+SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType, bool allowVerbose)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc;
@@ -212,8 +213,10 @@ SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDA
 	rc = j9shmem_getDir(ctrlDirName, flags, buffer, bufferSize);
 
 	if (rc < 0) {
-		if (0 != vm->sharedCacheAPI->verboseFlags) {
-			switch(rc) {
+		if (allowVerbose
+			&& J9_ARE_ANY_BITS_SET(vm->sharedCacheAPI->verboseFlags, J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT | J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+		) {
+		switch(rc) {
 			case J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW:
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_BUF_OVERFLOW);
 				break;
