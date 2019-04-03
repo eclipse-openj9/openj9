@@ -41,11 +41,11 @@
 #include "MetronomeAlarmThread.hpp"
 #include "JNICriticalRegion.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "RealtimeAccessBarrier.hpp"
 #include "RealtimeGC.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "ReferenceObjectList.hpp"
 #include "Scheduler.hpp"
-#include "StaccatoAccessBarrier.hpp"
 #include "UnfinalizedObjectList.hpp"
 
 void
@@ -779,13 +779,13 @@ MM_MetronomeDelegate::reportSyncGCEnd(MM_EnvironmentBase *env)
 	);
 }
 /**
- * Factory method for creating the access barrier. Note that the default staccato access barrier
+ * Factory method for creating the access barrier. Note that the default realtime access barrier
  * doesn't handle the RTSJ checks.
  */
 MM_RealtimeAccessBarrier*
 MM_MetronomeDelegate::allocateAccessBarrier(MM_EnvironmentBase *env)
 {
-	return MM_StaccatoAccessBarrier::newInstance(env);
+	return MM_RealtimeAccessBarrier::newInstance(env);
 }
 
 /**
@@ -796,14 +796,14 @@ void
 MM_MetronomeDelegate::enableDoubleBarrier(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	MM_StaccatoAccessBarrier* staccatoAccessBarrier = (MM_StaccatoAccessBarrier*)extensions->accessBarrier;
+	MM_RealtimeAccessBarrier* realtimeAccessBarrier = (MM_RealtimeAccessBarrier*)extensions->accessBarrier;
 	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
 	
 	/* First, enable the global double barrier flag so new threads will have the double barrier enabled. */
-	staccatoAccessBarrier->setDoubleBarrierActive();
+	realtimeAccessBarrier->setDoubleBarrierActive();
 	while(J9VMThread* thread = vmThreadListIterator.nextVMThread()) {
 		/* Second, enable the double barrier on all threads individually. */
-		staccatoAccessBarrier->setDoubleBarrierActiveOnThread(MM_EnvironmentBase::getEnvironment(thread->omrVMThread));
+		realtimeAccessBarrier->setDoubleBarrierActiveOnThread(MM_EnvironmentBase::getEnvironment(thread->omrVMThread));
 	}
 }
 
@@ -815,8 +815,8 @@ MM_MetronomeDelegate::disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_
 {
 	/* This gets called on a per thread basis as threads get scanned. */
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	MM_StaccatoAccessBarrier* staccatoAccessBarrier = (MM_StaccatoAccessBarrier*)extensions->accessBarrier;
-	staccatoAccessBarrier->setDoubleBarrierInactiveOnThread(MM_EnvironmentBase::getEnvironment(vmThread));
+	MM_RealtimeAccessBarrier* realtimeAccessBarrier = (MM_RealtimeAccessBarrier*)extensions->accessBarrier;
+	realtimeAccessBarrier->setDoubleBarrierInactiveOnThread(MM_EnvironmentBase::getEnvironment(vmThread));
 }
 
 /**
@@ -830,8 +830,8 @@ MM_MetronomeDelegate::disableDoubleBarrier(MM_EnvironmentBase* env)
 	 * on a per thread basis as threads get scanned, so no need to traverse all threads in this method.
 	 */
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	MM_StaccatoAccessBarrier* staccatoAccessBarrier = (MM_StaccatoAccessBarrier*)extensions->accessBarrier;
-	staccatoAccessBarrier->setDoubleBarrierInactive();
+	MM_RealtimeAccessBarrier* realtimeAccessBarrier = (MM_RealtimeAccessBarrier*)extensions->accessBarrier;
+	realtimeAccessBarrier->setDoubleBarrierInactive();
 }
 
 
