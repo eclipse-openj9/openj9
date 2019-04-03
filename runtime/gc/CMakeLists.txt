@@ -54,7 +54,6 @@ target_link_libraries(j9gc
 		j9gctrc
 		j9gctrcstandard
 		j9gctrcvlhgc
-		j9staccato
 		j9realtime
 		j9gcvlhgc
 		omrgc
@@ -66,7 +65,6 @@ target_link_libraries(j9gc
 		j9hashtable
 		j9gcbase
 		j9modronstandard
-		j9staccato
 		j9realtime
 		j9gcvlhgc
 		j9gcbase

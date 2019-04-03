@@ -39,7 +39,7 @@
 class MM_ObjectAccessBarrierAPI
 {
 	friend class MM_ObjectAccessBarrier;
-	friend class MM_StaccatoAccessBarrier;
+	friend class MM_RealtimeAccessBarrier;
 
 /* Data members & types */
 public:
