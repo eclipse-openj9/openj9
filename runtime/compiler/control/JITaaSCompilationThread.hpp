@@ -27,6 +27,7 @@
 #include "control/CompilationThread.hpp"
 #include "rpc/J9Client.hpp"
 #include "env/PersistentCollections.hpp"
+#include "env/j9methodServer.hpp"
 
 class TR_PersistentClassInfo;
 class TR_IPBytecodeHashTableEntry;
@@ -65,6 +66,10 @@ class ClientSessionData
       uintptrj_t totalInstanceSize;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_constantClassPoolCache;
+      TR_FieldAttributesCache *_fieldAttributesCache;
+      TR_FieldAttributesCache *_staticAttributesCache;
+      TR_FieldAttributesCache *_fieldAttributesCacheAOT;
+      TR_FieldAttributesCache *_staticAttributesCacheAOT;
       };
 
    struct J9MethodInfo

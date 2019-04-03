@@ -3009,6 +3009,27 @@ ClientSessionData::ClassInfo::freeClassInfo()
       jitPersistentFree(_constantClassPoolCache);
       }
 
+   if (_fieldAttributesCache)
+      {
+      _fieldAttributesCache->~TR_FieldAttributesCache();
+      jitPersistentFree(_fieldAttributesCache);
+      }
+   if (_staticAttributesCache)
+      {
+      _staticAttributesCache->~TR_FieldAttributesCache();
+      jitPersistentFree(_staticAttributesCache);
+      }
+
+   if (_fieldAttributesCacheAOT)
+      {
+      _fieldAttributesCacheAOT->~TR_FieldAttributesCache();
+      jitPersistentFree(_fieldAttributesCacheAOT);
+      }
+   if (_staticAttributesCacheAOT)
+      {
+      _staticAttributesCacheAOT->~TR_FieldAttributesCache();
+      jitPersistentFree(_staticAttributesCacheAOT);
+      }
    }
 
 ClientSessionData::VMInfo *
@@ -3266,6 +3287,10 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._classOfStaticCache = nullptr;
    classInfoStruct._constantClassPoolCache = nullptr;
    classInfoStruct.remoteRomClass = std::get<17>(classInfo);
+   classInfoStruct._fieldAttributesCache = NULL;
+   classInfoStruct._staticAttributesCache = NULL;
+   classInfoStruct._fieldAttributesCacheAOT = NULL;
+   classInfoStruct._staticAttributesCacheAOT = NULL;
 
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
