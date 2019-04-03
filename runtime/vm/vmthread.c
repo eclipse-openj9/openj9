@@ -558,7 +558,17 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #endif /* defined(OMR_THR_YIELD_ALG) */
 	
 #if defined(LINUX)
-	/* if Completely Fair Scheduler is detected, and sched_compat_yield=0, default to -Xthr:minimizeUserCPU */
+	/* Check the sched_compat_yield setting for the versions of the Completely Fair Scheduler (CFS) which
+	 * have broken the thread_yield behavior. If running in CFS and sched_compat_yield=0, the CPU yielding
+	 * behavior is moderated to act as though CFS is not enabled by increasing the yield count to 270 in
+	 * the three-tier spinlock loops.
+	 *
+	 * sched_compat_yield=1 uses the aggressive CPU yielding behavior of some versions of the O(1)
+	 * scheduler and uses the default yield counts (= 45).
+	 *
+	 * Newer Linux versions no longer support the sched_compat_yield flag since the thread_yield behavior
+	 * is restored to something stable.
+	 */
 	if ('0' == j9util_sched_compat_yield_value(vm)) {
 #if defined(OMR_THR_YIELD_ALG)
 		**(UDATA**)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_INCREASING_USLEEP;
