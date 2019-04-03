@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,7 +187,7 @@ public:
 
 	static UDATA getRequiredConstrBytes(void);
 	
-	static IDATA getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType);
+	static IDATA getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType, bool allowVerbose = true);
 	
 	static IDATA createCacheDir(J9PortLibrary* portLibrary, char* cacheDirName, UDATA cacheDirPerm, bool cleanMemorySegments);
 
