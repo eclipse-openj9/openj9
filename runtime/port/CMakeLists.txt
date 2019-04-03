@@ -31,33 +31,57 @@
 
 
 set(OBJECTS "")
-list(APPEND OBJECTS 
+list(APPEND OBJECTS
+	j9gp.c
+	j9gs.c
 	j9hypervisor.c
 	j9hypervisor_common.c
 	j9ipcmutex.c
-	j9SysvIPCWrappers.c
+	j9mem_basic.c
 	j9port.c
+	j9portcontrol.c
 	j9process.c
-	j9gs.c
-	j9gp.c
-	j9sharedhelper.c
 	j9shmem.c
 	j9shsem.c
 	j9shsem_deprecated.c
 	j9sock.c
 	j9sockptb.c
 	j9sysinfo.c
-	j9sysinfo_helpers.c
-	j9mem_basic.c
-	j9portcontrol.c
 )
 if(OMR_ARCH_X86)
-	list(APPEND OBJECTS
-		j9hypervisor_i386.c
-		j9sysinfo_helpers.c
-	)
+	list(APPEND OBJECTS j9hypervisor_i386.c)
 elseif(OMR_ARCH_POWER)
 	list(APPEND OBJECTS j9hypervisor_systemp.c)
+elseif(OMR_ARCH_S390)
+	list(APPEND OBJECTS
+		j9gs_s390.c
+		j9hypervisor_systemz.c
+	)
+endif()
+
+if(OMR_ARCH_X86 OR OMR_ARCH_S390)
+	list(APPEND OBJECTS j9sysinfo_helpers.c)
+endif()
+
+if(OMR_OS_ZOS)
+	list(APPEND OBJECTS
+		j9csrsi.c
+		j9csrsi_wrp.s
+		j9gs_get_supported.s
+		j9gs_load_gscb.s
+		j9gs_store_gscb.s
+		j9guardedstorage.mc
+		j9mprotect.s
+		j9munprotect.s
+		protect_helpers.c
+	)
+endif()
+
+if(NOT OMR_OS_WINDOWS)
+	list(APPEND OBJECTS
+		j9sharedhelper.c
+		j9SysvIPCWrappers.c
+	)
 endif()
 
 if(J9VM_PORT_RUNTIME_INSTRUMENTATION)
@@ -67,18 +91,31 @@ endif()
 set(resolvedPaths "")
 set(VPATH "")
 
-if(OMR_ARCH_X86) #TODO and linux
-	list(APPEND VPATH linuxamd64)
-elseif(OMR_ARCH_POWER) #TODO and linux
-	list(APPEND VPATH linuxppc)
+if(OMR_OS_LINUX)
+	if(OMR_ARCH_X86 AND OMR_ENV_DATA64)
+		list(APPEND VPATH linuxamd64)
+	elseif(OMR_ARCH_POWER)
+		list(APPEND VPATH linuxppc)
+	elseif(OMR_ARCH_S390)
+		list(APPEND VPATH linuxs390)
+	endif()
+	list(APPEND VPATH linux)
+elseif(OMR_OS_WINDOWS)
+	list(APPEND VPATH win32)
+elseif(OMR_OS_AIX)
+	list(APPEND VPATH aix)
+elseif(OMR_OS_ZOS)
+	list(APPEND VPATH zos390)
 endif()
 
-list(APPEND VPATH
-	linux
-	sysvipc
-	unix
-	common
-)
+if(NOT OMR_OS_WINDOWS)
+	list(APPEND VPATH
+		sysvipc
+		unix
+	)
+endif()
+
+list(APPEND VPATH common)
 
 omr_find_files(resolvedPaths
 	PATHS
@@ -109,6 +146,16 @@ target_link_libraries(j9prt
 		j9thr
 		${CMAKE_DL_LIBS}
 )
+if(OMR_OS_WINDOWS)
+	target_link_libraries(j9prt
+		PRIVATE
+			Ws2_32.lib
+			shell32.lib
+			Iphlpapi.lib
+			psapi.lib
+			pdh.lib
+	)
+endif()
 
 if(OMR_NEED_LIBRT)
 	target_link_libraries(j9prt PRIVATE rt)
@@ -119,10 +166,16 @@ target_compile_definitions(j9prt
 		-DJ9PORT_LIBRARY_DEFINE
 )
 
-target_include_directories(j9prt
-	PRIVATE
+if(OMR_OS_WINDOWS)
+	target_include_directories(j9prt PRIVATE win32_include)
+else()
+	target_include_directories(j9prt PRIVATE
 		unix
 		unix_include
+	)
+endif()
+
+target_include_directories(j9prt
 	PUBLIC
 		include
 		common

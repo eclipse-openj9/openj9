@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (c) 2006, 2018 IBM Corp. and others
+   Copyright (c) 2006, 2019 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,8 +49,31 @@
 	</xi:include>
 	
 	<objects group="all">
+		<object name="j9csrsi">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9csrsi_wrp">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
 		<object name="j9gp" />
-
+		<object name="j9gs"/>
+		<object name="j9gs_get_supported">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_load_gscb">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_s390">
+			<include-if condition="spec.linux_390.*"/>
+			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.linux_ztpf.*"/>
+		</object>
+		<object name="j9gs_store_gscb">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9guardedstorage">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
 		<object name="j9hypervisor"/>
 		<object name="j9hypervisor_common"/>
 		<object name="j9hypervisor_i386" >
@@ -71,8 +94,8 @@
 			<include-if condition="spec.linux_390.*"/>
 			<include-if condition="spec.linux_390-64.*"/>
 		</object>
-
 		<object name="j9ipcmutex" />
+		<object name="j9mem_basic" />
 		<object name="j9mprotect">
 			<include-if condition="spec.zos_390.*"/>
 			<exclude-if condition="spec.zos_390-64.*"/>
@@ -81,52 +104,20 @@
 			<include-if condition="spec.zos_390.*"/>
 			<exclude-if condition="spec.zos_390-64.*"/>
 		</object>
-		<object name="j9SysvIPCWrappers">
-			<exclude-if condition="spec.win_x86.*"/>
-		</object>
-		
 		<object name="j9port" />
+		<object name="j9portcontrol" />
 		<object name="j9process" />
-		<object name="j9gs"/>
-		<object name="j9guardedstorage">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_get_supported">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_load_gscb">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_store_gscb">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9csrsi">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9csrsi_wrp">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_s390">
-			<include-if condition="spec.linux_390.*"/>
-			<include-if condition="spec.zos_390.*"/>
-			<include-if condition="spec.linux_ztpf.*"/>
-			<exclude-if condition="spec.linux_x86.*"/>
-			<exclude-if condition="spec.win_x86.*"/>
-		</object>
 		<object name="j9ri">
 			<include-if condition="spec.flags.port_runtimeInstrumentation"/>
 		</object>
-		
 		<object name="j9sharedhelper">
 			<exclude-if condition="spec.win_x86.*"/>
 		</object>
 		<object name="j9shmem" />
 		<object name="j9shsem" />
 		<object name="j9shsem_deprecated" />
-
 		<object name="j9sock" />
 		<object name="j9sockptb" />
-
 		<object name="j9sysinfo" />
 		<object name="j9sysinfo_helpers">
 			<include-if condition="spec.linux_x86.*"/>
@@ -135,8 +126,9 @@
 			<include-if condition="spec.zos_390.*"/>
 			<include-if condition="spec.osx_x86.*"/>
 		</object>
-		<object name="j9mem_basic" />
-		<object name="j9portcontrol" />
+		<object name="j9SysvIPCWrappers">
+			<exclude-if condition="spec.win_x86.*"/>
+		</object>
 		<object name="protect_helpers">
 			<include-if condition="spec.zos_390.*"/>
 			<exclude-if condition="spec.zos_390-64.*"/>
