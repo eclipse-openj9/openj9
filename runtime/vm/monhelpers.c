@@ -34,8 +34,8 @@
 IDATA 
 objectMonitorExit(J9VMThread* vmStruct, j9object_t object) 
 {
-	j9objectmonitor_t *lockEA;
-	j9objectmonitor_t lock;
+	j9objectmonitor_t *lockEA = NULL;
+	j9objectmonitor_t lock = 0;
 
 	Assert_VM_true(vmStruct != NULL);
 	Assert_VM_true(0 == ((UDATA)vmStruct & OBJECT_HEADER_LOCK_BITS_MASK));
@@ -109,9 +109,9 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 		return 0;
 	} else if (J9_LOCK_IS_INFLATED(lock)) {
 		/* Dealing with an inflated monitor */
-		J9ObjectMonitor *objectMonitor;
-		J9ThreadAbstractMonitor *monitor;
-		IDATA rc;
+		J9ObjectMonitor *objectMonitor = NULL;
+		J9ThreadAbstractMonitor *monitor = NULL;
+		IDATA rc = 0;
 		IDATA deflate = 1;
 		
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);		
@@ -206,8 +206,8 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 J9ObjectMonitor * 
 objectMonitorInflate(J9VMThread* vmStruct, j9object_t object, UDATA lock) 
 {
-	J9ObjectMonitor * objectMonitor = monitorTableAt(vmStruct, object);
-	omrthread_monitor_t monitor;
+	J9ObjectMonitor *objectMonitor = monitorTableAt(vmStruct, object);
+	omrthread_monitor_t monitor = NULL;
 
 	if (objectMonitor == NULL) {
 		return NULL;
@@ -257,8 +257,8 @@ objectMonitorEnter(J9VMThread* vmStruct, j9object_t object)
 void
 cancelLockReservation(J9VMThread* vmStruct)
 {
-	j9object_t object;
-	j9objectmonitor_t lock;
+	j9object_t object = NULL;
+	j9objectmonitor_t lock = 0;
 
 	Trc_VM_cancelLockReservation_Entry(vmStruct, vmStruct->blockingEnterObject);
 	Assert_VM_mustHaveVMAccess(vmStruct);
@@ -278,8 +278,9 @@ cancelLockReservation(J9VMThread* vmStruct)
 	}
 
 	if ( (lock & (OBJECT_HEADER_LOCK_INFLATED | OBJECT_HEADER_LOCK_RESERVED)) == OBJECT_HEADER_LOCK_RESERVED) {
-		j9objectmonitor_t oldLock, newLock;
-		j9objectmonitor_t* lockEA;
+		j9objectmonitor_t oldLock = 0;
+		j9objectmonitor_t newLock = 0;
+		j9objectmonitor_t *lockEA = NULL;
 		J9VMThread* reservationOwner = J9_FLATLOCK_OWNER(lock);
 
 		Trc_VM_cancelLockReservation_reservationOwner(vmStruct, reservationOwner);
@@ -367,10 +368,7 @@ cancelLockReservation(J9VMThread* vmStruct)
 IDATA 
 objectMonitorDestroy(J9JavaVM *vm, J9VMThread* vmThread, omrthread_monitor_t monitor)
 {
-	IDATA rc; 
-
-	rc = omrthread_monitor_destroy_nolock(vmThread->osThread, monitor);
-	return rc;
+	return (IDATA)omrthread_monitor_destroy_nolock(vmThread->osThread, monitor);
 }
 
 /**
