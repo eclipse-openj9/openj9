@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.attacher;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AttachPermission;
-import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 import com.ibm.tools.attach.target.Advertisement;
@@ -52,7 +51,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 	}
 
 	@Override
-	public VirtualMachine attachVirtualMachine(String id)
+	public OpenJ9VirtualMachine attachVirtualMachine(String id)
 			throws AttachNotSupportedException, IOException {
 
 		checkAttachSecurity();
@@ -71,7 +70,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 	}
 
 	@Override
-	public VirtualMachine attachVirtualMachine (
+	public OpenJ9VirtualMachine attachVirtualMachine (
 			VirtualMachineDescriptor descriptor)
 			throws AttachNotSupportedException, IOException {
 
