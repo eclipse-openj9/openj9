@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -448,13 +448,37 @@ EXCEPTION_THROW_HELPER(jitThrowIncompatibleReceiver,2)
 
 dnl Write barrier helpers
 
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierBatchStore,1)
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierBatchStoreWithRange,3)
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierJ9ClassBatchStore,1)
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierJ9ClassStore,2)
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierStore,2)
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierStoreGenerational,2)
-FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierStoreGenerationalAndConcurrentMark,2)
+define({JIT_WRITE_BARRIER_WRAPPER},{
+	FASTCALL_EXTERN(fast_$1,$2+1)
+	BEGIN_HELPER($1)
+	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
+	SWITCH_TO_C_STACK
+	SAVE_C_VOLATILE_REGS
+	mov PARM_REG(1),_rbp
+	mov PARM_REG(2),uword ptr J9TR_VMThread_floatTemp1[_rbp]
+	ifelse($2, 2, {
+		ifdef({ASM_J9VM_ENV_DATA64},{
+			mov PARM_REG(3),uword ptr J9TR_VMThread_floatTemp2[_rbp]
+		}, {
+			push uword ptr J9TR_VMThread_floatTemp2[_rbp]
+		})
+	})
+	call FASTCALL_SYMBOL(fast_$1,$2+1)
+	RESTORE_C_VOLATILE_REGS
+	SWITCH_TO_JAVA_STACK
+	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
+	dnl parms are passed via fields of VM thread instead of register or stack
+	dnl therefore, the helper's parm count is 0
+	END_HELPER($1,0)
+})
+
+JIT_WRITE_BARRIER_WRAPPER(jitWriteBarrierBatchStore,1)
+UNUSED(jitWriteBarrierBatchStoreWithRange,3)
+UNUSED(jitWriteBarrierJ9ClassBatchStore,1)
+UNUSED(jitWriteBarrierJ9ClassStore,2)
+JIT_WRITE_BARRIER_WRAPPER(jitWriteBarrierStore,2)
+JIT_WRITE_BARRIER_WRAPPER(jitWriteBarrierStoreGenerational,2)
+JIT_WRITE_BARRIER_WRAPPER(jitWriteBarrierStoreGenerationalAndConcurrentMark,2)
 FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierClassStoreMetronome,3)
 FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierStoreMetronome,3)
 

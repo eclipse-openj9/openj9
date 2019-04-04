@@ -10115,28 +10115,12 @@ static void generateWriteBarrierCall(
 
    TR_OutlinedInstructionsGenerator og(wrtBarLabel, node, cg);
 
-   if (TR::Compiler->target.is64Bit())
+   generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), owningObjectReg, cg);
+   if (helperArgCount > 1)
       {
-      auto deps = generateRegisterDependencyConditions(helperArgCount, helperArgCount, cg);
-      deps->addPreCondition(owningObjectReg, TR::RealRegister::eax, cg);
-      deps->addPostCondition(owningObjectReg, TR::RealRegister::eax, cg);
-      if (helperArgCount > 1)
-         {
-         deps->addPreCondition(sourceReg, TR::RealRegister::esi, cg);
-         deps->addPostCondition(sourceReg, TR::RealRegister::esi, cg);
-         }
-      generateImmSymInstruction(CALLImm4, node, (uintptrj_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, deps, cg);
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), sourceReg, cg);
       }
-   else
-      {
-      if (helperArgCount > 1)
-         {
-         generateRegInstruction(PUSHReg, node, sourceReg, cg);
-         }
-      generateRegInstruction(PUSHReg, node, owningObjectReg, cg);
-      generateImmSymInstruction(CALLImm4, node, (uintptrj_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg)->setAdjustsFramePointerBy(-4*helperArgCount);
-      }
-
+   generateImmSymInstruction(CALLImm4, node, (uintptrj_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
    generateLabelInstruction(JMP4, node, doneLabel, cg);
    }
 
@@ -11185,48 +11169,30 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
       TR::RegisterDependencyConditions *deps = NULL;
       TR::LabelSymbol *doneWrtBarLabel = generateLabelSymbol(cg);
 
-      if (TR::Compiler->target.is64Bit())
+      if (TR::Compiler->target.is32Bit() && sourceObject->isNonNull() == false)
          {
-         // TODO: do this inline
-         generateWriteBarrierCall(JMP4, node, gcMode, owningObjectRegister, sourceRegister, doneWrtBarLabel, cg);
-         }
-      else
-         {
-         if (sourceObject->isNonNull() == false)
-            {
-            TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-            startLabel->setStartInternalControlFlow();
-            doneWrtBarLabel->setEndInternalControlFlow();
+         TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+         startLabel->setStartInternalControlFlow();
+         doneWrtBarLabel->setEndInternalControlFlow();
 
-            generateLabelInstruction(LABEL, node, startLabel, cg);
-            generateRegRegInstruction(TESTRegReg(), node, sourceRegister, sourceRegister, cg);
-            generateLabelInstruction(JE4, node, doneWrtBarLabel, cg);
+         generateLabelInstruction(LABEL, node, startLabel, cg);
+         generateRegRegInstruction(TESTRegReg(), node, sourceRegister, sourceRegister, cg);
+         generateLabelInstruction(JE4, node, doneWrtBarLabel, cg);
 
-            deps = generateRegisterDependencyConditions(0, 3, cg);
-            deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
-            deps->addPostCondition(owningObjectRegister, TR::RealRegister::NoReg, cg);
-            deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
-            deps->stopAddingConditions();
-            }
-
-         generateRegInstruction(PUSHReg, node, sourceRegister, cg);
-
-         TR::SymbolReference *wrtBarSymRef;
-
-         wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
-
-         generateRegInstruction(PUSHReg, node, owningObjectRegister, cg);
-
-         TR::X86ImmSymInstruction *instr =
-            generateImmSymInstruction(CALLImm4, node, (int32_t)(uintptr_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
-
-         instr->setAdjustsFramePointerBy(-8);
+         deps = generateRegisterDependencyConditions(0, 3, cg);
+         deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(owningObjectRegister, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+         deps->stopAddingConditions();
          }
 
-      if (deps != NULL)
-         generateLabelInstruction(LABEL, node, doneWrtBarLabel, deps, cg);
-      else
-         generateLabelInstruction(LABEL, node, doneWrtBarLabel, cg);
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), owningObjectRegister, cg);
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), sourceRegister, cg);
+
+      TR::SymbolReference* wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
+      generateImmSymInstruction(CALLImm4, node, (uintptrj_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
+
+      generateLabelInstruction(LABEL, node, doneWrtBarLabel, deps, cg);
       }
    else
       {
