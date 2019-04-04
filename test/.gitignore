@@ -27,6 +27,7 @@ test_output_*
 
 # misc auto generated files
 autoGen.mk
+TestConfig/dependencies.mk
 TestConfig/utils.mk
 TestConfig/count.mk
 TestConfig/specToPlat.mk
