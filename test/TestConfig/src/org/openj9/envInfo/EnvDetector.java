@@ -20,43 +20,77 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package org.openj9.java;
+package org.openj9.envInfo;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-
+import java.io.BufferedWriter;
 
 public class EnvDetector {
-    /** 
-     * This method create autoGenEnv.mk file for auto detecting environment.
-     */
-     public static void main(String[] args) {
-        
-        JavaInfo envDetection = new JavaInfo();
-        String SPECInfo = envDetection.getSPEC(); 
-        int javaVersionInfo = envDetection.getJDKVersion(); 
-        String javaImplInfo = envDetection.getJDKImpl();
-        if (SPECInfo == null || javaVersionInfo == -1 || javaImplInfo == null) {
-            System.exit(1);
-        }
-        String SPECvalue = "DETECTED_SPEC=" + SPECInfo + "\n";
-        String JDKVERSIONvalue = "DETECTED_JDK_VERSION="+ javaVersionInfo + "\n";
-        String JDKIMPLvalue = "DETECTED_JDK_IMPL=" + javaImplInfo + "\n";
+	static boolean isMachineInfo = false;
+	static boolean isJavaInfo = false;
 
-        BufferedWriter output = null;
-        try { 
-            output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../autoGenEnv.mk")));
-            output.write("########################################################\n");
-            output.write("# This is an auto generated file. Please do NOT modify!\n");
-            output.write("########################################################\n");
-            output.write(SPECvalue);
-            output.write(JDKVERSIONvalue);
-            output.write(JDKIMPLvalue);
-            output.close(); 
-        } catch ( IOException e ) {
-            e.printStackTrace(); 
-        }
-    }
+	public static void main(String[] args) {
+		parseArgs(args);
+	}
+
+	private static void parseArgs(String[] args) {
+		for (int i = 0; i < args.length; i++) {
+			String option = args[i].toLowerCase();
+			if (option.equals("machineinfo")) {
+				getMachineInfo();
+			} else if (option.equals("javainfo")) {
+				getJavaInfo();
+			}
+		}
+	}
+
+	/*
+	 * getJavaInfo() is used for AUTO_DETECT
+	 */
+	private static void getJavaInfo() {
+		JavaInfo envDetection = new JavaInfo();
+		String SPECInfo = envDetection.getSPEC();
+		int javaVersionInfo = envDetection.getJDKVersion();
+		String javaImplInfo = envDetection.getJDKImpl();
+		if (SPECInfo == null || javaVersionInfo == -1 || javaImplInfo == null) {
+			System.exit(1);
+		}
+		String SPECvalue = "DETECTED_SPEC=" + SPECInfo + "\n";
+		String JDKVERSIONvalue = "DETECTED_JDK_VERSION=" + javaVersionInfo + "\n";
+		String JDKIMPLvalue = "DETECTED_JDK_IMPL=" + javaImplInfo + "\n";
+
+		/**
+		 * autoGenEnv.mk file will be created to store auto detected java info.
+		 */
+		BufferedWriter output = null;
+		try {
+			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../autoGenEnv.mk")));
+			output.write("########################################################\n");
+			output.write("# This is an auto generated file. Please do NOT modify!\n");
+			output.write("########################################################\n");
+			output.write(SPECvalue);
+			output.write(JDKVERSIONvalue);
+			output.write(JDKIMPLvalue);
+			output.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private static void getMachineInfo() {
+		MachineInfo machineInfo = new MachineInfo();
+
+		machineInfo.getMachineInfo(MachineInfo.UNAME_CMD);
+		machineInfo.getMachineInfo(MachineInfo.SYS_ARCH_CMD);
+		machineInfo.getMachineInfo(MachineInfo.PROC_ARCH_CMD);
+		machineInfo.getMachineInfo(MachineInfo.SYS_OS_CMD);
+		machineInfo.getMachineInfo(MachineInfo.CPU_CORES_CMD);
+
+		machineInfo.getRuntimeInfo();
+		machineInfo.getSpaceInfo("");
+		System.out.println(machineInfo);
+	}
 }
