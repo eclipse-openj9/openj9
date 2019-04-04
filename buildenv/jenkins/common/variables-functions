@@ -476,6 +476,7 @@ def set_artifactory_config() {
         // Set Creds to env so that the parent pipeline can retireve them.
         env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
+        env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts // This is being used by the cleanup script 
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
