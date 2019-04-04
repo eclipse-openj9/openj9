@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2018 IBM Corp. and others
+# Copyright (c) 1991, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,8 +36,5 @@ set(J9VM_MODULE_JITRT_IA32 ON CACHE BOOL "")
 set(J9VM_MODULE_MASM2GAS ON CACHE BOOL "")
 set(J9VM_GC_IDLE_HEAP_MANAGER ON CACHE BOOL "")
 set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER ON CACHE BOOL "")
-
-set(CMAKE_C_COMPILER cc CACHE STRING "")
-set(CMAKE_CXX_COMPILER c++ CACHE STRING "")
 
 include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
