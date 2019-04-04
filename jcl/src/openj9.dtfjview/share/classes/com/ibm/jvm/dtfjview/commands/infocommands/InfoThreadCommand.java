@@ -545,6 +545,16 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 								out.println();
 								out.print("    Daemon:        " + Utils.getVal(threadObj, jf));
 								break;
+							case "threadRef":
+								try {
+									String hex = Utils.toHex(jf.getLong(threadObj));
+
+									out.println();
+									out.print("    Native info:   !j9vmthread " + hex + "  !stack " + hex);
+								} catch (MemoryAccessException e) {
+									// omit unavailable information
+								}
+								break;
 							default:
 								break;
 							}
