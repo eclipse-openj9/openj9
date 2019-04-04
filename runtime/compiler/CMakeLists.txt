@@ -28,6 +28,14 @@
 # Longer term, this will of course have to collapse into the VM builds.
 
 if(OMR_ARCH_X86)
+	# On windows, the proper binary format is not auto detected
+	if(OMR_OS_WINDOWS)
+		if(OMR_ENV_DATA64)
+			set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
+		else()
+			set(CMAKE_ASM_NASM_OBJECT_FORMAT win32)
+		endif()
+	endif()
 	enable_language(ASM_NASM)
 	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths
 	set(asm_inc_dirs
