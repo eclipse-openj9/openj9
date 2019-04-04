@@ -53,19 +53,6 @@
 #include "env/IO.hpp"
 #include "runtime/HookHelpers.hpp"
 
-
-/*
- *  *  Debugging help
- *   */
-#ifdef CODECACHE_DEBUG
-#define mcc_printf if (CodeCacheDebug) printf
-#define mcc_hashprintf /*printf*/
-#else
-#define mcc_printf
-#define mcc_hashprintf
-#endif
-
-
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 
 #define addFreeBlock2(start, end) addFreeBlock2WithCallSite((start), (end), __FILE__, __LINE__)
