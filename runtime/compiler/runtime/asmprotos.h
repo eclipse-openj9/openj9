@@ -150,7 +150,6 @@ JIT_HELPER(jitWriteBarrierStore);  // asm calling-convention helper
 JIT_HELPER(jitWriteBarrierStoreGenerational);  // asm calling-convention helper
 JIT_HELPER(jitWriteBarrierStoreGenerationalAndConcurrentMark);  // asm calling-convention helper
 JIT_HELPER(jitWriteBarrierStoreMetronome);  // asm calling-convention helper
-JIT_HELPER(traceExecutable);  // asm calling-convention helper
 JIT_HELPER(jitDecompileAfterAllocation);  // asm calling-convention helper
 JIT_HELPER(jitDecompileAfterMonitorEnter);  // asm calling-convention helper
 JIT_HELPER(jitDecompileAtCurrentPC);  // asm calling-convention helper
