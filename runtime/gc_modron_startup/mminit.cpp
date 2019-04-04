@@ -167,7 +167,7 @@ initializeMutatorModelJava(J9VMThread* vmThread)
 		if (extensions->isConcurrentScavengerEnabled()) {
 			/* Ensure that newly created threads invoke VM access using slow path, so that the associated hook is invoked.
 			 * GC will register to the hook to enable local thread resources if a thread happens to be created in a middle of Concurrent Scavenge */
-			setEventFlag(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE);
+			setEventFlag(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 		}
 
 #if defined(J9VM_GC_GENERATIONAL)
