@@ -1985,7 +1985,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 		classLoaderNameUTF = classLoaderNameBuf;
 	}
 	if ((NULL != classLoaderNameUTF) && (NULL != moduleNameUTF)) {
-		Trc_MODULE_setting_package(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classLoaderNameUTF, moduleNameUTF);
+		Trc_MODULE_setPackage(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classLoaderNameUTF, classLoader, moduleNameUTF, ramClass->module);
 		if (moduleNameBuf != moduleNameUTF) {
 			PORT_ACCESS_FROM_VMC(vmThread);
 			j9mem_free_memory(moduleNameUTF);
@@ -2821,7 +2821,7 @@ fail:
 			}
 			if ((J2SE_VERSION(javaVM) >= J2SE_V11) && (NULL == classBeingRedefined)) {
 				ramClass->module = module;
-				if (TrcEnabled_Trc_MODULE_setting_package) {
+				if (TrcEnabled_Trc_MODULE_setPackage) {
 					trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
 				}
 			}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@
 #include "j9protos.h"
 #include "ut_j9vm.h"
 
-static j9object_t moduleHashGetName(const void* entry);
 static UDATA packageHashFn(void *key, void *userData);
 static UDATA packageHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA moduleHashFn(void *key, void *userData);
@@ -32,23 +31,12 @@ static UDATA moduleHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA moduleExtraInfoHashFn(void *key, void *userData);
 static UDATA moduleExtraInfoHashEqualFn(void *tableNode, void *queryNode, void *userData);
 
-static j9object_t
-moduleHashGetName(const void* entry)
-{
-	const J9Module** const modulePtr = (const J9Module**)entry;
-	const J9Module* const  module = *modulePtr;
-	j9object_t moduleName = module->moduleName;
-
-	return moduleName;
-}
-
 static UDATA 
 moduleHashFn(void *key, void *userData) 
 {
-	J9JavaVM* javaVM = (J9JavaVM*) userData;
-	j9object_t name = moduleHashGetName(key);
-
-	return javaVM->memoryManagerFunctions->j9gc_stringHashFn(&name, userData);
+	const J9Module** const modulePtr = (const J9Module**)key;
+	
+	return (UDATA)(*modulePtr);
 }
 
 
@@ -72,17 +60,11 @@ moduleExtraInfoHashFn(void *key, void *userData)
 static UDATA  
 moduleHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	J9JavaVM* javaVM = (J9JavaVM*) userData;
-
 	const J9Module* const tableNodeModule = *((J9Module**)tableNode);
-	j9object_t tableNodeModuleName = tableNodeModule->moduleName;
-
 	const J9Module* const queryNodeModule = *((J9Module**)queryNode);
-	j9object_t queryNodeModuleName = queryNodeModule->moduleName;
 
-	return javaVM->memoryManagerFunctions->j9gc_stringHashEqualFn(&tableNodeModuleName, &queryNodeModuleName, userData) && (tableNodeModule->classLoader == queryNodeModule->classLoader);
+	return tableNodeModule == queryNodeModule;
 }
-
 
 static UDATA  
 packageHashEqualFn(void *tableNode, void *queryNode, void *userData)
