@@ -753,6 +753,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
    // maybe there is a reason for it
    if (_fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
+      if (comp && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         if (!comp->getSymbolValidationManager()->addVirtualMethodFromOffsetRecord(ramMethod, classObject, virtualCallOffset, ignoreRtResolve))
+            return NULL;
+         }
       resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
       }
    else
