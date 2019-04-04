@@ -954,77 +954,6 @@ findMethodInVTable(J9Method *method, UDATA *vTable)
 }
 
 
-void
-fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs)
-{
-	J9JVMTIClassPair *classPair;
-	J9HashTableState hashTableState;
-	UDATA updateITables = FALSE;
-
-	/* This is only necessary if methods were re-ordered in an interface update. */
-	classPair = hashTableStartDo(classPairs, &hashTableState);
-	while (NULL != classPair) {
-		J9ROMClass *romClass = classPair->originalRAMClass->romClass;
-
-		if ((0 != (romClass->modifiers & J9AccInterface)) && (NULL != classPair->methodRemap)) {
-			updateITables = TRUE;
-			break;
-		}
-		classPair = hashTableNextDo(&hashTableState);
-	}
-
-	if (updateITables) {
-		J9JavaVM *vm = currentThread->javaVM;
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		J9Class *clazz;
-		J9ClassWalkState classWalkState;
-
-		clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, NULL);
-		while (NULL != clazz) {
-
-			if (!J9_IS_CLASS_OBSOLETE(clazz) && (0 == (clazz->romClass->modifiers & J9AccInterface))) {
-				J9ITable *iTable = (J9ITable *)clazz->iTable;
-				J9ITable *superITable = NULL;
-				UDATA classDepth = J9CLASS_DEPTH(clazz);
-
-				if (0 != classDepth) {
-					 superITable = (J9ITable *) GET_SUPERCLASS(clazz)->iTable;
-				}
-
-				while (superITable != iTable) {
-					J9ITable *allInterfaces = (J9ITable*)iTable->interfaceClass->iTable;
-					UDATA *iTableMethods = (UDATA *)(iTable + 1);
-					do {
-						J9Class *interfaceClass = allInterfaces->interfaceClass;
-						J9JVMTIClassPair exemplar;
-						J9JVMTIClassPair *result;
-						UDATA methodCount = interfaceClass->romClass->romMethodCount;
-
-						exemplar.originalRAMClass = interfaceClass;
-						result = hashTableFind(classPairs, &exemplar);
-						if ((NULL != result) && (NULL != result->methodRemap)) {
-							UDATA methodIndex;
-							UDATA *vTableHeader = (UDATA *)J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
-	
-							for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
-								UDATA vTableIndex = findMethodInVTable(&interfaceClass->ramMethods[methodIndex], vTableHeader);
-								iTableMethods[methodIndex] = J9VTABLE_OFFSET_FROM_INDEX(vTableIndex);
-							}
-						}
-						iTableMethods += methodCount;
-						allInterfaces = allInterfaces->next;
-					} while (NULL != allInterfaces);
-					iTable = iTable->next;
-				}
-			}
-
-			clazz = vmFuncs->allClassesNextDo(&classWalkState);
-		}
-		vmFuncs->allClassesEndDo(&classWalkState);
-	}
-}
-
-
 /**
  * \brief   Method Pair hashing function
  * \ingroup jvmtiClass
@@ -1709,6 +1638,9 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 					UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 					UDATA newMethodIndex = methodIndex;
 					UDATA tagsAndArgCount = methodIndexAndArgCount & (J9_ITABLE_INDEX_TAG_BITS | 0xFF);
+					/* In fast HCR, both vTable and iTable indices are stable, so only the direct method
+					 * (via RAM method index) case can possibly be affected by method reordering.
+					 */
 					if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
 						/* Private interface method or non-vTable Object method */
 						if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
@@ -1726,45 +1658,12 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 								if (NULL != methodResult) {
 									J9Method *newMethod = methodResult->newMethod;
 									newMethodIndex = newMethod - J9_CLASS_FROM_METHOD(newMethod)->ramMethods;
+									/* Fix the index in the resolved CP entry, retaining the argCount and tag bits */
+									methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | tagsAndArgCount);
 								}
 							}
-						}
-					} else if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
-						/* vTable Object method - vTable indices are stable in fast HCR, so no need to update */
-					} else {
-						/* Standard interface method - find the appropriate segment for the referenced method
-						 * within the resolvedClass iTable.  This is fast HCR (no addition or removal of
-						 * methods), so the shape of the iTables cannot change, just the ordering
-						 * of methods within them.
-						 */
-						J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
-						for(;;) {
-							J9Class *interfaceClass = allInterfaces->interfaceClass;
-							UDATA methodCount = J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceClass);
-							if (methodIndex < methodCount) {
-								classPair.originalRAMClass = interfaceClass;
-								classResult = hashTableFind(classHashTable, &classPair);
-								/* If the class was not replaced, no need to update the constant pool */
-								if (NULL != classResult) {
-									J9Class *obsoleteClass = classResult->replacementClass.ramClass;
-									if (NULL != obsoleteClass) {
-										/* If the referenced method was not reordered, no need to update the constant pool */
-										methodPair.oldMethod = iTableMethodAtIndex(obsoleteClass, methodIndex);
-										methodResult = hashTableFind(methodHashTable, &methodPair);
-										if (NULL != methodResult) {
-											newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
-										}
-									}
-								}
-								/* iTable segment was located, stop the scan */
-								break;
-							}
-							methodIndex -= methodCount;
-							allInterfaces = allInterfaces->next;
 						}
 					}
-					/* Fix the index in the resolved CP entry, retaining the argCount and tag bits */
-					methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | tagsAndArgCount);
 				}
 				break;
 			}

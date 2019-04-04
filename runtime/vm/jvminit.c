@@ -228,7 +228,7 @@ void sidecarExit(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
 static jint runLoadStage (J9JavaVM *vm, IDATA flags);
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-static void jniIDTableClassUnload (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void freeClassNativeMemory (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */
 static jint runShutdownStage (J9JavaVM* vm, IDATA stage, void* reserved, UDATA filterFlags);
 static jint modifyDllLoadTable (J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args);
@@ -5897,7 +5897,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	vmHooks = getVMHookInterface(vm);
-	if(0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_UNLOAD, jniIDTableClassUnload, OMR_GET_CALLSITE(), NULL)) {
+	if(0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_UNLOAD, freeClassNativeMemory, OMR_GET_CALLSITE(), NULL)) {
 		goto error;
 	}
 #endif
@@ -6426,7 +6426,7 @@ detectAgentXruns(J9JavaVM* vm)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 
 static void
-jniIDTableClassUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMClassUnloadEvent * data = eventData;
 	J9Class * clazz = data->clazz;
@@ -6438,6 +6438,12 @@ jniIDTableClassUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 
 	j9mem_free_memory(clazz->jniIDs);
 	clazz->jniIDs = NULL;
+
+	/* If the class is an interface, free the HCR method ordering table */
+	if (J9ROMCLASS_IS_INTERFACE(clazz->romClass)) {
+		j9mem_free_memory(J9INTERFACECLASS_METHODORDERING(clazz));
+		J9INTERFACECLASS_SET_METHODORDERING(clazz, NULL);
+	}
 }
 
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */

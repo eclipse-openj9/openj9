@@ -295,7 +295,12 @@ addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClas
 		UDATA vTableSize = vTableHeader->size;
 		J9Method **vTable = J9VTABLE_FROM_HEADER(vTableHeader);
 		J9Method *interfaceRamMethod = interfaceClass->ramMethods;
+		U_32 *ordering = J9INTERFACECLASS_METHODORDERING(interfaceClass);
+		UDATA index = 0;
 		while (count-- > 0) {
+			if (NULL != ordering) {
+				interfaceRamMethod = interfaceClass->ramMethods + ordering[index++];
+			}
 			J9ROMMethod *interfaceRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceRamMethod);
 			if (J9ROMMETHOD_IN_ITABLE(interfaceRomMethod)) {
 				J9UTF8 *interfaceMethodName = J9ROMMETHOD_NAME(interfaceRomMethod);

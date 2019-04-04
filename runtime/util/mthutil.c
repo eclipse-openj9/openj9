@@ -233,16 +233,28 @@ getITableIndexWithinDeclaringClass(J9Method *method)
 {
 	UDATA index = 0;
 	J9Class * const methodClass = J9_CLASS_FROM_METHOD(method);
-	J9Method *ramMethod = methodClass->ramMethods;
-	UDATA const methodCount = methodClass->romClass->romMethodCount;
-	while (method != ramMethod) {
-		if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
-			index += 1;
+	J9Method *ramMethods = methodClass->ramMethods;
+	U_32 *ordering = J9INTERFACECLASS_METHODORDERING(methodClass);
+	if (NULL == ordering) {
+		while (method != ramMethods) {
+			if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethods))) {
+				index += 1;
+			}
+			ramMethods += 1;
 		}
-		ramMethod += 1;
+	} else {
+		for(;;) {
+			J9Method *ramMethod = ramMethods + *ordering;
+			if (method == ramMethod) {
+				break;
+			}
+			if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
+				index += 1;
+			}
+			ordering += 1;
+		}
 	}
 	return index;
-	
 }
 
 UDATA
