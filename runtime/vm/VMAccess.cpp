@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -385,9 +385,9 @@ void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltM
 
 	TRIGGER_J9HOOK_VM_ACQUIREVMACCESS(vm->hookInterface, vmThread);
 
-	/* Now that the hook has been invoked, allow inline VM access acquire */
-	if((vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE) == J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE) {
-		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE);
+	/* Now that the hook has been invoked, allow inline VM access */
+	if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
+		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 	}
 
 	if(reacquireJNICriticalAccess) {
@@ -454,6 +454,13 @@ static void  internalReleaseVMAccessNoMutexNoCheck(J9VMThread * vmThread)
 		}
 
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
+	}
+
+	TRIGGER_J9HOOK_VM_RELEASEVMACCESS(vm->hookInterface, vmThread);
+
+	/* Now that the hook has been invoked, allow inline VM access */
+	if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
+		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 	}
 
 	Assert_VM_mustNotHaveVMAccess(vmThread);
@@ -632,9 +639,9 @@ IDATA   internalTryAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA h
 
 	TRIGGER_J9HOOK_VM_ACQUIREVMACCESS(vm->hookInterface, vmThread);
 
-	/* Now that the hook has been invoked, allow inline VM access acquire */
-	if((vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE) == J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE) {
-		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE);
+	/* Now that the hook has been invoked, allow inline VM access */
+	if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
+		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 	}
 
     VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_VMACCESS_ACQUIRE_BITS);

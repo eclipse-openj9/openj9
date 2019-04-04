@@ -267,6 +267,15 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMAcquireVMAccessEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
+	
+	<event>
+		<name>J9HOOK_VM_RELEASEVMACCESS</name>
+		<description>
+				Triggered after a thread releases VM access.
+		</description>
+		<struct>J9VMReleaseVMAccessEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
 
 	<event>
 		<name>J9HOOK_VM_THREAD_CRASH</name>
