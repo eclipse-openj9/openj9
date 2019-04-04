@@ -34,6 +34,7 @@ my $headerComments =
 	. "\n";
 
 my $mkName = "autoGen.mk";
+my $dependmk = "dependencies.mk";
 my $utilsmk = "utils.mk";
 my $countmk = "count.mk";
 my $settings = "settings.mk";
@@ -123,6 +124,7 @@ sub runmkgen {
 	}
 
 	generateOnDir();
+	dependGen();
 	utilsGen();
 	countGen();
 }
@@ -480,8 +482,9 @@ sub writeTargets {
 	if (defined $result->{'include'}) {
 		print $fhOut "-include " . $result->{'include'} . "\n\n";
 	}
+	print $fhOut 'include $(TEST_ROOT)$(D)TestConfig$(D)' . $dependmk . "\n\n";
 	foreach my $test ( @{ $result->{'tests'} } ) {
-		my $count     = 0;
+		my $count    = 0;
 		my @subtests = ();
 		foreach my $var ( @{ $test->{'variation'} } ) {
 			my $jvmoptions = ' ' . $var . ' ';
@@ -671,84 +674,6 @@ sub writeTargets {
 		}
 	}
 
-	foreach my $eachLevel (sort @{$allLevels}) {
-		foreach my $eachGroup (sort @{$allGroups}) {
-			my $lgKey = $eachLevel . '.' . $eachGroup;
-			print $fhOut "$lgKey:";
-			foreach my $eachType (sort @{$allTypes}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
-				if (defined $groupTargets{$lgtKey}) {
-					print $fhOut " \\\n$lgtKey";
-					$targetCount{$lgKey} += @{$groupTargets{$lgtKey}};
-					$targetCount{$eachLevel} += @{$groupTargets{$lgtKey}};
-				}
-			}
-			print $fhOut "\n\n.PHONY: $lgKey\n\n";
-		}
-	}
-
-	foreach my $eachGroup (sort @{$allGroups}) {
-		foreach my $eachType (sort @{$allTypes}) {
-			my $gtKey = $eachGroup . '.' . $eachType;
-			print $fhOut "$gtKey:";
-			foreach my $eachLevel (sort @{$allLevels}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
-				if (defined $groupTargets{$lgtKey}) {
-					print $fhOut " \\\n$lgtKey";
-					$targetCount{$gtKey} += @{$groupTargets{$lgtKey}};
-					$targetCount{$eachGroup} += @{$groupTargets{$lgtKey}};
-				}
-			}
-			print $fhOut "\n\n.PHONY: $gtKey\n\n";
-		}
-	}
-
-	foreach my $eachType (sort @{$allTypes}) {
-		foreach my $eachLevel (sort @{$allLevels}) {
-			my $ltKey = $eachLevel . '.' . $eachType;
-			print $fhOut "$ltKey:";
-			foreach my $eachGroup (sort @{$allGroups}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
-				if (defined $groupTargets{$lgtKey}) {
-					print $fhOut " \\\n$lgtKey";
-					$targetCount{$ltKey} += @{$groupTargets{$lgtKey}};
-					$targetCount{$eachType} += @{$groupTargets{$lgtKey}};
-				}
-			}
-			print $fhOut "\n\n.PHONY: $ltKey\n\n";
-		}
-	}
-
-	foreach my $eachLevel (sort @{$allLevels}) {
-		print $fhOut "$eachLevel:";
-		foreach my $eachGroup (sort @{$allGroups}) {
-			print $fhOut " \\\n$eachLevel.$eachGroup";
-		}
-		print $fhOut "\n\n.PHONY: $eachLevel\n\n";
-	}
-
-	foreach my $eachGroup (sort @{$allGroups}) {
-		print $fhOut "$eachGroup:";
-		foreach my $eachLevel (sort @{$allLevels}) {
-			print $fhOut " \\\n$eachLevel.$eachGroup";
-		}
-		print $fhOut "\n\n.PHONY: $eachGroup\n\n";
-	}
-
-	foreach my $eachType (sort @{$allTypes}) {
-		print $fhOut "$eachType:";
-		foreach my $eachLevel (sort @{$allLevels}) {
-			print $fhOut " \\\n$eachLevel.$eachType";
-		}
-		print $fhOut "\n\n.PHONY: $eachType\n\n";
-	}
-
-	print $fhOut "all:";
-	foreach my $eachLevel (sort @{$allLevels}) {
-		print $fhOut " \\\n$eachLevel";
-	}
-	print $fhOut "\n\n.PHONY: all\n";
-
 	close $fhOut;
 }
 
@@ -822,6 +747,87 @@ sub getAllInvalidSpecs {
 	return @invalidSpecs;
 }
 
+sub dependGen {
+	my $dependmkpath = $testRoot . "/TestConfig/" . $dependmk;
+	open( my $fhOut, '>', $dependmkpath ) or die "Cannot create file $dependmkpath";
+	print $fhOut $headerComments;
+
+	foreach my $eachLevel (sort @{$allLevels}) {
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $lgKey = $eachLevel . '.' . $eachGroup;
+			print $fhOut "$lgKey:";
+			foreach my $eachType (sort @{$allTypes}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
+				print $fhOut " \\\n$lgtKey";
+				$targetCount{$lgKey} += $targetCount{$lgtKey};
+				$targetCount{$eachLevel} += $targetCount{$lgtKey};
+			}
+			print $fhOut "\n\n.PHONY: $lgKey\n\n";
+		}
+	}
+
+	foreach my $eachGroup (sort @{$allGroups}) {
+		foreach my $eachType (sort @{$allTypes}) {
+			my $gtKey = $eachGroup . '.' . $eachType;
+			print $fhOut "$gtKey:";
+			foreach my $eachLevel (sort @{$allLevels}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
+				print $fhOut " \\\n$lgtKey";
+				$targetCount{$gtKey} += $targetCount{$lgtKey};
+				$targetCount{$eachGroup} += $targetCount{$lgtKey};
+			}
+			print $fhOut "\n\n.PHONY: $gtKey\n\n";
+		}
+	}
+
+	foreach my $eachType (sort @{$allTypes}) {
+		foreach my $eachLevel (sort @{$allLevels}) {
+			my $ltKey = $eachLevel . '.' . $eachType;
+			print $fhOut "$ltKey:";
+			foreach my $eachGroup (sort @{$allGroups}) {
+				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+				print $fhOut " \\\n$lgtKey";
+				$targetCount{$ltKey} += $targetCount{$lgtKey};
+				$targetCount{$eachType} += $targetCount{$lgtKey};
+			}
+			print $fhOut "\n\n.PHONY: $ltKey\n\n";
+		}
+	}
+
+	foreach my $eachLevel (sort @{$allLevels}) {
+		print $fhOut "$eachLevel:";
+		foreach my $eachGroup (sort @{$allGroups}) {
+			print $fhOut " \\\n$eachLevel.$eachGroup";
+		}
+		print $fhOut "\n\n.PHONY: $eachLevel\n\n";
+	}
+
+	foreach my $eachGroup (sort @{$allGroups}) {
+		print $fhOut "$eachGroup:";
+		foreach my $eachLevel (sort @{$allLevels}) {
+			print $fhOut " \\\n$eachLevel.$eachGroup";
+		}
+		print $fhOut "\n\n.PHONY: $eachGroup\n\n";
+	}
+
+	foreach my $eachType (sort @{$allTypes}) {
+		print $fhOut "$eachType:";
+		foreach my $eachLevel (sort @{$allLevels}) {
+			print $fhOut " \\\n$eachLevel.$eachType";
+		}
+		print $fhOut "\n\n.PHONY: $eachType\n\n";
+	}
+
+	print $fhOut "all:";
+	foreach my $eachLevel (sort @{$allLevels}) {
+		print $fhOut " \\\n$eachLevel";
+	}
+	print $fhOut "\n\n.PHONY: all\n";
+
+	close $fhOut;
+	print "\nGenerated $dependmk\n";
+}
+
 sub utilsGen {
 	my $utilsmkpath = $testRoot . "/TestConfig/" . $utilsmk;
 	open( my $fhOut, '>', $utilsmkpath ) or die "Cannot create file $utilsmkpath";
@@ -837,6 +843,7 @@ sub utilsGen {
 		}
 	}
 	print $fhOut $spec2platform;
+
 	close $fhOut;
 	print "\nGenerated $utilsmk\n";
 }
@@ -844,6 +851,7 @@ sub utilsGen {
 sub countGen {
 	my $countmkpath = $testRoot . "/TestConfig/" . $countmk;
 	open( my $fhOut, '>', $countmkpath ) or die "Cannot create file $countmkpath";
+	print $fhOut $headerComments;
 
 	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
 	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
