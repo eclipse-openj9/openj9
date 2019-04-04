@@ -46,26 +46,27 @@
 		<jar jarfile="./EnvDetector.jar" filesonly="true">
 			<fileset dir="${build}"/>
 			<manifest>
-				<attribute name="Main-Class" value="org.openj9.java.EnvDetector"/>
+				<attribute name="Main-Class" value="org.openj9.envInfo.EnvDetector"/>
 			</manifest>
 		</jar>
 	</target>
 
 	<target name="run" depends="dist">
 		<property name="javaexecutable.java" value="${JAVA_BIN}/java" />
-		<java jar="./EnvDetector.jar" fork="true" failonerror="true" jvm="${javaexecutable.java}"/>
+		<java jar="./EnvDetector.jar" fork="true" failonerror="true" jvm="${javaexecutable.java}">
+			<arg value="JavaInfo"/>
+		</java>
 	</target>
 
 	<target name="clean" description="clean up">
+		<delete file="../autoGenEnv.mk" />
 		<delete dir="${build}" />
-		<delete file="EnvDetector.jar" />		
+		<delete file="EnvDetector.jar" />
 	</target>
 
 	<target name="build">
-		<delete file="../autoGenEnv.mk" />
 		<antcall target="clean" inheritall="true" />
 		<antcall target="run" inheritall="true" />
-		<antcall target="clean" inheritall="true" />
 	</target>
 
 </project>
