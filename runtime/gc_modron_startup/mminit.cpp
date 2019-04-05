@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -99,9 +98,9 @@
 #include "ObjectHeapIteratorSegregated.hpp"
 #include "SizeClasses.hpp"
 #endif /* J9VM_GC_SEGRGATED_HEAP */
-#if defined(J9VM_GC_STACCATO)
+#if defined(J9VM_GC_REALTIME)
 #include "RememberedSetSATB.hpp"
-#endif /* J9VM_GC_STACCATO */
+#endif /* J9VM_GC_REALTIME */
 #include "Scavenger.hpp"
 #include "StringTable.hpp"
 #include "Validator.hpp"

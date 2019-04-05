@@ -38,7 +38,7 @@ class MM_SweepSchemeRealtime : public MM_SweepSchemeSegregated
 	 * Data members
 	 */
 private:
-	MM_RealtimeGC *_realtimeGC; /**< The staccatoGC that this sweepScheme is associated with */
+	MM_RealtimeGC *_realtimeGC; /**< The RealtimeGC that this sweepScheme is associated with */
 	MM_Scheduler *_scheduler;
 	uintptr_t _coalesceFreeRegionCount;
 	uintptr_t _sweepSmallRegionCount;
