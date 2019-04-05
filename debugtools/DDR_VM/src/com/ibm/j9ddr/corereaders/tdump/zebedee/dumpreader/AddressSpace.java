@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.j9ddr.corereaders.tdump.zebedee.dumpreader;
 
 import java.io.*;
@@ -43,7 +42,6 @@ import java.util.logging.*;
  * @has - - - com.ibm.zebedee.util.MachineContext
  * @depend - - - com.ibm.zebedee.util.Template
  */
-
 public class AddressSpace implements Serializable {
     /** The dump we belong to */
     protected Dump dump;
@@ -381,7 +379,7 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read a byte at the specified address.
+     * Read an unsigned byte at the specified address.
      * @throws IOException if the given address is not present in this address space
      */
     public int read(long address) throws IOException {
@@ -393,10 +391,9 @@ public class AddressSpace implements Serializable {
      * @throws IOException if the given address is not present in this address space
      */
     public int readInt(long address) throws IOException {
-
     	int offset = (int)address & 0xfff;
     	try {
-    		if (offset < 0xffd) {
+    		if (offset <= 0xffc) {
     			return Dump.readInt(getBlock(address), offset);
     		}
     	} catch (ArrayIndexOutOfBoundsException e) {
@@ -408,7 +405,6 @@ public class AddressSpace implements Serializable {
     	int ch3 = read(address++);
     	int ch4 = read(address++);
     	return (ch1 << 24) | (ch2 << 16) | (ch3 << 8) | ch4;
-
     }
 
     /**
@@ -416,11 +412,11 @@ public class AddressSpace implements Serializable {
      * @throws IOException if the given address is not present in this address space
      */
     public int readUnsignedByte(long address) throws IOException {
-        return readInt(address) >>> 24;
+        return read(address);
     }
 
     /**
-     * Read a byte at the specified address.
+     * Read a (signed) byte at the specified address.
      * @throws IOException if the given address is not present in this address space
      */
     public byte readByte(long address) throws IOException {
@@ -432,11 +428,14 @@ public class AddressSpace implements Serializable {
      * @throws IOException if the given address is not present in this address space
      */
     public int readUnsignedShort(long address) throws IOException {
-        return readInt(address) >>> 16;
+		int ch1 = read(address);
+		int ch2 = read(address + 1);
+
+		return (ch1 << 8) | ch2;
     }
 
     /**
-     * Read a short at the specified address.
+     * Read a (signed) short at the specified address.
      * @throws IOException if the given address is not present in this address space
      */
     public short readShort(long address) throws IOException {
@@ -457,10 +456,9 @@ public class AddressSpace implements Serializable {
      * @throws IOException if the given address is not present in this address space
      */
     public long readLong(long address) throws IOException {
-
     	int offset = (int)address & 0xfff;
     	try {
-    		if (offset < 0xff9) {
+    		if (offset <= 0xff8) {
     			return Dump.readLong(getBlock(address), offset);
     		}
     	} catch (ArrayIndexOutOfBoundsException e) {
@@ -519,9 +517,9 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read an ebcdic String. This method expects to find a sequence of ebcdic bytes at the
+     * Read an EBCDIC String. This method expects to find a sequence of EBCDIC bytes at the
      * given address.
-     * @param address the start address of the ebcdic bytes
+     * @param address the start address of the EBCDIC bytes
      * @param length the number of bytes to be read
      * @throws IOException if the given address is not present in this address space
      */
@@ -532,9 +530,9 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read an ebcdic String. Assumes that address points to the halfword length immediately
-     * followed by the ebcdic bytes.
-     * @param address the start address of the ebcdic bytes
+     * Read an EBCDIC String. Assumes that address points to the halfword length immediately
+     * followed by the EBCDIC bytes.
+     * @param address the start address of the EBCDIC bytes
      * @throws IOException if the given address is not present in this address space
      */
     public String readEbcdicString(long address) throws IOException {
@@ -543,8 +541,8 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read an ebcdic String. Assumes that address points to a null-terminated ebcdic string.
-     * @param address the start address of the ebcdic bytes
+     * Read an EBCDIC String. Assumes that address points to a null-terminated EBCDIC string.
+     * @param address the start address of the EBCDIC bytes
      * @throws IOException if the given address is not present in this address space
      */
     public String readEbcdicCString(long address) throws IOException {
@@ -554,9 +552,9 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read an ascii String. This method expects to find a sequence of ascii bytes at the
+     * Read an ASCII String. This method expects to find a sequence of ASCII bytes at the
      * given address.
-     * @param address the start address of the ascii bytes
+     * @param address the start address of the ASCII bytes
      * @param length the number of bytes to be read
      * @throws IOException if the given address is not present in this address space
      */
@@ -570,9 +568,9 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read the ascii string at the given address. Assumes that address points to a
-     * null-terminated ascii C string.
-     * @param address the start address of the ascii bytes
+     * Read the ASCII string at the given address. Assumes that address points to a
+     * null-terminated ASCII C string.
+     * @param address the start address of the ASCII bytes
      * @throws IOException if the given address is not present in this address space
      */
     public String readAsciiCString(long address) throws IOException {
@@ -586,9 +584,9 @@ public class AddressSpace implements Serializable {
     }
 
     /**
-     * Read an ascii String. Assumes that address points to the halfword length immediately
-     * followed by the ascii bytes.
-     * @param address the start address of the ascii bytes
+     * Read an ASCII String. Assumes that address points to the halfword length immediately
+     * followed by the ASCII bytes.
+     * @param address the start address of the ASCII bytes
      * @throws IOException if the given address is not present in this address space
      */
     public String readAsciiString(long address) throws IOException {
@@ -599,7 +597,7 @@ public class AddressSpace implements Serializable {
     /**
      * Read a UTF8 String. Assumes that address points to the halfword length immediately
      * followed by the utf8 bytes.
-     * XXX Despite the name no UTF8 conversion is done yet! (Ie assumes ascii)
+     * XXX Despite the name no UTF8 conversion is done yet! (i.e. assumes ASCII)
      * @param address the start address of the structure
      * @throws IOException if the given address is not present in this address space
      */
@@ -633,7 +631,7 @@ public class AddressSpace implements Serializable {
      * So perhaps this knowledge should only be in the le layer?
      */
     public void setIs64bit(boolean is64bit) {
-    	log.fine("Set address space "+asid+" as "+(is64bit?"64-bit":"32-bit"));
+        log.fine("Set address space " + asid + " as " + (is64bit ? "64-bit" : "32-bit"));
         this.is64bit = is64bit;
     }
 
