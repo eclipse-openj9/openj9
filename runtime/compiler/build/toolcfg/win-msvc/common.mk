@@ -78,10 +78,9 @@ CX_DEFINES+=\
     $(TARGET_DEFINES) \
     CRTAPI1=_cdecl \
     CRTAPI2=_cdecl \
-    _WIN95 \
-    _WIN32_WINDOWS=0x400 \
-    _WIN32_IE=0x300 \
-    WINVER=0x400 \
+    _WIN32_WINDOWS=0x601 \
+    _WIN32_WINNT=0x0601 \
+    WINVER=0x601\
     _WIN32 \
     WIN32 \
     _CRT_SECURE_NO_WARNINGS \
@@ -124,7 +123,6 @@ endif
 
 ifeq ($(HOST_BITS),64)
     CX_DEFINES+=\
-        _WIN32_WINNT=0x0400 \
         _WINSOCKAPI_ \
         J9HAMMER
 endif
