@@ -1040,7 +1040,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
          bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
-         TR_J9MethodFieldAttributes attrs = {.resolvedFieldAttribute = {{.address = address}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result}};
+         TR_J9MethodFieldAttributes attrs(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          client->write(attrs);
          }
          break;
@@ -1081,7 +1081,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
          bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
-         TR_J9MethodFieldAttributes attrs = {.resolvedFieldAttribute = {{.fieldOffset = fieldOffset}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result}};
+         TR_J9MethodFieldAttributes attrs((void *) fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          client->write(attrs);
          }
          break;
@@ -1633,42 +1633,41 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes:
          {
-         UDATA ltype = 0;
-         J9ROMFieldShape * fieldShape = 0;
-         auto recv = client->getRecvData<J9Method *, TR_ResolvedJ9Method*, int32_t, bool, J9ConstantPool *>();
-         auto ramMethod = std::get<0>(recv);
-         TR_ResolvedJ9Method *method= std::get<1>(recv);
-         auto cpIndex = std::get<2>(recv);
-         bool isStore = std::get<3>(recv);
-         auto constantPool = std::get<4>(recv);
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         I_32 cpIndex = std::get<1>(recv);
+         bool isStore = std::get<2>(recv);
+         bool needAOTValidation = std::get<3>(recv);
+         U_32 fieldOffset;
+         TR::DataType type;
+         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
 
-         J9Class *definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, false);
-         IDATA offset = jitCTResolveInstanceFieldRefWithMethod(fe->vmThread(), ramMethod, cpIndex, isStore, &fieldShape);
-         bool unresolvedInCP = method->getUnresolvedFieldInCP(cpIndex);
-         if (offset >= 0)
-            ltype = fieldShape->modifiers;
-         TR_J9MethodFieldAttributes attrs = {.resolvedRelocatableFieldAttribute = {{.fieldOffset = offset}, definingClass, ltype, unresolvedInCP}};
-         client->write(attrs);
+         TR_J9MethodFieldAttributes attrs((void *) fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
+
+         J9ConstantPool *constantPool = (J9ConstantPool *) J9_CP_FROM_METHOD(method->ramMethod());
+         TR_OpaqueClassBlock *definingClass = compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, false);
+
+         client->write(attrs, definingClass);
          }
          break;
       case J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes:
          {
-         J9ROMFieldShape * fieldShape = 0;
-         UDATA ltype = 0;
-         auto recv = client->getRecvData<J9Method *, TR_ResolvedJ9Method*, int32_t, bool, J9ConstantPool *>();
-         auto ramMethod = std::get<0>(recv);
-         TR_ResolvedJ9Method *method= std::get<1>(recv);
-         int32_t cpIndex = std::get<2>(recv);
-         bool isStore = std::get<3>(recv);
-         auto constantPool = std::get<4>(recv);
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         int32_t isStore = std::get<2>(recv);
+         int32_t needAOTValidation = std::get<3>(recv);
+         void *address;
+         TR::DataType type;
+         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
+         TR_J9MethodFieldAttributes attrs(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
 
-         J9Class *definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, true);
-         void * offset = jitCTResolveStaticFieldRefWithMethod(fe->vmThread(), ramMethod, cpIndex, isStore, &fieldShape);
-         bool unresolvedInCP = method->getUnresolvedFieldInCP(cpIndex);
-         if (offset)
-            ltype = fieldShape->modifiers;
-         TR_J9MethodFieldAttributes attrs = {.resolvedRelocatableFieldAttribute = {{.address = offset}, definingClass, ltype, unresolvedInCP}};
-         client->write(attrs);
+         J9ConstantPool *constantPool = (J9ConstantPool *) J9_CP_FROM_METHOD(method->ramMethod());
+         TR_OpaqueClassBlock *definingClass = compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), fe->_jitConfig->javaVM, constantPool, cpIndex, true);
+
+         client->write(attrs, definingClass);
          }
          break;
 
