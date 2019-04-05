@@ -355,37 +355,40 @@ def get_summary_table() {
             // table cell
             def innerTable = "<table><tbody>"
 
-            def pipelineName = get_pipeline_name(spec, release)
-            def build = pipelineBuilds.get(pipelineName)
-            def downstreamJobNames = buildFile.get_downstream_job_names(spec, release)
+            // check if this release is supported for this spec
+            if (BUILD_SPECS.get(spec).contains(release)) {
+                def pipelineName = get_pipeline_name(spec, release)
+                def build = pipelineBuilds.get(pipelineName)
+                def downstreamJobNames = buildFile.get_downstream_job_names(spec, release)
 
-            if (build) {
-                def pipelineLink = buildFile.get_build_embedded_status_link(build)
-                innerTable += "<tr style=\"text-align: right\"><td colspan=\"2\">${pipelineLink}</td><td>${build.getDurationString()}</td></tr>"
+                if (build) {
+                    def pipelineLink = buildFile.get_build_embedded_status_link(build)
+                    innerTable += "<tr style=\"text-align: right\"><td colspan=\"2\">${pipelineLink}</td><td>${build.getDurationString()}</td></tr>"
 
-                // add pipeline's downstream builds
-                def downstreamBuilds = buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values())
+                    // add pipeline's downstream builds
+                    def downstreamBuilds = buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values())
 
-                downstreamJobNames.each { label, jobName ->
-                    def downstreamBuild = downstreamBuilds.get(jobName)
-                    def link = ''
-                    def runtime = ''
+                    downstreamJobNames.each { label, jobName ->
+                        def downstreamBuild = downstreamBuilds.get(jobName)
+                        def link = ''
+                        def runtime = ''
 
-                    if (downstreamBuild) {
-                        link = buildFile.get_build_embedded_status_link(downstreamBuild)
-                        runtime = downstreamBuild.getDurationString()
+                        if (downstreamBuild) {
+                            link = buildFile.get_build_embedded_status_link(downstreamBuild)
+                            runtime = downstreamBuild.getDurationString()
+                        }
+
+                        if (showLabel) {
+                            //show downstream jobs short names only once per platform
+                            innerTable += "<tr><td>${label}</td><td>${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                        } else {
+                            innerTable += "<tr><td colspan=\"2\">${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                        }
                     }
-
-                    if (showLabel) {
-                        //show downstream jobs short names only once per platform
-                        innerTable += "<tr><td>${label}</td><td>${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
-                    } else {
-                        innerTable += "<tr><td colspan=\"2\">${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                } else {
+                    downstreamJobNames.keySet().each {
+                        innerTable += "<tr><td colspan=\"3\">${it}</td></tr>"
                     }
-                }
-            } else {
-                downstreamJobNames.keySet().each {
-                    innerTable += "<tr><td colspan=\"3\">${it}</td></tr>"
                 }
             }
 
