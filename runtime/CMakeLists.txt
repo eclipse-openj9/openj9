@@ -266,7 +266,7 @@ add_subdirectory("${J9VM_OMR_DIR}" omr)
 
 # Due to CMake technical limitations we can't properly propagate dependencies
 # to omrutil via the glue.
-add_dependencies(omrutil_obj j9vm_nlsgen)
+add_dependencies(omrutil_obj j9vm_nlsgen run_cptool)
 
 ###
 ### Share library version suffixing
