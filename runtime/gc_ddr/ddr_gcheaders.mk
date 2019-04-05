@@ -1,7 +1,7 @@
 # Makefile for DDR blob generation
 
 ###############################################################################
-# Copyright (c) 1991, 2017 IBM Corp. and others
+# Copyright (c) 1991, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,6 @@ J9VM_GC_DIRS := \
 	gc_modron_standard \
 	gc_modron_startup \
 	gc_realtime \
-	gc_staccato \
 	gc_stats \
 	gc_structs \
 	gc_verbose_java \

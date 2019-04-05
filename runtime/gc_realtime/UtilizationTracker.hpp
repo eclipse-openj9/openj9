@@ -40,7 +40,6 @@ class MM_Scheduler;
 /**
  * This class tracks the current mutator utilization by remembering what executed (and the interleaving)
  * in the last time window.  When gang-scheduling (aka Metronome) there will be only one instance globally.
- * For Staccato, there will be one instance per thread.
  *
  * @todo Potentially make the backing data-structure dynamic or dependent on the time-window size.
  *

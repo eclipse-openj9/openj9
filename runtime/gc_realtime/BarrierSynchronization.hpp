@@ -32,7 +32,7 @@
 /**
  * This class provides thread synchronization between the GC thread and the mutator threads.
  * Its API is wide enough to support both the class Metronome gang scheduling as well as the
- * Staccato ragged barrier model.
+ * realtime ragged barrier model.
  *
  */
 class MM_BarrierSynchronization : public MM_BaseVirtual
@@ -64,7 +64,7 @@ public:
 
 	/*
 	 * These functions are used by classic Metronome gang-scheduling and
-	 * also transitionally used for the parts of Staccato that have not
+	 * also transitionally used for the parts of realtime that have not
 	 * been made concurrent.
 	 */
 	void preRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive);
