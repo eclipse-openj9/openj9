@@ -83,7 +83,7 @@ inline uint32_t lcm(uint32_t a, uint32_t b)
    {
    return a * b / gcd(a, b);
    }
-TR::X86PrivateLinkage::X86PrivateLinkage(TR::CodeGenerator *cg) : TR::Linkage(cg)
+TR::X86PrivateLinkage::X86PrivateLinkage(TR::CodeGenerator *cg) : J9::PrivateLinkage(cg)
    {
    // Stack alignment basic requirement:
    //    X86-32:  4 bytes, per hardware requirement

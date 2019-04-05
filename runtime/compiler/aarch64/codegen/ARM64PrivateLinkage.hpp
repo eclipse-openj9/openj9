@@ -24,6 +24,7 @@
 #define ARM64_PRIVATELINKAGE_INCL
 
 #include "codegen/Linkage.hpp"
+#include "codegen/PrivateLinkage.hpp"
 
 #include "infra/Assert.hpp"
 
@@ -32,9 +33,10 @@ namespace TR { class Instruction; }
 namespace TR { class Register; }
 namespace TR { class ResolvedMethodSymbol; }
 
-namespace TR {
+namespace TR
+{
 
-class ARM64PrivateLinkage : public TR::Linkage
+class ARM64PrivateLinkage : public J9::PrivateLinkage
    {
    protected:
 

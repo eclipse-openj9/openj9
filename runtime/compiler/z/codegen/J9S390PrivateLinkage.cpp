@@ -58,8 +58,10 @@
 // TR::S390PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
 TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   : TR::Linkage(codeGen,elc,lc)
+   : J9::PrivateLinkage(codeGen)
    {
+   setExplicitLinkageType(elc);
+
    // linkage properties
    setProperty(SplitLongParm);
    setProperty(TwoStackSlotsForLongAndDouble);

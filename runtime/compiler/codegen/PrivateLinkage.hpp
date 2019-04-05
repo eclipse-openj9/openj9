@@ -20,24 +20,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_LINKAGE_INCL
-#define TR_LINKAGE_INCL
+#include "codegen/Linkage.hpp"
 
-#include "codegen/J9Linkage.hpp"
+namespace TR { class CodeGenerator; }
 
-namespace TR
+namespace J9
 {
 
-class OMR_EXTENSIBLE Linkage : public J9::LinkageConnector
+class PrivateLinkage : public TR::Linkage
    {
-   public:
+public:
 
-   Linkage(TR::CodeGenerator *cg)
-      : J9::LinkageConnector(cg) {}
+   PrivateLinkage(TR::CodeGenerator *cg) :
+         TR::Linkage(cg)
+      {
+      }
 
-   Linkage(TR::CodeGenerator *cg, TR_S390LinkageConventions elc, TR_LinkageConventions le)
-      : J9::LinkageConnector(cg, elc, le) {}
    };
-}
 
-#endif
+}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,7 @@
 #ifndef PPC_PRIVATELINKAGE_INCL
 #define PPC_PRIVATELINKAGE_INCL
 
-#include "codegen/Linkage.hpp"
-
+#include "codegen/PrivateLinkage.hpp"
 #include "infra/Assert.hpp"
 
 class TR_BitVector;
@@ -53,7 +52,7 @@ struct PPCPICItem
    };
 
 
-class PPCPrivateLinkage : public TR::Linkage
+class PPCPrivateLinkage : public J9::PrivateLinkage
    {
    public:
 

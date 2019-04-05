@@ -59,7 +59,7 @@
 #define MAX_PROFILED_CALL_FREQUENCY (.90f)
 
 TR::PPCPrivateLinkage::PPCPrivateLinkage(TR::CodeGenerator *cg)
-   : TR::Linkage(cg)
+   : J9::PrivateLinkage(cg)
    {
    int i = 0;
    bool is32bitLinux = false;

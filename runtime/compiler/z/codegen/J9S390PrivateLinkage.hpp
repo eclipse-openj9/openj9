@@ -23,7 +23,7 @@
 #ifndef J9S390PRIVATELINKAGE_INCL
 #define J9S390PRIVATELINKAGE_INCL
 
-#include "codegen/Linkage.hpp"
+#include "codegen/PrivateLinkage.hpp"
 
 namespace TR { class S390JNICallDataSnippet; }
 namespace TR { class AutomaticSymbol; }
@@ -39,7 +39,7 @@ namespace TR {
 //  TR::S390PrivateLinkage Definition for J9
 ////////////////////////////////////////////////////////////////////////////////
 
-class S390PrivateLinkage : public TR::Linkage
+class S390PrivateLinkage : public J9::PrivateLinkage
    {
    uint32_t _preservedRegisterMapForGC;
 

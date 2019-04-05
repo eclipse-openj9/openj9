@@ -45,7 +45,7 @@
 #include "infra/List.hpp"
 
 TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
-   : TR::Linkage(cg),
+   : J9::PrivateLinkage(cg),
    _interpretedMethodEntryPoint(NULL),
    _jittedMethodEntryPoint(NULL)
    {
