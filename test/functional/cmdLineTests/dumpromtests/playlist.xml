@@ -47,6 +47,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
