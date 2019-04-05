@@ -217,6 +217,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -243,6 +246,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -269,6 +275,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -345,6 +354,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -371,6 +383,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
@@ -543,6 +558,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -569,6 +587,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -595,6 +616,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -622,6 +646,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -649,6 +676,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
@@ -679,6 +709,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -706,6 +739,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -733,6 +769,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -759,6 +798,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 	<test>
 		<testCaseName>testDefaultDisclaimMemory_zlinux</testCaseName>
@@ -784,6 +826,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>
@@ -811,6 +856,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 
 	<test>

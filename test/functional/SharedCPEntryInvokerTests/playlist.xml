@@ -43,5 +43,8 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 	</test>
 </playlist>
