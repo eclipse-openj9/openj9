@@ -1,5 +1,5 @@
 <#-- 
-	Copyright (c) 1998, 2018 IBM Corp. and others
+	Copyright (c) 1998, 2019 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,29 +175,15 @@ ifdef USE_CLANG
   CLANG_CXXFLAGS+=-DCRTAPI1=_cdecl -DCRTAPI2=_cdecl
 endif
 
-
-CFLAGS+=-D_WIN95 -D_WIN32_WINDOWS=0x0500 /D_WIN32_DCOM
-CXXFLAGS+=-D_WIN95 -D_WIN32_WINDOWS=0x0500 /D_WIN32_DCOM
-ifdef USE_CLANG
-  CLANG_CXXFLAGS+=-D_WIN95 -D_WIN32_WINDOWS=0x0500 -D_WIN32_DCOM
-endif
-
-# from win32.mak: regardless of the TARGET OS, define compile time UMA_WINVER to match APPVER macro
-CFLAGS+=-D_WIN32_IE=0x0500 -DWINVER=0x0501
-CXXFLAGS+=-D_WIN32_IE=0x0500 -DWINVER=0x0501
-ifdef USE_CLANG
-  CLANG_CXXFLAGS+=-D_WIN32_IE=0x0500 -DWINVER=0x0501
-endif
-
+# Target Win 7 by default
 ifndef UMA_WINVER
-  UMA_WINVER=0x0501
+  UMA_WINVER=0x0601
 endif
 
-# TODO: is this define obsolete?
-CFLAGS+=-D_WIN32_WINNT=$(UMA_WINVER)
-CXXFLAGS+=-D_WIN32_WINNT=$(UMA_WINVER)
+CFLAGS+=-DWINVER=$(UMA_WINVER) -D_WIN32_WINNT=$(UMA_WINVER) -D_WIN32_WINDOWS=$(UMA_WINVER)
+CXXFLAGS+=-DWINVER=$(UMA_WINVER) -D_WIN32_WINNT=$(UMA_WINVER) -D_WIN32_WINDOWS=$(UMA_WINVER)
 ifdef USE_CLANG
-  CLANG_CXXFLAGS+=-D_WIN32_WINNT=$(UMA_WINVER)
+  CLANG_CXXFLAGS+=-DWINVER=$(UMA_WINVER) -D_WIN32_WINNT=$(UMA_WINVER) -D_WIN32_WINDOWS=$(UMA_WINVER)
 endif
 
 # -Zm200 max memory is 200% default
