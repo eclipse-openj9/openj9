@@ -114,6 +114,10 @@ BUILD_IDENTIFIER = (params.BUILD_IDENTIFIER) ? params.BUILD_IDENTIFIER : ""
 echo "BUILD_IDENTIFIER:'${BUILD_IDENTIFIER}'"
 AUTOMATIC_GENERATION = (params.AUTOMATIC_GENERATION) ? params.AUTOMATIC_GENERATION : 'true'
 echo "AUTOMATIC_GENERATION:'${AUTOMATIC_GENERATION}'"
+TIMEOUT_TIME = (params.TIMEOUT_TIME) ? params.TIMEOUT_TIME : '12'
+echo "TIMEOUT_TIME: ${TIMEOUT_TIME}"
+TIMEOUT_UNIT = (params.TIMEOUT_UNITS) ? params.TIMEOUT_UNITS : 'HOURS'
+echo "TIMEOUT_UNIT: ${TIMEOUT_UNIT}"
 
 OPENJDK_REPO = [:]
 OPENJDK_BRANCH = [:]
@@ -123,74 +127,76 @@ BUILD_SPECS = [:]
 builds = [:]
 pipelineNames = []
 
-timeout(time: 12, unit: 'HOURS') {
-    timestamps {
-        node(SETUP_LABEL) {
-            try {
-                checkout scm
-                variableFile = load 'buildenv/jenkins/common/variables-functions'
-                buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
-                BUILD_SPECS.putAll(variableFile.get_specs(SPECS))
+try {
+    timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNIT) {
+        timestamps {
+            node(SETUP_LABEL) {
+                try {
+                    checkout scm
+                    variableFile = load 'buildenv/jenkins/common/variables-functions'
+                    buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
-                // parse variables file and initialize variables
-                variableFile.set_job_variables('wrapper')
-                SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+                    BUILD_SPECS.putAll(variableFile.get_specs(SPECS))
 
-                if (params.PERSONAL_BUILD) {
-                    // update build description
-                    currentBuild.description += "<br/>${params.PLATFORMS}"
-                }
+                    // parse variables file and initialize variables
+                    variableFile.set_job_variables('wrapper')
+                    SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
-                def BUILD_NODES = get_node_labels(params.BUILD_NODE_LABELS, BUILD_SPECS.keySet())
-                def TEST_NODES = get_node_labels(params.TEST_NODE_LABELS, BUILD_SPECS.keySet())
+                    if (params.PERSONAL_BUILD) {
+                        // update build description
+                        currentBuild.description += "<br/>${params.PLATFORMS}"
+                    }
 
-                BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
-                    if (VARIABLES."${SPEC}") {
-                        SDK_VERSIONS.each { SDK_VERSION ->
-                            def job_name = get_pipeline_name(SPEC, SDK_VERSION)
-                            pipelineNames.add(job_name)
+                    def BUILD_NODES = get_node_labels(params.BUILD_NODE_LABELS, BUILD_SPECS.keySet())
+                    def TEST_NODES = get_node_labels(params.TEST_NODE_LABELS, BUILD_SPECS.keySet())
 
-                            // set OpenJDK repos and branch for the downstream build
-                            def REPO = OPENJDK_REPO.get(SDK_VERSION).get(SPEC)
-                            def BRANCH = OPENJDK_BRANCH.get(SDK_VERSION).get(SPEC)
+                    BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
+                        if (VARIABLES."${SPEC}") {
+                            SDK_VERSIONS.each { SDK_VERSION ->
+                                def job_name = get_pipeline_name(SPEC, SDK_VERSION)
+                                pipelineNames.add(job_name)
 
-                            // set nodes for the downstream builds
-                            def BUILD_NODE = ''
-                            if (BUILD_NODES[SPEC]) {
-                                BUILD_NODE = BUILD_NODES[SPEC]
+                                // set OpenJDK repos and branch for the downstream build
+                                def REPO = OPENJDK_REPO.get(SDK_VERSION).get(SPEC)
+                                def BRANCH = OPENJDK_BRANCH.get(SDK_VERSION).get(SPEC)
+
+                                // set nodes for the downstream builds
+                                def BUILD_NODE = ''
+                                if (BUILD_NODES[SPEC]) {
+                                    BUILD_NODE = BUILD_NODES[SPEC]
+                                }
+                                def TEST_NODE = ''
+                                if (TEST_NODES[SPEC]) {
+                                    TEST_NODE = TEST_NODES[SPEC]
+                                }
+
+                                def EXTRA_GETSOURCE_OPTIONS = get_value_by_spec(EXTRA_GETSOURCE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                                def EXTRA_CONFIGURE_OPTIONS = get_value_by_spec(EXTRA_CONFIGURE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                                def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
+                                def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
+
+                                def ADOPTOPENJDK_REPO = ''
+                                def ADOPTOPENJDK_BRANCH = ''
+                                if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
+                                    ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
+                                    ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
+                                }
+
+                                if (AUTOMATIC_GENERATION != 'false'){
+                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
+                                }
+
+                                builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) }
                             }
-                            def TEST_NODE = ''
-                            if (TEST_NODES[SPEC]) {
-                                TEST_NODE = TEST_NODES[SPEC]
-                            }
-
-                            def EXTRA_GETSOURCE_OPTIONS = get_value_by_spec(EXTRA_GETSOURCE_OPTIONS_MAP, SDK_VERSION, SPEC)
-                            def EXTRA_CONFIGURE_OPTIONS = get_value_by_spec(EXTRA_CONFIGURE_OPTIONS_MAP, SDK_VERSION, SPEC)
-                            def EXTRA_MAKE_OPTIONS = get_value_by_spec(EXTRA_MAKE_OPTIONS_MAP, SDK_VERSION, SPEC)
-                            def OPENJDK_CLONE_DIR = get_value_by_spec(OPENJDK_CLONE_DIR_MAP, SDK_VERSION, SPEC)
-
-                            def ADOPTOPENJDK_REPO = ''
-                            def ADOPTOPENJDK_BRANCH = ''
-                            if (ADOPTOPENJDK_MAP.get(SDK_VERSION)) {
-                                ADOPTOPENJDK_REPO = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('repoUrl')
-                                ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
-                            }
-
-                            if (AUTOMATIC_GENERATION != 'false'){
-                                variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
-                            }
-
-                            builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION) }
                         }
                     }
+                } finally {
+                    // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+                    cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
                 }
-            } finally {
-                // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-                cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
             }
-        }
-        try {
+
             // launch all pipeline builds
             parallel builds
 
@@ -204,13 +210,13 @@ timeout(time: 12, unit: 'HOURS') {
                                                             string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}")])
                 }
             }
-        } finally {
-            // add summary badge
-            table = get_summary_table()
-            if (table) {
-                manager.createSummary("plugin.png").appendText(table)
-            }
         }
+    }
+} finally {
+    // add summary badge
+    table = get_summary_table()
+    if (table) {
+        manager.createSummary("plugin.png").appendText(table)
     }
 }
 
@@ -355,37 +361,40 @@ def get_summary_table() {
             // table cell
             def innerTable = "<table><tbody>"
 
-            def pipelineName = get_pipeline_name(spec, release)
-            def build = pipelineBuilds.get(pipelineName)
-            def downstreamJobNames = buildFile.get_downstream_job_names(spec, release)
+            // check if this release is supported for this spec
+            if (BUILD_SPECS.get(spec).contains(release)) {
+                def pipelineName = get_pipeline_name(spec, release)
+                def build = pipelineBuilds.get(pipelineName)
+                def downstreamJobNames = buildFile.get_downstream_job_names(spec, release)
 
-            if (build) {
-                def pipelineLink = buildFile.get_build_embedded_status_link(build)
-                innerTable += "<tr style=\"text-align: right\"><td colspan=\"2\">${pipelineLink}</td><td>${build.getDurationString()}</td></tr>"
+                if (build) {
+                    def pipelineLink = buildFile.get_build_embedded_status_link(build)
+                    innerTable += "<tr style=\"text-align: right\"><td colspan=\"2\">${pipelineLink}</td><td>${build.getDurationString()}</td></tr>"
 
-                // add pipeline's downstream builds
-                def downstreamBuilds = buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values())
+                    // add pipeline's downstream builds
+                    def downstreamBuilds = buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values())
 
-                downstreamJobNames.each { label, jobName ->
-                    def downstreamBuild = downstreamBuilds.get(jobName)
-                    def link = ''
-                    def runtime = ''
+                    downstreamJobNames.each { label, jobName ->
+                        def downstreamBuild = downstreamBuilds.get(jobName)
+                        def link = ''
+                        def runtime = ''
 
-                    if (downstreamBuild) {
-                        link = buildFile.get_build_embedded_status_link(downstreamBuild)
-                        runtime = downstreamBuild.getDurationString()
+                        if (downstreamBuild) {
+                            link = buildFile.get_build_embedded_status_link(downstreamBuild)
+                            runtime = downstreamBuild.getDurationString()
+                        }
+
+                        if (showLabel) {
+                            //show downstream jobs short names only once per platform
+                            innerTable += "<tr><td>${label}</td><td>${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                        } else {
+                            innerTable += "<tr><td colspan=\"2\">${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                        }
                     }
-
-                    if (showLabel) {
-                        //show downstream jobs short names only once per platform
-                        innerTable += "<tr><td>${label}</td><td>${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
-                    } else {
-                        innerTable += "<tr><td colspan=\"2\">${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
+                } else {
+                    downstreamJobNames.keySet().each {
+                        innerTable += "<tr><td colspan=\"3\">${it}</td></tr>"
                     }
-                }
-            } else {
-                downstreamJobNames.keySet().each {
-                    innerTable += "<tr><td colspan=\"3\">${it}</td></tr>"
                 }
             }
 
