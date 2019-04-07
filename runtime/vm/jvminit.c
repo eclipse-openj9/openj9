@@ -212,6 +212,7 @@ UDATA runJVMOnLoad (J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char* options);
 static IDATA updateJavaAgentClasspath (J9JavaVM * vm);
 #endif /* J9VM_OPT_JVMTI */
 static void consumeVMArgs (J9JavaVM* vm, J9VMInitArgs* j9vm_args);
+static BOOLEAN isEmpty (const char * str);
 
 #if (defined(J9VM_OPT_SIDECAR))
 static UDATA initializeJVMExtensionInterface (J9JavaVM* vm);
@@ -2392,9 +2393,10 @@ static UDATA checkArgsConsumed(J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_ar
 		if (IS_CONSUMABLE( j9vm_args, i ) && !IS_CONSUMED( j9vm_args, i )) {
 			char* optString = j9vm_args->actualVMArgs->options[i].optionString;
 			char* envVar = j9vm_args->j9Options[i].fromEnvVar;
-
-			/* If ignoreUnrecognized is set to JNI_TRUE, we should not reject any unrecognized options beginning with -X or _ */
-			if (ignoreUnrecognized && optString && (!strncmp(optString, "-X", 2) || *optString=='_')) {
+			
+			/* If ignoreUnrecognized is set to JNI_TRUE, we should not reject any options that are: 
+				empty or contain only whitespace, or unrecognized options beginning with -X or _ */
+			if (ignoreUnrecognized && (NULL != optString) && (isEmpty(optString) || !strncmp(optString, "-X", 2) || *optString=='_')) {
 				continue;
 			}
 			if (REQUIRES_LIBRARY( j9vm_args, i )) {
@@ -2421,6 +2423,18 @@ static UDATA checkArgsConsumed(J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_ar
 	return TRUE;
 }
 
+/* Returns TRUE if a string is empty or if it contains only whitespace characters. */
+static BOOLEAN isEmpty(const char * str) {
+	BOOLEAN isEmpty = TRUE;
+	while('\0' != *str) {
+		if (0 == isspace((unsigned char) *str)) {
+			isEmpty = FALSE;
+			break;
+		}
+		str++;
+	}
+	return isEmpty;
+}
 
 /* Run using a pool_do after each initialization stage. If any errors were reported by libraries,
 	a flag is set to FALSE and the error is printed. See checkPostStage. */
