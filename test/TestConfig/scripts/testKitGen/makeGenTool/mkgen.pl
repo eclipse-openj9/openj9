@@ -37,6 +37,7 @@ my $mkName = "autoGen.mk";
 my $dependmk = "dependencies.mk";
 my $utilsmk = "utils.mk";
 my $countmk = "count.mk";
+my $disabledmk = "disabled.mk";
 my $settings = "settings.mk";
 my $projectRootDir = '';
 my $testRoot = '';
@@ -61,6 +62,7 @@ my $parentEle = '';
 my $currentEle = '';
 my $eleStr = '';
 my $eleArr = [];
+my %disabledTable = ();
 
 sub runmkgen {
 	( $projectRootDir, $allLevels, $allGroups, $allTypes, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
@@ -91,34 +93,41 @@ sub runmkgen {
 		print "Getting modes data from modes services...\n";
 	}
 
-	#initialize counting hash targetCount 
+	#initialize counting hash targetCount and disabledTable
 	$targetCount{"all"} = 0;
 	foreach my $eachLevel (sort @{$allLevels}) {
 		if (!defined $targetCount{$eachLevel}) {
 			$targetCount{$eachLevel} = 0;
+			$disabledTable{$eachLevel} = [];
 		}
 		foreach my $eachGroup (sort @{$allGroups}) {
 			if (!defined $targetCount{$eachGroup}) {
 				$targetCount{$eachGroup} = 0;
+				$disabledTable{$eachGroup} = [];
 			}
 			my $lgKey = $eachLevel . '.' . $eachGroup;
 			if (!defined $targetCount{$lgKey}) {
 				$targetCount{$lgKey} = 0;
+				$disabledTable{$lgKey} = [];
 			}
 			foreach my $eachType (sort @{$allTypes}) {
 				if (!defined $targetCount{$eachType}) {
 					$targetCount{$eachType} = 0;
+					$disabledTable{$eachType} = [];
 				}
 				my $ltKey = $eachLevel . '.' . $eachType;
 				if (!defined $targetCount{$ltKey}) {
 					$targetCount{$ltKey} = 0;
+					$disabledTable{$ltKey} = [];
 				}
 				my $gtKey = $eachGroup . '.' . $eachType;
 				if (!defined $targetCount{$gtKey}) {
 					$targetCount{$gtKey} = 0;
+					$disabledTable{$gtKey} = [];
 				}
 				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
 				$targetCount{$lgtKey} = 0;
+				$disabledTable{$lgtKey} = [];
 			}
 		}
 	}
@@ -127,6 +136,7 @@ sub runmkgen {
 	dependGen();
 	utilsGen();
 	countGen();
+	disabledGen();
 }
 
 sub generateOnDir {
@@ -318,12 +328,13 @@ sub handle_start {
 
 sub handle_end {
 	my ($p, $elt) = @_;
+	my $neglectedFlag = 0;
 	if (($elt eq 'include') && ($currentEle eq 'include')) {
 		$parseResult->{'include'} = $eleStr;
 	} elsif ($elt eq 'test') {
 		# do not generate make taget if impl doesn't match the exported impl
 		if ((defined $parseTest->{'impls'}) && !grep(/^$impl$/, @{$parseTest->{'impls'}}) ) {
-			$parseTest->{'disabled'} = 1;
+			$neglectedFlag = 1;
 		}
 		# do not generate make target if subset doesn't match the exported jdk_version
 		if (defined $parseTest->{'subsets'}) {
@@ -340,10 +351,11 @@ sub handle_end {
 				}
 			}
 			if ( $isSubsetValid == 0) {
-				$parseTest->{'disabled'} = 1;
+				$neglectedFlag = 1;
 			}
 		}
-		if (!defined $parseTest->{'disabled'}) {
+		# Do not generate make taget if the test is aot not applicable when test flag is set to AOT.
+		if ($neglectedFlag == 0 && (!defined $parseTest->{'aot'} || $parseTest->{'aot'} ne 'nonapplicable')) {
 			# variation defaults to noOption
 			if (!defined $parseTest->{'variation'}) {
 				$parseTest->{'variation'} = ['NoOptions'];
@@ -369,9 +381,24 @@ sub handle_end {
 				$parseTest->{'aot'} = 'applicable';
 			}
 			push( @{$parseResult->{'tests'}}, $parseTest );
+			if ($parseTest->{'disabled'}) {
+				foreach my $curLevel (@{ $parseTest->{'levels'} }) {
+					push @{ $disabledTable{$curLevel} }, $parseTest->{'testCaseName'};
+					foreach my $curGroup (@{ $parseTest->{'groups'} }) {
+						push @{ $disabledTable{$curGroup} }, $parseTest->{'testCaseName'};
+						push @{ $disabledTable{$curLevel . '.' . $curGroup} }, $parseTest->{'testCaseName'};
+						foreach my $curType (@{ $parseTest->{'types'} }) {
+							push @{ $disabledTable{$curType} }, $parseTest->{'testCaseName'};
+							push @{ $disabledTable{$curLevel . '.' . $curType} }, $parseTest->{'testCaseName'};
+							push @{ $disabledTable{$curGroup . '.' . $curType} }, $parseTest->{'testCaseName'};
+							push @{ $disabledTable{$curLevel . '.' . $curGroup . '.' . $curType} }, $parseTest->{'testCaseName'};
+						}
+					}
+				}	
+			}
 		}
 	} elsif (($elt eq 'disabled') && ($currentEle eq 'disabled')) {
-		$parseTest->{'disabled'} = 1;
+		$parseTest->{'disabled'} = $eleStr;
 	} elsif (($elt eq 'testCaseName') && ($currentEle eq 'testCaseName')) {
 		$parseTest->{'testCaseName'} = $eleStr;
 	} elsif (($elt eq 'command') && ($currentEle eq 'command')) {
@@ -425,8 +452,7 @@ sub handle_end {
 	} elsif (($elt eq 'aot') && ($currentEle eq 'aot')) {
 		if ( $testFlag =~ /AOT/ ) {
 			if ( $eleStr eq 'nonapplicable' ) {
-				# Do not generate make taget if the test is aot not applicable when test flag is set to AOT.
-				$parseTest->{'disabled'} = 1;
+				$parseTest->{'aot'} = $eleStr;
 			} elsif ( $eleStr eq 'applicable' ) {
 				$parseTest->{'aot'} = $eleStr;
 			} elsif ( $eleStr eq 'explicit' ) {
@@ -643,8 +669,10 @@ sub writeTargets {
 			foreach my $eachGroup (@{$test->{'groups'}}) {
 				foreach my $eachLevel (@{$test->{'levels'}}) {
 					foreach my $eachType (@{$test->{'types'}}) {
-						my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
-						push(@{$groupTargets{$lgtKey}}, $name);
+						if (!defined $test->{'disabled'}) {
+							my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+							push(@{$groupTargets{$lgtKey}}, $name);
+						}
 					}
 				}
 			}
@@ -863,6 +891,21 @@ sub countGen {
 
 	close $fhOut;
 	print "\nGenerated $countmk\n";
+}
+
+sub disabledGen {
+	my $disabledmkpath = $testRoot . "/TestConfig/" . $disabledmk;
+	open( my $fhOut, '>', $disabledmkpath ) or die "Cannot create file $disabledmkpath";
+	print $fhOut $headerComments ."\n";
+	foreach my $disabledKey (sort keys %disabledTable) {
+		print $fhOut 'disabled.' . $disabledKey . ":\n";
+		foreach my $ele (@{ $disabledTable{$disabledKey} }) {
+			print $fhOut "\t@\$(MAKE) $ele\n";
+		}
+		print $fhOut "\n.PHONY: disabled.$disabledKey\n\n";
+	}
+	close $fhOut;
+	print "\nGenerated $disabledmk\n";
 }
 
 1;

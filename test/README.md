@@ -117,8 +117,17 @@ Supported groups  are `regular|native`
     make _sanity.native
     make _extended.functional.native
 ```
+## 5) How to execute disabled tests?
 
-## 5) How to execute a directory of tests?
+If a test is disabled using `<disbaled>` tag in playlist.xml, it can be executed through specifying the test target or add `disabled` in front of regular target.
+
+```    
+    make _testA
+    make _disabled.sanity.functional
+    make _disabled.extended
+```
+
+## 6) How to execute a directory of tests?
 
 The example below executes all of the sanity tests found within the
 JIT_Test directory
@@ -131,11 +140,11 @@ or
     cd ../functional/JIT_Test; make -f autoGen.mk _sanity
 ```
 
-## 6) How to run an individual JCK?
+## 7) How to run an individual JCK?
 
 Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/jck/README.md) for details.
 
-## 7) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
+## 8) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
 
 User can run tests against different jdk version and/or jdk
 implementation. While the default values of these variables match a
@@ -148,7 +157,7 @@ By default, AUTO_DETECT is turned on, and the test framework will
 auto detect SPEC, JDK_IMPL, and JDK_VERSION. Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#1-configure-environment) for
 details and examples. 
 
-## 8) How to interpret test results?
+## 9) How to interpret test results?
 - test results summary
 
 At the end of each run, test results summary will be printed:
@@ -184,7 +193,7 @@ If a test is skipped, it means that this test cannot be run on this
 platform due to jvm options, platform requirements and/or test
 capabilities.
 
-## 9) How to rerun failed tests?
+## 10) How to rerun failed tests?
 
 `failed.mk` will be generated if there is any failed test target.
 We can rerun failed tests as following:
