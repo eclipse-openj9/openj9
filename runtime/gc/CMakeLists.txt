@@ -26,11 +26,7 @@ add_library(j9gc SHARED
 
 )
 
-if(OMR_TOOLCONFIG STREQUAL "gnu")
-	if(OMR_ARCH_X86)
-		target_compile_options(j9gc PRIVATE -fpeel-loops)
-	endif()
-elseif(OMR_TOOLCONFIG STREQUAL "msvc")
+if(OMR_TOOLCONFIG STREQUAL "msvc")
 	target_compile_options(j9gc PRIVATE /w34189)
 endif()
 
