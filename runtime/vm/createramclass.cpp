@@ -2848,6 +2848,17 @@ fail:
 #if defined(J9VM_THR_LOCK_NURSERY) && defined(J9VM_THR_LOCK_NURSERY_FAT_ARRAYS)
 				ramArrayClass->lockOffset = (UDATA)TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR;
 #endif
+				if (J9_IS_J9CLASS_VALUETYPE(elementClass) && J9_IS_J9CLASS_FLATTENED(elementClass)) {
+					if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
+						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_64)));
+					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
+						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(fj9object_t)));
+					} else { /* VT only contains singles (int, short, etc) at this point */
+						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
+					}
+				} else {
+					J9ARRAYCLASS_SET_STRIDE(ramClass, (1 << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
+				}
 			} else if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
 				ramClass->module = module;
 			} else {

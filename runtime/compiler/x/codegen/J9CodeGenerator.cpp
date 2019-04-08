@@ -320,12 +320,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
    deps->addPreCondition(ediRegister, TR::RealRegister::edi, self());
 
    TR::SymbolReference *helperSymRef =
-      self()->symRefTab()->findOrCreateRuntimeHelper(
-         TR::X86CallSnippet::getDirectToInterpreterHelper(
-            methodSymbol,
-            methodSymbol->getMethod()->returnType(),
-            methodSymbol->isSynchronised()),
-         false, false, false);
+      self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
 
    if (TR::Compiler->target.is64Bit())
       {

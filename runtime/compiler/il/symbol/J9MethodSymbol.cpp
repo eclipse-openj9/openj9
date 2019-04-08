@@ -130,55 +130,6 @@ J9::MethodSymbol::isPureFunction()
    return false;
    }
 
-TR_RuntimeHelper
-J9::MethodSymbol::getVMCallHelperFor(TR::DataType returnType, bool isSync, bool isNative, TR::Compilation *comp)
-   {
-   if (isNative)
-      return TR_icallVMprJavaSendNativeStatic;
-
-   switch (returnType)
-      {
-      case TR::NoType:
-         return isSync? TR_icallVMprJavaSendStaticSync0 : TR_icallVMprJavaSendStatic0;
-      case TR::Int8:
-      case TR::Int16:
-      case TR::Int32:
-         return isSync? TR_icallVMprJavaSendStaticSync1 : TR_icallVMprJavaSendStatic1;
-      case TR::Address:
-         if (TR::Compiler->target.is64Bit())
-            return isSync? TR_icallVMprJavaSendStaticSyncJ : TR_icallVMprJavaSendStaticJ;
-         else
-            return isSync? TR_icallVMprJavaSendStaticSync1 : TR_icallVMprJavaSendStatic1;
-      case TR::Int64:
-         return isSync? TR_icallVMprJavaSendStaticSyncJ : TR_icallVMprJavaSendStaticJ;
-      case TR::Float:
-         return isSync? TR_icallVMprJavaSendStaticSyncF : TR_icallVMprJavaSendStaticF;
-      case TR::Double:
-         return isSync? TR_icallVMprJavaSendStaticSyncD : TR_icallVMprJavaSendStaticD;
-      default:
-         TR_ASSERT(0, "Unknown return type: %s\n", returnType.toString());
-         return (TR_RuntimeHelper)0;
-      }
-   }
-
-TR_RuntimeHelper
-J9::MethodSymbol::getVMCallHelper()
-   {
-   return self()->getVMCallHelper(TR::comp());
-   }
-
-TR_RuntimeHelper
-J9::MethodSymbol::getVMCallHelper(TR::Compilation *comp)
-   {
-   // Note: Unresolved methods are considered unsynchronized here.  Runtime
-   // resolve helper corrects this if necessary.
-   return self()->getVMCallHelperFor(
-      self()->getMethod()->returnType(), 
-      self()->isSynchronised(),
-      (self()->isVMInternalNative() || self()->isJITInternalNative()),
-      comp);
-   }
-
 
 // Which recognized methods are known to have no valid null checks
 //

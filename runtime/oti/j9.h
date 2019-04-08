@@ -325,9 +325,13 @@ static const struct { \
 
 /* Macros for ValueTypes */
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsValueType)
+#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
+#define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
+#define J9_VALUETYPE_FLATTENED_SIZE(clazz)((clazz)->totalInstanceSize - (clazz)->backfillOffset)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
+#define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
+#define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #if defined(OPENJ9_BUILD)
