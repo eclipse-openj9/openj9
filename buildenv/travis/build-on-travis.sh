@@ -27,7 +27,7 @@ set -e
 set -x
 
 # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container
-# builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make
+# Build machines have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make.
 MAKE_JOBS=4
 
 # download bootstrap jdk
@@ -71,12 +71,10 @@ if test "x$RUN_LINT" = "xyes"; then
   make -j $MAKE_JOBS -f linter.mk
 fi
 
-
 if test "x$RUN_BUILD" = "xyes"; then
-  export CCACHE=ccache
   if [ ! `wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar` ]; then
-      wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz;
-      tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2;
+    wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
+    tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
   fi
   cd ..
   # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load.
@@ -88,8 +86,8 @@ if test "x$RUN_BUILD" = "xyes"; then
   # Point the get_sources script at the OpenJ9 repo that's already been cloned to disk.
   # Results in a copy of the source (disk space =( ) but no new network activity so overall a win.
   OPENJ9_SHA=$(git -C $TRAVIS_BUILD_DIR rev-parse HEAD)
-  if test x"$OPENJ9_SHA" != x"$TRAVIS_COMMIT" ; then 
-      echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT."
+  if test x"$OPENJ9_SHA" != x"$TRAVIS_COMMIT" ; then
+    echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT."
   fi
 
   cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
