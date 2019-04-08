@@ -228,6 +228,8 @@
 			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
 			<class name="org.openj9.test.java.security.Test_MHLoaderConstraints"/>
 			<class name="org.openj9.test.java.security.DigestLoop"/>
+			<class name="org.openj9.test.java.security.OpenSSLInvalidCBCKeySizeTest"/>
+			<class name="org.openj9.test.java.security.OpenSSLInvalidGCMKeySizeTest"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_IBM-VM">
