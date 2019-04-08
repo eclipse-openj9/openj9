@@ -51,6 +51,7 @@
     SetupForInstructionSelectionPhase,
     RemoveUnusedLocalsPhase,
     InstructionSelectionPhase,
+    InstructionSimplificationPhase,
     CreateStackAtlasPhase,
 
     RegisterAssigningPhase,
