@@ -54,6 +54,35 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>J9vmTest_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xint \
+	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	j9vm.runner.Menu A -exe=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)java $(JVM_OPTIONS) -Xdump$(SQ) -version=$(JDK_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
+	-xids=all,$(PLATFORM); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	
+	<test>
 		<testCaseName>jvmnativestest</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -97,6 +126,29 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>ThreadRegressionTests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
+	j9vm.test.threads.regression.RegressionTests $(Q)$(TEST_RESROOT)$(Q); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 

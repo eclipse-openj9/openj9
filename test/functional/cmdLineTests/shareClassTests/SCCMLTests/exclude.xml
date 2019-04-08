@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2010, 2019 IBM Corp. and others
+  Copyright (c) 2010, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -317,5 +317,47 @@
 	</exclude>
 	<exclude id="Test 180 - 197 clean up with destroyAllLayers" platform=".*-3[12].*">
 		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 62: -Xnolinenumbers & -Xjit:verbose : create cache with -Xnolinenumbers -Xjit:verbose" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 63: -Xnolinenumbers & -Xjit:verbose : ensure debug area is zero bytes when -Xnolinenumbers & -Xjit:verbose are used" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 64: -Xnolinenumbers & -Xjit:verbose : cleanup" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 1-a: Create a cache with softmx=0" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 1-b: Verify in the cache stats that nothing has been added into the cache" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 2: Increase softmx to 20m" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 3-a: Add ROMClasses, AOT methods and JITHints into the cache" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 3-b: Verify in the cache stats that ROMClasses, AOT methods and JIT data have been added into the cache" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 4-a: Test setting maxAOT/maxJIT to a value that is smaller than AOT/JIT bytes already in the cache" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 4-b: Test setting minAOT to a value that is greater than maxAOT" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 4-c: Test setting minJIT to a value that is greater than maxJIT" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 4-d: Test setting softmx to a value that is smaller than the number of bytes already used" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 10-a: Test create a cache with a small -Xscmaxaot and -Xscmaxjitdata value" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	<exclude id="Test 10-b: Cleanup" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
 	</exclude>
 </suite>

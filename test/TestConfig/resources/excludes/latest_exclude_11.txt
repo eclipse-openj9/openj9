@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2018, 2018 IBM Corp. and others
+#  Copyright (c) 2018, 2020 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,3 +26,17 @@ org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	AN-https://
 org.openj9.test.java.lang.management.TestRuntimeMXBean:testGetMBeanInfo													1626 generic-all
 org.openj9.test.java.lang.management.TestThreadMXBean:testGetMBeanInfo													1626 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
+org.openj9.test.vmArguments.VmArgumentTests:testMappedOptions															9634 arch.riscv
+org.openj9.test.vmArguments.VmArgumentTests:testXprod																	9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testGetName													9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testGetTotalCompilationTime									9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testIsCompilationTimeMonitoringSupported						9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testGetAttribute												9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testSetAttribute												9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testGetAttributes											9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testSetAttributes											9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testInvoke													9634 arch.riscv
+org.openj9.test.java.lang.management.TestCompilationMXBean:testGetMBeanInfo												9634 arch.riscv
+org.openj9.test.java.lang.management.TestManagementFactory:testCompilationBeanRegisteredWithServer						9634 arch.riscv
+org.openj9.test.java.lang.management.TestManagementFactory:testCompilationMXBeanProxy									9634 arch.riscv
+org.openj9.test.java.lang.management.TestManagementFactory:testGetPlatformMXBeans										9634 arch.riscv

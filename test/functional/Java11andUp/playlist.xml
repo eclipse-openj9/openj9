@@ -93,6 +93,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -143,7 +144,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -158,7 +159,33 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
+	<test>
+		<testCaseName>CondyPrimitive_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-XX:RecreateClassfileOnload</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames PrimitiveCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 
 	<!--
 		Following test covers garbage collection of constant dynamics using several gc options.
@@ -180,7 +207,7 @@
 			$(TEST_STATUS)
 		</command>
 		<!-- aarch64 JIT lacks the support for -Xgcpolicy:balanced -->
-		<platformRequirements>^arch.aarch64</platformRequirements>
+		<platformRequirements>^arch.aarch64,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -193,6 +220,33 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>CondyGarbageCollection_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-Xgcpolicy:gencon</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.3.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 

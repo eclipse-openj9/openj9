@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,12 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-		$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)vmruntimestate.jar$(Q) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)vmruntimestate.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
-	$(TEST_STATUS)</command>
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)vmruntimestate.jar$(Q) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)vmruntimestate.xml$(Q) -explainExcludes \
+		-xids all,$(PLATFORM) -plats all,$(PLATFORM) \
+		-xlist $(Q)$(TEST_RESROOT)$(D)exclude_openj9.xml$(Q) \
+		-nonZeroExitWhenError; \
+		$(TEST_STATUS)
+		</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
 			<level>extended</level>

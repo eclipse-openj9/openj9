@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,5 +58,43 @@
 		<reason>Nestmates are not enabled on java10</reason>
 	</exclude>
 	
+	<exclude id="gaste001" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	
+	<exclude id="gaste001_multiple" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	
+	<exclude id="gste001" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	
+	<exclude id="gste001_multiple" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	
+	<exclude id="gtlste001" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	
+	<exclude id="gtlste001_multiple" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+	
+	<exclude id="fw001-1" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
 
+	<exclude id="fw001-2" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+
+	<exclude id="fw001-3" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
+
+	<exclude id="fw001-4" platform="linux_riscv.*">
+		<reason>JIT has not yet been implemented on RISC-V for the moment</reason>
+	</exclude>
 </suite>
