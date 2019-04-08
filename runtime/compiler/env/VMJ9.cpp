@@ -6991,13 +6991,7 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
    switch (methodSym->getMandatoryRecognizedMethod())
       {
       case TR::java_lang_invoke_ComputedCalls_dispatchJ9Method:
-         {
-         // TODO:JSR292: Get the proper helper based on the target j9method (or select it dynamically inside the thunk).
-         // This is a hack, and it appears more than once.  Search for PROPER_DISPATCH_J9METHOD.
-         //
-         TR_RuntimeHelper vmCallHelper = TR::MethodSymbol::getVMCallHelperFor(methodSym->getMethod()->returnType(), methodSym->isSynchronised(), false, comp);
-         tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(vmCallHelper, callSite);
-         }
+         tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_j2iTransition, callSite);
          break;
       default:
          tramp = (intptrj_t)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
@@ -7396,11 +7390,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          sym->setInterpreted(false);
          TR_Method *method = sym->getMethod();
 
-         // TODO:JSR292: Get the proper helper based on the target j9method (or select it dynamically inside the thunk).
-         // This is a hack, and it appears more than once.  Search for PROPER_DISPATCH_J9METHOD.
-         //
-         TR_RuntimeHelper vmCallHelper = TR::MethodSymbol::getVMCallHelperFor(method->returnType(), sym->isSynchronised(), false, comp);
-         TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(vmCallHelper, true, true, false);
+         TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
          return callNode;
          }
