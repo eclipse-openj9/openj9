@@ -416,11 +416,11 @@ void jitRemoveAllMetaDataForClassLoader(J9VMThread * vmThread, J9ClassLoader * c
 void jitReclaimMarkedAssumptions(bool isEager)
    {
    static char *forceAggressiveRATCleaning = feGetEnv("TR_forceAggressiveRATCleaning");
-   if (isEager && forceAggressiveRATCleaning)
+   if (isEager || forceAggressiveRATCleaning)
       {
       reclaimMarkedAssumptionsFromRAT(-1);
       }
-   else if (!isEager && !forceAggressiveRATCleaning)
+   else
       {
       reclaimMarkedAssumptionsFromRAT(100);
       }
