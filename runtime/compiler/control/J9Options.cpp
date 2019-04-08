@@ -2310,6 +2310,11 @@ J9::Options::setupJITaaSOptions()
          // no IProfiler info is collected at the server itself
          self()->setOption(TR_DisableIProfilerThread);
          }
+
+      // In the JITaaS world, expensive compilations are performed remotely so there is no risk of blowing the footprint limit on the JVM
+      // Setting _expensiveCompWeight to a large value so that JSR292/hot/scorching compilation are allowed to be executed concurrently
+      TR::Options::_expensiveCompWeight = TR::CompilationInfo::MAX_WEIGHT;
+
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
