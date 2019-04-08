@@ -214,7 +214,7 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 # Setup boot JDK for building Java 8
 RUN ln -s java-1.7.0 /usr/lib/jvm/java-1.7.0-openjdk
 
-# Setup boot JDK for building Java 11
+# Setup boot JDK for building Java 11 and 12
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && cd /usr/lib/jvm/adoptojdk-java-11 \
   && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
@@ -223,6 +223,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv $(ls | grep -i jdk-11) bootjdk11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
+
+# Setup boot JDK for building Java 13 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
+  && cd /usr/lib/jvm/adoptojdk-java-12 \
+  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
+  && tar -xzf bootjdk12.tar.gz \
+  && rm -f bootjdk12.tar.gz \
+  && mv $(ls | grep -i jdk-12) bootjdk12 \
+  && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
+  && rm -rf bootjdk12
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
