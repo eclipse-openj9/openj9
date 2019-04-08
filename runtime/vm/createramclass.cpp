@@ -2857,7 +2857,7 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
-					J9ARRAYCLASS_SET_STRIDE(ramClass, (1 << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
+					J9ARRAYCLASS_SET_STRIDE(ramClass, (((U_64) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
 				}
 			} else if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
 				ramClass->module = module;
