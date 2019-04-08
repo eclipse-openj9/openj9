@@ -94,6 +94,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "rc018", rc018, "com.ibm.jvmti.tests.redefineClasses.rc018", "RedefineClasses" },
 	{ "rc019a", rc019a, "com.ibm.jvmti.tests.redefineClasses.rc019a", "RedefineClasses" },
 	{ "rc019b", rc019b, "com.ibm.jvmti.tests.redefineClasses.rc019b", "RedefineClasses" },
+	{ "rc020", rc020, "com.ibm.jvmti.tests.redefineClasses.rc020", "RedefineClasses" },
 	{ "gtgc001", gtgc001, "com.ibm.jvmti.tests.getThreadGroupChildren.gtgc001", "GetThreadGroupChildren" },
 	{ "gtgc002", gtgc002, "com.ibm.jvmti.tests.getThreadGroupChildren.gtgc002", "3 bytes name buffer overflow" },
 	{ "gts001", gts001, "com.ibm.jvmti.tests.getThreadState.gts001", "GetThreadState" },
