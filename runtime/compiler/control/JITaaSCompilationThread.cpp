@@ -434,6 +434,10 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
          vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
          vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : NULL;
+         for (int32_t i = 0; i <= 7; i++)
+            {
+            vmInfo._arrayTypeClasses[i] = fe->getClassFromNewArrayTypeNonNull(i + 4);
+            }
          client->write(vmInfo);
          }
          break;
@@ -522,12 +526,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          {
          int32_t index = std::get<0>(client->getRecvData<int32_t>());
          client->write(fe->getClassFromNewArrayType(index));
-         }
-         break;
-      case J9ServerMessageType::VM_getClassFromNewArrayTypeNonNull:
-         {
-         int32_t index = std::get<0>(client->getRecvData<int32_t>());
-         client->write(fe->getClassFromNewArrayTypeNonNull(index));
          }
          break;
       case J9ServerMessageType::VM_isCloneable:

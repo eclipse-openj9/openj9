@@ -1494,13 +1494,9 @@ TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * c
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromNewArrayTypeNonNull(int32_t arrayType)
    {
-   // This query is needed for inline allocation, which requires array class to
-   // be non-NULL, but getClassFromNewArrayType returns NULL in AOT mode
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromNewArrayTypeNonNull, arrayType);
-   auto clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
-   TR_ASSERT(clazz, "class must not be NULL");
-   return clazz;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_arrayTypeClasses[arrayType - 4];
    }
 
 bool

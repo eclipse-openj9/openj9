@@ -217,9 +217,8 @@ enum J9ServerMessageType
    VM_getVMInfo = 301;
    VM_isAnonymousClass = 302;
    VM_dereferenceStaticAddress = 303;
-   VM_getClassFromNewArrayTypeNonNull = 304;
-   VM_getClassFromCP = 305;
-   VM_getROMMethodFromRAMMethod = 306;
+   VM_getClassFromCP = 304;
+   VM_getROMMethodFromRAMMethod = 305;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;
