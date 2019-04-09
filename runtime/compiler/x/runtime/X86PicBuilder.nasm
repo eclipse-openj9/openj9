@@ -65,15 +65,11 @@ memoryFence:
       test        ecx, J9TR_runtimeFlags_PatchingFenceType
       jz short    doLockOrEsp
 
-      MEMORY_FENCE
+      mfence
       jmp         doneMemoryFence
 
 doLockOrEsp:
-      db          0F0h
-      db          083h
-      db          00Ch
-      db          024h
-      db          000h
+      lock or     dword [esp], 0
 
 doneMemoryFence:
       pop         ecx                                ; restore

@@ -1387,7 +1387,7 @@ updateInterpreterDispatchGlueSite:
 
       mov         qword [rcx], rdx                          ; patch the call instruction
 
-      MEMORY_FENCE
+      mfence
 
       sub         qword [rsp], 5                            ; re-run the calling instruction
       ret
