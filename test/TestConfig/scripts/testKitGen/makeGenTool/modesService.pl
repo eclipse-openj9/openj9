@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ sub getDataFromService {
 	my $curl='curl --silent --max-time 120 ' . $url;
 	my $jsonData = qx{$curl};
 	if ($? != 0) {
-		print "Failed to execute curl with error code: $?.\n";
+		print "Warning: cannot get info from modes service (curl error code: $?), retrieve info from local files.\n";
 	}
 	my $data = from_json($jsonData);
 	foreach my $element (@{$data}) {
