@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,11 @@
 
 #if defined(AIXPPC)
 #include "protect_helpers.h"
+#endif
+
+#if defined(J9OS_I5)
+#include "as400_types.h"
+#include "as400_protos.h"
 #endif
 
 #define J9VERSION_NOT_IN_DEFAULT_DIR_MASK 0x10000000
@@ -597,6 +602,83 @@ ControlFileCloseAndUnLock(struct J9PortLibrary* portLibrary, intptr_t fd)
 	return J9SH_SUCCESS;
 }
 
+
+#if defined(J9OS_I5)
+/**
+ * @internal
+ * @brief This function validates if the current user has *ALLOBJ and *SECADM special authorities.
+ *
+ * This function is used to help manage files used to control System V objects (semaphores and memory)
+ * @return TRUE if current user has ALLOBJ and *SECADM special authorities.
+ */
+static BOOLEAN isAllObjAndSecAdmUser()
+{
+ 	const char* objname = "QSYRUSRI";
+ 	const char* libname = "QSYS";
+
+ 	/*
+ 	 * ilepContainer is the field into which a 16-byte tagged system pointer to the specified object is place by _RSLOBJ2.
+ 	 * It is extra large to allow the address for the system pointer to be placed on a
+ 	 * 16 byte boundary.  PASE (AIX) compilers do not know about tagged pointers and thus do not place
+ 	 * variables on 16 byte boundaries required for tagged pointers. *
+ 	 */
+ 	char ilepContainer[sizeof(ILEpointer) + 16];
+ 	ILEpointer* qsyrusri_pointer= (ILEpointer*)(((size_t)(ilepContainer) + 0xf) & ~0xf);
+
+ 	char rcvr[104];
+ 	int rcvrlen = sizeof(rcvr);
+
+ 	/*Text 'USRI0200' in EBCDIC*/
+ 	char format[] = {0xe4, 0xe2, 0xd9, 0xc9, 0xf0, 0xf2, 0xf0, 0xf0};
+
+ 	/*Text 'CURRENT' in EBCDIC*/
+ 	char profname[] = {0x5c, 0xc3, 0xe4, 0xd9, 0xd9, 0xc5, 0xd5, 0xe3, 0x40, 0x40};
+
+ 	struct {
+ 		int bytes_provided;
+ 		int bytes_available;
+ 		char msgid[7];
+ 		char reserved;
+ 		char exception_data[64];
+ 	} errcode;
+
+ 	char hasAuthority[] = {0xe8,0xe8}; /*Text 'YY' in EBCDIC*/
+ 	void *qsyrusri_argv[6];
+
+ 	memset(ilepContainer, 0 , sizeof(ilepContainer));
+
+	/*Set the IBM i pointer to the QSYS/QSYRUSRI *PGM object*/
+	if (0 != _RSLOBJ2(qsyrusri_pointer, RSLOBJ_TS_PGM, objname, libname)) {
+		return FALSE;
+	}
+ 	/* initialize the QSYRUSRI returned info structure and error code structure  */
+ 	memset(rcvr, 0, sizeof(rcvr));
+ 	memset(&errcode, 0, sizeof(errcode));
+ 	errcode.bytes_provided = sizeof(errcode);
+
+ 	/* initialize the array of argument pointers for the QSYRUSRI API */
+ 	qsyrusri_argv[0] = &rcvr;
+ 	qsyrusri_argv[1] = &rcvrlen;
+ 	qsyrusri_argv[2] = &format;
+ 	qsyrusri_argv[3] = &profname;
+ 	qsyrusri_argv[4] = &errcode;
+ 	qsyrusri_argv[5] = NULL;
+
+ 	/* Call the IBM i QSYRUSRI API from PASE for i */
+ 	if (0 != _PGMCALL((const ILEpointer*)qsyrusri_pointer, (void*)&qsyrusri_argv, 0)) {
+ 		return FALSE;
+ 	}
+
+ 	/* Check the contents of bytes 28-29 of the returned information.
+       If they are 'YY', the current user has *ALLOBJ and *SECADM special authorities*/
+	if (0 == memcmp(&rcvr[28], &hasAuthority, sizeof(hasAuthority))) {
+ 		return TRUE;
+ 	} else {
+ 		return FALSE;
+ 	}
+ }
+#endif
+
 /**
  * @internal
  * @brief This function validates if the current uid has rw access to a file.
@@ -620,6 +702,11 @@ IsFileReadWrite(struct J9FileStat * statbuf)
 		if (statbuf->perm.isGroupWriteable == 1 && statbuf->perm.isGroupReadable == 1) {
 			return TRUE;
 		} else {
+#if defined(J9OS_I5)
+ 			if (isAllObjAndSecAdmUser()) {
+ 				return TRUE;
+ 			}
+#endif
 			return FALSE;
 		}
 	}
