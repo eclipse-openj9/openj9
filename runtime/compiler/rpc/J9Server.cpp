@@ -89,6 +89,24 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
       }
    }
 
+bool
+J9ServerStream::checkVersion(uint32_t version)
+   {
+   bool result = false;
+   uint8_t clientMajorNumber = version >> 24;
+   uint16_t clientMinorNumber = (version & 0x00FFFF00)  >> 8;
+
+   if ((clientMajorNumber == MAJOR_NUMBER) &&
+       (clientMinorNumber == MINOR_NUMBER))
+      result = true;
+   if (!result)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "version check failed %d %d", clientMajorNumber, clientMinorNumber);
+      }
+   return result;
+   }
+
 void initSSL()
    {
    SSL_load_error_strings();

@@ -300,6 +300,7 @@ message J9ClientMessage
    {
    bool status = 1;
    AnyData data = 2;
+   uint32 version = 3;
    }
 
 service J9CompileService

@@ -54,9 +54,24 @@ public:
    template <typename ...T>
    std::tuple<T...> read()
       {
+      uint32_t version = 0;
       readBlocking(_cMsg);
       if (!_cMsg.status())
          throw StreamCancel();
+      //Version data will be present only in the first message for a connection.
+      if ((_versionCheckStatus == NOTDONE) &&
+            (version = _cMsg.version()))
+         {
+         if (!checkVersion(version))
+            {
+            _versionCheckStatus = FAILED;
+            throw StreamCancel();
+            }
+         else
+            {
+            _versionCheckStatus = PASSED;
+            }
+         }
       return getArgs<T...>(_cMsg.mutable_data());
       }
 
@@ -73,10 +88,15 @@ public:
       {
       return _clientId;
       }
+   bool checkVersion(uint32_t version);
 
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
 
+   bool getVersionStatus()
+      {
+      return _versionCheckStatus;
+      }
 private:
    void finish();
 

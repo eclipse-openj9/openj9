@@ -2072,6 +2072,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationRecoverableCodeCacheError:
                tryCompilingAgain = true;
                break;
+            case compilationVersionCheckFailed:
             case compilationExcessiveComplexity:
             case compilationHeapLimitExceeded:
             case compilationLowPhysicalMemory:
@@ -3407,6 +3408,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       {
       try
          {
+         JITaaS::J9ClientStream client(getPersistentInfo());
          getSequencingMonitor()->enter();
          uint32_t seqNo = getCompReqSeqNo();
          incCompReqSeqNo();
@@ -3419,11 +3421,10 @@ void TR::CompilationInfo::stopCompilationThreads()
          J9Class *clazz = NULL;
          J9Method *ramMethod = NULL;
          uint32_t romMethodOffset = 0;
-         JITaaS::J9ClientStream client(getPersistentInfo());
          bool useAotCompilation = false;
          client.buildCompileRequest(getPersistentInfo()->getJITaaSId(), romMethodOffset,
-                     ramMethod, clazz, cold, detailsStr, J9::EMPTY, unloadedClasses,
-                     classTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
+                  ramMethod, clazz, cold, detailsStr, J9::EMPTY, unloadedClasses,
+                  classTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
          }
       catch (const JITaaS::StreamFailure &e)
          {
@@ -6785,6 +6786,10 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
       if (entry->_optimizationPlan->getOptLevel() <= cold &&
          (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
          doLocalComp = true;
+
+      if (getClientStream())
+         if (!(getClientStream()->getVersionStatus()))
+            doLocalComp = true;
 
       return doLocalComp;
    }

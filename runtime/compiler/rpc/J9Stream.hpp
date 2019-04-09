@@ -26,6 +26,16 @@
 #include "rpc/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
 
+static const uint8_t MAJOR_NUMBER = 0;
+static const uint16_t MINOR_NUMBER = 1;
+static const uint8_t PATCH_NUMBER = 0;
+
+enum VersionStatus
+{
+   FAILED = 0,
+   PASSED = 1,
+   NOTDONE = 2,
+};
 namespace JITaaS
 {
 using namespace google::protobuf::io;
@@ -41,7 +51,8 @@ protected:
       _sslOutputStream(NULL),
       _connfd(-1)
       {
-      // set everything to NULL, in case the child stream fails to call initStream
+      _versionCheckStatus = NOTDONE;
+      // set everything to nullptr, in case the child stream fails to call initStream
       // which initializes these variables
       }
 
@@ -134,6 +145,7 @@ protected:
    SSLOutputStream *_sslOutputStream;
    ZeroCopyInputStream *_inputStream;
    ZeroCopyOutputStream *_outputStream;
+   VersionStatus _versionCheckStatus;
    };
 };
 

@@ -2445,6 +2445,7 @@ remoteCompile(
    TR_MethodMetaData *metaData = NULL;
    if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
       {
+      client->setVersionStatus(true);
       try
          {
          TR_IProfiler *iProfiler = compiler->fej9vm()->getIProfiler();
@@ -2553,6 +2554,10 @@ remoteCompile(
             }
          throw;
          }
+      }
+   else if (statusCode == compilationVersionCheckFailed)
+      {
+      client->setVersionStatus(false);
       }
    else
       {
@@ -4064,9 +4069,18 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITaaS::StreamCancel &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
-            getCompThreadId(), e.what());
+      if (stream->getVersionStatus() != PASSED)
+         {
+         stream->finishCompilation(compilationVersionCheckFailed);
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"version Check failed closing the connection on server");
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
+               getCompThreadId(), e.what());
+         }
       abortCompilation = true;
       if (!enableJITaaSPerCompConn)
          {

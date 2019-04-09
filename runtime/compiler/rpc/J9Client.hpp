@@ -60,6 +60,15 @@ public:
    void write(T... args)
       {
       _cMsg.set_status(true);
+      if (_versionCheckStatus == NOTDONE)
+         {
+         _cMsg.set_version(MAJOR_NUMBER << 24 | MINOR_NUMBER << 8 | PATCH_NUMBER);
+         }
+      else
+         {
+         // Need to clear version so version data is not sent.
+         _cMsg.clear_version();
+         }
       setArgs<T...>(_cMsg.mutable_data(), args...);
       writeBlocking(_cMsg);
       }
@@ -83,6 +92,22 @@ public:
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
 
+   bool getVersionStatus()
+      {
+      if ((_versionCheckStatus == PASSED) ||
+           (_versionCheckStatus == NOTDONE))
+         return true;
+      else
+         return false;
+      }
+
+   void setVersionStatus(bool result)
+      {
+      if (result)
+         _versionCheckStatus = PASSED;
+      else
+         _versionCheckStatus = FAILED;
+      }
 private:
    uint32_t _timeout;
 
