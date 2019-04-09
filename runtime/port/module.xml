@@ -351,6 +351,9 @@
 				<include-if condition="spec.aix_.*"/>
 				<include-if condition="spec.osx_x86.*"/>
 			</library>
+			<library name="rt" type="system">
+				<include-if condition="spec.linux_.*"/>
+			</library>
 			<library name="perfstat" type="system">
 				<include-if condition="spec.aix_.*"/>
 			</library>
