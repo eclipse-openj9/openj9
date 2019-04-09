@@ -90,18 +90,8 @@ TR::Register *TR::AMD64JNILinkage::processJNIReferenceArg(TR::Node *child)
 
       if (needsNullParameterCheck)
          {
-      TR::MemoryReference *tempMR = generateX86MemoryReference(refReg, 0, cg());
-         generateMemImmInstruction(CMPMemImms(), child, tempMR, 0, cg());
-
-         TR::MemoryReference *tempMR2 = generateX86MemoryReference(refReg, 0, cg());
-
-         TR::LabelSymbol *notNullLabel = generateLabelSymbol(cg());
-         generateLabelInstruction(JNE4, child, notNullLabel, cg());
-         generateRegMemInstruction(LRegMem(), child, refReg, tempMR2, cg());
-         generateLabelInstruction(LABEL, child, notNullLabel, cg());
-
-         tempMR->decNodeReferenceCounts(cg());
-         tempMR2->decNodeReferenceCounts(cg());
+         generateMemImmInstruction(CMPMemImms(), child, generateX86MemoryReference(refReg, 0, cg()), 0, cg());
+         generateRegMemInstruction(CMOVERegMem(), child, refReg, generateX86MemoryReference(cg()->findOrCreateConstantDataSnippet<intptr_t>(child, 0), cg()), cg());
          }
       }
    else
