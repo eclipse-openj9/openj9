@@ -89,6 +89,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('EXTRA_MAKE_OPTIONS')
         stringParam('OPENJDK_CLONE_DIR')
         stringParam('PERSONAL_BUILD')
+        stringParam('CUSTOM_DESCRIPTION')
         
         if (jobType == 'pipeline'){
             stringParam('TESTS_TARGETS')

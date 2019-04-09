@@ -543,8 +543,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _fixedVirtualCallSites.setFirst(NULL);
 
    _parms = NULL;
-   _nonColdLocalObjectsValueNumbers = NULL;
-   _allLocalObjectsValueNumbers = NULL;
+   _localObjectsValueNumbers = NULL;
    _visitedNodes = NULL;
    _aliasesOfAllocNode = NULL;
    _aliasesOfOtherAllocNode = NULL;
@@ -586,16 +585,10 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          }
       else
          {
-         _nonColdLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
-         _allLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
+         _localObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _notOptimizableLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
           _notOptimizableLocalStringObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          }
-      }
-
-   if ( !_candidates.isEmpty())
-      {
-      findLocalObjectsValueNumbers();
       }
 
    // Complete the candidate info by finding all uses and defs that are reached
@@ -609,6 +602,10 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
    if (trace())
       printCandidates("Initial candidates");
+
+   if ((manager()->numPassesCompleted() > 0) &&
+       !_candidates.isEmpty())
+      findLocalObjectsValueNumbers();
 
    // Look through the trees to see which candidates escape the method. This
    // may involve sniffing into called methods.
@@ -1262,6 +1259,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    return cost; // actual cost
    }
 
+
 void TR_EscapeAnalysis::findLocalObjectsValueNumbers()
    {
    TR::NodeChecklist visited(comp());
@@ -1281,29 +1279,26 @@ void TR_EscapeAnalysis::findLocalObjectsValueNumbers(TR::Node *node, TR::NodeChe
    visited.add(node);
 
    if (node->getOpCode().hasSymbolReference() &&
-       node->getSymbolReference()->getSymbol()->isLocalObject())
+       node->getSymbolReference()->getSymbol()->isLocalObject() &&
+       !node->escapesInColdBlock())
       {
-      _allLocalObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
-      if (!node->escapesInColdBlock())
+      _localObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
+      if (node->cannotTrackLocalUses())
          {
-         _nonColdLocalObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
-         if (node->cannotTrackLocalUses())
+         if (!_notOptimizableLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(node)))
             {
-            if (!_notOptimizableLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(node)))
+            //dumpOptDetails(comp(), "Local object %p value number %d detected\n", node, _valueNumberInfo->getValueNumber(node));
+
+            _notOptimizableLocalObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
+            }
+
+         if (node->cannotTrackLocalStringUses())
+            {
+            if (!_notOptimizableLocalStringObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(node)))
                {
                //dumpOptDetails(comp(), "Local object %p value number %d detected\n", node, _valueNumberInfo->getValueNumber(node));
 
-               _notOptimizableLocalObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
-               }
-
-            if (node->cannotTrackLocalStringUses())
-               {
-               if (!_notOptimizableLocalStringObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(node)))
-                  {
-                  //dumpOptDetails(comp(), "Local object %p value number %d detected\n", node, _valueNumberInfo->getValueNumber(node));
-
-                  _notOptimizableLocalStringObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
-                  }
+               _notOptimizableLocalStringObjectsValueNumbers->set(_valueNumberInfo->getValueNumber(node));
                }
             }
          }
@@ -1545,7 +1540,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
             {
             if (trace())
                {
-               const char *className = getClassName(classNode);
+               const char *className = getClassName(classNode->getSecondChild());
                traceMsg(comp(), "secs Class %s implements Runnable in %s\n",
                   className ? className : "<Missing class name>",
                   comp()->signature());
@@ -2149,7 +2144,6 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                   if (i < 0)
                      {
                      candidate->_valueNumbers->add(useNodeVN);
-
                      if (candidate->isInsideALoop())
                         {
                         static char *p = feGetEnv("TR_NoLoopAlloc");
@@ -2269,7 +2263,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
              (defNode->getFirstChild()->getSymbol()->isStatic() ||
              (defNode->getFirstChild()->getSymbol()->isShadow() &&
              (defNode->getFirstChild()->getSymbol()->isArrayShadowSymbol() ||
-              !_nonColdLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode->getFirstChild()->getFirstChild())))))))))
+              !_localObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode->getFirstChild()->getFirstChild())))))))))
          {
          if (_valueNumberInfo->getValueNumber(defNode) != _valueNumberInfo->getValueNumber(useNode))
             {
@@ -2371,8 +2365,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
 
          for (Candidate *otherAllocNode = _candidates.getFirst(); otherAllocNode; otherAllocNode = otherAllocNode->getNext())
             {
-            if (otherAllocNode->_node == firstChild
-                || _valueNumberInfo->getValueNumber(otherAllocNode->_node) == _valueNumberInfo->getValueNumber(firstChild))
+            if (otherAllocNode->_node == firstChild)
                {
                rhsIsHarmless = true;
                break;
@@ -2425,20 +2418,6 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                   rhsIsHarmless = true;
                   break;
                   }
-               }
-            }
-
-         if (!rhsIsHarmless)
-            {
-            if (trace())
-               {
-               traceMsg(comp(), "   defNode2 vn=%d is local %d\n", _valueNumberInfo->getValueNumber(defNode2), _allLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode2)));
-               }
-
-            // References to objects that were previously made local are also harmless
-            if (_allLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode2)))
-               {
-               rhsIsHarmless = true;
                }
             }
 
@@ -4042,8 +4021,8 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
             // or not.
             //
             //if (!baseObject->getOpCode().hasSymbolReference() ||
-            //        (!(_nonColdlocalObjectsValueNumbers &&
-            //        _nonColdlocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(baseObject)))))
+            //        (!(_localObjectsValueNumbers &&
+            //        _localObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(baseObject)))))
 
             // java/lang/Throwable.cause addition in SC1411, which disables fillInStackTrace opt in javac
             if ((node->getSecondChild() != baseObject) &&
@@ -4067,12 +4046,12 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
                      }
                   }
 
-               if ((!_nonColdLocalObjectsValueNumbers ||
+               if ((!_localObjectsValueNumbers ||
                     !_notOptimizableLocalObjectsValueNumbers ||
                     !resolvedBaseObject ||
                     (comp()->useCompressedPointers() && (TR::Compiler->om.compressedReferenceShift() > 3) && !TR::Compiler->target.cpu.isX86() && !TR::Compiler->target.cpu.isPower() && !TR::Compiler->target.cpu.isZ()) ||
                     !resolvedBaseObject->getOpCode().hasSymbolReference() ||
-                    !_nonColdLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(resolvedBaseObject)) ||
+                    !_localObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(resolvedBaseObject)) ||
                     (((node->getSymbolReference()->getSymbol()->getRecognizedField() != TR::Symbol::Java_lang_String_value) ||
                        stringCopyOwningMethod ||
                       _notOptimizableLocalStringObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(resolvedBaseObject))) &&
@@ -4653,8 +4632,11 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                //
 
               if (trace())
-                  traceMsg(comp(), "   Fail [%p] because child of call [%p]\n",
-                          candidate->_node, node);
+                  traceMsg(comp(), "   Fail [%p] because child of call [%p] to %s\n",
+                          candidate->_node, node,
+                          node->getSymbol()->getMethodSymbol()->getMethod()
+                             ? node->getSymbol()->getMethodSymbol()->getMethod()->signature(trMemory())
+                             : "[Unknown method]");
 
                rememoize(candidate);
                _candidates.remove(candidate);

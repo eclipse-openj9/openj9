@@ -515,6 +515,13 @@ def set_build_identifier() {
     }
 }
 
+def set_custom_description() {
+    if (params.CUSTOM_DESCRIPTION){
+        def TMP_DESC = (currentBuild.description) ? "<br>" + currentBuild.description : ""
+        currentBuild.description = CUSTOM_DESCRIPTION + TMP_DESC
+    }
+}
+
 /*
 * Adds a String type Parameter
 * Takes a Key-Value map which are used as the param name and default value
@@ -544,6 +551,9 @@ def set_job_variables(job_type) {
     } catch(MissingPropertyException e){
         // ignore when ARGS is not set
     }
+
+    // Add custom description
+    set_custom_description()
 
     switch (job_type) {
         case "build":
