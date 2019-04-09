@@ -51,7 +51,7 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
      _symRefTab(symRefTab),
      _classLookaheadSymRefTab(NULL),
      _blockAddedVisitCount(comp->incVisitCount()),
-     _generateWriteBarriersForGC(comp->getOptions()->getGcMode() != TR_WrtbarNone),
+     _generateWriteBarriersForGC(TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none),
      _generateWriteBarriersForFieldWatch(comp->getOption(TR_EnableFieldWatch)),
      _generateReadBarriersForFieldWatch(comp->getOption(TR_EnableFieldWatch)),
      _suppressSpineChecks(false),

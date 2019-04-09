@@ -349,7 +349,7 @@ J9::CodeGenerator::lowerCompressedRefs(
 
    if (loadOrStoreNode->getOpCode().isLoadIndirect() && shouldBeCompressed)
       {
-      if (TR::Compiler->target.cpu.isZ() && TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (TR::Compiler->target.cpu.isZ() && TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
          {
          dumpOptDetails(self()->comp(), "compression sequence %p is not required for loads under concurrent scavenge on Z.\n", node);
          return;
@@ -357,8 +357,8 @@ J9::CodeGenerator::lowerCompressedRefs(
 
       // base object
       address = loadOrStoreNode->getFirstChild();
-      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || loadOrStoreNode->getOpCode().isReadBar() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
-                                                                                   self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
+      loadOrStoreOp = TR::Compiler->om.readBarrierType() != gc_modron_readbar_none || loadOrStoreNode->getOpCode().isReadBar() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
+                                                                                                                                 self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
    else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
               loadOrStoreNode->getOpCodeValue() == TR::arrayset) &&
@@ -730,7 +730,7 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       if (parentOpCodeValue == TR::compressedRefs)
          self()->lowerCompressedRefs(treeTop, parent, visitCount, NULL);
       }
-   else if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && !TR::Compiler->target.cpu.isZ())
+   else if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && !TR::Compiler->target.cpu.isZ())
       {
       if (parentOpCodeValue == TR::aloadi)
          {
@@ -2939,9 +2939,9 @@ J9::CodeGenerator::compressedReferenceRematerialization()
    // 1. In Guarded Storage, we can't not do a guarded load because the object that is loaded may
    // not be in the root set, and as a consequence, may get moved.
    // 2. For read barriers in field watch, the vmhelpers are GC points and therefore the object might be moved
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || self()->comp()->getOption(TR_EnableFieldWatch))
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none || self()->comp()->getOption(TR_EnableFieldWatch))
       {
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
          traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because Concurrent Scavenger is enabled\n");
       if (self()->comp()->getOption(TR_EnableFieldWatch))
          traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because field watch is enabled\n");

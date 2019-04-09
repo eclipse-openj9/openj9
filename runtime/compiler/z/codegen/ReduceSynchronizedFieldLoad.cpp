@@ -327,7 +327,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                      // When concurrent scavenge is enabled we need to load the object reference using a read barrier however
                      // there is no guarded load alternative for the LPD instruction. As such this optimization cannot be carried
                      // out for object reference loads under concurrent scavenge.
-                     if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && loadNode->getDataType().isAddress())
+                     if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && loadNode->getDataType().isAddress())
                         {
                         TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", cg->comp()->signature()));
                         

@@ -1722,7 +1722,7 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
    TR::Compilation *comp = TR::comp();
    TR::LabelSymbol      *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::SymbolReference *wbref = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
    TR::Register *tempReg = NULL;
    TR::RegisterDependencyConditions *deps = NULL;
@@ -1745,7 +1745,7 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
    generateSrc2Instruction(cg, ARMOp_tst, node, srcReg, srcReg);
    generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, doneLabel);
 
-   if (gcMode != TR_WrtbarAlways)
+   if (gcMode != gc_modron_wrtbar_always)
       {
       // check to see if colour bits give hint (read FLAGS field of J9Object).
 // @@ getWordOffsetToGCFlags() and getWriteBarrierGCFlagMaskAsByte() are missing in TR_FrontEnd
@@ -1759,7 +1759,7 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
                                         new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
                                         wbref, NULL);
 
-   if (gcMode != TR_WrtbarAlways)
+   if (gcMode != gc_modron_wrtbar_always)
       {
       // conditional call to the write barrier
       cursor->setConditionCode(ARMConditionCodeNE);

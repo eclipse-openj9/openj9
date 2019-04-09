@@ -1262,7 +1262,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
       featureFlags |= TR_FeatureFlag_SIMDEnabled;
 #endif
 
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
 
    if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())

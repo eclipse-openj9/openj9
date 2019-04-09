@@ -1561,7 +1561,7 @@ onLoadInternal(
       }
 
 #if defined(TR_HOST_S390)
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       {
       // TODO (Guarded Storage): With the change to prevent lower trees, there's
       // an outstanding DLT issue where a LLGFSG is generated when loading the

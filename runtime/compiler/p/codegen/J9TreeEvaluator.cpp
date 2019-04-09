@@ -356,15 +356,15 @@ VMoutlinedHelperWrtbarEvaluator(
       TR::CodeGenerator *cg)
    {
    TR::Compilation * comp = cg->comp();
-   const TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   const auto gcMode = TR::Compiler->om.writeBarrierType();
 
-   if (gcMode == TR_WrtbarNone)
+   if (gcMode == gc_modron_wrtbar_none)
       return;
 
-   const bool doWrtbar = gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
+   const bool doWrtbar = gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
          || TR::Options::getCmdLineOptions()->realTimeGC();
 
-   const bool doCardMark = !node->isNonHeapObjectWrtBar() && (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental);
+   const bool doCardMark = !node->isNonHeapObjectWrtBar() && (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    TR::CodeCache *codeCache = cg->getCodeCache();
    TR::LabelSymbol *doneWrtbarLabel = generateLabelSymbol(cg);
@@ -501,13 +501,13 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
    TR::Compilation *comp = cg->comp();
    TR::Options *options = comp->getOptions();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
    TR::LabelSymbol *callLabel = generateLabelSymbol(cg);
    TR::Node *wrtbarNode = NULL;
    TR::SymbolReference *wbRef;
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
-   bool doCrdMrk = (gcMode == TR_WrtbarCardMarkAndOldCheck);
-   bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck);
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
          || TR::Options::getCmdLineOptions()->realTimeGC());
    bool temp3RegIsNull = (temp3Reg == NULL);
 
@@ -530,9 +530,9 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
       definitelyNonHeapObject = wrtbarNode->isNonHeapObjectWrtBar();
       }
 
-   if (gcMode == TR_WrtbarCardMarkAndOldCheck)
+   if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck)
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalAndConcurrentMarkSymbolRef(comp->getMethodSymbol());
-   else if (gcMode == TR_WrtbarOldCheck)
+   else if (gcMode == gc_modron_wrtbar_oldcheck)
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
    else if (TR::Options::getCmdLineOptions()->realTimeGC())
       {
@@ -544,7 +544,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
    else
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
 
-   if (gcMode != TR_WrtbarAlways && !TR::Options::getCmdLineOptions()->realTimeGC())
+   if (gcMode != gc_modron_wrtbar_always && !TR::Options::getCmdLineOptions()->realTimeGC())
       {
       bool inlineCrdmrk = (doCrdMrk && !definitelyNonHeapObject);
       // object header flags now occupy 4bytes (instead of 8) on 64-bit. Keep it in temp1Reg for following checks.
@@ -572,7 +572,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
 
          // Balanced policy must always dirty the card table.
          //
-         if (gcMode != TR_WrtbarCardMarkIncremental)
+         if (gcMode != gc_modron_wrtbar_cardmark_incremental)
             {
             noChkLabel = generateLabelSymbol(cg);
 
@@ -609,7 +609,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
          if (noChkLabel)
             generateLabelInstruction(cg, TR::InstOpCode::label, node, noChkLabel);
 
-         if (gcMode == TR_WrtbarCardMarkAndOldCheck)
+         if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck)
             {
             //check for src in new space
             generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp2Reg,
@@ -624,7 +624,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
          }
       else
          {
-         if (gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarOldCheck)
+         if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_oldcheck)
             {
             //check for src in new space
             if (temp4Reg != NULL)
@@ -712,7 +712,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
    TR::Options *options = comp->getOptions();
    TR::Node *wrtbarNode = NULL;
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
@@ -725,7 +725,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
       definitelyNonHeapObject = wrtbarNode->isNonHeapObjectWrtBar();
       }
 
-   TR_ASSERT((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && !definitelyNonHeapObject,
+   TR_ASSERT((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !definitelyNonHeapObject,
          "VMCardCheckEvaluator: Invalid call to cardCheckEvaluator\n");
 
    if (!definitelyNonHeapObject)
@@ -735,7 +735,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
 
       // Balanced policy must always dirty the card table.
       //
-      if (gcMode != TR_WrtbarCardMarkIncremental)
+      if (gcMode != gc_modron_wrtbar_cardmark_incremental)
          {
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, privateFlags), TR::Compiler->om.sizeofReferenceAddress(), cg));
@@ -790,10 +790,10 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
       TR::RegisterDependencyConditions *conditions, bool srcNonNull, bool needDeps, bool isCompressedRef, TR::CodeGenerator *cg, TR::Register *flagsReg = NULL)
    {
    TR::Compilation *comp = cg->comp();
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
          || TR::Options::getCmdLineOptions()->realTimeGC());
-   bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && !node->isNonHeapObjectWrtBar());
+   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !node->isNonHeapObjectWrtBar());
    TR::LabelSymbol *label;
    TR::Register *cr0, *temp1Reg, *temp2Reg, *temp3Reg = NULL, *temp4Reg = NULL;
    uint8_t numRegs = (doWrtBar && doCrdMrk) ? 7 : 5;
@@ -976,7 +976,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
       sourceRegister = cg->evaluate(firstChild);
 
    if (!node->skipWrtBar() && !node->hasUnresolvedSymbolReference()
-         && (comp->getOptions()->getGcMode() == TR_WrtbarOldCheck || comp->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck))
+         && (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck || TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck))
       {
       flagsReg = cg->allocateRegister();
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, flagsReg, new (cg->trHeapMemory()) TR::MemoryReference(destinationRegister, getOffsetOfJ9ObjectFlags(), 4, cg));
@@ -1132,7 +1132,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
       }
 
    if (!node->skipWrtBar() && !node->hasUnresolvedSymbolReference()
-         && (comp->getOptions()->getGcMode() == TR_WrtbarOldCheck || comp->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck))
+         && (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck || TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck))
       {
       flagsReg = cg->allocateRegister();
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, flagsReg, new (cg->trHeapMemory()) TR::MemoryReference(destinationRegister, getOffsetOfJ9ObjectFlags(), 4, cg));
@@ -1212,7 +1212,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
 
 TR::Register *J9::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads(), "iReadBarrierEvaluator");
+   TR_ASSERT(TR::Compiler->om.readBarrierType() != gc_modron_readbar_none, "iReadBarrierEvaluator");
 #ifdef OMR_GC_CONCURRENT_SCAVENGER
    TR_ASSERT(cg->comp()->useCompressedPointers(), "irdbarEvaluator is expecting compressed references");
 
@@ -1337,7 +1337,7 @@ TR::Register *J9::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::Code
 
 TR::Register *J9::Power::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads(), "aReadBarrierEvaluator");
+   TR_ASSERT(TR::Compiler->om.readBarrierType() != gc_modron_readbar_none, "aReadBarrierEvaluator");
 #ifdef OMR_GC_CONCURRENT_SCAVENGER
    TR::Compilation *comp = cg->comp();
    TR::MemoryReference *tempMR = NULL;
@@ -3121,12 +3121,10 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    TR::Node * firstChild = node->getFirstChild();
 
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-
-   bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways)
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always)
          || (TR::Options::getCmdLineOptions()->realTimeGC());
-
-   bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && !firstChild->isNonHeapObjectWrtBar());
+   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !firstChild->isNonHeapObjectWrtBar());
 
    TR::Node *sourceChild = firstChild->getSecondChild();
    TR::Node *destinationChild = firstChild->getChild(2);
@@ -3228,7 +3226,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    int32_t numDeps = 11;
    if (usingCompressedPointers)
       numDeps++;
-   if ((gcMode == TR_WrtbarRealTime) || (TR::Options::getCmdLineOptions()->realTimeGC()))
+   if ((gcMode == gc_modron_wrtbar_satb) || (TR::Options::getCmdLineOptions()->realTimeGC()))
       numDeps++;
    if (!firstChild->skipWrtBar())
       numDeps += 2;
@@ -8571,10 +8569,10 @@ void J9::Power::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Registe
    TR::Compilation * comp = cg->comp();
    bool ageCheckIsNeeded = false;
    bool cardMarkIsNeeded = false;
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
-   ageCheckIsNeeded = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
-   cardMarkIsNeeded = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental);
+   ageCheckIsNeeded = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   cardMarkIsNeeded = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    if (!ageCheckIsNeeded && !cardMarkIsNeeded)
       return;
@@ -8587,7 +8585,7 @@ void J9::Power::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Registe
       TR::Instruction *gcPoint;
       TR::RegisterDependencyConditions *conditions;
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          temp1Reg = cg->allocateRegister();
          temp2Reg = cg->allocateRegister();
@@ -8606,7 +8604,7 @@ void J9::Power::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Registe
       TR::LabelSymbol *doneLabel;
       TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierBatchStoreSymbolRef(comp->getMethodSymbol());
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          doneLabel = generateLabelSymbol(cg);
 
@@ -8627,13 +8625,13 @@ void J9::Power::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Registe
       gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptrj_t) wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress(),
             new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t) 0, 0, cg->trMemory()), wbRef, NULL);
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
       cg->machine()->setLinkRegisterKilled(true);
       cg->setHasCall();
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          cg->stopUsingRegister(temp1Reg);
          cg->stopUsingRegister(temp2Reg);
@@ -8820,10 +8818,10 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    bool freeOffsetReg = false;
    bool needDup = false;
 
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
          || TR::Options::getCmdLineOptions()->realTimeGC());
-   bool doCrdMrk = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental);
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    firstChild = node->getFirstChild();
    secondChild = node->getSecondChild();
@@ -8905,7 +8903,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       wrtBarEndLabel = doneLabel;
 
 #ifdef OMR_GC_CONCURRENT_SCAVENGER
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       {
       TR::Register *tmpReg = cg->allocateRegister();
       TR::Register *locationReg = cg->allocateRegister();
@@ -10651,7 +10649,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Code
    /*
     * TM is not compatible with read barriers. If read barriers are required, TM is disabled.
     */
-   if (disableTMOffer || TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (disableTMOffer || TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       {
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 3); // TM offer disabled
       generateLabelInstruction(cg, TR::InstOpCode::b, node, returnLabel);
@@ -10737,10 +10735,10 @@ static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Code
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
 
    // wrt bar
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
          || TR::Options::getCmdLineOptions()->realTimeGC());
-   bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
+   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
    if (doWrtBar)
       {
       if (doCrdMrk)
@@ -10857,7 +10855,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeG
    /*
     * TM is not compatible with read barriers. If read barriers are required, TM is disabled.
     */
-   if (disableTMPoll || TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (disableTMPoll || TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       {
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0); // BEFORE WAS 0
       generateLabelInstruction(cg, TR::InstOpCode::b, node, returnLabel);
@@ -10916,10 +10914,10 @@ static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeG
    generateInstruction(cg, TR::InstOpCode::tend_r, node);
 
    // WrtBar for this.head = q
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
          || TR::Options::getCmdLineOptions()->realTimeGC());
-   bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
+   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
    if (doWrtBar)
       {
       if (doCrdMrk)
@@ -13723,7 +13721,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
     * needed for field loads. At the time of writing, read barriers are used for Concurrent Scavenge GC.
     * If there are no read barriers then the original implementation of arraycopyEvaluator can be used.
     */
-   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() ||
+   if (TR::Compiler->om.readBarrierType() == gc_modron_readbar_none ||
           !node->chkNoArrayStoreCheckArrayCopy() ||
           !node->isReferenceArrayCopy() ||
           debug("noArrayCopy")

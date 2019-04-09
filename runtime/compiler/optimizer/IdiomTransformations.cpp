@@ -5761,8 +5761,21 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    lengthNode = createBytesFromElement(comp, trans->isGenerateI2L(), lengthNode, elementSize);
 
    // Prepare the arraycopy node.
-   bool needWriteBarrier = comp->getOptions()->needWriteBarriers() &&
-                           (inStoreNode->getOpCodeValue() == TR::awrtbari);
+   bool needWriteBarrier = false;
+   if (inStoreNode->getOpCodeValue() == TR::awrtbari)
+      {
+      switch (TR::Compiler->om.writeBarrierType())
+         {
+         case gc_modron_wrtbar_oldcheck:
+         case gc_modron_wrtbar_cardmark:
+         case gc_modron_wrtbar_cardmark_and_oldcheck:
+         case gc_modron_wrtbar_cardmark_incremental:
+            needWriteBarrier = true;
+            break;
+         default:
+            break;
+         }
+      }
 
    if (!comp->cg()->getSupportsReferenceArrayCopy() && needWriteBarrier)
       {
