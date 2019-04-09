@@ -212,8 +212,14 @@ SOLINK_FLAGS+=-nologo -nodefaultlib -incremental:no -debug
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 SOLINK_SLINK+=$(PRODUCT_SLINK) j9thr j9hookable kernel32 oldnames msvcrt msvcprt ws2_32
 
-ifneq (,$(filter 2015 2017, $(MSVC_VERSION)))
-    SOLINK_SLINK+=ucrt vcruntime
+ifeq ($(origin MSVC_VERSION), undefined)
+    ifneq (,$(filter 14.0 15.0, $(VisualStudioVersion)))
+        SOLINK_SLINK+=ucrt vcruntime
+    endif
+else
+    ifneq (,$(filter 2015 2017, $(MSVC_VERSION)))
+        SOLINK_SLINK+=ucrt vcruntime
+    endif
 endif
 
 SOLINK_DEF?=$(JIT_SCRIPT_DIR)/j9jit.def
