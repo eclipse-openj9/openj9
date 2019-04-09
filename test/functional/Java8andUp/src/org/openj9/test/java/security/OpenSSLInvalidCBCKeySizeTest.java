@@ -50,7 +50,7 @@ public class OpenSSLInvalidCBCKeySizeTest {
         AlgorithmParameterSpec iviv = new IvParameterSpec(iv);
 
         try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding", "SunJCE");
+            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, skey, iviv);
             cipher.doFinal();
             Assert.fail("InvalidKeyException is expected to be thrown");
@@ -59,8 +59,8 @@ public class OpenSSLInvalidCBCKeySizeTest {
             logger.debug("InvalidKeyException thrown as expected");
             logger.debug(e);
         } catch (Exception e) {
+            logger.error(e);
             Assert.fail("Unexpected exception thrown");
-            logger.debug(e);
         }
     }
 }
