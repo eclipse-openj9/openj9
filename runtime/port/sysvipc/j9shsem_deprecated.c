@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1092,11 +1092,20 @@ openSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, char *baseFile, j9
 			if (buf.sem_perm.__key != controlinfo->ftok_key)
 #endif
 			{
+#if defined (J9OS_I5)
+ 				/* The statement 'buf.sem_perm.key != controlinfo->common.ftok_key' will never fail on IBM i platform,
+ 				 * as the definition of structure ipc_perm is different:
+ 				 *  'key' field doesn't exists in structure ipc_perm on IBM i and the value of 'key' always zero.
+ 				 *  Simply log the error here, and then ignore it to avoid more incorrect messages
+ 				 */
+ 				Trc_PRT_shsem_j9shsem_opensemaphore_Msg("The <key,id> pair in our control file is not valid, but we ignore it here to avoid more incorrect messages.");
+#else /* defined (J9OS_I5) */
 				Trc_PRT_shsem_j9shsem_opensemaphore_Msg("The <key,id> pair in our control file is no longer valid.");
 				/* Clear any stale portlibrary error code */
 				clearPortableError(portLibrary);
 				rc = J9PORT_ERROR_SHSEM_OPFAILED_SEM_KEY_MISMATCH;
 				goto fail;
+#endif /* defined (J9OS_I5) */
 			}
 #endif
 #if defined (J9ZOS390)
