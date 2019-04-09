@@ -771,7 +771,7 @@ int32_t TR_UnsafeFastPath::perform()
                if (value)
                   {
                   // This is a store
-                  if (!isStatic && type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
+                  if (!isStatic && type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none))
                      {
                      node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                      spineCHK->setAndIncChild(0, addrCalc);
@@ -863,7 +863,7 @@ int32_t TR_UnsafeFastPath::perform()
                if (value)
                   {
                   // This is a store
-                  if (!isStatic && type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
+                  if (!isStatic && type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none))
                      node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                   else
                      {

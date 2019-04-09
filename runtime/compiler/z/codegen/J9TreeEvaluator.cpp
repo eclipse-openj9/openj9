@@ -1685,10 +1685,10 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
    //We need to do a runtime check on cardmarking for gencon policy if our owningObjReg is in tenure
-   bool doCrdMrk = (gcMode == TR_WrtbarCardMarkAndOldCheck);
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck);
 
    TR_ASSERT(srcReg != NULL, "VMnonNullSrcWrtBarCardCheckEvaluator: Cannot send in a null source object...look at the fcn name\n");
    TR_ASSERT(doWrtBar == true,"VMnonNullSrcWrtBarCardCheckEvaluator: Invalid call to VMnonNullSrcWrtBarCardCheckEvaluator\n");
@@ -1699,7 +1699,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       wrtbarNode = node;
    else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
       wrtbarNode = node->getFirstChild();
-   if (gcMode != TR_WrtbarAlways)
+   if (gcMode != gc_modron_wrtbar_always)
       {
       bool is64Bit = TR::Compiler->target.is64Bit();
       bool isConstantHeapBase = !comp->getOptions()->isVariableHeapBaseForBarrierRange0();
@@ -1775,8 +1775,8 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
 
             // If it is tarok balanced policy, we must generate card marking sequence.
             //
-            TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-            if (!(gcMode == TR_WrtbarCardMarkIncremental || gcMode == TR_WrtbarRealTime))
+            auto gcMode = TR::Compiler->om.writeBarrierType();
+            if (!(gcMode == gc_modron_wrtbar_cardmark_incremental || gcMode == gc_modron_wrtbar_satb))
                {
                generateTestBitFlag(cg, node, mdReg, offsetof(J9VMThread, privateFlags), sizeof(UDATA), J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE);
                // If the flag is not set, then we skip card marking
@@ -1885,7 +1885,7 @@ VMCardCheckEvaluator(
       // 83613: We used to do inline CM for Old&CM Objects.
       // However, since all Old objects will go through the wrtbar helper,
       // which will CM too, our inline CM would become redundant.
-      TR_ASSERT( (comp->getOptions()->getGcMode()==TR_WrtbarCardMark || comp->getOptions()->getGcMode()==TR_WrtbarCardMarkIncremental) && !isDefinitelyNonHeapObj,
+      TR_ASSERT( (TR::Compiler->om.writeBarrierType()==gc_modron_wrtbar_cardmark || TR::Compiler->om.writeBarrierType()==gc_modron_wrtbar_cardmark_incremental) && !isDefinitelyNonHeapObj,
          "VMCardCheckEvaluator: Invalid call to cardCheckEvaluator\n");
       TR_ASSERT(doneLabel, "VMCardCheckEvaluator: doneLabel must be defined\n");
       TR_ASSERT((conditions && tempReg || clobberDstReg), "VMCardCheckEvaluator: Either a tempReg must be sent in to be used, or we should be able to clobber the owningObjReg\n");
@@ -1914,8 +1914,8 @@ VMCardCheckEvaluator(
          static_assert(CARD_DIRTY <= MAX_IMMEDIATE_VAL, "VMCardCheckEvaluator: CARD_DIRTY flag is assumed to be small enough for an imm op");
 
          // If it is tarok balanced policy, we must generate card marking sequence.
-         TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-         if (!(gcMode == TR_WrtbarCardMarkIncremental || gcMode == TR_WrtbarRealTime))
+         auto gcMode = TR::Compiler->om.writeBarrierType();
+         if (!(gcMode == gc_modron_wrtbar_cardmark_incremental || gcMode == gc_modron_wrtbar_satb))
             {
             generateTestBitFlag(cg, node, mdReg, offsetof(J9VMThread, privateFlags), sizeof(UDATA), J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE);
             // If the flag is not set, then we skip card marking
@@ -1966,9 +1966,9 @@ VMwrtbarEvaluator(
    {
    TR::Instruction * cursor;
    TR::Compilation * comp = cg->comp();
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
-   bool doCrdMrk = ((gcMode == TR_WrtbarCardMark ||gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental )&& !node->isNonHeapObjectWrtBar());
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark ||gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental)&& !node->isNonHeapObjectWrtBar());
 
    // See VM Design 2048 for when wrtbar can be skipped, as determined by VP.
    if ( (node->getOpCode().isWrtBar() && node->skipWrtBar()) ||
@@ -1984,7 +1984,7 @@ VMwrtbarEvaluator(
    if (doWrtBar) // generational or gencon
       {
       TR::SymbolReference * wbRef = NULL;
-      if (gcMode == TR_WrtbarAlways)
+      if (gcMode == gc_modron_wrtbar_always)
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
       else // use jitWriteBarrierStoreGenerational for both generational and gencon, becaues we inline card marking.
          {
@@ -2032,12 +2032,12 @@ J9::Z::TreeEvaluator::awrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * owningObjectChild = node->getSecondChild();
    TR::Node * sourceChild = node->getFirstChild();
    TR::Compilation * comp = cg->comp();
-   bool doWrtBar = (comp->getOptions()->getGcMode() == TR_WrtbarOldCheck ||
-      comp->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck ||
-      comp->getOptions()->getGcMode() == TR_WrtbarAlways);
-   bool doCrdMrk = ((comp->getOptions()->getGcMode() == TR_WrtbarCardMark ||
-      comp->getOptions()->getGcMode() == TR_WrtbarCardMarkIncremental ||
-      comp->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck) && !node->isNonHeapObjectWrtBar());
+   bool doWrtBar = (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck ||
+                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck ||
+                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always);
+   bool doCrdMrk = ((TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark ||
+                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_incremental ||
+                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck) && !node->isNonHeapObjectWrtBar());
 
    TR::Register * owningObjectRegister = NULL;
    TR::Register * sourceRegister = NULL;
@@ -2160,12 +2160,12 @@ J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
       }
 
-   bool doWrtBar = (comp->getOptions()->getGcMode() == TR_WrtbarOldCheck ||
-      comp->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck ||
-      comp->getOptions()->getGcMode() == TR_WrtbarAlways);
-   bool doCrdMrk = ((comp->getOptions()->getGcMode() == TR_WrtbarCardMark ||
-      comp->getOptions()->getGcMode() == TR_WrtbarCardMarkIncremental ||
-      comp->getOptions()->getGcMode() == TR_WrtbarCardMarkAndOldCheck) && !node->isNonHeapObjectWrtBar());
+   bool doWrtBar = (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_oldcheck ||
+                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck ||
+                    TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always);
+   bool doCrdMrk = ((TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark ||
+                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_incremental ||
+                     TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_and_oldcheck) && !node->isNonHeapObjectWrtBar());
 
    TR::Register * owningObjectRegister = NULL;
 
@@ -4142,14 +4142,14 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Node * firstChild = node->getFirstChild();
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
    // As arguments to ArrayStoreCHKEvaluator helper function is children of first child,
    // We need to create a dummy call node for helper call with children containing arguments to helper call.
-   bool doWrtBar = (gcMode == TR_WrtbarOldCheck ||
-                    gcMode == TR_WrtbarCardMarkAndOldCheck ||
-                    gcMode == TR_WrtbarAlways);
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck ||
+                    gcMode == gc_modron_wrtbar_cardmark_and_oldcheck ||
+                    gcMode == gc_modron_wrtbar_always);
 
-   bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && !firstChild->isNonHeapObjectWrtBar());
+   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !firstChild->isNonHeapObjectWrtBar());
 
    TR::Node * litPoolBaseChild=NULL;
    TR::Node * sourceChild = firstChild->getSecondChild();
@@ -4349,7 +4349,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    if (doWrtBar)
       {
       TR::SymbolReference *wbRef ;
-      if (gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarOldCheck)
+      if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_oldcheck)
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
       else
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
@@ -9900,10 +9900,10 @@ void J9::Z::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *s
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
    TR::Compilation * comp = cg->comp();
 
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
-   // Do not do card marking when gcMode is TR_WrtbarCardMarkAndOldCheck - we go through helper, which performs CM, so it is redundant.
-   bool doCrdMrk = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental);
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   // Do not do card marking when gcMode is gc_modron_wrtbar_cardmark_and_oldcheck - we go through helper, which performs CM, so it is redundant.
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_incremental);
    TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
 
    if (doWrtBar)
@@ -9946,7 +9946,7 @@ void J9::Z::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *s
       // flag is in the lower 2 bytes in a 8 byte slot on 64 bit obj.(4 byte slot in 32bit obj)
       // so the offset should be ...
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          bool is64Bit = TR::Compiler->target.is64Bit();
          bool isConstantHeapBase = !comp->getOptions()->isVariableHeapBaseForBarrierRange0();
@@ -10115,7 +10115,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       casMemRef = generateS390MemoryReference(scratchReg, 0, cg);
       }
 
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && isObj)
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && isObj)
       {
       TR::Register* tempReadBarrier = cg->allocateRegister();
 
@@ -10147,11 +10147,11 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
 
    // Do wrtbar for Objects
    //
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck ||
-                    gcMode == TR_WrtbarAlways);
-   bool doCrdMrk = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck ||
-                    gcMode == TR_WrtbarCardMarkIncremental);
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck ||
+                    gcMode == gc_modron_wrtbar_always);
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck ||
+                    gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    if (isObj && (doWrtBar || doCrdMrk))
       {
@@ -10170,9 +10170,9 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       if (doWrtBar)
          {
          TR::SymbolReference *wbRef;
-         TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+         auto gcMode = TR::Compiler->om.writeBarrierType();
 
-         if (gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarOldCheck)
+         if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_oldcheck)
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
          else
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
@@ -10990,11 +10990,11 @@ genWrtBarForTM(
       bool checkResultRegForTMSuccess)
    {
    TR::Compilation *comp = cg->comp();
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-   bool doWrtBar = (gcMode == TR_WrtbarOldCheck ||
-         gcMode == TR_WrtbarCardMarkAndOldCheck ||
-         gcMode == TR_WrtbarAlways);
-   bool doCrdMrk = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental);
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck ||
+         gcMode == gc_modron_wrtbar_cardmark_and_oldcheck ||
+         gcMode == gc_modron_wrtbar_always);
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    if (doWrtBar || doCrdMrk)
       {
@@ -11028,7 +11028,7 @@ genWrtBarForTM(
          {
          TR::SymbolReference *wbRef;
 
-         if (gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarOldCheck)
+         if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_oldcheck)
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
          else
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
@@ -11383,7 +11383,6 @@ inlineConcurrentLinkedQueueTMPoll(
       if (usesCompressedrefs)
          {
          cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rQ, generateS390MemoryReference(rThis, offsetHead, cg));
-
          if (shiftAmount != 0)
             {
             cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, rTmp, rP, shiftAmount);
