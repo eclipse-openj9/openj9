@@ -51,7 +51,7 @@ public class OpenSSLInvalidGCMKeySizeTest {
         byte[] iv = new byte[12];
 
         try {
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", "SunJCE");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             AlgorithmParameterSpec iva = new GCMParameterSpec(tagLen * 8, iv);
             cipher.init(Cipher.ENCRYPT_MODE, skey, iva);
             cipher.doFinal(data, 0, data.length, tagBuffer);
@@ -61,8 +61,8 @@ public class OpenSSLInvalidGCMKeySizeTest {
             logger.debug("InvalidKeyException thrown as expected");
             logger.debug(e);
         } catch (Exception e) {
+            logger.error(e);
             Assert.fail("Unexpected exception thrown");
-            logger.debug(e);
         }
     }
 }
