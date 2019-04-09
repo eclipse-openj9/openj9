@@ -75,6 +75,7 @@ target_sources(j9vm_core_glue
 )
 target_link_libraries(j9vm_core_glue
 	INTERFACE
+		j9vm_interface
 		j9vm_gc_includes
 )
 

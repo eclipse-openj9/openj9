@@ -83,6 +83,8 @@ if(J9VM_IS_NON_STAGING)
 	set_source_files_properties(${cp_file_name} PROPERTIES GENERATED TRUE)
 	target_sources(jclse PRIVATE ${cp_file_name})
 else()
+	# Create dummy target for run_cptool
+	add_custom_target(run_cptool)
 	target_sources(jclse PRIVATE j9vmconstantpool.c)
 endif()
 
