@@ -52,8 +52,7 @@ cInterpreter:
 	RESTORE_PRESERVED_REGS
 	RESTORE_FPLR
 	SWITCH_TO_JAVA_STACK
-	ldr x0, [J9VMTHREAD,{#}J9TR_VMThread_tempSlot]
-	br x0
+	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 .L_cInterpExit:
 	ldp x19, x20, [sp, GPR_SAVE_OFFSET(19)]
 	ldp x21, x22, [sp, GPR_SAVE_OFFSET(21)]

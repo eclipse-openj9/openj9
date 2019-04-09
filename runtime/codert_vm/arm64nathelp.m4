@@ -34,8 +34,9 @@ define({CALL_SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE},{
 	SAVE_ALL_REGS
 	str x30,[J9VMTHREAD,{#}J9TR_VMThread_jitReturnAddress]
 	CALL_C_WITH_VMTHREAD(old_slow_$1)
-	cbz x0,+8
+	cbz x0,.L_done_$1
 	ret x0
+.L_done_$1:
 	RESTORE_ALL_REGS
 	RESTORE_FPLR
 	SWITCH_TO_JAVA_STACK
@@ -126,7 +127,12 @@ define({OLD_DUAL_MODE_HELPER},{
 	CALL_C_WITH_VMTHREAD(old_fast_$1)
 	cbz x0,.L_done_$1
 	SAVE_C_NONVOLATILE_REGS
-	hlt {#}0
+	mov x1,x0
+	mov x0,J9VMTHREAD
+	blr x1
+	cbz x0,.L_old_slow_$1
+	ret x0
+.L_old_slow_$1:
 	RESTORE_C_NONVOLATILE_REGS
 .L_done_$1:
 	RESTORE_C_VOLATILE_REGS
@@ -145,7 +151,12 @@ define({OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE},{
 	CALL_C_WITH_VMTHREAD(old_fast_$1)
 	cbz x0,.L_done_$1
 	SAVE_C_NONVOLATILE_REGS
-	hlt {#}0
+	mov x1,x0
+	mov x0,J9VMTHREAD
+	blr x1
+	cbz x0,.L_old_slow_$1
+	ret x0
+.L_old_slow_$1:
 	RESTORE_C_NONVOLATILE_REGS
 .L_done_$1:
 	RESTORE_C_VOLATILE_REGS
@@ -162,7 +173,12 @@ define({NEW_DUAL_MODE_HELPER},{
 	cbz x0,.L_done_$1
 	SWITCH_TO_C_STACK
 	SAVE_C_NONVOLATILE_REGS
-	hlt {#}0
+	mov x1,x0
+	mov x0,J9VMTHREAD
+	blr x1
+	cbz x0,.L_old_slow_$1
+	ret x0
+.L_old_slow_$1:
 	RESTORE_C_NONVOLATILE_REGS
 .L_done_$1:
 	RESTORE_FPLR
@@ -180,7 +196,12 @@ define({NEW_DUAL_MODE_HELPER_NO_RETURN_VALUE},{
 	cbz x0,.L_done_$1
 	SWITCH_TO_C_STACK
 	SAVE_C_NONVOLATILE_REGS
-	hlt {#}0
+	mov x1,x0
+	mov x0,J9VMTHREAD
+	blr x1
+	cbz x0,.L_old_slow_$1
+	ret x0
+.L_old_slow_$1:
 	RESTORE_C_NONVOLATILE_REGS
 .L_done_$1:
 	RESTORE_FPLR
@@ -203,11 +224,6 @@ define({DUAL_MODE_HELPER_NO_RETURN_VALUE},{OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(
 
 })	dnl ASM_J9VM_JIT_NEW_DUAL_HELPERS
 
-define({BRANCH_VIA_VMTHREAD},{
-	ldr x0,[J9VMTHREAD,{#}$1]
-	br x0
-})
-
 define({BEGIN_RETURN_POINT},{
 	START_PROC($1)
 })
@@ -218,7 +234,8 @@ define({END_RETURN_POINT},{
 })
 
 define({CINTERP},{
-	hlt {#}0
+	mov x0,{#}$1
+	mov x1,{#}$2
 	b FUNC_LABEL(cInterpreterFromJIT)
 })
 
@@ -365,7 +382,7 @@ dnl Switch from the C stack to the java stack and jump via tempSlot
 
 START_PROC(jitRunOnJavaStack)
 	SWITCH_TO_JAVA_STACK
-    BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
+	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitRunOnJavaStack)
 
 dnl When the VM access helpers are called, the java SP is already stored in the J9VMThread
@@ -390,7 +407,11 @@ BEGIN_HELPER(jitReleaseVMAccess)
 END_HELPER(jitReleaseVMAccess)
 
 START_PROC(cInterpreterFromJIT)
-	hlt {#}0
+	str x0,[J9VMTHREAD,{#}J9TR_VMThread_returnValue]
+	str x1,[J9VMTHREAD,{#}J9TR_VMThread_returnValue2]
+	ldr x0,[J9VMTHREAD,{#}J9TR_VMThread_javaVM]
+	ldr x0,[x0,{#}J9TR_JavaVM_cInterpreter]
+	br x0
 END_PROC(cInterpreterFromJIT)
 
 BEGIN_RETURN_POINT(jitExitInterpreter0)
@@ -461,7 +482,8 @@ START_PROC(j2iInvokeExact)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
 	SAVE_FPLR
-	hlt {#}0
+	mov x1,x0
+	mov x0,{#}J9TR_bcloop_j2i_invoke_exact
 	b FUNC_LABEL(cInterpreterFromJIT)
 END_PROC(j2iInvokeExact)
 
@@ -475,7 +497,8 @@ START_PROC(j2iTransition)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
 	SAVE_FPLR
-	hlt {#}0
+	mov x1,x0
+	mov x0,{#}J9TR_bcloop_j2i_transition
 	b FUNC_LABEL(cInterpreterFromJIT)
 END_PROC(j2iTransition)
 
@@ -484,13 +507,15 @@ dnl All arguments are on stack
 dnl Return address is in LR
 dnl JIT preserved registers are live
 dnl x0 contains the receiver
-dnl x? contains the vTable index
+dnl x9 contains the vTable index
 
 START_PROC(j2iVirtual)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
 	SAVE_FPLR
-	hlt {#}0
+	str x9,[J9VMTHREAD,{#}J9TR_VMThread_tempSlot]
+	mov x1,x0
+	mov x0,{#}J9TR_bcloop_j2i_virtual
 	b FUNC_LABEL(cInterpreterFromJIT)
 END_PROC(j2iVirtual)
 
@@ -501,10 +526,11 @@ dnl Arguments are in registers/stack per JIT linkage
 dnl Return address is in LR
 dnl JIT preserved registers are live
 dnl x0 contains the receiver
-dnl x? contains the vTable index
+dnl x9 contains the vTable index
 
 BEGIN_HELPER(icallVMprJavaSendPatchupVirtual)
-	hlt {#}0
+	str x0,[J9VMTHREAD,{#}J9TR_VMThread_returnValue2]
+	str x9,[J9VMTHREAD,{#}J9TR_VMThread_tempSlot]
 	CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(icallVMprJavaSendPatchupVirtual)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(icallVMprJavaSendPatchupVirtual)
@@ -749,12 +775,14 @@ START_PROC(throwCurrentExceptionFromJIT)
 END_PROC(throwCurrentExceptionFromJIT)
 
 START_PROC(enterMethodMonitorFromJIT)
-	hlt {#}0
+	ldr x1,[J9VMTHREAD,{#}J9TR_VMThread_floatTemp1]
+	mov x0,{#}J9TR_bcloop_enter_method_monitor
 	b FUNC_LABEL(cInterpreterFromJIT)
 END_PROC(enterMethodMonitorFromJIT)
 
 START_PROC(reportMethodEnterFromJIT)
-	hlt {#}0
+	ldr x1,[J9VMTHREAD,{#}J9TR_VMThread_floatTemp1]
+	mov x0,{#}J9TR_bcloop_report_method_enter
 	b FUNC_LABEL(cInterpreterFromJIT)
 END_PROC(reportMethodEnterFromJIT)
 
