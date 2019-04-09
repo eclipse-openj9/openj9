@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,8 +48,8 @@ class AMD64JNILinkage : public TR::AMD64PrivateLinkage
       TR::AMD64PrivateLinkage(cg),
          _systemLinkage(systemLinkage) {}
 
-   int32_t computeMemoryArgSize(TR::Node *callNode, int32_t first, int32_t last, int8_t direction, bool isJNI, bool passThread = true);
-   int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool isJNI, bool passThread = true, bool passReceiver = true);
+   int32_t computeMemoryArgSize(TR::Node *callNode, int32_t first, int32_t last, bool passThread = true);
+   int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool passThread = true, bool passReceiver = true);
    TR::Register *buildVolatileAndReturnDependencies(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool omitDedicatedFrameRegister);
    void switchToMachineCStack(TR::Node *callNode);
    void switchToJavaStack(TR::Node *callNode);
