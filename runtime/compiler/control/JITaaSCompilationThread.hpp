@@ -93,6 +93,7 @@ class ClientSessionData
       bool _stringCompressionEnabled;
       bool _hasSharedClassCache;
       bool _elgibleForPersistIprofileInfo;
+      TR_OpaqueClassBlock *_arrayTypeClasses[8];
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
