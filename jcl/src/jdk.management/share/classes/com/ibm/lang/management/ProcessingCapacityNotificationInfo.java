@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.lang.management;
 import javax.management.openmbean.CompositeData;
 
 import com.ibm.java.lang.management.internal.ManagementUtils;
-import com.ibm.lang.management.internal.ProcessingCapacityNotificationInfoUtil;
 
 /**
  * Encapsulates the details of a DLPAR notification emitted by a
@@ -40,10 +39,6 @@ import com.ibm.lang.management.internal.ProcessingCapacityNotificationInfoUtil;
 public class ProcessingCapacityNotificationInfo {
 
 	public static final String PROCESSING_CAPACITY_CHANGE = "com.ibm.management.processing.capacity.change"; //$NON-NLS-1$
-
-	static {
-		ProcessingCapacityNotificationInfoUtil.registerConverters();
-	}
 
 	private final int newProcessingCapacity;
 

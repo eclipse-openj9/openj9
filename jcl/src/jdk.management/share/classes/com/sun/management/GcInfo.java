@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,10 +52,6 @@ import com.sun.management.internal.GcInfoUtil;
  * @since   1.9
  */
 public class GcInfo implements CompositeData, CompositeDataView {
-
-	static {
-		GcInfoUtil.registerConverters();
-	}
 
 	/**
 	 * Comment for <code>index</code>
