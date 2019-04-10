@@ -659,9 +659,9 @@ The following instructions guide you through the process of building an **OpenJD
 
 ### 1. Prepare your system
 
-You need a Linux x86-64 environment with Docker :whale:.
+The binary can be built on your AArch64 Linux system, or in a Docker container :whale: on x86-64 Linux.
 
-Note: Building on x86-64 without Docker and building on AArch64 Linux are not tested.
+Note: Building on x86-64 without Docker is not tested.
 
 ### 2. Get the source
 :penguin:
@@ -679,9 +679,19 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 bash get_source.sh
 ```
 
-### 3. Create the Docker image
+### 3. Prepare for build on AArch64 Linux
 
-Run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
+You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
+
+- GNU C/C++ compiler (The Docker image uses GCC 7.3)
+- [AArch64 Linux JDK](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot), which is used as the boot JDK.
+- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
+
+See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
+
+### 4. Create the Docker image
+
+If you build the binary on x86-64 Linux, run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
 ```
 cd openj9/buildenv/docker/jdk11/aarch64_CC/arm-linux-aarch64
 docker build -t openj9aarch64 -f Dockerfile .
@@ -689,12 +699,27 @@ docker build -t openj9aarch64 -f Dockerfile .
 
 Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk11` in your local system:
 ```
-$ docker run -v /<host_directory>/openj9-openjdk-jdk11:/root/openj9-openjdk-jdk11 -it openj9aarch64
+docker run -v /<host_directory>/openj9-openjdk-jdk11:/root/openj9-openjdk-jdk11 -it openj9aarch64
 ```
 
-### 4. Configure
+Then go to the `openj9-openjdk-jdk11` directory:
+```
+cd /root/openj9-openjdk-jdk11
+```
+
+### 5. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+
+For building on AArch64 Linux:
+```
+bash configure --with-freemarker-jar=/<path_to>/freemarker.jar \
+               --with-boot-jdk=/<path_to_boot_JDK> \
+               --disable-warnings-as-errors \
+               --disable-warnings-as-errors-openj9
+```
+
+For building in the Docker container:
 ```
 bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --with-x=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/ \
@@ -709,14 +734,15 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
-:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl=path_to_library`
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`
 
   where:
 
+  - `system` uses the package installed OpenSSL library in the system.  Use this option when you build on your AArch64 Linux system.
   - `path_to_library` uses an OpenSSL v1.1.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
-  - Use of `fetched`/`system` options for `--with-openssl=` is not tested.
+  - Using `--with-openssl=fetched` will fail during the build in the Docker environment.
 
-### 5. Build
+### 6. Build
 :penguin:
 Now you're ready to build OpenJDK with OpenJ9:
 ```
