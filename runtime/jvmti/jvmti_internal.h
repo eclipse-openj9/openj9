@@ -35,7 +35,6 @@
 
 #include "j9.h"
 #include "j9comp.h"
-#include "jvmti_api.h"
 #include "jni.h"
 #include "jvmti.h"
 #include "jvmtiInternal.h"
