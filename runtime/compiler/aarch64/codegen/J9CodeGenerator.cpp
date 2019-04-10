@@ -20,24 +20,52 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "codegen/AheadOfTimeCompile.hpp"
+#include "codegen/ARM64JNILinkage.hpp"
+#include "codegen/ARM64PrivateLinkage.hpp"
+#include "codegen/ARM64Recompilation.hpp"
+#include "codegen/ARM64SystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGenerator_inlines.hpp"
 
 J9::ARM64::CodeGenerator::CodeGenerator() :
       J9::CodeGenerator()
    {
-   TR_UNIMPLEMENTED();
+   TR::CodeGenerator *cg = self();
+
+   cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
    }
 
 TR::Linkage *
 J9::ARM64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   TR::Linkage *linkage;
+   switch (lc)
+      {
+      case TR_Private:
+         linkage = new (self()->trHeapMemory()) TR::ARM64PrivateLinkage(self());
+         break;
+      case TR_System:
+         linkage = new (self()->trHeapMemory()) TR::ARM64SystemLinkage(self());
+         break;
+      case TR_CHelper:
+      case TR_Helper:
+         linkage = new (self()->trHeapMemory()) TR::ARM64HelperLinkage(self());
+         break;
+      case TR_J9JNILinkage:
+         linkage = new (self()->trHeapMemory()) TR::ARM64JNILinkage(self());
+         break;
+      default :
+         linkage = new (self()->trHeapMemory()) TR::ARM64SystemLinkage(self());
+         TR_ASSERT_FATAL(false, "Unexpected linkage convention");
+      }
+
+   self()->setLinkage(lc, linkage);
+   return linkage;
    }
 
 TR::Recompilation *
 J9::ARM64::CodeGenerator::allocateRecompilationInfo()
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   return TR_ARM64Recompilation::allocate(self()->comp());
    }

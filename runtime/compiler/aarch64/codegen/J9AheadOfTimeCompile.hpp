@@ -32,7 +32,7 @@ namespace J9 { typedef J9::ARM64::AheadOfTimeCompile AheadOfTimeCompileConnector
 #include "compiler/codegen/J9AheadOfTimeCompile.hpp"
 
 #include "codegen/ARM64AOTRelocation.hpp"
-#include "il/SymbolReference.hpp" // @@
+#include "il/SymbolReference.hpp"
 
 namespace TR { class CodeGenerator; }
 
