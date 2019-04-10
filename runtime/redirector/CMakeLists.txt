@@ -45,6 +45,8 @@ target_include_directories(jvm_redirect
 set_target_properties(jvm_redirect PROPERTIES
 	LIBRARY_OUTPUT_NAME jvm
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	ARCHIVE_OUTPUT_NAME redirector_jvm
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 install(
