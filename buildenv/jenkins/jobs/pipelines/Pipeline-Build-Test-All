@@ -29,7 +29,7 @@
  *
  * Parameters:
  *   PLATFORMS: String - Comma separated platforms to build.
- *              Expected values: all or any of the following: 
+ *              Expected values: all or any of the following:
  *              aix_ppc-64_cmprssptrs,
  *              linux_x86-64,
  *              linux_x86-64_cmprssptrs,
@@ -78,17 +78,17 @@
 RELEASES = ['8', '9', '10', '11', '12', 'next']
 CURRENT_RELEASES = ['8', '11', '12', 'next']
 
-SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
-         'linux_390-64_cmprssptrs'    : CURRENT_RELEASES,
-         'linux_ppc-64_cmprssptrs_le' : CURRENT_RELEASES,
-         'linux_x86-64'               : CURRENT_RELEASES,
-         'linux_x86-64_cmprssptrs'    : CURRENT_RELEASES,
-         'linux_x86-64_cmprssptrs_cmake' : ['8', '11'],
-         'win_x86'                    : ['8'],
-         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES,
-         'zos_390-64_cmprssptrs'      : ['11'],
-         'osx_x86-64'                 : CURRENT_RELEASES,
-         'osx_x86-64_cmprssptrs'      : CURRENT_RELEASES]
+SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
+         'ppc64le_linux'  : CURRENT_RELEASES,
+         's390x_linux'    : CURRENT_RELEASES,
+         's390x_zos'      : ['11'],
+         'x86-64_linux_xl': CURRENT_RELEASES,
+         'x86-64_linux'   : CURRENT_RELEASES,
+         'x86-64_linux_cm': ['8', '11'],
+         'x86-64_mac_xl'  : CURRENT_RELEASES,
+         'x86-64_mac'     : CURRENT_RELEASES,
+         'x86-32_windows' : ['8'],
+         'x86-64_windows' : CURRENT_RELEASES]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
@@ -186,7 +186,7 @@ try {
                                 }
 
                                 if (AUTOMATIC_GENERATION != 'false'){
-                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline')
+                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
                                 }
 
                                 builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION) }
@@ -216,7 +216,7 @@ try {
     }
 } finally {
     // add summary badge
-    table = get_summary_table()
+    table = get_summary_table(BUILD_IDENTIFIER)
     if (table) {
         manager.createSummary("plugin.png").appendText(table)
     }
@@ -311,13 +311,13 @@ def get_value_by_spec(map, release, spec) {
 }
 
 def get_pipeline_name(spec, version) {
-    return "Pipeline-Build-Test-JDK${version}-${spec}"
+    return "Pipeline_Build_Test_JDK${version}_${spec}"
 }
 
 /*
 * Returns an HTML summary table for the downstream builds.
 */
-def get_summary_table() {
+def get_summary_table(identifier) {
     // fetch the downstream builds of the current build
     def pipelineBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, pipelineNames)
     if (pipelineBuilds.isEmpty()) {
@@ -325,17 +325,6 @@ def get_summary_table() {
     }
 
     def buildReleases = get_sorted_releases()
-    def specShortNames = ['aix_ppc-64_cmprssptrs'          : 'aix-ppc64',
-                          'linux_390-64_cmprssptrs'        : 'linux-s390x',
-                          'linux_ppc-64_cmprssptrs_le'     : 'linux-ppc64le',
-                          'linux_x86-64'                   : 'linux-x64-XL',
-                          'linux_x86-64_cmprssptrs'        : 'linux-x64',
-                          'linux_x86-64_cmprssptrs_cmake'  : 'linux-x64-CM',
-                          'win_x86'                        : 'win-x32',
-                          'win_x86-64_cmprssptrs'          : 'win-x64',
-                          'zos_390-64_cmprssptrs'          : 'zos-390',
-                          'osx_x86-64'                     : 'osx-x64-XL',
-                          'osx_x86-64_cmprssptrs'          : 'osx-x64']
 
     def headerCols = ['']
     headerCols.addAll(buildReleases)
@@ -357,7 +346,7 @@ def get_summary_table() {
     for (spec in BUILD_SPECS.keySet().sort()){
         // table row
         summaryText += "<tr>"
-        summaryText += "<td style=\"font-weight: bold;\">${specShortNames[spec]}</td>"
+        summaryText += "<td style=\"font-weight: bold;\">${spec}</td>"
         def showLabel = true
 
         buildReleases.each { release ->
@@ -368,7 +357,7 @@ def get_summary_table() {
             if (BUILD_SPECS.get(spec).contains(release)) {
                 def pipelineName = get_pipeline_name(spec, release)
                 def build = pipelineBuilds.get(pipelineName)
-                def downstreamJobNames = buildFile.get_downstream_job_names(spec, release)
+                def downstreamJobNames = buildFile.get_downstream_job_names(spec, release, identifier)
 
                 if (build) {
                     def pipelineLink = buildFile.get_build_embedded_status_link(build)

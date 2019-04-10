@@ -78,20 +78,21 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
   logs:
-    build: 20
-    pipeline: 20
+    Nightly: 10
+    Release: 10
+    OMR: 20
+    OpenJDK: 20
+    Personal: 50
+    # tmp PRs
     pullRequest: 50
-  artifacts:
-    build: 10
-    pipeline: 0
-    pullRequest: 0
+    Pipeline: 100
 restart_timeout:
   time: '5'
   units: 'HOURS'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
-linux_ppc-64_cmprssptrs_le:
+ppc64le_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     9: '/usr/lib/jvm/adoptojdk-java-80'
@@ -135,7 +136,7 @@ linux_ppc-64_cmprssptrs_le:
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
-linux_390-64_cmprssptrs:
+s390x_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
@@ -177,7 +178,7 @@ linux_390-64_cmprssptrs:
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
-aix_ppc-64_cmprssptrs:
+ppc64_aix:
   boot_jdk:
     8: '/usr/java7'
     9: '/usr/java8_64'
@@ -216,7 +217,7 @@ aix_ppc-64_cmprssptrs:
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
-linux_x86-64_cmprssptrs:
+x86-64_linux:
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     9: '/usr/lib/jvm/adoptojdk-java-80'
@@ -258,7 +259,7 @@ linux_x86-64_cmprssptrs:
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
 #========================================#
-linux_x86-64_cmprssptrs_cmake:
+x86-64_linux_cm:
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     9: '/usr/lib/jvm/adoptojdk-java-80'
@@ -310,7 +311,7 @@ linux_x86-64_cmprssptrs_cmake:
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
-linux_x86-64:
+x86-64_linux_xl:
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     9: '/usr/lib/jvm/adoptojdk-java-80'
@@ -355,7 +356,7 @@ linux_x86-64:
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
-win_x86-64_cmprssptrs:
+x86-64_windows:
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     9: '/cygdrive/c/openjdk/jdk8'
@@ -396,7 +397,7 @@ win_x86-64_cmprssptrs:
 #========================================#
 # Windows x86 32bits
 #========================================#
-win_x86:
+x86-32_windows:
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
   release:
@@ -414,7 +415,7 @@ win_x86:
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
-osx_x86-64_cmprssptrs:
+x86-64_mac:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
@@ -447,7 +448,7 @@ osx_x86-64_cmprssptrs:
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
-osx_x86-64:
+x86-64_mac_xl:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
