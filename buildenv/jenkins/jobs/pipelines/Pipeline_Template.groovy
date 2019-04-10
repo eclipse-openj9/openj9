@@ -27,16 +27,15 @@ if (!binding.hasVariable('VENDOR_REPO_DEFAULT')) VENDOR_REPO_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_BRANCH_DEFAULT')) VENDOR_BRANCH_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID_DEFAULT = ''
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
-if (!binding.hasVariable('DISCARDER_NUM_ARTIFACTS')) DISCARDER_NUM_ARTIFACTS = '1'
+if (!binding.hasVariable('GIT_URI')) GIT_URI = 'https://github.com/eclipse/openj9.git'
+if (!binding.hasVariable('GIT_BRANCH')) GIT_BRANCH = 'refs/heads/master'
 
-def GIT_URI = 'https://github.com/eclipse/openj9.git'
-def GIT_BRANCH = 'refs/heads/master'
-
-def pipelineScript = ''
-if (jobType == 'build'){
+if (jobType == 'build') {
     pipelineScript = 'buildenv/jenkins/jobs/builds/Build-Test-Any-Platform'
-} else if (jobType == 'pipeline'){
+} else if (jobType == 'pipeline') {
     pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-Any-Platform'
+} else {
+    error "Unknown build type:'${jobType}'"
 }
 
 pipelineJob("$JOB_NAME") {
@@ -60,7 +59,6 @@ pipelineJob("$JOB_NAME") {
     }
     logRotator {
         numToKeep(DISCARDER_NUM_BUILDS.toInteger())
-        artifactNumToKeep(DISCARDER_NUM_ARTIFACTS.toInteger())
     }
     parameters {
         choiceParam('SDK_VERSION', ["${SDK_VERSION}"])
@@ -90,7 +88,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('OPENJDK_CLONE_DIR')
         stringParam('PERSONAL_BUILD')
         stringParam('CUSTOM_DESCRIPTION')
-        
+
         if (jobType == 'pipeline'){
             stringParam('TESTS_TARGETS')
             stringParam('BUILD_NODE')
