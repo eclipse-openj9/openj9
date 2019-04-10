@@ -1313,13 +1313,13 @@ fixDumpLabel(J9JavaVM *vm, const J9RASdumpSpec *spec, char **labelPtr, IDATA new
 
 		/* Test whether label is already a full file path, or stderr (i.e. '-'). In those cases we are done, no
 		 * need to fix up the label.
-		 * If the user has specified a path starting with %home or %tenantwd we will add a fully qualified path
+		 * If the user has specified a path starting with %home we will add a fully qualified path
 		 * at dump time.
 		 * Otherwise to detect a full path we check for a path separator as the first character.
-	     * On Windows we also check for <drive letter>:<path separator>. UNIX style forward slash separators are
+		 * On Windows we also check for <drive letter>:<path separator>. UNIX style forward slash separators are
 		 * allowed on Windows, since CMVC 200061.
 		 */
-		if ( path && ((strncmp(path, "%home", strlen("%home") ) == 0) || (strncmp(path, "%tenantwd", strlen("%tenantwd") ) == 0)) ) {
+		if ( path && (strncmp(path, "%home", strlen("%home")) == 0)) {
 			/* This path does not need fixing. */
 #ifdef WIN32
 		} else if ( path && path[0] != '\0' && path[0] != '-' &&
