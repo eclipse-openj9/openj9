@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,6 +113,19 @@
 
 class MM_AllocationContext;
 
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+extern "C" {
+
+void
+concurrentScavengerAsyncCallbackHandlerDelegate(J9VMThread *vmThread, IDATA handlerKey, void *userData)
+{
+	/* This will be populated once concurrentScavengerAsyncCallbackHandler is introduced in OMR */
+}
+
+} /* extern "C" */
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
+
 /**
  * Initialize the collector's internal structures and values.
  * @return true if initialization completed, false otherwise
@@ -120,6 +133,12 @@ class MM_AllocationContext;
 bool
 MM_ScavengerDelegate::initialize(MM_EnvironmentBase *env)
 {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->isConcurrentScavengerEnabled()) {
+		_flushCachesAsyncCallbackKey = _javaVM->internalVMFunctions->J9RegisterAsyncEvent(_javaVM, concurrentScavengerAsyncCallbackHandlerDelegate, NULL);
+	}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 	return true;
 }
 
@@ -714,6 +733,31 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 #endif
     }
 }
+
+void
+MM_ScavengerDelegate::signalThreadsToFlushCaches(MM_EnvironmentBase *envBase)
+{
+	J9InternalVMFunctions const * const vmFuncs = _javaVM->internalVMFunctions;
+	J9VMThread *walkThread = NULL;
+
+	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+
+	GC_VMInterface::lockVMThreadList(_extensions);
+
+	while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
+		vmFuncs->J9SignalAsyncEvent(_javaVM, walkThread, _flushCachesAsyncCallbackKey);
+	}
+
+	GC_VMInterface::unlockVMThreadList(_extensions);
+}
+
+void
+MM_ScavengerDelegate::cancelSignalToFlushCaches(MM_EnvironmentBase *env)
+{
+	_javaVM->internalVMFunctions->J9CancelAsyncEvent(_javaVM, NULL, _flushCachesAsyncCallbackKey);
+}
+
+
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
@@ -742,6 +786,9 @@ MM_ScavengerDelegate::MM_ScavengerDelegate(MM_EnvironmentBase* env)
 #if defined(J9VM_GC_FINALIZATION)
 	, _finalizationRequired(false)
 #endif /* J9VM_GC_FINALIZATION */
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	, _flushCachesAsyncCallbackKey(-1)
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 {
 	_typeId = __FUNCTION__;
 }
