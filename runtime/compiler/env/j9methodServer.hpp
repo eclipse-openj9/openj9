@@ -27,6 +27,14 @@
 #include "env/PersistentCollections.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
 
+struct
+TR_ResolvedMethodParams
+   {
+   J9Method *ramMethod;
+   TR_ResolvedJ9Method *owningMethod;
+   uint32_t vTableSlot;
+   };
+
 class TR_J9MethodFieldAttributes
    {
 public:
@@ -154,6 +162,7 @@ namespace std
 // each type. Apparently, the same cpIndex may refer to both virtual or special method,
 // for different method calls, so using TR_ResolvedMethodType is necessary.
 enum TR_ResolvedMethodType {VirtualFromCP, VirtualFromOffset, Interface, Static, Special};
+
 struct
 TR_ResolvedMethodKey
    {
@@ -163,10 +172,12 @@ TR_ResolvedMethodKey
 
    bool operator==(const TR_ResolvedMethodKey &other) const
       {
-      return type == other.type && cpIndex == other.cpIndex && classObject == other.classObject;
+      return
+         type == other.type &&
+         cpIndex == other.cpIndex &&
+         classObject == other.classObject;
       }
    };
-
 
 // define a hash function for TR_ResolvedMethodKey
 namespace std
@@ -177,16 +188,24 @@ namespace std
       std::size_t operator()(const TR_ResolvedMethodKey &k) const
          {
          // Compute a hash by hashing each part separately and then XORing them.
-         return std::hash<int32_t>()(static_cast<int32_t>(k.type)) ^ std::hash<int32_t>()(k.cpIndex) ^ std::hash<TR_OpaqueClassBlock *>()(k.classObject);
+         return
+            std::hash<int32_t>()(static_cast<int32_t>(k.type)) ^
+            std::hash<int32_t>()(k.cpIndex) ^
+            std::hash<TR_OpaqueClassBlock *>()(k.classObject);
          }
       };
    }
 
-struct TR_ResolvedMethodCacheEntry
+struct
+TR_ResolvedMethodCacheEntry
    {
-   TR_ResolvedMethod *resolvedMethod;
-   bool unresolvedInCP;
+   uint32_t compID;
+   TR_OpaqueMethodBlock *method;
+   uint32_t vTableSlot;
+   TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
    };
+
+using TR_ResolvedMethodInfoCache = PersistentUnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
 
 class TR_ResolvedJ9JITaaSServerMethod : public TR_ResolvedJ9Method
    {
@@ -256,17 +275,20 @@ public:
    virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = nullptr) override;
    virtual bool getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0) override;
 
-   TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
+   TR_ResolvedJ9Method *getRemoteMirror();
    bool inROMClass(void *address);
+   TR_ResolvedMethodParams getResolvedMethodParams();
    static void createResolvedMethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    static void createResolvedMethodFromJ9MethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
-   static bool _useCaching; // set by TR_DisableResolvedMethodsCaching. When false, caching of resolved methods is disabled 
+   static TR_ResolvedJ9Method *recreateResolvedMethodMirror(const TR_ResolvedMethodParams &methodParams, TR_J9VMBase *fe, TR_Memory *trMemory);
 
 protected:
    JITaaS::J9ServerStream *_stream;
    J9Class *_ramClass; // client pointer to RAM class
    UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache;
    UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache;
+
+   void setRemoteMirror(TR_ResolvedJ9Method *mirror) { _remoteMirror = mirror; }
    static void packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
    static void setAttributeResultFromResolvedMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, U_32 * fieldOffset, void **address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool * unresolvedInCP, bool *result, bool isStatic);
    virtual bool getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic);
@@ -274,6 +296,9 @@ protected:
    virtual TR_FieldAttributesCache *getAttributesCache(bool isStatic, bool unresolvedInCP=false);
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation);
    virtual bool canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
+
+   uint32_t getVTableSlot() { return _vTableSlot; }
+   bool addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key, TR_OpaqueMethodBlock *ramMethod, TR::Compilation *comp);
 
 private:
 
@@ -289,15 +314,17 @@ private:
    bool _virtualMethodIsOverridden; // cached information coming from client
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
-   UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry> _resolvedMethodsCache;
+   UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedJ9Method *> _resolvedMethodsCache;
    TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
-   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod *resolvedMethod, bool *unresolvedInCP = NULL);
+   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *resolvedMethod, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
    bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
+   TR_ResolvedMethodKey getResolvedMethodKey(TR_ResolvedMethodType type, int32_t cpIndex, TR_OpaqueClassBlock *classObject=NULL);
+   void recreateRemoteMirrorIfNecessary();
    };
 
 class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSServerMethod

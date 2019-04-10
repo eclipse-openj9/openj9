@@ -1515,6 +1515,14 @@ TR_J9ServerVM::getROMMethodFromRAMMethod(J9Method *ramMethod)
    return std::get<0>(stream->read<J9ROMMethod *>());
    }
 
+uint32_t
+TR_J9ServerVM::getCompilationID()
+   {
+   // use sequence number as compilation ID
+   uint32_t id = ((TR::CompilationInfoPerThreadRemote *) _compInfoPT)->getSeqNo();
+   return id;
+   }
+
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {

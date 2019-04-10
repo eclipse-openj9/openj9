@@ -70,6 +70,7 @@ class ClientSessionData
       TR_FieldAttributesCache *_staticAttributesCache;
       TR_FieldAttributesCache *_fieldAttributesCacheAOT;
       TR_FieldAttributesCache *_staticAttributesCacheAOT;
+      TR_ResolvedMethodInfoCache *_resolvedMethodInfoCache;
       };
 
    struct J9MethodInfo

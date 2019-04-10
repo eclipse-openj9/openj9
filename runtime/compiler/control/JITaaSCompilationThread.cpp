@@ -1029,7 +1029,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_staticAttributes:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool, TR_ResolvedMethodParams>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          int32_t isStore = std::get<2>(recv);
@@ -1037,9 +1037,16 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          void *address;
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
+
+         if (!method)
+            {
+            auto methodParams = std::get<4>(recv);
+            method = TR_ResolvedJ9JITaaSServerMethod::recreateResolvedMethodMirror(methodParams, fe, trMemory);
+            }
+
          bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          TR_J9MethodFieldAttributes attrs(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
-         client->write(attrs);
+         client->write(attrs, method);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getClassFromConstantPool:
@@ -1070,7 +1077,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_fieldAttributes:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool, TR_ResolvedMethodParams>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          I_32 cpIndex = std::get<1>(recv);
          bool isStore = std::get<2>(recv);
@@ -1078,44 +1085,67 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          U_32 fieldOffset;
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         
+         if (!method)
+            {
+            auto methodParams = std::get<4>(recv);
+            method = TR_ResolvedJ9JITaaSServerMethod::recreateResolvedMethodMirror(methodParams, fe, trMemory);
+            }
+
          bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          TR_J9MethodFieldAttributes attrs((void *) fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
-         client->write(attrs);
+         client->write(attrs, method);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
-         auto *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32, TR_ResolvedMethodParams>();
+         auto *owningMethod = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
+         if (!owningMethod)
+            {
+            auto methodParams = std::get<2>(recv);
+            // owningMethod is NULL, which means it was retrieved from global cache,
+            // so we need to recreate a client-side mirror
+            owningMethod = TR_ResolvedJ9JITaaSServerMethod::recreateResolvedMethodMirror(methodParams, fe, trMemory);
+            }
          bool unresolvedInCP;
-         J9Method *ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
+         J9Method *ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), owningMethod->cp(), cpIndex);
          unresolvedInCP = !ramMethod || !J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
 
             {
             TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
-            ramMethod = jitResolveStaticMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+            ramMethod = jitResolveStaticMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
             }
         
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          if (ramMethod)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
 
-         client->write(ramMethod, methodInfo, unresolvedInCP);
+         client->write(ramMethod, methodInfo, unresolvedInCP, owningMethod);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32, bool>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32, bool, TR_ResolvedMethodParams>();
+         TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          bool canBeUnresolved = std::get<2>(recv);
          J9Method *ramMethod = nullptr;
          bool unresolved = false, tookBranch = false;
+
+         if (!owningMethod)
+            {
+            auto methodParams = std::get<3>(recv);
+            // owningMethod is NULL, which means it was retrieved from global cache,
+            // so we need to recreate a client-side mirror
+            owningMethod = TR_ResolvedJ9JITaaSServerMethod::recreateResolvedMethodMirror(methodParams, fe, trMemory);
+            }
+         
          if (canBeUnresolved)
             {
-            ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
+            ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), owningMethod->cp(), cpIndex);
             unresolved = true;
             }
          if (!((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
@@ -1123,16 +1153,16 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                            performTransformation(comp, "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
             {
             TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
-            ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+            ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
             tookBranch = true;
             }
          
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          if (ramMethod)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
 
-         client->write(ramMethod, unresolved, tookBranch, methodInfo);
+         client->write(ramMethod, unresolved, tookBranch, methodInfo, owningMethod);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod:
@@ -1152,12 +1182,20 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror:
          {
          // 1. resolve method
-         auto recv = client->getRecvData<TR_ResolvedMethod *, J9RAMConstantPoolItem *, I_32>();
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9RAMConstantPoolItem *, I_32, TR_ResolvedMethodParams>();
          auto *owningMethod = std::get<0>(recv);
          auto literals = std::get<1>(recv);
          J9ConstantPool *cp = (J9ConstantPool*)literals;
          I_32 cpIndex = std::get<2>(recv);
          bool resolvedInCP = false;
+
+         if (!owningMethod)
+            {
+            auto methodParams = std::get<3>(recv);
+            // owningMethod is NULL, which means it was retrieved from global cache,
+            // so we need to recreate a client-side mirror
+            owningMethod = TR_ResolvedJ9JITaaSServerMethod::recreateResolvedMethodMirror(methodParams, fe, trMemory);
+            }
          
          // only call the resolve if unresolved
          J9Method * ramMethod = 0;
@@ -1189,11 +1227,11 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
             TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
                         
-            client->write(ramMethod, vTableIndex, resolvedInCP, methodInfo);
+            client->write(ramMethod, vTableIndex, resolvedInCP, methodInfo, owningMethod);
             }
          else
             {
-            client->write(ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JITaaSServerMethodInfo());
+            client->write(ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JITaaSServerMethodInfo(), owningMethod);
             }
          }
          break;
@@ -1279,7 +1317,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3:
          {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, I_32, TR_ResolvedJ9Method *>();
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, I_32, TR_ResolvedJ9Method *, TR_ResolvedMethodParams>();
          auto method = std::get<0>(recv);
          auto clazz = std::get<1>(recv);
          auto cpIndex = std::get<2>(recv);
@@ -1287,12 +1325,21 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          J9Method * ramMethod = (J9Method *)fe->getResolvedInterfaceMethod(method, clazz, cpIndex);
          bool resolved = ramMethod && J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
 
+         if (!owningMethod)
+            {
+            auto methodParams = std::get<4>(recv);
+            // owningMethod is NULL, which means it was retrieved from global cache,
+            // so we need to recreate a client-side mirror
+            owningMethod = TR_ResolvedJ9JITaaSServerMethod::recreateResolvedMethodMirror(methodParams, fe, trMemory);
+            }
+
+
          // create a mirror right away
          TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
          if (resolved)
             TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
 
-         client->write(resolved, ramMethod, methodInfo);
+         client->write(resolved, ramMethod, methodInfo, owningMethod);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodOffset:
@@ -3090,6 +3137,13 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _staticAttributesCacheAOT->~TR_FieldAttributesCache();
       jitPersistentFree(_staticAttributesCacheAOT);
       }
+
+   // free resolved method cache
+   if (_resolvedMethodInfoCache)
+      {
+      _resolvedMethodInfoCache->~TR_ResolvedMethodInfoCache();
+      jitPersistentFree(_resolvedMethodInfoCache);
+      }
    }
 
 ClientSessionData::VMInfo *
@@ -3351,6 +3405,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._staticAttributesCache = NULL;
    classInfoStruct._fieldAttributesCacheAOT = NULL;
    classInfoStruct._staticAttributesCacheAOT = NULL;
+   classInfoStruct._resolvedMethodInfoCache = NULL;
 
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
