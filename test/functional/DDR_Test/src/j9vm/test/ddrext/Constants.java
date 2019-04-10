@@ -258,17 +258,17 @@ public class Constants {
 
 	public static final String SHRC_FINDJITH = "findjith";
 	public static final String SHRC_FINDJITH_METHODNAME = "<init>";
-	public static final String SHRC_FINDJITH_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,.*/Object";
+	public static final String SHRC_FINDJITH_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,java/.*";
 	public static final String SHRC_FINDJITH_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_FINDJITHP = "findjithp";
 	public static final String SHRC_FINDJITHP_METHODPREFIX = "<init>";
-	public static final String SHRC_FINDJITHP_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,.*/Object";
+	public static final String SHRC_FINDJITHP_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,java/.*";
 	public static final String SHRC_FINDJITHP_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_JITHFOR = "jithfor";
 	public static final String SHRC_JITHFOR_METHODNAME = "<init>";
-	public static final String SHRC_JITHFOR_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,.*/Object";
+	public static final String SHRC_JITHFOR_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,(java|sun)/.*";
 	public static final String SHRC_JITHFOR_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_RTFLAGS = "rtflags";

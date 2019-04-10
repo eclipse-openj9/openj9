@@ -533,7 +533,7 @@ public class TestSharedClassesExt extends DDRExtTesterBase {
 		}
 
 		for (int i = 0; i < lines.length; i++) {
-			if (lines[i].contains("java/lang/Object") || lines[i].matches("\\s<init>\\(\\).*j9rommethod .*")) {
+			if (lines[i].contains("java/lang/Object") || lines[i].matches("\\s<init>\\(.*\\).*j9rommethod .*")) {
 				// lines[i].matches: For the case that method does not contain java/lang/Object
 				// we can find find j9rommethod address from <init> method in openj9
 				if (lines.length > 1) {
