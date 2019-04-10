@@ -131,6 +131,7 @@ target_link_libraries(j9util
 		j9vm_gc_includes
 
 		j9simplepool
+		j9stackmap
 )
 
 add_library(j9util_b156 STATIC
