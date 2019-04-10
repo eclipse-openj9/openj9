@@ -157,7 +157,7 @@ if(OMR_OS_WINDOWS)
 	)
 endif()
 
-if(OMR_NEED_LIBRT)
+if(OMR_OS_LINUX)
 	target_link_libraries(j9prt PRIVATE rt)
 endif()
 
