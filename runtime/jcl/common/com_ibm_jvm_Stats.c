@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2016 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
  *   max heap memory
  *   softmx heap memory
  *   free physical memory,
- * 	 total physical memory,
+ *   total physical memory,
  *   system load average
  *   cpuTime
  *
@@ -50,8 +50,10 @@ Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj)
 	jlong softmx = 0;
 	jlong free = 0;
 	jlong tot = 0;
-    jdouble sysLoadAvg = -1.0;
-    jlong cpuTime = 0;
+	jdouble sysLoadAvg = -1.0;
+	jlong cpuTime = 0;
+	J9MemoryInfo memInfo = {0};
+	int32_t rc = 0;
 
 	/* Access to the current jvm */
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
@@ -78,11 +80,13 @@ Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj)
 		softmx = max;
 	}
 
-	/* Calculation of free physical memory from existing function in mgmtosext.c*/
-	free = Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getFreePhysicalMemorySizeImpl(env, obj);
 
-	/* Calculation of total physical memory from port lib api */
-	tot = (jlong) j9sysinfo_get_physical_memory();
+	rc = j9sysinfo_get_memory_info(&memInfo);
+	
+	if (0 == rc) { 
+		free = (jlong) memInfo.availPhysical;
+		tot = (jlong) memInfo.totalPhysical;
+	} 
 
 	/* Calculation of system load average */
 	sysInfoResult = j9sysinfo_get_load_average(&loadData);

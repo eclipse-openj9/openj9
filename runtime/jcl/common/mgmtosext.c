@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,21 +46,6 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProce
 	}
 }
 
-/**
- * Returns the amount of physical memory that is available on the system in bytes.
- *
- * @return Amount of physical memory available in bytes or -1
- *         in the case of an error or if this metric is not
- *         supported for this operating system.
- */
-jlong JNICALL
-Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getFreePhysicalMemorySizeImpl(JNIEnv *env, jobject instance)
-{
-	PORT_ACCESS_FROM_ENV(env);
-	uint64_t size = 0;
-	int32_t rc = j9vmem_get_available_physical_memory(&size);
-	return (0 == rc)? (jlong) size: (jlong) -1;
-}
 
 /**
  * Returns the amount of virtual memory used by the process
