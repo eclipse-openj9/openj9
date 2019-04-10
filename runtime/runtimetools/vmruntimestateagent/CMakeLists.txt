@@ -38,7 +38,6 @@ target_link_libraries(vmruntimestateagent
 omr_add_exports(vmruntimestateagent
 	Agent_OnUnload
 	Agent_OnLoad
-	Agent_OnAttach
 )
 
 install(
