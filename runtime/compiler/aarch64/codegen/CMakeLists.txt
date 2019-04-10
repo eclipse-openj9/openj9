@@ -21,7 +21,11 @@
 ################################################################################
 
 j9jit_files(
+	aarch64/codegen/ARM64JNILinkage.cpp
+	aarch64/codegen/ARM64PrivateLinkage.cpp
+	aarch64/codegen/ARM64Recompilation.cpp
 	aarch64/codegen/J9ARM64Snippet.cpp
+	aarch64/codegen/J9AheadOfTimeCompile.cpp
 	aarch64/codegen/J9CodeGenerator.cpp
 	aarch64/codegen/J9TreeEvaluator.cpp
 	aarch64/codegen/J9UnresolvedDataSnippet.cpp
