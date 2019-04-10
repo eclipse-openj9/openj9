@@ -343,9 +343,9 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
       }
 
    // CP index and helper offset
-   *(int32_t *)cursor = (helperLookupOffset<<24) | methodSymRef->getCPIndexForVM();
+   *(intptrj_t *)cursor = (helperLookupOffset<<56) | methodSymRef->getCPIndexForVM();
 
-   return cursor + 4;
+   return cursor + 8;
    }
 
 uint32_t TR::ARM64UnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
@@ -387,9 +387,9 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP index
-   *(int32_t *)cursor = methodSymRef->getCPIndexForVM();
+   *(intptrj_t *)cursor = methodSymRef->getCPIndexForVM();
 
-   return cursor + 4;
+   return cursor + 8;
    }
 
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
@@ -429,14 +429,14 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP index
-   *(int32_t *)cursor = methodSymRef->getCPIndexForVM();
-   cursor += 4;
+   *(intptrj_t *)cursor = methodSymRef->getCPIndexForVM();
+   cursor += 8;
 
-   // Add 2 more slots for resolved values
-   *(int32_t *)cursor = 0;
-   cursor += 4;
-   *(int32_t *)cursor = 0;
-   cursor += 4;
+   // Add 2 more slots for resolved values (interface class and iTable offset)
+   *(intptrj_t *)cursor = 0;
+   cursor += 8;
+   *(intptrj_t *)cursor = 0;
+   cursor += 8;
 
    return cursor;
    }
