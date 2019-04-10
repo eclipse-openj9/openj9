@@ -289,10 +289,8 @@ JIT_HELPER(populateVPicSlotClass);
 JIT_HELPER(populateVPicSlotCall);
 JIT_HELPER(dispatchInterpretedFromVPicSlot);
 JIT_HELPER(populateVPicVTableDispatch);
-JIT_HELPER(updateInterpreterDispatchGlueSite);
 JIT_HELPER(interpreterUnresolvedSpecialGlue);
 JIT_HELPER(interpreterUnresolvedStaticGlue);
-JIT_HELPER(interpreterVoidStaticGlue);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 JIT_HELPER(doAESInHardwareJit);
@@ -350,16 +348,6 @@ JIT_HELPER(doAESENCEncrypt);
 JIT_HELPER(doAESENCDecrypt);
 #endif /* J9VM_OPT_JAVA_CRYPTO_ACCELERATION */
 
-JIT_HELPER(interpreterEAXStaticGlue);
-JIT_HELPER(interpreterRAXStaticGlue);
-JIT_HELPER(interpreterXMM0FStaticGlue);
-JIT_HELPER(interpreterXMM0DStaticGlue);
-JIT_HELPER(interpreterSyncVoidStaticGlue);
-JIT_HELPER(interpreterSyncEAXStaticGlue);
-JIT_HELPER(interpreterSyncRAXStaticGlue);
-JIT_HELPER(interpreterSyncXMM0FStaticGlue);
-JIT_HELPER(interpreterSyncXMM0DStaticGlue);
-
 JIT_HELPER(methodHandleJ2IGlue);
 JIT_HELPER(methodHandleJ2I_unwrapper);
 
@@ -388,15 +376,6 @@ JIT_HELPER(encodeUTF16Big);
 JIT_HELPER(encodeUTF16Little);
 
 JIT_HELPER(SMPVPicInit);
-JIT_HELPER(interpreterEAXStaticGlue);
-JIT_HELPER(interpreterEDXEAXStaticGlue);
-JIT_HELPER(interpreterST0FStaticGlue);
-JIT_HELPER(interpreterST0DStaticGlue);
-JIT_HELPER(interpreterSyncVoidStaticGlue);
-JIT_HELPER(interpreterSyncEAXStaticGlue);
-JIT_HELPER(interpreterSyncEDXEAXStaticGlue);
-JIT_HELPER(interpreterSyncST0FStaticGlue);
-JIT_HELPER(interpreterSyncST0DStaticGlue);
 #endif /* TR_HOST_64BIT */
 
 #elif defined(TR_HOST_POWER)
@@ -1163,7 +1142,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_X86interpreterUnresolvedStaticGlue,         (void *)interpreterUnresolvedStaticGlue,  TR_Helper);
    SET(TR_X86interpreterUnresolvedSpecialGlue,        (void *)interpreterUnresolvedSpecialGlue,  TR_Helper);
-   SET(TR_X86updateInterpreterDispatchGlueSite,       (void *)updateInterpreterDispatchGlueSite, TR_Helper);
 
    SET(TR_X86interpreterUnresolvedClassGlue,                (void *)interpreterUnresolvedClassGlue,                TR_Helper);
    SET(TR_X86interpreterUnresolvedClassFromStaticFieldGlue, (void *)interpreterUnresolvedClassFromStaticFieldGlue, TR_Helper);
@@ -1186,19 +1164,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #ifdef TR_HOST_64BIT
 
    // -------------------------------- AMD64 ------------------------------------
-
-   SET(TR_X86interpreterVoidStaticGlue,               (void *)interpreterVoidStaticGlue,      TR_Helper);
-   SET(TR_X86interpreterSyncVoidStaticGlue,           (void *)interpreterSyncVoidStaticGlue,  TR_Helper);
-   SET(TR_X86interpreterIntStaticGlue,                (void *)interpreterEAXStaticGlue,       TR_Helper);
-   SET(TR_X86interpreterSyncIntStaticGlue,            (void *)interpreterSyncEAXStaticGlue,   TR_Helper);
-   SET(TR_X86interpreterLongStaticGlue,               (void *)interpreterRAXStaticGlue,       TR_Helper);
-   SET(TR_X86interpreterSyncLongStaticGlue,           (void *)interpreterSyncRAXStaticGlue,   TR_Helper);
-   SET(TR_X86interpreterFloatStaticGlue,              (void *)interpreterXMM0FStaticGlue,     TR_Helper);
-   SET(TR_X86interpreterSyncFloatStaticGlue,          (void *)interpreterSyncXMM0FStaticGlue, TR_Helper);
-   SET(TR_X86interpreterDoubleStaticGlue,             (void *)interpreterXMM0DStaticGlue,     TR_Helper);
-   SET(TR_X86interpreterSyncDoubleStaticGlue,         (void *)interpreterSyncXMM0DStaticGlue, TR_Helper);
-   SET(TR_X86interpreterAddressStaticGlue,            (void *)interpreterRAXStaticGlue,       TR_Helper);
-   SET(TR_X86interpreterSyncAddressStaticGlue,        (void *)interpreterSyncRAXStaticGlue,   TR_Helper);
 
    SET(TR_AMD64floatRemainder,                        (void *)SSEfloatRemainder,  TR_Helper);
    SET(TR_AMD64doubleRemainder,                       (void *)SSEdoubleRemainder, TR_Helper);
@@ -1249,19 +1214,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    // -------------------------------- IA32 ------------------------------------
    SET(TR_IA32longDivide,                             (void *)longDivide,               TR_Helper);
    SET(TR_IA32longRemainder,                          (void *)longRemainder,            TR_Helper);
-
-   SET(TR_X86interpreterVoidStaticGlue,               (void *)interpreterVoidStaticGlue,       TR_Helper);
-   SET(TR_X86interpreterIntStaticGlue,                (void *)interpreterEAXStaticGlue,        TR_Helper);
-   SET(TR_X86interpreterLongStaticGlue,               (void *)interpreterEDXEAXStaticGlue,     TR_Helper);
-   SET(TR_X86interpreterFloatStaticGlue,              (void *)interpreterST0FStaticGlue,       TR_Helper);
-   SET(TR_X86interpreterDoubleStaticGlue,             (void *)interpreterST0DStaticGlue,       TR_Helper);
-   SET(TR_X86interpreterSyncVoidStaticGlue,           (void *)interpreterSyncVoidStaticGlue,   TR_Helper);
-   SET(TR_X86interpreterSyncIntStaticGlue,            (void *)interpreterSyncEAXStaticGlue,    TR_Helper);
-   SET(TR_X86interpreterSyncLongStaticGlue,           (void *)interpreterSyncEDXEAXStaticGlue, TR_Helper);
-   SET(TR_X86interpreterSyncFloatStaticGlue,          (void *)interpreterSyncST0FStaticGlue,   TR_Helper);
-   SET(TR_X86interpreterSyncDoubleStaticGlue,         (void *)interpreterSyncST0DStaticGlue,   TR_Helper);
-   SET(TR_X86interpreterAddressStaticGlue,            (void *)interpreterEAXStaticGlue,        TR_Helper);
-   SET(TR_X86interpreterSyncAddressStaticGlue,        (void *)interpreterSyncEAXStaticGlue,    TR_Helper);
 
    SET(TR_IA32jitCollapseJNIReferenceFrame,           (void *)jitCollapseJNIReferenceFrame,    TR_Helper);
 

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@ j9jit_files(
 	x/runtime/X86Codert.nasm
 	x/runtime/X86EncodeUTF16.nasm
 	x/runtime/X86LockReservation.nasm
-	x/runtime/X86PicBuilderC.cpp 
 	x/runtime/X86PicBuilder.nasm
 	x/runtime/X86RelocationTarget.cpp 
 	x/runtime/X86Unresolveds.nasm
