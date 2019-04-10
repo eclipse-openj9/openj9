@@ -123,18 +123,6 @@ public:
    MM_GCWriteBarrierType writeBarrierType() { return _writeBarrierType; }
 
    /**
-   * \brief: Determines whether the code generator should generate read barriers for loads of object references from the heap
-   *
-   * Instead of reaching into the VM each time, for the performance' sake,
-   * this value is cached here once at the JIT startup
-   * (since it does not change throughout the lifetime of the JIT).
-   *
-   * \return
-   *     true if concurrent scavenge of objects during garbage collection is enabled.
-   */
-   bool shouldGenerateReadBarriersForFieldLoads() { return _readBarrierType != gc_modron_wrtbar_none; }
-
-   /**
     * \brief Determine whether to replace guarded loads with software read barrier sequence
     *
     * \return
