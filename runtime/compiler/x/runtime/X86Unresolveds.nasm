@@ -1113,7 +1113,7 @@ retn
       %include "jilconsts.inc"
       %include "X86PicBuilder.inc"
 
-%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+%ifdef ASM_J9VM_GC_COMPRESSED_POINTERS
 eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Object
 %else
 eq_offsetof_J9Object_clazz equ   16       ; offset of class pointer in a J9Object
