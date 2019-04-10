@@ -789,6 +789,16 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      traceMsg(comp(), "Modifier in MethodHandle %p is %d and is static\n", mh, modifier);
                      }
                   }
+               else
+                  {
+                  // NULLCHK is required, insert a NULLCHK on the receiver object
+                  dumpOptDetails(comp(), "%sInsert NULLCHK on node %s [" POINTER_PRINTF_FORMAT "] n%dn\n", OPT_DETAILS, node->getOpCode().getName(), node, node->getGlobalIndex());
+                  TR::Node* passthrough = TR::Node::create(node, TR::PassThrough, 1, receiver);
+                  TR::ResolvedMethodSymbol* owningMethodSymbol = node->getSymbolReference()->getOwningMethodSymbol(comp());
+                  TR::Node* nullchk = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passthrough, comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(owningMethodSymbol));
+                  _curTree->insertAfter(TR::TreeTop::create(comp(), nullchk));
+                  removeCall = true;
+                  }
                }
 
             if (removeCall
