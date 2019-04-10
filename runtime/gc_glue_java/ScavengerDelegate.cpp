@@ -119,7 +119,7 @@ extern "C" {
 void
 concurrentScavengerAsyncCallbackHandlerDelegate(J9VMThread *vmThread, IDATA handlerKey, void *userData)
 {
-	/* This will be populated once concurrentScavengerAsyncCallbackHandler is introduced in OMR */
+	concurrentScavengerAsyncCallbackHandler(vmThread->omrVMThread);
 }
 
 } /* extern "C" */
@@ -735,10 +735,15 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 }
 
 void
-MM_ScavengerDelegate::signalThreadsToFlushCaches(MM_EnvironmentBase *envBase)
+MM_ScavengerDelegate::signalThreadsToFlushCaches(MM_EnvironmentBase *currentEnvBase)
 {
+	MM_EnvironmentStandard *currentEnv = MM_EnvironmentStandard::getEnvironment(currentEnvBase);
 	J9InternalVMFunctions const * const vmFuncs = _javaVM->internalVMFunctions;
 	J9VMThread *walkThread = NULL;
+
+	/* We will be abandoning TLH remainders on behalf of other threads. Let's do it for us first to clear up the pointers. */
+	_extensions->scavenger->abandonSurvivorTLHRemainder(currentEnv);
+	_extensions->scavenger->abandonTenureTLHRemainder(currentEnv, false);
 
 	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
 
@@ -746,6 +751,13 @@ MM_ScavengerDelegate::signalThreadsToFlushCaches(MM_EnvironmentBase *envBase)
 
 	while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
 		vmFuncs->J9SignalAsyncEvent(_javaVM, walkThread, _flushCachesAsyncCallbackKey);
+		/* For threads that blocked, do not hold VM access, run native etc, we cannot wait but must flush on their behalf.
+		 * Hold public mutex to prevent acquiring VM access and racing with our flush
+		 */
+		MM_EnvironmentStandard *walkEnv = MM_EnvironmentStandard::getEnvironment(walkThread->omrVMThread);
+		omrthread_monitor_enter(walkThread->publicFlagsMutex);
+		walkEnv->flushGCCaches(false);
+		omrthread_monitor_exit(walkThread->publicFlagsMutex);
 	}
 
 	GC_VMInterface::unlockVMThreadList(_extensions);
