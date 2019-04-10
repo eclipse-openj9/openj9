@@ -75,6 +75,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "optimizer/UnsafeFastPath.hpp"
 #include "optimizer/VarHandleTransformer.hpp"
+#include "optimizer/StaticFinalFieldFolding.hpp"
 
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
@@ -83,6 +84,7 @@ static const OptimizationStrategy J9EarlyGlobalOpts[] =
    { OMR::stringPeepholes                      }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::methodHandleInvokeInliningGroup,  OMR::IfMethodHandleInvokes },
    { OMR::inlining                             },
+   { OMR::staticFinalFieldFolding,             },
    { OMR::osrGuardInsertion,                OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfilingBlock                      },
@@ -299,6 +301,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::methodHandleInvokeInliningGroup,                OMR::IfMethodHandleInvokes },
    { OMR::inlining                                                              },
+   { OMR::staticFinalFieldFolding,                                              },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
@@ -379,6 +382,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
 static const OptimizationStrategy reducedWarmStrategyOpts[] =
    {
    { OMR::inlining                                                              },
+   { OMR::staticFinalFieldFolding,                                              },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
@@ -641,6 +645,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::methodHandleInvokeInliningGroup,           OMR::IfMethodHandleInvokes      },
    { OMR::inlining                                                              },
+   { OMR::staticFinalFieldFolding,                                              },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
@@ -804,6 +809,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingRecompLoopTest::create, OMR::jProfilingRecompLoopTest);
    _opts[OMR::jProfilingValue] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingValue::create, OMR::jProfilingValue);
+   _opts[OMR::staticFinalFieldFolding] =
+         new (comp->allocator()) TR::OptimizationManager(self(), TR_StaticFinalFieldFolding::create, OMR::staticFinalFieldFolding);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups
