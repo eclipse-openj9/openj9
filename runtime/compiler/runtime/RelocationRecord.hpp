@@ -516,6 +516,13 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordResolvedTrampolinesPrivateData resolvedTrampolines;
    };
 
+enum TR_RelocationRecordAction
+   {
+   ignore,
+   apply,
+   failCompilation
+   };
+
 // TR_RelocationRecord is the base class for all relocation records.  It is used for all queries on relocation
 // records as well as holding all the "wrapper" parts.  These classes are an interface to the *BinaryTemplate
 // classes which are simply structs that can be used to directly access the binary representation of the relocation
@@ -576,7 +583,7 @@ class TR_RelocationRecord
 
       TR_RelocationRuntime *_reloRuntime;
 
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime);
 
       static uint32_t getSizeOfAOTRelocationHeader(TR_ExternalRelocationTargetKind k)
          {
@@ -711,7 +718,7 @@ class TR_RelocationRecordWithInlinedSiteIndex : public TR_RelocationRecord
          return 1;
          }
 
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime);
    protected:
       virtual TR_OpaqueMethodBlock *getInlinedSiteCallerMethod(TR_RelocationRuntime *reloRuntime);
       virtual TR_OpaqueMethodBlock *getInlinedSiteMethod(TR_RelocationRuntime *reloRuntime);
@@ -1066,10 +1073,10 @@ class TR_RelocationRecordInlinedMethod : public TR_RelocationRecordConstantPoolW
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
 
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime)
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime)
          {
          // inlined method validations cannot be skipped as they control whether inlined method's relocations are needed
-         return false;
+         return TR_RelocationRecordAction::apply;
          }
 
    protected:
@@ -1298,7 +1305,7 @@ class TR_RelocationRecordMethodEnterCheck : public TR_RelocationRecordMethodTrac
       TR_RelocationRecordMethodEnterCheck() {}
       TR_RelocationRecordMethodEnterCheck(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordMethodTracingCheck(reloRuntime, record) {}
       virtual char *name();
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime);
    };
 
 class TR_RelocationRecordMethodExitCheck : public TR_RelocationRecordMethodTracingCheck
@@ -1307,7 +1314,7 @@ class TR_RelocationRecordMethodExitCheck : public TR_RelocationRecordMethodTraci
       TR_RelocationRecordMethodExitCheck() {}
       TR_RelocationRecordMethodExitCheck(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordMethodTracingCheck(reloRuntime, record) {}
       virtual char *name();
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime);
    };
 
 class TR_RelocationRecordRamMethod : public TR_RelocationRecord
@@ -1754,7 +1761,7 @@ class TR_RelocationRecordHCR : public TR_RelocationRecordWithOffset
 
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
 
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime);
    };
 
 class TR_RelocationRecordPointer : public TR_RelocationRecordWithInlinedSiteIndex
@@ -1773,7 +1780,7 @@ class TR_RelocationRecordPointer : public TR_RelocationRecordWithInlinedSiteInde
       void setClassChainForInlinedMethod(TR_RelocationTarget *reloTarget, uintptrj_t classChainOffsetInSharedCache);
       uintptrj_t classChainForInlinedMethod(TR_RelocationTarget *reloTarget);
 
-      virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+      virtual TR_RelocationRecordAction action(TR_RelocationRuntime *reloRuntime);
 
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
 
