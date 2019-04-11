@@ -4771,7 +4771,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       objectClassReg = cg->allocateRegister();
       numDeps++;
       TR::X86RegMemInstruction *instr;
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
       instr = generateRegMemInstruction(L4RegMem, node, objectClassReg, objectClassMR, cg);
 #else
       instr = generateRegMemInstruction(LRegMem(), node, objectClassReg, objectClassMR, cg);
@@ -5275,7 +5275,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       {
       TR::MemoryReference *objectClassMR = generateX86MemoryReference(objectReg, TMP_OFFSETOF_J9OBJECT_CLAZZ, cg);
       objectClassReg = cg->allocateRegister();
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
       TR::Instruction *instr = generateRegMemInstruction(L4RegMem, node, objectClassReg, objectClassMR, cg);
 #else
       TR::Instruction *instr = generateRegMemInstruction(LRegMem(), node, objectClassReg, objectClassMR, cg);
@@ -8149,7 +8149,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       TR::Instruction* instr;
 
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
       // FIXME: Add check for hint when doing the arraystore check as below when class pointer compression
       // is enabled.
 
@@ -8168,7 +8168,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       if (TR::Compiler->target.is64Bit())
          {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
          TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
          instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
 
@@ -8273,7 +8273,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       if (TR::Compiler->target.is64Bit())
          {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
          TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
          instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
 
@@ -8318,7 +8318,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          TR_OpaqueClassBlock *arrayComponentClass = (TR_OpaqueClassBlock *) node->getArrayComponentClassInNode();
          if (TR::Compiler->target.is64Bit())
             {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
             TR_ASSERT((((uintptr_t)arrayComponentClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
             instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) arrayComponentClass), cg);
 
@@ -8362,7 +8362,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
 
 
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
    // destComponentClassReg contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
 #endif
@@ -8417,7 +8417,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
             }
          }
 
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
    // temp2 contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
 #endif
@@ -8488,7 +8488,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          scratchRegisterManager->reclaimScratchRegister(sourceClassDepthReg);
 
 
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
    // destComponentClassReg contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
 #endif
@@ -8522,7 +8522,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       TR::MemoryReference *leaMR =
          generateX86MemoryReference(sourceSuperClassReg, destComponentClassDepthReg, logBase2(sizeof(uintptrj_t)), 0, cg);
 
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
       // leaMR is a memory reference to a J9Class
       // destComponentClassReg contains a TR_OpaqueClassBlock
       // We may need to convert superClass to a class offset before doing the comparison
@@ -8531,7 +8531,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       if (TR::Compiler->target.is32Bit())
          {
 
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
          TR_ASSERT(0, "Unexpected 32-bit ArrayStoreCHK path");
 #endif
 
@@ -8622,7 +8622,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       else
          testOpCode = TEST4MemImm4;
 
-      #ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+      #ifdef J9VM_GC_COMPRESSED_POINTERS
          generateRegMemInstruction(L4RegMem, node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
       #else
          generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
@@ -8678,7 +8678,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       if (!node->isArrayChkReferenceArray1())
          {
 
-         #ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+         #ifdef J9VM_GC_COMPRESSED_POINTERS
             generateRegMemInstruction(L4RegMem, node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
          #else
             generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
@@ -8714,7 +8714,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
 
          // Check that object 2 is an array. If not, throw exception.
          //
-         #ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+         #ifdef J9VM_GC_COMPRESSED_POINTERS
             generateRegMemInstruction(L4RegMem, node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
          #else
             generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);

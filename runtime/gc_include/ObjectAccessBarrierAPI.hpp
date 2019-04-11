@@ -2909,11 +2909,11 @@ private:
 			}
 			newFlags = (oldFlags & ~J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_CLEAR) | J9_OBJECT_HEADER_REMEMBERED_BITS_TO_SET;
 		}
-#if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 		while (oldFlags != VM_AtomicSupport::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined(J9VM_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != VM_AtomicSupport::lockCompareExchange(flagsPtr, (UDATA)oldFlags, (UDATA)newFlags));
-#endif /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
 
 		return result;
 	}

@@ -1953,6 +1953,7 @@ typedef struct J9BCTranslationData {
 #define BCT_Xfuture  0x800
 #define BCT_AlwaysSplitBytecodes 0x1000
 #define BCT_IntermediateDataIsClassfile  0x2000
+#define BCT_ValueTypesEnabled  0x4000
 #define BCT_StripDebugLines  0x8000
 #define BCT_StripDebugSource  0x10000
 #define BCT_StripDebugVars  0x20000
@@ -2819,7 +2820,7 @@ typedef struct J9IndexableObjectDiscontiguous {
 	U_32 size;
 #if defined(J9VM_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
 	U_32 padding;
-#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER || !J9VM_ENV_DATA64 */
+#endif /* J9VM_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguous;
 
 typedef struct J9InitializerMethods {
@@ -4711,6 +4712,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA ( *loadAndVerifyNestHost)(struct J9VMThread *vmThread, struct J9Class *clazz, UDATA options);
 	void ( *setNestmatesError)(struct J9VMThread *vmThread, struct J9Class *nestMember, struct J9Class *nestHost, IDATA errorCode);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+	BOOLEAN ( *areValueTypesEnabled)(struct J9JavaVM *vm);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -5023,6 +5025,7 @@ typedef struct J9JavaVM {
 	U_8* bootstrapClassPath;
 	U_32 runtimeFlags;
 	U_32 extendedRuntimeFlags;
+	U_32 extendedRuntimeFlags2;
 	UDATA zeroOptions;
 	struct J9ClassLoader* systemClassLoader;
 	struct J9ClassLoader *platformClassLoader;

@@ -2091,7 +2091,7 @@ int32_t TR_J9VMBase::getCAASaveOffset()
 uint32_t
 TR_J9VMBase::getWordOffsetToGCFlags()
    {
-#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(TR_TARGET_64BIT) && !defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(TR_TARGET_64BIT) && !defined(J9VM_GC_COMPRESSED_POINTERS)
       return TR::Compiler->om.offsetOfHeaderFlags() + 4;
 #else
       return TR::Compiler->om.offsetOfHeaderFlags();

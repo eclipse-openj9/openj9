@@ -225,7 +225,7 @@ J9::ObjectModel::nativeAddressesCanChangeSize()
 bool
 J9::ObjectModel::generateCompressedObjectHeaders()
    {
-#if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
    return true;
 #else
    return false;

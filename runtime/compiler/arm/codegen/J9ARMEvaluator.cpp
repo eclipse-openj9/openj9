@@ -118,7 +118,7 @@ TR::Instruction *OMR::ARM::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGen
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    uintptrj_t mask = TR::Compiler->om.maskOfObjectVftField();
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef J9VM_GC_COMPRESSED_POINTERS
    bool isCompressed = true;
 #else
    bool isCompressed = false;
