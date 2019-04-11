@@ -426,6 +426,14 @@ static void  internalReleaseVMAccessNoMutexNoCheck(J9VMThread * vmThread)
 	Assert_VM_mustHaveVMAccess(vmThread);
 
 	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_VM_ACCESS, true);
+
+	TRIGGER_J9HOOK_VM_RELEASEVMACCESS(vm->hookInterface, vmThread);
+
+	/* Now that the hook has been invoked, allow inline VM access */
+	if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
+		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
+	}
+
 	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_EXCLUSIVE_RESPONSE_MASK)) {
 		J9JavaVM * vm = vmThread->javaVM;
 		Trc_VM_internalReleaseVMAccessNoMutex_ThreadIsHalted(vmThread);
@@ -454,13 +462,6 @@ static void  internalReleaseVMAccessNoMutexNoCheck(J9VMThread * vmThread)
 		}
 
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
-	}
-
-	TRIGGER_J9HOOK_VM_RELEASEVMACCESS(vm->hookInterface, vmThread);
-
-	/* Now that the hook has been invoked, allow inline VM access */
-	if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
-		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 	}
 
 	Assert_VM_mustNotHaveVMAccess(vmThread);
