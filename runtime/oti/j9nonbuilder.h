@@ -2948,9 +2948,15 @@ typedef struct J9Class {
 	struct J9FlattenedClassCache* flattenedClassCache;
 } J9Class;
 
-/* Interface classes can never be instantiated - overload the totalInstanceSize slot to hold the iTable method count */
+/* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
+ *
+ *	totalInstanceSize -> map to iTable method count
+ *	finalizeLinkOffset -> map to interface method ordering table
+ */
 #define J9INTERFACECLASS_ITABLEMETHODCOUNT(clazz) ((clazz)->totalInstanceSize)
 #define J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(clazz, value) (clazz)->totalInstanceSize = (value)
+#define J9INTERFACECLASS_METHODORDERING(clazz) ((U_32*)((clazz)->finalizeLinkOffset))
+#define J9INTERFACECLASS_SET_METHODORDERING(clazz, value) (clazz)->finalizeLinkOffset = (UDATA)(value)
 
 #define J9ARRAYCLASS_SET_STRIDE(clazz, strideLength) ((clazz)->flattenedClassCache) = (J9FlattenedClassCache*)(UDATA)(strideLength)
 #define J9ARRAYCLASS_GET_STRIDE(clazz) ((UDATA)((clazz)->flattenedClassCache))
