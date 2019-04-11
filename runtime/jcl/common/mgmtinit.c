@@ -65,7 +65,7 @@ static void gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *tota
 static jint initMemoryManagement(J9JavaVM *vm);
 static U_32 getNumberSupported(U_32 supportedIDs);
 static UDATA getArrayIndexFromManagerID(J9JavaLangManagementData *mgmt, UDATA id);
-static void getSegmentSizes(J9JavaVM *javaVM, J9MemorySegmentList *segList, U_64 *storedSize, U_64 *storedUsed, U_64 *storedPeakSize, U_64 *storedPeakUsed);
+static void getSegmentSizes(J9JavaVM *javaVM, J9MemorySegmentList *segList, U_64 *storedSize, U_64 *storedUsed, U_64 *storedPeakSize, U_64 *storedPeakUsed, BOOLEAN isCodeCacheSegment);
 static void updateNonHeapMemoryPoolSizes(J9JavaVM *vm, J9JavaLangManagementData *mgmt, BOOLEAN isGCEnd);
 
 /* initialize java.lang.management data structures and hooks */
@@ -912,7 +912,7 @@ initMemoryManagement(J9JavaVM *vm)
 			/* Unreachable */
 			Assert_JCL_unreachable();
 		}
-		getSegmentSizes(vm, segList, &mgmt->nonHeapMemoryPools[idx].initialSize, &used, &mgmt->nonHeapMemoryPools[idx].peakSize, &mgmt->nonHeapMemoryPools[idx].peakUsed);
+		getSegmentSizes(vm, segList, &mgmt->nonHeapMemoryPools[idx].initialSize, &used, &mgmt->nonHeapMemoryPools[idx].peakSize, &mgmt->nonHeapMemoryPools[idx].peakUsed, (JIT_CODECACHE == idx));
 	}
 	return 0;
 
@@ -944,7 +944,7 @@ getArrayIndexFromManagerID(J9JavaLangManagementData *mgmt, UDATA id)
 }
 
 static void
-getSegmentSizes(J9JavaVM *javaVM, J9MemorySegmentList *segList, U_64 *storedSize, U_64 *storedUsed, U_64 *storedPeakSize, U_64 *storedPeakUsed)
+getSegmentSizes(J9JavaVM *javaVM, J9MemorySegmentList *segList, U_64 *storedSize, U_64 *storedUsed, U_64 *storedPeakSize, U_64 *storedPeakUsed, BOOLEAN isCodeCacheSegment)
 {
 	U_64 used = 0;
 	U_64 committed = 0;
@@ -953,8 +953,31 @@ getSegmentSizes(J9JavaVM *javaVM, J9MemorySegmentList *segList, U_64 *storedSize
 	omrthread_monitor_enter(segList->segmentMutex);
 
 	MEMORY_SEGMENT_LIST_DO(segList, seg)
+	if (isCodeCacheSegment) {
+		/* Set default values for warmAlloc and coldAlloc pointers */
+		UDATA warmAlloc = (UDATA)seg->heapBase;
+		UDATA coldAlloc = (UDATA)seg->heapTop;
+
+		/* The JIT code cache grows from both ends of the segment: the warmAlloc pointer upwards from the start of the segment
+		 * and the coldAlloc pointer downwards from the end of the segment. The free space in a JIT code cache segment is the
+		 * space between the warmAlloc and coldAlloc pointers. See compiler/runtime/OMRCodeCache.hpp, the contract with the JVM is
+		 * that the address of the TR::CodeCache structure is stored at the beginning of the segment.
+		 */
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+		UDATA *mccCodeCache = *((UDATA**)seg->heapBase);
+		if (mccCodeCache) {
+			J9JITConfig* jitConfig = javaVM->jitConfig;
+			if (jitConfig) {
+				warmAlloc = (UDATA)jitConfig->codeCacheWarmAlloc(mccCodeCache);
+				coldAlloc = (UDATA)jitConfig->codeCacheColdAlloc(mccCodeCache);
+			}
+		}
+#endif
+		used += seg->size - (coldAlloc - warmAlloc);
+	} else {
 		used += seg->heapAlloc - seg->heapBase;
-		committed += seg->size;
+	}
+	committed += seg->size;
 	END_MEMORY_SEGMENT_LIST_DO(seg)
 
 	omrthread_monitor_exit(segList->segmentMutex);
@@ -1002,6 +1025,6 @@ updateNonHeapMemoryPoolSizes(J9JavaVM *vm, J9JavaLangManagementData *mgmt, BOOLE
 			storedSize = &mgmt->nonHeapMemoryPools[idx].preCollectionSize;
 			storedUsed = &mgmt->nonHeapMemoryPools[idx].preCollectionUsed;
 		}
-		getSegmentSizes(vm, segList, storedSize, storedUsed, &mgmt->nonHeapMemoryPools[idx].peakSize, &mgmt->nonHeapMemoryPools[idx].peakUsed);
+		getSegmentSizes(vm, segList, storedSize, storedUsed, &mgmt->nonHeapMemoryPools[idx].peakSize, &mgmt->nonHeapMemoryPools[idx].peakUsed, (JIT_CODECACHE== idx));
 	}
 }
