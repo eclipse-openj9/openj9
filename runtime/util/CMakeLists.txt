@@ -133,29 +133,3 @@ target_link_libraries(j9util
 		j9simplepool
 		j9stackmap
 )
-
-add_library(j9util_b156 STATIC
-	modularityHelper.c
-	hshelp.c
-	superclass.c
-	fieldutil.c
-	tracehelp.c
-	propsfile.c
-	vmihelp.c
-	vmargs.c
-	${CMAKE_CURRENT_BINARY_DIR}/ut_j9util.c
-	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vmutil.c
-	${CMAKE_CURRENT_BINARY_DIR}/ut_module.c
-	${CMAKE_CURRENT_BINARY_DIR}/ut_j9hshelp.h
-)
-
-target_include_directories(j9util_b156
-	PUBLIC
-	${CMAKE_CURRENT_BINARY_DIR}
-	.
-)
-target_link_libraries(j9util_b156
-	PRIVATE
-		j9vm_interface
-		j9vm_gc_includes
-)
