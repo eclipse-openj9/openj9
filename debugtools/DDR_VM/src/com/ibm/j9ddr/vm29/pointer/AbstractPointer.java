@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -505,7 +505,7 @@ public abstract class AbstractPointer extends DataType {
 	{
 		long location = address + offset;
 		long classPointer;
-		if (J9BuildFlags.gc_compressedPointers) {
+		if (J9BuildFlags.interp_compressedObjectHeader) {
 			classPointer = (long)getAddressSpace().getIntAt(location) & 0xFFFFFFFFL;
 		} else {
 			classPointer = getAddressSpace().getPointerAt(location);

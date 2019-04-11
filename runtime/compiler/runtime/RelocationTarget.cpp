@@ -131,7 +131,7 @@ uint8_t *
 TR_RelocationTarget::loadClassAddressForHeader(uint8_t *reloLocation)
    {
    // reloLocation points at the start of the address, so just need to dereference as uint8_t *
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    return (uint8_t *) (uintptr_t) loadUnsigned32b(reloLocation);
 #else
    return (uint8_t *) loadPointer(reloLocation);
@@ -142,7 +142,7 @@ void
 TR_RelocationTarget::storeClassAddressForHeader(uint8_t *clazz, uint8_t *reloLocation)
    {
    // reloLocation points at the start of the address, so just store the uint8_t * at reloLocation
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    uintptr_t clazzPtr = (uintptr_t)clazz;
    storeUnsigned32b((uint32_t)clazzPtr, reloLocation);
 #else
