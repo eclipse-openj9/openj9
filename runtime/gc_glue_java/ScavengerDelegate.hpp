@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * Copyright (c) 2019, 2019 IBM Corp. and others
  *
@@ -118,9 +119,9 @@ public:
 	void backOutIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	void backOutIndirectObjects(MM_EnvironmentStandard *env);
 	void reverseForwardedObject(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject);
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 	void fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject, MM_MemorySubSpaceSemiSpace *subSpaceNew);
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void switchConcurrentForThread(MM_EnvironmentBase *env);

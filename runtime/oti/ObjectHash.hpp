@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,11 +53,11 @@ private:
 			oldFlags = *flagsPtr;
 			newFlags = oldFlags | OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
 		}
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 		while (oldFlags != VM_AtomicSupport::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#else /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 		while (oldFlags != VM_AtomicSupport::lockCompareExchange(flagsPtr, (UDATA)oldFlags, (UDATA)newFlags));
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 	}
 
 	static VMINLINE U_32

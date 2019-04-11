@@ -2820,7 +2820,7 @@ typedef struct J9IndexableObjectDiscontiguous {
 	U_32 size;
 #if defined(J9VM_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
 	U_32 padding;
-#endif /* J9VM_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
+#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER || !J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguous;
 
 typedef struct J9InitializerMethods {
