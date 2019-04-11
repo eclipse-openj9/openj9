@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2014 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 
 	protected J9ObjectPointer getForwardedObjectNoCheck() throws CorruptDataException
 	{
-		if(J9BuildFlags.gc_compressedPointers && !J9BuildFlags.env_littleEndian) {
+		if(J9BuildFlags.interp_compressedObjectHeader && !J9BuildFlags.env_littleEndian) {
 			/* compressed big endian - read two halves separately */
 			U32 low = U32Pointer.cast(objectPointer.clazzEA()).at(0).bitAnd(~ALL_TAGS);
 			U32 high = U32Pointer.cast(objectPointer.clazzEA()).at(1);

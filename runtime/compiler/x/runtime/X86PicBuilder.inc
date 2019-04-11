@@ -103,7 +103,7 @@ eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is pos
 ; ClassPtrReg32 must be the lower part of ClassPtrReg64
 ;
 %macro LoadClassPointerFromObjectHeader 3 ;ObjectReg, ClassPtrReg64, ClassPtrReg32
-%ifdef ASM_J9VM_GC_COMPRESSED_POINTERS
+%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         mov     %3, dword [%1 + J9TR_J9Object_class] ; read only 32 bits and zero extend
         and     %3, eq_ObjectClassMask
 %else

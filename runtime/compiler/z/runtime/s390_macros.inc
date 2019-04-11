@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2019 IBM Corp. and others
+ZZ Copyright (c) 2000, 2018 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -540,7 +540,7 @@ define(MTComputeStaticAddress,[dnl
     NILH    r2,0                      # get col index
     SLLG    r2,r2,0(r1)               # col offset, data size
 
-ifdef([ASM_J9VM_GC_COMPRESSED_POINTERS],[dnl
+ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
     LGR     r14,r0                    # restore r14
     LG      r1,28(,r14)               # load CP word
     SRLG    r1,r1,8                   # shift amount

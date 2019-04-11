@@ -474,7 +474,7 @@ TR::Register *outlinedHelperWrtbarEvaluator(TR::Node *node, TR::CodeGenerator *c
 static int32_t getOffsetOfJ9ObjectFlags()
    {
 #if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT)
-#if defined(TR_TARGET_64BIT) && !defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(TR_TARGET_64BIT) && !defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 #if defined(__LITTLE_ENDIAN__)
    return TMP_OFFSETOF_J9OBJECT_CLAZZ;
 #else
@@ -2934,7 +2934,7 @@ TR::Instruction *J9::Power::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGe
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    uintptrj_t mask = TR::Compiler->om.maskOfObjectVftField();
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    bool isCompressed = true;
 #else
    bool isCompressed = false;
@@ -2962,7 +2962,7 @@ static TR::Instruction *genTestIsSuper(TR::Node *node, TR::Register *objClassReg
    TR::Compilation* comp = cg->comp();
    int32_t superClassOffset = castClassDepth * TR::Compiler->om.sizeofReferenceAddress();
    bool outOfBound = (!depthInReg2 && (superClassOffset > UPPER_IMMED || superClassOffset < LOWER_IMMED)) ? true : false;
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // objClassReg contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
 #endif
@@ -2991,7 +2991,7 @@ static TR::Instruction *genTestIsSuper(TR::Node *node, TR::Register *objClassReg
       else
          cursor = generateShiftLeftImmediate(cg, node, scratch2Reg, scratch2Reg, 2, cursor);
       }
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // objClassReg contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
 #endif
@@ -3008,7 +3008,7 @@ static TR::Instruction *genTestIsSuper(TR::Node *node, TR::Register *objClassReg
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, scratch1Reg,
             new (cg->trHeapMemory()) TR::MemoryReference(scratch1Reg, superClassOffset, TR::Compiler->om.sizeofReferenceAddress(), cg), cursor);
       }
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // castClassReg has a class offset and scratch1Reg contains a J9Class pointer
    // May need to convert the J9Class pointer to a class offset
 #endif
@@ -3022,7 +3022,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // must read only 32 bits
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, t1Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(dst, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
@@ -3090,7 +3090,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, toWB, cndReg);
       }
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // For the following two instructions
    // we may need to convert the class offset from t1Reg into J9Class
 #endif
@@ -3868,7 +3868,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator2(TR::Node *node, TR
             TR_ASSERT(!objectClassReg, "Object class already loaded");
             objectClassReg = srm->findOrCreateScratchRegister();
             generateTrg1MemInstruction(cg,
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
                                        TR::InstOpCode::lwz,
 #else
                                        TR::InstOpCode::Op_load,
@@ -4038,7 +4038,7 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator2(TR::Node *node, T
             TR_ASSERT(!objectClassReg, "Object class already loaded");
             objectClassReg = srm->findOrCreateScratchRegister();
             generateTrg1MemInstruction(cg,
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
                                        TR::InstOpCode::lwz,
 #else
                                        TR::InstOpCode::Op_load,
@@ -4314,7 +4314,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, cndReg);
       }
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // read only 32 bits
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objClassReg,
          new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
@@ -4851,7 +4851,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
 
    if (testEqualClass || testCache || testCastClassIsSuper)
       {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // read only 32 bits
       iCursor = generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objClassReg,
             new (cg->trHeapMemory()) TR::MemoryReference(objectReg,
@@ -5316,7 +5316,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       objectClassReg = cg->allocateRegister();
       condReg = cg->allocateRegister(TR_CCR);
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // must read only 32 bits
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objectClassReg,
             new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
@@ -6446,7 +6446,7 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
          iCursor = loadConstant(cg, node, (int32_t) clazz | (int32_t) orFlag, temp1Reg, iCursor);
 #endif /* TR_TARGET_64BIT */
          }
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // must store only 32 bits
       iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
             new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg),
@@ -6462,7 +6462,7 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
          {
          iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, clzReg, clzReg, orFlag, iCursor);
          }
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // must store only 32 bits
       iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
             new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg),
@@ -7780,7 +7780,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    TR::InstOpCode::Mnemonic loadOpCode;
    if (nextTopNode->getOpCodeValue() == TR::aloadi && TR::Compiler->target.is64Bit())
       {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       if (nextTopNode->getSymbol()->isClassObject())
          {
          tempMR = new (cg->trHeapMemory()) TR::MemoryReference(nextTopNode, 4, cg);
@@ -7974,7 +7974,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       objectClassReg = cg->allocateRegister();
       condReg = cg->allocateRegister(TR_CCR);
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // must read only 32 bits
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objectClassReg,
             new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
@@ -8330,7 +8330,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
    //
    if (!node->isArrayChkPrimitiveArray1() && !node->isArrayChkReferenceArray1() && !node->isArrayChkPrimitiveArray2() && !node->isArrayChkReferenceArray2())
       {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
             new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
 #else
@@ -8353,7 +8353,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
 
    // One of the object is array. Test equality of two objects' classes.
    //
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
    // must read only 32 bits
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp2Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
@@ -8393,7 +8393,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
          {
 
          // Loading the Class Pointer -> classDepthandFlags
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
          generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
 #else
@@ -8425,7 +8425,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
       // Object2 must be of reference component type array, otherwise throw exception
       if (!node->isArrayChkReferenceArray2())
          {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
          generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
 #else
@@ -9429,7 +9429,7 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
          scratchRegister = cg->allocateCollectedReferenceRegister();
          TR::Register *memRefRegister = scratchRegister;
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
          // read only 32 bits
          generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, memRefRegister,
                new (cg->trHeapMemory()) TR::MemoryReference(valueReg, arrayFieldOffset, 4, cg));
@@ -9950,7 +9950,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(valueReg, arrayFieldOffset, size, cg);
       scratchReg = cg->allocateCollectedReferenceRegister();
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // read only 32 bits
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, scratchReg,
             new (cg->trHeapMemory()) TR::MemoryReference(valueReg, arrayFieldOffset, 4, cg));
