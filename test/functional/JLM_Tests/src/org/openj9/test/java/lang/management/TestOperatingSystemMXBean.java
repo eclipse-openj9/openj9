@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.AfterClass;
@@ -56,12 +55,15 @@ import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
 import com.ibm.lang.management.AvailableProcessorsNotificationInfo;
+import com.ibm.lang.management.CpuLoadCalculationConstants;
 import com.ibm.lang.management.ProcessingCapacityNotificationInfo;
 import com.ibm.lang.management.TotalPhysicalMemoryNotificationInfo;
 
-// This class is not part of the public API.
+// These classes are not part of the public API.
+import com.ibm.lang.management.internal.AvailableProcessorsNotificationInfoUtil;
 import com.ibm.lang.management.internal.ExtendedOperatingSystemMXBeanImpl;
-import com.ibm.lang.management.CpuLoadCalculationConstants;
+import com.ibm.lang.management.internal.ProcessingCapacityNotificationInfoUtil;
+import com.ibm.lang.management.internal.TotalPhysicalMemoryNotificationInfoUtil;
 
 @Test(groups = { "level.sanity" })
 public class TestOperatingSystemMXBean {
@@ -112,7 +114,7 @@ public class TestOperatingSystemMXBean {
 			attribs.put("MaxFileDescriptorCount", new AttributeData(Long.TYPE.getName(), true, false, false));
 			attribs.put("OpenFileDescriptorCount", new AttributeData(Long.TYPE.getName(), true, false, false));
 		}
-		/*At present, we don't have support for one of the APIs. Test what's
+		/* At present, we don't have support for one of the APIs. Test what's
 		 * there and exclude the other; enable when the API becomes available
 		 * on Z and OSX.
 		 */
@@ -144,6 +146,7 @@ public class TestOperatingSystemMXBean {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
+		// do nothing
 	}
 
 	@Test
@@ -215,16 +218,18 @@ public class TestOperatingSystemMXBean {
 
 		// A nonexistent attribute should throw an AttributeNotFoundException
 		try {
-			long rpm = ((Long)(mbs.getAttribute(objName, "RPM")));
+			long rpm = (Long) mbs.getAttribute(objName, "RPM");
 			Assert.fail("Should have thrown an AttributeNotFoundException.");
 		} catch (Exception e1) {
+			// expected
 		}
 
 		// Type mismatch should result in a casting exception
 		try {
-			String bad = (String)(mbs.getAttribute(objName, "AvailableProcessors"));
+			String bad = (String) mbs.getAttribute(objName, "AvailableProcessors");
 			Assert.fail("Should have thrown a ClassCastException");
-		} catch (Exception e2) {
+		} catch (Exception e1) {
+			// expected
 		}
 	}
 
@@ -236,6 +241,7 @@ public class TestOperatingSystemMXBean {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
 		} catch (Exception e1) {
+			// expected
 		}
 
 		attr = new Attribute("Arch", "ie Bunker");
@@ -243,6 +249,7 @@ public class TestOperatingSystemMXBean {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
 		} catch (Exception e1) {
+			// expected
 		}
 
 		attr = new Attribute("Version", "27 and a half");
@@ -250,6 +257,7 @@ public class TestOperatingSystemMXBean {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
 		} catch (Exception e1) {
+			// expected
 		}
 
 		attr = new Attribute("AvailableProcessors", new Integer(2));
@@ -257,6 +265,7 @@ public class TestOperatingSystemMXBean {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
 		} catch (Exception e1) {
+			// expected
 		}
 
 		// Try and set the Name attribute with an incorrect type.
@@ -264,7 +273,8 @@ public class TestOperatingSystemMXBean {
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception");
-		} catch (Exception e2) {
+		} catch (Exception e1) {
+			// expected
 		}
 	}
 
@@ -287,7 +297,7 @@ public class TestOperatingSystemMXBean {
 	/**
 	 * IBM attribute
 	 */
-	@Test(groups = { "disable.os.zos", "disable.os.aix"})
+	@Test(groups = { "disable.os.zos", "disable.os.aix" })
 	public void testgetCommittedVirtualMemorySize() {
 		AssertJUnit.assertTrue(osb.getCommittedVirtualMemorySize() > 0);
 	}
@@ -303,10 +313,10 @@ public class TestOperatingSystemMXBean {
 	/**
 	 * IBM attribute
 	 */
-	@Test(priority=-1) // set priority=-1 make it executed before any other tests
+	@Test(priority = -1) // priority is -1 so this test executes before any other
 	public void testGetProcessCPULoad() {
 		// first time it's -1.0
-		AssertJUnit.assertTrue(osb.getProcessCpuLoad() ==  CpuLoadCalculationConstants.ERROR_VALUE);
+		AssertJUnit.assertTrue(osb.getProcessCpuLoad() == CpuLoadCalculationConstants.ERROR_VALUE);
 		// sleep for a while otherwise next call will still return -1.0
 		try {
 			Thread.sleep(2000);
@@ -329,8 +339,8 @@ public class TestOperatingSystemMXBean {
 			 * the APIs as object-methods.  Instead, check the corresponding attributes.
 			 */
 			try {
-				maxFileDecriptors = ((Long)(mbs.getAttribute(objName, "MaxFileDescriptorCount"))).longValue();
-				openFileDecriptors = ((Long)(mbs.getAttribute(objName, "OpenFileDescriptorCount"))).longValue();
+				maxFileDecriptors = ((Long) mbs.getAttribute(objName, "MaxFileDescriptorCount")).longValue();
+				openFileDecriptors = ((Long) mbs.getAttribute(objName, "OpenFileDescriptorCount")).longValue();
 			} catch (AttributeNotFoundException e) {
 				Assert.fail("Unexpected AttributeNotFoundException exception: " + e.getMessage());
 			} catch (MBeanException e) {
@@ -448,7 +458,7 @@ public class TestOperatingSystemMXBean {
 					 * available on z/OS and OSX.
 					 */
 					if (isSupportedOS) {
-						AssertJUnit.assertTrue(((Long)(value)) > 0);
+						AssertJUnit.assertTrue(((Long)value) > 0);
 					}
 				} else {
 					Assert.fail("Unexpected attribute name returned! " + name);
@@ -505,6 +515,7 @@ public class TestOperatingSystemMXBean {
 					new String[] { "java.lang.Long", "java.lang.Long" });
 			Assert.fail("Should have thrown an exception.");
 		} catch (Exception e) {
+			// expected
 		}
 	}
 
@@ -571,7 +582,7 @@ public class TestOperatingSystemMXBean {
 		// Fire off a notification and ensure that the listener receives it.
 		try {
 			AvailableProcessorsNotificationInfo info = new AvailableProcessorsNotificationInfo(2);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = AvailableProcessorsNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(
 					AvailableProcessorsNotificationInfo.AVAILABLE_PROCESSORS_CHANGE,
 					new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 42);
@@ -619,7 +630,7 @@ public class TestOperatingSystemMXBean {
 		// Fire off a notification and ensure that the listener receives it.
 		try {
 			ProcessingCapacityNotificationInfo info = new ProcessingCapacityNotificationInfo(50);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = ProcessingCapacityNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(ProcessingCapacityNotificationInfo.PROCESSING_CAPACITY_CHANGE,
 					new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -666,7 +677,7 @@ public class TestOperatingSystemMXBean {
 		// Fire off a notification and ensure that the listener receives it.
 		try {
 			TotalPhysicalMemoryNotificationInfo info = new TotalPhysicalMemoryNotificationInfo(100 * 1024);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = TotalPhysicalMemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(
 					TotalPhysicalMemoryNotificationInfo.TOTAL_PHYSICAL_MEMORY_CHANGE,
 					new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 42);
@@ -714,7 +725,7 @@ public class TestOperatingSystemMXBean {
 		// Fire off a notification and ensure that the listener receives it.
 		try {
 			AvailableProcessorsNotificationInfo info = new AvailableProcessorsNotificationInfo(2);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = AvailableProcessorsNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(
 					AvailableProcessorsNotificationInfo.AVAILABLE_PROCESSORS_CHANGE,
 					new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 42);
@@ -745,7 +756,7 @@ public class TestOperatingSystemMXBean {
 		// Fire off a notification and ensure that the listener receives it.
 		try {
 			ProcessingCapacityNotificationInfo info = new ProcessingCapacityNotificationInfo(50);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = ProcessingCapacityNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(ProcessingCapacityNotificationInfo.PROCESSING_CAPACITY_CHANGE,
 					new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -775,7 +786,7 @@ public class TestOperatingSystemMXBean {
 		// Fire off a notification and ensure that the listener receives it.
 		try {
 			TotalPhysicalMemoryNotificationInfo info = new TotalPhysicalMemoryNotificationInfo(100 * 1024);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = TotalPhysicalMemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(
 					TotalPhysicalMemoryNotificationInfo.TOTAL_PHYSICAL_MEMORY_CHANGE,
 					new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 42);

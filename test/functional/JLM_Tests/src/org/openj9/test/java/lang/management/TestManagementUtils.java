@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.openj9.test.util.VersionCheck;
@@ -32,6 +31,8 @@ import org.testng.AssertJUnit;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.InvalidKeyException;
 
+// This class is not public API.
+import com.ibm.java.lang.management.internal.StackTraceElementUtil;
 
 @Test(groups = { "level.sanity" })
 public class TestManagementUtils {
@@ -45,6 +46,7 @@ public class TestManagementUtils {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
+		// do nothing
 	}
 
 	/*
@@ -234,7 +236,7 @@ public class TestManagementUtils {
 	public final void testToStackTraceElementCompositeData() {
 		// Null file name
 		StackTraceElement st = new StackTraceElement("foo.bar.DeclaringClass", "methodName", null, 42);
-		CompositeData cd = TestUtil.toCompositeData(st);
+		CompositeData cd = StackTraceElementUtil.toCompositeData(st);
 		int numValues = (VersionCheck.major() >= 9) ? 8 : 5;
 
 		// Examine the returned CompositeData
@@ -253,7 +255,7 @@ public class TestManagementUtils {
 
 		// Non-null file name
 		st = new StackTraceElement("foo.bar.DeclaringClass", "methodName", "DeclaringClass.java", -1);
-		cd = TestUtil.toCompositeData(st);
+		cd = StackTraceElementUtil.toCompositeData(st);
 
 		AssertJUnit.assertEquals(numValues, cd.values().size());
 		AssertJUnit.assertEquals("foo.bar.DeclaringClass", cd.get("className"));
@@ -271,7 +273,7 @@ public class TestManagementUtils {
 
 		// Native method
 		st = new StackTraceElement("foo.bar.DeclaringClass", "methodName", "DeclaringClass.java", -2);
-		cd = TestUtil.toCompositeData(st);
+		cd = StackTraceElementUtil.toCompositeData(st);
 
 		// Examine the returned CompositeData
 		AssertJUnit.assertEquals(numValues, cd.values().size());
@@ -322,15 +324,6 @@ public class TestManagementUtils {
 	 */
 	@Test
 	public final void testConvertFromOpenType() {
-		// TODO Auto-generated method stub
-
-	}
-
-	/*
-	 * Test method for 'com.ibm.lang.management.ManagementUtils.convertToOpenType(Object, Class<T>, Class<?>) <T>'
-	 */
-	@Test
-	public final void testConvertToOpenType() {
 		// TODO Auto-generated method stub
 
 	}
