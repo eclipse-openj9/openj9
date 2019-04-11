@@ -115,8 +115,6 @@ typedef J9RelocationStruct relocateStruct;
 
 #include "jniinv_api.h"
 
-#include "jvmti_api.h"
-
 #include "rasdump_api.h"
 
 #include "rastrace_api.h"
