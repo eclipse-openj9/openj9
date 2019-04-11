@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2019, 2019 IBM Corp. and others
  *
@@ -515,12 +514,12 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		}
 		extensions->objectModel.setObjectClassAndFlags(objectPtr, forwardedClass, forwardedFlags);
 
-#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (J9VM_GC_COMPRESSED_POINTERS)
 		/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
 		 * as well or it may be already reversed - such fixup will be completed at in a later pass.
 		 */
 		originalForwardedHeader->restoreDestroyedOverlap();
-#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
 
 		MM_ObjectAccessBarrier* barrier = extensions->accessBarrier;
 
@@ -547,7 +546,7 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 	}
 }
 
-#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (J9VM_GC_COMPRESSED_POINTERS)
 void
 MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *originalForwardedHeader, MM_MemorySubSpaceSemiSpace *subSpaceNew)
 {
@@ -585,7 +584,7 @@ MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHe
 		}
 	}
 }
-#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
 
 void
 MM_ScavengerDelegate::private_addOwnableSynchronizerObjectInList(MM_EnvironmentStandard *env, omrobjectptr_t object)

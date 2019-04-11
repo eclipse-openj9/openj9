@@ -2067,7 +2067,7 @@ impl_jitReferenceArrayCopy(J9VMThread *currentThread, UDATA lengthInBytes)
 		(I_32)(lengthInBytes >> 2)
 #else
 		(I_32)(lengthInBytes >> 3)
-#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER || !J9VM_ENV_DATA64 */
+#endif /* J9VM_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
 	)) {
 		exception = (void*)-1;
 	}
