@@ -2063,9 +2063,6 @@ void
 fixITables(J9VMThread * currentThread, J9HashTable* classHashTable);
 
 void
-fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classHashTable);
-
-void
 fixArrayClasses(J9VMThread * currentThread, J9HashTable* classHashTable);
 
 void

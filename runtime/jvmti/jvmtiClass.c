@@ -1017,6 +1017,58 @@ fixWatchedFields(J9JavaVM *vm, J9HashTable *classHashTable)
 	}
 }
 
+/**
+ * Update the method ordering table for an interface class. The cases are:
+ *
+ * 1) A reodering is required and none exists yet
+ *		Assign the remap array to the interface class
+ * 2) A reordring is not required, and the class already has one
+ *		Free and NULL the interface class ordering array
+ * 3) A reodering is required and the class already has one
+ *		Copy the method remap over the existing ordering in the class
+ * 4) No reordering required and the class does not have one
+ *		Do nothing
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] count The number of explicitly-redefined classes
+ * @param[in] classPair Pointer to the array of class pairs (of size count)
+ */
+static void
+updateInterfaceMethodOrdering(J9VMThread *currentThread, jint count, J9JVMTIClassPair *classPair)
+{
+	while (0 != count) {
+		J9Class *interfaceClass = classPair->originalRAMClass;
+		J9ROMClass *romClass = interfaceClass->romClass;
+		if (J9ROMCLASS_IS_INTERFACE(romClass)) {
+			U_32 *ordering = J9INTERFACECLASS_METHODORDERING(interfaceClass);
+			U_32 *remap = classPair->methodRemapIndices;
+			if (NULL == ordering) {
+				/* No reordering exists yet */
+				if (NULL != remap) {
+					/* First reordering required - assign the remap array and NULL it
+					 * in the pair to prevent it being freed.
+					 */
+					J9INTERFACECLASS_SET_METHODORDERING(interfaceClass, remap);
+					classPair->methodRemapIndices = NULL;
+				}
+			} else {
+				/* Ordering already exists */
+				if (NULL == remap) {
+					/* Back to the original ordering, discard the ordering array */
+					PORT_ACCESS_FROM_VMC(currentThread);
+					J9INTERFACECLASS_SET_METHODORDERING(interfaceClass, NULL);
+					j9mem_free_memory(ordering);
+				} else {
+					/* Reordering still required - copy the remap array over the existing ordering */
+					memcpy(ordering, remap, romClass->romMethodCount * sizeof(U_32));
+				}
+			}
+		}
+		classPair += 1;
+		count -= 1;
+	}
+}
+
 
 static jvmtiError
 redefineClassesCommon(jvmtiEnv* env,
@@ -1126,9 +1178,6 @@ redefineClassesCommon(jvmtiEnv* env,
 				/* Fix JNI */
 				fixJNIRefs(currentThread, classPairs, TRUE, extensionsUsed);
 
-				/* Update the iTables of any classes which implement a replaced interface */
-				fixITablesForFastHCR(currentThread, classPairs);
-
 				/* Fix resolved constant pool references to point to new methods. */
 				fixConstantPoolsForFastHCR(currentThread, classPairs, methodPairs);
 
@@ -1139,6 +1188,9 @@ redefineClassesCommon(jvmtiEnv* env,
 
 				/* Flush the reflect method cache */
 				flushClassLoaderReflectCache(currentThread, classPairs);
+
+				/* Store the method remap indices for redefined interface classes */
+				updateInterfaceMethodOrdering(currentThread, class_count, specifiedClasses);
 
 				/* Indicate that a redefine has occurred */
 				vm->hotSwapCount += 1;
