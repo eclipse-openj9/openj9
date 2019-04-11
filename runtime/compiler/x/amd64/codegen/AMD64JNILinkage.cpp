@@ -619,20 +619,8 @@ void TR::AMD64JNILinkage::buildJNICallOutFrame(
 
    // Store out pc and literals values indicating the callout frame.
    //
-   tempMR = generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaPCOffset(), cg());
-   uintptrj_t frameType = fej9->constJNICallOutFrameType();
-   if (frameType <= 0x7fffffff)
-      {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, frameType, cg());
-      }
-   else
-      {
-      if (!scratchReg)
-         scratchReg = cg()->allocateRegister();
-
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, frameType, cg());
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
-      }
+   static_assert(IS_32BIT_SIGNED(J9SF_FRAME_TYPE_JIT_JNI_CALLOUT), "J9SF_FRAME_TYPE_JIT_JNI_CALLOUT must fit in immediate");
+   generateMemImmInstruction(SMemImm4(), callNode, generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaPCOffset(), cg()), J9SF_FRAME_TYPE_JIT_JNI_CALLOUT, cg());
 
    if (scratchReg)
       cg()->stopUsingRegister(scratchReg);
@@ -1091,8 +1079,8 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
-   static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-   generateMemImmInstruction(CMP4MemImm4,
+   static_assert(IS_32BIT_SIGNED(J9_PUBLIC_FLAGS_VM_ACCESS), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
+   generateMemImmInstruction(J9_PUBLIC_FLAGS_VM_ACCESS < 128 ? CMP4MemImms : CMP4MemImm4,
                              callNode,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
                              J9_PUBLIC_FLAGS_VM_ACCESS,
@@ -1128,8 +1116,8 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
-   static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-   generateMemImmInstruction(CMP4MemImm4,
+   static_assert(IS_32BIT_SIGNED(J9_PUBLIC_FLAGS_VM_ACCESS), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
+   generateMemImmInstruction(J9_PUBLIC_FLAGS_VM_ACCESS < 128 ? CMP4MemImms : CMP4MemImm4,
                              callNode,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
                              J9_PUBLIC_FLAGS_VM_ACCESS,
@@ -1209,23 +1197,14 @@ void TR::AMD64JNILinkage::cleanupReturnValue(
 
 void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
    {
-   TR::Register *scratchReg  = cg()->allocateRegister();
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
    // Check exceptions.
    //
-   generateRegMemInstruction(
-      LRegMem(),
-      callNode,
-      scratchReg,
-      generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset(), cg()),
-      cg());
+   generateMemImmInstruction(CMPMemImms(), callNode, generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset(), cg()), 0, cg());
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
-   generateRegRegInstruction(TESTRegReg(), callNode, scratchReg, scratchReg, cg());
-   cg()->stopUsingRegister(scratchReg);
-
    TR::Instruction *instr = generateLabelInstruction(JNE4, callNode, snippetLabel, cg());
 
    uint32_t gcMap = _systemLinkage->getProperties().getPreservedRegisterMapForGC();
@@ -1233,7 +1212,6 @@ void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
       {
       gcMap |= (_JNIDispatchInfo.argSize<<14);
       }
-
    instr->setNeedsGCMap(gcMap);
 
    TR::Snippet *snippet =
@@ -1252,36 +1230,18 @@ void TR::AMD64JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
    // leave a bunch of pinned garbage behind that screws up the gc quality forever.
    //
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   uintptrj_t flagValue = fej9->constJNIReferenceFrameAllocatedFlags();
-   uintptrj_t flagsOffset = fej9->constJNICallOutFrameFlagsOffset();
+   TR_ASSERT(IS_32BIT_SIGNED(J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS), "J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS must fit in immediate");
 
    TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
    TR::LabelSymbol *refPoolSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *refPoolRestartLabel = generateLabelSymbol(cg());
 
-   if (TR::Compiler->target.is64Bit() && (flagValue > 0x7fffffff))
-      {
-      TR::Register *scratchReg = cg()->allocateRegister();
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, flagValue, cg());
-      generateMemRegInstruction(
-         TEST8MemReg,
-         callNode,
-         generateX86MemoryReference(espReal, flagsOffset, cg()),
-         scratchReg,
-         cg());
-      cg()->stopUsingRegister(scratchReg);
-      }
-   else
-      {
-      TR_X86OpCodes op = (flagValue <= 255) ? TEST1MemImm1 : (TESTMemImm4());
-      generateMemImmInstruction(
-         op,
-         callNode,
-         generateX86MemoryReference(espReal, flagsOffset, cg()),
-         flagValue,
-         cg());
-      }
+   generateMemImmInstruction(J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS <= 255 ? TEST1MemImm1 : TESTMemImm4(),
+                             callNode,
+                             generateX86MemoryReference(espReal, fej9->constJNICallOutFrameFlagsOffset(), cg()),
+                             J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS,
+                             cg());
 
    generateLabelInstruction(JNE4, callNode, refPoolSnippetLabel, cg());
    generateLabelInstruction(LABEL, callNode, refPoolRestartLabel, cg());
