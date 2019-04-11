@@ -24,7 +24,7 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>cmdLineTester_SCURLClassLoaderTests_SE80</testCaseName>
+		<testCaseName>SCURLClassLoaderTests_SE80</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -49,7 +49,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_SCURLClassLoaderTests</testCaseName>
+		<testCaseName>SCURLClassLoaderTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -74,7 +74,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_SCURLClassLoaderNPTests_SE80</testCaseName>
+		<testCaseName>SCURLClassLoaderNPTests_SE80</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -99,7 +99,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_SCURLClassLoaderNPTests</testCaseName>
+		<testCaseName>SCURLClassLoaderNPTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
