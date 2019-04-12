@@ -89,11 +89,15 @@ dumpCapabilities(J9JavaVM * vm, const jvmtiCapabilities *capabilities, const cha
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_threads_events);
 
 	/* JVMTI 9.0 */
+#if JAVA_SPEC_VERSION >= 9
 	PRINT_CAPABILITY(can_generate_early_vmstart);
 	PRINT_CAPABILITY(can_generate_early_class_hook_events);
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 	/* JVMTI 11 */
+#if JAVA_SPEC_VERSION >= 11
 	PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #undef PRINT_CAPABILITY
 }
 
@@ -168,11 +172,13 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	if (isEventHookable(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC)) {
 		rv_capabilities.can_generate_vm_object_alloc_events = 1;
 	}
-	
+
+#if JAVA_SPEC_VERSION >= 11
 	if (isEventHookable(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC)) {
 		/* hardcode to 0 (not enabled) for empty JEP331 implementation */
 		rv_capabilities.can_generate_sampled_object_alloc_events = 0;
 	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (isEventHookable(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND)) {
 		rv_capabilities.can_generate_native_method_bind_events = 1;
@@ -282,10 +288,12 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 		rv_capabilities.can_generate_resource_exhaustion_heap_events = 1;
 	}
 
+#if JAVA_SPEC_VERSION >= 9
 	if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
 		rv_capabilities.can_generate_early_vmstart = 1;
 		rv_capabilities.can_generate_early_class_hook_events = 1;
 	}
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 	rc = JVMTI_ERROR_NONE;
 	omrthread_monitor_exit(jvmtiData->mutex);
@@ -548,9 +556,11 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC);
 	}
 
+#if JAVA_SPEC_VERSION >= 11
 	if (capabilities->can_generate_sampled_object_alloc_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC);
 	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (capabilities->can_generate_object_free_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_OBJECT_FREE);

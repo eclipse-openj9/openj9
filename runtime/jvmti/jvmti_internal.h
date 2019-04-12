@@ -1510,9 +1510,11 @@ jvmtiGetLocalInstance(jvmtiEnv* env,
 * @param samplingInterval The sampling interval in bytes.
 * @return jvmtiError Error code returned by JVMTI function
 */
+#if JAVA_SPEC_VERSION >= 11
 jvmtiError JNICALL 
 jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 	jint samplingInterval);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /**
 * @brief
@@ -2508,6 +2510,7 @@ jvmtiSetFieldModificationWatch(jvmtiEnv* env,
 	jclass klass,
 	jfieldID field);
 
+#if JAVA_SPEC_VERSION >= 9
 /* ---------------- jvmtiModules.c ---------------- */
 /**
 * @brief
@@ -2568,6 +2571,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 		jobject module,
 		jboolean* is_modifiable_module_ptr);
 
+#endif /* JAVA_SPEC_VERSION >= 9 */
 /* ---------------- suspendhelper.cpp ---------------- */
 /**
 * @brief

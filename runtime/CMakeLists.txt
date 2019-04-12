@@ -150,6 +150,19 @@ else()
 	add_custom_target(j9vm_nlsgen)
 endif()
 
+# Generate jvmti header
+if(J9VM_IS_NON_STAGING)
+	set(JVMTI_HEADER_DIR  "${CMAKE_CURRENT_BINARY_DIR}/include")
+	file(MAKE_DIRECTORY "${JVMTI_HEADER_DIR}")
+else()
+	set(JVMTI_HEADER_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+endif()
+add_custom_command(OUTPUT "${JVMTI_HEADER_DIR}/jvmti.h" 
+   	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > "jvmti.h"
+	VERBATIM
+	WORKING_DIRECTORY "${JVMTI_HEADER_DIR}"
+)
+
 # Note we do this here rather than in the redirector directory to work arround
 # issues in cmake. If we did it there each target which consumed generated.c has
 # its own rule to create it. Which causes a race condition when building in parallel
@@ -170,20 +183,13 @@ add_custom_target(j9vm_m4gen
 	DEPENDS
 		"${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
 		"${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
+		"${JVMTI_HEADER_DIR}/jvmti.h"
 )
 
 if(J9VM_IS_NON_STAGING)
 	add_custom_target(copy_default_options ALL
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/options.default" "${CMAKE_CURRENT_BINARY_DIR}/options.default"
 	)
-
-	# Copy jvmti.h, later this will actually be generated
-	add_custom_target(copy_jvmti_h
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h" "${CMAKE_CURRENT_BINARY_DIR}/include/jvmti.h"
-	)
-else()
-	# just  create a dummy target that does noting
-	add_custom_target(copy_jvmti_h)
 endif()
 
 ###
@@ -214,7 +220,6 @@ add_dependencies(j9vm_interface
 	j9vm_hookgen
 	j9vm_m4gen
 	j9vm_nlsgen
-	copy_jvmti_h
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components

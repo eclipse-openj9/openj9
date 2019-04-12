@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+changequote(`[',`]')dnl
 
 #ifndef jvmti_h
 #define jvmti_h
@@ -481,10 +482,10 @@ typedef struct {
 	unsigned int can_retransform_any_class : 1;
 	unsigned int can_generate_resource_exhaustion_heap_events : 1;
 	unsigned int can_generate_resource_exhaustion_threads_events : 1;
-	unsigned int can_generate_early_vmstart : 1;
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	unsigned int can_generate_early_vmstart : 1;
 	unsigned int can_generate_early_class_hook_events : 1;
-	unsigned int can_generate_sampled_object_alloc_events : 1;
-	unsigned int : 4;
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [    unsigned int can_generate_sampled_object_alloc_events : 1;
+	unsigned int : 4;], [    unsigned int : 5;])], [	unsigned int : 7;])
 	unsigned int : 16;
 	unsigned int : 16;
 	unsigned int : 16;
@@ -734,7 +735,7 @@ typedef enum jvmtiEvent {
 	JVMTI_EVENT_GARBAGE_COLLECTION_FINISH = 82,
 	JVMTI_EVENT_OBJECT_FREE = 83,
 	JVMTI_EVENT_VM_OBJECT_ALLOC = 84,
-	JVMTI_EVENT_SAMPLED_OBJECT_ALLOC = 86,
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	JVMTI_EVENT_SAMPLED_OBJECT_ALLOC = 86,], [dnl])
 
 	JVMTI_MAX_EVENT_TYPE_VAL = 86,
 	jvmtiEventEnsureWideEnum = 0x1000000						/* ensure 4-byte enum */
@@ -950,13 +951,13 @@ typedef void (JNICALL *jvmtiEventResourceExhausted) (
 	const void* reserved,
 	const char* description);
 
-typedef void (JNICALL *jvmtiEventSampledObjectAlloc) (
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [typedef void (JNICALL *jvmtiEventSampledObjectAlloc) (
 	jvmtiEnv *jvmti_env,
 	JNIEnv *jni_env,
 	jthread thread,
 	jobject object,
 	jclass object_klass,
-	jlong size);
+	jlong size);], [dnl])
 
 typedef void * jvmtiEventReserved;
 
@@ -997,7 +998,7 @@ typedef struct {
 	jvmtiEventObjectFree ObjectFree;
 	jvmtiEventVMObjectAlloc VMObjectAlloc;
 	jvmtiEventReserved reserved85;
-	jvmtiEventSampledObjectAlloc SampledObjectAlloc;
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	jvmtiEventSampledObjectAlloc SampledObjectAlloc;], [	jvmtiEventReserved reserved86;])
 } jvmtiEventCallbacks;
 
 /*
@@ -1009,7 +1010,7 @@ typedef struct {
 typedef struct JVMTINativeInterface_ {
 	void *reserved1;
 	jvmtiError (JNICALL * SetEventNotificationMode)(jvmtiEnv* env,	jvmtiEventMode mode,	jvmtiEvent event_type,	jthread event_thread,	...);
-	jvmtiError (JNICALL * GetAllModules)(jvmtiEnv* env, jint* module_count_ptr, jobject** modules_ptr);
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	jvmtiError (JNICALL * GetAllModules)(jvmtiEnv* env, jint* module_count_ptr, jobject** modules_ptr);], [	void *reserved3;])
 	jvmtiError (JNICALL * GetAllThreads)(jvmtiEnv* env,	jint* threads_count_ptr,	jthread** threads_ptr);
 	jvmtiError (JNICALL * SuspendThread)(jvmtiEnv* env,	jthread thread);
 	jvmtiError (JNICALL * ResumeThread)(jvmtiEnv* env,	jthread thread);
@@ -1046,7 +1047,7 @@ typedef struct JVMTINativeInterface_ {
 	jvmtiError (JNICALL * RawMonitorNotifyAll)(jvmtiEnv* env,	jrawMonitorID monitor);
 	jvmtiError (JNICALL * SetBreakpoint)(jvmtiEnv* env,	jmethodID method,	jlocation location);
 	jvmtiError (JNICALL * ClearBreakpoint)(jvmtiEnv* env,	jmethodID method,	jlocation location);
-	jvmtiError (JNICALL * GetNamedModule)(jvmtiEnv* env, jobject class_loader, const char* package_name, jobject* module_ptr);
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	jvmtiError (JNICALL * GetNamedModule)(jvmtiEnv* env, jobject class_loader, const char* package_name, jobject* module_ptr);], [	void *reserved40;])
 	jvmtiError (JNICALL * SetFieldAccessWatch)(jvmtiEnv* env,	jclass klass,	jfieldID field);
 	jvmtiError (JNICALL * ClearFieldAccessWatch)(jvmtiEnv* env,	jclass klass,	jfieldID field);
 	jvmtiError (JNICALL * SetFieldModificationWatch)(jvmtiEnv* env,	jclass klass,	jfieldID field);
@@ -1100,12 +1101,18 @@ typedef struct JVMTINativeInterface_ {
 	jvmtiError (JNICALL * IsMethodObsolete)(jvmtiEnv* env,	jmethodID method,	jboolean* is_obsolete_ptr);
 	jvmtiError (JNICALL * SuspendThreadList)(jvmtiEnv* env,	jint request_count,	const jthread* request_list,	jvmtiError* results);
 	jvmtiError (JNICALL * ResumeThreadList)(jvmtiEnv* env,	jint request_count,	const jthread* request_list,	jvmtiError* results);
-	jvmtiError (JNICALL * AddModuleReads)(jvmtiEnv* env, jobject module, jobject to_module);
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	jvmtiError (JNICALL * AddModuleReads)(jvmtiEnv* env, jobject module, jobject to_module);
 	jvmtiError (JNICALL * AddModuleExports)(jvmtiEnv* env, jobject module, const char* pkg_name, jobject to_module);
 	jvmtiError (JNICALL * AddModuleOpens)(jvmtiEnv* env, jobject module, const char* pkg_name, jobject to_module);
 	jvmtiError (JNICALL * AddModuleUses)(jvmtiEnv* env, jobject module, jclass service);
 	jvmtiError (JNICALL * AddModuleProvides)(jvmtiEnv* env, jobject module, jclass service, jclass impl_class);
-	jvmtiError (JNICALL * IsModifiableModule)(jvmtiEnv* env, jobject module, jboolean* is_modifiable_module_ptr);
+	jvmtiError (JNICALL * IsModifiableModule)(jvmtiEnv* env, jobject module, jboolean* is_modifiable_module_ptr);], 
+	[	void *reserved94;
+	void *reserved95;
+	void *reserved96;
+	void *reserved97;
+	void *reserved98;
+	void *reserved99;])
 	jvmtiError (JNICALL * GetAllStackTraces)(jvmtiEnv* env,	jint max_frame_count,	jvmtiStackInfo** stack_info_ptr,	jint* thread_count_ptr);
 	jvmtiError (JNICALL * GetThreadListStackTraces)(jvmtiEnv* env,	jint thread_count,	const jthread* thread_list,	jint max_frame_count,	jvmtiStackInfo** stack_info_ptr);
 	jvmtiError (JNICALL * GetThreadLocalStorage)(jvmtiEnv* env,	jthread thread,	void** data_ptr);
@@ -1162,7 +1169,8 @@ typedef struct JVMTINativeInterface_ {
 	jvmtiError (JNICALL * GetOwnedMonitorStackDepthInfo)(jvmtiEnv* env, jthread thread, jint* monitor_info_count_ptr, jvmtiMonitorStackDepthInfo** monitor_info_ptr);
 	jvmtiError (JNICALL * GetObjectSize)(jvmtiEnv* env,	jobject object,	jlong* size_ptr);
 	jvmtiError (JNICALL * GetLocalInstance)(jvmtiEnv* env, jthread thread, jint depth, jobject* value_ptr);
-	jvmtiError (JNICALL * SetHeapSamplingInterval)(jvmtiEnv* env, jint sampling_interval);
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	jvmtiError (JNICALL * SetHeapSamplingInterval)(jvmtiEnv* env, jint sampling_interval);], 
+	[	void *reserved156;])
 } jvmtiNativeInterface;
 
 struct _jvmtiEnv {
@@ -1170,7 +1178,7 @@ struct _jvmtiEnv {
 #ifdef __cplusplus
 	jvmtiError SetEventNotificationMode (jvmtiEventMode mode,	jvmtiEvent event_type,	jthread event_thread,	...) { return functions->SetEventNotificationMode(this, mode, event_type, event_thread); }
 	jvmtiError GetAllThreads (jint* threads_count_ptr,	jthread** threads_ptr) { return functions->GetAllThreads(this, threads_count_ptr, threads_ptr); }
-	jvmtiError GetAllModules (jint* module_count_ptr, jobject** modules_ptr) { return functions->GetAllModules(this, module_count_ptr, modules_ptr); }
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	jvmtiError GetAllModules (jint* module_count_ptr, jobject** modules_ptr) { return functions->GetAllModules(this, module_count_ptr, modules_ptr); }], [dnl])
 	jvmtiError SuspendThread (jthread thread) { return functions->SuspendThread(this, thread); }
 	jvmtiError ResumeThread (jthread thread) { return functions->ResumeThread(this, thread); }
 	jvmtiError StopThread (jthread thread,	jobject exception) { return functions->StopThread(this, thread, exception); }
@@ -1206,7 +1214,7 @@ struct _jvmtiEnv {
 	jvmtiError RawMonitorNotifyAll (jrawMonitorID monitor) { return functions->RawMonitorNotifyAll(this, monitor); }
 	jvmtiError SetBreakpoint (jmethodID method,	jlocation location) { return functions->SetBreakpoint(this, method, location); }
 	jvmtiError ClearBreakpoint (jmethodID method,	jlocation location) { return functions->ClearBreakpoint(this, method, location); }
-	jvmtiError GetNamedModule(jvmtiEnv* env, jobject class_loader, const char* package_name, jobject* module_ptr) { return functions->GetNamedModule(this, class_loader, package_name, module_ptr); }
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	jvmtiError GetNamedModule(jvmtiEnv* env, jobject class_loader, const char* package_name, jobject* module_ptr) { return functions->GetNamedModule(this, class_loader, package_name, module_ptr); }], [dnl])
 	jvmtiError SetFieldAccessWatch (jclass klass,	jfieldID field) { return functions->SetFieldAccessWatch(this, klass, field); }
 	jvmtiError ClearFieldAccessWatch (jclass klass,	jfieldID field) { return functions->ClearFieldAccessWatch(this, klass, field); }
 	jvmtiError SetFieldModificationWatch (jclass klass,	jfieldID field) { return functions->SetFieldModificationWatch(this, klass, field); }
@@ -1259,12 +1267,12 @@ struct _jvmtiEnv {
 	jvmtiError IsMethodObsolete (jmethodID method,	jboolean* is_obsolete_ptr) { return functions->IsMethodObsolete(this, method, is_obsolete_ptr); }
 	jvmtiError SuspendThreadList (jint request_count,	const jthread* request_list,	jvmtiError* results) { return functions->SuspendThreadList(this, request_count, request_list, results); }
 	jvmtiError ResumeThreadList (jint request_count,	const jthread* request_list,	jvmtiError* results) { return functions->ResumeThreadList(this, request_count, request_list, results); }
-	jvmtiError AddModuleReads(jvmtiEnv* env, jobject module, jobject to_module) { return functions->AddModuleReads(this, module, to_module); }
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, [	jvmtiError AddModuleReads(jvmtiEnv* env, jobject module, jobject to_module) { return functions->AddModuleReads(this, module, to_module); }
 	jvmtiError AddModuleExports(jvmtiEnv* env, jobject module, const char* pkg_name, jobject to_module) { return functions->AddModuleExports(this, module, pkg_name, to_module); }
 	jvmtiError AddModuleOpens(jvmtiEnv* env, jobject module, const char* pkg_name, jobject to_module) { return functions->AddModuleOpens(this, module, pkg_name, to_module); }
 	jvmtiError AddModuleUses(jvmtiEnv* env, jobject module, jclass service) { return functions->AddModuleUses(this, module, service); }
 	jvmtiError AddModuleProvides(jvmtiEnv* env, jobject module, jclass service, jclass impl_class) { return functions->AddModuleProvides(this, module, service, impl_class); }
-	jvmtiError IsModifiableModule(jvmtiEnv* env, jobject module, jboolean* is_modifiable_module_ptr) { return functions->IsModifiableModule(this, module, is_modifiable_module_ptr); }
+	jvmtiError IsModifiableModule(jvmtiEnv* env, jobject module, jboolean* is_modifiable_module_ptr) { return functions->IsModifiableModule(this, module, is_modifiable_module_ptr); }], [dnl])
 	jvmtiError GetAllStackTraces (jint max_frame_count,	jvmtiStackInfo** stack_info_ptr,	jint* thread_count_ptr) { return functions->GetAllStackTraces(this, max_frame_count, stack_info_ptr, thread_count_ptr); }
 	jvmtiError GetThreadListStackTraces (jint thread_count,	const jthread* thread_list,	jint max_frame_count,	jvmtiStackInfo** stack_info_ptr) { return functions->GetThreadListStackTraces(this, thread_count, thread_list, max_frame_count, stack_info_ptr); }
 	jvmtiError GetThreadLocalStorage (jthread thread,	void** data_ptr) { return functions->GetThreadLocalStorage(this, thread, data_ptr); }
@@ -1315,7 +1323,7 @@ struct _jvmtiEnv {
 	jvmtiError GetOwnedMonitorStackDepthInfo (jthread thread, jint* monitor_info_count_ptr, jvmtiMonitorStackDepthInfo** monitor_info_ptr) { return functions->GetOwnedMonitorStackDepthInfo(this, thread, monitor_info_count_ptr, monitor_info_ptr); }
 	jvmtiError GetObjectSize (jobject object, jlong* size_ptr) { return functions->GetObjectSize(this, object, size_ptr); }
 	jvmtiError GetLocalInstance (jthread thread, jint depth, jobject* value_ptr) { return functions->GetLocalInstance(this, thread, depth, value_ptr); }
-	jvmtiError SetHeapSamplingInterval (jint sampling_interval) { return functions->SetHeapSamplingInterval(this, sampling_interval); }
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1,[ 	jvmtiError SetHeapSamplingInterval (jint sampling_interval) { return functions->SetHeapSamplingInterval(this, sampling_interval); }], [dnl])
 #endif
 };
 
