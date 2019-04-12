@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.AfterClass;
@@ -64,7 +63,9 @@ import com.ibm.lang.management.MemoryMXBean;
 
 import org.openj9.test.util.process.Task;
 
-// This class is not public API.
+// These classes are not public API.
+import com.ibm.java.lang.management.internal.MemoryNotificationInfoUtil;
+import com.ibm.java.lang.management.internal.MemoryUsageUtil;
 import com.ibm.lang.management.internal.ExtendedMemoryMXBeanImpl;
 
 @Test(groups = { "level.sanity" })
@@ -269,7 +270,7 @@ public class TestMemoryMXBean {
 
 		// Now check that the other, readonly attributes can't be set.
 		MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
-		CompositeData cd = TestUtil.toCompositeData(mu);
+		CompositeData cd = MemoryUsageUtil.toCompositeData(mu);
 		attr = new Attribute("HeapMemoryUsage", cd);
 		try {
 			mbs.setAttribute(objName, attr);
@@ -861,7 +862,7 @@ public class TestMemoryMXBean {
 		try {
 			MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 			MemoryNotificationInfo info = new MemoryNotificationInfo("Tim", mu, 42);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 					new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -908,7 +909,7 @@ public class TestMemoryMXBean {
 		try {
 			MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 			MemoryNotificationInfo info = new MemoryNotificationInfo("Tim", mu, 42);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 					new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -940,7 +941,7 @@ public class TestMemoryMXBean {
 		try {
 			MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 			MemoryNotificationInfo info = new MemoryNotificationInfo("Tim", mu, 42);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 					new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -1024,7 +1025,6 @@ public class TestMemoryMXBean {
 /**
  * Helper class
  */
-
 class MyTestListener implements NotificationListener {
 	private int count = 0;
 

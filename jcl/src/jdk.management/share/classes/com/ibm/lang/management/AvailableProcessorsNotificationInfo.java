@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.lang.management;
 import javax.management.openmbean.CompositeData;
 
 import com.ibm.java.lang.management.internal.ManagementUtils;
-import com.ibm.lang.management.internal.AvailableProcessorsNotificationInfoUtil;
 
 /**
  * Encapsulates the details of a DLPAR notification emitted by a
@@ -40,10 +39,6 @@ import com.ibm.lang.management.internal.AvailableProcessorsNotificationInfoUtil;
 public class AvailableProcessorsNotificationInfo {
 
 	public static final String AVAILABLE_PROCESSORS_CHANGE = "com.ibm.management.available.processors.change"; //$NON-NLS-1$
-
-	static {
-		AvailableProcessorsNotificationInfoUtil.registerConverters();
-	}
 
 	private final int newAvailableProcessors;
 
