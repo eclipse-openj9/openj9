@@ -185,6 +185,15 @@ target_include_directories(j9prt
 		${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+omr_add_exports(j9prt
+	j9port_allocate_library
+	j9port_create_library
+	j9port_getSize
+	j9port_getVersion
+	j9port_init_library
+	j9port_isCompatible
+	j9port_startup_library
+)
 
 install(
 	TARGETS j9prt

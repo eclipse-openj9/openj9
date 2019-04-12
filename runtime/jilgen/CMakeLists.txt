@@ -28,7 +28,7 @@ target_link_libraries(constgen
 	PRIVATE
 		j9vm_interface
 
-		j9prt
+		omrport
 		j9thr
 )
 

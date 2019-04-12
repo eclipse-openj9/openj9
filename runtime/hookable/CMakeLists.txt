@@ -31,6 +31,7 @@ target_link_libraries(j9hookable
 		j9pool
 		j9prt
 		j9thr
+		j9utilcore
 )
 
 # OMR keeps track of the exported symbols, and attaches them to j9hook_obj
