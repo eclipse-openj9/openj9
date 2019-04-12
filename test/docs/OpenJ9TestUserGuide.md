@@ -262,6 +262,13 @@ target
     ```
     element that you want to exclude.
 
+    For tests that are disabeld with playlist.xml, `disabled.mk` is generated when running `make -f run_configure.mk`. It contains a list of disabled test targets. These targets can be executed through specifying the test target or add `disabled` in front of regular target.
+    ```    
+        make _testA
+        make _disabled.sanity.functional
+        make _disabled.extended
+    ```
+
   * temporarily on all platforms
 
     Depends on the JDK_VERSION, add a line in the
