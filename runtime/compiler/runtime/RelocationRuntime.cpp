@@ -459,7 +459,14 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          RELO_LOG(reloLogger(), 6, "                        oldDataStart=%x codeStart=%x oldCodeStart=%x classReloAmount=%x cacheEntry=%x\n", oldDataStart, codeStart, oldCodeStart, classReloAmount(), cacheEntry);
          RELO_LOG(reloLogger(), 6, "                        tempDataStart: %p, _aotMethodHeaderEntry: %p, header offset: %x, binaryReloRecords: %p\n", tempDataStart, _aotMethodHeaderEntry, (UDATA)_aotMethodHeaderEntry-(UDATA)tempDataStart, binaryReloRecords);
 
-         _returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+         try
+            {
+            _returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            }
+         catch (...)
+            {
+            _returnCode = compilationAotClassReloFailure;
+            }
 
          RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", _returnCode);
 
