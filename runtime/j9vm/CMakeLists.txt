@@ -79,6 +79,7 @@ target_link_libraries(jvm
 		j9util
 )
 add_dependencies(jvm omrgc_hookgen)
+include(exports.cmake)
 
 install(
 	TARGETS jvm
