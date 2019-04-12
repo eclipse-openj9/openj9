@@ -67,6 +67,12 @@ target_link_libraries(j9trc
 		j9hookable
 )
 
+omr_add_exports(j9trc
+	JVM_OnUnload
+	JVM_OnLoad
+	J9VMDllMain
+)
+
 install(
 	TARGETS j9trc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
