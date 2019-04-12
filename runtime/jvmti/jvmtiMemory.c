@@ -80,6 +80,7 @@ jvmtiDeallocate(jvmtiEnv* env,
 	TRACE_JVMTI_RETURN(jvmtiDeallocate);
 }
 
+#if JAVA_SPEC_VERSION >= 11
 jvmtiError JNICALL 
 jvmtiSetHeapSamplingInterval(jvmtiEnv *env, 
 	jint samplingInterval)
@@ -98,3 +99,4 @@ jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 done:
 	TRACE_JVMTI_RETURN(jvmtiSetHeapSamplingInterval);
 }
+#endif /* JAVA_SPEC_VERSION >= 11 */
