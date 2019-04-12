@@ -84,7 +84,7 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
   UMA_END_DASH_L = -Xlinker --end-group
 </#if>
 
-UMA_EXE_POSTFIX_FLAGS += -lm -lpthread -lc -lrt -ldl -lutil -Wl,-z,origin,-rpath,\$$ORIGIN,--disable-new-dtags,-rpath-link,$(UMA_PATH_TO_ROOT)
+UMA_EXE_POSTFIX_FLAGS += -lm -lrt -lpthread -lc -ldl -lutil -Wl,-z,origin,-rpath,\$$ORIGIN,--disable-new-dtags,-rpath-link,$(UMA_PATH_TO_ROOT)
 
 <#if uma.spec.processor.amd64>
   UMA_MASM2GAS_FLAGS += --64
