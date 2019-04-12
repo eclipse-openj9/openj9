@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,11 +21,6 @@
  *******************************************************************************/
 package org.openj9.test.java.lang.management;
 
-import javax.management.openmbean.CompositeData;
-
-// This class is not public API.
-import com.ibm.java.lang.management.internal.ManagementUtils;
-
 /**
  * Centralized access to internal management classes.
  */
@@ -43,16 +38,11 @@ public final class TestUtil {
 	}
 
 	/**
-	* Helper function that tells whether we are running on Unix or not.
-	* @return Returns true if we are running on Unix; false, otherwise.
-	*/
-
+	 * Helper function that tells whether we are running on Unix or not.
+	 * @return Returns true if we are running on Unix; false, otherwise.
+	 */
 	public static boolean isRunningOnUnix() {
 		return isUnix;
-	}
-
-	public static CompositeData toCompositeData(Object data) {
-		return ManagementUtils.convertToOpenType(data, CompositeData.class, data.getClass());
 	}
 
 	private TestUtil() {

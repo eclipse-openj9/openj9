@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@ import javax.management.openmbean.CompositeDataView;
 import javax.management.openmbean.CompositeType;
 
 import com.ibm.java.lang.management.internal.ManagementUtils;
-import com.sun.management.GarbageCollectorMXBean;
 import com.sun.management.internal.GarbageCollectionNotificationInfoUtil;
 
 /**
@@ -89,10 +88,6 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	 * "com.ibm.lang.management.gc.notification" which matches RI naming for compatibility.
 	 */
 	public static final String GARBAGE_COLLECTION_NOTIFICATION = "com.sun.management.gc.notification"; //$NON-NLS-1$
-
-	static {
-		GarbageCollectionNotificationInfoUtil.registerConverters();
-	}
 
 	/**
 	 * Comment for <code>gcName</code>

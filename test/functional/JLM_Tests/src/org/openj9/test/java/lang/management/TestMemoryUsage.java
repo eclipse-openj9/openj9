@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.AfterClass;
@@ -36,6 +35,9 @@ import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
+
+// This class is not public API.
+import com.ibm.java.lang.management.internal.MemoryUsageUtil;
 
 @Test(groups = { "level.sanity" })
 public class TestMemoryUsage {
@@ -62,6 +64,7 @@ public class TestMemoryUsage {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
+		// do nothing
 	}
 
 	/**
@@ -112,7 +115,7 @@ public class TestMemoryUsage {
 	 */
 	@Test
 	public void testFrom() {
-		CompositeData cd = TestUtil.toCompositeData(goodMU);
+		CompositeData cd = MemoryUsageUtil.toCompositeData(goodMU);
 		AssertJUnit.assertNotNull(cd);
 		MemoryUsage mu = MemoryUsage.from(cd);
 		AssertJUnit.assertNotNull(mu);
@@ -135,6 +138,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu = MemoryUsage.from(cd);
 			Assert.fail("Method should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 	}
 
@@ -148,6 +152,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu1 = new MemoryUsage(-3, USED_VAL, COMMITTED_VAL, MAX_VAL);
 			Assert.fail("Constructor should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 
 		// Check max value less than -1...
@@ -155,6 +160,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu1 = new MemoryUsage(INIT_VAL, USED_VAL, COMMITTED_VAL, -27);
 			Assert.fail("Constructor should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 
 		// Check negative used ...
@@ -162,6 +168,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu1 = new MemoryUsage(INIT_VAL, -100, COMMITTED_VAL, MAX_VAL);
 			Assert.fail("Constructor should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 
 		// Check negative committed ...
@@ -169,6 +176,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu1 = new MemoryUsage(INIT_VAL, USED_VAL, -32, MAX_VAL);
 			Assert.fail("Constructor should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 
 		// Check used larger than committed ...
@@ -176,6 +184,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu1 = new MemoryUsage(INIT_VAL, USED_VAL * 1000, COMMITTED_VAL, MAX_VAL);
 			Assert.fail("Constructor should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 
 		// Check that if max has been defined, committed is not larger ...
@@ -183,6 +192,7 @@ public class TestMemoryUsage {
 			MemoryUsage mu1 = new MemoryUsage(INIT_VAL, USED_VAL, COMMITTED_VAL * 1000, MAX_VAL);
 			Assert.fail("Constructor should have thrown IllegalArgumentException");
 		} catch (IllegalArgumentException e) {
+			// expected
 		}
 
 		// Check that if max has *not* been defined, committed can be larger ...
@@ -191,7 +201,6 @@ public class TestMemoryUsage {
 		} catch (IllegalArgumentException e) {
 			Assert.fail("Constructor should not have thrown IllegalArgumentException");
 		}
-
 	}
 
 	private static CompositeData createBadCompositeDataObject() {
