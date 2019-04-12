@@ -774,7 +774,7 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
    startLabel->setStartInternalControlFlow();
    reStartLabel->setEndInternalControlFlow();
    generateLabelInstruction(LABEL, node, startLabel, cg);
-   generateLabelInstruction(testNode->getOpCodeValue() == TR::icmpeq ? JE4 : JNE4, node, snippetLabel, true, cg);
+   generateLabelInstruction(testNode->getOpCodeValue() == TR::icmpeq ? JE4 : JNE4, node, snippetLabel, cg);
 
    TR::Snippet *snippet;
    if (node->getNumChildren() == 2)
@@ -784,7 +784,7 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
 
    cg->addSnippet(snippet);
 
-   generateLabelInstruction(LABEL, node, reStartLabel, true, cg);
+   generateLabelInstruction(LABEL, node, reStartLabel, cg);
    cg->decReferenceCount(testNode);
    return NULL;
    }
