@@ -99,6 +99,10 @@ endif()
 # Generic configuration for omr
 include(cmake/omr_config.cmake)
 
+if(OPENJ9_BUILD)
+	add_definitions(-DOPENJ9_BUILD)
+endif()
+
 #clean up the variables we used
 set(versionStr)
 set(checkCondition)
