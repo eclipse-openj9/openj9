@@ -393,18 +393,14 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
 def get_test_target_names() {
     def targetNames = []
-    def targets = TESTS_TARGETS.split(",")
 
-    targets.each { target ->
-        switch (target.trim().toLowerCase()) {
-            case "_sanity":
-                targetNames.addAll(["sanity.functional", "sanity.system"])
-                break
-            case "_extended":
-                targetNames.addAll(["extended.functional", "extended.system"])
-                break
-            default:
-                targetNames.add(target.trim())
+    if (TESTS_TARGETS && TESTS_TARGETS.trim() != 'none') {
+        for (target in TESTS_TARGETS.trim().replaceAll("\\s","").toLowerCase().tokenize(',')) {
+            if (VARIABLES.tests_targets && VARIABLES.tests_targets."${target}") {
+                targetNames.addAll(VARIABLES.tests_targets."${target}".keySet())
+            } else {
+                targetNames.add(target)
+            }
         }
     }
 
