@@ -1711,11 +1711,20 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 			if (buf.shm_perm.__key != controlinfo->common.ftok_key)
 #endif
 			{
+#if defined (J9OS_I5)
+                                /* The statement 'buf.shm_perm.key != controlinfo->common.ftok_key' will never fail on IBM i platform,
+                                 * as the definition of structure ipc_perm is different:
+                                 *  'key' field doesn't exists in structure ipc_perm on IBM i and the value of 'key' always zero.
+                                 *  Simply log the error here, and then ignore it to avoid more incorrect messages
+                                 */
+                                Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is not valid, but we ignore it here to avoid more incorrect messages."); 
+#else /* defined (J9OS_I5) */
 				Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is no longer valid.");
 				/* Clear any stale portlibrary error code */
 				clearPortableError(portLibrary);
 				rc = J9PORT_ERROR_SHMEM_OPFAILED_SHM_KEY_MISMATCH;
 				goto fail;
+#endif /* defined (J9OS_I5) */
 			}
 #endif
 #if defined (J9ZOS390)
