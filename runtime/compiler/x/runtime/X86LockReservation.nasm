@@ -76,7 +76,7 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
 ; lockword value   => _rax
 %macro ObtainLockWordHelper 1 ; args: ObjAddr
     %ifdef ASM_J9VM_THR_LOCK_NURSERY
-        %ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+        %ifdef ASM_J9VM_GC_COMPRESSED_POINTERS
             mov  eax, [%1 + J9TR_J9Object_class]        ; receiver class
         %else
             mov _rax, [%1 + J9TR_J9Object_class]         ; receiver class
