@@ -2523,6 +2523,26 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		goto _errorFound;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/*
+	 * TODO This behaviour is based on the LW2 spec http://cr.openjdk.java.net/~fparain/L-world/LW2-JVMS-draft-20181009.pdf.
+	 * In the future the CFR_ACC_VALUE_TYPE class access bit will be replaced by a ValObject subtyping relationship. We will
+	 * likely keep the bit in the romClass class, but it will no longer appear in .class files.
+	 *
+	 * The LW10 prototype will likely still be enabled with a -XX:+EnableValhalla flag so a check and error message similar
+	 * to this will be required.
+	 */
+
+	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set */
+	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
+		&& J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)
+	) {
+		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED__ID;
+		offset = index - data - 2;
+		goto _errorFound;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/* mask access flags to remove unused access bits */
 	classfile->accessFlags &= CFR_CLASS_ACCESS_MASK;
 	classfile->j9Flags = 0;
