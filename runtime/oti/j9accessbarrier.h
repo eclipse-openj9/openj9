@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,11 +29,11 @@
 /*
  * Define type used to represent the class in the 'clazz' slot of an object's header
  */
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 typedef U_32 j9objectclass_t;
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
 typedef UDATA j9objectclass_t;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
 
 /*
  * Define type used to represent the lock in the 'monitor' slot of an object's header
@@ -641,7 +641,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 /*
  * Macros for accessing object header fields
  */
-#if defined (J9VM_GC_COMPRESSED_POINTERS) || !defined (J9VM_ENV_DATA64)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) || !defined (J9VM_ENV_DATA64)
 #define J9OBJECT_CLAZZ(vmThread, object) ((void)0, (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 #define J9OBJECT_CLAZZ_VM(javaVM, object) ((void)0, (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD_VM(javaVM, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 #define J9OBJECT_FLAGS_FROM_CLAZZ(vmThread, object) ((void)0, ((UDATA)J9OBJECT_U32_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
@@ -676,7 +676,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #endif
 
 #if defined( J9VM_THR_LOCK_NURSERY )
-#if defined (J9VM_GC_COMPRESSED_POINTERS) || !defined (J9VM_ENV_DATA64)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) || !defined (J9VM_ENV_DATA64)
 #define TMP_LOCKWORD_OFFSET(object) (dbgReadUDATA((UDATA*)((U_8*)(((UDATA)(dbgReadU32((U_32*)(((U_8*)object) + offsetof(J9Object, clazz))))& ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1)))+ offsetof(J9Class,lockOffset)))))
 #else
 #define TMP_LOCKWORD_OFFSET(object) (dbgReadUDATA((UDATA*)((U_8*)(((UDATA)(dbgReadU64((U_64*)(((U_8*)object) + offsetof(J9Object, clazz))))& ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1)))+ offsetof(J9Class,lockOffset)))))

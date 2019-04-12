@@ -2702,7 +2702,7 @@ _virtualUnresolvedHelper:
 .L.directDispatch:							! J9SP-96,r5(offset),r11,RTOC
 	laddr	r3, 7*ALen(J9SP)					! Restore object ptr: this
 	laddr	r0, VirtualRAOffset(r11)				! Load code cache RA
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         lwz     r6, J9TR_J9Object_class(r3)                                               ! Load class offset
         ! may need to convert class offset to J9Class
 #else
@@ -2824,7 +2824,7 @@ _interfaceCallHelper:
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
 #endif
 	mtspr	CTR, r5						! Prepare for long jump
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r3, J9TR_J9Object_class(r4)				! Load the class offset
 #else
 	laddr	r3, J9TR_J9Object_class(r4)				! Load the class
@@ -2884,7 +2884,7 @@ _interfaceCallHelper:
 	mtspr	CTR, r5						! Prepare for long jump
 	mr	r5, r11						! Load code cache RA
 	addi	r4, r11, 3*ALen					! Address of interface table&slot number
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r3, J9TR_J9Object_class(r6)				! Load the class offset
 #else
 	laddr	r3, J9TR_J9Object_class(r6)				! Load the class
@@ -2892,7 +2892,7 @@ _interfaceCallHelper:
 	maskVFT(r3)
 	bcctrl	BO_ALWAYS, CR0_LT					! Call to look up method
 	laddr	r5, 7*ALen(J9SP)					! Load:  this
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r6, J9TR_J9Object_class(r5)				! Load the class offset
 	! may need to convert class offset to J9Class
 #else
@@ -2945,7 +2945,7 @@ _interfaceCallHelper:
 	bl	.__refreshHelper					! save:	RTOC, r6, r10, r11
 #endif
 	laddr	r4, 5*ALen(r11)					! Load slot1 class
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         ! may need to convert class offset to J9Class pointer
 #endif
 	laddr	r5, 3*ALen(r11)					! Resolved class
@@ -2959,7 +2959,7 @@ _interfaceCallHelper:
 	neg	r4, r3
 	addi	r12, r4,J9TR_InterpVTableOffset			! Must set it up in r12
 	laddr	r3, 7*ALen(J9SP)					! Restore "this"
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r5, J9TR_J9Object_class(r3)				! class offset
         ! may need to convert class offset to J9Class pointer
 #else
@@ -3013,7 +3013,7 @@ _interfaceCompeteSlot2:
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
 #endif
 	laddr	r6, 7*ALen(J9SP)					! Load "this"
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r3, J9TR_J9Object_class(r6)				! Load the class offset
 #else
 	laddr	r3, J9TR_J9Object_class(r6)				! Load the class
@@ -3024,7 +3024,7 @@ _interfaceCompeteSlot2:
 	mr	r5, r11						! Load code cache RA
 	bcctrl	BO_ALWAYS, CR0_LT					! Call to look up
 	laddr	r5, 7*ALen(J9SP)					! Load:  this
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r6, J9TR_J9Object_class(r5)				! Load the class offset
         ! may need to convert class offset to J9Class
 #else
@@ -3081,7 +3081,7 @@ _interfaceCompeteSlot2:
 #endif
 	or	r3, r6, r6					! Restore r3
 	laddr	r4, 7*ALen(r11)					! Load slot2 class
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         ! may need to convert class offset to J9Class pointer
 #endif
 	laddr	r5, 3*ALen(r11)					! Resolved class
@@ -3151,7 +3151,7 @@ _interfaceSlotsUnavailable:
 #ifndef NO_HELPER_LASTITABLE_CHECK
         ! Before going to the VM helper, check if the receiver class lastITable matches the interface class
         ! of the method being called and if so, use it to quickly look up the vtable offset and make the call
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         lwz     r10, J9TR_J9Object_class(r3)                    ! Load class
 #else  
         laddr   r10, J9TR_J9Object_class(r3)                    ! Load class
@@ -3196,7 +3196,7 @@ _interfaceSlotsUnavailable:
 #else
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load address of final helper
 #endif
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r3, J9TR_J9Object_class(r3)				! Load class
 #else
 	laddr	r3, J9TR_J9Object_class(r3)				! Load class

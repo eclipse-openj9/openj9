@@ -1,5 +1,6 @@
+
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1451,7 +1452,7 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		goto _error;
 	}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)	/* This should be J9VM_GC_COMPRESSED_POINTERS */
+#if defined(J9VM_GC_COMPRESSED_POINTERS)	/* This should be J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
 	if (-1 != index) {
 		extensions->suballocatorInitialSize = optionValue;
 	}
