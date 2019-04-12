@@ -574,11 +574,11 @@ public:
 		 * pointer if another thread copied the object underneath us). In non-compressed, this field should still be readable
 		 * out of the heap.
 		 */
-#if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
 		uint32_t size = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
+#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
 		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
 
 #if defined(OMR_GC_HYBRID_ARRAYLETS)
 		if (0 == size) {
@@ -602,11 +602,11 @@ public:
 	{
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
-#if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
 		uint32_t size = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
+#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
 		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */		
+#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */		
 		
 		if (0 != size) {
 			return layout;

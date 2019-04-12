@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,13 +61,13 @@ protected:
 		/* class slot must be always aligned to UDATA */
 		j9objectclass_t clazz;
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 		/*
 		 * this field is used indirectly by extending of clazz field (8 bytes starting from &MutableHeaderFields.clazz)
 		 * must be here to reserve space if clazz field is 4 bytes long
 		 */
 		U_32 overlap;
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 	};
 	
 	omrobjectptr_t _objectPtr; /**< the object on which to act */
@@ -313,25 +313,25 @@ public:
 		/* restore class slot from local copy, change age flags in low bits of class slot at the same time */
 		newHeader->clazz = (j9objectclass_t)(((UDATA)_preserved.clazz & ~OBJECT_HEADER_AGE_MASK) | newAge);
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 		/* first object slot is destroyed, must be restored from local copy as well */
 		newHeader->overlap = _preserved.overlap;
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 	}
 
 	MMINLINE U_32
 	getPreservedIndexableSize()
 	{
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 		/* in compressed headers, the size of the object is stored in the other half of the UDATA read when we read clazz
 		 * so read it from there instead of the heap (since the heap copy would have been over-written by the forwarding
 		 * pointer if another thread copied the object underneath us).
 		 * In non-compressed, this field should still be readable out of the heap.
 		 */
 		U_32 size = _preserved.overlap;
-#else /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#else /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 		U_32 size = ((J9IndexableObjectContiguous *)_objectPtr)->size;
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (0 == size) {
 			/* Discontiguous */
@@ -373,18 +373,18 @@ protected:
 	{
 		Assert_MM_true(isForwardedPointer());
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN)
+#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(J9VM_ENV_LITTLE_ENDIAN)
 		/* compressed big endian - read two halves separately */
 		U_32 low = _preserved.clazz & ~ALL_TAGS;
 		U_32 high = _preserved.overlap;
 		omrobjectptr_t forwardedObject = (omrobjectptr_t)((U_64)low | ((U_64)high << 32));
 
-#else /* defined (J9VM_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
+#else /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
 
 		/* Little endian or not compressed - read all UDATA bytes at once */
 		omrobjectptr_t forwardedObject = (omrobjectptr_t)(*(UDATA *)(&_preserved.clazz) & ~ALL_TAGS);
 
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
+#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
 
 		return forwardedObject;
 	}
