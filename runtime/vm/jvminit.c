@@ -588,12 +588,6 @@ cleanCustomSpinOptions(void *element, void *userData)
 }
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
-BOOLEAN
-areValueTypesEnabled(J9JavaVM *vm)
-{
-	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
-}
-
 void
 freeJavaVM(J9JavaVM * vm)
 {
@@ -3148,17 +3142,6 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	{
-		IDATA enableValueTypes = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLEVALHALLA, NULL);
-		IDATA disableValueTypes = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLEVALHALLA, NULL);
-		if (enableValueTypes > disableValueTypes) {
-			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA;
-		} else if (enableValueTypes < disableValueTypes) {
-			vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA;
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	{
 		IDATA enableAlwaysSplitByCodes = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLEALWAYSSPLITBYTECODES, NULL);
