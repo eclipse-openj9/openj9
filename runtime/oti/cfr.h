@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -826,7 +826,9 @@ typedef struct J9CfrClassFile {
 #define CFR_ACC_BRIDGE  					0x00000040
 #define CFR_ACC_VOLATILE  					0x00000040
 #define CFR_ACC_TRANSIENT  					0x00000080
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define CFR_ACC_VALUE_TYPE					0x00000100
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_ACC_VARARGS  					0x00000080
 #define CFR_ACC_NATIVE  					0x00000100
 #define CFR_ACC_INTERFACE  					0x00000200

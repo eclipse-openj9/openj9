@@ -1402,14 +1402,6 @@ printBytecodePairs(J9JavaVM *vm);
 #endif /* COUNT_BYTECODE_PAIRS */
 
 /**
- * @brief Queries whether valueTypes are enable on the JVM
- * @param vm A handle to the J9JavaVM
- * @return TRUE if valueTypes are enabled, FALSE otherwise
- */
-BOOLEAN
-areValueTypesEnabled(J9JavaVM *vm);
-
-/**
 * @brief
 * @param vmThread
 * @param rc
