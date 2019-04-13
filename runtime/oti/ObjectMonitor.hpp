@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,11 +216,11 @@ done:
 	static VMINLINE j9objectmonitor_t
 	compareAndSwapLockword(j9objectmonitor_t volatile *lockEA, j9objectmonitor_t oldValue, j9objectmonitor_t newValue, bool readBeforeCAS = false)
 	{
-#if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchangeU32(lockEA, oldValue, newValue, readBeforeCAS);
-#else /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#else /* J9VM_GC_COMPRESSED_POINTERS */
 		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchange(lockEA, oldValue, newValue, readBeforeCAS);
-#endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 		return contents;
 	}
 

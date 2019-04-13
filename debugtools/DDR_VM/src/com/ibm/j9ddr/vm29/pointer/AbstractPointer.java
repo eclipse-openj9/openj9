@@ -553,7 +553,7 @@ public abstract class AbstractPointer extends DataType {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
-		if (J9BuildFlags.interp_smallMonitorSlot) {
+		if (J9BuildFlags.gc_compressedPointers) {
 			return J9ObjectMonitorPointer.cast(0xFFFFFFFFL & (long)(getAddressSpace().getIntAt(address + offset)));
 		} else {
 			return J9ObjectMonitorPointer.cast(getAddressSpace().getPointerAt(address + offset));
