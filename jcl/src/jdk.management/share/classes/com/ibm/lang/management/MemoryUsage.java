@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2016 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,10 +37,6 @@ import com.ibm.lang.management.internal.MemoryUsageUtil;
 public class MemoryUsage {
 
 	private static final int HASHMASK = 0x0FFFFFFF;
-
-	static {
-		MemoryUsageUtil.registerConverters();		
-	}
 
 	private long total;
 	private long free;

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,10 +38,6 @@ public final class JvmCpuMonitorInfo {
 
 	private static final int HASHMASK = 0x0FFFFFFF;
 	private static final int NUM_USER_DEFINED_CATEGORY = 5;
-
-	static {
-		JvmCpuMonitorInfoUtil.registerConverters();
-	}
 
 	private long timestamp;
 	private long applicationCpuTime;
