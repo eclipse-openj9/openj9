@@ -26,6 +26,7 @@
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Relocation.hpp"

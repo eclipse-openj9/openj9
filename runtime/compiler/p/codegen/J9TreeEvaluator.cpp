@@ -36,6 +36,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/Snippet.hpp"

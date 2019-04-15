@@ -34,6 +34,7 @@
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "control/Recompilation.hpp"

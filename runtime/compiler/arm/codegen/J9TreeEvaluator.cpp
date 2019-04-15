@@ -29,6 +29,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
