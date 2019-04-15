@@ -24,6 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"

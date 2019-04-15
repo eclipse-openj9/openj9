@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/ARM64JNILinkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 
 TR::ARM64JNILinkage::ARM64JNILinkage(TR::CodeGenerator *cg)
    :TR::ARM64PrivateLinkage(cg)

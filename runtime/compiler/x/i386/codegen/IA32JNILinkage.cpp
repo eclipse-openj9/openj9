@@ -25,6 +25,7 @@
 #include "codegen/IA32JNILinkage.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"

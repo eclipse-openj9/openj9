@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/ARM64PrivateLinkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 
 TR::ARM64LinkageProperties TR::ARM64PrivateLinkage::properties =
    {
