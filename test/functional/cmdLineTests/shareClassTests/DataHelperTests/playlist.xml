@@ -31,10 +31,10 @@
 			<variation>Mode610</variation>	
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)DataHelperTests.jar$(Q) .; \
-	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf DataHelperTests.jar; \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf DataHelperTests.jar; \
 	$(CONVERT_TO_EBCDIC_CMD) \
-	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(Q); $(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf dataone.jar *.txt; $(CD) $(Q)..$(D)..$(D)$(Q); \
-	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(Q); $(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf datatwo.jar *.txt; $(CD) $(Q)..$(D)..$(D)$(Q); \
+	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(Q); $(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf dataone.jar *.txt; $(CD) $(Q)..$(D)..$(D)$(Q); \
+	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(Q); $(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf datatwo.jar *.txt; $(CD) $(Q)..$(D)..$(D)$(Q); \
 	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(D)dataone.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
 	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DCPDL=$(Q)$(P)$(Q) -DSCMODE=204 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
