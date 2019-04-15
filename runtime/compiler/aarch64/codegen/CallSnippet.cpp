@@ -25,6 +25,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Register.hpp"
 #include "env/CompilerEnv.hpp"
