@@ -78,9 +78,9 @@
 #include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Recompilation.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
-#include "runtime/J9Profiler.hpp"
 #include "z/codegen/S390Register.hpp"
+#include "z/codegen/SystemLinkage.hpp"
+#include "runtime/J9Profiler.hpp"
 
 /*
  * List of functions that is needed by J9 Specific Evaluators that were moved from codegen.

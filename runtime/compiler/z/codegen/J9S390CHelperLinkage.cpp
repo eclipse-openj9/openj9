@@ -48,7 +48,7 @@
 #include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390J9CallSnippet.hpp"
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 

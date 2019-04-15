@@ -26,7 +26,6 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "codegen/PreprologueConst.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 
 class TR_ResolvedMethod;
 

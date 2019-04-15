@@ -37,7 +37,6 @@
 #include "il/TreeTop_inlines.hpp"
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 
 // Allocate a machine-specific recompilation processor for this compilation
 //

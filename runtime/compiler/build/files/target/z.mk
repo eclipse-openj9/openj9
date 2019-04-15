@@ -49,6 +49,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/S390Peephole.cpp \
     omr/compiler/z/codegen/S390Snippets.cpp \
     omr/compiler/z/codegen/SystemLinkage.cpp \
+    omr/compiler/z/codegen/SystemLinkageLinux.cpp \
+    omr/compiler/z/codegen/SystemLinkagezOS.cpp \
     omr/compiler/z/codegen/TranslateEvaluator.cpp \
     omr/compiler/z/codegen/UnaryEvaluator.cpp \
     omr/compiler/z/codegen/snippet/PPA1Snippet.cpp \
@@ -68,7 +70,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9S390CHelperLinkage.cpp \
     compiler/z/codegen/J9S390PrivateLinkage.cpp \
     compiler/z/codegen/J9S390Snippet.cpp \
-    compiler/z/codegen/J9S390SystemLinkage.cpp \
+    compiler/z/codegen/J9SystemLinkageLinux.cpp \
+    compiler/z/codegen/J9SystemLinkagezOS.cpp \
     compiler/z/codegen/J9TreeEvaluator.cpp \
     compiler/z/codegen/J9BCDTreeEvaluator.cpp \
     compiler/z/codegen/J9UnresolvedDataSnippet.cpp \
