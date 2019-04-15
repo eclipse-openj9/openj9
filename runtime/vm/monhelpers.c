@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -319,7 +319,7 @@ cancelLockReservation(J9VMThread* vmStruct)
 					Assert_VM_true(J9_FLATLOCK_COUNT(oldLock) == 0);
 				}
 
-#if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 				compareAndSwapU32(lockEA, oldLock, newLock);
 #else
 				compareAndSwapUDATA(lockEA, oldLock, newLock);

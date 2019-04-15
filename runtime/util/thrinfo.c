@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 #define READU_ADDR(fieldAddr) dbgReadUDATA((UDATA *)(fieldAddr))
 #define READP(field) ((void *)READU(field))
 #define READP_ADDR(fieldAddr) ((void *)READU_ADDR(fieldAddr))
-#if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 #define READMON(field) dbgReadU32((U_32 *)&(field))
 #define READMON_ADDR(fieldAddr) dbgReadU32((U_32 *)(fieldAddr))
 #else

@@ -60,7 +60,7 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFF05h
 ; this stupidness is required because masm2gas can't handle
 ; ifdef on definitions
 
-%ifdef ASM_J9VM_INTERP_SMALL_MONITOR_SLOT
+%ifdef ASM_J9VM_GC_COMPRESSED_POINTERS
 eq_J9Monitor_LockWord         equ 04h
 %else
 eq_J9Monitor_LockWord         equ 08h
@@ -87,7 +87,7 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
     %else
         lea _rcx, [%1 + eq_J9Monitor_LockWord]           ; load the address of object lock word
     %endif
-    %ifdef ASM_J9VM_INTERP_SMALL_MONITOR_SLOT
+    %ifdef ASM_J9VM_GC_COMPRESSED_POINTERS
         mov  eax, [_rcx]
     %else
         mov _rax, [_rcx]
@@ -125,7 +125,7 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
 %endif
 %endif
 
-%ifdef ASM_J9VM_INTERP_SMALL_MONITOR_SLOT
+%ifdef ASM_J9VM_GC_COMPRESSED_POINTERS
     lock cmpxchg [_rcx],  ebp                       ; try taking the lock
 %else
     lock cmpxchg [_rcx], _rbp                       ; try taking the lock
