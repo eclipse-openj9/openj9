@@ -237,6 +237,7 @@ MM_RealtimeGC::tearDown(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 {
+	Trc_MM_RealtimeGC_masterSetupForGC_Entry(env->getLanguageVMThread());
 	/* Reset memory pools of associated memory spaces */
 	env->_cycleState->_activeSubSpace->reset();
 	
@@ -245,7 +246,10 @@ MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 	/* Clear the gc stats structure */
 	clearGCStats(env);
 
+	Trc_MM_RealtimeGC_masterSetupForGC_statsCleared(env->getLanguageVMThread());
+
 	_realtimeDelegate.masterSetupForGC(env);
+	Trc_MM_RealtimeGC_masterSetupForGC_Exit(env->getLanguageVMThread());
 }
 
 /**
@@ -405,6 +409,8 @@ MM_RealtimeGC::allThreadsAllocateUnmarked(MM_EnvironmentBase *env) {
 void
 MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, U_32 gcCode)
 {
+	Trc_MM_RealtimeGC_internalPreCollect_Entry(env->getLanguageVMThread());
+
 	/* Setup the master thread cycle state */
 	_cycleState = MM_CycleState();
 	env->_cycleState = &_cycleState;
@@ -438,6 +444,9 @@ MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 	/* we are about to collect so generate the appropriate cycle start and increment start events */
 	reportGCCycleStart(rtEnv);
 	_sched->reportStartGCIncrement(rtEnv);
+
+	Trc_MM_RealtimeGC_internalPreCollect_Exit(env->getLanguageVMThread());
+
 }
 
 /**
