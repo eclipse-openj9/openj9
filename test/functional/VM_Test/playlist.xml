@@ -36,7 +36,7 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xint \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-	j9vm.runner.Menu A -exe=$(Q)$(JAVA_BIN_TMP)$(D)java $(JVM_OPTIONS) -Xdump$(Q) -version=$(JDK_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
+	j9vm.runner.Menu A -exe=$(SQ)$(JAVA_BIN)$(D)java $(JVM_OPTIONS) -Xdump$(SQ) -version=$(JDK_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
 	-xids=all,$(PLATFORM); \
 	$(TEST_STATUS)</command>
 		<levels>

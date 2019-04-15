@@ -27,15 +27,16 @@
 
 .PHONY: testconfig
 
-JAVAC=${JAVA_BIN}/javac
-ifneq (,$(findstring jre,$(JAVA_BIN)))
-	JAVAC=${JAVA_BIN}/../../bin/javac
+ifndef TEST_JDK_HOME
+$(error Please provide TEST_JDK_HOME value.)
+else
+export TEST_JDK_HOME:=$(subst \,/,$(TEST_JDK_HOME))
 endif
 
 testconfig:
 ifneq ($(AUTO_DETECT), false)
 	@echo "AUTO_DETECT is set to true"
-	ant -f ./src/build_envInfo.xml -DJAVA_BIN=$(JAVA_BIN) -DJAVAC=$(JAVAC)
+	ant -f ./src/build_envInfo.xml -DTEST_JDK_HOME=$(TEST_JDK_HOME)
 else
 	@echo "AUTO_DETECT is set to false"
 endif

@@ -31,8 +31,8 @@
 			<variation>Mode610</variation>	
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
-	$(Q)$(JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf HelperCompatibilityTests.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_win$(Q) -DSCMODE=204 \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf HelperCompatibilityTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_win$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests$(XMLSUFFIX).xml$(Q) \
 	-xids all,$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
@@ -54,9 +54,9 @@
 			<variation>Mode610</variation>	
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
-	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(Q) xf HelperCompatibilityTests.jar; \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(Q) xf HelperCompatibilityTests.jar; \
 	$(CONVERT_TO_EBCDIC_CMD) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_unix$(Q) -DSCMODE=204 \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_unix$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests$(XMLSUFFIX).xml$(Q) \
 	-xids all,$(JDK_VERSION),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \

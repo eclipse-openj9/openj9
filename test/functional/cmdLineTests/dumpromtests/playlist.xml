@@ -32,7 +32,7 @@
 	-DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DEXE=$(JAVA_COMMAND) \
 	-DGENERAL_TEST_DIR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Java8andUp$(Q) \
-	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)dumpromclasstests.xml$(Q) -explainExcludes \
