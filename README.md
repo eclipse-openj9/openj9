@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2018 IBM Corp. and others
+Copyright (c) 2017, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ To get started, read our [Contribution Guide](CONTRIBUTING.md).
 
 [coc]: https://eclipse.org/org/documents/Community_Code_of_Conduct.php
 
-If you think you want to contribute but you're not ready to sign the Eclipse Contributor Agreement, why not come along to our weekly *Ask the OpenJ9 community* calls to find out more about how we work. We talk about new ideas, answer any questions that get raised, and discuss project plans and status. We also do lightning talks on features and functions of the VM. Visit the *#planning* channel in our [Slack workspace](https://openj9.slack.com/) for information about upcoming community calls and minutes from previous meetings (Join [here](https://www.eclipse.org/openj9/oj9_joinslack.html)). 
+If you think you want to contribute but you're not ready to sign the Eclipse Contributor Agreement, why not come along to our weekly *Ask the OpenJ9 community* calls to find out more about how we work. We talk about new ideas, answer any questions that get raised, and discuss project plans and status. We also do lightning talks on features and functions of the VM. Visit the *#planning* channel in our [Slack workspace](https://openj9.slack.com/) for information about upcoming community calls and minutes from previous meetings (Join [here](https://join.slack.com/t/openj9/shared_invite/enQtNDU4MDI4Mjk0MTk2LWM2MjliMTQ4NWM5YjMwNTViOTgzMzM2ZDhlOWJmZTc1MjhmYmRjMDg2NDljNGM0YTAwOWRiZDE0YzI0NjgyOWI)). 
 
 What repos are part of the project?
 ===================================
