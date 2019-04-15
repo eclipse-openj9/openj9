@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 
 /** \brief
  *     Align stackIndex so that rsp+stackIndex is a multiple of localObjectAlignment
@@ -53,7 +54,7 @@ void J9::X86::Linkage::alignOffset(uint32_t &stackIndex, int32_t localObjectAlig
       stackIndex -= adjust;
       }
    }
-   
+
 /** \brief
  *     Align stackIndex as part of alignment for local object with collected fields
  *
@@ -106,7 +107,7 @@ void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex
    int32_t numberOfSlotsMapped = atlas->getNumberOfSlotsMapped();
    atlas->setNumberOfSlotsMapped(numberOfSlotsMapped + adjust/pointerSize);
    }
-   
+
 /** \brief
  *     Align stack offset local object without collected fields
  *

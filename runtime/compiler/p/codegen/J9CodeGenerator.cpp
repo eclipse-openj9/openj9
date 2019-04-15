@@ -26,6 +26,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "env/VMJ9.h"
@@ -77,7 +78,7 @@ J9::Power::CodeGenerator::CodeGenerator() :
       TR::Compiler->target.is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
       !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringIndexOf();
-   
+
    if (!comp->getOption(TR_DisableReadMonitors))
       cg->setSupportsReadOnlyLocks();
 

@@ -36,6 +36,7 @@
 #include "codegen/Instruction.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/Register.hpp"
@@ -3766,7 +3767,7 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    TR::Register *temp1Reg = cg->allocateRegister();
    TR::Register *temp2Reg = cg->allocateRegister();
    TR::Register *objClassReg = cg->allocateRegister();
-  
+
    bool isCheckCastAndNullCheck = (node->getOpCodeValue() == TR::checkcastAndNULLCHK);
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -3777,9 +3778,9 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    TR::LabelSymbol *iTableLoopLabel = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
    fallThruLabel->setEndInternalControlFlow();
-   
+
    generateLabelInstruction(LABEL, node, startLabel, cg);
-   
+
    TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, outlinedCallLabel, fallThruLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
@@ -3789,13 +3790,13 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
 
    // temp2Reg holds romClass of cast class, for testing array, interface class type
    generateRegMemInstruction(LRegMem(), node, temp2Reg, generateX86MemoryReference(castClassReg, offsetof(J9Class, romClass), cg), cg);
-   
+
    // If cast class is array, call out of line helper
    generateMemImmInstruction(TEST4MemImm4, node,
        generateX86MemoryReference(temp2Reg, offsetof(J9ROMClass, modifiers), cg), J9AccClassArray, cg);
    generateLabelInstruction(JNE4, node, outlinedCallLabel, cg);
 
-   // objClassReg holds object class  
+   // objClassReg holds object class
    if (!isCheckCastAndNullCheck)
       {
       generateRegRegInstruction(TESTRegReg(), node, ObjReg, ObjReg, cg);
@@ -3808,7 +3809,7 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    generateMemImmInstruction(TEST4MemImm4, node,
        generateX86MemoryReference(temp2Reg, offsetof(J9ROMClass, modifiers), cg), J9AccInterface, cg);
    generateLabelInstruction(JE4, node, isClassLabel, cg);
-   
+
    // Obtain I-Table
    // temp1Reg holds head of J9Class->iTable of obj class
    generateRegMemInstruction(LRegMem(), node, temp1Reg, generateX86MemoryReference(objClassReg, offsetof(J9Class, iTable), cg), cg);
@@ -3821,41 +3822,41 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    generateMemRegInstruction(CMPMemReg(), node, interfaceMR, castClassReg, cg);
    generateRegMemInstruction(LRegMem(), node, temp1Reg, generateX86MemoryReference(temp1Reg, offsetof(J9ITable, next), cg), cg);
    generateLabelInstruction(JNE4, node, iTableLoopLabel, cg);
-   
+
    // Found from I-Table
    generateLabelInstruction(JMP4, node, fallThruLabel, cg);
-   
+
    // cast class is non-interface class
    generateLabelInstruction(LABEL, node, isClassLabel, cg);
    // equality test
    generateRegRegInstruction(CMPRegReg(use64BitClasses), node, objClassReg, castClassReg, cg);
    generateLabelInstruction(JE4, node, fallThruLabel, cg);
-   
+
    // class not equal
    // temp2 holds cast class depth
    // class depth mask must be low 16 bits to safely load without the mask.
    static_assert(J9AccClassDepthMask == 0xffff, "J9_JAVA_CLASS_DEPTH_MASK must be 0xffff");
    generateRegMemInstruction(TR::Compiler->target.is64Bit()? MOVZXReg8Mem2 : MOVZXReg4Mem2, node,
             temp2Reg, generateX86MemoryReference(castClassReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
-   
-   // cast class depth >= obj class depth, throw 
+
+   // cast class depth >= obj class depth, throw
    generateRegMemInstruction(CMP2RegMem, node, temp2Reg, generateX86MemoryReference(objClassReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
    generateLabelInstruction(JAE4, node, throwLabel, cg);
-   
+
    // check obj class's super class array entry
    // temp1Reg holds superClasses array of obj class
    // An alternative sequences requiring one less register may be:
    // SHL temp2Reg, 3 for 64-bit or 2 for 32-bit
    // ADD temp2Reg, [temp3Reg, superclasses offset]
    // CMP classClassReg, [temp2Reg]
-   // On 64 bit, the extra reg isn't likely to cause significant register pressure. 
-   // On 32 bit, it could put more register pressure due to limited number of regs. 
+   // On 64 bit, the extra reg isn't likely to cause significant register pressure.
+   // On 32 bit, it could put more register pressure due to limited number of regs.
    // Since 64-bit is more prevalent, we opt to optimize for 64bit in this case
    generateRegMemInstruction(LRegMem(), node, temp1Reg, generateX86MemoryReference(objClassReg, offsetof(J9Class, superclasses), cg), cg);
    generateRegMemInstruction(CMPRegMem(use64BitClasses), node, castClassReg,
        generateX86MemoryReference(temp1Reg, temp2Reg, TR::Compiler->target.is64Bit()?3:2, cg), cg);
    generateLabelInstruction(JNE4, node, throwLabel, cg);
-   
+
    // throw classCastException
    {
       TR_OutlinedInstructionsGenerator og(throwLabel, node, cg);
@@ -3865,38 +3866,38 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
       call->setNeedsGCMap(0xFF00FFFF);
       call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
    }
-   
+
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 8, cg);
-   
+
    deps->addPostCondition(ObjReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(castClassReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(temp1Reg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(temp2Reg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(objClassReg, TR::RealRegister::NoReg, cg);
-   
+
    TR::Node *callNode = outlinedHelperCall->getCallNode();
    TR::Register *reg;
-   
+
    if (callNode->getFirstChild() == node->getFirstChild())
       if (reg = callNode->getFirstChild()->getRegister())
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
-   
+
    if (callNode->getSecondChild() == node->getSecondChild())
       if (reg = callNode->getSecondChild()->getRegister())
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
-   
+
    deps->stopAddingConditions();
-   
+
    generateLabelInstruction(LABEL, node, fallThruLabel, deps, cg);
-   
+
    cg->stopUsingRegister(temp1Reg);
    cg->stopUsingRegister(temp2Reg);
    cg->stopUsingRegister(objClassReg);
-   
+
    // Decrement use counts on the children
    //
    cg->decReferenceCount(node->getFirstChild());
-   cg->decReferenceCount(node->getSecondChild());   
+   cg->decReferenceCount(node->getSecondChild());
    }
 
 inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
@@ -6919,7 +6920,7 @@ static void genInitObjectHeader(TR::Node             *node,
    // --------------------------------------------------------------------------------
    //
    // For dynamic array allocation, in case (very unlikely) the object array has a lock word, we just initialized it to 0 conservatively.
-   // In this case, if the original array is reserved, initializating the cloned object's lock word to 0 will force the 
+   // In this case, if the original array is reserved, initializating the cloned object's lock word to 0 will force the
    // locking to go to the slow locking path.
    if (isDynamicAllocation)
       {
@@ -7650,7 +7651,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          classReg = node->getSecondChild()->getRegister();
          // For dynamic array allocation, need to evaluate second child
          if (!classReg && dynamicArrayAllocation)
-            classReg = cg->evaluate(node->getSecondChild());	 
+            classReg = cg->evaluate(node->getSecondChild());
          }
 
       isArrayNew = true;

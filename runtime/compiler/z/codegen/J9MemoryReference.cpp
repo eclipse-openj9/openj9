@@ -44,6 +44,7 @@
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -158,22 +159,22 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
    if (storageReference)
       {
       bool isImpliedMemoryReference = false;
-      
+
       TR::Compilation *comp = cg->comp();
       TR::Node *storageRefNode = storageReference->getNode();
       bool isIndirect = storageRefNode->getOpCode().isIndirect();
-      
+
       TR_ASSERT(!storageRefNode->getOpCode().isLoadConst(), "storageRefNode %s (%p) const should be BCD or Aggr type\n", storageRefNode->getOpCode().getName(),storageRefNode);
-      
+
       TR_ASSERT(storageRefNode->getOpCode().isLoadVar() || storageRefNode->getOpCode().isStore(), "expecting storageRef node %p to be a loadVar or store\n",storageRefNode);
-      
+
       _symbolReference = storageReference->getSymbolReference();
-      
+
       symRef = _symbolReference;
       _originalSymbolReference = _symbolReference;
-      
+
       symbol = _symbolReference->getSymbol();
-      
+
       if (cg->traceBCDCodeGen())
          traceMsg(comp,"\t\tmr storageRef case: setting rootLoadOrStore from %s (%p) to storageRef->node %s (%p) (ref->nodeRefCount %d, symRef #%d (sym=%p), isIndirect %s, isConst %s)\n",
             rootLoadOrStore?rootLoadOrStore->getOpCode().getName():"NULL",
@@ -185,7 +186,7 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
             symbol,
             isIndirect?"yes":"no",
             "no");
-      
+
       rootLoadOrStore = storageRefNode;
       if (isIndirect)
          {
@@ -226,9 +227,9 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
          // the tree.
          // The flag forceFolding is set in these cases to force populateMemoryReference to attempt folding even when the (now) higher refCounts would usually disallow it.
          TR::Node *addressChild = rootLoadOrStore->getFirstChild();
-         
+
          self()->setForceFoldingIfAdvantageous(cg, addressChild);
-         
+
          if (self()->forceFolding() || self()->forceFirstTimeFolding() || addressChild->getOpCodeValue() == TR::loadaddr)
             {
             if (cg->traceBCDCodeGen())
@@ -291,7 +292,7 @@ J9::Z::MemoryReference::createUnresolvedDataSnippetForiaload(TR::Node * node, TR
       {
       isStore = true;
       }
-   
+
    TR::UnresolvedDataSnippet * uds = self()->createUnresolvedDataSnippet(node, cg, symRef, tempReg, isStore);
    self()->getUnresolvedSnippet()->createUnresolvedData(cg, _baseNode);
    self()->getUnresolvedSnippet()->getUnresolvedData()->setUnresolvedDataSnippet(self()->getUnresolvedSnippet());
@@ -403,7 +404,7 @@ reuseS390MemRefFromStorageRef(TR::MemoryReference *baseMR, int32_t offset, TR::N
       }
    return baseMR;
    }
-   
+
 
 /**
  * When isNewTemp=true then do not transfer any deadBytes from the node/reg as this is a memref for brand new tempStorageRef -- node is still needed
