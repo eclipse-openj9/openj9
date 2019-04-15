@@ -45,7 +45,7 @@ def get_source() {
 
             // use sshagent with Jenkins credentials ID for all platforms except zOS
             // on zOS use the user's ssh key
-            if (!SPEC.startsWith('zos') && (USER_CREDENTIALS_ID != '')) {
+            if (!SPEC.contains('zos') && (USER_CREDENTIALS_ID != '')) {
                 get_sources_with_authentication()
             } else {
                 get_sources()
@@ -269,7 +269,7 @@ def build() {
     stage('Compile') {
         timestamps {
             // 'all' target dependencies broken for zos, use 'images test-image-openj9'
-            def make_target = SPEC.startsWith('zos') ? 'images test-image-openj9' : 'all'
+            def make_target = SPEC.contains('zos') ? 'images test-image-openj9' : 'all'
             OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
             withEnv(BUILD_ENV_VARS_LIST) {
                 dir(OPENJDK_CLONE_DIR) {
@@ -297,7 +297,7 @@ def archive() {
                 sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
                 // test if the test natives directory is present, only in JDK11+
                 if (fileExists("${buildDir}${testDir}")) {
-                    if (SPEC.startsWith('zos')) {
+                    if (SPEC.contains('zos')) {
                         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
                         sh "pax  -wvz -s#${buildDir}${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
                     } else {
