@@ -78,12 +78,22 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
         echo "Keeping the latest ${artifactory_max_num_artifacts} builds"
         currentBuild.description = "Keeping ${artifactory_max_num_artifacts} builds of ${jobToCheck}"
 
-        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, url: "${artifactory_server}/api/storage/${artifactory_repo}/${jobToCheck}"
+        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/storage/${artifactory_repo}/${jobToCheck}" 
 
-        data = readJSON text: request.getContent()
-        numberOfArtifacts = data.children.size()
-        echo "There are ${numberOfArtifacts} builds"
-    } 
+        requestStatus = request.getStatus()
+        if (requestStatus == 200){
+            data = readJSON text: request.getContent()
+            numberOfArtifacts = data.children.size()
+            echo "There are ${numberOfArtifacts} builds"
+        } else {
+            currentBuild.description = "Warning: The URL does not exist<br>" + currentBuild.description
+            echo 'Warning: This URL does not exist... EXITING'
+            return
+        }
+    }
+    if (requestStatus == 404){
+        return
+    }
     stage('Delete Old Artifacts'){
         def amount_deleted = numberOfArtifacts - artifactory_max_num_artifacts
         if (amount_deleted > 0){
