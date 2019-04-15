@@ -29,7 +29,6 @@
 #include "RealtimeGC.hpp"
 
 #include "AllocateDescription.hpp"
-#include "BarrierSynchronization.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
@@ -954,7 +953,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			flushRememberedSet(env);
 			if (_extensions->concurrentTracingEnabled) {
 				setCollectorConcurrentTracing();
-				_sched->_barrierSynchronization->releaseExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
+				_realtimeDelegate.releaseExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
 			} else {
 				setCollectorTracing();
 			}
@@ -980,7 +979,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			_sched->popYieldCollaborator();
 			
 			if (_extensions->concurrentTracingEnabled) {
-				_sched->_barrierSynchronization->acquireExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
+				_realtimeDelegate.acquireExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
 				setCollectorTracing();
 			}
 			_moreTracingRequired |= _realtimeDelegate.doTracing(env);

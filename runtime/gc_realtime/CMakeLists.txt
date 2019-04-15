@@ -22,7 +22,6 @@
 
 add_library(j9realtime STATIC
 	AllocationContextRealtime.cpp
-	BarrierSynchronization.cpp
 	ConfigurationRealtime.cpp
 	EnvironmentRealtime.cpp
 	GlobalAllocationManagerRealtime.cpp

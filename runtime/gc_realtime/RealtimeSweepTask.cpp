@@ -24,7 +24,7 @@
 #include "ut_j9mm.h"
 
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "GlobalGCStats.hpp"
 #include "RealtimeSweepTask.hpp"
 #include "SweepSchemeRealtime.hpp"
@@ -44,22 +44,22 @@ MM_RealtimeSweepTask::setup(MM_EnvironmentBase *envBase)
 	env->_sweepStats.clear();
 
 	/* record that this thread is participating in this cycle */
-	env->_sweepStats._gcCount = MM_GCExtensions::getExtensions(env)->globalGCStats.gcCount;
+	env->_sweepStats._gcCount = env->getExtensions()->globalGCStats.gcCount;
 }
 
 void
 MM_RealtimeSweepTask::cleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	MM_GlobalGCStats *finalGCStats = &MM_GCExtensions::getExtensions(env)->globalGCStats;
+	MM_GlobalGCStats *finalGCStats = &env->getExtensions()->globalGCStats;
 	finalGCStats->sweepStats.merge(&env->_sweepStats);
 
 	Trc_MM_RealtimeSweepTask_parallelStats(
 		env->getLanguageVMThread(),
 		(U_32)env->getSlaveID(), 
-		(U_32)j9time_hires_delta(0, env->_sweepStats.idleTime, J9PORT_TIME_DELTA_IN_MILLISECONDS), 
+		(U_32)omrtime_hires_delta(0, env->_sweepStats.idleTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
 		env->_sweepStats.sweepChunksProcessed, 
-		(U_32)j9time_hires_delta(0, env->_sweepStats.mergeTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
+		(U_32)omrtime_hires_delta(0, env->_sweepStats.mergeTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS));
 }

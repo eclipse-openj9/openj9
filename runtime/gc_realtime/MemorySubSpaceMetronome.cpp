@@ -27,7 +27,6 @@
 #include "Collector.hpp"
 #include "EnvironmentRealtime.hpp"
 #include "GCCode.hpp"
-#include "JNICriticalRegion.hpp"
 #include "MemoryPool.hpp"
 #include "MemorySubSpace.hpp"
 #include "MetronomeDelegate.hpp"

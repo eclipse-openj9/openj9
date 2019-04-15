@@ -73,7 +73,7 @@ protected:
 private:
 	intptr_t _currentGCThreadPriority;
 	bool _previousCycleBelowTrigger;
-	bool _sweepingArraylets;	
+	bool _sweepingArraylets;
 
 	uintptr_t _gcPhase; /**< What gc phase are we currently in? */
 	

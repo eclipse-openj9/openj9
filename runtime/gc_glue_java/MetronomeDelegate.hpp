@@ -40,6 +40,8 @@ private:
 	MM_GCExtensions *_extensions;
 	MM_RealtimeGC *_realtimeGC;
 	J9JavaVM *_javaVM;
+	UDATA _vmResponsesRequiredForExclusiveVMAccess;  /**< Used to support the (request/wait)ExclusiveVMAccess methods. */
+	UDATA _jniResponsesRequiredForExclusiveVMAccess;  /**< Used to support the (request/wait)ExclusiveVMAccess methods. */
 
 public:
 	void yieldWhenRequested(MM_EnvironmentBase *env);
@@ -137,6 +139,18 @@ public:
 	bool doClassTracing(MM_EnvironmentRealtime* env);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	bool doTracing(MM_EnvironmentRealtime* env);
+
+	/*
+	 * These functions are used by classic Metronome gang-scheduling and
+	 * also transitionally used for the parts of realtime that have not
+	 * been made concurrent.
+	 */
+	void preRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive);
+	void postRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive);
+	uintptr_t requestExclusiveVMAccess(MM_EnvironmentBase *env, uintptr_t block, uintptr_t *gcPriority);
+	void waitForExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired);
+	void acquireExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired);
+	void releaseExclusiveVMAccess(MM_EnvironmentBase *env, bool releaseRequired);
 
 	/*
 	 * Friends
