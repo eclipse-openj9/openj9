@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 public class ObjectMonitorReferencePointer extends Pointer
 {
 	public static final ObjectMonitorReferencePointer NULL = new ObjectMonitorReferencePointer(0);
-	public static final long SIZEOF = J9BuildFlags.interp_smallMonitorSlot ? U32.SIZEOF : UDATA.SIZEOF;
+	public static final long SIZEOF = J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF;
 	
 	protected ObjectMonitorReferencePointer(long address)
 	{

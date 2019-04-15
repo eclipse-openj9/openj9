@@ -38,11 +38,11 @@ typedef UDATA j9objectclass_t;
 /*
  * Define type used to represent the lock in the 'monitor' slot of an object's header
  */
-#ifdef J9VM_INTERP_SMALL_MONITOR_SLOT
+#ifdef J9VM_GC_COMPRESSED_POINTERS
 typedef U_32 j9objectmonitor_t;
-#else /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#else /* J9VM_GC_COMPRESSED_POINTERS */
 typedef UDATA j9objectmonitor_t;
-#endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 
 /*
  * Define the type system for object pointers.
@@ -667,7 +667,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #define J9OBJECT_MONITOR_OFFSET(vmThread,object) offsetof(J9Object,monitor)
 #endif
 
-#if defined (J9VM_INTERP_SMALL_MONITOR_SLOT) || !defined (J9VM_ENV_DATA64)
+#if defined (J9VM_GC_COMPRESSED_POINTERS) || !defined (J9VM_ENV_DATA64)
 #define J9OBJECT_MONITOR(vmThread, object) ((void)0, (j9objectmonitor_t)J9OBJECT_U32_LOAD(vmThread, object, J9OBJECT_MONITOR_OFFSET(vmThread,object)))
 #define J9OBJECT_SET_MONITOR(vmThread, object, value) ((void)0, J9OBJECT_U32_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value))
 #else
