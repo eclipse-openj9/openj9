@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -261,23 +261,13 @@ TR_PersistentCHTable::classGotExtended(
       OMR::CriticalSection classGotExtended(assumptionTableMutex);
       OMR::RuntimeAssumption ** headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
                                          TR_RuntimeAssumptionTable::hashCode((uintptrj_t) superClassId));
-      OMR::RuntimeAssumption *cursor = *headPtr;
-      OMR::RuntimeAssumption *prev   = 0;
-      while (cursor)
+      for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
          {
-         OMR::RuntimeAssumption *next = cursor->getNext();
-
          if (cursor->matches((uintptrj_t) superClassId))
             {
             cursor->compensate(fe, 0, 0);
-            removeAssumptionFromList(headPtr, cursor, prev);
+            removeAssumptionFromRAT(cursor);
             }
-         else
-            {
-            prev = cursor;
-            }
-
-         cursor = next;
          }
       }
 
@@ -368,23 +358,13 @@ TR_PersistentCHTable::classGotInitialized(
       TR_RuntimeAssumptionTable *table = persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
       OMR::RuntimeAssumption ** headPtr = table->getBucketPtr(RuntimeAssumptionOnClassPreInitialize, TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(sig, sigLen));
 
-      OMR::RuntimeAssumption *cursor = *headPtr;
-      OMR::RuntimeAssumption *prev   = 0;
-      while (cursor)
+      for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
          {
-         OMR::RuntimeAssumption *next = cursor->getNext();
-
          if (cursor->matches(sig, sigLen))
             {
             cursor->compensate(fej9, 0, 0);
-            removeAssumptionFromList(headPtr, cursor, prev);
+            removeAssumptionFromRAT(cursor);
             }
-         else
-            {
-            prev = cursor;
-            }
-
-         cursor = next;
          }
       }
 
@@ -404,23 +384,13 @@ TR_PersistentCHTable::methodGotOverridden(
    TR_RuntimeAssumptionTable *table = persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
    OMR::RuntimeAssumption ** headPtr = table->getBucketPtr(RuntimeAssumptionOnMethodOverride,
                                         TR_RuntimeAssumptionTable::hashCode((uintptrj_t)overriddenMethod));
-   OMR::RuntimeAssumption *cursor = *headPtr;
-   OMR::RuntimeAssumption *prev   = 0;
-   while (cursor)
+   for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
       {
-      OMR::RuntimeAssumption *next = cursor->getNext();
-
       if (cursor->matches((uintptrj_t) overriddenMethod))
          {
          cursor->compensate(fe, 0, 0);
-         removeAssumptionFromList(headPtr, cursor, prev);
+         removeAssumptionFromRAT(cursor);
          }
-      else
-         {
-         prev = cursor;
-         }
-
-      cursor = next;
       }
    }
 
@@ -442,23 +412,13 @@ TR_PersistentCHTable::classGotRedefined(
    TR_RuntimeAssumptionTable *table = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
    OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
                                       TR_RuntimeAssumptionTable::hashCode((uintptrj_t) oldClassId));
-   OMR::RuntimeAssumption *cursor = *headPtr;
-   OMR::RuntimeAssumption *prev   = 0;
-   while (cursor)
+   for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
       {
-      OMR::RuntimeAssumption *next = cursor->getNext();
-
       if (cursor->matches((uintptrj_t) oldClassId))
          {
          cursor->compensate(fe, 0, 0);
-         removeAssumptionFromList(headPtr, cursor, prev);
+         removeAssumptionFromRAT(cursor);
          }
-      else
-         {
-         prev = cursor;
-         }
-
-      cursor = next;
       }
 
    //
@@ -485,20 +445,8 @@ TR_PersistentCHTable::classGotRedefined(
 
 
 void
-TR_PersistentCHTable::removeAssumptionFromList(
-      OMR::RuntimeAssumption **list,
-      OMR::RuntimeAssumption *assumption,
-      OMR::RuntimeAssumption *prev)
+TR_PersistentCHTable::removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption)
    {
-   OMR::RuntimeAssumption *next = assumption->getNext();
-   assumption->dequeueFromListOfAssumptionsForJittedBody();
    TR_RuntimeAssumptionTable *rat = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-   rat->incReclaimedAssumptionCount(assumption->getAssumptionKind());
-   assumption->paint(); // RAS
-
-   jitPersistentFree(assumption);
-   if (prev)
-      prev->setNext(next);
-   else
-      *list = next;
+   rat->markForDetachFromRAT(assumption);
    }
