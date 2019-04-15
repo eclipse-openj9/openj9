@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,9 @@ static void JNICALL releasePrimitiveArrayCritical(JNIEnv *env, jarray array, voi
 static const jchar * JNICALL getStringCritical(JNIEnv *env, jstring str, jboolean *isCopy);
 static void JNICALL releaseStringCritical(JNIEnv *env, jstring str, const jchar * elems);
 
+#if JAVA_SPEC_VERSION >= 9
 static jobject JNICALL getModule(JNIEnv *env, jclass clazz);
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 #define FIND_CLASS gpCheckFindClass
 #define TO_REFLECTED_METHOD gpCheckToReflectedMethod
@@ -1463,7 +1465,9 @@ struct JNINativeInterface_ EsJNIFunctions = {
 	getDirectBufferAddress,
 	getDirectBufferCapacity,
 	getObjectRefType,
+#if JAVA_SPEC_VERSION >= 9
 	getModule,
+#endif /* JAVA_SPEC_VERSION >= 9 */
 };
 
 void  initializeJNITable(J9JavaVM *vm)
@@ -2223,6 +2227,7 @@ done:
 	return rc;
 }
 
+#if JAVA_SPEC_VERSION >= 9
 static jobject JNICALL
 getModule(JNIEnv *env, jclass clazz)
 {
@@ -2242,6 +2247,7 @@ getModule(JNIEnv *env, jclass clazz)
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 	return module;
 }
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 
 IDATA
