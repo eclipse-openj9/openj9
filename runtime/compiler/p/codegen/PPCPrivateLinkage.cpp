@@ -23,6 +23,7 @@
 #include "p/codegen/PPCPrivateLinkage.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
@@ -1087,7 +1088,7 @@ void TR::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
       else
          {
          cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1), cg()), machine->getRealRegister(intSavedFirst), cursor);
-         
+
          argSize += (TR::RealRegister::LastGPR - intSavedFirst + 1) * 4;
          }
       }
@@ -1373,7 +1374,7 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
       else
          {
          cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
-         
+
          saveSize += (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
          }
       }
@@ -1917,33 +1918,33 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
 
    /*
    PPC ABI --
-   AIX 32-bit BE & AIX 64-bit BE & Linux 64-bit BE: 
-   These follow aix-style linkage. 
-   There is a TOC-base register (gr2) that needs to be loaded from function descriptor of that function that is called. 
+   AIX 32-bit BE & AIX 64-bit BE & Linux 64-bit BE:
+   These follow aix-style linkage.
+   There is a TOC-base register (gr2) that needs to be loaded from function descriptor of that function that is called.
    If the callee function is in libj9jitxx.so module, (as in the case of CHelper functions are) then the module's TOC-base can be found in the J9VMThread jitTOC field.
    The TOC can be loaded from the jitTOC field of J9VMThread (pointed to by metaDataRegister).
-  
-   Linux 64-bit LE: There exists a TOC (gr2), but there is no such function descriptor. 
-   The TOC-base set-up is defined by ABI to go through a function's global-entry (relocation). 
+
+   Linux 64-bit LE: There exists a TOC (gr2), but there is no such function descriptor.
+   The TOC-base set-up is defined by ABI to go through a function's global-entry (relocation).
    The global-entry address will be set up in gr12.
 
-   Registers r12, and r2 are always added to the dependency in the situations that they're used. 
-   R12 is added at all times, and is an unreserved register across all platforms. 
-   R2 is added to the dependency only if we're not dealing with a linux 32 bit platform, where it's system reserved. 
-   Ultimately, we don't need an assert or NULL check when searching for these registers within the dependency. 
+   Registers r12, and r2 are always added to the dependency in the situations that they're used.
+   R12 is added at all times, and is an unreserved register across all platforms.
+   R2 is added to the dependency only if we're not dealing with a linux 32 bit platform, where it's system reserved.
+   Ultimately, we don't need an assert or NULL check when searching for these registers within the dependency.
    */
    if(linkage == TR_CHelper)
    {
       if(TR::Compiler->target.isLinux() && TR::Compiler->target.is64Bit() && TR::Compiler->target.cpu.isLittleEndian())
       {
          int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptrj_t);
-         generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12), 
+         generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12),
             new(trHeapMemory()) TR::MemoryReference(cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress(), cg()));
 
       }
       else if (TR::Compiler->target.isAIX() || (TR::Compiler->target.isLinux() && TR::Compiler->target.is64Bit()))
       {
-         generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr2), 
+         generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr2),
             new(trHeapMemory()) TR::MemoryReference(cg()->getMethodMetaDataRegister(), offsetof(J9VMThread, jitTOC), TR::Compiler->om.sizeofReferenceAddress(), cg()));
       }
    }
@@ -1980,7 +1981,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
       }
    else if (cg()->comp()->getOption(TR_TraceCG))
       traceMsg(comp(), "Omitting CCR save/restore for helper calls\n");
-   
+
    if (memArgs > 0)
       {
       for (argIndex = 0; argIndex < memArgs; argIndex++)
@@ -2666,7 +2667,7 @@ void TR::PPCPrivateLinkage::buildDirectCall(TR::Node *callNode,
    TR::MethodSymbol *callSymbol    = callSymRef->getSymbol()->castToMethodSymbol();
    TR::ResolvedMethodSymbol *sym   = callSymbol->getResolvedMethodSymbol();
    TR_ResolvedMethod *vmm       = (sym==NULL)?NULL:sym->getResolvedMethod();
-   bool myself = 
+   bool myself =
       (vmm!=NULL && vmm->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ?
       true : false;
 

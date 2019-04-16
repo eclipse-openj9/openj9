@@ -24,6 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Machine.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
@@ -267,7 +268,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
          OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
          for (int32_t cnt=0; cnt < deps->getAddCursorForPre(); cnt++)
             map.addDependency(deps->getPreConditions()->getRegisterDependency(cnt), cnt);
-         
+
          TR::Register *addrArg, *posArg, *lenArg, *wasteArg;
          if (crc32m2)
             {
@@ -277,7 +278,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
 
             generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
             }
-         
+
          if (crc32m3)
             {
             addrArg = map.getSourceWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr4):(TR::RealRegister::gr5));
