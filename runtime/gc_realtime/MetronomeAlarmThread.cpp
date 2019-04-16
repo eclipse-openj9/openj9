@@ -47,7 +47,7 @@ MM_MetronomeAlarmThread::newInstance(MM_EnvironmentBase *env)
 {
 	MM_MetronomeAlarmThread *alarmThread;
 	
-	alarmThread = (MM_MetronomeAlarmThread *)env->getForge()->allocate(sizeof(MM_MetronomeAlarmThread), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	alarmThread = (MM_MetronomeAlarmThread *)env->getForge()->allocate(sizeof(MM_MetronomeAlarmThread), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (alarmThread) {
 		new(alarmThread) MM_MetronomeAlarmThread(env);
 		if (!alarmThread->initialize(env)) {

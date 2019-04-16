@@ -40,7 +40,6 @@
 #include "YieldCollaborator.hpp"
 
 class MM_OSInterface;
-class MM_BarrierSynchronization;
 class MM_EnvironmentBase;
 class MM_EnvironmentRealtime;
 class MM_MemorySubSpaceMetronome;
@@ -91,7 +90,6 @@ public:
 	
 	bool _exclusiveVMAccessRequired; /**< This flag is used by the master thread to see if it needs to get exclusive vm access */
 
-	MM_BarrierSynchronization *_barrierSynchronization;
 	MM_MetronomeAlarmThread *_alarmThread;
 	MM_EnvironmentRealtime *_threadWaitingOnMasterThreadMonitor;
 	uintptr_t _mutatorCount;
@@ -253,8 +251,7 @@ public:
 		_currentConsecutiveBeats(0),
 		_threadResumedTable(NULL),
 		_masterThreadMustShutDown(false),
-		_exclusiveVMAccessRequired(true),		
-		_barrierSynchronization(NULL),
+		_exclusiveVMAccessRequired(true),
 		_alarmThread(NULL),
 		_threadWaitingOnMasterThreadMonitor(NULL),
 		_mutatorCount(0),

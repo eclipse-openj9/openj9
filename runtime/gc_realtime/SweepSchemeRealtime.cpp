@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "BarrierSynchronization.hpp"
 #include "GCExtensionsBase.hpp"
 #include "MarkMap.hpp"
 #include "MemoryPoolSegregated.hpp"
@@ -71,7 +70,7 @@ MM_SweepSchemeRealtime::preSweep(MM_EnvironmentBase *env)
 	_realtimeGC->allThreadsAllocateUnmarked(env);
 	if (ext->isConcurrentSweepEnabled()) {
 		_realtimeGC->setCollectorConcurrentSweeping();
-		_scheduler->_barrierSynchronization->releaseExclusiveVMAccess(env, _scheduler->_exclusiveVMAccessRequired);
+		_realtimeGC->getRealtimeDelegate()->releaseExclusiveVMAccess(env, _scheduler->_exclusiveVMAccessRequired);
 	}
 }
 
@@ -80,7 +79,7 @@ MM_SweepSchemeRealtime::postSweep(MM_EnvironmentBase *env)
 {
 	MM_GCExtensionsBase *ext = env->getExtensions();
 	if (ext->isConcurrentSweepEnabled()) {
-		_scheduler->_barrierSynchronization->acquireExclusiveVMAccess(env, _scheduler->_exclusiveVMAccessRequired);
+		_realtimeGC->getRealtimeDelegate()->acquireExclusiveVMAccess(env, _scheduler->_exclusiveVMAccessRequired);
 		_realtimeGC->setCollectorSweeping(); /* It might have been in ConcurrentSweep mode before. */
 	}
 
