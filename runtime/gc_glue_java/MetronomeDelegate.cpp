@@ -982,5 +982,111 @@ MM_MetronomeDelegate::defaultMemorySpaceAllocated(MM_GCExtensionsBase *extension
 	vm->heapTop = extensions->heap->getHeapTop();
 }
 
+/**
+ * This function has to be called at the beginning of continueGC because requestExclusiveVMAccess
+ * assumes the current J9VMThread does not have VM Access.  All java threads that cause a GC (either
+ * System.gc or allocation failure) will have VM access when entering the GC so we have to give it up.
+ *
+ * @param threadRequestingExclusive the J9VMThread for the MetronomeGCThread that will
+ * be requesting exclusive vm access.
+ */
+void
+MM_MetronomeDelegate::preRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive)
+{
+	if (threadRequestingExclusive == NULL) {
+		return;
+	}
+	J9VMThread *vmThread = (J9VMThread *)threadRequestingExclusive->_language_vmthread;
+	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+}
+
+/**
+ * This function is called when leaving continueGC so the J9VMThread associated with current
+ * MetronomeGCThread will get its VM Access back before returning to run Java code.
+ *
+ * @param threadRequestingExclusive the J9VMThread for the MetronomeGCThread that requested
+ * exclusive vm access.
+ */
+void
+MM_MetronomeDelegate::postRequestExclusiveVMAccess(OMR_VMThread *threadRequestingExclusive)
+{
+	if (NULL == threadRequestingExclusive) {
+		return;
+	}
+	J9VMThread *vmThread = (J9VMThread *)threadRequestingExclusive->_language_vmthread;
+	vmThread->javaVM->internalVMFunctions->internalAcquireVMAccess(vmThread);
+}
+
+
+
+/**
+ * A call to requestExclusiveVMAccess must be followed by a call to waitForExclusiveVMAccess,
+ * but not necessarily by the same thread.
+ *
+ * @param env the requesting thread.
+ * @param block boolean input paramter specifing whether we should block and wait, if another party is requesting at the same time, or we return
+ * @return boolean returning whether request was successful or not (make sense only if block is set to FALSE)
+ */
+uintptr_t
+MM_MetronomeDelegate::requestExclusiveVMAccess(MM_EnvironmentBase *env, uintptr_t block, uintptr_t *gcPriority)
+{
+	return _javaVM->internalVMFunctions->requestExclusiveVMAccessMetronomeTemp(_javaVM, block, &_vmResponsesRequiredForExclusiveVMAccess, &_jniResponsesRequiredForExclusiveVMAccess, gcPriority);
+}
+
+/**
+ * Block until the earlier request for exclusive VM access completes.
+ * @note This can only be called by the MasterGC thread.
+ * @param The requesting thread.
+ */
+void 
+MM_MetronomeDelegate::waitForExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired)
+{
+	J9VMThread *masterGCThread = (J9VMThread *)env->getLanguageVMThread();
+	
+	if (waitRequired) {
+		_javaVM->internalVMFunctions->waitForExclusiveVMAccessMetronomeTemp((J9VMThread *)env->getLanguageVMThread(), _vmResponsesRequiredForExclusiveVMAccess, _jniResponsesRequiredForExclusiveVMAccess);
+	}
+	++(masterGCThread->omrVMThread->exclusiveCount);
+}
+
+/**
+ * Acquire (request and block until success) exclusive VM access.
+ * @note This can only be called by the MasterGC thread.
+ * @param The requesting thread.
+ */
+void 
+MM_MetronomeDelegate::acquireExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired)
+{
+	J9VMThread *masterGCThread = (J9VMThread *)env->getLanguageVMThread();
+
+	if (waitRequired) {
+		_javaVM->internalVMFunctions->acquireExclusiveVMAccessFromExternalThread(_javaVM);
+	}
+	++(masterGCThread->omrVMThread->exclusiveCount);
+
+}
+
+/**
+ * Release the held exclusive VM access.
+ * @note This can only be called by the MasterGC thread.
+ * @param The requesting thread.
+ */
+void 
+MM_MetronomeDelegate::releaseExclusiveVMAccess(MM_EnvironmentBase *env, bool releaseRequired)
+{
+	J9VMThread *masterGCThread = (J9VMThread *)env->getLanguageVMThread();
+
+	--(masterGCThread->omrVMThread->exclusiveCount);
+	if (releaseRequired) {
+		_javaVM->internalVMFunctions->releaseExclusiveVMAccessMetronome(masterGCThread);
+		/* Set the exclusive access response counts to an unusual value,
+		 * just for debug purposes, so we can detect scenarios, when master
+		 * thread is waiting for Xaccess with noone requesting it before.
+		 */
+		_vmResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
+		_jniResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
+	}
+}
+
 #endif /* defined(J9VM_GC_REALTIME) */
 

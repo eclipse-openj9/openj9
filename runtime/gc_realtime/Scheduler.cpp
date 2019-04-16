@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "AtomicOperations.hpp"
-#include "BarrierSynchronization.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
 #include "GCCode.hpp"
@@ -91,9 +90,6 @@ MM_Scheduler::tearDown(MM_EnvironmentBase *env)
 	}
 	if (NULL != _utilTracker) {
 		_utilTracker->kill(env);
-	}
-	if (NULL != _barrierSynchronization) {
-		_barrierSynchronization->kill(env);
 	}
 	MM_ParallelDispatcher::kill(env);
 }
@@ -209,11 +205,6 @@ MM_Scheduler::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	_barrierSynchronization = MM_BarrierSynchronization::newInstance(env);
-	if (_barrierSynchronization == NULL) {
-		goto error_no_memory;
-	}
-
 	return true;
 
 error_no_memory:
@@ -287,7 +278,7 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 		omrthread_set_category(omrthread_self(), J9THREAD_CATEGORY_SYSTEM_GC_THREAD, J9THREAD_TYPE_SET_GC);
 	}
 
-	_barrierSynchronization->preRequestExclusiveVMAccess(thr);
+	_gc->getRealtimeDelegate()->preRequestExclusiveVMAccess(thr);
 
 	/* Wake up only the master thread -- it is responsible for
 	 * waking up any slaves.
@@ -364,7 +355,7 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 		 * that will be done by the master gc thread when it resumes activity after the masterThreadMonitor is notified
 		 * We do not block. It's best effort. If the request is success full TRUE is returned via requested flag.
 		 */
-		if (FALSE == _barrierSynchronization->requestExclusiveVMAccess(_threadWaitingOnMasterThreadMonitor, FALSE /* do not block */, &gcPriority)) {
+		if (FALSE == _gc->getRealtimeDelegate()->requestExclusiveVMAccess(_threadWaitingOnMasterThreadMonitor, FALSE /* do not block */, &gcPriority)) {
 			didGC = false;
 			goto exit;
 		}
@@ -382,7 +373,7 @@ exit:
 	}
 
 	omrthread_monitor_exit(_masterThreadMonitor);
-	_barrierSynchronization->postRequestExclusiveVMAccess(thr);
+	_gc->getRealtimeDelegate()->postRequestExclusiveVMAccess(thr);
 
 	return didGC;
 }
@@ -419,15 +410,15 @@ MM_Scheduler::waitForMutatorsToStop(MM_EnvironmentRealtime *env)
 	 * "if" statement and fix alarm thread not to die before requesting exlusive access for us.
 	 */
 	if (_masterThreadMustShutDown && _mode != WAKING_GC) {
-		uintptr_t gcPriority;
-		_barrierSynchronization->requestExclusiveVMAccess(env, TRUE /* block */, &gcPriority);
+		uintptr_t gcPriority = 0;
+		_gc->getRealtimeDelegate()->requestExclusiveVMAccess(env, TRUE /* block */, &gcPriority);
 		_gc->setGCThreadPriority(env->getOmrVMThread(), gcPriority);
 	}
 	/* Avoid another attempt to start up GC increment */
 	_mode = STOP_MUTATOR;
 	omrthread_monitor_exit(_masterThreadMonitor);
 
-	_barrierSynchronization->waitForExclusiveVMAccess(env, _exclusiveVMAccessRequired);
+	_gc->getRealtimeDelegate()->waitForExclusiveVMAccess(env, _exclusiveVMAccessRequired);
 
 	_mode = RUNNING_GC;
 
@@ -437,7 +428,7 @@ MM_Scheduler::waitForMutatorsToStop(MM_EnvironmentRealtime *env)
 void
 MM_Scheduler::startMutators(MM_EnvironmentRealtime *env) {
 	_mode = WAKING_MUTATOR;
-	_barrierSynchronization->releaseExclusiveVMAccess(env, _exclusiveVMAccessRequired);
+	_gc->getRealtimeDelegate()->releaseExclusiveVMAccess(env, _exclusiveVMAccessRequired);
 }
 
 void
