@@ -36,7 +36,7 @@ target_link_libraries(constgen
 add_custom_command(
 	OUTPUT ${j9vm_BINARY_DIR}/oti/jilconsts.inc ${j9vm_BINARY_DIR}/oti/jilvalues.m4
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${j9vm_BINARY_DIR}/oti
-	COMMAND  constgen
+	COMMAND $<TARGET_FILE:constgen>
 	VERBATIM
 	WORKING_DIRECTORY ${j9vm_BINARY_DIR}
 )
