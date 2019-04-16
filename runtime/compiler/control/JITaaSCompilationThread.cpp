@@ -3358,8 +3358,8 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {
-      clientSessionData->getJ9MethodMap().insert({ &methods[i], 
-            {romMethod, NULL, static_cast<bool>(methodTracingInfo[i])} });
+      clientSessionData->getJ9MethodMap().insert({&methods[i], 
+            {romMethod, NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz} });
       romMethod = nextROMMethod(romMethod);
       }
    }
