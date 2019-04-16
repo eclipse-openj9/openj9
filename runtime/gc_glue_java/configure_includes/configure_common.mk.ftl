@@ -45,7 +45,6 @@ CONFIGURE_ARGS += \
   --enable-OMR_GC_HYBRID_ARRAYLETS \
   --enable-OMR_GC_LEAF_BITS \
   --enable-OMR_GC_REALTIME \
-  --enable-OMR_GC_SCAVENGER_DELEGATE \
   --enable-OMR_GC_STACCATO \
   --enable-OMR_GC_VLHGC \
   --enable-OMR_PORT_ASYNC_HANDLER \
