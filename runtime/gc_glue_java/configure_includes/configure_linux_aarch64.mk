@@ -49,25 +49,24 @@ ifneq (,$(findstring _cross,$(SPEC)))
 	--host=$(OPENJ9_CC_PREFIX) \
 	--build=x86_64-pc-linux-gnu \
 	'OMR_CROSS_CONFIGURE=yes'
-endif
 
-ifeq (default,$(origin AS))
-	AS = $(OPENJ9_CC_PREFIX)-as
-endif
-ifeq (default,$(origin CC))
-	CC = $(OPENJ9_CC_PREFIX)-gcc
-endif
-ifeq (default,$(origin CXX))
-	CXX = $(OPENJ9_CC_PREFIX)-g++
-endif
-ifeq (default,$(origin AR))
-	AR = $(OPENJ9_CC_PREFIX)-ar
+	ifeq (default,$(origin AS))
+		AS = $(OPENJ9_CC_PREFIX)-as
+	endif
+	ifeq (default,$(origin CC))
+		CC = $(OPENJ9_CC_PREFIX)-gcc
+	endif
+	ifeq (default,$(origin CXX))
+		CXX = $(OPENJ9_CC_PREFIX)-g++
+	endif
+	ifeq (default,$(origin AR))
+		AR = $(OPENJ9_CC_PREFIX)-ar
+	endif
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'
 CONFIGURE_ARGS += 'CC=$(CC)'
 CONFIGURE_ARGS += 'CXX=$(CXX)'
-CONFIGURE_ARGS += 'OBJCOPY=$(OPENJ9_CC_PREFIX)-objcopy'
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
