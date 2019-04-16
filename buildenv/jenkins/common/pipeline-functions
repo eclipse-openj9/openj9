@@ -342,11 +342,13 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         ARTIFACTORY_SERVER = BUILD_JOB_ENV['ARTIFACTORY_SERVER']
         ARTIFACTORY_REPO = BUILD_JOB_ENV['ARTIFACTORY_REPO']
         ARTIFACTORY_NUM_ARTIFACTS = BUILD_JOB_ENV['ARTIFACTORY_NUM_ARTIFACTS']
+        ARTIFACTORY_MANUAL_CLEANUP = BUILD_JOB_ENV['ARTIFACTORY_MANUAL_CLEANUP']
         echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
         echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
         echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
+        echo "Passing ARTIFACTORY_MANUAL_CLEANUP:'${ARTIFACTORY_MANUAL_CLEANUP}'"
 
-        cleanup_artifactory(BUILD_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
+        cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, BUILD_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
     }
 
     if (TESTS_TARGETS.trim() != "none") {
@@ -371,7 +373,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
             testjobs["${TEST_JOB_NAME}"] = {
                 if (ARTIFACTORY_CREDS) {
-                    cleanup_artifactory(TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
+                    cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
                 } else {
                     jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
@@ -498,18 +500,20 @@ def get_downstream_job_names(spec, version, identifier) {
     return downstreamJobNames
 }
 
-def cleanup_artifactory(job_name, artifactory_server, artifactory_repo, artifactory_num_artifacts){
-    try {
-        def cleanup_job_params = [
-            string(name: 'JOB_TYPE', value: 'COUNT'),
-            string(name: 'JOB_TO_CHECK', value: job_name),
-            string(name: 'ARTIFACTORY_SERVER', value: artifactory_repo),
-            string(name: 'ARTIFACTORY_REPO', value: artifactory_repo),
-            string(name: 'ARTIFACTORY_NUM_ARTIFACTS', value: artifactory_num_artifacts)]
+def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server, artifactory_repo, artifactory_num_artifacts){
+    if (artifactory_manual_cleanup == 'true'){
+        try {
+            def cleanup_job_params = [
+                string(name: 'JOB_TYPE', value: 'COUNT'),
+                string(name: 'JOB_TO_CHECK', value: job_name),
+                string(name: 'ARTIFACTORY_SERVER', value: artifactory_repo),
+                string(name: 'ARTIFACTORY_REPO', value: artifactory_repo),
+                string(name: 'ARTIFACTORY_NUM_ARTIFACTS', value: artifactory_num_artifacts)]
 
-        build job: 'Cleanup_Artifactory', parameters: cleanup_job_params, wait: false
-    } catch (any){
-        echo 'The Cleanup_Artifactory job is not availible'
+            build job: 'Cleanup_Artifactory', parameters: cleanup_job_params, wait: false
+        } catch (any){
+            echo 'The Cleanup_Artifactory job is not availible'
+        }
     }
 }
 

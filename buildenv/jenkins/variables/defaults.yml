@@ -62,6 +62,7 @@ artifactory_creds: 'ab89294b-5ba1-48e9-8c85-107daca5a2e9'
 artifactory_num_artifacts: 30
 # This is being used for the cleanup script
 artifactory_days_to_keep_artifacts: 30
+artifactory_manual_cleanup: true
 #========================================#
 # Miscellaneous settings
 #========================================#
