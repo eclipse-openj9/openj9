@@ -22,6 +22,7 @@
 
 #include "x/codegen/X86PrivateLinkage.hpp"
 
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -660,7 +661,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
    //
    const bool frameIsSmall  = peakSize < STACKCHECKBUFFER;
    const bool frameIsMedium = !frameIsSmall;
-   
+
    if (trace)
       {
       traceMsg(comp(), "\nFrame size: %c%c locals=%d frame=%d peak=%d\n",

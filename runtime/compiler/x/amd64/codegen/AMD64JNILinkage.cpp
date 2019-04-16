@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
