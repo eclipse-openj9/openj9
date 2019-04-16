@@ -29,7 +29,7 @@ add_library(gptest SHARED
 target_link_libraries(gptest
 	PRIVATE
 		j9vm_interface
-		pthread
+		${OMR_PLATFORM_THREAD_LIBRARY}
 )
 target_include_directories(gptest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
