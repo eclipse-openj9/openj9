@@ -23,6 +23,7 @@
 #include "x/codegen/CallSnippet.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/SnippetGCMap.hpp"
 #include "env/CompilerEnv.hpp"
