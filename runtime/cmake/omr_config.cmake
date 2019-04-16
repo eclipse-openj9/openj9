@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,3 +25,6 @@ set(OMR_DDR OFF CACHE INTERNAL "")
 set(OMR_EXAMPLE OFF CACHE INTERNAL "")
 set(OMR_FVTEST OFF CACHE INTERNAL "")
 set(OMR_GC ON CACHE INTERNAL "")
+
+# Force OMR options to match mirrored j9vm options
+set(OMR_OPT_CUDA ${J9VM_OPT_CUDA} CACHE BOOL "" FORCE)
