@@ -812,6 +812,105 @@ JavaCoreDumpWriter::writeEventDrivenTitle(void)
 	_OutputStream.writeCharacters(" received \n");
 }
 
+#if defined(J9OS_I5)
+
+char * J9ProcessorArchitectureEnumToStr(J9ProcessorArchitecture input)
+{
+    switch (input) {
+    case PROCESSOR_UNDEFINED:
+        return "PROCESSOR_UNDEFINED";
+    case PROCESSOR_S390_UNKNOWN:
+        return "PROCESSOR_S390_UNKNOWN";
+    case PROCESSOR_S390_GP6:
+        return "PROCESSOR_S390_GP6";
+    case PROCESSOR_S390_GP7:
+        return "PROCESSOR_S390_GP7";
+    case PROCESSOR_S390_GP8:
+        return "PROCESSOR_S390_GP8";
+    case PROCESSOR_S390_GP9:
+        return "PROCESSOR_S390_GP9";
+    case PROCESSOR_S390_GP10:
+        return "PROCESSOR_S390_GP10";
+    case PROCESSOR_S390_GP11:
+        return "PROCESSOR_S390_GP11";
+    case PROCESSOR_PPC_UNKNOWN:
+        return "PROCESSOR_PPC_UNKNOWN";
+    case PROCESSOR_PPC_7XX:
+        return "PROCESSOR_PPC_7XX";
+    case PROCESSOR_PPC_GP:
+        return "PROCESSOR_PPC_GP";
+    case PROCESSOR_PPC_GR:
+        return "PROCESSOR_PPC_GR";
+    case PROCESSOR_PPC_NSTAR:
+        return "PROCESSOR_PPC_NSTAR";
+    case PROCESSOR_PPC_PULSAR:
+        return "PROCESSOR_PPC_PULSAR";
+    case PROCESSOR_PPC_PWR403:
+        return "PROCESSOR_PPC_PWR403";
+    case PROCESSOR_PPC_PWR405:
+        return "PROCESSOR_PPC_PWR405";
+    case PROCESSOR_PPC_PWR440:
+        return "PROCESSOR_PPC_PWR440";
+    case PROCESSOR_PPC_PWR601:
+        return "PROCESSOR_PPC_PWR601";
+    case PROCESSOR_PPC_PWR602:
+        return "PROCESSOR_PPC_PWR602";
+    case PROCESSOR_PPC_PWR603:
+        return "PROCESSOR_PPC_PWR603";
+    case PROCESSOR_PPC_PWR604:
+        return "PROCESSOR_PPC_PWR604";
+    case PROCESSOR_PPC_PWR620:
+        return "PROCESSOR_PPC_PWR620";
+    case PROCESSOR_PPC_PWR630:
+        return "PROCESSOR_PPC_PWR630";
+    case PROCESSOR_PPC_RIOS1:
+        return "PROCESSOR_PPC_RIOS1";
+    case PROCESSOR_PPC_RIOS2:
+        return "PROCESSOR_PPC_RIOS2";
+    case PROCESSOR_PPC_P6:
+        return "PROCESSOR_PPC_P6";
+    case PROCESSOR_PPC_P7:
+        return "PROCESSOR_PPC_P7";
+    case PROCESSOR_PPC_P8:
+        return "PROCESSOR_PPC_P8";
+    case PROCESSOR_PPC_P9:
+        return "PROCESSOR_PPC_P9";
+    case PROCESSOR_X86_UNKNOWN:
+        return "PROCESSOR_X86_UNKNOWN";
+    case PROCESSOR_X86_INTELPENTIUM:
+        return "PROCESSOR_X86_INTELPENTIUM";
+    case PROCESSOR_X86_INTELP6:
+        return "PROCESSOR_X86_INTELP6";
+    case PROCESSOR_X86_INTELPENTIUM4:
+        return "PROCESSOR_X86_INTELPENTIUM4";
+    case PROCESSOR_X86_INTELCORE2:
+        return "PROCESSOR_X86_INTELCORE2";
+    case PROCESSOR_X86_INTELTULSA:
+        return "PROCESSOR_X86_INTELTULSA";
+    case PROCESSOR_X86_INTELNEHALEM:
+        return "PROCESSOR_X86_INTELNEHALEM";
+    case PROCESSOR_X86_INTELWESTMERE:
+        return "PROCESSOR_X86_INTELWESTMERE";
+    case PROCESSOR_X86_INTELSANDYBRIDGE:
+        return "PROCESSOR_X86_INTELSANDYBRIDGE";
+    case PROCESSOR_X86_INTELHASWELL:
+        return "PROCESSOR_X86_INTELHASWELL";
+    case PROCESSOR_X86_AMDK5:
+        return "PROCESSOR_X86_AMDK5";
+    case PROCESSOR_X86_AMDK6:
+        return "PROCESSOR_X86_AMDK6";
+    case PROCESSOR_X86_AMDATHLONDURON:
+        return "PROCESSOR_X86_AMDATHLONDURON";
+    case PROCESSOR_X86_AMDOPTERON:
+        return "PROCESSOR_X86_AMDOPTERON";
+    case PROCESSOR_DUMMY:
+        return "PROCESSOR_DUMMY";
+    default :
+        return "PROCESSOR_UNKNOWN";
+        }
+}
+#endif
+
 /**************************************************************************************************/
 /*                                                                                                */
 /* JavaCoreDumpWriter::writeUserRequestedTitle() method implementation                              */
@@ -897,6 +996,15 @@ JavaCoreDumpWriter::writeProcessorSection(void)
 	_OutputStream.writeCharacters("3XHNUMCPUS       How Many       : ");
 	_OutputStream.writeInteger(numberOfCpus, "%i");
 	_OutputStream.writeCharacters("\n");
+
+#if defined(J9OS_I5)
+        J9ProcessorDesc desc;
+        memset(&desc, 0, sizeof(J9ProcessorDesc));
+        (void)j9sysinfo_get_processor_description(&desc);
+        _OutputStream.writeCharacters("3XHCPUVERS       Version        : ");
+        _OutputStream.writeCharacters(J9ProcessorArchitectureEnumToStr(desc.physicalProcessor));
+        _OutputStream.writeCharacters("\n");
+#endif
 
 	/* Write the NUMA support description */
 	_OutputStream.writeCharacters("3XHNUMASUP       ");
