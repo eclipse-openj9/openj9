@@ -25,12 +25,15 @@
 
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
-#include "control/JITaaSCompilationThread.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
 
 class TR_J9MethodFieldAttributes
    {
 public:
+   TR_J9MethodFieldAttributes() :
+      TR_J9MethodFieldAttributes(NULL, TR::NoType, false, false, false, false, false)
+      {}
+
    TR_J9MethodFieldAttributes(void *fieldOffsetOrAddress,
                               TR::DataType type,
                               bool volatileP,
@@ -47,10 +50,11 @@ public:
       _result(result)
       {}
 
-   bool operator==(const TR_J9MethodFieldAttributes &other)
+   bool operator==(const TR_J9MethodFieldAttributes &other) const
       {
+      if (!_result && !other._result) return true; // result is false, shouldn't compare other fields
       if (_fieldOffsetOrAddress != other._fieldOffsetOrAddress) return false;
-      if (_type != other._type) return false;
+      if (_type.getDataType() != other._type.getDataType()) return false;
       if (_volatileP != other._volatileP) return false;
       if (_isFinal != other._isFinal) return false;
       if (_isPrivate != other._isPrivate) return false;
@@ -70,6 +74,8 @@ public:
       setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
       if (address) *address = _fieldOffsetOrAddress;
       }
+
+   bool isUnresolvedInCP() const { return _unresolvedInCP; }
 
 private:
    void setMethodFieldAttributesResult(TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
@@ -91,6 +97,8 @@ private:
    bool _result;
    };
 
+using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodFieldAttributes>;
+
 struct
 TR_ResolvedJ9JITaaSServerMethodInfoStruct
    {
@@ -110,6 +118,7 @@ TR_ResolvedJ9JITaaSServerMethodInfoStruct
    void *addressContainingIsOverriddenBit;
    J9ClassLoader *classLoader;
    };
+
 
 // The last 3 strings are serialized versions of jittedBodyInfo, persistentMethodInfo and TR_ContiguousIPMethodHashTableInfo
 using TR_ResolvedJ9JITaaSServerMethodInfo = std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string, std::string>;
@@ -255,15 +264,21 @@ public:
 
 protected:
    JITaaS::J9ServerStream *_stream;
-   static void packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   J9Class *_ramClass; // client pointer to RAM class
    UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache;
    UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache;
+   static void packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   static void setAttributeResultFromResolvedMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, U_32 * fieldOffset, void **address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool * unresolvedInCP, bool *result, bool isStatic);
+   virtual bool getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic);
+   virtual void cacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
+   virtual TR_FieldAttributesCache *getAttributesCache(bool isStatic, bool unresolvedInCP=false);
+   virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation);
+   virtual bool canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
 
 private:
 
    J9ROMClass *_romClass; // cached copy of ROM class from client
    J9RAMConstantPoolItem *_literals; // client pointer to constant pool
-   J9Class *_ramClass; // client pointer to RAM class
    TR_ResolvedJ9Method *_remoteMirror;
    void *_startAddressForJittedMethod; // JIT entry point
    void *_addressContainingIsOverriddenBit; // Only valid at the client. Cached info from the client
@@ -331,6 +346,7 @@ protected:
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
+   virtual TR_FieldAttributesCache *getAttributesCache(bool isStatic, bool unresolvedInCP=false) override;
    UDATA getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex);
    };
 #endif // J9METHODSERVER_H

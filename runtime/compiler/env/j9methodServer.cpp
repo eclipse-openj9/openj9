@@ -128,18 +128,25 @@ TR_ResolvedJ9JITaaSServerMethod::getClassLoader()
 bool
 TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void * * address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
-   // only make a query if it's not in the cache
-   auto gotAttrs = _staticAttributesCache.find(cpIndex); 
-   if (gotAttrs == _staticAttributesCache.end())
+   bool isStatic = true;
+   TR_J9MethodFieldAttributes attributes;
+   if(!getCachedFieldAttributes(cpIndex, attributes, isStatic))
       {
+      // make a remote call, if attributes are not cached
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_staticAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
       auto recv = _stream->read<TR_J9MethodFieldAttributes>();
-      gotAttrs = _staticAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      attributes = std::get<0>(recv);
+
+      cacheFieldAttributes(cpIndex, attributes, isStatic);
       }
-   // access attributes from the cache
+   else
+      {
+      TR_ASSERT(validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, needAOTValidation), "static attributes from client and cache do not match");
+      }
+
    bool result;
-   auto attrs = gotAttrs->second;
-   attrs.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &result);
+   attributes.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &result);
+
    return result;
    }
 
@@ -414,22 +421,114 @@ TR_ResolvedJ9JITaaSServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMet
    return false;
    }
 
+TR_FieldAttributesCache *
+TR_ResolvedJ9JITaaSServerMethod::getAttributesCache(bool isStatic, bool unresolvedInCP)
+   {
+   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+   auto &attributesCache = isStatic ? 
+      getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCache :
+      getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCache;
+   if (!attributesCache)
+      {
+      // initialize cache, called once per ram class
+      attributesCache = new (PERSISTENT_NEW) TR_FieldAttributesCache(TR_FieldAttributesCache::allocator_type(TR::Compiler->persistentAllocator()));
+      }
+   return attributesCache;
+   }
+
+bool
+TR_ResolvedJ9JITaaSServerMethod::getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic)
+   {
+      {
+      // First, search a global cache
+      TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
+      auto attributesCache = getAttributesCache(isStatic);
+      auto it = attributesCache->find(cpIndex);
+      if (it != attributesCache->end())
+         {
+         attributes = it->second;
+         return true;
+         }
+      }
+
+   // If global cache is empty, search local cache
+   // Local cache is searched after global, because it only stores
+   // unresolved field attributes, so most attributes should be stored globally
+   auto &localCache = isStatic ? _staticAttributesCache : _fieldAttributesCache;
+   auto it = localCache.find(cpIndex);
+   if (it != localCache.end())
+      {
+      attributes = it->second;
+      return true;
+      }
+   return false;
+   }
+
+void
+TR_ResolvedJ9JITaaSServerMethod::cacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic)
+   {
+   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+   if (attributes.isUnresolvedInCP())
+      {
+      // field is unresolved in CP, can later become resolved, can only be cached per resolved method.
+      auto &attributesCache = isStatic ? _staticAttributesCache : _fieldAttributesCache;
+      attributesCache.insert({cpIndex, attributes});
+      }
+   else
+      {
+      // field is resolved in CP, can cache globally per RAM class.
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
+      auto attributesCache = getAttributesCache(isStatic);
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      TR_ASSERT(canCacheFieldAttributes(cpIndex, attributes, isStatic), "new and cached field attributes are not equal");
+#endif
+      attributesCache->insert({cpIndex, attributes});
+      }
+   }
+
+bool
+TR_ResolvedJ9JITaaSServerMethod::canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic)
+   {
+   auto attributesCache = getAttributesCache(isStatic);
+   auto it = attributesCache->find(cpIndex);
+   if (it != attributesCache->end())
+      {
+      // Attempting to cache attributes when this key is already cached.
+      // This case can happen when two threads call `getCachedFieldAttributes`,
+      // see that attributes are not cached, and they both make a remote call
+      // and call this method.
+      // Make sure that attributes they are caching are the same.
+      auto cachedAttrs = it->second;
+      return attributes == cachedAttrs;
+      }
+   return true;
+   }
+
 bool
 TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
-   // look up attributes in a cache, make a query only if they are not cached
-   auto gotAttrs = _fieldAttributesCache.find(cpIndex); 
-   if (gotAttrs == _fieldAttributesCache.end())
+   bool isStatic = false;
+   TR_J9MethodFieldAttributes attributes;
+   if(!getCachedFieldAttributes(cpIndex, attributes, isStatic))
       {
+      // make a remote call, if attributes are not cached
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
       auto recv = _stream->read<TR_J9MethodFieldAttributes>();
-      gotAttrs = _fieldAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      attributes = std::get<0>(recv);
+
+      cacheFieldAttributes(cpIndex, attributes, isStatic);
+      }
+   else
+      {
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      bool validated = validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, needAOTValidation);
+      TR_ASSERT(validated, "field attributes from client and cache do not match");
+#endif
       }
    
-   // access attributes from the cache
    bool result;
-   auto attrs = gotAttrs->second;
-   attrs.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &result);
+   attributes.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &result);
    return result;
    }
 
@@ -1512,6 +1611,20 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey ke
    return false;
    }
 
+bool
+TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
+   {
+   if (!isStatic)
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
+   else
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_staticAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
+   auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+   auto clientAttributes = std::get<0>(recv);
+   bool equal = attributes == clientAttributes;
+   return equal;
+   }
+
+
 TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
    : TR_ResolvedJ9JITaaSServerMethod(aMethod, fe, trMemory, owner, vTableSlot)
    {
@@ -2056,22 +2169,38 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * co
    // Will search per-resolved method cache and make a remote call if needed, client will call AOT version of the method.
    // We still need to create a validation record, and if it can't be added, change
    // return values appropriately.
+   bool isStatic = false;
+   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
    bool theFieldIsFromLocalClass = false;
    TR_OpaqueClassBlock *definingClass = NULL;
-   auto gotAttrs = _fieldAttributesCache.find(cpIndex); 
-   if (gotAttrs == _fieldAttributesCache.end())
+   TR_J9MethodFieldAttributes attributes;
+   if (!getCachedFieldAttributes(cpIndex, attributes, isStatic))
       {
       _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
       auto recv = _stream->read<TR_J9MethodFieldAttributes, TR_OpaqueClassBlock *>();
-      gotAttrs = _fieldAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      attributes = std::get<0>(recv);
       definingClass = std::get<1>(recv);
+      
+      cacheFieldAttributes(cpIndex, attributes, isStatic);
       }
-   auto attrs = gotAttrs->second;
-   attrs.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
+   else
+      {
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      if (!attributes.isUnresolvedInCP())
+         {
+         // Validate cached attributes from global cache.
+         // Do not validate locally cached attributes, because even if they are incorrect
+         // they only exist for the duration of one compilation
+         bool validated = validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool);
+         TR_ASSERT(validated, "static attributes from client and cache do not match");
+         }
+#endif
+      }
+   attributes.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
 
    bool fieldInfoCanBeUsed = false;
    bool resolveField = true;
-   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
+
    if (comp->getOption(TR_DisableAOTInstanceFieldResolution))
       {
       resolveField = false;
@@ -2132,22 +2261,31 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
    // Will search per-resolved method cache and make a remote call if needed, client will call AOT version of the method.
    // We still need to create a validation record, and if it can't be added, change
    // return values appropriately.
+   bool isStatic = true;
+   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
    bool theFieldIsFromLocalClass = false;
    TR_OpaqueClassBlock *definingClass = NULL;
-   auto gotAttrs = _staticAttributesCache.find(cpIndex); 
-   if (gotAttrs == _staticAttributesCache.end())
+   TR_J9MethodFieldAttributes attributes;
+   if(!getCachedFieldAttributes(cpIndex, attributes, isStatic))
       {
       _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
       auto recv = _stream->read<TR_J9MethodFieldAttributes, TR_OpaqueClassBlock *>();
-      gotAttrs = _staticAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      attributes = std::get<0>(recv);
       definingClass = std::get<1>(recv);
+      
+      cacheFieldAttributes(cpIndex, attributes, isStatic);
       }
-   auto attrs = gotAttrs->second;
-   attrs.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
+   else
+      {
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      bool validated = validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool);
+      TR_ASSERT(validated, "static attributes from client and cache do not match");
+#endif
+      }
+   attributes.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
 
    bool fieldInfoCanBeUsed = false;
    bool resolveField = true;
-   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
    if (comp->getOption(TR_DisableAOTInstanceFieldResolution))
       {
       resolveField = false;
@@ -2189,4 +2327,19 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
       }
 
    return theFieldIsFromLocalClass;
+   }
+
+TR_FieldAttributesCache *
+TR_ResolvedRelocatableJ9JITaaSServerMethod::getAttributesCache(bool isStatic, bool unresolvedInCP)
+   {
+   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+   auto &attributesCache = isStatic ? 
+      getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCacheAOT :
+      getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCacheAOT;
+   if (!attributesCache)
+      {
+      // initialize cache, called once per ram class
+      attributesCache = new (PERSISTENT_NEW) TR_FieldAttributesCache(TR_FieldAttributesCache::allocator_type(TR::Compiler->persistentAllocator()));
+      }
+   return attributesCache;
    }
