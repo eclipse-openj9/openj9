@@ -58,8 +58,7 @@ target_link_libraries(jvm_common
 		j9vmi
 
 		${CMAKE_DL_LIBS}
-		# TODO these are platform specific
-		pthread
+		${OMR_PLATFORM_THREAD_LIBRARY}
 )
 
 target_include_directories(jvm_common
@@ -78,6 +77,10 @@ target_link_libraries(jvm
 		jvm_common
 		j9util
 )
+
+if(OMR_OS_WINDOWS)
+	target_link_libraries(jvm PRIVATE ws2_32)
+endif()
 add_dependencies(jvm omrgc_hookgen)
 
 install(
