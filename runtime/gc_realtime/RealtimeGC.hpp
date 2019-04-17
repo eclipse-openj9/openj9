@@ -142,7 +142,7 @@ public:
 
 	void traceAll(MM_EnvironmentBase *env);
 
-	void clearGCStats(MM_EnvironmentBase *env);
+	void clearGCStats();
 	void mergeGCStats(MM_EnvironmentBase *env);
 
 	void reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, uintptr_t reasonParameter);
