@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2333,6 +2333,18 @@ _newStack:
 					errorTempData = (UDATA)nextStackPC;
 					goto _miscError;
 				} else {
+					if ((action != RTV_RETURN) 
+					&& (bc !=JBathrow) 
+					&& (bc !=JBtableswitch) 
+					&& (bc !=JBlookupswitch)
+					&& (bc !=JBgoto)
+					&& (bc !=JBgotow)
+					) {
+						/* Jazz 82615: Set the error code when it reaches unterminated dead code. */
+						errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
+						verboseErrorCode = BCV_ERR_DEAD_CODE;
+						goto _miscError;
+					}
 					/* no more maps, skip remaining code as dead */
 					pc = length;
 				}
@@ -2342,13 +2354,13 @@ _newStack:
 
 	/* StackMap/StackMapTable attribute treat all code as live */
 	/* Flow verification allows unterminated dead code */
-	if (J9ROMCLASS_HAS_VERIFY_DATA(romClass)
-			&& (action != RTV_RETURN) 
-			&& (bc !=JBathrow) 
-			&& (bc !=JBtableswitch) 
-			&& (bc !=JBlookupswitch)
-			&& (bc !=JBgoto)
-			&& (bc !=JBgotow)) {
+	if ((action != RTV_RETURN) 
+	&& (bc !=JBathrow) 
+	&& (bc !=JBtableswitch) 
+	&& (bc !=JBlookupswitch)
+	&& (bc !=JBgoto)
+	&& (bc !=JBgotow)
+	) {
 		/* Jazz 82615: Set the error code when it reaches unterminated dead code. */
 		errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 		verboseErrorCode = BCV_ERR_DEAD_CODE;
