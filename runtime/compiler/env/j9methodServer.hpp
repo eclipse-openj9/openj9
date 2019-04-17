@@ -28,43 +28,67 @@
 #include "control/JITaaSCompilationThread.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
 
-struct
-TR_J9MethodResolvedFieldAttributes
+class TR_J9MethodFieldAttributes
    {
-   // for field attributes, use fieldOffset,
-   // for static attributes, use address
-   union
-      {
-      U_32 fieldOffset;
-      void *address;
-      };
-   TR::DataTypes type; 
-   bool volatileP;
-   bool isFinal;
-   bool isPrivate;
-   bool unresolvedInCP;
-   bool result;
-   };
-struct
-TR_J9MethodResolvedRelocatableFieldAttributes
-   {
-   // for field attributes, use fieldOffset,
-   // for static attributes, use address
-   union
-      {
-      IDATA fieldOffset;
-      void *address;
-      };
-   J9Class *definingClass;
-   UDATA ltype;
-   bool unresolvedInCP;
-   };
+public:
+   TR_J9MethodFieldAttributes(void *fieldOffsetOrAddress,
+                              TR::DataType type,
+                              bool volatileP,
+                              bool isFinal,
+                              bool isPrivate,
+                              bool unresolvedInCP,
+                              bool result) :
+      _fieldOffsetOrAddress(fieldOffsetOrAddress),
+      _type(type),
+      _volatileP(volatileP),
+      _isFinal(isFinal),
+      _isPrivate(isPrivate),
+      _unresolvedInCP(unresolvedInCP),
+      _result(result)
+      {}
 
-union
-TR_J9MethodFieldAttributes
-   {
-   TR_J9MethodResolvedFieldAttributes resolvedFieldAttribute;
-   TR_J9MethodResolvedRelocatableFieldAttributes resolvedRelocatableFieldAttribute;
+   bool operator==(const TR_J9MethodFieldAttributes &other)
+      {
+      if (_fieldOffsetOrAddress != other._fieldOffsetOrAddress) return false;
+      if (_type != other._type) return false;
+      if (_volatileP != other._volatileP) return false;
+      if (_isFinal != other._isFinal) return false;
+      if (_isPrivate != other._isPrivate) return false;
+      if (_unresolvedInCP != other._unresolvedInCP) return false;
+      if (_result != other._result) return false;
+      return true;
+      }
+   
+   void setMethodFieldAttributesResult(uint32_t *fieldOffset, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
+      {
+      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
+      if (fieldOffset) *fieldOffset = (uint32_t) *( (uint32_t *) &_fieldOffsetOrAddress);
+      }
+
+   void setMethodFieldAttributesResult(void **address, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
+      {
+      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
+      if (address) *address = _fieldOffsetOrAddress;
+      }
+
+private:
+   void setMethodFieldAttributesResult(TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
+      {
+      if (type) *type = _type;
+      if (volatileP) *volatileP = _volatileP;
+      if (isFinal) *isFinal = _isFinal;
+      if (isPrivate) *isPrivate = _isPrivate;
+      if (unresolvedInCP) *unresolvedInCP = _unresolvedInCP;
+      if (result) *result = _result;
+      }
+
+   void *_fieldOffsetOrAddress; // stores uint32_t for non-static attributes
+   TR::DataType _type; 
+   bool _volatileP;
+   bool _isFinal;
+   bool _isPrivate;
+   bool _unresolvedInCP;
+   bool _result;
    };
 
 struct

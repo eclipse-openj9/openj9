@@ -137,14 +137,10 @@ TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 c
       gotAttrs = _staticAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
       }
    // access attributes from the cache
+   bool result;
    auto attrs = gotAttrs->second;
-   *address = attrs.resolvedFieldAttribute.address;
-   *type = attrs.resolvedFieldAttribute.type;
-   *volatileP = attrs.resolvedFieldAttribute.volatileP;
-   if (isFinal) *isFinal = attrs.resolvedFieldAttribute.isFinal;
-   if (isPrivate) *isPrivate = attrs.resolvedFieldAttribute.isPrivate;
-   if (unresolvedInCP) *unresolvedInCP = attrs.resolvedFieldAttribute.unresolvedInCP;
-   return attrs.resolvedFieldAttribute.result;
+   attrs.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &result);
+   return result;
    }
 
 TR_OpaqueClassBlock *
@@ -431,14 +427,10 @@ TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cp
       }
    
    // access attributes from the cache
+   bool result;
    auto attrs = gotAttrs->second;
-   *fieldOffset = attrs.resolvedFieldAttribute.fieldOffset;
-   *type = attrs.resolvedFieldAttribute.type;
-   *volatileP = attrs.resolvedFieldAttribute.volatileP;
-   if (isFinal) *isFinal = attrs.resolvedFieldAttribute.isFinal;
-   if (isPrivate) *isPrivate = attrs.resolvedFieldAttribute.isPrivate;
-   if (unresolvedInCP) *unresolvedInCP = attrs.resolvedFieldAttribute.unresolvedInCP;
-   return attrs.resolvedFieldAttribute.result;
+   attrs.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &result);
+   return result;
    }
 
 TR_ResolvedMethod *
@@ -2060,43 +2052,41 @@ bool
 TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-
-   I_32 volatileFlag = 0, finalFlag = 0, privateFlag = 0;
+   
+   // Will search per-resolved method cache and make a remote call if needed, client will call AOT version of the method.
+   // We still need to create a validation record, and if it can't be added, change
+   // return values appropriately.
    bool theFieldIsFromLocalClass = false;
-   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
+   TR_OpaqueClassBlock *definingClass = NULL;
+   auto gotAttrs = _fieldAttributesCache.find(cpIndex); 
+   if (gotAttrs == _fieldAttributesCache.end())
+      {
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
+      auto recv = _stream->read<TR_J9MethodFieldAttributes, TR_OpaqueClassBlock *>();
+      gotAttrs = _fieldAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      definingClass = std::get<1>(recv);
+      }
+   auto attrs = gotAttrs->second;
+   attrs.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
 
    bool fieldInfoCanBeUsed = false;
    bool resolveField = true;
-
-   // look up attributes in a cache, make a query only if they are not cached
-   auto gotAttrs = _fieldAttributesCache.find(cpIndex);
-   if (gotAttrs == _fieldAttributesCache.end())
-      {
-      _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes, ramMethod(), getRemoteMirror(), cpIndex, isStore, constantPool);
-      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
-      gotAttrs = _fieldAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
-      }
-
-   // access attributes from the cache
-   auto attrs = gotAttrs->second;
-   IDATA offset = attrs.resolvedRelocatableFieldAttribute.fieldOffset;
-   *unresolvedInCP = attrs.resolvedRelocatableFieldAttribute.unresolvedInCP;
-   UDATA ltype = attrs.resolvedRelocatableFieldAttribute.ltype;
-   J9Class *clazz = attrs.resolvedRelocatableFieldAttribute.definingClass;
-
+   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
    if (comp->getOption(TR_DisableAOTInstanceFieldResolution))
+      {
       resolveField = false;
+      }
    else
       {
       if (needAOTValidation)
          {
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
-            fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(reinterpret_cast<TR_OpaqueClassBlock *> (clazz), constantPool, cpIndex);
+            fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(reinterpret_cast<TR_OpaqueClassBlock *> (definingClass), constantPool, cpIndex);
             }
          else
             {
-            fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateInstanceField, ramMethod(), clazz);
+            fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateInstanceField, ramMethod());
             }
          }
       else
@@ -2105,50 +2095,26 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * co
          }
       }
 
-   if (offset == J9JIT_RESOLVE_FAIL_COMPILE)
-      {
-      comp->failCompilation<TR::CompilationException>("offset == J9JIT_RESOLVE_FAIL_COMPILE");
-      }
-
    if (!resolveField)
       {
       *fieldOffset = (U_32)NULL;
       fieldInfoCanBeUsed = false;
       }
-   if (offset >= 0 &&
-       (!(_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) ||
-        comp->ilGenRequest().details().isMethodHandleThunk() || // cmvc 195373
-        !performTransformation(comp, "Setting as unresolved field attributes cpIndex=%d\n",cpIndex))  && fieldInfoCanBeUsed
-       /*fieldIsFromLocalClass((void *)_methodCookie, cpIndex)*/)
-      {
-      theFieldIsFromLocalClass = true;
-      volatileFlag = (ltype & J9AccVolatile) ? 1 : 0;
-      finalFlag = (ltype & J9AccFinal) ? 1 : 0;
-      privateFlag = (ltype & J9AccPrivate) ? 1 : 0;
 
-      if (resolveField) *fieldOffset = offset + sizeof(J9Object);  // add header size
-      }
-   else
+   if (!fieldInfoCanBeUsed)
       {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-      ltype = getFieldType((J9ROMConstantPoolItem *)romLiterals(), cpIndex);
-#endif
+      theFieldIsFromLocalClass = false;
+      // Either couldn't create validation record 
+      // or AOT instance field resolution is disabled.
+      if (volatileP) *volatileP = true;
+      if (isFinal) *isFinal = false;
+      if (isPrivate) *isPrivate = false;
+      if (fieldOffset) *(U_32*)fieldOffset = (U_32) sizeof(J9Object);
       }
-
-   TR_ResolvedRelocatableJ9Method::setAttributeResult(false,
-                      theFieldIsFromLocalClass,
-                      ltype,
-                      volatileFlag,
-                      finalFlag,
-                      privateFlag,
-                      type,
-                      volatileP,
-                      isFinal,
-                      isPrivate,
-                      (void**)fieldOffset);
 
    return theFieldIsFromLocalClass;
    }
+
 bool
 TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp,
                                                  int32_t cpIndex,
@@ -2163,68 +2129,64 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   I_32 volatileFlag = 0, finalFlag = 0, privateFlag = 0;
+   // Will search per-resolved method cache and make a remote call if needed, client will call AOT version of the method.
+   // We still need to create a validation record, and if it can't be added, change
+   // return values appropriately.
    bool theFieldIsFromLocalClass = false;
-   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
-
-   bool fieldInfoCanBeUsed = false;
-
-   // only make a query if it's not in the cache
-   auto gotAttrs = _staticAttributesCache.find(cpIndex);
+   TR_OpaqueClassBlock *definingClass = NULL;
+   auto gotAttrs = _staticAttributesCache.find(cpIndex); 
    if (gotAttrs == _staticAttributesCache.end())
       {
-      _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes, ramMethod(), getRemoteMirror(), cpIndex, isStore, constantPool);
-      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
+      auto recv = _stream->read<TR_J9MethodFieldAttributes, TR_OpaqueClassBlock *>();
       gotAttrs = _staticAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      definingClass = std::get<1>(recv);
       }
-
-   // access attributes from the cache
    auto attrs = gotAttrs->second;
-   void *offset = attrs.resolvedRelocatableFieldAttribute.address;
-   *unresolvedInCP = attrs.resolvedRelocatableFieldAttribute.unresolvedInCP;
-   UDATA ltype = attrs.resolvedRelocatableFieldAttribute.ltype;
-   J9Class *clazz = attrs.resolvedRelocatableFieldAttribute.definingClass;
+   attrs.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
 
-   if (needAOTValidation)
+   bool fieldInfoCanBeUsed = false;
+   bool resolveField = true;
+   J9ConstantPool *constantPool = (J9ConstantPool *)literals();
+   if (comp->getOption(TR_DisableAOTInstanceFieldResolution))
       {
-      if (comp->getOption(TR_UseSymbolValidationManager))
+      resolveField = false;
+      }
+   else
+      {
+      if (needAOTValidation)
          {
-         fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), constantPool, cpIndex, true);
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(reinterpret_cast<TR_OpaqueClassBlock *> (definingClass), constantPool, cpIndex, true);
+            }
+         else
+            {
+            fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateInstanceField, ramMethod());
+            }
          }
       else
          {
-         fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateStaticField, ramMethod(), clazz);
+         fieldInfoCanBeUsed = true;
          }
       }
-   else
+
+   if (!resolveField)
       {
-      fieldInfoCanBeUsed = true;
+      *address = (U_32)NULL;
+      fieldInfoCanBeUsed = false;
       }
 
-   if (offset == (void *)J9JIT_RESOLVE_FAIL_COMPILE)
+   if (!fieldInfoCanBeUsed)
       {
-      comp->failCompilation<TR::CompilationException>("offset == J9JIT_RESOLVE_FAIL_COMPILE");
+      theFieldIsFromLocalClass = false;
+      // Either couldn't create validation record 
+      // or AOT instance field resolution is disabled.
+      if (volatileP) *volatileP = true;
+      if (isFinal) *isFinal = false;
+      if (isPrivate) *isPrivate = false;
+      if (address) *address = NULL;
       }
-
-   if (offset && fieldInfoCanBeUsed &&
-      (!(_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) ||
-      comp->ilGenRequest().details().isMethodHandleThunk() || // cmvc 195373
-      !performTransformation(comp, "Setting as unresolved static attributes cpIndex=%d\n",cpIndex)))
-      {
-      theFieldIsFromLocalClass = true;
-      volatileFlag = (ltype & J9AccVolatile) ? 1 : 0;
-      finalFlag = (ltype & J9AccFinal) ? 1 : 0;
-      privateFlag = (ltype & J9AccPrivate) ? 1 : 0;
-      *address = offset;
-      }
-   else
-      {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-      ltype = getFieldType((J9ROMConstantPoolItem *)romLiterals(), cpIndex);
-#endif
-      }
-
-   TR_ResolvedRelocatableJ9Method::setAttributeResult(true, theFieldIsFromLocalClass, ltype, volatileFlag, finalFlag, privateFlag, type, volatileP, isFinal, isPrivate, address);
 
    return theFieldIsFromLocalClass;
    }
