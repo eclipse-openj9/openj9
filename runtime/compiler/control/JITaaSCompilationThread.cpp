@@ -2286,6 +2286,9 @@ remoteCompile(
    )
    {
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Client must work with VM access");
+   // JITaas: if TR_EnableJITaaSPerCompCon is set, then each remote compilation establishes a new connection 
+   // instead of re-using the connection shared within a compilation thread
+   static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
 
    // Prepare the parameters for the compilation request
    J9Class *clazz = J9_CLASS_FROM_METHOD(method);
@@ -2295,6 +2298,54 @@ remoteCompile(
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
+   JITaaS::J9ClientStream *client = NULL;
+   if (enableJITaaSPerCompConn)
+      {
+      try 
+         {
+         client = new (PERSISTENT_NEW) JITaaS::J9ClientStream(compInfo->getPersistentInfo());
+         }
+      catch (const JITaaS::StreamFailure &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+
+         compiler->failCompilation<JITaaS::StreamFailure>(e.what());
+         }
+      catch (const std::bad_alloc &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+      
+         compiler->failCompilation<std::bad_alloc>(e.what());
+         }
+      }
+   else
+      {
+      client = compInfoPT->getClientStream();
+      if (!client)
+         {
+         try
+            {
+            client = new (PERSISTENT_NEW) JITaaS::J9ClientStream(compInfo->getPersistentInfo());
+            compInfoPT->setClientStream(client);
+            }
+         catch (const JITaaS::StreamFailure &e)
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+
+            compiler->failCompilation<JITaaS::StreamFailure>(e.what());
+            }
+         catch (const std::bad_alloc &e)
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+      
+            compiler->failCompilation<std::bad_alloc>(e.what());
+            }
+         }
+      }
 
    if (compiler->getOption(TR_UseSymbolValidationManager))
        {
@@ -2322,9 +2373,6 @@ remoteCompile(
    compInfo->incCompReqSeqNo();
    compInfo->getSequencingMonitor()->exit();
 
- 
-   JITaaS::J9ClientStream client(compInfo->getPersistentInfo());
-
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
    std::string dataCacheStr;
@@ -2332,6 +2380,7 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
    std::string svmSymbolToIdStr;
+   JITaaS::Status status; 
    try
       {
       // release VM access just before sending the compilation request
@@ -2344,7 +2393,7 @@ remoteCompile(
             "Client sending compReq seqNo=%u to server for method %s @ %s.",
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
-      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset, 
+      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset,
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), unloadedClasses,
                                  classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
       // re-acquire VM access and check for possible class unloading
@@ -2360,8 +2409,8 @@ remoteCompile(
          comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
          }
 
-      while(!handleServerMessage(&client, compiler->fej9vm()));
-      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string, std::string>();
+      while(!handleServerMessage(client, compiler->fej9vm()));
+      auto recv = client->getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string, std::string>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
@@ -2371,15 +2420,20 @@ remoteCompile(
       svmSymbolToIdStr = std::get<6>(recv);
       if (statusCode >= compilationMaxError)
          throw JITaaS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
+      status = client->waitForFinish();
       }
    catch (const JITaaS::StreamFailure &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
-      
+         
+      client->~J9ClientStream();
+      TR_Memory::jitPersistentFree(client);
+      compInfoPT->setClientStream(NULL);
+
       compiler->failCompilation<JITaaS::StreamFailure>(e.what());
       }
-   JITaaS::Status status = client.waitForFinish();
+
    TR_MethodMetaData *metaData = NULL;
    if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
       {
@@ -2492,6 +2546,12 @@ remoteCompile(
       {
       compInfoPT->getMethodBeingCompiled()->_compErrCode = statusCode;
       compiler->failCompilation<JITaaS::ServerCompFailure>("JITaaS compilation failed.");
+      }
+
+   if (enableJITaaSPerCompConn && client)
+      {
+      client->~J9ClientStream();
+      TR_Memory::jitPersistentFree(client);
       }
    return metaData;
    }
@@ -3652,6 +3712,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
 void
 TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider)
    {
+   static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
+
    bool abortCompilation = false;
    uint64_t clientId = 0;
    TR::CompilationInfo *compInfo = getCompilationInfo();
@@ -3887,6 +3949,15 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             getCompThreadId(), e.what());
       stream->cancel(); // This does nothing for raw sockets
       abortCompilation = true;
+#ifdef JITAAS_USE_RAW_SOCKETS
+      if (!enableJITaaSPerCompConn)
+         {
+         // Delete server stream
+         stream->~J9ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
+         }
+#endif
       }
    catch (const JITaaS::StreamCancel &e)
       {
@@ -3894,6 +3965,15 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
             getCompThreadId(), e.what());
       abortCompilation = true;
+#ifdef JITAAS_USE_RAW_SOCKETS
+      if (!enableJITaaSPerCompConn)
+         {
+         // Delete server stream
+         stream->~J9ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
+         }
+#endif
       }
    catch (const JITaaS::StreamOOO &e)
       {
@@ -3939,7 +4019,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       // Put the request back into the pool
       setMethodBeingCompiled(NULL); // Must have the compQmonitor
-      compInfo->recycleCompilationEntry(&entry);
+
+      compInfo->requeueOutOfProcessEntry(&entry);
 
       // Reset the pointer to the cached client session data
       if (getClientData())
@@ -3954,12 +4035,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
                   TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
                }
             }
-         setClientData(nullptr);
+         setClientData(NULL);
          }
 #ifdef JITAAS_USE_RAW_SOCKETS
-      // Delete server stream
-      stream->~J9ServerStream();
-      TR_Memory::jitPersistentFree(stream);
+      if (enableJITaaSPerCompConn)
+         {
+         // Delete server stream
+         stream->~J9ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
+         }
 #endif
       return;
       }
@@ -3997,7 +4082,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
       }
 
-   setClientData(nullptr); // Reset the pointer to the cached client session data
+   setClientData(NULL); // Reset the pointer to the cached client session data
 
    _customClassByNameMap.clear(); // reset before next compilation starts
    entry._newStartPC = startPC;
@@ -4009,8 +4094,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    compInfo->decreaseQueueWeightBy(entry._weight);
    // Put the request back into the pool
    setMethodBeingCompiled(NULL);
-   compInfo->recycleCompilationEntry(&entry);
-
+   compInfo->requeueOutOfProcessEntry(&entry);
    compInfo->printQueue();
 
    // Release the queue slot monitor
@@ -4072,10 +4156,15 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          compInfo->setSuspendThreadDueToLowPhysicalMemory(false);
       }
 
+   
 #ifdef JITAAS_USE_RAW_SOCKETS
-   // Delete server stream
-   stream->~J9ServerStream();
-   TR_Memory::jitPersistentFree(stream);
+   if (enableJITaaSPerCompConn)
+      {
+      // Delete server stream
+      stream->~J9ServerStream();
+      TR_Memory::jitPersistentFree(stream);
+      entry._stream = NULL;
+      }
 #endif
    }
 

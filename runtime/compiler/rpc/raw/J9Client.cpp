@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,9 @@
 
 namespace JITaaS
 {
+
+int J9ClientStream::_numConnectionsOpened = 0;
+int J9ClientStream::_numConnectionsClosed = 0;
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
@@ -245,6 +248,7 @@ J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
    initStream(connfd, ssl);
+   _numConnectionsOpened++;
    }
 
 Status

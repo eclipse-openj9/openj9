@@ -850,7 +850,8 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compilationThreadState(COMPTHREAD_UNINITIALIZED),
    _compilationShouldBeInterrupted(false),
    _addToJProfilingQueue(false),
-   _cachedClientDataPtr(nullptr)
+   _cachedClientDataPtr(nullptr),
+   _clientStream(NULL)
    {
    // At this point, compilation threads have not been fully started yet. getNumTotalCompilationThreads()
    // would not return a correct value. Need to use TR::Options::_numUsableCompilationThreads
@@ -3268,6 +3269,20 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       }
 
+   if (feGetEnv("TR_PrintJITaaSConnStats"))
+      {
+      if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         {
+         fprintf(stderr, "Number of connections opened = %u\n", JITaaS::J9ServerStream::_numConnectionsOpened);
+         fprintf(stderr, "Number of connections closed = %u\n", JITaaS::J9ServerStream::_numConnectionsClosed);
+         }
+      else if (getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         {
+         fprintf(stderr, "Number of connections opened = %u\n", JITaaS::J9ClientStream::_numConnectionsOpened);
+         fprintf(stderr, "Number of connections closed = %u\n", JITaaS::J9ClientStream::_numConnectionsClosed);
+         }
+      }
+
 #ifdef STATS
    if (compBudgetSupport() || dynamicThreadPriority())
       {
@@ -3775,6 +3790,7 @@ TR::CompilationInfoPerThread::processEntries()
          _compInfo.getQueueWeight()
          );
       }
+
    // Possible scenarios here
    // 1. We take a method from queue and compile it
    // 2. We refrain to take a method from queue because that means two simultaneous compilations --> wait to be notified
@@ -3836,7 +3852,7 @@ TR::CompilationInfoPerThread::processEntries()
                   // It's possible that a notification was sent just after the
                   // timeout expired. Hence, if something was added to the compilation
                   // queue we must attempt to process it
-                  if (_compInfo.getMethodQueueSize() > 0)
+                  if (compInfo->getMethodQueueSize() > 0)
                      {
                      setCompilationThreadState(COMPTHREAD_ACTIVE);
                      }
@@ -3946,6 +3962,18 @@ TR::CompilationInfoPerThread::processEntries()
          // Must change the state to prevent an infinite loop
          // Change it to COMPTHREAD_SIGNAL_WAIT because the compilation queue is empty
          setCompilationThreadState(COMPTHREAD_SIGNAL_WAIT);
+         }
+      }
+
+   static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !enableJITaaSPerCompConn)
+      {
+      JITaaS::J9ClientStream *client = getClientStream();
+      if (client)
+         {
+         client->~J9ClientStream();
+         TR_Memory::jitPersistentFree(client);
+         setClientStream(NULL);
          }
       }
    }
@@ -12445,7 +12473,7 @@ TR::CompilationInfoPerThread::updateLastLocalGCCounter()
 // entry is queued we do not know any details about the compilation request.
 // The method needs to be executed with compilation monitor in hand
 TR_MethodToBeCompiled *
-TR::CompilationInfo::addRemoteMethodToBeCompiled(JITaaS::J9ServerStream *stream)
+TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITaaS::J9ServerStream *stream)
    {
    TR_MethodToBeCompiled *entry = getCompilationQueueEntry(); // allocate a new entry
    if (entry)
@@ -12494,3 +12522,22 @@ TR::CompilationInfo::addRemoteMethodToBeCompiled(JITaaS::J9ServerStream *stream)
       }
    return entry;
    }
+
+void
+TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
+   {
+   TR_ASSERT(getPersistentInfo()->getJITaaSMode() == SERVER_MODE, "Should be called in JITaaS server mode only");
+
+   recycleCompilationEntry(entry);
+   // we do not requeue outOfProcessEntry for the Per-Compilation-Connection Mode
+   if (feGetEnv("TR_EnableJITaaSPerCompConn"))
+      return;
+
+   if (entry->_stream && addOutOfProcessMethodToBeCompiled(entry->_stream))
+      {
+      // successfully queued the new entry, so notify a thread
+      getCompilationMonitor()->notifyAll();
+      }
+   }
+
+

@@ -39,7 +39,10 @@ class J9ServerStream : J9Stream
    {
 public:
    J9ServerStream(int connfd, BIO *ssl, uint32_t timeout);
-   virtual ~J9ServerStream() {}
+   virtual ~J9ServerStream() 
+      {
+      _numConnectionsClosed++;
+      }
 
    template <typename ...T>
    void write(J9ServerMessageType type, T... args)
@@ -67,6 +70,9 @@ public:
       {
       return _clientId;
       }
+
+   static int _numConnectionsOpened;
+   static int _numConnectionsClosed;
 
 private:
    void finish();

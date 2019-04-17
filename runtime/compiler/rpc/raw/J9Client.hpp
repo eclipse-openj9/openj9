@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,10 @@ public:
    static void static_init(TR::PersistentInfo *info);
 
    J9ClientStream(TR::PersistentInfo *info);
-   virtual ~J9ClientStream() {}
+   virtual ~J9ClientStream()
+      {
+      _numConnectionsClosed++;
+      }
 
    template <typename... T>
    void buildCompileRequest(T... args)
@@ -76,6 +79,9 @@ public:
       }
 
    void shutdown();
+
+   static int _numConnectionsOpened;
+   static int _numConnectionsClosed;
 
 private:
    uint32_t _timeout;

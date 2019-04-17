@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,13 +31,14 @@
 void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
    {
    TR::CompilationInfo * compInfo = getCompilationInfo(_jitConfig);
+
    TR_MethodToBeCompiled *entry = NULL;
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server received request for stream %p", stream);
       {
       // Grab the compilation monitor to queue this entry and notify a compilation thread
       OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-      if (compInfo->addRemoteMethodToBeCompiled(stream))
+      if (compInfo->addOutOfProcessMethodToBeCompiled(stream))
          {
          // successfully queued the new entry, so notify a thread
          compInfo->getCompilationMonitor()->notifyAll();
