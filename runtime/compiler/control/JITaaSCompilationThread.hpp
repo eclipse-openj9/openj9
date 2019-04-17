@@ -113,9 +113,11 @@ class ClientSessionData
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & getSystemClassByNameMap() { return _systemClassByNameMap; }
+   PersistentUnorderedMap<J9Class *, UDATA *> & getClassClainDataCache() { return _classChainDataMap; }
    void processUnloadedClasses(JITaaS::J9ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getSystemClassMapMonitor() { return _systemClassMapMonitor; }
+   TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    VMInfo *getOrCacheVMInfo(JITaaS::J9ServerStream *stream);
@@ -166,9 +168,10 @@ class ClientSessionData
    // The following hashtable caches <classname> --> <J9Class> mappings
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> _systemClassByNameMap;
- 
+   PersistentUnorderedMap<J9Class *, UDATA *> _classChainDataMap;
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_systemClassMapMonitor;
+   TR::Monitor *_classChainDataMapMonitor;
    // The following monitor is used to protect access to _expectedSeqNo and 
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
    TR::Monitor *_sequencingMonitor;

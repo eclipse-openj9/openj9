@@ -810,10 +810,34 @@ UDATA *
 TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   // TODO: might want to keep a per-client cache of (class -> class chain)
-   // that were remembered to reduce the number of remote calls
+   auto clientData = TR::compInfoPT->getClientData();
+   PersistentUnorderedMap<J9Class *, UDATA *> & cache = clientData->getClassClainDataCache();
+      {
+      OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
+      auto it = cache.find(clazz);
+      if (it != cache.end())
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Chain exists (%p) so nothing to store \n", it->second);
+         return it->second;
+         }
+      }
    _stream->write(JITaaS::J9ServerMessageType::SharedCache_rememberClass, clazz, create);
-   return std::get<0>(_stream->read<UDATA *>());
+   UDATA * chainData = std::get<0>(_stream->read<UDATA *>());
+   if (chainData)
+      {
+      if (!create)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "not asked to create but could create, returning non-null \n");
+         }
+      else
+         {
+         OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
+         cache.insert(std::make_pair(clazz, chainData));
+         }
+      }
+   return chainData;
    }
 
 UDATA
