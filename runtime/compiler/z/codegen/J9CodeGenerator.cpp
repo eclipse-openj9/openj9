@@ -35,6 +35,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "il/Node.hpp"

@@ -28,6 +28,7 @@
 #include "j9cfg.h"
 #include "j9consts.h"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "env/VMJ9.h"
 #include "il/ILOps.hpp"
@@ -330,7 +331,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                      if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && loadNode->getDataType().isAddress())
                         {
                         TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", cg->comp()->signature()));
-                        
+
                         break;
                         }
 
@@ -444,7 +445,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
 
       if (opcode.hasSymbolReference() || opcode.isBranch())
          {
-         if (loadNode == NULL && 
+         if (loadNode == NULL &&
             opcode.isLoadIndirect() && (opcode.isRef() || opcode.isInt() || opcode.isLong()) &&
             currentNode->getFirstChild() == synchronizedObjectNode)
             {
