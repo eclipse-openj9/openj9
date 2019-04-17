@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (c) 2006, 2017 IBM Corp. and others
+   Copyright (c) 2006, 2019 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,9 @@
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="CFLAGS+=-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1"/>
+			<makefilestub data="trclog.o: CFLAGS+=-U_FORTIFY_SOURCE">
+				<include-if condition="spec.linux_aarch64.*"/>
+			</makefilestub>
 		</makefilestubs>
 		<libraries>
 			<library name="j9util"/>

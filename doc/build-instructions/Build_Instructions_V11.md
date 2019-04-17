@@ -715,8 +715,7 @@ For building on AArch64 Linux:
 ```
 bash configure --with-freemarker-jar=/<path_to>/freemarker.jar \
                --with-boot-jdk=/<path_to_boot_JDK> \
-               --disable-warnings-as-errors \
-               --disable-warnings-as-errors-openj9
+               --disable-warnings-as-errors
 ```
 
 For building in the Docker container:
@@ -728,8 +727,7 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --with-freemarker-jar=/root/freemarker.jar \
                --with-boot-jdk=/root/bootjdk11 \
                --with-build-jdk=/root/bootjdk11 \
-               --disable-warnings-as-errors \
-               --disable-warnings-as-errors-openj9
+               --disable-warnings-as-errors
 ```
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
