@@ -156,13 +156,14 @@ endif()
 
 # Generate jvmti header
 if(J9VM_IS_NON_STAGING)
-	set(JVMTI_HEADER_DIR  "${CMAKE_CURRENT_BINARY_DIR}/include")
+	set(JVMTI_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 	file(MAKE_DIRECTORY "${JVMTI_HEADER_DIR}")
 else()
-	set(JVMTI_HEADER_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+	set(JVMTI_HEADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 endif()
-add_custom_command(OUTPUT "${JVMTI_HEADER_DIR}/jvmti.h" 
-   	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > "jvmti.h"
+add_custom_command(OUTPUT "${JVMTI_HEADER_DIR}/jvmti.h"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4"
+	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > "jvmti.h"
 	VERBATIM
 	WORKING_DIRECTORY "${JVMTI_HEADER_DIR}"
 )
