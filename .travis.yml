@@ -51,6 +51,7 @@ addons:
       - libxtst-dev
       - make
       - nasm
+      - nvidia-cuda-dev
       - pkg-config
       - realpath
       - ssh
