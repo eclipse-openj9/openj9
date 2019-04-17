@@ -41,6 +41,7 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -265,11 +266,11 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    if (comp->getOption(TR_TraceCG))
       traceMsg(comp, "inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
 
-   // This evaluator function handles different indexOf() instrinsics, some of which are static calls without a 
+   // This evaluator function handles different indexOf() instrinsics, some of which are static calls without a
    // receiver. Hence, the need for static call check.
    const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
    const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
-   
+
    // Get call parameters where s1Value and s2Value are byte arrays
    TR::Register* s1ValueReg = cg->evaluate(node->getChild(firstCallArgIdx));
    TR::Register* s1LenReg = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+1));
@@ -308,7 +309,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    regDeps->addPostCondition(s2PartialVReg, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(s2Char1RepVReg, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(tmpVReg, TR::RealRegister::AssignAny);
-   
+
    // Labels
    TR::LabelSymbol* labelStart = generateLabelSymbol(cg);
    TR::LabelSymbol* labelFindS2Head = generateLabelSymbol(cg);
@@ -8960,7 +8961,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       current = cg->getAppendInstruction();
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
-      
+
       if (outlineNew)
          {
          if (isVariableLen)
@@ -9138,7 +9139,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             reloKind = TR_VerifyRefArrayForAlloc;
             // In AOT without SVM, we validate the class by pulling it from the constant pool which is not the array class as anewarray bytecode refers to the component class.
             // In the evaluator we directly refer to the array class.  In AOT with SVM we need to remember to validate the component class since relocation infrastructure is
-            // expecting component class. 
+            // expecting component class.
             if (comp->getOption(TR_UseSymbolValidationManager))
                classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
             }
