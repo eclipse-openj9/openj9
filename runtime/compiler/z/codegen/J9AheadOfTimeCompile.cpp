@@ -199,24 +199,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_VirtualRamMethodConst:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
-
-         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
-
-         *(uintptr_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(self()->comp())->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
-
-         uintptr_t cpIndex=(uintptr_t)tempSR->getCPIndex();
-         *(uintptr_t *)cursor =cpIndex;// cpIndex
-         cursor += SIZEPOINTER;
-         }
-         break;
       case TR_ClassAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();

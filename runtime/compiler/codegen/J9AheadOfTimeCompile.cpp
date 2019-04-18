@@ -229,6 +229,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_JNISpecialTargetAddress:
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
+      case TR_VirtualRamMethodConst:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
          TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
@@ -649,6 +650,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_JNISpecialTargetAddress:
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
+      case TR_VirtualRamMethodConst:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
 
@@ -1341,29 +1343,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   traceMsg(self()->comp(), "\nFirst address %x", *(uint32_t *)ep1);
                   }
                }
-            break;
-         case TR_VirtualRamMethodConst:
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            ep1 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep2 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep3 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-
-            if (is64BitTarget)
-            {
-            traceMsg(self()->comp(), "\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d",
-                            getNameForMethodRelocation(kind), *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3);
-            }
-            else
-            {
-            traceMsg(self()->comp(), "\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d",
-                            getNameForMethodRelocation(kind), *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3);
-            }
             break;
          case TR_InlinedInterfaceMethod:
          case TR_InlinedVirtualMethod:
