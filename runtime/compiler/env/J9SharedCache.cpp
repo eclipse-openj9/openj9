@@ -836,8 +836,12 @@ void
 TR_J9JITaaSServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   _stream->write(JITaaS::J9ServerMessageType::SharedCache_addHint, method, theHint);
-   _stream->read<JITaaS::Void>();
+   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   if (vmInfo->_hasSharedClassCache)
+      {
+      _stream->write(JITaaS::J9ServerMessageType::SharedCache_addHint, method, theHint);
+      _stream->read<JITaaS::Void>();
+      }
    }
 
 const void *
