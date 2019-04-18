@@ -385,25 +385,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateArbitraryClass:
-         {
-         TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*) relocation->getTargetAddress2();
-         TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
-
-         //store the classchain's offset for the classloader for the class
-         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCacheForCL;
-         cursor += SIZEPOINTER;
-
-         //store the classchain's offset for the class that needs to be validated in the second run
-         void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(classToValidate);
-         uintptr_t *classChainForClassToValidate = (uintptr_t *) aotCI->_classChain;
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_HCR:
          {
          flags = 0;

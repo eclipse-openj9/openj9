@@ -522,6 +522,23 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateArbitraryClass:
+         {
+         TR_RelocationRecordValidateArbitraryClass *vacRecord = reinterpret_cast<TR_RelocationRecordValidateArbitraryClass *>(reloRecord);
+
+         TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
+         TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
+
+         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+
+         void *classChainForClassToValidate = aotCI->_classChain;
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
+
+         vacRecord->setClassChainIdentifyingLoaderOffset(reloTarget, classChainOffsetInSharedCacheForCL);
+         vacRecord->setClassChainOffsetForClassBeingValidated(reloTarget, classChainOffsetInSharedCache);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -806,6 +823,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                       cpRecord->inlinedSiteIndex(reloTarget),
                                       cpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
                                       cpRecord->classChainForInlinedMethod(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateArbitraryClass:
+         {
+         TR_RelocationRecordValidateArbitraryClass *vacRecord = reinterpret_cast<TR_RelocationRecordValidateArbitraryClass *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nValidateArbitraryClass Relocation: classChainOffsetForClassToValidate = %p, classChainIdentifyingClassLoader = %p",
+                                      vacRecord->classChainOffsetForClassBeingValidated(reloTarget),
+                                      vacRecord->classChainIdentifyingLoaderOffset(reloTarget));
             }
          }
          break;
@@ -1308,28 +1339,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   traceMsg(self()->comp(), "\nFirst address %x", *(uint32_t *)ep1);
                   }
                }
-            break;
-         case TR_ValidateArbitraryClass:
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            ep1 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep2 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-
-            if (is64BitTarget)
-            {
-            traceMsg(self()->comp(), "\nValidateArbitraryClass Relocation: classChainOffsetForClassToValidate = %p, classChainIdentifyingClassLoader = %p",
-                            *(uint64_t *)ep1, *(uint64_t *)ep2);
-            }
-            else
-            {
-            traceMsg(self()->comp(), "\nValidateArbitraryClass Relocation: classChainOffsetForClassToValidate = %p, classChainIdentifyingClassLoader = %p",
-                            *(uint32_t *)ep1, *(uint32_t *)ep2);
-            }
-
             break;
          case TR_JNISpecialTargetAddress:
          case TR_VirtualRamMethodConst:
