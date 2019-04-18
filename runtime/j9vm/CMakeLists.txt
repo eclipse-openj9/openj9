@@ -82,6 +82,7 @@ if(OMR_OS_WINDOWS)
 	target_link_libraries(jvm PRIVATE ws2_32)
 endif()
 add_dependencies(jvm omrgc_hookgen)
+include(exports.cmake)
 
 install(
 	TARGETS jvm
