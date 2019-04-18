@@ -100,7 +100,7 @@ ppc64le_linux:
     10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
-    next: '/usr/lib/jvm/adoptojdk-java-11'
+    next: '/usr/lib/jvm/adoptojdk-java-12'
   release:
     8: 'linux-ppc64le-normal-server-release'
     9: 'linux-ppc64le-normal-server-release'
@@ -144,7 +144,7 @@ s390x_linux:
     10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
-    next: '/usr/lib/jvm/adoptojdk-java-11'
+    next: '/usr/lib/jvm/adoptojdk-java-12'
   release:
     8: 'linux-s390x-normal-server-release'
     9: 'linux-s390x-normal-server-release'
@@ -186,7 +186,7 @@ ppc64_aix:
     10: '/usr/java9_64'
     11: '/usr/java11_64'
     12: '/usr/java11_64'
-    next: '/usr/java11_64'
+    next: '/usr/java12_64'
   release:
     8: 'aix-ppc64-normal-server-release'
     9: 'aix-ppc64-normal-server-release'
@@ -225,7 +225,7 @@ x86-64_linux:
     10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/jdk-11'
     12: '/usr/lib/jvm/jdk-11'
-    next: '/usr/lib/jvm/jdk-11'
+    next: '/usr/lib/jvm/adoptojdk-java-12'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
@@ -267,7 +267,7 @@ x86-64_linux_cm:
     10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/jdk-11'
     12: '/usr/lib/jvm/jdk-11'
-    next: '/usr/lib/jvm/jdk-11'
+    next: '/usr/lib/jvm/adoptojdk-java-12'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
@@ -319,7 +319,7 @@ x86-64_linux_xl:
     10: '/usr/lib/jvm/adoptojdk-java-90'
     11: '/usr/lib/jvm/jdk-11'
     12: '/usr/lib/jvm/jdk-11'
-    next: '/usr/lib/jvm/jdk-11'
+    next: '/usr/lib/jvm/adoptojdk-java-12'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
@@ -364,7 +364,7 @@ x86-64_windows:
     10: '/cygdrive/c/openjdk/jdk9'
     11: '/cygdrive/c/openjdk/jdk11'
     12: '/cygdrive/c/openjdk/jdk11'
-    next: '/cygdrive/c/openjdk/jdk11'
+    next: '/cygdrive/c/openjdk/jdk12'
   release:
     8: 'windows-x86_64-normal-server-release'
     9: 'windows-x86_64-normal-server-release'
@@ -421,7 +421,7 @@ x86-64_mac:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-11'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-12'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
@@ -454,7 +454,7 @@ x86-64_mac_xl:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-11'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-12'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
