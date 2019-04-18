@@ -500,7 +500,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t inlinedSiteIndex = static_cast<uintptr_t>(aconstNode->getInlinedSiteIndex());
 
          TR_OpaqueMethodBlock *j9method = reinterpret_cast<TR_OpaqueMethodBlock *>(aconstNode->getAddress());
-
          if (aconstNode->getOpCodeValue() == TR::loadaddr)
             j9method = reinterpret_cast<TR_OpaqueMethodBlock *>(aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress());
 
@@ -515,6 +514,35 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          mpRecord->setClassChainForInlinedMethod(reloTarget, classChainForInlinedMethodOffsetInSharedCache);
          mpRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainOffsetOfCLInSharedCache);
          mpRecord->setVTableSlot(reloTarget, vTableOffset);
+         }
+         break;
+
+      case TR_ClassPointer:
+         {
+         TR_RelocationRecordClassPointer *cpRecord = reinterpret_cast<TR_RelocationRecordClassPointer *>(reloRecord);
+
+         TR::Node *aconstNode = reinterpret_cast<TR::Node *>(relocation->getTargetAddress());
+         uintptr_t inlinedSiteIndex = static_cast<uintptr_t>(aconstNode->getInlinedSiteIndex());
+
+         TR_OpaqueClassBlock *j9class = NULL;
+         if (relocation->getTargetAddress2())
+            {
+            j9class = reinterpret_cast<TR_OpaqueClassBlock *>(relocation->getTargetAddress2());
+            }
+         else
+            {
+            if (aconstNode->getOpCodeValue() == TR::loadaddr)
+               j9class = reinterpret_cast<TR_OpaqueClassBlock *>(aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress());
+            else
+               j9class = reinterpret_cast<TR_OpaqueClassBlock *>(aconstNode->getAddress());
+            }
+
+         uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->getClassChainOffset(j9class);
+
+         cpRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         cpRecord->setClassChainForInlinedMethod(reloTarget, classChainForInlinedMethodOffsetInSharedCache);
+         cpRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainOffsetOfCLInSharedCache);
          }
          break;
 
@@ -786,6 +814,21 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                       mpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
                                       mpRecord->classChainForInlinedMethod(reloTarget),
                                       mpRecord->vTableSlot(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ClassPointer:
+         {
+         TR_RelocationRecordClassPointer *cpRecord = reinterpret_cast<TR_RelocationRecordClassPointer *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nClass Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p",
+                                      cpRecord->inlinedSiteIndex(reloTarget),
+                                      cpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
+                                      cpRecord->classChainForInlinedMethod(reloTarget));
             }
          }
          break;
@@ -1222,7 +1265,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             break;
 
          case TR_ArbitraryClassAddress:
-         case TR_ClassPointer:
             cursor++;           // unused field
             if (is64BitTarget)
                cursor += 4;     // padding

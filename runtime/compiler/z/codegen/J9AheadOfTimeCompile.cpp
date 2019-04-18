@@ -693,36 +693,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_ClassPointer:
-         {
-         TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
-
-         uintptr_t inlinedSiteIndex = (uintptr_t)aconstNode->getInlinedSiteIndex();
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         //for optimizations where we are trying to relocate either profiled j9class or getfrom signature we can't use node to get the target address
-         //so we need to pass it to relocation in targetaddress2 for now
-         //two instances where use this relotype in such way are: profile checkcast and arraystore check object check optimizations
-
-         TR_OpaqueClassBlock *j9class = NULL;
-         if (relocation->getTargetAddress2())
-            j9class = (TR_OpaqueClassBlock *) relocation->getTargetAddress2();
-         else
-            {
-            j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
-            if (aconstNode->getOpCodeValue() == TR::loadaddr)
-               j9class = (TR_OpaqueClassBlock *) aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
-            }
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, j9class);
-         }
-         break;
-
       case TR_ArbitraryClassAddress:
          {
          // ExternalRelocation data is as expected for TR_ClassAddress
