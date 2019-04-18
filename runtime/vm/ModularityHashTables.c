@@ -24,21 +24,64 @@
 #include "j9protos.h"
 #include "ut_j9vm.h"
 
+static j9object_t moduleHashGetName(const void *entry);
+static UDATA moduleNameHashFn(void *key, void *userData);
+static UDATA moduleNameHashEqualFn(void *leftKey, void *rightKey, void *userData);
+static UDATA modulePointerHashFn(void *key, void *userData);
+static UDATA modulePointerHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA packageHashFn(void *key, void *userData);
 static UDATA packageHashEqualFn(void *leftKey, void *rightKey, void *userData);
-static UDATA moduleHashFn(void *key, void *userData);
-static UDATA moduleHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA moduleExtraInfoHashFn(void *key, void *userData);
 static UDATA moduleExtraInfoHashEqualFn(void *tableNode, void *queryNode, void *userData);
 
+static j9object_t
+moduleHashGetName(const void *entry)
+{
+	const J9Module** const modulePtr = (const J9Module**)entry;
+	const J9Module* const module = *modulePtr;
+	j9object_t moduleName = module->moduleName;
+
+	return moduleName;
+}
 static UDATA 
-moduleHashFn(void *key, void *userData) 
+moduleNameHashFn(void *key, void *userData) 
+{
+	J9JavaVM *javaVM = (J9JavaVM*) userData;
+	j9object_t name = moduleHashGetName(key);
+
+	return javaVM->memoryManagerFunctions->j9gc_stringHashFn(&name, userData);
+}
+static UDATA  
+moduleNameHashEqualFn(void *tableNode, void *queryNode, void *userData)
+{
+	J9JavaVM *javaVM = (J9JavaVM*) userData;
+
+	const J9Module* const tableNodeModule = *((J9Module**)tableNode);
+	j9object_t tableNodeModuleName = tableNodeModule->moduleName;
+
+	const J9Module* const queryNodeModule = *((J9Module**)queryNode);
+	j9object_t queryNodeModuleName = queryNodeModule->moduleName;
+
+	Assert_VM_true(tableNodeModule->classLoader == queryNodeModule->classLoader);
+	
+	return javaVM->memoryManagerFunctions->j9gc_stringHashEqualFn(&tableNodeModuleName, &queryNodeModuleName, userData);
+}
+
+static UDATA 
+modulePointerHashFn(void *key, void *userData) 
 {
 	const J9Module** const modulePtr = (const J9Module**)key;
 	
 	return (UDATA)(*modulePtr);
 }
+static UDATA  
+modulePointerHashEqualFn(void *tableNode, void *queryNode, void *userData)
+{
+	const J9Module* const tableNodeModule = *((J9Module**)tableNode);
+	const J9Module* const queryNodeModule = *((J9Module**)queryNode);
 
+	return tableNodeModule == queryNodeModule;
+}
 
 static UDATA 
 packageHashFn(void *key, void *userData) 
@@ -55,15 +98,6 @@ moduleExtraInfoHashFn(void *key, void *userData)
 	J9ModuleExtraInfo *entry = (J9ModuleExtraInfo *)key;
 
 	return (UDATA)entry->j9module;
-}
-
-static UDATA  
-moduleHashEqualFn(void *tableNode, void *queryNode, void *userData)
-{
-	const J9Module* const tableNodeModule = *((J9Module**)tableNode);
-	const J9Module* const queryNodeModule = *((J9Module**)queryNode);
-
-	return tableNodeModule == queryNodeModule;
 }
 
 static UDATA  
@@ -85,11 +119,19 @@ moduleExtraInfoHashEqualFn(void *tableNode, void *queryNode, void *userData)
 }
 
 J9HashTable *
-hashModuleTableNew(J9JavaVM *javaVM, U_32 initialSize)
+hashModuleNameTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, moduleHashFn, moduleHashEqualFn, NULL, javaVM);
+	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, moduleNameHashFn, moduleNameHashEqualFn, NULL, javaVM);
+}
+
+J9HashTable *
+hashModulePointerTableNew(J9JavaVM *javaVM, U_32 initialSize)
+{
+	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
+
+	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, modulePointerHashFn, modulePointerHashEqualFn, NULL, javaVM);
 }
 
 J9HashTable *

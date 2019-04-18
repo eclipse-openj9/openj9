@@ -204,7 +204,7 @@ createPackage(J9VMThread * currentThread, J9Module * fromModule, const char *pac
 			freePackage(currentThread, j9package);
 			return retval;
 		}
-		j9package->exportsHashTable = vmFuncs->hashModuleTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
+		j9package->exportsHashTable = vmFuncs->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 		if (NULL != j9package->exportsHashTable) {
 			retval = j9package;
 		}
@@ -263,7 +263,7 @@ createModule(J9VMThread * currentThread, j9object_t moduleObject, J9ClassLoader 
 	if (NULL != j9mod) {
 		j9mod->moduleName = moduleName;
 
-		j9mod->readAccessHashTable = vmFuncs->hashModuleTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
+		j9mod->readAccessHashTable = vmFuncs->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 
 		if (NULL != j9mod->readAccessHashTable) {
 			j9mod->classLoader = classLoader;
@@ -666,7 +666,7 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
 				 * at the same time.
 				 */
 				if (NULL == fromModule->removeAccessHashTable) {
-					fromModule->removeAccessHashTable = vm->internalVMFunctions->hashModuleTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
+					fromModule->removeAccessHashTable = vm->internalVMFunctions->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 				}
 				if (NULL != fromModule->removeAccessHashTable) {
 					Trc_MODULE_invokeHashTableAtPut(currentThread, "allowReadAccessToModule(removeAccessHashTable)", fromModule, fromModule->removeAccessHashTable, &toModule, toModule, "false");

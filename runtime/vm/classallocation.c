@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,7 +172,7 @@ allocateClassLoader(J9JavaVM *javaVM)
 		/* memset not required as the classLoaderBlocks pool returns zero'd memory */
 
 		classLoader->classHashTable = hashClassTableNew(javaVM, INITIAL_CLASSHASHTABLE_SIZE);
-		classLoader->moduleHashTable = hashModuleTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
+		classLoader->moduleHashTable = hashModuleNameTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
 		classLoader->packageHashTable = hashPackageTableNew(javaVM, INITIAL_PACKAGE_HASHTABLE_SIZE);
 		/* Allocate classLocationHashTable only for bootloader which is the first classloader to be allocated.
 		 * The classLoader being allocated must be the bootloader if javaVM->systemClassLoader is NULL.
