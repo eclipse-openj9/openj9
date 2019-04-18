@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 #include "MetronomeDelegate.hpp"
 
 #if defined(J9VM_GC_REALTIME)
@@ -109,9 +108,35 @@ MM_MetronomeDelegate::signalProtectedFunction(J9PortLibrary *privatePortLibrary,
 }
 
 void
-MM_MetronomeDelegate::clearGCStats(MM_EnvironmentBase *env)
+MM_MetronomeDelegate::clearGCStats()
 {
 	_extensions->markJavaStats.clear();
+}
+
+void
+MM_MetronomeDelegate::clearGCStatsEnvironment(MM_EnvironmentRealtime *env)
+{
+	env->_markStats.clear();
+	env->getGCEnvironment()->_markJavaStats.clear();
+	env->_workPacketStats.clear();
+}
+
+void
+MM_MetronomeDelegate::mergeGCStats(MM_EnvironmentRealtime *env)
+{
+	GC_Environment *gcEnv = env->getGCEnvironment();
+
+	MM_GlobalGCStats *finalGCStats= &_extensions->globalGCStats;
+	finalGCStats->markStats.merge(&env->_markStats);
+	_extensions->markJavaStats.merge(&gcEnv->_markJavaStats);
+	finalGCStats->workPacketStats.merge(&env->_workPacketStats);
+}
+
+uintptr_t
+MM_MetronomeDelegate::getSplitArraysProcessed(MM_EnvironmentRealtime *env)
+{
+	GC_Environment *gcEnv = env->getGCEnvironment();
+	return gcEnv->_markJavaStats.splitArraysProcessed;
 }
 
 bool

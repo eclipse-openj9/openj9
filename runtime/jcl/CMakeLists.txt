@@ -213,6 +213,8 @@ if(NOT JAVA_SPEC_VERSION LESS 12)
 	# sources for Java 12+
 endif()
 
+include(exports.cmake)
+
 install(
 	TARGETS jclse
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

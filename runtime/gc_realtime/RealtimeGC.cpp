@@ -242,7 +242,7 @@ MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 	_workPackets->reset(env);	
 	
 	/* Clear the gc stats structure */
-	clearGCStats(env);
+	clearGCStats();
 
 	_realtimeDelegate.masterSetupForGC(env);
 }
@@ -267,10 +267,10 @@ MM_RealtimeGC::workerSetupForGC(MM_EnvironmentBase *env)
 /**
  */
 void
-MM_RealtimeGC::clearGCStats(MM_EnvironmentBase *env)
+MM_RealtimeGC::clearGCStats()
 {
 	_extensions->globalGCStats.clear();
-	_realtimeDelegate.clearGCStats(env);
+	_realtimeDelegate.clearGCStats();
 }
 
 /**
