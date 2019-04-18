@@ -80,7 +80,10 @@ public:
 	void incrementalCollectStart(MM_EnvironmentRealtime *env);
 	void incrementalCollect(MM_EnvironmentRealtime *env);
 	void doAuxilaryGCWork(MM_EnvironmentBase *env);
-	void clearGCStats(MM_EnvironmentBase *env);
+	void clearGCStats();
+	void clearGCStatsEnvironment(MM_EnvironmentRealtime *env);
+	void mergeGCStats(MM_EnvironmentRealtime *env);
+	uintptr_t getSplitArraysProcessed(MM_EnvironmentRealtime *env);
 	void reportSyncGCEnd(MM_EnvironmentBase *env);
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
