@@ -52,13 +52,13 @@ TR_JITaaSIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *
    if (entry)
       {
       memset(entry, 0, sizeof(TR_IPMethodHashTableEntry));
-      entry->_next = nullptr;
+      entry->_next = NULL;
       entry->_method = serialEntry->_method;
       entry->_otherBucket = serialEntry->_otherBucket;
 
       size_t callerCount = 0;
       for (; callerCount < TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS; callerCount++)
-         if (serialEntry->_callers[callerCount]._method == nullptr)
+         if (serialEntry->_callers[callerCount]._method == NULL)
             break;
 
       TR_IPMethodData *callerStore = (TR_IPMethodData*) trMemory->allocateHeapMemory(callerCount * sizeof(TR_IPMethodData));
@@ -80,7 +80,7 @@ TR_JITaaSIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *
             caller->setMethod(serialCaller._method);
             caller->setPCIndex(serialCaller._pcIndex);
             caller->setWeight(serialCaller._weight);
-            caller->next = nullptr;
+            caller->next = NULL;
             }
          }
       }
@@ -112,7 +112,7 @@ TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry)
 TR_IPBytecodeHashTableEntry*
 TR_JITaaSIProfiler::ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind)
    {
-   TR_IPBytecodeHashTableEntry *entry =  nullptr;
+   TR_IPBytecodeHashTableEntry *entry =  NULL;
    uint32_t entryType = storage->ID;
    if (entryType == TR_IPBCD_FOUR_BYTES)
       {
@@ -145,13 +145,13 @@ TR_JITaaSIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t buc
    auto stream = TR::CompilationInfo::getStream();
    if (!stream)
       {
-      return nullptr;
+      return NULL;
       }
    stream->write(JITaaS::J9ServerMessageType::IProfiler_searchForMethodSample, omb);
    const std::string entryStr = std::get<0>(stream->read<std::string>());
    if (entryStr.empty())
       {
-      return nullptr;
+      return NULL;
       }
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
    return deserializeMethodEntry(serialEntry, TR::comp()->trMemory());
@@ -162,10 +162,10 @@ TR_IPBytecodeHashTableEntry*
 TR_JITaaSIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData, uint32_t freq)
    {
    if (addIt)
-      return nullptr; // Server should not create any samples
+      return NULL; // Server should not create any samples
 
    TR_ASSERT(false, "not implemented for JITaaS");
-   return nullptr;
+   return NULL;
    }
 
 
@@ -176,11 +176,11 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
                                   TR::Compilation *comp, uintptrj_t data, bool addIt)
    {
    if (addIt)
-      return nullptr; // Server should not create any samples
+      return NULL; // Server should not create any samples
 
    ClientSessionData *clientSessionData = comp->fej9()->_compInfoPT->getClientData();
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) comp->fej9()->_compInfoPT;
-   TR_IPBytecodeHashTableEntry *entry = nullptr;
+   TR_IPBytecodeHashTableEntry *entry = NULL;
 
    // Check the cache first, if allowed
    //
@@ -208,7 +208,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          bool usePersistentCache = std::get<2>(recv);
          TR_ASSERT(!wholeMethod, "Client should not have sent whole method info");
          uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-         TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? nullptr : (TR_IPBCDataStorageHeader *) &ipdata[0];
+         TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? NULL : (TR_IPBCDataStorageHeader *) &ipdata[0];
          bool isMethodBeingCompiled = (method == comp->getMethodBeingCompiled()->getPersistentIdentifier());
 
          if (!clientData && entry)
@@ -244,12 +244,12 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          {
          // cache some empty data so that we don't ask again for this method
          // this method contains empty data
-         if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, nullptr))
+         if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, NULL))
                _statsIProfilerInfoCachingFailures++;
-         else if (!usePersistentCache && !compInfoPT->cacheIProfilerInfo(method, byteCodeIndex, nullptr))   
+         else if (!usePersistentCache && !compInfoPT->cacheIProfilerInfo(method, byteCodeIndex, NULL))   
                _statsIProfilerInfoCachingFailures++;
          }
-      return nullptr;
+      return NULL;
       }
    
    uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
@@ -258,7 +258,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
       {
       // Walk the data sent by the client and add new entries to our internal hashtable
       const char *bufferPtr = &ipdata[0];
-      TR_IPBCDataStorageHeader *storage = nullptr;
+      TR_IPBCDataStorageHeader *storage = NULL;
       do {
          storage = (TR_IPBCDataStorageHeader *)bufferPtr;
          // allocate a new entry of the specified type
@@ -321,7 +321,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          {
          // Find my desired pc/bci and return a heap allocated entry for it
          const char *bufferPtr = &ipdata[0];
-         TR_IPBCDataStorageHeader *storage = nullptr;
+         TR_IPBCDataStorageHeader *storage = NULL;
          do {
             storage = (TR_IPBCDataStorageHeader *)bufferPtr;
             uint32_t bci = storage->pc;
@@ -505,7 +505,7 @@ TR_JITaaSClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries,
                                                         uintptr_t memChunk, uintptrj_t methodStartAddress)
    {
    uintptr_t crtAddr = memChunk;
-   TR_IPBCDataStorageHeader * storage = nullptr;
+   TR_IPBCDataStorageHeader * storage = NULL;
    for (uint32_t i = 0; i < numEntries; ++i)
       {
       storage = (TR_IPBCDataStorageHeader *)crtAddr;
@@ -535,11 +535,11 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
    uintptrj_t methodSize  = (uintptrj_t)TR::Compiler->mtd.bytecodeSize(method);
    uintptrj_t methodStart = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
 
-   uintptrj_t * pcEntries = nullptr;
+   uintptrj_t * pcEntries = NULL;
    bool abort = false;
    try {
       TR_ResolvedJ9Method resolvedj9method = TR_ResolvedJ9Method(method, comp->fej9(), comp->trMemory());
-      TR_J9ByteCodeIterator bci(nullptr, &resolvedj9method, static_cast<TR_J9VMBase *> (comp->fej9()), comp);
+      TR_J9ByteCodeIterator bci(NULL, &resolvedj9method, static_cast<TR_J9VMBase *> (comp->fej9()), comp);
       // Allocate memory for every possible node in this method
       TR_BitVector *BCvisit = new (comp->trStackMemory()) TR_BitVector(methodSize, comp->trMemory(), stackAlloc);
       pcEntries = (uintptrj_t *)comp->trMemory()->allocateMemory(sizeof(uintptrj_t) * methodSize, stackAlloc);
@@ -589,7 +589,7 @@ std::string
 TR_JITaaSClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
    {
    // find entry in a hash table, if it exists
-   auto entry = findOrCreateMethodEntry(nullptr, (J9Method *) omb, false);
+   auto entry = findOrCreateMethodEntry(NULL, (J9Method *) omb, false);
    if (entry)
       {
       auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);

@@ -127,7 +127,7 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
       ERR_print_errors_fp(stderr);
       exit(1);
       }
-   EVP_PKEY *privKey = PEM_read_bio_PrivateKey(keyMem, nullptr, nullptr, nullptr);
+   EVP_PKEY *privKey = PEM_read_bio_PrivateKey(keyMem, NULL, NULL, NULL);
    if (!privKey)
       {
       perror("cannot parse private key");
@@ -149,7 +149,7 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
       ERR_print_errors_fp(stderr);
       exit(1);
       }
-   X509 *certificate = PEM_read_bio_X509(certMem, nullptr, nullptr, nullptr);
+   X509 *certificate = PEM_read_bio_X509(certMem, NULL, NULL, NULL);
    if (!certificate)
       {
       perror("cannot parse cert");
@@ -172,7 +172,7 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
       }
 
    // verify server identity using standard method
-   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
    return ctx;
    }
@@ -180,7 +180,7 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
 void
 J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
-   SSL_CTX *sslCtx = nullptr;
+   SSL_CTX *sslCtx = NULL;
    if (useSSL(info))
       {
       initSSL();
@@ -245,8 +245,8 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
       {
       struct sockaddr_in cli_addr;
       socklen_t clilen = sizeof(cli_addr);
-      SSL *ssl = nullptr;
-      BIO *bio = nullptr;
+      SSL *ssl = NULL;
+      BIO *bio = NULL;
 
       int connfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
       if (connfd < 0)

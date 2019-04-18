@@ -64,7 +64,7 @@ struct TR_MethodToBeCompiled
    bool isAotLoad() const { return _doAotLoad; }
    bool isRemoteCompReq() const { return _remoteCompReq; } // at the client
    void setRemoteCompReq() { _remoteCompReq = true; }
-   bool isOutOfProcessCompReq() const { return _stream != nullptr; } // at the server
+   bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
    void cleanupJITaaS();
    bool hasChangedToLocalSyncComp() const { return _origOptLevel != unknownHotness; }

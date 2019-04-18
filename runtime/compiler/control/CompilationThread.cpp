@@ -642,7 +642,7 @@ J9ROMClass *
 TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memory *trMemory)
    {
    auto romClass = getRemoteROMClassIfCached(clazz);
-   if (romClass == nullptr)
+   if (romClass == NULL)
       {
       JITaaSHelpers::ClassInfoTuple classInfoTuple;
       romClass = JITaaSHelpers::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &classInfoTuple);
@@ -850,7 +850,7 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compilationThreadState(COMPTHREAD_UNINITIALIZED),
    _compilationShouldBeInterrupted(false),
    _addToJProfilingQueue(false),
-   _cachedClientDataPtr(nullptr),
+   _cachedClientDataPtr(NULL),
    _clientStream(NULL)
    {
    // At this point, compilation threads have not been fully started yet. getNumTotalCompilationThreads()
@@ -930,8 +930,8 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _numJITCompilations = 0;
    _lastTimeThreadWasSuspended = 0;
    _lastTimeThreadWentToSleep = 0;
-   _serverVM = nullptr;
-   _sharedCacheServerVM = nullptr;
+   _serverVM = NULL;
+   _sharedCacheServerVM = NULL;
 
    if (compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
@@ -940,7 +940,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
       }
    else
       {
-      _classesThatShouldNotBeNewlyExtended = nullptr;
+      _classesThatShouldNotBeNewlyExtended = NULL;
       }
    }
 
@@ -1038,11 +1038,11 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _lowPriorityCompilationScheduler.setCompInfo(this);
    _JProfilingQueue.setCompInfo(this);
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
-   _clientSessionHT = nullptr; // This will be set later when options are processed
-   _unloadedClassesTempList = nullptr;
+   _clientSessionHT = NULL; // This will be set later when options are processed
+   _unloadedClassesTempList = NULL;
    _sequencingMonitor = TR::Monitor::create("JIT-SequencingMonitor");
    _compReqSeqNo = 0;
-   _newlyExtendedClasses = nullptr;
+   _newlyExtendedClasses = NULL;
    _chTableUpdateFlags = 0;
    }
 
@@ -1370,7 +1370,7 @@ TR::CompilationInfo::getMethodBytecodeSize(const J9ROMMethod * romMethod)
 JITaaS::J9ServerStream *
 TR::CompilationInfo::getStream()
    {
-   return (TR::compInfoPT) ? TR::compInfoPT->getStream() : nullptr;
+   return (TR::compInfoPT) ? TR::compInfoPT->getStream() : NULL;
    }
 
 uint32_t
@@ -3667,7 +3667,7 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
 JITaaS::J9ServerStream *
 TR::CompilationInfoPerThread::getStream()
    {
-   return (_methodBeingCompiled) ? _methodBeingCompiled->_stream : nullptr;
+   return (_methodBeingCompiled) ? _methodBeingCompiled->_stream : NULL;
    }
 
 void
@@ -11364,7 +11364,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
    ) 
    {
    bool safeToStore;
-   const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
+   const J9JITDataCacheHeader *storedCompiledMethod = NULL;
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
 

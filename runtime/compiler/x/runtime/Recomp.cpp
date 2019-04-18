@@ -122,7 +122,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
    TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
    return linkageInfo->isRecompMethodBody() ?
       *(TR_PersistentJittedBodyInfo **)((uint8_t*)startPC + START_PC_TO_METHOD_INFO_ADDRESS) :
-      nullptr;
+      NULL;
    }
 
 // This method should only be called for methods compiled for sampling

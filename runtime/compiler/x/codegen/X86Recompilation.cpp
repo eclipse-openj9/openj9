@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ TR_PersistentMethodInfo *TR_X86Recompilation::getExistingMethodInfo(TR_ResolvedM
    // method was compiled for sampling or counting.
    //
    TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) method)->getExistingJittedBodyInfo();
-   return bodyInfo ? bodyInfo->getMethodInfo() : nullptr;
+   return bodyInfo ? bodyInfo->getMethodInfo() : NULL;
    }
 
 TR::Instruction *TR_X86Recompilation::generatePrePrologue()

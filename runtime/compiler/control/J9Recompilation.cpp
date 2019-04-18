@@ -741,12 +741,12 @@ J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInf
    memcpy(bodyInfo, &bodyInfoStr[0], sizeof(TR_PersistentJittedBodyInfo));
    memcpy(methodInfo, &methodInfoStr[0], sizeof(TR_PersistentMethodInfo));
    bodyInfo->setMethodInfo(methodInfo);
-   bodyInfo->setProfileInfo(nullptr);
-   bodyInfo->setMapTable(nullptr);
-   methodInfo->setOptimizationPlan(nullptr);
+   bodyInfo->setProfileInfo(NULL);
+   bodyInfo->setMapTable(NULL);
+   methodInfo->setOptimizationPlan(NULL);
    // cannot use setter because it calls the destructor on the old profile data,
    // which is a client pointer
-   methodInfo->_recentProfileInfo = nullptr;
-   methodInfo->_bestProfileInfo = nullptr;
+   methodInfo->_recentProfileInfo = NULL;
+   methodInfo->_bestProfileInfo = NULL;
    return bodyInfo;
    }

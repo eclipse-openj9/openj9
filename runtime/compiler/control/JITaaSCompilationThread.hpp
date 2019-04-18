@@ -76,7 +76,7 @@ class ClientSessionData
       {
       J9ROMMethod *_romMethod; // pointer to local/server cache
       // The following is a hashtable that maps a bcIndex to IProfiler data
-      // The hashtable is created on demand (nullptr means it is missing)
+      // The hashtable is created on demand (NULL means it is missing)
       IPTable_t *_IPData;
       bool _isMethodTracingEnabled;
       };
@@ -155,7 +155,7 @@ class ClientSessionData
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
-   TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
+   TR_OpaqueClassBlock *_javaLangClassPtr; // NULL means not set
    // Server side cache of CHTable
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap;
    // Server side cache of j9classes and their properties; romClass is copied so it can be accessed by the server
@@ -181,7 +181,7 @@ class ClientSessionData
    int8_t _numActiveThreads; // Number of threads working on compilations for this client
                              // This is smaller or equal to _inUse because some threads
                              // could be just starting or waiting in _OOSequenceEntryList
-   VMInfo *_vmInfo; // info specific to a client VM that does not change, nullptr means not set
+   VMInfo *_vmInfo; // info specific to a client VM that does not change, NULL means not set
    bool _markedForDeletion; //Client Session is marked for deletion. When the inUse count will become zero this will be deleted.
    TR_AddressSet *_unloadedClassAddresses; // Per-client versions of the unloaded class and method addresses kept in J9PersistentInfo
    bool           _requestUnloadedClasses; // If true we need to request the current state of unloaded classes from the client

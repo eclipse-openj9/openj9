@@ -72,7 +72,7 @@ TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
    {
-   TR_OpaqueClassBlock *parentClass = nullptr;
+   TR_OpaqueClassBlock *parentClass = NULL;
 
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_PARENT_CLASS, (void *)&parentClass);
@@ -89,7 +89,7 @@ TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
                                   TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance)
    {
-   return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, nullptr, -1, owningMethod);
+   return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, NULL, -1, owningMethod);
    }
 
 TR_ResolvedMethod *
@@ -249,7 +249,7 @@ void *
 TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock * classPointer)
    {
    TR_ASSERT(false, "The server vm should not call getClassLoader.");
-   return nullptr;
+   return NULL;
    }
 
 TR_OpaqueClassBlock *
@@ -263,7 +263,7 @@ TR_J9ServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims)
    {
-   TR_OpaqueClassBlock *baseComponentClass = nullptr;
+   TR_OpaqueClassBlock *baseComponentClass = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_NUMBER_DIMENSIONS, &numDims, JITaaSHelpers::CLASSINFO_BASE_COMPONENT_CLASS, (void *)&baseComponentClass);
 
@@ -273,7 +273,7 @@ TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numD
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
    {
-   TR_OpaqueClassBlock *leafComponentClass = nullptr;
+   TR_OpaqueClassBlock *leafComponentClass = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_LEAF_COMPONENT_CLASS, (void *)&leafComponentClass);
    return leafComponentClass;
@@ -282,7 +282,7 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
    {
-   TR_OpaqueClassBlock * clazz = nullptr;
+   TR_OpaqueClassBlock * clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
    // If the classloader is the systemClassLoader, which cannot be unloaded,
    // then look into the global, 'per client', cache
@@ -415,7 +415,7 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    {
-   TR_OpaqueClassBlock *componentClass = nullptr;
+   TR_OpaqueClassBlock *componentClass = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_COMPONENT_CLASS, (void *)&componentClass);
    return componentClass;
@@ -609,7 +609,7 @@ bool
 TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    {
    uint32_t modifiers = 0;
-   TR_OpaqueClassBlock * componentClass = nullptr;
+   TR_OpaqueClassBlock * componentClass = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers, JITaaSHelpers::CLASSINFO_COMPONENT_CLASS, (void *)&componentClass);
 
@@ -693,7 +693,7 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazz)
    {
-   TR_OpaqueClassBlock *hostClass = nullptr;
+   TR_OpaqueClassBlock *hostClass = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_HOST_CLASS, (void *)&hostClass);
 
@@ -986,8 +986,8 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
 bool
 TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBlock * class2)
    {
-   void *class1Loader = nullptr;
-   void *class2Loader = nullptr;
+   void *class1Loader = NULL;
+   void *class2Loader = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)class1, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&class1Loader);
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)class2, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&class2Loader);
@@ -1000,8 +1000,8 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_Resolve
    {
    TR_OpaqueClassBlock * classOfMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(methodBeingCompiled)->classOfMethod();
    uint32_t extraModifiers = 0;
-   void *classLoader = nullptr;
-   void *classOfMethodLoader = nullptr;
+   void *classLoader = NULL;
+   void *classOfMethodLoader = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
 
    if (clazz == classOfMethod)
@@ -1115,7 +1115,7 @@ TR_J9ServerVM::getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlo
    stream->write(JITaaS::J9ServerMessageType::VM_getReferenceSlotsInClass, clazz);
    std::string slotsStr = std::get<0>(stream->read<std::string>());
    if (slotsStr == "")
-      return nullptr;
+      return NULL;
    int32_t *refSlots = (int32_t *)comp->trHeapMemory().allocate(slotsStr.size());
    if (!refSlots)
       throw std::bad_alloc();
@@ -1253,7 +1253,7 @@ TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcIn
 bool
 TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    {
-   void *classLoader = nullptr;
+   void *classLoader = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&classLoader);
 
@@ -1296,7 +1296,7 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj
    TR_OpaqueMethodBlock *archetype = std::get<0>(recv);
    std::string thunkableSignature = std::get<1>(recv);
    if (!archetype)
-      return nullptr;
+      return NULL;
 
    TR_ResolvedMethod *result = createResolvedMethodWithSignature(trMemory, archetype, NULL, &thunkableSignature[0], thunkableSignature.length(), owningMethod);
    result->convertToMethod()->setArchetypeSpecimen();

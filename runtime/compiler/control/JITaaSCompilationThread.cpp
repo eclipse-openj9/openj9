@@ -1111,7 +1111,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          bool canBeUnresolved = std::get<2>(recv);
-         J9Method *ramMethod = nullptr;
+         J9Method *ramMethod = NULL;
          bool unresolved = false, tookBranch = false;
          if (canBeUnresolved)
             {
@@ -1310,7 +1310,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
-         J9Method *j9method = nullptr;
+         J9Method *j9method = NULL;
             {
             TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
             j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
@@ -2571,7 +2571,7 @@ remoteCompilationEnd(
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
    J9JITConfig *jitConfig = compInfoPT->getJitConfig();
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-   const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
+   const J9JITDataCacheHeader *storedCompiledMethod = NULL;
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
 
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE()) // for relocating received JIT compilations
@@ -2850,13 +2850,13 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
-   _javaLangClassPtr = nullptr;
+   _javaLangClassPtr = NULL;
    _inUse = 1;
    _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
    _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSSystemClassMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
-   _vmInfo = nullptr;
+   _vmInfo = NULL;
    _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
    _markedForDeletion = false;
    }
@@ -2935,7 +2935,7 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
                   }
                ipDataHT->~IPTable_t();
                jitPersistentFree(ipDataHT);
-               iter->second._IPData = nullptr;
+               iter->second._IPData = NULL;
                }
             _J9MethodMap.erase(j9method);
             }
@@ -2954,7 +2954,7 @@ TR_IPBytecodeHashTableEntry*
 ClientSessionData::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent)
    {
    *methodInfoPresent = false;
-   TR_IPBytecodeHashTableEntry *ipEntry = nullptr;
+   TR_IPBytecodeHashTableEntry *ipEntry = NULL;
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
    // check whether info about j9method is cached
    auto & j9methodMap = getJ9MethodMap();
@@ -3123,7 +3123,7 @@ ClientSessionData::clearCaches()
             }
          ipDataHT->~IPTable_t();
          jitPersistentFree(ipDataHT);
-         it.second._IPData = nullptr;
+         it.second._IPData = NULL;
          }
       }
    _J9MethodMap.clear();
@@ -3198,7 +3198,7 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
 bool
 ClientSessionHT::deleteClientSession(uint64_t clientUID, bool forDeletion)
    {
-   ClientSessionData *clientData = nullptr;
+   ClientSessionData *clientData = NULL;
    auto clientDataIt = _clientSessionMap.find(clientUID);
    if (clientDataIt != _clientSessionMap.end())
       {
@@ -3224,7 +3224,7 @@ ClientSessionHT::deleteClientSession(uint64_t clientUID, bool forDeletion)
 ClientSessionData *
 ClientSessionHT::findClientSession(uint64_t clientUID)
    {
-   ClientSessionData *clientData = nullptr;
+   ClientSessionData *clientData = NULL;
    auto clientDataIt = _clientSessionMap.find(clientUID);
    if (clientDataIt != _clientSessionMap.end())
       {
@@ -3326,8 +3326,8 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    J9Method *methods = classInfoStruct.methodsOfClass;
    classInfoStruct.baseComponentClass = std::get<2>(classInfo);
    classInfoStruct.numDimensions = std::get<3>(classInfo);
-   classInfoStruct._remoteROMStringsCache = nullptr;
-   classInfoStruct._fieldOrStaticNameCache = nullptr;
+   classInfoStruct._remoteROMStringsCache = NULL;
+   classInfoStruct._fieldOrStaticNameCache = NULL;
    classInfoStruct.parentClass = std::get<4>(classInfo);
    auto &tmpInterfaces = std::get<5>(classInfo);
    classInfoStruct.interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
@@ -3344,8 +3344,8 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct.componentClass = std::get<14>(classInfo);
    classInfoStruct.arrayClass = std::get<15>(classInfo);
    classInfoStruct.totalInstanceSize = std::get<16>(classInfo);
-   classInfoStruct._classOfStaticCache = nullptr;
-   classInfoStruct._constantClassPoolCache = nullptr;
+   classInfoStruct._classOfStaticCache = NULL;
+   classInfoStruct._constantClassPoolCache = NULL;
    classInfoStruct.remoteRomClass = std::get<17>(classInfo);
    classInfoStruct._fieldAttributesCache = NULL;
    classInfoStruct._staticAttributesCache = NULL;
@@ -3359,7 +3359,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    for (uint32_t i = 0; i < numMethods; i++)
       {
       clientSessionData->getJ9MethodMap().insert({ &methods[i], 
-            {romMethod, nullptr, static_cast<bool>(methodTracingInfo[i])} });
+            {romMethod, NULL, static_cast<bool>(methodTracingInfo[i])} });
       romMethod = nextROMMethod(romMethod);
       }
    }
@@ -3369,7 +3369,7 @@ JITaaSHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J
    {
    OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
-   return (it == clientSessionData->getROMClassMap().end()) ? nullptr : it->second.romClass;
+   return (it == clientSessionData->getROMClassMap().end()) ? NULL : it->second.romClass;
    }
 
 JITaaSHelpers::ClassInfoTuple

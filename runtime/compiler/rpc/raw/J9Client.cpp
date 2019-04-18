@@ -87,7 +87,7 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
       ERR_print_errors_fp(stderr);
       exit(1);
       }
-   STACK_OF(X509_INFO) *certificates = PEM_X509_INFO_read_bio(certMem, nullptr, nullptr, nullptr);
+   STACK_OF(X509_INFO) *certificates = PEM_X509_INFO_read_bio(certMem, NULL, NULL, NULL);
    if (!certificates)
       {
       perror("cannot parse cert");
@@ -113,7 +113,7 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
    sk_X509_INFO_pop_free(certificates, X509_INFO_free);
 
    // verify server identity using standard method
-   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
    _sslCtx = ctx;
 
@@ -185,7 +185,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
 BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    {
    if (!ctx)
-      return nullptr;
+      return NULL;
 
    SSL *ssl = SSL_new(ctx);
    if (!ssl)

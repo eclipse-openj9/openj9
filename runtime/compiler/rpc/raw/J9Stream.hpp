@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,14 +34,14 @@ class J9Stream
    {
 protected:
    J9Stream()
-      : _inputStream(nullptr),
-      _outputStream(nullptr),
-      _ssl(nullptr),
-      _sslInputStream(nullptr),
-      _sslOutputStream(nullptr),
+      : _inputStream(NULL),
+      _outputStream(NULL),
+      _ssl(NULL),
+      _sslInputStream(NULL),
+      _sslOutputStream(NULL),
       _connfd(-1)
       {
-      // set everything to nullptr, in case the child stream fails to call initStream
+      // set everything to NULL, in case the child stream fails to call initStream
       // which initializes these variables
       }
 

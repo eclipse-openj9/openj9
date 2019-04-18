@@ -130,7 +130,7 @@ TR_JITaaSServerPersistentCHTable::commitModifications(const std::string &rawData
       TR_PersistentClassInfo* clazz = findClassInfo(classId);
       if (!clazz)
          {
-         clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(nullptr);
+         clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(NULL);
          data.insert({classId, clazz});
          }
       infoMap.insert({classId, {info, clazz}});
@@ -353,7 +353,7 @@ FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *clazz, F
    clazz->_nameLength = info->_nameLength;
    clazz->_flags = info->_flags;
    clazz->_shouldNotBeNewlyExtended = info->_shouldNotBeNewlyExtended;
-   clazz->_fieldInfo = nullptr;
+   clazz->_fieldInfo = NULL;
    return sizeof(FlatPersistentClassInfo) + info->_numSubClasses * sizeof(TR_OpaqueClassBlock*);
    }
 
@@ -368,7 +368,7 @@ FlatPersistentClassInfo::deserializeHierarchy(std::string& data)
       {
       TR_ASSERT(bytesRead < data.length(), "Corrupt CHTable!!");
       FlatPersistentClassInfo* info = (FlatPersistentClassInfo*)&data[bytesRead];
-      TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(nullptr);
+      TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(NULL);
       bytesRead += deserializeClassSimple(clazz, info);
       out.push_back(clazz);
       infoMap.insert({clazz->getClassId(), {info, clazz}});
