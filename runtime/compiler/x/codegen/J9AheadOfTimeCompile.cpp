@@ -262,7 +262,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
          }
          break;
-      case TR_JNISpecialTargetAddress:
       case TR_VirtualRamMethodConst:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
