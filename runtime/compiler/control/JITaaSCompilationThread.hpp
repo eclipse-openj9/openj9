@@ -72,6 +72,9 @@ struct ClassUnloadedData
    bool _cached;
    };
 
+using TR_JitFieldsCacheEntry = std::pair<J9Class *, UDATA>;
+using TR_JitFieldsCache = PersistentUnorderedMap<int32_t, TR_JitFieldsCacheEntry>;
+
 class ClientSessionData
    {
    public:
@@ -106,6 +109,7 @@ class ClientSessionData
       TR_FieldAttributesCache *_fieldAttributesCacheAOT;
       TR_FieldAttributesCache *_staticAttributesCacheAOT;
       J9ConstantPool *_constantPool;
+      TR_JitFieldsCache *_jitFieldsCache;
       };
 
    struct J9MethodInfo

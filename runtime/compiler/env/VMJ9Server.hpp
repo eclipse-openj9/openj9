@@ -176,6 +176,8 @@ public:
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
+   bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
+   void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
    };
 
 class TR_J9SharedCacheServerVM: public TR_J9ServerVM

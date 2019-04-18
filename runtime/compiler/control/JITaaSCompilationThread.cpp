@@ -48,6 +48,62 @@ extern TR::Monitor *assumptionTableMutex;
 
 uint32_t serverMsgTypeCount[JITaaS::J9ServerMessageType_ARRAYSIZE] = {};
 
+// TODO: this method is copied from runtime/jit_vm/ctsupport.c,
+// in the future it's probably better to make that method publicly accessible
+static UDATA
+findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLEAN isStatic, J9Class **declaringClass)
+   {
+   J9JavaVM *javaVM = vmStruct->javaVM;
+   J9ROMFieldRef *romRef; 
+   J9ROMClassRef *classRef; /* ROM class of the field */
+   U_32 classRefCPIndex;
+   J9UTF8 *classNameUTF;
+   J9Class *clazz;
+   UDATA result = 0;
+
+   *declaringClass = NULL;
+   romRef = (J9ROMFieldRef*) &(((J9ROMConstantPoolItem*) constantPool->romConstantPool)[index]);
+   classRefCPIndex = romRef->classRefCPIndex;
+   classRef = (J9ROMClassRef*) &(((J9ROMConstantPoolItem*) constantPool->romConstantPool)[classRefCPIndex]);
+   classNameUTF = J9ROMCLASSREF_NAME(classRef);
+   clazz = javaVM->internalVMFunctions->internalFindClassUTF8(vmStruct, J9UTF8_DATA(classNameUTF),
+                  J9UTF8_LENGTH(classNameUTF), constantPool->ramClass->classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
+   if (NULL != clazz)
+      {
+      J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romRef);
+      J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+      J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+
+      if (!isStatic)
+         {
+         UDATA instanceField;
+         IDATA offset = javaVM->internalVMFunctions->instanceFieldOffset(
+                         vmStruct, clazz, J9UTF8_DATA(name),
+                         J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), declaringClass,
+                         &instanceField, J9_LOOK_NO_JAVA);
+
+         if (-1 != offset)
+            {
+            result = instanceField;
+            }
+         }
+      else
+         {
+         UDATA staticField;
+         void * addr = javaVM->internalVMFunctions->staticFieldAddress(
+                         vmStruct, clazz, J9UTF8_DATA(name),
+                         J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), declaringClass,
+                         &staticField, J9_LOOK_NO_JAVA, NULL);
+
+         if (NULL != addr)
+            {
+            result = staticField;
+            }
+         }
+      }
+   return result;
+   }
+
 size_t methodStringsLength(J9ROMMethod *method)
    {
    J9UTF8 *name = J9ROMMETHOD_NAME(method);
@@ -313,7 +369,64 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedMethod *method2 = std::get<2>(recv);
          int32_t cpIndex2 = std::get<3>(recv);
          int32_t isStatic = std::get<4>(recv);
-         client->write(fe->jitFieldsAreSame(method1, cpIndex1, method2, cpIndex2, isStatic));
+         bool identical = false;
+         bool compareFields = false;
+         UDATA f1 = 0, f2 = 0;
+         J9Class *declaringClass1 = NULL, *declaringClass2 = NULL;
+         J9ConstantPool *cp1 = (J9ConstantPool *) method1->ramConstantPool();
+         J9ConstantPool *cp2 = (J9ConstantPool *) method2->ramConstantPool();
+
+         // The following code is mostly a copy of jitFieldsAreIdentical from runtime/jit_vm/ctsupport.c
+         // If that code changes, this will also need to change
+         J9RAMFieldRef *ramRef1 = (J9RAMFieldRef*) &(((J9RAMConstantPoolItem *)cp1)[cpIndex1]);
+
+         if (!isStatic)
+            {
+            if (!J9RAMFIELDREF_IS_RESOLVED(ramRef1))
+               {
+               compareFields = true;
+               }
+            else
+               {
+               J9RAMFieldRef *ramRef2 = (J9RAMFieldRef*) &(((J9RAMConstantPoolItem *)cp2)[cpIndex2]);
+               if (!J9RAMFIELDREF_IS_RESOLVED(ramRef2))
+                  {
+                  compareFields = true;
+                  }
+               else if (ramRef1->valueOffset == ramRef2->valueOffset)
+                  {
+                  compareFields = true;
+                  }
+               }
+            }
+         else
+            {
+            J9RAMStaticFieldRef *ramRef1 = ((J9RAMStaticFieldRef*) cp1) + cpIndex1;
+
+            if (!J9RAMSTATICFIELDREF_IS_RESOLVED(ramRef1))
+               {
+               compareFields = true;
+               }
+            else
+               {
+               J9RAMStaticFieldRef *ramRef2 = ((J9RAMStaticFieldRef*) cp2) + cpIndex2;
+               if (!J9RAMSTATICFIELDREF_IS_RESOLVED(ramRef2))
+                  {
+                  compareFields = true;
+                  }
+               else if (ramRef1->valueOffset == ramRef2->valueOffset)
+                  {
+                  compareFields = true;
+                  }
+               }
+            }      
+         if (compareFields)
+            {
+             f1 = findField(fe->vmThread(), cp1, cpIndex1, isStatic, &declaringClass1);
+             if (f1)
+                f2 = findField(fe->vmThread(), cp2, cpIndex2, isStatic, &declaringClass2);
+            }
+         client->write(declaringClass1, declaringClass2, f1, f2);
          };
          break;
       case J9ServerMessageType::VM_jitStaticsAreSame:
@@ -3211,6 +3324,11 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _staticAttributesCacheAOT->~TR_FieldAttributesCache();
       jitPersistentFree(_staticAttributesCacheAOT);
       }
+   if (_jitFieldsCache)
+      {
+      _jitFieldsCache->~TR_JitFieldsCache();
+      jitPersistentFree(_jitFieldsCache);
+      }
    }
 
 ClientSessionData::VMInfo *
@@ -3481,6 +3599,8 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._fieldAttributesCacheAOT = NULL;
    classInfoStruct._staticAttributesCacheAOT = NULL;
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
+   classInfoStruct._jitFieldsCache = NULL;
+
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;
