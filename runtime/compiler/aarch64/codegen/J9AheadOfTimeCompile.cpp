@@ -267,12 +267,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_CheckMethodExit:
-         {
-         *(uint64_t *) cursor = (uint64_t) (uintptr_t) relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         }
-         break;
      case TR_J2IThunks:
          {
          TR::Node *node = (TR::Node*)relocation->getTargetAddress();

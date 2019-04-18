@@ -243,10 +243,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_CheckMethodEnter:
+      case TR_CheckMethodExit:
          {
-         TR_RelocationRecordMethodEnterCheck *mcRecord = reinterpret_cast<TR_RelocationRecordMethodEnterCheck *>(reloRecord);
+         TR_RelocationRecordMethodTracingCheck *mtRecord = reinterpret_cast<TR_RelocationRecordMethodTracingCheck *>(reloRecord);
 
-         mcRecord->setDestinationAddress(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         mtRecord->setDestinationAddress(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
          }
          break;
 
@@ -645,13 +646,14 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_CheckMethodEnter:
+      case TR_CheckMethodExit:
          {
-         TR_RelocationRecordMethodEnterCheck *mcRecord = reinterpret_cast<TR_RelocationRecordMethodEnterCheck *>(reloRecord);
+         TR_RelocationRecordMethodTracingCheck *mtRecord = reinterpret_cast<TR_RelocationRecordMethodTracingCheck *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nDestination address %x", mcRecord->destinationAddress(reloTarget));
+            traceMsg(self()->comp(), "\nDestination address %x", mtRecord->destinationAddress(reloTarget));
             }
          }
          break;
@@ -1133,31 +1135,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
-            break;
-         case TR_CheckMethodExit:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nDestination address %x", *(uint64_t *)ep1);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               cursor += 4;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  // ep1 is same as self()->comp()->getCurrentMethod()->constantPool())
-                  traceMsg(self()->comp(), "\nDestination address %x", *(uint32_t *)ep1);
-                  }
-               }
             break;
          case TR_PicTrampolines:
             cursor++;        // unused field

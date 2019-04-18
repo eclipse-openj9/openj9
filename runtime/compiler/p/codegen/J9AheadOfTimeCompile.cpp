@@ -420,21 +420,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_CheckMethodExit:
-         {
-         if (comp->target().is64Bit())
-            {
-            *(uint64_t *) cursor = (uint64_t) (uintptr_t) relocation->getTargetAddress();
-            cursor += 8;
-            }
-         else
-            {
-            *(uint32_t *) cursor = (uint32_t) (uintptr_t) relocation->getTargetAddress();
-            cursor += 4;
-            }
-         }
-         break;
-
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {

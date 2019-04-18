@@ -305,21 +305,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_CheckMethodExit:
-         {
-         if (comp->target().is64Bit())
-            {
-            *(uint64_t *)cursor = (uint64_t)(uintptr_t)relocation->getTargetAddress();
-            cursor += 8;
-            }
-         else
-            {
-            *(uint32_t *)cursor = (uint32_t)(uintptr_t)relocation->getTargetAddress();
-            cursor += 4;
-            }
-         }
-         break;
-
       case TR_ValidateClassByName:
          {
          TR::ClassByNameRecord *record = reinterpret_cast<TR::ClassByNameRecord *>(relocation->getTargetAddress());

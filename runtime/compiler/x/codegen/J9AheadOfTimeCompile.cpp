@@ -365,12 +365,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
         break;
 
-      case TR_CheckMethodExit:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         }
-        break;
      case TR_J2IThunks:
          {
          // Note: thunk relos should only be created for 64 bit
