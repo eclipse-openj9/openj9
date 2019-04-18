@@ -262,11 +262,20 @@ target
     ```
     element that you want to exclude.
 
-    For tests that are disabeld with playlist.xml, `disabled.mk` is generated when running `make -f run_configure.mk`. It contains a list of disabled test targets. These targets can be executed through specifying the test target or add `disabled` in front of regular target.
+    If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
+
     ```    
-        make _testA
+        make _testA    // testA has <disabled> tag in playlist.xml  
         make _disabled.sanity.functional
         make _disabled.extended
+    ```
+
+    Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
+
+    ```    
+        make _echo.disabled.testA
+        make _echo.disabled.sanity.functional
+        make _echo.disabled.extended
     ```
 
   * temporarily on all platforms
@@ -331,12 +340,22 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
     testng logger (and not System.out.print statements). In this way,
     we can not only direct that output to console, but also to various
     other clients (WIP).  At the end of a test run, the results are
-    summarized to show which tests passed / failed / skipped.  This gives
+    summarized to show which tests are passed / failed / disabled / skipped.  This gives
     you a quick view of the test names and numbers in each category
-    (passed/failed/skipped).  If you've piped the output to a file, or
+    (passed/failed/disabled/skipped).  If you've piped the output to a file, or
     if you like scrolling up, you can search for and find the specific
     output of the tests that failed (exceptions or any other logging
     that the test produces).
+
+    - `SKIPPED` tests
+
+      If a test is skipped, it means that this test cannot be run on this
+      platform due to jvm options, platform requirements and/or test
+      capabilities.
+
+    - `DISABLED` tests
+
+      If a test is disabled, it means that this test is disabled using `<disabled>` tag in playlist.xml.
 
   * in html files
 

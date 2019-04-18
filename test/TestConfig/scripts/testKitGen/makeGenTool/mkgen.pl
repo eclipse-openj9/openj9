@@ -37,7 +37,6 @@ my $mkName = "autoGen.mk";
 my $dependmk = "dependencies.mk";
 my $utilsmk = "utils.mk";
 my $countmk = "count.mk";
-my $disabledmk = "disabled.mk";
 my $settings = "settings.mk";
 my $projectRootDir = '';
 my $testRoot = '';
@@ -62,7 +61,6 @@ my $parentEle = '';
 my $currentEle = '';
 my $eleStr = '';
 my $eleArr = [];
-my %disabledTable = ();
 
 sub runmkgen {
 	( $projectRootDir, $allLevels, $allGroups, $allTypes, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
@@ -93,41 +91,37 @@ sub runmkgen {
 		print "Getting modes data from modes services...\n";
 	}
 
-	#initialize counting hash targetCount and disabledTable
+	# initialize counting hash targetCount
 	$targetCount{"all"} = 0;
-	foreach my $eachLevel (sort @{$allLevels}) {
-		if (!defined $targetCount{$eachLevel}) {
-			$targetCount{$eachLevel} = 0;
-			$disabledTable{$eachLevel} = [];
-		}
-		foreach my $eachGroup (sort @{$allGroups}) {
-			if (!defined $targetCount{$eachGroup}) {
-				$targetCount{$eachGroup} = 0;
-				$disabledTable{$eachGroup} = [];
+	my @allDisHead = ('', 'disabled.', 'echo.disabled.');
+	foreach my $eachDisHead (@allDisHead) {
+		foreach my $eachLevel (sort @{$allLevels}) {
+			if (!defined $targetCount{$eachDisHead . $eachLevel}) {
+				$targetCount{$eachDisHead . $eachLevel} = 0;
 			}
-			my $lgKey = $eachLevel . '.' . $eachGroup;
-			if (!defined $targetCount{$lgKey}) {
-				$targetCount{$lgKey} = 0;
-				$disabledTable{$lgKey} = [];
-			}
-			foreach my $eachType (sort @{$allTypes}) {
-				if (!defined $targetCount{$eachType}) {
-					$targetCount{$eachType} = 0;
-					$disabledTable{$eachType} = [];
+			foreach my $eachGroup (sort @{$allGroups}) {
+				if (!defined $targetCount{$eachDisHead . $eachGroup}) {
+					$targetCount{$eachDisHead . $eachGroup} = 0;
 				}
-				my $ltKey = $eachLevel . '.' . $eachType;
-				if (!defined $targetCount{$ltKey}) {
-					$targetCount{$ltKey} = 0;
-					$disabledTable{$ltKey} = [];
+				my $lgKey = $eachLevel . '.' . $eachGroup;
+				if (!defined $targetCount{$eachDisHead . $lgKey}) {
+					$targetCount{$eachDisHead . $lgKey} = 0;
 				}
-				my $gtKey = $eachGroup . '.' . $eachType;
-				if (!defined $targetCount{$gtKey}) {
-					$targetCount{$gtKey} = 0;
-					$disabledTable{$gtKey} = [];
+				foreach my $eachType (sort @{$allTypes}) {
+					if (!defined $targetCount{$eachDisHead . $eachType}) {
+						$targetCount{$eachDisHead . $eachType} = 0;
+					}
+					my $ltKey = $eachLevel . '.' . $eachType;
+					if (!defined $targetCount{$eachDisHead . $ltKey}) {
+						$targetCount{$eachDisHead . $ltKey} = 0;
+					}
+					my $gtKey = $eachGroup . '.' . $eachType;
+					if (!defined $targetCount{$eachDisHead . $gtKey}) {
+						$targetCount{$eachDisHead . $gtKey} = 0;
+					}
+					my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+					$targetCount{$eachDisHead . $lgtKey} = 0;
 				}
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
-				$targetCount{$lgtKey} = 0;
-				$disabledTable{$lgtKey} = [];
 			}
 		}
 	}
@@ -136,7 +130,6 @@ sub runmkgen {
 	dependGen();
 	utilsGen();
 	countGen();
-	disabledGen();
 }
 
 sub generateOnDir {
@@ -381,21 +374,6 @@ sub handle_end {
 				$parseTest->{'aot'} = 'applicable';
 			}
 			push( @{$parseResult->{'tests'}}, $parseTest );
-			if ($parseTest->{'disabled'}) {
-				foreach my $curLevel (@{ $parseTest->{'levels'} }) {
-					push @{ $disabledTable{$curLevel} }, $parseTest->{'testCaseName'};
-					foreach my $curGroup (@{ $parseTest->{'groups'} }) {
-						push @{ $disabledTable{$curGroup} }, $parseTest->{'testCaseName'};
-						push @{ $disabledTable{$curLevel . '.' . $curGroup} }, $parseTest->{'testCaseName'};
-						foreach my $curType (@{ $parseTest->{'types'} }) {
-							push @{ $disabledTable{$curType} }, $parseTest->{'testCaseName'};
-							push @{ $disabledTable{$curLevel . '.' . $curType} }, $parseTest->{'testCaseName'};
-							push @{ $disabledTable{$curGroup . '.' . $curType} }, $parseTest->{'testCaseName'};
-							push @{ $disabledTable{$curLevel . '.' . $curGroup . '.' . $curType} }, $parseTest->{'testCaseName'};
-						}
-					}
-				}	
-			}
 		}
 	} elsif (($elt eq 'disabled') && ($currentEle eq 'disabled')) {
 		$parseTest->{'disabled'} = $eleStr;
@@ -614,7 +592,17 @@ sub writeTargets {
 			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
-			print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"$name Start Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"$name Start Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";			
+			if (defined $test->{'disabled'}) {
+				#This line is also the key words to match runningDisabled
+				print $fhOut "$indent\@echo \"Test is disabled due to:\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+				my @disabledReasons = split("[\t\n]", $test->{'disabled'});
+				foreach my $dReason (@disabledReasons) {
+					if ($dReason ne "") {
+						print $fhOut "$indent\@echo \"$dReason\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+					}	
+				}
+			}
 			if ($condition_platform) {
 				print $fhOut "ifeq (\$($condition_platform),)\n";
 			}
@@ -673,6 +661,29 @@ sub writeTargets {
 							my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
 							push(@{$groupTargets{$lgtKey}}, $name);
 						}
+						else {
+							my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+							my $dlgtKey = 'disabled.' . $lgtKey;
+							my $echodlgtKey = 'echo.' . $dlgtKey;
+							push(@{$groupTargets{$dlgtKey}}, $name);
+							push(@{$groupTargets{$echodlgtKey}}, "echo.disabled." . $name);
+							print $fhOut "echo.disabled." . $name . ":\n";
+							print $fhOut "$indent\@echo \"\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+							print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+							print $fhOut "$indent\@echo \"Running test $name ...\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+							print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+							print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"$name Start Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+							print $fhOut "$indent\@echo \"" . $name . "_DISABLED\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+							print $fhOut "$indent\@echo \"Disabled Reason:\"\n";
+							my @disabledReasons = split("[\t\n]", $test->{'disabled'});
+							foreach my $dReason (@disabledReasons) {
+								if ($dReason ne "") {
+									print $fhOut "$indent\@echo \"$dReason\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+								}	
+							}
+							print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"$name Finish Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
+							print $fhOut "\n.PHONY: echo.disabled." . "$name\n\n";
+						}
 					}
 				}
 			}
@@ -686,18 +697,31 @@ sub writeTargets {
 		print $fhOut "\n\n.PHONY: " . $test->{'testCaseName'} . "\n\n";
 	}
 
-	foreach my $eachLevel (sort @{$allLevels}) {
-		foreach my $eachGroup (sort @{$allGroups}) {
-			foreach my $eachType (sort @{$allTypes}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
-				my $tests = $groupTargets{$lgtKey};
-				print $fhOut "$lgtKey:";
-				foreach my $test (@{$tests}) {
-					print $fhOut " \\\n$test";
+	my @allDisHead = ('', 'disabled.', 'echo.disabled.');
+	foreach my $eachDisHead (@allDisHead) { 
+		foreach my $eachLevel (sort @{$allLevels}) {
+			foreach my $eachGroup (sort @{$allGroups}) {
+				foreach my $eachType (sort @{$allTypes}) {
+					my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
+					my $hlgtKey = $eachDisHead . $eachLevel . '.' . $eachGroup . '.' . $eachType;
+					my $tests = $groupTargets{$hlgtKey};
+					print $fhOut "$hlgtKey:";
+					foreach my $test (@{$tests}) {
+						print $fhOut " \\\n$test";
+					}
+					# The 'all' / lgtKey  contain normal and echo.disabled.					
+					$targetCount{$hlgtKey} += @{$tests};
+					if ($eachDisHead eq '') {
+						print $fhOut " \\\necho.disabled." . $lgtKey;
+						$targetCount{"all"} += @{$tests};
+					}
+					if ($eachDisHead eq 'echo.disabled.') {
+						# normal key contains echo.disabled key
+						$targetCount{$lgtKey} += @{$tests};
+						$targetCount{"all"} += @{$tests};
+					}
+					print $fhOut "\n\n.PHONY: $hlgtKey\n\n";
 				}
-				$targetCount{$lgtKey} += @{$tests};
-				$targetCount{"all"} += @{$tests};
-				print $fhOut "\n\n.PHONY: $lgtKey\n\n";
 			}
 		}
 	}
@@ -780,77 +804,84 @@ sub dependGen {
 	open( my $fhOut, '>', $dependmkpath ) or die "Cannot create file $dependmkpath";
 	print $fhOut $headerComments;
 
-	foreach my $eachLevel (sort @{$allLevels}) {
-		foreach my $eachGroup (sort @{$allGroups}) {
-			my $lgKey = $eachLevel . '.' . $eachGroup;
-			print $fhOut "$lgKey:";
-			foreach my $eachType (sort @{$allTypes}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
-				print $fhOut " \\\n$lgtKey";
-				$targetCount{$lgKey} += $targetCount{$lgtKey};
-				$targetCount{$eachLevel} += $targetCount{$lgtKey};
-			}
-			print $fhOut "\n\n.PHONY: $lgKey\n\n";
-		}
-	}
-
-	foreach my $eachGroup (sort @{$allGroups}) {
-		foreach my $eachType (sort @{$allTypes}) {
-			my $gtKey = $eachGroup . '.' . $eachType;
-			print $fhOut "$gtKey:";
-			foreach my $eachLevel (sort @{$allLevels}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType; 
-				print $fhOut " \\\n$lgtKey";
-				$targetCount{$gtKey} += $targetCount{$lgtKey};
-				$targetCount{$eachGroup} += $targetCount{$lgtKey};
-			}
-			print $fhOut "\n\n.PHONY: $gtKey\n\n";
-		}
-	}
-
-	foreach my $eachType (sort @{$allTypes}) {
+	my @allDisHead = ('', 'disabled.', 'echo.disabled.');
+	foreach my $eachDisHead (@allDisHead) {
 		foreach my $eachLevel (sort @{$allLevels}) {
-			my $ltKey = $eachLevel . '.' . $eachType;
-			print $fhOut "$ltKey:";
 			foreach my $eachGroup (sort @{$allGroups}) {
-				my $lgtKey = $eachLevel . '.' . $eachGroup . '.' . $eachType;
-				print $fhOut " \\\n$lgtKey";
-				$targetCount{$ltKey} += $targetCount{$lgtKey};
-				$targetCount{$eachType} += $targetCount{$lgtKey};
+				my $hlgKey = $eachDisHead . $eachLevel . '.' . $eachGroup;
+				print $fhOut "$hlgKey:";
+				foreach my $eachType (sort @{$allTypes}) {
+					my $hlgtKey = $eachDisHead. $eachLevel . '.' . $eachGroup . '.' . $eachType; 
+					print $fhOut " \\\n$hlgtKey";
+					$targetCount{$hlgKey} += $targetCount{$hlgtKey};
+					$targetCount{$eachDisHead . $eachLevel} += $targetCount{$hlgtKey};
+				}
+				print $fhOut "\n\n.PHONY: $hlgKey\n\n";
 			}
-			print $fhOut "\n\n.PHONY: $ltKey\n\n";
-		}
-	}
+		}	
 
-	foreach my $eachLevel (sort @{$allLevels}) {
-		print $fhOut "$eachLevel:";
 		foreach my $eachGroup (sort @{$allGroups}) {
-			print $fhOut " \\\n$eachLevel.$eachGroup";
+			foreach my $eachType (sort @{$allTypes}) {
+				my $gtKey = $eachDisHead . $eachGroup . '.' . $eachType;
+				print $fhOut "$gtKey:";
+				foreach my $eachLevel (sort @{$allLevels}) {
+					my $lgtKey = $eachDisHead . $eachLevel . '.' . $eachGroup . '.' . $eachType; 
+					print $fhOut " \\\n$lgtKey";
+					$targetCount{$gtKey} += $targetCount{$lgtKey};
+					$targetCount{$eachDisHead . $eachGroup} += $targetCount{$lgtKey};
+				}
+				print $fhOut "\n\n.PHONY: $gtKey\n\n";
+			}
 		}
-		print $fhOut "\n\n.PHONY: $eachLevel\n\n";
-	}
 
-	foreach my $eachGroup (sort @{$allGroups}) {
-		print $fhOut "$eachGroup:";
+		foreach my $eachType (sort @{$allTypes}) {
+			foreach my $eachLevel (sort @{$allLevels}) {
+				my $ltKey = $eachDisHead . $eachLevel . '.' . $eachType;
+				print $fhOut "$ltKey:";
+				foreach my $eachGroup (sort @{$allGroups}) {
+					my $lgtKey = $eachDisHead . $eachLevel . '.' . $eachGroup . '.' . $eachType;
+					print $fhOut " \\\n$lgtKey";
+					$targetCount{$ltKey} += $targetCount{$lgtKey};
+					$targetCount{$eachDisHead . $eachType} += $targetCount{$lgtKey};
+				}
+				print $fhOut "\n\n.PHONY: $ltKey\n\n";
+			}
+		}
+
 		foreach my $eachLevel (sort @{$allLevels}) {
-			print $fhOut " \\\n$eachLevel.$eachGroup";
-		}
-		print $fhOut "\n\n.PHONY: $eachGroup\n\n";
-	}
+			my $lKey = $eachDisHead . $eachLevel;
+			print $fhOut "$lKey:";
+			foreach my $eachGroup (sort @{$allGroups}) {
+				print $fhOut " \\\n" . $eachDisHead . $eachLevel . '.' . $eachGroup;
+			}
+			print $fhOut "\n\n.PHONY: $lKey\n\n";
+		}	
 
-	foreach my $eachType (sort @{$allTypes}) {
-		print $fhOut "$eachType:";
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $gKey = $eachDisHead . $eachGroup;
+			print $fhOut "$gKey:";
+			foreach my $eachLevel (sort @{$allLevels}) {
+				print $fhOut " \\\n" . $eachDisHead . $eachLevel . '.' . $eachGroup;
+			}
+			print $fhOut "\n\n.PHONY: $gKey\n\n";
+		}
+
+		foreach my $eachType (sort @{$allTypes}) {
+			my $tKey = $eachDisHead . $eachType;
+			print $fhOut "$tKey:";
+			foreach my $eachLevel (sort @{$allLevels}) {
+				print $fhOut " \\\n" . $eachDisHead . $eachLevel . '.' . $eachType;
+			}
+			print $fhOut "\n\n.PHONY: $tKey\n\n";
+		}
+
+		my $allKey = $eachDisHead . "all";
+		print $fhOut "$allKey:";
 		foreach my $eachLevel (sort @{$allLevels}) {
-			print $fhOut " \\\n$eachLevel.$eachType";
+			print $fhOut " \\\n" . $eachDisHead . $eachLevel;
 		}
-		print $fhOut "\n\n.PHONY: $eachType\n\n";
+		print $fhOut "\n\n.PHONY: $allKey\n\n";
 	}
-
-	print $fhOut "all:";
-	foreach my $eachLevel (sort @{$allLevels}) {
-		print $fhOut " \\\n$eachLevel";
-	}
-	print $fhOut "\n\n.PHONY: all\n";
 
 	close $fhOut;
 	print "\nGenerated $dependmk\n";
@@ -893,19 +924,5 @@ sub countGen {
 	print "\nGenerated $countmk\n";
 }
 
-sub disabledGen {
-	my $disabledmkpath = $testRoot . "/TestConfig/" . $disabledmk;
-	open( my $fhOut, '>', $disabledmkpath ) or die "Cannot create file $disabledmkpath";
-	print $fhOut $headerComments ."\n";
-	foreach my $disabledKey (sort keys %disabledTable) {
-		print $fhOut 'disabled.' . $disabledKey . ":\n";
-		foreach my $ele (@{ $disabledTable{$disabledKey} }) {
-			print $fhOut "\t@\$(MAKE) $ele\n";
-		}
-		print $fhOut "\n.PHONY: disabled.$disabledKey\n\n";
-	}
-	close $fhOut;
-	print "\nGenerated $disabledmk\n";
-}
 
 1;
