@@ -178,8 +178,8 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    if (addIt)
       return NULL; // Server should not create any samples
 
-   ClientSessionData *clientSessionData = comp->fej9()->_compInfoPT->getClientData();
-   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) comp->fej9()->_compInfoPT;
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)(comp->fej9()->_compInfoPT);
+   ClientSessionData *clientSessionData = compInfoPT->getClientData();
    TR_IPBytecodeHashTableEntry *entry = NULL;
 
    // Check the cache first, if allowed
@@ -761,13 +761,13 @@ void
 TR_JITaaSIProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp)
    {
    // resolvedMethodSymbol is only used for debugging on the client, so we don't have to send it
-   auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method);
    auto stream = TR::CompilationInfo::getStream();
-   ClientSessionData *clientSessionData = comp->fej9()->_compInfoPT->getClientData();
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)(comp->fej9()->_compInfoPT);
+   ClientSessionData *clientSessionData = compInfoPT->getClientData();
 
    if (clientSessionData->getOrCacheVMInfo(stream)->_elgibleForPersistIprofileInfo)
       {
-      stream->write(JITaaS::J9ServerMessageType::IProfiler_persistIprofileInfo, serverMethod->getRemoteMirror());
-      auto recv = stream->read<JITaaS::Void>();
+      auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method);
+      compInfoPT->cacheResolvedMirrorMethodsPersistIPInfo(serverMethod->getRemoteMirror());
       }
    }

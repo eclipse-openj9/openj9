@@ -31,6 +31,7 @@
 
 class SSLOutputStream;
 class SSLInputStream;
+class TR_ResolvedJ9Method;
 
 namespace JITaaS
 {
@@ -60,7 +61,10 @@ public:
       }
 
    void cancel();
-   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", CHTableCommitData chTableData = {}, std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = {}, std::string logFileStr = "", std::string symbolToIdStr = "");
+   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", CHTableCommitData chTableData = {},
+                          std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = {},
+                          std::string logFileStr = "", std::string symbolToIdStr = "",
+                          std::vector<TR_ResolvedJ9Method*> = {});
    void setClientId(uint64_t clientId)
       {
       _clientId = clientId;

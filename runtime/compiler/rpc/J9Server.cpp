@@ -32,12 +32,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
+#include <openssl/err.h>
 #include "J9Server.hpp"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
+#include "env/j9method.h"
 #include "rpc/SSLProtobufStream.hpp"
-#include <openssl/err.h>
 
 
 namespace JITaaS
@@ -70,11 +71,15 @@ J9ServerStream::cancel()
    }
 
 void
-J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData, std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended, std::string logFileStr, std::string symbolToIdStr)
+J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
+                                 std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
+                                 std::string logFileStr, std::string symbolToIdStr,
+                                 std::vector<TR_ResolvedJ9Method*> resolvedMethodsForPersistIprofileInfo)
    {
    try
       {
-      write(J9ServerMessageType::compilationCode, statusCode, codeCache, dataCache, chTableData, classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr);
+      write(J9ServerMessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
+            classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr, resolvedMethodsForPersistIprofileInfo);
       finish();
       }
    catch (std::exception &e)

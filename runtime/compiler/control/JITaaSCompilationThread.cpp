@@ -2246,15 +2246,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::IProfiler_persistIprofileInfo:
-         {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *>();
-         auto mirror = std::get<0>(recv);
-         TR_IProfiler *iProfiler = fe->getIProfiler();
-         iProfiler->persistIprofileInfo(NULL, mirror, comp);
-         client->write(JITaaS::Void());
-         }
-         break;
       case J9ServerMessageType::Recompilation_getExistingMethodInfo:
          {
          auto recomp = comp->getRecompilationInfo();
@@ -2275,7 +2266,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       default:
          // It is vital that this remains a hard error during dev!
-         TR_ASSERT(false, "JITaaS: handleServerMessage received an unknown message type");
+         TR_ASSERT(false, "JITaaS: handleServerMessage received an unknown message type: %d\n", response);
       }
    return done;
    }
@@ -2386,7 +2377,8 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
    std::string svmSymbolToIdStr;
-   JITaaS::Status status; 
+   JITaaS::Status status;
+   std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
    try
       {
       // release VM access just before sending the compilation request
@@ -2424,7 +2416,8 @@ remoteCompile(
          }
 
       while(!handleServerMessage(client, compiler->fej9vm()));
-      auto recv = client->getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string, std::string>();
+      auto recv = client->getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
+                                      std::string, std::string, std::vector<TR_ResolvedJ9Method*>>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
@@ -2432,6 +2425,7 @@ remoteCompile(
       classesThatShouldNotBeNewlyExtended = std::get<4>(recv);
       logFileStr = std::get<5>(recv);
       svmSymbolToIdStr = std::get<6>(recv);
+      resolvedMirrorMethodsPersistIPInfo = std::get<7>(recv);
       if (statusCode >= compilationMaxError)
          throw JITaaS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       status = client->waitForFinish();
@@ -2453,6 +2447,10 @@ remoteCompile(
       {
       try
          {
+         TR_IProfiler *iProfiler = compiler->fej9vm()->getIProfiler();
+         for (TR_ResolvedJ9Method* mirror : resolvedMirrorMethodsPersistIPInfo)
+            iProfiler->persistIprofileInfo(NULL, mirror, compiler);
+
          if (compiler->getOption(TR_UseSymbolValidationManager))
             {
             // compilation is done, now we need client to validate all of the records accumulated by the server,
@@ -2738,6 +2736,7 @@ outOfProcessCompilationEnd(
    TR::Compilation *comp)
    {
    entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
+   auto compInfoPT = ((TR::CompilationInfoPerThreadRemote*)(entry->_compInfoPT));
 
    TR::CodeCache *codeCache = comp->cg()->getCodeCache();
 #if 0
@@ -2754,7 +2753,7 @@ outOfProcessCompilationEnd(
    TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
    TR_ASSERT(dataCache, "A dataCache must be reserved for JITaaS compilations\n");
    J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-   J9JITExceptionTable *metaData = TR::compInfoPT->getMetadata();
+   J9JITExceptionTable *metaData = compInfoPT->getMetadata();
 
    size_t codeSize = codeCache->getWarmCodeAlloc() - (uint8_t*)codeCacheHeader;
    size_t dataSize = dataCache->getSegment()->heapAlloc - (uint8_t*)dataCacheHeader;
@@ -2771,7 +2770,7 @@ outOfProcessCompilationEnd(
       chTableData = chTable->computeDataForCHTableCommit(comp);
       }
 
-   auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
+   auto classesThatShouldNotBeNewlyExtended = compInfoPT->getClassesThatShouldNotBeNewlyExtended();
 
    // pack log file to send to client
    std::string logFileStr = TR::Options::packLogFile(comp->getOutFile());
@@ -2781,13 +2780,21 @@ outOfProcessCompilationEnd(
       {
       svmSymbolToIdStr = comp->getSymbolValidationManager()->serializeSymbolToIDMap();
       }
+
+   auto resolvedMirrorMethodsPersistIPInfo = compInfoPT->getCachedResolvedMirrorMethodsPersistIPInfo();
    entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
-                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()), logFileStr, svmSymbolToIdStr);
+                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
+                                     logFileStr, svmSymbolToIdStr,
+                                     (resolvedMirrorMethodsPersistIPInfo) ?
+                                                         std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
+                                                         std::vector<TR_ResolvedJ9Method*>()
+                                     );
+   compInfoPT->clearResolvedMirrorMethodsPersistIPInfo();
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d has successfully compiled %s",
-         entry->_compInfoPT->getCompThreadId(), entry->_compInfoPT->getCompilation()->signature());
+         compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature());
       }
    }
 
@@ -3770,7 +3777,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    entry._compInfoPT = this; // create the reverse link
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
-  
+   clearResolvedMirrorMethodsPersistIPInfo();
+
    _recompilationMethodInfo = NULL;
    // Release compMonitor before doing the blocking read
    compInfo->releaseCompMonitor(compThread);
@@ -4208,14 +4216,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    }
 
 void
-TR::CompilationInfoPerThreadRemote::clearIProfilerMap(TR_Memory *trMemory)
+TR::CompilationInfoPerThreadRemote::clearIProfilerMap()
    {
-   if (_methodIPDataPerComp)
-      {
-      // the map and all of its values should be freed automatically at the end of compilation,
-      // since they were allocated on the compilation heap memory
-      _methodIPDataPerComp = NULL;
-      }
+   // the map and all of its values should be freed automatically at the end of compilation,
+   // since they were allocated on the compilation heap memory
+   _methodIPDataPerComp = NULL;
    }
 
 bool
@@ -4371,4 +4376,28 @@ TR::CompilationInfoPerThreadRemote::getResolvedMethodKey(TR_ResolvedMethodType t
    {
    TR_ResolvedMethodKey key = {type, ramClass, cpIndex, classObject};
    return key;
+   }
+
+void
+TR::CompilationInfoPerThreadRemote::clearResolvedMirrorMethodsPersistIPInfo()
+   {
+   // It should be freed automatically at the end of compilation,
+   // since they were allocated on the compilation heap memory
+   _resolvedMirrorMethodsPersistIPInfo = NULL;
+   }
+
+void
+TR::CompilationInfoPerThreadRemote::cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod)
+   {
+   if (!_resolvedMirrorMethodsPersistIPInfo)
+      {
+      TR_Memory *trMemory = getCompilation()->trMemory();
+      _resolvedMirrorMethodsPersistIPInfo = new (trMemory->trHeapMemory()) ResolvedMirrorMethodsPersistIP_t(
+                                                                           ResolvedMirrorMethodsPersistIP_t::allocator_type(trMemory->heapMemoryRegion()));
+
+      if (!_resolvedMirrorMethodsPersistIPInfo)
+         return;
+      }
+
+   _resolvedMirrorMethodsPersistIPInfo->push_back(resolvedMethod);
    }
