@@ -1091,32 +1091,15 @@ J9::Options::fePreProcess(void * base)
    TR::Compiler->host.setSMP(true);
    TR::Compiler->target.setSMP(true);
 
-   TR_WriteBarrierKind wrtbarMode = TR_WrtbarOldCheck;
-
    J9MemoryManagerFunctions * mmf = vm->memoryManagerFunctions;
+#if defined(J9VM_GC_HEAP_CARD_TABLE)
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      switch (mmf->j9gc_modron_getWriteBarrierType(vm))
-         {
-         case j9gc_modron_wrtbar_none:                   wrtbarMode = TR_WrtbarNone; break;
-         case j9gc_modron_wrtbar_always:                 wrtbarMode = TR_WrtbarAlways; break;
-         case j9gc_modron_wrtbar_oldcheck:               wrtbarMode = TR_WrtbarOldCheck; break;
-         case j9gc_modron_wrtbar_cardmark:               wrtbarMode = TR_WrtbarCardMark; break;
-         case j9gc_modron_wrtbar_cardmark_and_oldcheck:  wrtbarMode = TR_WrtbarCardMarkAndOldCheck; break;
-         case j9gc_modron_wrtbar_cardmark_incremental:   wrtbarMode = TR_WrtbarCardMarkIncremental; break;
-         case j9gc_modron_wrtbar_satb:
-         case j9gc_modron_wrtbar_satb_and_oldcheck:      wrtbarMode = TR_WrtbarRealTime; break;
-         }
-
-#if defined(J9VM_GC_HEAP_CARD_TABLE)
       self()->setGcCardSize(mmf->j9gc_concurrent_getCardSize(vm));
       self()->setHeapBase(mmf->j9gc_concurrent_getHeapBase(vm));
       self()->setHeapTop(mmf->j9gc_concurrent_getHeapBase(vm) + mmf->j9gc_get_initial_heap_size(vm));
-#endif
-
       }
-
-   self()->setGcMode(wrtbarMode);
+#endif
 
    uintptr_t value;
 
@@ -1131,16 +1114,6 @@ J9::Options::fePreProcess(void * base)
 
    value = mmf->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_heapAddressToCardAddressShift, &value) ? value : 0;
    self()->setHeapAddressToCardAddressShift(value);
-
-#if 0
-// DMDM: MOVED TO ObjectModel
-   uintptr_t result = mmf->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_discontiguousArraylets, &value);
-   if (result == 0)
-      self()->setUsesDiscontiguousArraylets(false);
-   else
-      self()->setUsesDiscontiguousArraylets((value == 1) ? true : false);
-#endif
-
 
    // Pull the constant heap parameters from a VMThread (it doesn't matter which one).
    //
