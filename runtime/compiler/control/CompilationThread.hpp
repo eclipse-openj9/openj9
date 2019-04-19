@@ -406,7 +406,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    TR_J9SharedCacheServerVM *getSharedCacheServerVM() { return _sharedCacheServerVM; }
    void                   setSharedCacheServerVM(TR_J9SharedCacheServerVM *vm) { _sharedCacheServerVM = vm; }
    JITaaS::J9ServerStream  *getStream();
-   J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
+   J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
    void                   addThunkToBeRelocated(void *thunk, std::string signature);
    void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);

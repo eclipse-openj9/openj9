@@ -253,7 +253,7 @@ public:
    virtual void setClassForNewInstance(J9Class *c) override;
    virtual TR_OpaqueClassBlock * classOfMethod() override;
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo() override;
-   virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = nullptr) override;
+   virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL) override;
    virtual bool getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }

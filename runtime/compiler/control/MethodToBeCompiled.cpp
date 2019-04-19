@@ -82,9 +82,9 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _GCRrequest = false;
 
    _remoteCompReq = false;
-   _stream = nullptr;
+   _stream = NULL;
    _methodIsInSharedCache = TR_maybe;
-   _clientOptions = nullptr;
+   _clientOptions = NULL;
    _clientOptionsSize = 0;
    _origOptLevel = unknownHotness;
 

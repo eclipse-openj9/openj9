@@ -81,11 +81,11 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
       {
       TR::MethodSymbol *methodSymbol = symRef->getSymbol()->castToMethodSymbol();
       TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
-      info._hasResolvedMethodSymbol = resolvedMethodSymbol != nullptr;
+      info._hasResolvedMethodSymbol = resolvedMethodSymbol != NULL;
       info._cpIndex = symRef->getCPIndex();
       info._owningMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
       info._isInterface = methodSymbol->isInterface();
-      info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITaaSServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : nullptr;
+      info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITaaSServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : NULL;
       info._offset = symRef->getOffset();
 
       info._isInlineGuard = vguard->isInlineGuard();
@@ -103,12 +103,12 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
    info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();
    info._mergedWithOSRGuard = vguard->mergedWithOSRGuard();
 
-   info._mutableCallSiteObject = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteObject() : nullptr;
+   info._mutableCallSiteObject = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteObject() : NULL;
    info._mutableCallSiteEpoch = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteEpoch() : -1;
 
    info._inlinedResolvedMethod = info._kind == TR_BreakpointGuard
       ? static_cast<TR_ResolvedJ9JITaaSServerMethod *>(comp->getInlinedResolvedMethod(info._calleeIndex))->getRemoteMirror()
-      : nullptr;
+      : NULL;
 
    return info;
    }
@@ -375,8 +375,8 @@ bool JITaaSCHTableCommit(
       newSite->setLocation(site.getLocation() - serverStartPC + startPC);
       sites->push_front(newSite);
       }
-   comp->getClassesThatShouldNotBeLoaded()->setFirst(nullptr); // clear
-   comp->getClassesThatShouldNotBeNewlyExtended()->setFirst(nullptr); // clear
+   comp->getClassesThatShouldNotBeLoaded()->setFirst(NULL); // clear
+   comp->getClassesThatShouldNotBeNewlyExtended()->setFirst(NULL); // clear
    for (auto &clc : compClassesThatShouldNotBeLoaded)
       comp->getClassesThatShouldNotBeLoaded()->add(new (comp->trHeapMemory()) TR_ClassLoadCheck(&clc[0], clc.size()));
    for (auto &cec : compClassesThatShouldNotBeNewlyExtended)
@@ -385,7 +385,7 @@ bool JITaaSCHTableCommit(
    table->commitSideEffectGuards(comp);
 
    // Clear again because string pointers are only valid in this block
-   comp->getClassesThatShouldNotBeLoaded()->setFirst(nullptr);
+   comp->getClassesThatShouldNotBeLoaded()->setFirst(NULL);
 
    return true;
    }

@@ -62,7 +62,7 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
    // Create client side mirror of this object to use for calls involving RAM data
-   TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JITaaSServerMethod*) owningMethod)->_remoteMirror : nullptr;
+   TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JITaaSServerMethod*) owningMethod)->_remoteMirror : NULL;
 
    // If in AOT mode, will actually create relocatable version of resolved method on the client
    _stream->write(JITaaS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot, fej9->isAOT_DEPRECATED_DO_NOT_USE());
@@ -154,7 +154,7 @@ TR_OpaqueClassBlock *
 TR_ResolvedJ9JITaaSServerMethod::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool returnClassForAOT)
    {
    if (cpIndex == -1)
-      return nullptr;
+      return NULL;
 
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
       {
@@ -195,7 +195,7 @@ TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassFor
    {
    // if method is unresolved, return right away
    if (cpIndex < 0)
-      return nullptr;
+      return NULL;
 
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
       {
@@ -248,8 +248,8 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
 #if TURN_OFF_INLINING
    return 0;
 #else
-   TR_ResolvedMethod *resolvedMethod = nullptr;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, NULL}, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    // See if the constant pool entry is already resolved or not
@@ -278,7 +278,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
 
       if (vTableIndex)
          {
-         TR_AOTInliningStats *aotStats = nullptr;
+         TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
 
@@ -290,7 +290,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
          }
       }
 
-   if (resolvedMethod == nullptr)
+   if (resolvedMethod == NULL)
       {
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
       if (unresolvedInCP)
@@ -313,7 +313,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
       
       }
-   cacheResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
+   cacheResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, NULL}, resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
 #endif
@@ -538,8 +538,8 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   TR_ResolvedMethod *resolvedMethod = nullptr;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, NULL}, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
@@ -586,7 +586,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
       if (unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
       }
-   cacheResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
+   cacheResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, NULL}, resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
    }
@@ -597,14 +597,14 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    
-   TR_ResolvedMethod *resolvedMethod = nullptr;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, NULL}, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    if (unresolvedInCP)
       *unresolvedInCP = true;
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex, unresolvedInCP != nullptr);
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex, unresolvedInCP != NULL);
    auto recv = _stream->read<J9Method *, bool, bool, TR_ResolvedJ9JITaaSServerMethodInfo>();
    J9Method * ramMethod = std::get<0>(recv);
    bool unresolved = std::get<1>(recv);
@@ -637,7 +637,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
 
-   cacheResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
+   cacheResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, NULL}, resolvedMethod, unresolvedInCP);
    return resolvedMethod;
    }
 
@@ -706,8 +706,8 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA 
 TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
    {
-   TR_ResolvedMethod *resolvedMethod = nullptr;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, &resolvedMethod, nullptr))
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, &resolvedMethod, NULL))
       return resolvedMethod;
    
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
@@ -752,7 +752,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * co
       }
    // for resolved interface method, need to know cpIndex, as well as classObject
    // to uniquely identify it.
-   cacheResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, resolvedMethod, nullptr);
+   cacheResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, resolvedMethod, NULL);
    if (resolvedMethod)
       return resolvedMethod;
 
@@ -880,7 +880,7 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMString(int32_t &len, void *basePtr,
    key.basePtr = basePtr;
    key.offsets = offsetKey;
    
-   std::string *cachedStr = nullptr;
+   std::string *cachedStr = NULL;
    bool isCached = false;
    TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
    {
@@ -1044,7 +1044,7 @@ TR_ResolvedJ9JITaaSServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, 
       }
 
    
-   std::string *cachedStr = nullptr;
+   std::string *cachedStr = NULL;
    bool isCached = false;
    TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
    {
@@ -1489,12 +1489,12 @@ TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(TR_ResolvedJ9JITaaSServerMethodI
    methodInfoStruct.mandatoryRm = resolvedMethod->getMandatoryRecognizedMethod();
    methodInfoStruct.rm = ((TR_ResolvedMethod*)resolvedMethod)->getRecognizedMethod();
    methodInfoStruct.startAddressForJittedMethod = TR::CompilationInfo::isCompiled(resolvedMethod->ramMethod()) ?
-                                           resolvedMethod->startAddressForJittedMethod() : nullptr;
+                                           resolvedMethod->startAddressForJittedMethod() : NULL;
    methodInfoStruct.virtualMethodIsOverridden = resolvedMethod->virtualMethodIsOverridden();
    methodInfoStruct.addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
    methodInfoStruct.classLoader = resolvedMethod->getClassLoader();
 
-   TR_PersistentJittedBodyInfo *bodyInfo = nullptr;
+   TR_PersistentJittedBodyInfo *bodyInfo = NULL;
    // Method may not have been compiled
    if (!resolvedMethod->isInterpreted() && !resolvedMethod->isJITInternalNative())
       {
@@ -1532,7 +1532,7 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA) _romClass + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;
-   _j9classForNewInstance = nullptr;
+   _j9classForNewInstance = NULL;
 
    _jniProperties = methodInfoStruct.jniProperties;
    _jniTargetAddress = methodInfoStruct.jniTargetAddress;
@@ -1559,7 +1559,7 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    _name = J9ROMMETHOD_GET_NAME(_romClass, _romMethod);
    _signature = J9ROMMETHOD_GET_SIGNATURE(_romClass, _romMethod);
    parseSignature(trMemory);
-   _fullSignature = nullptr;
+   _fullSignature = NULL;
   
    setMandatoryRecognizedMethod(mandatoryRm);
    setRecognizedMethod(rm);
@@ -1567,7 +1567,7 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    TR_JITaaSIProfiler *iProfiler = (TR_JITaaSIProfiler *) ((TR_J9VMBase *) fe)->getIProfiler();
    const std::string entryStr = std::get<3>(methodInfo);
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
-   _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : nullptr; 
+   _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL; 
    }
 
 
