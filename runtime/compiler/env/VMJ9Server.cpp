@@ -955,9 +955,63 @@ TR_J9ServerVM::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opa
 TR_OpaqueMethodBlock *
 TR_J9ServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
+   if (isInterfaceClass(classObject))
+      return NULL;
+
+   if ((_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) && !ignoreRtResolve)
+      return NULL;
+
+   // Search the cache for the j9method corresponding to this virtualCallOffset
+   ClientSessionData *clientSessionData = _compInfoPT->getClientData();
+   bool classInfoPresent = false;
+   {
+   OMR::CriticalSection remoteRamClassCS(clientSessionData->getROMMapMonitor());
+   auto it = clientSessionData->getROMClassMap().find((J9Class*)classObject);
+   if (it != clientSessionData->getROMClassMap().end())
+      {
+      classInfoPresent = true;
+      auto &virtualMethodCache = it->second._virtualMethodCache;
+      if (!virtualMethodCache)
+         {
+         // initialize cache, called once per ram class
+         virtualMethodCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, TR_OpaqueMethodBlock *>(PersistentUnorderedMap<int32_t, TR_OpaqueMethodBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
+         }
+      else
+         {
+         auto it = virtualMethodCache->find(virtualCallOffset);
+         if (it != virtualMethodCache->end())
+            {
+            TR_OpaqueMethodBlock * method = it->second;
+            // TODO: Add remote check to validate cache
+            return method;
+            }
+         }
+      }
+   } // end critical section
+
+   // Send a message to the client for the desired data
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve);
-   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   TR_OpaqueMethodBlock * method = std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   // If method == NULL, it means J9_BYTECODE_START_FROM_RAM_METHOD((J9Method*)method) == NULL
+
+   // Update the cache
+   if (classInfoPresent)
+      {
+      // Must check again because class could have been unloaded
+      OMR::CriticalSection remoteRamClassCS(clientSessionData->getROMMapMonitor());
+      auto it = clientSessionData->getROMClassMap().find((J9Class*)classObject);
+      if (it != clientSessionData->getROMClassMap().end())
+         {
+         auto virtualMethodCache = it->second._virtualMethodCache;
+         if (virtualMethodCache)
+            {
+            virtualMethodCache->insert({ virtualCallOffset, method });
+            }
+         }
+      }
+
+   return method;
    }
 
 TR::CodeCache *
@@ -2243,7 +2297,7 @@ TR_J9SharedCacheServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classOb
    {
    TR_OpaqueMethodBlock *ramMethod = TR_J9ServerVM::getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
    TR::Compilation *comp = TR::comp();
-   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+   if (comp && comp->getOption(TR_UseSymbolValidationManager) && ramMethod)
       {
       if (!comp->getSymbolValidationManager()->addVirtualMethodFromOffsetRecord(ramMethod, classObject, virtualCallOffset, ignoreRtResolve))
          return NULL;

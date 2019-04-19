@@ -70,6 +70,7 @@ class ClientSessionData
       TR_FieldAttributesCache *_staticAttributesCache;
       TR_FieldAttributesCache *_fieldAttributesCacheAOT;
       TR_FieldAttributesCache *_staticAttributesCacheAOT;
+      PersistentUnorderedMap<int32_t, TR_OpaqueMethodBlock *> *_virtualMethodCache;
       };
 
    struct J9MethodInfo

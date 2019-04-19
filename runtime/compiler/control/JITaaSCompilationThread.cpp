@@ -3090,6 +3090,11 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _staticAttributesCacheAOT->~TR_FieldAttributesCache();
       jitPersistentFree(_staticAttributesCacheAOT);
       }
+   if (_virtualMethodCache)
+      {
+      _virtualMethodCache->~PersistentUnorderedMap<int32_t, TR_OpaqueMethodBlock *>();
+      jitPersistentFree(_virtualMethodCache);
+      }
    }
 
 ClientSessionData::VMInfo *
@@ -3351,6 +3356,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._staticAttributesCache = NULL;
    classInfoStruct._fieldAttributesCacheAOT = NULL;
    classInfoStruct._staticAttributesCacheAOT = NULL;
+   classInfoStruct._virtualMethodCache = NULL;
 
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
