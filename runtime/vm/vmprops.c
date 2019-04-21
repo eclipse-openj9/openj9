@@ -539,6 +539,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	UDATA j2seVersion = J2SE_VERSION(vm);
 	const char* propValue = NULL;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
+	const char *specificationVersion = NULL;
 
 	if (omrthread_monitor_init(&(vm->systemPropertiesMutex), 0) != 0) {
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
@@ -572,35 +573,34 @@ initializeSystemProperties(J9JavaVM * vm)
 		}
 	}
 
-#if JAVA_SPEC_VERSION < 12
-	/* Following system properties are defined via java.lang.VersionProps.init(systemProperties) and following settings within System.ensureProperties() */
-	{
-		const char *classVersion = NULL;
-		const char *specificationVersion = NULL;
-
-		/* Properties that always exist */
-		switch (j2seVersion) {
-		case J2SE_18:
-			classVersion = "52.0";
-			specificationVersion = "1.8";
-			break;
-		case J2SE_V11:
-		default:
-			classVersion = "55.0";
-			specificationVersion = "11";
-			break;
-		}
-		rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			goto fail;
-		}
-
+	if (JAVA_SPEC_VERSION == 8) {
+		specificationVersion = "1.8";
+	} else {
+#define J9_STR_(x) #x
+#define J9_STR(x) J9_STR_(x)
+		specificationVersion = J9_STR(JAVA_SPEC_VERSION);
+	}
+	if (JAVA_SPEC_VERSION < 12) {
+		/* System property "java.specification.version" is defined via java.lang.VersionProps.init(systemProperties) within System.ensureProperties() */
 		rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-
-		rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
+	}
+	rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+	
+	if (JAVA_SPEC_VERSION < 12) {
+		/* Following system properties are defined via java.lang.VersionProps.init(systemProperties) within System.ensureProperties() */
+		const char *classVersion = NULL;
+		if (JAVA_SPEC_VERSION == 8) {
+			classVersion = "52.0";
+		} else {
+			classVersion = "55.0";	/* Java 11 */
+		}
+		rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
@@ -614,9 +614,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-
 	}
-#endif /* JAVA_SPEC_VERSION < 12 */
 
 	rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VM_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
