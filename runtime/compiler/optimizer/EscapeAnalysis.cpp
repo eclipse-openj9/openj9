@@ -2371,8 +2371,16 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
 
          for (Candidate *otherAllocNode = _candidates.getFirst(); otherAllocNode; otherAllocNode = otherAllocNode->getNext())
             {
+            // A reaching definition that is an allocation node for a candidate
+            // for stack allocation is harmless.  Also, a reaching definition
+            // that has the value number of a candidate allocation, other than the
+            // current candidate, is harmless.  The added restriction in the
+            // second case avoids allowing the current candidate through from a
+            // a previous loop iteration. 
             if (otherAllocNode->_node == firstChild
-                || _valueNumberInfo->getValueNumber(otherAllocNode->_node) == _valueNumberInfo->getValueNumber(firstChild))
+                   || (candidate->_node != otherAllocNode->_node
+                       && _valueNumberInfo->getValueNumber(otherAllocNode->_node)
+                            == _valueNumberInfo->getValueNumber(firstChild)))
                {
                rhsIsHarmless = true;
                break;
