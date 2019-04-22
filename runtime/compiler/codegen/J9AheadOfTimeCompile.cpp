@@ -331,6 +331,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_InlinedSpecialMethodWithNopGuard:
       case TR_InlinedVirtualMethodWithNopGuard:
       case TR_InlinedInterfaceMethodWithNopGuard:
+      case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
       case TR_InlinedVirtualMethod:
          {
@@ -352,7 +353,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR_ResolvedMethod *resolvedMethod;
          if (kind == TR_InlinedInterfaceMethodWithNopGuard ||
-             kind == TR_InlinedInterfaceMethod)
+             kind == TR_InlinedInterfaceMethod ||
+             kind == TR_InlinedAbstractMethodWithNopGuard)
             {
             TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
             TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite->_methodInfo;
@@ -753,6 +755,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_InlinedSpecialMethodWithNopGuard:
       case TR_InlinedVirtualMethodWithNopGuard:
       case TR_InlinedInterfaceMethodWithNopGuard:
+      case TR_InlinedAbstractMethodWithNopGuard:
          {
          TR_RelocationRecordNopGuard *inlinedMethod = reinterpret_cast<TR_RelocationRecordNopGuard *>(reloRecord);
 
@@ -1249,40 +1252,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                {
                cursor += 4;
                self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               }
-            break;
-         case TR_InlinedAbstractMethodWithNopGuard:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor += 4;           // padding
-               ep1 = cursor;          // inlinedSiteIndex
-               ep2 = cursor+8;        // constantPool
-               ep3 = cursor+16;       // cpIndex
-               ep4 = cursor+24;       // romClassOffsetInSharedCache
-               ep5 = cursor+32; // destination address
-               cursor +=40;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined Method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, destinationAddress = %p",
-                                  *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3, *(uint64_t *)ep4, *(uint64_t *)ep5);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;          // inlinedSiteIndex
-               ep2 = cursor+4;        // constantPool
-               ep3 = cursor+8;        // cpIndex
-               ep4 = cursor+12;       // romClassOffsetInSharedCache
-               ep5 = cursor+16; // destinationAddress
-               cursor += 20;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined Method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, destinationAddress = %p",
-                                  *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3, *(uint32_t *)ep4, *(uint32_t *)ep5);
-                  }
                }
             break;
 
