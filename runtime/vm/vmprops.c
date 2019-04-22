@@ -775,10 +775,19 @@ initializeSystemProperties(J9JavaVM * vm)
 		}
 	}
 
+#if defined(OSX) && defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64)
+	/*
+	 * The reference implementation uses "amd64" to refer to the 64-bit x86
+	 * architecture everywhere except on OSX where the name "x86_64" is
+	 * used: We follow suit.
+	 */
+	propValue = "x86_64";
+#else /* defined(OSX) && defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64) */
 	propValue = j9sysinfo_get_CPU_architecture();
 	if (NULL == propValue) {
 		propValue = "unknown";
 	}
+#endif /* defined(OSX) && defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64) */
 	rc = addSystemProperty(vm, "os.arch", propValue, J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
