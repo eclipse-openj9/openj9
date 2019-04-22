@@ -201,6 +201,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_AbsoluteMethodAddress:
       case TR_BodyInfoAddress:
       case TR_RamMethod:
+      case TR_ClassUnloadAssumption:
          {
          // Nothing to do
          }
@@ -623,6 +624,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_AbsoluteMethodAddress:
       case TR_BodyInfoAddress:
       case TR_RamMethod:
+      case TR_ClassUnloadAssumption:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
@@ -1401,14 +1403,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-         case TR_ClassUnloadAssumption:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;
-               }
-            traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
 
          case TR_ValidateClassByName:
