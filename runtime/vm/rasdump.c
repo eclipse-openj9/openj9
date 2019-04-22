@@ -587,8 +587,13 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 	/* ensure that the string is properly terminated */
 	rasStruct->hostname[sizeof(rasStruct->hostname)-1] = '\0';
 
+#if defined(J9OS_I5_V7R3)
+	/* set AI_ADDRCONFIG(0x08) to fix low performance of inactive ipv6 resolving */
+	j9sock_getaddrinfo_create_hints( &hints, (I_16) J9ADDR_FAMILY_UNSPEC, 0, J9PROTOCOL_FAMILY_UNSPEC, 0x08 ); 
+#else
 	/* create the hints structure for both IPv4 and IPv6 */
 	j9sock_getaddrinfo_create_hints( &hints, (I_16) J9ADDR_FAMILY_UNSPEC, 0, J9PROTOCOL_FAMILY_UNSPEC, 0 );
+#endif
 	/* rasStruct->hostname can't simply be localhost since that is always 127.0.0.1 */
 	if (0 !=  j9sock_getaddrinfo((char*)rasStruct->hostname, hints, &addrinfo )) {
 		/* error so null the buffer so we don't try to work with it on the other side */
