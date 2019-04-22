@@ -364,6 +364,11 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
 
         for (name in TARGET_NAMES) {
+            // Checking to see if the test should be excluded
+            if (EXCLUDED_TESTS.contains(name)){
+                echo "The '${name}' test suite will be excluded"
+                continue
+            }
             def TEST_FLAG = (name.contains('+jitaas')) ? 'JITAAS' : ''
             def TEST_JOB_NAME = get_test_job_name(get_target_name(name), SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 

@@ -459,6 +459,14 @@ def set_test_targets() {
         // set default TESTS_TARGETS for pipeline job (run all tests)
         TESTS_TARGETS = "_sanity,_extended"
     }
+
+    EXCLUDED_TESTS = []
+    if (VARIABLES."${SPEC}".excluded_tests) {
+        def excludedTests = get_value(VARIABLES."${SPEC}".excluded_tests, SDK_VERSION)
+        if (excludedTests) {
+            EXCLUDED_TESTS.addAll(excludedTests)
+        }
+    }
 }
 
 def set_slack_channel() {
