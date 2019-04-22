@@ -20,8 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifdef JITAAS_USE_RAW_SOCKETS
-
 #include <chrono>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -322,5 +320,3 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
       }
    }
 }
-
-#endif

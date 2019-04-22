@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2000, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,10 +26,8 @@ Relevant files:
 ```
 rpc/ProtobufTypeConvert.hpp
 rpc/protos/compile.proto
-rpc/raw/J9Server.*
-rpc/raw/J9Client.*
-rpc/grpc/J9Server.*
-rpc/grpc/J9Client.*
+rpc/J9Server.*
+rpc/J9Client.*
 ```
 
 To add a new message, edit `rpc/protos/compile.proto`.
