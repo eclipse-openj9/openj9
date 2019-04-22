@@ -1900,6 +1900,18 @@ TR_RelocationRecordJ2IVirtualThunkPointer::bytesInHeaderAndPayload()
    }
 
 void
+TR_RelocationRecordJ2IVirtualThunkPointer::setOffsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget, uintptr_t j2iVirtualThunkPointer)
+   {
+   reloTarget->storeRelocationRecordValue(j2iVirtualThunkPointer, (uintptr_t *) &((TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate *)_record)->_offsetToJ2IVirtualThunkPointer);
+   }
+
+uintptr_t
+TR_RelocationRecordJ2IVirtualThunkPointer::getOffsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate *)_record)->_offsetToJ2IVirtualThunkPointer);
+   }
+
+void
 TR_RelocationRecordJ2IVirtualThunkPointer::relocateJ2IVirtualThunkPointer(
    TR_RelocationTarget *reloTarget,
    uint8_t *reloLocation,

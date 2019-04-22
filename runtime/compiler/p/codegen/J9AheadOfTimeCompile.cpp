@@ -387,21 +387,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_J2IVirtualThunkPointer:
-         {
-         auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data2; // inlined site index
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data1; // constantPool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data3; // offset to J2I virtual thunk pointer
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {

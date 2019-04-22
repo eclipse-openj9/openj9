@@ -549,6 +549,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_J2IVirtualThunkPointer:
+         {
+         TR_RelocationRecordJ2IVirtualThunkPointer *vtpRecord = reinterpret_cast<TR_RelocationRecordJ2IVirtualThunkPointer *>(reloRecord);
+
+         TR_RelocationRecordInformation *info = reinterpret_cast<TR_RelocationRecordInformation*>(relocation->getTargetAddress());
+
+         vtpRecord->setConstantPool(reloTarget, info->data1);
+         vtpRecord->setInlinedSiteIndex(reloTarget, info->data2);
+         vtpRecord->setOffsetToJ2IVirtualThunkPointer(reloTarget, info->data3);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -871,6 +883,21 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_J2IVirtualThunkPointer:
+         {
+         TR_RelocationRecordJ2IVirtualThunkPointer *vtpRecord = reinterpret_cast<TR_RelocationRecordJ2IVirtualThunkPointer *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined site index %lld, constant pool 0x%llx, offset to j2i thunk pointer 0x%llx",
+                                     vtpRecord->inlinedSiteIndex(reloTarget),
+                                     vtpRecord->constantPool(reloTarget),
+                                     vtpRecord->getOffsetToJ2IVirtualThunkPointer(reloTarget));
+            }
+         } 
+         break;
+
       default:
          return cursor;
       }
@@ -1161,24 +1188,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                cursor +=4;      // padding
                }
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            break;
-         case TR_J2IVirtualThunkPointer:
-            cursor++;        // unused field
-            cursor += is64BitTarget ? 4 : 0;
-            ep1 = cursor;
-            ep2 = cursor + sizeof(uintptr_t);
-            ep3 = cursor + 2 * sizeof(uintptr_t);
-            cursor += 3 * sizeof(uintptr_t);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            if (isVerbose)
-               {
-               traceMsg(
-                  self()->comp(),
-                  "\nInlined site index %lld, constant pool 0x%llx, offset to j2i thunk pointer 0x%llx",
-                  (int64_t)*(uintptr_t*)ep1,
-                  (uint64_t)*(uintptr_t*)ep2,
-                  (uint64_t)*(uintptr_t*)ep3);
-               }
             break;
          case TR_ResolvedTrampolines:
             {

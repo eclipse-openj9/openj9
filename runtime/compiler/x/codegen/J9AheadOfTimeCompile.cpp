@@ -319,22 +319,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_J2IVirtualThunkPointer:
-         {
-         // Note: thunk relos should only be created for 64 bit
-         auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data2; // inlined site index
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data1; // constantPool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data3; // offset to J2I virtual thunk pointer
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_PicTrampolines:
          {
          TR_ASSERT(_cg->comp()->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
