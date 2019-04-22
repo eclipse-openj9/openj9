@@ -312,59 +312,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_InlinedVirtualMethod:
-         {
-         guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
-
-         // Setup flags field with type of method that needs to be validated at relocation time
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
-            flags = inlinedMethodIsStatic;
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
-            flags = inlinedMethodIsSpecial;
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
-            flags = inlinedMethodIsVirtual;
-
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-
-         int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptr_t *) cursor = (uintptr_t) inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *) cursor = (uintptr_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t*) cursor = (uintptr_t) guard->getSymbolReference()->getCPIndex(); // record cpIndex
-         cursor += SIZEPOINTER;
-
-         if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
-             relocation->getTargetKind() == TR_InlinedInterfaceMethod)
-            {
-            TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
-            TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *) inlinedCallSite->_methodInfo;
-            resolvedMethod = aotMethodInfo->resolvedMethod;
-            }
-         else
-            {
-            resolvedMethod = guard->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
-            }
-
-         TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
-         void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-
-         *(uintptr_t *) cursor = romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         if (relocation->getTargetKind() != TR_InlinedInterfaceMethod &&
-             relocation->getTargetKind() != TR_InlinedVirtualMethod)
-            {
-            *(uintptr_t *) cursor = (uintptr_t) relocation->getTargetAddress(); // record Patch Destination Address
-            cursor += SIZEPOINTER;
-            }
-         }
-         break;
-
       case TR_HCR:
          {
          flags = 0;

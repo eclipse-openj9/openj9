@@ -295,7 +295,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
       case TR_InlinedAbstractMethodWithNopGuard:
-      case TR_InlinedVirtualMethod:
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
