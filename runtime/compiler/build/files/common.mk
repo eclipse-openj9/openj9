@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -376,9 +376,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/StatisticsThread.cpp \
     compiler/env/VMJ9Server.cpp \
     compiler/env/j9methodServer.cpp \
-    compiler/rpc/grpc/J9Server.cpp \
-    compiler/rpc/raw/J9Server.cpp \
-    compiler/rpc/raw/J9Client.cpp \
+    compiler/rpc/J9Server.cpp \
+    compiler/rpc/J9Client.cpp \
     compiler/rpc/ProtobufTypeConvert.cpp \
     compiler/control/JITaaSCompilationThread.cpp \
     compiler/env/JITaaSPersistentCHTable.cpp \

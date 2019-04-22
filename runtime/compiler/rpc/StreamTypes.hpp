@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,63 +20,63 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "rpc/gen/compile.pb.h"
+
 #ifndef RPC_TYPES_H
 #define RPC_TYPES_H
 
 #include "infra/Assert.hpp"
 
-#ifdef JITAAS_USE_GRPC
-#include "grpc/StreamTypes.hpp"
-#endif
-#ifdef JITAAS_USE_RAW_SOCKETS
-#include "raw/StreamTypes.hpp"
-#endif
-
 namespace JITaaS
 {
-   class StreamFailure: public virtual std::exception
-      {
-   public:
-      StreamFailure() : _message("Generic stream failure") { }
-      StreamFailure(std::string message) : _message(message) { }
-      virtual const char* what() const throw() { return _message.c_str(); }
-   private:
-      std::string _message;
-      };
+struct Status
+   {
+   const static Status OK;
+   bool ok() { return true; }
+   };
 
-   class StreamCancel: public virtual std::exception
-      {
-   public:
-      virtual const char* what() const throw() { return "compilation canceled by client"; }
-      };
+class StreamFailure: public virtual std::exception
+   {
+public:
+   StreamFailure() : _message("Generic stream failure") { }
+   StreamFailure(std::string message) : _message(message) { }
+   virtual const char* what() const throw() { return _message.c_str(); }
+private:
+   std::string _message;
+   };
 
-   class StreamOOO : public virtual std::exception
-      {
-      public:
-         virtual const char* what() const throw() { return "Messages arriving out-of-order"; }
-      };
+class StreamCancel: public virtual std::exception
+   {
+public:
+   virtual const char* what() const throw() { return "compilation canceled by client"; }
+   };
 
-   class StreamTypeMismatch: public virtual StreamFailure
-      {
+class StreamOOO : public virtual std::exception
+   {
    public:
-      StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Type mismatch: %s", message.c_str()); }
-      };
+      virtual const char* what() const throw() { return "Messages arriving out-of-order"; }
+   };
 
-   class StreamArityMismatch: public virtual StreamFailure
-      {
-   public:
-      StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Arity mismatch: %s", message.c_str()); }
-      };
+class StreamTypeMismatch: public virtual StreamFailure
+   {
+public:
+   StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Type mismatch: %s", message.c_str()); }
+   };
 
-   class ServerCompFailure: public virtual std::exception
-      {
-   public:
-      ServerCompFailure() : _message("Generic JITaaS server compilation failure") { }
-      ServerCompFailure(std::string message) : _message(message) { }
-      virtual const char* what() const throw() { return _message.c_str(); }
-   private:
-      std::string _message;
-      };
+class StreamArityMismatch: public virtual StreamFailure
+   {
+public:
+   StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Arity mismatch: %s", message.c_str()); }
+   };
+
+class ServerCompFailure: public virtual std::exception
+   {
+public:
+   ServerCompFailure() : _message("Generic JITaaS server compilation failure") { }
+   ServerCompFailure(std::string message) : _message(message) { }
+   virtual const char* what() const throw() { return _message.c_str(); }
+private:
+   std::string _message;
+   };
 }
-
 #endif // RPC_TYPES_H

@@ -3974,7 +3974,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             getCompThreadId(), e.what());
       stream->cancel(); // This does nothing for raw sockets
       abortCompilation = true;
-#ifdef JITAAS_USE_RAW_SOCKETS
       if (!enableJITaaSPerCompConn)
          {
          // Delete server stream
@@ -3982,7 +3981,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
-#endif
       }
    catch (const JITaaS::StreamCancel &e)
       {
@@ -3990,7 +3988,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
             getCompThreadId(), e.what());
       abortCompilation = true;
-#ifdef JITAAS_USE_RAW_SOCKETS
       if (!enableJITaaSPerCompConn)
          {
          // Delete server stream
@@ -3998,7 +3995,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
-#endif
       }
    catch (const JITaaS::StreamOOO &e)
       {
@@ -4062,7 +4058,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             }
          setClientData(NULL);
          }
-#ifdef JITAAS_USE_RAW_SOCKETS
       if (enableJITaaSPerCompConn)
          {
          // Delete server stream
@@ -4070,7 +4065,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
-#endif
       return;
       }
 
@@ -4182,7 +4176,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
 
    
-#ifdef JITAAS_USE_RAW_SOCKETS
    if (enableJITaaSPerCompConn)
       {
       // Delete server stream
@@ -4190,7 +4183,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       TR_Memory::jitPersistentFree(stream);
       entry._stream = NULL;
       }
-#endif
    }
 
 void
