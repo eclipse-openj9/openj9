@@ -215,6 +215,12 @@ ppc64_aix:
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
     12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
     next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+  build_env:
+    vars:
+      8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
+      11: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
+      12: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
+      next: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
