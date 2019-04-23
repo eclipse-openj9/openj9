@@ -499,7 +499,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 	markObjectClass(env, objectPtr);
 
 	/* Object slots */
-	volatile fj9object_t *scanPtr = (fj9object_t*)( objectPtr + 1 );
+	volatile fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 
 	updateScanStats(env, objectSize, reason);
@@ -510,7 +510,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
-	if(((UDATA)descriptionPtr) & 1) {
+	if (((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
 #if defined(J9VM_GC_LEAF_BITS)
 		leafBits = ((UDATA)leafPtr) >> 1;
@@ -523,7 +523,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 	}
 	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
-	while(scanPtr < endScanPtr) {
+	while (scanPtr < endScanPtr) {
 		/* Determine if the slot should be processed */
 		if(descriptionBits & 1) {
 			/* As this function can be invoked during concurent mark the slot is
@@ -546,7 +546,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 #if defined(J9VM_GC_LEAF_BITS)
 		leafBits >>= 1;
 #endif /* J9VM_GC_LEAF_BITS */
-		if(descriptionIndex-- == 0) {
+		if (descriptionIndex-- == 0) {
 			descriptionBits = *descriptionPtr++;
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits = *leafPtr++;
@@ -615,7 +615,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 		}
 	}
 
-	volatile fj9object_t * scanPtr = (fj9object_t*)( objectPtr + 1 );
+	volatile fj9object_t * scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
 

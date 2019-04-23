@@ -2220,11 +2220,11 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 	if (GC_ObjectModel::SCAN_MIXED_OBJECT == _extensions->objectModel.getScanType(clazz)) {
 		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
 		/* For now we only support leaf children in small objects. If the leaf description isn't immediate, ignore it to keep the code simple. */
-		if(1 == (instanceLeafDescription & 1)) {
-			fj9object_t* scanPtr = (fj9object_t*)( objectPtr + 1 );
+		if (1 == (instanceLeafDescription & 1)) {
+			fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 			UDATA leafBits = instanceLeafDescription >> 1;
 			while (0 != leafBits) {
-				if(1 == (leafBits & 1)) {
+				if (1 == (leafBits & 1)) {
 					/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 					GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
 					/* pass leaf flag into copy method for optimazing abort case and hybrid case (don't need to push leaf object in work stack) */
@@ -2413,13 +2413,13 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 #endif /* J9VM_GC_LEAF_BITS */
 
 	/* Object slots */
-	volatile fj9object_t* scanPtr = (fj9object_t*)( objectPtr + 1 );
+	volatile fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 
 	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
 	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
 
-	if(((UDATA)descriptionPtr) & 1) {
+	if (((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
 #if defined(J9VM_GC_LEAF_BITS)
 		leafBits = ((UDATA)leafPtr) >> 1;
@@ -2432,7 +2432,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	}
 	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
-	while(success && (scanPtr < endScanPtr)) {
+	while (success && (scanPtr < endScanPtr)) {
 		/* Determine if the slot should be processed */
 		if (descriptionBits & 1) {
 			GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
@@ -2448,7 +2448,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 #if defined(J9VM_GC_LEAF_BITS)
 		leafBits >>= 1;
 #endif /* J9VM_GC_LEAF_BITS */
-		if(descriptionIndex-- == 0) {
+		if (descriptionIndex-- == 0) {
 			descriptionBits = *descriptionPtr++;
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits = *leafPtr++;
@@ -3131,7 +3131,7 @@ MM_CopyForwardScheme::incrementalScanMixedObjectSlots(MM_EnvironmentVLHGC *env, 
 
 	if (!hasPartiallyScannedObject) {
 		/* finished previous object, step up for next one */
-		mixedObjectIterator.initialize(objectPtr);
+		mixedObjectIterator.initialize(_javaVM->omrVM, objectPtr);
 	} else {
 		/* retrieve partial scan state of cache */
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
@@ -3213,7 +3213,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 
 	if (!hasPartiallyScannedObject) {
 		/* finished previous object, step up for next one */
-		mixedObjectIterator.initialize(objectPtr);
+		mixedObjectIterator.initialize(_javaVM->omrVM, objectPtr);
 	} else {
 		/* retrieve partial scan state of cache */
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));

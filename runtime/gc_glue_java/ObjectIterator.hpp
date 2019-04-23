@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ public:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
-			return _mixedObjectIterator.initialize(objectPtr);
+			return _mixedObjectIterator.initialize(_omrVM, objectPtr);
 		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 			return _pointerContiguousArrayIterator.initialize(objectPtr);
 		case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
