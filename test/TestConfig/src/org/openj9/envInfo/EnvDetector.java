@@ -88,6 +88,7 @@ public class EnvDetector {
 		machineInfo.getMachineInfo(MachineInfo.PROC_ARCH_CMD);
 		machineInfo.getMachineInfo(MachineInfo.SYS_OS_CMD);
 		machineInfo.getMachineInfo(MachineInfo.CPU_CORES_CMD);
+		machineInfo.getMachineInfo(MachineInfo.ULIMIT_CMD);
 
 		machineInfo.getRuntimeInfo();
 		machineInfo.getSpaceInfo("");
