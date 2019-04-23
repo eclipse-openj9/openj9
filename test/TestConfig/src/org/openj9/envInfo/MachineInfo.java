@@ -32,6 +32,7 @@ public class MachineInfo {
 	public static String UNAME_CMD = "uname -a";
 	public static String SYS_ARCH_CMD = "uname -m";
 	public static String PROC_ARCH_CMD = "uname -p";
+	public static final String ULIMIT_CMD = "ulimit -a";
 
 	public static String INSTALLED_MEM_CMD = "grep MemTotal /proc/meminfo | awk '{print $2}";
 	public static String FREE_MEM_CMD = "grep MemFree /proc/meminfo | awk '{print $2}";
@@ -55,6 +56,7 @@ public class MachineInfo {
 	public static final String ACTIVE_JAVA_PROCESSES_CMD = "ps -ef | grep -i [j]ava";
 
 	String uname = "";
+	String ulimit = "";
 	String installedMem = "";
 	String freeMem = "";
 	String cpuCores = "";
@@ -80,6 +82,7 @@ public class MachineInfo {
 		+ "\nsysArch: " + sysArch 
 		+ "\nprocArch: " + procArch 
 		+ "\nsysOS: " + sysOS
+		+ "\nulimit: " + ulimit 
 		+ "\n"
 		+ "\nvmVendor: " + vmVendor 
 		+ "\nvmVersion: " + vmVersion 
@@ -111,11 +114,19 @@ public class MachineInfo {
 	public String getUname() {
 		return uname;
 	}
+	
+	public String getUlimit() {
+		return ulimit;
+	}
 
 	public void setUname(String uname) {
 		this.uname = uname;
 	}
 
+	public void setUlimit(String ulimit) {
+		this.ulimit = ulimit;
+	}
+	
 	public String getVmVendor() {
 		return vmVendor;
 	}
@@ -248,12 +259,30 @@ public class MachineInfo {
 	}
 
 	public void getMachineInfo(String command) {
-		try {
-			Process proc = Runtime.getRuntime().exec(command);
+		try { 
+			Process proc = null;
+			// ulimit needs to be invoked via shell with -c option for it to work on all platforms
+			if (command.equals(MachineInfo.ULIMIT_CMD)) { 
+				proc = Runtime.getRuntime().exec(new String[] { "bash", "-c", MachineInfo.ULIMIT_CMD });
+			} else {
+				proc = Runtime.getRuntime().exec(command);
+			}
+			
 			BufferedReader sout = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			String line = sout.readLine();
+	
 			if (command.equals(MachineInfo.UNAME_CMD)) {
 				setUname(line);
+			} else if (command.equals(MachineInfo.ULIMIT_CMD)) {
+				String rest = "";
+				while (true) {
+					rest = sout.readLine();
+					if (rest == null) {
+						break;
+					}
+					line = line + "\n" + rest; 
+				}
+				setUlimit(line);
 			} else if (command.equals(MachineInfo.SYS_ARCH_CMD)) {
 				setSysArch(line);
 			} else if (command.equals(MachineInfo.PROC_ARCH_CMD)) {
