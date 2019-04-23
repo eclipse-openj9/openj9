@@ -27,9 +27,12 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
 
 /*
  * Instructions to run this test:
@@ -49,21 +52,88 @@ import org.testng.annotations.Test;
 @Test(groups = { "level.sanity" })
 public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
+	static Unsafe myUnsafe = null;
+	/* point2D */
 	static Class point2DClass = null;
-	static Class line2DClass = null;
-	static Class flattenedLine2DClass = null;
 	static MethodHandle makePoint2D = null;
-	static MethodHandle makeLine2D = null;
-	static MethodHandle makeFlattenedLine2D = null;
 	static MethodHandle getX = null;
 	static MethodHandle getY = null;
 	static MethodHandle withX = null;
 	static MethodHandle withY = null;
+	/* line2D */
+	static Class line2DClass = null;
+	static MethodHandle makeLine2D = null;
+	/* flattenedLine2D */
+	static Class flattenedLine2DClass = null;
+	static MethodHandle makeFlattenedLine2D = null;
 	static MethodHandle getFlatSt = null;
 	static MethodHandle withFlatSt = null;
  	static MethodHandle getFlatEn = null;
  	static MethodHandle withFlatEn = null;
-
+	/* triangle2D */
+	static Class triangle2DClass = null;
+	static MethodHandle makeTriangle2D = null;
+	static MethodHandle getV1 = null;
+	static MethodHandle getV2 = null;
+	static MethodHandle getV3 = null;
+	/* valueLong */
+	static Class valueLongClass = null;
+	static MethodHandle makeValueLong = null;
+	static MethodHandle getLong = null;
+	static MethodHandle withLong = null;
+	/* valueInt */
+	static Class valueIntClass = null;
+	static MethodHandle makeValueInt = null;
+	static MethodHandle getInt = null;
+	static MethodHandle withInt = null;
+	/* valueDouble */
+	static Class valueDoubleClass = null;
+	static MethodHandle makeValueDouble = null;
+	static MethodHandle getDouble = null;
+	static MethodHandle withDouble = null;
+	/* valueFloat */
+	static Class valueFloatClass = null;
+	static MethodHandle makeValueFloat = null;
+	static MethodHandle getFloat = null;
+	static MethodHandle withFloat = null;
+	/* valueObject */
+	static Class valueObjectClass = null;
+	static MethodHandle makeValueObject = null;
+	static MethodHandle getObject = null;
+	static MethodHandle withObject = null;
+	/* largeObject */
+	static Class largeObjectValueClass = null;
+	static MethodHandle makeLargeObjectValue = null;
+	static MethodHandle[] getObjects = null;
+	
+	/* default values */
+	static int[] defaultPointPositions = {0xFFEEFFEE, 0xAABBAABB};
+	static int[][] defaultLinePositions = {defaultPointPositions, defaultPointPositions};
+	static int[][][] defaultTrianglePositions = {defaultLinePositions, defaultLinePositions, defaultLinePositions};
+	static long defaultLong = Long.MAX_VALUE;
+	static int defaultInt = Integer.MAX_VALUE;
+	static double defaultDouble = Double.MAX_VALUE;
+	static float defaultFloat = Float.MAX_VALUE;
+	static Object defaultObject = (Object)0xEEFFEEFF;
+	static int[] defaultPointPositionsNew = {0xFFEEFFAA, 0xFFEEFFAA};
+	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositionsNew};
+	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositionsNew, defaultLinePositionsNew};
+	static long defaultLongNew = Long.MIN_VALUE;
+	static int defaultIntNew = Integer.MIN_VALUE;
+	static double defaultDoubleNew = Double.MIN_VALUE;
+	static float defaultFloatNew = Float.MIN_VALUE;
+	static Object defaultObjectNew = (Object)0xFFEEFFEE;
+	
+	@BeforeClass
+	static public void testSetUp() throws RuntimeException {
+		try {
+			Field f = Unsafe.class.getDeclaredField("theUnsafe");
+			f.setAccessible(true);
+			myUnsafe = (Unsafe)f.get(null);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}	
+	}
 
 	/*
 	 * Create a value type
@@ -587,6 +657,586 @@ public class ValueTypeTests {
 		}
 	}
 	
+	/*	
+	 * Create a valueType with three valueType members
+	 * 
+	 * value Triangle2D {
+	 *  flattened Line2D v1;
+	 *  flattened Line2D v2;
+	 *  flattened Line2D v3;
+	 * }
+	 */
+	@Test(priority=3)
+	static public void testCreateTriangle2D() throws Throwable {
+		String fields[] = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		triangle2DClass = ValueTypeGenerator.generateValueClass("Triangle2D", fields);
+
+		makeTriangle2D = lookup.findStatic(triangle2DClass, "makeValueGeneric", MethodType.methodType(triangle2DClass, Object.class, Object.class, Object.class));
+
+		getV1 = generateGenericGetter(triangle2DClass, "v1");
+		MethodHandle withV1 = generateGenericWither(triangle2DClass, "v1");
+		getV2 = generateGenericGetter(triangle2DClass, "v2");
+		MethodHandle withV2 = generateGenericWither(triangle2DClass, "v2");
+		getV3 = generateGenericGetter(triangle2DClass, "v3");
+		MethodHandle withV3 = generateGenericWither(triangle2DClass, "v3");
+
+		MethodHandle[][] getterAndWither = {{getV1, withV1}, {getV2, withV2}, {getV3, withV3}};
+		Object triangle2D = createTriangle2D(defaultTrianglePositions);
+		checkFieldAccessMHOfAssortedType(getterAndWither, triangle2D, fields, true);
+	}
+
+	/*
+	 * Create a value type with a long primitive member
+	 * 
+	 * value ValueLong {
+	 * 	long j;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueLong() throws Throwable {
+		String fields[] = {"j:J"};
+		valueLongClass = ValueTypeGenerator.generateValueClass("ValueLong", fields);
+		makeValueLong = lookup.findStatic(valueLongClass, "makeValue",
+				MethodType.methodType(valueLongClass, long.class));
+
+		getLong = generateGetter(valueLongClass, "j", long.class);
+		withLong = generateWither(valueLongClass, "j", long.class);
+
+		long j = Long.MAX_VALUE;
+		long jNew = Long.MIN_VALUE;
+		Object valueLong = makeValueLong.invoke(j);
+
+		assertEquals(getLong.invoke(valueLong), j);
+
+		valueLong = withLong.invoke(valueLong, jNew);
+		assertEquals(getLong.invoke(valueLong), jNew);
+	}
+
+	/*
+	 * Create a value type with a int primitive member
+	 * 
+	 * value ValueInt {
+	 * 	int i;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueInt() throws Throwable {
+		String fields[] = {"i:I"};
+		valueIntClass = ValueTypeGenerator.generateValueClass("ValueInt", fields);
+
+		makeValueInt = lookup.findStatic(valueIntClass, "makeValue", MethodType.methodType(valueIntClass, int.class));
+
+		getInt = generateGetter(valueIntClass, "i", int.class);
+		withInt = generateWither(valueIntClass, "i", int.class);
+
+		int i = Integer.MAX_VALUE;
+		int iNew = Integer.MIN_VALUE;
+		Object valueInt = makeValueInt.invoke(i);
+
+		assertEquals(getInt.invoke(valueInt), i);
+
+		valueInt = withInt.invoke(valueInt, iNew);
+		assertEquals(getInt.invoke(valueInt), iNew);
+	}
+
+	/*
+	 * Create a value type with a double primitive member
+	 * 
+	 * value ValueDouble {
+	 * 	double d;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueDouble() throws Throwable {
+		String fields[] = {"d:D"};
+		valueDoubleClass = ValueTypeGenerator.generateValueClass("ValueDouble", fields);
+
+		makeValueDouble = lookup.findStatic(valueDoubleClass, "makeValue",
+				MethodType.methodType(valueDoubleClass, double.class));
+
+		getDouble = generateGetter(valueDoubleClass, "d", double.class);
+		withDouble = generateWither(valueDoubleClass, "d", double.class);
+
+		double d = Double.MAX_VALUE;
+		double dNew = Double.MIN_VALUE;
+		Object valueDouble = makeValueDouble.invoke(d);
+
+		assertEquals(getDouble.invoke(valueDouble), d);
+
+		valueDouble = withDouble.invoke(valueDouble, dNew);
+		assertEquals(getDouble.invoke(valueDouble), dNew);
+	}
+
+	/*
+	 * Create a value type with a float primitive member
+	 * 
+	 * value ValueFloat {
+	 * 	float f;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueFloat() throws Throwable {
+		String fields[] = {"f:F"};
+		valueFloatClass = ValueTypeGenerator.generateValueClass("ValueFloat", fields);
+
+		makeValueFloat = lookup.findStatic(valueFloatClass, "makeValue",
+				MethodType.methodType(valueFloatClass, float.class));
+
+		getFloat = generateGetter(valueFloatClass, "f", float.class);
+		withFloat = generateWither(valueFloatClass, "f", float.class);
+
+		float f = Float.MAX_VALUE;
+		float fNew = Float.MIN_VALUE;
+		Object valueFloat = makeValueFloat.invoke(f);
+
+		assertEquals(getFloat.invoke(valueFloat), f);
+
+		valueFloat = withFloat.invoke(valueFloat, fNew);
+		assertEquals(getFloat.invoke(valueFloat), fNew);
+	}
+
+	/*
+	 * Create a value type with a reference member
+	 * 
+	 * value ValueObject {
+	 * 	Object val;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueObject() throws Throwable {
+		String fields[] = {"val:Ljava/lang/Object;:value"};
+
+		valueObjectClass = ValueTypeGenerator.generateValueClass("ValueObject", fields);
+
+		makeValueObject = lookup.findStatic(valueObjectClass, "makeValue",
+				MethodType.methodType(valueObjectClass, Object.class));
+
+		Object val = (Object)0xEEFFEEFF;
+		Object valNew = (Object)0xFFEEFFEE;
+
+		getObject = generateGetter(valueObjectClass, "val", Object.class);
+		withObject = generateWither(valueObjectClass, "val", Object.class);
+
+		Object valueObject = makeValueObject.invoke(val);
+
+		assertEquals(getObject.invoke(valueObject), val);
+
+		valueObject = withObject.invoke(valueObject, valNew);
+		assertEquals(getObject.invoke(valueObject), valNew);
+	}
+
+	/*
+	 * Create an assorted value type with long alignment
+	 * 
+	 * value AssortedValueWithLongAlignment {
+	 *	flattened Point2D point;
+	 *	flattened Line2D line;
+	 *	flattened ValueObject o;
+	 *	flattened ValueLong l;
+	 *	flattened ValueDouble d;
+	 *	flattened ValueInt i;
+	 *	flattened Triangle2D tri;
+	 * }
+	 */
+	@Test(priority=4)
+	static public void testCreateAssortedValueWithLongAlignment() throws Throwable {
+		String fields[] = {
+				"point:QPoint2D;:value",
+				"line:QFlattenedLine2D;:value",
+				"o:QValueObject;:value",
+				"l:QValueLong;:value",
+				"d:QValueDouble;:value",
+				"i:QValueInt;:value",
+				"tri:QTriangle2D;:value"};
+		Class assortedValueWithLongAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithLongAlignment", fields);
+
+		MethodHandle makeAssortedValueWithLongAlignment = lookup.findStatic(assortedValueWithLongAlignmentClass,
+				"makeValueGeneric", MethodType.methodType(assortedValueWithLongAlignmentClass, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndWither[i][0] according to the order of fields i
+		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(assortedValueWithLongAlignmentClass, fields);
+		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, fields);
+		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithLongAlignment, fields, true);
+	}
+
+	/*
+	 * Create an assorted refType with long alignment
+	 * 
+	 * class AssortedReftWithLongAlignment {
+	 *	flattened Point2D point;
+	 *	flattened Line2D line;
+	 *	flattened ValueObject o;
+	 *	flattened ValueLong l;
+	 *	flattened ValueDouble d;
+	 *	flattened ValueInt i;
+	 *	flattened Triangle2D tri;
+	 * }
+	 */
+	@Test(priority=4)
+	static public void testCreateAssortedRefWithLongAlignment() throws Throwable {
+		String fields[] = {
+				"point:QPoint2D;:value",
+				"line:QFlattenedLine2D;:value",
+				"o:QValueObject;:value",
+				"l:QValueLong;:value",
+				"d:QValueDouble;:value",
+				"i:QValueInt;:value",
+				"tri:QTriangle2D;:value"};
+		Class assortedRefWithLongAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithLongAlignment", fields);
+
+		MethodHandle makeAssortedRefWithLongAlignment = lookup.findStatic(assortedRefWithLongAlignmentClass,
+				"makeRefGeneric", MethodType.methodType(assortedRefWithLongAlignmentClass, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class));
+
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithLongAlignmentClass, fields);
+		Object assortedRefWithLongAlignment = createAssorted(makeAssortedRefWithLongAlignment, fields);
+		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithLongAlignment, fields, false);
+	}
+
+	/*
+	 * Create an assorted value type with object alignment 
+	 * 
+	 * value AssortedValueWithObjectAlignment {
+	 * 	flattened Triangle2D tri;
+	 * 	flattened Point2D point;
+	 * 	flattened Line2D line;
+	 * 	flattened ValueObject o;
+	 * 	flattened ValueInt i;
+	 * 	flattened ValueFloat f;
+	 * 	flattened Triangle2D tri2;
+	 * }
+	 */
+	@Test(priority=4)
+	static public void testCreateAssortedValueWithObjectAlignment() throws Throwable {
+		String fields[] = {
+				"tri:QTriangle2D;:value",
+				"point:QPoint2D;:value",
+				"line:QFlattenedLine2D;:value",
+				"o:QValueObject;:value",
+				"i:QValueInt;:value",
+				"f:QValueFloat;:value",
+				"tri2:QTriangle2D;:value"};
+		Class assortedValueWithObjectAlignmentClass = ValueTypeGenerator
+				.generateValueClass("AssortedValueWithObjectAlignment", fields);
+
+		MethodHandle makeAssortedValueWithObjectAlignment = lookup.findStatic(assortedValueWithObjectAlignmentClass,
+				"makeValueGeneric", MethodType.methodType(assortedValueWithObjectAlignmentClass, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(assortedValueWithObjectAlignmentClass, fields);
+
+		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, fields);
+		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithObjectAlignment, fields, true);
+	}
+
+	/*
+	 * Create an assorted refType with object alignment 
+	 * 
+	 * class AssortedRefWithObjectAlignment {
+	 * 	flattened Triangle2D tri;
+	 * 	flattened Point2D point;
+	 * 	flattened Line2D line;
+	 * 	flattened ValueObject o;
+	 * 	flattened ValueInt i;
+	 * 	flattened ValueFloat f;
+	 * 	flattened Triangle2D tri2;
+	 * }
+	 */
+	@Test(priority=4)
+	static public void testCreateAssortedRefWithObjectAlignment() throws Throwable {
+		String fields[] = {
+				"tri:QTriangle2D;:value",
+				"point:QPoint2D;:value",
+				"line:QFlattenedLine2D;:value",
+				"o:QValueObject;:value",
+				"i:QValueInt;:value",
+				"f:QValueFloat;:value",
+				"tri2:QTriangle2D;:value"};
+		Class assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", fields);
+
+		MethodHandle makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
+				"makeRefGeneric", MethodType.methodType(assortedRefWithObjectAlignmentClass, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, fields);
+
+		Object assortedRefWithObjectAlignment = createAssorted(makeAssortedRefWithObjectAlignment, fields);
+		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithObjectAlignment, fields, false);
+	}
+
+	/*
+	 * Create an assorted value type with single alignment 
+	 * 
+	 * value AssortedValueWithSingleAlignment {
+	 * 	flattened Triangle2D tri;
+	 * 	flattened Point2D point;
+	 * 	flattened Line2D line;
+	 * 	flattened ValueInt i;
+	 * 	flattened ValueFloat f;
+	 * 	flattened Triangle2D tri2;
+	 * }
+	 */
+	@Test(priority=4)
+	static public void testCreateAssortedValueWithSingleAlignment() throws Throwable {
+		String fields[] = {
+				"tri:QTriangle2D;:value",
+				"point:QPoint2D;:value",
+				"line:QFlattenedLine2D;:value",
+				"i:QValueInt;:value",
+				"f:QValueFloat;:value",
+				"tri2:QTriangle2D;:value"};
+		Class assortedValueWithSingleAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithSingleAlignment", fields);
+
+		MethodHandle makeAssortedValueWithSingleAlignment = lookup.findStatic(assortedValueWithSingleAlignmentClass,
+				"makeValueGeneric", MethodType.methodType(assortedValueWithSingleAlignmentClass, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(assortedValueWithSingleAlignmentClass, fields);
+
+		Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, fields);
+		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithSingleAlignment, fields, true);
+	}
+
+	/*
+	 * Create an assorted refType with single alignment 
+	 * 
+	 * class AssortedRefWithSingleAlignment {
+	 * 	flattened Triangle2D tri;
+	 * 	flattened Point2D point;
+	 * 	flattened Line2D line;
+	 * 	flattened ValueInt i;
+	 * 	flattened ValueFloat f;
+	 * 	flattened Triangle2D tri2;
+	 * }
+	 */
+	@Test(priority=4)
+	static public void testCreateAssortedRefWithSingleAlignment() throws Throwable {
+		String fields[] = {
+				"tri:QTriangle2D;:value",
+				"point:QPoint2D;:value",
+				"line:QFlattenedLine2D;:value",
+				"i:QValueInt;:value",
+				"f:QValueFloat;:value",
+				"tri2:QTriangle2D;:value"};
+		Class assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", fields);
+
+		MethodHandle makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
+				"makeRefGeneric", MethodType.methodType(assortedRefWithSingleAlignmentClass, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, fields);
+
+		Object assortedRefWithSingleAlignment = createAssorted(makeAssortedRefWithSingleAlignment, fields);
+		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithSingleAlignment, fields, false);
+	}
+
+	/*
+	 * Create a large valueType with 16 valuetypes as its members
+	 * Create a mega valueType with 16 large valuetypes as its members 
+	 *
+	 * value LargeObject {
+	 *	flattened ValueObject val1;
+	 *	flattened ValueObject val2;
+	 *	...
+	 *	flattened ValueObject val16;
+	 * }
+	 *
+	 * value MegaObject {
+	 *	flattened LargeObject val1;
+	 *	... 
+	 *	flattened LargeObject val16;
+	 * }
+	 */
+	@Test(priority=2)
+	static public void testCreateLargeObjectAndMegaValue() throws Throwable {
+		String largeFields[] = {
+				"val1:QValueObject;:value",
+				"val2:QValueObject;:value",
+				"val3:QValueObject;:value",
+				"val4:QValueObject;:value",
+				"val5:QValueObject;:value",
+				"val6:QValueObject;:value",
+				"val7:QValueObject;:value",
+				"val8:QValueObject;:value",
+				"val9:QValueObject;:value",
+				"val10:QValueObject;:value",
+				"val11:QValueObject;:value",
+				"val12:QValueObject;:value",
+				"val13:QValueObject;:value",
+				"val14:QValueObject;:value",
+				"val15:QValueObject;:value",
+				"val16:QValueObject;:value"};
+
+		largeObjectValueClass = ValueTypeGenerator.generateValueClass("LargeObject", largeFields);
+		makeLargeObjectValue = lookup.findStatic(largeObjectValueClass, "makeValueGeneric",
+				MethodType.methodType(largeObjectValueClass, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndWither[i][0] according to the order of fields i
+		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(largeObjectValueClass, largeFields);
+
+		getObjects = new MethodHandle[16];
+		for (int i = 0; i < 16; i++) {
+			getObjects[i] = getterAndWither[i][0];
+		}
+
+		Object largeObjectValue = createAssorted(makeLargeObjectValue, largeFields);
+		checkFieldAccessMHOfAssortedType(getterAndWither, largeObjectValue, largeFields, true);
+
+		/*
+		 * create MegaObject
+		 */
+		String megaFields[] = {
+				"val1:QLargeObject;:value",
+				"val2:QLargeObject;:value",
+				"val3:QLargeObject;:value",
+				"val4:QLargeObject;:value",
+				"val5:QLargeObject;:value",
+				"val6:QLargeObject;:value",
+				"val7:QLargeObject;:value",
+				"val8:QLargeObject;:value",
+				"val9:QLargeObject;:value",
+				"val10:QLargeObject;:value",
+				"val11:QLargeObject;:value",
+				"val12:QLargeObject;:value",
+				"val13:QLargeObject;:value",
+				"val14:QLargeObject;:value",
+				"val15:QLargeObject;:value",
+				"val16:QLargeObject;:value"};
+		Class megaObjectClass = ValueTypeGenerator.generateValueClass("MegaObject", megaFields);
+		MethodHandle makeMega = lookup.findStatic(megaObjectClass, "makeValueGeneric",
+				MethodType.methodType(megaObjectClass, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+
+		/*
+		 * Getters are created in array getterAndWither[i][0] according to the order of fields i
+		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] megaGetterAndWither = generateGenericGetterAndWither(megaObjectClass, megaFields);
+		Object megaObject = createAssorted(makeMega, megaFields);
+		checkFieldAccessMHOfAssortedType(megaGetterAndWither, megaObject, megaFields, true);
+	}
+
+	/*
+	 * Create a large refType with 16 valuetypes as its members
+	 * Create a mega refType with 16 large valuetypes as its members 
+	 *
+	 * class LargeRef {
+	 *	flattened ValObject val1;
+	 *	flattened ValObject val2;
+	 *	...
+	 *	flattened ValObject val16;
+	 * }
+	 *
+	 * class MegaObject {
+	 *	flattened LargeObject val1;
+	 *	... 
+	 *	flattened LargeObject val16;
+	 * }
+	 */
+	@Test(priority=3)
+	static public void testCreateLargeObjectAndMegaRef() throws Throwable {
+		String largeFields[] = {
+				"val1:QValueObject;:value",
+				"val2:QValueObject;:value",
+				"val3:QValueObject;:value",
+				"val4:QValueObject;:value",
+				"val5:QValueObject;:value",
+				"val6:QValueObject;:value",
+				"val7:QValueObject;:value",
+				"val8:QValueObject;:value",
+				"val9:QValueObject;:value",
+				"val10:QValueObject;:value",
+				"val11:QValueObject;:value",
+				"val12:QValueObject;:value",
+				"val13:QValueObject;:value",
+				"val14:QValueObject;:value",
+				"val15:QValueObject;:value",
+				"val16:QValueObject;:value"};
+
+		Class largeRefClass = ValueTypeGenerator.generateRefClass("LargeRef", largeFields);
+		MethodHandle makeLargeObjectRef = lookup.findStatic(largeRefClass, "makeRefGeneric",
+				MethodType.methodType(largeRefClass, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] getterAndSetter = new MethodHandle[largeFields.length][2];
+		for (int i = 0; i < largeFields.length; i++) {
+			String field = (largeFields[i].split(":"))[0];
+			getterAndSetter[i][0] = generateGenericGetter(largeRefClass, field);
+			getterAndSetter[i][1] = generateGenericSetter(largeRefClass, field);
+		}
+
+		Object largeObjectRef = createAssorted(makeLargeObjectRef, largeFields);
+		checkFieldAccessMHOfAssortedType(getterAndSetter, largeObjectRef, largeFields, false);
+
+		/*
+		 * create MegaObject
+		 */
+		String megaFields[] = {
+				"val1:QLargeObject;:value",
+				"val2:QLargeObject;:value",
+				"val3:QLargeObject;:value",
+				"val4:QLargeObject;:value",
+				"val5:QLargeObject;:value",
+				"val6:QLargeObject;:value",
+				"val7:QLargeObject;:value",
+				"val8:QLargeObject;:value",
+				"val9:QLargeObject;:value",
+				"val10:QLargeObject;:value",
+				"val11:QLargeObject;:value",
+				"val12:QLargeObject;:value",
+				"val13:QLargeObject;:value",
+				"val14:QLargeObject;:value",
+				"val15:QLargeObject;:value",
+				"val16:QLargeObject;:value"};
+		Class megaObjectClass = ValueTypeGenerator.generateRefClass("MegaRef", megaFields);
+		MethodHandle makeMegaObjectRef = lookup.findStatic(megaObjectClass, "makeRefGeneric",
+				MethodType.methodType(megaObjectClass, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+
+		/*
+		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
+		 */
+		MethodHandle[][] megaGetterAndSetter = new MethodHandle[megaFields.length][2];
+		for (int i = 0; i < megaFields.length; i++) {
+			String field = (megaFields[i].split(":"))[0];
+			megaGetterAndSetter[i][0] = generateGenericGetter(megaObjectClass, field);
+			megaGetterAndSetter[i][1] = generateGenericSetter(megaObjectClass, field);
+		}
+
+		Object megaObjectRef = createAssorted(makeMegaObjectRef, megaFields);
+		checkFieldAccessMHOfAssortedType(megaGetterAndSetter, megaObjectRef, megaFields, false);
+	}
+
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));
@@ -641,4 +1291,226 @@ public class ValueTypeTests {
 		return null;
 	}
 
+	static long getFieldOffset(Class clazz, String field) {
+		try {
+			Field f = clazz.getDeclaredField(field);
+			return myUnsafe.objectFieldOffset(f);
+		} catch (Throwable t) {
+			throw new RuntimeException(t);
+		}
+	}
+
+	static MethodHandle[][] generateGenericGetterAndWither(Class clazz, String[] fields) {
+		MethodHandle[][] getterAndWither = new MethodHandle[fields.length][2];
+		for (int i = 0; i < fields.length; i++) {
+			String field = (fields[i].split(":"))[0];
+			getterAndWither[i][0] = generateGenericGetter(clazz, field);
+			getterAndWither[i][1] = generateGenericWither(clazz, field);
+		}
+		return getterAndWither;
+	}
+
+	static MethodHandle[][] generateGenericGetterAndSetter(Class clazz, String[] fields) {
+		MethodHandle[][] getterAndSetter = new MethodHandle[fields.length][2];
+		for (int i = 0; i < fields.length; i++) {
+			String field = (fields[i].split(":"))[0];
+			getterAndSetter[i][0] = generateGenericGetter(clazz, field);
+			getterAndSetter[i][1] = generateGenericSetter(clazz, field);
+		}
+		return getterAndSetter;
+	}
+
+	static Object createPoint2D(int[] positions) throws Throwable {
+		return makePoint2D.invoke(positions[0], positions[1]);
+	}
+
+	static Object createFlattenedLine2D(int[][] positions) throws Throwable {
+		return makeFlattenedLine2D.invoke(makePoint2D.invoke(positions[0][0], positions[0][1]),
+				makePoint2D.invoke(positions[1][0], positions[1][1]));
+	}
+
+	static Object createTriangle2D(int[][][] positions) throws Throwable {
+		return makeTriangle2D.invoke(
+				makeFlattenedLine2D.invoke(makePoint2D.invoke(positions[0][0][0], positions[0][0][1]),
+						makePoint2D.invoke(positions[0][1][0], positions[0][1][1])),
+				makeFlattenedLine2D.invoke(makePoint2D.invoke(positions[1][0][0], positions[1][0][1]),
+						makePoint2D.invoke(positions[1][1][0], positions[1][1][1])),
+				makeFlattenedLine2D.invoke(makePoint2D.invoke(positions[2][0][0], positions[2][0][1]),
+						makePoint2D.invoke(positions[2][1][0], positions[2][1][1])));
+	}
+
+	static Object createLargeObject(Object arg) throws Throwable {
+		Object[] args = new Object[16];
+		for(int i = 0; i < 16; i++) {
+			Object valueObject = makeValueObject.invoke(arg);
+			args[i] = valueObject;
+		}
+		return makeLargeObjectValue.invokeWithArguments(args);
+	}
+
+	static Object createAssorted(MethodHandle makeMethod, String[] fields) throws Throwable {
+		Object[] args = new Object[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			String nameAndSigValue[] = fields[i].split(":");
+			String signature = nameAndSigValue[1];
+			switch (signature) {
+			case "QPoint2D;":
+				args[i] = createPoint2D(defaultPointPositions);
+				break;
+			case "QFlattenedLine2D;":
+				args[i] = createFlattenedLine2D(defaultLinePositions);
+				break;
+			case "QTriangle2D;":
+				args[i] = createTriangle2D(defaultTrianglePositions);
+				break;
+			case "QValueInt;":
+				args[i] = makeValueInt.invoke(defaultInt);
+				break;
+			case "QValueFloat;":
+				args[i] = makeValueFloat.invoke(defaultFloat);
+				break;
+			case "QValueDouble;":
+				args[i] = makeValueDouble.invoke(defaultDouble);
+				break;
+			case "QValueObject;":
+				args[i] = makeValueObject.invoke(defaultObject);
+				break;
+			case "QValueLong;":
+				args[i] = makeValueLong.invoke(defaultLong);
+				break;
+			case "QLargeObject;":
+				args[i] = createLargeObject(defaultObject);
+				break;
+			default:
+				args[i] = null;
+				break;
+			}
+		}
+		return makeMethod.invokeWithArguments(args);
+	}
+
+	static void checkFieldAccessMHOfAssortedType(MethodHandle[][] fieldAccessMHs, Object instance, String[] fields,
+			boolean ifValue)
+			throws Throwable {
+		for (int i = 0; i < fields.length; i++) {
+			String nameAndSigValue[] = fields[i].split(":");
+			String signature = nameAndSigValue[1];
+			switch (signature) {
+			case "QPoint2D;":
+				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositions);
+				Object pointNew = createPoint2D(defaultPointPositionsNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, pointNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, pointNew);
+				}
+				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositionsNew);
+				break;
+			case "QFlattenedLine2D;":
+				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositions);
+				Object lineNew = createFlattenedLine2D(defaultLinePositionsNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, lineNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, lineNew);
+				}
+				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositionsNew);
+				break;
+			case "QTriangle2D;":
+				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(instance), defaultTrianglePositions);
+				Object triNew = createTriangle2D(defaultTrianglePositionsNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, triNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, triNew);
+				}
+				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(instance), defaultTrianglePositionsNew);
+				break;
+			case "QValueInt;":
+				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultInt);
+				Object iNew = makeValueInt.invoke(defaultIntNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, iNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, iNew);
+				}
+				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultIntNew);
+				break;
+			case "QValueFloat;":
+				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultFloat);
+				Object fNew = makeValueFloat.invoke(defaultFloatNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, fNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, fNew);
+				}
+				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultFloatNew);
+				break;
+			case "QValueDouble;":
+				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultDouble);
+				Object dNew = makeValueDouble.invoke(defaultDoubleNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, dNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, dNew);
+				}
+				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultDoubleNew);
+				break;
+			case "QValueObject;":
+				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultObject);
+				Object oNew = makeValueObject.invoke(defaultObjectNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, oNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, oNew);
+				}
+				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultObjectNew);
+				break;
+			case "QValueLong;":
+				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLong);
+				Object lNew = makeValueLong.invoke(defaultLongNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, lNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, lNew);
+				}
+				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLongNew);
+				break;
+			case "QLargeObject;":
+				checkEqualLargeObject(fieldAccessMHs[i][0].invoke(instance), defaultObject);
+				Object largeNew = createLargeObject(defaultObjectNew);
+				if (ifValue) {
+					instance = fieldAccessMHs[i][1].invoke(instance, largeNew);
+				} else {
+					fieldAccessMHs[i][1].invoke(instance, largeNew);
+				}
+				checkEqualLargeObject(fieldAccessMHs[i][0].invoke(instance), defaultObjectNew);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	static void checkEqualPoint2D(Object point, int[] positions) throws Throwable {
+		assertEquals(getX.invoke(point), positions[0]);
+		assertEquals(getY.invoke(point), positions[1]);
+	}
+
+	static void checkEqualFlattenedLine2D(Object line, int[][] positions) throws Throwable {
+		checkEqualPoint2D(getFlatSt.invoke(line), positions[0]);
+		checkEqualPoint2D(getFlatEn.invoke(line), positions[1]);
+	}
+
+	static void checkEqualTriangle2D(Object triangle, int[][][] positions) throws Throwable {
+		checkEqualFlattenedLine2D(getV1.invoke(triangle), positions[0]);
+		checkEqualFlattenedLine2D(getV2.invoke(triangle), positions[1]);
+		checkEqualFlattenedLine2D(getV3.invoke(triangle), positions[2]);
+	}
+
+	static void checkEqualLargeObject(Object largeObject, Object contentObject) throws Throwable {
+		for (int i = 0; i < 16; i++) {
+			assertEquals(getObject.invoke(getObjects[i].invoke(largeObject)), contentObject);
+		}
+	}
 }
