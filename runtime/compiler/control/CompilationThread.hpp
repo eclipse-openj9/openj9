@@ -425,7 +425,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    j9thread_t             _osThread;
    J9VMThread            *_compilationThread;
    int32_t                _compThreadPriority; // to reduce number of checks
-   TR::Monitor *_compThreadMonitor;
+   TR::Monitor           *_compThreadMonitor;
    char                  *_activeThreadName; // name of thread when active
    char                  *_suspendedThreadName; // name of thread when suspended
    uint64_t               _lastTimeThreadWasSuspended; // RAS; only accessed by the thread itself

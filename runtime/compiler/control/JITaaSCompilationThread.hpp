@@ -79,6 +79,7 @@ class ClientSessionData
       // The hashtable is created on demand (NULL means it is missing)
       IPTable_t *_IPData;
       bool _isMethodTracingEnabled;
+      TR_OpaqueClassBlock * _owningClass;
       };
 
    // This struct contains information about VM that does not change during its lifetime.

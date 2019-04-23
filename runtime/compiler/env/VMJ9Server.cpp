@@ -255,9 +255,7 @@ TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock * classPointer)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
    {
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassOfMethod, method);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   return TR_J9ServerVM::getClassFromMethodBlock(method);
    }
 
 TR_OpaqueClassBlock *
@@ -319,20 +317,12 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
       {
       ClassLoaderStringPair key = {cl, std::string(sig, length)};
       auto it = _compInfoPT->getCustomClassByNameMap().find(key);
-
-      // If not found in the cache, ask the client
-      if (it == _compInfoPT->getCustomClassByNameMap().end())
+      if (it != _compInfoPT->getCustomClassByNameMap().end())
+         return it->second;
+      clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+      if (clazz)
          {
-         clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
-         if (clazz)
-            {
-            // Put into the HT for next time
-            _compInfoPT->getCustomClassByNameMap()[key] = clazz;
-            }
-         }
-      else
-         {
-         clazz = it->second;
+         _compInfoPT->getCustomClassByNameMap()[key] = clazz;
          }
       }
    return clazz;
@@ -1184,6 +1174,15 @@ TR_J9ServerVM::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromMethodBlock(TR_OpaqueMethodBlock *method)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getJ9MethodMap().find((J9Method*) method);
+      if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
+         {
+         return it->second._owningClass;
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getClassFromMethodBlock, method);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
@@ -1676,38 +1675,112 @@ TR_OpaqueClassBlock *
 TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedMethod * method, bool isVettedForAOT)
    {
    TR_ResolvedRelocatableJ9JITaaSServerMethod* resolvedJITaaSMethod = (TR_ResolvedRelocatableJ9JITaaSServerMethod *)method;
-   return getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
+   TR_OpaqueClassBlock* clazz = NULL;
+   J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
+   // If the classloader is the systemClassLoader, which cannot be unloaded,
+   // then look into the global, 'per client', cache
+   void * systemClassLoader = getSystemClassLoader();
+   if (cl == (J9ClassLoader*)systemClassLoader)
+      {
+      PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+         {
+         OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
+         auto it = systemClassByNameMap.find(std::string(sig, sigLength));
+         if (it != systemClassByNameMap.end())
+            clazz = it->second;
+         }
+      if (!clazz)
+         {
+         // classname not found; ask the client and cache the answer
+         clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
+         if (clazz)
+            {
+               {
+               OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
+               systemClassByNameMap.insert(std::make_pair(std::string(sig, sigLength), clazz));
+               }
+            if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+               {
+               clazz = NULL;
+               }
+            }
+         else
+            {
+            // Class with given name does not exist yet, but it could be
+            // loaded in the future, thus we should not cache NULL pointers.
+            // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
+            // In theory we could consider this a special case and watch the CHTable updates
+            // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
+            // be worth the trouble.
+            //static unsigned long errorsSystem = 0;
+            //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
+            }
+         }
+      else
+         {
+         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+               clazz = NULL;
+         }
+      }
+   else // look into the 'per compilation' cache
+      {
+      ClassLoaderStringPair key = {cl, std::string(sig, sigLength)};
+      auto it = _compInfoPT->getCustomClassByNameMap().find(key);
+      if (it != _compInfoPT->getCustomClassByNameMap().end())
+         clazz = it->second;
+      if (!clazz)
+         {
+         clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
+         if (clazz)
+            {
+            _compInfoPT->getCustomClassByNameMap()[key] = clazz;
+            if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+               clazz = NULL;
+            }
+         }
+      else
+         {
+         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+            clazz = NULL;
+         }
+      }
+   return clazz;
    }
 
 TR_OpaqueClassBlock *
 TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueMethodBlock * method, bool isVettedForAOT)
    {
    TR_OpaqueClassBlock* j9class = TR_J9ServerVM::getClassFromSignature(sig, sigLength, method, true);
-   bool validated = false;
-   TR::Compilation* comp = _compInfoPT->getCompilation();
-
    if (j9class)
       {
-      if (comp->getOption(TR_UseSymbolValidationManager))
-         {
-         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         SVM_ASSERT_ALREADY_VALIDATED(svm, method);
-         validated = svm->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
-         }
-      else
-         {
-         if (isVettedForAOT)
-            {
-            if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class))
-               validated = true;
-            }
-         }
+      if (!validateClass(method, j9class, isVettedForAOT))
+         j9class = NULL;
       }
 
-   if (validated)
-      return j9class;
+   return j9class;
+   }
+
+bool
+TR_J9SharedCacheServerVM::validateClass(TR_OpaqueMethodBlock * method, TR_OpaqueClassBlock* j9class, bool isVettedForAOT)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   bool validated = false;
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+      SVM_ASSERT_ALREADY_VALIDATED(svm, method);
+      validated = svm->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
+      }
    else
-      return NULL;
+      {
+      if (isVettedForAOT)
+         {
+         if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class))
+            validated = true;
+         }
+      }
+   return validated;
    }
 
 bool
@@ -2058,20 +2131,23 @@ TR_J9SharedCacheServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    TR_OpaqueClassBlock *classPointer = TR_J9ServerVM::getClassOfMethod(method);
-
-   bool validated = false;
-
-   if (comp->getOption(TR_UseSymbolValidationManager))
+   if (classPointer)
       {
-      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
-      validated = true;
-      }
-   else
-      {
-      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
-      }
+      bool validated = false;
 
-   return (validated ? classPointer : NULL);
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+         validated = true;
+         }
+      else
+         {
+         validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+         }
+      if (!validated)
+         classPointer = NULL;
+      }
+   return classPointer;
    }
 
 J9Class *
