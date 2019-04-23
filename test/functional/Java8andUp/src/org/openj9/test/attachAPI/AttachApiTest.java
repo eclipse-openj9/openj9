@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 import org.openj9.test.util.PlatformInfo;
@@ -172,10 +171,6 @@ abstract class AttachApiTest {
 	public static void checkTargetPid(TargetManager target) {
 		String targetPid = target.getTargetPid();
 		Assert.assertTrue((null != targetPid) && !targetPid.equalsIgnoreCase("failed"), "target attach API failed to launch");
-	}
-
-	protected static Optional<String> search(String needle, List<String> haystack) {
-		return haystack.stream().filter(s -> s.contains(needle)).findFirst();
 	}
 
 	protected boolean checkLoadAgentOutput(String errOutput,
