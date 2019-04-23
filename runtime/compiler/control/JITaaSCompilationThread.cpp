@@ -2867,6 +2867,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classByNameMap(decltype(_classByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classChainDataMap(decltype(_classChainDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _constantPoolToClassMap(decltype(_constantPoolToClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _unloadedClassAddresses(NULL),
    _requestUnloadedClasses(true),
    _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator()))
@@ -2879,6 +2880,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _classMapMonitor = TR::Monitor::create("JIT-JITaaSClassMapMonitor");
    _classChainDataMapMonitor = TR::Monitor::create("JIT-JITaaSClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
+   _constantPoolMapMonitor = TR::Monitor::create("JIT-JITaaSConstantPoolMonitor");
    _vmInfo = NULL;
    _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
    _markedForDeletion = false;
@@ -2891,6 +2893,7 @@ ClientSessionData::~ClientSessionData()
    _classMapMonitor->destroy();
    _classChainDataMapMonitor->destroy();
    _sequencingMonitor->destroy();
+   _constantPoolMapMonitor->destroy();
    if (_unloadedClassAddresses)
       {
       _unloadedClassAddresses->destroy();
@@ -2945,6 +2948,9 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
             unloadedClasses.push_back({clazz, key, NULL, false});
             continue; // unloaded class was never cached
             }
+
+         J9ConstantPool *cp = it->second._constantPool;
+
          J9ROMClass *romClass = it->second.romClass;
 
          J9UTF8 *clazzName = NNSRP_GET(romClass->className, J9UTF8 *);
@@ -2952,7 +2958,7 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
          J9ClassLoader * cl = (J9ClassLoader *)(it->second.classLoader);
          ClassLoaderStringPair key = {cl, className};
          //Class is cached, so retain the data to be used for purging the caches.
-         unloadedClasses.push_back({clazz, key, NULL, true});
+         unloadedClasses.push_back({clazz, key, cp, true});
 
          J9Method *methods = it->second.methodsOfClass;
          // delete all the cached J9Methods belonging to this unloaded class
@@ -2991,34 +2997,17 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
          _classChainDataMap.erase((J9Class*)clazz);
       }
 
+      // purge Class by name cache
       {
       OMR::CriticalSection classMapCS(getClassMapMonitor());
-      auto it = unloadedClasses.begin();
-      while (it != unloadedClasses.end())
-         {
-         if (it->_cached)
-            {
-            getClassByNameMap().erase(it->_pair);
-            }
-         else
-            {
-            //If the class is not cached this is the place to iterate the cache(Map) for deleting the entry by value rather then key.
-            auto itClass = getClassByNameMap().begin();
-            while (itClass != getClassByNameMap().end())
-               {
-               if (itClass->second == it->_class)
-                  {
-                  getClassByNameMap().erase(itClass);
-                  break;
-                  }
-               ++itClass;
-               }
-            }
-         //DO NOT remove the entry from the unloadedClasses as it will be needed to purge other caches.
-         ++it;
-         }
+      JITaaSHelpers::purgeCache(&unloadedClasses, getClassByNameMap(), &ClassUnloadedData::_pair);
       }
 
+      // purge Constant pool to class cache
+      {
+      OMR::CriticalSection constantPoolToClassMap(getConstantPoolMonitor());
+      JITaaSHelpers::purgeCache(&unloadedClasses, getConstantPoolToClassMap(), &ClassUnloadedData::_cp);
+      }
    }
 
 TR_IPBytecodeHashTableEntry*
@@ -3430,7 +3419,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._staticAttributesCache = NULL;
    classInfoStruct._fieldAttributesCacheAOT = NULL;
    classInfoStruct._staticAttributesCacheAOT = NULL;
-
+   classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;
@@ -3449,6 +3438,37 @@ JITaaSHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J
    OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
    return (it == clientSessionData->getROMClassMap().end()) ? NULL : it->second.romClass;
+   }
+
+template <typename map, typename key>
+void JITaaSHelpers::purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k)
+   {
+   ClassUnloadedData *data = unloadedClasses->data();
+   std::vector<ClassUnloadedData>::iterator it = unloadedClasses->begin();
+   while (it != unloadedClasses->end())
+      {
+      if (it->_cached)
+         {
+         m.erase((data->*k));
+         }
+      else
+         {
+         //If the class is not cached this is the place to iterate the cache(Map) for deleting the entry by value rather then key.
+         auto itClass = m.begin();
+         while (itClass != m.end())
+            {
+            if (itClass->second == data->_class)
+               {
+               m.erase(itClass);
+               break;
+               }
+            ++itClass;
+            }
+         }
+      //DO NOT remove the entry from the unloadedClasses as it will be needed to purge other caches.
+      ++it;
+      ++data;
+      }
    }
 
 JITaaSHelpers::ClassInfoTuple
@@ -3482,7 +3502,8 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_M
    TR_OpaqueClassBlock * componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock * arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
    uintptrj_t totalInstanceSize = clazz->totalInstanceSize;
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass);
+   uintptrj_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass, cp);
    }
 
 J9ROMClass *
