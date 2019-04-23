@@ -9621,8 +9621,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    TR_DataCache *dataCache = NULL;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
    if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
-      // end of compilation, clear per-compilation IProfiler cache
+      {
+      // end of compilation, clear per-compilation caches
       ((TR::CompilationInfoPerThreadRemote *) entry->_compInfoPT)->clearIProfilerMap(comp->trMemory());
+      ((TR::CompilationInfoPerThreadRemote *) entry->_compInfoPT)->clearResolvedMethodInfoMap(comp->trMemory());
+      }
 
    if (details.isNewInstanceThunk())
       {

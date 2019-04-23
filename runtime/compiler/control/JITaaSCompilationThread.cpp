@@ -4264,3 +4264,97 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
       }
    return ipEntry;
    }
+
+void
+TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo)
+   {
+   static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
+   if (!useCaching)
+      return;
+
+   TR::Compilation *comp = getCompilation();
+   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && comp->getSymbolValidationManager()->inHeuristicRegion())
+      {
+      // Problem: If inside of heuristic region, will not create SVM record, so if the same resolved method is queried again,
+      // but outside of heuristic region, we would return cached pointer and not create the validation record, which is wrong.
+      // Temporary solution: don't cache resolved methods if in heuristic region
+      // In a later change should fix it properly by creating SVM record even if retrieved it from cache.
+      return;
+      }
+
+   if (!_resolvedMethodInfoMap)
+      {
+      // Cache not initialized yet
+      _resolvedMethodInfoMap = new (comp->trMemory()->trHeapMemory()) TR_ResolvedMethodInfoCache(TR_ResolvedMethodInfoCache::allocator_type(comp->trMemory()->heapMemoryRegion()));
+      }
+   TR_ASSERT(_resolvedMethodInfoMap->find(key) == _resolvedMethodInfoMap->end(), "Should not cache the same method twice");
+   _resolvedMethodInfoMap->insert({key, {method, vTableSlot, methodInfo}});
+   }
+
+// retrieve a resolved method from the cache
+// returns true if the method is cached, sets resolvedMethod and unresolvedInCP to the cached values.
+// returns false otherwise.
+bool 
+TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
+   {
+   if (!_resolvedMethodInfoMap)
+      return false;
+
+   auto it = _resolvedMethodInfoMap->find(key);
+   if (it != _resolvedMethodInfoMap->end())
+      {
+      auto comp = getCompilation();
+      auto methodCacheEntry = it->second;
+      auto methodInfo = methodCacheEntry.methodInfo;
+      TR_OpaqueMethodBlock *method = methodCacheEntry.method;
+      uint32_t vTableSlot = methodCacheEntry.vTableSlot;
+      // Create resolved method from cached method info
+      if (key.type != TR_ResolvedMethodType::VirtualFromOffset)
+         {
+         *resolvedMethod = owningMethod->createResolvedMethodFromJ9Method(
+                              comp,
+                              key.cpIndex,
+                              vTableSlot,
+                              (J9Method *) method,
+                              unresolvedInCP,
+                              NULL,
+                              methodInfo);
+         }
+      else
+         {
+         if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
+            *resolvedMethod = method ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod(method, _vm, comp->trMemory(), methodInfo, owningMethod) : 0;
+         else
+            *resolvedMethod = method ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod(method, _vm, comp->trMemory(), methodInfo, owningMethod) : 0;
+         }
+         
+      if (*resolvedMethod)
+         {
+         if (unresolvedInCP) *unresolvedInCP = false;
+         return true;
+         }
+      else
+         {
+         TR_ASSERT(false, "Should not have cached unresolved method globally");
+         }
+      }
+   return false;
+   }
+
+void
+TR::CompilationInfoPerThreadRemote::clearResolvedMethodInfoMap(TR_Memory *trMemory)
+   {
+   if (_resolvedMethodInfoMap)
+      {
+      // the map and all of its values should be freed automatically at the end of compilation,
+      // since they were allocated on the compilation heap memory
+      _resolvedMethodInfoMap = NULL;
+      }
+   }
+
+TR_ResolvedMethodKey
+TR::CompilationInfoPerThreadRemote::getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject)
+   {
+   TR_ResolvedMethodKey key = {type, ramClass, cpIndex, classObject};
+   return key;
+   }
