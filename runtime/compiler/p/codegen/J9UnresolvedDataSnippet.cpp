@@ -74,53 +74,55 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::SymbolReference *glueRef;
+   TR_RuntimeHelper refNum;
 
    if (getDataSymbol()->getShadowSymbol() != NULL) // instance data
       {
       if (isUnresolvedStore())
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataStoreGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedInstanceDataStoreGlue;
       else
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedInstanceDataGlue;
       }
    else if (getDataSymbol()->isClassObject())
       {
       if (getDataSymbol()->addressIsCPIndexOfStatic())
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue2, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedClassGlue2;
       else
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedClassGlue;
       }
    else if (getDataSymbol()->isConstString())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStringGlue, false, false, false);
+      refNum = TR_PPCinterpreterUnresolvedStringGlue;
       }
    else if (getDataSymbol()->isConstMethodType())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedMethodTypeGlue;
       }
    else if (getDataSymbol()->isConstMethodHandle())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodHandleGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedMethodHandleGlue;
       }
    else if (getDataSymbol()->isCallSiteTableEntry())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedCallSiteTableEntryGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedCallSiteTableEntryGlue;
       }
    else if (getDataSymbol()->isMethodTypeTableEntry())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeTableEntryGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedMethodTypeTableEntryGlue;
       }
    else if (getDataSymbol()->isConstantDynamic())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedConstantDynamicGlue, false, false, false);
+      refNum = TR_PPCinterpreterUnresolvedConstantDynamicGlue;
       }
    else // must be static data
       {
       if (isUnresolvedStore())
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataStoreGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedStaticDataStoreGlue;
       else
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedStaticDataGlue;
       }
 
+   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(refNum, false, false, false);
    getSnippetLabel()->setCodeLocation(cursor);
 
    intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
