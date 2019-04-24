@@ -2753,9 +2753,10 @@ fail:
 				ramClass->initializeStatus = J9ClassInitSucceeded;
 			}
 
-			/* If the class is an interface, fill in the iTableMethodCount */
+			/* If the class is an interface, fill in the iTableMethodCount and method ordering table */
 			if (J9ROMCLASS_IS_INTERFACE(romClass)) {
 				J9INTERFACECLASS_SET_ITABLEMETHODCOUNT(ramClass, iTableMethodCount);
+				J9INTERFACECLASS_SET_METHODORDERING(ramClass, NULL);
 			}
 
 			Trc_VM_initializeRAMClass_End(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classSize, classLoader);
