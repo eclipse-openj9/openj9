@@ -193,6 +193,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
             "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
 
+      // We want to break the connection when the compilation failed midway
+      // as a way to inform the server that this compilation has failed and it should abort
+      client->~J9ClientStream();
+      TR_Memory::jitPersistentFree(client);
+      compInfoPT->setClientStream(NULL);
+
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
 
@@ -2406,6 +2412,14 @@ remoteCompile(
          auto comp = compInfoPT->getCompilation();
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
+         client->writeError();
+
+         // We want to break the connection when the compilation failed midway
+         // as a way to inform the server that this compilation has failed and it should abort
+         client->~J9ClientStream();
+         TR_Memory::jitPersistentFree(client);
+         compInfoPT->setClientStream(NULL);
+
          comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
          }
 
