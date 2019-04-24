@@ -284,32 +284,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
          }
 
-      case TR_ValidateProfiledClass:
-         {
-         TR::ProfiledClassRecord *record = reinterpret_cast<TR::ProfiledClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateProfiledClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateProfiledClassBinaryTemplate *>(cursor);
-
-         TR_OpaqueClassBlock *classToValidate = record->_class;
-         void *classChainForClassToValidate = record->_classChain;
-
-         //store the classchain's offset for the classloader for the class
-         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
-
-         //store the classchain's offset for the class that needs to be validated in the second run
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
-         binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
-         binaryTemplate->_classChainOffsetForCLInScc = classChainOffsetInSharedCacheForCL;
-
-         cursor += sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassFromCP:
          {
          TR::ClassFromCPRecord *record = reinterpret_cast<TR::ClassFromCPRecord *>(relocation->getTargetAddress());

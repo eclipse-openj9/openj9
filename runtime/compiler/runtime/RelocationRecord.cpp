@@ -3396,26 +3396,65 @@ TR_RelocationRecordValidateClassByName::classChainOffset(TR_RelocationTarget *re
 int32_t
 TR_RelocationRecordValidateProfiledClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classID);
+   uint16_t classID = this->classID(reloTarget);
 
-   uintptr_t classChainForCLOffset = reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classChainOffsetForCLInScc);
+   uintptr_t classChainForCLOffset = this->classChainOffsetForClassLoader(reloTarget);
    void *classChainForCL = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainForCLOffset);
 
-   uintptr_t classChainOffset = reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   uintptr_t classChainOffset = this->classChainOffset(reloTarget);
    void *classChain = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classChainForCL %p\n", classChainForCL);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classChain %p\n", classChain);
-      }
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateProfiledClassRecord(classID, classChainForCL, classChain))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateProfiledClass::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tclassID %d\n", classID(reloTarget));
+   reloLogger->printf("\tclassChainForCL %p\n", (void *)classChainOffsetForClassLoader(reloTarget));
+   reloLogger->printf("\tclassChain %p\n", (void *)classChainOffset(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateProfiledClass::setClassID(TR_RelocationTarget *reloTarget, uint16_t classID)
+   {
+   reloTarget->storeUnsigned16b(classID, (uint8_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateProfiledClass::classID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classID);
+   }
+
+void
+TR_RelocationRecordValidateProfiledClass::setClassChainOffset(TR_RelocationTarget *reloTarget, uintptr_t classChainOffset)
+   {
+   reloTarget->storeRelocationRecordValue(classChainOffset, (uintptr_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   }
+
+uintptr_t
+TR_RelocationRecordValidateProfiledClass::classChainOffset(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   }
+
+void
+TR_RelocationRecordValidateProfiledClass::setClassChainOffsetForClassLoader(TR_RelocationTarget *reloTarget, uintptr_t classChainOffsetForCL)
+   {
+   reloTarget->storeRelocationRecordValue(classChainOffsetForCL, (uintptr_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classChainOffsetForCLInScc);
+   }
+
+uintptr_t
+TR_RelocationRecordValidateProfiledClass::classChainOffsetForClassLoader(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateProfiledClassBinaryTemplate *)_record)->_classChainOffsetForCLInScc);
    }
 
 int32_t

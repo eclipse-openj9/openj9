@@ -578,6 +578,27 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateProfiledClass:
+         {
+         TR_RelocationRecordValidateProfiledClass *pcRecord = reinterpret_cast<TR_RelocationRecordValidateProfiledClass *>(reloRecord);
+
+         TR::ProfiledClassRecord *svmRecord = reinterpret_cast<TR::ProfiledClassRecord *>(relocation->getTargetAddress());
+
+         TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
+         void *classChainForClassToValidate = svmRecord->_classChain;
+
+         //store the classchain's offset for the classloader for the class
+         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+
+         //store the classchain's offset for the class that needs to be validated in the second run
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
+
+         pcRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(classToValidate));
+         pcRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache);
+         pcRecord->setClassChainOffsetForClassLoader(reloTarget, classChainOffsetInSharedCacheForCL);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -927,6 +948,21 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                       (uint32_t)cbnRecord->classID(reloTarget),
                                       (uint32_t)cbnRecord->beholderID(reloTarget),
                                       (void *)cbnRecord->classChainOffset(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateProfiledClass:
+         {
+         TR_RelocationRecordValidateProfiledClass *pcRecord = reinterpret_cast<TR_RelocationRecordValidateProfiledClass *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d classChainOffsetInSCC=%p classChainOffsetForCLInScc=%p ",
+                                      (uint32_t)pcRecord->classID(reloTarget),
+                                      (void *)pcRecord->classChainOffset(reloTarget),
+                                      (void *)pcRecord->classChainOffsetForClassLoader(reloTarget));
             }
          }
          break;
@@ -1411,26 +1447,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateProfiledClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateProfiledClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateProfiledClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d classChainOffsetInSCC=%d classChainOffsetForCLInScc=%p ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_classChainOffsetInSCC,
-                        binaryTemplate->_classChainOffsetForCLInScc);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateClassFromCP:
