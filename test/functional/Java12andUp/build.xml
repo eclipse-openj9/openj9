@@ -44,10 +44,10 @@
 	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source" >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:		${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:			${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>

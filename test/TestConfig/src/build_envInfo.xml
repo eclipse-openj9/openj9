@@ -37,8 +37,8 @@
 	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source  ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===debug:				on</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===debug:                        on</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${JAVAC}" includeAntRuntime="false" encoding="ISO-8859-1"/>
 	</target>
 
