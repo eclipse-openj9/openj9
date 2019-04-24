@@ -428,7 +428,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				} else {
 					lockAllAttachNotificationSyncFiles(vmds);
 					numberOfTargets = CommonDirectory.countTargetDirectories();
-					int status = CommonDirectory.notifyVm(numberOfTargets);
+					int status = CommonDirectory.notifyVm(numberOfTargets, descriptor.isGlobalSemaphore());
 					/*[MSG "K0532", "status={0}"]*/
 					if ((IPC.JNI_OK != status)
 							&& (CommonDirectory.J9PORT_INFO_SHSEM_OPENED_STALE != status)) {
@@ -468,7 +468,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				}
 				if (numberOfTargets > 0) { /*[PR 48044] if number of targets is 0, then the VM is attaching to itself  and the semaphore was not involved */
 					unlockAllAttachNotificationSyncFiles();
-					CommonDirectory.cancelNotify(numberOfTargets);
+					CommonDirectory.cancelNotify(numberOfTargets, descriptor.isGlobalSemaphore());
 
 					if (numberOfTargets > 2) {
 						try {

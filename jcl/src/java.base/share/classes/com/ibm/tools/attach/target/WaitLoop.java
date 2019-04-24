@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ final class WaitLoop extends Thread {
 				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("iteration ", AttachHandler.notificationCount, " waitForNotification cancelNotify"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
-				CommonDirectory.cancelNotify(AttachHandler.getNumberOfTargets());
+				CommonDirectory.cancelNotify(AttachHandler.getNumberOfTargets(), true);
 			}
 			return null;
 		} 
@@ -107,7 +107,7 @@ final class WaitLoop extends Thread {
 						IPC.logMessage("semaphore recovery: send test post"); //$NON-NLS-1$
 						int numTargets = CommonDirectory.countTargetDirectories();
 						AttachHandler.setNumberOfTargets(numTargets);
-						CommonDirectory.notifyVm(numTargets); 
+						CommonDirectory.notifyVm(numTargets, true); 
 						CommonDirectory.releaseMasterLock();
 					}
 					return waitForNotification(false);

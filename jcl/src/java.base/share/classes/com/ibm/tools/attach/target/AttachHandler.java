@@ -481,7 +481,7 @@ public class AttachHandler extends Thread {
 					 * Therefore, notify myself 
 					 */
 					if (wakeHandler) {
-						CommonDirectory.notifyVm(1); 
+						CommonDirectory.notifyVm(1, true); 
 					}
 					destroySemaphore = true;
 				} else if (wakeHandler) {
@@ -493,7 +493,7 @@ public class AttachHandler extends Thread {
 					 * it wakes up.
 					 */
 					setDoCancelNotify(true); /* get the handler thread to close the semaphore */
-					CommonDirectory.notifyVm(numTargets); 
+					CommonDirectory.notifyVm(numTargets, true); 
 					/* CMVC 162086. add an extra notification since the count won't include this VM: the advertisement directory is already deleted */
 				}
 			} finally {

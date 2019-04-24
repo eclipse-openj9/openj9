@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@ public final class Advertisement {
 	private static final String KEY_VERSION = "version"; //$NON-NLS-1$
 	private static final String KEY_PROCESS_ID = "processId"; //$NON-NLS-1$
 	private static final String ADVERT_FILENAME = "attachInfo"; //$NON-NLS-1$
+	private static final String GLOBAL_SEMAPHORE = "globalSemaphore"; //$NON-NLS-1$
 	private Properties props;
 	private final long pid, uid;
 
@@ -81,7 +82,7 @@ public final class Advertisement {
 	 * Factory method to read the data from an advertisement file
 	 * @param advertStream InputStream to an open file
 	 * @return Advertisement object containing the data from the file.
-	 * @throws IOException 
+	 * @throws IOException if file cannot be read
 	 */
 	public static Advertisement readAdvertisementFile(InputStream advertStream) throws IOException {
 		Advertisement advert = null;
@@ -109,7 +110,7 @@ public final class Advertisement {
 		addKeyValue(contentBuffer, KEY_VM_ID, vmId);
 		addKeyValue(contentBuffer, KEY_DISPLAY_NAME, (((null == displayName) || (displayName.length() == 0))? vmId: displayName));
 		addKeyValue(contentBuffer, KEY_NOTIFIER, CommonDirectory.MASTER_NOTIFIER);
-		
+		addKeyValue(contentBuffer, GLOBAL_SEMAPHORE, Boolean.TRUE.toString());
 		File tmpTargetDirectoryFileObject = TargetDirectory.getTargetDirectoryFileObject();
 		File tmpSyncFileObject = TargetDirectory.getSyncFileObject();
 		
@@ -270,6 +271,14 @@ public final class Advertisement {
 	 */
 	public long getUid() {
 		return uid;
+	}
+
+	/**
+	 * 
+	 * @return true if the target uses the global semaphore (Windows only)
+	 */
+	public boolean isGlobalSemaphore() {
+		return Boolean.parseBoolean(props.getProperty(GLOBAL_SEMAPHORE));
 	}
 
 	/**

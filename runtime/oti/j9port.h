@@ -253,7 +253,8 @@ typedef struct  J9PortShSemParameters {
  	const char* controlFileDir; /* Directory in which to create control files (SysV semaphores only) */
  	uint8_t proj_id; /* parameter used with semName to generate semaphore key */
  	uint32_t deleteBasefile : 1; /* delete the base file (used to generate the semaphore key) when destroying the semaphore */
- } J9PortShSemParameters;
+ 	uint32_t global : 1; /* Windows only: use the global namespace for the sempahore */
+} J9PortShSemParameters;
 /**
  * @name Process Handle
  * J9ProcessHandle is a pointer to the opaque structure J9ProcessHandleStruct.
