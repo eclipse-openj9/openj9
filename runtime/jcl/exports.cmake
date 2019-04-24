@@ -519,7 +519,7 @@ if(JAVA_SPEC_VERSION EQUAL 8)
 endif()
 
 # java 9+
-if(NOT JAVA_SPEC_VERSION LESS 10)
+if(NOT JAVA_SPEC_VERSION LESS 9)
 	omr_add_exports(jclse
 		Java_java_lang_StackWalker_getImpl
 		Java_java_lang_StackWalker_walkWrapperImpl
@@ -568,7 +568,7 @@ if(NOT JAVA_SPEC_VERSION LESS 10)
 endif()
 
 #java 11+
-if(NOT JAVA_SPEC_VERSION LESS 12)
+if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jclse
 		Java_java_lang_Class_getNestHostImpl
 		Java_java_lang_Class_getNestMembersImpl
