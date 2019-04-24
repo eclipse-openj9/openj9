@@ -580,20 +580,24 @@ initializeSystemProperties(J9JavaVM * vm)
 #define J9_STR(x) J9_STR_(x)
 		specificationVersion = J9_STR(JAVA_SPEC_VERSION);
 	}
-	if (JAVA_SPEC_VERSION < 12) {
-		/* System property "java.specification.version" is defined via java.lang.VersionProps.init(systemProperties) within System.ensureProperties() */
-		rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			goto fail;
-		}
-	}
+
+	/* Some properties (*.vm.*) are owned by the VM and need to be set early for all
+	 * versions so they are available to jvmti agents.
+	 * Other java.* properties are owned by the class libraries and setting them can be
+	 * delayed until VersionProps.init() runs.
+	 */
 	rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
-	
-	if (JAVA_SPEC_VERSION < 12) {
-		/* Following system properties are defined via java.lang.VersionProps.init(systemProperties) within System.ensureProperties() */
+
+#if JAVA_SPEC_VERSION < 12
+	/* For Java 12, the following properties are defined via java.lang.VersionProps.init(systemProperties) within System.ensureProperties() */
+	rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+	{
 		const char *classVersion = NULL;
 		if (JAVA_SPEC_VERSION == 8) {
 			classVersion = "52.0";
@@ -604,17 +608,18 @@ initializeSystemProperties(J9JavaVM * vm)
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			goto fail;
 		}
-
-		rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			goto fail;
-		}
-
-		rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			goto fail;
-		}
 	}
+
+	rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+
+	rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif /* JAVA_SPEC_VERSION < 12 */
 
 	rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VM_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
