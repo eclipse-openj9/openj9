@@ -37,6 +37,40 @@ using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>
 using IPTableHeapEntry = UnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using IPTableHeap_t = UnorderedMap<J9Method *, IPTableHeapEntry *>;
 
+struct ClassLoaderStringPair
+   {
+   J9ClassLoader *_classLoader;
+   std::string    _className;
+
+   bool operator==(const ClassLoaderStringPair &other) const
+      {
+      return _classLoader == other._classLoader &&  _className == other._className;
+      }
+   };
+
+
+// custom specialization of std::hash injected in std namespace
+namespace std
+   {
+   template<> struct hash<ClassLoaderStringPair>
+      {
+      typedef ClassLoaderStringPair argument_type;
+      typedef std::size_t result_type;
+      result_type operator()(argument_type const& clsPair) const noexcept
+         {
+         return std::hash<void*>()((void*)(clsPair._classLoader)) ^ std::hash<std::string>()(clsPair._className);
+         }
+      };
+   }
+
+struct ClassUnloadedData
+   {
+   TR_OpaqueClassBlock* _class;
+   ClassLoaderStringPair _pair;
+   J9ConstantPool *_cp;
+   bool _cached;
+   };
+
 class ClientSessionData
    {
    public:
@@ -112,11 +146,11 @@ class ClientSessionData
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
-   PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & getSystemClassByNameMap() { return _systemClassByNameMap; }
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
    PersistentUnorderedMap<J9Class *, UDATA *> & getClassClainDataCache() { return _classChainDataMap; }
    void processUnloadedClasses(JITaaS::J9ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
-   TR::Monitor *getSystemClassMapMonitor() { return _systemClassMapMonitor; }
+   TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
@@ -167,10 +201,11 @@ class ClientSessionData
    PersistentUnorderedMap<J9Method*, J9MethodInfo> _J9MethodMap;
    // The following hashtable caches <classname> --> <J9Class> mappings
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
-   PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> _systemClassByNameMap;
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classByNameMap;
+
    PersistentUnorderedMap<J9Class *, UDATA *> _classChainDataMap;
    TR::Monitor *_romMapMonitor;
-   TR::Monitor *_systemClassMapMonitor;
+   TR::Monitor *_classMapMonitor;
    TR::Monitor *_classChainDataMapMonitor;
    // The following monitor is used to protect access to _expectedSeqNo and 
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)

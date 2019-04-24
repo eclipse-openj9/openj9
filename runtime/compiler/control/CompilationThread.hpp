@@ -329,33 +329,6 @@ private:
    }; // CompilationInfoPerThreadBase
 }
 
-struct ClassLoaderStringPair
-   {
-   J9ClassLoader *_classLoader;
-   std::string    _className;
-
-   bool operator==(const ClassLoaderStringPair &other) const
-      {
-      return _classLoader == other._classLoader &&  _className == other._className;
-      }
-   };
-
-
-// custom specialization of std::hash injected in std namespace
-namespace std
-   {
-   template<> struct hash<ClassLoaderStringPair>
-      {
-      typedef ClassLoaderStringPair argument_type;
-      typedef std::size_t result_type;
-      result_type operator()(argument_type const& clsPair) const noexcept
-         {
-         return std::hash<void*>()((void*)(clsPair._classLoader)) ^ std::hash<std::string>()(clsPair._className);
-         }
-      };
-   }
-
-
 //--------------------------------------------------------------------
 // The following class will be use by the separate compilation threads
 // TR::CompilationInfoPerThreadBase will be used by compilation on application thread
@@ -412,7 +385,6 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
    void                   relocateThunks();
    void                   persistThunksToSCC(const J9JITDataCacheHeader *cacheEntry, uint8_t * existingCode);
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getCustomClassByNameMap() { return _customClassByNameMap; }
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended; }
    uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
    void                   updateLastLocalGCCounter(); 
@@ -440,7 +412,6 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    std::vector<TR_J2IThunk *, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _customClassByNameMap;
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
    uint32_t               _lastLocalGCCounter;
 

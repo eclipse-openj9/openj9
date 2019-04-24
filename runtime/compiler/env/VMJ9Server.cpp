@@ -171,13 +171,15 @@ TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
    {
-   // check the cache first
+   J9ClassLoader *cl = (J9ClassLoader *)getSystemClassLoader();
    std::string className(name, length);
-   PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+   ClassLoaderStringPair key = {cl, className};
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classByNameMap = _compInfoPT->getClientData()->getClassByNameMap();
+
    {
-   OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
-   auto it = systemClassByNameMap.find(className);
-   if (it != systemClassByNameMap.end())
+   OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getClassMapMonitor());
+   auto it = classByNameMap.find(key);
+   if (it != classByNameMap.end())
       return it->second;
    }
    // classname not found; ask the client and cache the answer
@@ -186,8 +188,9 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    TR_OpaqueClassBlock * clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    if (clazz)
       {
-      OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
-      systemClassByNameMap.insert(std::make_pair(className, clazz));
+      OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getClassMapMonitor());
+      classByNameMap[key] = clazz;
+
       }
    else
       {
@@ -282,48 +285,31 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
    {
    TR_OpaqueClassBlock * clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
-   // If the classloader is the systemClassLoader, which cannot be unloaded,
-   // then look into the global, 'per client', cache
-   void * systemClassLoader = getSystemClassLoader();
-   if (cl == (J9ClassLoader*)systemClassLoader)
+   ClassLoaderStringPair key = {cl, std::string(sig, length)};
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classByNameMap = _compInfoPT->getClientData()->getClassByNameMap();
       {
-      PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
-      {
-      OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
-      auto it = systemClassByNameMap.find(std::string(sig, length));
-      if (it != systemClassByNameMap.end())
+      OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
+      auto it = classByNameMap.find(key);
+      if (it != classByNameMap.end())
          return it->second;
       }
-      // classname not found; ask the client and cache the answer  
-      clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
-      if (clazz)
-         {
-         OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
-         systemClassByNameMap.insert(std::make_pair(std::string(sig, length), clazz));
-         }
-      else
-         {
-         // Class with given name does not exist yet, but it could be
-         // loaded in the future, thus we should not cache NULL pointers.
-         // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
-         // In theory we could consider this a special case and watch the CHTable updates
-         // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
-         // be worth the trouble.
-         //static unsigned long errorsSystem = 0;
-         //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
-         }
-      }
-   else // look into the 'per compilation' cache
+   // classname not found; ask the client and cache the answer
+   clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+   if (clazz)
       {
-      ClassLoaderStringPair key = {cl, std::string(sig, length)};
-      auto it = _compInfoPT->getCustomClassByNameMap().find(key);
-      if (it != _compInfoPT->getCustomClassByNameMap().end())
-         return it->second;
-      clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
-      if (clazz)
-         {
-         _compInfoPT->getCustomClassByNameMap()[key] = clazz;
-         }
+      OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
+      classByNameMap[key] = clazz;
+      }
+   else
+      {
+      // Class with given name does not exist yet, but it could be
+      // loaded in the future, thus we should not cache NULL pointers.
+      // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
+      // In theory we could consider this a special case and watch the CHTable updates
+      // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
+      // be worth the trouble.
+      //static unsigned long errorsSystem = 0;
+      //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
       }
    return clazz;
    }
@@ -1677,72 +1663,45 @@ TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLen
    TR_ResolvedRelocatableJ9JITaaSServerMethod* resolvedJITaaSMethod = (TR_ResolvedRelocatableJ9JITaaSServerMethod *)method;
    TR_OpaqueClassBlock* clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
-   // If the classloader is the systemClassLoader, which cannot be unloaded,
-   // then look into the global, 'per client', cache
-   void * systemClassLoader = getSystemClassLoader();
-   if (cl == (J9ClassLoader*)systemClassLoader)
+   ClassLoaderStringPair key = {cl, std::string(sig, sigLength)};
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classByNameMap = _compInfoPT->getClientData()->getClassByNameMap();
       {
-      PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+      OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
+      auto it = classByNameMap.find(key);
+      if (it != classByNameMap.end())
+         clazz = it->second;
+      }
+   if (!clazz)
+      {
+      // classname not found; ask the client and cache the answer
+      clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
+      if (clazz)
          {
-         OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
-         auto it = systemClassByNameMap.find(std::string(sig, sigLength));
-         if (it != systemClassByNameMap.end())
-            clazz = it->second;
-         }
-      if (!clazz)
-         {
-         // classname not found; ask the client and cache the answer
-         clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
-         if (clazz)
             {
-               {
-               OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
-               systemClassByNameMap.insert(std::make_pair(std::string(sig, sigLength), clazz));
-               }
-            if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
-               {
-               clazz = NULL;
-               }
+            OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
+            classByNameMap[key] = clazz;
             }
-         else
+         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
             {
-            // Class with given name does not exist yet, but it could be
-            // loaded in the future, thus we should not cache NULL pointers.
-            // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
-            // In theory we could consider this a special case and watch the CHTable updates
-            // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
-            // be worth the trouble.
-            //static unsigned long errorsSystem = 0;
-            //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
+            clazz = NULL;
             }
          }
       else
          {
-         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
-               clazz = NULL;
+         // Class with given name does not exist yet, but it could be
+         // loaded in the future, thus we should not cache NULL pointers.
+         // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
+         // In theory we could consider this a special case and watch the CHTable updates
+         // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
+         // be worth the trouble.
+         //static unsigned long errorsSystem = 0;
+         //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
          }
       }
-   else // look into the 'per compilation' cache
+   else
       {
-      ClassLoaderStringPair key = {cl, std::string(sig, sigLength)};
-      auto it = _compInfoPT->getCustomClassByNameMap().find(key);
-      if (it != _compInfoPT->getCustomClassByNameMap().end())
-         clazz = it->second;
-      if (!clazz)
-         {
-         clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
-         if (clazz)
-            {
-            _compInfoPT->getCustomClassByNameMap()[key] = clazz;
-            if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
-               clazz = NULL;
-            }
-         }
-      else
-         {
-         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
-            clazz = NULL;
-         }
+      if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+         clazz = NULL;
       }
    return clazz;
    }
