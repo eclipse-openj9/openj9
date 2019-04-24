@@ -23,6 +23,7 @@
 #include "j9cfg.h"
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
@@ -440,7 +441,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             TR::Register *tempReg = self()->allocateRegister();
             TR::RegisterDependencyConditions *deps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(1, 2, self()->trMemory());
             deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
-            addDependency(deps, condReg, TR::RealRegister::NoReg, TR_CCR, self());
+            TR::addDependency(deps, condReg, TR::RealRegister::NoReg, TR_CCR, self());
 
             if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
                {

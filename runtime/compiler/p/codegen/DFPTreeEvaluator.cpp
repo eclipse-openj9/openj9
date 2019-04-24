@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/TreeEvaluator.hpp"
@@ -1822,7 +1823,7 @@ extern TR::Register *inlineBigDecimalCompareTo(
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, retRegister, retRegister, crGPRegister);
    cg->stopUsingRegister(crGPRegister);
 
-   addDependency(deps, crRegister, TR::RealRegister::cr0, TR_CCR, cg);
+   TR::addDependency(deps, crRegister, TR::RealRegister::cr0, TR_CCR, cg);
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, TR::LabelSymbol::create(cg->trHeapMemory(),cg), deps);
    deps->stopUsingDepRegs(cg);
 
