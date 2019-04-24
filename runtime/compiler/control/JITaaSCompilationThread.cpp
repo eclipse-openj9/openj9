@@ -2845,6 +2845,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classChainDataMap(decltype(_classChainDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _unloadedClassAddresses(NULL),
    _requestUnloadedClasses(true),
    _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator()))
@@ -2855,6 +2856,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
    _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSSystemClassMapMonitor");
+   _classChainDataMapMonitor = TR::Monitor::create("JIT-JITaaSClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
    _vmInfo = NULL;
    _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
@@ -2866,6 +2868,7 @@ ClientSessionData::~ClientSessionData()
    clearCaches();
    _romMapMonitor->destroy();
    _systemClassMapMonitor->destroy();
+   _classChainDataMapMonitor->destroy();
    _sequencingMonitor->destroy();
    if (_unloadedClassAddresses)
       {
@@ -2903,51 +2906,54 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
 
       updateUnloadedClasses = false;
       }
-
-   OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
-
-   for (auto clazz : classes)
       {
-      if (updateUnloadedClasses)
-         _unloadedClassAddresses->add((uintptrj_t)clazz);
+      OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
 
-      auto it = _romClassMap.find((J9Class*) clazz);
-      if (it == _romClassMap.end())
-         continue; // unloaded class was never cached
-
-      J9ROMClass *romClass = it->second.romClass;
-      J9Method *methods = it->second.methodsOfClass;
-      // delete all the cached J9Methods belonging to this unloaded class
-      for (size_t i = 0; i < romClass->romMethodCount; i++)
+      for (auto clazz : classes)
          {
-         J9Method *j9method = methods + i;
-         auto iter = _J9MethodMap.find(j9method);
-         if (iter != _J9MethodMap.end())
+         if (updateUnloadedClasses)
+            _unloadedClassAddresses->add((uintptrj_t)clazz);
+
+         auto it = _romClassMap.find((J9Class*) clazz);
+         if (it == _romClassMap.end())
+            continue; // unloaded class was never cached
+
+         J9ROMClass *romClass = it->second.romClass;
+         J9Method *methods = it->second.methodsOfClass;
+         // delete all the cached J9Methods belonging to this unloaded class
+         for (size_t i = 0; i < romClass->romMethodCount; i++)
             {
-            IPTable_t *ipDataHT = iter->second._IPData;
-            if (ipDataHT)
+            J9Method *j9method = methods + i;
+            auto iter = _J9MethodMap.find(j9method);
+            if (iter != _J9MethodMap.end())
                {
-               for (auto entryIt : *ipDataHT)
+               IPTable_t *ipDataHT = iter->second._IPData;
+               if (ipDataHT)
                   {
-                  auto entryPtr = entryIt.second;
-                  if (entryPtr)
-                     jitPersistentFree(entryPtr);
+                  for (auto entryIt : *ipDataHT)
+                     {
+                     auto entryPtr = entryIt.second;
+                     if (entryPtr)
+                        jitPersistentFree(entryPtr);
+                     }
+                  ipDataHT->~IPTable_t();
+                  jitPersistentFree(ipDataHT);
+                  iter->second._IPData = NULL;
                   }
-               ipDataHT->~IPTable_t();
-               jitPersistentFree(ipDataHT);
-               iter->second._IPData = NULL;
+               _J9MethodMap.erase(j9method);
                }
-            _J9MethodMap.erase(j9method);
             }
-         else
-            {
-            // This must never happen
-            }
-         
+         it->second.freeClassInfo();
+         _romClassMap.erase(it);
          }
-      it->second.freeClassInfo();
-      _romClassMap.erase(it);
       }
+      OMR::CriticalSection processUnloadedClasses(getClassChainDataMapMonitor());
+
+      //remove the class chain data from the cache for the unloaded class.
+      for (auto clazz : classes)
+         _classChainDataMap.erase((J9Class*)clazz);
+
+
    }
 
 TR_IPBytecodeHashTableEntry*
@@ -3133,6 +3139,8 @@ ClientSessionData::clearCaches()
       it.second.freeClassInfo();
       }
    _romClassMap.clear();
+
+   _classChainDataMap.clear();
    // TODO: do we need another monitor here?
 
    // Free CHTable 
