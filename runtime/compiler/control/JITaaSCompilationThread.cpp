@@ -4344,7 +4344,20 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
          
       if (*resolvedMethod)
          {
-         if (unresolvedInCP) *unresolvedInCP = false;
+         if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())
+            {
+            auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(*resolvedMethod);
+            if(!serverMethod->addValidationRecordForCachedResolvedMethod(key))
+               {
+               // Could not add a validation record
+               *resolvedMethod = NULL;
+               if (unresolvedInCP) *unresolvedInCP = true;
+               }
+            }
+         else
+            {
+            if (unresolvedInCP) *unresolvedInCP = false;
+            }
          return true;
          }
       else
