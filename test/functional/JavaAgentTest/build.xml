@@ -41,9 +41,10 @@
 	</target>
 
 	<target name="compile" depends="init" description="compile the source " >
-		<echo>===Ant version: ${ant.version}</echo>
-		<echo>===executable:			${compiler.javac}</echo>
-		<echo>===destdir:				${DEST}</echo>
+		<echo>Ant version is ${ant.version}</echo>
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<if>
 			<matches string="${JDK_VERSION}" pattern="^(8|9|10|11)$$" />
 			<then>

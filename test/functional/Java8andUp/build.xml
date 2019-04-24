@@ -143,10 +143,10 @@
 	<target name="compile" depends="jasm_generator" description="using java ${JDK_VERSION} to compile the source ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:		${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:			${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
