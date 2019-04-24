@@ -49,6 +49,7 @@
 #define VENDOR_SHORT_NAME "OpenJ9"
 
 #define JAVA_VM_VENDOR "Eclipse OpenJ9"
+#define JAVA_VM_NAME "Eclipse OpenJ9 VM"
 
 #if JAVA_SPEC_VERSION < 12
 /* Pre-JDK12 versions use following defines to set system properties
@@ -59,7 +60,5 @@
 #define JAVA_VENDOR "Eclipse OpenJ9"
 #define JAVA_VENDOR_URL "http://www.eclipse.org/openj9"
 #endif /* JAVA_SPEC_VERSION < 12 */
-
-#define JAVA_VM_NAME "Eclipse OpenJ9 VM"
 
 #endif     /* vendor_version_h */

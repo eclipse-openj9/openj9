@@ -398,8 +398,6 @@ private static void ensureProperties(boolean isInitialization) {
 
 /*[IF Java12]*/
 	java.lang.VersionProps.init(initializedProperties);
-	/* VersionProps.init(systemProperties) above sets java.specification.version value which is used to set java.vm.specification.version. */
-	initializedProperties.put("java.vm.specification.version", initializedProperties.get("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
 /*[ELSE]
 	/* VersionProps.init requires systemProperties to be set */
 	systemProperties = initializedProperties;
