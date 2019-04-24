@@ -104,8 +104,6 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 	_gcPhase = GC_PHASE_IDLE;
 	_extensions->realtimeGC = this;
 	_allowGrowth = false;
-	_unmarkedImpliesCleared = false;
-	_unmarkedImpliesStringsCleared = false;
 	
 	if (_extensions->gcTrigger == 0) {
 		_extensions->gcTrigger = (_extensions->memoryMax / 2);

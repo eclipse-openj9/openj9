@@ -616,7 +616,7 @@ MM_RealtimeMarkingScheme::markLiveObjects(MM_EnvironmentRealtime *env)
 	
 	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
-		_realtimeGC->_unmarkedImpliesCleared = true;
+		_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesCleared = true;
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 
@@ -642,8 +642,8 @@ MM_RealtimeMarkingScheme::markLiveObjects(MM_EnvironmentRealtime *env)
 		 * cleared. It's used to prevent objects that are going to be cleared (e.g. referent that is not marked,
 		 * or unmarked string constant) from escaping.
 		 */
-		_realtimeGC->_unmarkedImpliesCleared = false;
-		_realtimeGC->_unmarkedImpliesStringsCleared = false;
+		_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesCleared = false;
+		_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesStringsCleared = false;
 		
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		/* enable to use mark information to detect is class dead */

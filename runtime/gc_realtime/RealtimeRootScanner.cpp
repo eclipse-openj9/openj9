@@ -316,7 +316,7 @@ MM_RealtimeRootScanner::scanStringTable(MM_EnvironmentBase *env)
 		/* We can't rely on using _unmarkedImpliesCleared because clearable phase can mark more objects.
 		 * Only at this point can we assume unmarked strings are truly dead.
 		 */
-		_realtimeGC->_unmarkedImpliesStringsCleared = true;
+		_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesStringsCleared = true;
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 	MM_RootScanner::scanStringTable(env);
