@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,12 @@
 
 #define J9_EXTERNAL_TO_VM
 
+#include <string.h>
+
 #include "env/CompilerEnv.hpp"
 #include "env/VMMethodEnv.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "infra/Assert.hpp"
 #include "j9.h"
 #include "j9cfg.h"
 #include "jilconsts.h"
@@ -72,5 +75,41 @@ J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
    J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
    return (uint32_t)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod) -
                      J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
+   }
+
+
+void
+J9::VMMethodEnv::tokenizeSignature(
+      const char * methodSignature,
+      const char * &methodClass,
+      uint32_t     &methodClassLen,
+      const char * &methodName,
+      uint32_t     &methodNameLen,
+      const char * &typeSignature,
+      uint32_t     &typeSignatureLen)
+   {
+
+   if (methodSignature[0] == '/') // omr method pattern
+      {
+      methodClass = methodSignature;
+      typeSignature = strchr(methodSignature, ':');
+      methodClassLen = typeSignature - methodClass;
+      typeSignature++;
+      methodName = strchr(typeSignature, ':');
+      typeSignatureLen = methodName - typeSignature;
+      methodName++;
+      methodNameLen = strlen(methodName);
+      }
+   else
+      {
+      methodName  = strchr(methodSignature, '.');
+      methodClassLen = methodName - methodClass;
+      methodName++;
+      typeSignature = strchr(methodName, '(');
+      typeSignatureLen = strlen(typeSignature);
+      TR_ASSERT(typeSignature, "unable to pattern match java method signature");
+      methodNameLen = typeSignature - methodName;
+      }
+
    }
 

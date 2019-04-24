@@ -111,6 +111,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/env/OMRObjectModel.cpp \
     omr/compiler/env/OMRPersistentInfo.cpp \
     omr/compiler/env/OMRVMEnv.cpp \
+    omr/compiler/env/OMRVMMethodEnv.cpp \
     omr/compiler/env/Region.cpp \
     omr/compiler/env/SegmentAllocator.cpp \
     omr/compiler/env/SegmentProvider.cpp \
