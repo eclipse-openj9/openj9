@@ -145,6 +145,8 @@ MM_MetronomeDelegate::initialize(MM_EnvironmentBase *env)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_unmarkedImpliesClasses = false;
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+	_unmarkedImpliesCleared = false;
+	_unmarkedImpliesStringsCleared = false;
 
 	/* allocate and initialize the global reference object lists */
 	if (!allocateAndInitializeReferenceObjectLists(env)){

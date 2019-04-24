@@ -103,7 +103,7 @@ MM_RealtimeAccessBarrier::referenceGet(J9VMThread *vmThread, J9Object *refObject
 	
 	/* Now we know referent isn't NULL and isn't marked */
 	
-	if (_realtimeGC->_unmarkedImpliesCleared) {
+	if (_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesCleared) {
 		/* In phase indicated by this flag, all unmarked references are logically cleared
 		 * (will be physically cleared by the end of the gc).
 		 */
@@ -696,7 +696,7 @@ j9gc_objaccess_checkStringConstantsLive(J9JavaVM *javaVM, j9object_t stringOne, 
 	MM_RealtimeGC *realtimeGC = extensions->realtimeGC;
 
 	if (realtimeGC->isBarrierEnabled()) {
-		if (realtimeGC->_unmarkedImpliesStringsCleared) {
+		if (realtimeGC->getRealtimeDelegate()->_unmarkedImpliesStringsCleared) {
 			/* If this flag is set, we will not scan the remembered set again, so we must
 			 * treat any unmarked string constant as having been cleared.
 			 */
@@ -720,7 +720,7 @@ j9gc_objaccess_checkStringConstantLive(J9JavaVM *javaVM, j9object_t string)
 	MM_RealtimeGC *realtimeGC = extensions->realtimeGC;
 
 	if (realtimeGC->isBarrierEnabled()) {
-		if (realtimeGC->_unmarkedImpliesStringsCleared) {
+		if (realtimeGC->getRealtimeDelegate()->_unmarkedImpliesStringsCleared) {
 			/* If this flag is set, we will not scan the remembered set again, so we must
 			 * treat any unmarked string constant as having been cleared.
 			 */

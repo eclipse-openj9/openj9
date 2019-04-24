@@ -56,6 +56,8 @@ public:
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
  	bool _unmarkedImpliesClasses; /**< if true the mark bit can be used to check is class alive or not */
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+	bool _unmarkedImpliesCleared;
+	bool _unmarkedImpliesStringsCleared; /**< If true, we can assume that unmarked strings in the string table will be cleared */
 	
 #if defined(J9VM_GC_FINALIZATION)	
 	bool _finalizationRequired;

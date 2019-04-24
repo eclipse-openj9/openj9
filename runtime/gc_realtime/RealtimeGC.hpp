@@ -92,9 +92,6 @@ public:
 	MM_OSInterface *_osInterface;
 	MM_Scheduler *_sched;
 
- 	bool _unmarkedImpliesCleared;
- 	bool _unmarkedImpliesStringsCleared; /**< If true, we can assume that unmarked strings in the string table will be cleared */
-
 	bool _fixHeapForWalk;
 	float _avgPercentFreeHeapAfterCollect;
 	MM_WorkPacketsRealtime *_workPackets;
