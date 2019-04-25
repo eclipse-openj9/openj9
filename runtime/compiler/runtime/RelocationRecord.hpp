@@ -228,7 +228,7 @@ struct TR_RelocationRecordValidateClassFromCPBinaryTemplate : public TR_Relocati
 
 struct TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   bool _isStatic;
+   uint8_t _isStatic;
    uint16_t _classID;
    uint16_t _beholderID;
    uint32_t _cpIndex;
@@ -1491,6 +1491,20 @@ class TR_RelocationRecordValidateDefiningClassFromCP : public TR_RelocationRecor
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setIsStatic(TR_RelocationTarget *reloTarget, bool isStatic);
+      bool isStatic(TR_RelocationTarget *reloTarget);
+
+      void setClassID(TR_RelocationTarget *reloTarget, uint16_t classID);
+      uint16_t classID(TR_RelocationTarget *reloTarget);
+
+      void setBeholderID(TR_RelocationTarget *reloTarget, uint16_t beholderID);
+      uint16_t beholderID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndex(TR_RelocationTarget *reloTarget, uint32_t cpIndex);
+      uint32_t cpIndex(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateStaticClassFromCP : public TR_RelocationRecord

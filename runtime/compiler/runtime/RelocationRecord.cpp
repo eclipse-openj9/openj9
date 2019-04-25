@@ -3520,24 +3520,75 @@ TR_RelocationRecordValidateClassFromCP::cpIndex(TR_RelocationTarget *reloTarget)
 int32_t
 TR_RelocationRecordValidateDefiningClassFromCP::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_classID);
-   uint16_t beholderID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_beholderID);
-   uint32_t cpIndex = reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_cpIndex);
-   bool isStatic = (bool)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_isStatic);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: beholderID %d\n", beholderID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: cpIndex %d\n", cpIndex);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: isStatic %s\n", isStatic ? "true" : "false");
-      }
+   uint16_t classID = this->classID(reloTarget);
+   uint16_t beholderID = this->beholderID(reloTarget);
+   uint32_t cpIndex = this->cpIndex(reloTarget);
+   bool isStatic = this->isStatic(reloTarget);
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateDefiningClassFromCPRecord(classID, beholderID, cpIndex, isStatic))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateDefiningClassFromCP::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tisStatic %s\n", isStatic(reloTarget) ? "true" : "false");
+   reloLogger->printf("\tclassID %d\n", classID(reloTarget));
+   reloLogger->printf("\tbeholderID %d\n", beholderID(reloTarget));
+   reloLogger->printf("\tcpindex %d\n", cpIndex(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateDefiningClassFromCP::setIsStatic(TR_RelocationTarget *reloTarget, bool isStatic)
+   {
+   reloTarget->storeUnsigned8b((uint8_t)isStatic, (uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_isStatic);
+   }
+
+bool
+TR_RelocationRecordValidateDefiningClassFromCP::isStatic(TR_RelocationTarget *reloTarget)
+   {
+   return (bool)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_isStatic);
+   }
+
+void
+TR_RelocationRecordValidateDefiningClassFromCP::setClassID(TR_RelocationTarget *reloTarget, uint16_t classID)
+   {
+   reloTarget->storeUnsigned16b(classID, (uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_classID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateDefiningClassFromCP::classID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_classID);
+   }
+
+void
+TR_RelocationRecordValidateDefiningClassFromCP::setBeholderID(TR_RelocationTarget *reloTarget, uint16_t beholderID)
+   {
+   reloTarget->storeUnsigned16b(beholderID, (uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_beholderID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateDefiningClassFromCP::beholderID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_beholderID);
+   }
+
+void
+TR_RelocationRecordValidateDefiningClassFromCP::setCpIndex(TR_RelocationTarget *reloTarget, uint32_t cpIndex)
+   {
+   reloTarget->storeUnsigned32b(cpIndex, (uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_cpIndex);
+   }
+
+uint32_t
+TR_RelocationRecordValidateDefiningClassFromCP::cpIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_cpIndex);
    }
 
 int32_t

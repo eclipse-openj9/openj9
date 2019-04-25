@@ -611,6 +611,19 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateDefiningClassFromCP:
+         {
+         TR_RelocationRecordValidateDefiningClassFromCP *dcpRecord = reinterpret_cast<TR_RelocationRecordValidateDefiningClassFromCP *>(reloRecord);
+
+         TR::DefiningClassFromCPRecord *svmRecord = reinterpret_cast<TR::DefiningClassFromCPRecord *>(relocation->getTargetAddress());
+
+         dcpRecord->setIsStatic(reloTarget, svmRecord->_isStatic);
+         dcpRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
+         dcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         dcpRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -990,6 +1003,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                      (uint32_t)cpRecord->classID(reloTarget),
                                      (uint32_t)cpRecord->beholderID(reloTarget),
                                      cpRecord->cpIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateDefiningClassFromCP:
+         {
+         TR_RelocationRecordValidateDefiningClassFromCP *dcpRecord = reinterpret_cast<TR_RelocationRecordValidateDefiningClassFromCP *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Defining Class From CP: classID=%d, beholderID=%d, cpIndex=%d, isStatic=%s ",
+                                      (uint32_t)dcpRecord->classID(reloTarget),
+                                      (uint32_t)dcpRecord->beholderID(reloTarget),
+                                      dcpRecord->cpIndex(reloTarget),
+                                      dcpRecord->isStatic(reloTarget) ? "true" : "false");
             }
          }
          break;
@@ -1474,27 +1503,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateDefiningClassFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Defining Class From CP: classID=%d, beholderID=%d, cpIndex=%d, isStatic=%s ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex,
-                        binaryTemplate->_isStatic ? "true" : "false");
-               }
-            cursor += sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateStaticClassFromCP:
