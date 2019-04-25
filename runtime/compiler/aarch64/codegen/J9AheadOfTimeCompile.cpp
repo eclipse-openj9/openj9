@@ -286,23 +286,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_ValidateClassFromCP:
-         {
-         TR::ClassFromCPRecord *record = reinterpret_cast<TR::ClassFromCPRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateClassFromCPBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateClassFromCPBinaryTemplate *>(cursor);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_cpIndex = record->_cpIndex;
-
-         cursor += sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateDefiningClassFromCP:
          {
          TR::DefiningClassFromCPRecord *record = reinterpret_cast<TR::DefiningClassFromCPRecord *>(relocation->getTargetAddress());
