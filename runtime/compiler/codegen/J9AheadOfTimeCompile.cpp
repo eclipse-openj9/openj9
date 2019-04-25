@@ -624,6 +624,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateStaticClassFromCP:
+         {
+         TR_RelocationRecordValidateStaticClassFromCP *scpRecord = reinterpret_cast<TR_RelocationRecordValidateStaticClassFromCP *>(reloRecord);
+
+         TR::StaticClassFromCPRecord *svmRecord = reinterpret_cast<TR::StaticClassFromCPRecord *>(relocation->getTargetAddress());
+
+         scpRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
+         scpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         scpRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -993,13 +1005,15 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_ValidateClassFromCP:
+      case TR_ValidateStaticClassFromCP:
          {
          TR_RelocationRecordValidateClassFromCP *cpRecord = reinterpret_cast<TR_RelocationRecordValidateClassFromCP *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Class From CP: classID=%d, beholderID=%d, cpIndex=%d ",
+            traceMsg(self()->comp(), "\n Validate" "%s" "Class From CP: classID=%d, beholderID=%d, cpIndex=%d ",
+                                     kind == TR_ValidateStaticClassFromCP ? " Static " : " ",
                                      (uint32_t)cpRecord->classID(reloTarget),
                                      (uint32_t)cpRecord->beholderID(reloTarget),
                                      cpRecord->cpIndex(reloTarget));
@@ -1503,26 +1517,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateStaticClassFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Static Class From CP: classID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateArrayClassFromComponentClass:
