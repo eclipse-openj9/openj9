@@ -66,7 +66,7 @@ else ifneq (,$(findstring linux_x86,$(SPEC)))
 endif
 
 ifndef NATIVE_TEST_LIBS
-	NATIVE_TEST_LIBS=$(JDK_HOME)$(D)..$(D)native-test-libs$(D)
+	NATIVE_TEST_LIBS=$(TEST_JDK_HOME)$(D)..$(D)native-test-libs$(D)
 endif
 
 # if JCL_VESION is current check for default locations for native test libs

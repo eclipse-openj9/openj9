@@ -37,10 +37,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8" />
 		<then>
-			<property name="j9ddr" location="${JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
+			<property name="j9ddr" location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
 		</then>
 		<else>
-			<property name="j9ddr" location="${JDK_HOME}/lib/ddr/j9ddr.jar" />
+			<property name="j9ddr" location="${TEST_JDK_HOME}/lib/ddr/j9ddr.jar" />
 		</else>
 	</if>
 

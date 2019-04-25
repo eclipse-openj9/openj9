@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<include>ddrSettings.mk</include>
 	<test>
 		<testCaseName>testDDRExt_General_ibm</testCaseName>
-		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -41,7 +41,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test>
 		<testCaseName>testDDRExt_General_openj9</testCaseName>
-		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -60,7 +60,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test>
 		<testCaseName>testDDRExt_Callsites_ibm</testCaseName>
-		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -77,7 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test>
 		<testCaseName>testDDRExt_Callsites_openj9</testCaseName>
-		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -96,7 +96,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test>
 		<testCaseName>testDDRExt_JITExt_ibm</testCaseName>
-		<command>ant -v -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -v -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestJITExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -DEXTRADUMPOPT=$(Q)-Xjit:count=0$(Q) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -113,7 +113,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	
 	<test>
 		<testCaseName>testDDRExt_JITExt_openj9</testCaseName>
-		<command>ant -v -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -v -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestJITExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -DEXTRADUMPOPT=$(Q)-Xjit:count=0$(Q) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -132,7 +132,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test>
 		<testCaseName>testDDRExt_SharedClasses_ibm</testCaseName>
-		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestSharedClassesExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -149,7 +149,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test>
 		<testCaseName>testDDRExt_SharedClasses_openj9</testCaseName>
-		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestSharedClassesExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
