@@ -889,6 +889,13 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
                   continue;
                /* call getResolvedMethod again to generate the validation records */
                TR_ResolvedMethod* target_method = getResolvedMethod (tempreceiverClass);
+
+               /* it is possible for getResolvedMethod to return NULL, since there might be
+                * a problem when generating validation records
+                */
+               if (!target_method)
+                  continue;
+
                TR_OpaqueClassBlock *classOfMethod = target_method->classOfMethod();
                SVM_ASSERT_ALREADY_VALIDATED(comp()->getSymbolValidationManager(), classOfMethod);
                }
