@@ -584,7 +584,8 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_UseDefInfo             *_useDefInfo;
    bool                      _invalidateUseDefInfo;
    TR_BitVector              *_otherDefsForLoopAllocation;
-   TR_BitVector              *_localObjectsValueNumbers;
+   TR_BitVector              *_nonColdLocalObjectsValueNumbers;
+   TR_BitVector              *_allLocalObjectsValueNumbers;
    TR_BitVector              *_notOptimizableLocalObjectsValueNumbers;
    TR_BitVector              *_notOptimizableLocalStringObjectsValueNumbers;
    TR_BitVector              *_blocksWithFlushOnEntry;
