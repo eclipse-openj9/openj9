@@ -75,6 +75,9 @@ typedef UDATA fj9object_t;
 typedef UDATA fj9array_t;
 #endif
 
+/* j9flatobject_t is a pointer to a headerless object */
+typedef UDATA j9flatobject_t;
+
 /**
  * Internal references.  
  * Some modules need a structure type for objects that describe the header to effectively perform work.  

@@ -60,6 +60,10 @@ protected:
 	UDATA _ownableSynchronizerLinkOffset; /** Offset within java/util/concurrent/locks/AbstractOwnableSynchronizer of the ownable synchronizer link field */
 public:
 
+	MMINLINE j9flatobject_t indexableFlatObjectAddress(J9VMThread *vmThread, J9IndexableObject *arrayRef, J9Class *clazz, I_32 index) {
+		return (j9flatobject_t)(indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE(clazz)));
+	}
+
 	/* member function */
 private:
 	/**

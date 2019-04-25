@@ -5803,10 +5803,8 @@ done:
 						arrayrefClass = VM_VMHelpers::currentClass(arrayrefClass);
 					}
 
-					UDATA stride = J9ARRAYCLASS_GET_STRIDE(arrayrefClass);
-					/* There is only support for contiguous arrays and only -Xgcpolicy:nogc has support. Support for discontiguous arrays and the other GC policies will come later. */
-					UDATA headerSize = ((MM_GCExtensionsBase *)vm->gcExtensions)->indexableObjectModel.getHeaderSize();
-					_objectAccessBarrier.copyObjectFields(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, arrayref, ((index * stride) + headerSize), newObjectRef, headerSize);
+					UDATA elementAddress = _objectAccessBarrier.inlineIndexableFlatObjectAddress(_currentThread, (J9IndexableObject *)arrayref, arrayrefClass, index);
+					_objectAccessBarrier.copyObjectFields(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, (j9object_t)elementAddress, 0, (j9object_t)newObjectRef, J9_OBJECT_HEADER_SIZE);
 					value = newObjectRef;
 				}
 #endif /* ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -5844,10 +5842,9 @@ done:
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 					J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
 					if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass) && J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
-						UDATA stride = J9ARRAYCLASS_GET_STRIDE(arrayrefClass);
 						/* There is only support for contiguous arrays and only -Xgcpolicy:nogc has support. Support for discontiguous arrays and the other GC policies will come later. */
-						UDATA headerSize = ((MM_GCExtensionsBase *)vm->gcExtensions)->indexableObjectModel.getHeaderSize();
-						_objectAccessBarrier.copyObjectFields(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, value, headerSize, arrayref, ((index * stride) + headerSize));
+						UDATA elementAddress = _objectAccessBarrier.inlineIndexableFlatObjectAddress(_currentThread, arrayref, arrayrefClass, index);
+						_objectAccessBarrier.copyObjectFields(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, value, J9_OBJECT_HEADER_SIZE, (j9object_t)elementAddress, 0);
 					} else 
 #endif /* ifdef J9VM_OPT_VALHALLA_VALUE_TYPES */
 					{

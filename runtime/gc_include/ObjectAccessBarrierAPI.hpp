@@ -362,6 +362,10 @@ public:
 		copyObjectFields(currentThread, objectClass, original, mixedObjectGetHeaderSize(), copy, mixedObjectGetHeaderSize());
 	}
 
+	VMINLINE j9flatobject_t inlineIndexableFlatObjectAddress(J9VMThread *vmThread, J9IndexableObject *arrayRef, J9Class *clazz, I_32 index)
+	{
+		return (j9flatobject_t)vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableFlatObjectAddress(vmThread, arrayRef, clazz, index);
+	}
 
 	/**
 	 * Copy valueType from sourceObject to destObject
@@ -2667,6 +2671,7 @@ private:
 			internalStaticPreStoreObjectSATB(vmThread, object, destAddress, value);
 		}
 	}
+
 
 	/**
 	 * Perform the preStore barrier for WRT

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -616,6 +616,16 @@ j9gc_objaccess_copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Obj
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
 	return barrier->copyObjectFields(vmThread, valueClass, srcObject, srcOffset, destObject, destOffset);
+}
+
+/**
+ * Called by to get address of a flattened array
+ */
+j9flatobject_t
+j9gc_objaccess_indexableFlatObjectAddress(J9VMThread *vmThread, J9IndexableObject *arrayRef, J9Class *clazz, I_32 index)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->indexableFlatObjectAddress(vmThread, arrayRef, clazz, index);
 }
 
 /**
