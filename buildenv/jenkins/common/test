@@ -20,18 +20,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-// Set JAVA_BIN here not in the variables-functions.set_job_variables() function
-// to ensure a correct JAVA_BIN path. JAVA_BIN should be available on the
+// Set TEST_JDK_HOME here not in the variables-functions.set_job_variables() function
+// to ensure a correct TEST_JDK_HOME path. TEST_JDK_HOME should be available on the
 // machine the tests run.
 // set_job_variables() is usually called on the master not on the node (where
 // the tests run) and the master's WORKSPACE is different than the node's WORKSPACE
-JRE_FOLDER = (SDK_VERSION == '8') ? '/jre' : ''
 
 BUILD_RELEASE_IMAGES = ''
 if (params.ghprbPullId) {
     BUILD_RELEASE_IMAGES = "build/${RELEASE}/images/"
 }
-JAVA_BIN = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}${JDK_FOLDER}${JRE_FOLDER}/bin"
+TEST_JDK_HOME = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}${JDK_FOLDER}"
 NATIVE_TEST_LIBS = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}test/openj9/"
 
 def fetch_artifacts(){
@@ -51,7 +50,7 @@ def configure() {
     stage('Configure Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["TEST_JDK_HOME=${TEST_JDK_HOME}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make -f run_configure.mk'
                 }
             }
@@ -71,7 +70,7 @@ def compile() {
     stage('Compile Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["TEST_JDK_HOME=${TEST_JDK_HOME}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make compile'
                 }
             }
@@ -83,7 +82,7 @@ def test() {
     stage('Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["JAVA_BIN=${JAVA_BIN}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
+                withEnv(["TEST_JDK_HOME=${TEST_JDK_HOME}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh "make ${TEST_TARGET}"
                 }
             }
