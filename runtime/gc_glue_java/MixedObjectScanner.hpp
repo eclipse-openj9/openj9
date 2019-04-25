@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,8 +63,8 @@ protected:
 	 * @param[in] flags Scanning context flags
 	 */
 	MMINLINE GC_MixedObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, uintptr_t flags)
-		: GC_ObjectScanner(env, objectPtr, (fomrobject_t *)(objectPtr + 1), 0, flags, J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceHotFieldDescription)
-		, _endPtr((fomrobject_t *)((uint8_t*)_scanPtr + J9GC_J9OBJECT_CLAZZ(objectPtr)->totalInstanceSize))
+		: GC_ObjectScanner(env, objectPtr, env->getExtensions()->mixedObjectModel.getHeadlessObject(objectPtr), 0, flags, J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceHotFieldDescription)
+		, _endPtr((fomrobject_t *)((uint8_t*)_scanPtr + env->getExtensions()->mixedObjectModel.getSizeInBytesWithoutHeader(objectPtr)))
 		, _mapPtr(_scanPtr)
 		, _descriptionPtr(NULL)
 #if defined(J9VM_GC_LEAF_BITS)

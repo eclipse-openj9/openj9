@@ -722,7 +722,7 @@ MM_RealtimeMarkingScheme::scanMixedObject(MM_EnvironmentRealtime *env, J9Object 
 {
 	/* Object slots */
 
-	fj9object_t *scanPtr = (fj9object_t*)( objectPtr + 1 );
+	fj9object_t *scanPtr = _gcExtensions->mixedObjectModel.getHeadlessObject(objectPtr);
 	UDATA objectSize = _gcExtensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 	fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
 	UDATA *descriptionPtr;
@@ -793,7 +793,7 @@ MM_RealtimeMarkingScheme::scanMixedObject(MM_EnvironmentRealtime *env, J9Object 
 MMINLINE UDATA
 MM_RealtimeMarkingScheme::scanReferenceMixedObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
 {
-	fj9object_t *scanPtr = (fj9object_t*)( objectPtr + 1 );
+	fj9object_t *scanPtr = _gcExtensions->mixedObjectModel.getHeadlessObject(objectPtr);
 	UDATA objectSize = _gcExtensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 	fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
 	UDATA *descriptionPtr;

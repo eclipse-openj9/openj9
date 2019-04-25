@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@
 #include "j9cfg.h"
 #include "modron.h"
 #include "ModronAssertions.h"
+#include "GCExtensionsBase.hpp"
 
 #include "Bits.hpp"
 #include "ObjectModel.hpp"
@@ -82,15 +83,16 @@ public:
 	 * @param objectPtr[in] Mixed object to be scanned
 	 */
 	MMINLINE void 
-	initialize(J9Object *objectPtr)
+	initialize(OMR_VM *omrVM, J9Object *objectPtr)
 	{
+		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 		_objectPtr = objectPtr;
 		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr);
 		initializeDescriptionBits(clazzPtr);
 
 		/* Set current and end scan pointers */
-		_scanPtr = (fj9object_t *)(objectPtr + 1);
-		_endPtr = (fj9object_t *)((U_8*)_scanPtr +clazzPtr->totalInstanceSize);
+		_scanPtr = extensions->mixedObjectModel.getHeadlessObject(objectPtr);
+		_endPtr = (fj9object_t *)((U_8*)_scanPtr + extensions->mixedObjectModel.getSizeInBytesWithoutHeader(objectPtr));
 	}
 
 	/**
@@ -99,14 +101,15 @@ public:
 	 * @param fj9object_t*[in] Address within an object to scan
 	 */
 	MMINLINE void 
-	initialize(J9Class *clazzPtr, fj9object_t *addr)
+	initialize(OMR_VM *omrVM, J9Class *clazzPtr, fj9object_t *addr)
 	{
+		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 		_objectPtr = NULL;
 		initializeDescriptionBits(clazzPtr);
 
 		/* Set current and end scan pointers */
-		_scanPtr = (fj9object_t *)(addr);
-		_endPtr = (fj9object_t *)((U_8*)_scanPtr +clazzPtr->totalInstanceSize);
+		_scanPtr = addr;
+		_endPtr = (fj9object_t *)((U_8*)_scanPtr + extensions->mixedObjectModel.getSizeInBytesWithoutHeader(clazzPtr));
 	}
 
 
@@ -243,7 +246,7 @@ public:
 		, _description(0)
 		, _descriptionIndex(0)
 	  {
-		initialize(objectPtr);
+		initialize(omrVM, objectPtr);
 	  }
 };
 
