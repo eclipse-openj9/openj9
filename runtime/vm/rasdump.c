@@ -587,7 +587,7 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 	/* ensure that the string is properly terminated */
 	rasStruct->hostname[sizeof(rasStruct->hostname)-1] = '\0';
 
-#if defined(J9OS_I5_V7R3)
+#if defined(J9OS_I5)
 	/* set AI_ADDRCONFIG(0x08) to fix low performance of inactive ipv6 resolving */
 	j9sock_getaddrinfo_create_hints( &hints, (I_16) J9ADDR_FAMILY_UNSPEC, 0, J9PROTOCOL_FAMILY_UNSPEC, 0x08 ); 
 #else
