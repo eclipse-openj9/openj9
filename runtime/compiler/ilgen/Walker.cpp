@@ -3967,6 +3967,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
       _methodSymbol->setMayHaveInlineableCall(true);
       TR::TreeTop *prevLastTree = _block->getExit()->getPrevTreeTop();
       TR::Node *callNode = NULL;
+      TR::Node *receiver = topn(improperMethod->numberOfExplicitParameters());
       if (improperMethod->isPrivate() || improperMethod->convertToMethod()->isFinalInObject())
          {
          TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodSymbol(
@@ -4008,7 +4009,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
       TR::TransformUtil::separateNullCheck(comp(), callTree, comp()->getOption(TR_TraceILGen));
 
       uint32_t interfaceCPIndex = owningMethod->classCPIndexOfMethod(cpIndex);
-      push(callNode->getArgument(0));
+      push(receiver);
       genInstanceof(interfaceCPIndex);
       TR::Node *instanceof = pop();
 
