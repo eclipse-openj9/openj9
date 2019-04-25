@@ -27,7 +27,7 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
 
 ```
     cd openj9/test/TestConfig
-    export JAVA_BIN=/my/openj9/sdk/bin
+    export TEST_JDK_HOME=/my/openj9/jdk
     make -f run_configure.mk   // generates makefiles
     make compile               // downloads test related material/libs
                                // and compiles test material

@@ -39,7 +39,7 @@
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===debug:                        on</echo>
-		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${JAVAC}" includeAntRuntime="false" encoding="ISO-8859-1"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${TEST_JDK_HOME}/bin/javac" includeAntRuntime="false" encoding="ISO-8859-1"/>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -52,7 +52,7 @@
 	</target>
 
 	<target name="run" depends="dist">
-		<property name="javaexecutable.java" value="${JAVA_BIN}/java" />
+		<property name="javaexecutable.java" value="${TEST_JDK_HOME}/bin/java" />
 		<java jar="./EnvDetector.jar" fork="true" failonerror="true" jvm="${javaexecutable.java}">
 			<arg value="JavaInfo"/>
 		</java>

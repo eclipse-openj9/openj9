@@ -25,8 +25,14 @@
 help:
 	@echo "This makefile is used to build and execute JVM tests. You should specify the following"
 	@echo "variables before using this script:"
-	@echo "JAVA_BIN  Path to java bin dir which will be used to built and executed JVM tests"
-	@echo "SPEC      Should match the current platform (e.g. SPEC=linux_x86-64, SPEC=linux_x86)"
+	@echo "required:"
+	@echo "    TEST_JDK_HOME=<path to JDK home directory that you wish to test>"
+	@echo "    BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)"
+	@echo "optional:"
+	@echo "    SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test, could be auto detected)"
+	@echo "    JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (default to 8, could be auto detected)"
+	@echo "    JDK_IMPL=[openj9|ibm|hotspot|sap] (default to openj9, could be auto detected)"
+	@echo "    NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at the same level as TEST_JDK_HOME)"
 
 CD        = cd
 ECHO      = echo
@@ -48,19 +54,6 @@ include $(TEST_ROOT)$(D)TestConfig$(D)envSettings.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)featureSettings.mk
-
-
-ifndef JAVA_BIN
-$(error Please provide JAVA_BIN value.)
-else
-export JAVA_BIN:=$(subst \,/,$(JAVA_BIN))
-endif
-
-ifndef SPEC
-$(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
-else
-export SPEC:=$(SPEC)
-endif
 
 # temporarily support both JAVA_VERSION and JDK_VERSION
 ifeq ($(JAVA_VERSION), SE80)
@@ -86,6 +79,27 @@ ifndef JDK_VERSION
 	export JDK_VERSION:=8
 else
 	export JDK_VERSION:=$(JDK_VERSION)
+endif
+
+ifndef TEST_JDK_HOME
+$(error Please provide TEST_JDK_HOME value.)
+else
+export TEST_JDK_HOME := $(subst \,/,$(TEST_JDK_HOME))
+endif
+
+ifeq ($(JDK_VERSION), 8)
+export JAVA_BIN := $(TEST_JDK_HOME)/jre/bin
+else
+export JAVA_BIN := $(TEST_JDK_HOME)/bin
+endif
+
+OLD_JAVA_HOME := $(JAVA_HOME)
+export JAVA_HOME := $(TEST_JDK_HOME)
+
+ifndef SPEC
+$(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
+else
+export SPEC:=$(SPEC)
 endif
 
 # temporarily support both JAVA_IMPL and JDK_IMPL
@@ -145,15 +159,7 @@ endif
 JVM_TEST_ROOT = $(BUILD_ROOT)
 TEST_GROUP=level.*
 
-# removing " 
-JAVA_BIN_TMP := $(subst ",,$(JAVA_BIN))
-JDK_HOME := $(JAVA_BIN_TMP)$(D)..
-ifeq ($(JDK_VERSION),8)
-JDK_HOME := $(JAVA_BIN_TMP)$(D)..$(D)..
-endif
 
-OLD_JAVA_HOME := $(JAVA_HOME)
-export JAVA_HOME := $(JDK_HOME)
 
 #######################################
 # Set OS, ARCH and BITS based on SPEC
@@ -182,7 +188,7 @@ ifneq ($(DEBUG),)
 $(info DEFAULT_EXCLUDE is set to $(DEFAULT_EXCLUDE))
 endif
 
-JAVA_COMMAND:=$(Q)$(JAVA_BIN_TMP)$(D)java$(Q)
+JAVA_COMMAND:=$(Q)$(JAVA_BIN)$(D)java$(Q)
 
 #######################################
 # common dir and jars

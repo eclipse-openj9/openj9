@@ -139,7 +139,7 @@
 	<test>
 		<testCaseName>AttachAPISanity_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames AttachAPISanity \
@@ -183,7 +183,7 @@
 		<testCaseName>TestAttachAPI_SE80</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachAPI \
@@ -232,7 +232,7 @@
 	<test>
 		<testCaseName>TestAttachAPIEnabling_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachAPIEnabling \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -273,7 +273,7 @@
 	<test>
 		<testCaseName>TestAttachErrorHandling_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachErrorHandling \
@@ -316,7 +316,7 @@
 		<testCaseName>TestSunAttachClasses_SE80</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestSunAttachClasses \
@@ -366,7 +366,7 @@
 	<test>
 		<testCaseName>TestManagementAgent_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestManagementAgent \
@@ -409,7 +409,7 @@
 	<test>
 		<testCaseName>TestJps_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -459,7 +459,7 @@
 	<test>
 		<testCaseName>TestJstack_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \

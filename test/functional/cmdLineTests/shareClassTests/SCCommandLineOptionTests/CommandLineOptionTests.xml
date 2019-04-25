@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2004, 2018 IBM Corp. and others
+  Copyright (c) 2004, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,9 @@
 <suite id="Shared Classes CommandLineOptionTests Suite - Windows Configuration">
 
 	<!-- Set variables up -->
-	<variable name="JAVA_DIR" value="$JDK_HOME$/bin"/>
-	<variable name="JAVAC_DIR" value="$JDK_HOME$/bin"/>
-	<variable name="JAVA_EXE" value="$JDK_HOME$/bin/java$EXECUTABLE_SUFFIX$"/>
+	<variable name="JAVA_DIR" value="$TEST_JDK_HOME$/bin"/>
+	<variable name="JAVAC_DIR" value="$TEST_JDK_HOME$/bin"/>
+	<variable name="JAVA_EXE" value="$TEST_JDK_HOME$/bin/java$EXECUTABLE_SUFFIX$"/>
 	<variable name="PERL_EXE" value="perl"/>
 	<variable name="CACHE_MAX_LEN" value="64"/>
 	<variable name="PERL_EXTN" value=".pl"/>

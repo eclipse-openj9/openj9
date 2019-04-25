@@ -31,9 +31,9 @@
 			<variation>Mode610</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)SCCommandLineOptionTests.jar$(Q) .; \
-	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf SCCommandLineOptionTests.jar; \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf SCCommandLineOptionTests.jar; \
 	$(CONVERT_TO_EBCDIC_CMD) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)CommandLineOptionTests.xml$(Q) \
 	-xids all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
