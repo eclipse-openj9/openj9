@@ -37,6 +37,7 @@
 #include "MemorySubSpaceMetronome.hpp"
 #include "Metronome.hpp"
 #include "MetronomeAlarmThread.hpp"
+#include "MetronomeDelegate.hpp"
 #include "RealtimeGC.hpp"
 #include "OSInterface.hpp"
 #include "Scheduler.hpp"

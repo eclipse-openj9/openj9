@@ -278,12 +278,6 @@ MM_RealtimeGC::mergeGCStats(MM_EnvironmentBase *env)
 {
 }
 
-void
-MM_RealtimeGC::enqueuePointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
-{
-	env->getWorkStack()->push(env, (void *)ARRAYLET_TO_ITEM(arraylet));
-}
-
 uintptr_t
 MM_RealtimeGC::verbose(MM_EnvironmentBase *env) {
 	return _sched->verbose();
@@ -943,7 +937,7 @@ MM_RealtimeGC::flushRememberedSet(MM_EnvironmentRealtime *env)
  * If concurrentMarkingEnabled is true then tracing is completed concurrently.
  */
 void
-MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
+MM_RealtimeGC::completeMarking(MM_EnvironmentRealtime *env)
 {
 	
 	do {
@@ -959,7 +953,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			_moreTracingRequired = false;
 			
 			/* From this point on the Scheduler collaborates with WorkPacketsRealtime on yielding.
-			 * Strictly speaking this should be done first thing in incrementalConsumeQueue().
+			 * Strictly speaking this should be done first thing in incrementalCompleteScan().
 			 * However, it would require another synchronizeGCThreadsAndReleaseMaster barrier.
 			 * So we are just reusing the existing one.
 			 */
@@ -968,7 +962,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
 		
-		if(_markingScheme->incrementalConsumeQueue(env, MAX_UINT)) {
+		if(_markingScheme->incrementalCompleteScan(env, MAX_UINT)) {
 			_moreTracingRequired = true;
 		}
 

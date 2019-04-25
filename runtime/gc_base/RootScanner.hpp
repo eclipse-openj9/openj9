@@ -37,9 +37,11 @@
 
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
+#include "JVMTIObjectTagTableIterator.hpp"
 #include "ModronTypes.hpp"
 #include "RootScannerTypes.h"
 #include "Task.hpp"
+#include "VMClassSlotIterator.hpp"
 
 class GC_SlotObject;
 class MM_MemoryPool;
