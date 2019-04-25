@@ -60,6 +60,17 @@ class ValuePropagation : public OMR::ValuePropagation
 
    virtual void getParmValues();
 
+   /**
+    * @brief Supplemental functionality for constraining an acall node.  Projects
+    *        consuming OMR can implement this function to provide project-specific
+    *        functionality.
+    *
+    * @param[in] node : TR::Node of the call to constrain
+    *
+    * @return Resulting node with constraints applied.
+    */
+   virtual TR::Node *innerConstrainAcall(TR::Node *node);
+
    private:
 
    TR_YesNoMaybe safeToAddFearPointAt(TR::TreeTop* tt);
