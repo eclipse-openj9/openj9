@@ -24,8 +24,16 @@
 package openj9.tools.attach.diagnostics.target;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
+import openj9.tools.attach.diagnostics.info.HeapConfigInfo;
+import openj9.tools.attach.diagnostics.info.JvmInfo;
 import openj9.tools.attach.diagnostics.info.ThreadGroupInfo;
 import openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider;
 
@@ -37,11 +45,66 @@ import openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider;
  */
 public class TargetDiagnosticsProviderImpl implements TargetDiagnosticsProvider {
 
+	static final Map<String, Function<String, DiagnosticProperties>> commandTable;
+	static {
+		commandTable = new HashMap<>();
+		commandTable.put(openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_CLASS_HISTOGRAM, s -> getHeapStatistics(s));
+		commandTable.put(openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_RUN, s -> runGC());
+		commandTable.put(openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_CONFIG, s -> getHeapConfig());
+		commandTable.put(openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_FINALIZABLE, s -> getFinalizable());
+	}
+
 	@Override
 	public DiagnosticProperties getThreadGroupInfo() throws IOException {
 		DiagnosticProperties threadInfoProperties = ThreadGroupInfo.getThreadInfoProperties();
 		DiagnosticProperties.dumpPropertiesIfDebug("Thread group properties", threadInfoProperties); //$NON-NLS-1$
 		return threadInfoProperties;
+	}
+
+	@Override
+	public DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand) {
+		if (DiagnosticProperties.isDebug) {
+			System.err.println("executeDiagnosticCommand: "+diagnosticCommand); //$NON-NLS-1$
+		}
+
+		DiagnosticProperties result;
+		String[] commandRoot = diagnosticCommand.split(DiagnosticUtils.DIAGNOSTICS_OPTION_SEPARATOR);
+		Function<String, DiagnosticProperties> cmd = commandTable.get(commandRoot[0]);
+		if (null == cmd) {
+			result = DiagnosticProperties.makeStatusProperties(true,
+					"Command " + diagnosticCommand + "not recognized"); //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			result = cmd.apply(diagnosticCommand);
+			result.put(DiagnosticUtils.COMMAND_STRING, diagnosticCommand);
+		}
+		return result;
+	}
+
+	private static DiagnosticProperties getHeapStatistics(String diagnosticCommand) {
+		boolean doLive = Arrays.stream(diagnosticCommand
+				.split(DiagnosticUtils.DIAGNOSTICS_OPTION_SEPARATOR))
+				.anyMatch(Predicate.isEqual(DiagnosticUtils.LIVE_OPTION));
+		if (doLive) {
+			runGC();
+		}
+		String result = JvmInfo.getMemoryMXBean().getHeapClassStatistics();
+		return DiagnosticProperties.makeStringResult(result);
+	}
+
+	private static DiagnosticProperties getHeapConfig() {
+		String result = HeapConfigInfo.getHeapConfigString();
+		return DiagnosticProperties.makeStringResult(result);
+	}
+
+	private static DiagnosticProperties runGC() {
+		System.gc();
+		return DiagnosticProperties.makeCommandSucceeded();
+	}
+
+	private static DiagnosticProperties getFinalizable() {
+		int finalCount = JvmInfo.getMemoryMXBean().getObjectPendingFinalizationCount();
+		return DiagnosticProperties.makeStringResult(String.format("Approximate number of finalizable objects: %d%n", //$NON-NLS-1$
+				Integer.valueOf(finalCount)));
 	}
 
 }

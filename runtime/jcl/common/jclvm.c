@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,12 +51,24 @@ typedef struct AllInstancesData {
 	UDATA instanceCount;        /* count of instances found regardless if they are being collected in the array or not */
 } AllInstancesData;
 
+typedef struct J9HeapStatisticsTableEntry {
+	J9Class *klass; /* hash table key */
+	UDATA objectCount; /* number of instances of the class */
+	UDATA objectSize;
+	UDATA aggregateSize;
+} J9HeapStatisticsTableEntry;
+
 static UDATA hasConstructor(J9VMThread *vmThread, J9StackWalkState *state);
 static jvmtiIterationControl collectInstances(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *state);
 static int hasActiveConstructor(J9VMThread *vmThread, J9Class *clazz);
 static UDATA allInstances (JNIEnv * env, jclass clazz, jobjectArray target);
-
-
+static J9HashTable *collectHeapStatistics(J9VMThread *vmThread);
+static jvmtiIterationControl updateHeapStatistics (J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *state);
+static UDATA heapStatisticsHashEqualFn (void *leftKey, void *rightKey, void *userData);
+static UDATA heapStatisticsHashFn (void *key, void *userData);
+static void sortStatsTable(J9HeapStatisticsTableEntry *list[], IDATA start, IDATA end);
+static I_32 printHeapStatistics(JNIEnv * env,J9HeapStatisticsTableEntry **statsArray,
+		U_32 numClasses, char *stringBuffer, UDATA bufferSize);
 void JNICALL
 Java_com_ibm_oti_vm_VM_localGC(JNIEnv *env, jclass clazz)
 {
@@ -138,6 +150,142 @@ Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, j
 	return count;
 }
 
+/**
+ * Return a String object containing a summary of the classes on the heap, 
+ * the number of instances, and their aggregate size.
+ */
+jobject JNICALL
+Java_com_ibm_lang_management_internal_ExtendedMemoryMXBeanImpl_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused)
+{
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9HashTable *statsTable = NULL;
+	J9HashTableState hashTableState;
+	BOOLEAN outOfMemory = FALSE;
+	j9object_t stringObject = NULL;
+	J9HeapStatisticsTableEntry **statsArray = NULL;
+	jobject stringObjectRef = NULL;
+	I_32 numClasses = 0;
+
+	PORT_ACCESS_FROM_ENV(env);
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+
+	vmFuncs->acquireExclusiveVMAccess(vmThread);
+	statsTable = collectHeapStatistics(vmThread);
+	vmFuncs->releaseExclusiveVMAccess(vmThread);
+
+	numClasses = hashTableGetCount(statsTable);
+	statsArray = j9mem_allocate_memory(numClasses * sizeof(J9HeapStatisticsTableEntry*), J9MEM_CATEGORY_VM_JCL);
+	if (NULL == statsArray) {
+		outOfMemory = TRUE;
+	} else {
+		I_32 cursor = 0;
+		J9HeapStatisticsTableEntry *entry = (J9HeapStatisticsTableEntry *) hashTableStartDo(statsTable, &hashTableState);
+		while (NULL != entry) {
+			entry->aggregateSize = entry->objectSize * entry->objectCount;
+			statsArray[cursor] = entry;
+			cursor += 1;
+			entry = (J9HeapStatisticsTableEntry *) hashTableNextDo(&hashTableState);
+		}
+		numClasses = cursor; /* adjust the length in case the hash table contained nulls */
+		sortStatsTable(statsArray, 0, numClasses - 1);
+	}
+	if (!outOfMemory) {
+		I_32 printedLength = 0;
+		UDATA bufferSize =0;
+		do {
+			bufferSize += numClasses * 80; /* try incrementally larger sizes */
+			char *stringBuffer = (char *) j9mem_allocate_memory(bufferSize, J9MEM_CATEGORY_VM_JCL);
+			if (NULL == stringBuffer) {
+				outOfMemory = TRUE;
+				break;
+			} else {
+				printedLength = printHeapStatistics(env, statsArray,numClasses,
+						stringBuffer,bufferSize);
+				if (printedLength > 0) {
+					stringObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread,
+							(U_8 *) stringBuffer, printedLength, J9_STR_XLAT);
+					stringObjectRef = vmFuncs->j9jni_createLocalRef(env, stringObject);
+				}
+				j9mem_free_memory(stringBuffer);
+			}
+		} while (0 == printedLength);
+		j9mem_free_memory(statsArray);
+	}
+
+	if (outOfMemory) {
+		vmFuncs->setHeapOutOfMemoryError(vmThread);
+	}
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
+
+	return stringObjectRef;
+}
+
+static I_32
+printHeapStatistics(JNIEnv * env,J9HeapStatisticsTableEntry **statsArray,
+		U_32 numClasses, char *stringBuffer, UDATA bufferSize) {
+	char *bufferCursor = stringBuffer;
+	I_32 classCursor = 0;
+	UDATA cumulativeCount = 0;
+	UDATA cumulativeSize = 0;
+	UDATA result = 0;
+
+	PORT_ACCESS_FROM_ENV(env);
+
+	result = j9str_printf(PORTLIB, bufferCursor, bufferSize,
+			"%5s%15s%15s    %s\n-------------------------------------------------\n",
+			"num", "object count", "total size", "class name"
+	);
+	bufferCursor += result;
+	bufferSize -= result;
+	for (classCursor = 0; (result > 0) && (classCursor < numClasses); ++classCursor) {
+		J9Class *currentClass = statsArray[classCursor]->klass;
+		result = j9str_printf(PORTLIB, bufferCursor, bufferSize,
+				"%5ld%15ld%15ld    ",
+				classCursor + 1, statsArray[classCursor]->objectCount,
+				statsArray[classCursor]->aggregateSize
+		);
+		bufferCursor += result;
+		bufferSize -= result;
+		if (J9CLASS_IS_ARRAY(currentClass)) {
+			J9ArrayClass *arrayKlass = (J9ArrayClass*)currentClass;
+			UDATA arity = arrayKlass->arity;
+			J9Class *leafComponentType = arrayKlass->leafComponentType;
+			J9ROMClass * leafROMClass = leafComponentType->romClass;
+			J9UTF8 *leafName = J9ROMCLASS_CLASSNAME(leafROMClass);
+			UDATA isPrimitive = J9ROMCLASS_IS_PRIMITIVE_TYPE(leafROMClass);
+			UDATA i = 0;
+			for (i = 0; i < arity; ++i) {
+				result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "[");
+				bufferCursor += result;
+				bufferSize -= result;
+			}
+			if (isPrimitive) {
+				result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "%c\n",
+						J9UTF8_DATA(J9ROMCLASS_CLASSNAME(leafComponentType->arrayClass->romClass))[1]);
+			} else {
+				result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "L%.*s;\n",
+						J9UTF8_LENGTH(leafName), J9UTF8_DATA(leafName));
+			}
+		} else {
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(currentClass->romClass);
+			result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "%.*s\n",
+					J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+		}
+		bufferCursor += result;
+		bufferSize -= result;
+		cumulativeCount += statsArray[classCursor]->objectCount;
+		cumulativeSize += statsArray[classCursor]->aggregateSize;
+	}
+	result = j9str_printf(PORTLIB, bufferCursor, bufferSize,
+			"%5s%15d%15d\n",
+			"Total", cumulativeCount, cumulativeSize
+	);
+	bufferCursor += result;
+	return (result > 0) ? (bufferCursor - stringBuffer) : 0;
+}
 
 /* The string that keeps its original bytes is string1.
  * String2 has its bytes set to be string1-> bytes if the offsets already match and the bytes are not already set to the same value
@@ -300,7 +448,68 @@ hasConstructor(J9VMThread *vmThread, J9StackWalkState *state)
 	}
 }
 
+static J9HashTable *
+collectHeapStatistics(J9VMThread *vmThread) {
+	J9JavaVM *vm = vmThread->javaVM;
+	J9HashTable *hashTable = hashTableNew(
+			OMRPORT_FROM_J9PORT(vm->portLibrary),
+			J9_GET_CALLSITE(),
+			64,
+			sizeof(J9HeapStatisticsTableEntry),
+			sizeof(U_8*),
+			0,
+			J9MEM_CATEGORY_CLASSES,
+			heapStatisticsHashFn,
+			heapStatisticsHashEqualFn,
+			NULL,
+			vm
+	);
 
+	vm->memoryManagerFunctions->j9mm_iterate_all_objects(vmThread->javaVM,
+			vm->portLibrary, 0, updateHeapStatistics, hashTable);
+	return hashTable;
+}
+
+static jvmtiIterationControl
+updateHeapStatistics(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *state)
+{
+	J9HashTable *hashTable = (J9HashTable *) state;
+	j9object_t obj = objDesc->object;
+	J9Class *klass = J9OBJECT_CLAZZ_VM(vm, obj);
+	struct J9HeapStatisticsTableEntry query;
+	struct J9HeapStatisticsTableEntry *result = NULL;
+
+	query.klass = klass;
+	result = hashTableFind(hashTable, &query);
+	if (NULL == result) {
+		query.objectCount = 1;
+		query.objectSize = vm->memoryManagerFunctions->j9gc_get_object_size_in_bytes(vm, obj);
+		result = hashTableAdd(hashTable,  &query);
+		if (NULL == result) {
+			J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+			Trc_JCL_heapStatisticsTableAddFail(vmThread);
+			vm->internalVMFunctions->setNativeOutOfMemoryError(vmThread, 0, 0);
+		}
+	} else {
+		result->objectCount += 1;
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+static UDATA
+heapStatisticsHashEqualFn (void *leftKey, void *rightKey, void *userData)
+{
+	J9HeapStatisticsTableEntry *entryA = leftKey;
+	J9HeapStatisticsTableEntry *entryB = rightKey;
+	return (entryA->klass == entryB->klass);
+}
+
+static UDATA
+heapStatisticsHashFn (void *key, void *userData)
+{
+	J9HeapStatisticsTableEntry *entry = key;
+	return (UDATA) entry->klass;
+}
 
 /*
  * Dump a String to stderr using the port library.
@@ -322,6 +531,73 @@ Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str)
 			Trc_JCL_com_ibm_oti_vm_VM_dumpString(env, utfChars);
 			j9tty_printf(PORTLIB, "%s", utfChars);
 			(*env)->ReleaseStringUTFChars(env, str, utfChars);
+		}
+	}
+}
+
+/**
+ * quicksort the list of pointers to statistics entries based on aggregateSize.
+ * @param list
+ * Vector of pointers to statistics entries
+ * @start index of the first element to be sorted
+ * @end index of the last element to be sorted
+ */
+
+static void
+sortStatsTable(J9HeapStatisticsTableEntry **list, IDATA start, IDATA end) {
+	IDATA leftScan = start;
+	IDATA rightScan = end;
+	IDATA pivot = (start + end) / 2;
+	UDATA pivotValue = list[pivot]->aggregateSize;
+	BOOLEAN leftMismatch = FALSE;
+	BOOLEAN rightMismatch = FALSE;
+	do {
+		while (!leftMismatch && (leftScan < rightScan)) {
+			if (list[leftScan]->aggregateSize <= pivotValue) {
+				leftMismatch = TRUE;
+			} else {
+				++leftScan;
+			}
+		}
+		while (!rightMismatch && (leftScan < rightScan)) {
+			if (list[rightScan]->aggregateSize >= pivotValue) {
+				rightMismatch = TRUE;
+			} else {
+				--rightScan;
+			}
+		}
+		if (leftScan < rightScan) {
+			J9HeapStatisticsTableEntry* swap = list[rightScan];
+			list[rightScan] = list[leftScan];
+			list[leftScan] = swap;
+			leftMismatch = FALSE;
+			rightMismatch = FALSE;
+			leftScan += 1;
+			if (rightScan > leftScan) {
+				rightScan -= 1;
+			}
+		}
+	} while (leftScan < rightScan);
+
+	if ((end - start) >= 2) { /* list of length 1 or 2 is already sorted */
+		if (leftMismatch) {
+			leftScan -= 1;
+		}
+		if (rightMismatch) {
+			rightScan += 1;
+		}
+		while ((leftScan > start) &&  (list[leftScan]->aggregateSize == pivotValue)) {
+			--leftScan;
+		}
+		while ((rightScan < end) &&  (list[rightScan]->aggregateSize == pivotValue)) {
+			++rightScan;
+		}
+
+		if (leftScan > start) {
+			sortStatsTable(list, start, leftScan);
+		}
+		if (rightScan < end) {
+			sortStatsTable(list, rightScan, end);
 		}
 	}
 }

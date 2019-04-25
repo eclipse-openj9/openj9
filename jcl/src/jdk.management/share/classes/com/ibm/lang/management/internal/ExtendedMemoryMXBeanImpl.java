@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,5 +93,13 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 	protected MemoryPoolMXBean makeMemoryPoolBean(String name, MemoryType type, int internalID) {
 		return new MemoryPoolMXBeanImpl(name, type, internalID, this);
 	}
+
+	@Override
+	public String getHeapClassStatistics() {
+		String heapStats = getHeapClassStatisticsImpl();
+		return heapStats;
+	}
+
+	private native String getHeapClassStatisticsImpl();
 
 }

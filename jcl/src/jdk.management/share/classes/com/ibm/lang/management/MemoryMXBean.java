@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -274,4 +274,10 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      * @return number of active GC worker threads
      */
 	public int getCurrentGCThreads();
+	
+	/**
+	 * Returns information on the number and size of objects in the heap.
+	 * @return statistics formatted as a String
+	 */
+	public String getHeapClassStatistics();
 }

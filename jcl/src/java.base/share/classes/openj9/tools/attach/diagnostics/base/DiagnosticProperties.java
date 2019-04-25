@@ -29,6 +29,8 @@ import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.Properties;
 
+import com.ibm.tools.attach.target.IPC;
+
 /**
  * Augments Properties with convenience methods to add ints, booleans, and
  * longs.
@@ -163,6 +165,18 @@ public class DiagnosticProperties {
 	 * Return a property value for the given key.
 	 * 
 	 * @param key property name
+	 * @return property value as a String
+	 * @throws IOException if the property is missing
+	 */
+	public String getString(String key) throws IOException {
+		checkExists(key);
+		return baseProperties.getProperty(key);
+	}
+
+	/**
+	 * Return a property value for the given key.
+	 * 
+	 * @param key property name
 	 * @return property value or null if the property is not found
 	 */
 	public String getPropertyOrNull(String key) {
@@ -254,7 +268,7 @@ public class DiagnosticProperties {
 	 * @return String representation of props
 	 */
 	public static String printProperties(final Properties props) {
-		final StringWriter buff = new StringWriter(1000);
+		StringWriter buff = new StringWriter(1000);
 		try (PrintWriter buffWriter = new PrintWriter(buff)) {
 			props.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().toString())).forEach(theEntry -> {
 				buffWriter.print(theEntry.getKey());
@@ -262,8 +276,41 @@ public class DiagnosticProperties {
 				buffWriter.println((String) theEntry.getValue());
 			});
 		}
-		final String result = buff.toString();
-		return result;
+		return buff.toString();
+	}
+	
+	/**
+	 * Print the result string of a command that produces a single string.
+	 * Print an error message if the command resulted in an error.
+	 * @return String result or error message
+	 */
+	public String printStringResult() {
+		StringWriter buff = new StringWriter(1000);
+		try (PrintWriter buffWriter = new PrintWriter(buff)) {
+			if (Boolean.parseBoolean(getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERROR))) {
+				buffWriter.printf("Error: %s\n", getString(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE)); //$NON-NLS-1$
+				String msg = getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG);
+				if (null != msg) {
+					buffWriter.printf("%s\n", msg); //$NON-NLS-1$
+				}
+			} else {
+				buff.append(getString(DiagnosticsInfo.DIAGNOSTICS_STRING_RESULT));
+			}
+		} catch (IOException e) {
+			buff.append("Error parsing properties"); //$NON-NLS-1$
+		}
+		return buff.toString();
+	}
+
+	/**
+	 * Create a properties file to hold a single string.
+	 * @param text text of the string
+	 * @return properties file containing the string, plus success indication
+	 */
+	public static DiagnosticProperties makeStringResult(String text) {
+		DiagnosticProperties props = makeCommandSucceeded();
+		props.put(DiagnosticsInfo.DIAGNOSTICS_STRING_RESULT, text);
+		return props;
 	}
 
 	/**
@@ -274,4 +321,43 @@ public class DiagnosticProperties {
 	public Properties toProperties() {
 		return baseProperties;
 	}
+
+	/**
+	 * @return Properties file indicating success
+	 */
+	public static DiagnosticProperties makeCommandSucceeded() {
+		return makeStatusProperties(false, "Command succeeded"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Encode information about an exception into properties.
+	 * @param e Exception object
+	 * @return Properties object
+	 */
+	public static Properties makeExceptionProperties(Exception e) {
+		Properties props = new Properties();
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(true));
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, e.getClass().getName());
+		String msg = e.getMessage();
+		if (null != msg) {
+			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		}
+		return props;
+	}
+	
+	/**
+	 * Report the status of a command execution.
+	 * @param error true if the command failed
+	 * @param msg status message
+	 * @return properties file encoding the status and message
+	 */
+	public static DiagnosticProperties makeStatusProperties(boolean error, String msg) {
+		DiagnosticProperties props = new DiagnosticProperties();
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(error));
+		if (null != msg) {
+			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		}
+		return props;
+	}
+
 }

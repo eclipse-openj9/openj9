@@ -43,4 +43,12 @@ public interface TargetDiagnosticsProvider {
 	 */
 	public DiagnosticProperties getThreadGroupInfo() throws IOException;
 
+	/**
+	 * Perform a diagnostic operation as specified by an attacher.
+	 * 
+	 * @param diagnosticCommand text of the command, with arguments if any
+	 * @return properties object
+	 */
+	public DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand);
+
 }

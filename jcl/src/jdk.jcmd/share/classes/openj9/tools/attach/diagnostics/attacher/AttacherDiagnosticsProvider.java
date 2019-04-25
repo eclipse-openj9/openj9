@@ -66,6 +66,22 @@ public class AttacherDiagnosticsProvider {
 	}
 
 	/**
+	 * Request thread information, including stack traces, from a target VM.
+	 * 
+	 * @param diagnosticCommand name of command to execute
+	 * @return properties object containing serialized thread information
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
+		IPC.logMessage("enter executeDiagnosticCommand", diagnosticCommand); //$NON-NLS-1$
+		checkAttached();
+		Properties info = vm.executeDiagnosticCommand(diagnosticCommand);
+		DiagnosticProperties.dumpPropertiesIfDebug("Properties from target:", info); //$NON-NLS-1$
+		IPC.logMessage("exit getRemoteThreadGroupInfo"); //$NON-NLS-1$
+		return info;
+	}
+
+	/**
 	 * Call equivalent com.sun.tools.attach.VirtualMachine method.
 	 * 
 	 * @param vmid ID of target

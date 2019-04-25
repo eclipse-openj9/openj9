@@ -28,5 +28,6 @@ module jdk.jcmd {
   provides openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider with openj9.tools.attach.diagnostics.target.TargetDiagnosticsProviderImpl;
   requires java.base;
   requires java.management;
+  requires jdk.management;
   requires jdk.attach;
 }

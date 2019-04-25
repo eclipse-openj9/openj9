@@ -1,6 +1,8 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.attacher;
 
+import java.io.ByteArrayInputStream;
+
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -36,6 +38,8 @@ import java.util.regex.Pattern;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
+import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.AttachmentConnection;
 import com.ibm.tools.attach.target.Command;
@@ -274,6 +278,19 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	public Properties getThreadInfo() throws IOException {
 		IPC.logMessage("enter getThreadInfo"); //$NON-NLS-1$
 		AttachmentConnection.streamSend(commandStream, Command.GET_THREAD_GROUP_INFO);
+		return IPC.receiveProperties(responseStream, true);
+	}
+
+	/**
+	 * Execute a diagnostic command on a target VM.
+	 * 
+	 * @param diagnosticCommand name of command to execute
+	 * @return properties object containing serialized result
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
+		IPC.logMessage("enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
+		AttachmentConnection.streamSend(commandStream, Command.ATTACH_DIAGNOSTICS_PREFIX + diagnosticCommand);
 		return IPC.receiveProperties(responseStream, true);
 	}
 
@@ -554,6 +571,41 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		}
 		return result;
 
+	}
+	
+	/**
+	 * Generate a text description of a target JVM's heap, including the number and sizes
+	 * of instances of each  class.
+	 * @param opts String options: "-live" for live object only, or "-all" for all objects
+	 * @return byte stream containing the UTF-8 text of the formatted output
+	 */
+	public InputStream heapHisto(Object... opts) {
+		String responseString = DiagnosticUtils.EMPTY_STRING;
+		boolean live = false;
+		for (Object opt: opts) {
+			if ("-live".equals(opt)) { //$NON-NLS-1$
+				live = true;
+			} else if ("-all".equals(opt)) { //$NON-NLS-1$
+				live = false;
+			} else {
+				responseString = "unrecognized option: " + opt.toString(); //$NON-NLS-1$
+			}
+		}
+		if (responseString.isEmpty()) {
+			String cmd = DiagnosticUtils.makeHeapHistoCommand(live);
+			try {
+				DiagnosticProperties props = new DiagnosticProperties(executeDiagnosticCommand(cmd));
+				
+				responseString = props.printStringResult();
+			} catch (IOException e) {
+				responseString = "Error executing heapHisto command"; //$NON-NLS-1$
+				String msg = e.getMessage();
+				if (null != msg) {
+					responseString += ": " + msg; //$NON-NLS-1$
+				}
+			}
+		}
+		return new ByteArrayInputStream(responseString.getBytes());
 	}
 
 	/**

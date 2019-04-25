@@ -30,6 +30,10 @@ package openj9.tools.attach.diagnostics.base;
 public interface DiagnosticsInfo {
 	String OPENJ9_DIAGNOSTICS_PREFIX = "openj9_diagnostics."; //$NON-NLS-1$
 	String JAVA_INFO = OPENJ9_DIAGNOSTICS_PREFIX + "java_info"; //$NON-NLS-1$
+	/**
+	 * Use for commands which return a single string
+	 */
+	String DIAGNOSTICS_STRING_RESULT = OPENJ9_DIAGNOSTICS_PREFIX + "string_result"; //$NON-NLS-1$
 
 	@Override
 	String toString();
