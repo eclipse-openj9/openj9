@@ -2100,8 +2100,12 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args) {
 	case JNI_VERSION_1_4:
 	case JNI_VERSION_1_6:
 	case JNI_VERSION_1_8:
+#if JAVA_SPEC_VERSION >= 9
 	case JNI_VERSION_9:
+#endif /* JAVA_SPEC_VERSION >= 9 */
+#if JAVA_SPEC_VERSION >= 10
 	case JNI_VERSION_10:
+#endif /* JAVA_SPEC_VERSION >= 10 */
 		return JNI_OK;
 	}
 	

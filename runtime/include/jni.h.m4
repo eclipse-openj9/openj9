@@ -53,8 +53,8 @@ extern "C" {
 #define JNI_VERSION_1_4 0x00010004
 #define JNI_VERSION_1_6 0x00010006
 #define JNI_VERSION_1_8 0x00010008
-#define JNI_VERSION_9   0x00090000
-#define JNI_VERSION_10  0x000A0000
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, `#define JNI_VERSION_9   0x00090000', `dnl')
+ifelse(eval(JAVA_SPEC_VERSION >= 10), 1, `#define JNI_VERSION_10  0x000A0000', `dnl')
 
 #define JVMEXT_VERSION_1_1 0x7E010001
 
@@ -429,7 +429,7 @@ struct JNINativeInterface_ {
 	void * (JNICALL * GetDirectBufferAddress)(JNIEnv *env, jobject buf);
 	jlong (JNICALL * GetDirectBufferCapacity)(JNIEnv *env, jobject buf);
 	jobjectRefType (JNICALL * GetObjectRefType)(JNIEnv* env, jobject obj);
-	jobject (JNICALL * GetModule)(JNIEnv *env, jclass clazz);
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, `	jobject (JNICALL * GetModule)(JNIEnv *env, jclass clazz);', `dnl')
 };
 struct JNIEnv_ {
 	const struct JNINativeInterface_ *functions;
@@ -665,7 +665,7 @@ struct JNIEnv_ {
 	void* GetDirectBufferAddress(jobject buf) { return functions->GetDirectBufferAddress(this, buf); }
 	jlong GetDirectBufferCapacity(jobject buf) { return functions->GetDirectBufferCapacity(this, buf); }
 	jobjectRefType GetObjectRefType(jobject obj) { return functions->GetObjectRefType(this, obj); }
-	jobject GetModule(jclass clazz) { return functions->GetModule(this, clazz); }
+ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, `	jobject GetModule(jclass clazz) { return functions->GetModule(this, clazz); }', `dnl')
 #endif
 };
 

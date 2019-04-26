@@ -24,11 +24,17 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="J9 Command-Line Option Tests" timeout="180">
+<suite id="J9 Command-Line Option Tests" timeout="600">
     <variable name="READIPINFOFORRAS" value="-XX:+ReadIPInfoForRAS"/>
     <variable name="NOREADIPINFOFORRAS" value="-XX:-ReadIPInfoForRAS"/>
     <variable name="READIPINFOFORRAS_MESSAGE" value="enabled network query to determine host name and IP address for RAS."/>
     <variable name="NOREADIPINFOFORRAS_MESSAGE" value="disabled network query to determine host name and IP address for RAS."/>
+
+    <variable name="JVM_HEAP_LIMIT" value="-Xmx512m"/>
+    <variable name="ONOUTOFMEMORYERROR_EQUALS" value="-XX:OnOutOfMemoryError="/>
+    <variable name="ONOUTOFMEMORYERROR_JAR" value="-cp $Q$$JARPATH$$Q$ OnOutOfMemoryErrorTest"/>
+    <variable name="JAVALANGOUTOFMEMORYERROR" value="java.lang.OutOfMemoryError:"/>
+    <variable name="JVMREQUESTINGTOOLDUMP" value="JVM Requesting Tool dump using 'java -version'"/>
 
     <test id="Verify Generate a javacore to STDOUT">
         <command>$EXE$ -Xdump:java:events=vmstart,file=/STDOUT/</command>
@@ -58,6 +64,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
         <command>$EXE$ $READIPINFOFORRAS$ $NOREADIPINFOFORRAS$ -verbose:init -version</command>
         <output type="success" caseSensitive="yes" regex="no">$NOREADIPINFOFORRAS_MESSAGE$</output>
         <output type="failure" caseSensitive="yes" regex="no">$READIPINFOFORRAS_MESSAGE$</output>
+    </test>
+
+    <test id="test -XX:OnOutOfMemoryError=">
+        <command>$EXE$ $JVM_HEAP_LIMIT$ $ONOUTOFMEMORYERROR_EQUALS$"java -version" $ONOUTOFMEMORYERROR_JAR$</command>
+        <output type="success" caseSensitive="yes" regex="no">$JAVALANGOUTOFMEMORYERROR$</output>
+        <output type="required" caseSensitive="yes" regex="no">$JVMREQUESTINGTOOLDUMP$</output>
+        <output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
     </test>
 </suite>
 

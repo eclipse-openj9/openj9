@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,6 +133,11 @@ jniVersionIsValid(UDATA jniVersion)
 		   || (jniVersion == JNI_VERSION_1_4) 
 		   || (jniVersion == JNI_VERSION_1_6) 
 		   || (jniVersion == JNI_VERSION_1_8)
+#if JAVA_SPEC_VERSION >= 9
 		   || (jniVersion == JNI_VERSION_9)
-		   || (jniVersion == JNI_VERSION_10);
+#endif /* JAVA_SPEC_VERSION >= 9 */
+#if JAVA_SPEC_VERSION >= 10
+		   || (jniVersion == JNI_VERSION_10)
+#endif /* JAVA_SPEC_VERSION >= 10 */
+		   ;
 }
