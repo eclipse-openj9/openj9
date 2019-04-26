@@ -365,7 +365,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
         for (name in TARGET_NAMES) {
             // Checking to see if the test should be excluded
-            if (EXCLUDED_TESTS.contains(name)){
+            if (EXCLUDED_TESTS.contains(get_target_name(name))){
                 echo "The '${name}' test suite will be excluded"
                 continue
             }
@@ -380,6 +380,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                     jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
                 }
             }
+        }
+        if (params.AUTOMATIC_GENERATION != 'false'){
+            generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
         }
         parallel testjobs
     }
@@ -525,6 +528,35 @@ def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server
             echo 'The Cleanup_Artifactory job is not availible'
         }
     }
+}
+
+def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO){
+    def levels = []
+    def groups = []
+
+    TARGET_NAMES.each { target ->
+        def target_name = get_target_name(target)
+        if (!EXCLUDED_TESTS.contains(target_name)){
+            def split_target = target_name.tokenize('.')
+            levels.add(split_target[0])
+            groups.add(split_target[1])
+        }
+    }
+    levels.unique(true)
+    groups.unique(true)
+
+    def parameters = [
+        string(name: 'LEVELS', value: levels.join(',')),
+        string(name: 'GROUPS', value: groups.join(',')),
+        string(name: 'JDK_VERSIONS', value: SDK_VERSION),
+        string(name: 'SUFFIX', value: "_${convert_build_identifier(BUILD_IDENTIFIER)}"),
+        string(name: 'ARCH_OS_LIST', value: SPEC),
+        string(name: 'JDK_IMPL', value: 'openj9'),
+        string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
+        string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
+        string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS)
+    ]
+    build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
 }
 
 return this
