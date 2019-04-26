@@ -156,16 +156,24 @@ endif()
 
 # Generate jvmti header
 if(J9VM_IS_NON_STAGING)
-	set(JVMTI_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
-	file(MAKE_DIRECTORY "${JVMTI_HEADER_DIR}")
+	set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
+	file(MAKE_DIRECTORY "${J9VM_INCLUDE_DIR}")
 else()
-	set(JVMTI_HEADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+	set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 endif()
-add_custom_command(OUTPUT "${JVMTI_HEADER_DIR}/jvmti.h"
+add_custom_command(OUTPUT "${J9VM_INCLUDE_DIR}/jvmti.h"
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4"
 	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > "jvmti.h"
 	VERBATIM
-	WORKING_DIRECTORY "${JVMTI_HEADER_DIR}"
+	WORKING_DIRECTORY "${J9VM_INCLUDE_DIR}"
+)
+
+#Generate jni header
+add_custom_command(OUTPUT "${J9VM_INCLUDE_DIR}/jni.h" 
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4"
+   	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4" > "jni.h"
+	VERBATIM
+	WORKING_DIRECTORY "${J9VM_INCLUDE_DIR}"
 )
 
 # Note we do this here rather than in the redirector directory to work arround
@@ -188,7 +196,8 @@ add_custom_target(j9vm_m4gen
 	DEPENDS
 		"${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
 		"${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
-		"${JVMTI_HEADER_DIR}/jvmti.h"
+		"${J9VM_INCLUDE_DIR}/jni.h"
+		"${J9VM_INCLUDE_DIR}/jvmti.h"
 )
 
 if(J9VM_IS_NON_STAGING)

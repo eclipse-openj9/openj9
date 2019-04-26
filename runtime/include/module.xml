@@ -35,9 +35,20 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</commands>
 	</artifact>
 
+	<artifact type="target" name="jni.h" all="false">
+		<dependencies>
+			<dependency name="jni.h.m4"/>
+		</dependencies>
+		<commands>
+			<command type="all" line="m4 -D JAVA_SPEC_VERSION=$(VERSION_MAJOR) jni.h.m4 > jni.h"/>
+			<command type="clean" line="$(RM) jni.h"/>
+		</commands>
+	</artifact>	
+
 	<artifact type="target" name="j9include_generate" all="false">
 		<dependencies>
 			<dependency name="jvmti.h"/>
+			<dependency name="jni.h"/>
 		</dependencies>
 	</artifact>
 
