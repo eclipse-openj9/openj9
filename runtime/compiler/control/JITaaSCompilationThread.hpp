@@ -36,6 +36,7 @@ struct TR_RemoteROMStringKey;
 using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using IPTableHeapEntry = UnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using IPTableHeap_t = UnorderedMap<J9Method *, IPTableHeapEntry *>;
+using ResolvedMirrorMethodsPersistIP_t = Vector<TR_ResolvedJ9Method *>;
 
 class ClientSessionData
    {
@@ -249,19 +250,26 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // return false if timeout
       bool getWaitToBeNotified() const { return _waitToBeNotified; }
       void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
-      void clearIProfilerMap(TR_Memory *trMemory);
+
+      void clearIProfilerMap();
       bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
       TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
       void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
       bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
       TR_ResolvedMethodKey getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject=NULL);
       void clearResolvedMethodInfoMap(TR_Memory *trMemory);
+
+      void clearResolvedMirrorMethodsPersistIPInfo();
+      void cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod);
+      ResolvedMirrorMethodsPersistIP_t *getCachedResolvedMirrorMethodsPersistIPInfo() { return _resolvedMirrorMethodsPersistIPInfo; }
+
    private:
       TR_PersistentMethodInfo *_recompilationMethodInfo;
       uint32_t _seqNo;
       bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand
       IPTableHeap_t *_methodIPDataPerComp;
       TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
+      ResolvedMirrorMethodsPersistIP_t *_resolvedMirrorMethodsPersistIPInfo; //list of mirrors of resolved methods for persisting IProfiler info
    };
 }
 
