@@ -764,7 +764,8 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
 		} else {
-			Assert_MM_unreachable();
+			Assert_GC_true_with_message2(env, forwardHeader.isSelfForwardedPointer(),
+				"Monitor object, not forwarded, in Evacuate: slot %llx object %llx\n", srcAddress, object);
 			/* A typical usage of this barrier is to update monitor table slot for blocking object (blockingEnterObject).
 			 * Such object is a hard root, hence copied during initial roots scanning. We should never need to copy it via this barrier.
 			 * If this assert eventually triggers it means the barrier is used for some other objects that are not hard roots
