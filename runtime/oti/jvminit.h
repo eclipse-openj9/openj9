@@ -268,6 +268,7 @@ enum INIT_STAGE {
 #define VMOPT_XDUMP  "-Xdump"
 #define VMOPT_XDUMP_NONE  "-Xdump:none"
 #define VMOPT_XDUMP_DIRECTORY_EQUALS  "-Xdump:directory="
+#define VMOPT_XDUMP_TOOL_OUTOFMEMORYERROR_EXEC_EQUALS "-Xdump:tool:events=systhrow,filter=java/lang/OutOfMemoryError,exec="
 #define VMOPT_XARGENCODING "-Xargencoding"
 #define VMOPT_XARGENCODINGCOLON "-Xargencoding:"
 #define VMOPT_XARGENCODINGUTF8 "-Xargencoding:utf8"
@@ -487,6 +488,7 @@ enum INIT_STAGE {
 #define MAPOPT_XXHEAPDUMPPATH_EQUALS "-XX:HeapDumpPath="
 #define MAPOPT_XXMAXHEAPSIZE_EQUALS "-XX:MaxHeapSize="
 #define MAPOPT_XXINITIALHEAPSIZE_EQUALS "-XX:InitialHeapSize="
+#define MAPOPT_XXONOUTOFMEMORYERROR_EQUALS "-XX:OnOutOfMemoryError="
 
 #define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 

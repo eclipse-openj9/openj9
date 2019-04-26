@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -577,7 +577,42 @@ configureDumpAgents(J9JavaVM *vm)
 		}
 		if ( IS_CONSUMABLE(j9vm_args, xdumpIndex) && !IS_CONSUMED(j9vm_args, xdumpIndex) )
 		{
-			GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
+			BOOLEAN isMappedToolDump = FALSE;
+			/* Handle mapped tool dump options */
+			if (HAS_MAPPING(j9vm_args, xdumpIndex)) {
+				char *mappingJ9Name = MAPPING_J9NAME(j9vm_args, xdumpIndex);
+				char *toolString = ":tool:";
+				char *toolCursor = strstr(mappingJ9Name, toolString);
+				if (NULL != toolCursor) {
+					char *optionValue = NULL;
+					/* The mapped option specifies the tool command to run after the equals */
+					GET_OPTION_VALUE(xdumpIndex, '=', &optionValue);
+					
+					/* Move toolCursor past ":tool:" */
+					toolCursor += strlen(toolString);
+
+					if (NULL != optionValue) {
+						size_t toolCursorLength = strlen(toolCursor);
+						size_t optionValueLength = strlen(optionValue);
+						size_t optionStringMemAlloc = toolCursorLength + optionValueLength + 1;
+
+						/* Construct optionString by combining the J9 tool dump command with the mapped option */
+						optionString = (char *) j9mem_allocate_memory(optionStringMemAlloc, OMRMEM_CATEGORY_VM);
+						
+						if (NULL != optionString) {
+							strcpy(optionString, toolCursor);
+							strcat(optionString + toolCursorLength, optionValue);
+							isMappedToolDump = TRUE;
+						} else {
+							char *mappingMapName = MAPPING_MAPNAME(j9vm_args, xdumpIndex);
+							j9tty_err_printf(PORTLIB, "Unable to map %s to J9 %s - Could not allocate the requested size of memory %zu for optionString\n", mappingMapName, mappingJ9Name, optionStringMemAlloc);
+							return J9VMDLLMAIN_FAILED;
+						}
+					}
+				}
+			} else {
+				GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
+			}
 			if (!optionString) {
 				/* ... silent option ... */
 			} else if( strncmp(optionString, "none", strlen("none") ) == 0 ){
@@ -589,6 +624,13 @@ configureDumpAgents(J9JavaVM *vm)
 					agentOpts[agentNum].pass = J9RAS_DUMP_OPTS_PASS_ONE;
 					agentNum++;
 				}
+			} else if (isMappedToolDump) {
+				char * toolString = "tool";
+				agentOpts[agentNum].kind = scanDumpType(&toolString);
+				agentOpts[agentNum].flags = J9RAS_DUMP_OPT_ARGS_ALLOC;
+				agentOpts[agentNum].args = optionString;
+				agentOpts[agentNum].pass = J9RAS_DUMP_OPTS_PASS_ONE;
+				agentNum++;
 			} else {
 				char *typeString = optionString;
 
