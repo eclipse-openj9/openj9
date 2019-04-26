@@ -297,9 +297,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_SMALL_MONITOR_SLOT", 1) |
 #endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_GC_COMPRESSED_POINTERS", 1) |
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+			writeConstant(OMRPORTLIB, fd, "ASM_OMR_GC_COMPRESSED_POINTERS", 1) |
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 #if defined(J9VM_GC_TLH_PREFETCH_FTA)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_GC_TLH_PREFETCH_FTA", 1) |
 #endif /* J9VM_GC_TLH_PREFETCH_FTA */
@@ -482,9 +482,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_jitTOC", offsetof(J9JavaVM, jitTOC)) |
 #endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE */
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_compressedPointersShift", offsetof(J9JavaVM, compressedPointersShift)) |
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_J9ReadBarrier", offsetof(J9MemoryManagerFunctions, J9ReadBarrier)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_referenceArrayCopy", offsetof(J9MemoryManagerFunctions, referenceArrayCopy)) |
 			/* J9VMEntryLocalStorage */

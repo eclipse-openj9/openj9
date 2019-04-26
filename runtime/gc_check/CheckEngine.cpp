@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -1535,11 +1534,11 @@ isPointerInRange(void *pointer, void *start, void *end)
 static J9Object* 
 convertPointerFromToken(J9JavaVM* vm, fj9object_t token)
 {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)	
+#if defined(OMR_GC_COMPRESSED_POINTERS)	
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
 	return barrier->convertPointerFromToken(token);
 #else 
 	return (J9Object*)token;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 }
 #endif /* J9VM_GC_ARRAYLETS && !J9VM_GC_HYBRID_ARRAYLETS */

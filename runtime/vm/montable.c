@@ -110,7 +110,7 @@ cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor*
 static J9HashTable*
 createMonitorTable(J9JavaVM *vm, char *tableName) {
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 #define MONTABLE_FLAGS J9HASH_TABLE_ALLOCATE_ELEMENTS_USING_MALLOC32
 #else
 #define MONTABLE_FLAGS 0

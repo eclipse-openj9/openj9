@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -175,11 +174,11 @@ j9mm_iterate_spaces(
 		spaceDesc.classPointerOffset = TMP_OFFSETOF_J9OBJECT_CLAZZ;
 		spaceDesc.classPointerSize = sizeof(j9objectclass_t);
 		spaceDesc.fobjectPointerDisplacement = 0;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		spaceDesc.fobjectPointerScale = (UDATA)1 << vm->compressedPointersShift;
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		spaceDesc.fobjectPointerScale = 1;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 		spaceDesc.fobjectSize = sizeof(fj9object_t);
 		spaceDesc.memorySpace = defaultMemorySpace;
 

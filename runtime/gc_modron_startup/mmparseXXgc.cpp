@@ -242,7 +242,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		/* see if we are to force disable shifting in compressed refs */
 		if (try_scan(&scan_start, "noShiftingCompression")) {
 			extensions->shouldAllowShiftingCompression = false;
@@ -264,7 +264,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 			continue;
 		}
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 #if defined (J9VM_GC_VLHGC)
 		/* parse the maximum age a region can have to be included in the nursery set, if specified */
@@ -1151,7 +1151,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 		if (try_scan(&scan_start, "fvtest_enableReadBarrierVerification=")) {
 			extensions->fvtest_enableReadBarrierVerification = 0;
 
@@ -1175,7 +1175,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			}
 			continue;
 		}
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 		if (try_scan(&scan_start, "fvtest_forceReferenceChainWalkerMarkMapCommitFailure=")) {
 			if(!scan_udata_helper(vm, &scan_start, &(extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailure), "fvtest_forceReferenceChainWalkerMarkMapCommitFailure=")) {

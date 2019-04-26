@@ -426,7 +426,7 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	}
 }
 
-#if !defined(J9ZOS390) && !defined(J9ZTPF) && defined(J9VM_GC_COMPRESSED_POINTERS)
+#if !defined(J9ZOS390) && !defined(J9ZTPF) && defined(OMR_GC_COMPRESSED_POINTERS)
 #define ALLOCATE_RAS_DATA_IN_SUBALLOCATOR
 #endif
 

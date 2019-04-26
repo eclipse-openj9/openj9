@@ -53,11 +53,11 @@ private:
 			oldFlags = *flagsPtr;
 			newFlags = oldFlags | OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
 		}
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		while (oldFlags != VM_AtomicSupport::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != VM_AtomicSupport::lockCompareExchange(flagsPtr, (UDATA)oldFlags, (UDATA)newFlags));
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	}
 
 	static VMINLINE U_32

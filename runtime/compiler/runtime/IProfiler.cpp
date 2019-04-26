@@ -4304,18 +4304,18 @@ TR_IPHashedCallSite::operator new (size_t size) throw()
 inline
 uintptrj_t CallSiteProfileInfo::getClazz(int index)
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
    //support for convert code, when it is implemented, "uncompress"
    return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)(uintptrj_t)_clazz[index]);
 #else
    return (uintptrj_t)_clazz[index]; //things are just stored as regular pointers otherwise
-#endif //J9VM_GC_COMPRESSED_POINTERS
+#endif //OMR_GC_COMPRESSED_POINTERS
    }
 
 inline
 void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
    //support for convert code, when it is implemented, do compression
    TR_OpaqueClassBlock * compressedOffset = J9JitMemory::convertClassPtrToClassOffset((J9Class *)clazzPointer); //compressed 32bit pointer
    //if we end up with something in the top 32bits, our compression is no good...
@@ -4323,7 +4323,7 @@ void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
    _clazz[index] = (uint32_t)((uintptrj_t)compressedOffset); //ditch the top zeros
 #else
    _clazz[index] = (uintptrj_t)clazzPointer;
-#endif //J9VM_GC_COMPRESSED_POINTERS
+#endif //OMR_GC_COMPRESSED_POINTERS
    }
 
 

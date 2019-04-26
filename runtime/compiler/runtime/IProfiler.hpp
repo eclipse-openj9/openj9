@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,11 +132,11 @@ public:
    void setClazz(int index, uintptrj_t clazzPtr);
 
 private:
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
    uint32_t _clazz[NUM_CS_SLOTS]; // store them in 32bits
 #else
    uintptrj_t _clazz[NUM_CS_SLOTS]; // store them in either 64 or 32 bits
-#endif //J9VM_GC_COMPRESSED_POINTERS
+#endif //OMR_GC_COMPRESSED_POINTERS
    };
 
 #define TR_IPBCD_FOUR_BYTES  1
@@ -379,11 +379,11 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
    static const uint32_t IPROFILING_INVALID = ~0; //only take up the bottom 32, class compression issue
 #else
    static const uintptrj_t IPROFILING_INVALID = ~0;
-#endif //J9VM_GC_COMPRESSED_POINTERS
+#endif //OMR_GC_COMPRESSED_POINTERS
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded

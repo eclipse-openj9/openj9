@@ -1131,7 +1131,7 @@ extern void TEMPORARY_initJ9S390TreeEvaluatorTable(TR::CodeGenerator *cg)
 TR::Instruction *
 J9::Z::TreeEvaluator::genLoadForObjectHeaders(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::MemoryReference *tempMR, TR::Instruction *iCursor)
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
    return generateRXInstruction(cg, TR::InstOpCode::LLGF, node, reg, tempMR, iCursor);
 #else
    return generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, reg, tempMR, iCursor);
@@ -1146,7 +1146,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
    TR::Compilation *comp = cg->comp();
    bool disabled = comp->getOption(TR_DisableZ13) || comp->getOption(TR_DisableZ13LoadAndMask);
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13) && !disabled)
       {
       iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
@@ -1213,7 +1213,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
    bool eliminateSuperClassArraySizeCheck = (!dynamicCastClass && (castClassDepth < cg->comp()->getOptions()->_minimumSuperclassArraySize));
 
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
    // objClassReg contains the class offset, so we may need to
    // convert this offset to a real J9Class pointer
 #endif
@@ -1347,7 +1347,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
       {
       cursor = generateRIInstruction(cg, TR::InstOpCode::LHI, node, resultReg, 1, cursor);
       }
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
    // objClassReg contains the class offset, so we may need to
    // convert this offset to a real J9Class pointer
 #endif
@@ -1364,7 +1364,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
          {
          cursor = generateRSInstruction(cg, TR::InstOpCode::SLL, node, scratch2Reg, 2, cursor);
          }
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
       // castClassReg contains the class offset, but the memory reference below will
       // generate a J9Class pointer. We may need to convert this pointer to an offset
 #endif
@@ -1373,7 +1373,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
       }
    else
       {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
       // castClassReg contains the class offset, but the memory reference below will
       // generate a J9Class pointer. We may need to convert this pointer to an offset
 #endif
@@ -1836,7 +1836,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       // inline checking remembered bit for generational or (gencon+cardmarking is inlined).
       static_assert(J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= 0xFF, "The constant is too big");
       int32_t offsetToAgeBits =  TR::Compiler->om.offsetOfHeaderFlags() + 3;
-#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(TR_TARGET_64BIT) && !defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(TR_TARGET_64BIT) && defined(OMR_GC_FULL_POINTERS)
       offsetToAgeBits += 4;
 #endif
       TR::MemoryReference * tempMR = generateS390MemoryReference(owningObjectReg, offsetToAgeBits, cg);
@@ -3984,7 +3984,7 @@ VMarrayStoreCHKEvaluator(
    cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, t1Reg, generateS390MemoryReference(owningObjectRegVal, (int32_t) offsetof(J9ArrayClass, componentType), cg));
 
    // check if obj.class(in t1Reg) == array.componentClass in t2Reg
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
    cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, t1Reg, srcRegVal, TR::InstOpCode::COND_BER, wbLabel, false, false);
 #else
    cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, t1Reg, srcRegVal, TR::InstOpCode::COND_BE, wbLabel, false, false);
@@ -4037,7 +4037,7 @@ VMarrayStoreCHKEvaluator(
             genLoadAddressConstantInSnippet(cg, node, (intptr_t)objectClass, t2Reg, cursor, conditions, litPoolBaseReg, true);
             }
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
          generateRRInstruction(cg, TR::InstOpCode::CR, node, t1Reg, t2Reg);
 #else
          generateRRInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, t1Reg, t2Reg);
@@ -4787,7 +4787,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
 
       TR::LabelSymbol * doneTestCacheLabel  = generateLabelSymbol(cg);
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
       // For the memory reference below, we may need to convert the
       // class offset from objClassReg into a J9Class pointer
 #endif
@@ -4817,7 +4817,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          generateRRInstruction(cg, TR::InstOpCode::getAndRegOpCode(), node, scratch1Reg, scratch2Reg);
          }
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
       // May need to convert the J9Class pointer from scratch1Reg
       // into a class offset
 #endif
@@ -6981,7 +6981,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
       // compare and we will take the slow path.
 
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
       // for the following two instructions we may need to convert the
       // class offset from scratch1Reg into a J9Class pointer and
       // offset from castClassReg into a J9Pointer. Then we can compare
@@ -7243,7 +7243,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          TR::MemoryReference * temp2MR = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), lookupOffsetReg, offsetOfMonitorLookupCache, cg);
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
          generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
          startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
 #else
@@ -7676,7 +7676,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          // TODO No Need to use Memory Reference Here. Combine it with generateRXInstruction
          TR::MemoryReference * temp2MR = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), lookupOffsetReg, offsetOfMonitorLookupCache, cg);
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
          generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
          startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
 #else
@@ -8290,7 +8290,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
             iCursor = genLoadAddressConstantInSnippet(cg, node, (intptr_t) classAddress | (intptrj_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg, true);
             if (orFlag != 0)
                {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
                iCursor = generateS390ImmOp(cg, TR::InstOpCode::O, node, temp1Reg, temp1Reg, (int32_t)orFlag, conditions, litPoolBaseReg);
 #else
                if (TR::Compiler->target.is64Bit())
@@ -8324,7 +8324,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
             }
          else
             {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
             // must store just 32 bits (class offset)
 
             iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, temp1Reg,
@@ -8337,7 +8337,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
          }
       else
          {
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
          // must store just 32 bits (class offset)
          iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, clzReg,
                generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
@@ -8491,7 +8491,7 @@ genInitArrayHeader(TR::Node * node, TR::Instruction *& iCursor, bool isVariableL
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    bool canUseIIHF= false;
    if (!comp->compileRelocatableCode() && (node->getOpCodeValue() == TR::newarray || node->getOpCodeValue() == TR::anewarray)
-#ifndef J9VM_GC_COMPRESSED_POINTERS
+#ifndef OMR_GC_COMPRESSED_POINTERS
          && TR::Compiler->target.is32Bit()
 #endif
 #ifndef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
@@ -9319,7 +9319,7 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
    //
    TR::TreeEvaluator::genLoadForObjectHeaders(cg, node, tempReg, generateS390MemoryReference(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
    generateRXInstruction(cg, TR::InstOpCode::X, node, tempReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
 #else
    generateRXInstruction(cg, TR::InstOpCode::getXOROpCode(), node, tempReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));

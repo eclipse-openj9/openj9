@@ -194,7 +194,7 @@ PLACE_LABEL(L_GS_CALL_HELPER)
 
 dnl Load the updated object pointer into CARG2
     LG CARG1,J9TR_VMThread_gsParameters_operandAddr(J9VMTHREAD)
-ifdef({ASM_J9VM_GC_COMPRESSED_POINTERS},{
+ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{
 dnl Some objects may be stored in a decompressed format on the heap.
 dnl A typical example of this may be static objects. For such objects
 dnl we must not decompress via the compressedPointersShift value. To

@@ -320,7 +320,7 @@ public:
 		J9Class* clazz = (J9Class *)(preservedSlot & ~(UDATA)_delegateHeaderSlotFlagsMask);
 
 		if (J9GC_CLASS_IS_ARRAY(clazz)) {
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 			uintptr_t elements = forwardedHeader->getPreservedOverlap();
 #else /* defined (OMR_GC_COMPRESSED_POINTERS) */
 			uintptr_t elements = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
