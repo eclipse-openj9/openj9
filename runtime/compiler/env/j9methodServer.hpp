@@ -158,12 +158,17 @@ struct
 TR_ResolvedMethodKey
    {
    TR_ResolvedMethodType type;
+   TR_OpaqueClassBlock *ramClass;
    int32_t cpIndex;
    TR_OpaqueClassBlock *classObject; // only set for resolved interface methods
 
    bool operator==(const TR_ResolvedMethodKey &other) const
       {
-      return type == other.type && cpIndex == other.cpIndex && classObject == other.classObject;
+      return
+         type == other.type &&
+         ramClass == other.ramClass &&
+         cpIndex == other.cpIndex &&
+         classObject == other.classObject;
       }
    };
 
@@ -177,16 +182,24 @@ namespace std
       std::size_t operator()(const TR_ResolvedMethodKey &k) const
          {
          // Compute a hash by hashing each part separately and then XORing them.
-         return std::hash<int32_t>()(static_cast<int32_t>(k.type)) ^ std::hash<int32_t>()(k.cpIndex) ^ std::hash<TR_OpaqueClassBlock *>()(k.classObject);
+         return
+            std::hash<int32_t>()(static_cast<int32_t>(k.type)) ^
+            std::hash<TR_OpaqueClassBlock *>()(k.ramClass) ^
+            std::hash<int32_t>()(k.cpIndex) ^
+            std::hash<TR_OpaqueClassBlock *>()(k.classObject);
          }
       };
    }
 
-struct TR_ResolvedMethodCacheEntry
+struct
+TR_ResolvedMethodCacheEntry
    {
-   TR_ResolvedMethod *resolvedMethod;
-   bool unresolvedInCP;
+   TR_OpaqueMethodBlock *method;
+   uint32_t vTableSlot;
+   TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
    };
+
+using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
 
 class TR_ResolvedJ9JITaaSServerMethod : public TR_ResolvedJ9Method
    {
@@ -260,7 +273,6 @@ public:
    bool inROMClass(void *address);
    static void createResolvedMethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    static void createResolvedMethodFromJ9MethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
-   static bool _useCaching; // set by TR_DisableResolvedMethodsCaching. When false, caching of resolved methods is disabled 
 
 protected:
    JITaaS::J9ServerStream *_stream;
@@ -296,8 +308,6 @@ private:
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
-   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod *resolvedMethod, bool *unresolvedInCP = NULL);
-   bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
    };
 
 class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSServerMethod

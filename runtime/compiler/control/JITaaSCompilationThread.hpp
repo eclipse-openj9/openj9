@@ -252,11 +252,16 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       void clearIProfilerMap(TR_Memory *trMemory);
       bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
       TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
+      void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
+      bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
+      TR_ResolvedMethodKey getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject=NULL);
+      void clearResolvedMethodInfoMap(TR_Memory *trMemory);
    private:
       TR_PersistentMethodInfo *_recompilationMethodInfo;
       uint32_t _seqNo;
       bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand
       IPTableHeap_t *_methodIPDataPerComp;
+      TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
    };
 }
 

@@ -48,8 +48,6 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    return romMethod;
    }
 
-bool TR_ResolvedJ9JITaaSServerMethod::_useCaching = true;
-
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
@@ -248,8 +246,9 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
 #if TURN_OFF_INLINING
    return 0;
 #else
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, NULL}, &resolvedMethod, unresolvedInCP)) 
+   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    // See if the constant pool entry is already resolved or not
@@ -286,7 +285,10 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
          
          // call constructor without making a new query
          if (createResolvedMethod)
+            {
             resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats, methodInfo);
+            compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, methodInfo);
+            }
          }
       }
 
@@ -313,7 +315,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
       
       }
-   cacheResolvedMethod({TR_ResolvedMethodType::VirtualFromCP, cpIndex, NULL}, resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
 #endif
@@ -538,8 +539,9 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, NULL}, &resolvedMethod, unresolvedInCP)) 
+   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
@@ -570,9 +572,9 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
          }
       }
 
+   auto methodInfo = std::get<1>(recv);
    if (ramMethod && !skipForDebugging)
       {
-      auto methodInfo = std::get<1>(recv);
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->staticMethods);
@@ -586,7 +588,10 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
       if (unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
       }
-   cacheResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, NULL}, resolvedMethod, unresolvedInCP);
+   else
+      {
+      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
+      }
 
    return resolvedMethod;
    }
@@ -597,8 +602,10 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, NULL}, &resolvedMethod, unresolvedInCP)) 
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
+   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex), this, &resolvedMethod, unresolvedInCP)) 
       return resolvedMethod;
 
    if (unresolvedInCP)
@@ -609,6 +616,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
    J9Method * ramMethod = std::get<0>(recv);
    bool unresolved = std::get<1>(recv);
    bool tookBranch = std::get<2>(recv);
+   auto methodInfo = std::get<3>(recv);
 
    if (unresolved && unresolvedInCP)
       *unresolvedInCP = true;
@@ -621,7 +629,6 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
          if (!comp->getSymbolValidationManager()->addSpecialMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
             createResolvedMethod = false;
          }
-      auto methodInfo = std::get<3>(recv);
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
@@ -636,8 +643,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
       if (unresolvedInCP)
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
+   else
+      {
+      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
+      }
 
-   cacheResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, NULL}, resolvedMethod, unresolvedInCP);
    return resolvedMethod;
    }
 
@@ -707,7 +717,9 @@ TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
    {
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, &resolvedMethod, NULL))
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
+   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), this, &resolvedMethod))
       return resolvedMethod;
    
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
@@ -752,9 +764,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * co
       }
    // for resolved interface method, need to know cpIndex, as well as classObject
    // to uniquely identify it.
-   cacheResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, resolvedMethod, NULL);
    if (resolvedMethod)
+      {
+      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
       return resolvedMethod;
+      }
 
    TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface/null");
    return 0;
@@ -829,9 +843,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
    if (fej9->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE && !ignoreRtResolve)
       return NULL;
 
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
    TR_ResolvedMethod *resolvedMethod = NULL;
    // If method is already cached, return right away
-   if (getCachedResolvedMethod({TR_ResolvedMethodType::VirtualFromOffset, virtualCallOffset, classObject}, &resolvedMethod)) 
+   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), this, &resolvedMethod)) 
       return resolvedMethod;
 
    // Remote call finds RAM method at offset and creates a resolved method at the client
@@ -855,7 +871,8 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
       {
       resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
       }
-   cacheResolvedMethod({TR_ResolvedMethodType::VirtualFromOffset, virtualCallOffset, classObject}, resolvedMethod);
+   if (resolvedMethod)
+      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), ramMethod, 0, methodInfo);
    return resolvedMethod;
    }
 
@@ -1571,45 +1588,6 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    }
 
 
-void
-TR_ResolvedJ9JITaaSServerMethod::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod* resolvedMethod, bool *unresolvedInCP)
-   {
-   if (!_useCaching)
-      return;
-   TR::Compilation *comp = _fe->_compInfoPT->getCompilation();
-   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && comp->getSymbolValidationManager()->inHeuristicRegion())
-      // Problem: If inside of heuristic region, will not create SVM record, so if the same resolved method is queried again,
-      // but outside of heuristic region, we would return cached pointer and not create the validation record, which is wrong.
-      // Temporary solution: don't cache resolved methods if in heuristic region
-      // In a later change should fix it properly by creating SVM record even if retrieved it from cache.
-      return;
-
-   TR_ASSERT(_resolvedMethodsCache.find(key) == _resolvedMethodsCache.end(), "Should not cache the same method twice");
-
-   _resolvedMethodsCache.insert({key, {resolvedMethod, unresolvedInCP ? *unresolvedInCP : false}});
-   }
-
-// retrieve a resolved method from the cache
-// returns true if the method is cached, sets resolvedMethod and unresolvedInCP to the cached values.
-// returns false otherwise.
-bool 
-TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
-   {
-   if(!_useCaching)
-      return false;
-
-   auto it = _resolvedMethodsCache.find(key);
-   if (it != _resolvedMethodsCache.end())
-      {
-      auto entry = it->second;
-      if (resolvedMethod)
-         *resolvedMethod = entry.resolvedMethod;
-      if (unresolvedInCP)
-         *unresolvedInCP = entry.unresolvedInCP;
-      return true;
-      }
-   return false;
-   }
 
 bool
 TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
