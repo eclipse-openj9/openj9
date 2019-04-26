@@ -35,7 +35,9 @@ namespace TR {
 
 class ARM64PrivateLinkage : public TR::Linkage
    {
-   static TR::ARM64LinkageProperties properties;
+   protected:
+
+   TR::ARM64LinkageProperties _properties;
 
    public:
 
@@ -43,7 +45,7 @@ class ARM64PrivateLinkage : public TR::Linkage
     * @brief Constructor
     * @param[in] cg : CodeGenerator
     */
-   ARM64PrivateLinkage(TR::CodeGenerator *cg) : TR::Linkage(cg) {}
+   ARM64PrivateLinkage(TR::CodeGenerator *cg);
 
    /**
     * @brief Answers linkage properties
