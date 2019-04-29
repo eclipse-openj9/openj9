@@ -1587,7 +1587,46 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL; 
    }
 
-
+bool
+TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key)
+   {
+   // This method should be called whenever this resolved method is fetched from
+   // cache during AOT compilation, because
+   // if the cached resolved method was created while in heuristic region,
+   // SVM record would not be added.
+   auto svm = _fe->_compInfoPT->getCompilation()->getSymbolValidationManager();
+   int32_t cpIndex = key.cpIndex;
+   TR_OpaqueClassBlock *classObject = key.classObject;
+   bool added = false;
+   TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) _ramMethod;
+   TR_ResolvedJ9Method *owner = static_cast<TR_ResolvedJ9Method *>(owningMethod());
+   J9ConstantPool *cp = (J9ConstantPool *) owner->cp();
+   switch (key.type)
+      {
+      case VirtualFromCP:
+         added = svm->addVirtualMethodFromCPRecord(method, cp, cpIndex);
+         break;
+      case VirtualFromOffset:
+         added = svm->addVirtualMethodFromOffsetRecord(method, classObject, key.cpIndex, false);
+         break;
+      case Interface:
+         added = svm->addInterfaceMethodFromCPRecord(
+            method,
+            (TR_OpaqueClassBlock *) ((TR_J9VM *) _fe)->getClassFromMethodBlock(owner->getPersistentIdentifier()),
+            classObject,
+            cpIndex);
+         break;
+      case Static:
+         added = svm->addStaticMethodFromCPRecord(method, cp, cpIndex);
+         break;
+      case Special:
+         added = svm->addSpecialMethodFromCPRecord(method, cp, cpIndex);
+         break;
+      default:
+         TR_ASSERT(false, "Invalid TR_ResolvedMethodType value");
+      }
+   return added;
+   }
 
 bool
 TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
