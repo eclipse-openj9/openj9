@@ -1014,7 +1014,7 @@ TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* n
          break;
       case gc_modron_readbar_always:
          generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), address, cg);
-         generateHelperCallInstruction(node, TR_readBarrier, NULL, cg);
+         generateHelperCallInstruction(node, TR_softwareReadBarrier, NULL, cg);
          generateRegMemInstruction(LRegMem(use64BitClasses), node, object, generateX86MemoryReference(address, 0, cg), cg);
          break;
       case gc_modron_readbar_range_check:
@@ -1039,7 +1039,7 @@ TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* n
          generateRegMemInstruction(CMPRegMem(use64BitClasses), node, object, generateX86MemoryReference(cg->getVMThreadRegister(), cg->comp()->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg), cg);
          generateLabelInstruction(JA4, node, endLabel, cg);
          generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), address, cg);
-         generateHelperCallInstruction(node, TR_readBarrier, NULL, cg);
+         generateHelperCallInstruction(node, TR_softwareReadBarrier, NULL, cg);
          generateRegMemInstruction(LRegMem(use64BitClasses), node, object, generateX86MemoryReference(address, 0, cg), cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
          }
@@ -9589,7 +9589,7 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
       case gc_modron_readbar_always:
          generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
          generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
-         generateHelperCallInstruction(node, TR_readBarrier, NULL, cg);
+         generateHelperCallInstruction(node, TR_softwareReadBarrier, NULL, cg);
          break;
       case gc_modron_readbar_range_check:
          {
@@ -9616,7 +9616,7 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
          generateLabelInstruction(JA4, node, endLabel, cg);
          generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
          generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
-         generateHelperCallInstruction(node, TR_readBarrier, NULL, cg);
+         generateHelperCallInstruction(node, TR_softwareReadBarrier, NULL, cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
          }
 

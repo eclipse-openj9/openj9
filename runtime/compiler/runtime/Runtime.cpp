@@ -1058,8 +1058,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_typeCheckArrayStore,        (void *)jitTypeCheckArrayStoreWithNullCheck,   TR_Helper);
 #endif
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
-   SET(TR_readBarrier,                                      (void *)jitReadBarrier,                                    TR_Helper);
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+   SET(TR_softwareReadBarrier,                              (void *)jitSoftwareReadBarrier,                         TR_Helper);
 #endif
    SET(TR_writeBarrierStore,                                (void *)jitWriteBarrierStore,                              TR_Helper);
    SET(TR_writeBarrierStoreGenerational,                    (void *)jitWriteBarrierStoreGenerational,                  TR_Helper);
