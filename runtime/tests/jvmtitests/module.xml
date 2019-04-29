@@ -199,6 +199,8 @@
 		<export name="Java_com_ibm_jvmti_tests_nestMatesRedefinition_nmr001_redefineClass" />
 		<export name="Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_setPrefix" />
 		<export name="Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_nat" />
+		<export name="Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_getSystemProperty" />
+		<export name="Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_cleanup" />
 	</exports>
 		
 	<exports group="jdk9">

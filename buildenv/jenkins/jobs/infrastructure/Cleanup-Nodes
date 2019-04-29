@@ -169,19 +169,23 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                     }
 
                                     // Clean up defunct pipelines workspaces
-                                    dir("${buildWorkspace}/../") {
-                                        def retStatus = 0
+                                    def retStatus = 0
+                                    def cleanWSDirs = get_other_workspaces("${buildWorkspace}/../")
+
+                                    if (cleanWSDirs) {
+                                        def cleanWSDirsStr = "${buildWorkspace}/../"
+                                        cleanWSDirsStr += cleanWSDirs.join(" ${buildWorkspace}/../")
 
                                         retry(3) {
                                             if (retStatus != 0) {
                                                 sleep(time: SLEEP_TIME.toInteger(), unit: 'SECONDS')
                                             }
 
-                                            if (nodeLabels.contains('sw.os.aix')) {
-                                                retStatus = sh script: "rm -rf Build* Test* PullRequest*", returnStatus: true
-                                            } else {
-                                                retStatus = sh script: "ls | grep -v ${JOB_NAME} | xargs rm -rf", returnStatus: true
-                                            }
+                                            retStatus = sh script: "rm -rf ${cleanWSDirsStr}", returnStatus: true
+                                        }
+
+                                        if (retStatus != 0) {
+                                            throw new Exception("Could not delete old builds workspaces on ${nodeName}!")
                                         }
                                     }
                                 }
@@ -230,6 +234,18 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
             }
         }
     }
+}
+
+/*
+* Return a list of workspace directories (current build workspace excluded)
+*/
+def get_other_workspaces(workspaceDir) {
+    // fetch all directories in workspaceDir (this should not fail)
+    def workspaces = sh(script: "ls ${workspaceDir}", returnStdout: true).trim().tokenize(System.lineSeparator())
+    // remove current build workspace
+    def otherWS = workspaces.findAll { ws -> ws.startsWith(JOB_NAME) == false }
+
+    return otherWS
 }
 
 /*
