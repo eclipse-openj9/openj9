@@ -2865,7 +2865,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classByNameMap(decltype(_classByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classChainDataMap(decltype(_classChainDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _unloadedClassAddresses(NULL),
    _requestUnloadedClasses(true),
@@ -2876,7 +2876,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _inUse = 1;
    _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
-   _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSSystemClassMapMonitor");
+   _classMapMonitor = TR::Monitor::create("JIT-JITaaSClassMapMonitor");
    _classChainDataMapMonitor = TR::Monitor::create("JIT-JITaaSClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
    _vmInfo = NULL;
@@ -2888,7 +2888,7 @@ ClientSessionData::~ClientSessionData()
    {
    clearCaches();
    _romMapMonitor->destroy();
-   _systemClassMapMonitor->destroy();
+   _classMapMonitor->destroy();
    _classChainDataMapMonitor->destroy();
    _sequencingMonitor->destroy();
    if (_unloadedClassAddresses)
@@ -2906,7 +2906,9 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
    {
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
-
+   //Vector to hold the list of the unloaded classes and the corresponding data needed for purging the Caches
+   std::vector<ClassUnloadedData> unloadedClasses;
+   unloadedClasses.reserve(classes.size());
    bool updateUnloadedClasses = true;
    if (_requestUnloadedClasses)
       {
@@ -2937,9 +2939,21 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
 
          auto it = _romClassMap.find((J9Class*) clazz);
          if (it == _romClassMap.end())
+            {
+            //Class is not cached so this entry will be used to delete the entry from caches by value.
+            ClassLoaderStringPair key;
+            unloadedClasses.push_back({clazz, key, NULL, false});
             continue; // unloaded class was never cached
-
+            }
          J9ROMClass *romClass = it->second.romClass;
+
+         J9UTF8 *clazzName = NNSRP_GET(romClass->className, J9UTF8 *);
+         std::string className((const char *)clazzName->data, (int32_t)clazzName->length);
+         J9ClassLoader * cl = (J9ClassLoader *)(it->second.classLoader);
+         ClassLoaderStringPair key = {cl, className};
+         //Class is cached, so retain the data to be used for purging the caches.
+         unloadedClasses.push_back({clazz, key, NULL, true});
+
          J9Method *methods = it->second.methodsOfClass;
          // delete all the cached J9Methods belonging to this unloaded class
          for (size_t i = 0; i < romClass->romMethodCount; i++)
@@ -2968,12 +2982,42 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
          _romClassMap.erase(it);
          }
       }
+
+      {
       OMR::CriticalSection processUnloadedClasses(getClassChainDataMapMonitor());
 
       //remove the class chain data from the cache for the unloaded class.
       for (auto clazz : classes)
          _classChainDataMap.erase((J9Class*)clazz);
+      }
 
+      {
+      OMR::CriticalSection classMapCS(getClassMapMonitor());
+      auto it = unloadedClasses.begin();
+      while (it != unloadedClasses.end())
+         {
+         if (it->_cached)
+            {
+            getClassByNameMap().erase(it->_pair);
+            }
+         else
+            {
+            //If the class is not cached this is the place to iterate the cache(Map) for deleting the entry by value rather then key.
+            auto itClass = getClassByNameMap().begin();
+            while (itClass != getClassByNameMap().end())
+               {
+               if (itClass->second == it->_class)
+                  {
+                  getClassByNameMap().erase(itClass);
+                  break;
+                  }
+               ++itClass;
+               }
+            }
+         //DO NOT remove the entry from the unloadedClasses as it will be needed to purge other caches.
+         ++it;
+         }
+      }
 
    }
 
@@ -3134,6 +3178,10 @@ ClientSessionData::getOrCacheVMInfo(JITaaS::J9ServerStream *stream)
 void
 ClientSessionData::clearCaches()
    {
+      {
+      OMR::CriticalSection clearCache(getClassMapMonitor());
+      _classByNameMap.clear();
+      }
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
    // Free memory for all hashtables with IProfiler info
    for (auto it : _J9MethodMap)
@@ -3153,12 +3201,14 @@ ClientSessionData::clearCaches()
          it.second._IPData = NULL;
          }
       }
+
    _J9MethodMap.clear();
    // Free memory for j9class info
    for (auto it : _romClassMap)
       {
       it.second.freeClassInfo();
       }
+
    _romClassMap.clear();
 
    _classChainDataMap.clear();
@@ -4133,7 +4183,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
    setClientData(NULL); // Reset the pointer to the cached client session data
 
-   _customClassByNameMap.clear(); // reset before next compilation starts
    entry._newStartPC = startPC;
    // Update statistics regarding the compilation status (including compilationOK)
    compInfo->updateCompilationErrorStats((TR_CompilationErrorCode)entry._compErrCode);
