@@ -73,6 +73,85 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static float interpreterProfilingInstanceOfOrCheckCastTopProb(TR::CodeGenerator * cg, TR::Node * node);
 
+   // Software Concurrent Scavenge evaluators
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   /**
+    * \brief
+    * In concurrent scavenge (CS) mode, this is used to evaluate ardbari nodes and inlined-compare-and-swap to
+    * generate a guarded load software sequence that is functionally equivalent to LGG/LLGFSG instructions on z.
+    *
+    * \param node
+    *       the read barrier node to evaluate
+    *
+    * \param cg
+    *       the code generator object
+    *
+    * \param resultReg
+    *       the read barrier's result register
+    *
+    * \param memRef
+    *       a memory reference to the reference field to load from
+    *
+    * \param deps
+    *       A register dependency condition pointer used when the software read barrier, which itself is an internal
+    *       control flow (ICF), is built inside another ICF. This is the outer ICF's dependency conditions.
+    *       When the deps parameter is not NULL, this evalutor helper does not build its own dependencies. Instead,
+    *       it builds on top of this outer deps.
+    *
+    * \param produceUnshiftedValue
+    *       A flag to make this evaluator produce unshifted reference loads for compressed reference Java.
+    *       For compressed reference builds, a guarded reference field load normally produces a
+    *       reference (64-bit value).
+    *       However, for compressed reference array copy, it is faster to do 32-bit load, 32-bit range check,
+    *       and 32-bit stores. Hence, eliminating the need for shift instructions (compression and decompression).
+    *
+    * \return
+    *       returns a register that contains the reference field.
+   */
+   static TR::Register *generateSoftwareReadBarrier(TR::Node* node,
+                                                    TR::CodeGenerator* cg,
+                                                    TR::Register* resultReg,
+                                                    TR::MemoryReference* memRef,
+                                                    TR::RegisterDependencyConditions* deps = NULL,
+                                                    bool produceUnshiftedValue = false);
+
+   /** \brief
+    *     Evaluates a reference arraycopy node. If software concurrent scavenge is not enabled, it generates an
+    *     MVC memory-memory copy for a forward arraycopy and a
+    *     loop based on the reference size for a backward arraycopy. For runtimes which support it, this function will
+    *     also generate write barrier checks on \p byteSrcObjNode and \p byteDstObjNode.
+    *
+    *     When software concurrent scavenge is enabled, it generates a internal control flow that first checks if the current
+    *     execution is in the GC cycle and perfoms either a loop-based array copy or a helper call.
+    *
+    *  \param node
+    *     The reference arraycopy node.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    */
+   static TR::Register *referenceArraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *generateConstantLengthReferenceArrayCopy(TR::Node *node, TR::CodeGenerator *cg);
+
+   static void generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeGenerator *cg, TR::MemoryReference *srcMemRef,
+                                                TR::MemoryReference *dstMemRef,
+                                                TR_S390ScratchRegisterManager *srm,
+                                                TR::DataType elenmentType,
+                                                bool needsGuardedLoad,
+                                                TR::RegisterDependencyConditions* deps = NULL);
+
+   static void forwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg,
+                                                           TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                                           TR::Register *byteLenReg, TR::Node *byteLenNode,
+                                                           TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel);
+   static TR::RegisterDependencyConditions * backwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg,
+                                                            TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                                            TR::Register *byteLenReg, TR::Node *byteLenNode,
+                                                            TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel);
+
+
 
    /*           START BCD Evaluators          */
    // Used for VPSOP in vector setSign operations

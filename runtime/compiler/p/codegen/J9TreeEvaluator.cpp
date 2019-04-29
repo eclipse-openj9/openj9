@@ -1235,7 +1235,7 @@ TR::Register *J9::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::Code
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 7, cg->trMemory());
    deps->addPostCondition(objReg, TR::RealRegister::NoReg);
-   deps->addPostCondition(locationReg, TR::RealRegister::gr4); //TR_readBarrier helper needs this in gr4.
+   deps->addPostCondition(locationReg, TR::RealRegister::gr4); //TR_softwareReadBarrier helper needs this in gr4.
    deps->addPostCondition(evacuateReg, TR::RealRegister::NoReg);
    deps->addPostCondition(r3Reg, TR::RealRegister::gr3);
    deps->addPostCondition(r11Reg, TR::RealRegister::gr11);
@@ -1292,10 +1292,10 @@ TR::Register *J9::Power::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::Code
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, objReg, evacuateReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, endLabel, condReg);
 
-   // TR_readBarrier helper expects the vmThread in r3.
+   // TR_softwareReadBarrier helper expects the vmThread in r3.
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_readBarrier, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
    generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptrj_t)helperSym->getMethodAddress(), deps, helperSym);
 
    // For compr refs caseL if monitored loads is supported and we are loading an address, use monitored loads instruction
@@ -1372,7 +1372,7 @@ TR::Register *J9::Power::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::Code
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 7, cg->trMemory());
    deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
-   deps->addPostCondition(locationReg, TR::RealRegister::gr4); //TR_readBarrier helper needs this in gr4.
+   deps->addPostCondition(locationReg, TR::RealRegister::gr4); //TR_softwareReadBarrier helper needs this in gr4.
    deps->addPostCondition(evacuateReg, TR::RealRegister::NoReg);
    deps->addPostCondition(r3Reg, TR::RealRegister::gr3);
    deps->addPostCondition(r11Reg, TR::RealRegister::gr11);
@@ -1430,10 +1430,10 @@ TR::Register *J9::Power::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::Code
    generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, tempReg, evacuateReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, endLabel, condReg);
 
-   // TR_readBarrier helper expects the vmThread in r3.
+   // TR_softwareReadBarrier helper expects the vmThread in r3.
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_readBarrier, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
    generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptrj_t)helperSym->getMethodAddress(), deps, helperSym);
 
    // if monitored loads is supported and we are loading an address, use monitored loads instruction
@@ -8921,7 +8921,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       deps->addPostCondition(offsetReg, TR::RealRegister::NoReg);
       deps->addPostCondition(tmpReg, TR::RealRegister::NoReg);
-      deps->addPostCondition(locationReg, TR::RealRegister::gr4); //TR_readBarrier helper needs this in gr4.
+      deps->addPostCondition(locationReg, TR::RealRegister::gr4); //TR_softwareReadBarrier helper needs this in gr4.
       deps->addPostCondition(evacuateReg, TR::RealRegister::NoReg);
       deps->addPostCondition(r3Reg, TR::RealRegister::gr3);
       deps->addPostCondition(r11Reg, TR::RealRegister::gr11);
@@ -8958,10 +8958,10 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
 
       generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, locationReg, objReg, offsetReg);
 
-      // TR_readBarrier helper expects the vmThread in r3.
+      // TR_softwareReadBarrier helper expects the vmThread in r3.
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
-      TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_readBarrier, false, false, false);
+      TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
       generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptrj_t)helperSym->getMethodAddress(), deps, helperSym);
 
       generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endReadBarrierLabel, deps);

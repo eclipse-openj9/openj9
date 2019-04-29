@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,23 +242,7 @@ PLACE_LABEL(L_GS_FORCE_CRASH)
 END_CURRENT
 })
 
-define({HANDLE_SOFTWARE_READ_BARRIER},{
-BEGIN_HELPER($1)
-    SAVE_ALL_REGS($1)
-    ST_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
-    LR_GPR CARG1,J9VMTHREAD
-    L_GPR CRA,J9TR_VMThread_javaVM(J9VMTHREAD)
-    L_GPR CRA,J9TR_JavaVM_invokeJ9ReadBarrier(CRA)
-    CALL_INDIRECT(CRA)
-    L_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
-    ST_GPR J9SP,JIT_GPR_SAVE_SLOT(J9SP)
-    RESTORE_ALL_REGS_AND_SWITCH_TO_JAVA_STACK($1)
-    BR r14
-END_CURRENT
-})
-
 HANDLE_HARDWARE_READ_BARRIER(handleHardwareReadBarrier)
-HANDLE_SOFTWARE_READ_BARRIER(handleSoftwareReadBarrier)
 })
 
     FILE_END

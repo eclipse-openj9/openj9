@@ -992,7 +992,7 @@ END_PROC(jitDecompileOnReturnJ)
 
 })	dnl ASM_J9VM_ENV_DATA64
 
-START_PROC(jitReadBarrier)
+START_PROC(jitSoftwareReadBarrier)
 ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
 	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	SWITCH_TO_C_STACK
@@ -1011,7 +1011,7 @@ ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
 	dnl not supported
 	int 3
 })	dnl OMR_GC_CONCURRENT_SCAVENGER
-END_PROC(jitReadBarrier)
+END_PROC(jitSoftwareReadBarrier)
 
 	FASTCALL_EXTERN(impl_jitReferenceArrayCopy,2)
 START_PROC(jitReferenceArrayCopy)

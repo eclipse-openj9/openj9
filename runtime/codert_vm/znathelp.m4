@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -429,6 +429,20 @@ dnl Switch from the C stack to the java stack and jump via tempSlot
 BEGIN_FUNC(jitRunOnJavaStack)
     SWITCH_TO_JAVA_STACK
     BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
+END_CURRENT
+
+dnl CARG2 is expected to contain reference field address
+BEGIN_HELPER(jitSoftwareReadBarrier)
+    SAVE_ALL_REGS(jitSoftwareReadBarrier)
+
+    LR_GPR CARG1,J9VMTHREAD
+    L_GPR CRA,J9TR_VMThread_javaVM(J9VMTHREAD)
+    L_GPR CRA,J9TR_JavaVM_memoryManagerFunctions(CRA)
+    L_GPR CRA,J9TR_J9MemoryManagerFunctions_J9ReadBarrier(CRA)
+    CALL_INDIRECT(CRA)
+
+    RESTORE_ALL_REGS_AND_SWITCH_TO_JAVA_STACK(jitSoftwareReadBarrier)
+    br r14
 END_CURRENT
 
 dnl When the offload helpers are called,
