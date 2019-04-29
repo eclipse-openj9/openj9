@@ -23,9 +23,7 @@ package org.openj9.test.attachAPI;
 
 import static org.openj9.test.attachAPI.TestConstants.TARGET_VM_CLASS;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -34,6 +32,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.openj9.test.util.PlatformInfo;
+import org.openj9.test.util.StringUtilities;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -54,9 +53,9 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand();
-		assertTrue(TEST_PROCESS_ID_MISSING, search(vmId, jpsOutput).isPresent());
-		assertTrue("jps is missing", search(JPS_Class, jpsOutput).isPresent()); //$NON-NLS-1$
-		assertTrue(CHILD_IS_MISSING, search(tgtMgr.targetId, jpsOutput).isPresent());
+		assertTrue(TEST_PROCESS_ID_MISSING, StringUtilities.searchSubstring(vmId, jpsOutput).isPresent());
+		assertTrue("jps is missing", StringUtilities.searchSubstring(JPS_Class, jpsOutput).isPresent()); //$NON-NLS-1$
+		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
 		tgtMgr.terminateTarget();
 	}
 
@@ -66,7 +65,7 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-l")); //$NON-NLS-1$
-		Optional<String> searchResult = search(tgtMgr.targetId, jpsOutput);
+		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
 		assertTrue(WRONG_PKG_NAME + searchResult.get(), searchResult.get().contains(TargetVM.class.getPackage().getName()));
 		tgtMgr.terminateTarget();
@@ -74,25 +73,21 @@ public class TestJps extends AttachApiTest {
 
 	@Test(groups = { "level.extended" })
 	public void testJpsIdOnly() throws IOException {
-		final String SPURIOUS_OUTPUT = "Spurious output: "; //$NON-NLS-1$
 		TargetManager tgtMgr1 = new TargetManager(TARGET_VM_CLASS, null);
 		TargetManager tgtMgr2 = new TargetManager(TARGET_VM_CLASS, "SomeRandomId"); //$NON-NLS-1$
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr1.syncWithTarget());
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr2.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-q")); //$NON-NLS-1$
 		
-		Optional<String> searchResult = search(vmId, jpsOutput);
-		assertTrue(TEST_PROCESS_ID_MISSING, searchResult.isPresent());
-		assertEquals(SPURIOUS_OUTPUT, vmId, searchResult.get());
+		boolean searchResult = StringUtilities.contains(vmId, jpsOutput);
+		assertTrue(TEST_PROCESS_ID_MISSING + ": " + vmId, searchResult); //$NON-NLS-1$
 		
-		searchResult = search(tgtMgr1.targetId, jpsOutput);
-		assertTrue(CHILD_IS_MISSING, search(tgtMgr1.targetId, jpsOutput).isPresent());
-		assertEquals(SPURIOUS_OUTPUT, tgtMgr1.targetId, searchResult.get());
+		searchResult = StringUtilities.contains(tgtMgr1.targetId, jpsOutput);
+		assertTrue(CHILD_IS_MISSING + ": " + tgtMgr1.targetId, searchResult); //$NON-NLS-1$
 		
 		/* now try with non-default vm ID */
-		searchResult = search(tgtMgr2.targetId, jpsOutput);
-		assertTrue(CHILD_IS_MISSING, search(tgtMgr2.targetId, jpsOutput).isPresent());
-		assertEquals(SPURIOUS_OUTPUT, tgtMgr2.targetId, searchResult.get());
+		searchResult = StringUtilities.contains(tgtMgr2.targetId, jpsOutput);
+		assertTrue(CHILD_IS_MISSING + ": " + tgtMgr2.targetId, searchResult); //$NON-NLS-1$
 		
 		tgtMgr1.terminateTarget();
 		tgtMgr2.terminateTarget();
@@ -104,8 +99,8 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-m")); //$NON-NLS-1$
-		Optional<String> searchResult =  search(tgtMgr.targetId, jpsOutput);
-		assertTrue(CHILD_IS_MISSING, search(tgtMgr.targetId, jpsOutput).isPresent());
+		Optional<String> searchResult =  StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
+		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
 		for (String a: targetArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
 		}
@@ -118,8 +113,8 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, null, vmArgs, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-v")); //$NON-NLS-1$
-		Optional<String> searchResult =  search(tgtMgr.targetId, jpsOutput);
-		assertTrue(CHILD_IS_MISSING, search(tgtMgr.targetId, jpsOutput).isPresent());
+		Optional<String> searchResult =  StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
+		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
 		for (String a: vmArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
 		}
@@ -137,22 +132,8 @@ public class TestJps extends AttachApiTest {
 	 */
 	@BeforeSuite
 	void setupSuite() {
-		assertTrue("This test is valid only on OpenJ9",  //$NON-NLS-1$
-				System.getProperty("java.vm.vendor").contains("OpenJ9"));  //$NON-NLS-1$//$NON-NLS-2$
-		char fs = java.io.File.separatorChar;
-		final String jpsCommandWithSuffix = 
-				PlatformInfo.isWindows() ? JPS_COMMAND + ".exe": JPS_COMMAND; //$NON-NLS-1$
-		String binDir = System.getProperty("java.home") + fs + "bin" + fs; //$NON-NLS-1$ //$NON-NLS-2$
-		commandName = binDir + jpsCommandWithSuffix;
-		File  commandFile = new File(commandName);
-		if (!commandFile.exists()) { /* Java 8 has 2 bin directories, and JAVA_HOME is probably pointing at jre/bin */
-			log("Did not find jps in "+binDir); //$NON-NLS-1$
-			binDir = System.getProperty("java.home") + fs + ".." + fs + "bin" + fs; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			commandName = binDir + jpsCommandWithSuffix;
-			commandFile = new File(commandName);
-			assertTrue("Did not find " + jpsCommandWithSuffix //$NON-NLS-1$
-					+ " in " + binDir, commandFile.exists()); //$NON-NLS-1$
-		}
+		assertTrue("This test is valid only on OpenJ9",PlatformInfo.isOpenJ9()); //$NON-NLS-1$
+		getJdkUtilityPath(JPS_COMMAND);
 		assertTrue("Attach API failed to launch", TargetManager.waitForAttachApiInitialization()); //$NON-NLS-1$
 		vmId = TargetManager.getVmId();
 	}
