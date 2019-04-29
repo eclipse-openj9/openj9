@@ -108,8 +108,10 @@ Release:
                 - "https://github.com/ibmruntimes/openj9-openjdk-jdk8.git"
             OPENJDK11_REPO:
                 - "https://github.com/ibmruntimes/openj9-openjdk-jdk11.git"
-            OPEMJDK12_REPO:
+            OPENJDK12_REPO:
                 - "https://github.com/ibmruntimes/openj9-openjdk-jdk12.git"
+            OPENJDKNEXT_REPO:
+                - "https://github.com/ibmruntimes/openj9-openjdk-jdk.git"
             OPENJ9_REPO:
                 - "https://github.com/eclipse/openj9.git"
             OMR_REPO:
