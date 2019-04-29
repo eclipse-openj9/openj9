@@ -109,6 +109,6 @@ Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_cleanup(JNIEnv *jni_env, jclas
 	
 	for (counter = 0; counter < PROPERTY_NUMBER; counter++) {
 		printf("gsp001_cleanup sysPropValues[%d] %s \n", counter, sysPropValues[counter]);
-		(*jvmti_env)->Deallocate(jvmti_env, sysPropValues[counter]);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char*) sysPropValues[counter]);
 	}
 }
