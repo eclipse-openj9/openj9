@@ -24,7 +24,6 @@ package org.openj9.test.attachAPI;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -38,7 +37,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.openj9.test.util.PlatformInfo;
 import org.openj9.test.util.StringPrintStream;
+import org.openj9.test.util.StringUtilities;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -120,7 +121,7 @@ public class TestJstack extends AttachApiTest {
 			buff.append("\n"); //$NON-NLS-1$
 		});
 		log(buff.toString());
-		Optional<String> searchResult = search(testName, jpsOutput);
+		Optional<String> searchResult = StringUtilities.searchSubstring(testName, jpsOutput);
 		assertTrue(searchResult.isPresent(), "Method name missing"); //$NON-NLS-1$
 	}
 
@@ -137,7 +138,7 @@ public class TestJstack extends AttachApiTest {
 			buff.append("\n"); //$NON-NLS-1$
 		});
 		log(buff.toString());
-		Optional<String> searchResult = search(testName, jpsOutput);
+		Optional<String> searchResult = StringUtilities.searchSubstring(testName, jpsOutput);
 		assertTrue(searchResult.isPresent(), "Method name missing"); //$NON-NLS-1$
 	}
 
@@ -158,7 +159,7 @@ public class TestJstack extends AttachApiTest {
 			buff.append("\n"); //$NON-NLS-1$
 		});
 		log(buff.toString());
-		Optional<String> searchResult = search(TEST_VALUE, jpsOutput);
+		Optional<String> searchResult = StringUtilities.searchSubstring(TEST_VALUE, jpsOutput);
 		assertTrue(searchResult.isPresent(), TEST_PROPERTY + " missing"); //$NON-NLS-1$
 	}
 
@@ -170,8 +171,7 @@ public class TestJstack extends AttachApiTest {
 
 	@BeforeSuite
 	protected void setupSuite() {
-		assertTrue("This test is valid only on OpenJ9", //$NON-NLS-1$
-				System.getProperty("java.vm.vendor").contains("OpenJ9")); //$NON-NLS-1$//$NON-NLS-2$
+		assertTrue(PlatformInfo.isOpenJ9(), "This test is valid only on OpenJ9"); //$NON-NLS-1$
 		getJdkUtilityPath(JSTACK_COMMAND);
 	}
 
