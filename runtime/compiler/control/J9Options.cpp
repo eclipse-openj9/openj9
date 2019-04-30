@@ -304,7 +304,7 @@ qualifiedSize(UDATA *byteSize, char **qualifier)
 bool
 J9::Options::useCompressedPointers()
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
    return true;
 #else
    return false;

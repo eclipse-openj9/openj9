@@ -102,7 +102,7 @@
 #define J9GC_CLASS_SHAPE(ramClass)		(J9CLASS_SHAPE(ramClass))
 #define J9GC_CLASS_IS_ARRAY(ramClass)	(J9CLASS_IS_ARRAY(ramClass))
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 
 extern "C" mm_j9object_t j9gc_objaccess_pointerFromToken(J9VMThread *vmThread, fj9object_t token);
 extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_j9object_t object);
@@ -113,12 +113,12 @@ extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_
 /* The size of the reserved area at the beginning of the compressed pointer heap */
 #define J9GC_COMPRESSED_POINTER_NULL_REGION_SIZE 4096
 
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 
 #define mmPointerFromToken(vmThread, token) ((mm_j9object_t)(token))
 #define mmTokenFromPointer(vmThread, object) ((fj9object_t)(object))
 
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 #if defined(J9VM_GC_REALTIME)
 /* Note that the "reserved" index is used for 2 different purposes with the

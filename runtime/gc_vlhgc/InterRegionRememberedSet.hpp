@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -380,7 +380,7 @@ public:
 	convertRememberedSetCardFromHeapAddress(void* address)
 	{
 		MM_RememberedSetCard card = 0;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		card = (MM_RememberedSetCard)((UDATA)address >> CARD_SIZE_SHIFT);
 #else
 		card = (MM_RememberedSetCard) address;	
@@ -397,7 +397,7 @@ public:
 	convertHeapAddressFromRememberedSetCard(MM_RememberedSetCard card)
 	{
 		void *address = NULL;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		address = (void *)((UDATA)card << CARD_SIZE_SHIFT);
 #else
 		address = (void *) card;
@@ -413,7 +413,7 @@ public:
 	 */
 	MMINLINE Card *rememberedSetCardToCardAddr(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
 	{
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		Card *virtualStart = _cardTable->getCardTableVirtualStart();
 		return virtualStart + card;
 #else

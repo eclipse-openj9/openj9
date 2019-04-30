@@ -431,7 +431,7 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
          const intptrj_t *obj = *(intptrj_t **)((intptrj_t)extra + sizeof(intptrj_t));
          // Discard high order 32 bits via cast to uint32_t to avoid shifting and masking when using compressed refs
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
          intptrj_t currentReceiverJ9Class = *(uint32_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
 #else
          intptrj_t currentReceiverJ9Class = *(intptrj_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);

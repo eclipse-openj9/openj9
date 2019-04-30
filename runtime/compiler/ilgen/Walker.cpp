@@ -3146,7 +3146,7 @@ TR_J9ByteCodeIlGenerator::calculateArrayElementAddress(TR::DataType dataType, bo
    // since each element of an reference array is a compressed pointer,
    // modify the width accordingly, so the stride is 4bytes instead of 8
    //
-   // J9VM_GC_COMPRESSED_POINTERS
+   // OMR_GC_COMPRESSED_POINTERS
    //
    if (comp()->useCompressedPointers() && dataType == TR::Address)
       {

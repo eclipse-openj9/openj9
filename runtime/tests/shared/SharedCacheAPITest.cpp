@@ -217,11 +217,11 @@ validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *us
 
 	cacheCount++;
 
-#if defined(J9VM_ENV_DATA64) && defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(J9VM_ENV_DATA64) && defined(OMR_GC_COMPRESSED_POINTERS)
 	addrMode |= COM_IBM_ITERATE_SHARED_CACHES_COMPRESSED_POINTERS_MODE;
 #else
 	addrMode |= COM_IBM_ITERATE_SHARED_CACHES_NON_COMPRESSED_POINTERS_MODE;
-#endif /* defined(J9VM_ENV_DATA64) && defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(J9VM_ENV_DATA64) && defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	/* calculate cache size for empty cache */
 	if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == cacheInfo->cacheType) {

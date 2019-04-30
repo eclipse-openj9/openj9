@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,13 +32,13 @@
 #include "EnvironmentVLHGC.hpp"
 #include "GCExtensions.hpp"
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 /* Compresses a heap address by shifting right by CARD_SIZE_SHIFT */
 typedef U_32 MM_RememberedSetCard; 
 #else
 /* Just a heap address */
 typedef UDATA MM_RememberedSetCard;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 class MM_RememberedSetCardList;
 

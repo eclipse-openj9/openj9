@@ -229,11 +229,11 @@ gcDumpMemorySizes(J9JavaVM *javaVM)
 	gcDumpQualifiedSize(PORTLIB, javaVM->ramClassAllocationIncrement, "-Xmca", J9NLS_GC_VERB_SIZES_XMCA);
 	gcDumpQualifiedSize(PORTLIB, javaVM->romClassAllocationIncrement, "-Xmco", J9NLS_GC_VERB_SIZES_XMCO);
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)	/* This should be J9VM_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_COMPRESSED_POINTERS)	/* This should be OMR_GC_COMPRESSED_POINTERS */
 	gcDumpQualifiedSize(PORTLIB, extensions->suballocatorInitialSize, "-Xmcrs", J9NLS_GC_VERB_SIZES_XMCRS);
-#else /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	gcDumpQualifiedSize(PORTLIB, 0, "-Xmcrs", J9NLS_GC_VERB_SIZES_XMCRS);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	if (extensions->isVLHGC()) {
 #if defined (J9VM_GC_VLHGC)

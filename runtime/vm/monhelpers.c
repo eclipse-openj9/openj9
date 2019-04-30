@@ -320,7 +320,7 @@ cancelLockReservation(J9VMThread* vmStruct)
 					Assert_VM_true(J9_FLATLOCK_COUNT(oldLock) == 0);
 				}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 				compareAndSwapU32(lockEA, oldLock, newLock);
 #else
 				compareAndSwapUDATA(lockEA, oldLock, newLock);
