@@ -3122,6 +3122,12 @@ old_slow_jitReportStaticFieldWrite(J9VMThread *currentThread)
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
 		J9Class *fieldClass = dataBlock->fieldClass;
 		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+			/* Read the data now, as the incoming pointer is potentially into the
+			 * java stack, which would be invalidated by the class initialization below.
+			 * Ensure the read does not get reordered below by the compiler.
+			 */
+			U_64 value = *(U_64 volatile *)valuePointer;
+			VM_AtomicSupport::compilerReorderingBarrier();
 			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
 			/* Ensure that this call blocks before reporting the event if another thread
 			 * is initializing the class.
@@ -3135,7 +3141,7 @@ old_slow_jitReportStaticFieldWrite(J9VMThread *currentThread)
 					goto restore;
 				}
 			}
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, fieldClass, dataBlock->fieldAddress, *(U_64*)valuePointer);
+			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, fieldClass, dataBlock->fieldAddress, value);
 restore:
 			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
 		}
