@@ -266,12 +266,15 @@ MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC* env)
 	_tableDescriptorSize = _heapRegionManager->_tableDescriptorSize;
 	UDATA baseOfHeap = (UDATA) (_heapRegionManager->_regionTable)->getLowAddress();
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	_cardToRegionShift = _heapRegionManager->_regionShift - CARD_SIZE_SHIFT;
-	_cardToRegionDisplacement = baseOfHeap >> CARD_SIZE_SHIFT;
-#else
-	_cardToRegionShift = _heapRegionManager->_regionShift;
-	_cardToRegionDisplacement = baseOfHeap;
-#endif
+	if (env->compressObjectReferences()) {
+		_cardToRegionShift = _heapRegionManager->_regionShift - CARD_SIZE_SHIFT;
+		_cardToRegionDisplacement = baseOfHeap >> CARD_SIZE_SHIFT;
+	} else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	{
+		_cardToRegionShift = _heapRegionManager->_regionShift;
+		_cardToRegionDisplacement = baseOfHeap;
+	}
 	_cardTable = ext->cardTable;
 
 	return true;

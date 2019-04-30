@@ -1451,18 +1451,20 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		goto _error;
 	}
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)	/* This should be OMR_GC_COMPRESSED_POINTERS */
-	if (-1 != index) {
-		extensions->suballocatorInitialSize = optionValue;
-	}
-	if(0 == extensions->suballocatorInitialSize) {
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, OPT_XMCRS, (UDATA)0);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		if (-1 != index) {
+			extensions->suballocatorInitialSize = optionValue;
+		}
+		if(0 == extensions->suballocatorInitialSize) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, OPT_XMCRS, (UDATA)0);
 			return JNI_EINVAL;
-	}
+		}
 #define FOUR_GB ((UDATA)4 * 1024 * 1024 * 1024)
-	if(extensions->suballocatorInitialSize >= FOUR_GB) {
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, OPT_XMCRS);
+		if(extensions->suballocatorInitialSize >= FOUR_GB) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, OPT_XMCRS);
 			return JNI_EINVAL;
+		}
 	}
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
