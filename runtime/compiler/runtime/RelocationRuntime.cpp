@@ -1024,13 +1024,13 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEn
          incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
                            "AOT header validation failed: incompatible arraylet size");
          }
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       else if ( hdrInCache->compressedPointerShift != TR::Compiler->om.compressedReferenceShift())
          {
          incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
                            "AOT header validation failed: incompatible compressed pointer shift");
          }
-#endif // J9VM_GC_COMPRESSED_POINTERS
+#endif // OMR_GC_COMPRESSED_POINTERS
       else
          {
          static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig)->aotValidHeader = TR_yes;
@@ -1079,7 +1079,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd 
       aotHeader->processorSignature = TR::Compiler->target.cpu.id();
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(pjavaVM);
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
 #else
       aotHeader->compressedPointerShift = 0;

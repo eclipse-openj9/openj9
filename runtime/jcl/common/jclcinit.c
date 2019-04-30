@@ -131,7 +131,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	osarch = j9sysinfo_get_CPU_architecture();
 
 #ifdef J9VM_ENV_DATA64
-	#ifdef J9VM_GC_COMPRESSED_POINTERS
+	#ifdef OMR_GC_COMPRESSED_POINTERS
 		#define MEM_INFO "-64-Bit Compressed References "
 	#else
 		#define MEM_INFO "-64-Bit "

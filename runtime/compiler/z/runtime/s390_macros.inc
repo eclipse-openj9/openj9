@@ -540,7 +540,7 @@ define(MTComputeStaticAddress,[dnl
     NILH    r2,0                      # get col index
     SLLG    r2,r2,0(r1)               # col offset, data size
 
-ifdef([J9VM_GC_COMPRESSED_POINTERS],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     LGR     r14,r0                    # restore r14
     LG      r1,28(,r14)               # load CP word
     SRLG    r1,r1,8                   # shift amount

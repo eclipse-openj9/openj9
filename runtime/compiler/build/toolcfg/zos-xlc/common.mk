@@ -192,7 +192,7 @@ ifeq ($(HOST_BITS),64)
     endif
 
     ifneq (,$(shell grep 'define J9VM_GC_COMPRESSED_POINTERS' $(J9SRC)/include/j9cfg.h))
-        M4_DEFINES+=J9VM_GC_COMPRESSED_POINTERS
+        M4_DEFINES+=OMR_GC_COMPRESSED_POINTERS
     endif
 endif
 

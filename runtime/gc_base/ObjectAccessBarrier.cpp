@@ -50,7 +50,7 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 	J9JavaVM *vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
 	OMR_VM *omrVM = env->getOmrVM();
 	
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 
 #if defined(J9VM_GC_REALTIME)
 	/*
@@ -69,7 +69,7 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 	_compressedPointersShift = omrVM->_compressedPointersShift;
 	vm->compressedPointersShift = omrVM->_compressedPointersShift;
 	Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 	vm->objectAlignmentInBytes = omrVM->_objectAlignmentInBytes;
 	vm->objectAlignmentShift = omrVM->_objectAlignmentShift;
@@ -1567,7 +1567,7 @@ MM_ObjectAccessBarrier::compareAndSwapObject(J9VMThread *vmThread, J9Object *des
 		preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
 		protectIfVolatileBefore(vmThread, true, false, false);
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		result = ((U_32)(UDATA)compareValue == MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue));
 #else
 		result = ((UDATA)compareValue == MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue));
@@ -1715,7 +1715,7 @@ MM_ObjectAccessBarrier::compareAndExchangeObject(J9VMThread *vmThread, J9Object 
 		preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
 		protectIfVolatileBefore(vmThread, true, false, false);
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		J9Object *result = (J9Object *)(UDATA)MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue);
 #else
 		J9Object *result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue);

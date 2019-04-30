@@ -91,7 +91,7 @@ J9::ObjectModel::initialize()
 int32_t
 J9::ObjectModel::sizeofReferenceField()
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
    return sizeof(fj9object_t);
 #else
    return sizeof(uintptrj_t);
@@ -113,7 +113,7 @@ J9::ObjectModel::getSizeOfArrayElement(TR::Node * node)
 
    if (node->getOpCodeValue() == TR::anewarray)
       {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       return TR::Compiler->om.sizeofReferenceField();
 #else
       return TR::Symbol::convertTypeToSize(TR::Address);
@@ -225,7 +225,7 @@ J9::ObjectModel::nativeAddressesCanChangeSize()
 bool
 J9::ObjectModel::generateCompressedObjectHeaders()
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
    return true;
 #else
    return false;
@@ -306,7 +306,7 @@ J9::ObjectModel::compressedReferenceShiftOffset()
 int32_t
 J9::ObjectModel::compressedReferenceShift()
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
    J9JavaVM *javaVM = TR::Compiler->javaVM;
    if (!javaVM)
       return 0;

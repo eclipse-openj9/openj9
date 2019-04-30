@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@
 #include "Scavenger.hpp"
 #include "SublistFragment.hpp"
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 
 MM_ReadBarrierVerifier *
 MM_ReadBarrierVerifier::newInstance(MM_EnvironmentBase *env)
@@ -249,5 +249,5 @@ MM_ReadBarrierVerifier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAdd
 	return true;
 }
 
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 

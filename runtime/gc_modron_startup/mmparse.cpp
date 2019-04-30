@@ -1451,7 +1451,7 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		goto _error;
 	}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)	/* This should be J9VM_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_COMPRESSED_POINTERS)	/* This should be OMR_GC_COMPRESSED_POINTERS */
 	if (-1 != index) {
 		extensions->suballocatorInitialSize = optionValue;
 	}
@@ -1464,7 +1464,7 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, OPT_XMCRS);
 			return JNI_EINVAL;
 	}
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	memoryParameters[opt_Xmcrs] = index;
 

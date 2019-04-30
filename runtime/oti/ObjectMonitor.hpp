@@ -216,11 +216,11 @@ done:
 	static VMINLINE j9objectmonitor_t
 	compareAndSwapLockword(j9objectmonitor_t volatile *lockEA, j9objectmonitor_t oldValue, j9objectmonitor_t newValue, bool readBeforeCAS = false)
 	{
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchangeU32(lockEA, oldValue, newValue, readBeforeCAS);
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchange(lockEA, oldValue, newValue, readBeforeCAS);
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 		return contents;
 	}
 

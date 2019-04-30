@@ -642,7 +642,7 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
       {
       readValues = true;
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       J9JavaVM *jvm = jitConfig->javaVM;
       if (!jvm)
          return;

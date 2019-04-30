@@ -31,9 +31,9 @@
 void
 MM_ScavengerForwardedHeader::validateAssumptions()
 {
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	Assert_MM_true(offsetof(J9IndexableObjectContiguous, size) == offsetof(MutableHeaderFields, overlap));
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 }
 
 /**
@@ -56,7 +56,7 @@ MM_ScavengerForwardedHeader::setForwardedObject(omrobjectptr_t destinationObject
 	volatile MutableHeaderFields* objectHeader = (volatile MutableHeaderFields *)_objectPtr;
 	UDATA oldValue = *(UDATA *)&_preserved.clazz;
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN)
+#if defined (OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN)
 	/*
 	 *  Forwarded tag should be in low bits of the pointer and at the same time be in class slot
 	 * To get it for compressed big endian just swap halves of pointer
@@ -66,12 +66,12 @@ MM_ScavengerForwardedHeader::setForwardedObject(omrobjectptr_t destinationObject
 	/* add a high half */
 	newValue |= ((UDATA)destinationObjectPtr | FORWARDED_TAG) << 32;
 
-#else /* defined (J9VM_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
+#else /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
 
 	/* little endian or not compressed - write UDATA bytes straight */
 	UDATA newValue = (UDATA)destinationObjectPtr | FORWARDED_TAG;
 
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
 
 	if (MM_AtomicOperations::lockCompareExchange((volatile UDATA*)&objectHeader->clazz, oldValue, newValue) != oldValue) {
 		MM_ScavengerForwardedHeader forwardedObject(_objectPtr);

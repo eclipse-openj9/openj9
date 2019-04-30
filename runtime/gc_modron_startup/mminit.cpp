@@ -1100,7 +1100,7 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 	extensions->memoryMax = MM_Math::roundToFloor(extensions->regionSize, extensions->memoryMax);
 	extensions->maxSizeDefaultMemorySpace = MM_Math::roundToFloor(extensions->regionSize, extensions->maxSizeDefaultMemorySpace);
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	if (extensions->shouldAllowShiftingCompression) {
 		if (extensions->shouldForceSpecifiedShiftingCompression) {
 			extensions->heapCeiling = NON_SCALING_LOW_MEMORY_HEAP_CEILING << extensions->forcedShiftingCompressionAmount;
@@ -1150,7 +1150,7 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_OVERFLOW, displayXmxOrMaxRAMPercentage(memoryParameters));
 		return JNI_ERR;
 	}
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 	/* Verify Xmx is too small */
 	if (extensions->memoryMax < minimumSizeValue) {
@@ -1538,10 +1538,10 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 		extensions->allocationIncrement = MM_Math::roundToCeiling(extensions->regionSize, extensions->allocationIncrement);
 	}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 	/* Align the Xmcrs if necessary */
 	extensions->suballocatorInitialSize = MM_Math::roundToCeiling(SUBALLOCATOR_ALIGNMENT, extensions->suballocatorInitialSize);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	return JNI_OK;
 

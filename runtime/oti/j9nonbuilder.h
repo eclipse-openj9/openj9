@@ -2809,18 +2809,18 @@ typedef struct J9IndexableObject {
 typedef struct J9IndexableObjectContiguous {
 	j9objectclass_t clazz;
 	U_32 size;
-#if defined(J9VM_ENV_DATA64) && !defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(J9VM_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 	U_32 padding;
-#endif /* J9VM_ENV_DATA64 && !J9VM_GC_COMPRESSED_POINTERS */
+#endif /* J9VM_ENV_DATA64 && !OMR_GC_COMPRESSED_POINTERS */
 } J9IndexableObjectContiguous;
 
 typedef struct J9IndexableObjectDiscontiguous {
 	j9objectclass_t clazz;
 	U_32 mustBeZero;
 	U_32 size;
-#if defined(J9VM_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
+#if defined(OMR_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
 	U_32 padding;
-#endif /* J9VM_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
+#endif /* OMR_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguous;
 
 typedef struct J9InitializerMethods {
@@ -4910,10 +4910,10 @@ typedef struct J9VMThread {
 	struct J9GSParameters gsParameters;
 	UDATA readBarrierRangeCheckBase;
 	UDATA readBarrierRangeCheckTop;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 	U_32 readBarrierRangeCheckBaseCompressed;
 	U_32 readBarrierRangeCheckTopCompressed;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
 } J9VMThread;
@@ -5266,9 +5266,9 @@ typedef struct J9JavaVM {
 	struct J9CheckJNIData checkJNIData;
 	void* j9rasdumpGlobalStorage;
 	struct J9HashTable* contendedLoadTable;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 	UDATA compressedPointersShift;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 	void ( *invokeJ9ReadBarrier)(struct J9VMThread *currentThread);
 #endif

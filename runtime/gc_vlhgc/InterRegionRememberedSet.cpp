@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -265,7 +265,7 @@ MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC* env)
 	_regionTable = _heapRegionManager->_regionTable;
 	_tableDescriptorSize = _heapRegionManager->_tableDescriptorSize;
 	UDATA baseOfHeap = (UDATA) (_heapRegionManager->_regionTable)->getLowAddress();
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 	_cardToRegionShift = _heapRegionManager->_regionShift - CARD_SIZE_SHIFT;
 	_cardToRegionDisplacement = baseOfHeap >> CARD_SIZE_SHIFT;
 #else

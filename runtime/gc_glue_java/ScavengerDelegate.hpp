@@ -118,9 +118,9 @@ public:
 	void backOutIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	void backOutIndirectObjects(MM_EnvironmentStandard *env);
 	void reverseForwardedObject(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject);
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	void fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject, MM_MemorySubSpaceSemiSpace *subSpaceNew);
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void switchConcurrentForThread(MM_EnvironmentBase *env);
@@ -141,10 +141,10 @@ public:
 	bool getFinalizationRequired(void) { return _finalizationRequired; }
 #endif /* J9VM_GC_FINALIZATION */
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 	void poisonSlots(MM_EnvironmentBase *env);
 	void healSlots(MM_EnvironmentBase *env);
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);

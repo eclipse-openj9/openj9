@@ -958,7 +958,7 @@ ZZ            rEP - new method Entry Point
 
 ZZ Get the lastCacheSlot pointer into r3.
     L_GPR     r3,eq_lastCachedSlotField_inInterfaceSnippet(r2)
-ifdef([J9VM_GC_COMPRESSED_POINTERS],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
 ZZ Load the class offset (32 bits)
     L         r0,J9TR_J9Object_class(,r1)
     LLGFR     r0,r0
@@ -978,7 +978,7 @@ ZZ slots or slots are uninitialized.
     JL        LJumpToNewRoutine
 
 ZZ Compare our class pointer with the class pointer in current slot
-ifdef([J9VM_GC_COMPRESSED_POINTERS],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     CL        r0,0(,r3)
 ],[dnl
     CL_GPR    r0,0(,r3)
