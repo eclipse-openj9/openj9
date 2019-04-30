@@ -276,7 +276,9 @@ CPU::initializeS390ProcessorFeatures()
 
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE))
          {
-         TR::Compiler->target.cpu.setSupportsGuardedStorageFacility(true);
+         // turn off GS facility if GC has -XXgc:softwareRangeCheckReadBarrier
+         J9MemoryManagerFunctions * mmf = TR::Compiler->javaVM->memoryManagerFunctions;
+         TR::Compiler->target.cpu.setSupportsGuardedStorageFacility(!(mmf->j9gc_software_read_barrier_enabled(TR::Compiler->javaVM)));
          }
       }
 

@@ -10126,11 +10126,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && isObj)
       {
       TR::Register* tempReadBarrier = cg->allocateRegister();
-      if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
-         {
-         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
-         }
-      else
+      if (TR::Compiler->target.cpu.getSupportsGuardedStorageFacility())
          {
          auto guardedLoadMnemonic = comp->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
 
@@ -10139,6 +10135,10 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
          // a read barrier
          generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
          generateRXInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
+         }
+      else
+         {
+         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
          }
       cg->stopUsingRegister(tempReadBarrier);
       }
@@ -12081,15 +12081,15 @@ J9::Z::TreeEvaluator::ardbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // MemRef can generate BRCL to unresolved data snippet if needed.
       TR::MemoryReference* loadMemRef = generateS390MemoryReference(node, cg);
 
-      if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
-         {
-         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, loadMemRef);
-         }
-      else
+      if (TR::Compiler->target.cpu.getSupportsGuardedStorageFacility())
          {
          TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, loadMemRef);
          TR::InstOpCode::Mnemonic loadOp = cg->comp()->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
          generateRXInstruction(cg, loadOp, node, resultReg, loadMemRef);
+         }
+      else
+         {
+         TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, loadMemRef);
          }
       node->setRegister(resultReg);
       }
@@ -12363,7 +12363,7 @@ J9::Z::TreeEvaluator::generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeG
    {
    if ((node->getArrayCopyElementType() == TR::Address)
            && needsGuardedLoad
-           && TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
+           && (!TR::Compiler->target.cpu.getSupportsGuardedStorageFacility()))
       {
       TR::Register* resultReg = srm->findOrCreateScratchRegister();
       TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, srcMemRef, deps, true);
