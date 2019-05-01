@@ -23,6 +23,7 @@
 #include "p/codegen/PPCPrivateLinkage.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
@@ -1449,7 +1450,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
       {
       // Helper linkage preserves all registers that are not argument registers, so we don't need to spill them.
       if (linkage != TR_Helper)
-         addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg());
+         TR::addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg());
       }
 
    uint32_t numIntArgRegs   = properties.getNumIntArgRegs();
@@ -1609,7 +1610,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                   }
                else
                   {
-                  addDependency(dependencies, argRegister, specialArgReg, TR_GPR, cg());
+                  TR::addDependency(dependencies, argRegister, specialArgReg, TR_GPR, cg());
                   }
                }
             else
@@ -1649,7 +1650,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                      }
                   else
                      {
-                     addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                      }
                   }
                else // numIntegerArgs >= numIntArgRegs
@@ -1682,7 +1683,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                   }
                else
                   {
-                  addDependency(dependencies, specialArgRegister, specialArgReg, TR_GPR, cg());
+                  TR::addDependency(dependencies, specialArgRegister, specialArgReg, TR_GPR, cg());
                   }
                }
             else
@@ -1735,9 +1736,9 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                   else
                      {
                      if (TR::Compiler->target.is64Bit())
-                        addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                        TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                      else
-                        addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                        TR::addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                      }
                   if (TR::Compiler->target.is32Bit())
                      {
@@ -1759,7 +1760,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                               dependencies->addPostCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs + 1));
                            }
                         else
-                           addDependency(dependencies, argRegister->getRegisterPair()->getLowOrder(), properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
+                           TR::addDependency(dependencies, argRegister->getRegisterPair()->getLowOrder(), properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
                         }
                      else // numIntegerArgs+1 == numIntArgRegs
                         mref = getOutgoingArgumentMemRef(totalSize-argSize+4, argRegister->getRegisterPair()->getLowOrder(), TR::InstOpCode::stw, pushToMemory[argIndex++], 4);
@@ -1802,7 +1803,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                   dependencies->addPostCondition(resultReg, TR::RealRegister::fp0);
                   }
                else
-                  addDependency(dependencies, argRegister, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  TR::addDependency(dependencies, argRegister, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else // numFloatArgs >= numFloatArgRegs
                {
@@ -1832,7 +1833,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                   dependencies->addPostCondition(resultReg, TR::RealRegister::fp0);
                   }
                else
-                  addDependency(dependencies, argRegister, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  TR::addDependency(dependencies, argRegister, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else // numFloatArgs >= numFloatArgRegs
                {
@@ -1844,9 +1845,9 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
       }
 
    if (!dependencies->searchPreConditionRegister(TR::RealRegister::gr11))
-      addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg());
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg());
    if (!dependencies->searchPreConditionRegister(TR::RealRegister::gr12))
-      addDependency(dependencies, NULL, TR::RealRegister::gr12, TR_GPR, cg());
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr12, TR_GPR, cg());
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
       {
@@ -1868,7 +1869,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
             {
             // Helper linkage preserves all registers that are not argument registers, so we don't need to spill them.
             if (linkage != TR_Helper)
-               addDependency(dependencies, NULL, realReg, TR_GPR, cg());
+               TR::addDependency(dependencies, NULL, realReg, TR_GPR, cg());
             }
          }
       }
@@ -1890,7 +1891,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
       {
       while (numFloatArgs < 8)
          {
-         addDependency(dependencies, NULL, (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0+numFloatArgs), TR_FPR, cg());
+         TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fp0+numFloatArgs), TR_FPR, cg());
          numFloatArgs++;
          }
 
@@ -1898,20 +1899,20 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
       for (int32_t i = TR::RealRegister::fp8; i <= theLastOne; i++)
          if (!properties.getPreserved((TR::RealRegister::RegNum)i))
             {
-            addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, (i>TR::RealRegister::LastFPR)?TR_VSX_SCALAR:TR_FPR, cg());
+            TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, (i>TR::RealRegister::LastFPR)?TR_VSX_SCALAR:TR_FPR, cg());
             }
       }
    else if (callNode->getType().isFloatingPoint())
       {
       //add return floating-point register dependency
-      addDependency(dependencies, NULL, (TR::RealRegister::RegNum)getProperties().getFloatReturnRegister(), TR_FPR, cg());
+      TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)getProperties().getFloatReturnRegister(), TR_FPR, cg());
       }
 
    if (!liveVSX && liveVMX)
       {
       for (int32_t i = TR::RealRegister::vr0; i <= TR::RealRegister::vr31; i++)
 	 if (!properties.getPreserved((TR::RealRegister::RegNum)i))
-	    addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
+	    TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
       }
 
 
@@ -1966,7 +1967,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
          for (int32_t i = TR::RealRegister::FirstCCR; i <= TR::RealRegister::LastCCR; i++)
             if (!properties.getPreserved((TR::RealRegister::RegNum)i))
                {
-               addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_CCR, cg());
+               TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_CCR, cg());
                }
          }
       else
@@ -1975,7 +1976,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
          //because on buildVirtualDispatch(), it gets the CCR dependency from search
          if (!properties.getPreserved(TR::RealRegister::FirstCCR))
             {
-            addDependency(dependencies, NULL, TR::RealRegister::FirstCCR, TR_CCR, cg());
+            TR::addDependency(dependencies, NULL, TR::RealRegister::FirstCCR, TR_CCR, cg());
             }
          }
       }
@@ -2256,7 +2257,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
       // On 32-bit, we can just ignore the top 32 bits of the 64-bit target address
       if (vftReg->getRegisterPair())
          vftReg = vftReg->getLowOrder();
-      addDependency(dependencies, vftReg, getProperties().getComputedCallTargetRegister(), TR_GPR, cg());
+      TR::addDependency(dependencies, vftReg, getProperties().getComputedCallTargetRegister(), TR_GPR, cg());
 
       switch (methodSymbol->getMandatoryRecognizedMethod())
          {
@@ -2307,7 +2308,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
       if (methodSymRef->isUnresolved() || cg()->comp()->compileRelocatableCode())
          {
          TR::Register *vftReg = evaluateUpToVftChild(callNode, cg());
-         addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
+         TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
 
          TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
          TR::Snippet  *snippet = new (trHeapMemory()) TR::PPCVirtualUnresolvedSnippet(cg(), callNode, snippetLabel, sizeOfArguments, doneLabel);
@@ -2398,7 +2399,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
                if (vftNode->getReferenceCount() > 1 || vftNode->getRegister())
                   {
                   vftReg = evaluateUpToVftChild(callNode, cg());
-                  addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
+                  TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
                   }
                else
                   {
@@ -2451,7 +2452,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
                   vftReg = evaluateUpToVftChild(callNode, cg());
                   outlinedCallDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(1, 1, trMemory());
                   // Normally we don't care which reg the VFT gets, but in this case we don't want to undo the assignments done by the main deps so we choose a reg that we know will not be needed
-                  addDependency(outlinedCallDeps, vftReg, TR::RealRegister::gr11, TR_GPR, cg());
+                  TR::addDependency(outlinedCallDeps, vftReg, TR::RealRegister::gr11, TR_GPR, cg());
                   }
                else
                   outlinedCallDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 0, trMemory());
@@ -2480,7 +2481,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
    // virtual call or dynamic PIC call all inline.
    //
    TR::Register *vftReg = evaluateUpToVftChild(callNode, cg());
-   addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
+   TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
 
    if (callIsSafe && !callNode->isTheVirtualCallNodeForAGuardedInlinedCall() && !comp()->getOption(TR_DisableInterpreterProfiling))
       {
@@ -2589,12 +2590,12 @@ void inlineCharacterIsMethod(TR::Node *node, TR::MethodSymbol* methodSymbol, TR:
    TR::Register *tmpReg = cg->allocateRegister(TR_GPR);
 
    TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
-   addDependency(dependencies, srcReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(dependencies, rangeReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(dependencies, returnRegister, TR::RealRegister::gr3, TR_GPR, cg);
-   addDependency(dependencies, cnd0Reg, TR::RealRegister::cr0, TR_CCR, cg);
-   addDependency(dependencies, cnd1Reg, TR::RealRegister::NoReg, TR_CCR, cg);
-   addDependency(dependencies, cnd2Reg, TR::RealRegister::NoReg, TR_CCR, cg);
+   TR::addDependency(dependencies, srcReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(dependencies, rangeReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(dependencies, returnRegister, TR::RealRegister::gr3, TR_GPR, cg);
+   TR::addDependency(dependencies, cnd0Reg, TR::RealRegister::cr0, TR_CCR, cg);
+   TR::addDependency(dependencies, cnd1Reg, TR::RealRegister::NoReg, TR_CCR, cg);
+   TR::addDependency(dependencies, cnd2Reg, TR::RealRegister::NoReg, TR_CCR, cg);
 
    int32_t imm = (TR::RealRegister::CRCC_GT << TR::RealRegister::pos_RT | TR::RealRegister::CRCC_GT << TR::RealRegister::pos_RA | TR::RealRegister::CRCC_GT << TR::RealRegister::pos_RB);
 
