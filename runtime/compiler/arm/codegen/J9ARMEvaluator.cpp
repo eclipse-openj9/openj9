@@ -31,6 +31,7 @@
 #include "arm/codegen/ARMOperand2.hpp"
 #include "arm/codegen/J9ARMSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
@@ -84,7 +85,7 @@ static TR::Register *nonFixedDependency(TR::CodeGenerator                   *cg,
    if (nonFixedReg == NULL)
       nonFixedReg = cg->allocateRegister(kind);
 
-   addDependency(conditions, nonFixedReg, TR::RealRegister::NoReg, kind, cg);
+   TR::addDependency(conditions, nonFixedReg, TR::RealRegister::NoReg, kind, cg);
    return nonFixedReg;
    }
 
@@ -243,8 +244,8 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
    TR::Register *castClassReg = cg->evaluate(castClassNode);
    TR::Register *objClassReg  = cg->allocateRegister();
 
-   addDependency(deps, objReg, TR::RealRegister::gr1, TR_GPR, cg);
-   addDependency(deps, castClassReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, objReg, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(deps, castClassReg, TR::RealRegister::gr0, TR_GPR, cg);
 
    cg->machine()->setLinkRegisterKilled(true);
 
@@ -263,7 +264,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
 
    TR::Instruction *gcPoint;
 
-   addDependency(deps, objClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, objClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    TR::Instruction *implicitExceptionPointInstr = NULL;
    if (!objNode->isNonNull())
@@ -297,8 +298,8 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
       {
       TR::Register *scratch1Reg = cg->allocateRegister();
       TR::Register *scratch2Reg = cg->allocateRegister();
-      addDependency(deps, scratch1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, scratch2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, scratch1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, scratch2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
       genTestIsSuper(cg, node, objClassReg, castClassReg, scratch1Reg,
                      scratch2Reg, castClassDepth, NULL, NULL, doneLabel);
@@ -880,9 +881,9 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
    TR::Register *metaReg    = cg->getMethodMetaDataRegister();
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-   addDependency(deps, objReg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(deps, monitorReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, flagReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, objReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, monitorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, flagReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg);
    generateTrg1MemInstruction(cg, ARMOp_ldr, node, monitorReg, tempMR);
@@ -1319,10 +1320,10 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
          }
       }
 
-   addDependency(deps, classReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, classReg, TR::RealRegister::NoReg, TR_GPR, cg);
    if (secondChild == NULL)
       enumReg = cg->allocateRegister();
-   addDependency(deps, enumReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, enumReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    // We have two paths through this code, each of which calls a different helper:
    // one calls jitNewObject, the other performs a write barrier (when multimidlets are enabled).
@@ -1335,11 +1336,11 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
    TR::Register *dataSizeReg = cg->allocateRegister();
    TR::Register *temp1Reg    = cg->allocateRegister();
    TR::Register *temp2Reg    = cg->allocateRegister();
-   addDependency(deps, resReg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(deps, zeroReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, dataSizeReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, temp1Reg, TR::RealRegister::gr2, TR_GPR, cg);
-   addDependency(deps, temp2Reg, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(deps, resReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, zeroReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, dataSizeReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, temp1Reg, TR::RealRegister::gr2, TR_GPR, cg);
+   TR::addDependency(deps, temp2Reg, TR::RealRegister::gr1, TR_GPR, cg);
 
 
    if (isVariableLen)
@@ -1498,13 +1499,13 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    metaReg = cg->getMethodMetaDataRegister();
    dataReg = cg->allocateRegister();
    addrReg = cg->allocateRegister();
-   addDependency(deps, objReg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, objReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
 #ifdef J9VM_TASUKI_LOCKS_SINGLE_SLOT
    TR::Register *tempReg = cg->allocateRegister();
-   addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
 #endif
    callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
@@ -1583,7 +1584,7 @@ TR::Register *OMR::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node)
    tmp1Reg = nonFixedDependency(conditions, NULL, &depIndex, TR_GPR, false);
    tmp2Reg = nonFixedDependency(conditions, NULL, &depIndex, TR_GPR, false);
    cndReg = ppcCodeGen->allocateRegister(TR_CCR);
-   addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
+   TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
 
    // We have a unique snippet sharing arrangement in this code sequence.
    // It is not generally applicable for other situations.
@@ -1736,9 +1737,9 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
    if (needDeps)
       {
       deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-      addDependency(deps, srcReg,  TR::RealRegister::gr1, TR_GPR, cg);
-      addDependency(deps, dstReg,  TR::RealRegister::gr0, TR_GPR, cg);
-      addDependency(deps, tempReg, TR::RealRegister::gr2, TR_GPR, cg);
+      TR::addDependency(deps, srcReg,  TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(deps, dstReg,  TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(deps, tempReg, TR::RealRegister::gr2, TR_GPR, cg);
       }
 
    // todo check for _isSourceNonNull in PPC gen to see possible opt?

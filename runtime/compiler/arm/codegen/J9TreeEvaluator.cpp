@@ -27,6 +27,7 @@
 #include "thrdsup.h"
 #include "thrtypes.h"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -177,8 +178,8 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
          doneLabel = generateLabelSymbol(cg);
 
          conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-         addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
          TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
@@ -198,7 +199,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
          conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
          }
 
-      addDependency(conditions, dstObjReg, TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(conditions, dstObjReg, TR::RealRegister::gr0, TR_GPR, cg);
 
       TR::Instruction *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress(), NULL, wbRef);
       gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
@@ -226,10 +227,10 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
          TR::Register *temp3Reg = cg->allocateRegister();
          TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
 
-         addDependency(conditions, dstObjReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, dstObjReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
          VMCardCheckEvaluator(node, dstObjReg, temp1Reg, temp2Reg, temp3Reg, conditions, cg);
 
