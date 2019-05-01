@@ -299,7 +299,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          // code is present. Because of this deviation from the COBOL treatment of sign codes we must
          // take a specialized control path when generating instructions for Java.
 
-         if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10))
             {
             generateSILInstruction(cg, TR::InstOpCode::CLHHSI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), 0x002D);
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
@@ -1991,7 +1991,7 @@ J9::Z::TreeEvaluator::df2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->traceBCDExit("df2zd",node);
 
-   TR_ASSERT( cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
+   TR_ASSERT( TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
    TR_ASSERT(node->getDecimalFraction() == 0,"frac should be 0 and not %d\n",node->getDecimalFraction());
 
    TR::Node *srcNode = node->getFirstChild();
@@ -2264,7 +2264,7 @@ J9::Z::TreeEvaluator::zd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->traceBCDEntry("zd2dd",node);
 
-   TR_ASSERT( cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
+   TR_ASSERT( TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
    TR_ASSERT(node->getDataType() == TR::DecimalDouble || node->getDataType() == TR::DecimalLongDouble,"expecting op to be zd2dd or zd2de and not %d\n",node->getOpCodeValue());
    TR_ASSERT(node->getDecimalFraction() == 0,"frac should be 0 and not %d\n",node->getDecimalFraction());
 
@@ -3782,7 +3782,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
 
    // byteLength = precision/2 + 1. Note that the length codes of all instructions are (byteLength-1).
    // Thus, lengthCode = precision/2
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196))
       {
       generateRSInstruction(cg, TR::InstOpCode::SRAK, pdOpNode, lengthReg, precisionReg, 0x1, NULL);
       }
@@ -3866,7 +3866,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
          {
          TR::Register* tempLengthForTP = cg->allocateRegister();
 
-         if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196))
             {
             generateRSInstruction(cg, TR::InstOpCode::SLAK, node, tempLengthForTP, lengthReg, 4);
             }
@@ -4100,7 +4100,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // also do for assumed (PFD) preferred and clean signs?
    int32_t srcSign = srcReg->hasKnownOrAssumedSignCode() ? srcReg->getKnownOrAssumedSignCode() : TR::DataType::getInvalidSignCode();
-   bool useRegBasedSequence = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10) && srcReg->hasKnownValidSign();
+   bool useRegBasedSequence = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) && srcReg->hasKnownValidSign();
    bool isSrcSign0xF     = srcSign == 0xf;
    bool isSimpleSignFlip = srcSign == TR::DataType::getPreferredPlusCode() ||
                            srcSign == TR::DataType::getPreferredMinusCode() ||
@@ -4187,7 +4187,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
          cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
 
-      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12))
+      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12))
          generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, targetData, tempSign, 63, 63, 64-3);
       else
          generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, targetData, tempSign, 63, 63, 64-3);

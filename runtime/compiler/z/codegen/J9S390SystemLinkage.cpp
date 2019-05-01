@@ -373,7 +373,7 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
       {
       auto* systemSPOffsetMR = generateS390MemoryReference(methodMetaDataVirtualRegister, static_cast<int32_t>(fej9->thisThreadGetSystemSPOffset()), codeGen);
 
-      if (codeGen->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10))
          {
          generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, systemSPOffsetMR, 0);
          }
