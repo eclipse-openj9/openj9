@@ -565,89 +565,89 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 
       switch (machineId)
          {
-         case TR_FREEWAY:
+         case TR::CPU::TR_FREEWAY:
             returnValue = snprintf(processorName, stringLength, "z900 (%d)", machineId);
          break;
 
-         case TR_Z800:
+         case TR::CPU::TR_Z800:
             returnValue = snprintf(processorName, stringLength, "z800 (%d)", machineId);
          break;
 
          // zPDT
-         case TR_MIRAGE:
-         case TR_MIRAGE2:
+         case TR::CPU::TR_MIRAGE:
+         case TR::CPU::TR_MIRAGE2:
             returnValue = snprintf(processorName, stringLength, "zPDT (%d)", machineId);
          break;
 
-         case TR_TREX:
+         case TR::CPU::TR_TREX:
             returnValue = snprintf(processorName, stringLength, "z990 (%d)", machineId);
          break;
 
-         case TR_Z890:
+         case TR::CPU::TR_Z890:
             returnValue = snprintf(processorName, stringLength, "z890 (%d)", machineId);
          break;
 
-         case TR_GOLDEN_EAGLE:
+         case TR::CPU::TR_GOLDEN_EAGLE:
             returnValue = snprintf(processorName, stringLength, "z9 (%d)", machineId);
          break;
 
-         case TR_Z9BC:
+         case TR::CPU::TR_Z9BC:
             returnValue = snprintf(processorName, stringLength, "z9BC (%d)", machineId);
          break;
 
-         case TR_Z10:
+         case TR::CPU::TR_Z10:
             returnValue = snprintf(processorName, stringLength, "z10 (%d)", machineId);
          break;
 
-         case TR_Z10BC:
+         case TR::CPU::TR_Z10BC:
             returnValue = snprintf(processorName, stringLength, "z10BC (%d)", machineId);
          break;
 
-         case TR_ZG:
+         case TR::CPU::TR_ZG:
             returnValue = snprintf(processorName, stringLength, "z196 (%d)", machineId);
          break;
 
-         case TR_ZGMR:
+         case TR::CPU::TR_ZGMR:
             returnValue = snprintf(processorName, stringLength, "z114 (%d)", machineId);
          break;
 
-         case TR_ZEC12:
+         case TR::CPU::TR_ZEC12:
             returnValue = snprintf(processorName, stringLength, "zEC12 (%d)", machineId);
          break;
 
-         case TR_ZEC12MR:
+         case TR::CPU::TR_ZEC12MR:
             returnValue = snprintf(processorName, stringLength, "zBC12 (%d)", machineId);
          break;
 
-         case TR_Z13:
+         case TR::CPU::TR_Z13:
             returnValue = snprintf(processorName, stringLength, "z13 (%d)", machineId);
          break;
 
-         case TR_Z13s:
+         case TR::CPU::TR_Z13s:
             returnValue = snprintf(processorName, stringLength, "z13s (%d)", machineId);
          break;
 
-         case TR_Z14:
+         case TR::CPU::TR_Z14:
             returnValue = snprintf(processorName, stringLength, "z14 (%d)", machineId);
          break;
 
-         case TR_Z14s:
+         case TR::CPU::TR_Z14s:
             returnValue = snprintf(processorName, stringLength, "z14s (%d)", machineId);
          break;
 
-         case TR_Z15:
+         case TR::CPU::TR_Z15:
             returnValue = snprintf(processorName, stringLength, "z15 (%d)", machineId);
          break;
 
-         case TR_Z15s:
+         case TR::CPU::TR_Z15s:
             returnValue = snprintf(processorName, stringLength, "z15 (%d)", machineId);
          break;
 
-         case TR_ZNEXT:
+         case TR::CPU::TR_ZNEXT:
             returnValue = snprintf(processorName, stringLength, "zNext (%d)", machineId);
          break;
 
-         case TR_ZNEXTs:
+         case TR::CPU::TR_ZNEXTs:
             returnValue = snprintf(processorName, stringLength, "zNexts (%d)", machineId);
          break;
 
