@@ -191,6 +191,7 @@ CXXFLAGS+=$(UMA_C_INCLUDES)
 CPPFLAGS+=$(UMA_C_INCLUDES)
 
 UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/base/lib)
+UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/base/stdlib)
 UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 
 </#if>

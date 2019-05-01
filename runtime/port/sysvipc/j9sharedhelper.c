@@ -137,11 +137,11 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 		return J9SH_SUCCESS;
 	} else if (J9PORT_ERROR_FILE_EXIST == omrerror_last_error_number()) {
 		Trc_PRT_shared_createDirectory_Exit1();
-		return J9SH_SUCCESS; 
+		return J9SH_SUCCESS;
 	}
-		
+
 	omrstr_printf(tempPath, J9SH_MAXPATH, "%s", pathname);
-		
+
 	current = strchr(tempPath+1, DIR_SEPARATOR); /* skip the first '/' */
 
 	if ((J9SH_DIRPERM_ABSENT == permission)
@@ -152,10 +152,10 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 
 	while ((NULL != current) && (omrfile_attr(pathname) != EsIsDir)) {
 		char *previous;
-			
+
 		*current='\0';
 
-#if defined(J9SHSEM_DEBUG)    		
+#if defined(J9SHSEM_DEBUG)
 		portLibrary->tty_printf(portLibrary, "mkdir %s\n",tempPath);
 #endif
 
@@ -173,23 +173,23 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 			Trc_PRT_shared_createDirectory_Event2(tempPath);
   		}
 
-		previous = current;    		
+		previous = current;
 		current = strchr(current+1, DIR_SEPARATOR);
 		*previous=DIR_SEPARATOR;
 	}
-	
-	Trc_PRT_shared_createDirectory_Exit2();	
+
+	Trc_PRT_shared_createDirectory_Exit2();
 	return J9SH_SUCCESS;
 }
 
 
-/* 
+/*
  * Note that this auto-clean function walks all shared memory segments on the system looking
  * for J9 shared caches. If it finds any, it attempts to destroy them. This was introduced to mitigate
  * against /tmp being wiped and the control files being lost, which causes shared memory to be leaked.
  * It is important to understand that this only attempts to clean shared memory areas which were created
  * in the default control file dir (/tmp) and therefore any VM which is currently using a custom control file dir
- * will exit this function without attempting any cleanup. Caches not created in the default control file dir are 
+ * will exit this function without attempting any cleanup. Caches not created in the default control file dir are
  * distinguished by having an extra bit in the "version" field of the cache header, which is checked for below.
  */
 
@@ -270,11 +270,11 @@ cleanSharedMemorySegments(struct J9PortLibrary* portLibrary)
 #pragma convlit(resume)
 
 		/* spawn a process to run the ipcs command */
-		pid = spawn( argv[0], 
-								fdCnt, 
-								fdMap, 
-								&inherit, 
-								(const unsigned char**)argv, 
+		pid = spawn( argv[0],
+								fdCnt,
+								fdMap,
+								&inherit,
+								(const unsigned char**)argv,
 								(const unsigned char**)envp);
 		if (-1 == pid) {
 			Trc_PRT_shared_cleanSharedMemorySegments_spawnFailed(errno);
@@ -293,7 +293,11 @@ cleanSharedMemorySegments(struct J9PortLibrary* portLibrary)
 			return;
 		}
 	}
-#else
+#elif defined(J9ZTPF) /* defined(J9ZOS390) */
+	/* The z/TPF platform does not support the ipcs command */
+	Trc_PRT_shared_cleanSharedMemorySegments_exit();
+	return;
+#else /* defined(J9ZTPF) */
 	/* Run the ipcs command and create a FILE * for us to read its output */
 	ipcsOutput = popen( "ipcs -m", "r");
 
@@ -345,9 +349,9 @@ cleanSharedMemorySegments(struct J9PortLibrary* portLibrary)
 		Trc_PRT_shared_cleanSharedMemorySegments_endOfExtraction();
 
 		/* If owner, attach shared memory, check eyecatcher and remove if shared memory classes cache */
-		if (ipcsField[IPCS_USERID_FIELD_NO] && 
+		if (ipcsField[IPCS_USERID_FIELD_NO] &&
 			ipcsField[IPCS_SHMID_FIELD_NO] &&
-			(!strcmp(ipcsField[IPCS_USERID_FIELD_NO], processOwner) || 
+			(!strcmp(ipcsField[IPCS_USERID_FIELD_NO], processOwner) ||
 			!strcmp(processOwner, "root"))) {
 			uintptr_t shmid = atol(ipcsField[IPCS_SHMID_FIELD_NO]);
 			char *region = NULL;
@@ -400,16 +404,16 @@ errorRet:
 #else
 	pclose(ipcsOutput);
 #endif
-	
+
 	return;
 }
-		
+
 /**
  * @internal
  * @brief This function opens a file and takes a writer lock on it. If the file has been removed we repeat the process.
  *
  * This function is used to help manage files used to control System V objects (semaphores and memory)
- * 
+ *
  * @param[in] portLibrary The port library
  * @param[out] fd the file descriptor we locked on (if we are successful)
  * @param[out] isReadOnlyFD is the file opened read only (we do this only if we can not obtain write access)
@@ -419,14 +423,14 @@ errorRet:
  *
  * @return 0 on sucess or less than 0 in the case of an error
  */
-intptr_t 
+intptr_t
 ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, BOOLEAN * isReadOnlyFD, BOOLEAN canCreateNewFile, const char * filename, uintptr_t groupPerm)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	BOOLEAN weAreDone = FALSE;
 	struct stat statafter;
 	int32_t openflags =  EsOpenWrite | EsOpenRead;
-	int32_t exclcreateflags =  EsOpenCreate | EsOpenWrite | EsOpenRead | EsOpenCreateNew;	
+	int32_t exclcreateflags =  EsOpenCreate | EsOpenWrite | EsOpenRead | EsOpenCreateNew;
 	int32_t lockType = J9PORT_FILE_WRITE_LOCK;
 
 	Trc_PRT_shared_ControlFileFDWithWriteLock_EnterWithMessage("Start");
@@ -466,7 +470,7 @@ ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, B
 			int32_t mode = (1 == groupPerm) ? J9SH_BASEFILEPERM_GROUP_RW_ACCESS : J9SH_BASEFILEPERM;
 
 			*fd = omrfile_open(filename, exclcreateflags, mode);
-			if (*fd != -1) {		
+			if (*fd != -1) {
 				if (omrfile_chown(filename, OMRPORT_FILE_IGNORE_ID, getegid()) == -1) {
 					/*If this fails it is not fatal ... but we may have problems later ...*/
 					Trc_PRT_shared_ControlFileFDWithWriteLock_Message("Info: could not chown file.");
@@ -513,7 +517,7 @@ ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, B
 		} else {
 			tryOpenReadOnly = TRUE;
 		}
-		
+
 		if (TRUE == tryOpenReadOnly) {
 			/*If opening the file rw will fail then default to r*/
 			*fd = omrfile_open(filename, EsOpenRead, 0);
@@ -579,10 +583,10 @@ ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, B
 }
 /**
  * @internal
- * @brief This function closes a file and releases a writer lock on it. 
+ * @brief This function closes a file and releases a writer lock on it.
  *
  * This function is used to help manage files used to control System V objects (semaphores and memory)
- * 
+ *
  * @param[in] portLibrary The port library
  * @param[in] fd the file descriptor we wish to close
  *
