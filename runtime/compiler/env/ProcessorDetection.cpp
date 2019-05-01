@@ -733,39 +733,39 @@ TR_J9VM::initializeProcessorType()
 #ifdef TR_TARGET_S390
       // For AOT shared classes cache processor compatibility purposes, the following
       // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.getS390SupportsZNext())
+      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zNext))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ15())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z15))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ14())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z14))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ13())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z13))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZEC12())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ196())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ10())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ9())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z9))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp7);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ990())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z990))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp6);
          }

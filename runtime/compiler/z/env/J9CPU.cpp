@@ -181,23 +181,44 @@ CPU::initializeS390ProcessorFeatures()
    J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
 
    // The following conditionals are dependent on each other and must occur in this order
-   TR::Compiler->target.cpu.setS390SupportsZ9();
+   TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_z9);
 
    // On z10 or higher architectures, we should check for facility bits.
-   if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
-      TR::Compiler->target.cpu.setS390SupportsZNext();
-   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ15())
-      TR::Compiler->target.cpu.setS390SupportsZ15();
-   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
-      TR::Compiler->target.cpu.setS390SupportsZ14();
-   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
-      TR::Compiler->target.cpu.setS390SupportsZ13();
-   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
-      TR::Compiler->target.cpu.setS390SupportsZEC12();
-   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
-      TR::Compiler->target.cpu.setS390SupportsZ196();
-   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
-      TR::Compiler->target.cpu.setS390SupportsZ10();
+   if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_zNext);
+      }
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ15() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_z15);
+      }
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZ14))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_z14);
+      }
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZ13))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_z13);
+      }
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_zEC12);
+      }
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZ196))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_z196);
+      }
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6() &&
+         !TR::Options::getCmdLineOptions()->getOption(TR_DisableZ10))
+      {
+      TR::Compiler->target.cpu.setSupportsArch(TR::CPU::TR_z10);
+      }
    
    if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
       {
@@ -205,19 +226,19 @@ CPU::initializeS390ProcessorFeatures()
       }
 
    // z9 supports DFP in millicode so do not check for DFP support unless we are z10+
-   if (TR::Compiler->target.cpu.getS390SupportsZ10() &&
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) &&
          j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
       {
       TR::Compiler->target.cpu.setS390SupportsDFP();
       }
 
-   if (TR::Compiler->target.cpu.getS390SupportsZ196() && 
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196) && 
          j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_WORD))
       {
       TR::Compiler->target.cpu.setS390SupportsHPR();
       }
 
-   if (TR::Compiler->target.cpu.getS390SupportsZEC12())
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12))
       {
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
          {
@@ -233,13 +254,13 @@ CPU::initializeS390ProcessorFeatures()
          }
       }
 
-   if (TR::Compiler->target.cpu.getS390SupportsZ13() &&
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z13) &&
          j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
       {
       TR::Compiler->target.cpu.setS390SupportsVectorFacility();
       }
 
-   if (TR::Compiler->target.cpu.getS390SupportsZ14())
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z14))
       {
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
          {
@@ -252,7 +273,7 @@ CPU::initializeS390ProcessorFeatures()
          }
       }
 
-   if (TR::Compiler->target.cpu.getS390SupportsZ15())
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z15))
       {
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_3))
          {
