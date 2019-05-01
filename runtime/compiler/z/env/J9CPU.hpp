@@ -57,25 +57,6 @@ namespace J9
 
 namespace Z
 {
-
-
-enum S390SupportsArchitectures
-   {
-   S390SupportsUnknownArch = 0,
-   S390SupportsZ900        = 1,
-   S390SupportsZ990        = 2,
-   S390SupportsZ9          = 3,
-   S390SupportsZ10         = 4,
-   S390SupportsZ196        = 5,
-   S390SupportsZEC12       = 6,
-   S390SupportsZ13         = 7,
-   S390SupportsZ14         = 8,
-   S390SupportsZ15         = 9,
-   S390SupportsZNext       = 10,
-   S390SupportsLatestArch  = S390SupportsZNext
-   };
-
-
 enum // flags
    {
    //                                       = 0x00000001,     // AVAILABLE FOR USE !!
@@ -105,23 +86,10 @@ protected:
 
    CPU() :
          J9::CPU(),
-         _supportsArch(S390SupportsUnknownArch),
          _flags(0)
       {}
 
 public:
-
-   bool getS390SupportsArch(S390SupportsArchitectures arch)
-      {
-      TR_ASSERT(arch >= S390SupportsUnknownArch  && arch <= S390SupportsLatestArch, "Unknown Architecture");
-      return _supportsArch >= arch;
-      }
-
-   void setS390SupportsArch(S390SupportsArchitectures arch)
-      {
-      TR_ASSERT(arch >= S390SupportsUnknownArch && arch <= S390SupportsLatestArch, "Unknown Architecture");
-      _supportsArch = _supportsArch >= arch ? _supportsArch : arch;
-      }
 
    bool getS390SupportsZ900() {return getS390SupportsArch(S390SupportsZ900);}
    void setS390SupportsZ900() { setS390SupportsArch(S390SupportsZ900);}
@@ -210,13 +178,9 @@ public:
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
 
-private:
-
-   S390SupportsArchitectures _supportsArch;
+   private:
 
    flags32_t _flags;
-
-
    };
 
 }
