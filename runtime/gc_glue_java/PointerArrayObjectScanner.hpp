@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,28 +57,8 @@ protected:
 	 * @param[in] endPtr pointer to the array cell where scanning will stop
 	 * @param[in] flags Scanning context flags
 	 */
-	MMINLINE GC_PointerArrayObjectScanner(
-		MM_EnvironmentBase *env
-		, omrobjectptr_t arrayPtr
-		, fomrobject_t *basePtr
-		, fomrobject_t *limitPtr
-		, fomrobject_t *scanPtr
-		, fomrobject_t *endPtr
-		, uintptr_t flags
-	)
+	MMINLINE GC_PointerArrayObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t arrayPtr, fomrobject_t *basePtr, fomrobject_t *limitPtr, fomrobject_t *scanPtr, fomrobject_t *endPtr, uintptr_t flags)
 		: GC_IndexableObjectScanner(env, arrayPtr, basePtr, limitPtr, scanPtr, endPtr, flags)
-		, _mapPtr(_scanPtr)
-	{
-		_typeId = __FUNCTION__;
-	}
-
-	/**
-	 * @param env The scanning thread environment
-	 * @param objectScanner The scanner to split from
-	 * @param splitAmount The maximum number of array elements to include
-	 */
-	MMINLINE GC_PointerArrayObjectScanner(MM_EnvironmentBase *env, GC_PointerArrayObjectScanner *objectScanner, uintptr_t splitAmount)
-		: GC_IndexableObjectScanner(env, objectScanner, splitAmount)
 		, _mapPtr(_scanPtr)
 	{
 		_typeId = __FUNCTION__;
@@ -155,7 +135,8 @@ public:
 		Assert_MM_true(NULL != allocSpace);
 		/* If splitAmount is 0 the new scanner will return NULL on the first call to getNextSlot(). */
 		splitScanner = (GC_PointerArrayObjectScanner *)allocSpace;
-		new(splitScanner) GC_PointerArrayObjectScanner(env, this, splitAmount);
+		/* Create new scanner for next chunk of array starting at the end of current chunk size splitAmount elements */
+		new(splitScanner) GC_PointerArrayObjectScanner(env, _parentObjectPtr, _basePtr, _limitPtr, _endPtr, _endPtr + splitAmount, _flags);
 		splitScanner->initialize(env);
 
 		return splitScanner;
