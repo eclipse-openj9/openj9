@@ -1534,11 +1534,10 @@ isPointerInRange(void *pointer, void *start, void *end)
 static J9Object* 
 convertPointerFromToken(J9JavaVM* vm, fj9object_t token)
 {
-#if defined(OMR_GC_COMPRESSED_POINTERS)	
-	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
-	return barrier->convertPointerFromToken(token);
-#else 
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
+		return barrier->convertPointerFromToken(token);
+	}
 	return (J9Object*)token;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
 }
 #endif /* J9VM_GC_ARRAYLETS && !J9VM_GC_HYBRID_ARRAYLETS */

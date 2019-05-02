@@ -101,9 +101,13 @@ void freeVMThread(J9JavaVM *vm, J9VMThread *vmThread)
 	}
 #endif /* defined(J9VM_PORT_RUNTIME_INSTRUMENTATION) */
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	j9mem_free_memory32(vmThread->startOfMemoryBlock);
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		j9mem_free_memory32(vmThread->startOfMemoryBlock);
+	}
 #else
-	j9mem_free_memory(vmThread->startOfMemoryBlock);
+	{
+		j9mem_free_memory(vmThread->startOfMemoryBlock);
+	}
 #endif
 }
 

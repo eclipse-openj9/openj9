@@ -175,10 +175,13 @@ j9mm_iterate_spaces(
 		spaceDesc.classPointerSize = sizeof(j9objectclass_t);
 		spaceDesc.fobjectPointerDisplacement = 0;
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-		spaceDesc.fobjectPointerScale = (UDATA)1 << vm->compressedPointersShift;
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		spaceDesc.fobjectPointerScale = 1;
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			spaceDesc.fobjectPointerScale = (UDATA)1 << vm->compressedPointersShift;
+		} else
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+		{
+			spaceDesc.fobjectPointerScale = 1;
+		}
 		spaceDesc.fobjectSize = sizeof(fj9object_t);
 		spaceDesc.memorySpace = defaultMemorySpace;
 

@@ -74,12 +74,15 @@ MM_VerboseEventGCInitialized::formattedOutput(MM_VerboseOutputAgent *agent)
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"maxHeapSize\" value=\"0x%zx\" />", _event.maxHeapSize);
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"initialHeapSize\" value=\"0x%zx\" />", _event.initialHeapSize);
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefs\" value=\"true\" />");
-	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefsDisplacement\" value=\"0x%zx\" />", 0);
-	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefsShift\" value=\"0x%zx\" />", _event.compressedPointersShift);
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefs\" value=\"false\" />");
+	if (OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(_omrThread)) {
+		agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefs\" value=\"true\" />");
+		agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefsDisplacement\" value=\"0x%zx\" />", 0);
+		agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefsShift\" value=\"0x%zx\" />", _event.compressedPointersShift);
+	} else
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	{
+		agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"compressedRefs\" value=\"false\" />");
+	}
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"pageSize\" value=\"0x%zx\" />", _event.heapPageSize);
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"pageType\" value=\"%s\" />", _event.heapPageType);
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel + 1, "<attribute name=\"requestedPageSize\" value=\"0x%zx\" />", _event.heapRequestedPageSize);

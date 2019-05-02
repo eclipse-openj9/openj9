@@ -1539,8 +1539,10 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 	}
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	/* Align the Xmcrs if necessary */
-	extensions->suballocatorInitialSize = MM_Math::roundToCeiling(SUBALLOCATOR_ALIGNMENT, extensions->suballocatorInitialSize);
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+		/* Align the Xmcrs if necessary */
+		extensions->suballocatorInitialSize = MM_Math::roundToCeiling(SUBALLOCATOR_ALIGNMENT, extensions->suballocatorInitialSize);
+	}
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	return JNI_OK;

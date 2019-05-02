@@ -2063,11 +2063,7 @@ impl_jitReferenceArrayCopy(J9VMThread *currentThread, UDATA lengthInBytes)
 		(J9IndexableObject*)currentThread->floatTemp2,
 		(fj9object_t*)currentThread->floatTemp3,
 		(fj9object_t*)currentThread->floatTemp4,
-#if defined(OMR_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
-		(I_32)(lengthInBytes >> 2)
-#else
-		(I_32)(lengthInBytes >> 3)
-#endif /* OMR_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
+		(I_32)(lengthInBytes / (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread) ? sizeof(U_32) : sizeof(UDATA)))
 	)) {
 		exception = (void*)-1;
 	}
