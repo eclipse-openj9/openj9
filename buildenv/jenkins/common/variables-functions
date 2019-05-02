@@ -456,17 +456,29 @@ def set_test_variables() {
 def set_test_targets() {
     TESTS_TARGETS = params.TESTS_TARGETS
     if (!TESTS_TARGETS) {
-        // set default TESTS_TARGETS for pipeline job (run all tests)
-        TESTS_TARGETS = "_sanity,_extended"
+        // set default TESTS_TARGETS for pipeline job (fetch from variables file)
+        TESTS_TARGETS = get_default_test_targets()
     }
 
     EXCLUDED_TESTS = []
     if (VARIABLES."${SPEC}".excluded_tests) {
         def excludedTests = get_value(VARIABLES."${SPEC}".excluded_tests, SDK_VERSION)
         if (excludedTests) {
-            EXCLUDED_TESTS.addAll(excludedTests)
+            EXCLUDED_TESTS.addAll(excludedTests.keySet())
         }
     }
+
+    echo "TESTS_TARGETS: ${TESTS_TARGETS}"
+    echo "EXCLUDED_TESTS: ${EXCLUDED_TESTS}"
+}
+
+def get_default_test_targets() {
+    if (VARIABLES.tests_targets && VARIABLES.tests_targets.default) {
+        // VARIABLES.tests_targets.default is a map where all values are null
+        return VARIABLES.tests_targets.default.keySet().join(',')
+    }
+
+    return ''
 }
 
 def set_slack_channel() {
