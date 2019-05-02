@@ -275,9 +275,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    {
    public:
       friend class TR::CompilationInfo;
-      CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
-         :CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread), 
-         _recompilationMethodInfo(NULL), _seqNo(0), _waitToBeNotified(false) {}
+      CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
       virtual void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
       TR_PersistentMethodInfo *getRecompilationMethodInfo() { return _recompilationMethodInfo; }
       uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
