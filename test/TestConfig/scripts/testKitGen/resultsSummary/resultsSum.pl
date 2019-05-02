@@ -56,9 +56,12 @@ sub resultReporter {
 	my $numOfFailed = 0;
 	my $numOfPassed = 0;
 	my $numOfSkipped = 0;
+	my $numOfDisabled = 0;
 	my $numOfTotal = 0;
+	my $runningDisabled = 0;
 	my @passed;
 	my @failed;
+	my @disabled;
 	my @capSkipped;
 	my $tapString = '';
 	my $fhIn;
@@ -105,6 +108,13 @@ sub resultReporter {
 						if (($diagnostic eq 'failure') || ($diagnostic eq 'all')) {
 							$tapString .= $output;
 						}
+					} elsif ($result eq ($testName . "_DISABLED\n")) {
+						$result =~ s/_DISABLED\n$//;
+						push (@disabled, $result);
+						$numOfDisabled++;
+						$numOfTotal++;
+					} elsif ($result eq ("Test is disabled due to:\n")) {
+						$runningDisabled = 1;
 					} elsif ($result =~ /(capabilities \(.*?\))\s*=>\s*${testName}_SKIPPED\n/) {
 						my $capabilities = $1;
 						push (@capSkipped, "$testName - $capabilities");
@@ -127,10 +137,10 @@ sub resultReporter {
 
 	#generate console output
 	print "TEST TARGETS SUMMARY\n";
-	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
-	if ($numOfPassed != 0) {
-		printTests(\@passed, "PASSED test targets");
+	if ($numOfDisabled != 0) {
+		printTests(\@disabled, "DISABLED test targets");
 		print "\n";
 	}
 
@@ -140,14 +150,25 @@ sub resultReporter {
 		print "\n";
 	}
 
+	if ($numOfPassed != 0) {
+		printTests(\@passed, "PASSED test targets");
+		print "\n";
+	}
+
 	if ($numOfFailed != 0) {
 		printTests(\@failed, "FAILED test targets");
 		print "\n";
 	}
 
-	$numOfExecuted = $numOfTotal - $numOfSkipped;
+	$numOfExecuted = $numOfTotal - $numOfSkipped - $numOfDisabled;
 
-	print "TOTAL: $numOfTotal   EXECUTED: $numOfExecuted   PASSED: $numOfPassed   FAILED: $numOfFailed   SKIPPED: $numOfSkipped\n";
+	print "TOTAL: $numOfTotal   EXECUTED: $numOfExecuted   PASSED: $numOfPassed   FAILED: $numOfFailed";
+	# Hide numOfDisabled when running disabled tests list.
+	if ($runningDisabled == 0) {
+		print "   DISABLED: $numOfDisabled";   
+	}
+	print "   SKIPPED: $numOfSkipped";
+	print "\n";
 	if ($numOfTotal > 0) {
 		#generate tap output
 		my $dir = dirname($tapFile);
@@ -163,7 +184,7 @@ sub resultReporter {
 		}
 	}
 
-	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	unlink($resultFile);
 

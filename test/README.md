@@ -117,14 +117,23 @@ Supported groups  are `regular|native`
     make _sanity.native
     make _extended.functional.native
 ```
+
 ## 5) How to execute disabled tests?
 
-If a test is disabled using `<disbaled>` tag in playlist.xml, it can be executed through specifying the test target or add `disabled` in front of regular target.
+If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
 
 ```    
-    make _testA
+    make _testA    // testA has <disabled> tag in playlist.xml  
     make _disabled.sanity.functional
     make _disabled.extended
+```
+
+Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
+
+```    
+    make _echo.disabled.testA
+    make _echo.disabled.sanity.functional
+    make _echo.disabled.extended
 ```
 
 ## 6) How to execute a directory of tests?
@@ -164,7 +173,11 @@ At the end of each run, test results summary will be printed:
 
 ```
     TEST TARGETS SUMMARY
-    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    DISABLED test targets:
+	    cmdLineTester_pltest_tty_extended_0
+	    cmdLineTester_pltest_numcpus_notBound_0
+        ...
     PASSED test targets:
         cmdLineTester_javaAssertions_0
         cmdLineTester_LazyClassLoading_0
@@ -173,8 +186,8 @@ At the end of each run, test results summary will be printed:
         TestAttachAPIEnabling_SE80_0
         TestFileLocking_SE80_0
 
-    TOTAL: 84   EXECUTED: 84   PASSED: 82   FAILED: 2   SKIPPED: 0
-    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    TOTAL: 91   EXECUTED: 84   PASSED: 82   FAILED: 2   DISABLED: 7   SKIPPED: 0
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ```
 
 You can find the failed test output in console output.
