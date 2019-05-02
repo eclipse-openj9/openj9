@@ -90,6 +90,16 @@ build_discarder:
 restart_timeout:
   time: '5'
   units: 'HOURS'
+tests_targets:
+  sanity:
+    ? sanity.functional
+  extended:
+    ? extended.functional
+  default: &defaultTests
+    ? extended.functional
+    ? extended.system
+    ? sanity.functional
+    ? sanity.system
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
@@ -317,25 +327,13 @@ x86-64_linux_cm:
       next: 'source /opt/rh/devtoolset-7/enable'
   excluded_tests:
     8:
-      - 'sanity.functional'
-      - 'sanity.system'
-      - 'extended.functional'
-      - 'extended.system'
+      <<: *defaultTests
     11:
-      - 'sanity.functional'
-      - 'sanity.system'
-      - 'extended.functional'
-      - 'extended.system'
+      <<: *defaultTests
     12:
-      - 'sanity.functional'
-      - 'sanity.system'
-      - 'extended.functional'
-      - 'extended.system'
+      <<: *defaultTests
     next:
-      - 'sanity.functional'
-      - 'sanity.system'
-      - 'extended.functional'
-      - 'extended.system'
+      <<: *defaultTests
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
