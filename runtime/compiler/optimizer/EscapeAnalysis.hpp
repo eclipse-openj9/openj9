@@ -39,6 +39,7 @@
 #include "optimizer/OptimizationManager.hpp"
 
 class TR_EscapeAnalysis;
+class TR_HashTab;
 class TR_OpaqueClassBlock;
 class TR_ResolvedMethod;
 class TR_UseDefInfo;
@@ -458,6 +459,9 @@ class TR_EscapeAnalysis : public TR::Optimization
    bool     collectValueNumbersOfIndirectAccessesToObject(TR::Node *node, Candidate *candidate, TR::Node *indirectStore, TR::NodeChecklist& visited, int32_t baseChildVN = -1);
    void     checkDefsAndUses();
    bool     checkDefsAndUses(TR::Node *node, Candidate *candidate);
+   void     gatherUsesThroughAternary();
+   void     gatherUsesThroughAternary(TR::Node *node, TR::NodeChecklist& visited);
+   bool     checkUsesThroughAternary(TR::Node *node, Candidate *candidate);
    bool     checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candidate *candidate, bool isImmediateUse);
    bool     checkOverlappingLoopAllocation(TR::Node *useNode, Candidate *candidate);
    bool     checkOverlappingLoopAllocation(TR::Node *node, TR::Node *useNode, TR::Node *allocNode, rcount_t &numReferences);
@@ -645,6 +649,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_ScratchList<TR_DependentAllocations> _dependentAllocations;
    TR_BitVector *             _vnTemp;
    TR_BitVector *             _vnTemp2;
+   TR_HashTab *               _nodeUsesThroughAternary;
    };
 
 //class Candidate;
