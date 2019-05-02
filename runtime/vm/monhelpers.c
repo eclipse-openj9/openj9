@@ -320,11 +320,11 @@ cancelLockReservation(J9VMThread* vmStruct)
 					Assert_VM_true(J9_FLATLOCK_COUNT(oldLock) == 0);
 				}
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-				compareAndSwapU32(lockEA, oldLock, newLock);
-#else
-				compareAndSwapUDATA(lockEA, oldLock, newLock);
-#endif
+				if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmStruct)) {
+					compareAndSwapU32((uint32_t*)lockEA, (uint32_t)oldLock, (uint32_t)newLock);
+				} else {
+					compareAndSwapUDATA((uintptr_t*)lockEA, (uintptr_t)oldLock, (uintptr_t)newLock);
+				}
 
 				/* 
 				 * This can only fail if another canceller has modified the lockword, in which case the

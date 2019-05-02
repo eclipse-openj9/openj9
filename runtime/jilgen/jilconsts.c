@@ -300,6 +300,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 			writeConstant(OMRPORTLIB, fd, "ASM_OMR_GC_COMPRESSED_POINTERS", 1) |
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_FULL_POINTERS)
+			writeConstant(OMRPORTLIB, fd, "ASM_OMR_GC_FULL_POINTERS", 1) |
+#endif /* OMR_GC_FULL_POINTERS */
 #if defined(J9VM_GC_TLH_PREFETCH_FTA)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_GC_TLH_PREFETCH_FTA", 1) |
 #endif /* J9VM_GC_TLH_PREFETCH_FTA */

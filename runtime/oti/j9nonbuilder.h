@@ -4962,6 +4962,12 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, object, value) J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((vmThread), (j9object_t*)&((object)->blockingEnterObject), (value))
 #define TMP_J9VMTHREAD_BLOCKINGENTEROBJECT(object) ((object)->blockingEnterObject)
 
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) TRUE
+#else /* OMR_GC_COMPRESSED_POINTERS */
+#define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) FALSE
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
 	jobject  ( *idToReflectField)(struct J9VMThread* vmThread, jfieldID fieldID) ;
@@ -5398,6 +5404,12 @@ typedef struct J9JavaVM {
 #define J9VM_DEBUG_ATTRIBUTE_MAINTAIN_FULL_INLINE_MAP  0x40000
 #define J9VM_DEBUG_ATTRIBUTE_UNUSED_0x800000  0x800000
 #define J9VM_DEFLATION_POLICY_NEVER  0
+
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) TRUE
+#else /* OMR_GC_COMPRESSED_POINTERS */
+#define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) FALSE
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /* Data block for JIT instance field watch reporting */
 
