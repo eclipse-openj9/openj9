@@ -521,40 +521,24 @@ void TR::AMD64JNILinkage::buildJNICallOutFrame(
    //    1:   frame flags
    //    0:   RAM method
    //
-   TR::X86RegImmInstruction *instr = generateRegImmInstruction(
-      SUBRegImms(),
-      callNode,
-      espReal,
-      _JNIDispatchInfo.numJNIFrameSlotsPushed * TR::Compiler->om.sizeofReferenceAddress(),
-      cg());
 
    // Build stack frame in Java stack.  Tag current bp.
    //
-   uintptrj_t tagBits = fej9->constJNICallOutFrameSpecialTag();
+   uintptrj_t tagBits = 0;
 
    // If the current method is simply a wrapper for the JNI call, hide the call-out stack frame.
    //
+   static_assert(IS_32BIT_SIGNED(J9SF_A0_INVISIBLE_TAG), "J9SF_A0_INVISIBLE_TAG must fit in immediate");
    if (resolvedMethod == comp()->getCurrentMethod())
-      tagBits |= fej9->constJNICallOutFrameInvisibleTag();
+      tagBits |= J9SF_A0_INVISIBLE_TAG;
 
    // Push tag bits (savedA0 slot).
    //
-   TR::MemoryReference *tempMR = generateX86MemoryReference(espReal, 4*TR::Compiler->om.sizeofReferenceAddress(), cg());
-   if (tagBits <= 0x7fffffff)
-      {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, tagBits, cg());
-      }
-   else
-      {
-      if (!scratchReg)
-         scratchReg = cg()->allocateRegister();
-
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, tagBits, cg());
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
-      }
+   generateImmInstruction(PUSHImm4, callNode, tagBits, cg());
 
    // (skip savedPC slot).
    //
+   generateImmInstruction(PUSHImm4, callNode, 0, cg());
 
    // Push return address in this frame (savedCP slot).
    //
@@ -572,50 +556,31 @@ void TR::AMD64JNILinkage::buildJNICallOutFrame(
 
    returnAddressInstr->setReloKind(TR_AbsoluteMethodAddress);
 
-
-   generateMemRegInstruction(
-      S8MemReg,
-      callNode,
-      generateX86MemoryReference(espReal, 2*TR::Compiler->om.sizeofReferenceAddress(), cg()),
-      scratchReg,
-      cg());
+   generateRegInstruction(PUSHReg, callNode, scratchReg, cg());
 
    // Push frame flags.
    //
-   tempMR = generateX86MemoryReference(espReal, TR::Compiler->om.sizeofReferenceAddress(), cg());
-   uintptrj_t frameFlags = fej9->constJNICallOutFrameFlags();
-   if (frameFlags <= 0x7fffffff)
-      {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, frameFlags, cg());
-      }
-   else
-      {
-      if (!scratchReg)
-         scratchReg = cg()->allocateRegister();
-
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, frameFlags, cg());
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
-      }
+   static_assert(IS_32BIT_SIGNED(J9_SSF_JIT_JNI_CALLOUT), "J9_SSF_JIT_JNI_CALLOUT must fit in immediate");
+   generateImmInstruction(PUSHImm4, callNode, J9_SSF_JIT_JNI_CALLOUT, cg());
 
    // Push the RAM method for the native.
    //
-   static const int reloTypes[] = {TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst};
-   int reloType = callSymbol->getMethodKind()-1; //method kinds are 1-based!!
-
-   tempMR = generateX86MemoryReference(espReal, 0, cg());
+   auto tempMR = generateX86MemoryReference(espReal, 0, cg());
    uintptrj_t methodAddr = (uintptrj_t) resolvedMethod->resolvedMethodAddress();
-   if (methodAddr <= 0x7fffffff && !TR::Compiler->om.nativeAddressesCanChangeSize())
+   if (IS_32BIT_SIGNED(methodAddr) && !TR::Compiler->om.nativeAddressesCanChangeSize())
       {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, methodAddr, cg());
+      generateImmInstruction(PUSHImm4, callNode, methodAddr, cg());
       }
    else
       {
       if (!scratchReg)
          scratchReg = cg()->allocateRegister();
 
+      static const int reloTypes[] = { TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst };
+      int reloType = callSymbol->getMethodKind() - 1; //method kinds are 1-based!!
       TR_ASSERT(reloTypes[reloType], "There shouldn't be direct JNI interface calls!");
       generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, methodAddr, cg(), reloTypes[reloType]);
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
+      generateRegInstruction(PUSHReg, callNode, scratchReg, cg());
       }
 
    // Store out pc and literals values indicating the callout frame.
@@ -1231,7 +1196,7 @@ void TR::AMD64JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
    // leave a bunch of pinned garbage behind that screws up the gc quality forever.
    //
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   TR_ASSERT(IS_32BIT_SIGNED(J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS), "J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS must fit in immediate");
+   static_assert(IS_32BIT_SIGNED(J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS), "J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS must fit in immediate");
 
    TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
