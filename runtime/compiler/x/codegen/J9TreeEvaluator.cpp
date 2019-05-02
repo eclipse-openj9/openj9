@@ -12962,7 +12962,8 @@ void J9::X86::TreeEvaluator::rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeG
 TR::Register *J9::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_none)
+   // Perform regular load if no rdbar required.
+   if (TR::Compiler->om.readBarrierType() == gc_modron_readbar_none)
       return TR::TreeEvaluator::iloadEvaluator(node, cg);
 
    //sequence for Concurrent Scavenge
@@ -13007,7 +13008,8 @@ TR::Register *J9::X86::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGe
 TR::Register *J9::X86::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_none)
+   // Perform regular load if no rdbar required.
+   if (TR::Compiler->om.readBarrierType() == gc_modron_readbar_none)
       return TR::TreeEvaluator::aloadEvaluator(node, cg);
 
    //sequence for Concurrent Scavenge
