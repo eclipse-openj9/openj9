@@ -3718,6 +3718,16 @@ ClientSessionData::updateMaxReceivedSeqNo(uint32_t seqNo)
    }
 
 
+TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
+   : CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread),
+   _recompilationMethodInfo(NULL),
+   _seqNo(0),
+   _waitToBeNotified(false),
+   _methodIPDataPerComp(NULL),
+   _resolvedMethodInfoMap(NULL),
+   _resolvedMirrorMethodsPersistIPInfo(NULL)
+   {}
+
 // waitForMyTurn needs to be exeuted with sequencingMonitor in hand
 void
 TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry)
