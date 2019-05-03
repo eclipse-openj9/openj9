@@ -1135,6 +1135,7 @@ extern J9_CFUNC UDATA jitGetRealCPIndex(J9VMThread *currentThread, J9ROMClass *r
 extern J9_CFUNC struct J9Method* jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpOrSplitIndex);
 extern J9_CFUNC struct J9Method* jitResolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpOrSplitIndex, UDATA resolveFlags);
 extern J9_CFUNC struct J9Method* jitResolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpOrSplitIndex, UDATA resolveFlags);
+extern J9_CFUNC UDATA jitFindField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLEAN isStatic, J9Class **declaringClass);
 
 #endif /* J9VM_INTERP_NATIVE_SUPPORT*/
 #endif /* _J9VMJITNATIVECOMPILESUPPORT_ */

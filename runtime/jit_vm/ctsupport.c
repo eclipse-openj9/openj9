@@ -404,7 +404,7 @@ jitResetAllMethodsAtStartupHelper(J9VMThread *vmStruct, J9Class *root)
  * @return pointer cast to UDATA 
  */
 static UDATA
-findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLEAN isStatic, J9Class **declaringClass)
+jitFindField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLEAN isStatic, J9Class **declaringClass)
 {
 	J9JavaVM *javaVM = vmStruct->javaVM;
 	J9ROMFieldRef *romRef; 
@@ -496,10 +496,10 @@ jitFieldsAreIdentical (J9VMThread *vmStruct, J9ConstantPool *cp1, UDATA index1, 
 	}
 	if (compareFields) {
 		J9Class *c1 = NULL;
-		UDATA f1 = findField(vmStruct, cp1, index1, isStatic, &c1);
+		UDATA f1 = jitFindField(vmStruct, cp1, index1, isStatic, &c1);
 		if (0 != f1) {
 			J9Class *c2 = NULL;
-			UDATA f2 = findField(vmStruct, cp2, index2, isStatic, &c2);
+			UDATA f2 = jitFindField(vmStruct, cp2, index2, isStatic, &c2);
 			if (0 != f2) {
 					identical = ((f1 == f2) && (c1 == c2));
 			}
