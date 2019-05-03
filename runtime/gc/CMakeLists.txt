@@ -86,6 +86,8 @@ omr_add_exports(j9gc
 	J9VMDllMain
 )
 
+target_enable_ddr(j9gc j9ddr)
+
 install(
 	TARGETS j9gc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

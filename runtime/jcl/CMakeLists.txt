@@ -215,6 +215,8 @@ endif()
 
 include(exports.cmake)
 
+target_enable_ddr(jclse j9ddr)
+
 install(
 	TARGETS jclse
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
