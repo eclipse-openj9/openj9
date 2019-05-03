@@ -6808,12 +6808,6 @@ isPPC64bit() {
 #endif /* (AIXPPC || LINUXPPC) && !J9OS_I5 */
 
 void
-installJitBytecodes(J9JavaVM *javaVM)
-{
-}
-
-
-void
 initializeExecutionModel(J9VMThread *currentThread)
 {
 	/* Build initial call-out frame. */
