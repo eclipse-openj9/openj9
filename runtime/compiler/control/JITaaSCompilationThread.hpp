@@ -105,6 +105,7 @@ class ClientSessionData
       TR_FieldAttributesCache *_staticAttributesCache;
       TR_FieldAttributesCache *_fieldAttributesCacheAOT;
       TR_FieldAttributesCache *_staticAttributesCacheAOT;
+      J9ConstantPool *_constantPool;
       };
 
    struct J9MethodInfo
@@ -149,6 +150,7 @@ class ClientSessionData
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
    PersistentUnorderedMap<J9Class *, UDATA *> & getClassClainDataCache() { return _classChainDataMap; }
+   PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void processUnloadedClasses(JITaaS::J9ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
@@ -172,6 +174,7 @@ class ClientSessionData
    int64_t getTimeOflastAccess() const { return _timeOfLastAccess; }
 
    TR::Monitor *getSequencingMonitor() { return _sequencingMonitor; }
+   TR::Monitor *getConstantPoolMonitor() { return _constantPoolMapMonitor; }
    TR_MethodToBeCompiled *getOOSequenceEntryList() { return _OOSequenceEntryList; }
    TR_MethodToBeCompiled *notifyAndDetachFirstWaitingThread();
    void insertIntoOOSequenceEntryList(TR_MethodToBeCompiled *entry);
@@ -205,12 +208,15 @@ class ClientSessionData
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classByNameMap;
 
    PersistentUnorderedMap<J9Class *, UDATA *> _classChainDataMap;
+   //Constant pool to class map
+   PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> _constantPoolToClassMap;
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_classMapMonitor;
    TR::Monitor *_classChainDataMapMonitor;
    // The following monitor is used to protect access to _expectedSeqNo and 
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
    TR::Monitor *_sequencingMonitor;
+   TR::Monitor *_constantPoolMapMonitor;
    // Compilation requests that arrived out-of-sequence wait in 
    // _OOSequenceEntryList for their turn to be processed
    TR_MethodToBeCompiled *_OOSequenceEntryList;
@@ -332,7 +338,7 @@ class JITaaSHelpers
       };
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.
-   using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<uint8_t>, bool, uintptrj_t , bool, uint32_t, TR_OpaqueClassBlock *, void *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, uintptrj_t, J9ROMClass *>;
+   using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<uint8_t>, bool, uintptrj_t , bool, uint32_t, TR_OpaqueClassBlock *, void *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, uintptrj_t, J9ROMClass *, uintptrj_t>;
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
@@ -342,6 +348,10 @@ class JITaaSHelpers
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType,  void *data);
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
+   //purgeCache function can only be used inside the JITaaSCompilationThread.cpp file.
+   //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error. 
+   template <typename map, typename key>
+   static void purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
    };
 
 #endif

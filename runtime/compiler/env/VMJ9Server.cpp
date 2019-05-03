@@ -1449,9 +1449,24 @@ TR_J9ServerVM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType a
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
    {
+   auto & constantPoolMap = _compInfoPT->getClientData()->getConstantPoolToClassMap();
+      {
+      // check if the value is cached
+      OMR::CriticalSection getConstantPoolMonitor(_compInfoPT->getClientData()->getConstantPoolMonitor());
+      auto it = constantPoolMap.find(cp);
+      if (it != constantPoolMap.end())
+         return it->second;
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getClassFromCP, cp);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   TR_OpaqueClassBlock * clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   if (clazz)
+      {
+      OMR::CriticalSection getConstantPoolMonitor(_compInfoPT->getClientData()->getConstantPoolMonitor());
+      constantPoolMap.insert({cp, clazz});
+      }
+   return clazz;
    }
 
 void
