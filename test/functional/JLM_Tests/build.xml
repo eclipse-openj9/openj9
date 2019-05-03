@@ -64,7 +64,7 @@
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
-						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
+						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
 					</classpath>
 				</javac>
 			</then>
