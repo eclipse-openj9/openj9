@@ -541,18 +541,20 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     levels.unique(true)
     groups.unique(true)
 
-    def parameters = [
-        string(name: 'LEVELS', value: levels.join(',')),
-        string(name: 'GROUPS', value: groups.join(',')),
-        string(name: 'JDK_VERSIONS', value: SDK_VERSION),
-        string(name: 'SUFFIX', value: "_${convert_build_identifier(BUILD_IDENTIFIER)}"),
-        string(name: 'ARCH_OS_LIST', value: SPEC),
-        string(name: 'JDK_IMPL', value: 'openj9'),
-        string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
-        string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
-        string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS)
-    ]
-    build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
+    if (levels && groups) {
+        def parameters = [
+            string(name: 'LEVELS', value: levels.join(',')),
+            string(name: 'GROUPS', value: groups.join(',')),
+            string(name: 'JDK_VERSIONS', value: SDK_VERSION),
+            string(name: 'SUFFIX', value: "_${convert_build_identifier(BUILD_IDENTIFIER)}"),
+            string(name: 'ARCH_OS_LIST', value: SPEC),
+            string(name: 'JDK_IMPL', value: 'openj9'),
+            string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
+            string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
+            string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS)
+        ]
+        build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
+    }
 }
 
 return this
