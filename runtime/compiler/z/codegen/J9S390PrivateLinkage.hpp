@@ -25,11 +25,13 @@
 
 #include "codegen/Linkage.hpp"
 
+namespace TR { class S390JNICallDataSnippet; }
 namespace TR { class AutomaticSymbol; }
 namespace TR { class CodeGenerator; }
 namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class Snippet; }
+
 
 namespace TR {
 
@@ -84,11 +86,11 @@ public:
    virtual uint32_t setPreservedRegisterMapForGC(uint32_t m)  { return _preservedRegisterMapForGC = m; }
    virtual uint32_t getPreservedRegisterMapForGC()        { return _preservedRegisterMapForGC; }
 
-   virtual TR::RealRegister::RegNum getSystemStackPointerRegister(){ return cg()->getLinkage(TR_System)->getStackPointerRegister(); }
+   virtual TR::RealRegister::RegNum getSystemStackPointerRegister();
    virtual TR::RealRegister *getSystemStackPointerRealRegister() {return getRealRegister(getSystemStackPointerRegister());}
 
    virtual int32_t setupLiteralPoolRegister(TR::Snippet *firstSnippet);
-   
+
    //called by buildNativeDispatch
    virtual void setupRegisterDepForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions * &, int64_t &, TR::SystemLinkage *, TR::Node * &, bool &, TR::Register **, TR::Register *&);
    virtual void setupBuildArgForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions *, bool, bool, int64_t &, TR::Node *, bool, TR::SystemLinkage *);
