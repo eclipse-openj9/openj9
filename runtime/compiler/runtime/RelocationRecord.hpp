@@ -141,8 +141,12 @@ typedef TR_RelocationRecordNopGuardBinaryTemplate TR_RelocationRecordInlinedInte
 struct TR_RelocationRecordProfiledInlinedMethodBinaryTemplate : TR_RelocationRecordInlinedMethodBinaryTemplate
    {
    UDATA _classChainIdentifyingLoaderOffsetInSharedCache;
+
+   // Class chain of the defining class of the inlined method
    UDATA _classChainForInlinedMethod;
-   UDATA _vTableSlot;
+
+   // The inlined j9method's index into its defining class' array of j9methods
+   UDATA _methodIndex;
    };
 
 typedef TR_RelocationRecordProfiledInlinedMethodBinaryTemplate TR_RelocationRecordProfiledGuardBinaryTemplate;
@@ -1229,12 +1233,15 @@ class TR_RelocationRecordProfiledInlinedMethod : public TR_RelocationRecordInlin
       void setClassChainForInlinedMethod(TR_RelocationTarget *reloTarget, uintptrj_t classChainForInlinedMethod);
       uintptrj_t classChainForInlinedMethod(TR_RelocationTarget *reloTarget);
 
-      void setVTableSlot(TR_RelocationTarget *reloTarget, uintptrj_t vTableSlot);
-      uintptrj_t vTableSlot(TR_RelocationTarget *reloTarget);
+      void setMethodIndex(TR_RelocationTarget *reloTarget, uintptrj_t methodIndex);
+      uintptrj_t methodIndex(TR_RelocationTarget *reloTarget);
 
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
 
+      TR_OpaqueMethodBlock *getInlinedMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueClassBlock *inlinedCodeClass);
+
    private:
+
       virtual void setupInlinedMethodData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual bool checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedCodeClass);
       virtual void activateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {}

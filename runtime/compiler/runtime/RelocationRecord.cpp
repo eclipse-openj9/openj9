@@ -2689,7 +2689,7 @@ TR_RelocationRecordProfiledInlinedMethod::print(TR_RelocationRuntime *reloRuntim
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    reloLogger->printf("\tclassChainIdentifyingLoaderOffsetInSharedCache %x\n", classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
    reloLogger->printf("\tclassChainForInlinedMethod %x\n", classChainForInlinedMethod(reloTarget));
-   reloLogger->printf("\tvTableSlot %x\n", vTableSlot(reloTarget));
+   reloLogger->printf("\tmethodIndex %x\n", methodIndex(reloTarget));
    }
 
 int32_t
@@ -2723,15 +2723,15 @@ TR_RelocationRecordProfiledInlinedMethod::classChainForInlinedMethod(TR_Relocati
    }
 
 void
-TR_RelocationRecordProfiledInlinedMethod::setVTableSlot(TR_RelocationTarget *reloTarget, uintptrj_t vTableSlot)
+TR_RelocationRecordProfiledInlinedMethod::setMethodIndex(TR_RelocationTarget *reloTarget, uintptrj_t methodIndex)
    {
-   reloTarget->storeRelocationRecordValue(vTableSlot, (uintptrj_t *) &((TR_RelocationRecordProfiledInlinedMethodBinaryTemplate *)_record)->_vTableSlot);
+   reloTarget->storeRelocationRecordValue(methodIndex, (uintptrj_t *) &((TR_RelocationRecordProfiledInlinedMethodBinaryTemplate *)_record)->_methodIndex);
    }
 
 uintptrj_t
-TR_RelocationRecordProfiledInlinedMethod::vTableSlot(TR_RelocationTarget *reloTarget)
+TR_RelocationRecordProfiledInlinedMethod::methodIndex(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordProfiledInlinedMethodBinaryTemplate *)_record)->_vTableSlot);
+   return reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordProfiledInlinedMethodBinaryTemplate *)_record)->_methodIndex);
    }
 
 
@@ -2739,6 +2739,23 @@ bool
 TR_RelocationRecordProfiledInlinedMethod::checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedClass)
    {
    return true;
+   }
+
+TR_OpaqueMethodBlock *
+TR_RelocationRecordProfiledInlinedMethod::getInlinedMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueClassBlock *inlinedCodeClass)
+   {
+   J9Method *resolvedMethods = static_cast<J9Method *>(reloRuntime->fej9()->getMethods(inlinedCodeClass));
+   J9Method *inlinedMethod = NULL;
+
+   uint32_t numMethods = reloRuntime->fej9()->getNumMethods(inlinedCodeClass);
+   uint32_t methodIndex = this->methodIndex(reloTarget);
+
+   if (methodIndex < numMethods)
+      {
+      inlinedMethod = &(resolvedMethods[methodIndex]);
+      }
+
+   return reinterpret_cast<TR_OpaqueMethodBlock *>(inlinedMethod);
    }
 
 void
@@ -2801,7 +2818,7 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
 
       if (inlinedSiteIsValid)
          {
-         inlinedMethod = * (TR_OpaqueMethodBlock **) (((uint8_t *)reloPrivateData->_inlinedCodeClass) + vTableSlot(reloTarget));
+         inlinedMethod = getInlinedMethod(reloRuntime, reloTarget, inlinedCodeClass);
          if (!inlinedMethod)
             inlinedSiteIsValid = false;
          }
@@ -2908,7 +2925,7 @@ void
 TR_RelocationRecordProfiledMethodGuard::setupInlinedMethodData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
    TR_RelocationRecordProfiledInlinedMethodPrivateData *reloPrivateData = &(privateData()->profiledInlinedMethod);
-   TR_OpaqueMethodBlock *inlinedMethod = * (TR_OpaqueMethodBlock **) (((uint8_t *)reloPrivateData->_inlinedCodeClass) + vTableSlot(reloTarget));
+   TR_OpaqueMethodBlock *inlinedMethod = getInlinedMethod(reloRuntime, reloTarget, reloPrivateData->_inlinedCodeClass);
    reloPrivateData->_guardValue = (uintptrj_t) inlinedMethod;
    }
 

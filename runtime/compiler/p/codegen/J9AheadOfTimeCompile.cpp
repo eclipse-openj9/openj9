@@ -628,7 +628,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_ProfiledMethodGuardRelocation:
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
-         TR_OpaqueClassBlock *inlinedCodeClass = guard->getThisClass();
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
          *(uintptrj_t *) cursor = (uintptrj_t) inlinedSiteIndex;
@@ -636,6 +635,11 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          TR::SymbolReference *callSymRef = guard->getSymbolReference();
          TR_ResolvedMethod *owningMethod = callSymRef->getOwningMethod(comp);
+
+         TR_InlinedCallSite & ics = comp->getInlinedCallSite(inlinedSiteIndex);
+         TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
+         TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
+
          *(uintptrj_t *) cursor = (uintptrj_t) owningMethod->constantPool(); // record constant pool
          cursor += SIZEPOINTER;
 
@@ -651,9 +655,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             }
          cursor += SIZEPOINTER;
 
-         int32_t len;
-         char *className = fej9->getClassNameChars(inlinedCodeClass, len);
-
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
          void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
@@ -666,22 +667,8 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          cursor = emitClassChainOffset(cursor, inlinedCodeClass);
 
-         uintptrj_t offset;
-         TR::MethodSymbol *calleeSymbol = callSymRef->getSymbol()->castToMethodSymbol();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, inlinedCodeClass) && calleeSymbol->isInterface())
-            {
-            int32_t index = owningMethod->getResolvedInterfaceMethodOffset(inlinedCodeClass, callSymRef->getCPIndex());
-            offset = (uintptrj_t) index;
-            if (index < 0)
-               offset = (uintptrj_t) fej9->virtualCallOffsetToVTableSlot(index);
-            }
-         else
-            {
-            offset = (int32_t) callSymRef->getOffset();
-            offset = (uintptrj_t) fej9->virtualCallOffsetToVTableSlot((int32_t) callSymRef->getOffset());
-            }
-
-         *(uintptrj_t *) cursor = offset;
+         uintptrj_t methodIndex = fej9->getMethodIndexInClass(inlinedCodeClass, inlinedMethod->getNonPersistentIdentifier());
+         *(uintptrj_t *)cursor = methodIndex;
          cursor += SIZEPOINTER;
          }
          break;
