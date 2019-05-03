@@ -3495,6 +3495,14 @@ TR::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_Dispa
 
    }
 
+
+TR::RealRegister::RegNum
+TR::S390PrivateLinkage::getSystemStackPointerRegister()
+   {
+   return cg()->getLinkage(TR_System)->getStackPointerRegister();
+   }
+
+
 TR::J9S390JNILinkage::J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    :TR::S390PrivateLinkage(cg, elc, lc)
    {
