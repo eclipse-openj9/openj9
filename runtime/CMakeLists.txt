@@ -57,7 +57,7 @@ else()
 	set(OMR_TRACE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 include(OmrTracegen)
-
+include(OmrDDRSupport)
 include(cmake/build_tags.cmake)
 include(cmake/compiler_config.cmake)
 include(cmake/J9vmGenAsm.cmake)
@@ -263,6 +263,8 @@ target_link_libraries(j9vm_main_wrapper
 ### OMR configuration stuff
 ###
 
+make_ddr_set(j9ddr)
+
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
 set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "")
@@ -276,6 +278,8 @@ set(OMR_HOOK_LIB "j9hookable" CACHE INTERNAL "")
 set(OMR_PORT_LIB "j9prt" CACHE INTERNAL "")
 set(OMR_THREAD_LIB "j9thr" CACHE INTERNAL "")
 set(OMR_TRACE_LIB "j9trc" CACHE INTERNAL "")
+
+set(OMR_DDR_SET "j9ddr" CACHE INTERNAL "")
 
 add_subdirectory(gc_glue_java)
 # hack to add our binary dir to omr include path

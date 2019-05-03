@@ -44,6 +44,10 @@ endif()
 get_target_property(thread_exports j9thr_obj EXPORTED_SYMBOLS)
 omr_add_exports(j9thr ${thread_exports})
 
+# Note: we need to pass EARLY_SOURCE_EVAL because the ddr logic chokes on
+# $<TARGET_OBJECTS:j9thr_obj> on older versions of cmake
+target_enable_ddr(j9thr j9ddr EARLY_SOURCE_EVAL)
+
 install(
 	TARGETS j9thr
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
