@@ -1862,29 +1862,31 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		}
 		/* now add implicit VM arguments */
 		if (
-				/* Add the default options file */
-				(0 != addOptionsDefaultFile(&j9portLibrary, &vmArgumentsList, optionsDefaultFileLocation, localVerboseLevel))
-				|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, J2SE_CURRENT_VERSION))
-				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dcom.ibm.oti.vm.bootstrap.library.path=",
-						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
-				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dsun.boot.library.path=",
-						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
-				|| (0 != addJavaLibraryPath(&j9portLibrary, &vmArgumentsList, argEncoding, jvmInSubdir,
-						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
-						libpathValue, ldLibraryPathValue))
-				|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
-				|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
-				|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
-				|| (0 != addJavaPropertiesOptions(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
-				|| (0 != addJarArguments(&j9portLibrary, &vmArgumentsList, specialArgs.executableJarPath, zipFuncs, localVerboseLevel))
-				|| (0 != addEnvironmentVariables(&j9portLibrary, args, &vmArgumentsList, localVerboseLevel))
-				|| (0 != addLauncherArgs(&j9portLibrary, args, launcherArgumentsSize, &vmArgumentsList,
-						&xServiceBuffer, argEncoding, localVerboseLevel))
+			/* Add the default options file */
+			(0 != addOptionsDefaultFile(&j9portLibrary, &vmArgumentsList, optionsDefaultFileLocation, localVerboseLevel))
+			|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, J2SE_CURRENT_VERSION))
+			|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dcom.ibm.oti.vm.bootstrap.library.path=",
+					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
+			|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dsun.boot.library.path=",
+					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
+			|| (0 != addJavaLibraryPath(&j9portLibrary, &vmArgumentsList, argEncoding, jvmInSubdir,
+					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
+					libpathValue, ldLibraryPathValue))
+			|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
+			|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
+			|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
+#if !defined(OPENJ9_BUILD)
+			|| (0 != addJavaPropertiesOptions(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
+#endif /* defined(OPENJ9_BUILD) */
+			|| (0 != addJarArguments(&j9portLibrary, &vmArgumentsList, specialArgs.executableJarPath, zipFuncs, localVerboseLevel))
+			|| (0 != addEnvironmentVariables(&j9portLibrary, args, &vmArgumentsList, localVerboseLevel))
+			|| (0 != addLauncherArgs(&j9portLibrary, args, launcherArgumentsSize, &vmArgumentsList,
+					&xServiceBuffer, argEncoding, localVerboseLevel))
 #ifdef J9VM_OPT_HARMONY
-				/* pass in the Harmony library */
-				|| (0 != addHarmonyPortLibrary(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
+			/* pass in the Harmony library */
+			|| (0 != addHarmonyPortLibrary(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
 #endif /* J9VM_OPT_HARMONY */
-				|| (0 != addXserviceArgs(&j9portLibrary, &vmArgumentsList, xServiceBuffer, localVerboseLevel))
+			|| (0 != addXserviceArgs(&j9portLibrary, &vmArgumentsList, xServiceBuffer, localVerboseLevel))
 		) {
 			result = JNI_ERR;
 			goto exit;

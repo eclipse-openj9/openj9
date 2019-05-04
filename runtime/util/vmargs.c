@@ -1069,6 +1069,13 @@ addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *
 
 }
 
+#if !defined(OPENJ9_BUILD)
+/* Function reads the J9NLS_J2SE_EXTRA_OPTIONS to get a -D define to set the IBM java version.
+ * This isn't needed in OpenJ9 and using this is one of the items that forces the NLS message
+ * catalogs to be parsed  early in startup
+ *
+ * Disable for OpenJ9 but leave in place for IBM to be handled in a separate cleanup item
+ */
 IDATA
 addJavaPropertiesOptions(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
@@ -1112,6 +1119,7 @@ addJavaPropertiesOptions(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumen
 	}
 	return 0;
 }
+#endif /* !OPENJ9_BUILD */
 
 /*
  * parseOptionsFileText() removes tabs and spaces following a newline.
