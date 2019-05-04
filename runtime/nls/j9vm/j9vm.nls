@@ -1888,3 +1888,47 @@ J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.explanation=NOTAG
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.system_action=
 J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.user_response=
 # END NON-TRANSLATABLE
+
+# Message for LinkageError when a VerifyError is thrown out
+# arguments 1 and 2 are the specified class name
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Final superclass %2$.*1$s can't be extended
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_1=9
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_2=ClassName
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.explanation=A final superclass can't be exteneded
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.system_action=The JVM will throw a VerifyError.
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a IncompatibleClassChangeError is thrown out
+# arguments 1 and 2 are the specified interface name
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE=Superclass %2$.*1$s can't be an interface
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_1=9
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_2=InterfaceName
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.explanation=A superclass can't be interface
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a IllegalAccessError is thrown out
+# arguments 1 and 2 are the specified class/interface name
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE=%2$.*1$s is not visible
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.sample_input_1=9
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.sample_input_2=ClassName
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.explanation=The specified class or interface is not visible
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.system_action=The JVM will throw an IllegalAccessError.
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a IncompatibleClassChangeError is thrown out
+# arguments 1 and 2 are the specified interface name
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE=%2$.*1$s is not an interface
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_1=9
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_2=InterfaceName
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.explanation=The specified interface is not a real interface
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
