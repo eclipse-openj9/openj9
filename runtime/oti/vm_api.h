@@ -1783,12 +1783,28 @@ findClassLocationForClass(J9VMThread *currentThread, J9Class *clazz);
 /* ---------------- ModularityHashTables.c ---------------- */
 
 /**
- * @brief Create the module definition hash table
+ * Used by classLoader->moduleHashTable which doesn't allow multiple modules with same module name.
+ * Create a new J9HashTable with hashFn (moduleNameHashFn) and hashEqualFn (moduleNameHashEqualFn).
+ * Using module name as the key can determine if two modules are same based on their module names.
+ *
+ * @param javaVM A java VM 
  * @param initialSize initial size
- * @return Pointer to new hash table
+ * @return an initialized J9HashTable on success, otherwise NULL.
  */
 J9HashTable *
-hashModuleTableNew(J9JavaVM *javaVM, U_32 initialSize);
+hashModuleNameTableNew(J9JavaVM *javaVM, U_32 initialSize);
+
+/**
+ * Used by J9Package->exportsHashTable, J9Module->readAccessHashTable, and J9Module->removeAccessHashTable
+ * which might contain modules loaded by different classloader but with same module names.
+ * Create a new J9HashTable with hashFn (modulePointerHashFn) and hashEqualFn (modulePointerHashEqualFn).
+ * Using J9Module pointer as the key can differentiate modules loaded by different classloader with same module name.
+ * @param javaVM A java VM 
+ * @param initialSize initial size
+ * @return an initialized J9HashTable on success, otherwise NULL.
+ */
+J9HashTable *
+hashModulePointerTableNew(J9JavaVM *javaVM, U_32 initialSize);
 
 /**
  * @brief Create the package definition hash table
