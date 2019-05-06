@@ -1805,6 +1805,12 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 			}
 
+			argIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNLSMESSAGES, NULL);
+			argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNONLSMESSAGES, NULL);
+			if (argIndex2 > argIndex) {
+				j9port_control(OMRPORT_CTLDATA_NLS_DISABLE, 1);
+			} 
+
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_PAGE_ALIGN_DIRECT_MEMORY)) {
 				J9VMSystemProperty* prop = NULL;
 
