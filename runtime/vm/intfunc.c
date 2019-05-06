@@ -123,7 +123,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_IVE_ROM_IMAGE_HELPERS) || (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT) && defined(J9VM_OPT_ROM_IMAGE_SUPPORT))
 	romImageNewSegment,
 #endif /* J9VM_IVE_ROM_IMAGE_HELPERS || (J9VM_OPT_DYNAMIC_LOAD_SUPPORT && J9VM_OPT_ROM_IMAGE_SUPPORT) */
-	installJitBytecodes,
 	runCallInMethod,
 	catUtfToString4,
 	allocateMemorySegmentList,
@@ -338,7 +337,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	internalEnterVMFromJNI,
 	internalExitVMToJNI,
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-	hashModuleTableNew,
+	hashModuleNameTableNew,
+	hashModulePointerTableNew,
 	hashPackageTableNew,
 	hashModuleExtraInfoTableNew,
 	hashClassLocationTableNew,

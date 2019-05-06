@@ -130,8 +130,6 @@ static void codertOnBootstrap(J9HookInterface * * hookInterface, UDATA eventNum,
       javaVM->jitGetOwnedObjectMonitors = jitGetOwnedObjectMonitors;
       }
 
-   /* Poke the new return bytecodes into the bytecode table */
-   javaVM->internalVMFunctions->installJitBytecodes(javaVM);
    return;
    }
 

@@ -47,9 +47,6 @@ public final class JITHelpers {
 
 	private static final JITHelpers helpers;
 	private static final Unsafe unsafe;
-	// If JITHelpers class is loaded at startup, so is DecimalFormatHelper. The latter is needed
-	// to optimize DecimalFormat.format(bd.doubleValue()) optimization in jit.
-	private static final DecimalFormatHelper dummyDecFormat = new DecimalFormatHelper();
 
 	private JITHelpers() {
 	}

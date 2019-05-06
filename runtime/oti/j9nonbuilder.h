@@ -4465,7 +4465,6 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_IVE_ROM_IMAGE_HELPERS) || (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT) && defined(J9VM_OPT_ROM_IMAGE_SUPPORT))
 	struct J9MemorySegment*  ( *romImageNewSegment)(struct J9JavaVM *vm, struct J9ROMImageHeader *header, UDATA isBaseType, struct J9ClassLoader *classLoader ) ;
 #endif /* J9VM_IVE_ROM_IMAGE_HELPERS || (J9VM_OPT_DYNAMIC_LOAD_SUPPORT && J9VM_OPT_ROM_IMAGE_SUPPORT) */
-	void  ( *installJitBytecodes)(struct J9JavaVM *javaVM) ;
 	void  (JNICALL *runCallInMethod)(JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID, void* args) ;
 	j9object_t  ( *catUtfToString4)(struct J9VMThread * vmThread, const U_8 *data1, UDATA length1, const U_8 *data2, UDATA length2, const U_8 *data3, UDATA length3, const U_8 *data4, UDATA length4) ;
 	struct J9MemorySegmentList*  ( *allocateMemorySegmentList)(struct J9JavaVM * javaVM, U_32 numberOfMemorySegments, U_32 memoryCategory) ;
@@ -4684,7 +4683,8 @@ typedef struct J9InternalVMFunctions {
 	void  ( *internalEnterVMFromJNI)(struct J9VMThread * currentThread) ;
 	void  ( *internalExitVMToJNI)(struct J9VMThread * currentThread) ;
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-	struct J9HashTable* ( *hashModuleTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
+	struct J9HashTable* ( *hashModuleNameTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
+	struct J9HashTable* ( *hashModulePointerTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashPackageTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashModuleExtraInfoTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashClassLocationTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;

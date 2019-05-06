@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,6 +193,7 @@ addExtDir(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jr
 IDATA
 addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *cwd);
 
+#if !defined(OPENJ9_BUILD)
 /**
  * Add -D options to define java properties
  * @param portLib port library
@@ -202,6 +203,7 @@ addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *
  */
 IDATA
 addJavaPropertiesOptions(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags);
+#endif /* !defined(OPENJ9_BUILD) */
 
 /**
  * Open the executable JAR file and add arguments from the manifest file.

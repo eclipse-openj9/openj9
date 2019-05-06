@@ -51,6 +51,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
@@ -176,7 +177,7 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 		public List<LoadCommand> loadCommands;
 		public List<SegmentCommand64> segments;
 		public List<LoadCommand> otherLoads;
-		public ThreadCommand threads;
+		public List<ThreadCommand> threads;
 		long streamOffset;
 
 		public MachFile64() {}
@@ -208,10 +209,16 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 		private final List<IMemoryRange> memoryRanges = new LinkedList<>();
 		private final List<IOSStackFrame> stackFrames = new LinkedList<>();
 
-		public OSXThread(long tid, ThreadCommand.ThreadState thread)
+		public OSXThread(long tid, ThreadCommand thread)
 		{
 			threadId = tid;
-			registers = thread.registers;
+			registers = new TreeMap<>();
+			// Since IOSThread doesn't have a sense of the different types of registers for a thread,
+			// we add all the registers to the OSXThread. The registers all have different names, so 
+			// there should be no conflict.
+			for (ThreadState state : thread.states) {
+				registers.putAll(state.registers);
+			}
 			properties = new Properties();
 		}
 
@@ -355,27 +362,32 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 		return 0;
 	}
 
-	public List<? extends IOSThread> getThreads()
+	public List<? extends IOSThread> getThreads() throws CorruptDataException
 	{
-		List<ThreadState> x86ThreadStates = new ArrayList<>(dumpFile.threads.states.size());
-		for(ThreadState state : dumpFile.threads.states) {
-			if (state.flavor == ThreadCommand.x86_THREAD_STATE) {
-				x86ThreadStates.add(state);
-			} else if (_signalNumber == -1 && state.flavor == ThreadCommand.x86_EXCEPTION_STATE) {
-				_signalNumber = state.registers.get("err").intValue();
+		List<IOSThread> threads = new ArrayList<>(dumpFile.threads.size());
+		for (ThreadCommand command : dumpFile.threads) {
+				OSXThread nativeThread = new OSXThread(0, command);
+				threads.add(nativeThread);
+				if (_signalNumber == -1) {
+					// will use the first thread's exception values, which should be the primary thread
+					if (nativeThread.registers.containsKey("err")) {
+						_signalNumber = nativeThread.registers.get("err").intValue();
+					} else {
+						throw new CorruptDataException("Core dump missing thread exception registers.");
+					}
 			}
-		}
-		List<IOSThread> threads = new ArrayList<IOSThread>(x86ThreadStates.size());
-		for (ThreadState thread : x86ThreadStates) {
-			threads.add(new OSXThread(0, thread));
 		}
 		return threads;
 	}
 
-	public int getSignalNumber()
+	public int getSignalNumber() throws DataUnavailableException
 	{
 		if (_signalNumber == -1) {
-			getThreads();
+			try {
+				getThreads();
+			} catch (CorruptDataException e) {
+				throw new DataUnavailableException("Core dump missing thread exception registers.", e);
+			}
 		}
 		return _signalNumber;
 	}
@@ -424,11 +436,6 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 				// nothing to process if we have a truncated file
 			}
 		}
-		for (LoadCommand lc : dumpFile.otherLoads) {
-			if (lc instanceof ThreadCommand) {
-				dumpFile.threads = (ThreadCommand) lc;
-			}
-		}
 	}
 
 	public MachFile64 readMachFile(long fileOffset) throws IOException, InvalidDumpFormatException
@@ -440,6 +447,7 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 			machfile.loadCommands = new ArrayList<>(machfile.header.numCommands);
 			machfile.segments = new ArrayList<>();
 			machfile.otherLoads = new ArrayList<>();
+			machfile.threads = new ArrayList<>();
 		}
 		long currentOffset = fileOffset + header64Size;
 		for (int i = 0; i < machfile.header.numCommands; i++) {
@@ -447,6 +455,8 @@ public class MachoDumpReader extends AbstractCoreReader implements ILibraryDepen
 			if (command instanceof SegmentCommand64) {
 				SegmentCommand64 segment = (SegmentCommand64) command;
 				machfile.segments.add(segment);
+			} else if (command instanceof ThreadCommand) {
+				machfile.threads.add((ThreadCommand)command);
 			} else {
 				machfile.otherLoads.add(command);
 			}
