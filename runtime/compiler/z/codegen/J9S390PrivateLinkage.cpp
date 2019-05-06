@@ -97,7 +97,7 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setLongDoubleReturnRegister4  (TR::RealRegister::FPR4 );
    setLongDoubleReturnRegister6  (TR::RealRegister::FPR6 );
 
-   if(TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z13) && TR::Compiler->target.cpu.getS390SupportsVectorFacility() &&
+   if(TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z13) && TR::Compiler->target.cpu.getSupportsVectorFacility() &&
      !comp()->getOption(TR_DisableSIMD))
        {
        codeGen->setSupportsVectorRegisters();

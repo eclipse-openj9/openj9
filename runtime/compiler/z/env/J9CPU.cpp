@@ -63,7 +63,7 @@ CPU::TO_PORTLIB_get390MachineId()
       return atoi(info.machine);
       }
 
-   return TR_Z10;
+   return 2098;
 #else
    char line[80];
    const int LINE_SIZE = sizeof(line) - 1;
@@ -95,7 +95,7 @@ CPU::TO_PORTLIB_get390MachineId()
       fclose(fp);
       }
 
-   return TR_UNDEFINED_S390_MACHINE;
+   return 2098;
 #endif
    }
 
@@ -229,27 +229,27 @@ CPU::initializeS390ProcessorFeatures()
 
    if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
       {
-      TR::Compiler->target.cpu.setS390SupportsFPE();
+      TR::Compiler->target.cpu.setSupportsFloatingPointExtensionFacility(true);
       }
 
    // z9 supports DFP in millicode so do not check for DFP support unless we are z10+
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) &&
          j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
       {
-      TR::Compiler->target.cpu.setS390SupportsDFP();
+      TR::Compiler->target.cpu.setSupportsDecimalFloatingPointFacility(true);
       }
 
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196) && 
          j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_WORD))
       {
-      TR::Compiler->target.cpu.setS390SupportsHPR();
+      TR::Compiler->target.cpu.setSupportsHighWordFacility(true);
       }
 
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12))
       {
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
          {
-         TR::Compiler->target.cpu.setS390SupportsTM();
+         TR::Compiler->target.cpu.setSupportsTransactionalMemoryFacility(true);
          }
 
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_RI))
@@ -257,26 +257,26 @@ CPU::initializeS390ProcessorFeatures()
 #if defined(LINUX)
          if (0 == j9ri_enableRISupport())
 #endif
-         TR::Compiler->target.cpu.setS390SupportsRI();
+         TR::Compiler->target.cpu.setSupportsRuntimeInstrumentationFacility(true);
          }
       }
 
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z13) &&
          j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
       {
-      TR::Compiler->target.cpu.setS390SupportsVectorFacility();
+      TR::Compiler->target.cpu.setSupportsVectorFacility(true);
       }
 
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z14))
       {
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
          {
-         TR::Compiler->target.cpu.setS390SupportsVectorPackedDecimalFacility();
+         TR::Compiler->target.cpu.setSupportsVectorPackedDecimalFacility(true);
          }
 
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE))
          {
-         TR::Compiler->target.cpu.setS390SupportsGuardedStorageFacility();
+         TR::Compiler->target.cpu.setSupportsGuardedStorageFacility(true);
          }
       }
 
@@ -284,17 +284,17 @@ CPU::initializeS390ProcessorFeatures()
       {
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_3))
          {
-         TR::Compiler->target.cpu.setS390SupportsMIE3();
+         TR::Compiler->target.cpu.setSupportsMiscellaneousInstructionExtensions3Facility(true);
          }
 
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_2))
          {
-         TR::Compiler->target.cpu.setS390SupportsVectorFacilityEnhancement2();
+         TR::Compiler->target.cpu.setSupportsVectorFacilityEnhancement2(true);
          }
 
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY))
          {
-         TR::Compiler->target.cpu.setS390SupportsVectorPDEnhancement();
+         TR::Compiler->target.cpu.setSupportsVectorPackedDecimalEnhancementFacility(true);
          }
       }
    }

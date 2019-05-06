@@ -1366,7 +1366,7 @@ TR_J9ByteCodeIlGenerator::genDFPGetHWAvailable()
 
       bool is390DFP =
 #ifdef TR_TARGET_S390
-         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getS390SupportsDFP();
+         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
 #else
          false;
 #endif

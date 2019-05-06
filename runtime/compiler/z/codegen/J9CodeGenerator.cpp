@@ -150,7 +150,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    if (comp->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
        && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12)
-       && TR::Compiler->target.cpu.getS390SupportsRI())
+       && TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility())
       {
       cg->setSupportsRuntimeInstrumentation();
       cg->setEnableRIOverPrivateLinkage(false);  // Disable RI over private linkage, since RION/OFF will be controlled over J2I / I2J.
@@ -3672,7 +3672,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
 
-   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && TR::Compiler->target.cpu.getS390SupportsDFP())
+   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility())
       {
       if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
           method == TR::java_math_BigDecimal_DFPLongConstructor ||
@@ -4108,7 +4108,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
         }
 
    if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
-       TR::Compiler->target.cpu.getS390SupportsDFP())
+       TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility())
       {
       TR_ASSERT( methodSymbol, "require a methodSymbol for DFP on Z\n");
       if (methodSymbol)
