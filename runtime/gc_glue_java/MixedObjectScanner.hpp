@@ -150,6 +150,36 @@ public:
 		return NULL;
 	}
 
+	/**
+	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
+	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
+	 * increasing significance, and the least significant bit maps to the slot at the returned
+	 * base pointer.
+	 *
+	 * @param[out] scanMap the bit map for the slots contiguous with the returned base pointer
+	 * @param[out] hasNextSlotMap set this to true if this method should be called again, false if this map is known to be last
+	 * @return a pointer to the first slot mapped by the least significant bit of the map, or NULL if no more slots
+	 */
+	virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *slotMap, bool *hasNextSlotMap)
+	{
+		fomrobject_t *result = NULL;
+		*slotMap = 0;
+		*hasNextSlotMap = false;
+		_mapPtr += _bitsPerScanMap;
+		while (_endPtr > _mapPtr) {
+			*slotMap = *_descriptionPtr;
+			_descriptionPtr += 1;
+			if (0 != *slotMap) {
+				*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
+				result = _mapPtr;
+				break;
+			}
+			_mapPtr += _bitsPerScanMap;
+		}
+		return result;
+	}
+
 #if defined(J9VM_GC_LEAF_BITS)
 	/**
 	 * @see GC_ObjectScanner::getNextSlotMap(uintptr_t&, uintptr_t&, bool&)
@@ -172,6 +202,40 @@ public:
 			_mapPtr += _bitsPerScanMap;
 		}
 		return NULL;
+	}
+
+	/**
+	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
+	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
+	 * increasing significance, and the least significant bit maps to the slot at the returned
+	 * base pointer.
+	 *
+	 * @param[out] scanMap the bit map for the slots contiguous with the returned base pointer
+	 * @param[out] leafMap the leaf bit map for the slots contiguous with the returned base pointer
+	 * @param[out] hasNextSlotMap set this to true if this method should be called again, false if this map is known to be last
+	 * @return a pointer to the first slot mapped by the least significant bit of the map, or NULL if no more slots
+	 */
+	virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *slotMap, uintptr_t *leafMap, bool *hasNextSlotMap)
+	{
+		fomrobject_t *result = NULL;
+		*slotMap = 0;
+		*leafMap = 0;
+		*hasNextSlotMap = false;
+		_mapPtr += _bitsPerScanMap;
+		while (_endPtr > _mapPtr) {
+			*slotMap = *_descriptionPtr;
+			_descriptionPtr += 1;
+			*leafMap = *_leafPtr;
+			_leafPtr += 1;
+			if (0 != *slotMap) {
+				*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
+				result = _mapPtr;
+				break;
+			}
+			_mapPtr += _bitsPerScanMap;
+		}
+		return result;
 	}
 #endif /* J9VM_GC_LEAF_BITS */
 };
