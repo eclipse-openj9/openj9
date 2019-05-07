@@ -96,7 +96,8 @@ def get_sources() {
     }
 
     // Check if this build is a PR
-    if (params.ghprbGhRepository) {
+    // Only PR builds (old and new) pass ghprbPullId
+    if (params.ghprbPullId) {
         // Look for dependent changes and checkout PR(s)
         checkout_pullrequest()
     } else {
