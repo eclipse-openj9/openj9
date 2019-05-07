@@ -42,6 +42,9 @@ namespace JITaaS
 
 int J9ClientStream::_numConnectionsOpened = 0;
 int J9ClientStream::_numConnectionsClosed = 0;
+uint64_t J9ClientStream::_localCompStartTime = 0;
+bool J9ClientStream::_serverUnreachable = false;
+uint64_t J9ClientStream::_pingServerInterval = 1000;
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
@@ -268,6 +271,46 @@ void
 J9ClientStream::shutdown()
    {
    // destructor is used instead
+   }
+
+void
+J9ClientStream::markServerUnreachable(J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   if (!_serverUnreachable)
+      {
+      _serverUnreachable = true;
+      _localCompStartTime = j9time_current_time_millis();
+      }
+   }
+
+bool
+J9ClientStream::isServerReachable(J9JITConfig *jitConfig, TR::PersistentInfo *info)
+   {
+   if (!_serverUnreachable)
+      return true;
+
+   // check server availability 1 second after the first StreamFailure
+   // if it fails again, the _pingServerInterval will be set to 10 seconds
+   // meaning the server will be pinged every 10 seconds to see if it's back up again
+   // without the 1 second delay after the first StreamFailure would cause the performance of client
+   // to suffer as client could fire off a lot of remote compilations that fails
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   uint64_t current_time = j9time_current_time_millis();
+   if ((current_time - _localCompStartTime) > _pingServerInterval)
+      {
+      if (gethostbyname(info->getJITaaSServerAddress().c_str()))
+         {
+         JITaaS::J9ClientStream::_serverUnreachable = false;
+         JITaaS::J9ClientStream::_pingServerInterval = 1000;
+         return true;
+         }
+
+      JITaaS::J9ClientStream::_localCompStartTime = current_time;
+      JITaaS::J9ClientStream::_pingServerInterval = 10000;
+      return false;
+      }
+   return false;
    }
 
 };

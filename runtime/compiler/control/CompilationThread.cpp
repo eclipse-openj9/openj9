@@ -3427,6 +3427,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       catch (const JITaaS::StreamFailure &e)
          {
+         JITaaS::J9ClientStream::markServerUnreachable(_jitConfig);
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure (server died before the termination message send): %s", e.what());
@@ -6972,7 +6973,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
 
       if ((_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) &&
-         !shouldPerformLocalComp(entry))
+         !shouldPerformLocalComp(entry) && JITaaS::J9ClientStream::isServerReachable(_jitConfig, _compInfo.getPersistentInfo()))
          {
          entry->setRemoteCompReq();
          }
@@ -7032,7 +7033,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                }
             }
 
-         if (!doLocalCompilation)
+         if (!doLocalCompilation && JITaaS::J9ClientStream::isServerReachable(_jitConfig, _compInfo.getPersistentInfo()))
             entry->setRemoteCompReq();
          }
       }

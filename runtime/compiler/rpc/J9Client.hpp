@@ -80,8 +80,14 @@ public:
 
    void shutdown();
 
+   static void markServerUnreachable(J9JITConfig *jitConfig);
+   static bool isServerReachable(J9JITConfig *jitConfig, TR::PersistentInfo *info);
+
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
+   static uint64_t _localCompStartTime;
+   static uint64_t _pingServerInterval;
+   static bool _serverUnreachable;
 
 private:
    uint32_t _timeout;

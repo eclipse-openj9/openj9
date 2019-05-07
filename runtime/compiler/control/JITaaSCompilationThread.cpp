@@ -2367,6 +2367,8 @@ remoteCompile(
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
 
+         JITaaS::J9ClientStream::markServerUnreachable(jitConfig);
+
          compiler->failCompilation<JITaaS::StreamFailure>(e.what());
          }
       catch (const std::bad_alloc &e)
@@ -2391,6 +2393,8 @@ remoteCompile(
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+
+            JITaaS::J9ClientStream::markServerUnreachable(jitConfig);
 
             compiler->failCompilation<JITaaS::StreamFailure>(e.what());
             }
@@ -2498,6 +2502,8 @@ remoteCompile(
       client->~J9ClientStream();
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
+
+      JITaaS::J9ClientStream::markServerUnreachable(jitConfig);
 
       compiler->failCompilation<JITaaS::StreamFailure>(e.what());
       }
