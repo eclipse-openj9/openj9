@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,6 +124,27 @@ public:
 		return mapPtr;
 	}
 
+	/**
+	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
+	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
+	 * increasing significance, and the least significant bit maps to the slot at the returned
+	 * base pointer.
+	 *
+	 * @param[out] scanMap the bit map for the slots contiguous with the returned base pointer
+	 * @param[out] hasNextSlotMap set this to true if this method should be called again, false if this map is known to be last
+	 * @return a pointer to the first slot mapped by the least significant bit of the map, or NULL if no more slots
+	 */
+	virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *slotMap, bool *hasNextSlotMap)
+	{
+		fomrobject_t *mapPtr = GC_MixedObjectScanner::getNextSlotMap(slotMap, hasNextSlotMap);
+
+		/* Skip over referent slot */
+		*slotMap = skipReferentSlot(mapPtr, *slotMap);
+
+		return mapPtr;
+	}
+
 #if defined(OMR_GC_LEAF_BITS)
 	virtual fomrobject_t *
 	getNextSlotMap(uintptr_t &slotMap, uintptr_t &leafMap, bool &hasNextSlotMap)
@@ -132,6 +153,28 @@ public:
 
 		/* Skip over referent slot */
 		slotMap = skipReferentSlot(mapPtr, slotMap);
+
+		return mapPtr;
+	}
+
+	/**
+	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
+	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
+	 * increasing significance, and the least significant bit maps to the slot at the returned
+	 * base pointer.
+	 *
+	 * @param[out] scanMap the bit map for the slots contiguous with the returned base pointer
+	 * @param[out] leafMap the leaf bit map for the slots contiguous with the returned base pointer
+	 * @param[out] hasNextSlotMap set this to true if this method should be called again, false if this map is known to be last
+	 * @return a pointer to the first slot mapped by the least significant bit of the map, or NULL if no more slots
+	 */
+	virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *slotMap, uintptr_t *leafMap, bool *hasNextSlotMap)
+	{
+		fomrobject_t *mapPtr = GC_MixedObjectScanner::getNextSlotMap(slotMap, leafMap, hasNextSlotMap);
+
+		/* Skip over referent slot */
+		*slotMap = skipReferentSlot(mapPtr, *slotMap);
 
 		return mapPtr;
 	}

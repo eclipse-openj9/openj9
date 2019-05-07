@@ -165,11 +165,60 @@ public:
 		}
 	}
 
+	/**
+	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
+	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
+	 * increasing significance, and the least significant bit maps to the slot at the returned
+	 * base pointer.
+	 *
+	 * @param[out] scanMap the bit map for the slots contiguous with the returned base pointer
+	 * @param[out] hasNextSlotMap set this to true if this method should be called again, false if this map is known to be last
+	 * @return a pointer to the first slot mapped by the least significant bit of the map, or NULL if no more slots
+	 */
+	virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *slotMap, bool *hasNextSlotMap)
+	{
+		fomrobject_t *result = NULL;
+		_mapPtr += _bitsPerScanMap;
+		if (_endPtr > _mapPtr) {
+			intptr_t remainder = _endPtr - _mapPtr;
+			if (remainder >= _bitsPerScanMap) {
+				*slotMap = UDATA_MAX;
+			} else {
+				*slotMap = ((uintptr_t)1 << remainder) - 1;
+			}
+			*hasNextSlotMap = remainder > _bitsPerScanMap;
+			result = _mapPtr;
+		} else {
+			*slotMap = 0;
+			*hasNextSlotMap = false;
+		}
+		return result;
+	}
+
 #if defined(OMR_GC_LEAF_BITS)
 	virtual fomrobject_t *
 	getNextSlotMap(uintptr_t &scanMap, uintptr_t &leafMap, bool &hasNextSlotMap)
 	{
 		leafMap = 0;
+		return getNextSlotMap(scanMap, hasNextSlotMap);
+	}
+
+	/**
+	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
+	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
+	 * increasing significance, and the least significant bit maps to the slot at the returned
+	 * base pointer.
+	 *
+	 * @param[out] scanMap the bit map for the slots contiguous with the returned base pointer
+	 * @param[out] leafMap the leaf bit map for the slots contiguous with the returned base pointer
+	 * @param[out] hasNextSlotMap set this to true if this method should be called again, false if this map is known to be last
+	 * @return a pointer to the first slot mapped by the least significant bit of the map, or NULL if no more slots
+	 */
+	virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *scanMap, uintptr_t *leafMap, bool *hasNextSlotMap)
+	{
+		*leafMap = 0;
 		return getNextSlotMap(scanMap, hasNextSlotMap);
 	}
 #endif /* defined(OMR_GC_LEAF_BITS) */
