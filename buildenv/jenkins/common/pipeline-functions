@@ -398,7 +398,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 echo "The '${name}' test suite will be excluded"
                 continue
             }
-            def TEST_FLAG = (name.contains('+jitaas')) ? 'JITAAS' : ''
+            def TEST_FLAG = (name.contains('+')) ? name.substring(name.indexOf('+')+1).toUpperCase() : ''
             def TEST_JOB_NAME = get_test_job_name(get_target_name(name), SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             testjobs["${TEST_JOB_NAME}"] = {
@@ -440,8 +440,8 @@ def get_test_target_names() {
 }
 
 def get_target_name(name) {
-    if (name.contains('+jitaas')) {
-        name -= '+jitaas'
+    if (name.contains('+')) {
+        name = name.substring(0, name.indexOf('+'))
     }
 
     return name
