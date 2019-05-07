@@ -137,6 +137,7 @@ def get_short_sha(SHA) {
 }
 
 def git_push_auth(REPO, OPTION, CRED_ID) {
+    REPO -= 'https://'
     withCredentials([usernamePassword(credentialsId: "${CRED_ID}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
         sh "git push https://${USERNAME}:${PASSWORD}@${REPO} ${OPTION}"
     }
