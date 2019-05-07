@@ -3418,6 +3418,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       catch (const JITServer::StreamFailure &e)
          {
+         JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary));
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure (server unreachable before the termination message was sent): %s", e.what());
@@ -6775,7 +6776,8 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    //
    if (entry->_optimizationPlan->getOptLevel() <= cold &&
       (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations) || 
-      !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)))
+      !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
+      (!JITaaSHelpers::isServerAvailable() && !JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
       doLocalComp = true;
 
    return doLocalComp;

@@ -48,6 +48,11 @@ extern TR::Monitor *assumptionTableMutex;
 
 uint32_t serverMsgTypeCount[JITServer::MessageType_ARRAYSIZE] = {};
 
+uint64_t JITaaSHelpers::_waitTime = 1000;
+bool JITaaSHelpers::_serverAvailable = true;
+uint64_t JITaaSHelpers::_nextConnectionRetryTime = 0;
+TR::Monitor * JITaaSHelpers::_clientStreamMonitor = NULL;
+
 // TODO: this method is copied from runtime/jit_vm/ctsupport.c,
 // in the future it's probably better to make that method publicly accessible
 static UDATA
@@ -2476,10 +2481,23 @@ remoteCompile(
       {
       try 
          {
-         client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+         if (JITaaSHelpers::isServerAvailable())
+            {
+            client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+            }
+         else if (JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
+            {
+            client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+            JITaaSHelpers::postStreamConnectionSuccess();
+            }
+         else
+            {
+            compiler->failCompilation<JITServer::StreamFailure>("Server is not available, should retry with local compilation.");
+            }
          }
       catch (const JITServer::StreamFailure &e)
          {
+         JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
          compiler->failCompilation<JITServer::StreamFailure>(e.what());
          }
       catch (const std::bad_alloc &e)
@@ -2494,11 +2512,25 @@ remoteCompile(
          {
          try
             {
-            client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
-            compInfoPT->setClientStream(client);
+            if (JITaaSHelpers::isServerAvailable())
+               {
+               client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+               compInfoPT->setClientStream(client);
+               }
+            else if (JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
+               {
+               client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+               compInfoPT->setClientStream(client);
+               JITaaSHelpers::postStreamConnectionSuccess();
+               }
+            else
+               {
+               compiler->failCompilation<JITServer::StreamFailure>("Server is not available, should retry with local compilation.");
+               }
             }
          catch (const JITServer::StreamFailure &e)
             {
+            JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
             compiler->failCompilation<JITServer::StreamFailure>(e.what());
             }
          catch (const std::bad_alloc &e)
@@ -2597,6 +2629,8 @@ remoteCompile(
       }
    catch (const JITServer::StreamFailure &e)
       {
+      JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
@@ -3888,6 +3922,34 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
       }
    }
 
+void
+JITaaSHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
+   {
+   OMR::CriticalSection handleStreamFailure(getClientStreamMonitor());
+
+   OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
+   uint64_t current_time = omrtime_current_time_millis();
+   if (current_time >= _nextConnectionRetryTime)
+      {
+      _waitTime *= 2; // exponential backoff
+      }
+   _nextConnectionRetryTime = current_time + _waitTime;
+   _serverAvailable = false;
+   }
+
+void
+JITaaSHelpers::postStreamConnectionSuccess()
+   {
+   _serverAvailable = true;
+   _waitTime = 1000; // ms
+   }
+
+bool
+JITaaSHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
+   {
+   OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
+   return omrtime_current_time_millis() > _nextConnectionRetryTime;
+   }
 
 // insertIntoOOSequenceEntryList needs to be executed with sequencingMonitor in hand
 void 
