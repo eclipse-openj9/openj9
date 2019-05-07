@@ -1579,6 +1579,71 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                        mirror->isUnresolvedString(cpIndex, false));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getMultipleResolvedMethods:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, std::vector<TR_ResolvedMethodType>, std::vector<int32_t>>();
+         auto owningMethod = std::get<0>(recv);
+         auto methodTypes = std::get<1>(recv);
+         auto cpIndices = std::get<2>(recv);
+         int32_t numMethods = methodTypes.size();
+         std::vector<J9Method *> ramMethods(numMethods);
+         std::vector<uint32_t> vTableOffsets(numMethods);
+         std::vector<TR_ResolvedJ9JITaaSServerMethodInfo> methodInfos(numMethods);
+         for (int32_t i = 0; i < numMethods; ++i)
+            {
+            int32_t cpIndex = cpIndices[i];
+            TR_ResolvedMethodType type = methodTypes[i];
+            J9Method *ramMethod = NULL;
+            uint32_t vTableOffset = 0;
+            TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
+            bool createMethod = false;
+            switch (type)
+               {
+               case TR_ResolvedMethodType::VirtualFromCP:
+                  {
+                  ramMethod = (J9Method *) TR_ResolvedJ9Method::getVirtualMethod(fe, owningMethod->cp(), cpIndex, (UDATA *) &vTableOffset, NULL);
+                  if (ramMethod && vTableOffset) createMethod = true;
+                  break;
+                  }
+               case TR_ResolvedMethodType::Static:
+                  {
+                  TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
+                  ramMethod = jitResolveStaticMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME); 
+                  if (ramMethod) createMethod = true;
+                  break;
+                  }
+               case TR_ResolvedMethodType::Special:
+                  {
+                  if (!((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
+                                    comp->ilGenRequest().details().isMethodHandleThunk() &&
+                                    performTransformation(comp, "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
+                     {
+                     TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
+                     ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+                     }
+                  if (ramMethod) createMethod = true;
+                  break;
+                  }
+               default:
+                  {
+                  break;
+                  }
+               }
+            if (createMethod)
+               TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(
+                  methodInfo,
+                  (TR_OpaqueMethodBlock *) ramMethod,
+                  vTableOffset,
+                  owningMethod,
+                  fe,
+                  trMemory);
+            ramMethods[i] = ramMethod;
+            vTableOffsets[i] = vTableOffset;
+            methodInfos[i] = methodInfo;
+            }
+         client->write(ramMethods, vTableOffsets, methodInfos);
+         }
+         break;
       case J9ServerMessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();

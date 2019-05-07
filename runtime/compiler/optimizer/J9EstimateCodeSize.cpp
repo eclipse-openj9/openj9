@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "runtime/J9Profiler.hpp"
+#include "env/j9methodServer.hpp"
 
 // Empirically determined value
 const float TR_J9EstimateCodeSize::STRING_COMPRESSION_ADJUSTMENT_FACTOR = 0.75f;
@@ -701,9 +702,18 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       }
 
    // PHASE 1:  Bytecode Iteration
-
    TR_J9ByteCode bc = bci.first(), nextBC;
-   for (; bc != J9BCunknown; bc = bci.next())
+
+   if (comp()->isOutOfProcessCompilation())
+      {
+      // JITaaS optimization: 
+      // request this resolved method to create all of its callee resolved methods
+      // in a single query.
+      auto calleeMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(calltarget->_calleeMethod);
+      calleeMethod->cacheResolvedMethodsCallees();
+      }
+
+   for(; bc != J9BCunknown; bc = bci.next())
       {
       nph.processByteCode();
       TR_ResolvedMethod * resolvedMethod;
