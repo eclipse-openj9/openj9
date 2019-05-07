@@ -75,7 +75,6 @@
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
  */
 
-RELEASES = ['8', '9', '10', '11', '12', 'next']
 CURRENT_RELEASES = ['8', '11', '12', 'next']
 
 SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
@@ -90,14 +89,29 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'x86-32_windows' : ['8'],
          'x86-64_windows' : CURRENT_RELEASES]
 
+// SHORT_NAMES is used for PullRequest triggers
+// TODO Combine SHORT_NAMES and SPECS
+SHORT_NAMES = ['all' : 'all',
+            'aix' : 'ppc64_aix',
+            'zlinux' : 's390x_linux',
+            'plinux' : 'ppc64le_linux',
+            'xlinuxlargeheap' : 'x86-64_linux_xl',
+            'xlinuxxl' : 'x86-64_linux_xl',
+            'xlinux' : 'x86-64_linux',
+            'xlinuxcmake' : 'x86-64_linux_cm',
+            'xlinuxcm' : 'x86-64_linux_cm',
+            'win32' : 'x86-32_windows',
+            'win' : 'x86-64_windows',
+            'osx' : 'x86-64_mac',
+            'osxlargeheap' : 'x86-64_mac_xl',
+            'osxxl' : 'x86-64_mac_xl']
+
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
 SETUP_LABEL = (params.SETUP_LABEL) ? params.SETUP_LABEL : "worker"
 echo "Setup SETUP_LABEL:'${SETUP_LABEL}'"
 TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : ""
 echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
-PLATFORMS = (params.PLATFORMS) ? params.PLATFORMS : ""
-echo "PLATFORMS:'${PLATFORMS}'"
 PERSONAL_BUILD = (params.PERSONAL_BUILD) ? params.PERSONAL_BUILD : ""
 echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
 BUILD_NODE_LABELS = (params.BUILD_NODE_LABELS) ? params.BUILD_NODE_LABELS : ""
@@ -121,6 +135,24 @@ echo "TIMEOUT_UNIT: ${TIMEOUT_UNIT}"
 CUSTOM_DESCRIPTION = (params.CUSTOM_DESCRIPTION) ? params.CUSTOM_DESCRIPTION : ""
 echo "CUSTOM_DESCRIPTION:'${CUSTOM_DESCRIPTION}'"
 
+// param PLATFORMS is a string, we convert it to an array later on
+PLATFORMS = []
+echo "PLATFORMS:'${params.PLATFORMS}'"
+
+// Pull Request Builds
+ghprbPullId = (params.ghprbPullId) ? params.ghprbPullId : ""
+echo "ghprbPullId:'${ghprbPullId}'"
+ghprbGhRepository = (params.ghprbGhRepository) ? params.ghprbGhRepository : ""
+echo "ghprbGhRepository:'${ghprbGhRepository}'"
+ghprbCommentBody = (params.ghprbCommentBody) ? params.ghprbCommentBody : ""
+echo "ghprbCommentBody:'${ghprbCommentBody}'"
+ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
+echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
+ghprbActualCommit = (params.ghprbActualCommit) ? params.ghprbActualCommit : ""
+echo "ghprbActualCommit:'${ghprbActualCommit}'"
+
+RELEASES = []
+
 OPENJDK_REPO = [:]
 OPENJDK_BRANCH = [:]
 OPENJDK_SHA = [:]
@@ -128,7 +160,6 @@ OPENJDK_SHA = [:]
 BUILD_SPECS = [:]
 builds = [:]
 pipelineNames = []
-
 
 try {
     timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNIT) {
@@ -139,19 +170,25 @@ try {
                     variableFile = load 'buildenv/jenkins/common/variables-functions'
                     buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
+                    // Determine if build is a PullRequest
+                    if (ghprbPullId) {
+                        buildFile.setup_pull_request()
+                    }
+
                     BUILD_SPECS.putAll(variableFile.get_specs(SPECS))
 
                     // parse variables file and initialize variables
                     variableFile.set_job_variables('wrapper')
+
                     SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
-                    if (params.PERSONAL_BUILD) {
+                    if (PERSONAL_BUILD) {
                         // update build description
-                        currentBuild.description += "<br/>${params.PLATFORMS}"
+                        currentBuild.description += "<br/>${PLATFORMS}"
                     }
 
-                    def BUILD_NODES = get_node_labels(params.BUILD_NODE_LABELS, BUILD_SPECS.keySet())
-                    def TEST_NODES = get_node_labels(params.TEST_NODE_LABELS, BUILD_SPECS.keySet())
+                    def BUILD_NODES = get_node_labels(BUILD_NODE_LABELS, BUILD_SPECS.keySet())
+                    def TEST_NODES = get_node_labels(TEST_NODE_LABELS, BUILD_SPECS.keySet())
 
                     BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
                         if (VARIABLES."${SPEC}") {
@@ -186,7 +223,7 @@ try {
                                 }
 
                                 if (AUTOMATIC_GENERATION != 'false'){
-                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
+                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
                                 }
 
                                 builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION) }
@@ -202,7 +239,7 @@ try {
             // launch all pipeline builds
             parallel builds
 
-            if (params.PROMOTE_OMR) {
+            if (PROMOTE_OMR) {
                 stage('Promote') {
                     ghprbGhRepository = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('.com') +5, OPENJ9_REPO.indexOf('.git'))
                     ghprbActualCommit = SHAS['OPENJ9']
@@ -257,7 +294,12 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'EXTRA_MAKE_OPTIONS', value: EXTRA_MAKE_OPTIONS),
                     string(name: 'OPENJDK_CLONE_DIR', value: OPENJDK_CLONE_DIR),
                     string(name: 'AUTOMATIC_GENERATION', value: AUTOMATIC_GENERATION),
-                    string(name: 'CUSTOM_DESCRIPTION', value: CUSTOM_DESCRIPTION)]
+                    string(name: 'CUSTOM_DESCRIPTION', value: CUSTOM_DESCRIPTION),
+                    string(name: 'ghprbPullId', value: ghprbPullId),
+                    string(name: 'ghprbGhRepository', value: ghprbGhRepository),
+                    string(name: 'ghprbCommentBody', value: ghprbCommentBody),
+                    string(name: 'ghprbTargetBranch', value: ghprbTargetBranch),
+                    string(name: 'ghprbActualCommit', value: ghprbActualCommit)]
         return JOB
     }
 }
@@ -293,7 +335,7 @@ def get_node_labels(NODE_LABELS, SPECS) {
             }
 
             if (!SPECS.contains(ENTRY[0].trim())) {
-                error("Wrong node labels platform: ${ENTRY[0]} in ${ITEM}! It does not match any of your selected platforms: ${params.PLATFORMS}")
+                error("Wrong node labels platform: ${ENTRY[0]} in ${ITEM}! It does not match any of your selected platforms: ${PLATFORMS}")
             }
 
             LABELS.put(ENTRY[0].trim(), ENTRY[1].trim())

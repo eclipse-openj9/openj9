@@ -109,7 +109,7 @@ def checkout_pullrequest() {
     echo 'Look for Dependent Changes'
 
     def KEYWORD = "depends"
-    def COMMENT = ghprbCommentBody.toLowerCase(Locale.US);
+    def COMMENT = params.ghprbCommentBody.toLowerCase(Locale.US);
     def OPENJDK_PR
     def OMR_PR
     def OPENJ9_PR
@@ -365,11 +365,7 @@ def build_all() {
             add_node_to_description()
             get_source()
             build()
-            // Do not archive in compile only pr jobs
-            // ghprbPullId is the PullRequest ID which only shows up in Pull Requests
-            if (!params.ghprbPullId) {
-                archive()
-            }
+            archive()
         } finally {
             // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
             cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true

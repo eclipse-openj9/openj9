@@ -84,8 +84,6 @@ build_discarder:
     OMR: 20
     OpenJDK: 20
     Personal: 50
-    # tmp PRs
-    pullRequest: 50
     Pipeline: 100
 restart_timeout:
   time: '5'

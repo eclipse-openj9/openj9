@@ -165,7 +165,22 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     ]);
 }
 
-def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, CUSTOM_DESCRIPTION) {
+
+def cancel_running_builds(JOB_NAME, BUILD_IDENTIFIER) {
+    echo "Looking to stop running jobs:'${JOB_NAME}' from build:'${BUILD_IDENTIFIER}'"
+    Jenkins.instance.getItemByFullName(JOB_NAME, Job.class)._getRuns().each { number, run ->
+        // get all runs/jobs from the build
+        // Class org.jenkinsci.plugins.workflow.job.WorkflowRun
+        // Only look for running jobs with matching BUILD_IDENTIFIER
+        if ((run.isBuilding()) && (run.getEnvironment().get('BUILD_IDENTIFIER') == "${BUILD_IDENTIFIER}")) {
+            echo "Cancelling Job:'${run}'"
+            run.doStop()
+        }
+    }
+    echo "Done stopping jobs"
+}
+
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, CUSTOM_DESCRIPTION, ghprbPullId, ghprbCommentBody, ghprbTargetBranch) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
@@ -188,7 +203,11 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'EXTRA_CONFIGURE_OPTIONS', value: EXTRA_CONFIGURE_OPTIONS),
             string(name: 'EXTRA_MAKE_OPTIONS', value: EXTRA_MAKE_OPTIONS),
             string(name: 'OPENJDK_CLONE_DIR', value: OPENJDK_CLONE_DIR),
-            string(name: 'CUSTOM_DESCRIPTION', value: CUSTOM_DESCRIPTION)])
+            string(name: 'CUSTOM_DESCRIPTION', value: CUSTOM_DESCRIPTION),
+            string(name: 'ghprbPullId', value: ghprbPullId),
+            string(name: 'ghprbGhRepository', value: ghprbGhRepository),
+            string(name: 'ghprbCommentBody', value: ghprbCommentBody),
+            string(name: 'ghprbTargetBranch', value: ghprbTargetBranch)])
     }
 }
 
@@ -275,19 +294,23 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
         // Get build causes
         build_causes_string = get_causes(currentBuild)
 
-        if (JOB.result == "UNSTABLE") {
-            echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is unstable after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
-            currentBuild.result = "UNSTABLE"
+        if ((JOB.result == "UNSTABLE") || (JOB.result == "ABORTED")) { // Job unstable (YELLOW) or aborted (GREY)
+            // If the job was ABORTED it either was killed by someone or
+            // killed by cancel_running_builds(). In this case we don't
+            // want to offer the restart option as it is not desired for PR builds.
+            // If the job was UNSTABLE this indicates test(s) failed and we don't want to offer the restart option.
+            echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is ${JOB.result} after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            currentBuild.result = JOB.result
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
+                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
             }
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node('master') {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build UNSTABLE")
+                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")
                 }
             }
-        } else {
+        } else { // Job faild (RED)
             if (SLACK_CHANNEL) {
                 slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
             }
@@ -330,7 +353,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     echo "Repo:${ghprbGhRepository}, Commit:${ghprbActualCommit}, GITHUB_SERVER:${GITHUB_SERVER}"
 
     // compile the source and build the SDK
-    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, CUSTOM_DESCRIPTION)
+    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, CUSTOM_DESCRIPTION, ghprbPullId, ghprbCommentBody, ghprbTargetBranch)
 
     // Determine if Build job archived to Artifactory
     def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
@@ -363,6 +386,11 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
         echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
 
+        // For PullRequest Builds, overwrite the OpenJ9 sha for test jobs so they checkout the PR (OpenJ9 PRs only)
+        if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse/openj9') {
+            SHAS['OPENJ9'] = "origin/pr/${params.ghprbPullId}/merge"
+        }
+
         for (name in TARGET_NAMES) {
             // Checking to see if the test should be excluded
             if (EXCLUDED_TESTS.contains(get_target_name(name))){
@@ -373,6 +401,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def TEST_JOB_NAME = get_test_job_name(get_target_name(name), SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             testjobs["${TEST_JOB_NAME}"] = {
+                if (params.ghprbPullId) {
+                    cancel_running_builds(TEST_JOB_NAME, BUILD_IDENTIFIER)
+                }
                 if (ARTIFACTORY_CREDS) {
                     cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
@@ -555,6 +586,100 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
         ]
         build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
     }
+}
+
+def setup_pull_request() {
+    // Parse Github trigger comment
+    // Jenkins test sanity <platform>*
+    // Jenkins test extended <platform>*
+    // Jenkins compile <platform>*
+    // Jenkins test <comma_separated_test_target> <platform> *
+    /*
+    * Comment indexes - '+' is an offset of 0/1 if running tests or not
+    * 0 - Jenkins
+    * 1 - test / compile
+    * 1+ - test target
+    * 2+ - platforms
+    * 3+ - jdk versions
+    *
+    * Note: Depends logic is already part of the build/compile job and is located in the checkout_pullrequest() function.
+    */
+    def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
+    // Don't both checking PARSED_COMMENT[0] since it is hardcoded in the trigger regex of the Jenkins job.
+
+    // Setup TESTS_TARGETS
+    switch ("${PARSED_COMMENT[1]}") {
+        case "compile":
+            if (PARSED_COMMENT.size() < 4) {
+                error("Pull Request trigger comment needs to specify PLATFORM and SDK_VERSION")
+            }
+            TESTS_TARGETS = 'none'
+            OFFSET = 0
+            break
+        case "test":
+            if (PARSED_COMMENT.size() < 5) {
+                error("Pull Request trigger comment needs to specify TESTS_TARGET, PLATFORM and SDK_VERSION")
+            }
+            TESTS_TARGETS = "${PARSED_COMMENT[2]}"
+            if ("${TESTS_TARGETS}" == "all") {
+                error("Test Target 'all' not allowed for Pull Request builds")
+            }
+            OFFSET = 1
+            break
+        default:
+            error("Unable to parse trigger comment. Unknown build option:'${PARSED_COMMENT[1]}'")
+    }
+    echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+
+    // Setup JDK VERSIONS
+    switch (ghprbGhRepository) {
+        case   ~/.*openj9-openjdk-jdk.*/:
+            TMP_VERSION = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
+            if ("${TMP_VERSION}" == "") {
+                TMP_VERSION = 'next'
+            }
+            RELEASES.add(TMP_VERSION)
+            MIN_COMMENT_SIZE = 3
+            break
+        case "eclipse/openj9":
+            TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].tokenize(',')
+            TMP_VERSIONS.each { VERSION ->
+                echo "VERSION:'${VERSION}'"
+                if ("${VERSION}" == "all") {
+                    error("JDK version 'all' not allowed for Pull Request builds\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
+                }
+                if (!("${VERSION}" ==~ /jdk.*/)) {
+                    error("Incorrect syntax for requested JDK version:'${VERSION}'\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
+                }
+                if (CURRENT_RELEASES.contains(VERSION.substring(3))) {
+                    RELEASES.add(VERSION.substring(3))
+                } else {
+                    error("Unsupported JDK version or incorrect syntax:'${VERSION}'\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
+                }
+            }
+            MIN_COMMENT_SIZE = 4
+            break
+        default:
+            error("Unknown source repo:'${ghprbGhRepository}'")
+    }
+
+    echo "RELEASES:'${RELEASES}'"
+
+    if (PARSED_COMMENT.size() < MIN_COMMENT_SIZE) { error("Pull Request trigger comment does not contain enough elements.")}
+
+    // Setup PLATFORMS
+    PARSED_PLATFORMS = PARSED_COMMENT[2+OFFSET].tokenize(',')
+    PARSED_PLATFORMS.each { SHORT ->
+        LONG_PLATFORM = SHORT_NAMES["${SHORT}"]
+        if (LONG_PLATFORM) {
+            PLATFORMS.add(LONG_PLATFORM)
+        } else {
+            error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${SHORT_NAMES}")
+        }
+    }
+    echo "PLATFORMS:'${PLATFORMS}'"
+
+    PERSONAL_BUILD = 'true'
 }
 
 return this
