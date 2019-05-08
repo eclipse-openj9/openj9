@@ -52,7 +52,8 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    : TR_ResolvedJ9Method(fe, owningMethod),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
    _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion()))
+   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion())),
+   _isUnresolvedStr(decltype(_isUnresolvedStr)::allocator_type(trMemory->heapMemoryRegion()))
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->getJ9JITConfig());
@@ -74,7 +75,8 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    : TR_ResolvedJ9Method(fe, owningMethod),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
    _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion()))
+   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion())),
+   _isUnresolvedStr(decltype(_isUnresolvedStr)::allocator_type(trMemory->heapMemoryRegion()))
    {
    // Mirror has already been created, its parameters are passed in methodInfo
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
@@ -230,13 +232,6 @@ TR_ResolvedJ9JITaaSServerMethod::isConstantDynamic(I_32 cpIndex)
    TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
    UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(_romClass), cpIndex);
    return (J9CPTYPE_CONSTANT_DYNAMIC == cpType);
-   }
-
-bool
-TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
-   {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex, optimizeForAOT);
-   return std::get<0>(_stream->read<bool>());
    }
 
 TR_ResolvedMethod *
@@ -1101,9 +1096,27 @@ TR_ResolvedJ9JITaaSServerMethod::stringConstant(I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
-   return std::get<0>(_stream->read<void *>());
+   auto recv = _stream->read<void *, bool, bool>();
+
+   _isUnresolvedStr.insert({cpIndex, TR_IsUnresolvedString(std::get<1>(recv), std::get<2>(recv))});
+   return std::get<0>(recv);
    }
 
+bool
+TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
+   {
+   auto it = _isUnresolvedStr.find(cpIndex);
+   if (it != _isUnresolvedStr.end())
+      {
+      return optimizeForAOT ? it->second._optimizeForAOTTrueResult : it->second._optimizeForAOTFalseResult;
+      }
+   else
+      {
+      TR_ASSERT(false, "isUnresolvedString should have already been fetched through querying stringConstant");
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex, optimizeForAOT);
+      return std::get<0>(_stream->read<bool>());
+      }
+   }
 
 bool
 TR_ResolvedJ9JITaaSServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)

@@ -305,6 +305,15 @@ private:
    UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry> _resolvedMethodsCache;
    TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
 
+   struct TR_IsUnresolvedString
+      {
+      TR_IsUnresolvedString(bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult): _optimizeForAOTTrueResult(optimizeForAOTTrueResult),
+                                                                                            _optimizeForAOTFalseResult(optimizeForAOTFalseResult) {}
+      bool _optimizeForAOTTrueResult;
+      bool _optimizeForAOTFalseResult;
+      };
+   UnorderedMap<I_32, TR_IsUnresolvedString> _isUnresolvedStr;
+
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
