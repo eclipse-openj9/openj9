@@ -885,7 +885,7 @@ def get_specs(SUPPORTED_SPECS) {
         SPEC = SPEC.trim()
         if (!SUPPORTED_SPECS.keySet().contains(SPEC)) {
             echo "Warning: Unknown or unsupported platform: ${SPEC}"
-            continue
+            return
         }
 
         if (RELEASES) {
