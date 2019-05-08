@@ -2707,7 +2707,7 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
 
    cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
                                                                          callNode, longReleaseSnippetLabel,
-                                                                         comp->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp->getJittedMethodSymbol()),
+                                                                         comp->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp->getJittedMethodSymbol()),
                                                                          longReleaseRestartLabel));
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, longReleaseRestartLabel);
