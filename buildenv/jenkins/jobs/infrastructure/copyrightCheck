@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,26 +55,29 @@ timeout(time: 6, unit: 'HOURS') {
                     ).trim()
                     
                     // Set a different Copyright regex depending on the Repo the PR is from
-                    if (ghprbGhRepository ==~ "eclipse.*") {
-                        REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
-                    } else if (ghprbGhRepository ==~ "ibmruntimes.*") {
-                        REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
-                    } else {
-                        echo "ERROR: Unrecognized repository. Unable to determine correct Copyright regex"
-                        sh 'exit 1'
+                    REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
+
+                    WHITE_LIST = []
+                    if (fileExists("${WORKSPACE}/.copyright_whitelist")) {
+                        WHITE_LIST = readFile '.copyright_whitelist'
+                        WHITE_LIST = WHITE_LIST.tokenize("\n")
                     }
 
                     FILES_LIST.each() {
                         println "Checking file: '${it}'"
-                        RESULT = sh (
-                            script: "grep -qE ${REGEX} '${it}'",
-                            returnStatus: true)
-                        if(RESULT != 0) {
-                            echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
-                            FAIL = true
-                            BAD_FILES << "${it}"
+                        if (WHITE_LIST.contains(it)) {
+                            echo "Ignoring file"
                         } else {
-                            echo "Copyright date in file: appears to be correct"
+                            RESULT = sh (
+                                script: "grep -qE ${REGEX} '${it}'",
+                                returnStatus: true)
+                            if(RESULT != 0) {
+                                echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
+                                FAIL = true
+                                BAD_FILES << "${it}"
+                            } else {
+                                echo "Copyright date in file: appears to be correct"
+                            }
                         }
                     }
                     if (FAIL) {
@@ -84,7 +87,7 @@ timeout(time: 6, unit: 'HOURS') {
                             echo "${it}"
                         }
                         echo "${HASHES}"
-                        sh 'exit 1'
+                        error("One or more files do not have valid copyrights.")
                     } else {
                         echo "All modified files appear to have correct copyrights"
                     }
