@@ -120,8 +120,8 @@ TEST_NODE_LABELS = (params.TEST_NODE_LABELS) ? params.TEST_NODE_LABELS : ""
 echo "TEST_NODE_LABELS:'${TEST_NODE_LABELS}'"
 PROMOTE = (params.PROMOTE) ? params.PROMOTE : ""
 echo "PROMOTE:'${PROMOTE}'"
-SLACK_HANDLE = (params.SLACK_HANDLE) ? params.SLACK_HANDLE : ""
-echo "SLACK_HANDLE:'${SLACK_HANDLE}'"
+SLACK_CHANNEL = (params.SLACK_HANDLE) ? params.SLACK_HANDLE : ""
+echo "SLACK_CHANNEL:'${SLACK_CHANNEL}'"
 BUILD_LIST = (params.BUILD_LIST) ? params.BUILD_LIST : ""
 echo "BUILD_LIST:'${BUILD_LIST}'"
 BUILD_IDENTIFIER = (params.BUILD_IDENTIFIER) ? params.BUILD_IDENTIFIER : ""
@@ -312,7 +312,7 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'BUILD_NODE', value: BUILD_NODE),
                     string(name: 'TEST_NODE', value: TEST_NODE),
                     string(name: 'PERSONAL_BUILD', value: PERSONAL_BUILD),
-                    string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE),
+                    string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL),
                     string(name: 'RESTART_TIMEOUT', value: RESTART_TIMEOUT),
                     string(name: 'RESTART_TIMEOUT_UNITS', value: RESTART_TIMEOUT_UNITS),
                     string(name: 'SETUP_LABEL', value: SETUP_LABEL),
