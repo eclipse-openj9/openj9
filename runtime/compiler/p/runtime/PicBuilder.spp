@@ -3289,7 +3289,7 @@ TOCjitResolveInterfaceMethod:
 TOCjitLookupInterfaceMethod:
 	.tc       jitLookupInterfaceMethod[TC],jitLookupInterfaceMethod
 TOC_interfaceCompeteSlot2:
-	.tc       _interfaceCompteteSlot2[TC],_interfaceCompeteSlot2{DS}
+	.tc       _interfaceCompeteSlot2[TC],_interfaceCompeteSlot2{DS}
 TOC_interfaceSlotsUnavailable:
 	.tc       _interfaceSlotsUnavailable[TC],_interfaceSlotsUnavailable{DS}
 TOC_jitAddPicToPatchOnClassUnload:
@@ -3648,7 +3648,7 @@ TOCjitResolveInterfaceMethod:
 TOCjitLookupInterfaceMethod:
 	.tc       jitLookupInterfaceMethod[TC],jitLookupInterfaceMethod
 TOC_interfaceCompeteSlot2:
-	.tc       _interfaceCompteteSlot2[TC],_interfaceCompeteSlot2
+	.tc       _interfaceCompeteSlot2[TC],_interfaceCompeteSlot2
 TOC_interfaceSlotsUnavailable:
 	.tc       _interfaceSlotsUnavailable[TC],_interfaceSlotsUnavailable
 TOC_jitAddPicToPatchOnClassUnload:
