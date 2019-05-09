@@ -623,7 +623,7 @@ testClasspathCache(J9JavaVM* vm)
 	SHC_TEST_ASSERT("freeIdentifiedClasspathArray", ClasspathCacheTest::freeTest(PORTLIB, &cp1, &cp2, &cp3), success, rc);
 	SHC_TEST_ASSERT("registerMatchFailed", ClasspathCacheTest::matchFailedTest(vm), success, rc);
 
-	REPORT_SUMMARY("ClaspathCache", success);
+	REPORT_SUMMARY("ClasspathCache", success);
 
 	return success;
 }
