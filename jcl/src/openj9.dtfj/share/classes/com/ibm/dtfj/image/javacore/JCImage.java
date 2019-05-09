@@ -57,7 +57,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	private boolean fCreationTimeNanosSet = false;
 	private String fHostName = null;
 	private List fIPAddresses = new Vector();
-	private List _closables = new Vector();
+	private List _closeables = new Vector();
 	private URI source = null;
 	private ManagedImageSource imageSource = null;
 	
@@ -287,7 +287,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	public void close() {
 		// This is just for show; JCImageFactory closes the input stream during construction.
 
-		Iterator it = _closables .iterator();
+		Iterator it = _closeables .iterator();
 		while(it.hasNext()) {
 			Object o = it.next();
 			if (o instanceof JavaCoreResourceReleaser) {
@@ -305,7 +305,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	public void addReleasable(JavaCoreResourceReleaser o) {
-		_closables.add(o);
+		_closeables.add(o);
 	}
 
 	public Properties getProperties() {

@@ -54,7 +54,7 @@ public class Image implements ReleasingImage, ManagedImage
 	private Vector _addressSpaces = new Vector();
 	private String _hostname;
 	private List _ipAddresses = new Vector();
-	private List _closables = new Vector();
+	private List _closeables = new Vector();
 	private URI source = null;
 	private ManagedImageSource imageSource = null;
 	
@@ -199,11 +199,11 @@ public class Image implements ReleasingImage, ManagedImage
 	}
 
 	public void addReleasable(ResourceReleaser o) {
-		_closables.add(o);
+		_closeables.add(o);
 	}
 	
 	public void close() {
-		Iterator it = _closables.iterator();
+		Iterator it = _closeables.iterator();
 		while(it.hasNext()) {
 			Object o = it.next();
 			if (o instanceof ResourceReleaser) {
