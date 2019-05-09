@@ -154,7 +154,7 @@ public class CheckConversionsFromDouble {
 		testCases.add(new ConversionPair<Integer>(D.NMIN,	0));
 
 		for (ConversionPair<Integer> pair : testCases) {
-			String operation = "testing conversion: convert double " + pair.from + " to byintte";
+			String operation = "testing conversion: convert double " + pair.from + " to byte";
 			logger.debug(operation);
 			Assert.assertEquals((int)pair.from, (int)pair.to, operation);
 		}

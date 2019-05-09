@@ -158,7 +158,7 @@ public class CheckConversionsFromFloat {
 		testCases.add(new ConversionPair<Integer>(F.NMIN,	0));
 
 		for (ConversionPair<Integer> pair : testCases) {
-			String operation = "testing conversion: convert float " + pair.from + " to byintte";
+			String operation = "testing conversion: convert float " + pair.from + " to byte";
 			logger.debug(operation);
 			Assert.assertEquals((int)pair.from, (int)pair.to, operation);
 		}
