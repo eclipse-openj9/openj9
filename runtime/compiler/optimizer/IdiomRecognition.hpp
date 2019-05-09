@@ -277,7 +277,7 @@ public:
                                                                         _isParentSimplyConnected); }
    bool isCFGConnected()                        { return _flags.testAll(_isSuccSimplyConnected |
                                                                         _isPredSimplyConnected); }
-   bool isCFGDataConected()                     { return _flags.testAll(_isSuccSimplyConnected |
+   bool isCFGDataConnected()                    { return _flags.testAll(_isSuccSimplyConnected |
                                                                         _isPredSimplyConnected |
                                                                         _isChildSimplyConnected |
                                                                         _isParentSimplyConnected); }
