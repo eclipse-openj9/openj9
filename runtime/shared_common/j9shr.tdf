@@ -532,7 +532,7 @@ TraceExit=Trc_SHR_OSC_createNewCache_Exit2 Obsolete NoEnv Overhead=1 Level=1 Gro
 TraceExit=Trc_SHR_OSC_openCache_ExitOpExist NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache - cache does not exist and we only want to open existing ones!"
 TraceExit=Trc_SHR_OSC_createNewCache_Exit4 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache - unknown error return by j9shmem_open!"
 
-TraceEntry=Trc_SHR_OSC_openCache_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCaahe Entered rootName=%s"
+TraceEntry=Trc_SHR_OSC_openCache_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache Entered rootName=%s"
 TraceEvent=Trc_SHR_OSC_openCache_shmem_open NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache calling shmem_open: name = %s, size = %d"
 TraceEvent=Trc_SHR_OSC_openCache_release_cache_activity NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache increment cache activity"
 TraceExit=Trc_SHR_OSC_openCache_Exit_Restart1 NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache return Restart - semaphore current generation number incorrect"
