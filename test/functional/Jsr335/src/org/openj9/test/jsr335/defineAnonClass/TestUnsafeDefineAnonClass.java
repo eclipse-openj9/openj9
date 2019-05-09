@@ -33,7 +33,7 @@ import java.lang.reflect.Method;
 public class TestUnsafeDefineAnonClass {
 	private static final int CLASS_UNLOADING_ITERATIONS = 100000;
 	private static final int CLASS_REFLECTION_ITERATIONS = 10000;
-	private static final int CLASSESS_KEPT_ALIVE_AT_ANY_TIME = 100;
+	private static final int CLASSES_KEPT_ALIVE_AT_ANY_TIME = 100;
 	public static final int CORRECT_ANSWER = 100;
 	
 	/**
@@ -43,7 +43,7 @@ public class TestUnsafeDefineAnonClass {
 	@Test(groups = { "level.sanity" })
 	public void testAnonClassUnloading() {
 		byte[] classBytes = DefineAnonClass.getClassBytesFromResource(BasicClass.class);
-		CircularBuffer<Class<?>> buf = new CircularBuffer<Class<?>>(CLASSESS_KEPT_ALIVE_AT_ANY_TIME);
+		CircularBuffer<Class<?>> buf = new CircularBuffer<Class<?>>(CLASSES_KEPT_ALIVE_AT_ANY_TIME);
 		for (int i = 0; i < CLASS_UNLOADING_ITERATIONS; i++) {
 			Class<?> anonClass = DefineAnonClass.callDefineAnonClass(TestUnsafeDefineAnonClass.class, classBytes, null);
 			
@@ -60,7 +60,7 @@ public class TestUnsafeDefineAnonClass {
 	@Test(groups = { "level.sanity" })
 	public void testAnonClassCodePaths() {
 		byte[] classBytes = DefineAnonClass.getClassBytesFromResource(BasicClass.class);
-		CircularBuffer<Class<?>> buf = new CircularBuffer<Class<?>>(CLASSESS_KEPT_ALIVE_AT_ANY_TIME);
+		CircularBuffer<Class<?>> buf = new CircularBuffer<Class<?>>(CLASSES_KEPT_ALIVE_AT_ANY_TIME);
 		for (int i = 0; i < CLASS_REFLECTION_ITERATIONS; i++) {
 			Class<?> anonClass = DefineAnonClass.callDefineAnonClass(TestUnsafeDefineAnonClass.class, classBytes, null);
 			runBasicClassTests(anonClass);

@@ -35,7 +35,7 @@ public class TestClassExt extends DDRExtTesterBase {
 				new String[] {});
 		assertTrue(validate(allClassesOutput,
 				Constants.ALL_CLASSES_SUCCESS_KEY,
-				Constants.ALL_CLASSESS_FAILURE_KEY, true));
+				Constants.ALL_CLASSES_FAILURE_KEY, true));
 	}
 
 	public void testJ9ClassShapeExt() {
