@@ -98,7 +98,7 @@ public class LazyClassLoaderInitTest {
 	 */
 	public void testDefineClass() {
 		try {
-			System.out.println("Begining testDefineClass");
+			System.out.println("Beginning testDefineClass");
 			ClassLoader ecl = new EmptyClassLoader();
 			@SuppressWarnings("rawtypes")
 			Class clazz = ecl.loadClass("j9vm.test.classloader.Dummy");
@@ -117,7 +117,7 @@ public class LazyClassLoaderInitTest {
 	 */
 	public void testJniDefineClass() {
 		try {
-			System.out.println("Begining testJniDefineClass");
+			System.out.println("Beginning testJniDefineClass");
 			ClassLoader ecl = new EmptyClassLoader();
 			byte[] dummyBytecode = EmptyClassLoader.getDummyBytecode();
 			assert dummyBytecode != null;
@@ -139,7 +139,7 @@ public class LazyClassLoaderInitTest {
 	 */
 	public void testJvmtiCountLoadedClasses() {
 		try {
-			System.out.println("Begining testJvmtiCountLoadedClasses");
+			System.out.println("Beginning testJvmtiCountLoadedClasses");
 			ClassLoader ecl = new EmptyClassLoader();
 			int numClasses = jvmtiCountLoadedClasses(ecl);
 			if (0 == numClasses) {
@@ -162,7 +162,7 @@ public class LazyClassLoaderInitTest {
 	 */
 	public void testJvmFindClass() {
 		try {
-			System.out.println("Begining testJvmFindClass");
+			System.out.println("Beginning testJvmFindClass");
 			ClassLoader ecl = new EmptyClassLoader();
 			@SuppressWarnings("rawtypes")
 			Class clazz = (Class) jvmFindClass("java/lang/Object", ecl);

@@ -971,7 +971,7 @@ public class LinuxNumaTest {
 			System.exit(0);
 		}
 
-		System.out.println("Begining heap memory policy test...");
+		System.out.println("Beginning heap memory policy test...");
 
 		// Run as an instance so we have access to an object monitor so we can
 		// wait() for other processes to complete.
