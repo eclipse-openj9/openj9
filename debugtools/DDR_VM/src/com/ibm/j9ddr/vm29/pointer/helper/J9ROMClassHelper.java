@@ -125,7 +125,7 @@ public class J9ROMClassHelper {
 		return romclass. extraModifiers().allBitsIn(J9AccClassFinalizeNeeded);
 	}
 
-	public static boolean isClonable(J9ROMClassPointer romclass) throws CorruptDataException {
+	public static boolean isCloneable(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.extraModifiers().allBitsIn(J9AccClassCloneable);
 	}
 	
