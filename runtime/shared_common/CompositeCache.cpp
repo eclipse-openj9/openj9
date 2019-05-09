@@ -265,6 +265,8 @@ SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 	_useWriteHash = false;
 	_reduceStoreContentionDisabled = false;
 	_initializingNewCache = false;
+	_minimumAccessedShrCacheMetadata = 0;
+	_maximumAccessedShrCacheMetadata = 0;
 }
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -3778,6 +3780,23 @@ SH_CompositeCacheImpl::isAddressInROMClassSegment(const void* address)
 }
 
 /**
+ * Checks whether given address is in the metadata area of this shared cache
+ *
+ * @param [in] address  Address to be checked
+ *
+ * @return true if address is within the shared metadata area, false otherwise
+ */
+bool
+SH_CompositeCacheImpl::isAddressInMetaDataArea(const void* address) const
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return false;
+	}
+	return ((address >= UPDATEPTR(_theca)) && (address < CADEBUGSTART(_theca)));
+}
+
+/**
  * Check whether given address is in the Shared Classes cache
  * Note - does not include the cache header
  *
@@ -6115,8 +6134,16 @@ SH_CompositeCacheImpl::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, 
  * Advise the OS to release resources used by a section of the shared classes cache
  */
 void
-SH_CompositeCacheImpl::dontNeedMetadata(J9VMThread *currentThread, const void* startAddress, size_t length) {
-	_oscache->dontNeedMetadata(currentThread, startAddress, length);
+SH_CompositeCacheImpl::dontNeedMetadata(J9VMThread *currentThread)
+{
+	UDATA  min = _minimumAccessedShrCacheMetadata;
+	UDATA  max = _maximumAccessedShrCacheMetadata;
+	size_t length = (size_t) (max - min);
+	if ((0 != min)
+		&& (0 != length)
+	) {
+		_oscache->dontNeedMetadata(currentThread, (const void *)min, length);
+	}
 }
 /**
  * This function changes the permission of the page containing given address by marking the page as read-only or read-write.
@@ -6885,4 +6912,87 @@ SH_CompositeCacheImpl::isNewCache(void)
 		return false;
 	}
 	return _initializingNewCache;
+}
+
+/**
+ * Record the minimum and maximum boundaries of accessed address in this shared classes cache.
+ * @param [in] metadataAddress address accessed in metadata
+ * @return true if the boundaries are updated, false otherwise
+ */
+bool
+SH_CompositeCacheImpl::updateAccessedShrCacheMetadataBounds(J9VMThread* currentThread, uintptr_t const * metadataAddress)
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return false;
+	}
+
+	if (!isAddressInMetaDataArea((const void*)metadataAddress)) {
+		return false;
+	}
+
+	uintptr_t* updateAddress = (uintptr_t *) &_minimumAccessedShrCacheMetadata;
+	uintptr_t currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
+	uintptr_t const newValue = (uintptr_t const) metadataAddress;
+
+	if (0 == currentValue) { /* set initial value.  Don't care if someone beats us to this  */
+		Trc_SHR_CM_updateAccessedShrCacheMetadataMinimum(currentThread, metadataAddress);
+		compareAndSwapUDATA(
+				updateAddress,
+				currentValue,
+				newValue
+		);
+	}
+
+	currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
+	while (newValue < (uintptr_t) currentValue) {
+		Trc_SHR_CM_updateAccessedShrCacheMetadataMinimum(currentThread, metadataAddress);
+
+		compareAndSwapUDATA(
+				updateAddress,
+				currentValue,
+				newValue
+		);
+		currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
+	}
+
+	updateAddress = (uintptr_t *) &_maximumAccessedShrCacheMetadata;
+	currentValue = (uintptr_t) _maximumAccessedShrCacheMetadata;
+	while (newValue > (uintptr_t) _maximumAccessedShrCacheMetadata) {
+		Trc_SHR_CM_updateAccessedShrCacheMetadataMaximum(currentThread, metadataAddress);
+
+		compareAndSwapUDATA(
+				updateAddress,
+				currentValue,
+				newValue
+		);
+		currentValue = (uintptr_t) _maximumAccessedShrCacheMetadata;
+	}
+
+	return true;
+}
+
+/**
+ * Checks whether the address is inside the released metadata boundaries.
+ *
+ * @param [in] currentThread The current JVM thread
+ * @param [in] metadataAddress The address to be checked
+ *
+ * @return true if the _minimumAccessedShrCacheMetadata <= metadataAddress <= _maximumAccessedShrCacheMetadata, false otherwise.
+ */
+bool
+SH_CompositeCacheImpl::isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA metadataAddress) const
+{
+	bool rc = false;
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return rc;
+	}
+	if ((0 != _minimumAccessedShrCacheMetadata)
+		&& (0 != _maximumAccessedShrCacheMetadata)
+	) {
+		rc = ((_minimumAccessedShrCacheMetadata <= metadataAddress) && (metadataAddress <= _maximumAccessedShrCacheMetadata));
+	}
+
+	return rc;
 }
