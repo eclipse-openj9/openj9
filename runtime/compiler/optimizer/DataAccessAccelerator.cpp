@@ -339,15 +339,15 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
 
                   // DAA Packed Decimal comparison methods
                case TR::com_ibm_dataaccess_PackedDecimal_lessThanPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmplt); break;
+                  result |= genComparisonIntrinsic(treeTop, callNode, TR::pdcmplt); break;
                case TR::com_ibm_dataaccess_PackedDecimal_lessThanOrEqualsPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmple); break;
+                  result |= genComparisonIntrinsic(treeTop, callNode, TR::pdcmple); break;
                case TR::com_ibm_dataaccess_PackedDecimal_greaterThanPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmpgt); break;
+                  result |= genComparisonIntrinsic(treeTop, callNode, TR::pdcmpgt); break;
                case TR::com_ibm_dataaccess_PackedDecimal_greaterThanOrEqualsPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmpge); break;
+                  result |= genComparisonIntrinsic(treeTop, callNode, TR::pdcmpge); break;
                case TR::com_ibm_dataaccess_PackedDecimal_equalsPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmpeq); break;
+                  result |= genComparisonIntrinsic(treeTop, callNode, TR::pdcmpeq); break;
 
                   // DAA Packed Decimal <-> Integer
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
@@ -1021,7 +1021,7 @@ TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR:
    return arrayAddressNode;
    }
 
-bool TR_DataAccessAccelerator::genComparisionIntrinsic(TR::TreeTop* treeTop, TR::Node* callNode, TR::ILOpCodes ops)
+bool TR_DataAccessAccelerator::genComparisonIntrinsic(TR::TreeTop* treeTop, TR::Node* callNode, TR::ILOpCodes ops)
    {
    if (!isChildConst(callNode, 2) || !isChildConst(callNode, 5))
       {
