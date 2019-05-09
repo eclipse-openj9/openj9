@@ -56,7 +56,7 @@ typedef struct riControlBlock {
    uint32_t callTypeBranches:1;
    uint32_t returnTypeBranches:1;
    uint32_t otherTypeBranches:1;
-   uint32_t branchOnCondAsOtherTypeBrranches:1;
+   uint32_t branchOnCondAsOtherTypeBranches:1;
    uint32_t RIEmit:1;
    uint32_t TXAbort:1;
 
