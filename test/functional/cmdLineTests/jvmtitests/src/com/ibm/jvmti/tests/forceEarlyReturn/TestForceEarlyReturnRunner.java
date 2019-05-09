@@ -265,7 +265,7 @@ public class TestForceEarlyReturnRunner extends Thread
 		TestForceEarlyReturnRunner ret = new TestForceEarlyReturnRunner();
 
 		/* Should never execute this code if ForceEarlyReturnObject works correctly */
-		ret.objectReturnTestString = new String("bugus");
+		ret.objectReturnTestString = new String("bogus");
 
 		return ret;
 	}
