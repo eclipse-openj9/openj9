@@ -1044,7 +1044,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
       {
       if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
          {
-         TR::VMAccessCriticalSection isConsitble(comp->fej9());
+         TR::VMAccessCriticalSection isConstible(comp->fej9());
          prepareNodeToBeLoadConst(node);
          switch (loadType)
             {
