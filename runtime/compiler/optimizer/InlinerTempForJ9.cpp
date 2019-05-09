@@ -3377,7 +3377,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
                {
                if (prev)
                   {
-                  heuristicTrace(tracer(), "Chopping the Tail off the list of targets we're inlining. New last target = %p Choping off at target %p", prev, calltarget);
+                  heuristicTrace(tracer(), "Chopping the Tail off the list of targets we're inlining. New last target = %p Chopping off at target %p", prev, calltarget);
                   prev->setNext(0);
                   }
                else
@@ -3421,7 +3421,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
 
             if (prev)
                {
-               heuristicTrace(tracer(),"Chopping the Tail off the list of targets we're inlining. New last target = %p Choping off at target %p",prev,calltarget);
+               heuristicTrace(tracer(),"Chopping the Tail off the list of targets we're inlining. New last target = %p Chopping off at target %p",prev,calltarget);
                prev->setNext(0);
                }
             else
