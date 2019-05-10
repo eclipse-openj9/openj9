@@ -173,7 +173,7 @@ def cancel_running_builds(JOB_NAME, BUILD_IDENTIFIER) {
         // get all runs/jobs from the build
         // Class org.jenkinsci.plugins.workflow.job.WorkflowRun
         // Only look for running jobs with matching BUILD_IDENTIFIER
-        if ((run.isBuilding()) && (run.getEnvironment().get('BUILD_IDENTIFIER') == "${BUILD_IDENTIFIER}")) {
+        if ((run) && (run.isBuilding()) && (run.getEnvironment().get('BUILD_IDENTIFIER') == "${BUILD_IDENTIFIER}")) {
             echo "Cancelling Job:'${run}'"
             run.doStop()
         }
