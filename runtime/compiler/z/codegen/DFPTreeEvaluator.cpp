@@ -208,7 +208,7 @@ genLoadDFP(
       fprRegister = cg->allocateRegister(TR_FPR);
 
       // move it from GPR to FPR
-      if (TR::Compiler->target.cpu.getS390SupportsFPE())
+      if (TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility())
          {
          generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister);
          }

@@ -563,101 +563,7 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
       {
       int32_t machineId = TR::Compiler->target.cpu.TO_PORTLIB_get390MachineId();
 
-      switch (machineId)
-         {
-         case TR_FREEWAY:
-            returnValue = snprintf(processorName, stringLength, "z900 (%d)", machineId);
-         break;
-
-         case TR_Z800:
-            returnValue = snprintf(processorName, stringLength, "z800 (%d)", machineId);
-         break;
-
-         // zPDT
-         case TR_MIRAGE:
-         case TR_MIRAGE2:
-            returnValue = snprintf(processorName, stringLength, "zPDT (%d)", machineId);
-         break;
-
-         case TR_TREX:
-            returnValue = snprintf(processorName, stringLength, "z990 (%d)", machineId);
-         break;
-
-         case TR_Z890:
-            returnValue = snprintf(processorName, stringLength, "z890 (%d)", machineId);
-         break;
-
-         case TR_GOLDEN_EAGLE:
-            returnValue = snprintf(processorName, stringLength, "z9 (%d)", machineId);
-         break;
-
-         case TR_Z9BC:
-            returnValue = snprintf(processorName, stringLength, "z9BC (%d)", machineId);
-         break;
-
-         case TR_Z10:
-            returnValue = snprintf(processorName, stringLength, "z10 (%d)", machineId);
-         break;
-
-         case TR_Z10BC:
-            returnValue = snprintf(processorName, stringLength, "z10BC (%d)", machineId);
-         break;
-
-         case TR_ZG:
-            returnValue = snprintf(processorName, stringLength, "z196 (%d)", machineId);
-         break;
-
-         case TR_ZGMR:
-            returnValue = snprintf(processorName, stringLength, "z114 (%d)", machineId);
-         break;
-
-         case TR_ZEC12:
-            returnValue = snprintf(processorName, stringLength, "zEC12 (%d)", machineId);
-         break;
-
-         case TR_ZEC12MR:
-            returnValue = snprintf(processorName, stringLength, "zBC12 (%d)", machineId);
-         break;
-
-         case TR_Z13:
-            returnValue = snprintf(processorName, stringLength, "z13 (%d)", machineId);
-         break;
-
-         case TR_Z13s:
-            returnValue = snprintf(processorName, stringLength, "z13s (%d)", machineId);
-         break;
-
-         case TR_Z14:
-            returnValue = snprintf(processorName, stringLength, "z14 (%d)", machineId);
-         break;
-
-         case TR_Z14s:
-            returnValue = snprintf(processorName, stringLength, "z14s (%d)", machineId);
-         break;
-
-         case TR_Z15:
-            returnValue = snprintf(processorName, stringLength, "z15 (%d)", machineId);
-         break;
-
-         case TR_Z15s:
-            returnValue = snprintf(processorName, stringLength, "z15 (%d)", machineId);
-         break;
-
-         case TR_ZNEXT:
-            returnValue = snprintf(processorName, stringLength, "zNext (%d)", machineId);
-         break;
-
-         case TR_ZNEXTs:
-            returnValue = snprintf(processorName, stringLength, "zNexts (%d)", machineId);
-         break;
-
-         default:
-            // Unknown machine id, simply print out the machine model number
-            returnValue = snprintf(processorName, stringLength, "(%d)", machineId);
-         break;
-         }
-
-      return returnValue;
+      return snprintf(processorName, stringLength, "%s (%d)", TR::Compiler->target.cpu.getProcessorName(machineId), machineId);
       }
 #endif
 
@@ -733,39 +639,39 @@ TR_J9VM::initializeProcessorType()
 #ifdef TR_TARGET_S390
       // For AOT shared classes cache processor compatibility purposes, the following
       // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.getS390SupportsZNext())
+      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zNext))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ15())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z15))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ14())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ13())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZEC12())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ196())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ10())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ9())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z9))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp7);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ990())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z990))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp6);
          }

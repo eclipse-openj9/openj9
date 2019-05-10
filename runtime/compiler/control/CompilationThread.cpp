@@ -5255,7 +5255,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                  ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) || !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
                   (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-                  || TR::Compiler->target.cpu.getS390SupportsDFP()
+                  || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
                   ) && TR_J9MethodBase::isBigDecimalMethod((J9Method *)method))))
                 async = false;
@@ -6397,7 +6397,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                   (
                   TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-                  || TR::Compiler->target.cpu.getS390SupportsDFP()
+                  || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
                   ) &&
                   TR_J9MethodBase::isBigDecimalMethod(method)
