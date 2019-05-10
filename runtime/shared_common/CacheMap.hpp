@@ -302,8 +302,6 @@ private:
 	U_32 _actualSize;
 	UDATA _cacheletCntr;
 	J9Pool* _ccPool;
-	uintptr_t  _minimumAccessedShrCacheMetadata;
-	uintptr_t _maximumAccessedShrCacheMetadata;
 	bool _metadataReleased;
 	
 	/* True iff (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED). Set in startup().
@@ -392,6 +390,8 @@ private:
 	
 	void updateAllManagersWithNewCacheArea(J9VMThread* currentThread, SH_CompositeCacheImpl* newArea);
 	void updateAccessedShrCacheMetadataBounds(J9VMThread* currentThread, uintptr_t const  * result);
+	
+	bool isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA address) const;
 
 	SH_CompositeCacheImpl* getCacheAreaForDataType(J9VMThread* currentThread, UDATA dataType, UDATA dataLength);
 
