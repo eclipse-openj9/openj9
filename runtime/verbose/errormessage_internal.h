@@ -321,7 +321,7 @@ decodeStackFrameDataFromStackMapTable(StackMapFrame* stackMapFrame, U_8* nextSta
  * @return the pointer to the next stackmap frame
  */
 U_8*
-decodeConstuctedStackMapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData *verifyData);
+decodeConstructedStackMapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData *verifyData);
 
 
 /**
