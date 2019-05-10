@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,5 +46,5 @@ OMR_Glue_GetThreadNameForUnamedThread(OMR_VMThread *vmThread)
 			J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
 			J9NLS_VMUTIL_THREAD_NAME_UNNAMED__MODULE,
 			J9NLS_VMUTIL_THREAD_NAME_UNNAMED__ID,
-			NULL);
+			"(unnamed thread)");
 }

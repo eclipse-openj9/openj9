@@ -446,6 +446,9 @@ enum INIT_STAGE {
 #define VMOPT_XXREADIPINFOFORRAS "-XX:+ReadIPInfoForRAS"
 #define VMOPT_XXNOREADIPINFOFORRAS "-XX:-ReadIPInfoForRAS"
 
+#define VMOPT_XXNLSMESSAGES "-XX:+NLSMessages"
+#define VMOPT_XXNONLSMESSAGES  "-XX:-NLSMessages"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"
