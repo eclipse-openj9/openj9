@@ -49,7 +49,7 @@ _ENTRY globalLeConditionHandlerENTRY = { (_POINTER)&j9vm_inline_le_condition_han
  * is a Java native, who's signature we of course don't know at compile time.
  *
  * j9vm_inline_le_condition_handler uses j9port_control to obtain a function pointer to the handler, omrsig_le_condition_handler,
- * which j9sig_protect_ceehdlr registers (using CEEHDLR) on calls to the port library's sig_protect function.
+ * which omrsig_protect_ceehdlr registers (using CEEHDLR) on calls to the port library's sig_protect function.
  *
  * j9vm_inline_le_condition_handler then creates and provides the OMRZOSLEConditionHandlerRecord expected by the port library's
  * 	omrsig_le_condition_handler and calls omrsig_le_condition_handler directly
@@ -63,8 +63,8 @@ _ENTRY globalLeConditionHandlerENTRY = { (_POINTER)&j9vm_inline_le_condition_han
  *
  * @see J9VMPlatformDependentZOS390#enterSEH:vmThreadWrapper:
  * @see j9portcontrol.c#j9port_control()
- * @see j9signal_ceehdlr.c#omrsig_le_condition_handler()
- * @see j9signal_ceehdlr.c#j9sig_protect_ceehdlr()
+ * @see omrsignal_ceehdlr.c#omrsig_le_condition_handler()
+ * @see omrsignal_ceehdlr.c#omrsig_protect_ceehdlr()
  */
 void
 j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDBACK *newfc)
@@ -82,7 +82,7 @@ j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, 
 
 	memset(&thisRecord, 0, sizeof(OMRZOSLEConditionHandlerRecord));
 
-	/* Fake up the OMRZOSLEConditionHandlerRecord as if j9sig_protect_ceehdlr() had created it */
+	/* Fake up the OMRZOSLEConditionHandlerRecord as if omrsig_protect_ceehdlr() had created it */
 	thisRecord.portLibrary = PORTLIB;
 	thisRecord.handler = structuredSignalHandler;
 	thisRecord.handler_arg = vmThread;
