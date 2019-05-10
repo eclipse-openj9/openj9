@@ -117,11 +117,11 @@ public class Allocator extends Thread {
 				if (0 == (i % sumOfFrequencies)) {
 					long totalBytes = 0;
 					long totalCount = 0;
-					long containterTotalSize = 0;
+					long containerTotalSize = 0;
 					for (int j = 0; j < largeAllocSize.length; j++) {
 						totalBytes += largeAllocSize[j] * largeAllocCount[j];
 						totalCount += largeAllocCount[j];
-						containterTotalSize += container.get(j).size();
+						containerTotalSize += container.get(j).size();
 					}
 				}
 
