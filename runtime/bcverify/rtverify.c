@@ -392,7 +392,7 @@ _errorLocation:
 
 
 /* 
-	Walk the bytceodes linearly and verify that the recorded stack maps match.
+	Walk the bytecodes linearly and verify that the recorded stack maps match.
 
 	returns BCV_SUCCESS on success
 	returns BCV_ERR_INTERNAL_ERROR on verification error

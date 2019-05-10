@@ -452,7 +452,7 @@ GC_CheckCycle::run(GCCheckInvokedBy invokedBy, UDATA filterFlags)
  * method can identify dead objects by virtue of the fact that their class
  * pointer is unaligned, ie low_tagged.
  * 
- * This is not necessary if the Object Map is avaialable as we can perform the
+ * This is not necessary if the Object Map is available as we can perform the
  * necessary check by calling the memeory manager j9gc_ext_is_liveObject() fucntion
  * 
  */

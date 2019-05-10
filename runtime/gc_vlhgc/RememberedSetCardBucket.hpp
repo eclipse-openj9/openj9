@@ -107,7 +107,7 @@ public:
 	/**
 	 * If current buffer is full or bucket is empty,
 	 * add a card to a new buffer.
-	 * Handle various misc scenarios when unable to alocate new buffer
+	 * Handle various misc scenarios when unable to allocate new buffer
 	 * or list is already overflowed.
 	 * @param card  card to be remembered
 	 */

@@ -52,7 +52,7 @@
  *    action and delay.
  *
  * triggering on methods:
- *    An entry is created in the triggerOnMethods chain, achored off RasGlobalStorage.
+ *    An entry is created in the triggerOnMethods chain, anchored off RasGlobalStorage.
  *    This is known as a method rule.  This contains a RasMethodSpec, as used
  *    in method trace, representing the user entered methodspec.  Whenever a
  *    class is loaded, the classloader calls us.  The class and if necessary its

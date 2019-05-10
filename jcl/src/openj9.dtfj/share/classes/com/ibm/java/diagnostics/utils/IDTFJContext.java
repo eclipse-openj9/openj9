@@ -45,7 +45,7 @@ public interface IDTFJContext extends IContext {
 	 * The address space for this context. This may or may not
 	 * contain any processes.
 	 * 
-	 * @return the image adress space
+	 * @return the image address space
 	 */
 	public ImageAddressSpace getAddressSpace();
 	

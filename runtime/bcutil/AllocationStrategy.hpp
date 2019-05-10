@@ -45,7 +45,7 @@ public:
 	virtual U_8* allocate(UDATA byteAmount) = 0;
 
 	/* 
-	 * allocate multiple memory regions to accomodate out of line debug information
+	 * allocate multiple memory regions to accommodate out of line debug information
 	 * with sizes as specified by the argument list.
 	 */
 	virtual bool allocateWithOutOfLineData(AllocatedBuffers *allocatedBuffers, UDATA byteAmount, UDATA lineNumberByteAmount, UDATA variableInfoByteAmount) { return false; }

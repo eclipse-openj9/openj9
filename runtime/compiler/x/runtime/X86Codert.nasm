@@ -389,7 +389,7 @@ dremloop:
 
 
 ; The assumption is that this thunk method would be called from a 32-bit runtime only.
-; Otherwise, the stack offsets will have to change to accomodate the correct size of return
+; Otherwise, the stack offsets will have to change to accommodate the correct size of return
 ; address.
 ;
         align 16
@@ -406,7 +406,7 @@ SSEfloatRemainderIA32Thunk:
 
 
 ; The assumption is that this thunk method would be called from a 32-bit runtime only.
-; Otherwise, the stack offsets will have to change to accomodate the correct size of return
+; Otherwise, the stack offsets will have to change to accommodate the correct size of return
 ; address.
 ;
         align 16

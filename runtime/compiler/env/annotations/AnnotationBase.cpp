@@ -397,7 +397,7 @@ TR_AnnotationBase::getAnnotationInfoEntry(TR::SymbolReference *symRef,const char
          if(p->getSlot() == slotId) break;
          parmNo++;
          }
-      if(!resolvedSym->isStatic()) --parmNo; // accomodate 'this'
+      if(!resolvedSym->isStatic()) --parmNo; // accommodate 'this'
 
       annotationj9Type |= parmNo << ANNOTATION_PARM_SHIFT;
       memberName = vmSym->nameChars();

@@ -342,7 +342,7 @@ class LockThread extends Thread
       return sum;
       }
 
-   // arrangment of synchronized calls should cause the collectPreds and
+   // arrangement of synchronized calls should cause the collectPreds and
    // collectSuccs to bounce around a bit
    private int testSwitch(LockTestDriver to, int x)
       {

@@ -465,7 +465,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelS2HeadPartMatch);
 
       // Starting from the beginning of the partial match, load the next 16 bytes from s1 and redo s2 header search.
-      // This implies that the partial match will be re-matched by the next VSTRS. This can potentially benifit string
+      // This implies that the partial match will be re-matched by the next VSTRS. This can potentially benefit string
       // search cases where s2 is shorter than 16 bytes. For short s2 strings, string search can potentially be done in
       // the next VSTRS and can we avoid residue matching which requires several index adjustments that do not provide
       // performance benefits.
@@ -1987,7 +1987,7 @@ VMwrtbarEvaluator(
       TR::SymbolReference * wbRef = NULL;
       if (gcMode == gc_modron_wrtbar_always)
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
-      else // use jitWriteBarrierStoreGenerational for both generational and gencon, becaues we inline card marking.
+      else // use jitWriteBarrierStoreGenerational for both generational and gencon, because we inline card marking.
          {
          static char *disable = feGetEnv("TR_disableGenWrtBar");
          wbRef = disable ?
@@ -3094,7 +3094,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          // Any constValue <= MAX_UNSIGNED_IMMEDIATE_VAL is taken here.
          // The length is assumed to be non-negative and is within [0, max_uint32] range.
-         // The index can be negative or [0, max_uint32]. An unconditional bransh is generated if it's negative.
+         // The index can be negative or [0, max_uint32]. An unconditional branch is generated if it's negative.
          // No need to use unconditional BRC because it requires a proceeding NO-OP instruction for proper signal
          // handling. And NOP+BRC is of the same length as CLFIT.
          TR::Register * testRegister = cg->evaluate(nonConstNode);
@@ -4054,7 +4054,7 @@ VMarrayStoreCHKEvaluator(
       }
 
    // Bringing back tests from outlined keeping only helper call in outlined section
-   // TODO Attching helper call predependency to BRASL instruction and combine ICF conditions with post dependency conditions of
+   // TODO Attaching helper call predependency to BRASL instruction and combine ICF conditions with post dependency conditions of
    // helper call should fix the issue of unnecessary spillings in ICF. Currently bringing the tests back to main line here but
    // check performance of both case.
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, wbLabel);
@@ -4364,7 +4364,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       }
 
    // Store for case where we have a NULL ptr detected at runtime and
-   // branchec around the wrtbar
+   // branches around the wrtbar
    //
    // For the non-NULL case we chose to simply exec the ST twice as this is
    // cheaper than branching around the a single ST inst.
@@ -5729,7 +5729,7 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
  *
  *  \details
  *     Note that if this function returns <c>false</c> the appropriate null test condition code will be set and the
- *     callee is responsible for generating the branh instruction to act on the condition code.
+ *     callee is responsible for generating the branch instruction to act on the condition code.
  */
 static
 bool genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Register* objectReg)
@@ -6119,7 +6119,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
              /*   #IF NextTest = GoToFalse
               *      branchCond = ifInstanceOf ? (!trueFallThrough ? COND_BE : COND_BNE ) : (init=true ? COND_BE : COND_BNE )
-              *      brnachLabel = ifInstanceOf ? (!trueFallThrough ? trueLabel : falseLabel ) : doneLabel
+              *      branchLabel = ifInstanceOf ? (!trueFallThrough ? trueLabel : falseLabel ) : doneLabel
               *      CGRJ castClassReg, objClassReg, branchCond, branchLabel
               *   #ELSE
               *      CGRJ castClassReg, objClassReg, COND_BE, trueLabel
@@ -8877,7 +8877,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                   debugObj->addInstructionComment(cursor, "Denotes start of OOL for allocating zero size arrays");
 
                   /* using TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-                   * for byte size for discontinous 0 size arrays becasue later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
+                   * for byte size for discontinous 0 size arrays because later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
                    *
                    *
                    ----------- OOL: Beginning of out-of-line code section ---------------

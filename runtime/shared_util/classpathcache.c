@@ -400,7 +400,7 @@ findIdentifiedWithPartition(J9VMThread* currentThread, struct J9ClasspathByIDArr
  * SPEC: Registers a failed match between 2 identified classpaths.
  * This is an optimization that reduces the number of failed classpath matches. 
  * This is particularly useful if the bootstrap classpath is long,
- * as every non-bootstrap FIND will have to first fail the boostrap classpath check.
+ * as every non-bootstrap FIND will have to first fail the bootstrap classpath check.
  * This only works if a ROMClass was found and if both the caller classpath and the cache classpath are identified.
  * The caller classpath ID is callerHelperID and the cache classpath ID is arrayIndex.
  * IndexInCacheHelper is the index of the ROMClass in the cache classpath.

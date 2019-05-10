@@ -5892,7 +5892,7 @@ TR_J9InnerPreexistenceInfo::perform(TR::Compilation *comp, TR::Node *guardNode, 
        comp->compileRelocatableCode())
       return false;
 
-   // perform() is a misnomer -- most of the work is alredy done by the constructor
+   // perform() is a misnomer -- most of the work is already done by the constructor
    // at this stage - we just find what is the best way to utilize the information
    //
    if (!comp->performVirtualGuardNOPing())
@@ -5926,7 +5926,7 @@ TR_J9InnerPreexistenceInfo::perform(TR::Compilation *comp, TR::Node *guardNode, 
 
          //_callNode->devirtualizeCall(_callTree);
 
-         // Add an inner assumptoin on the outer guard
+         // Add an inner assumption on the outer guard
          //
          TR_InnerAssumption *a  = new (comp->trHeapMemory()) TR_InnerAssumption(point->_ordinal, virtualGuard);
          ((TR_J9InnerPreexistenceInfo *)point->_callStack->_innerPrexInfo)->addInnerAssumption(a);

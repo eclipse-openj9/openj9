@@ -1510,7 +1510,7 @@ J9::SymbolReferenceTable::checkUserField(TR::SymbolReference *symRef)
    static const char *userField = feGetEnv("TR_UserField");
    if (!userField)
       {
-      // In the absense of further analysis, treat everything as user fields
+      // In the absence of further analysis, treat everything as user fields
       setHasUserField(true);
       return;
       }

@@ -357,7 +357,7 @@ public class monTests {
    }
 
    // java "-Xjit:{*testSimple*}(log=tlog,tracefull,optdetails,disableinlining),disableasynccompilation" montests
-   // no ilgen transformation here becuase the method below is not synchronized
+   // no ilgen transformation here because the method below is not synchronized
    //
    private int testSimpleReadMonitorBlock() throws Exception {
       try {

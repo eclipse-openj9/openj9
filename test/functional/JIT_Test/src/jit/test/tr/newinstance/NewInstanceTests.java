@@ -54,7 +54,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attemption to create a new instance of a Inner class should raise an instantiation
+	 * Attempt to create a new instance of a Inner class should raise an instantiation
 	 * exception, since the default constructor does not exist (all constructors must take an outer
 	 * instance)
 	 */
@@ -70,7 +70,7 @@ public class NewInstanceTests {
 	}
 		
 	/**
-	 * Attemption to create a new instance of a static inner class should pass 
+	 * Attempt to create a new instance of a static inner class should pass 
 	 */
 	@Test
 	public void test003() {		
@@ -96,7 +96,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attemption to create a new instance of a static inner class with a public constructor
+	 * Attempt to create a new instance of a static inner class with a public constructor
 	 * of a class in another package should fail with an illegal access exception
 	 */
 	@Test
@@ -111,7 +111,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attemption to create a new instance of a static inner class should pass with a private
+	 * Attempt to create a new instance of a static inner class should pass with a private
 	 * constructor by itself should succeed 
 	 */
 	@Test
@@ -130,7 +130,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attemption to create a new instance of an interface should fail with an 
+	 * Attempt to create a new instance of an interface should fail with an 
 	 * InstantiationException
 	 */
 	@Test
@@ -145,7 +145,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attemption to create a new instance of an Abstract class shoudl fail with an
+	 * Attempt to create a new instance of an Abstract class shoudl fail with an
 	 * InstantiationException
 	 */
 	@Test
@@ -160,7 +160,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attemption to create a new instance of an array class should fail with 
+	 * Attempt to create a new instance of an array class should fail with 
 	 * an InstantiationException
 	 */
 	@Test

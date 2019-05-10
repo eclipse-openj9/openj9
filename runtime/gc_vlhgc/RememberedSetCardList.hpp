@@ -162,7 +162,7 @@ public:
 	void releaseBuffers(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Release buffers only for the bucked assocated with current thread.
+	 * Release buffers only for the bucked associated with current thread.
 	 */
 	void releaseBuffersForCurrentThread(MM_EnvironmentVLHGC *env);
 

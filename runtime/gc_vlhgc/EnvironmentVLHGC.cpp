@@ -103,7 +103,7 @@ MM_EnvironmentVLHGC::initializeGCThread()
 	UDATA threadPoolSize = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 	/* Make this thread aware of its RSCL buckets for all regions */
 	_rememberedSetCardBucketPool = &extensions->rememberedSetCardBucketPool[getSlaveID() * threadPoolSize];
-    /* Associate buckets with approprate RSCL (each RSCL maintains a list of its own buckets) */
+    /* Associate buckets with appropriate RSCL (each RSCL maintains a list of its own buckets) */
 	extensions->interRegionRememberedSet->threadLocalInitialize(this);
 }
 

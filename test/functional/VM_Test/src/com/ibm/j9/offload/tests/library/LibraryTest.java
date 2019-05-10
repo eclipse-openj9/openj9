@@ -30,7 +30,7 @@ public class LibraryTest extends TestCase {
 	/**
 	 * method that can be used to run the test by itself
 	 * 
-	 * @param args no valid arugments
+	 * @param args no valid arguments
 	 */
 	public static void main (String[] args) {
 		junit.textui.TestRunner.run(suite());

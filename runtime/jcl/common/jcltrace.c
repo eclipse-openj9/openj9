@@ -802,7 +802,7 @@ countArguments(const UDATA pattern)
  * Trace method that all other com.ibm.jvm.Trace.trace() methods call through.
  *
  * @param env JNI environment
- * @param handle Application trace handle (returned from registerApplicaton)
+ * @param handle Application trace handle (returned from registerApplication)
  * @param traceId Id of trace point to trace
  * @param methodSignature the signature of the method that supplied the arguments
  *

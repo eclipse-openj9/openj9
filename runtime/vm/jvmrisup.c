@@ -613,7 +613,7 @@ static int JNICALL rasDumpRegister(JNIEnv *env, int (JNICALL *func)(JNIEnv *env2
 	}
 	
 	memset(rda, 0, sizeof(*rda));
-	/* change this to filter on a java core when that facility is avaiable. */
+	/* change this to filter on a java core when that facility is available. */
 	/* for now just run when anything unexpected happens! */
 	rda->nextPtr = NULL;
 	rda->shutdownFn = rasDumpAgentShutdownFn;

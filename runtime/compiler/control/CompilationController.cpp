@@ -866,7 +866,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
 
                   // secondCriteria looks at hotness over a period of time that is double
                   // than normal (60 samples). This is why we have to increase scaledScorchingThreshold
-                  // by a factor of 2. If we want to become twice as aggressve we need to double
+                  // by a factor of 2. If we want to become twice as aggressive we need to double
                   // scaledScorchingThreshold yet again
                   //
                   bool secondCriteriaScorching = useAggressiveRecompilations &&

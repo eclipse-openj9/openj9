@@ -264,7 +264,7 @@ public final class DecimalData
      * @param precision
      *            number of Packed Decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * 
      * @throws ArrayIndexOutOfBoundsException
@@ -562,7 +562,7 @@ public final class DecimalData
      * @param precision
      *            number of Packed Decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow), otherwise a truncated value is returned
      * 
      * @throws ArrayIndexOutOfBoundsException
@@ -1260,7 +1260,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @return BigInteger the resulting BigIntger
      * 
@@ -1295,7 +1295,7 @@ public final class DecimalData
      * @param scale
      *            scale of the BigDecimal to be returned
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * 
      * @return BigDecimal the resulting BigDecimal
@@ -1696,7 +1696,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value indicating the type of External Decimal
@@ -1746,7 +1746,7 @@ public final class DecimalData
      * @param scale
      *            scale of the BigDecimal
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value that indicates the type of External Decimal
@@ -2163,7 +2163,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value indicating the type of External Decimal
@@ -2213,7 +2213,7 @@ public final class DecimalData
      * @param scale
      *            scale of the returned BigDecimal
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value indicating the type of External Decimal
@@ -2262,7 +2262,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253s
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * 
      * @throws NullPointerException
@@ -2295,7 +2295,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value that indicates the type of External Decimal
@@ -2335,7 +2335,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant indicating the type of External Decimal
@@ -2375,7 +2375,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * 
      * @throws NullPointerException
@@ -2423,7 +2423,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value indicating the External Decimal type
@@ -2478,7 +2478,7 @@ public final class DecimalData
      * @param precision
      *            number of decimal digits. Maximum valid precision is 253
      * @param checkOverflow
-     *            if true an <code>ArithmenticException</code> will be thrown if the decimal value does not fit in the
+     *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
      * @param decimalType
      *            constant value that indicates the type of External Decimal

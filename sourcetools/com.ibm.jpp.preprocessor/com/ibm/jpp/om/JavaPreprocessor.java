@@ -792,7 +792,7 @@ public class JavaPreprocessor {
 
 	/**
 	 * Each preprocessor may use a single instance of this class to replace
-	 * specially-formatted calls to Msg.getString() with appropiate
+	 * specially-formatted calls to Msg.getString() with appropriate
 	 * String-valued expressions at preprocess time.
 	 */
 	private final class MsgCallInliner {

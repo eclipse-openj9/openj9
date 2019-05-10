@@ -282,7 +282,7 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 
 	/* Wake up only the master thread -- it is responsible for
 	 * waking up any slaves.
-	 * Make sure _completeCurrentGCSynchronously and _mode are atomicly changed.
+	 * Make sure _completeCurrentGCSynchronously and _mode are atomically changed.
 	 */
 	omrthread_monitor_enter(_masterThreadMonitor);
 	switch(reason) {

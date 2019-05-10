@@ -2406,7 +2406,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
 
                   // Until we reach otherAllocNode, call visitTree to
                   // ignore nodes in those trees.  After we've reached
-                  // otherAllocNode, call collectAiasesOfAllocations to
+                  // otherAllocNode, call collectAliasesOfAllocations to
                   // track its aliases in _aliasesOfOtherAllocNode
                   if (!collectAliases)
                      {

@@ -107,12 +107,12 @@ class CIE {
 			cfiStream.read(initialInstructions, 0, initialInstructions.length);
 //			System.err.printf("Initial instructions: %s\n", Unwind.byteArrayToHexString(initialInstructions));
 			
-			// Advance to finish on a word boundry.
+			// Advance to finish on a word boundary.
 			int remainder = (int)(cfiStream.getStreamPosition() % this.unwind.process.bytesPerPointer());
 			
 			// We don't need to skip but printing 0 nicely
 			// confirms we ended up in the right place.
-//			System.err.printf("Skipping %d bytes to end on word boundry\n", remainder);
+//			System.err.printf("Skipping %d bytes to end on word boundary\n", remainder);
 			cfiStream.read(new byte[remainder], 0, remainder); 
 		}
 

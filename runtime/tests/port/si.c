@@ -1762,7 +1762,7 @@ j9sysinfo_test_get_tmp4(struct J9PortLibrary *portLibrary)
 #endif /* !defined(WIN32) */
 
 /*
- * Test j9sysinfo_get_cwd when the buffer size == 0, then allocate required ammount of bites and try again.
+ * Test j9sysinfo_get_cwd when the buffer size == 0, then allocate required amount of bites and try again.
  * Expected result size of buffer required
  */
 I_32

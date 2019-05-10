@@ -504,7 +504,7 @@ j9time_nano_time_direction(struct J9PortLibrary *portLibrary)
 #if defined(WIN32) || defined(WIN64)
 	/**
 	 * On Windows, if QueryPerformanceCounter is used on a multiprocessor computer,
-	 * time might be different accross CPUs. Therefore skip this test and only
+	 * time might be different across CPUs. Therefore skip this test and only
 	 * re-enable if we develop thread affinity support.
 	 */
 	{

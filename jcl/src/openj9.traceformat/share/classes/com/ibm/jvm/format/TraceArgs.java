@@ -68,7 +68,7 @@ final public class TraceArgs {
 	override = false;
     }
 
-    /** parses the command line arguements
+    /** parses the command line arguments
      *
      * @param   args      the arguments
      * @throws  UsageException

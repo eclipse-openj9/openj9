@@ -401,7 +401,7 @@ typedef struct J9ProcessorDesc {
 } J9ProcessorDesc;
 
 /* PowerPC features
- * Auxlliary Vector Hardware Capability (AT_HWCAP) features for PowerPC.
+ * Auxiliary Vector Hardware Capability (AT_HWCAP) features for PowerPC.
  */
 #define J9PORT_PPC_FEATURE_32                    31 /* 32-bit mode.  */
 #define J9PORT_PPC_FEATURE_64                    30 /* 64-bit mode.  */

@@ -1860,7 +1860,7 @@ J9::Options::fePreProcess(void * base)
    // On big machines we can afford to spend more time compiling
    // (but not on zOS where customers care about CPU or on Xquickstart
    // which should be skimpy on compilation resources).
-   // TR_SuspendEarly is set on zOS becuse test results indicate that
+   // TR_SuspendEarly is set on zOS because test results indicate that
    // it does not benefit much by spending more time compiling.
 #if !defined(J9ZOS390)
    if (!self()->isQuickstartDetected())

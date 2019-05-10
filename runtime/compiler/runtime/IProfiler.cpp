@@ -3879,7 +3879,7 @@ void TR_IProfiler::processWorkingQueue()
 
 extern "C" void stopInterpreterProfiling(J9JITConfig *jitConfig);
 
-/* Lower value will more aggressivly skip samples as the number of unloaded classes increasses */
+/* Lower value will more aggressively skip samples as the number of unloaded classes increasses */
 static const int IP_THROTTLE = 32;
 
 #if defined(NETWORK_ORDER_BYTECODE)
@@ -4582,7 +4582,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
 // This method will be executing on a single thread and it will acquire VM access as needed
 // to prevent the GC from modifying the BC hashtable as we walk.
 // Application threads may add new data to the IProfiler hashtable, but this is not an impediment.
-// Temporary data structures will be allocated using persistent memory which will be dealocated
+// Temporary data structures will be allocated using persistent memory which will be deallocated
 // at the end.
 // Parameter: the vmThread it is executing on.
 void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)

@@ -161,7 +161,7 @@ private:
 	static VMINLINE void
 	copyForwardU8(U_8 *dest, U_8 *source, UDATA count)
 	{
-		/* Use memmove instead of memcpy becuase memcpy does not work on Ubuntu 10.04 */
+		/* Use memmove instead of memcpy because memcpy does not work on Ubuntu 10.04 */
 		memmove((void *)dest, (void *)source, count);
 	}
 	

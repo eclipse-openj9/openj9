@@ -120,7 +120,7 @@ UDATA handlerIterateStackTrace      (struct J9PortLibrary *, U_32, void *, void 
 UDATA handlerWriteJavaLangThreadInfo(struct J9PortLibrary *, U_32, void *, void *);
 UDATA handlerWriteStacks            (struct J9PortLibrary *, U_32, void *, void *);
 
-/* associated structures for passing arguements are below the JavaCoreDumpWriter declaration */
+/* associated structures for passing arguments are below the JavaCoreDumpWriter declaration */
 }
 
 static IDATA vmthread_comparator(struct J9AVLTree *tree, struct J9AVLTreeNode *insertNode, struct J9AVLTreeNode *walkNode);

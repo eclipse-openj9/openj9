@@ -293,7 +293,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns the flags associaetd with this ConfigObject.
+	 * Returns the flags associated with this ConfigObject.
 	 * <p>
 	 * <b>Note:</b> the flagSet isn't completely correct until updateWithDependencies
 	 * is called, when the removes and adding of sets happens
@@ -305,7 +305,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns the flags associaetd with this ConfigObject.
+	 * Returns the flags associated with this ConfigObject.
 	 * <p>
 	 * <b>Note:</b> the flagSet isn't completely correct until updateWithDependencies
 	 * is called, when the removes and adding of sets happens

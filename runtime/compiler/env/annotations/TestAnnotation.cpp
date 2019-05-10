@@ -30,7 +30,7 @@
 #include "il/SymbolReference.hpp"
 #include "compile/ResolvedMethod.hpp"
 
-// only purpose of this class is to test that annoations are working.  Will
+// only purpose of this class is to test that annotations are working.  Will
 // expect specific values
 TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *symRef):
   TR_AnnotationBase(comp)

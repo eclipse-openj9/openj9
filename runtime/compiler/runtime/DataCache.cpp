@@ -309,7 +309,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
 //       Pointer to TR_DataCache that can be used exclusively by this thread
 //       or NULL if cannot get any dataCache
 // Side efects:
-//       Aquires/releases dataCache mutex internally
+//       Acquires/releases dataCache mutex internally
 //----------------------------------------------------------------------------
 TR_DataCache* TR_DataCacheManager::reserveAvailableDataCache(J9VMThread *vmThread, uint32_t sizeHint)
    {
@@ -367,7 +367,7 @@ TR_DataCache* TR_DataCacheManager::reserveAvailableDataCache(J9VMThread *vmThrea
 //---------------------------- makeDataCacheAvailable ------------------------
 // Put the designated dataCache back into the list of available data caches
 // Side efects:
-//       Aquires/releases dataCache mutex internally
+//       Acquires/releases dataCache mutex internally
 //----------------------------------------------------------------------------
 void TR_DataCacheManager::makeDataCacheAvailable(TR_DataCache *dataCache)
    {
@@ -454,7 +454,7 @@ uint8_t* TR_DataCache::allocateDataCacheSpace(int32_t size)
 // Ret value:
 //      pointer to allocated space
 // Side efects:
-//       Aquires/releases dataCache mutex internally
+//       Acquires/releases dataCache mutex internally
 //-----------------------------------------------------------------------------
 uint8_t* TR_DataCacheManager::allocateDataCacheSpace(uint32_t size)
 {

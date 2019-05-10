@@ -30,7 +30,7 @@ Download Artifactory from JFrog (https://jfrog.com/open-source/)
 
 `https://api.bintray.com/content/jfrog/artifactory/jfrog-artifactory-oss-$latest.zip;bt_package=jfrog-artifactory-oss-zip`
 
-Once Atifactory is downloaded, unzip the file to a directory.  
+Once Artifactory is downloaded, unzip the file to a directory.  
 
 `unzip jfrog-artifactory-oss-zip -d /home/jenkins/artifactory` 
 

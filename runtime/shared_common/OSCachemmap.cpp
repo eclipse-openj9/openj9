@@ -691,7 +691,7 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 			 *	- Owns W monitor, W lock, RW monitor, and gets EDADLK on RW lock
 			 *
 			 * Notes:
-			 *	- This means other JVMs caused EDEADLK becuase they are holding RW, and
+			 *	- This means other JVMs caused EDEADLK because they are holding RW, and
 			 *	  waiting on W in a sequence that gives fcntl the impression of deadlock
 			 *	- If current thread owns the W monitor, it must also own the W lock 
 			 *	  if the call stack ended up here.
@@ -1678,7 +1678,7 @@ SH_OSCachemmap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescripto
 void * 
 SH_OSCachemmap::getAttachedMemory()
 {
-	/* This method should only be called betwen calls to 
+	/* This method should only be called between calls to 
 	 * internalAttach and internalDetach
 	 */
 	return _dataStart;

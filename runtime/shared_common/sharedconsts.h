@@ -51,7 +51,7 @@
  *
  * Total chars needed  = 11 + 8 + 64 + 1 + 3 = 87 chars.
  *
- * Add 1 to above length to accomodate NULL char.
+ * Add 1 to above length to accommodate NULL char.
  * Reference:  getCacheVersionAndGen function
  */
 #define CACHE_ROOT_MAXLEN 88

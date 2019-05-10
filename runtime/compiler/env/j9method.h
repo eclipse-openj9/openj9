@@ -373,7 +373,7 @@ public:
     */
    virtual bool                  isUnresolvedConstantDynamic(int32_t cpIndex);
    /** \brief
-    *     Retrieve the adress of the slot containing the constant dynamic.
+    *     Retrieve the address of the slot containing the constant dynamic.
     *
     *  \param cpIndex
     *     The constant pool index of the constant dynamic.

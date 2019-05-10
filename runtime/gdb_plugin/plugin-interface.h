@@ -116,7 +116,7 @@ struct plugin_service_ops {
   int (*get_thread_list) (gdb_plugin_thread_info * threads, int * count);   
 
   /* Get a list of register names and values. The registers array should be
-	 large enough to accomodate count registers. If registers is null, count
+	 large enough to accommodate count registers. If registers is null, count
 	 will be initialized with the register count and returned. If the
 	 register->name is NULL, a string will be allocated and must be freed
 	 by the user once done. If the passed in register->name is non-null, the

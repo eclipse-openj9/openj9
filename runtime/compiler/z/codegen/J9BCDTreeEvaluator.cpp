@@ -7353,7 +7353,7 @@ J9::Z::TreeEvaluator::pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
             needExtraShift = true;
             }
 
-         // Allocate enough temporary space to accomodate the amount of left shifts.
+         // Allocate enough temporary space to accommodate the amount of left shifts.
          tmpResultByteSize += (shiftAmount + 1)/2;
          }
 

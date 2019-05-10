@@ -321,7 +321,7 @@ int32_t CpuSelfThreadUtilization::computeThreadCpuUtilOverLastNns(int64_t validI
      
       // The interval between crtTimeNs and lastIntervalEndNs is not accounted for; if this interval
       // is larger than the measurement period the thread might have gone to sleep and not
-      // had a chance to update its CPU utilization. Blindely assume a 0% duty cycle
+      // had a chance to update its CPU utilization. Blindly assume a 0% duty cycle
       if (crtTimeNs - lastIntervalEndNs > _minMeasurementIntervalLength)
          {
          totalTime += crtTimeNs - lastIntervalEndNs;

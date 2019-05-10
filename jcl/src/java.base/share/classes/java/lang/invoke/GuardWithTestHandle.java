@@ -52,7 +52,7 @@ final class GuardWithTestHandle extends MethodHandle {
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 
  	protected final ThunkTuple computeThunks(Object guardType) {
- 		// Different thunks accomodate guards with different numbers of parameters
+ 		// Different thunks accommodate guards with different numbers of parameters
  		return thunkTable().get(new ThunkKeyWithObject(ThunkKey.computeThunkableType(type()), ThunkKey.computeThunkableType((MethodType)guardType)));
  	}
  

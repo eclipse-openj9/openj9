@@ -1266,7 +1266,7 @@ SH_CacheMap::getCacheAreaForDataType(J9VMThread* currentThread, UDATA dataType, 
 			}
 		} else {
 			/* Either cachelet is corrupt or there is not enough space to allocate new cachelet.
-			 * In latter case, cache would have alredy been marked full in SH_CompositeCacheImpl::allocate().
+			 * In latter case, cache would have already been marked full in SH_CompositeCacheImpl::allocate().
 			 */
 			return NULL;
 		}
@@ -1417,7 +1417,7 @@ SH_CacheMap::addScopeToCache(J9VMThread* currentThread, const J9UTF8* scope)
 	
 	itemInCache = (ShcItem*)cacheForAllocate->allocateBlock(currentThread, itemPtr, SHC_WORDALIGN, 0);
 	if (itemInCache == NULL) {
-		/* Not enough space in cache to accomodate this item. */
+		/* Not enough space in cache to accommodate this item. */
 		Trc_SHR_CM_addScopeToCache_Exit_Null(currentThread);
 		return NULL;
 	}
@@ -2319,7 +2319,7 @@ SH_CacheMap::commitMetaDataROMClassIfRequired(J9VMThread* currentThread, Classpa
 	itemInCache = (ShcItem*) cacheAreaForAllocate->allocateBlock(currentThread, itemPtr, SHC_WORDALIGN, wrapperSize);
 
 	if (itemInCache == NULL) {
-		/* Not enough space in cache to accomodate this item. */
+		/* Not enough space in cache to accommodate this item. */
 		Trc_SHR_CM_commitMetaDataROMClassIfRequired_Full_Event(currentThread, (UDATA)J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName), (UDATA)romclass);
 		retval = -1;
 		goto done;
@@ -3672,7 +3672,7 @@ SH_CacheMap::addByteDataToCache(J9VMThread* currentThread, SH_Manager* localBDM,
 				}
 			}
 			if ((itemInCache = (ShcItem*)(cacheForAllocate->allocateBlock(currentThread, itemPtr, SHC_WORDALIGN, sizeof(ByteDataWrapper)))) == NULL) {
-				/* Not enough space in cache to accomodate this item. */
+				/* Not enough space in cache to accommodate this item. */
 				return NULL;
 			}
 		} else {
@@ -4993,7 +4993,7 @@ SH_CacheMap::printCacheStats(J9VMThread* currentThread, UDATA showFlags, U_64 ru
 		}
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2, javacoreData.otherBytes);
 		if ((U_32)-1 == javacoreData.softMaxBytes) {
-			/* similarly to the calculation of cache full percentage, take used debug area into accout */
+			/* similarly to the calculation of cache full percentage, take used debug area into account */
 			CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2, ((javacoreData.otherBytes * 100) / (javacoreData.cacheSize - javacoreData.freeBytes)));
 		} else {
 			/* cache header size is not included in javacoreData.cacheSize, but it is included in softmx as used bytes. To be consistent, subtract cache header size here */ 
@@ -7273,7 +7273,7 @@ SH_CacheMap::tryAdjustMinMaxSizes(J9VMThread* currentThread, bool isJCLCall)
 	return _ccHead->tryAdjustMinMaxSizes(currentThread, isJCLCall);
 }
 
-/* Update the runtime cache full flags accroding to cache full flags in the cache header
+/* Update the runtime cache full flags according to cache full flags in the cache header
  *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
  *
@@ -7398,7 +7398,7 @@ SH_CacheMap::updateLocalHintsData(J9VMThread* currentThread, J9SharedLocalStartu
 	} else if (J9_ARE_ALL_BITS_SET(localHints->localStartupHintFlags, J9SHR_LOCAL_STARTUPHINTS_FLAG_STORE_HEAPSIZES)) {
 		if (J9_ARE_NO_BITS_SET(updatedHintsData.flags, J9SHR_STARTUPHINTS_HEAPSIZES_SET)) {
 			Trc_SHR_CM_updateLocalHintsData_WriteHeapSizes(currentThread, localHints->hintsData.heapSize1, localHints->hintsData.heapSize2);
-			/* heapSize1 and heapSize2 have not been set beofore */
+			/* heapSize1 and heapSize2 have not been set before */
 			updatedHintsData.heapSize1 = localHints->hintsData.heapSize1;
 			updatedHintsData.heapSize2 = localHints->hintsData.heapSize2;
 			updatedHintsData.flags |= J9SHR_STARTUPHINTS_HEAPSIZES_SET;

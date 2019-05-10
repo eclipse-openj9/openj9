@@ -45,7 +45,7 @@ class MM_RealtimeGC;
  * new location. This is implemented using a forwarding pointer in each object
  * that normally points to the object itself, but after an object has been
  * moved, points to the new location. This class also implements the snapshot
- * at the beggining barrier that remembers overwritten values.
+ * at the beginning barrier that remembers overwritten values.
  */
 
 class MM_RealtimeAccessBarrier : public MM_ObjectAccessBarrier

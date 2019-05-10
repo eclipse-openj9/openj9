@@ -941,7 +941,7 @@ int32_t TR::AMD64PrivateLinkage::buildPrivateLinkageArgs(TR::Node               
    // we're going to align the stack depend on the alignment property
    // adjust = something
    // allocateSize = parmAreaSize + adjust;
-   // then subtract stackpointer with alocateSize
+   // then subtract stackpointer with allocateSize
    uint32_t alignedParmAreaSize = parmAreaSize;
 
    if (!getProperties().getReservesOutgoingArgsInPrologue() && !callNode->getSymbol()->castToMethodSymbol()->isHelper())

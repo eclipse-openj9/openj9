@@ -788,7 +788,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    *(intptrj_t *)(cursor+2*TR::Compiler->om.sizeofReferenceAddress()) = -1;
    *(intptrj_t *)(cursor+3*TR::Compiler->om.sizeofReferenceAddress()) = (intptrj_t)blAddress;
 
-   // Register for relation of the 1st target addess
+   // Register for relation of the 1st target address
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 

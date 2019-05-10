@@ -1087,7 +1087,7 @@ exit:
 }
 
 /**
- * Verify calling protect on memory aquired using mmap.
+ * Verify calling protect on memory acquired using mmap.
  * 
  * Verify @ref j9mmap.c::j9mmap_protect "j9mmap_protect()" with 
  * J9PORT_PAGE_PROTECT_READ allows the 
@@ -1209,7 +1209,7 @@ exit:
 }
 
 /**
- * Verify calling protect on memory aquired using mmap.
+ * Verify calling protect on memory acquired using mmap.
  * 
  * Verify @ref j9mmap.c::j9mmap_protect "j9mmap_protect()" with 
  * J9PORT_PAGE_PROTECT_READ | J9PORT_PAGE_PROTECT_WRITE allows the 
@@ -1356,7 +1356,7 @@ exit:
 }	
 
 /**
- * Verify calling protect on memory aquired using mmap.
+ * Verify calling protect on memory acquired using mmap.
  * 
  * Verify @ref j9mmap.c::j9mmap_protect "j9mmap_protect()" with 
  * J9PORT_PAGE_PROTECT_READ causes us to crash when writing to the protected region, 

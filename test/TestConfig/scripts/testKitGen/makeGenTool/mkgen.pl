@@ -561,7 +561,7 @@ sub writeTargets {
 			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
 			my $aotOptions = '';
-			# AOT_OPTIONS only needs to be apended when TEST_FLAG contains AOT and the test is aot applicable.
+			# AOT_OPTIONS only needs to be appended when TEST_FLAG contains AOT and the test is aot applicable.
 			if ( defined $test->{'aot'} ) {
 				if ( $test->{'aot'} eq 'applicable' ) {
 					$aotOptions = '$(AOT_OPTIONS) ';

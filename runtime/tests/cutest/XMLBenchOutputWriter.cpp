@@ -48,7 +48,7 @@ void XMLBenchOutputWriter::kill()
 /**
  * This method can be used to create an instanced of this class
  *
- * @param portLib the port library that should be assocaited with the class
+ * @param portLib the port library that should be associated with the class
  * @param createOutput set this to true if you want xml output to be created
  */
 XMLBenchOutputWriter* XMLBenchOutputWriter::newInstance(J9PortLibrary* portlib, bool createOutput) {

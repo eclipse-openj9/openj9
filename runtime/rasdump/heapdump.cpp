@@ -90,7 +90,7 @@ public :
 
 	/* Assignment operators... */
 
-	/* Assigment methods... */
+	/* Assignment methods... */
 
 	/* Append operators... */
 	/* Operator for appending another string */

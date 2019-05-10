@@ -1036,7 +1036,7 @@ _nextBranch:
 			break;
 
 		/*	START OF DUP CODES */
-		/* DUPS can legally duplicate return adresses */
+		/* DUPS can legally duplicate return addresses */
 
 		case CFR_BC_dup:
 			value = popStack(jsrData);

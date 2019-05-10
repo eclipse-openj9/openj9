@@ -281,7 +281,7 @@ hythread_getSize(struct HyThreadLibraryVersion *version)
 	}
 
 	/* The size of the portLibrary table is determined by the majorVersion number
-	 * and the presence/absense of the HYTHREAD_CAPABILITY_STANDARD capability 
+	 * and the presence/absence of the HYTHREAD_CAPABILITY_STANDARD capability 
 	 */
 	if (0 != (version->capabilities & HYTHREAD_CAPABILITY_STANDARD)) {
 		return sizeof(HyThreadLibrary);

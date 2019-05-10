@@ -1780,7 +1780,7 @@ public final class Unsafe {
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value 
 	 * matches the existing value in the object.
-	 * The get operation has memory semantics of getAquire.
+	 * The get operation has memory semantics of getAcquire.
 	 * The set operation has the memory semantics of set.
 	 *
 	 * @param obj object into which to store the value

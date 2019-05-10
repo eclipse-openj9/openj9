@@ -85,7 +85,7 @@ const int32_t len = 22;
 /*
  *  No need to stopUsingRegister(FPR) because the RA does
  *  not check for liveliness of these regs on zSeries (yet).
- *  But we'll do it anways.
+ *  But we'll do it anyways.
  */
 
 /*

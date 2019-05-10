@@ -905,7 +905,7 @@ public class DsaStackFrame {
                         /* state variable locator */
                         if ((ppa1h_flag3 & 0x80) != 0)
                             opt_ptr = opt_ptr + 4;
-                        /* Argumnet Area Length */
+                        /* Argument Area Length */
                         if ((ppa1h_flag3 & 0x40) != 0)
                             opt_ptr = opt_ptr + 4;
                         /* FP reg save area locator */
@@ -1022,7 +1022,7 @@ public class DsaStackFrame {
                 /* state variable locator */
                 if ((ppa1flags3 & 0x80) != 0)
                     ptrnam = ptrnam + 4;
-                /* Argumnet Area Length */
+                /* Argument Area Length */
                 if ((ppa1flags3 & 0x40) != 0)
                     ptrnam = ptrnam + 4;
                 /* FP reg save area locator */

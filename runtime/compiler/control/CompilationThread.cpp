@@ -1662,7 +1662,7 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
       TR_MethodToBeCompiled *methodBeingCompiled = curCompThreadInfoPT->getMethodBeingCompiled();
-      // Mark the method beign compiled that it has been unloaded.
+      // Mark the method being compiled that it has been unloaded.
       // If it is already marked, then there is nothing to do.
       //
       if (methodBeingCompiled && !methodBeingCompiled->_unloadedMethod)
@@ -8280,7 +8280,7 @@ TR::CompilationInfoPerThreadBase::compile(
          // FAR: should we do postpone this copying until after CHTable commit?
          metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
 
-         // We don't need to delete the metadataAsumptionList from the compilation object,
+         // We don't need to delete the metadataAssumptionList from the compilation object,
          // and in fact it would be wrong to do so because code during chtable.commit is
          // expecting something in the compiler object
          }

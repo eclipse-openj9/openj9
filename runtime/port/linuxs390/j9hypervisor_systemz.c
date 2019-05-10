@@ -511,7 +511,7 @@ errorout:
  *		files and recreates them with the latest data.
  *		The above operation is very dicey when multiple processes are writing to the update file
  *		and reading from the hypfs files. hypfs also does not allow two writes to the "update"
- *		file within the span of a second. To prevent issues with multiple processes accesing hypfs
+ *		file within the span of a second. To prevent issues with multiple processes accessing hypfs
  *		at the same time, the following protocol is followed
  *		1. check the file write time of the "update" file using stat.
  *		2. If the write has happened within the last second, go to step 5
