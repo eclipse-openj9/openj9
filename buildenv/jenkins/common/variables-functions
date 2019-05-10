@@ -1095,8 +1095,7 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     // when a PR build is involved as the other builds would always generate the same config.
     // In my opinion, the window of time is small enough that this won't happen often.
     // Furthermore, and most importantly, the PR would have to be changing Pipeline code in
-    // order for either build to be adversely affected. Given those 2 points I am confortable
-    // leaving this race condition as a possibility.
+    // order for either build to be adversely affected.
     if (ghprbPullId) {
         params.put('SOURCE_BRANCH', "origin/pr/${ghprbPullId}/merge")
         params.put('GIT_REFSPEC', '+refs/pull/*:refs/remotes/origin/pr/*')
@@ -1105,6 +1104,19 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
 
+    node('mutex') {
+        def LOCK_FILE = "${HOME}/OpenJ9-${JOB_NAME}.lock"
+        retry(3) {
+            // Aquire lock file to avoid race condition above
+            if (fileExists(LOCK_FILE)) {
+                // 5000 miliseconds = 5 seconds
+                sleep(5000)
+                error("lock file already aquired by another job")
+            }
+        }
+        def lockFile = new File(LOCK_FILE)
+        lockFile.createNewFile()
+    }
     create = jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params
 }
 
