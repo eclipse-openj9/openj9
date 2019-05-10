@@ -81,6 +81,11 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
          crtTime = j9time_current_time_millis();
          persistentInfo->setElapsedTime(crtTime - persistentInfo->getStartTime());
 
+            {
+            OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+            compInfo->getClientSessionHT()->purgeOldDataIfNeeded();
+            }
+
          if ((statisticsThread->getStatisticsFrequency() != 0) && ((crtTime - lastStatistics) > statisticsThread->getStatisticsFrequency()))
             {
             int32_t cpuUsage = 0, avgCpuUsage = 0, vmCpuUsage = 0;
