@@ -4752,8 +4752,11 @@ typedef struct J9VMThread {
 	IDATA nonZeroTlhPrefetchFTA;
 	omrthread_monitor_t publicFlagsMutex;
 	UDATA publicFlags;
-	UDATA inspectionSuspendCount;
-	UDATA inspectorCount;
+#if defined(J9VM_ENV_DATA64) /* The ifdeffed field does not affect the aligmment check below */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	UDATA compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(J9VM_ENV_DATA64) */
 	j9object_t threadObject;
 	void* lowTenureAddress;
 	void* highTenureAddress;
@@ -4778,6 +4781,8 @@ typedef struct J9VMThread {
 	UDATA* objectFlagSpinLockAddress; /* used by JIT. Do not remove, even though NO VM code uses it see matching comment in J9VMThread.st */
 	struct J9JavaStack* stackObject;
 	omrthread_t osThread;
+	UDATA inspectionSuspendCount;
+	UDATA inspectorCount;
 	U_32 eventFlags;
 	U_32 osrFrameIndex;
 	void* codertTOC;
@@ -4963,7 +4968,11 @@ typedef struct J9VMThread {
 #define TMP_J9VMTHREAD_BLOCKINGENTEROBJECT(object) ((object)->blockingEnterObject)
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+#define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) (0 != (vmThread)->compressObjectReferences)
+#else /* OMR_GC_FULL_POINTERS */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) TRUE
+#endif /* OMR_GC_FULL_POINTERS */
 #else /* OMR_GC_COMPRESSED_POINTERS */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) FALSE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
@@ -5406,7 +5415,11 @@ typedef struct J9JavaVM {
 #define J9VM_DEFLATION_POLICY_NEVER  0
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+#define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES)
+#else /* OMR_GC_FULL_POINTERS */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) TRUE
+#endif /* OMR_GC_FULL_POINTERS */
 #else /* OMR_GC_COMPRESSED_POINTERS */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) FALSE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
