@@ -1949,37 +1949,32 @@ void TR_EscapeAnalysis::checkDefsAndUses()
       }
    }
 
-void printUsesThroughAternary(TR::Compilation *comp, TR_HashTab *usesTable)
+void TR_EscapeAnalysis::printUsesThroughAternary(void)
    {
-   traceMsg(comp, "\nNodes used through aternary operations\n");
-   TR_HashTabIterator hti(usesTable);
-   TR_HashId nextID;
-   TR_Array<TR::Node*> *aternaryUses = (TR_Array<TR::Node*>*) hti.getFirst(nextID);
+   traceMsg(comp(), "\nNodes used through aternary operations\n");
 
-   while (aternaryUses)
+   for (auto mi = _nodeUsesThroughAternary->begin(); mi != _nodeUsesThroughAternary->end(); mi++)
       {
-      TR::Node *key = (TR::Node*) usesTable->getKey(nextID);
+      TR::Node *key = mi->first;
       int32_t nodeIdx = key->getGlobalIndex();
 
-      traceMsg(comp, "   node [%p] n%dn is used by {", key, nodeIdx, aternaryUses);
+      traceMsg(comp(), "   node [%p] n%dn is used by {", key, nodeIdx);
 
-      TR_ArrayIterator<TR::Node> ai(aternaryUses);
+      TR_ArrayIterator<TR::Node> ai(mi->second);
       bool first = true;
 
       for (TR::Node* aternaryNode = ai.getFirst(); aternaryNode; aternaryNode = ai.getNext())
          {
-         traceMsg(comp, "%s[%p] n%dn", (first ? "" : ", "), aternaryNode,
+         traceMsg(comp(), "%s[%p] n%dn", (first ? "" : ", "), aternaryNode,
                   aternaryNode->getGlobalIndex());
          first = false;
          }
 
-      traceMsg(comp, "}\n");
-
-      aternaryUses = (TR_Array<TR::Node*>*) hti.getNext(nextID);
+      traceMsg(comp(), "}\n");
       }
    }
 
-void TR_EscapeAnalysis::gatherUsesThroughAternary()
+void TR_EscapeAnalysis::gatherUsesThroughAternary(void)
    {
    TR::NodeChecklist visited(comp());
    TR::TreeTop *tt = comp()->getStartTree();
@@ -1987,16 +1982,16 @@ void TR_EscapeAnalysis::gatherUsesThroughAternary()
    for (; tt; tt = tt->getNextTreeTop())
       {
       TR::Node *node = tt->getNode();
-      gatherUsesThroughAternary(node, visited);
+      gatherUsesThroughAternaryImpl(node, visited);
       }
 
    if (trace() && _nodeUsesThroughAternary)
       {
-      printUsesThroughAternary(comp(), _nodeUsesThroughAternary);
+      printUsesThroughAternary();
       }
    }
 
-void TR_EscapeAnalysis::gatherUsesThroughAternary(TR::Node *node, TR::NodeChecklist& visited)
+void TR_EscapeAnalysis::gatherUsesThroughAternaryImpl(TR::Node *node, TR::NodeChecklist& visited)
    {
    if (visited.contains(node))
       {
@@ -2004,44 +1999,50 @@ void TR_EscapeAnalysis::gatherUsesThroughAternary(TR::Node *node, TR::NodeCheckl
       }
    visited.add(node);
 
-   if (_nodeUsesThroughAternary == NULL
-          && node->getOpCode().isTernary()
-          && node->getDataType() == TR::Address)
+   for (int32_t i=0; i<node->getNumChildren(); i++)
       {
-      _nodeUsesThroughAternary = new (trStackMemory()) TR_HashTab(trMemory(), stackAlloc);
+      gatherUsesThroughAternaryImpl(node->getChild(i), visited);
       }
 
-   int32_t i;
-   for (i=0;i<node->getNumChildren(); i++)
+   // If this is an aternary operation, for each of its child operands (other than
+   // the condition) add the aternary node to the array of nodes that use that child
+   if (node->getOpCode().isTernary() && node->getDataType() == TR::Address)
       {
-      TR::Node *child = node->getChild(i);
-      gatherUsesThroughAternary(child, visited);
+      associateAternaryWithChild(node, 1);
+      associateAternaryWithChild(node, 2);
+      }
+   }
 
-      // If this is an aternary operation, for each of its child operands (other than
-      // the condition) add the aternary node to the array of nodes that use that child
-      if (node->getOpCode().isTernary() && node->getDataType() == TR::Address)
-         {
-         if (i > 0)
-            {
-            TR_Array<TR::Node*> *currChildUses;
-            TR_HashId hashValue;
+void TR_EscapeAnalysis::associateAternaryWithChild(TR::Node *aternaryNode, int32_t idx)
+   {
+   TR::Region &stackMemoryRegion = trMemory()->currentStackRegion();
+   TR::Node *child = aternaryNode->getChild(idx);
 
-            if (_nodeUsesThroughAternary->locate(child, hashValue))
-               {
-               currChildUses = (TR_Array<TR::Node*>*) _nodeUsesThroughAternary->getData(hashValue);
-               }
-            else
-               {
-               currChildUses = new (trStackMemory()) TR_Array<TR::Node*>(trMemory(), 8, false, stackAlloc);
-               _nodeUsesThroughAternary->add(child, hashValue, currChildUses);
-               }
+   TR_Array<TR::Node*> *currChildUses;
+   TR_HashId hashValue;
 
-            if (!currChildUses->contains(node))
-               {
-               currChildUses->add(node);
-               }
-            }
-         }
+   if (NULL == _nodeUsesThroughAternary)
+      {
+      _nodeUsesThroughAternary =
+            new (trStackMemory()) NodeToNodeArrayMap((NodeComparator()),
+                                                     NodeToNodeArrayMapAllocator(stackMemoryRegion));
+      }
+
+   auto search = _nodeUsesThroughAternary->find(child);
+
+   if (_nodeUsesThroughAternary->end() != search)
+      {
+      currChildUses = search->second;
+      }
+   else
+      {
+      currChildUses = new (trStackMemory()) TR_Array<TR::Node*>(trMemory(), 8, false, stackAlloc);
+      (*_nodeUsesThroughAternary)[child] = currChildUses;
+      }
+
+   if (!currChildUses->contains(aternaryNode))
+      {
+      currChildUses->add(aternaryNode);
       }
    }
 
@@ -2207,38 +2208,43 @@ bool TR_EscapeAnalysis::checkUsesThroughAternary(TR::Node *node, Candidate *cand
    bool returnValue = true;
    TR_HashId hashValue;
 
-   // Is this node referenced directly by any aternary nodes?
-   if (_nodeUsesThroughAternary && _nodeUsesThroughAternary->locate(node, hashValue))
+   if (_nodeUsesThroughAternary)
       {
-      TR_ArrayIterator<TR::Node> ai((TR_Array<TR::Node*>*) _nodeUsesThroughAternary->getData(hashValue));
+      auto search = _nodeUsesThroughAternary->find(node);
 
-      for (TR::Node* aternaryNode = ai.getFirst(); aternaryNode; aternaryNode = ai.getNext())
+      // Is this node referenced directly by any aternary nodes?
+      if (_nodeUsesThroughAternary->end() != search)
          {
-         int32_t aternaryVN = _valueNumberInfo->getValueNumber(aternaryNode);
-         int32_t i;
+         TR_ArrayIterator<TR::Node> ai(search->second);
 
-         // Check whether this aternary has already been accounted for with this candidate
-         for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
+         for (TR::Node* aternaryNode = ai.getFirst(); aternaryNode; aternaryNode = ai.getNext())
             {
-            if (candidate->_valueNumbers->element(i) == aternaryVN)
-               {
-               break;
-               }
-            }
+            int32_t aternaryVN = _valueNumberInfo->getValueNumber(aternaryNode);
+            int32_t i;
 
-         // If this aternary has not been accounted for with this candidate, check for its uses
-         if (i < 0)
-            {
-            candidate->_valueNumbers->add(aternaryVN);
-
-            if (trace())
+            // Check whether this aternary has already been accounted for with this candidate
+            for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
                {
-               traceMsg(comp(), "   Checking uses of node %p through aternary operation %p for candidate %p\n", node, aternaryNode, candidate->_node);
+               if (candidate->_valueNumbers->element(i) == aternaryVN)
+                  {
+                  break;
+                  }
                }
 
-            if (!checkDefsAndUses(aternaryNode, candidate))
+            // If this aternary has not been accounted for with this candidate, check for its uses
+            if (i < 0)
                {
-               returnValue = false;
+               candidate->_valueNumbers->add(aternaryVN);
+
+               if (trace())
+                  {
+                  traceMsg(comp(), "   Checking uses of node %p through aternary operation %p for candidate %p\n", node, aternaryNode, candidate->_node);
+                  }
+
+               if (!checkDefsAndUses(aternaryNode, candidate))
+                  {
+                  returnValue = false;
+                  }
                }
             }
          }
