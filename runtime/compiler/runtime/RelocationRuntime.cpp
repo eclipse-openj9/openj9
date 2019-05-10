@@ -868,7 +868,7 @@ TR_SharedCacheRelocationRuntime::useDFPHardware(TR_FrontEnd *fe)
    bool isPOWERDFP = TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint();
    bool is390DFP =
 #ifdef TR_TARGET_S390
-      TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getS390SupportsDFP();
+      TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
 #else
       false;
 #endif
@@ -1265,7 +1265,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
       featureFlags |= TR_FeatureFlag_HCREnabled;
 
 #ifdef TR_TARGET_S390
-   if (TR::Compiler->target.cpu.getS390SupportsVectorFacility())
+   if (TR::Compiler->target.cpu.getSupportsVectorFacility())
       featureFlags |= TR_FeatureFlag_SIMDEnabled;
 #endif
 

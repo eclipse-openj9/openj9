@@ -351,7 +351,7 @@ J9::Z::MemoryReference::createPatchableDataInLitpool(TR::Node * node, TR::CodeGe
    TR::S390WritableDataSnippet * litpool = cg->CreateWritableConstant(node);
    litpool->setUnresolvedDataSnippet(uds);
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
       {
       litpool->resetNeedLitPoolBasePtr();
       TR::S390RILInstruction * LRLinst;

@@ -427,7 +427,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
    if (!optionsJIT->getOption(TR_DisableDFP) && !optionsAOT->getOption(TR_DisableDFP)
        && (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.getS390SupportsDFP()
+       || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
        )
        && TR_J9MethodBase::isBigDecimalMethod(method)

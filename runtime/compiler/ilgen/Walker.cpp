@@ -4777,7 +4777,7 @@ break
       bool isPOWERDFP = TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint();
       bool is390DFP =
 #ifdef TR_TARGET_S390
-         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getS390SupportsDFP();
+         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
 #else
          false;
 #endif
@@ -5873,7 +5873,7 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    if (!comp()->compileRelocatableCode() && !comp()->getOption(TR_DisableDFP) &&
        ((TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint())
 #ifdef TR_TARGET_S390
-         || (TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getS390SupportsDFP())
+         || (TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility())
 #endif
          ))
       {

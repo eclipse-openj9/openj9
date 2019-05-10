@@ -1773,7 +1773,7 @@ J9::Options::fePreProcess(void * base)
    TR_Processor proc = TR_J9VMBase::getPPCProcessorType();
    preferTLHPrefetch = proc >= TR_PPCp6 && proc <= TR_PPCp7;
 #elif defined(TR_HOST_S390)
-   preferTLHPrefetch = TR::Compiler->target.cpu.getS390SupportsZ10();
+   preferTLHPrefetch = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10);
 #else /* TR_HOST_X86 */
    preferTLHPrefetch = true;
    // Disable TM on x86 because we cannot tell whether a Haswell chip supports TM or not, plus it's killing the performace on dayTrader3
@@ -1853,8 +1853,13 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_InlineVeryLargeCompiledMethods);
       }
 
-   // Disable zNext support until it has been gone through several rounds of functional stress testing
-   self()->setOption(TR_DisableZ15);
+   static bool enableZ15 = feGetEnv("TR_EnableZ15") != NULL;
+
+   if (!enableZ15)
+      {
+      // Disable zNext support until it has been gone through several rounds of functional stress testing
+      self()->setOption(TR_DisableZ15);
+      }
 #endif
 
    // On big machines we can afford to spend more time compiling

@@ -50,7 +50,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/S390Snippets.cpp \
     omr/compiler/z/codegen/SystemLinkage.cpp \
     omr/compiler/z/codegen/TranslateEvaluator.cpp \
-    omr/compiler/z/codegen/UnaryEvaluator.cpp
+    omr/compiler/z/codegen/UnaryEvaluator.cpp \
+    omr/compiler/z/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/DFPTreeEvaluator.cpp \

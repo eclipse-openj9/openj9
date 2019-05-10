@@ -1228,7 +1228,7 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
    if ((!comp->getOption(TR_DisableDFP)) &&
        (
 #ifdef TR_TARGET_S390
-       TR::Compiler->target.cpu.getS390SupportsDFP() ||
+       TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility() ||
 #endif
        TR::Compiler->target.cpu.supportsDecimalFloatingPoint()) && sym != NULL)
       {
@@ -2183,7 +2183,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
    if (comp->getOption(TR_DisableDFP) ||
        (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.getS390SupportsDFP()
+       || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
          ) ||
           !TR_J9MethodBase::isBigDecimalMethod(j9method)))
