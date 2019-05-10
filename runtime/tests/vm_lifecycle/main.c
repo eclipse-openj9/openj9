@@ -250,14 +250,14 @@ childProcessMain(struct J9PortLibrary *portLibrary, void * vargs)
 
 	/* first make sure we can load the function pointers */
 	if (setupInvocationAPIMethods(args) != 0) {
-		j9tty_printf(PORTLIB, "\nCound not do required setup...\n");
+		j9tty_printf(PORTLIB, "\nCould not do required setup...\n");
 		rc = FAIL;
 		goto done;
 	}
 
 	/* now set up the arguments for JNI_CreateJavaVM */
 	if (setupArguments(args,&vm_args,&vmOptionsTable) != 0){
-		j9tty_printf(PORTLIB, "\nCound not create required arguments for JNI_CreateJavaVM...\n");
+		j9tty_printf(PORTLIB, "\nCould not create required arguments for JNI_CreateJavaVM...\n");
 		rc = FAIL;
 		goto done;
 	}
