@@ -36,12 +36,35 @@ message Any
       bytes bytes_v = 6;
       bool bool_v = 7;
       AnyData vector_v = 8;
+      ResolvedMethodInfo method_info_v = 9;
       }
    }
 
 message AnyData
    {
    repeated Any data = 1;
+   }
+
+message ResolvedMethodInfo
+   {
+   uint64 remoteMirror = 1;
+   uint64 literals = 2;
+   uint64 ramClass = 3;
+   uint64 methodIndex = 4;
+   uint64 jniProperties = 5;
+   uint64 jniTargetAddress = 6;
+   bool isINterpreted = 7;
+   bool isJNINative = 8;
+   bool isMethodInValidLibrary = 9;
+   int32 mandatoryRm = 10;
+   int32 rm = 11;
+   uint64 startAddressForJittedMethod = 12;
+   bool virtualMethodIsOverridden = 13;
+   uint64 addressContainingIsOverriddenBit = 14;
+   uint64 classLoader = 15;
+   bytes bodyInfoStr = 16;
+   bytes methodInfoStr = 17;
+   bytes entryStr = 18;
    }
 
 enum J9ServerMessageType

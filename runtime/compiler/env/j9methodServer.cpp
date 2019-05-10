@@ -1488,12 +1488,11 @@ TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resol
 void
 TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe)
    {
-   auto &methodInfoStruct = std::get<0>(methodInfo);
    if (!resolvedMethod)
       {
       // resolved method not created, setting remoteMirror to NULL indicates
       // that other fields should be ignored.
-      methodInfoStruct.remoteMirror = NULL;
+      methodInfo.remoteMirror = NULL;
       return;
       }
 
@@ -1507,22 +1506,22 @@ TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(TR_ResolvedJ9JITaaSServerMethodI
    J9Method *j9method = resolvedMethod->ramMethod();
   
    // fill-in struct fields 
-   methodInfoStruct.remoteMirror = resolvedMethod;
-   methodInfoStruct.literals = literals;
-   methodInfoStruct.ramClass = cpHdr;
-   methodInfoStruct.methodIndex = getMethodIndexUnchecked(j9method);
-   methodInfoStruct.jniProperties = resolvedMethod->getJNIProperties();
-   methodInfoStruct.jniTargetAddress = resolvedMethod->getJNITargetAddress();
-   methodInfoStruct.isInterpreted = resolvedMethod->isInterpreted();
-   methodInfoStruct.isJNINative = resolvedMethod->isJNINative();
-   methodInfoStruct.isMethodInValidLibrary = resolvedMethod->isMethodInValidLibrary();
-   methodInfoStruct.mandatoryRm = resolvedMethod->getMandatoryRecognizedMethod();
-   methodInfoStruct.rm = ((TR_ResolvedMethod*)resolvedMethod)->getRecognizedMethod();
-   methodInfoStruct.startAddressForJittedMethod = TR::CompilationInfo::isCompiled(resolvedMethod->ramMethod()) ?
+   methodInfo.remoteMirror = resolvedMethod;
+   methodInfo.literals = literals;
+   methodInfo.ramClass = cpHdr;
+   methodInfo.methodIndex = getMethodIndexUnchecked(j9method);
+   methodInfo.jniProperties = resolvedMethod->getJNIProperties();
+   methodInfo.jniTargetAddress = resolvedMethod->getJNITargetAddress();
+   methodInfo.isInterpreted = resolvedMethod->isInterpreted();
+   methodInfo.isJNINative = resolvedMethod->isJNINative();
+   methodInfo.isMethodInValidLibrary = resolvedMethod->isMethodInValidLibrary();
+   methodInfo.mandatoryRm = resolvedMethod->getMandatoryRecognizedMethod();
+   methodInfo.rm = ((TR_ResolvedMethod*)resolvedMethod)->getRecognizedMethod();
+   methodInfo.startAddressForJittedMethod = TR::CompilationInfo::isCompiled(resolvedMethod->ramMethod()) ?
                                            resolvedMethod->startAddressForJittedMethod() : NULL;
-   methodInfoStruct.virtualMethodIsOverridden = resolvedMethod->virtualMethodIsOverridden();
-   methodInfoStruct.addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
-   methodInfoStruct.classLoader = resolvedMethod->getClassLoader();
+   methodInfo.virtualMethodIsOverridden = resolvedMethod->virtualMethodIsOverridden();
+   methodInfo.addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
+   methodInfo.classLoader = resolvedMethod->getClassLoader();
 
    TR_PersistentJittedBodyInfo *bodyInfo = NULL;
    // Method may not have been compiled
@@ -1534,53 +1533,52 @@ TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(TR_ResolvedJ9JITaaSServerMethodI
    // set string info fields (they cannot be inside of the struct)
    std::string jbi = bodyInfo ? std::string((char*)bodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string();
    std::string methodInfoStr = bodyInfo ? std::string((char*)bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
-   std::get<1>(methodInfo) = jbi;
-   std::get<2>(methodInfo) = methodInfoStr;
+   methodInfo.bodyInfoStr = jbi;
+   methodInfo.methodInfoStr = methodInfoStr;
 
    // set IP method data string.
    // fanin info is not used at cold opt level, so there is no point sending this information to the server
    TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *)((TR_J9VMBase *) fe)->getIProfiler();
-   std::get<3>(methodInfo) = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
+   methodInfo.entryStr = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
    }
 
 void
 TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo)
    {
-   auto methodInfoStruct = std::get<0>(methodInfo);
    
    
    _ramMethod = (J9Method *)aMethod;
 
-   _remoteMirror = methodInfoStruct.remoteMirror;
+   _remoteMirror = methodInfo.remoteMirror;
 
    // Cache the constantPool and constantPoolHeader
-   _literals = methodInfoStruct.literals;
-   _ramClass = methodInfoStruct.ramClass;
+   _literals = methodInfo.literals;
+   _ramClass = methodInfo.ramClass;
 
    _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass, trMemory);
-   _romMethod = romMethodAtClassIndex(_romClass, methodInfoStruct.methodIndex);
+   _romMethod = romMethodAtClassIndex(_romClass, methodInfo.methodIndex);
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA) _romClass + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;
    _j9classForNewInstance = NULL;
 
-   _jniProperties = methodInfoStruct.jniProperties;
-   _jniTargetAddress = methodInfoStruct.jniTargetAddress;
+   _jniProperties = methodInfo.jniProperties;
+   _jniTargetAddress = methodInfo.jniTargetAddress;
 
-   _isInterpreted = methodInfoStruct.isInterpreted;
-   _isJNINative = methodInfoStruct.isJNINative;
-   _isMethodInValidLibrary = methodInfoStruct.isMethodInValidLibrary;
+   _isInterpreted = methodInfo.isInterpreted;
+   _isJNINative = methodInfo.isJNINative;
+   _isMethodInValidLibrary = methodInfo.isMethodInValidLibrary;
    
-   TR::RecognizedMethod mandatoryRm = methodInfoStruct.mandatoryRm;
-   TR::RecognizedMethod rm = methodInfoStruct.rm;
+   TR::RecognizedMethod mandatoryRm = methodInfo.mandatoryRm;
+   TR::RecognizedMethod rm = methodInfo.rm;
 
-   _startAddressForJittedMethod = methodInfoStruct.startAddressForJittedMethod;
-   _virtualMethodIsOverridden = methodInfoStruct.virtualMethodIsOverridden;
-   _addressContainingIsOverriddenBit = methodInfoStruct.addressContainingIsOverriddenBit;
-   _classLoader = methodInfoStruct.classLoader;
+   _startAddressForJittedMethod = methodInfo.startAddressForJittedMethod;
+   _virtualMethodIsOverridden = methodInfo.virtualMethodIsOverridden;
+   _addressContainingIsOverriddenBit = methodInfo.addressContainingIsOverriddenBit;
+   _classLoader = methodInfo.classLoader;
 
-   auto &bodyInfoStr = std::get<1>(methodInfo);
-   auto &methodInfoStr = std::get<2>(methodInfo);
+   auto &bodyInfoStr = methodInfo.bodyInfoStr;
+   auto &methodInfoStr = methodInfo.methodInfoStr;
 
    _bodyInfo = J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, trMemory);
  
@@ -1595,7 +1593,7 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    setRecognizedMethod(rm);
 
    TR_JITaaSIProfiler *iProfiler = (TR_JITaaSIProfiler *) ((TR_J9VMBase *) fe)->getIProfiler();
-   const std::string entryStr = std::get<3>(methodInfo);
+   const std::string entryStr = methodInfo.entryStr;
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
    _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL; 
    }
@@ -1919,7 +1917,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedMethodFromJ9Method(TR:
    bool sameClassLoaders = std::get<2>(recv);
    bool sameClass = std::get<3>(recv);
 
-   if (std::get<0>(methodInfo).remoteMirror)
+   if (methodInfo.remoteMirror)
       {
       // Remote mirror created successfully
       resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
@@ -1953,7 +1951,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::createResolvedMethodFromJ9Method( TR
    // In either case, methodInfo contains all parameters required to construct a resolved method or check that it's NULL.
    // The only problem is that we can't update AOT stats from this method.
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (std::get<0>(methodInfo).remoteMirror)
+   if (methodInfo.remoteMirror)
       resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
 
    return resolvedMethod;

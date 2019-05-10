@@ -27,6 +27,7 @@
 #include <utility>
 #include <type_traits>
 #include "StreamTypes.hpp"
+#include "ProtobufWrappers.hpp"
 
 namespace JITaaS
    {
@@ -117,6 +118,22 @@ namespace JITaaS
          msg->set_bytes_v(strVal);
          }
       static inline Any::TypeCase typeCase() { return Any::kBytesV; }
+      };
+   // TR_ResolvedMethodInfoWrapper
+   template <> struct AnyPrimitive<const TR_ResolvedMethodInfoWrapper>
+      {
+      static inline TR_ResolvedMethodInfoWrapper read(const Any *msg)
+         {
+         const ResolvedMethodInfo &data = msg->method_info_v();
+         TR_ResolvedMethodInfoWrapper methodInfo(data);
+         return methodInfo;
+         }
+      static inline void write(Any *msg, const TR_ResolvedMethodInfoWrapper &val)
+         {
+         ResolvedMethodInfo *resolvedMsg = msg->mutable_method_info_v();
+         val.serialize(resolvedMsg);
+         }
+      static inline Any::TypeCase typeCase() { return Any::kMethodInfoV; }
       };
    // vector
    template <typename T> struct AnyPrimitive<T, typename std::enable_if<std::is_same<T, std::vector<typename T::value_type>>::value>::type>
@@ -227,6 +244,8 @@ namespace JITaaS
       {
       static_assert(!std::is_same<T, bool>::value, "ProtobufTypeConvert for vector of bools (non-contiguous in standard)");
       };
+
+   template <> struct ProtobufTypeConvert<TR_ResolvedMethodInfoWrapper> : PrimitiveTypeConvert<const TR_ResolvedMethodInfoWrapper> { };
 
 
    // setArgs fills out a protobuf AnyData message with values from a variadic argument list.

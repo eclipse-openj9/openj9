@@ -99,29 +99,7 @@ private:
 
 using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodFieldAttributes>;
 
-struct
-TR_ResolvedJ9JITaaSServerMethodInfoStruct
-   {
-   TR_ResolvedJ9Method *remoteMirror;
-   J9RAMConstantPoolItem *literals;
-   J9Class *ramClass;
-   uint64_t methodIndex;
-   uintptrj_t jniProperties;
-   void *jniTargetAddress;
-   bool isInterpreted;
-   bool isJNINative;
-   bool isMethodInValidLibrary;
-   TR::RecognizedMethod mandatoryRm;
-   TR::RecognizedMethod rm;
-   void *startAddressForJittedMethod;
-   bool virtualMethodIsOverridden;
-   void *addressContainingIsOverriddenBit;
-   J9ClassLoader *classLoader;
-   };
-
-
-// The last 3 strings are serialized versions of jittedBodyInfo, persistentMethodInfo and TR_ContiguousIPMethodHashTableInfo
-using TR_ResolvedJ9JITaaSServerMethodInfo = std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string, std::string>;
+using TR_ResolvedJ9JITaaSServerMethodInfo = JITaaS::TR_ResolvedMethodInfoWrapper;
 
 struct
 TR_RemoteROMStringKey

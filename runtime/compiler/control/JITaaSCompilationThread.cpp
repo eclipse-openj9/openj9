@@ -1595,7 +1595,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, vTableSlot, mirror, fe, trMemory);
 
          // Collect AOT stats
-         TR_ResolvedJ9Method *resolvedMethod = std::get<0>(methodInfo).remoteMirror;
+         TR_ResolvedJ9Method *resolvedMethod = methodInfo.remoteMirror;
 
          isRomClassForMethodInSC = TR::CompilationInfo::get(fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method, fe->_jitConfig->javaVM);
 
