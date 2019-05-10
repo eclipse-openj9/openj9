@@ -111,20 +111,6 @@ public:
 	}
 
 	/**
-	 * @see GC_ObjectScanner::getNextSlotMap()
-	 */
-	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, bool &hasNextSlotMap)
-	{
-		fomrobject_t *mapPtr = GC_MixedObjectScanner::getNextSlotMap(slotMap, hasNextSlotMap);
-
-		/* Skip over referent slot */
-		slotMap = skipReferentSlot(mapPtr, slotMap);
-
-		return mapPtr;
-	}
-
-	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
 	 * increasing significance, and the least significant bit maps to the slot at the returned
@@ -146,17 +132,6 @@ public:
 	}
 
 #if defined(OMR_GC_LEAF_BITS)
-	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, uintptr_t &leafMap, bool &hasNextSlotMap)
-	{
-		fomrobject_t *mapPtr = GC_MixedObjectScanner::getNextSlotMap(slotMap, leafMap, hasNextSlotMap);
-
-		/* Skip over referent slot */
-		slotMap = skipReferentSlot(mapPtr, slotMap);
-
-		return mapPtr;
-	}
-
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of

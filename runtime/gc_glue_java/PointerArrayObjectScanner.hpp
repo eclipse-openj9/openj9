@@ -143,29 +143,6 @@ public:
 	}
 
 	/**
-	 * @see GC_ObjectScanner::getNextSlotMap()
-	 */
-	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, bool &hasNextSlotMap)
-	{
-		_mapPtr += _bitsPerScanMap;
-		if (_endPtr > _mapPtr) {
-			intptr_t remainder = _endPtr - _mapPtr;
-			if (remainder >= _bitsPerScanMap) {
-				slotMap = UDATA_MAX;
-			} else {
-				slotMap = ((uintptr_t)1 << remainder) - 1;
-			}
-			hasNextSlotMap = remainder > _bitsPerScanMap;
-			return _mapPtr;
-		} else {
-			slotMap = 0;
-			hasNextSlotMap = false;
-			return NULL;
-		}
-	}
-
-	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
 	 * increasing significance, and the least significant bit maps to the slot at the returned
@@ -197,13 +174,6 @@ public:
 	}
 
 #if defined(OMR_GC_LEAF_BITS)
-	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &scanMap, uintptr_t &leafMap, bool &hasNextSlotMap)
-	{
-		leafMap = 0;
-		return getNextSlotMap(scanMap, hasNextSlotMap);
-	}
-
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
