@@ -84,7 +84,7 @@ public class TestLambda {
 		/* Verify that the list was correctly sorted */
 		int lenghtOfPrevious = list.get(0).length();
 		for (int i = 1 ; i < list.size() ; i++) {
-			AssertJUnit.assertTrue("List was not correclty sorted in descending String.length() order." +
+			AssertJUnit.assertTrue("List was not correctly sorted in descending String.length() order." +
 					"\n\tCurrent element: " + list.get(i) + 
 					"\n\tPrevious element: " + list.get(i - 1),
 					list.get(i).length() <= lenghtOfPrevious);	

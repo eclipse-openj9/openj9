@@ -150,6 +150,6 @@ public class rc008
 	}
 
 	public String helpRedefineNewInstance() {
-		return "Test that redefining default constructors works correclty for Class.newInstance()";
+		return "Test that redefining default constructors works correctly for Class.newInstance()";
 	}
 }
