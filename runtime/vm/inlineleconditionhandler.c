@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,12 +51,12 @@ _ENTRY globalLeConditionHandlerENTRY = { (_POINTER)&j9vm_inline_le_condition_han
  * j9vm_inline_le_condition_handler uses j9port_control to obtain a function pointer to the handler, j9vm_le_condition_handler,
  * which j9sig_protect_ceehdlr registers (using CEEHDLR) on calls to the port library's sig_protect function.
  *
- * j9vm_inline_le_condition_handler then creates and provides the J9ZOSLEConditionHandlerRecord expected by the port library's
+ * j9vm_inline_le_condition_handler then creates and provides the OMRZOSLEConditionHandlerRecord expected by the port library's
  * 	j9vm_le_condition_handler and calls j9vm_le_condition_handler directly
  *
  * @param[in]	_FEEDBACK *fc 		condition token representing the condition for which this handler was invoked
  * 										- forwarded to the j9vm_le_condition_handler.
- * @param[in]	_INT4 *token 		points to a J9VMThread*. Needed to obtain the portlibrary and by the the J9ZOSLEConditionHandlerRecord.
+ * @param[in]	_INT4 *token 		points to a J9VMThread*. Needed to obtain the portlibrary and by the the OMRZOSLEConditionHandlerRecord.
  * @param[out]	_INT4 *leResult		tells the OS what to do when the condition handler returns.
  * 										- forwarded to the j9vm_le_condition_handler
  * @param[out]	_FEEDBACK *newfc	forwarded to the j9vm_le_condition_handler
@@ -70,7 +70,7 @@ void
 j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDBACK *newfc)
 {
 
- 	struct J9ZOSLEConditionHandlerRecord thisRecord;
+ 	struct OMRZOSLEConditionHandlerRecord thisRecord;
 	J9VMThread* vmThread = (J9VMThread *) *token;
 	PORT_ACCESS_FROM_VMC(vmThread);
 	void (*portLibraryInternalLEConditionHandler)(_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDBACK *newfc);
@@ -80,9 +80,9 @@ j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, 
 	printf("j9vm_inline_le_condition_handler, fc->tok_msgno: %i, fc->tok_facid: %s, fc->tok_sev: %i\n", fc->tok_msgno, e2a_func(fc->tok_facid, 3), fc->tok_sev);fflush(NULL);
 #endif
 
-	memset(&thisRecord, 0, sizeof(J9ZOSLEConditionHandlerRecord));
+	memset(&thisRecord, 0, sizeof(OMRZOSLEConditionHandlerRecord));
 
-	/* Fake up the J9ZOSLEConditionHandlerRecord as if j9sig_protect_ceehdlr() had created it */
+	/* Fake up the OMRZOSLEConditionHandlerRecord as if j9sig_protect_ceehdlr() had created it */
 	thisRecord.portLibrary = PORTLIB;
 	thisRecord.handler = structuredSignalHandler;
 	thisRecord.handler_arg = vmThread;
