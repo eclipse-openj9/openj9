@@ -26,6 +26,8 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "compile/Compilation.hpp"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
