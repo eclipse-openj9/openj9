@@ -216,14 +216,17 @@ SH_CacheMap::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, S
 void
 SH_CacheMap::dontNeedMetadata(J9VMThread* currentThread) 
 {
-	/* Local copies to avoid race condition */
 	Trc_SHR_CM_j9shr_dontNeedMetadata(currentThread);
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
 
+	if (_metadataReleased) {
+		return;
+	}
 	_metadataReleased = true;
-	uintptr_t  min = _minimumAccessedShrCacheMetadata;
-	uintptr_t  max = _maximumAccessedShrCacheMetadata;
-	size_t length = (size_t) (max - min);
-	_ccHead->dontNeedMetadata(currentThread, (const void *) min, length);
+	do {
+		ccToUse->dontNeedMetadata(currentThread);
+		ccToUse = ccToUse->getNext();
+	} while (NULL != ccToUse);
 }
 
 /**
@@ -274,8 +277,6 @@ SH_CacheMap::initialize(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, Bl
 	_growEnabled = false;
 	_isSerialized = false;
 	_isAssertEnabled = true;
-	_minimumAccessedShrCacheMetadata = 0;
-	_maximumAccessedShrCacheMetadata = 0;
 	_metadataReleased = false;
 	
 	/* TODO: Need this function to be able to return pass/fail */
@@ -1663,7 +1664,10 @@ SH_CacheMap::allocateROMClass(J9VMThread* currentThread, const J9RomClassRequire
 	
 	pieces->romClass = (void *) allocateROMClassOnly(currentThread, romclassSizeToUse, classnameLength, classnameData, cpw, partitionInCache, modContextInCache, callerHelperID, modifiedNoContext, newItemInCache, cacheAreaForAllocate);
 
-	if ((NULL != newItemInCache) && _ccHead->isNewCache()) {
+	if ((NULL != newItemInCache)
+		&& (_ccHead->isNewCache()) 
+		&& (false == _metadataReleased)
+	) {
 		/* Update the min/max boundary with the stored metadata entry only when the cache is
 		 * being created by the current VM.
 		 */
@@ -2328,7 +2332,9 @@ SH_CacheMap::commitMetaDataROMClassIfRequired(J9VMThread* currentThread, Classpa
 	/* Update the min/max boundary with the stored metadata entry only when the cache is
 	 * being created by the current VM.
 	 */
-	if (_ccHead->isNewCache()) {
+	if (_ccHead->isNewCache() 
+		&& (false == _metadataReleased)
+	) {
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 #if defined(LINUX)
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE))
@@ -2633,8 +2639,7 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 #endif
 		) {
 			if (TrcEnabled_Trc_SHR_CM_findROMClass_metadataAccess
-			                   && ((uintptr_t) locateResult.known >= _minimumAccessedShrCacheMetadata)
-			                   && ((uintptr_t) locateResult.known <= _maximumAccessedShrCacheMetadata)
+				&& (isAddressInReleasedMetaDataBounds(currentThread, (UDATA)locateResult.known))
 			) {
 				Trc_SHR_CM_findROMClass_metadataAccess(currentThread, path, (U_8 *) locateResult.known);
 			}
@@ -2830,6 +2835,7 @@ SH_CacheMap::storeROMClassResource(J9VMThread* currentThread, const void* romAdd
 	&& ((void*)J9SHR_RESOURCE_STORE_FULL != result)
 	&& ((void*)J9SHR_RESOURCE_STORE_ERROR != result)
 	&& _ccHead->isNewCache()
+	&& (false == _metadataReleased)
 	) {
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 #if defined(LINUX)
@@ -3076,8 +3082,7 @@ SH_CacheMap::findCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* ro
 #endif
 		) {
 			if (TrcEnabled_Trc_SHR_CM_findCompiledMethod_metadataAccess
-			&& ((uintptr_t) result >= _minimumAccessedShrCacheMetadata)
-			&& ((uintptr_t) result <= _maximumAccessedShrCacheMetadata)
+			&& (isAddressInReleasedMetaDataBounds(currentThread, (UDATA)result))
 			) {
 				J9InternalVMFunctions* vmFunctions = currentThread->javaVM->internalVMFunctions;
 				J9ClassLoader* loader = NULL;
@@ -3119,43 +3124,15 @@ SH_CacheMap::findCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* ro
 void
 SH_CacheMap::updateAccessedShrCacheMetadataBounds(J9VMThread* currentThread, uintptr_t const * metadataAddress)
 {
-	uintptr_t * updateAddress = (uintptr_t *) &_minimumAccessedShrCacheMetadata;
-	uintptr_t currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
-	uintptr_t const newValue = (uintptr_t const) metadataAddress;
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+	bool rc = false;
 
-	if (0 == currentValue) { /* set initial value.  Don't care if someone beats us to this  */
-		Trc_SHR_CM_updateAccessedShrCacheMetadataMinimum(currentThread, metadataAddress);
-		compareAndSwapUDATA(
-				updateAddress,
-				currentValue,
-				newValue
-		);
-	}
+	do {
+		rc = ccToUse->updateAccessedShrCacheMetadataBounds(currentThread, metadataAddress);
+		ccToUse = ccToUse->getNext();
+	} while ((false == rc) && (NULL != ccToUse));
 
-	currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
-	while (newValue < (uintptr_t) currentValue) {
-		Trc_SHR_CM_updateAccessedShrCacheMetadataMinimum(currentThread, metadataAddress);
-
-		compareAndSwapUDATA(
-				updateAddress,
-				currentValue,
-				newValue
-		);
-		currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
-	}
-
-	updateAddress = (uintptr_t *) &_maximumAccessedShrCacheMetadata;
-	currentValue = (uintptr_t) _maximumAccessedShrCacheMetadata;
-	while (newValue > (uintptr_t) _maximumAccessedShrCacheMetadata) {
-		Trc_SHR_CM_updateAccessedShrCacheMetadataMaximum(currentThread, metadataAddress);
-
-		compareAndSwapUDATA(
-				updateAddress,
-				currentValue,
-				newValue
-		);
-		currentValue = (uintptr_t) _maximumAccessedShrCacheMetadata;
-	}
+	return;
 }
 
 /**
@@ -7451,5 +7428,28 @@ checkROMClassUTF8SRPs(J9ROMClass *romClass)
 		}
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+}
+
+/**
+ * checks if an address is in the cache metadata area
+ *
+ *	@param [in] currentThread The current JVM thread
+ *	@param [in] address The address to be checked
+ *
+ *	@return true if the address is in cache metadata area, false otherwise.
+ */
+
+bool
+SH_CacheMap::isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA address) const
+{
+	bool rc = false;
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+
+	do {
+		rc = ccToUse->isAddressInReleasedMetaDataBounds(currentThread, address);
+		ccToUse = ccToUse->getNext();
+	} while ((false == rc) && (NULL != ccToUse));
+
+	return rc;
 }
 
