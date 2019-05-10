@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,6 @@ JavaVM* vmBuff[1];
 jsize numVms;
 UDATA handle;
 
-static int startsWith(char *s, char *prefix);
 IDATA setupArguments(struct j9cmdlineOptions* startupOptions,JavaVMInitArgs* vm_args,void **vmOptionsTable, jint version);
 void cleanupArguments(void **vmOptionsTable);
 IDATA setupInvocationAPIMethods(struct j9cmdlineOptions* startupOptions);
@@ -440,30 +439,6 @@ IDATA setupArguments(struct j9cmdlineOptions* startupOptions,JavaVMInitArgs* vm_
 	cleanup:
 
 	return rc;
-}
-
-/**
- * This method parses a looks for a prefix match in a command line option
- * @param s the option
- * @param prefix what to match
- * @returns 1 when there is a match
- */
-static int
-startsWith(char *s, char *prefix)
-{
-	int sLen=(int)strlen(s);
-	int prefixLen=(int)strlen(prefix);
-	int i;
-
-	if (sLen < prefixLen) {
-		return 0;
-	}
-	for (i=0; i<prefixLen; i++){
-		if (s[i] != prefix[i]) {
-			return 0;
-		}
-	}
-	return 1; /*might want to make sure s is not NULL or something*/
 }
 
 /**
