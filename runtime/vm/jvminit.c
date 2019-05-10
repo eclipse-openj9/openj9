@@ -194,9 +194,11 @@ static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ MAPOPT_XK, EXACT_MEMORY_MATCH },
 	{ MAPOPT_XP, EXACT_MEMORY_MATCH },
 	{ VMOPT_XNORTSJ, EXACT_MATCH },
-	{ MAPOPT_XCOMPRESSEDREFS, EXACT_MATCH },
-	{ MAPOPT_XNOCOMPRESSEDREFS, EXACT_MATCH },
-#endif
+#if !(defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS))
+	{ VMOPT_XCOMPRESSEDREFS, EXACT_MATCH },
+	{ VMOPT_XNOCOMPRESSEDREFS, EXACT_MATCH },
+#endif /* !(defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) */
+#endif /* defined(J9VM_OPT_SIDECAR) */
 };
 #define ignoredOptionTableSize (sizeof(ignoredOptionTable) / sizeof(struct J9VMIgnoredOption))
 
@@ -3202,6 +3204,18 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			return JNI_ERR;
 		}
 	}
+
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	{
+		IDATA compressed = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XCOMPRESSEDREFS, NULL);
+		IDATA nocompressed = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XNOCOMPRESSEDREFS, NULL);
+		if (compressed > nocompressed) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
+		} else if (compressed < nocompressed) {
+			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
+		}
+	}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 	return JNI_OK;
 }

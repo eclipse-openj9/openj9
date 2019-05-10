@@ -449,6 +449,9 @@ enum INIT_STAGE {
 #define VMOPT_XXNLSMESSAGES "-XX:+NLSMessages"
 #define VMOPT_XXNONLSMESSAGES  "-XX:-NLSMessages"
 
+#define VMOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
+#define VMOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"
@@ -478,8 +481,6 @@ enum INIT_STAGE {
 #define MAPOPT_XDIAGNOSTICSCOLLECTOR "-Xdiagnosticscollector"
 #define MAPOPT_XDIAGNOSTICSCOLLECTOR_COLON "-Xdiagnosticscollector:"
 #define MAPOPT_XSOFTREFTHRESHOLD "-Xsoftrefthreshold"
-#define MAPOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
-#define MAPOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
 #define MAPOPT_XXJITDIRECTORY "-XXjitdirectory="
 #define MAPOPT_XSHARE_ON "-Xshare:on"
 #define MAPOPT_XSHARE_OFF "-Xshare:off"

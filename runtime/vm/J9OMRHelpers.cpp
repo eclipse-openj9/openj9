@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,6 +63,9 @@ attachVMThreadToOMR(J9JavaVM *vm, J9VMThread *vmThread, omrthread_t osThread)
 	omrVMThread->_vm = omrVM;
 	omrVMThread->_language_vmthread = vmThread;
 	omrVMThread->_os_thread = osThread;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	omrVMThread->_compressObjectReferences = J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread);
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	if (OMR_ERROR_NONE == omr_attach_vmthread_to_vm(omrVMThread)) {
 		vmThread->omrVMThread = omrVMThread;
 		rc = JNI_OK;
@@ -112,6 +115,9 @@ attachVMToOMR(J9JavaVM *vm)
 		omrVM->_configuration._maximum_thread_count = 0;
 		omrVM->_language_vm = (void*)vm;
 		omrVM->_runtime = omrRuntime;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		omrVM->_compressObjectReferences = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES);
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		if (OMR_ERROR_NONE == omr_attach_vm_to_runtime(omrVM)) {
 			vm->omrRuntime = omrRuntime;
 			vm->omrVM = omrVM;

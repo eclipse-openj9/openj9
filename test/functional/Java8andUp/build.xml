@@ -163,7 +163,7 @@
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
-						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
+						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-cli.jar" />
 						<pathelement location="${TEST_ROOT}/TestConfig/lib/javassist.jar" />
 					</classpath>
@@ -253,10 +253,10 @@
 	<target name="jasm_generator" depends="init" description="prepare jasm files">
 		<property name="jasm_class_destination" location="${build}/j9vm/test/invoker" />
 		<mkdir dir="${jasm_class_destination}" />
-		<exec executable="${JAVA_BIN}/java" dir="${jasm_class_destination}">
+		<exec executable="${TEST_JDK_HOME}/bin/java" dir="${jasm_class_destination}">
 			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm ${src}/j9vm/test/invoker/NodeClass.jasm"/>
 		</exec>
-		<exec executable="${JAVA_BIN}/java" dir="${jasm_class_destination}">
+		<exec executable="${TEST_JDK_HOME}/bin/java" dir="${jasm_class_destination}">
 			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm ${src}/j9vm/test/invoker/NodeInterface.jasm"/>
 		</exec>
 	</target>

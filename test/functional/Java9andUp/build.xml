@@ -118,7 +118,7 @@
 				</javac>
 			</sequential>
 		</for>
-		<exec executable="${JAVA_BIN}/java" failonerror="true">
+		<exec executable="${TEST_JDK_HOME}/bin/java" failonerror="true">
 			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm -d ${module_bin_root}/${MODULE_NAME_ROOT}.testerModule ${module_src_root}/${MODULE_NAME_ROOT}.testerModule/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm" />
 		</exec>
 	</target>
