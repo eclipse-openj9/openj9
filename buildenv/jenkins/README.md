@@ -179,7 +179,7 @@ Pipelines for all platforms and versions are available [**here**](https://ci.ecl
         - Compile and run sanity tests against new OMR content
         - Triggers:
             - Build-JDK`<version>`-`<platform>` and Test-Sanity-JDK`<version>`-`<platform>` across all platforms and versions
-            - `Promote-OpenJ9-OMR-master-to-openj9` once all testing is passed
+            - `Promote_OMR` once all testing is passed
     - Trigger: Triggered by `Mirror-OMR-to-OpenJ9-OMR`
 
 
@@ -224,11 +224,11 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
     - Trigger:
         - Build periodically, 15 minutes
 
-- Promote-OpenJ9-OMR-master-to-openj9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Promote-OpenJ9-OMR-master-to-openj9)](https://ci.eclipse.org/openj9/job/Promote-OpenJ9-OMR-master-to-openj9)
+- Promote_OMR
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Promote_OMR)](https://ci.eclipse.org/openj9/job/Promote_OMR)
     - Description:
         - Promotes eclipse/openj9-omr branch master to branch openj9
-        - Lays a tag down on the promoted SHA in the format `omr_merge_YYYYMMDD_HHMMSS` with annotations including the current OpenJ9 and OpenJDK SHAs
+        - Lays a tag down on the promoted SHA in the format `promote_merge_YYYYMMDD_HHMMSS` with annotations including the current OpenJ9 and OpenJDK SHAs
     - Trigger:
         - Last step of `Pipeline-OMR-Acceptance`
 
