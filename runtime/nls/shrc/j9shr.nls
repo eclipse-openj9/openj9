@@ -4211,7 +4211,7 @@ J9NLS_CACHE_BAD_CC_INIT= Composite cache has bad initialization flag value. The 
 # START NON-TRANSLATABLE
 J9NLS_CACHE_BAD_CC_INIT.sample_input_1=2
 J9NLS_CACHE_BAD_CC_INIT.explanation=Composite cache has bad initialization flag value. 
-J9NLS_CACHE_BAD_CC_INIT.system_action=The cache is marked as corrup and JVM continues. 
+J9NLS_CACHE_BAD_CC_INIT.system_action=The cache is marked as corrupt and JVM continues. 
 J9NLS_CACHE_BAD_CC_INIT.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
