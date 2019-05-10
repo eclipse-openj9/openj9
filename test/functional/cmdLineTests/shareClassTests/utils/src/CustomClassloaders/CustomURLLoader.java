@@ -116,7 +116,7 @@ public class CustomURLLoader extends SecureClassLoader {
 		try{
 			if (this.loadClass(name)==null)
 			{
-				System.out.println("CustomeURLLoader::loadClassFrom returned null.");
+				System.out.println("CustomURLLoader::loadClassFrom returned null.");
 			}
 		} catch(ClassNotFoundException e){
 			e.printStackTrace();
@@ -478,7 +478,7 @@ public class CustomURLLoader extends SecureClassLoader {
 				return false;
 			}
 		}
-		System.out.println("CustomeURLLoader::isClassInSharedCache scHelper is null.");
+		System.out.println("CustomURLLoader::isClassInSharedCache scHelper is null.");
 		return false;
 	}
 	
