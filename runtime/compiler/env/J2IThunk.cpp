@@ -188,7 +188,7 @@ TR_J2IThunkTable::findThunkFromTerseSignature(
       }
    else
       {
-      OMR::CriticalSection critialSection(_monitor);
+      OMR::CriticalSection criticalSection(_monitor);
 
       Node *match = root()->get(terseSignature, _nodes, false);
       returnThunk = match ? match->_thunk : NULL;
