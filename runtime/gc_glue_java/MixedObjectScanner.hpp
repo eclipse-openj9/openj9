@@ -130,27 +130,6 @@ public:
 	MMINLINE uintptr_t getBytesRemaining() { return sizeof(fomrobject_t) * (_endPtr - _scanPtr); }
 
 	/**
-	 * @see GC_ObjectScanner::getNextSlotMap(uintptr_t&, bool&)
-	 */
-	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, bool &hasNextSlotMap)
-	{
-		slotMap = 0;
-		hasNextSlotMap = false;
-		_mapPtr += _bitsPerScanMap;
-		while (_endPtr > _mapPtr) {
-			slotMap = *_descriptionPtr;
-			_descriptionPtr += 1;
-			if (0 != slotMap) {
-				hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
-				return _mapPtr;
-			}
-			_mapPtr += _bitsPerScanMap;
-		}
-		return NULL;
-	}
-
-	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
 	 * increasing significance, and the least significant bit maps to the slot at the returned
@@ -181,29 +160,6 @@ public:
 	}
 
 #if defined(J9VM_GC_LEAF_BITS)
-	/**
-	 * @see GC_ObjectScanner::getNextSlotMap(uintptr_t&, uintptr_t&, bool&)
-	 */
-	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, uintptr_t &leafMap, bool &hasNextSlotMap)
-	{
-		slotMap = 0;
-		hasNextSlotMap = false;
-		_mapPtr += _bitsPerScanMap;
-		while (_endPtr > _mapPtr) {
-			slotMap = *_descriptionPtr;
-			_descriptionPtr += 1;
-			leafMap = *_leafPtr;
-			_leafPtr += 1;
-			if (0 != slotMap) {
-				hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
-				return _mapPtr;
-			}
-			_mapPtr += _bitsPerScanMap;
-		}
-		return NULL;
-	}
-
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
 	 * base pointer must be fomrobject_t-aligned. Bits in the bit map are scanned in order of
