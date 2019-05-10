@@ -567,7 +567,7 @@ MHInterpreter$(UMA_DOT_O):MHInterpreter.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
 
 endif
-<#if uma.spec.flags.env_littleEndian.enabled && !uma.spec.flags.env_gcc.enabled>
+<#if uma.spec.type.linux && !uma.spec.flags.env_gcc.enabled>
 # special handling of fltconv.c
 # This is a work around for a compiler defect (see JAZZ 76038)
 fltconv$(UMA_DOT_O):fltconv.c
