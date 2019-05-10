@@ -253,7 +253,7 @@ ReduceSynchronizedFieldLoad::perform()
    {
    bool transformed = false;
 
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196))
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
       {
       if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
          {

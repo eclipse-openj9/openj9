@@ -149,7 +149,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // RI support
    if (comp->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
-       && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_zEC12)
+       && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12)
        && TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility())
       {
       cg->setSupportsRuntimeInstrumentation();
@@ -169,7 +169,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
 
-   const bool accessStaticsIndirectly = !TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) ||
+   const bool accessStaticsIndirectly = !TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) ||
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
          (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
@@ -2019,7 +2019,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:
          {
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) && isPacked && digitsToClear >= 3)
+         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && isPacked && digitsToClear >= 3)
             {
             int32_t bytesToSet = (digitsToClear+1)/2;
             int32_t leftMostByte = 0;
@@ -2962,7 +2962,7 @@ J9::Z::CodeGenerator::canCopyWithOneOrTwoInstrs(char *lit, size_t size)
       }
 
    // z9 does not support these complex move instructions
-   if (!TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) && size > 2)
+   if (!TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && size > 2)
       {
       return false;
       }
@@ -3061,7 +3061,7 @@ J9::Z::CodeGenerator::useMoveImmediateCommon(TR::Node *node,
          break;
       case 2:  // MVI/MVI or MVHHI
          {
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10))
+         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
             {
             genMVHHI(destMR, node, (lit[0]<<8)|lit[1], cg);
             }
@@ -3914,7 +3914,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -3929,7 +3929,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -3993,7 +3993,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
       case TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_:
          // TODO (Nigel): Is this deprecated? If so can we remove this?
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10) && !comp->getOption(TR_DisableIntrinsics) && !comp->getOption(TR_DisableDAATrailingZero) && !TR::Compiler->om.canGenerateArraylets())
+         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && !comp->getOption(TR_DisableIntrinsics) && !comp->getOption(TR_DisableDAATrailingZero) && !TR::Compiler->om.canGenerateArraylets())
             return resultReg = inlineTrailingZerosQuadWordAtATime(node, cg);
          break;
 

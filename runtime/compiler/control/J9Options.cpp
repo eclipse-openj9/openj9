@@ -1773,7 +1773,7 @@ J9::Options::fePreProcess(void * base)
    TR_Processor proc = TR_J9VMBase::getPPCProcessorType();
    preferTLHPrefetch = proc >= TR_PPCp6 && proc <= TR_PPCp7;
 #elif defined(TR_HOST_S390)
-   preferTLHPrefetch = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::TR_z10);
+   preferTLHPrefetch = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10);
 #else /* TR_HOST_X86 */
    preferTLHPrefetch = true;
    // Disable TM on x86 because we cannot tell whether a Haswell chip supports TM or not, plus it's killing the performace on dayTrader3
