@@ -304,12 +304,18 @@ matchStack(J9BytecodeVerificationData * verifyData, J9BranchTargetStack *liveSta
 		goto _errorLocation;
 	}
 
-
-	/* Jazz103: 120689 */
-	/* Target stack frame flag needs to be subset of ours. See JVM sepc 4.10.1.4 */
-	if (liveStack->uninitializedThis && !targetStack->uninitializedThis) {
-		rc = BCV_FAIL;
-		goto _finished;
+	/* The check on the uninitializedThis flag is only applied to the class files
+	 * with stackmaps (class version >= 51) which was introduced since Java 7.
+	 * For the old class files without stackmaps (class version < 51), such check
+	 * on the generated stackmaps is ignored so as to match the RI's behavior.
+	 * (See Jazz103: 120689 for details)
+	 */
+	if (!verifyData->createdStackMap) {
+		/* Target stack frame flag needs to be subset of ours. See JVM sepc 4.10.1.4 */
+		if (liveStack->uninitializedThis && !targetStack->uninitializedThis) {
+			rc = BCV_FAIL;
+			goto _finished;
+		}
 	}
 
 	while (livePtr != liveTop) {
