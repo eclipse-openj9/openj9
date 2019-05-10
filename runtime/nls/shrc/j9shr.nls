@@ -261,7 +261,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOPERMISSION=Permission Denied
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOPERMISSION.explanation=The system does not have permission to access a system resource.  A previous message should be issued indicating the resource that cannot be accessed.  For example, a previous message may indicate that there was an error opening shared memory.  This message would indicate that the error was that you do not have permission to access the shared memory.
 J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOPERMISSION.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOPERMISSION.user_response=Shared class caches are created so that only the user who created the cache has access to it, unless the -Xshareclasses:groupAccess is specified when other members of the creater's group may also access it.  If you do not come into one of these categories, you will not have access to the cache.  For more information on permissions and Shared Classes, see \"Chapter 4. Understanding Shared Classes\".
+J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOPERMISSION.user_response=Shared class caches are created so that only the user who created the cache has access to it, unless the -Xshareclasses:groupAccess is specified when other members of the creator's group may also access it.  If you do not come into one of these categories, you will not have access to the cache.  For more information on permissions and Shared Classes, see \"Chapter 4. Understanding Shared Classes\".
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOSPACE=Not enough memory left on the system
