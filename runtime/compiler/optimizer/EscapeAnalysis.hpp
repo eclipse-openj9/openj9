@@ -444,7 +444,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
 
-     //protected :
+   protected:
 
    enum restrictionType { MakeNonLocal, MakeContiguous, MakeObjectReferenced };
 
@@ -656,6 +656,9 @@ class TR_EscapeAnalysis : public TR::Optimization
    typedef std::map<TR::Node*, TR_Array<TR::Node*>*, NodeComparator, NodeToNodeArrayMapAllocator> NodeToNodeArrayMap;
 
    NodeToNodeArrayMap *       _nodeUsesThroughAternary;
+
+   friend class TR_FlowSensitiveEscapeAnalysis;
+   friend class TR_LocalFlushElimination;
    };
 
 //class Candidate;
