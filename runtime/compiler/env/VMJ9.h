@@ -416,10 +416,6 @@ public:
    void *                     getAllocationNoZeroPrefetchCodeSnippetAddress( TR::Compilation * comp);
 #endif
 
-#if defined(TR_TARGET_S390)
-   virtual void generateBinaryEncodingPrologue(TR_BinaryEncodingData *beData, TR::CodeGenerator *cg);
-#endif
-
    virtual TR::TreeTop *lowerTree(TR::Compilation *, TR::Node *, TR::TreeTop *);
 
    virtual bool canRelocateDirectNativeCalls() {return true; }

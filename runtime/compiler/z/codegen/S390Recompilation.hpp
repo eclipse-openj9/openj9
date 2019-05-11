@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "codegen/PreprologueConst.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 
 class TR_ResolvedMethod;
 
@@ -269,7 +268,6 @@ class TR_S390Recompilation : public TR::Recompilation
    TR::Instruction* bodyInfoDataConstant;
    };
 
-uint32_t CalcCodeSize(TR::Instruction *start,TR::Instruction *end);
 #define FOUR_BYTE_JUMP_INSTRUCTION 0xA7F40000
 
 #endif

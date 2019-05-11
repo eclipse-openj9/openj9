@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,10 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9SYSTEMLINKAGE_INCL
-#define J9SYSTEMLINKAGE_INCL
+#ifndef J9_Z_SYSTEMLINKAGELINUX_INCL
+#define J9_Z_SYSTEMLINKAGELINUX_INCL
 
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
+#include "z/codegen/SystemLinkageLinux.hpp"
 
 #include <stdint.h>
 #include "env/jittypes.h"
@@ -36,9 +37,6 @@ namespace TR { class SystemLinkage; }
 
 namespace TR {
 
-////////////////////////////////////////////////////////////////////////////////
-//  TR::J9S390zLinuxSystemLinkage Definition
-////////////////////////////////////////////////////////////////////////////////
 class J9S390zLinuxSystemLinkage : public TR::S390zLinuxSystemLinkage
    {
 public:
@@ -64,43 +62,6 @@ public:
          bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs);
 
    };
-
-////////////////////////////////////////////////////////////////////////////////
-//  TR::J9S390zOSSystemLinkage Definition
-////////////////////////////////////////////////////////////////////////////////
-class J9S390zOSSystemLinkage: public TR::S390zOSSystemLinkage
-   {
-public:
-   J9S390zOSSystemLinkage(TR::CodeGenerator * cg);
-
-   virtual void generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
-         intptrj_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-         TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint = true);
-
-
-
-   // this set of 3 method called by buildNative Dispatch is the same as the J9S390zLinux methods above
-   // omr todo: need to find a better way instead of duplicating them
-   virtual void setupRegisterDepForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions * &,
-         int64_t &, TR::SystemLinkage *, TR::Node * &, bool &, TR::Register **, TR::Register *&);
-
-   virtual void setupBuildArgForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions *, bool, bool,
-         int64_t &, TR::Node *, bool, TR::SystemLinkage *);
-
-   virtual void performCallNativeFunctionForLinkage(TR::Node *, TR_DispatchType, TR::Register *&, TR::SystemLinkage *,
-         TR::RegisterDependencyConditions *&, TR::Register *, TR::Register *, bool);
-
-   //called by buildArgs, same as J9S390zLinux methods above
-   // omr todo: need to find a better way instead of duplicating them
-   virtual void doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask);
-   virtual void addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step);
-   virtual int64_t addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies);
-   virtual int32_t storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
-         bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs);
-
-   TR::Instruction * genCallNOPAndDescriptor(TR::Instruction * cursor, TR::Node *node, TR::Node *callNode, TR_XPLinkCallTypes callType);
-   };
-
 }
 
 #endif

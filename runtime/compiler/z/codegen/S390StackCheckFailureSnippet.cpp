@@ -43,7 +43,7 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "runtime/CodeCacheManager.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 
 TR::S390StackCheckFailureSnippet::S390StackCheckFailureSnippet
                         (TR::CodeGenerator        *cg,
