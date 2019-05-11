@@ -2190,40 +2190,39 @@ _errorFound:
 static I_32 
 checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
 {
-	U_32 errorCode = 0;
-	U_16 max_allowed_version = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
-	I_32 result = 0;
-	U_16 majorVersion = classfile->majorVersion;
-	U_16 minorVersion = classfile->minorVersion;
+	const U_32 offset = 6;
+	const U_16 max_allowed_version = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
+	const U_16 majorVersion = classfile->majorVersion;
+	const U_16 minorVersion = classfile->minorVersion;
+	U_32 errorCode = J9NLS_CFR_ERR_MAJOR_VERSION__ID;
 
-	if ((majorVersion < 45) || (majorVersion > max_allowed_version)) {
-		errorCode = J9NLS_CFR_ERR_MAJOR_VERSION__ID;
-		result = -1;
-	} else if ((45 != majorVersion) && (0 != minorVersion)) { /* any minor  permitted for Version 45 */
-		if (52 == max_allowed_version) { /* Java 8 runtime */
-			if ((52 == majorVersion) && (0 != minorVersion)) { /* non-zero minor allowed only for older major */
-				errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
-				result = -1;
+	/* Support versions 45.0 -> <whatever is legal for this VM> */
+	if (majorVersion == max_allowed_version) {
+		if (0 == minorVersion) {
+			return 0;
+		} else if (0xffff == minorVersion) {
+			/* Preview flags won't be set for Java 8 & earlier (excluding cfdump) */
+			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion | BCT_EnablePreview)) {
+				return 0;
 			}
-		} else { /* Post Java 8 runtime */
-			if (0xffff != minorVersion) { /* -1 is the only permitted non-zero minor */
-				errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
-				result = -1;
-			} else if (((max_allowed_version != majorVersion) && J9_ARE_NO_BITS_SET(flags, BCT_AnyPreviewVersion))
-					|| J9_ARE_NO_BITS_SET(flags, BCT_EnablePreview)
-			) {
-				errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
-				result = -1;
+		}
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
+	} else if (majorVersion >= 45) {
+		if (majorVersion < 52) {
+			/* versions prior to Java 8, allow any minor */
+			return 0;
+		} else if (majorVersion < max_allowed_version) {
+			/* only .0 is the only valid minor version for this range */
+			if (0 == minorVersion) {
+				return 0;
 			}
+			errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 		}
 	}
 
-	if (0 != result) {
-		buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, 6);
-	}
-	return result;
+	buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, offset);
+	return -1;
 }
-
 
 /*
 	Check the class file in @classfile.
