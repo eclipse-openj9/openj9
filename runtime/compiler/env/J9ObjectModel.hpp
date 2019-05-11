@@ -53,8 +53,7 @@ public:
       _arrayLetLeafSize(0),
       _arrayLetLeafLogSize(0),
       _readBarrierType(gc_modron_readbar_none),
-      _writeBarrierType(gc_modron_wrtbar_none),
-      _shouldReplaceGuardedLoadWithSoftwareReadBarrier(false)
+      _writeBarrierType(gc_modron_wrtbar_none)
    {}
 
    void initialize();
@@ -122,14 +121,6 @@ public:
    */
    MM_GCWriteBarrierType writeBarrierType() { return _writeBarrierType; }
 
-   /**
-    * \brief Determine whether to replace guarded loads with software read barrier sequence
-    *
-    * \return
-    *     true if debug gc option -XXgc:softwareRangeCheckReadBarrier is used
-    */
-   bool shouldReplaceGuardedLoadWithSoftwareReadBarrier() { return _shouldReplaceGuardedLoadWithSoftwareReadBarrier; }
-
 private:
 
    bool                  _usesDiscontiguousArraylets;
@@ -137,7 +128,6 @@ private:
    int32_t               _arrayLetLeafLogSize;
    MM_GCReadBarrierType  _readBarrierType;
    MM_GCWriteBarrierType _writeBarrierType;
-   bool                  _shouldReplaceGuardedLoadWithSoftwareReadBarrier;
    };
 
 }
