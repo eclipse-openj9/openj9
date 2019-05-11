@@ -40,7 +40,6 @@
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Snippets.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 #include "z/codegen/J9TreeEvaluator.hpp"
 
 /**

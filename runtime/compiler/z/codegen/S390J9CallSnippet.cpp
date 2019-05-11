@@ -34,7 +34,6 @@
 #include "il/Node_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 #include "runtime/CodeCacheManager.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 
 uint8_t *
 TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR::CodeGenerator * cg)

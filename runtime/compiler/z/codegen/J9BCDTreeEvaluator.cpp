@@ -63,8 +63,8 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390Instruction.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 #include "z/codegen/S390Register.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 
 #define TR_PACKED_TO_DFP_NOABS   (0x8)
 #define TR_PACKED_TO_DFP_ABS     (0x9)

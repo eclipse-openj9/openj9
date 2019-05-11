@@ -78,9 +78,9 @@
 #include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Recompilation.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
-#include "runtime/J9Profiler.hpp"
 #include "z/codegen/S390Register.hpp"
+#include "z/codegen/SystemLinkage.hpp"
+#include "runtime/J9Profiler.hpp"
 
 /*
  * List of functions that is needed by J9 Specific Evaluators that were moved from codegen.
@@ -11517,101 +11517,6 @@ VMgenerateCatchBlockBBStartPrologue(
 
       cg->stopUsingRegister(biAddrReg);
       }
-   }
-
-void
-TR_J9VMBase::generateBinaryEncodingPrologue(
-      TR_BinaryEncodingData *beData,
-      TR::CodeGenerator *cg)
-   {
-   TR_S390BinaryEncodingData *data = (TR_S390BinaryEncodingData *)beData;
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   data->cursorInstruction = cg->getFirstInstruction();
-   data->estimate = 0;
-   TR::Recompilation * recomp = comp->getRecompilationInfo();
-
-   TR::ResolvedMethodSymbol * methodSymbol = comp->getJittedMethodSymbol();
-
-   //  setup cursor for JIT to JIT transfer
-   //
-   if (comp->getJittedMethodSymbol()->isJNI() &&
-      !comp->getOption(TR_FullSpeedDebug))
-      {
-      data->preProcInstruction = (TR::Compiler->target.is64Bit())?data->cursorInstruction->getNext()->getNext():data->cursorInstruction->getNext();
-      }
-   else
-      {
-      data->preProcInstruction = data->cursorInstruction;
-      }
-
-   data->jitTojitStart = data->preProcInstruction->getNext();
-
-   // Generate code to setup argument registers for interpreter to JIT transfer
-   // This piece of code is right before JIT-JIT entry point
-   //
-   TR::Instruction * preLoadArgs, * endLoadArgs;
-   preLoadArgs = data->preProcInstruction;
-
-   // We need full prolog if there is a call or a non-constant snippet
-   //
-   TR_BitVector * callBlockBV = cg->getBlocksWithCalls();
-
-   // No exit points, hence we can
-   //
-   if (callBlockBV->isEmpty() && !cg->anyNonConstantSnippets())
-      {
-      cg->setExitPointsInMethod(false);
-      }
-
-   endLoadArgs = cg->getS390PrivateLinkage()->loadUpArguments(preLoadArgs);
-
-   if (recomp != NULL)
-      {
-      if (preLoadArgs != endLoadArgs)
-         {
-         data->loadArgSize = CalcCodeSize(preLoadArgs->getNext(), endLoadArgs);
-         }
-
-      ((TR_S390Recompilation *) recomp)->setLoadArgSize(data->loadArgSize);
-      recomp->generatePrePrologue();
-      }
-   else if (comp->getOption(TR_FullSpeedDebug) || comp->getOption(TR_SupportSwitchToInterpreter))
-      {
-      if (preLoadArgs != endLoadArgs)
-         {
-         data->loadArgSize = CalcCodeSize(preLoadArgs->getNext(), endLoadArgs);
-         }
-
-      cg->generateVMCallHelperPrePrologue(NULL);
-      }
-
-   data->cursorInstruction = cg->getFirstInstruction();
-
-   static char *disableAlignJITEP = feGetEnv("TR_DisableAlignJITEP");
-
-   // Padding for JIT Entry Point
-   //
-   if (!disableAlignJITEP && !comp->compileRelocatableCode())
-      {
-      data->estimate += 256;
-      }
-
-   while (data->cursorInstruction && data->cursorInstruction->getOpCodeValue() != TR::InstOpCode::PROC)
-      {
-      data->estimate = data->cursorInstruction->estimateBinaryLength(data->estimate);
-      data->cursorInstruction = data->cursorInstruction->getNext();
-      }
-
-   TR::Instruction* cursor = data->cursorInstruction;
-
-   if (recomp != NULL)
-      {
-      cursor = recomp->generatePrologue(cursor);
-      }
-
-   cg->getLinkage()->createPrologue(cursor);
    }
 
 float
