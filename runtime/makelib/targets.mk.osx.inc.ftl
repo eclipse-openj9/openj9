@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2018 IBM Corp. and others
+Copyright (c) 1998, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,7 +123,7 @@ endif
 
 # https://stackoverflow.com/questions/21907504/how-to-compile-shared-lib-with-clang-on-osx
 UMA_DLL_LINK_FLAGS += -shared -undefined dynamic_lookup -install_name @rpath/lib$(UMA_LIB_NAME).dylib
-UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker @loader_path
+UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker @loader_path -Xlinker -rpath -Xlinker @loader_path/..
 
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)
