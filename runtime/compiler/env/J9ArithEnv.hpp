@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,8 @@ public:
    int64_t longRemainderLong(int64_t a, int64_t b);
    int64_t longDivideLong(int64_t a, int64_t b);
    int64_t longMultiplyLong(int64_t a, int64_t b);
+
+   bool permitsFusedMultiplyAdd() {return false;}
    };
 
 }

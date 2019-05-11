@@ -3031,6 +3031,15 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                }
             break;
+         case TR::java_lang_Math_fma_F:
+         case TR::java_lang_Math_fma_D:
+         case TR::java_lang_StrictMath_fma_F:
+         case TR::java_lang_StrictMath_fma_D:
+            if(comp->cg()->supportsFusedMultiplyAdd())
+               {
+               dontInlineRecognizedMethod = true;
+               }
+               break;
          case TR::java_lang_Math_max_D:
          case TR::java_lang_Math_min_D:
             if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))

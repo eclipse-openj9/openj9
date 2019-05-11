@@ -2537,6 +2537,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_Math_exp,              "exp",            "(D)D")},
       {x(TR::java_lang_Math_expm1,            "expm1",          "(D)D")},
       {x(TR::java_lang_Math_floor,            "floor",          "(D)D")},
+      {x(TR::java_lang_Math_fma_F,            "fma",            "(FFF)F")},
+      {x(TR::java_lang_Math_fma_D,            "fma",            "(DDD)D")},
       {x(TR::java_lang_Math_hypot,            "hypot",          "(DD)D")},
       {x(TR::java_lang_Math_IEEEremainder,    "IEEEremainder",  "(DD)D")},
       {x(TR::java_lang_Math_log,              "log",            "(D)D")},
@@ -2581,6 +2583,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_StrictMath_exp,        "exp",             "(D)D")},
       {x(TR::java_lang_StrictMath_expm1,      "expm1",           "(D)D")},
       {x(TR::java_lang_StrictMath_floor,      "floor",           "(D)D")},
+      {x(TR::java_lang_StrictMath_fma_F,      "fma",             "(FFF)F")},
+      {x(TR::java_lang_StrictMath_fma_D,      "fma",             "(DDD)D")},
       {x(TR::java_lang_StrictMath_hypot,      "hypot",           "(DD)D")},
       {x(TR::java_lang_StrictMath_IEEEremainder,"IEEEremainder", "(DD)D")},
       {x(TR::java_lang_StrictMath_log,        "log",             "(D)D")},
@@ -4898,6 +4902,10 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::sun_misc_Unsafe_getAndAddLong:
             case TR::sun_misc_Unsafe_getAndSetLong:
 
+            case TR::java_lang_Math_fma_F:
+            case TR::java_lang_Math_fma_D:
+            case TR::java_lang_StrictMath_fma_F:
+            case TR::java_lang_StrictMath_fma_D:
             case TR::java_lang_Math_sqrt:
             case TR::java_lang_StrictMath_sqrt:
             case TR::java_lang_Math_max_I:

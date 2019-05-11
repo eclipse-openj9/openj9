@@ -56,6 +56,7 @@ class Simplifier : public OMR::Simplifier
 
    bool isRecognizedPowMethod(TR::Node *node);
    bool isRecognizedAbsMethod(TR::Node *node);
+   bool isRecognizedFMAMethod(TR::Node *node);
 
    TR::Node *getUnsafeIorByteChild(TR::Node * child, TR::ILOpCodes b2iOpCode, int32_t mulConst);
    TR::Node *getLastUnsafeIorByteChild(TR::Node * child);
@@ -68,6 +69,8 @@ class Simplifier : public OMR::Simplifier
    TR::Node *getOrOfTwoConsecutiveBytes(TR::Node * ior);
 
    TR::Node *foldAbs(TR::Node *node);
+   TR::Node *foldFMAFloat(TR::Node *node);
+   TR::Node *foldFMADouble(TR::Node *node);
 
    /*! \brief Convert System.currentTimeMillis() into currentTimeMaxPrecision
     *

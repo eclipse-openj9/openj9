@@ -9166,6 +9166,149 @@ inlineMathSQRT(
 
    }
 
+static bool inlineMathFMA(TR::Node *node, TR::CodeGenerator *cg, isFloat)
+   {
+   // of the form fma(firstChild, secondChild, thirdChild) i.e (firstChild * secondChild) + thirdChild
+   TR::Node *firstChild = node->getChild(0);
+   TR::Node *secondChild = node->getChild(1);
+   TR::Node *thirdChild = node->getChild(2);
+
+   int preferredChildInTargetRegister = -1;
+   int preferredChildFromMemory = -1;
+
+   TR_X86OpCodes opcodeList[6][2] = 
+     {{VFMADD132SSRegRegReg, VFMADD132SDRegRegReg},
+      {VFMADD132SSRegRegMem, VFMADD132SDRegRegMem},
+      {VFMADD213SSRegRegReg, VFMADD213SDRegRegReg},
+      {VFMADD213SSRegRegMem, VFMADD213SDRegRegMem},
+      {VFMADD231SSRegRegReg, VFMADD231SDRegRegReg},
+      {VFMADD231SSRegRegMem, VFMADD231SDRegRegMem}};
+
+   if (firstChild->getReferenceCount() == 1)
+      {
+      if (firstChild->getRegister() != NULL)
+         {
+         // firstChild => xmm1
+         preferredChildInTargetRegister = 0;
+         }
+      else if (firstChild->getOpCode().isLoadVar())
+         {
+         // firstChild => xmm3/m32/m64
+         preferredChildFromMemory = 0;
+         }
+      }
+
+   if (secondChild->getReferenceCount() == 1)
+      {
+      if (preferredChildInTargetRegister == -1 && secondChild->getRegister() != NULL)
+         {
+         // secondChild => xmm1
+         preferredChildInTargetRegister = 1;
+         }
+      else if (preferredChildFromMemory == -1 && secondChild->getOpCode().isLoadVar())
+         {
+         // secondChild => xmm3/m32/m64
+         preferredChildFromMemory = 1;
+         }
+      }
+
+   if (thirdChild->getReferenceCount() == 1)
+      {
+      if (preferredChildInTargetRegister == -1 && thirdChild->getRegister() != NULL)
+         {
+         // thirdChild => xmm1
+         preferredChildInTargetRegister = 2;
+         }
+      else if (preferredChildFromMemory == -1 && thirdChild->getOpCode().isLoadVar())
+         {
+         // thirdChild => xmm3/m32/m64
+         preferredChildFromMemory = 2;
+         }
+      }
+
+   int opcodeVariant, source1Choice, source2Choice, source3Choice;
+
+   if (preferredChildFromMemory != -1 && preferredChildInTargetRegister != -1)
+      {
+      source1Choice = preferredChildInTargetRegister;
+      source2Choice = 3 - preferredChildFromMemory - preferredChildInTargetRegister;
+      source3Choice = preferredChildFromMemory;
+
+      if (preferredChildFromMemory == 2)
+         opcodeVariant = 3;
+      else if (preferredChildInTargetRegister == 2)
+         opcodeVariant = 5;
+      else
+         opcodeVariant = 1;
+      }
+   else if (preferredChildFromMemory != -1)
+      {
+      source3Choice = preferredChildFromMemory;
+
+      if (preferredChildFromMemory == 2)
+         {
+         opcodeVariant = 3;
+         source1Choice = 0;
+         source2Choice = 1;
+         }
+      else
+         {
+         opcodeVariant = 1;
+         source1Choice = 1 - preferredChildFromMemory;
+         source2Choice = 2;
+         }
+      }
+   else if (preferredChildInTargetRegister != -1)
+      {
+      source1Choice = preferredChildInTargetRegister;
+      if (preferredChildInTargetRegister == 2)
+         {
+         opcodeVariant = 4;
+         source2Choice = 0;
+         source3Choice = 1;
+         }
+      else
+         {
+         opcodeVariant = 0;
+         source2Choice = 2;
+         source3Choice = 1 - preferredChildInTargetRegister;
+         }
+      }
+   else
+      {
+      opcodeVariant = 0;
+      source1Choice = 0;
+      source2Choice = 2;
+      source3Choice = 1;
+      }
+
+   TR::ILOpCodes nodeOp = node->getOpCodeValue();
+
+   int ilVariant;
+
+   if (isFloat)
+      ilVariant = 0;
+   else
+      ilVariant = 1;
+
+   TR::Register *source1Register = cg->evaluate(node->getChild(source1Choice));
+   TR::Register *source2Register = cg->evaluate(node->getChild(source2Choice));
+
+   TR::Register *trgRegister = source1Register;
+
+   if (opcodeVariant % 2 == 0)
+      generateRegRegRegInstruction(opcodeList[opcodeVariant][ilVariant], node, trgRegister, source2Register, cg->evaluate(node->getChild(source3Choice)), cg);
+   else 
+      generateRegRegMemInstruction(opcodeList[opcodeVariant][ilVariant], node, trgRegister, source2Register, generateX86MemoryReference(node->getChild(source3Choice), cg), cg);
+
+   node->setRegister(trgRegister);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+
+   return trgRegister;
+   }
+
 // Convert serial String.hashCode computation into vectorization copy and implement with SSE instruction
 //
 // Conversion process example:
@@ -10122,6 +10265,13 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             return inlineMathSQRT(node, cg);
             }
+         
+         case TR::java_lang_Math_fma_F:
+         case TR::java_lang_StrictMath_fma_F:
+            return inlineMathFMA(node, cg, true);
+         case TR::java_lang_Math_fma_D:
+         case TR::java_lang_StrictMath_fma_D:
+            return inlineMathFMA(node, cg, false);
 
          case TR::java_lang_Long_reverseBytes:
          case TR::java_lang_Integer_reverseBytes:
@@ -11805,6 +11955,10 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
+      case TR::java_lang_Math_fma_F:
+      case TR::java_lang_Math_fma_D:
+      case TR::java_lang_StrictMath_fma_F:
+      case TR::java_lang_StrictMath_fma_D:
       case TR::java_lang_Long_reverseBytes:
       case TR::java_lang_Integer_reverseBytes:
       case TR::java_lang_Short_reverseBytes:

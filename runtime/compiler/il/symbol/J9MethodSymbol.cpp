@@ -56,6 +56,8 @@ J9::MethodSymbol::isPureFunction()
       case TR::java_lang_Math_exp:
       case TR::java_lang_Math_expm1:
       case TR::java_lang_Math_floor:
+      case TR::java_lang_Math_fma_F:
+      case TR::java_lang_Math_fma_D:
       case TR::java_lang_Math_hypot:
       case TR::java_lang_Math_IEEEremainder:
       case TR::java_lang_Math_log:
@@ -95,6 +97,8 @@ J9::MethodSymbol::isPureFunction()
       case TR::java_lang_StrictMath_exp:
       case TR::java_lang_StrictMath_expm1:
       case TR::java_lang_StrictMath_floor:
+      case TR::java_lang_StrictMath_fma_F:
+      case TR::java_lang_StrictMath_fma_D:
       case TR::java_lang_StrictMath_hypot:
       case TR::java_lang_StrictMath_IEEEremainder:
       case TR::java_lang_StrictMath_log:
