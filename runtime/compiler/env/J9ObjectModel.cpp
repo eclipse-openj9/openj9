@@ -77,7 +77,6 @@ J9::ObjectModel::initialize()
       _arrayLetLeafLogSize = 0;
       }
 
-   _shouldReplaceGuardedLoadWithSoftwareReadBarrier = mmf->j9gc_software_read_barrier_enabled(vm);
    _readBarrierType  = (MM_GCReadBarrierType) mmf->j9gc_modron_getReadBarrierType(vm);
    _writeBarrierType = (MM_GCWriteBarrierType)mmf->j9gc_modron_getWriteBarrierType(vm);
    if (_writeBarrierType == gc_modron_wrtbar_satb_and_oldcheck)

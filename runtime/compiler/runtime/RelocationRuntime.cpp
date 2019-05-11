@@ -1270,10 +1270,15 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 #endif
 
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      {
       featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
 
-   if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
-      featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
+#ifdef TR_TARGET_S390
+      if (!TR::Compiler->target.cpu.getSupportsGuardedStorageFacility())
+         featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
+#endif
+      }
+
 
    if (fej9->isAsyncCompilation())
       featureFlags |= TR_FeatureFlag_AsyncCompilation;
