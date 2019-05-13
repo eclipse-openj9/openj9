@@ -29,7 +29,7 @@ run tests. Details are explained in *Tasks in OpenJ9 Test* section below.
 
 ```
 cd openj9/test/TestConfig
-export JAVA_BIN=<path to JDK bin directory that you wish to test>
+export TEST_JDK_HOME=<path to JDK directory that you wish to test>
 export SPEC=linux_x86-64_cmprssptrs
 make -f run_configure.mk
 make _sanity
@@ -47,7 +47,7 @@ tools should be installed on your test machine to run tests.
 
     required:
     ```
-    JAVA_BIN=<path to JDK bin directory that you wish to test>
+    TEST_JDK_HOME=<path to JDK directory that you wish to test>
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
     ```
     optional:
@@ -55,7 +55,7 @@ tools should be installed on your test machine to run tests.
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test, could be auto detected)
     JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value, could be auto detected)
     JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value, could be auto detected)
-    NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as JDK_HOME)
+    NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as TEST_JDK_HOME)
     ```
   * auto detection:
   
