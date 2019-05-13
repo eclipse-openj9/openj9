@@ -6451,6 +6451,28 @@ TR_J9VMBase::getNumMethods(TR_OpaqueClassBlock * classPointer)
    return TR::Compiler->cls.romClassOf(classPointer)->romMethodCount;
    }
 
+/* This API takes a J9Class (TR_OpaqueClassBlock) and a J9Method (TR_OpaqueMethodBlock) and returns the
+ * index of the J9Method in the J9Class' array of J9Methods.
+ */
+uintptr_t
+TR_J9VMBase::getMethodIndexInClass(TR_OpaqueClassBlock *classPointer, TR_OpaqueMethodBlock *methodPointer)
+   {
+   void *methodsInClass = getMethods(classPointer);
+   uint32_t numMethods = getNumMethods(classPointer);
+
+   uintptr_t methodOffset = reinterpret_cast<uintptr_t>(methodPointer) - reinterpret_cast<uintptr_t>(methodsInClass);
+   TR_ASSERT_FATAL((methodOffset % sizeof (J9Method)) == 0, "methodOffset %llx isn't a multiple of sizeof(J9Method)\n",
+                                                             static_cast<uint64_t>(methodOffset));
+
+   uintptr_t methodIndex = methodOffset / sizeof (J9Method);
+   TR_ASSERT_FATAL(methodIndex < numMethods, "methodIndex %llx greater than numMethods %llx for method %p in class %p\n",
+                                              static_cast<uint64_t>(methodIndex),
+                                              static_cast<uint64_t>(numMethods),
+                                              methodPointer, classPointer);
+
+   return methodIndex;
+   }
+
 uint32_t
 TR_J9VMBase::getNumInnerClasses(TR_OpaqueClassBlock * classPointer)
    {
