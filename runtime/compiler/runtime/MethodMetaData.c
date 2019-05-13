@@ -285,7 +285,7 @@ static void printMetaData(J9TR_MethodMetaData * methodMetaData)
 
    if (methodMetaData->flags & JIT_METADATA_IS_STUB)
       {
-      printf("Stub Metadata 0x%p, nothing to dump", methodMetaData);
+      printf("Stub Metadata 0x%p, nothing to dump\n", methodMetaData);
       return;
       }
    
@@ -313,43 +313,42 @@ static void printMapTable(TR_StackMapTable * stackMapTable, U_8 * addressOfFirst
 static void fastwalkDebug(J9TR_MethodMetaData * methodMetaData, UDATA offsetPC, TR_StackMapTable * stackMapTable, TR_MapTableEntry * mapTableEntry)
    {
    if (methodMetaData && (methodMetaData->flags & JIT_METADATA_IS_STUB))
+      printf("Stub Metadata 0x%p, nothing to dump\n", methodMetaData);
+   else
       {
-      printf("Stub Metadata 0x%p, nothing to dump", methodMetaData);
-      return;
-      }
-   
-   UDATA fourByteOffsets = HAS_FOUR_BYTE_OFFSET(methodMetaData);
-   J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) methodMetaData->gcStackAtlas;
-   void * stackMap1 = 0;
-   void * inlineMap1 = 0;
-   void * stackMap2 = 0;
-   void * inlineMap2 = 0;
-   TR_MapIterator iter1, iter2;
-   U_8 * addressOfFirstMap = 0;
+      UDATA fourByteOffsets = HAS_FOUR_BYTE_OFFSET(methodMetaData);
+      J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) methodMetaData->gcStackAtlas;
+      void * stackMap1 = 0;
+      void * inlineMap1 = 0;
+      void * stackMap2 = 0;
+      void * inlineMap2 = 0;
+      TR_MapIterator iter1, iter2;
+      U_8 * addressOfFirstMap = 0;
 
-   /* Find the stack map and the inline map using a linear search. */
-   initializeIterator(&iter1, methodMetaData);
-   addressOfFirstMap = iter1._nextMap;
-   findMapsAtPC(&iter1, offsetPC, &stackMap1, &inlineMap1, fourByteOffsets);
+      /* Find the stack map and the inline map using a linear search. */
+      initializeIterator(&iter1, methodMetaData);
+      addressOfFirstMap = iter1._nextMap;
+      findMapsAtPC(&iter1, offsetPC, &stackMap1, &inlineMap1, fourByteOffsets);
 
-   /* Find the stack map and the inline map using the fastwalk method. */
-   initializeIteratorWithSpecifiedMap(&iter2, methodMetaData, (U_8 *) (getFirstStackMap(stackAtlas) + mapTableEntry->_stackMapOffset), mapTableEntry->_mapCount);
-   findMapsAtPC(&iter2, offsetPC, &stackMap2, &inlineMap2, fourByteOffsets);
+      /* Find the stack map and the inline map using the fastwalk method. */
+      initializeIteratorWithSpecifiedMap(&iter2, methodMetaData, (U_8 *) (getFirstStackMap(stackAtlas) + mapTableEntry->_stackMapOffset), mapTableEntry->_mapCount);
+      findMapsAtPC(&iter2, offsetPC, &stackMap2, &inlineMap2, fourByteOffsets);
 
-   /* Ensure the maps found by each method are the same. */
-   if ((stackMap1 != stackMap2) || (inlineMap1 != inlineMap2))
-      {
-      printf("FASTWALK DEBUG:\n");
-      printf("stackMap found by linear walk is %p\n", stackMap1);
-      printf("stackMap found by fastwalk method is %p\n", stackMap2);
-      printf("inlineMap found by linear walk is %p\n", inlineMap1);
-      printf("inlineMap found by fastwalk method is %p\n", inlineMap2);
+      /* Ensure the maps found by each method are the same. */
+      if ((stackMap1 != stackMap2) || (inlineMap1 != inlineMap2))
+         {
+         printf("FASTWALK DEBUG:\n");
+         printf("stackMap found by linear walk is %p\n", stackMap1);
+         printf("stackMap found by fastwalk method is %p\n", stackMap2);
+         printf("inlineMap found by linear walk is %p\n", inlineMap1);
+         printf("inlineMap found by fastwalk method is %p\n", inlineMap2);
 
-      printMetaData(methodMetaData);
-      printMapTable(stackMapTable, addressOfFirstMap);
+         printMetaData(methodMetaData);
+         printMapTable(stackMapTable, addressOfFirstMap);
 
-      assert(stackMap1 == stackMap2);
-      assert(inlineMap1 == inlineMap2);
+         assert(stackMap1 == stackMap2);
+         assert(inlineMap1 == inlineMap2);
+         }
       }
    }
 #endif /* defined(DEBUG) */
