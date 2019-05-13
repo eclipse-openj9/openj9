@@ -2098,8 +2098,8 @@ typedef struct J9RAMStaticMethodRef {
 } J9RAMStaticMethodRef;
 
 typedef struct J9RAMVirtualMethodRef {
-	UDATA methodIndexAndArgCount;
-	struct J9Method* method;
+	UDATA volatile methodIndexAndArgCount;
+	struct J9Method *volatile method;
 } J9RAMVirtualMethodRef;
 
 typedef struct J9RAMMethodTypeRef {
