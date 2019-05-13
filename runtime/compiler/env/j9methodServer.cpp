@@ -250,7 +250,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
    if (unresolvedInCP)
        *unresolvedInCP = true;
 
-   if (!((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
+   if (!((_fe->_compInfoPT->getClientData()->getRtResolve()) &&
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
       {
@@ -790,7 +790,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilat
 #if TURN_OFF_INLINING
    return 0;
 #else
-   if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
+   if (!(_fe->_compInfoPT->getClientData()->getRtResolve()))
       {
       // query for resolved method and create its mirror at the same time
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
@@ -835,7 +835,7 @@ TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-   if (fej9->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE && !ignoreRtResolve)
+   if (_fe->_compInfoPT->getClientData()->getRtResolve() && !ignoreRtResolve)
       return NULL;
 
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;

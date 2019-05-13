@@ -2873,7 +2873,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _constantPoolToClassMap(decltype(_constantPoolToClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _unloadedClassAddresses(NULL),
    _requestUnloadedClasses(true),
-   _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _rtResolve(false)
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;

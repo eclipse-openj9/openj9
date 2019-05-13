@@ -46,6 +46,7 @@
 #include "control/CompilationThread.hpp"
 #include "runtime/IProfiler.hpp"
 #include "env/j9methodServer.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -2859,7 +2860,7 @@ J9::Options::packOptions(TR::Options *origOptions)
    }
 
 TR::Options *
-J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Memory *trMemory)
+J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT, TR_Memory *trMemory)
    {
    TR::Options *options = (TR::Options *)trMemory->allocateHeapMemory(clientOptionsSize);
    memcpy(options, clientOptions, clientOptionsSize);
@@ -2877,10 +2878,10 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
    
    // receive rtResolve
    // NOTE: this relies on rtResolve being the last option in clientOptions
+   // the J9JIT_RUNTIME_RESOLVE flag from JITaaS client
+   // On JITaaS server, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
-   J9JITConfig *jitConfig = (J9JITConfig *) _feBase;
-   if (rtResolve)
-      jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE; // JITaaS FIXME: don't change global flags
+   compInfoPT->getClientData()->setRtResolve(rtResolve);
 
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);

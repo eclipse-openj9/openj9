@@ -193,6 +193,9 @@ class ClientSessionData
    TR::Monitor *getStaticMapMonitor() { return _staticMapMonitor; }
    PersistentUnorderedMap<void *, TR_StaticFinalData> &getStaticFinalDataMap() { return _staticFinalDataMap; }
 
+   bool getRtResolve() { return _rtResolve; }
+   void setRtResolve(bool rtResolve) { _rtResolve = rtResolve; }
+
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -233,6 +236,7 @@ class ClientSessionData
    bool           _requestUnloadedClasses; // If true we need to request the current state of unloaded classes from the client
    TR::Monitor *_staticMapMonitor;
    PersistentUnorderedMap<void *, TR_StaticFinalData> _staticFinalDataMap; // stores values at static final addresses in JVM
+   bool _rtResolve; // treat all data references as unresolved
    }; // ClientSessionData
 
 // Hashtable that maps clientUID to a pointer that points to ClientSessionData
