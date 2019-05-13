@@ -28,6 +28,13 @@
 
 namespace TR { class Block; }
 
+/**
+ * The \c TR_PostEscapeAnalysis optimization performs a simple
+ * clean up pass over the trees to remove fake \c prepareForOSR calls
+ * that were added by \ref TR_PreEscapeAnalysis.
+ *
+ * \see TR_PreEscapeAnalysis,TR_EscapeAnalysis
+ */
 class TR_PostEscapeAnalysis : public TR::Optimization
    {
    public:
