@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+import hudson.slaves.OfflineCause
 
 defaultSetupLabel = 'worker'
 defaultLabel = 'ci.role.build || ci.role.test'
@@ -123,8 +124,14 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 
                     if (aNode.toComputer().isOffline()) {
                         // skip offline slave
-                        def offlineCause = aNode.toComputer().getOfflineCause().toString()
-                        offlineSlaves.put(nodeName, offlineCause)
+                        def offlineCause = aNode.toComputer().getOfflineCause()
+                        if (offlineCause instanceof OfflineCause.UserCause) {
+                            // skip offline node disconnected by users
+                            offlineSlaves.put(nodeName, offlineCause.toString())
+                        } else {
+                            // cache nodes, will attempt to reconnect nodes disconnected by system later
+                            buildNodes.add(nodeName)
+                        }
                         continue
                     }
 
@@ -218,20 +225,29 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
         try {
             parallel jobs
         } finally {
-            def offlineNodes = []
-            for (label in buildNodes.sort()) {
-                if (jenkins.model.Jenkins.instance.getNode(label)) {
-                    def aComputer = jenkins.model.Jenkins.instance.getNode(label).toComputer()
+            if (MODES.contains('sanitize')) {
+                def offlineNodes = []
+                for (label in buildNodes.sort()) {
+                    if (jenkins.model.Jenkins.instance.getNode(label)) {
+                        def aComputer = jenkins.model.Jenkins.instance.getNode(label).toComputer()
 
-                    if (aComputer.isOffline()) {
-                        echo "Node: ${JENKINS_URL}${aComputer.getUrl()} - Status: offline - Cause: ${aComputer.getOfflineCause().toString()}"
-                        offlineNodes.add("<${JENKINS_URL}${aComputer.getUrl()}|${aComputer.getDisplayName()}>")
+                        if (aComputer.isOffline() && !(aComputer.getOfflineCause() instanceof OfflineCause.UserCause)) {
+                            // reconnect slave (asynchronously)
+                            aComputer.connect(false)
+                            aComputer.setTemporarilyOffline(false, null)
+                            aComputer.waitUntilOnline()
+                        }
+
+                        if (aComputer.isOffline()) {
+                            echo "Node: ${JENKINS_URL}${aComputer.getUrl()} - Status: offline - Cause: ${aComputer.getOfflineCause().toString()}"
+                            offlineNodes.add("<${JENKINS_URL}${aComputer.getUrl()}|${aComputer.getDisplayName()}>")
+                        }
                     }
                 }
-            }
 
-            if (!offlineNodes.isEmpty() && SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) left nodes offline: ${offlineNodes.join(',')}"
+                if (!offlineNodes.isEmpty() && SLACK_CHANNEL) {
+                    slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) left nodes offline: ${offlineNodes.join(',')}"
+                }
             }
         }
     }
@@ -261,7 +277,7 @@ def sanitize_node(nodeName) {
         def cmd = ''
 
         if (workingNode.getLabelString().indexOf("sw.os.windows") != -1) {
-            println("\t ${nodeName}: Restarting...")
+            println("\t ${nodeName}: Rebooting...")
             // NB: user requires shut down permissions (SeShutdownPrivilege) or
             // belongs to the Administrators group
             cmd = "cmd.exe /K shutdown /f /r"
@@ -281,13 +297,24 @@ def sanitize_node(nodeName) {
         println(e.getMessage())
     }
 
+    //reconnect slave
     timeout(time: RECONNECT_TIMEOUT.toInteger(), unit: 'MINUTES') {
-        println("\t ${nodeName}: Reconnecting...")
+        println("\t ${nodeName}: Disconnecting...")
+        waitUntil {
+            // wait for Jenkins to disconnect the slave after kill -9 or reboot
+            return (workingComputer.getNode().getRootPath() == null)
+        }
         workingComputer.disconnect(null)
         workingComputer.waitUntilOffline()
+
+        println("\t ${nodeName}: Connecting...")
         workingComputer.connect(false)
         workingComputer.setTemporarilyOffline(false, null)
         workingComputer.waitUntilOnline()
-        println("${nodeName} is back online: ${workingComputer.isOnline()}")
+        waitUntil {
+            // wait for slave agent to relaunch
+            return (workingComputer.getChannel() != null)
+        }
+        println("\t ${nodeName} is back online: ${workingComputer.isOnline()}")
     }
 }
