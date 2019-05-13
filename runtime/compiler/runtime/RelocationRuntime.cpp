@@ -936,6 +936,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHead
       defaultMessage = generateError("AOT header validation failed: Concurrent Scavenge feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_SoftwareReadBarrier) != (hdrInCache->featureFlags & TR_FeatureFlag_SoftwareReadBarrier))
       defaultMessage = generateError("AOT header validation failed: Software Read Barrier feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_UsesTM) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesTM))
+      defaultMessage = generateError("AOT header validation failed: TM feature mismatch.");
 
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError("AOT header validation failed: Trailing sanity bit mismatch.");
@@ -1282,6 +1284,16 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 
    if (fej9->isAsyncCompilation())
       featureFlags |= TR_FeatureFlag_AsyncCompilation;
+
+
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableTM) &&
+       !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableTM))
+      {
+      if (TR::Compiler->target.cpu.supportsTransactionalMemoryInstructions())
+         {
+         featureFlags |= TR_FeatureFlag_UsesTM;
+         }
+      }
 
    return featureFlags;
    }
