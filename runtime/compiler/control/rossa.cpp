@@ -197,6 +197,7 @@ char *compilationErrorNames[]={
    "compilationEnforceProfiling", //49
    "compilationSymbolValidationManagerFailure", //50
    "compilationAOTNoSupportForAOTFailure", //51
+   "compilationAOTValidateTMFailure", //52
    "compilationMaxError"
 };
 
