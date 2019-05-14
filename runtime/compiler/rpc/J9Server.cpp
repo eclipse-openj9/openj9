@@ -108,12 +108,14 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
 
    SSL_CTX_set_session_id_context(ctx, (const unsigned char*) "JITaaS", 6);
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
    if (SSL_CTX_set_ecdh_auto(ctx, 1) != 1)
       {
       perror("failed to configure SSL ecdh");
       ERR_print_errors_fp(stderr);
       exit(1);
       }
+#endif
 
    auto &sslKeys = info->getJITaaSSslKeys();
    auto &sslCerts = info->getJITaaSSslCerts();

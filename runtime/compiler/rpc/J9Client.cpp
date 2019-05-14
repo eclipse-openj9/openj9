@@ -62,12 +62,14 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
       exit(1);
       }
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
    if (SSL_CTX_set_ecdh_auto(ctx, 1) != 1)
       {
       perror("failed to configure SSL ecdh");
       ERR_print_errors_fp(stderr);
       exit(1);
       }
+#endif
 
    auto &sslKeys = info->getJITaaSSslKeys();
    auto &sslCerts = info->getJITaaSSslCerts();
