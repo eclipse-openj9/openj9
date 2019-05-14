@@ -21,20 +21,9 @@
  *******************************************************************************/
 import groovy.json.JsonSlurper;
 
-def git_clean() {
-    if (fileExists('.git')) {
-            sh "git clean -ffxd"
-    }
-    if (fileExists('.git/index.lock')) {
-            sh "rm -f .git/index.lock"
-    }
-}
-
 def get_source() {
     stage('Get Source') {
         timestamps {
-            git_clean()
-
             // Setup REPO variables
             OPENJ9_REPO_OPTION = (OPENJ9_REPO != "") ? "-openj9-repo=${OPENJ9_REPO}" : ""
             OPENJ9_BRANCH_OPTION = (OPENJ9_BRANCH != "") ? "-openj9-branch=${OPENJ9_BRANCH}" : ""
@@ -363,6 +352,8 @@ def build_all() {
     // Typically called by Build jobs and Compile only PRs
     timeout(time: 6, unit: 'HOURS') {
         try {
+            // Cleanup in case an old build left anything behind
+            cleanWs()
             add_node_to_description()
             get_source()
             build()
