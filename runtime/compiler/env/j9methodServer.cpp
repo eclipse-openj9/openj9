@@ -792,6 +792,12 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilat
 #else
    if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
       {
+      // check for cache first
+      auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+      TR_ResolvedMethod * resolvedMethod = NULL;
+      if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this, &resolvedMethod)) 
+         return resolvedMethod;
+
       // query for resolved method and create its mirror at the same time
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
       auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
@@ -804,6 +810,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilat
             j9method = NULL;
          }
 
+      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) j9method, 0, methodInfo);
       if (j9method == NULL)
          return NULL;
       else
@@ -1634,6 +1641,9 @@ TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(cons
          break;
       case Special:
          added = svm->addSpecialMethodFromCPRecord(method, cp, cpIndex);
+         break;
+      case ImproperInterface:
+         added = svm->addImproperInterfaceMethodFromCPRecord(method, cp, cpIndex);
          break;
       default:
          TR_ASSERT(false, "Invalid TR_ResolvedMethodType value");

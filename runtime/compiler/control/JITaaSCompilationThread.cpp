@@ -4407,8 +4407,13 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       {
       auto comp = getCompilation();
       auto methodCacheEntry = it->second;
-      auto methodInfo = methodCacheEntry.methodInfo;
       TR_OpaqueMethodBlock *method = methodCacheEntry.method;
+      if (!method)
+         {
+         *resolvedMethod = NULL;
+         return true;
+         }
+      auto methodInfo = methodCacheEntry.methodInfo;
       uint32_t vTableSlot = methodCacheEntry.vTableSlot;
       // Create resolved method from cached method info
       if (key.type != TR_ResolvedMethodType::VirtualFromOffset)
