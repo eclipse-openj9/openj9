@@ -68,20 +68,17 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - `<group>` is functional | system
     - `<platform>` is one of the platform shorthands above
     - `<version>` is the number of the supported release, e.g. 8 | 11 | next
-- Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
 - Note: For backward compatability `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
 
 ###### Examples
-- Request a Compile-only build on all platforms and multiple versions by commenting in a PR
-    - `Jenkins compile all jdk8,jdk11`
+- Request a Compile-only build on xlinux and multiple versions by commenting in a PR
+    - `Jenkins compile xlinux jdk8,jdk11`
 - Request a sanity functional build on zLinux and multiple versions
     - `Jenkins test sanity.functional zlinux jdk8,jdk11`
 - Request an extended functional and system build on pLinux for a single version
     - `Jenkins test extended.functional,extended.system plinux jdk8`
 - Request a sanity build on z,p Linux for multiple versions
     - `Jenkins test sanity zlinux,plinux jdk8,jdk11`
-- Request sanity.system test on all platforms and multiple versions
-    - `Jenkins test sanity.system all jdk8,jdk11`
 
 You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
 
@@ -101,7 +98,7 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 - Ex. Dependent change in OpenJDK Pull Request `#789`
     - `Jenkins test sanity xlinux jdk8 depends ibmruntimes/openj9-openjdk-jdk8#789`
 - Ex. Dependent changes in OMR and OpenJDK
-    - `Jenkins test sanity all jdk8 depends eclipse/omr#123 ibmruntimes/openj9-openjdk-jdk8#789`
+    - `Jenkins test sanity plinux jdk8 depends eclipse/omr#123 ibmruntimes/openj9-openjdk-jdk8#789`
 - Ex. If you have a dependent change and only want one platform, depends comes last
     - `Jenkins test sanity zlinux jdk8 depends eclipse/omr#123`
 
