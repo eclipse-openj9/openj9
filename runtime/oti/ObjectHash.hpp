@@ -44,20 +44,17 @@ public:
 private:
 
 	static VMINLINE void
-	setHasBeenHashed(j9object_t objectPtr)
+	setHasBeenHashed(J9JavaVM *vm, j9object_t objectPtr)
 	{
-		volatile j9objectclass_t* flagsPtr = (j9objectclass_t*)&((J9Object*)objectPtr)->clazz;
-		j9objectclass_t oldFlags = 0;
-		j9objectclass_t newFlags = 0;
-		do {
-			oldFlags = *flagsPtr;
-			newFlags = oldFlags | OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			VM_AtomicSupport::bitOrU32(
+				(uint32_t*)&((J9Object*)objectPtr)->clazz,
+				(uint32_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
+		} else {
+			VM_AtomicSupport::bitOr(
+				(uintptr_t*)&((J9Object*)objectPtr)->clazz,
+				(uintptr_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
 		}
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		while (oldFlags != VM_AtomicSupport::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-		while (oldFlags != VM_AtomicSupport::lockCompareExchange(flagsPtr, (UDATA)oldFlags, (UDATA)newFlags));
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	}
 
 	static VMINLINE U_32
@@ -244,7 +241,7 @@ public:
 
 			} else {
 				if (J9_ARE_NO_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS)) {
-					setHasBeenHashed(objectPointer);
+					setHasBeenHashed(vm, objectPointer);
 				}
 				hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
 			}

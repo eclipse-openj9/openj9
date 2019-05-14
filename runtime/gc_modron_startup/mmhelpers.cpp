@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -315,10 +315,14 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 #endif /* J9VM_GC_HYBRID_ARRAYLETS */
 		break;
 	case j9gc_modron_configuration_gcThreadCount:
-		*((UDATA *)value) =  extensions->gcThreadCount;
+		*((UDATA *)value) = extensions->gcThreadCount;
 		keyFound = TRUE;
 		break;
-
+	case j9gc_modron_configuration_compressObjectReferences:
+		*((UDATA *)value) = extensions->compressObjectReferences();
+		keyFound = TRUE;
+		break;
+		
 	default:
 		/* key is either invalid or unknown for this configuration - should not have been requested */
 		Assert_MM_unreachable();
