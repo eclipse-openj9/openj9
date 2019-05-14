@@ -32,6 +32,14 @@ timeout(time: 10, unit: 'HOURS') {
         node(SETUP_LABEL) {
             try{
                 checkout scm
+                // For OpenJ9 PRs, pull the pipeline code from the PR merge ref in order to test the pipeline changes
+                if (params.ghprbPullId && params.ghprbGhRepository == "eclipse/openj9") {
+                    echo "Checkout pipeline code from Pull Request"
+                    sh """
+                        git fetch --progress origin +refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge
+                        git checkout origin/pr/${ghprbPullId}/merge
+                    """
+                }
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions'
 

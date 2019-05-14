@@ -33,6 +33,15 @@ timestamps {
         try{
             currentBuild.description = "<a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
             checkout scm
+            // For OpenJ9 PRs, pull the pipeline code from the PR merge ref in order to test the pipeline changes
+            if (params.ghprbPullId && params.ghprbGhRepository == "eclipse/openj9") {
+                echo "Checkout pipeline code from Pull Request"
+                sh """
+                    git fetch --progress origin +refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge
+                    git checkout origin/pr/${ghprbPullId}/merge
+                """
+            }
+
             variableFile = load 'buildenv/jenkins/common/variables-functions'
             variableFile.set_job_variables('pipeline')
 
