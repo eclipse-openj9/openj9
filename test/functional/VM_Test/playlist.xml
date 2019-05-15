@@ -36,7 +36,7 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xint \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-	j9vm.runner.Menu A -exe=$(SQ)$(JAVA_BIN)$(D)java $(JVM_OPTIONS) -Xdump$(SQ) -version=$(JDK_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
+	j9vm.runner.Menu A -exe=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)java $(JVM_OPTIONS) -Xdump$(SQ) -version=$(JDK_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
 	-xids=all,$(PLATFORM); \
 	$(TEST_STATUS)</command>
 		<levels>
@@ -92,7 +92,7 @@
 	<test>
 		<testCaseName>SharedClassesSysVTesting</testCaseName>
 		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
-	cd $(JAVA_BIN) ; \
+	cd $(TEST_JDK_HOME)$(D)bin ; \
 	perl $(TEST_RESROOT)$(D)SharedClassesSysVTesting$(D)testSC_SysV_Java7_Tests.pl linux ; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.linux,^arch.390</platformRequirements>
@@ -102,6 +102,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>11+</subset>
+		</subsets>
 	</test>
 	<test>
 		<testCaseName>recreateClassTest</testCaseName>

@@ -59,7 +59,7 @@
 					<src path="${src_80}"/>
 					<classpath>
 						<pathelement location="${asm.jar}" />
-						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
+						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
 					</classpath>
 				</javac>
 			</then>
