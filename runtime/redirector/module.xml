@@ -30,7 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<dependency name="$(UMA_PATH_TO_ROOT)oti/helpers.m4"/>
 		</dependencies>
 		<commands>
-			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti generated.c.m4 > generated.c"/>
+			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti generated.c.m4 > generated.c $(call CONVERT_ASCII_TO_NATIVE, generated.c)"/>
 			<command type="clean" line="$(RM) generated.c"/>
 		</commands>
 	</artifact>
