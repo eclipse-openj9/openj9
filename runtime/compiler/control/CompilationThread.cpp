@@ -1697,7 +1697,7 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
             }
          }
       } // end for
-   // if compilin on app thread, there is no compilation queue
+   // if compiling on app thread, there is no compilation queue
    TR_MethodToBeCompiled *cur  = _methodQueue;
    TR_MethodToBeCompiled *prev = NULL;
    bool verboseDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails);
@@ -4799,7 +4799,7 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
    if (!oldStartPC)
       {
       // first compilation of the method: J9Method would be updated if the
-      // compilatoin has already taken place
+      // compilation has already taken place
       //
       if (isCompiled(method))
          startPC = getJ9MethodStartPC(method);

@@ -39,7 +39,7 @@ private:
 	/* indicator of whether the agent should stop doing its action */
 	bool _done;
 
-	/* monitor used to co-ordinate with the thread that calls runAction on each interval */
+	/* monitor used to coordinate with the thread that calls runAction on each interval */
 	omrthread_monitor_t _monitor;
 
 	/* env that interval thread can use when running jni */

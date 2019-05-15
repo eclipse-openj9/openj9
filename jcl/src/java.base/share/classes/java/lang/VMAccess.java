@@ -196,9 +196,9 @@ final class VMAccess implements VMLangAccess {
 	}
 	
 	/**
-	 * Returns a ConstanPool object
+	 * Returns a ConstantPool object
 	 * @param internalRamClass An object ref to a j9class
-	 * @return ContanstPool instance
+	 * @return ConstantPool instance
 	 */
 	@Override
 	public ConstantPool getConstantPool(Object internalRamClass) {

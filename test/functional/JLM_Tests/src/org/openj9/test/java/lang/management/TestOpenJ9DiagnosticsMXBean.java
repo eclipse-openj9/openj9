@@ -161,7 +161,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 				Assert.fail("Please check the url supplied to JMXServiceURL!");
 			} catch (IOException e) {
 				/*
-				 * Waiting 1000 ms before retrying to connnect to remote server.
+				 * Waiting 1000 ms before retrying to connect to remote server.
 				 */
 				logger.error("Failed connecting. Retry " + retryCounter + " after 1000 ms.");
 

@@ -55,7 +55,7 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    *(int16_t *) cursor = 0xC0E0;
    cursor += sizeof(int16_t);
 
-   // Place holder.  Proper offset will be calulated by relocation.
+   // Place holder.  Proper offset will be calculated by relocation.
    *(int32_t *) cursor = 0xDEADBEEF;
    cursor += sizeof(int32_t);
 

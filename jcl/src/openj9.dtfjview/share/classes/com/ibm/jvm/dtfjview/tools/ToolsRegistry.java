@@ -175,7 +175,7 @@ public class ToolsRegistry {
 	}
 	
 	/**
-	 * To execute a Jdmpview commmand.
+	 * To execute a Jdmpview command.
 	 * <p>
 	 * @param jdmpviewCommand	The Jdmpview command.
 	 * @param out	The PrintStream.

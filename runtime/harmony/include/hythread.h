@@ -140,9 +140,9 @@ extern HY_CFUNC I_32 hythread_allocate_library (struct HyThreadLibraryVersion
 
 /** @} */
 /**
- * @name Thread library version and compatability queries
+ * @name Thread library version and compatibility queries
  * @anchor ThreadVersionControl
- * Determine thread library compatability and version.
+ * Determine thread library compatibility and version.
  * @{
  */
 extern HY_CFUNC UDATA hythread_getSize (struct HyThreadLibraryVersion

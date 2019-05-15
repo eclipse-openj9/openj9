@@ -534,7 +534,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			 *
 			 * Attempt to find it.
 			 * 
-			 * Note: When comparing classes it is expected that the context conatins the 
+			 * Note: When comparing classes it is expected that the context contains the 
 			 * rom class being compared to. 'prevROMClass' is used to backup the romClass 
 			 * currently in the context, so the compare loop can set the romClass in the 
 			 * context accordingly.

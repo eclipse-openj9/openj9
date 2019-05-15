@@ -573,7 +573,7 @@ GC_CheckEngine::checkJ9Class(J9JavaVM *javaVM, J9Class *clazzPtr, J9MemorySegmen
 		return J9MODRON_GCCHK_RC_CLASS_POINTER_UNALIGNED;
 	}
 
-	/* Check that the class header containes the expected values */
+	/* Check that the class header contains the expected values */
 	UDATA ret = checkJ9ClassHeader(javaVM, clazzPtr);
 	if (J9MODRON_GCCHK_RC_OK != ret) {
 		return ret;

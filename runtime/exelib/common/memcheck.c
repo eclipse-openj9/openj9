@@ -542,7 +542,7 @@ static BOOLEAN memoryCheck_parseOption(OMRPortLibrary *portLib, char const *opti
 	 *
 	 * Note, each site string is meant to be a prefix match to call site info.
 	 * if string is 'zip/', it will ignore all unfreed blocks with callsite string with 'zip/'
-	 * Conversly, if a call siteis abc/de.c, specifing a string of de.c will not be a match */
+	 * Conversely, if a call siteis abc/de.c, specifing a string of de.c will not be a match */
 	char const *optStrIgnoreUnfreedCallsite = "ignoreUnfreedCallsite=";
 	size_t optLenIgnoreUnfreedCallsite = strlen(optStrIgnoreUnfreedCallsite);
 
@@ -1633,7 +1633,7 @@ memoryCheck_wrapper_allocate_memory(OMRPortLibrary *portLib, UDATA byteAmount, c
 			/* we're in mode = J9_MCMODE_MPROTECT */
 			/* Allocate the structure.  
 			 * NOTE: memCheckPortLib->mem_allocate_memory is the "allocator" function (because we can't be
-			 *  using the subAllocator in conjuction with mode J9_MCMODE_MPROTECT).
+			 *  using the subAllocator in conjunction with mode J9_MCMODE_MPROTECT).
 			 * 		making it clear that we are using memCheckPortLib->mem_allocate_memory here because the 
 			 * 		corresponding free is done using memCheckPortLib->mem_free_memory (and we don't want to pass in
 			 * 		a deallocator to memoryCheck_wrapper_allocate_memory

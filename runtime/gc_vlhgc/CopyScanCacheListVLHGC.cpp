@@ -105,7 +105,7 @@ MM_CopyScanCacheListVLHGC::resizeCacheEntries(MM_EnvironmentVLHGC *env, UDATA to
 {
 	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
 	
-	/* If -Xgc:fvtest=scanCacheCountn has been specified, then restrict the number of scan caches to n.
+	/* If -Xgc:fvtest=scanCacheCount has been specified, then restrict the number of scan caches to n.
 	 * Stop all future resizes from having any effect. */
 	if (0 != ext->fvtest_scanCacheCount) {
 		if (0 == _totalEntryCount) {

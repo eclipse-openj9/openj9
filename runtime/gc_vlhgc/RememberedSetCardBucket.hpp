@@ -133,7 +133,7 @@ public:
 
 	/**
 	 * Set a list as being overflowed.
-	 * This releases all the buffers from the curent bucket (but not from other buckets of the list).
+	 * This releases all the buffers from the current bucket (but not from other buckets of the list).
 	 * The list may be anyone (the owner of the current bucket or any other).
 	 * @param listToOverflow RSCL to overflow
 	 */

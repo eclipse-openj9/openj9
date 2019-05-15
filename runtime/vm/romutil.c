@@ -145,7 +145,7 @@ romClassLoadFromCookie (J9VMThread *vmStruct, U_8 *clsName, UDATA clsNameLength,
 				if ( !J9UTF8_DATA_EQUALS( clsName, clsNameLength, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf) ) ) {
 					return NULL;
 				}
-				/* Check that the cookie originated from shared.c and has not been creted in Java */
+				/* Check that the cookie originated from shared.c and has not been created in Java */
 				if (jxeCookie->magic != J9_ROM_CLASS_COOKIE_MAGIC(vmStruct->javaVM, romClass)) {
 					return NULL;
 				}

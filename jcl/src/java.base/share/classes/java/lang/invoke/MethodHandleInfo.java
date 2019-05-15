@@ -119,7 +119,7 @@ public interface MethodHandleInfo {
 	 * @return whether the underlying method has variable arity
 	 */
 	default boolean isVarArgs() {
-		// Check whether the MethodHandle refers to a Method or Contructor (not Field)
+		// Check whether the MethodHandle refers to a Method or Constructor (not Field)
 		if (getReferenceKind() >= REF_invokeVirtual) {
 			return ((getModifiers() & MethodHandles.Lookup.VARARGS) != 0);
 		}

@@ -182,7 +182,7 @@ private:
 	 * only want invocations from jitted code to drive CustomThunk compilation so the
 	 * interpreter needs to pre-emptively negate the modification to the invocationCount.
 	 *
-	 * @param methodHandle[in] The MethodHandle to modify the coun on
+	 * @param methodHandle[in] The MethodHandle to modify the count on
 	 */
 	VMINLINE void
 	modifyMethodHandleCountForI2J(REGISTER_ARGS_LIST, j9object_t methodHandle)

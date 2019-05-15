@@ -182,7 +182,7 @@ public class JavaArrayClass extends JavaAbstractClass
 	 */
 	public Iterator getConstantPoolReferences()
 	{
-		//array classes don't have contant pools
+		//array classes don't have constant pools
 		return Collections.EMPTY_LIST.iterator();
 	}
 

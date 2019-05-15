@@ -138,10 +138,10 @@ public interface VMLangAccess {
 	public Object createInternalRamClass(long addr);
 	
 	/**
-	 * Returns a ConstanPool object
+	 * Returns a ConstantPool object
 	 * 
 	 * @param internalRamClass An object ref to an internalRamClass
-	 * @return ContanstPool instance
+	 * @return ConstantPool instance
 	 */
 	public ConstantPool getConstantPool(Object internalRamClass);
 

@@ -195,7 +195,7 @@ private:
 	/*
 	 * Helper function used by J9_SORT to sort rate of return element lists.
 	 *
-	 * @param[in] element1 first element to comapre
+	 * @param[in] element1 first element to compare
 	 * @param[in] element2 second element to compare env
 	 */
 	static int compareRateOfReturnScoreFunc(const void *element1, const void *element2);
@@ -203,7 +203,7 @@ private:
 	/**
 	 * Helper function used by J9_SORT to sort core sample element lists.
 	 *
-	 * @param[in] element1 first element to comapre
+	 * @param[in] element1 first element to compare
 	 * @param[in] element2 second element to compare
 	 */
 	static int compareCoreSampleScoreFunc(const void *element1, const void *element2);

@@ -2253,7 +2253,7 @@ static BOOLEAN
 canClassBeInstrumented(J9VMClassLoadHookEvent* data)
 {
 	BOOLEAN modifiable = TRUE;
-	/* Only clasess on the bootpath may be marked unmodifiable */
+	/* Only classes on the bootpath may be marked unmodifiable */
 	if (data->classLoader == data->currentThread->javaVM->systemClassLoader) {
 		U_8 *classData = data->classData;
 		UDATA const classDataLength = data->classDataLength;

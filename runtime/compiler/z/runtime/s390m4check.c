@@ -33,7 +33,7 @@ int main(int argc, char **argv)
    {
    FILE *in;
    int i, j, ascii, m4, charencountered, insidebracket, linecnt, errors;
-   /* Make data buffer 1K - definitely big enough to read in all characeters on 1 line,      */
+   /* Make data buffer 1K - definitely big enough to read in all characters on 1 line,      */
    /* since fgets continues reading characters from same line if end of line is not reached. */
    char data[1024];     
 

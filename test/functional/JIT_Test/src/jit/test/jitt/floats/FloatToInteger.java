@@ -28,7 +28,7 @@ Test:  F2I  Float to Integer
 -Case 1:if pre-converted value is NaN, then the converted value is an int 0
 -Case 2:if the pre-converted value is not infinity, the value is rounded using IEEE754 if it can be represented as an int
 -Case 3:if pre-converted value does not fit into case1 and case2, then the pre-converted value must be either too small or 
-too large.  It will be convrted to the smallest or largest representable value of type int.
+too large.  It will be converted to the smallest or largest representable value of type int.
 
 May lose precision and overall magnitude
 

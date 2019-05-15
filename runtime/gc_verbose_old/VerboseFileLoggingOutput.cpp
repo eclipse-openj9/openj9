@@ -112,7 +112,7 @@ MM_VerboseFileLoggingOutput::tearDown(MM_EnvironmentBase *env)
 
 /**
  * Initialize the _tokens field.
- * for backwards compability with Sovereign, alias %p to be the same as %pid
+ * for backwards compatibility with Sovereign, alias %p to be the same as %pid
  */
 bool 
 MM_VerboseFileLoggingOutput::initializeTokens(MM_EnvironmentBase *env)

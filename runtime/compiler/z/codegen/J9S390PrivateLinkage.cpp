@@ -2017,7 +2017,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
 
       if (numInterfaceCallCacheSlots == 0 )
          {
-         //Disabled interface call cahcing
+         //Disabled interface call caching
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
 

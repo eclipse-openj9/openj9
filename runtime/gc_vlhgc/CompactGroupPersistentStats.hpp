@@ -104,7 +104,7 @@ private:
 	 * Auxiliary function used by updateProjectedSurvivalRate. If an age group is at the boundary of Eden, it returns the size fractions on either sides.
  	 * @param env[in] The Master GC thread
 	 * @param ageInThisAgeGroup[in] Age-size of the age group
-	 * @param ageInThisComactGroup[in] Age-size of the compact group
+	 * @param ageInThisCompactGroup[in] Age-size of the compact group
 	 * @param currentAge[in] Current age of objects in this group
 	 * @param edenFractionOfCompactGroup[out]
 	 * @param nonEdenFractionOfCompactGroup[out]

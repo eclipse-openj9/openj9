@@ -210,7 +210,7 @@ hythread_shutdown_library(struct HyThreadLibrary *threadLibrary )
  * @param[in] size Size of the thread library.
  *
  * @return 0 on success, negative return value on failure
- * @note The threadlibrary version must be compatabile with the that which we are compiled against
+ * @note The threadlibrary version must be compatible with the that which we are compiled against
  */
 I_32
 hythread_create_library(struct HyThreadLibrary *threadLibrary, struct HyThreadLibraryVersion *version, UDATA size)
@@ -270,7 +270,7 @@ hythread_startup_library(struct HyThreadLibrary *threadLibrary)
  *
  * @return size of thread library on success, zero on failure
  *
- * @note The thread library version must be compatabile with the that which we are compiled against
+ * @note The thread library version must be compatible with the that which we are compiled against
  */
 UDATA 
 hythread_getSize(struct HyThreadLibraryVersion *version)
@@ -389,7 +389,7 @@ hythread_isFunctionOverridden(struct HyThreadLibrary *threadLibrary, UDATA offse
  * @return 0 on success, negative return value on failure
  *
  * @note threadLibrary will be NULL on failure
- * @note The threadlibrary version must be compatabile with the that which we are compiled against
+ * @note The threadlibrary version must be compatible with the that which we are compiled against
  * @note @ref hythread_shutdown_library will deallocate this memory as part of regular shutdown
  */
 I_32

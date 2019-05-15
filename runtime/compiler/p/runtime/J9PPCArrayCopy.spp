@@ -210,8 +210,8 @@ __referenceArrayCopy:
 	! card marking may be required
 .L.checkForOldDestinationAfterCopying:
 	! need to add check:  if no card marking needed then return
-	! should be a check on OLD and !NON_CM_CANDIATE
-	! however there is no define of NON_CM_CANDIATE available
+	! should be a check on OLD and !NON_CM_CANDIDATE
+	! however there is no define of NON_CM_CANDIDATE available
 	bc	BO_IF_NOT, CR0_EQ, .L.destinationOldAfterCopying
 	mtlr	r0
 	blr

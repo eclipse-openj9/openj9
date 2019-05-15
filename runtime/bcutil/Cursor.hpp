@@ -90,7 +90,7 @@ public:
 	/* 
 	 * Mode is used to indicate the transition from one cursor type 
 	 * to another.  This feature was specifically added to enable
-	 * the comparision of ROMClass that had debug information out of line.
+	 * the comparison of ROMClass that had debug information out of line.
 	 * 
 	 * This was required to support the ComparingCursor and ComparingCursorHelper model.
 	 */

@@ -557,9 +557,9 @@ extern J9_CFUNC int32_t j9port_allocate_library(struct J9PortLibraryVersion *exp
 /** @} */
 
 /**
- * @name Port library version and compatability queries
+ * @name Port library version and compatibility queries
  * @anchor PortVersionControl
- * Determine port library compatability and version.
+ * Determine port library compatibility and version.
  * @{
  */
 extern J9_CFUNC uintptr_t j9port_getSize(struct J9PortLibraryVersion *version);

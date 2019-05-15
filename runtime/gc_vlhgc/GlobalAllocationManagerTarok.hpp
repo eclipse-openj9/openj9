@@ -52,7 +52,7 @@ class MM_GlobalAllocationManagerTarok : public MM_GlobalAllocationManager
 public:
 protected:
 private:
-	MM_AllocationContextBalanced **_perNodeContextSets; /**< an array which is extensions->numaNodes elements long, containing the "first" AllocationContextVLHGC in each corresponding per-node cicular list */
+	MM_AllocationContextBalanced **_perNodeContextSets; /**< an array which is extensions->numaNodes elements long, containing the "first" AllocationContextVLHGC in each corresponding per-node circular list */
 
 	MM_RuntimeExecManager _runtimeExecManager; /**< A helper object used to intercept Runtime.exec() and manage affinity to workaround limitations on Linux */
 

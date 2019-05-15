@@ -258,7 +258,7 @@ gpProtectedRunCallInMethod(void *entryArg)
 	runCallInMethod(args->env, args->receiver, args->clazz, args->methodID, args->args);
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 
-	return 0;					/* return value required to clonform to port library definition */
+	return 0;					/* return value required to clone from to port library definition */
 }
 
 

@@ -220,7 +220,7 @@ public class SharedClassCacheInfo {
 	}
 	
 	/**
-	 * Get the compresssedRefs mode for the shared class cache. 
+	 * Get the compressedRefs mode for the shared class cache. 
 	 *
 	 * @return		Either {@link SharedClassCacheInfo#COMPRESSED_REFS} or
 	 * 				{@link SharedClassCacheInfo#NON_COMPRESSED_REFS} or

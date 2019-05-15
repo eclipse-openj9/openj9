@@ -296,7 +296,7 @@ typedef struct jvmtiStackInfoExtended {
  * softMaxBytes - the soft limit for the available space in the cache. This is the new field included when COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 or later is specified
  * 
  * If IBM adds new information to this structure, it will be added
- * to the end to preserve backwards compability, and
+ * to the end to preserve backwards compatibility, and
  * COM_IBM_ITERATE_SHARED_CACHES_VERSION will be incremented.
  */
 typedef struct jvmtiSharedCacheInfo {

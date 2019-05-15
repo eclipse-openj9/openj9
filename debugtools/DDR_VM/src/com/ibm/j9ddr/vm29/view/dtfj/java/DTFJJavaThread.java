@@ -97,7 +97,7 @@ public class DTFJJavaThread implements JavaThread
 			
 				imageThread = imageProcess.getThread(tid);
 							
-				//We could't match one of the "proper" ImageThreads - so we'll return a stub image thread instead.
+				//We couldn't match one of the "proper" ImageThreads - so we'll return a stub image thread instead.
 				if (null == imageThread) {
 					imageThread = new J9DDRStubImageThread(DTFJContext.getProcess(), tid);
 				}

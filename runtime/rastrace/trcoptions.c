@@ -1372,7 +1372,7 @@ reportCommandLineError(BOOLEAN suppressMessages, const char* detailStr, ...)
 /**************************************************************************
  * name        - selectSpecial
  * description - Selects special option - provides argument parsing only to
- * 				 allow backwards command line compatability.
+ * 				 allow backwards command line compatibility.
  * parameters  - Component name, component array,
  * returns     - size of the match
  *************************************************************************/

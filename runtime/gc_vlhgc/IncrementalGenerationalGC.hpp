@@ -106,7 +106,7 @@ private:
 	MM_MasterGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */ 
 	
 	MM_CycleStateVLHGC _persistentGlobalMarkPhaseState; /**< Since the GMP can be fragmented into increments running across several pauses, we need to store the cycle state data */
-	volatile bool _forceConcurrentTermination;	/**< Setting this to true will cause any concurrent GMP work being done for this collector to stop and return.  It is volatile because it is shared state between this and the concurren task's increment manager */
+	volatile bool _forceConcurrentTermination;	/**< Setting this to true will cause any concurrent GMP work being done for this collector to stop and return.  It is volatile because it is shared state between this and the concurrent task's increment manager */
 	
 	UDATA _globalMarkPhaseIncrementBytesStillToScan;	/**< The number of bytes which must be scanned in the next GMP increment.  This is used by the concurrent GMP task to determine when it can terminate */
 
@@ -287,7 +287,7 @@ public:
 	 * Initial increment of region ages
 	 * As far as allocation is acceptable before Collector is started up
 	 * all regions allocated at this time required to have their age corrected
-	 * Currently age just set up to time of Collecter's start up
+	 * Currently age just set up to time of Collector's start up
 	 * @param env[in] The master GC thread
 	 * @param increment number of allocated bytes age should be set up
 	 */

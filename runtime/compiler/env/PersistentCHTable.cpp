@@ -674,7 +674,7 @@ TR_PersistentCHTable::dumpMethodCounts(TR_FrontEnd *fe, TR_Memory &trMemory)
 
 
 void
-TR_PersistentCHTable::resetVisitedClasses() // highly time consumming
+TR_PersistentCHTable::resetVisitedClasses() // highly time consuming
    {
    for (int32_t i = 0; i <= CLASSHASHTABLE_SIZE; ++i)
       {

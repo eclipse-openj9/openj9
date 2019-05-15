@@ -36,7 +36,7 @@
 
 /**
  * Construct a ByteInfo. Used to profile UTF16 strings.
- * String will become persistently allocated only through the copy constuctor.
+ * String will become persistently allocated only through the copy constructor.
  * Assignment and custom constructors will just set fields.
  */
 TR_ByteInfo::TR_ByteInfo(const TR_ByteInfo &orig) : length(orig.length), chars(NULL)

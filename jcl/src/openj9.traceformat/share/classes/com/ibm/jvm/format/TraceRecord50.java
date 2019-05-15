@@ -409,7 +409,7 @@ public class TraceRecord50 implements Comparable {
 						 * incompleteTracePoint contain the beginning of that
 						 * tracepoint, and probably several more tracepoints
 						 * before that. So I create a temporary buffer,
-						 * concatonate those two arrays of bytes, and then
+						 * concatenate those two arrays of bytes, and then
 						 * simply replace the rawTraceRecord (which has been
 						 * fully processed if we have reached this point) with
 						 * the new array and process it as a normal buffer

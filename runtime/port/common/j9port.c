@@ -489,7 +489,7 @@ cleanup:
  *
  * @return size of port library on success, zero on failure
  *
- * @note The portlibrary version must be compatabile with the that which we are compiled against
+ * @note The portlibrary version must be compatible with the that which we are compiled against
  */
 uintptr_t 
 j9port_getSize(struct J9PortLibraryVersion *version)
@@ -608,7 +608,7 @@ j9port_isFunctionOverridden(struct J9PortLibrary *portLibrary, uintptr_t offset)
  * @return 0 on success, negative return value on failure
  *
  * @note portLibrary will be NULL on failure
- * @note The portlibrary version must be compatabile with the that which we are compiled against
+ * @note The portlibrary version must be compatible with the that which we are compiled against
  * @note @ref j9port_shutdown_library will deallocate this memory as part of regular shutdown
  */
 int32_t

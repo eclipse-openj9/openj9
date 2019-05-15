@@ -140,7 +140,7 @@ public class TestOperatingSystemMXBean {
 				} catch (MalformedURLException e) {
 					Assert.fail("Unexpected MalformedURLException occured, please check the url supplied to JMXServiceURL!", e);
 				} catch (IOException e) {
-					/* Waiting 1000 ms before retrying to connnect to remote server. */
+					/* Waiting 1000 ms before retrying to connect to remote server. */
 					logger.warn("Connection request failed: " + e.getMessage());
 					logger.warn("Connection failed at: " + System.currentTimeMillis() + " ms.  Retry " + retryCounter + " after 1000 ms.");
 					try {

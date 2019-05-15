@@ -255,7 +255,7 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          *newPlanCreated = true;
          bodyInfo->getMethodInfo()->incrementNumberOfInvalidations();
 
-         // the following is just for compatib with older implementation
+         // the following is just for compatibility with older implementation
          //bodyInfo->getMethodInfo()->setNextCompileLevel(hotnessLevel, false); // no profiling
          break;
       case TR_MethodEvent::HWPRecompilationTrigger:
@@ -1507,7 +1507,7 @@ TR_OptimizationPlan *TR::ThresholdCompilationStrategy::processEvent(TR_MethodEve
          hotnessLevel = bodyInfo->getHotness();
          plan = TR_OptimizationPlan::alloc(hotnessLevel);
          *newPlanCreated = true;
-         // the following is just for compatib with older implementation
+         // the following is just for compatibility with older implementation
          bodyInfo->getMethodInfo()->setNextCompileLevel(hotnessLevel, false); // no profiling
          break;
       case TR_MethodEvent::JittedMethodSample:

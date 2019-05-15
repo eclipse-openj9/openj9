@@ -941,9 +941,9 @@ extern HY_CFUNC I_32 hyport_allocate_library (struct
 
 /** @} */
 /**
- * @name Port library version and compatability queries
+ * @name Port library version and compatibility queries
  * @anchor PortVersionControl
- * Determine port library compatability and version.
+ * Determine port library compatibility and version.
  * @{
  */
 extern HY_CFUNC UDATA hyport_getSize (struct HyPortLibraryVersion

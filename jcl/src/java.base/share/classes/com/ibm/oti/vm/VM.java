@@ -242,7 +242,7 @@ static final native ClassLoader getStackClassLoader(int depth);
  * @param loaderType
  *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader 
  *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader 
- *            J9_CLASSLOADER_TYPE_OTHERS   - other classlader
+ *            J9_CLASSLOADER_TYPE_OTHERS   - other classloader
  * @param parallelCapable
  *            true if the loader has registered as parallel capable
  */

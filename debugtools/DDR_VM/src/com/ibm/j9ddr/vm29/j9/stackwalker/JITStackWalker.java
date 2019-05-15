@@ -426,7 +426,7 @@ public class JITStackWalker
 					} else if (0 != (iTableOffset & J9_ITABLE_OFFSET_VIRTUAL)) {
 						long vTableOffset = iTableOffset & ~J9_ITABLE_OFFSET_TAG_BITS;
 						J9JavaVMPointer vm = walkState.walkThread.javaVM();
-						// C code uses Object from the VM contant pool, but that's not easily
+						// C code uses Object from the VM constant pool, but that's not easily
 						// accessible to DDR. Any class will do.
 						J9ClassPointer clazz = vm.booleanArrayClass();
 						ramMethod = J9MethodPointer.cast(PointerPointer.cast(clazz.longValue() + vTableOffset).at(0));

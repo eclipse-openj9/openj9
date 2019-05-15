@@ -802,7 +802,7 @@ SEARCH_LOOP:do {
 	}
 
 	/**
-	 * CustomComparetor is used to sort J9MemTags depending on their allocated sizes. 
+	 * Custom Comparator is used to sort J9MemTags depending on their allocated sizes. 
 	 * It is used to sort the list of MemTagEntries
 	 * 
 	 *
@@ -823,7 +823,7 @@ SEARCH_LOOP:do {
 		}
 	}
 	/**
-	 * CustomComparetor is used to sort J9MemTags depending on their allocated sizes. 
+	 * Custom Comparator is used to sort J9MemTags depending on their allocated sizes. 
 	 * It is used to sort the list of MemTagEntries
 	 * 
 	 *

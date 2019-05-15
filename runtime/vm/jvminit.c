@@ -30,7 +30,7 @@
 #endif
 #endif /* defined(WIN32) */
 
-/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
+/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatibility */
 #if defined(LINUX) && !defined(J9ZTPF)
 #define _GNU_SOURCE
 #endif /* defined(LINUX) && !defined(J9ZTPF) */
@@ -1420,7 +1420,7 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
  * Create and initialize modules path entries.
  * Currently JVM searches system modules at following locations:
  * 	<JAVA_HOME>/lib/modules - should be a jimage file
- * 	<JAVA-HOME>/modules - should be a directory containining modules in exploded form
+ * 	<JAVA-HOME>/modules - should be a directory containing modules in exploded form
  */
 IDATA
 initializeModulesPath(J9JavaVM *vm) {
@@ -3227,7 +3227,7 @@ static jint runInitializationStage(J9JavaVM* vm, IDATA stage) {
 	RunDllMainData userData;
 	J9VMThread *mainThread = vm->mainThread;
 
-	/* Once the main J9VMThread has been cretaed, each init stage expects the thread
+	/* Once the main J9VMThread has been created, each init stage expects the thread
 	 * to have entered the VM and released VM access.
 	 */
 	if (NULL != mainThread) {

@@ -680,7 +680,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 			/* The amount of data we expect in the previous buffer and the amount actually there don't match.
 			 * This implies:
 			 *   a. missing data inbetween the end of the stream and the start of this buffer
-			 *   b. corrputed trace data
+			 *   b. corrupted trace data
 			 *   c. incorrect parsing
 			 *   
 			 * We throw away the mismatched parts as they're inconsistent.

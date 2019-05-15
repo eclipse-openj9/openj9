@@ -492,7 +492,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             else if (!TR::Options::getCountsAreProvidedByUser())
                {
                // Because C-interpreter is slower we need to rely more on jitted code
-               // This means compiling more, but we have to be carefull
+               // This means compiling more, but we have to be careful
                // Let's use some smaller than normal counts, but only if
                // 1) Quickstart - because we don't risk losing iprofiling info
                // 2) GracePeriod - because we want to limit the number of 'extra'
@@ -6046,7 +6046,7 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
 /// with 100 meaning 'be very aggressive' and 0 meaning 'be very conservative'
 /// 'time' is not wall clock time because the algorithm would be dependent on
 /// machine speed/capability and load. Instead 'time' can be expressed in
-/// terms of CPU cycles consummed by the JVM or number of samples taken
+/// terms of CPU cycles consumed by the JVM or number of samples taken
 /// by application threads. Both are a loose measure of how much work the
 /// JVM has done.
 void inlinerAggressivenessLogic(TR::CompilationInfo *compInfo)

@@ -638,7 +638,7 @@ log_hypervisor_error(struct J9PortLibrary *portLibrary, uint32_t module_name, ui
  * Get Linux usage info from hypfs and constants from /proc/sysinfo
  *
  * @param [in]  portLibrary The port library
- * @param [in]  staticInfo  Constats
+ * @param [in]  staticInfo  Constants
  * @param [out] linuxInfo   Caller supplied LinuxzVMInfo that gets updated
  *
  * @return	0 on success, negative value on failure

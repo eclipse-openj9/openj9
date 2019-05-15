@@ -966,7 +966,7 @@ sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDA
 				 * the correct one. In cases where we can have an
 				 * old method (caused by class redefinition) on the stack,
 				 * we will need to search the old ramClass to get the correct
-				 * constanPool. It is difficult to do this if we pass the
+				 * constantPool. It is difficult to do this if we pass the
 				 * classObject.
 				 */
 
@@ -1016,7 +1016,7 @@ sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA
 				 * the correct one. In cases where we can have an
 				 * old method (caused by class redefinition) on the stack,
 				 * we will need to search the old ramClass to get the correct
-				 * constanPool. It is difficult to do this if we pass the
+				 * constantPool. It is difficult to do this if we pass the
 				 * classObject.
 				 */
 				*(U_64*)currentThread->sp = (U_64)ramCP->ramClass;

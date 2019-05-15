@@ -447,7 +447,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                    {
                      // TODO: Do not consider types for arrays yet; have to
                      // be careful when appending '[' correct number of times
-                     // for compatibility with constt propagation.
+                     // for compatibility with constant propagation.
                      //
                      //
                      //sig = rhsOfStoreNode->getSecondChild()->getSymbolReference()->getTypeSignature(length);

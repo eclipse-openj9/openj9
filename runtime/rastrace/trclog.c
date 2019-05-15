@@ -1627,7 +1627,7 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 
 		p += (stringVarLen + 4);
 
-		/* if tracepoint is part of other component - write contaner's name into buffer */
+		/* if tracepoint is part of other component - write container's name into buffer */
 		if (containerModuleVar != NULL){
 			*p++ = '(';
 			memcpy(p, containerModuleVar, containerModuleVarLen);

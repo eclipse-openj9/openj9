@@ -716,7 +716,7 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 			 *	- Current thread owns the RW monitor, and gets EDEADLK on RW lock
 			 *
 			 * Note:
-			 *  - Deadlock might caused by the order in which threads have taken taken locks, when compaired to another JVM.
+			 *  - Deadlock might caused by the order in which threads have taken taken locks, when compared to another JVM.
 			 *  - In the recovery code below the first release of the RW Monitor is to ensure SCStoreTransactions
 			 *    can complete.
 			 *
