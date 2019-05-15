@@ -405,6 +405,8 @@ public:
    uint32_t                   getNumInnerClasses(TR_OpaqueClassBlock *classPointer);
    uint32_t                   getNumMethods(TR_OpaqueClassBlock *classPointer);
 
+   uintptr_t                  getMethodIndexInClass(TR_OpaqueClassBlock *classPointer, TR_OpaqueMethodBlock *methodPointer);
+
    virtual uint8_t *          allocateCodeMemory( TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
 
    virtual void               releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart);
