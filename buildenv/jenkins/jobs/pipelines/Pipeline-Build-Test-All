@@ -91,20 +91,20 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
-SHORT_NAMES = ['all' : 'all',
-            'aix' : 'ppc64_aix',
-            'zlinux' : 's390x_linux',
-            'plinux' : 'ppc64le_linux',
-            'xlinuxlargeheap' : 'x86-64_linux_xl',
-            'xlinuxxl' : 'x86-64_linux_xl',
-            'xlinux' : 'x86-64_linux',
-            'xlinuxcmake' : 'x86-64_linux_cm',
-            'xlinuxcm' : 'x86-64_linux_cm',
-            'win32' : 'x86-32_windows',
-            'win' : 'x86-64_windows',
-            'osx' : 'x86-64_mac',
-            'osxlargeheap' : 'x86-64_mac_xl',
-            'osxxl' : 'x86-64_mac_xl']
+SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','x86-64_linux_xl','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
+            'aix' : ['ppc64_aix'],
+            'zlinux' : ['s390x_linux'],
+            'plinux' : ['ppc64le_linux'],
+            'xlinuxlargeheap' : ['x86-64_linux_xl'],
+            'xlinuxxl' : ['x86-64_linux_xl'],
+            'xlinux' : ['x86-64_linux'],
+            'xlinuxcmake' : ['x86-64_linux_cm'],
+            'xlinuxcm' : ['x86-64_linux_cm'],
+            'win32' : ['x86-32_windows'],
+            'win' : ['x86-64_windows'],
+            'osx' : ['x86-64_mac'],
+            'osxlargeheap' : ['x86-64_mac_xl'],
+            'osxxl' : ['x86-64_mac_xl']]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
