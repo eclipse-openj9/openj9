@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src_stubs"/>
 	<classpathentry kind="src" path="testsrc"/>
 	<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 	<classpathentry kind="lib" path="/binaries/vm/ibm/dtfj.pkg.tck-head.jar"/>
