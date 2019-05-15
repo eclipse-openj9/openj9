@@ -1775,7 +1775,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
    TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-
+   static bool disableBranchlessPassThroughNULLCHK = feGetEnv("TR_disableBranchlessPassThroughNULLCHK") != NULL;
    // NOTE:
    //
    // If no code is generated for the null check, just evaluate the
@@ -1955,6 +1955,36 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
          {
          needExplicitCheck = false;
          cg->decReferenceCount(reference);
+         }
+      }
+   else if (!disableBranchlessPassThroughNULLCHK && opCode.getOpCodeValue () == TR::PassThrough
+            && !needResolution && cg->getHasResumableTrapHandler())
+      {
+      TR::Register *refRegister = cg->evaluate(firstChild);
+      needLateEvaluation = false;
+
+      if (refRegister)
+         {
+         if (!appendTo)
+            appendTo = cg->getAppendInstruction();
+         if (cg->getNumberBytesReadInaccessible() > 0)
+            {
+            needExplicitCheck = false;
+            TR::MemoryReference *memRef = NULL;
+            if (TR::Compiler->om.compressedReferenceShift() > 0 
+                && firstChild->getType() == TR::Address
+                && firstChild->getOpCode().hasSymbolReference()
+                && firstChild->getSymbol()->isCollectedReference())
+               {
+               memRef = generateX86MemoryReference(NULL, refRegister, TR::Compiler->om.compressedReferenceShift(), 0, cg);
+               }
+            else
+               {
+               memRef = generateX86MemoryReference(refRegister, 0, cg);
+               }
+            appendTo = generateMemImmInstruction(appendTo, TEST1MemImm1, memRef, 0, cg);
+            cg->setImplicitExceptionPoint(appendTo);
+            }
          }
       }
 
