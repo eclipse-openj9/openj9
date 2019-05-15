@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,7 +148,7 @@ public class UnwindInfo {
 		}
 		if( (flags & FLAGS_CHAINED) == FLAGS_CHAINED) {
 			UnwindInfo chainedInfo = getChainedUnwindInfo();
-			//System.err.println("Appling chained info: " + chainedInfo);
+			//System.err.println("Applying chained info: " + chainedInfo);
 			stackPointer = chainedInfo.apply(stackPointer);
 		}
 		return stackPointer;

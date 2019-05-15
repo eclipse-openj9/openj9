@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -879,7 +879,7 @@ omr_trc_formatNextTracePoint(UtTracePointIterator *iter, char *buffer, uint32_t 
 		return NULL;
 	}
 
-	/* if this is a circular buffer, that we have alread moved to the end of, and 
+	/* if this is a circular buffer, that we have already moved to the end of, and 
 	 * the current tracepoint length takes us back before where formatting originally
 	 * started in this buffer, then we have found the partially overwritten tracepoint
 	 * that means we have got to the end of this buffer. */

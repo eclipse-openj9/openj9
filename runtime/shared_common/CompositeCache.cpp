@@ -2819,9 +2819,9 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 		Trc_SHR_CC_allocate_softMaxBytesReached(currentThread, softMaxValue);
 		if (ALLOCATE_TYPE_BLOCK == type) {
 			/* Similar to the behaviour when setting J9SHR_BLOCK_SPACE_FULL,
-			 * if avalible bytes < CC_MIN_SPACE_BEFORE_CACHE_FULL, J9SHR_AVAILABLE_SPACE_FULL is set in the previous commit. J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is checked in 
+			 * if available bytes < CC_MIN_SPACE_BEFORE_CACHE_FULL, J9SHR_AVAILABLE_SPACE_FULL is set in the previous commit. J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is checked in 
 			 * higher level APIs in SH_CacheMap. If it is set, higher level APIs will return direcly and we would not reach here. 
-			 * if avalible bytes >= CC_MIN_SPACE_BEFORE_CACHE_FULL, do not set J9SHR_AVAILABLE_SPACE_FULL here as it is above the threshold.
+			 * if available bytes >= CC_MIN_SPACE_BEFORE_CACHE_FULL, do not set J9SHR_AVAILABLE_SPACE_FULL here as it is above the threshold.
 			 */
 			Trc_SHR_Assert_True((softMaxValue - usedBytes) >= CC_MIN_SPACE_BEFORE_CACHE_FULL);
 			/* If allocating block data, we would reach here only when allocating something that requires more than CC_MIN_SPACE_BEFORE_CACHE_FULL bytes. As free available space
@@ -3639,7 +3639,7 @@ SH_CompositeCacheImpl::getFreeBytes(void)
 }
 
 /**
- * Get the number of free availabe bytes within softmx (softmx - usedBytes).
+ * Get the number of free available bytes within softmx (softmx - usedBytes).
  *
  * @return free available bytes in cache (for stats)
  */
@@ -5523,7 +5523,7 @@ SH_CompositeCacheImpl::startupForStats(J9VMThread* currentThread, SH_OSCache * o
 		notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, true);
 	}
 
-	/* _started is set to true if the write area mutex was entered. Becuase _started 
+	/* _started is set to true if the write area mutex was entered. Because _started 
 	 * is used in ::shutdownForStats() to decide if '::exitWriteMutex()' needs to be called,
 	 * _started will still be set if any of the below code finds the cache to be corrupt.
 	 * 
@@ -6542,7 +6542,7 @@ SH_CompositeCacheImpl::tryAdjustMinMaxSizes(J9VMThread *currentThread, bool isJC
 	protectHeaderReadWriteArea(currentThread, false);
 
 	if (adjustMinJIT || adjustMinAOT || adjustSoftMax) {
-		/* The free block bytes and avaliable bytes (softmx - usedBytes) can be changed if minAOT, minJIT or softmx has been adjusted. fillCacheIfNearlyFull() needs to be called.
+		/* The free block bytes and available bytes (softmx - usedBytes) can be changed if minAOT, minJIT or softmx has been adjusted. fillCacheIfNearlyFull() needs to be called.
 		 */
 		fillCacheIfNearlyFull(currentThread);
 	}
@@ -6563,7 +6563,7 @@ done:
 }
 
 /* Another JVM may have adjusted the softMaxBytes/minAOT/maxAOT/minJIT/maxJIT in the cache header.
- * Update the runtime cache full flags accroding to cache full flags in the cache header
+ * Update the runtime cache full flags according to cache full flags in the cache header
  *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
  *

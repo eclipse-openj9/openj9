@@ -582,7 +582,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
                   new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, privateFlags), TR::Compiler->om.sizeofReferenceAddress(), cg));
 
             // The value for J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE is a generated value when VM code is created
-            // At the moment we are safe here, but it is better to be careful and avoid any unexpected behavoiur
+            // At the moment we are safe here, but it is better to be careful and avoid any unexpected behaviour
             // Make sure this falls within the scope of andis
             //
             TR_ASSERT(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= 0x00010000 && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= 0x80000000,
@@ -743,7 +743,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
                new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, privateFlags), TR::Compiler->om.sizeofReferenceAddress(), cg));
 
          // The value for J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE is a generated value when VM code is created
-         // At the moment we are safe here, but it is better to be careful and avoid any unexpected behavoiur
+         // At the moment we are safe here, but it is better to be careful and avoid any unexpected behaviour
          // Make sure this falls within the scope of andis
          //
          TR_ASSERT(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= 0x00010000 && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= 0x80000000,
@@ -2510,7 +2510,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
          // If the constant arraylength is non-zero then it will pass the spine check (hence its
          // a contiguous array) and the BNDCHK can be done inline with no OOL path.
          //
-         // If the constant arraylenth is zero then we will always go OOL.
+         // If the constant arraylength is zero then we will always go OOL.
          //
          // TODO: in the future there shouldn't be an OOL path because any valid access must be
          //       on a discontiguous array.

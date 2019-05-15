@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ static IDATA mapLocalSet(J9PortLibrary * portLibrary, J9ROMMethod * romMethod, P
 /**
  * Construct a locals map size_of(PARALLEL_TYPE) * 8 slots at a time from 0 to remainingLocals-1.
  * @param portLibrary
- * @param romMethod Method whose byteocdes should be walked.
+ * @param romMethod Method whose bytecodes should be walked.
  * @param unknownsByPC Buffer used to store per-PC metadata (1 PARALLEL_TYPE per PC) + branch stack.
  * @param startPC The PC at which to start mapping.
  * @param resultArrayBase Memory into which the result should be stored.

@@ -246,7 +246,7 @@ class TR_ActiveMonitor
    // Further info:
    // 1) Do we profile monitor object types?
    // 2) I think we want high false contention scenarios.  This allows TLE to work nicely
-   // 3) No contention (ie single thread using a lock, or there's only one thread ever trying to aquire the lock) is bad.  There's a 3-5 cycle penalty for Tbegin and compareandswap is 1 cycle
+   // 3) No contention (ie single thread using a lock, or there's only one thread ever trying to acquire the lock) is bad.  There's a 3-5 cycle penalty for Tbegin and compareandswap is 1 cycle
    public:
    int32_t                      _numberOfTreeTopsInsideMonitor;
    bool                         _containsCalls;

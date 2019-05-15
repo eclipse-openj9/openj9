@@ -456,7 +456,7 @@ TR_J9VMBase::releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(TR::Compilation
             //if (*hadClassUnloadMonitor)
             //   TR::MonitorTable::get()->readAcquireClassUnloadMonitor(_compInfoPT->getCompThreadId());
             comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted");
-            // After the exception throw we will release the classUnloadMonitor and re-acquire the VM access
+            // After the exception throw we will release the classUnloadMonitor and reacquire the VM access
             }
          }
       else
@@ -3889,7 +3889,7 @@ TR_J9VMBase::compilationShouldBeInterrupted(TR::Compilation * comp, TR_CallingCo
          }
       if (exitClassUnloadMonitor)
          {
-         // release the classUnloadMonitor and then re-aquire it. This will give GC a chance to cut in.
+         // release the classUnloadMonitor and then reacquire it. This will give GC a chance to cut in.
          persistentMemory(_jitConfig)->getPersistentInfo()->resetGCwillBlockOnClassUnloadMonitor();
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)

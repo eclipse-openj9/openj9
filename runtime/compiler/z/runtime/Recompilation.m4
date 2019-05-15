@@ -109,7 +109,7 @@ ZZ Snippet Base Register
 SETVAL(sbase,r11)
 SETVAL(eq_JitCompilerAddr,0)
 ZZ previous field only 4 bytes big, but compiler aligns
-ZZ to double word boundry on 64 bit
+ZZ to double word boundary on 64 bit
 SETVAL(eq_BodyInfo_MethodInfo,PTR_SIZE)
 SETVAL(eq_VMMethodInfo_j9Method,0)
 

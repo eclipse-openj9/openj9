@@ -2501,7 +2501,7 @@ jvmtiGetMethodAndClassNames_verifyRamMethod(J9JavaVM * vm, J9Method * ramMethod)
  * 	The user is responsible for passing in a ramMethods array containing ram method pointers they wish to query. 
  *	The ramMethodCount argument contains the count of passed in ram method pointers.
  *
- *	The ramMethodDataDescriptors is a buffer large enough to accomodate ramMethodCount number of jvmtiExtensionRamMethodData
+ *	The ramMethodDataDescriptors is a buffer large enough to accommodate ramMethodCount number of jvmtiExtensionRamMethodData
  *	structures. It is written to by this extension as ram method pointers are processed. The first jvmtiExtensionRamMethodData structure
  *	written to the ramMethodDataDescriptors corresponds to the first ram method pointer in the ramMethods array and so on. Ram method
  *	pointers that are detected to be no longer valid (e.g. class has been unloaded) will result in className and methodName pointers being 
@@ -2510,7 +2510,7 @@ jvmtiGetMethodAndClassNames_verifyRamMethod(J9JavaVM * vm, J9Method * ramMethod)
  *
  *	The ramMethodStrings serves as a buffer to copy class, method and package name strings for valid ram method pointers. The 
  *	jvmtiExtensionRamMethodData structures are initialized with pointers into this array. Each string is null terminated. Care should be
- *	taken to pass in a large enough buffer to accomodate strings for all requested ram methods. In case the buffer is not sufficiently 
+ *	taken to pass in a large enough buffer to accommodate strings for all requested ram methods. In case the buffer is not sufficiently 
  *	large, the extension will stop processing any further ram methods pointers and return whatever has been processed up to that point.
  *
  *  ramMethodStringsSize is used by the user to specify the size of ramMethodStrings. If not enough space was provided, this 
@@ -2575,7 +2575,7 @@ jvmtiGetMethodAndClassNames(jvmtiEnv *jvmti_env,  void * ramMethods, jint ramMet
 				   
 				totalStringsLength += length;
 
-				/* got enough space to accomodate this ramMethod's strings? */
+				/* got enough space to accommodate this ramMethod's strings? */
 
 				if (stringsSize >= length) {
 
@@ -2937,7 +2937,7 @@ static void fillInCategoryDeepCounters(jvmtiMemoryCategory * category)
   * JVMTI_ERROR_UNSUPPORTED_VERSION - Unsupported version of jvmtiMemoryCategory
   * JVMTI_ERROR_ILLEGAL_ARGUMENT - Illegal argument (categories_buffer, count_ptr & total_categories_ptr are all NULL)
   * JVMTI_ERROR_INVALID_ENVIRONMENT - Invalid JVMTI environment
-  * JVMTI_ERROR_OUT_OF_MEMORY - Memory category data was truncated becasue category_buffer/max_categories was not large enough
+  * JVMTI_ERROR_OUT_OF_MEMORY - Memory category data was truncated because category_buffer/max_categories was not large enough
   *
   */
 static jvmtiError JNICALL

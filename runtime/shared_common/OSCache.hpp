@@ -109,7 +109,7 @@ typedef struct SH_OSCache_Info {
         UDATA isCompatible; /** Is the cache compatible with this VM */
         UDATA isCorrupt; /** Is set when the cache is found to be corrupt */
         UDATA isJavaCorePopulated; /** Is set when the javacoreData contains valid data */
-        J9SharedClassJavacoreDataDescriptor javacoreData; /** If isCompatible is true, then extra information about the cache is availaible in here*/
+        J9SharedClassJavacoreDataDescriptor javacoreData; /** If isCompatible is true, then extra information about the cache is available in here*/
 } SH_OSCache_Info;
 
 /* DO NOT use UDATA/IDATA in the cache headers so that 32-bit/64-bit JVMs can read each others headers

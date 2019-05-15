@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1148,7 +1148,7 @@ public class Test_Thread {
 
 		/*
 		 * Thread.stop() implementation is changed from 1.1.7 to the 1.2
-		 * behavour. now stop() doesn't ensure immediate thread death, so we
+		 * behaviour. now stop() doesn't ensure immediate thread death, so we
 		 * have to wait till st thread joins back to curent thread, before
 		 * making an isAlive() check.
 		 */

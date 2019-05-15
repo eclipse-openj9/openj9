@@ -1228,7 +1228,7 @@ _error:
  * Wrapper for scan_udata, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the udata
  * @param value address of the storage for the udata to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1254,7 +1254,7 @@ scan_udata_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *arg
  * Wrapper for scan_udata, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the udata
  * @param value address of the storage for the udata to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1280,7 +1280,7 @@ scan_u32_helper(J9JavaVM *javaVM, char **cursor, U_32 *value, const char *argNam
  * Wrapper for scan_long, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the u_64
  * @param value address of the storage for the U_64 to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1306,7 +1306,7 @@ scan_u64_helper(J9JavaVM *javaVM, char **cursor, U_64 *value, const char *argNam
  * Wrapper for scan_hex, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the hex value
  * @param value address of the storage for the hex value to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool

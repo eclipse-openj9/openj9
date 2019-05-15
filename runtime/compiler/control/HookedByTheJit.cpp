@@ -5852,7 +5852,7 @@ void getOutOfIdleStates(TR::CompilationInfo::TR_SamplerStates expectedState, TR:
    if (compInfo->getSamplerState() == expectedState)
       {
       J9JavaVM * vm = compInfo->getJITConfig()->javaVM;
-      // Now aquire the monitor and do another test
+      // Now acquire the monitor and do another test
       j9thread_monitor_enter(vm->vmThreadListMutex);
       getOutOfIdleStatesUnlocked(expectedState, compInfo, reason);
       j9thread_monitor_exit(vm->vmThreadListMutex);
@@ -6044,7 +6044,7 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
 /// Change inlining aggressiveness based on 'time' since we last entered
 /// JIT startup phase. Inlining aggressiveness is a number between 100 and 0
 /// with 100 meaning 'be very aggressive' and 0 meaning 'be very conservative'
-/// 'time' is not wall clock time becaue the algorithm would be dependent on
+/// 'time' is not wall clock time because the algorithm would be dependent on
 /// machine speed/capability and load. Instead 'time' can be expressed in
 /// terms of CPU cycles consummed by the JVM or number of samples taken
 /// by application threads. Both are a loose measure of how much work the

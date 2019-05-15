@@ -127,7 +127,7 @@ omr_add_hookgen(INPUT oti/zipCachePool.hdf)
 omr_add_hookgen(INPUT gc_include/j9mm.hdf)
 
 # Wrap up the hookgen'd files in a named target
-# This is to work arround the fact that CMake does not do proper dependency tracking
+# This is to work around the fact that CMake does not do proper dependency tracking
 # for generated files across different directories
 add_custom_target(j9vm_hookgen
 	DEPENDS
@@ -176,7 +176,7 @@ add_custom_command(OUTPUT "${J9VM_INCLUDE_DIR}/jni.h"
 	WORKING_DIRECTORY "${J9VM_INCLUDE_DIR}"
 )
 
-# Note we do this here rather than in the redirector directory to work arround
+# Note we do this here rather than in the redirector directory to work around
 # issues in cmake. If we did it there each target which consumed generated.c has
 # its own rule to create it. Which causes a race condition when building in parallel
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"

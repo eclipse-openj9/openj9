@@ -1322,7 +1322,7 @@ void TR::X86CallSite::computeProfiledTargets()
 
          // PMR 05447,379,000 getTopValue may return array length profile data instead of a class pointer
          // (when the virtual call feeds an arraycopy method length parameter). We need to defend this case to
-         // avoid attempting to use the length as a pointer, so use asAdressInfo() to gate assignment of topValue.
+         // avoid attempting to use the length as a pointer, so use asAddressInfo() to gate assignment of topValue.
          uintptrj_t topValue = (valueInfo) ? valueInfo->getTopValue() : 0;
 
          // if the call to hashcode is a virtual call node, the top value was already inlined.

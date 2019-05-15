@@ -77,7 +77,7 @@ class AdjacentBlockIterator
             return;
             }
          }
-      // handle the loopback edge from start to end with an artifically high frequency
+      // handle the loopback edge from start to end with an artificially high frequency
       // to make sure the edge is included in the computed MST
       if (cfg->getStart()->asBlock() == _block
           && !_visitedBlocks.contains(cfg->getEnd()->asBlock()))

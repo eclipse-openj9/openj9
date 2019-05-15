@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ public class TestSuite {
 	}
 	
 	void printResults() {
-		// print aggegate statistics
+		// print aggregate statistics
 		System.out.println("\n---TEST RESULTS---");
 		System.out.println("Number of PASSED tests: " + _passed.size() + " out of " + (_passed.size() + _failed.size()));
 		System.out.println("Number of FAILED tests: " + _failed.size() + " out of " + (_passed.size() + _failed.size()));

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -379,7 +379,7 @@ J9JITHashTable* hash_jit_toJ9MemorySegment(J9JITHashTable * table, J9MemorySegme
 	}
 
 	byteCount += sizeof(J9JITHashTable);
-	/* check allignment - currently removed */
+	/* check alignment - currently removed */
 	/*if (LOW_BIT_SET(dataCache->heapAlloc)) 
 		++byteCount;*/
 
@@ -393,9 +393,9 @@ J9JITHashTable* hash_jit_toJ9MemorySegment(J9JITHashTable * table, J9MemorySegme
 
 	allocate += sizeof(J9JITDataCacheHeader);
 
-	/* point buckets to first alligned chunk after the J9JITHashTable structure */
+	/* point buckets to first aligned chunk after the J9JITHashTable structure */
 	dataCacheHashTable = (J9JITHashTable *) allocate;
-	/* check allignment - currently removed */
+	/* check alignment - currently removed */
 	/*if (LOW_BIT_SET(dataCache->heapAlloc))
 		dataCacheHashTable->buckets = (UDATA *) (allocate + sizeof(J9JITHashTable) + 1);
 	else*/

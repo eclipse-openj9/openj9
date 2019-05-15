@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ import com.ibm.dtfj.image.Image;
  * If a javacore contains multiple address spaces, each
  * with its own set of processes and runtimes, it is assumed
  * that some sort of unique ID in the javacore (could be start address
- * of addresspace) is used to distinguish each address space, and that
+ * of address space) is used to distinguish each address space, and that
  * the proper addressSpaceBuilder can be selected throughout the parsing
  * process by parsing a tag in the javacore that contains this id.
  *

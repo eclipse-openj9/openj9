@@ -293,7 +293,7 @@ public class StructureReader {
 	}
 
 	/**
-	 * Test to see if a structure has been read in and hence avaialble
+	 * Test to see if a structure has been read in and hence available
 	 * @param name name of the structure to look for
 	 * @return true if the structure exists, false if not
 	 */

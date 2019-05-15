@@ -299,7 +299,7 @@ class Candidate : public TR_Link<Candidate>
          FillsInStackTrace            = 0x08000000,
          UsesStackTrace               = 0x04000000,
 
-         // Object that is being allocted inside a loop
+         // Object that is being allocated inside a loop
          //
          InsideALoop                  = 0x02000000,
 

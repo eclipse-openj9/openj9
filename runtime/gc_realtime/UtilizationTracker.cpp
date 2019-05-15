@@ -127,7 +127,7 @@ MM_UtilizationTracker::compactTimeSliceWindowAndUpdateCurrentUtil(MM_Environment
 }
 
 /**
- * Adds a time slice.  Calling this method acknoeledges that a certain
+ * Adds a time slice.  Calling this method acknowledges that a certain
  * amount of time has elapsed and is being charged to the GC or mutator.
  * 
  * @note Synchronization must be provided externally when calling this method.

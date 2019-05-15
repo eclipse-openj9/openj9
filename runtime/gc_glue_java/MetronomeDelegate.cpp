@@ -956,7 +956,7 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 						/**
 						 * Jazz103 55784: We cannot rehash the table in the middle of iteration and the Space-opt hashtable cannot grow if
 						 * J9HASH_TABLE_DO_NOT_REHASH is enabled. Don't yield if the hashtable is space-optimized because we run the
-						 * risk of the mutator not being able to grow to accomodate new elements.
+						 * risk of the mutator not being able to grow to accommodate new elements.
 						 */
 						if (!hashTableIsSpaceOptimized(classLoader->classHashTable)) {
 							_realtimeGC->condYield(env, 0);

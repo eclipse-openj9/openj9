@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ abstract class ArgumentConversionHandle extends ConvertHandle {
 	protected final ThunkTuple computeThunks(Object nextHandleType) {
 		// To get the type casts right, we must inspect the full signatures of
 		// both the receiver and nextHandleType, but we can upcast the return
-		// type becuse ArgumentConversionHandles are not used to filter return types.
+		// type because ArgumentConversionHandles are not used to filter return types.
 		MethodType thunkableReceiverType = ThunkKey.computeThunkableType(type(), 0);
 		MethodType thunkableNextType     = ThunkKey.computeThunkableType((MethodType)nextHandleType, 0);
 		return thunkTable().get(new ThunkKeyWithObject(thunkableReceiverType, thunkableNextType));

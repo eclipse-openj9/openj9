@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ public class StringIndexOfString {
 				subStringByteLen = (VECTOR_SIZE - 2);
 				break;
 			case 6:
-				// sub-string head and tail are not alighed to 16B bounary. Its length <
+				// sub-string head and tail are not aligned to 16B boundary. Its length <
 				// VECTOR_SIZE.
 				subStringByteIndex = (VECTOR_SIZE + 2);
 				subStringByteLen = (VECTOR_SIZE - 4);
@@ -132,7 +132,7 @@ public class StringIndexOfString {
 
 			case 13:
 				// 1st char collision
-				// Sub-string is 3*VECTOR_SIZE long, spanning bettween the 4th and 7th 16B
+				// Sub-string is 3*VECTOR_SIZE long, spanning between the 4th and 7th 16B
 				// boundary.
 				subStringByteIndex = VECTOR_SIZE * 3;
 				subStringByteLen = VECTOR_SIZE * 3;

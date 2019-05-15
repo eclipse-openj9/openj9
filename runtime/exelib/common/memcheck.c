@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2974,7 +2974,7 @@ memoryCheck_free_AVLTreeNode(OMRPortLibrary *portLib, J9AVLTreeNode *node)
  * @param insertNode The node which will be inserted into the tree
  * @param walk The current search position in the tree
  *
- * @return IDATA the difference bewtween the two strings alphabetically
+ * @return IDATA the difference between the two strings alphabetically
  *
  */
 static IDATA 
@@ -3020,7 +3020,7 @@ memoryCheck_print_stats_callSite(OMRPortLibrary *portLib, J9MEMAVLTreeNode *node
  * @param search The char * to search for
  * @param walk The current search position in the tree
  *
- * @return IDATA the difference bewtween the two strings alphabetically
+ * @return IDATA the difference between the two strings alphabetically
  *
  */
 static IDATA 

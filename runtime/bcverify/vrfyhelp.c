@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -532,7 +532,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		 */
 		if ((IDATA) TRUE == isInterfaceClass(verifyData, targetName, targetLength, reasonCode)) {
 			/* targetClass must be either java/lang/Cloneable or java/io/Serializable
-			 * in the case when sourceClass is an arary type (sourceArity > 0).
+			 * in the case when sourceClass is an array type (sourceArity > 0).
 			 */
 			if (((CLONEABLE_CLASS_NAME_LENGTH == targetLength) && ((0 == strncmp((const char*)targetName, CLONEABLE_CLASS_NAME, CLONEABLE_CLASS_NAME_LENGTH))))
 			|| ((SERIALIZEABLE_CLASS_NAME_LENGTH == targetLength) && (0 == strncmp((const char*)targetName, SERIALIZEABLE_CLASS_NAME, SERIALIZEABLE_CLASS_NAME_LENGTH)))

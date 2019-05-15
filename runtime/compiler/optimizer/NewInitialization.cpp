@@ -554,7 +554,7 @@ bool TR_NewInitialization::findAllocationNode(TR::TreeTop *treeTop, TR::Node *no
 
       size = node->getFirstChild()->getInt();
 
-      // Ignore large arrays so we don't have to worry abount size
+      // Ignore large arrays so we don't have to worry about size
       // overflow. Make sure that illegal sizes are not inlined.
       //
       if (size < 0 || size > 10000)

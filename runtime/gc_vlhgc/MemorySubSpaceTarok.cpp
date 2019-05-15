@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -899,7 +899,7 @@ MM_MemorySubSpaceTarok::collectorExpand(MM_EnvironmentBase *env)
 
 /**
  * Perform the contraction/expansion based on decisions made by checkResize.
- * Adjustements in contraction size is possible (because compaction might have yielded less then optimal results),
+ * Adjustments in contraction size is possible (because compaction might have yielded less then optimal results),
  * therefore allocDesriptor is still passed.
  * @return the actual amount of resize (having IDATA return result will contain valid value only if contract/expand size is half of maxOfUDATA)
  */
