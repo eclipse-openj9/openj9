@@ -57,7 +57,7 @@ set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${compile_defs})
 
 omr_add_tracegen(env/j9jit.tdf)
 
-# this is a workarround because the jit code is inconsistent about how it includes the tracegen files
+# this is a workaround because the jit code is inconsistent about how it includes the tracegen files
 # It only really works if we put it in the source tree
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h

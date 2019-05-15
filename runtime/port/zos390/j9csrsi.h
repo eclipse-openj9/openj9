@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,7 @@ BOOLEAN j9csrsi_is_vmh(const j9csrsi_t *session);
  *  @param[in] position Number of the entry that should be retrieved
  *  @param[out] buf buffer where vmhpidentifier will be written to. The string
  *  returned is in ASCII
- *  @param[in] len Length of buf. buf must be sufficiently large to accomodate
+ *  @param[in] len Length of buf. buf must be sufficiently large to accommodate
  *  the whole string and a '\0'. Otherwise, an error will be returned.
  *  @return A number greater than 0 in case of success. This is the number
  *  of chars written to buf. Any other return value indicates an error.
@@ -79,7 +79,7 @@ int32_t j9csrsi_get_vmhpidentifier(const j9csrsi_t *session, uint32_t position,
  *  @param[in] session Pointer to j9csrsi session
  *  @param[out] buf buffer where cpctype will be written to. The string
  *  returned is in ASCII
- *  @param[in] len Length of buf. buf must be sufficiently large to accomodate
+ *  @param[in] len Length of buf. buf must be sufficiently large to accommodate
  *  the whole string and a '\0'. Otherwise, an error will be returned.
  *  @return A number greater than 0 in case of success. This is the number
  *  of chars written to buf. Any other return value indicates an error.

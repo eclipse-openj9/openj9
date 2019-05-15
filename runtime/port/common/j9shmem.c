@@ -390,7 +390,7 @@ j9shmem_getFilepath(struct J9PortLibrary* portLibrary, char* cacheDirName, char*
  * Sets the protection as specified by flags for the memory pages containing all or part of the interval address->(address+len).
  * The size of the memory page for a specified memory region can be requested via @ref j9shmem_get_region_granularity
  *
- * The memory region must have been aquired using j9shmap_file
+ * The memory region must have been acquired using j9shmap_file
  *
  * This call has no effect on the protection of other processes.
  *

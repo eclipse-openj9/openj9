@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -251,7 +251,7 @@ exit:
 #if defined(J9ZOS390)
 /**
  * Returns TRUE if the given page size and flags corresponds to new page sizes added in z/OS.
- * z/OS traditionally supports 4K and 1M fixed pages.
+ * z/OS tradditionally supports 4K and 1M fixed pages.
  * 1M pageable and 2G fixed, added recently, are considered new page sizes.
  */
 BOOLEAN

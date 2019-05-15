@@ -181,7 +181,7 @@ MM_IncrementalParallelTask::releaseSynchronizedGCThreads(MM_EnvironmentBase *env
 	
 	if(env->isMasterThread()) {
 		/* sync/release sequence actually takes time (excluding the work within the sync/release pair).
-		 * Take adventage of the fact the all slaves are blocked to check if it is time to yield */
+		 * Take advantage of the fact the all slaves are blocked to check if it is time to yield */
 		((MM_Scheduler*)_dispatcher)->condYieldFromGC(env);
 		
 		/* Could not have gotten here unless all other threads are sync'd - don't check, just release */

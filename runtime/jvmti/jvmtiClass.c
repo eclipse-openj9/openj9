@@ -2370,7 +2370,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot1);
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot2);
 #endif				
-				/* Skip additional CP entry. See JVM spec v2 section 4.4.5 for the briliant rationale */
+				/* Skip additional CP entry. See JVM spec v2 section 4.4.5 for the brilliant rationale */
 				sunCpIndex++;
 
 				break;

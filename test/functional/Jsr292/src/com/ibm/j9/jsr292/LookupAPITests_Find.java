@@ -1570,7 +1570,7 @@ public class LookupAPITests_Find {
 	}
 	
 	/**
-	 * findVirtual test using a protected overridden method that belogs to the super-class which the lookup class extends.
+	 * findVirtual test using a protected overridden method that belongs to the super-class which the lookup class extends.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

@@ -274,7 +274,7 @@ class TR_PersistentMethodInfo
    void setRecentProfileInfo(TR_PersistentProfileInfo * ppi) { setForSharedInfo(&_recentProfileInfo, ppi); }
 
    // ### IMPORTANT ###
-   // Method info must alway be the first field in this structure
+   // Method info must always be the first field in this structure
    // Flags must always be second
    private:
    TR_OpaqueMethodBlock                  *_methodInfo;

@@ -1846,7 +1846,7 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
    if (stringCount > MAX_STRINGS)
       return 0;
    if (stringCount == 2 && !findSymRefForOptMethod(SPH_String_init_SS))
-      return 0; // cannot do it because we do not have the appropiate constructor
+      return 0; // cannot do it because we do not have the appropriate constructor
    if (stringCount == 3 && !findSymRefForOptMethod(SPH_String_init_SSS))
       return 0; // same as above
 

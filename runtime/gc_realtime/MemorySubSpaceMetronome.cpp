@@ -126,7 +126,7 @@ MM_MemorySubSpaceMetronome::allocateMixedObjectOrArraylet(MM_EnvironmentBase *en
 		return result;
 	}
 	
-	/* Still failed to allocate so try an agressive synchronous GC */
+	/* Still failed to allocate so try an aggressive synchronous GC */
 	collectOnOOM(envRealtime, MM_GCCode(J9MMCONSTANT_IMPLICIT_GC_AGGRESSIVE), allocDescription);
 	
 	result = allocate(envRealtime, allocDescription, allocType);

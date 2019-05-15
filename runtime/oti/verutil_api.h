@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ IDATA verifyFieldSignatureUtf8(U_8* signatureBytes, UDATA signatureLength, UDATA
 /**
  * Check if a string is a well-formed identifier per JVMS java 8 version, section 4.2.
  * String is well-formed if it comprises one or more Unicode characters, with the following exceptions:
- * '/', ';' , '[' and '.' (semicolon, open square backet, and period) are not allowed
+ * '/', ';' , '[' and '.' (semicolon, open square bracket, and period) are not allowed
  * 	@param identifierStart pointer to first character of the signature
  * 	@param identifierLength Length of the signature in bytes
  *	@return TRUE if the string is well formed
@@ -65,7 +65,7 @@ BOOLEAN verifyIdentifierUtf8(U_8* identifierStart, UDATA identifierLength);
 /**
  * Check if a string is a well-formed fully qualified class or interface name per JVMS java 8 version, section 4.2.
  * String is well-formed if it comprises one or more Unicode characters, with the following exceptions:
- * ';' , '[' and '.' (semicolon, open square backet, and period) are not allowed
+ * ';' , '[' and '.' (semicolon, open square bracket, and period) are not allowed
  * '/' is allowed but may not be contiguous with another '/'
  * 	@param identifierStart pointer to first character of the signature
  * 	@param identifierLength Length of the signature in bytes

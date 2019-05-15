@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2018 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -792,7 +792,7 @@ public class JavaPreprocessor {
 
 	/**
 	 * Each preprocessor may use a single instance of this class to replace
-	 * specially-formatted calls to Msg.getString() with appropiate
+	 * specially-formatted calls to Msg.getString() with appropriate
 	 * String-valued expressions at preprocess time.
 	 */
 	private final class MsgCallInliner {

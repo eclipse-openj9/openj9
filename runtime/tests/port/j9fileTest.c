@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4139,7 +4139,7 @@ j9file_test_long_file_name(struct J9PortLibrary *portLibrary)
 	char *readBufPtr;
 	char *longDirName = "\\abcdefghijklmnopqrstuvwx";
 #define MIN_LENGTH (MAX_PATH + 1)
-#define FILENAME_LENGTH MIN_LENGTH*2 /* double the size to accomodate a file size that is just under twice MIN_LENGTH */
+#define FILENAME_LENGTH MIN_LENGTH*2 /* double the size to accommodate a file size that is just under twice MIN_LENGTH */
 	char filePathName[FILENAME_LENGTH];
 	IDATA fd;
 	char cwd[FILENAME_LENGTH];

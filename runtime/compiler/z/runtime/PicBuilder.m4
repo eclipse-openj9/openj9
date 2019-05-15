@@ -260,7 +260,7 @@ ZZ             DC <Const Pool Indx> // Constant Pool Index
 ZZ ===================================================================
 ZZ
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterUnresolvedSpecialGlue
+ZZ PICBuilder routine _interpreterUnresolvedSpecialGlue
 ZZ
 ZZ Exports:
 ZZ   _interpreterUnresolvedSpecialGlue
@@ -312,7 +312,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveSpecialMethod)
     END_FUNC(_interpreterUnresolvedSpecialGlue,intpUnrSpG,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStaticGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticGlue
 ZZ
 ZZ ===================================================================
 
@@ -337,7 +337,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveStaticMethod)
     END_FUNC(_interpreterUnresolvedStaticGlue,intpUnrStG,12)
 
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterUnresolvedDirectVirtualGlue
+ZZ PICBuilder routine _interpreterUnresolvedDirectVirtualGlue
 ZZ
 ZZ ===================================================================
 
@@ -504,7 +504,7 @@ ZZ   Go through j2iTransition
 
 
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterVoidStaticGlue
+ZZ PICBuilder routine _interpreterVoidStaticGlue
 ZZ
 ZZ ===================================================================
 
@@ -522,7 +522,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStatic0)
     END_FUNC(_interpreterVoidStaticGlue,intpVStG,10)
 
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterSyncVoidStaticGlue
+ZZ PICBuilder routine _interpreterSyncVoidStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncVoidStaticGlue,intpSVStG)
@@ -539,7 +539,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSync0)
     END_FUNC(_interpreterSyncVoidStaticGlue,intpSVStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterIntStaticGlue
+ZZ  PICBuilder routine - _interpreterIntStaticGlue
 ZZ
 ZZ ===================================================================
 
@@ -557,7 +557,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStatic1)
     END_FUNC(_interpreterIntStaticGlue,intpIStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncIntStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncIntStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncIntStaticGlue,intpSIStG)
@@ -574,7 +574,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSync1)
     END_FUNC(_interpreterSyncIntStaticGlue,intpSIStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterLongStaticGlue
+ZZ  PICBuilder routine - _interpreterLongStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterLongStaticGlue,intpLStG)
@@ -591,7 +591,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncJ)
     END_FUNC(_interpreterLongStaticGlue,intpLStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncLongStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncLongStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncLongStaticGlue,intpSLStG)
@@ -608,7 +608,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncJ)
     END_FUNC(_interpreterSyncLongStaticGlue,intpSLStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterFloatStaticGlue
+ZZ  PICBuilder routine - _interpreterFloatStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterFloatStaticGlue,intpFStG)
@@ -625,7 +625,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncF)
     END_FUNC(_interpreterFloatStaticGlue,intpFStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncFloatStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncFloatStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncFloatStaticGlue,intpSFStG)
@@ -642,7 +642,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncF)
     END_FUNC(_interpreterSyncFloatStaticGlue,intpSFStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterDoubleStaticGlue
+ZZ  PICBuilder routine - _interpreterDoubleStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterDoubleStaticGlue,intpDStG)
@@ -659,7 +659,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncD)
     END_FUNC(_interpreterDoubleStaticGlue,intpDStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncDoubleStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncDoubleStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncDoubleStaticGlue,intpSDStG)
@@ -823,7 +823,7 @@ ZZ End of LStaticGlueCallFixer
     END_FUNC(_interpreterSyncDoubleStaticGlue,intpSDStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _nativeStaticHelper
+ZZ  PICBuilder routine - _nativeStaticHelper
 ZZ
 ZZ ===================================================================
 
@@ -851,7 +851,7 @@ ZZ
 ZZ This glue function is called by an unresolved call data snippet.
 ZZ It in turn calls a VM routine (i.e. jitResolve{Class,ClassFrom-
 ZZ StaticField,StaticField,StaticFieldSetter}) to resolve an
-ZZ unresolved class/field, stores the resolved adderss in the literal
+ZZ unresolved class/field, stores the resolved address in the literal
 ZZ pool, patches mainline code, and returns to the point
 ZZ where the call was originally made in the code cache.
 ZZ
@@ -896,7 +896,7 @@ ZZ properly.
 ZZ ===================================================================
 ZZ
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedClassGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedClassGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedClassGlue,intpUCG)
@@ -919,7 +919,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClass)
     END_FUNC(_interpreterUnresolvedClassGlue,intpUCG,9)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedClassGlue2
+ZZ  PICBuilder routine - _interpreterUnresolvedClassGlue2
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedClassGlue2,intpUCG2)
@@ -942,7 +942,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClassFromStaticField)
     END_FUNC(_interpreterUnresolvedClassGlue2,intpUCG2,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStringGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStringGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedStringGlue,intpUSG)
@@ -965,7 +965,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveString)
     END_FUNC(_interpreterUnresolvedStringGlue,intpUSG,9)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedMethodTypeGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodTypeGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedMethodTypeGlue,intpUMTG)
@@ -988,7 +988,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodType)
     END_FUNC(_interpreterUnresolvedMethodTypeGlue,intpUMTG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedMethodHandleGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodHandleGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedMethodHandleGlue,intpUMHG)
@@ -1011,7 +1011,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodHandle)
     END_FUNC(_interpreterUnresolvedMethodHandleGlue,intpUMHG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedCallSiteTableEntryGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedCallSiteTableEntryGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedCallSiteTableEntryGlue,intpUCSG)
@@ -1034,7 +1034,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveInvokeDynamic)
     END_FUNC(_interpreterUnresolvedCallSiteTableEntryGlue,intpUCSG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedMethodTypeTableEntryGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodTypeTableEntryGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedMethodTypeTableEntryGlue,intpUMT)
@@ -1057,7 +1057,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveHandleMethod)
     END_FUNC(_interpreterUnresolvedMethodTypeTableEntryGlue,intpUMT,9)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt32Load
+ZZ  PICBuilder routine - MTUnresolvedInt32Load
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt32Load,intpMTI32L)
@@ -1084,7 +1084,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedInt32Load,intpMTI32L,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt64Load
+ZZ  PICBuilder routine - MTUnresolvedInt64Load
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt64Load,intpMTI64L)
@@ -1111,7 +1111,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedInt64Load,intpMTI64L,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedFloatLoad
+ZZ  PICBuilder routine - MTUnresolvedFloatLoad
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedFloatLoad,intpMTFL)
@@ -1138,7 +1138,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedFloatLoad,intpMTFL,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedDoubleLoad
+ZZ  PICBuilder routine - MTUnresolvedDoubleLoad
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedDoubleLoad,intpMTDL)
@@ -1165,7 +1165,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedDoubleLoad,intpMTDL,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedAddressLoad
+ZZ  PICBuilder routine - MTUnresolvedAddressLoad
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedAddressLoad,intpMTAL)
@@ -1212,7 +1212,7 @@ LABEL(LMTStaticAddressLoadBRANCHEND)
     END_FUNC(MTUnresolvedAddressLoad,intpMTAL,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt32Store
+ZZ  PICBuilder routine - MTUnresolvedInt32Store
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt32Store,intpMTI32S)
@@ -1239,7 +1239,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedInt32Store,intpMTI32S,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt64Store
+ZZ  PICBuilder routine - MTUnresolvedInt64Store
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt64Store,intpMTI64S)
@@ -1266,7 +1266,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedInt64Store,intpMTI64S,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedFloatStore
+ZZ  PICBuilder routine - MTUnresolvedFloatStore
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedFloatStore,intpMTFS)
@@ -1293,7 +1293,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedFloatStore,intpMTFS,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedDoubleStore
+ZZ  PICBuilder routine - MTUnresolvedDoubleStore
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedDoubleStore,intpMTDS)
@@ -1320,7 +1320,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedDoubleStore,intpMTDS,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedAddressStore
+ZZ  PICBuilder routine - MTUnresolvedAddressStore
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedAddressStore,intpMTAS)
@@ -1387,7 +1387,7 @@ LABEL(LMTUnresolvedAddressStoreNonIsolated)
     END_FUNC(MTUnresolvedAddressStore,intpMTAS,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStaticDataGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticDataGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedStaticDataGlue,intpUStDG)
@@ -1410,7 +1410,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(_interpreterUnresolvedStaticDataGlue,intpUStDG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStaticDataStoreGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticDataStoreGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedStaticDataStoreGlue,intpUStDSG)
@@ -1454,7 +1454,7 @@ ZZ  at the end, otherwise, we would be loading off the wrong
 ZZ  and unaligned address!
 LABEL(LPatchData)
     TML     r2,HEX(0001)    # data is masked for clinit?
-    JZ      LPatchLitPool   # if no, jump accordinly
+    JZ      LPatchLitPool   # if no, jump accordingly
     LR_GPR  r0,r2           # save the resolved data in r0
     NILL    r2,HEX(FFFE)    # mask off the lower bit
 
@@ -1508,7 +1508,7 @@ ZZ Now we jump back to mainline code.
     END_FUNC(_interpreterUnresolvedStaticDataStoreGlue,intpUStDSG,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedInstanceDataGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedInstanceDataGlue
 ZZ
 ZZ ===================================================================
 
@@ -1533,7 +1533,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveField)
     END_FUNC(_interpreterUnresolvedInstanceDataGlue,intpUIDG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedInstanceDataStoreGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedInstanceDataStoreGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedInstanceDataStoreGlue,intpUIDSG)
@@ -1630,7 +1630,7 @@ LABEL(LDataOOLExit)
     END_FUNC(_interpreterUnresolvedInstanceDataStoreGlue,intpUIDSG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _virtualUnresolvedHelper
+ZZ  PICBuilder routine - _virtualUnresolvedHelper
 ZZ  Handles unresolved virtual and unresolved nestmate private methods
 ZZ
 ZZ  For unresolved virtual call targets, this routine calls VM helper
@@ -1832,7 +1832,7 @@ ZZ Branch instruction in mainline will be patched here with NOP
     END_FUNC(_jitResolveConstantDynamic,jRCD,6)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interfaceCallHelper
+ZZ  PICBuilder routine - _interfaceCallHelper
 ZZ
 ZZ ===================================================================
     START_FUNC(_interfaceCallHelper,ifCH)
@@ -1937,7 +1937,7 @@ ZZ # Load address of the lookup class
     END_FUNC(_interfaceCallHelper,ifCH,6)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interfaceCallHelperSingleDynamicSlot
+ZZ  PICBuilder routine - _interfaceCallHelperSingleDynamicSlot
 ZZ
 ZZ ===================================================================
     START_FUNC(_interfaceCallHelperSingleDynamicSlot,ifCH1)
@@ -2181,7 +2181,7 @@ ZZ # Load the address of lookup class
 
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interfaceCallHelperMultiSlots
+ZZ  PICBuilder routine - _interfaceCallHelperMultiSlots
 ZZ
 ZZ ===================================================================
     START_FUNC(_interfaceCallHelperMultiSlots,ifCHM)
@@ -2300,7 +2300,7 @@ ZZ  so just dispatch
     JZ      ifCHMLcommonJitDispatch
 
 ZZ Try to atomically update lastCachedSlot
-ZZ value to be stored(r1) begining with firstSlot
+ZZ value to be stored(r1) beginning with firstSlot
     L_GPR   r0,eq_firstSlotField_inInterfaceSnippet(r14)
     AHI_GPR r0,-2*PTR_SIZE
 LABEL(ifCHMCSLoopBegin)

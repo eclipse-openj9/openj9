@@ -312,7 +312,7 @@ ZZ  # is the dest. word aligned?
     JNZ       $1PatchLbl1 # no, process accordingly
 
 ZZ
-ZZ 4-bytes patching in word aligneded address.
+ZZ 4-bytes patching in word aligned address.
 ZZ Doing so is straightforward.
 ZZ
     ST        r1,0(r2)              # replace the value

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 #include "il/SymbolReference.hpp"
 #include "compile/ResolvedMethod.hpp"
 
-// only purpose of this class is to test that annoations are working.  Will
+// only purpose of this class is to test that annotations are working.  Will
 // expect specific values
 TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *symRef):
   TR_AnnotationBase(comp)

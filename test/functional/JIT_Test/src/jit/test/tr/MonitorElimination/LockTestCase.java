@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2018 IBM Corp. and others
+ * Copyright (c) 2003, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -342,7 +342,7 @@ class LockThread extends Thread
       return sum;
       }
 
-   // arrangment of synchronized calls should cause the collectPreds and
+   // arrangement of synchronized calls should cause the collectPreds and
    // collectSuccs to bounce around a bit
    private int testSwitch(LockTestDriver to, int x)
       {

@@ -1838,7 +1838,7 @@ osrAllFramesSize(J9VMThread *currentThread, J9JITExceptionTable *metaData, void 
  * Perform an OSR (fill in the OSR buffer) for the frame represented in the stack walk state.
  *
  * Note that the JITted stack frame will be copied to (osrScratchBuffer + osrScratchBufferSize).
- * This function assumes that the buffer has been alllocated large enough.
+ * This function assumes that the buffer has been allocated large enough.
  *
  * @param[in] *currentThread current thread
  * @param[in] *walkState stack walk state (already at the OSR point)

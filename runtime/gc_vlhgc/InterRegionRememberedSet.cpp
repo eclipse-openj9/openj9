@@ -124,7 +124,7 @@ MM_InterRegionRememberedSet::flushBuffersForDecommitedRegions(MM_EnvironmentVLHG
 
 		/* At this point there should be no non-empty buffers used by decommitted regions.
 		 * Now, walk the global pool of free buffers, and remove them from the list if they are owned by decommitted region.
-		 * Before that, move all free buffes from thread local pools to the global
+		 * Before that, move all free buffers from thread local pools to the global
 		 */
 
 		releaseCardBufferControlBlockLocalPools(env);

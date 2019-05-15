@@ -5928,7 +5928,7 @@ TR_CISCTransformer::searchPredecessorOfBlock(TR::Block *block)
 
 //*****************************************************************************************
 // It decides whether we generate versioning code and modifies the target blocks.
-// It returns the block that fast code will be appened.
+// It returns the block that fast code will be appended.
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *startTop, TR::Node *lengthNode, List<TR::Node> *guardList)
@@ -5961,7 +5961,7 @@ TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *
 
 //*****************************************************************************************
 // It decides whether we generate versioning code and modifies the target blocks.
-// It returns the block that fast code will be appeneded.
+// It returns the block that fast code will be appended.
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *startTop, List<TR::Node> *guardList)
@@ -6144,7 +6144,7 @@ TR_CISCTransformer::isDeadStore(TR::Node *node)
 
 //*****************************************************************************************
 // It basically skips blocks containing only a goto statement.
-// It can aditionally skip nodes for dead stores and the node specified by "ignoreTree"
+// It can additionally skip nodes for dead stores and the node specified by "ignoreTree"
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::skipGoto(TR::Block *block, TR::Node *ignoreTree)

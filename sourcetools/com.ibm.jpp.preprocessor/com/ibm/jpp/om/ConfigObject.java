@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,7 +293,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns the flags associaetd with this ConfigObject.
+	 * Returns the flags associated with this ConfigObject.
 	 * <p>
 	 * <b>Note:</b> the flagSet isn't completely correct until updateWithDependencies
 	 * is called, when the removes and adding of sets happens
@@ -305,7 +305,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns the flags associaetd with this ConfigObject.
+	 * Returns the flags associated with this ConfigObject.
 	 * <p>
 	 * <b>Note:</b> the flagSet isn't completely correct until updateWithDependencies
 	 * is called, when the removes and adding of sets happens

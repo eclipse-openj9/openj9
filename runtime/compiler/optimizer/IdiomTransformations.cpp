@@ -104,7 +104,7 @@ static bool avoidTransformingStringLoops(TR::Compilation* comp)
    }
 
 //*****************************************************************************************
-// It partially peels the loop body to aligh the top of the region
+// It partially peels the loop body to align the top of the region
 //*****************************************************************************************
 bool
 ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
@@ -139,7 +139,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
          if (!chk->isOutsideOfLoop())
             {
             if (disptrace) traceMsg(comp, "ChangeAlignmentOfRegion : (t:%d p:%d) no need to change alignment\n",t->getID(),pTop->getID());
-            return changed;        // Find pTop! Already alighed correctly
+            return changed;        // Find pTop! Already aligned correctly
             }
          }
       if (t->getNumSuccs() < 1)

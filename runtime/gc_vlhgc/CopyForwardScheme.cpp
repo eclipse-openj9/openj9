@@ -5487,7 +5487,7 @@ MM_CopyForwardScheme::setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC* env, 
 	}
 
 	region->setAge(newAllocationAge, logicalAge);
-	/* reset aging auxilary datea for future usage */
+	/* reset aging auxiliary datea for future usage */
 	region->setAllocationAgeSizeProduct(0.0);
 
 }

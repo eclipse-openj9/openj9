@@ -115,7 +115,7 @@ public:
 	void acquireVMAccess();
 
 	/**
-	 * Release shared VM acccess.
+	 * Release shared VM access.
 	 */
 	void releaseVMAccess();
 
@@ -137,7 +137,7 @@ public:
 	void acquireExclusiveVMAccess();
 
 	/**
-	 * Release exclusive VM acccess. If no other thread is waiting for exclusive VM access
+	 * Release exclusive VM access. If no other thread is waiting for exclusive VM access
 	 * this method will notify all threads waiting for shared VM access to continue and
 	 * acquire shared VM access.
 	 */

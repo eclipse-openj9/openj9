@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -345,7 +345,7 @@ public class TestLambdaAccessibilityRules {
 		 * lambdaType. The SAM type depends on the value of useSerializable.
 		 *  
 		 * @param testString		The testString to pass into the containing class' method
-		 * @param lambdaType		The accessiblity rule of the method to call
+		 * @param lambdaType		The accessibility rule of the method to call
 		 * @param useSerializable	If true the lambda will be a SAM of the type SerializableCallable<String>,
 		 * 							otherwise it will be a Callable<String>
 		 * @return	The return value of the containing class' method or null if an error occurred
@@ -493,7 +493,7 @@ public class TestLambdaAccessibilityRules {
 		 * outerLambdaType. The SAM type depends on the value of useSerializable.
 		 *  
 		 * @param testString		The testString to pass into the containing class' method
-		 * @param outerLambdaType	The accessiblity rule of the method to call
+		 * @param outerLambdaType	The accessibility rule of the method to call
 		 * @param innerLambdaType	This argument is passed through as the ContainingClassCaller method's lambdaType  
 		 * @param useSerializable	If true the lambda will be a SAM of the type SerializableCallable<String>,
 		 * 							otherwise it will be a Callable<String>

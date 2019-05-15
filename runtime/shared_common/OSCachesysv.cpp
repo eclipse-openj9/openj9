@@ -2156,7 +2156,7 @@ SH_OSCachesysv::checkSharedMemoryAccess(LastErrorInfo *lastErrorInfo)
 						Trc_SHR_OSC_Sysv_checkSharedMemoryAccess_GroupAccessRequired(shmid);
 
 						if (statBuf.perm.isGroupWriteable) {
-							/* The shared memory has group read-write permission set, so this process can use it if 'groupAcccess' option is specified. */
+							/* The shared memory has group read-write permission set, so this process can use it if 'groupAccess' option is specified. */
 							shmAccess = J9SH_SHM_ACCESS_GROUP_ACCESS_REQUIRED;
 						} else {
 							/* The shared memory does not have group write permission set, so this process can use it in readonly mode. */

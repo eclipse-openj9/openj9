@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ MM_VerboseEventMetronomeSynchronousGCEnd::consumeEvents(void)
 
 	/* Find previous (matching) SyncGC start event */
 	if (NULL != (eventSyncGCStart = (MM_VerboseEventMetronomeSynchronousGCStart *)eventStream->returnEvent(J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START, _manager->getPrivateHookInterface(), (MM_VerboseEvent *)this))){
-		/* Copy over all relevant atributes from SyncGC start event, to be used later in formattedOutput */
+		/* Copy over all relevant attributes from SyncGC start event, to be used later in formattedOutput */
 		_heapFreeBefore = eventSyncGCStart->getHeapFree();
 		_startTime = eventSyncGCStart->getTimeStamp();
 		strncpy(_timestamp, eventSyncGCStart->getTimestamp(), 32);		

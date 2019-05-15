@@ -12655,7 +12655,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
 
    /*
     * For reporting field write, reference to the valueNode is needed so we need to store
-    * the value on to a stack location first and pass the stack location address as an arguement
+    * the value on to a stack location first and pass the stack location address as an argument
     * to the VM helper
     */
    if (isWrite)

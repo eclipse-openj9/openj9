@@ -27,7 +27,7 @@
 
 /* Notes on string usage:
  * This details what strings are allocated where and which are null-terminated.
- * String data can either come in from JNI in the jcl helpers (shared.c) or from the boostrap loader.
+ * String data can either come in from JNI in the jcl helpers (shared.c) or from the bootstrap loader.
  * Strings we care about are:
  * - Class name
  * 		In the helper API, UTF bytes/length are obtained from the JNI calls. These are only required for the duration of the find/store call so are not copied.
@@ -2863,7 +2863,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 }
 
 /*
- * Allocates and initiliases SCAbstraceAPI object.
+ * Allocates and initiliases SCAbstractAPI object.
  *
  * @param	vm
  *

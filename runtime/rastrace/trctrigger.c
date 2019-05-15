@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@
  *    action and delay.
  *
  * triggering on methods:
- *    An entry is created in the triggerOnMethods chain, achored off RasGlobalStorage.
+ *    An entry is created in the triggerOnMethods chain, anchored off RasGlobalStorage.
  *    This is known as a method rule.  This contains a RasMethodSpec, as used
  *    in method trace, representing the user entered methodspec.  Whenever a
  *    class is loaded, the classloader calls us.  The class and if necessary its

@@ -2562,7 +2562,7 @@ public class MethodHandles {
 	 * If <i>handle</i> has a void return, <i>filter</i> must not take any parameters.
 	 * 
 	 * @param handle - the MethodHandle that will have its return value adapted
-	 * @param filter - the MethodHandle that will do the return adaption.
+	 * @param filter - the MethodHandle that will do the return adaptation.
 	 * @return a MethodHandle that will run the filter handle on the result of handle.
 	 * @throws NullPointerException - if handle or filter is null
 	 * @throws IllegalArgumentException - if the return type of <i>handle</i> differs from the type of the only argument to <i>filter</i>

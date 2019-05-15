@@ -36,7 +36,7 @@
 
 #define CLOCK_SWITCH_TICK_THRESHOLD 1000000
 #define INTER_YIELD_WARNING_THRESHOLD_NS 80000
-/* INTER_YIELD_WARNING_THRESHOLD_NS indicates that 80 usec for inter-yield checks is alreaady considered large.
+/* INTER_YIELD_WARNING_THRESHOLD_NS indicates that 80 usec for inter-yield checks is already considered large.
  * The largest interval between yield checks should be bounded by 500 usec, which is a HardRT quanta.
  */
 #define INTER_YIELD_MAX_NS 500000

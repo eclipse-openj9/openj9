@@ -6515,7 +6515,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
                      return;
                      }
                   }
-               // If the primitive condy is unresolved, OR resolved but we fail to accquire VM access,
+               // If the primitive condy is unresolved, OR resolved but we fail to acquire VM access,
                // proceed to generate the loads. Store the type signature info in the symbol so it may be
                // retrieved by optimizer later.
                symbolTypeSig = (char*)comp()->trMemory()->allocateMemory(autoboxClassSigLength, heapAlloc);
