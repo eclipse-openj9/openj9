@@ -107,21 +107,25 @@ public class ValueTypeTests {
 	static MethodHandle[] getObjects = null;
 	
 	/* default values */
-	static int[] defaultPointPositions = {0xFFEEFFEE, 0xAABBAABB};
-	static int[][] defaultLinePositions = {defaultPointPositions, defaultPointPositions};
-	static int[][][] defaultTrianglePositions = {defaultLinePositions, defaultLinePositions, defaultLinePositions};
+	static int[] defaultPointPositions1 = {0xFFEEFFEE, 0xAABBAABB};
+	static int[] defaultPointPositions2 = {0xCCDDCCDD, 0x33443344};
+	static int[] defaultPointPositions3 = {0x43211234, 0xABCDDCBA};
+	static int[][] defaultLinePositions1 = {defaultPointPositions1, defaultPointPositions2};
+	static int[][] defaultLinePositions2 = {defaultPointPositions2, defaultPointPositions3};
+	static int[][] defaultLinePositions3 = {defaultPointPositions1, defaultPointPositions3};
+	static int[][][] defaultTrianglePositions = {defaultLinePositions1, defaultLinePositions2, defaultLinePositions3};
 	static long defaultLong = Long.MAX_VALUE;
 	static int defaultInt = Integer.MAX_VALUE;
 	static double defaultDouble = Double.MAX_VALUE;
 	static float defaultFloat = Float.MAX_VALUE;
 	static Object defaultObject = (Object)0xEEFFEEFF;
-	static int[] defaultPointPositionsNew = {0xFFEEFFAA, 0xFFEEFFAA};
-	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositionsNew};
-	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositionsNew, defaultLinePositionsNew};
-	static long defaultLongNew = Long.MIN_VALUE;
-	static int defaultIntNew = Integer.MIN_VALUE;
-	static double defaultDoubleNew = Double.MIN_VALUE;
-	static float defaultFloatNew = Float.MIN_VALUE;
+	static int[] defaultPointPositionsNew = {0xFF112233, 0xFF332211};
+	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositions1};
+	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositions3, defaultLinePositions1};
+	static long defaultLongNew = -1234123L;
+	static int defaultIntNew = -1234123234;
+	static double defaultDoubleNew = -123412341.21341234d;
+	static float defaultFloatNew = -123423.12341234f;
 	static Object defaultObjectNew = (Object)0xFFEEFFEE;
 	
 	@BeforeClass
@@ -682,7 +686,13 @@ public class ValueTypeTests {
 
 		MethodHandle[][] getterAndWither = {{getV1, withV1}, {getV2, withV2}, {getV3, withV3}};
 		Object triangle2D = createTriangle2D(defaultTrianglePositions);
-		checkFieldAccessMHOfAssortedType(getterAndWither, triangle2D, fields, true);
+		checkEqualTriangle2D(triangle2D, defaultTrianglePositions);
+		
+		for (int i = 0; i < getterAndWither.length; i++) {
+			triangle2D = getterAndWither[i][1].invoke(triangle2D, createFlattenedLine2D(defaultTrianglePositionsNew[i]));
+		}
+		
+		checkEqualTriangle2D(triangle2D, defaultTrianglePositionsNew);
 	}
 
 	/*
@@ -1355,10 +1365,10 @@ public class ValueTypeTests {
 			String signature = nameAndSigValue[1];
 			switch (signature) {
 			case "QPoint2D;":
-				args[i] = createPoint2D(defaultPointPositions);
+				args[i] = createPoint2D(defaultPointPositions1);
 				break;
 			case "QFlattenedLine2D;":
-				args[i] = createFlattenedLine2D(defaultLinePositions);
+				args[i] = createFlattenedLine2D(defaultLinePositions1);
 				break;
 			case "QTriangle2D;":
 				args[i] = createTriangle2D(defaultTrianglePositions);
@@ -1397,7 +1407,7 @@ public class ValueTypeTests {
 			String signature = nameAndSigValue[1];
 			switch (signature) {
 			case "QPoint2D;":
-				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositions);
+				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositions1);
 				Object pointNew = createPoint2D(defaultPointPositionsNew);
 				if (ifValue) {
 					instance = fieldAccessMHs[i][1].invoke(instance, pointNew);
@@ -1407,7 +1417,7 @@ public class ValueTypeTests {
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositionsNew);
 				break;
 			case "QFlattenedLine2D;":
-				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositions);
+				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositions1);
 				Object lineNew = createFlattenedLine2D(defaultLinePositionsNew);
 				if (ifValue) {
 					instance = fieldAccessMHs[i][1].invoke(instance, lineNew);
@@ -1512,5 +1522,9 @@ public class ValueTypeTests {
 		for (int i = 0; i < 16; i++) {
 			assertEquals(getObject.invoke(getObjects[i].invoke(largeObject)), contentObject);
 		}
+	}
+	
+	static void checkObject(Object ...objects) {
+		com.ibm.jvm.Dump.SystemDump();
 	}
 }
