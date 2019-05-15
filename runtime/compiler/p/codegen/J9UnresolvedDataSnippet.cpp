@@ -69,7 +69,6 @@ J9::Power::UnresolvedDataSnippet::UnresolvedDataSnippet(
 
 uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t *cursor = cg()->getBinaryBufferCursor();
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -259,8 +258,6 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    {
-
-   // *this  swipeable for debugger
    uint8_t            *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
@@ -360,7 +357,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
 
 uint32_t J9::Power::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    TR::Compilation* comp = cg()->comp();
    return 28+2*TR::Compiler->om.sizeofReferenceAddress();
    }

@@ -402,7 +402,6 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCastSnippet * snippet)
    {
-   // *this  swipeable for debugger
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
    bool     checkcast = snippet->isCheckCast();
