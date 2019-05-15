@@ -673,7 +673,7 @@ def setup_pull_request() {
     PARSED_PLATFORMS.each { SHORT ->
         LONG_PLATFORM = SHORT_NAMES["${SHORT}"]
         if (LONG_PLATFORM) {
-            PLATFORMS.add(LONG_PLATFORM)
+            PLATFORMS.addAll(LONG_PLATFORM)
         } else {
             error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${SHORT_NAMES}")
         }
