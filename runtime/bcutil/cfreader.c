@@ -2179,7 +2179,7 @@ _errorFound:
  *	- or major version > maximum allowed
  *	- or if the runtime version is Java 8 (major version 52) and
  *		-  major version is 52 and minor version is non-zero
- *	- or if the runtime version is greater than Java 8 and:
+ *	- or if the runtime version is greater than Java 11 and:
  *		- [major version > 45] and [minor version is not 0 or -1 (0xFFFF)]
  *		- or minor version == 0xffff and
  *			(--enable-preview is not set or major version != runtime version or major version < 55)
@@ -2207,17 +2207,16 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 			}
 		}
 		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
-	} else if (majorVersion >= 45) {
-		if (majorVersion < 52) {
-			/* versions prior to Java 8, allow any minor */
+	} else if ((majorVersion >= 45) && (majorVersion < max_allowed_version)) {
+		if (majorVersion <= 55) {
+			/* versions prior to and including Java 11, allow any minor */
 			return 0;
-		} else if (majorVersion < max_allowed_version) {
-			/* only .0 is the only valid minor version for this range */
-			if (0 == minorVersion) {
-				return 0;
-			}
-			errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 		}
+		/* only .0 is the only valid minor version for this range */
+		if (0 == minorVersion) {
+			return 0;
+		}
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 	}
 
 	buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, offset);
