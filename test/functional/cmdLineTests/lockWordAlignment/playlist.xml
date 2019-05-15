@@ -40,8 +40,12 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
-		<test>
+	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_Standard</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -58,5 +62,9 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

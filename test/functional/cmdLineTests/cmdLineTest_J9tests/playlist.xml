@@ -41,6 +41,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	
 	<test>
@@ -61,6 +65,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	
 	<test>
@@ -108,5 +116,9 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>ibm</impl>
+			<impl>openj9</impl>
+		</impls>
 	</test>
 </playlist>
