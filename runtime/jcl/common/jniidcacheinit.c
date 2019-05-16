@@ -105,7 +105,8 @@ initializeJavaLangStringIDCache(JNIEnv* env)
 
 
 /**
- * Initializes sun/reflect/ConstantPool class ID and constantPoolOop field ID in JniIDCache struct 
+ * Initializes sun/reflect/ConstantPool (Java 8) or jdk/internal/reflect/ConstantPool (Java 11+) class ID 
+ * and constantPoolOop field ID in JniIDCache struct 
  *
  * @param[in] env The JNI env
  *
@@ -114,69 +115,66 @@ initializeJavaLangStringIDCache(JNIEnv* env)
 BOOLEAN 
 initializeSunReflectConstantPoolIDCache(JNIEnv* env) 
 {
-
-	jclass sunReflectConstantPool;
-	jfieldID fieldID;
-	jobject globalClassRef;
-	BOOLEAN isGlobalRefRedundant=FALSE;
-	BOOLEAN isClassIDAlreadyCached=TRUE;
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+	BOOLEAN isClassIDAlreadyCached = TRUE;
+	BOOLEAN result = TRUE;
 	
-	/* Initializing java/net/Socket class ID */
-	/* Check if java/net/Socket class ID hasn't been cached yet */
 	omrthread_monitor_enter(javaVM->jclCacheMutex);
-
-	if (JCL_CACHE_GET(env, CLS_sun_reflect_ConstantPool) == NULL) {
-		isClassIDAlreadyCached=FALSE;
+	if (NULL == JCL_CACHE_GET(env, CLS_sun_reflect_ConstantPool)) {
+		isClassIDAlreadyCached = FALSE;
 	}
-
 	omrthread_monitor_exit(javaVM->jclCacheMutex);
 		
 	if (!isClassIDAlreadyCached) {	
+		jclass sunReflectConstantPool = NULL;
 
-		/* Load sun/reflect/ConstantPool */
+		/* Load sun/reflect/ConstantPool (Java 8) or jdk/internal/reflect/ConstantPool (Java 11+) */
 		if (J2SE_VERSION(javaVM) >= J2SE_V11) {
 			sunReflectConstantPool = (*env)->FindClass(env, "jdk/internal/reflect/ConstantPool");
 		} else {
 			sunReflectConstantPool = (*env)->FindClass(env, "sun/reflect/ConstantPool");
 		}
-		if (sunReflectConstantPool == NULL) {
+		if (NULL == sunReflectConstantPool) {
 			/* exception thrown */
-			return FALSE; 		
-		}
-	
-		globalClassRef = (*env)->NewGlobalRef(env, sunReflectConstantPool);
-		if (globalClassRef == NULL) {
-			/* out of memory exception thrown */
-			javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
-			return FALSE; 
-		}
-		
-		/* Allow the local reference sunReflectConstantPool to be garbage collected immediately */ 
-		(*env)->DeleteLocalRef(env,sunReflectConstantPool);
-
-		/* Initializing sun/reflect/ConstantPool constantPoolOop field ID */
-		fieldID = (*env)->GetFieldID(env, globalClassRef, "constantPoolOop", "Ljava/lang/Object;");
-		if (fieldID == NULL) {
-			return FALSE;
-		}
-
-		omrthread_monitor_enter(javaVM->jclCacheMutex);
-
-		if (JCL_CACHE_GET(env,CLS_sun_reflect_ConstantPool) == NULL) {
-			JCL_CACHE_SET(env, CLS_sun_reflect_ConstantPool, globalClassRef);
-			JCL_CACHE_SET(env, FID_sun_reflect_ConstantPool_constantPoolOop, fieldID);
-		}
-		else {
-			isGlobalRefRedundant=TRUE;
-		}
-
-		omrthread_monitor_exit(javaVM->jclCacheMutex);
-	
-		if (isGlobalRefRedundant == TRUE) {
-			(*env)->DeleteGlobalRef(env,globalClassRef);
+			result = FALSE;
+		} else {
+			jobject globalClassRef = (*env)->NewGlobalRef(env, sunReflectConstantPool);
+			/* Allow the local reference sunReflectConstantPool to be garbage collected immediately */
+			(*env)->DeleteLocalRef(env, sunReflectConstantPool);
+			if (NULL == globalClassRef) {
+				/* out of memory exception thrown */
+				javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
+				result = FALSE;
+			} else {
+				/* Initializing constantPoolOop field ID */
+				jfieldID fieldID = (*env)->GetFieldID(env, globalClassRef, "constantPoolOop", "Ljava/lang/Object;");
+				if (NULL == fieldID) {
+					result = FALSE;
+				} else {
+					BOOLEAN isGlobalRefRedundant = FALSE;
+			
+					omrthread_monitor_enter(javaVM->jclCacheMutex);
+					if (NULL == JCL_CACHE_GET(env,CLS_sun_reflect_ConstantPool)) {
+						/* Set FID_sun_reflect_ConstantPool_constantPoolOop first and CLS_sun_reflect_ConstantPool afterwards,
+						 * read CLS_sun_reflect_ConstantPool first in java_lang_Access.c:Java_java_lang_Access_getConstantPool(),
+						 * if NULL is returned, initializeSunReflectConstantPoolIDCache() is invoked to 
+						 * set FID_sun_reflect_ConstantPool_constantPoolOop, next read it and de-reference.
+						 * Otherwise, a NULL FID_sun_reflect_ConstantPool_constantPoolOop could be returned and cause gpf later.
+						 */
+						JCL_CACHE_SET(env, FID_sun_reflect_ConstantPool_constantPoolOop, fieldID);
+						issueWriteBarrier();
+						JCL_CACHE_SET(env, CLS_sun_reflect_ConstantPool, globalClassRef);
+					} else {
+						isGlobalRefRedundant = TRUE;
+					}
+					omrthread_monitor_exit(javaVM->jclCacheMutex);
+				
+					if (isGlobalRefRedundant) {
+						(*env)->DeleteGlobalRef(env, globalClassRef);
+					}
+				}
+			}
 		}
 	}
-	return TRUE;
+	return result;
 }
-
