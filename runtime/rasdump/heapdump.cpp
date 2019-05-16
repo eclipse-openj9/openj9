@@ -2174,7 +2174,7 @@ BinaryHeapDumpWriter::writeClassRecord(J9Class *currentClass)
 		return;
 	}
 
-	/* Write the comibined number of references */
+	/* Write the combined number of references */
 	writeNumber(instanceActiveReferenceCount + staticActiveReferenceCount, 4);
 	if (_Error) {
 		return;

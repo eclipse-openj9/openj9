@@ -1552,7 +1552,7 @@ dfp2fpHelper(TR::Node * node, TR::CodeGenerator * cg)
       bits 58-59:   Target-radix-dependent controls
       bits 60-63:   PFPO rounding method
 **********************************************************/
-   int32_t funcCode = 0x01 << 24;   // perform radix convertion
+   int32_t funcCode = 0x01 << 24;   // perform radix conversion
    int32_t srcTypeCode, tgtTypeCode;
    switch (tgtType)
       {

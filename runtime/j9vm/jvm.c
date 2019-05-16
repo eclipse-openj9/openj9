@@ -2228,7 +2228,7 @@ int isFileInDir(char *dir, char *file){
 	int foundFile = 0;
 
 	dirLength = strlen(dir);
-	/* Constuct 'full' path */
+	/* Construct 'full' path */
 	if (dir[dirLength-1] == DIR_SEPARATOR) {
 		/* remove trailing '/' */
 		dir[dirLength-1] = '\0';

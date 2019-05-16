@@ -1710,7 +1710,7 @@ releaseLockCheck:
  * Checks whether existing cache is compatible with options specified on command-line.
  * This is called by startup().
  *
- * @param [in] curretThread  current VM thread
+ * @param [in] currentThread  current VM thread
  *
  * @return true if cache is compatible, else false.
  */
@@ -4179,7 +4179,7 @@ SH_CompositeCacheImpl::notifyRefreshMutexExited(J9VMThread* currentThread)
 }
 
 /* Since the cache header and the readWrite area may in the same page, protecting and unprotecting
- * these areas must be co-ordinated. On entry to this function, it should be possible for 3 states:
+ * these areas must be coordinated. On entry to this function, it should be possible for 3 states:
  * 1) Neither area is protected (another thread is changing the areas)
  * 2) Only the readWrite area is protected (another thread is changing the header)
  * 3) Both areas are protected

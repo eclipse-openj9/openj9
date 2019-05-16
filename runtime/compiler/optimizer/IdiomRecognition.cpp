@@ -4991,7 +4991,7 @@ TR_CISCTransformer::areAllNodesIncluded(TR_CISCNodeRegion *r)
          }
       }
 
-   // Reset the ID of the idiom nodes correspoing to each target node in the region r.
+   // Reset the ID of the idiom nodes corresponding to each target node in the region r.
    ni.set((ListHeadAndTail<TR_CISCNode>*)r);
    for (t = ni.getFirst(); t; t = ni.getNext())
       {
@@ -7170,7 +7170,7 @@ TR_CISCTransformer::countGoodArrayIndex(TR::SymbolReference *inductionVariableSy
 
 //*****************************************************************************
 // It performs very simple optimizations using UD/DU chains.
-// Curretly, it performs:
+// Currently, it performs:
 //   (1) redundant BNDCHK elimination. necessary for very early phase, such as in the earlyGlobalOpts phase
 //*****************************************************************************
 bool
@@ -7559,7 +7559,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
    T->importUDchains(comp(), _useDefInfo);
 
    // It performs very simple optimizations using UD/DU chains.
-   // Curretly, it performs:
+   // Currently, it performs:
    //   (1) redundant BNDCHK elimination.
    simpleOptimization();
    if (trace())

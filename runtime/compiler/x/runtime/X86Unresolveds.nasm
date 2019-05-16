@@ -1319,7 +1319,7 @@ patchOverMfence:
 
 patchWith3ByteNOP:
 
-      mov         ecx, dword  [rax]                   ; load existing double word containg mfence
+      mov         ecx, dword  [rax]                   ; load existing double word containing mfence
       and         ecx, 0ff000000h                     ; insert trailing byte of 3 word nop
       or          ecx, 000001f0fh                     ; load the the first 2 bytes of the 3 word nop
       mov         dword  [rax], ecx                   ; write the nop

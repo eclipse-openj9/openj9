@@ -58,7 +58,7 @@
       const char *fieldStr;   // "<field>"
       uint16_t fieldLen;
       const char *sigStr;    // "<signature>"
-      uint16_t totalLen;      // should be compatable with TR_ResolvedMethod->fieldName()
+      uint16_t totalLen;      // should be compatible with TR_ResolvedMethod->fieldName()
       };
    #define r(id, c, f, s)   id, c, sizeof(c)-1, f, sizeof(f)-1, s, (sizeof(c)-1)+(sizeof(f)-1)+(sizeof(s)-1) + 3
 

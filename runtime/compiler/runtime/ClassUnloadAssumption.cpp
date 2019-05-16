@@ -112,7 +112,7 @@ TR_PersistentClassInfo::removeUnloadedSubClasses()
          //printf("***removing subClass %p\n",scl->getClassInfo()->getClassId());
          // fflush(stdout);
 
-         //carefull
+         //careful
          _subClasses.removeAfter(prevScl,scl);
          jitPersistentFree(scl);
          }

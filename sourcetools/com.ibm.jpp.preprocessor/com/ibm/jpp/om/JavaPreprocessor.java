@@ -1684,7 +1684,7 @@ public class JavaPreprocessor {
 		}
 
 		// Find the last ']' on the line to allow arguments to include that
-		// character, but this means that ']' cannot be used in commments
+		// character, but this means that ']' cannot be used in comments
 		// after the command on the same line.
 		int positionOfClose = lineLength;
 

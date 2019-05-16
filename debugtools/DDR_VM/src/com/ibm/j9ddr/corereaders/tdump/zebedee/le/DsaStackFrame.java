@@ -547,7 +547,7 @@ public class DsaStackFrame {
                 if (in_dsafmt == US_FORMAT) {
                     next_instruction_address = CeedsaTemplate.getCeedsar14(inputStream, in_dsa);
                 } else {
-                    /* Downstack DSA.  The return address is in the calless DSA. If the
+                    /* Downstack DSA.  The return address is in the callees DSA. If the
                      * callee dsa was supplied, obtain the return address from reg7.
                      * If no callee DSA, see if the CAA is also CEEKTBCK's CAA. If they 
                      * are the same, this means that the DSA is on CEEKTBCK's BackChain.

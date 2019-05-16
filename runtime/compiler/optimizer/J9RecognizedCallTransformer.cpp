@@ -214,7 +214,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
    if (isNotStaticField)
       {
-      // It is safe to skip diamond, the address can be calaulated directly via [object+offset]
+      // It is safe to skip diamond, the address can be calculated directly via [object+offset]
       address = TR::Compiler->target.is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode, TR::Node::create(TR::l2i, 1, offsetNode)) :
                                               TR::Node::create(TR::aladd, 2, objectNode, offsetNode);
       if (enableTrace)

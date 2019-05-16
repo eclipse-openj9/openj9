@@ -1135,7 +1135,7 @@ TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, cons
 
    /*
     * Re-process arguments here
-    * The delimiter is space or comma (maintain compatability with j9)
+    * The delimiter is space or comma (maintain compatibility with j9)
     * The algorithm is not bullet proof, but should be sufficient for us
     */
    #define ARGSIZE 200

@@ -392,7 +392,7 @@ done:
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param object[in] the object whose monitor was just entered
-	 * @param arg0EA[in] the curent arg0EA
+	 * @param arg0EA[in] the current arg0EA
 	 *
 	 * @returns	true on success, false if out of memory
 	 */

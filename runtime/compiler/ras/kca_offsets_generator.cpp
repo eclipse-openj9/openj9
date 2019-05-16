@@ -22,7 +22,7 @@
 
 /*
   * This file is used to write a header file that can be used with KCA so
-  * that it knows the offset information required to corrently work with this
+  * that it knows the offset information required to correctly work with this
   * JVM.
   *
   * How to modify:

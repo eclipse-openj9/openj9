@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ public class DTFJJavaThread implements JavaThread
 			
 				imageThread = imageProcess.getThread(tid);
 							
-				//We could't match one of the "proper" ImageThreads - so we'll return a stub image thread instead.
+				//We couldn't match one of the "proper" ImageThreads - so we'll return a stub image thread instead.
 				if (null == imageThread) {
 					imageThread = new J9DDRStubImageThread(DTFJContext.getProcess(), tid);
 				}

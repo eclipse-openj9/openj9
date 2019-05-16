@@ -3299,7 +3299,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
 
       // dont inline methods that contain the NumberFormat pattern
       // this is because we want to catch the opportunity with stringpeepholes
-      // and stringpeepholes runs before inliner. so if the callemethod contained
+      // and stringpeepholes runs before inliner. so if the calleemethod contained
       // the pattern and it got inlined, we would never find the pattern
       isDecimalFormatPattern(comp, target->_calleeMethod))
       {

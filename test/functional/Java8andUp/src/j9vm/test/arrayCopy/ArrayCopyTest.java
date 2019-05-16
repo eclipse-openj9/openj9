@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
 /**
- * version 2.0 Test corectness of ArrayCopy implementations - References must be
+ * version 2.0 Test correctness of ArrayCopy implementations - References must be
  * copied atomically - Test Forward and Backward copy directions
  */
 public class ArrayCopyTest {
@@ -619,7 +619,7 @@ public class ArrayCopyTest {
 
 			System.arraycopy(a, 0, tmp, 0, size);
 
-			/* Copy array by not overlaped chuncks */
+			/* Copy array by not overlaped chunks */
 			for (int i = 0; i < iterations - 1; i++) {
 				System.arraycopy(a, (i + 1) * size, a, i * size, size);
 			}
@@ -686,7 +686,7 @@ public class ArrayCopyTest {
 
 			System.arraycopy(a, a.length - size, tmp, 0, size);
 
-			/* Copy array by not overlaped chuncks */
+			/* Copy array by not overlaped chunks */
 			for (int i = 1; i < iterations; i++) {
 				System.arraycopy(a, a.length - (i + 1) * size, a, a.length - i
 						* size, size);

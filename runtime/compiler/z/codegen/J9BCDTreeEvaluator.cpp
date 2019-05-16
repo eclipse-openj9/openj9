@@ -2764,7 +2764,7 @@ J9::Z::TreeEvaluator::pdcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->traceBCDEntry("pdcmpeq",node);
    cg->generateDebugCounter("PD-Op/pdcmpeq", 1, TR::DebugCounter::Cheap);
 
-   // to support castedToBCD have to ensure generateS390CompareBool generates logical comparision only and not CP
+   // to support castedToBCD have to ensure generateS390CompareBool generates logical comparison only and not CP
    TR_ASSERT(node->castedToBCD() == false,"castedToBCD=true not supported for %s (%p)\n",node->getOpCode().getName(),node);
    TR::Register *targetReg = NULL;
 

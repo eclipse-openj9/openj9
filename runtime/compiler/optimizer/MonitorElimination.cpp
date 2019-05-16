@@ -3623,7 +3623,7 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
                if (!(*_subtraction == *_intersection))
                   {
                   //
-                  // Loops in coarsensed range are the only reason we
+                  // Loops in coarsened range are the only reason we
                   // could not coarsen; check if the locked code is simple (no side-effects).
                   // In that case we can merge the code from the locked code
                   // into previous locked region of code.
@@ -3894,7 +3894,7 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
                if (!(*_subtraction == *_intersection))
                   {
                   //
-                  // Loops in coarsensed range are the only reason we
+                  // Loops in coarsened range are the only reason we
                   // could not coarsen; check if the locked code is simple (no side-effects).
                   // In that case we can merge the code from the locked code
                   // into previous locked region of code.

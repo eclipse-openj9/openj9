@@ -294,7 +294,7 @@ J9::Recompilation::endOfCompilation()
       _bodyInfo->setHasLoops        (_compilation->mayHaveLoops());
       _bodyInfo->setUsesPreexistence(_compilation->usesPreexistence());
 
-      // if the only future compliation can be a forced one (preexistence)
+      // if the only future compilation can be a forced one (preexistence)
       // do not sample this method.  If this is a counting based compilation
       // disable sampling as well
       //

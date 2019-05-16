@@ -873,7 +873,7 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
 #if defined (LINUXPPC64) || (defined (AIXPPC) && defined (PPC64)) || defined (J9ZOS39064)
 		/* there was a bug in Sovereign VMs on these platforms where jsize was defined to
 		 * be 64-bits, rather than the 32-bits required by the JNI spec. Provide backwards
-		 * compatability if the JAVA_JSIZE_COMPAT environment variable is set
+		 * compatibility if the JAVA_JSIZE_COMPAT environment variable is set
 		 */
 		if (getenv("JAVA_JSIZE_COMPAT")) {
 			*(jlong*)nVMs = (jlong)0;
@@ -1215,7 +1215,7 @@ getjvmBin(BOOLEAN removeSubdir)
 		/* remove jvm.dll */
 		truncatePath(jvmBufferData(buffer), FALSE);
 	}
-	/* remove jvm.dll or classis */
+	/* remove jvm.dll or classes */
 	truncatePath(jvmBufferData(buffer), TRUE);
 
 	return buffer;
@@ -1365,7 +1365,7 @@ isFileInDir(char *dir, char *file)
 	char *fullpath;
 	FILE *f;
 
-	/* Constuct 'full' path */
+	/* Construct 'full' path */
 	if (dir[strlen(dir)-1] == DIR_SLASH_CHAR) {
 		/* remove trailing DIR_SLASH_CHAR */
 		dir[strlen(dir)-1] = '\0';

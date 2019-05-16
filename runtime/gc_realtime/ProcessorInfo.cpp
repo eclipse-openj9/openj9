@@ -53,7 +53,7 @@ bool
 MM_ProcessorInfo::initialize(MM_EnvironmentBase *env)
 {
 #if defined(AIXPPC) || defined(WIN32)
-	/* on AIX and Windows we don't use tick based timer so no need to calculte CPU clock frequency */
+	/* on AIX and Windows we don't use tick based timer so no need to calculate CPU clock frequency */
 	return true;
 #else
 	_freq = readFrequency();

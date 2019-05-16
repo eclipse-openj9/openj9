@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -161,7 +161,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 				Assert.fail("Please check the url supplied to JMXServiceURL!");
 			} catch (IOException e) {
 				/*
-				 * Waiting 1000 ms before retrying to connnect to remote server.
+				 * Waiting 1000 ms before retrying to connect to remote server.
 				 */
 				logger.error("Failed connecting. Retry " + retryCounter + " after 1000 ms.");
 

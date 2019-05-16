@@ -114,7 +114,7 @@ extern "C" {
 #define FIND_NEXT_ARG_IN_VMARGS_FORWARD(match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
 #define FIND_AND_CONSUME_ARG_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match | SEARCH_FORWARD), optionName, optionValue, TRUE)
 
-/* REMOVE - FOR BACKWARDS COMPATABILITY */
+/* REMOVE - FOR BACKWARDS COMPATIBILITY */
 #define FIND_AND_CONSUME_ARG2(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, TRUE)
 #define VMARGS_OPTION(element) vm->vmArgsArray->actualVMArgs->options[element].optionString
 #define GET_OPTION_VALUE2(element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, resultPtr, 0, delimChar, 0, NULL)

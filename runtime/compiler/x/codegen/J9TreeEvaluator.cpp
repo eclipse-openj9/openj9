@@ -4332,7 +4332,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
       //64 bit sequence
       //
       //Generate a call to the out-of-line patching sequence.
-      //This sequence will conver the call back into an asynch message check cmp
+      //This sequence will convert the call back into an asynch message check cmp
       //
       TR::LabelSymbol *gcMapPatchingLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *outlinedStartLabel = generateLabelSymbol(cg);
@@ -4415,7 +4415,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
       //
 
       //Generate a call to the out-of-line patching sequence.
-      //This sequence will conver the call back into an asynch message check cmp
+      //This sequence will convert the call back into an asynch message check cmp
       //
       TR::LabelSymbol *gcMapPatchingLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *outlinedStartLabel = generateLabelSymbol(cg);
@@ -9260,7 +9260,7 @@ inlineMathSQRT(
 //    cmp i, end -3
 //    jge SSEloop
 // xmm0 = load 16 bytes align [31^3, 31^2, 31, 1]
-// xmm1 = xmm1 * xmm0      value containst [a0, a1, a2, a3]
+// xmm1 = xmm1 * xmm0      value contains [a0, a1, a2, a3]
 // xmm0 = xmm1
 // xmm0 = xmm0 >> 64 bits
 // xmm1 = xmm1 + xmm0       reduce add [a0+a2, a1+a3, .., ...]
@@ -12285,7 +12285,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
       };
 
    TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
-   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # charater to # byte
+   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # character to # byte
    // conversion will cause overflow.
    if (!TR::Compiler->target.is64Bit() && !manager.isCompressedString())
       {
@@ -12336,7 +12336,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    auto srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, headerSize, cg);
    generateRegMemInstruction(MOVDQURegMem, node, xmmRegArrayContentCopy0, srcArrayMemRef, cg);
 
-   //detect invalid charactors
+   //detect invalid characters
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
    cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,

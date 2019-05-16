@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -680,7 +680,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 			/* The amount of data we expect in the previous buffer and the amount actually there don't match.
 			 * This implies:
 			 *   a. missing data inbetween the end of the stream and the start of this buffer
-			 *   b. corrputed trace data
+			 *   b. corrupted trace data
 			 *   c. incorrect parsing
 			 *   
 			 * We throw away the mismatched parts as they're inconsistent.

@@ -390,7 +390,7 @@ DDR_SED_COMMAND := \
 
 </#if>
 <#if !(uma.spec.type.aix || uma.spec.type.zos)>
-# compileation rule for .asm files
+# compilation rule for .asm files
 <#if uma.spec.type.windows>
 %$(UMA_DOT_O): %.asm
 	$(AS) $(ASFLAGS) $<

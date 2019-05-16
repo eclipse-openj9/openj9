@@ -116,7 +116,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_FATAL "fatal"
 #define OPTION_SILENT "silent"
 #define OPTION_NONE "none"
-#define OPTION_CONTROLDIR_EQUALS "controlDir="		/* purely for java5 compatability */
+#define OPTION_CONTROLDIR_EQUALS "controlDir="		/* purely for java5 compatibility */
 #define OPTION_NOAOT "noaot"
 #define OPTION_PERSISTENT "persistent"
 #define OPTION_NONPERSISTENT "nonpersistent"
@@ -134,8 +134,8 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_RESTORE_FROM_SNAPSHOT "restoreFromSnapshot"
 #define OPTION_PRINT_SNAPSHOTNAME "printSnapshotFilename"
 #endif /* !defined(WIN32) */
-#define OPTION_SINGLEJVM "singleJVM"		/* purely for java5 compatability */
-#define OPTION_KEEP "keep"					/* purely for java5 compatability */
+#define OPTION_SINGLEJVM "singleJVM"		/* purely for java5 compatibility */
+#define OPTION_KEEP "keep"					/* purely for java5 compatibility */
 #define OPTION_MPROTECT_EQUALS "mprotect="
 #define SUB_OPTION_MPROTECT_ALL "all"
 #define SUB_OPTION_MPROTECT_ONFIND "onfind"

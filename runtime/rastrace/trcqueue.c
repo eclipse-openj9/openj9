@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@
  * value of zero as a definitive indication that the message is finished with.
  *
  * Complexity is introduced by subscriptions and unsubscriptions. In these cases we need to ensure that the
- * message->subscriptions value is consitent with the actual number of subscribers that will process it.
+ * message->subscriptions value is consistent with the actual number of subscribers that will process it.
  *
  * In order to maintain the consistency between number and state of subscribers and the message subscriptions
  * we need to know exactly which message is the last queued before we update the global queue->subscriptions

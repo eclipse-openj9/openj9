@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,7 @@ public:
 	/* 
 	 * Mode is used to indicate the transition from one cursor type 
 	 * to another.  This feature was specifically added to enable
-	 * the comparision of ROMClass that had debug information out of line.
+	 * the comparison of ROMClass that had debug information out of line.
 	 * 
 	 * This was required to support the ComparingCursor and ComparingCursorHelper model.
 	 */

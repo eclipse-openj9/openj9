@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -557,9 +557,9 @@ extern J9_CFUNC int32_t j9port_allocate_library(struct J9PortLibraryVersion *exp
 /** @} */
 
 /**
- * @name Port library version and compatability queries
+ * @name Port library version and compatibility queries
  * @anchor PortVersionControl
- * Determine port library compatability and version.
+ * Determine port library compatibility and version.
  * @{
  */
 extern J9_CFUNC uintptr_t j9port_getSize(struct J9PortLibraryVersion *version);
