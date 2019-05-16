@@ -489,3 +489,30 @@ PROTO_CMD?=protoc
 SOLINK_SLINK+=protobuf ssl
 
 CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI
+
+ifneq ($(OPENSSL_CFLAGS),)
+    ADD_OPENSSL_CFLAGS=false
+    # --with-openssl=system, OPENSSL_LIBS looks like "-L/path/to/system/openssllib -lssl -lcrypto"
+    ifneq ($(OPENSSL_LIBS),)
+        SOLINK_LIBPATH+=$(subst -L,,$(firstword $(OPENSSL_LIBS)))
+        ADD_OPENSSL_CFLAGS=true
+    else
+        # --with-openssl=fetched --enable-openssl-bundling
+        ifneq ($(OPENSSL_BUNDLE_LIB_PATH),)
+            SOLINK_LIBPATH+=$(OPENSSL_BUNDLE_LIB_PATH)
+            SOLINK_FLAGS+=-Wl,-rpath,\$$ORIGIN/..
+            ADD_OPENSSL_CFLAGS=true
+        else
+	    # --with-openssl=fetched only
+            ifneq ($(OPENSSL_DIR),)
+                SOLINK_LIBPATH+=$(OPENSSL_DIR)
+                ADD_OPENSSL_CFLAGS=true
+            endif
+        endif
+    endif
+
+    ifeq (true, $(ADD_OPENSSL_CFLAGS))
+        C_INCLUDES+=$(subst -I,,$(OPENSSL_CFLAGS))
+        CXX_INCLUDES+=$(subst -I,,$(OPENSSL_CFLAGS))
+    endif
+endif
