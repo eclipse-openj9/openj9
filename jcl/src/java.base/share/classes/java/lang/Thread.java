@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -347,6 +347,12 @@ public Thread(ThreadGroup group, Runnable runnable, String threadName, long stac
  */
 public Thread(ThreadGroup group, Runnable runnable, String threadName) {
 	this(group, runnable, threadName, null, true);
+}
+
+Thread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader) {
+	this(isSystemThreadGroup ? systemThreadGroup : null, runnable, threadName, null, inheritThreadLocals);
+	this.isDaemon = isDaemon;
+	this.contextClassLoader = contextClassLoader;
 }
 
 private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessControlContext acc, boolean inheritThreadLocals) {
