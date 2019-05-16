@@ -1523,6 +1523,11 @@ createMethodMetaData(
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing;
          }
 
+      if (comp->getOption(TR_DisableTM))
+         {
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_TMDisabled;
+         }
+
       // totalAllocated space is in comp object
       TR_ASSERT(comp->getTotalNeededDataCacheSpace() == aotMethodHeaderEntry->compileMethodDataSize, "Size missmatach");
       }

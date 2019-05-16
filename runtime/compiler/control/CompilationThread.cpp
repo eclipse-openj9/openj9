@@ -1803,6 +1803,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateStringCompressionFailure:
             case compilationSymbolValidationManagerFailure:
             case compilationAOTNoSupportForAOTFailure:
+            case compilationAOTValidateTMFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;

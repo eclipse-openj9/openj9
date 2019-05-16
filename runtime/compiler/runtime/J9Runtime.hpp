@@ -170,6 +170,7 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_UsesEnableStringCompressionFolding        0x00000008
 #define TR_AOTMethodHeader_StringCompressionEnabled                  0x00000010
 #define TR_AOTMethodHeader_UsesSymbolValidationManager               0x00000020
+#define TR_AOTMethodHeader_TMDisabled                                0x00000040
 
 
 
