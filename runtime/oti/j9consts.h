@@ -326,7 +326,7 @@ extern "C" {
 /* constants for J9JavaVM.extendedRuntimeFlags2 */
 #define J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA 0x1
 #define J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES 0x2
-#define J9_EXTENDED2_RUNTIME_ENABLE_PREVIEW 0x4
+#define J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW 0x4
 
 
 /* TODO: Define this until the JIT removes it */
