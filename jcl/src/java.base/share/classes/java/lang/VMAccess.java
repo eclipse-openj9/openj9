@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,4 +216,8 @@ final class VMAccess implements VMLangAccess {
 	}
 	/*[ENDIF] Sidecar19-SE */
 
+	@Override
+	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader) {
+		return new Thread(runnable, threadName, isSystemThreadGroup, inheritThreadLocals, isDaemon, contextClassLoader);
+	}
 }
