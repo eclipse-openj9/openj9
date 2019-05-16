@@ -349,6 +349,12 @@ public Thread(ThreadGroup group, Runnable runnable, String threadName) {
 	this(group, runnable, threadName, null, true);
 }
 
+Thread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader) {
+	this(isSystemThreadGroup ? systemThreadGroup : null, runnable, threadName, null, inheritThreadLocals);
+	this.isDaemon = isDaemon;
+	this.contextClassLoader = contextClassLoader;
+}
+
 private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessControlContext acc, boolean inheritThreadLocals) {
 	super();
 	/*[PR 1FEVFSU] Re-arrange method so that common code to this constructor and the private one the VM calls can be put in a separate method */
