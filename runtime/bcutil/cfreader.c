@@ -2168,23 +2168,17 @@ _errorFound:
 
 
 /*
- * Java 8 allows non-zero minor versions if the major version is < 52 (Java 8).
- * 
- * Java 11 and up prohibit non-zero minor versions with two exceptions
- * 	Major version is 45, or
- * 	Major version is the same as the runtime version and the minor version is -1 (0xFFFF)
- * 	
- *	To be more precise, throw an error if:
- *	- major version < 45
- *	- or major version > maximum allowed
- *	- or if the runtime version is Java 8 (major version 52) and
- *		-  major version is 52 and minor version is non-zero
- *	- or if the runtime version is greater than Java 11 and:
- *		- [major version > 45] and [minor version is not 0 or -1 (0xFFFF)]
- *		- or minor version == 0xffff and
- *			(--enable-preview is not set or major version != runtime version or major version < 55)
+ * Java allows non-zero minor versions if the major version is less than
+ * the max supported version for this release:
+ * 	Java 8 - v52
+ * 	Java 11 - v55
+ * 	Java 12 - v56
  *
- *	Returns -1 on error, 0 on success.
+ * Starting in Java 12, only 0 & -1 are valid minor versions for classfiles with
+ * version >= 56.  The -1 version is only allowed when combined with the max 
+ * supported version for this release and the --enable-preview flag is specified.
+ *
+ * Returns -1 on error, 0 on success.
  */
 
 static I_32 
@@ -2198,16 +2192,18 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 
 	/* Support versions 45.0 -> <whatever is legal for this VM> */
 	if (majorVersion == max_allowed_version) {
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 		if (0 == minorVersion) {
 			return 0;
 		} else if (0xffff == minorVersion) {
+			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
 			/* Preview flags won't be set for Java 8 & earlier (excluding cfdump) */
 			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion | BCT_EnablePreview)) {
 				return 0;
 			}
 		}
-		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 	} else if ((majorVersion >= 45) && (majorVersion < max_allowed_version)) {
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 		if (majorVersion <= 55) {
 			/* versions prior to and including Java 11, allow any minor */
 			return 0;
@@ -2216,11 +2212,13 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 		if (0 == minorVersion) {
 			return 0;
 		}
-		/* Allow cfdump to dump preview classes from other releases */
-		if ((0xffff == minorVersion) & J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
-			return 0;
+		if (0xffff == minorVersion) {
+			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
+			/* Allow cfdump to dump preview classes from other releases */
+			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
+				return 0;
+			}
 		}
-		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 	}
 
 	buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, offset);
