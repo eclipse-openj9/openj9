@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -311,7 +311,7 @@ moduleUnLoading(UtThreadData **thr, UtModuleInfo *modInfo)
 	UT_DBGOUT(1, ("<UT> ModuleUnloading: %s\n", modInfo->name));
 
 	if (modInfo->traceVersionInfo == NULL){
-		/* this is a pre 142 module - not comaptible with this trace engine fail silently to register this module */
+		/* this is a pre 142 module - not compatible with this trace engine fail silently to register this module */
 		UT_DBGOUT(1, ("<UT> ModuleLoaded refusing deregistration to %s because it's version is less than the supported UT version %d\n", modInfo->name, UT_VERSION));
 		return OMR_ERROR_NONE;
 	} /* else {

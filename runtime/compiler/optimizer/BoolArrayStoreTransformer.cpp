@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -515,7 +515,7 @@ void TR_BoolArrayStoreTransformer::findLoadAddressAutoAndFigureOutType(TR::Node 
 
 /*
  * \brief
- *   This function caculcates the type info of each auto and figure out whether a
+ *   This function calculcates the type info of each auto and figure out whether a
  *   bstorei node is for boolean array
  *
  * \parm block

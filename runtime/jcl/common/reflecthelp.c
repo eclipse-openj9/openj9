@@ -1697,7 +1697,7 @@ retry:
 		walkFieldHierarchyDo(clazz, &state);
 
 		if (0 != data.restartRequired) {
-			/* Class redefinition resulted in an inconsitent state.
+			/* Class redefinition resulted in an inconsistent state.
 			 * Restart the operation
 			 */
 			if (NULL != result) {

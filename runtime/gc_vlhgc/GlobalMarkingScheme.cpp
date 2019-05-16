@@ -526,7 +526,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 	while (scanPtr < endScanPtr) {
 		/* Determine if the slot should be processed */
 		if(descriptionBits & 1) {
-			/* As this function can be invoked during concurent mark the slot is
+			/* As this function can be invoked during concurrent mark the slot is
 			 * volatile so we must ensure that the compiler generates the correct
 			 * code if markObject() is inlined.
 			 */

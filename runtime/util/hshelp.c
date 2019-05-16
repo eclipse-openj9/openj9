@@ -316,7 +316,7 @@ fixJNIFieldIDs(J9VMThread * currentThread, J9Class * originalClass, J9Class * re
 }
 
 /*
- * @param currenThread
+ * @param currentThread
  * @param oldMethod
  * @param newMethod
  * @param equivalent

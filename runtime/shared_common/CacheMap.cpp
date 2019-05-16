@@ -461,7 +461,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 #if !defined(J9SHR_CACHELET_SUPPORT)
 		if (rc == CC_STARTUP_OK) {
 			/* When J9SHR_CACHELET_SUPPORT is defined there are no J9ROMClasses
-			 * in the 'parent' cache, only in the cachlets. This means it is incorrect
+			 * in the 'parent' cache, only in the cachelets. This means it is incorrect
 			 * to call SH_CacheMap::sanityWalkROMClassSegment() here because it assumes
 			 * to find J9ROMClasses starting at SH_CompositeCacheImpl::getBaseAddress().
 			 *
@@ -4826,7 +4826,7 @@ SH_CacheMap::printCacheStats(J9VMThread* currentThread, UDATA showFlags, U_64 ru
 	CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_TITLE, _cacheName);
 
 #if defined(J9SHR_CACHELET_SUPPORT)
-	/* startup all cachlets to get stats */
+	/* startup all cachelets to get stats */
 	cache = _cacheletHead; /* this list currently spans all supercaches */
 	while (cache) {
 		if ( CC_STARTUP_OK != startupCachelet(currentThread, cache) ) {
@@ -5056,7 +5056,7 @@ void
 SH_CacheMap::printShutdownStats(void)
 {
 	UDATA bytesStored = 0;
-	U_64 bytesRead = (U_64)_bytesRead;		/* U_64 for compatability so that we don't have to change all the nls msgs */
+	U_64 bytesRead = (U_64)_bytesRead;		/* U_64 for compatibility so that we don't have to change all the nls msgs */
 	U_32 softmxUnstoredBytes = 0;
 	U_32 maxAOTUnstoredBytes = 0;
 	U_32 maxJITUnstoredBytes = 0;
@@ -6623,7 +6623,7 @@ SH_CacheMap::startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_
 	}
 
 #if defined(J9SHR_CACHELET_SUPPORT)
-	/* startup all cachlets to get stats */
+	/* startup all cachelets to get stats */
 	while (cache) {
 		IDATA startupcachelet = startupCacheletForStats(currentThread, cache);
 		if ( CC_STARTUP_OK != startupcachelet ) {
@@ -6755,7 +6755,7 @@ SH_CacheMap::isCacheCorruptReported(void)
 }
 
 /**
- * Print a series of bytes as hexadecimal chartacters into a buffer.
+ * Print a series of bytes as hexadecimal characters into a buffer.
  * The data are truncated silently if the buffer is too small.
  * When allocating the buffer, allow 5 characters per byte plus a null character to terminate the string.
  * @param attachedData Data to be printed

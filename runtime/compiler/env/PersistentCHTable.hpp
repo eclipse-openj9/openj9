@@ -82,7 +82,7 @@ class TR_PersistentCHTable
    void classGotUnloadedPost(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
    void classGotRedefined(TR_FrontEnd *vm, TR_OpaqueClassBlock *oldClassId, TR_OpaqueClassBlock *newClassId);
    void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
-   void resetVisitedClasses(); // highly time consumming
+   void resetVisitedClasses(); // highly time consuming
 
 #ifdef DEBUG
    void dumpStats(TR_FrontEnd *);

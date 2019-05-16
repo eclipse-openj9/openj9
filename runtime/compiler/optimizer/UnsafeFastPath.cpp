@@ -136,7 +136,7 @@ static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
  *    Tree containing the call
  *
  * \parm callerMethod
- *    VarHandle concreate operation method
+ *    VarHandle concrete operation method
  *
  * \parm calleeMethod
  *    The unsafe method

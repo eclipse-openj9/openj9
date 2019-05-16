@@ -7433,7 +7433,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                   }
                else
                   {
-                  // Test for zero length array: the following two instructions will be conbined
+                  // Test for zero length array: the following two instructions will be combined
                   // to the record form by later pass.
                   iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tmp5Reg, dataSizeReg, 30, 0x3FFFFFFF, iCursor);
                   iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, tmp5Reg, 0, iCursor);

@@ -867,7 +867,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java8MajorVersionShifted)
 				&& (bc != CFR_BC_invokevirtual) && (info->tag == CFR_CONSTANT_InterfaceMethodref)
 				) {
-					/* JVMS 4.9.1 Static Contraints:
+					/* JVMS 4.9.1 Static Constraints:
 					 * The indexbyte operands of each invokespecial and invokestatic instruction must represent
 					 * a valid index into the constant_pool table. The constant pool entry referenced by that
 					 * index must be either of type CONSTANT_Methodref or of type CONSTANT_InterfaceMethodref.

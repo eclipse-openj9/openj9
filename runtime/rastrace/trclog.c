@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1627,7 +1627,7 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 
 		p += (stringVarLen + 4);
 
-		/* if tracepoint is part of other component - write contaner's name into buffer */
+		/* if tracepoint is part of other component - write container's name into buffer */
 		if (containerModuleVar != NULL){
 			*p++ = '(';
 			memcpy(p, containerModuleVar, containerModuleVarLen);

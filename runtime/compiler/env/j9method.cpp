@@ -1186,7 +1186,7 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
 
    // For methods that are resolved but are still interpreted and have high counts
    // we can assume the method is cold
-   // We do this for direct calls and currenly not-overridden virtual calls
+   // We do this for direct calls and currently not-overridden virtual calls
    // For overridden virtual calls we may decide at some point to traverse all the
    // existing targets to see if they are all interpreted with high counts
    //
@@ -6026,8 +6026,8 @@ TR_ResolvedJ9Method::isConstantDynamic(I_32 cpIndex)
 // If first slot is non null, the CP entry is resolved to a non-null value.
 // Else if second slot is the class object of j/l/Void, the CP entry is resolved to null (0) value.
 // We retrieve the Void class object via javaVM->voidReflectClass->classObject,
-// which is protected by VMAccessCrtitical section to ensure vm access.
-// Other casese, the CP entry is considered unresolved.
+// which is protected by VMAccessCritical section to ensure vm access.
+// Other cases, the CP entry is considered unresolved.
 bool
 TR_ResolvedJ9Method::isUnresolvedConstantDynamic(I_32 cpIndex)
    {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -251,7 +251,7 @@ j9shsem_deprecated_wait(struct J9PortLibrary *portLibrary, struct j9shsem_handle
 	rc = WaitForSingleObject(handle->semHandles[semset],timeout);
 	
 	switch(rc) {
-	case WAIT_ABANDONED: /* This means someone has crash but hasn't relase the mutex, we are okay with this */
+	case WAIT_ABANDONED: /* This means someone has crashed but hasn't relase the mutex, we are okay with this */
 	case WAIT_OBJECT_0:
 		Trc_PRT_shsem_j9shsem_wait_Exit(0);
 		return 0;

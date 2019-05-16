@@ -1193,7 +1193,7 @@ ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
 
     MTComputeStaticAddress(AddressLoad,Obj)
 ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
-    LLGF    r3,0(,r2)                        # load comprssed val
+    LLGF    r3,0(,r2)                        # load compressed val
     SLLG    r3,r3,0(r1)                       # decompress
     STG     r3,(2*PTR_SIZE)(,r5)             # store val into r2
 ],[dnl

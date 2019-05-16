@@ -1247,7 +1247,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns a string representation of the oonfig object with build info.
+	 * Returns a string representation of the config object with build info.
 	 *
 	 * @return      the string representation of the config object
 	 *
@@ -1259,7 +1259,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns a string representation of the oonfig object with build info.
+	 * Returns a string representation of the config object with build info.
 	 * Build info includes the sources for the configuration and the output
 	 * directory.
 	 *

@@ -95,7 +95,7 @@ public class TestManagementUtils {
 	}
 
 	/*
-	 * Test method for 'com.ibm.lang.management.ManagementUtils.getCompliationBean()'
+	 * Test method for 'com.ibm.lang.management.ManagementUtils.getCompilationBean()'
 	 */
 	@Test
 	public final void testGetCompliationBean() {

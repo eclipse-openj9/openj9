@@ -94,10 +94,10 @@ extern TR::Instruction * generateS390CompareOps(TR::Node * node, TR::CodeGenerat
 
 /* Moved from Codegen to FE */
 ///////////////////////////////////////////////////////////////////////////////////
-// Generate code to perform a comparisson and branch to a snippet.
+// Generate code to perform a comparison and branch to a snippet.
 // This routine is used mostly by bndchk evaluator.
 //
-// The comparisson type is determined by the choice of CMP operators:
+// The comparison type is determined by the choice of CMP operators:
 //   - fBranchOp:  Operator used for forward operation ->  A fCmp B
 //   - rBranchOp:  Operator user for reverse operation ->  B rCmp A <=> A fCmp B
 //
@@ -5016,7 +5016,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          TR::LabelSymbol *doneUpdateSnippetLabel = generateLabelSymbol(cg);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneUpdateSnippetLabel);
          TR::Register * tempNeg1LoadedRegister = cg->allocateRegister();
-         //we do not need post condtion since this code resides in OOL only.
+         //we do not need post condition since this code resides in OOL only.
 
          generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, tempNeg1LoadedRegister, -1);
 
@@ -6392,7 +6392,7 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
 
    // Fast path failure check
    //  TODO: For now we cannot handle Global regs in this path
-   //        due to possible colision with call out deps.
+   //        due to possible collision with call out deps.
    if (graDepNode && graDepsConflictWithInstanceOfDeps(graDepNode, instanceOfNode, cg))
       {
       return (TR::Register*) 1;

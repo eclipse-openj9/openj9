@@ -982,7 +982,7 @@ class CheckEngine
 			return J9MODRON_GCCHK_RC_CLASS_POINTER_UNALIGNED;
 		}
 		
-		/* Check that the class header containes the expected values */
+		/* Check that the class header contains the expected values */
 		int ret = checkJ9ClassHeader(clazz);
 		if (J9MODRON_GCCHK_RC_OK != ret) {
 			return ret;

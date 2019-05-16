@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,7 +96,7 @@ public abstract class ClassWalker {
 			/* Get SlotType by using field type name */
 			SlotType type = getTypeByFieldTypeName(fd.getType());
 
-			/* Get the address of the field by adding the offset to the methodClass'address */
+			/* Get the address of the field by adding the offset to the methodClass's address */
 			AbstractPointer address = U8Pointer.cast(methodClass).addOffset(fd.getOffset());
 
 			/* Rename fields if any defined. */

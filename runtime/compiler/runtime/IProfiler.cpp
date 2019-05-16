@@ -298,7 +298,7 @@ TR_IProfiler::walkILTreeForEntries(uintptrj_t *pcEntries, uint32_t &numEntries, 
                      // that means the entry is locked by another thread. going to abort the
                      // storage of iprofiler information for this method
                      {
-                     // In some corener cases of invoke interface, we may come across the same entry
+                     // In some corner cases of invoke interface, we may come across the same entry
                      // twice under 2 different bytecodes. In that case, the other entry has been
                      // locked by this thread and is in the list of entries, so don't abort.
                      bool found = false;
@@ -4350,7 +4350,7 @@ class TR_AggregationHT
          };
       class TR_AggregationHTNode
          {
-         TR_AggregationHTNode *_next; // for chaning
+         TR_AggregationHTNode *_next; // for chaining
          J9ROMMethod *_romMethod; // this is the key
          J9ROMClass  *_romClass;
          TR_CGChainedEntry *_IPData;

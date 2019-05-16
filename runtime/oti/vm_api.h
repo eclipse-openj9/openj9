@@ -4002,7 +4002,7 @@ buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType);
 /**
 * @brief Set the SP to the unwindSP (as if we had stack walked) of the current frame.
 * Keep literals consistent with that.
-* @param curretThread
+* @param currentThread
 * @return UDATA TRUE or FALSE - is this a bytecoded frame (i.e. can't push on top of it)?
 */
 UDATA  
@@ -4010,7 +4010,7 @@ dropPendingSendPushes(J9VMThread *currentThread);
 
 /**
 * @brief Prepare the current stack for throwing an exception (clear all pending, build necessary frames)
-* @param curretThread
+* @param currentThread
 * @return void
 */
 void  

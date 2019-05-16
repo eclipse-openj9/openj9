@@ -1597,7 +1597,7 @@ MM_ObjectAccessBarrier::staticCompareAndSwapObject(J9VMThread *vmThread, J9Class
  * Performs an atomic compare-and-swap on an int field of a mixed object
  * @param destObject the object containing the field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  **/ 
 bool 
@@ -1615,7 +1615,7 @@ MM_ObjectAccessBarrier::mixedObjectCompareAndSwapInt(J9VMThread *vmThread, J9Obj
  * Performs an atomic compare-and-swap on a static int field.
  * @param destClass the class containing the statics field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  **/ 
 bool 
@@ -1631,7 +1631,7 @@ MM_ObjectAccessBarrier::staticCompareAndSwapInt(J9VMThread *vmThread, J9Class *d
  * Performs an atomic compare-and-swap on an long field of a mixed object
  * @param destObject the object containing the field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  **/ 
 bool 
@@ -1649,7 +1649,7 @@ MM_ObjectAccessBarrier::mixedObjectCompareAndSwapLong(J9VMThread *vmThread, J9Ob
  * Performs an atomic compare-and-swap on a static long field.
  * @param destClass the class containing the statics field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  **/ 
 bool 
@@ -1747,7 +1747,7 @@ MM_ObjectAccessBarrier::staticCompareAndExchangeObject(J9VMThread *vmThread, J9C
  * Performs an atomic compare-and-exchange on an int field of a mixed object
  * @param destObject the object containing the field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  * @return the int stored in the object field before the update
  **/
@@ -1766,7 +1766,7 @@ MM_ObjectAccessBarrier::mixedObjectCompareAndExchangeInt(J9VMThread *vmThread, J
  * Performs an atomic compare-and-exchange on a static int field.
  * @param destClass the class containing the statics field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  * @return the int stored in the object field before the update
  **/
@@ -1783,7 +1783,7 @@ MM_ObjectAccessBarrier::staticCompareAndExchangeInt(J9VMThread *vmThread, J9Clas
  * Performs an atomic compare-and-exchange on an long field of a mixed object
  * @param destObject the object containing the field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  * @return the long stored in the object field before the update
  **/
@@ -1802,7 +1802,7 @@ MM_ObjectAccessBarrier::mixedObjectCompareAndExchangeLong(J9VMThread *vmThread, 
  * Performs an atomic compare-and-exchange on a static long field.
  * @param destClass the class containing the statics field being swapped into
  * @param destAddress the address of the destination field of the operation
- * @param compareValue the value to be comapared with contents of destSlot
+ * @param compareValue the value to be compared with contents of destSlot
  * @param swapValue the value to be stored in the destSlot if compareValue is there now
  * @return the long stored in the object field before the update
  **/

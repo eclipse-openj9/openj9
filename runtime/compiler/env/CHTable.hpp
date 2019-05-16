@@ -256,7 +256,7 @@ class TR_PreXRecompile : public OMR::LocationRedirectRuntimeAssumption
    public:
 
    // NOTE: this function should be the first non-inline function in the class
-   // to make sure that the compiler puts the vtable in codege.dev
+   // to make sure that the compiler puts the vtable in codegen.dev
    virtual void dumpInfo();
 
    virtual void compensate(TR_FrontEnd *vm, bool isSMP, void *newAddress);

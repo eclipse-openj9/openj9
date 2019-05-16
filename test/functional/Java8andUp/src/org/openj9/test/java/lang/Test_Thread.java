@@ -1149,7 +1149,7 @@ public class Test_Thread {
 		/*
 		 * Thread.stop() implementation is changed from 1.1.7 to the 1.2
 		 * behaviour. now stop() doesn't ensure immediate thread death, so we
-		 * have to wait till st thread joins back to curent thread, before
+		 * have to wait till st thread joins back to current thread, before
 		 * making an isAlive() check.
 		 */
 		try {

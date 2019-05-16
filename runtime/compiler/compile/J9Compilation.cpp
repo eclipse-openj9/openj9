@@ -1180,7 +1180,7 @@ J9::Compilation::addAsMonitorAuto(TR::SymbolReference* symRef, bool dontAddIfDLT
       else
          {
          // only add the symref into the list for initialization when not in DLT and not peeking.
-         // in DLT, we already use the corresp. slot to store the locked object from the interpreter
+         // in DLT, we already use the corresponding slot to store the locked object from the interpreter
          // so initializing the symRef later in the block can overwrite the first store.
          if (!self()->isDLT() && siteIndex == -1)
             self()->getMonitorAutoSymRefsInCompiledMethod()->push_front(symRef);

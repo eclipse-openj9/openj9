@@ -646,7 +646,7 @@ int getGpuDeviceCount(TR::PersistentInfo * persistentInfo, int tracing)
    int deviceLoopLimit = nDevices > MAX_DEVICE_NUM ? MAX_DEVICE_NUM : nDevices;
    for (int deviceId = 0; deviceId < deviceLoopLimit; deviceId++)
       {
-      cudaDeviceProp prop[3];   // workaround to avoid memory collapsion since recent CUDA version requires large size for cudeDeviceProp (by Keith)
+      cudaDeviceProp prop[3];   // workaround to avoid memory collapsing since recent CUDA version requires large size for cudeDeviceProp (by Keith)
 
       cudaError = jitCudaGetDeviceProperties(&prop[0], deviceId);
       if (cudaError != cudaSuccess)

@@ -4093,7 +4093,7 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 	J9AbstractThread* osThread =  NULL;
 
-	/* Extract the corrseponding OS thread */
+	/* Extract the corresponding OS thread */
 	if (vmThread != NULL) {
 		osThread = (J9AbstractThread*)vmThread->osThread;
 
