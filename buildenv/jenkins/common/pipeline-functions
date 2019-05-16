@@ -183,6 +183,8 @@ def cancel_running_builds(JOB_NAME, BUILD_IDENTIFIER) {
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, CUSTOM_DESCRIPTION, ghprbPullId, ghprbCommentBody, ghprbTargetBranch) {
     stage ("${BUILD_JOB_NAME}") {
+        SCM_BRANCH = (ghprbPullId) ? "origin/pr/${ghprbPullId}/merge" : 'refs/heads/master'
+        SCM_REFSPEC = (ghprbPullId) ? "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge" : ''
         return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
             string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
@@ -208,7 +210,9 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'ghprbPullId', value: ghprbPullId),
             string(name: 'ghprbGhRepository', value: ghprbGhRepository),
             string(name: 'ghprbCommentBody', value: ghprbCommentBody),
-            string(name: 'ghprbTargetBranch', value: ghprbTargetBranch)])
+            string(name: 'ghprbTargetBranch', value: ghprbTargetBranch),
+            string(name: 'SCM_BRANCH', value: SCM_BRANCH),
+            string(name: 'SCM_REFSPEC', value: SCM_REFSPEC)])
     }
 }
 
