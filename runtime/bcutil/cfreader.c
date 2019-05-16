@@ -2216,6 +2216,10 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 		if (0 == minorVersion) {
 			return 0;
 		}
+		/* Allow cfdump to dump preview classes from other releases */
+		if ((0xffff == minorVersion) & J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
+			return 0;
+		}
 		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
 	}
 
