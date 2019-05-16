@@ -73,6 +73,7 @@ J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
    _gpuSymbolMap(self()->comp()->allocator()),
    _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset()),
+   _uncommonedNodes(self()->comp()->trMemory(), stackAlloc),
    _liveMonitors(NULL)
    {
    }
@@ -587,8 +588,8 @@ J9::CodeGenerator::preLowerTrees()
 */
 
    // For dual operator lowering
-   _uncommmonedNodes.reset();
-   _uncommmonedNodes.init(64, true);
+   _uncommonedNodes.reset();
+   _uncommonedNodes.init(64, true);
    }
 
 
@@ -2910,6 +2911,27 @@ void J9::CodeGenerator::addProjectSpecializedPairRelocation(uint8_t *location, u
    self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(location, location2, target, kind, self()),
          generatingFileName, generatingLineNumber, node);
    }
+
+
+TR::Node *
+J9::CodeGenerator::createOrFindClonedNode(TR::Node *node, int32_t numChildren)
+   {
+   TR_HashId index;
+   if (!_uncommonedNodes.locate(node->getGlobalIndex(), index))
+      {
+      // has not been uncommoned already, clone and store for later
+      TR::Node *clone = TR::Node::copy(node, numChildren);
+      _uncommonedNodes.add(node->getGlobalIndex(), index, clone);
+      node = clone;
+      }
+   else
+      {
+      // found previously cloned node
+      node = (TR::Node *) _uncommonedNodes.getData(index);
+      }
+   return node;
+   }
+
 
 void
 J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition(void *firstInstruction)
