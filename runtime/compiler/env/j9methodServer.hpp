@@ -153,7 +153,7 @@ namespace std
 // Since one cache contains different types of resolved methods, need to uniquely identify
 // each type. Apparently, the same cpIndex may refer to both virtual or special method,
 // for different method calls, so using TR_ResolvedMethodType is necessary.
-enum TR_ResolvedMethodType {VirtualFromCP, VirtualFromOffset, Interface, Static, Special};
+enum TR_ResolvedMethodType {VirtualFromCP, VirtualFromOffset, Interface, Static, Special, ImproperInterface};
 struct
 TR_ResolvedMethodKey
    {
