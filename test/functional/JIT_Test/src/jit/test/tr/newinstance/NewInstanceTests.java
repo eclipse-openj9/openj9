@@ -145,7 +145,7 @@ public class NewInstanceTests {
 	}
 	
 	/**
-	 * Attempt to create a new instance of an Abstract class shoudl fail with an
+	 * Attempt to create a new instance of an Abstract class should fail with an
 	 * InstantiationException
 	 */
 	@Test

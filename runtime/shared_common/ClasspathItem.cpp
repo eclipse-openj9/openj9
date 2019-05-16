@@ -192,7 +192,7 @@ ClasspathItem::addItem(J9InternalVMFunctions* functionTable, const char* path, U
 	Trc_SHR_CPI_addItem_Entry(pathLen, path, protocol);
 
 	if (entries==itemsAdded) {
-		/* Cannot access verbose level, so this is not surpressed by "silent". However, it's a "should never happen" message. */
+		/* Cannot access verbose level, so this is not suppressed by "silent". However, it's a "should never happen" message. */
 		PORT_ACCESS_FROM_PORT(portlib);
 		CLASSPATHITEM_ERR_TRACE(J9NLS_SHRC_CPI_TOO_MANY_ITEMS);
 		Trc_SHR_CPI_addItem_ExitTooMany();

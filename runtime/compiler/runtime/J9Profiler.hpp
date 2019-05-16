@@ -137,7 +137,7 @@ class TR_PersistentProfileInfo
    static TR_PersistentProfileInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
 
    /**
-    * Methods for managing reference count to this info from persistent data stuctures, such
+    * Methods for managing reference count to this info from persistent data structures, such
     * as MethodInfo and from jitted code.
     */
    static void decRefCount(TR_PersistentProfileInfo* info);
@@ -659,7 +659,7 @@ class TR_BlockFrequencyInfo
 
    // counterDerivationInfo is used by JProfiling to store which counters to add and subtract to derive
    // the frequency of a basic block. A NULL entry represents no counters, a low tagged entry represents
-   // a single block which can be obtained by right shifiting the entry by 1, otherwise it will be a pointer
+   // a single block which can be obtained by right shifting the entry by 1, otherwise it will be a pointer
    // to a TR_BitVector holding the counters to add together
    TR_BitVector    ** _counterDerivationInfo;
    int32_t         _entryBlockNumber;

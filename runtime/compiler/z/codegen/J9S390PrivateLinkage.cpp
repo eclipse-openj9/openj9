@@ -3151,7 +3151,7 @@ TR::S390PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Li
         TR::Register *stackRegister = linkage->getStackRegisterForOutgoingArguments(callNode, dependencies);  // delay (possibly) creating this till needed
         storeArgumentOnStack(callNode, TR::InstOpCode::getStoreOpCode(), jniEnvRegister, &stackOffset, stackRegister);
         }
-     if (linkage->isXPLinkLinkageType()) // call specifc
+     if (linkage->isXPLinkLinkageType()) // call specific
         {
         stackOffset += gprSize;
         }

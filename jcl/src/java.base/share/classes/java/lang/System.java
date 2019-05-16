@@ -457,7 +457,7 @@ private static void ensureProperties(boolean isInitialization) {
 
 /* Converts a Map<String, String> to a properties object.
  * 
- * The sytem properties will be initialized as a Map<String, String> type to be compatible
+ * The system properties will be initialized as a Map<String, String> type to be compatible
  * with jdk.internal.misc.VM and java.lang.VersionProps APIs.
  */
 private static void initializeSystemProperties(Map<String, String> mapProperties) {

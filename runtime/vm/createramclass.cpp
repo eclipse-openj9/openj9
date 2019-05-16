@@ -427,7 +427,7 @@ initializeRAMClassITable (J9VMThread* vmStruct, J9Class *ramClass, J9Class *supe
  * @param[in] sig1 The first signature
  * @param[in] name2 The second name
  * @param[in] sig2 The second signature
- * @return true iff the names and signtures are the same.
+ * @return true iff the names and signatures are the same.
  */
 static bool VMINLINE
 areNamesAndSignaturesEqual(J9UTF8 *name1, J9UTF8 *sig1, J9UTF8 *name2, J9UTF8 *sig2)
@@ -697,7 +697,7 @@ processEquivalentSets(J9VMThread *vmStruct, UDATA *defaultConflictCount, UDATA v
 		UDATA slotValue = vTableMethods[i];
 
 		if (EQUIVALENT_SET_ID_TAG == (slotValue & VTABLE_SLOT_TAG_MASK)) {
-			/* Process set and determine if there is a method that satisifies or if this is a conflict */
+			/* Process set and determine if there is a method that satisfies or if this is a conflict */
 			J9EquivalentEntry *entry = (J9EquivalentEntry*)(slotValue & ~EQUIVALENT_SET_ID_TAG);
 			J9Method *candidate = entry->method;
 			bool foundNonAbstract = false;

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Attempts to seamlessy merge two input streams so that they behave as one.
+ * Attempts to seamlessly merge two input streams so that they behave as one.
  */
 public class InputStreamMerger extends InputStream {
 	private final InputStream prepend;

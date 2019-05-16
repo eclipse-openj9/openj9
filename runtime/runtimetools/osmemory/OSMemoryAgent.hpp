@@ -212,7 +212,7 @@ public:
 	 *
 	 * @param options the options passed to the agent in Agent_OnLoad
 	 *
-	 * @returns 0 on succes, and error value otherwise
+	 * @returns 0 on success, and error value otherwise
 	 */
 	virtual jint setup(char * options);
 

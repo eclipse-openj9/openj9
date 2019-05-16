@@ -61,7 +61,7 @@ public class TraceFileHeaderWriter {
 	 * flavours.
 	 * 
 	 * @param snapTraceFileName the filename to write the trace header to
-	 * @param bigEndian true if the dump came from a big endian sytem.
+	 * @param bigEndian true if the dump came from a big endian system.
 	 * @param cpuCount the number of cpu's on the system the dump came from
 	 * @param wordSize the wordsize of the system the dump came from
 	 * @param bufferSize the size of the trace buffers in the dump

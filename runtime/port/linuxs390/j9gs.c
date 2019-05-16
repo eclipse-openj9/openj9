@@ -102,7 +102,7 @@ j9gs_deinitialize(struct J9PortLibrary *portLibrary, struct J9GSParameters *gsPa
 
 #if !defined(J9ZTPF)
 	/*
-	 * syscall is _s390_guarded_storagee
+	 * syscall is _s390_guarded_storage
 	 * errno values from syscall routine is as follows:
 	 * EINVAL     The value specified for command is not a valid command.
 	 * EFAULT     The cp pointer is outside of the accessible address space.

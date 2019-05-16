@@ -157,7 +157,7 @@ MM_ParallelSweepVLHGCTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, con
 }
 
 /**
- * Stats gathering for synchornizing threads during sweep.
+ * Stats gathering for synchronizing threads during sweep.
  */
 bool
 MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)

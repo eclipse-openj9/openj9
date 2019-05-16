@@ -308,7 +308,7 @@ public class JavaHeapRegion
 				int bytesPerPointer = _javaVM.bytesPerPointer();
 				try	{
 					int instanceSize = arrayForm.getInstanceSize(instance);
-					//the instance size will include the header and the actual data inside the array so seperate them
+					//the instance size will include the header and the actual data inside the array so separate them
 					long contentDataSize = (long)(instanceSize - objectHeaderSize);
 					//get the number of leaves, excluding the tail leaf (the tail leaf is the final leaf which points back into the spine).  There won't be one if there is isn't a remainder in this calculation since it would be empty
 					int fullSizeLeaves = (int)(contentDataSize / _arrayletLeafSize);

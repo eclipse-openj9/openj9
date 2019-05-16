@@ -576,7 +576,7 @@ J9::Z::TreeEvaluator::pd2udEvaluator(TR::Node *node, TR::CodeGenerator *cg)
  * \param targetReg         PseudoRegister object for the parent node (the node)
  * \param sourceMR          MemoryRefernece object pointer
  * \param childReg          PseudoRegister object for the child node (e.g. pdloadi node)
- * \param isSeparaeteSign   True if the operation is pd2udsl or pd2udst, which all have separate sign code. False
+ * \param isSeparateSign    True if the operation is pd2udsl or pd2udst, which all have separate sign code. False
  *                          if it's pd2ud.
  * \param cg                The codegen object
  * \param srcStorageReference If not null, this replaces the childReg's StorageReference for unpack to unicode
@@ -3165,7 +3165,7 @@ J9::Z::TreeEvaluator::df2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    int32_t maxBytesFromConv = 0;    // how many digits CSDTR/CSXTR can at most produce
-   int32_t maxDigitsInSrc = 0;   // how many signif digits are possible from source dfp
+   int32_t maxDigitsInSrc = 0;   // how many significant digits are possible from source dfp
    if (isFloat)
       {
       maxBytesFromConv = cg->getDecimalFloatToPackedFixedSize();  // CSDTR produces 15 digits == 8 bytes; CPDT produces 16 digits == 9 bytes

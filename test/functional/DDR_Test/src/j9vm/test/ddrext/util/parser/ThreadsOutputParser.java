@@ -67,7 +67,7 @@ public class ThreadsOutputParser {
 	 */
 
 	/**
-	 * This method splits the !threads output into seperate thread info arrays.
+	 * This method splits the !threads output into separate thread info arrays.
 	 * !threads output prints one line per thread in the DDR output.
 	 * 
 	 * @param threadsOutput

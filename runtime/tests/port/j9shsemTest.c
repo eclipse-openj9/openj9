@@ -287,7 +287,7 @@ j9shsem_test4(J9PortLibrary *portLibrary, char* argv0)
 		case 0: /*Semaphore is opened*/
 			break;
 
-		case 1: /*sempahore is created*/
+		case 1: /*Semaphore is created*/
 			if(created) {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "more then 1 child created the semaphore.\n");
 			} else {
@@ -295,7 +295,7 @@ j9shsem_test4(J9PortLibrary *portLibrary, char* argv0)
 			}
 			break;
 
-		default: /*semaphore open call failed*/
+		default: /*Semaphore open call failed*/
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "child reported error. rc=%d\n",returnCode);
 			break;
 		}
@@ -672,7 +672,7 @@ int j9shsem_test7(J9PortLibrary *portLibrary) {
 	 */
 	(void)destroyAndReopenSemaphore(portLibrary, "handle A", &params, &handleA);
 	/*
-	 * Shou1d destroy semaphore 0 (redundantly) and open semaphore 1.
+	 * Should destroy semaphore 0 (redundantly) and open semaphore 1.
 	 */
 	/*
 	 * Note that if deleteBasefile=0 (normal test case) then j9shsem_destroy retains the file that was used to create semaphore 1,

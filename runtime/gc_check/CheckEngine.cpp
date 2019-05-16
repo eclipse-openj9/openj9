@@ -96,7 +96,7 @@ static J9Object* convertPointerFromToken(J9JavaVM *javaVM, fj9object_t token);
 #define J9MODRON_GCCHK_J9CLASS_EYECATCHER (UDATA)0x99669966
 
 /**
- * Clear the counts of OwnableSynchronzierObjects
+ * Clear the counts of OwnableSynchronizerObjects
  */
 void
 GC_CheckEngine::clearCountsForOwnableSynchronizerObjects()

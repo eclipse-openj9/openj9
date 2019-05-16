@@ -38,7 +38,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /*
- * Verify Java 10 additions, specfifically depth-limited stack traces.
+ * Verify Java 10 additions, specifically depth-limited stack traces.
  */
 public class APITestJava10 extends ThreadMXBeanTestCase {
 	private static final int MAXDEPTH = 10;

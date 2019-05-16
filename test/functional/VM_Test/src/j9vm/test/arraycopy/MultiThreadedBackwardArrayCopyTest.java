@@ -96,7 +96,7 @@ public class MultiThreadedBackwardArrayCopyTest implements Runnable {
 
 	// Create a unique String object
 	private static Object createValidValue(int i) {
-		// Create array of bytes to spreadout the objects
+		// Create array of bytes to spread out the objects
 		byte [] unused = new byte[17832];
 		return Integer.toString(i);
 	}

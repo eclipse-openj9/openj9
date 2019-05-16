@@ -200,7 +200,7 @@ public class TestSuite {
 	 * and System.properties, this method replaces all instances of $<code>key</code>$
 	 * with <code>value</code> (taking into account the nested variable replacement
 	 * described above). All the substitutions from <code>_variables</code> are
-	 * done before any of the subsitutions from System.properties.
+	 * done before any of the substitutions from System.properties.
 	 * 
 	 * Note: this method will "expand" the String "$$" to "$" after all other expansions
 	 * have been performed.  This is done so that the user can specify a literal "$" if

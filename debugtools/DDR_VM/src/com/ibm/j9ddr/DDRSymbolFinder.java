@@ -47,7 +47,7 @@ public class DDRSymbolFinder {
 	
 	private static List<String[][]> paths = new LinkedList<String[][]>();
 	
-	/* Set of known fields to ignore as StuctureName.fieldName */
+	/* Set of known fields to ignore as StructureName.fieldName */
 	private static Set<String> ignoredSymbols = new HashSet<String>();
 	
 	static {

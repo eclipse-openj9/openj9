@@ -303,7 +303,7 @@ MM_ReferenceChainWalker::popObject()
 		while (_hasOverflowed && !_isProcessingOverflow) {
 			/* We can completely clear out the overflow now.  Field ordering has been keep
 			 * via the ordering of doSlot calls.  This is done here as it keeps the queue
-			 * and overflow seperate from the scanning.
+			 * and overflow separate from the scanning.
 			 */
 
 			_isProcessingOverflow = true;

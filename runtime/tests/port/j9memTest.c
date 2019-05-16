@@ -589,9 +589,9 @@ shuffleArray(struct J9PortLibrary *portLibrary, UDATA *array, UDATA length)
  * 
  * We allocate a variety of sizes comparable to the heap size used in mem_allocate_memory32 implementation (see HEAP_SIZE_BYTES in j9mem32helpers.c):
  * 1. size requests that are much smaller than the heap size are satisfied with j9heap suballocation.
- * 2. size requests that are slightly smaller than the heap size will not use j9heap suallocation (because they cannot be satisfied by 
+ * 2. size requests that are slightly smaller than the heap size will not use j9heap suballocation (because they cannot be satisfied by 
  *    suballocating a j9heap due to heap management overhead), but rather given their own vmem allocated chunk.
- * 3. size requests that are greater or equal to the heap size also will not use j9heap suallocation, but rather given their own vmem allocated chunk.
+ * 3. size requests that are greater or equal to the heap size also will not use j9heap suballocation, but rather given their own vmem allocated chunk.
  * 
  * @param[in] portLibrary The port library under test
  * 

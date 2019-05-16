@@ -1593,7 +1593,7 @@ static intptr_t
 openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile, int32_t perm, struct j9shmem_controlFileFormat * controlinfo, uintptr_t groupPerm, struct j9shmem_handle *handle, BOOLEAN *canUnlink, uintptr_t cacheFileType)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	/*The control file contains data, and we have sucessfully reading our structure*/
+	/*The control file contains data, and we have successfully reading our structure*/
 	int shmid = -1;
 	int shmflags = groupPerm ? SHMFLAGS_GROUP : SHMFLAGS;
 	intptr_t rc = -1;

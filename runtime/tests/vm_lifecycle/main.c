@@ -120,7 +120,7 @@ setupInvocationAPIMethods(struct j9cmdlineOptions* startupOptions)
  * to free the memory allocated
  *
  * @param startupOptions the command line options passed to the test
- * @param vm_argsm, the JavaVMInitArgs struture into which the arguments will be populated
+ * @param vm_argsm, the JavaVMInitArgs structure into which the arguments will be populated
  * @param vmOptionsTable options table that can be used by the function to generate the options, this should be passed to
  * cleanupArguments once the test is complete to free allocated memory
  * @returns 0 on success, non-zero otherwise

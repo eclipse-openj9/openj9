@@ -75,12 +75,12 @@ import com.ibm.jpp.xml.XMLParser;
  * <li>Precede the flag/dependency name with '-' to remove, rather than add
  * that flag/dependency from the final flagset, trying it remove flags that
  * don't exist in the flagset will not cause an error.</li>
- * <li>Options that apply to the entire set/config are added as a seperate
+ * <li>Options that apply to the entire set/config are added as a separate
  * element called parameter, with attributes name and value.</li>
  * <li>Other elements, such as extension point will be ignored</li>
  * <li>Use the output path attribute of configuration to set the output path,
  * note that this path will be combined with the {basedir} arg</li>
- * <li>For each source, create a seperate source element, with attribute path
+ * <li>For each source, create a separate source element, with attribute path
  * to define the source location. Add "type=simplecopy" to do a copy instead of
  * a preprocess, add an element called parameter with attributes name and value
  * to add an option to a specific source dir</li>
@@ -328,7 +328,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 	}
 
 	/**
-	 * A series of if statements to identify the signifiance of the parsed
+	 * A series of if statements to identify the significance of the parsed
 	 * element and act accordingly.
 	 *
 	 * @param       elementName     the XML element name

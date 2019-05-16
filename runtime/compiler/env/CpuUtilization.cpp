@@ -48,7 +48,7 @@
  * typedef struct j9thread_process_time_t {
  *
  *    // for consistency sake, times are stored as I_64s
- *    I_64 _systemTime; // systen time used
+ *    I_64 _systemTime; // system time used
  *    I_64 _userTime;   // non-system time used
  *
  * } j9thread_process_time_t;

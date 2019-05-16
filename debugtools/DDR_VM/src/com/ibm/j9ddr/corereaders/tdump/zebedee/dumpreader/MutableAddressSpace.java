@@ -172,7 +172,7 @@ public final class MutableAddressSpace extends AddressSpace implements Emulator.
 
     /**
      * Allocate a chunk of unused memory. This searches the known address ranges and tries
-     * to find an unallocated area of the given size. If succesfull, this area effectively
+     * to find an unallocated area of the given size. If successful, this area effectively
      * becomes part of this ImageSpace and may be read and written to as normal.
      * This method is used by users of the Emulator for things like allocating
      * stack, arguments etc.

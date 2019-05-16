@@ -569,7 +569,7 @@ public class cTypeTests {
              startIndex = 0;
              
              boolean inDelimiter = true;
-             // We add each comma-delimited element seperately.
+             // We add each comma-delimited element separately.
              elementLength += token[field].length;
          }   
          ///System.out.println("elementLength = "+elementLength);

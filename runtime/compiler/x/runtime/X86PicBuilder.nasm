@@ -2058,7 +2058,7 @@ VPicSlotMethodIsNative:
       ; code needs to be taken.
       ;
       ; TODO: figure out why trampolines are not created. I do not see why they
-      ; shouldnt be...
+      ; shouldn't be...
       ;
       mov         rcx, qword  [rax+J9TR_MethodPCStartOffset]                  ; compiled native entry point
       mov         edi, dword  [rcx-4]                                         ; fetch preprologue info word

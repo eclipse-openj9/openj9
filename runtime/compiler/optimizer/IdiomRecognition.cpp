@@ -5784,7 +5784,7 @@ TR_CISCTransformer::analyzeSuccessorBlock(TR::Node *ignoreTree)
 
 
 //*****************************************************************************************
-// It sets one successsor "target" to the block.
+// It sets one successor "target" to the block.
 //*****************************************************************************************
 void
 TR_CISCTransformer::setSuccessorEdge(TR::Block *block, TR::Block *target)
@@ -5847,7 +5847,7 @@ TR_CISCTransformer::searchOtherBlockInSuccBlocks(TR::Block *target0)
 
 
 //*****************************************************************************************
-// It sets two successsors "target0" and "target1" to the block.
+// It sets two successors "target0" and "target1" to the block.
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::setSuccessorEdges(TR::Block *block, TR::Block *target0, TR::Block *target1)

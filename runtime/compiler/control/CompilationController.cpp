@@ -1304,7 +1304,7 @@ void TR::DefaultCompilationStrategy::beforeCodeGen(TR_OptimizationPlan *plan, TR
    // Set up the opt level and counter for the next compilation. This will
    // also decide if there is going to be a next compilation. If there is no
    // next compilation, remove any counters that have been inserted into the code
-   // Ideally, we should have a sigle step after the compilation
+   // Ideally, we should have a single step after the compilation
    if (! recomp->_doNotCompileAgain)
       {
       int32_t level;

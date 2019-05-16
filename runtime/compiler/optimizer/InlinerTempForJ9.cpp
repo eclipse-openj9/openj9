@@ -4185,7 +4185,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
    // we need to be conservative about inlining potentially highly polymorphic interface calls for
    // functional frameworks like scala - we limit this to hot and above
    // if the callsite is highly polymorphic but the following conditions are meet, still inline the callee
-   // 1. the compiling method is sorching
+   // 1. the compiling method is scorching
    // 2. the callee is scorching OR queued for veryhot/scorching compile
    int32_t outterMethodSize = getJ9InitialBytecodeSize(callSite->_callerResolvedMethod, 0, comp());
    if (comp()->getMethodHotness() > warm && callSite->isInterface()

@@ -1428,7 +1428,7 @@ public class Test_ThreadGroup {
 	}
 
 	private boolean verifyThreadList(ThreadGroup root, ThreadGroup onlyChildGroup, String listOutput) {
-		// We expect that @root has only 1 subgraoup, @onlyChildGroup. The
+		// We expect that @root has only 1 subgroup, @onlyChildGroup. The
 		// output from
 		// method 'list' is stored in @listOutput
 		if (listOutput.length() == 0) {

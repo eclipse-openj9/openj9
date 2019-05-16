@@ -214,7 +214,7 @@ public:
 
 			/* Technically, one should use J9OBJECT_FLAGS_FROM_CLAZZ macro to fetch the clazz flags.
 			 * However, considering the need to optimize hashcode code path and how we actually use
-			 * the flag, it is sufficent to fetch objectPointer->clazz.
+			 * the flag, it is sufficient to fetch objectPointer->clazz.
 			 */
 			UDATA flags = (UDATA)(((J9Object*)objectPointer)->clazz);
 

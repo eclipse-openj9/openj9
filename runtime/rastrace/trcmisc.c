@@ -70,7 +70,7 @@ void decrementRecursionCounter(UtThreadData *thr)
 
 /*******************************************************************************
  * name        - expandString
- * description - take a string and substutue pid number for %p, date for
+ * description - take a string and substitute pid number for %p, date for
  *               %d and time for %t
  * parameters  - returnBuffer - the expanded string as return
  *               value - the original string

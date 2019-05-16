@@ -65,9 +65,9 @@ j9gc_modron_global_collect(J9VMThread *vmThread)
  * <ul>
  * 	<li>J9MMCONSTANT_IMPLICIT_GC_DEFAULT - collect due to normal GC activity</li>
  *  <li>J9MMCONSTANT_IMPLICIT_GC_AGGRESSIVE - second collect since first collect was insufficient</li>
- * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE - collect due to scavanger percolate</li>
- * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_UNLOADING_CLASSES - collect due to scavanger percolate (unloading classes)</li>
- * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_AGGRESSIVE - collect due to aggressive scavanger percolate</li>
+ * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE - collect due to scavenger percolate</li>
+ * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_UNLOADING_CLASSES - collect due to scavenger percolate (unloading classes)</li>
+ * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_AGGRESSIVE - collect due to aggressive scavenger percolate</li>
  * 	<li>J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC - Java code has requested a System.gc()</li>
  *  <li>J9MMCONSTANT_EXPLICIT_GC_NOT_AGGRESSIVE - Java code has requested a non-compacting GC via JVM_GCNoCompact</li>
  *  <li>J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY - a native out of memory has occurred -- attempt to recover as much native memory as possible</li>

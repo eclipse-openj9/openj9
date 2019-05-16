@@ -1551,7 +1551,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved);
 
 /**
  * Initializes class path entries. Path of each class path entry is set using the 'classPath' provided as parameter.
- * Each path in 'classPath' is seaprated by 'classPathSeparator'.
+ * Each path in 'classPath' is separated by 'classPathSeparator'.
  * If 'initClassPathEntry' is TRUE, then each class path entry in initialized by calling 'initializeClassPathEntry()' function.
  *
  * @param[in] vm pointer to the J9JavaVM
@@ -3304,7 +3304,7 @@ releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm);
 /**
 * @brief initiates an exclusive access request for metronome
 * @param vm
-* @param block input parameter specifing whether caller should block if another request is ongoing
+* @param block input parameter specifying whether caller should block if another request is ongoing
 * @param responsesRequired the number of mutator threads that must voluntarily quiesce themselves
 * @param gcPriority returned the new gc collector priority
 * @return effectively a boolean the request is successful or not 
@@ -3315,7 +3315,7 @@ requestExclusiveVMAccessMetronome(J9JavaVM *vm, UDATA block, UDATA *responsesReq
 /**
 * @brief initiates an exclusive access request for metronome
 * @param vm
-* @param block input parameter specifing whether caller should block if another request is ongoing
+* @param block input parameter specifying whether caller should block if another request is ongoing
 * @param vmResponsesRequired the number of mutator threads holding VM access that must voluntarily quiesce themselves
 * @param jniResponsesRequired the number of mutator threads holding JNI critical access that must voluntarily quiesce themselves
 * @param gcPriority returned the new gc collector priority

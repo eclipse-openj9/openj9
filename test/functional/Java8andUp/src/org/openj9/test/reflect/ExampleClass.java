@@ -8,7 +8,7 @@
  * is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * This Source Code may also be made available under the following
- * firstary Licenses when the conditions for such availability set
+ * Secondary Licenses when the conditions for such availability set
  * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
  * General Public License, version 2 with the GNU Classpath
  * Exception [1] and GNU General Public License, version 2 with the

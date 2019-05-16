@@ -411,7 +411,7 @@ ZZ divL = 3 => rem = -2147483654  (0xFFFF FFFF 7FFF FFFA)
     LHI QotH,-1
     LHI QotL,-12
     SRL QotL,1
-    j     LREMExit  #Just in case sombody adds code after this
+    j     LREMExit  #Just in case somebody adds code after this
 
 ZZ end   Defect 112396
 

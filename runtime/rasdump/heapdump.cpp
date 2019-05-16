@@ -1720,7 +1720,7 @@ BinaryHeapDumpWriter::writeArrayObjectRecord(J9MM_IterateObjectDescriptor* objec
 			// Write a long primitive array record with the hash code.
 			/* Calculate the start tag / flags */
 			int flags =((dataType << 5) & 0xE0 );
-			// We can only specifiy byte or word size.
+			// We can only specify byte or word size.
 			if( overallEncoding != 0 ) {
 				flags = flags | 0x10;
 			}

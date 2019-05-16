@@ -52,7 +52,7 @@ private:
 public:
 
 	/**
-	 * @return size of interned strin cache size
+	 * @return size of interned string cache size
 	 */
 	static UDATA getCacheSize() { return cacheSize; }
 	/**

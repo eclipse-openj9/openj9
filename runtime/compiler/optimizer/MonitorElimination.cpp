@@ -1173,7 +1173,7 @@ TR_Array<TR::Block *>* TR::MonitorElimination::createFailHandlerBlocks(TR_Active
    persistfhBlock->append(TR::TreeTop::create(comp(), resetTempNode, NULL, NULL));
 
 
-   // New logic. I'm adding a goto at the end of the persistent fail block to point directly to the monitor block.  This shoudl allow induction variable analysis to exclude the setting of the temp=0 from the loop, and make it a counted loop.
+   // New logic. I'm adding a goto at the end of the persistent fail block to point directly to the monitor block.  This should allow induction variable analysis to exclude the setting of the temp=0 from the loop, and make it a counted loop.
 
    persistfhBlock->append(TR::TreeTop::create(comp(), TR::Node::create(monitor->getMonitorNode(), TR::Goto, 0, monitorblock->getEntry())));
 

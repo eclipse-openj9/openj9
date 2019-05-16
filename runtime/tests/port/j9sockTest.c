@@ -178,7 +178,7 @@ j9sock_verify_function_slots(struct J9PortLibrary *portLibrary)
  * @param[in] server_socket	a pointer to the server socket. 
  * @param[in] server_addr 
  * 
- * @return 0 on succes, non-zero otherwise
+ * @return 0 on success, non-zero otherwise
  */ 
 I_32 
 startServer(struct J9PortLibrary *portLibrary, const char* testName, char *addrStr, U_16 port, j9socket_t *server_socket, j9sockaddr_t server_addr) {
@@ -226,7 +226,7 @@ startServer(struct J9PortLibrary *portLibrary, const char* testName, char *addrS
  * @param[in] session_client_socket	a pointer to the client socket. 
  * @param[in] server_addr 
  * 
- * @return 0 on succes, non-zero otherwise
+ * @return 0 on success, non-zero otherwise
  */ 
 I_32 
 connectClientToServer(struct J9PortLibrary *portLibrary, const char* testName, char *addrStr, U_16 port, j9socket_t *session_client_socket, j9sockaddr_t session_client_addr) {
@@ -269,7 +269,7 @@ connectClientToServer(struct J9PortLibrary *portLibrary, const char* testName, c
  * @param[in] session_client_socket	a pointer to the client socket. 
  * @param[in] server_addr 
  * 
- * @return 0 on succes, non-zero otherwise
+ * @return 0 on success, non-zero otherwise
  */ 
 static I_32 
 connectClientToServerNonBlocking(struct J9PortLibrary *portLibrary, const char* testName, char *addrStr, U_16 port, j9socket_t *session_client_socket, j9sockaddr_t session_client_addr) {
