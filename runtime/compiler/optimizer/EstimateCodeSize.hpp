@@ -46,7 +46,7 @@ class TR_EstimateCodeSize
    //    TR_EstimateCodeSize::raiiWrapper lexicalScopeObject(....);
    //    TR_EstimateCodeSize *ecs = lexicalScopeObject->getCodeEstimator();
    //    ... do whatever you gotta do
-   //    } // estimator will be automatically freed by lexicalScopeObject regardless of how scope is exitted
+   //    } // estimator will be automatically freed by lexicalScopeObject regardless of how scope is exited
    class raiiWrapper
       {
       public:

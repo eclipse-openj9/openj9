@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@
 * Checks if running on a Virtualized environment or not. i.e On a Hypervisor or not
 *
 * Class:     com_ibm_virtalization_management_internal_HypervisorMXBeanImpl
-* Method:    isEnvirornmentVirtual
+* Method:    isEnvironmentVirtual
 *
 * @param[in] env The JNI env.
 * @param[in] obj The this pointer.

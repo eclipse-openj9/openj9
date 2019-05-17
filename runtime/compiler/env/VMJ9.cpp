@@ -2655,7 +2655,7 @@ TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMeth
       else
          {
          int32_t nameLen = std::min<int32_t>(bufLen-3, J9UTF8_LENGTH(name));
-         if (nameLen == bufLen-3) // not even the method name can be printed entireley
+         if (nameLen == bufLen-3) // not even the method name can be printed entirely
             sigLen = sprintf(sigBuf, "*.%.*s", nameLen, utf8Data(name));
          else
             sigLen = sprintf(sigBuf, "%.*s.%.*s", std::min<int32_t>(bufLen-2 - nameLen, J9UTF8_LENGTH(className)), utf8Data(className), nameLen, utf8Data(name));
@@ -4492,7 +4492,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
    else if (!comp->getOptions()->realTimeGC() && instanceSize == 0)
       {
       // Contiguous size field is zero (mandatory)
-      // For J9VM_GC_COMBINATION_SPEC only 0 size discontinous arrays are supported
+      // For J9VM_GC_COMBINATION_SPEC only 0 size discontiguous arrays are supported
       TR::Node* node = TR::Node::create(allocationNode, TR::iconst, 0, instanceSize);
       arraySizeSymRef = comp->getSymRefTab()->findOrCreateContiguousArraySizeSymbolRef();
       node = TR::Node::createWithSymRef(TR::istorei, 2, 2, allocationNode, node, arraySizeSymRef);

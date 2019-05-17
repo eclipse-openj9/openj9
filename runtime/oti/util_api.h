@@ -505,7 +505,7 @@ void helperConvertIntegerToFloat(I_32 *src, jfloat *dst);
 /**
 * @brief Helper function called by VM interpreter, using pointers 
 *        to values. Converts a long number to double precision.
-* @param[in] *src Pointer to long value to be converted to doble.
+* @param[in] *src Pointer to long value to be converted to double.
 * @param[out] *dst Pointer to the resulting double value.
 * @return Void.
 *

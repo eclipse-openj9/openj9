@@ -57,7 +57,7 @@ private:
 	double _targetUtilization;                            /**< The minimum target utilization we are trying to maintain.  Typically, 70%. */
 	U_64 _maxGCSlice;                                     /**< The maximum we would like the GC to run at a time.  Typically, 500us. */
 	U_64 _nanosLeftInCurrentSlice;                        /**< How many nanos are left in the current time slice before we violate either _maxGCSlice or utilization target. */
-	double _currentUtilization;                           /**< The current utilization exclusing the current incomplete time slice. */
+	double _currentUtilization;                           /**< The current utilization excluding the current incomplete time slice. */
 	U_64 _lastUpdateTime;
 	
 	double _timeSliceDuration[UTILIZATION_WINDOW_SIZE];   /**< How long is the time slice in seconds? */

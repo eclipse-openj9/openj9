@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2011 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,7 +230,7 @@ public class BuildSpec extends OMObject implements IFlagContainer, ISourceContai
 	}
 
 	/**
-	 * Checks for the existance of a local flag.
+	 * Checks for the existence of a local flag.
 	 *
 	 * @param 	flagId 		ID of the flag to check for
 	 * @return	<code>true</code> if the flag is included for this spec, <code>false</code> otherwise
@@ -570,9 +570,9 @@ public class BuildSpec extends OMObject implements IFlagContainer, ISourceContai
 	}
 
 	/**
-	 * Retries the name of the defaul JCL configuration for this build spec.
+	 * Retries the name of the default JCL configuration for this build spec.
 	 *
-	 * @return	the name of the defaul JCL configuration
+	 * @return	the name of the default JCL configuration
 	 */
 	public JclConfiguration getDefaultJCL() {
 		return jclConfiguration;
@@ -581,7 +581,7 @@ public class BuildSpec extends OMObject implements IFlagContainer, ISourceContai
 	/**
 	 * Sets the name of the default JCL configuration for this build spec.
 	 *
-	 * @param 	jclConfiguration		the defaul JCL configuration
+	 * @param 	jclConfiguration		the default JCL configuration
 	 */
 	public void setDefaultJCL(JclConfiguration jclConfiguration) {
 		this.jclConfiguration = jclConfiguration;
@@ -590,7 +590,7 @@ public class BuildSpec extends OMObject implements IFlagContainer, ISourceContai
 	/**
 	 * Retrieves the default size for this build spec.
 	 *
-	 * @return	the defaul size
+	 * @return	the default size
 	 */
 	public DefaultSizes getDefaultSizes() {
 		return defaultSizes;
@@ -784,7 +784,7 @@ public class BuildSpec extends OMObject implements IFlagContainer, ISourceContai
 			}
 		}
 
-		// Verify sources for existance in Build Info definition
+		// Verify sources for existence in Build Info definition
 		SourceVerifier sourceVerifier = (buildInfo == null) ? new SourceVerifier(this, new HashSet<String>()) : new SourceVerifier(this, buildInfo.getSources());
 		errors.addAll(sourceVerifier.verify());
 

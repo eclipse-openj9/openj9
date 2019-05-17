@@ -187,7 +187,7 @@ class TR_DataAccessAccelerator : public TR::Optimization
     *  \detail
     *     Unlike constant precision DAA call inlining which can be done in-place without introducing extra blocks,
     *     each variable precision call node has to be bloated into multiple
-    *     basic blocks to form a precision diamon. This disrupts the CFG and invalidates block iterator and
+    *     basic blocks to form a precision diamond. This disrupts the CFG and invalidates block iterator and
     *     TreeTop iterator that might be in use. As a result of this, it's difficult to inline variable precision
     *     calls while iterating the entire tree. The solution to this problem is to build a list of variable
     *     precision TreeTops during thetree traversal phase. And after that, go through this list and inline each one of them.

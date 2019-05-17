@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ MM_VerboseEventMetronomeTriggerStart::formattedOutput(MM_VerboseOutputAgent *age
 	char timestamp[32];
 	/* Intervalms for trigger start is the distance (in time) from previous trigger end and this trigger start.
 	 * There should be no heartbeat neither syncGC/OOM events in between the two, since no GC should be happening in between.
-	 * SyncGC due to Explict GC are possible between trigger end and trigger start */
+	 * SyncGC due to explicit GC are possible between trigger end and trigger start */
 	U_64 timeSinceLastTriggerEnd;
 	U_64 prevTime;
 

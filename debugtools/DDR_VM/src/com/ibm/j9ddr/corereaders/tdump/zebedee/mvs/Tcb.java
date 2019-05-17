@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,7 +246,7 @@ public class Tcb {
          *                                                                 
          * 1) Single RB on the input TCB RB chain                          
          *    a) If current linkage stack is empty, registers are extracted
-         *       from the input TCB and PSW is extraced from the current   
+         *       from the input TCB and PSW is extracted from the current   
          *       RB.                                                       
          *    b) If linkage stack is present, and non-fast path Kernel     
          *       call has been issued, registers and PSW are extracted     

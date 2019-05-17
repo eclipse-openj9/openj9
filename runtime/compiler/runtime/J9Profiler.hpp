@@ -657,7 +657,7 @@ class TR_BlockFrequencyInfo
    TR_ByteCodeInfo * const _blocks;
    int32_t         * const _frequencies;
 
-   // counterDeriviationInfo is used by JProfiling to store which counters to add and subtract to derrive
+   // counterDerivationInfo is used by JProfiling to store which counters to add and subtract to derive
    // the frequency of a basic block. A NULL entry represents no counters, a low tagged entry represents
    // a single block which can be obtained by right shifiting the entry by 1, otherwise it will be a pointer
    // to a TR_BitVector holding the counters to add together

@@ -612,7 +612,7 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
       if (DISPTRACE(trans)) traceMsg(comp, "moveStoreOutOfLoopForward failed because targetList is empty.\n");
       success0 = false;
       }
-   // check if decendents of p include an array load
+   // check if descendants of p include an array load
    if (!getThreeNodesForArray(p, &ixload, &aload, &iload, true))
       {
       if (DISPTRACE(trans)) traceMsg(comp, "moveStoreOutOfLoopForward failed because decendents of pid:%d don't include an array load.\n", p->getID());
@@ -1714,7 +1714,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
                                      okDest);
       }
 
-   // Check existance of nullchk
+   // Check existence of nullchk
    // Insert (nullchk), findbytes, and result store instructions
    listT = P2T + P->getImportantNode(2)->getID();
    TR::TreeTop *last;
@@ -2166,7 +2166,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
    TR::Node * top = TR::Node::create(TR::treetop, 1, findBytesNode);
    TR::Node * storeToIndVar = TR::Node::createStore(indexVarSymRef, findBytesNode);
 
-   // Check existance of nullchk
+   // Check existence of nullchk
    // Insert (nullchk), findbytes, and result store instructions
    listT = P2T + P->getImportantNode(2)->getID();
    TR::TreeTop *last;

@@ -952,7 +952,7 @@ class CheckEngine
 					//		if ((NULL == classToCast) || (0 == instanceOfOrCheckCast(J9GC_J9OBJECT_CLAZZ(*address), classToCast))) {
 					// The issue is that we can't simply call "internalFindClassUTF8" in DDR.
 					// We could guess at the behaviour of the ClassLoader, but that makes 
-					// distingushing a real problem from a weird ClassLoader delegation
+					// distinguishing a real problem from a weird ClassLoader delegation
 					// model difficult.
 				}
 	

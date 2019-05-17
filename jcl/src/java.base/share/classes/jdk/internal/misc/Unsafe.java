@@ -5840,7 +5840,7 @@ public final class Unsafe {
 	 * otherwise an IllegalArgumentException is thrown
 	 * 
 	 * @param bbo a ByteBuffer object
-	 * @throws IllegalArgumentException as per decription above
+	 * @throws IllegalArgumentException as per description above
 	 */
 	public void invokeCleaner(ByteBuffer bbo) {
 		if (bbo instanceof DirectBuffer) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -310,7 +310,7 @@ decodeStackFrameDataFromStackMapTable(StackMapFrame* stackMapFrame, U_8* nextSta
 
 
 /**
- * Decode all data of the specified stackmap frame from verifyData->stackMaps (the decompessed stackmap table)
+ * Decode all data of the specified stackmap frame from verifyData->stackMaps (the decompressed stackmap table)
  * as the stackmap table doesn't exist in the class file, and push the information of all data type
  * to the verification type buffer (Only used for the 'Stackmap Frame' section).
  * @param stackMapFrame - pointer to the current stackmap frame data

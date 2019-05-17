@@ -4537,7 +4537,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                // The 2nd check below is to account for the rare case when we can
                // have a virtual (non interface) call that has an interface method
                // as the callee in the IL. This can happen in cases when an abstract class
-               // implements an interface but doesnt even declare one of the methods in the
+               // implements an interface but doesn't even declare one of the methods in the
                // interface. In this case, the vft slot for the abstract class actually
                // has the interface method and this can lead to strange behaviour when we look
                // up the method (code guarded by below if). The strange case is if

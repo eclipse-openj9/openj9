@@ -887,7 +887,7 @@ j9process_fireAndForgetImpl(struct J9PortLibrary *portLibrary, const char *testN
  * Verify port library process management.
  * 
  * Fire & Forget:
- * - Execute the differens scenarios of this test (processSuccess, processCrash, etc.)
+ * - Execute the different scenarios of this test (processSuccess, processCrash, etc.)
  * 
  * @param[in] portLibrary The port library under test
  * 
@@ -973,7 +973,7 @@ j9process_fireAndWaitForImpl(struct J9PortLibrary *portLibrary, const char *test
  * Verify port library process management.
  * 
  * Fire and WaitFor - Runtime.exec (Blocking)
- * - Execute the differens scenarios of this test (processSuccess, processCrash, etc.)
+ * - Execute the different scenarios of this test (processSuccess, processCrash, etc.)
  * 
  * @param[in] portLibrary The port library under test
  * 
@@ -1063,7 +1063,7 @@ j9process_fireAndCheckIfCompleteImpl(struct J9PortLibrary *portLibrary, const ch
  * Verify port library process management.
  * 
  * Fire and Check if Complete - Runtime.exe (Non-Blocking)
- * - Execute the differens scenarios of this test (processSuccess, processCrash, etc.)
+ * - Execute the different scenarios of this test (processSuccess, processCrash, etc.)
  * 
  * @param[in] portLibrary The port library under test
  * 
@@ -1158,7 +1158,7 @@ j9process_fireAndTerminateImpl(struct J9PortLibrary *portLibrary, const char *te
  * Verify port library process management.
  * 
  * Fire and Terminate - Hang
- * - Execute the differens scenarios of this test (processSuccess, processCrash, etc.)
+ * - Execute the different scenarios of this test (processSuccess, processCrash, etc.)
  * 
  * @param[in] portLibrary The port library under test
  * 
@@ -1444,7 +1444,7 @@ j9process_envTest(struct J9PortLibrary *portLibrary)
  * Verify port library process management.
  *
  * Fire, Write and Read
- * - Execute the differens scenarios of this test (processSuccess, processCrash, etc.)
+ * - Execute the different scenarios of this test (processSuccess, processCrash, etc.)
  *
  * @param[in] portLibrary The port library under test
  *
@@ -1715,7 +1715,7 @@ j9process_testCloseScenarioImpl(struct J9PortLibrary *portLibrary, const char *t
  * Verify port library process management.
  *
  * Fire & Forget:
- * - Execute the differens scenarios of this test (processSuccess, processCrash, etc.)
+ * - Execute the different scenarios of this test (processSuccess, processCrash, etc.)
  *
  * @param[in] portLibrary The port library under test
  *

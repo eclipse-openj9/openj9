@@ -419,7 +419,7 @@ uint8_t* TR_DataCache::allocateDataCacheSpace(int32_t size)
    {
    uint8_t *base = 0;
    size = TR_DataCacheManager::alignToMachineWord(size);
-   // dataCache is manipulated exclussively by a single thread
+   // dataCache is manipulated exclusively by a single thread
    if (_segment->heapAlloc + size <= _segment->heapTop)
       {
       base = _segment->heapAlloc;

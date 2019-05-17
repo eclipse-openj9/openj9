@@ -1362,7 +1362,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    if (useDirectHelperCall || !secondChild->getOpCode().isLoadConst() || secondChild->getInt()!=2)
       return TR::TreeEvaluator::performHelperCall(node, NULL, TR::acall, true, cg);
 
-   // 2-dimentional MultiANewArray
+   // 2-dimensional MultiANewArray
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
@@ -8968,7 +8968,7 @@ inlineNanoTime(
       cg->stopUsingRegister(temp1);
       deps->addPostCondition(cg->getMethodMetaDataRegister(), TR::RealRegister::ebp, cg);
 
-      // add the XMM dependendencies
+      // add the XMM dependencies
       addFPXMMDependencies(cg, deps);
       deps->stopAddingConditions();
 
@@ -9069,7 +9069,7 @@ inlineNanoTime(
 
       deps->addPostCondition(cg->getMethodMetaDataRegister(), TR::RealRegister::ebp, cg);
 
-      // add the XMM dependendencies
+      // add the XMM dependencies
       addFPXMMDependencies(cg, deps);
       deps->stopAddingConditions();
 
@@ -11340,7 +11340,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
 
    if (isRealTimeGC)
       {
-      // Realtime GC evalutes storeMR into a register here and then uses it to do the store after the write barrier
+      // Realtime GC evaluates storeMR into a register here and then uses it to do the store after the write barrier
 
       // If reference is unresolved, need to resolve it right here before the barrier starts
       // Otherwise, we could get stopped during the resolution and that could invalidate any tests we would have performend

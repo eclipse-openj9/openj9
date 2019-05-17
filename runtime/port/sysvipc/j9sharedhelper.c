@@ -499,7 +499,7 @@ ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, B
 			}
 		}
 
-		/*Now get a file descrip for caller ... and obtain a writer lock ... */
+		/*Now get a file descriptor for caller ... and obtain a writer lock ... */
 		*fd = 0;
 		*isReadOnlyFD=FALSE;
 

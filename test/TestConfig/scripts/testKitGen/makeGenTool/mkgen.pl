@@ -566,7 +566,7 @@ sub writeTargets {
 				if ( $test->{'aot'} eq 'applicable' ) {
 					$aotOptions = '$(AOT_OPTIONS) ';
 				} elsif ( $test->{'aot'} eq 'explicit' ) {
-					# When test tagged with aot explicit, its test command has aot options and runs multiple times explictly.
+					# When test tagged with aot explicit, its test command has aot options and runs multiple times explicitly.
 					$iterations = 1;
 				}
 			}

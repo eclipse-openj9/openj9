@@ -58,7 +58,7 @@
  * @param [in]  piconfig Pointer to a configuration structure
  * @param [in]  numLocks The number of locks to be initialized
  * @param [in]  createFlag Indicates whether cache is to be opened or created.
- * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existsing cache
+ * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existing cache
  * \args J9SH_OSCACHE_OPEXIST Open an existing cache only, failed if it doesn't exist.
  * @param [in]  verboseFlags Verbose flags
  * @param [in]  openMode Mode to open the cache in. Any of the following flags:

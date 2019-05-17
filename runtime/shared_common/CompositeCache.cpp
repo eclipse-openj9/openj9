@@ -2820,7 +2820,7 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 		if (ALLOCATE_TYPE_BLOCK == type) {
 			/* Similar to the behaviour when setting J9SHR_BLOCK_SPACE_FULL,
 			 * if available bytes < CC_MIN_SPACE_BEFORE_CACHE_FULL, J9SHR_AVAILABLE_SPACE_FULL is set in the previous commit. J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is checked in 
-			 * higher level APIs in SH_CacheMap. If it is set, higher level APIs will return direcly and we would not reach here. 
+			 * higher level APIs in SH_CacheMap. If it is set, higher level APIs will return directly and we would not reach here. 
 			 * if available bytes >= CC_MIN_SPACE_BEFORE_CACHE_FULL, do not set J9SHR_AVAILABLE_SPACE_FULL here as it is above the threshold.
 			 */
 			Trc_SHR_Assert_True((softMaxValue - usedBytes) >= CC_MIN_SPACE_BEFORE_CACHE_FULL);

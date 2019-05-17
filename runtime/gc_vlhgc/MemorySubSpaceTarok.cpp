@@ -900,7 +900,7 @@ MM_MemorySubSpaceTarok::collectorExpand(MM_EnvironmentBase *env)
 /**
  * Perform the contraction/expansion based on decisions made by checkResize.
  * Adjustments in contraction size is possible (because compaction might have yielded less then optimal results),
- * therefore allocDesriptor is still passed.
+ * therefore allocDescriptor is still passed.
  * @return the actual amount of resize (having IDATA return result will contain valid value only if contract/expand size is half of maxOfUDATA)
  */
 IDATA
@@ -1300,7 +1300,7 @@ MM_MemorySubSpaceTarok::calculateExpandSize(MM_EnvironmentBase *env, UDATA bytes
 	/* and how much do we need free after this GC to meet -Xminf ? */
 	minimumFree = (getActiveMemorySize() / _extensions->heapFreeMinimumRatioDivisor) * _extensions->heapFreeMinimumRatioMultiplier;
 	
-	/* The derired free is the sum of these 2 rounded to heapAlignment */
+	/* The desired free is the sum of these 2 rounded to heapAlignment */
 	desiredFree= MM_Math::roundToCeiling(_extensions->heapAlignment, minimumFree + bytesRequired);
 
 	if(desiredFree <= currentFree) {

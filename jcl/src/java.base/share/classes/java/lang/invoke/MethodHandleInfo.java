@@ -129,7 +129,7 @@ public interface MethodHandleInfo {
 	/**
 	 * Reflects the underlying member as a Method, Field or Constructor. The member must be accessible to the provided lookup object.
 	 * Public members are reflected as if by <code>getMethod</code>, <code>getField</code> or <code>getConstructor</code>. 
-	 * Non-public members are reflected as if by <code>getDeclearedMethod</code>, <code>getDeclaredField</code> or <code>getDeclaredConstructor</code>.
+	 * Non-public members are reflected as if by <code>getDeclaredMethod</code>, <code>getDeclaredField</code> or <code>getDeclaredConstructor</code>.
 	 * 
 	 * @param expected The expected type of the returned Member
 	 * @param lookup The lookup that was used to create the MethodHandle, or a lookup object with equivalent access

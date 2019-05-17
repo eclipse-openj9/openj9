@@ -2459,12 +2459,12 @@ TR_J9ByteCodeIlGenerator::saveStack(int32_t targetIndex, bool anchorLoads)
 // Meanwhile, TR IL is being generated that refers to Nodes popped off
 // the stack. The assumption here is that the order of operations is
 // unconstrained other than by the data flow implied by the trees of
-// references to nodes and by the control dependancies imposed by the
+// references to nodes and by the control dependencies imposed by the
 // order of treetops. The latter are implied by the semantics of each
 // bytecode.
 //
 // The job of handlePendingPushSaveSideEffects is to add additional
-// implicit control dependancies to the TR IL caused by the
+// implicit control dependencies to the TR IL caused by the
 // decompilation points.  All loads of the PPS save region must occur
 // before decompilation points except in the specfic case when the load
 // would redundantly reload a value already in the PPS.
@@ -5057,7 +5057,7 @@ break
       TR::ILOpCodes callOpCode = calledMethod->indirectCallOpCode();
       if (invokedynamicReceiver)
          {
-         // invokedyanmic is an oddball.  It's the only way to invoke a method
+         // invokedynamic is an oddball.  It's the only way to invoke a method
          // such that the receiver is NOT on the operand stack, yet it IS
          // included in the numArgs calculation.  That's why we pass
          // numChildren as numArgs+1 below.

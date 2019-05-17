@@ -582,7 +582,7 @@ TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
       TR::RawAllocator rawAllocator(jitConfig->javaVM);
       void * alloc = rawAllocator.allocate(sizeof(TR::CompilationInfo));
       /* FIXME: Replace this with the appropriate intializers in the constructor */
-      /* Note: there are embbeded objects in TR::CompilationInfo that rely on the fact
+      /* Note: there are embedded objects in TR::CompilationInfo that rely on the fact
          that we do memset this object to 0 */
       memset(alloc, 0, sizeof(TR::CompilationInfo));
       _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);

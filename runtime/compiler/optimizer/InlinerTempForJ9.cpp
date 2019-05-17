@@ -1814,7 +1814,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
        !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;
 
-   // I am not sure if having the same type between C/S and B/Z matters here.. ie. if the type is being used as the only distiguishing factor
+   // I am not sure if having the same type between C/S and B/Z matters here.. ie. if the type is being used as the only distinguishing factor
    switch (callNode->getSymbol()->castToResolvedMethodSymbol()->getRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
@@ -3817,7 +3817,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
                   }
                else if ((frequency2 >= 0) && (frequency2 < coldBorderFrequency)) // very cold block
                   {
-                  //to avoid divizion by zero crash. Semantically  freqs of 0 and 1 should be pretty close given maxFrequency of 10K
+                  //to avoid division by zero crash. Semantically  freqs of 0 and 1 should be pretty close given maxFrequency of 10K
                   int adjFrequency2 = frequency2 ? frequency2 : 1;
                   float factor = (float)adjFrequency2 / (float)maxFrequency;
                   //factor = std::max(factor, 0.1f);
@@ -4098,7 +4098,7 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
       if (comp()->trace(OMR::inlining))
       oldSize = bytecodeSize;
 
-      //to avoid divizion by zero crash. Semantically  freqs of 0 and 1 should be pretty close given maxFrequency of 10K
+      //to avoid division by zero crash. Semantically  freqs of 0 and 1 should be pretty close given maxFrequency of 10K
       int adjFrequency = frequency ? frequency : 1;
 
       float factor = (float)adjFrequency / (float)maxFrequency;
@@ -4397,7 +4397,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
 
    if (!comp()->getOption(TR_DisableInlinerFanIn))  // TODO: make the default for everybody
       {
-      // In JIT, having low caller information is equivallent to lack of information.  We want to exclude only cases where we know we have alot of fan-in
+      // In JIT, having low caller information is equivalent to lack of information.  We want to exclude only cases where we know we have alot of fan-in
       if (j9InlinerPolicy->adjustFanInSizeInExceedsSizeThreshold(bytecodeSize, calculatedSize, calleeResolvedMethod, callerResolvedMethod, bcInfo.getByteCodeIndex()))
          {
          return true;

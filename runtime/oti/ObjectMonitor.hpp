@@ -426,7 +426,7 @@ done:
 	 * record for the object is found, nothing happens.
 	 *
 	 * @param currentThread[in] the current J9VMThread
-	 * @param object[in] the object whose monitor was just exitted
+	 * @param object[in] the object whose monitor was just exited
 	 * @param recordList[in/out] pointer to the head of the monitor enter record list to update
 	 */
 	static VMINLINE void
@@ -459,7 +459,7 @@ done:
 	 * record for the object is found, nothing happens.
 	 *
 	 * @param currentThread[in] the current J9VMThread
-	 * @param object[in] the object whose monitor was just exitted
+	 * @param object[in] the object whose monitor was just exited
 	 */
 	static VMINLINE void
 	recordBytecodeMonitorExit(J9VMThread *currentThread, j9object_t object)
@@ -476,7 +476,7 @@ done:
 	 * record for the object is found, nothing happens.
 	 *
 	 * @param currentThread[in] the current J9VMThread
-	 * @param object[in] the object whose monitor was just exitted
+	 * @param object[in] the object whose monitor was just exited
 	 */
 	static VMINLINE void
 	recordJNIMonitorExit(J9VMThread *currentThread, j9object_t object)

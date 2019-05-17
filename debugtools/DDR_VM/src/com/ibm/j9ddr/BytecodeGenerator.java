@@ -40,7 +40,7 @@ import jdk.internal.org.objectweb.asm.Type;
 
 /**
  * Generates the class bytecodes needed by DDR to represent, as Java classes,
- * the structures and pointers decribed by the blob.
+ * the structures and pointers described by the blob.
  */
 public class BytecodeGenerator {
 

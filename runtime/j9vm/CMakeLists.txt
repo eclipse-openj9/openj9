@@ -26,7 +26,7 @@ set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 add_tracegen(j9scar.tdf)
 
 # Note we add all the actual sources to this interface library.
-# This is so that we can reuse them in jvm_b150/jvm_b156 without having to explictly re-list all the files
+# This is so that we can reuse them in jvm_b150/jvm_b156 without having to explicitly re-list all the files
 add_library(jvm_common INTERFACE)
 target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/j7verify.c
