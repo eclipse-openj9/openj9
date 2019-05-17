@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2246,7 +2246,7 @@ Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadsCpuUsageImpl(JNIEn
 	memset(&cpuUsage, 0, sizeof(cpuUsage));
 
 	/* Get the cpu usage for all threads while holding the vmThreadListMutex.
-	 * This ensures that a thread doesnt die on us while walking the threads in the thread library
+	 * This ensures that a thread doesn't die on us while walking the threads in the thread library
 	 */
 	omrthread_monitor_enter(javaVM->vmThreadListMutex);
 	rc = omrthread_get_jvm_cpu_usage_info(&cpuUsage);

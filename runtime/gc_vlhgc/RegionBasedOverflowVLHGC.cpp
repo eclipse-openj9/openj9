@@ -91,7 +91,7 @@ MM_RegionBasedOverflowVLHGC::tearDown(MM_EnvironmentBase *env)
  * Empty a packet to resolve overflow by dirtying the appropriate 
  * cards for each object withing a given packet
  * 
- * @param packet - Reference to packet to be empited
+ * @param packet - Reference to packet to be emptied
  * @param type - ignored for concurrent collector
  *  
  */

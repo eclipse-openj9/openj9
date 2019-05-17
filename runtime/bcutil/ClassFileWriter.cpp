@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -194,7 +194,7 @@ ClassFileWriter::analyzeROMClass()
 	 * If there are multiple call sites referring to same InvokeDynamic CP entry,
 	 * then the contents get duplicated as many times.
 	 *
-	 * Eg: Say there are two InvokeDynamic entris in .class
+	 * Eg: Say there are two InvokeDynamic entries in .class
 	 *
 	 * 		InvokeDynamic1
 	 * 			bootstrap_method_attr_index1

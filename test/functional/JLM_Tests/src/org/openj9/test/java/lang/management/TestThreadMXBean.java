@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1453,7 +1453,7 @@ public class TestThreadMXBean {
 	//        final Object lock1 = new Object();
 	//        ThreadInfo[] threadinfos = tb.dumpAllThreads(true, true);
 	//        // must be more than 6 thread: ReaderThread,Attach Listener, Signal
-	//        // Disparcher, Finalizer, Reference Harndler, main
+	//        // Dispatcher, Finalizer, Reference Harndler, main
 	//        AssertJUnit.assertTrue(threadinfos.length >= 6);
 	//        int threadsum = threadinfos.length;
 	//        new Thread() {
@@ -1483,7 +1483,7 @@ public class TestThreadMXBean {
 	//        long[] ids = tb.getAllThreadIds();
 	//        ThreadInfo[] threadinfos = tb.getThreadInfo(ids, true, true);
 	//        // must be more than 6 thread: ReaderThread,Attach Listener, Signal
-	//        // Disparcher, Finalizer, Reference Harndler, main
+	//        // Dispatcher, Finalizer, Reference Harndler, main
 	//        int threadsum = threadinfos.length;
 	//        AssertJUnit.assertTrue(threadsum >= 6);
 	//        for (int i = 0; i < threadinfos.length; i++) {

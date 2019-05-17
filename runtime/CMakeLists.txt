@@ -67,7 +67,7 @@ include(cmake/J9vmGenAsm.cmake)
 ### all configuration that does not need to proceed J9vmPlatform
 ###
 
-# Build everything with -fPIC (or equivilent).
+# Build everything with -fPIC (or equivalent).
 # We do this to ensure that our static libraries get built with -fPIC
 # (cmake automatically builds shared libraries with -fPIC)
 # TODO this has the side effect that we also build executables with -fPIE which we dont want.

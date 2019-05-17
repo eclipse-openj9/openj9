@@ -1667,7 +1667,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
          */
          TR::MemoryReference  *sourceMR = generateX86MemoryReference(vftChild, cg());
          TR::Register *reg = cg()->allocateRegister();
-         // as vftChild->getOpCode().isLoadIndirect is true here, need set excpetionpoint
+         // as vftChild->getOpCode().isLoadIndirect is true here, need set exception point
          TR::Instruction * instr = TR::TreeEvaluator::insertLoadMemory(vftChild, reg, sourceMR, TR_RematerializableAddress, cg());
          reg->setMemRef(sourceMR);
          cg()->setImplicitExceptionPoint(instr);

@@ -756,7 +756,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
             // The scaling of the threshold can be turned off by having
             // the sampleThresholdVariationAllowance equal to 0
             J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(event->_vmThread, (UDATA)startPC);
-            int32_t codeSize = 0; // TODO elminate the overhead; we already have metadata
+            int32_t codeSize = 0; // TODO eliminate the overhead; we already have metadata
             if (metaData)
                codeSize = compInfo->calculateCodeSize(metaData);
 

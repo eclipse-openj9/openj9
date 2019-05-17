@@ -68,7 +68,7 @@ MM_ConfigurationRealtime::initialize(MM_EnvironmentBase *env)
 		 * which also removes the contention when inserting to a global list.
 		 * So the split count equals the number of gc threads.
 		 * NOTE: The split available list mechanism assumes the slave IDs are in the range of [0, gcThreadCount-1].
-		 * This is currently the case, as _statusTable in ParallelDispacher also replies on slave IDs be in this range
+		 * This is currently the case, as _statusTable in ParallelDispatcher also replies on slave IDs be in this range
 		 * as it uses the slave ID as index into the status array. If slave IDs ever fall out of the above range,
 		 * split available list would likely loose the performance advantage.
 		 */

@@ -1521,7 +1521,7 @@ J9NLS_VM_PROPERTY_MODULARITY_OPTION_REQUIRES_MODULES.user_response=Refer to the 
 # fifth argument is the module name
 # sixth argument is the module version
 # seventh argument is the length of source file
-# eigth argument is the source file
+# eighth argument is the source file
 # ninth argument is the line number
 J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION_LINE=\tat %2$.*1$s.%4$.*3$s (%5$s@%6$s/%8$.*7$s:%9$u)
 # START NON-TRANSLATABLE
@@ -1547,7 +1547,7 @@ J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION_LINE.user_response=no action.
 # fifth argument is the module name
 # sixth argument is the module version
 # seventh argument is the length of source file
-# eigth argument is the source file
+# eighth argument is the source file
 J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION=\tat %2$.*1$s.%4$.*3$s (%5$s@%6$s/%8$.*7$s)
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION.sample_input_1=9
@@ -1570,7 +1570,7 @@ J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION.user_response=no action.
 # fifth argument is the module name
 # sixth argument is the length of source file
 # seventh argument is the source file
-# eigth argument is the line number
+# eighth argument is the line number
 J9NLS_VM_STACK_TRACE_WITH_MODULE_LINE=\tat %2$.*1$s.%4$.*3$s (%5$s/%7$.*6$s:%8$u)
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_WITH_MODULE_LINE.sample_input_1=9

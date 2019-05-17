@@ -21,7 +21,7 @@
 # Defines rules for compiling source files into object files
 #
 # Each of these rules will also add themselves to jit_cleanobjs and jit_cleandeps
-# to clean build artifacts and dependecy files, respectively
+# to clean build artifacts and dependency files, respectively
 #
 include $(JIT_MAKE_DIR)/rules/gnu/filetypes.mk
 

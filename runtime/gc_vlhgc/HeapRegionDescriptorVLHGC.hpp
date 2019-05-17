@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -267,7 +267,7 @@ public:
 	}
 
 	/**
-	 * @return True if region is in survivor set (there is no explict flag, but info is inferred from _survivorBase being non-null
+	 * @return True if region is in survivor set (there is no explicit flag, but info is inferred from _survivorBase being non-null
 	 */
 	MMINLINE bool isSurvivorRegion() { return NULL != _copyForwardData._survivorBase; }
 

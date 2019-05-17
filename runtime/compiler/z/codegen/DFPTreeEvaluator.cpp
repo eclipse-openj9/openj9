@@ -1375,7 +1375,7 @@ inlineBigDecimalFromPackedConverter(
    //we will have a label so that our OOL path could be redirected to the end of inlining method.
    outlinedHelperCall->swapInstructionListsWithCompilation();
 
-   //put dec reference here because we may need to use it to actually evalute the call node
+   //put dec reference here because we may need to use it to actually evaluate the call node
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getChild(3));
 
@@ -1444,7 +1444,7 @@ inlineBigDecimalToPackedConverter(
    // load the dfp value into register
    TR::Register * dfpRegister = genLoadDFP(node, cg, node->getFirstChild());
 
-   // convert the dfp value into packed decimak
+   // convert the dfp value into packed decimal
    TR::Register * retRegister = cg->allocateRegister();
    if(signedPacked == 1)
       {
@@ -2272,7 +2272,7 @@ J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // RTC 91058: The COBOL runtime was previously setting the IEEE divide-by-zero mask
    // on when it was first brought up, so COBOL programs would terminate with an
-   // expection on a divide by zero. In a mixed-language environment, other languages
+   // exception on a divide by zero. In a mixed-language environment, other languages
    // might want to handle the exception instead of terminate. To accommodate this,
    // the runtime will no longer set the divide-by-zero mask. COBOL programs will then
    // need to ensure the mask is on exactly when an exception would be hit.

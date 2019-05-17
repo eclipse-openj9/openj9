@@ -2294,7 +2294,7 @@ j9file_create_status_file(J9PortLibrary* portLibrary, const char* filename, cons
 }
 
 /*
- * Helper function used by File Locking tests below to check for the existance
+ * Helper function used by File Locking tests below to check for the existence
  * of a status file from the other child in the test
  */
 IDATA

@@ -255,7 +255,7 @@ protected :
 		/* Declared data */
 		LengthType iCapacity;
 		LengthType iLength;
-		DataType*  iDebugData;  /* Only required for debuging */
+		DataType*  iDebugData;  /* Only required for debugging */
 
 		/* Internal method for accessing the data associated with a header */
 		inline DataType* data(void)

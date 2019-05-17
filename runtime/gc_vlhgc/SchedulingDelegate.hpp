@@ -424,7 +424,7 @@ public:
 
 	/**
 	 * Determine what type of PGC should be run next PGC cycle (Copy-Forward, Mark-Sweep-Compact etc)
-	 * The result is not explicitely returned, but implicitely through CycleState, class member flag etc.
+	 * The result is not explicitly returned, but implicitely through CycleState, class member flag etc.
 	 * @param env[in] the master GC thread
 	 */
 	void determineNextPGCType(MM_EnvironmentVLHGC *env);

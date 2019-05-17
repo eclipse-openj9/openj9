@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -143,7 +143,7 @@ I_32 initZipLibrary(J9PortLibrary* portLib, char* dir)
 		j9str_printf(portLib, correctPathPtr, expectedPathLength, "%s/%s", dir, J9_ZIP_DLL_NAME);
 		if(j9sl_open_shared_library(correctPathPtr, &zipDLLDescriptor, TRUE)) goto openFailed;
 	} else {
-		/* dir is NULL. It shouldn't happen, but in case, revert back to original dlload that
+		/* dir is NULL. It shouldn't happen, but in case, revert back to original dlopen that
 		 * replies on LIBPATH
 		 */
 		if(j9sl_open_shared_library(J9_ZIP_DLL_NAME, &zipDLLDescriptor, TRUE)) goto openFailed;

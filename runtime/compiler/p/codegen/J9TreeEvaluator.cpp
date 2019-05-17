@@ -2475,7 +2475,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
    // Evaluate any escaping nodes before the OOL branch since they won't be evaluated in the OOL path.
    preEvaluateEscapingNodesForSpineCheck(node, cg);
 
-   // Label to the OOL code that will perform the load/store/agen for discontigous arrays (and the bound check if needed).
+   // Label to the OOL code that will perform the load/store/agen for discontiguous arrays (and the bound check if needed).
    TR::LabelSymbol *discontiguousArrayLabel = generateLabelSymbol(cg);
 
    // Label back to main-line that the OOL code will branch to when done.
@@ -6170,7 +6170,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          //TODO: this code is never executed, check if we can remove this now.
          if (!cg->isDualTLH())
             {
-            //shouldAlignToCacheBoundary is false at defintion at the top, and
+            //shouldAlignToCacheBoundary is false at definition at the top, and
             //the only codepoint where its set to true is never executed
             //so this looks like a candidate for deletion.
             if (shouldAlignToCacheBoundary)
@@ -8394,7 +8394,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
       if (!node->isArrayChkReferenceArray1())
          {
 
-         // Loading the Class Pointer -> classDepthandFlags
+         // Loading the Class Pointer -> classDepthAndFlags
 #ifdef OMR_GC_COMPRESSED_POINTERS
          generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));

@@ -4599,7 +4599,7 @@ void JitShutdown(J9JITConfig * jitConfig)
 
       // free the IProfiler structures
 
-      // Dealllocate the buffers used for interpreter profiling
+      // Deallocate the buffers used for interpreter profiling
       // Must be called when we are sure that no java thread can be running
       // Or at least that Java threads do not try to collect IProfiler info
       // We turn off IProfiler above, but let's add another check

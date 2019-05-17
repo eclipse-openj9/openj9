@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,7 @@ my %jaxb_api = (
 	sha1 => '99f802e0cb3e953ba3d6e698795c4aeb98d37c48'
 );
 
-# Put all dependent jars hash to array to prepare dowloading
+# Put all dependent jars hash to array to prepare downloading
 my @jars_info = (
 	\%asm_all,
 	\%asm_7_0,

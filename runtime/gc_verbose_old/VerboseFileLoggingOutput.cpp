@@ -269,7 +269,7 @@ MM_VerboseFileLoggingOutput::formatAndOutput(J9VMThread *vmThread, UDATA indent,
 }
 
 /**
- * Generate an expaneded filename based on currentFile.
+ * Generate an expanded filename based on currentFile.
  * The caller is responsible for freeing the returned memory.
  * 
  * @param env the current thread

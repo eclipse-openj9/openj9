@@ -53,7 +53,7 @@ else
 endif
 
 ifneq (,$(CCACHE))
-  # Open jdk makefiles add a  bunch of environemnt variables to the ccache command
+  # Open jdk makefiles add a  bunch of environment variables to the ccache command
   # cmake will not parse this properly, so we wrap the whole thing in the env command
   # We also need to add semicolons between arguments or else cmake will treat the whole
   # thing as one long command name

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -409,7 +409,7 @@ closeLibrary:
 /**
  * Load a JVMTI agent and call the agent's intialization function
  * @param vm Java VM
- * @param agentLibrary environemtn for the agent
+ * @param agentLibrary environment for the agent
  * @param name of the initialization function
  * @return JNI_ERR, JNI_OK
  */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,8 +122,8 @@ TR_S390RelocationTarget::arrayCopyHelperAddress(J9JavaVM *javaVM)
 void
 TR_S390RelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
   {
-   /* for Z platform, isolated field row/col offset is recorded in long displacment
-      Long displacment Format
+   /* for Z platform, isolated field row/col offset is recorded in long displacement
+      Long displacement Format
        ________ ____ ____ ____ __ ________ ____________ _______
       |Op Code | R1 | X2 | B2 |DL2        | DH2        |Op Code|
       |________|____|____|____|___________|____________|_______|

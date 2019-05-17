@@ -620,7 +620,7 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 				region->getOwnableSynchronizerObjectList()->startOwnableSynchronizerProcessing();
 				Assert_MM_true(region->getRememberedSetCardList()->isAccurate());
 				if ((region->_criticalRegionsInUse > 0) || (randomDecideForceNonEvacuatedRegion(_extensions->fvtest_forceCopyForwardHybridRatio))) {
-					/* set the region is noEvacation for copyforward collector */
+					/* set the region is noEvacuation for copyforward collector */
 					region->_markData._noEvacuation = true;
 					_regionCountCannotBeEvacuated += 1;
 				} else if ((_regionCountReservedNonEvacuated > 0) && region->isEden()){
@@ -2048,7 +2048,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 	}
 
 	if (_abortInProgress || noEvacuation) {
-		/* Once threads agreed that abort is in progress or the object is in noEvacation region, only mark/push should be happening, no attempts even to allocate/copy */
+		/* Once threads agreed that abort is in progress or the object is in noEvacuation region, only mark/push should be happening, no attempts even to allocate/copy */
 
 		if (_markMap->atomicSetBit(object)) {
 			Assert_MM_false(MM_ScavengerForwardedHeader(object).isForwardedPointer());

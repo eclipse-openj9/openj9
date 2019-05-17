@@ -1565,7 +1565,7 @@ TR_CISCGraph::importUDchains(TR::Compilation *comp, TR_UseDefInfo *useDefInfo, b
 
 
 //*****************************************************************************************
-// Defragement dagIds and set _noFragmentDagId
+// Defragment dagIds and set _noFragmentDagId
 //*****************************************************************************************
 int32_t
 TR_CISCGraph::defragDagId()
@@ -4301,7 +4301,7 @@ TR_CISCTransformer::analyzeConnectionOnePairChild(TR_CISCNode *const p, TR_CISCN
    const uint32_t tmpIdx = idx(pn->getID(), 0);
    int32_t successCount = 0;
    TR_CISCNode *tnBefore = t;
-   while(true)  // we may need to analyze decendant for tn because of negligible nodes (e.g. iload)
+   while(true)  // we may need to analyze descendant for tn because of negligible nodes (e.g. iload)
       {
       uint8_t chiData = result[tmpIdx + tn->getID()];
       if (chiData == _Embed)
@@ -5399,7 +5399,7 @@ TR_CISCTransformer::countP2T(TR_CISCNode *p, bool inLoop)
 
 //*****************************************************************************************
 // Return a representative target node corresponding to p
-// 0 for no-existance
+// 0 for no-existence
 //*****************************************************************************************
 TR_CISCNode *
 TR_CISCTransformer::getP2TRep(TR_CISCNode *p)
@@ -5420,7 +5420,7 @@ TR_CISCTransformer::getP2TRep(TR_CISCNode *p)
 
 //*****************************************************************************************
 // Return a representative target node *in the cycle* corresponding to p
-// 0 for no-existance
+// 0 for no-existence
 //*****************************************************************************************
 TR_CISCNode *
 TR_CISCTransformer::getP2TRepInLoop(TR_CISCNode *p, TR_CISCNode *exclude)

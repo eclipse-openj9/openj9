@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,7 +121,7 @@ public class signExtendedHighOrderBits extends jit.test.jitt.Test {
     return b;
   }
 
-  // b2i evalutor, but not into if case for GE instr because parent is ibload
+  // b2i evaluator, but not into if case for GE instr because parent is ibload
   //   Vijay: The only byte datatype nodes i know we will create are ibload and x2b where
   //          x can be i,l,s,c
   int b2i()

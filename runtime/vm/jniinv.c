@@ -1161,7 +1161,7 @@ static UDATA terminateRemainingThreads(J9VMThread* vmThread) {
 
 	Trc_VM_terminateRemainingThreads_Entry(vmThread);
 
-	/* Wait for any zombie threads (java notified of death, but vmThread not freed and threadProc not exitted) to completely terminate */
+	/* Wait for any zombie threads (java notified of death, but vmThread not freed and threadProc not exited) to completely terminate */
 
 	omrthread_monitor_enter(vm->vmThreadListMutex);
 	while (vm->zombieThreadCount != 0) {

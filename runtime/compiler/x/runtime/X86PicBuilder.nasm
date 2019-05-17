@@ -1527,7 +1527,7 @@ mergeIPicSlotCall:
       jnz         short IPicSlotMethodInterpreted
 
       ; We have a compiled method. Claim the trampoline reservation for this
-      ; target method if one doesnt exist for it yet reclaim the trampoline
+      ; target method if one doesn't exist for it yet reclaim the trampoline
       ; space if it already does.
       ;
 mergeUpdateIPicSlotCallWithCompiledMethod:
@@ -1997,7 +1997,7 @@ mergeVPicSlotCall:
       jnz         short VPicSlotMethodIsNative
 
       ; We have a compiled method. Claim the trampoline reservation for this
-      ; target method if one doesnt exist for it yet reclaim the trampoline
+      ; target method if one doesn't exist for it yet reclaim the trampoline
       ; space if it already does.
       ;
 mergeUpdateVPicSlotCallWithCompiledMethod:

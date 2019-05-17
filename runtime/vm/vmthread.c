@@ -409,7 +409,7 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	omrthread_monitor_exit(vmThread->publicFlagsMutex);
 #endif
 
-	/* Increment zombie thread counter - indicates threads which have notified java of their death, but have not deallocated their vmThread and exitted their thread proc */
+	/* Increment zombie thread counter - indicates threads which have notified java of their death, but have not deallocated their vmThread and exited their thread proc */
 
 	omrthread_monitor_enter(vm->vmThreadListMutex);
 	++(vm->zombieThreadCount);

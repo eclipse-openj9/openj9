@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -259,7 +259,7 @@ pushLiveStackToVerificationTypeBuffer(StackMapFrame* stackMapFrame, J9BytecodeVe
 	}
 
 	/* Step forward by 1 slot to point to the non-top element or the 2nd slot of long/double
-	 * as we retreat 1 step when the non-top element was defectd in the for loop.
+	 * as we retreat 1 step when the non-top element was detected in the for loop.
 	 */
 	if (nonTopFound) {
 		lastIndex += 1;

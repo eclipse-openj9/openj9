@@ -262,7 +262,7 @@ void TR_VMFieldsInfo::print(TR::FILE *outFile)
 {
    int i=0;
 
-   // iterate through the list invoking print on each elemnt
+   // iterate through the list invoking print on each element
    if ( _fields != NULL )
       {
       ListIterator <TR_VMField> iter(_fields);
