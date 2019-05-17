@@ -2322,6 +2322,7 @@ static U_32 buildFlags(void)
 	 */
 	flags |= BCT_JavaMaxMajorVersionShifted;
 	flags |= BCT_ValueTypesEnabled;
+	flags |= BCT_AnyPreviewVersion;
 
 	if(options.options & OPTION_stripDebugAttributes) flags |= CFR_StripDebugAttributes;
 	if(options.options & OPTION_stripDebugLines) flags |= BCT_StripDebugLines;

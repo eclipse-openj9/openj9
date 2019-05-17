@@ -2093,6 +2093,11 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				 */
 				vm->runtimeFlags |= J9_RUNTIME_XFUTURE;
 			}
+			if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_V11) {
+				if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_ENABLE_PREVIEW, NULL) >= 0) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW;
+				}
+			}
 			if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XSIGQUITTOFILE, NULL)) >= 0) {
 				GET_OPTION_VALUE(argIndex, ':', &optionValue);
 				vm->sigquitToFileDir = (optionValue == NULL) ? "." : optionValue;
