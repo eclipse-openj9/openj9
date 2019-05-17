@@ -41,7 +41,7 @@
 * Checks if running on a Virtualized environment or not. i.e On a Hypervisor or not
 *
 * Class:     com_ibm_virtalization_management_internal_HypervisorMXBeanImpl
-* Method:    isEnvirornmentVirtual
+* Method:    isEnvironmentVirtual
 *
 * @param[in] env The JNI env.
 * @param[in] obj The this pointer.

@@ -147,13 +147,13 @@ private:
 
 	/**
 	 * Rebuild Compressed Card Table for Mark (multithreaded, by regions)
-	 * @param env current thread envirinment
+	 * @param env current thread environment
 	 */
 	void rebuildCompressedCardTableForMark(MM_EnvironmentVLHGC* env);
 
 	/**
 	 * Rebuild Compressed Card Table for Compact (multithreaded, by regions)
-	 * @param env current thread envirinment
+	 * @param env current thread environment
 	 */
 	void rebuildCompressedCardTableForCompact(MM_EnvironmentVLHGC* env);
 

@@ -25,7 +25,7 @@ package java.lang;
  
 /**
  * This class is a placeholder for environments which
- * explicitely manage the action of a "Just In Time"
+ * explicitly manage the action of a "Just In Time"
  * compiler.
  *
  * @author		OTI

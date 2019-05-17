@@ -119,7 +119,7 @@ public:
 
 	/**
 	 * Exit a JNI critical region (i.e. ReleasePrimitiveArrayCritical or ReleaseStringCritical).
-	 * Once a thread has successfully exitted a critical region, objects in the java
+	 * Once a thread has successfully exited a critical region, objects in the java
 	 * heap are allowed to move again.
 	 *
 	 * @param vmThread     the J9VMThread requesting to exit a critical region
@@ -134,7 +134,7 @@ public:
 
 		Assert_MM_mustHaveJNICriticalRegion(vmThread);
 		if (--vmThread->jniCriticalDirectCount == 0) {
-			/* Exitting last critical region, swap out critical flags */
+			/* Exiting last critical region, swap out critical flags */
 			UDATA const criticalFlags = J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS;
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			UDATA const finalFlags = J9_PUBLIC_FLAGS_VM_ACCESS;

@@ -67,7 +67,7 @@ public class Format2Tprof {
                  public int compare(Object o1, Object o2) {
                     MethodEntry m1 = (MethodEntry) o1;
                     MethodEntry m2 = (MethodEntry) o2;
-                    return m2.count - m1.count;   // in decending order
+                    return m2.count - m1.count;   // in descending order
                   }
                }
             );

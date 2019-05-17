@@ -168,7 +168,7 @@ class Test {
 				exeToDebug = cmdArray[0];
 				proc = Runtime.getRuntime().exec(cmdArray, TestSuite.getEnvironmentVariableList(), userDir);
 			} else {
-				// Use a buffer to build the command line from the _commandExcutable and the _commandArgs
+				// Use a buffer to build the command line from the _commandExecutable and the _commandArgs
 				StringBuilder buffer = new StringBuilder(TestSuite.evaluateVariables(_commandExecutable));
 				for (String arg : _commandArgs) {
 					buffer.append(' ');
@@ -709,7 +709,7 @@ class Test {
 						return;
 					}
 					TestSuite.printErrorMessage("ABRT timed out");
-					/* When ABRT times out, try to kill the process with kill -9 to make sure it doesn's stop the rest */
+					/* When ABRT times out, try to kill the process with kill -9 to make sure it doesn't stop the rest */
 					TestSuite.printErrorMessage("executing kill -9 " + pid);
 					Process procKill9 = Runtime.getRuntime().exec("kill -9 " + pid);
 					procKill9.waitFor();

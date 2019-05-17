@@ -626,7 +626,7 @@ cleanup:
 #if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 /*Note:
  * This is more than one test. The first test that fails blocks the rest of the test. The test should not fail :-) 
- * This test is meant to excercise the race conditions that can occur when mutliple vm's create sysv obj
+ * This test is meant to exercise the race conditions that can occur when mutliple vm's create sysv obj
  * at the same time.
  */
 int

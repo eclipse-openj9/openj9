@@ -444,7 +444,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		assertTrue(validate(output, Constants.DCLIBS_SUCCESS_KEYS,
 				Constants.DCLIBS_FAILURE_KEYS, false));
 		
-		//if library is collected to the core, then test "!dclibs extrac" command to extract libs to temp folder
+		//if library is collected to the core, then test "!dclibs extract" command to extract libs to temp folder
 		if (output.contentEquals(Constants.DCLIBS_LIB_COLLENTED)){
 			String output2 = exec(Constants.DCLIBS_CMD, new String[] {"extract" });
 			assertTrue(validate(output2, Constants.DCLIBS_EXTRACT_SUCCESS_KEYS,

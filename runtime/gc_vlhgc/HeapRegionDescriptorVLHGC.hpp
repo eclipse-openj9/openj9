@@ -267,7 +267,7 @@ public:
 	}
 
 	/**
-	 * @return True if region is in survivor set (there is no explict flag, but info is inferred from _survivorBase being non-null
+	 * @return True if region is in survivor set (there is no explicit flag, but info is inferred from _survivorBase being non-null
 	 */
 	MMINLINE bool isSurvivorRegion() { return NULL != _copyForwardData._survivorBase; }
 

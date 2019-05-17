@@ -612,7 +612,7 @@ j9mem_test7_allocate32(struct J9PortLibrary *portLibrary, int randomSeed)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9mem_test7_allocate32";
 	
-	/* Use a more exhausive size array for 64 bit platforms to exercise the j9heap API.
+	/* Use a more exhaustive size array for 64 bit platforms to exercise the j9heap API.
 	 * Retain the old sizes for regular 32 bit VMs, including ME platforms with very limited amount of physical memory.
 	 */
 #if defined(J9VM_ENV_DATA64)

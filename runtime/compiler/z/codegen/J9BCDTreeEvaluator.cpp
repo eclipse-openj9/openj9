@@ -520,7 +520,7 @@ J9::Z::TreeEvaluator::pd2udEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 J9::Z::TreeEvaluator::pd2udVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
-   // 1. Evalute child node and get a packed decimal in vector register
+   // 1. Evaluate child node and get a packed decimal in vector register
    TR::Node* childNode = node->getFirstChild();
    TR::Register* pdValueReg = cg->evaluate(childNode);
 
@@ -1598,7 +1598,7 @@ J9::Z::TreeEvaluator::zd2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 /**
- * 1. Get zd value by evaluting child node. It's in zdNode's PseudoRegister
+ * 1. Get zd value by evaluating child node. It's in zdNode's PseudoRegister
  * 2. Get the memory reference from the pseudo register.
  * 3. Allocate Vector register to return
  * 4. get size of the node( node->getsize)
@@ -1909,7 +1909,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
    TR_StorageReference* targetStorageReference = hint ? hint : TR_StorageReference::createTemporaryBasedStorageReference(sizeOfZonedValue, comp);
 
    targetReg->setStorageReference(targetStorageReference, node);
-   TR::Node *child = node->getFirstChild(); //This child will evalueate to Vector Register
+   TR::Node *child = node->getFirstChild(); //This child will evaluate to Vector Register
    TR::Register *valueRegister = cg->evaluate(child);
    TR_ASSERT((valueRegister->getKind() == TR_VRF || valueRegister->getKind() == TR_FPR),
              "valueChild should evaluate to Vector register.");
@@ -2197,7 +2197,7 @@ J9::Z::TreeEvaluator::df2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    targetReg->setStorageReference(targetStorageReference, node);
 
-   bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacment)
+   bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacement)
    TR::MemoryReference *destMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, memSize, enforceSSLimits);
 
    if (cg->traceBCDCodeGen())
@@ -2278,7 +2278,7 @@ J9::Z::TreeEvaluator::zd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_StorageReference *srcStorageReference = srcReg->getStorageReference();
    int32_t srcRegSize = srcReg->getSize();
 
-   bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacment)
+   bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacement)
    TR::MemoryReference *sourceMR = generateS390LeftAlignedMemoryReference(srcNode, srcStorageReference, cg, srcRegSize, enforceSSLimits);
 
    TR::Register *fprTargetReg = isLongDouble ? cg->allocateFPRegisterPair() : cg->allocateRegister(TR_FPR);
@@ -2342,7 +2342,7 @@ J9::Z::TreeEvaluator::isZonedOperationAnEffectiveNop(TR::Node * node, int32_t sh
    }
 
 /**
- * \brief This evaluator helper function evalutes BCDCHK nodes by emitting mainline and out-of-line instructions for
+ * \brief This evaluator helper function evaluates BCDCHK nodes by emitting mainline and out-of-line instructions for
  * the underlying packed decimal operations. The mainline instructions perform the actual operations, and the OOL
  * instructions are for hardware exception handling.
  *
@@ -2953,7 +2953,7 @@ J9::Z::TreeEvaluator::pd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       {
       uint8_t mask = isAbs ? TR_PACKED_TO_DFP_ABS : TR_PACKED_TO_DFP_NOABS;
 
-      bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacment)
+      bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacement)
       TR::MemoryReference *sourceMR = generateS390LeftAlignedMemoryReference(srcNode, srcStorageReference, cg, srcRegSize, enforceSSLimits);
 
       fprTargetReg = isLongDouble ? cg->allocateFPRegisterPair() : cg->allocateRegister(TR_FPR);
@@ -3393,7 +3393,7 @@ J9::Z::TreeEvaluator::df2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
       targetReg->setStorageReference(targetStorageReference, node);
 
-      bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacment)
+      bool enforceSSLimits = true;  // RSL has same limits as SS (no index and 12 bit displacement)
       TR::MemoryReference *destMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, memSize, enforceSSLimits);
 
       if (cg->traceBCDCodeGen())
@@ -4742,7 +4742,7 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    TR::Register* vTargetReg = vTargetReg = cg->allocateRegister(TR_VRF);
    TR::Node* addressNode = node->getFirstChild();
 
-   // No need to evalute the address node of the pdloadi.
+   // No need to evaluate the address node of the pdloadi.
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
@@ -5773,7 +5773,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    TR::Compilation *comp = cg->comp();
    TR::Node * valueChild = node->getValueChild();
    TR::Node* addressNode = node->getChild(0);
-   // evalute valueChild (which is assumed by the OMR layer to be the second child) to Vector register.
+   // evaluate valueChild (which is assumed by the OMR layer to be the second child) to Vector register.
    // for this "pdStore" we assume if we evaluate value node we get Vector Register
    TR::Register* pdValueReg = cg->evaluate(valueChild);
 
@@ -5785,7 +5785,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
       traceMsg(comp,"generating VSTRL for pdstore node->size = %d.\n", node->getSize());
       }
 
-   // No need to evalute the address node of the pdstorei.
+   // No need to evaluate the address node of the pdstorei.
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
@@ -6687,7 +6687,7 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
          node,targetReg->getDecimalPrecision(),computedResultPrecision,firstReg->getDecimalPrecision(),secondReg->getDecimalPrecision());
       }
 
-   // Even with no overflow MP can produce a negative zero as the sign of the result is determinted from the rules
+   // Even with no overflow MP can produce a negative zero as the sign of the result is determined from the rules
    // of algebra *even when one or both of the operands are zero*. So 0 * -1 = -0 (0x0c * 0x1d = 0x0d -- not clean result)
    // MP will always produce a result with a preferred sign however.
    if (firstReg->hasKnownOrAssumedPositiveSignCode() &&

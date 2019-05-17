@@ -238,7 +238,7 @@ srpHashTableNew(
  * @return				An initialized SRP hash table
  *
  * Creates a SRP hash table with as many nodes as possible in the given memory region.
- * The actual number of nodes is egual to the next smaller value in primes table
+ * The actual number of nodes is equal to the next smaller value in primes table
  * of max elements that can fit in a given memory.
  */
 J9SRPHashTable *

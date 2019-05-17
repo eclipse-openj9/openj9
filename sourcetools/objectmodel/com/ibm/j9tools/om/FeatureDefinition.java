@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * The Feature class defines the elements of a J9 Build Spec Feature.  It encompases flags and sources
+ * The Feature class defines the elements of a J9 Build Spec Feature.  It encompasses flags and sources
  * which are common among multiple build specifications and should be re-used.
  * 
  * @author 	Gabriel Castro

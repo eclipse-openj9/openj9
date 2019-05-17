@@ -117,7 +117,7 @@ my %jaxb_api = (
 	sha1 => '99f802e0cb3e953ba3d6e698795c4aeb98d37c48'
 );
 
-# Put all dependent jars hash to array to prepare dowloading
+# Put all dependent jars hash to array to prepare downloading
 my @jars_info = (
 	\%asm_all,
 	\%asm_7_0,

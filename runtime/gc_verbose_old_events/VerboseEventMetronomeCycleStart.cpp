@@ -74,7 +74,7 @@ MM_VerboseEventMetronomeCycleStart::formattedOutput(MM_VerboseOutputAgent *agent
 	char timestamp[32];
 	/* Intervalms for cycle start is the distance (in time) from previous cycle end and this cycle start.
 	 * There should be no heartbeat nither syncGC/OOM events in between the two, since no GC should be happening in between.
-	 * SyncGC due to Explict GC are possible between cycle end and cycle start */
+	 * SyncGC due to explicit GC are possible between cycle end and cycle start */
 	U_64 timeSinceLastCycleEnd;
 	U_64 prevTime;
 

@@ -1051,7 +1051,7 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
                /*
                 * Special case for VPSOP + VTP sequence generated for checkPachedDecimal()
                 *
-                * In the design of DAA tree, we would normally put excetpion throwing nodes under BCDCHK
+                * In the design of DAA tree, we would normally put exception throwing nodes under BCDCHK
                 * node and create a function call in the OOL path of a JIT-compiled method should exceptions be thrown.
                 * However, pdModifyPrecision under pdChk DAA pattern is a bit different because they were
                 * not an exception throwing pattern.
@@ -1064,7 +1064,7 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
                 * The tree above evaluates to a normal non-exception throwing sequence when vector BCD support
                 * is not installed.
                 *
-                * With vector support, the same tree structure evaluates to VPSOP+VTP, the former throws Deciaml Exception.
+                * With vector support, the same tree structure evaluates to VPSOP+VTP, the former throws Decimal Exception.
                 * Since we don't have an OOL path to fall back to, the normal NOP BRC (which contains a snippet
                 * that indirectly points to OOL section start) is not generated. As a result, isDAACodeException() is
                 * not able to find the OOL snippet address and return an ILC of 0.

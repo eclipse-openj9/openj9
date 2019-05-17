@@ -45,7 +45,7 @@ MM_YieldCollaborator::yield(MM_EnvironmentBase *env)
 	
 	/* because of sync sections nesting we have to do >= (instead of ==) */
 	if (_yieldCount + *_count >= env->_currentTask->getThreadCount() || env->_currentTask->isSynchronized() /* only master active */) {
-		/* CMVC 142132 We change the resume event, even if we are master thread (ie we do not explicitely notify ourselves).
+		/* CMVC 142132 We change the resume event, even if we are master thread (ie we do not explicitly notify ourselves).
 		 * This is to "clear" any pending event (like newPacket) that may wake up slave after this point
 		 * (when master thread thinks that every other GC thread is blocked) */
 		_resumeEvent = notifyMaster;

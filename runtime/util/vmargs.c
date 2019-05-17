@@ -433,7 +433,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 						}
 						++cursor;
 					}
-					*(++cursor) = '\0';		/* explicity null-terminate the "array". There is no danger of walking beyond the buffer here because of bufSize-1 in call above. */
+					*(++cursor) = '\0';		/* explicitly null-terminate the "array". There is no danger of walking beyond the buffer here because of bufSize-1 in call above. */
 				}
 				if (errorFound != OPTION_OK) {
 					return errorFound;

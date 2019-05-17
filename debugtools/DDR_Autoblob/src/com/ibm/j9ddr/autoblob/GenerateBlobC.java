@@ -356,7 +356,7 @@ public class GenerateBlobC
 				/*
 				 * CMVC 193975 - adam
 				 * 
-				 * When running the build on Windows if a relative path has been used with / delimeters for the name
+				 * When running the build on Windows if a relative path has been used with / delimiters for the name
 				 * e.g. common/thrtypes , then Windows will treat the entire string as the file name rather than a directory
 				 * followed by a file name as Linux does. In order to correctly fallback to match just the name of the 
 				 * header file on Window's systems, only the characters after the last / can be used.

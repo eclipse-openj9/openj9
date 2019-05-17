@@ -287,7 +287,7 @@ mapDumpOptions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 			
 			/* Loop to map all the supported conditions (for ONANYSIGNAL) */
 			for (i = 0; i < numDumpConditions; i++) {
-				/* Disable any default or earlier envars for this condition */
+				/* Disable any default or earlier envvars for this condition */
 				for (j = 0; j < saveAgentNum; j++) {
 					if (strstr(agentOpts[j].args, dgConditions[i].event)) {
 						agentOpts[j].kind = J9RAS_DUMP_OPT_DISABLED;
@@ -306,7 +306,7 @@ mapDumpOptions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 			cursor += strlen(dgConditions[i].name);
 			
 			if ( *cursor == '(' && ( strchr(cursor, ')')) != NULL ) {
-				/* Disable any default or earlier envars for this condition */
+				/* Disable any default or earlier envvars for this condition */
 				for (j = 0; j < saveAgentNum; j++) {
 					if (strstr(agentOpts[j].args, dgConditions[i].event)) {
 						agentOpts[j].kind = J9RAS_DUMP_OPT_DISABLED;

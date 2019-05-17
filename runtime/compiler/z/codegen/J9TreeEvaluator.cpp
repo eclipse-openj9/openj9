@@ -2604,7 +2604,7 @@ J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::C
       //   ->secondChild
       //   #ENDIF
       // If we generate i2l node, we need to artificially set reference count of node to 1.
-      // After helper call is generated we decrese reference count of this node so that a register will be marked dead for RA.
+      // After helper call is generated we decrease reference count of this node so that a register will be marked dead for RA.
       TR::Node *secondChild = node->getSecondChild();
       if (TR::Compiler->target.is64Bit())
          {
@@ -4270,7 +4270,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    //  We need deps to setup args for arrayStoreCHK helper and/or wrtBAR helper call.
    //  We need 2 more regs for inline version of arrayStoreCHK (txReg & tyReg).  We use RA/EP for these
    //  We then need two extra regs for memref for the actual store.
-   //  A seventh, eigth and ninth post dep may be needed to manufacture imm values
+   //  A seventh, eighth and ninth post dep may be needed to manufacture imm values
    //  used by the inlined version of arrayStoreCHK
    //  The tenth post dep may be needed to generateDirectCall if it creates a RegLitRefInstruction.
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg);
@@ -5008,7 +5008,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          * BRC to end of this block if callResult is 0
          * load -1 to temp Register
          * compare with "-1 loded register", dataSnippet1, and if not update datasnippet with objectClassReg(Compare and Swap instr)
-         * if we didnot update, we don't update the next one->branch out to doneUpdateSnippetLabel
+         * if we didn't update, we don't update the next one->branch out to doneUpdateSnippetLabel
          * store dataSnippet2, castClassReg.//if we did update 1, we need to update both.
          * TestcallResultReg again to use in branch Instr
          * */
@@ -7120,7 +7120,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       numDeps +=2;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          {
-         numDeps +=2; // extra one for lit pool reg in disablez9 mode
+         numDeps +=2; // extra one for lit pool reg in disableZ9 mode
          }
       }
 #endif
@@ -7555,7 +7555,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       numDeps +=2;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          {
-         numDeps +=2; // extra one for lit pool reg in disablez9 mode
+         numDeps +=2; // extra one for lit pool reg in disableZ9 mode
          }
       }
 #endif
@@ -8566,7 +8566,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    /* Variables needed for Heap alloc OOL Opt */
    TR::Register * tempResReg;//Temporary register used to get the result from the BRASL call in heap alloc OOL
-   TR::RegisterDependencyConditions * heapAllocDeps1;//Depenedencies needed for BRASL call in heap alloc OOL
+   TR::RegisterDependencyConditions * heapAllocDeps1;//Dependencies needed for BRASL call in heap alloc OOL
    TR::Instruction *firstBRCToOOL = NULL;
    TR::Instruction *secondBRCToOOL = NULL;
 
@@ -8877,7 +8877,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                   debugObj->addInstructionComment(cursor, "Denotes start of OOL for allocating zero size arrays");
 
                   /* using TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-                   * for byte size for discontinous 0 size arrays because later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
+                   * for byte size for discontiguous 0 size arrays because later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
                    *
                    *
                    ----------- OOL: Beginning of out-of-line code section ---------------

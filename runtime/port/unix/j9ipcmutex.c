@@ -176,7 +176,7 @@ j9ipcmutex_release(struct J9PortLibrary *portLibrary, const char *name)
 	/* get size required for semaphore path and name */
 	sPathLen = nameLen + sizeof("/tmp/");
 
-	/* check if length of semaphore name is empty or if it exeeds max size for path */
+	/* check if length of semaphore name is empty or if it exceeds max size for path */
 	if (nameLen == 0) {
 		return -1;
 	}

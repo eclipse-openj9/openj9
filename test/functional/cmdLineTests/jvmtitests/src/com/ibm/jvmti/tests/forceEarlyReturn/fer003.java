@@ -25,7 +25,7 @@ package com.ibm.jvmti.tests.forceEarlyReturn;
  * 
  * @author mac
  *
- * Depracates fer001 which has synchronization issues however we still want to 
+ * Deprecates fer001 which has synchronization issues however we still want to 
  * keep it for debug purposes (disabled in testing)
  *
  */

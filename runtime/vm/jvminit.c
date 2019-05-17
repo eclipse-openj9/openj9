@@ -50,7 +50,7 @@
 #endif
 
 #if !defined(WIN32)
-/* Needed for JCL dependancy on JVM to set SIGPIPE to SIG_IGN */
+/* Needed for JCL dependency on JVM to set SIGPIPE to SIG_IGN */
 #include <signal.h>
 #endif
 
@@ -5592,7 +5592,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif
 
 #if !defined(WIN32)
-	/* Needed for JCL dependancy on JVM to set SIGPIPE to SIG_IGN */
+	/* Needed for JCL dependency on JVM to set SIGPIPE to SIG_IGN */
 	struct sigaction newSignalAction;
 #endif
 
@@ -5610,7 +5610,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 	
-	/* Needed for JCL dependancy on JVM to set SIGPIPE to SIG_IGN */
+	/* Needed for JCL dependency on JVM to set SIGPIPE to SIG_IGN */
 	sigemptyset(&newSignalAction.sa_mask);
 #ifndef J9ZTPF
 	newSignalAction.sa_flags = SA_RESTART;

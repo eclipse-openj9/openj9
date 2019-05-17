@@ -153,4 +153,4 @@ public:
 };
 
 #endif /* OMR_GC_MODRON_SCAVENGER */
-#endif /* SCAVENGERDELETAGEJAVA_HPP_ */
+#endif /* SCAVENGERDELEGATEJAVA_HPP_ */

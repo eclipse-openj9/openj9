@@ -68,7 +68,7 @@ public class TraceSection {
         Util.Debug.println("TraceSection: modification:        " + modification);
         Util.Debug.println("TraceSection: startPlatform:       " + startPlatform);
         Util.Debug.println("TraceSection: startSystem:         " + startSystem);
-        Util.Debug.println("TraceSection: type:                " + type); //  0=internal 1=extrenal
+        Util.Debug.println("TraceSection: type:                " + type); //  0=internal 1=external
         Util.Debug.println("TraceSection: generations:         " + generations);
         Util.Debug.println("TraceSection: pointerSize:         " + pointerSize);
 

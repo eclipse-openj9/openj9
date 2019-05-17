@@ -27,5 +27,5 @@ org.openj9test.modularity.unnamed   ---> the folder containing this README and t
   |
   |-- org.openj9.test.unnamed   ---> package name
                           |
-                          |-- UnnamedDummy   ---> target class field/method/constructor with references to module org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy.Dumm
+                          |-- UnnamedDummy   ---> target class field/method/constructor with references to module org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy.Dummy
                           |-- UnnamedReflectObjects   ---> providing reflection objects from class UnnamedDummy above

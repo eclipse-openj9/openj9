@@ -24,7 +24,7 @@
 
 // Include file for WinDbg kernel debugger extensions.
 // Note that you will typically NOT want to simply include
-// <wdbgexts.h> in your projects because of dependancies
+// <wdbgexts.h> in your projects because of dependencies
 // on some Windows definitions.  Include this file instead.
 //
 

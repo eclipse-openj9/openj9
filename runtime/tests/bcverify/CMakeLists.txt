@@ -37,8 +37,8 @@ add_library(bcuwhite SHARED
 	${j9vm_BINARY_DIR}/bcverify/ut_j9bcverify.c
 )
 
-# We need to add an explict dependency on the actual tracegen step since CMake
-# doesnt properly track generated file dependencies across directories
+# We need to add an explicit dependency on the actual tracegen step since CMake
+# doesn't properly track generated file dependencies across directories
 add_dependencies(bcuwhite trc_j9bcverify)
 
 target_link_libraries(bcuwhite

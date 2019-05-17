@@ -73,7 +73,7 @@ GC_FinalizeListManager::newInstance(MM_EnvironmentBase *env)
 }
 
 /**
- * deinitalize the instance of FinalizeListManager and deallocate the memory
+ * deinitialize the instance of FinalizeListManager and deallocate the memory
  */
 void
 GC_FinalizeListManager::kill(MM_EnvironmentBase *env)
@@ -83,7 +83,7 @@ GC_FinalizeListManager::kill(MM_EnvironmentBase *env)
 } 
 
 /**
- * initalize with deafault values and create the mutex
+ * initalize with default values and create the mutex
  * @return true if initialisation succesful, false otherwise.
  */
 bool

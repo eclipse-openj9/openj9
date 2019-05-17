@@ -32,7 +32,7 @@ add_executable(cfdump
 	${j9vm_SOURCE_DIR}/vm/ModularityHashTables.c
 	${j9vm_SOURCE_DIR}/vm/dllsup.c
 )
-# We need to add an explicty dependency since CMake doesnt track dependencies for generated files across directories
+# We need to add an explicit dependency since CMake doesn't track dependencies for generated files across directories
 add_dependencies(cfdump trc_j9vm)
 
 # And add the vm binary dir to our include path

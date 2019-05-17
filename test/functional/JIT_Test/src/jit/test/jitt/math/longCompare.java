@@ -60,7 +60,7 @@ public class longCompare extends jit.test.jitt.Test {
 	}
 
 	/* these tests are designed to tests the lcmp?? 
-	 * evaulators, at least when run at lowOpt
+	 * evaluators, at least when run at lowOpt
 	 */	
 	private static boolean tstCmpLT(long l1, long l2) {
 		boolean result = l1 < l2;

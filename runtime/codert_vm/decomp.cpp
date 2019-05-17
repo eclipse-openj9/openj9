@@ -958,7 +958,7 @@ decompileOuterFrame(J9VMThread * currentThread, J9JITDecompileState * decompileS
 	currentThread->j2iFrame = currentJ2iFrame;
 
 	/* If the outer framed failed a method monitor enter, hide the interpreted version to prevent exception throw
-	 * from exitting the monitor that was never entered.
+	 * from exiting the monitor that was never entered.
 	 */
 	if (J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE == resolveFrameType) {
 		newTempBase[-1] |= J9SF_A0_INVISIBLE_TAG;

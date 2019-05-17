@@ -338,7 +338,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	/**
 	 * Allows the process to peek ahead in the stream and see what the next closing tag is.
 	 * It handles peeks beyond the end of the current buffer contents.
-	 * @param the delimeter which indicates the end of the tag name
+	 * @param the delimiter which indicates the end of the tag name
 	 * @return the name of the tag found
 	 * @throws IOException re-throw exceptions.
 	 */

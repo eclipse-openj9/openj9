@@ -146,7 +146,7 @@ public class FlagDefinitions extends OMObject {
 	/**
 	 * Retrieve the HashMap containing all flag definitions contained by this FlagDefinitions object. 
 	 * 
-	 * @return	A HashMap with all the flag defintions that this FlagDefinitions object holds.
+	 * @return	A HashMap with all the flag definitions that this FlagDefinitions object holds.
 	 */
 	public Map<String, FlagDefinition> getFlagDefinitions() {
 		return Collections.unmodifiableMap(_flagDefinitions);

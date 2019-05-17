@@ -554,7 +554,7 @@ _inconsistentStack2:
 				}
 				/* Jazz 82615: Set liveStack->pc to the next pc value rather than the current pc value (start)
 				 * in the case of the matched stack frame in the current frame (liveStack)
-				 * of the detaile error message
+				 * of the detailed error message
 			 	 */
 				liveStack->pc = pc;
 				goto _mapError;

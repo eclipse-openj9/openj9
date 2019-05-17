@@ -157,13 +157,13 @@ private:
 protected:
 	/**
 	 * Construct a new TGC extensions object
-	 * @param extensions[in] the GC extesions
+	 * @param extensions[in] the GC extensions
 	 */
 	MM_TgcExtensions(MM_GCExtensions *extensions);
 	
 	/**
 	 * Tear down a TGC extensions object
-	 * @param extensions[in] the GC extesions
+	 * @param extensions[in] the GC extensions
 	 */
 	void tearDown(MM_GCExtensions *extensions);
 
@@ -197,14 +197,14 @@ public:
 	
 	/**
 	 * Allocate and initialize a new TGC extensions object
-	 * @param extensions[in] the GC extesions
+	 * @param extensions[in] the GC extensions
 	 * @return an initialized instance, or NULL on failure
 	 */
 	static MM_TgcExtensions * newInstance(MM_GCExtensions *extensions);
 	
 	/**
 	 * Tear down and free the TGC extensions object
- 	 * @param extensions[in] the GC extesions
+ 	 * @param extensions[in] the GC extensions
 	 */
 	void kill(MM_GCExtensions *extensions);
 	

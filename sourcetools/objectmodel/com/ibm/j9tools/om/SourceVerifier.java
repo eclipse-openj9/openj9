@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Verifier class to check the existance of the sources in a given {@link ISourceContainer}.
+ * Verifier class to check the existence of the sources in a given {@link ISourceContainer}.
  * 
  * @author	Gabriel Castro
  * @author	Han Xu

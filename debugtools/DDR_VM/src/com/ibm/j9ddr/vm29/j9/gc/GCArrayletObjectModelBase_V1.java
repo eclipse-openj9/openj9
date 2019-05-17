@@ -440,7 +440,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 
 	/**
 	 * Return the total number of arraylets for an indexable object, not including the arraylet in the spine.
-	 * Note that discontiugous arrays always have an empty leaf contained in the spine.  
+	 * Note that discontiguous arrays always have an empty leaf contained in the spine.  
 	 * @param array pointer to array
 	 * @return the number of leaf arraylets
 	 */	

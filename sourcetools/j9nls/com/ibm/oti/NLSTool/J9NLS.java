@@ -153,7 +153,7 @@ public class J9NLS implements NLSConstants {
 		Vector defaultNLSFiles = (Vector) localeHashtable.get(DEFAULT_LOCALE);
 		StringBuffer buffer = new StringBuffer();
 
-		// Create the output directory if it doesnt exist
+		// Create the output directory if it doesn't exist
 		File outputDir = new File(workingDirectory + fileSeparator + "nls");
 		if (!outputDir.exists()) {
 				dp("Output directory does not exist, creating it");

@@ -416,7 +416,7 @@ U_8*
 decodeStackmapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData* verifyData)
 {
 	if (verifyData->createdStackMap) {
-		/* Decode the specified 'Stackmap frame' data from verifyData->stackMaps (the decompessed stackmap table)
+		/* Decode the specified 'Stackmap frame' data from verifyData->stackMaps (the decompressed stackmap table)
 		 * as the stackmap table doesn't exist in the class file or currently in fallback verification
 		 * so the frame is pointing to internal created stackMap
 		 */

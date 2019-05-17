@@ -402,12 +402,12 @@ MM_Scheduler::waitForMutatorsToStop(MM_EnvironmentRealtime *env)
 	omrthread_monitor_enter(_masterThreadMonitor);
 	/* If master GC thread gets here without anybody requesting exclusive access for us
 	 * (possible in a shutdown scenario after we kill alarm thread), the thread will request
-	 * exlusive access for itself.
+	 * exclusive access for itself.
 	 * requestExclusiveVMAccess is invoked atomically with _mode being set to WAKING_GC
 	 * under masterThreadMonitor (see continueGC). Therefore, we check here if mode is not
-	 * WAKING_GC, and only than we reqest exlusive assess for ourselves.
+	 * WAKING_GC, and only than we reqest exclusive assess for ourselves.
 	 * TODO: This approach is just to fix some timing holes in shutdown. Consider removing this
-	 * "if" statement and fix alarm thread not to die before requesting exlusive access for us.
+	 * "if" statement and fix alarm thread not to die before requesting exclusive access for us.
 	 */
 	if (_masterThreadMustShutDown && _mode != WAKING_GC) {
 		uintptr_t gcPriority = 0;

@@ -1072,7 +1072,7 @@ public class LookupAPITests_Find {
 	
 	/**
 	 * Negative test : findSetter, findGetter test using private fields of an inner classes (level 1 deep)
-	 * where the lookup class is the top level outer class belonging to a diffrent package.
+	 * where the lookup class is the top level outer class belonging to a different package.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

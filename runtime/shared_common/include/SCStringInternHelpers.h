@@ -70,7 +70,7 @@ sharedInternTable_performNodeAction(J9SharedInvariantInternTable *table, J9Share
 /*
  * Key is the user passed search key.
  * existingEntry is the SRP Hashtable entry with the hash calculated by using the given key
- * @param exisitingEntry Entry in the SRP hashtable
+ * @param existingEntry Entry in the SRP hashtable
  * @param key is compared with the existingEntry.
  * @return 0, meaning false, if key does not match with the existingEntry,
  * 		   1, otherwise

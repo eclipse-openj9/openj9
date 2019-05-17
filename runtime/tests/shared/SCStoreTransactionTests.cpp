@@ -129,7 +129,7 @@ testSCStoreTransaction(J9JavaVM* vm)
 	rc |= test22(vm);
 	
 
-	/*The tests below excercise the class debug area of the cache*/
+	/*The tests below exercise the class debug area of the cache*/
 	if (0 < ClassDebugDataProvider::getRecommendedPercentage()) {
 		rc |= test23(vm);
 		rc |= test24(vm);

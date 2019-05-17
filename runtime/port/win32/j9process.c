@@ -152,7 +152,7 @@ getUnicodeCmdline(struct J9PortLibrary *portLibrary, const char *command[], uint
 	/* 
 	 * Windows needs a char* command line unlike regular C exec* functions
 	 * Therefore we need to rebuild the line that has been sliced in java...
-	 * Subtle : if a token embbeds a <space>, the token will be quoted (only
+	 * Subtle : if a token embeds a <space>, the token will be quoted (only
 	 * 			if it hasn't been quoted yet) The quote char is "
 	 * Note (see "XXX references in the code)
 		 * Our CDev scanner/parser does not handle '"' correctly. A workaround is to close
@@ -171,7 +171,7 @@ getUnicodeCmdline(struct J9PortLibrary *portLibrary, const char *command[], uint
 			const char *commandStart;
 			commandILength = strlen(command[i]);
 			length += commandILength;
-			/* check_for_embbeded_space */
+			/* check_for_embedded_space */
 			if (commandILength>0) {
 				commandStart = command[i];
 				if (commandStart[0]!='"' /*"XXX*/ ) {

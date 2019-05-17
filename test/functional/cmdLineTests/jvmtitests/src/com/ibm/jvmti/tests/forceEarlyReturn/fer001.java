@@ -24,7 +24,7 @@ package com.ibm.jvmti.tests.forceEarlyReturn;
 
 
 /*
- *  Depracated in favour of fer003
+ *  Deprecated in favour of fer003
  * 
  */
 

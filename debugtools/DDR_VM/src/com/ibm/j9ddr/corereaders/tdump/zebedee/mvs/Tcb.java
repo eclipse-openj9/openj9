@@ -246,7 +246,7 @@ public class Tcb {
          *                                                                 
          * 1) Single RB on the input TCB RB chain                          
          *    a) If current linkage stack is empty, registers are extracted
-         *       from the input TCB and PSW is extraced from the current   
+         *       from the input TCB and PSW is extracted from the current   
          *       RB.                                                       
          *    b) If linkage stack is present, and non-fast path Kernel     
          *       call has been issued, registers and PSW are extracted     

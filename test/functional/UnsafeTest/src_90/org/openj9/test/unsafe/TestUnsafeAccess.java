@@ -344,7 +344,7 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 		Class<?> anon = myUnsafe.defineAnonymousClass(Object.class, bytes, null);
 		
 		/* Anonymous Class = java/lang/DummyClass; Host Class = java/lang/Object 
-		 * No execption should be thrown since anonymous class and host class
+		 * No exception should be thrown since anonymous class and host class
 		 * are in the same package.
 		 */
 		bytes = createDummyClass("java/lang");

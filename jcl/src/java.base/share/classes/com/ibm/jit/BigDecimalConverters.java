@@ -37,7 +37,7 @@ public class BigDecimalConverters extends BigDecimalExtension {
          long longPack = 0;
          if (packedDecimal.length == 8)
          {
-            // explicitely unrolled loop to take advantage of sequential load
+            // explicitly unrolled loop to take advantage of sequential load
             longPack = ((long)(packedDecimal[0] & 0xFF) << 56)
                 + ((long)(packedDecimal[1] & 0xFF) << 48)
                 + ((long)(packedDecimal[2] & 0xFF) << 40)

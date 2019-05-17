@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * This test is to excercise the GC's dynamic class unloading capability.  It tries to load a class and then instantiate thousands
+ * This test is to exercise the GC's dynamic class unloading capability.  It tries to load a class and then instantiate thousands
  * of copies of it in an array which it continues to over-write with new copies of the class or other objects to force the creation
  * of large amounts of garbage.  Note that this test will give most useful results if run with -Xalwaysclassgc
  *

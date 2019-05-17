@@ -174,7 +174,7 @@ namespace  {
             // Make a copy of just the J9JITExceptionTable Struct (excluding the variable length section)
             memcpy((uint8_t *)stubMetadata, (uint8_t *)metaData, numBytes);
             
-            // Set the various pointers to NULL since this J9JITExeptionTable has no variable length section
+            // Set the various pointers to NULL since this J9JITExceptionTable has no variable length section
             // However, the bodyInfo needs to exist.
             stubMetadata->inlinedCalls = NULL;
             stubMetadata->gcStackAtlas = NULL;

@@ -1051,7 +1051,7 @@ modifyArrayHeaderConst(TR::Compilation *comp, TR::Node *tree, int32_t offset)
    }
 
 //*****************************************************************************************
-// It creates a table load node especialy for fuction tables for TRT or TRxx
+// It creates a table load node especially for fuction tables for TRT or TRxx
 //*****************************************************************************************
 TR::Node*
 createTableLoad(TR::Compilation *comp, TR::Node* repNode, uint8_t inputSize, uint8_t outputSize, void *array, bool dispTrace)

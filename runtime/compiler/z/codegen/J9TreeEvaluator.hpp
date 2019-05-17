@@ -95,7 +95,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     * \param deps
     *       A register dependency condition pointer used when the software read barrier, which itself is an internal
     *       control flow (ICF), is built inside another ICF. This is the outer ICF's dependency conditions.
-    *       When the deps parameter is not NULL, this evalutor helper does not build its own dependencies. Instead,
+    *       When the deps parameter is not NULL, this evaluator helper does not build its own dependencies. Instead,
     *       it builds on top of this outer deps.
     *
     * \param produceUnshiftedValue

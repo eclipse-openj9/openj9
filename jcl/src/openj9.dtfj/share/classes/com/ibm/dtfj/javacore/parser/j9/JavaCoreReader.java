@@ -146,7 +146,7 @@ public class JavaCoreReader {
 		if (head.indexOf(sectionEyeCatcher) >= 0) {
 			int idx = head.indexOf(charsetEyeCatcher);
 			
-			/* The charset eyecather is much newer, so may not be present */
+			/* The charset eyecatcher is much newer, so may not be present */
 			if (idx >= 0) {
 				idx += charsetEyeCatcher.length();
 				String javacoreCharset = head.substring(idx).trim();

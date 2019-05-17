@@ -4909,7 +4909,7 @@ isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if (-1 == j9shr_getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
-		/* use j9shr_getCacheDir() instead of SH_OSCache::getCacheDir() to avoid dupliated NLS message if SH_OSCache::getCacheDir() failed */
+		/* use j9shr_getCacheDir() instead of SH_OSCache::getCacheDir() to avoid duplicated NLS message if SH_OSCache::getCacheDir() failed */
 		Trc_SHR_INIT_isFreeDiskSpaceLow_getDirFailed();
 		goto done;
 	}

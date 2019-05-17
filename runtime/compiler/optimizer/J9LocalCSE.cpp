@@ -92,7 +92,7 @@ J9::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
       // had checkOverflow argument as true (n6n) and thus the original DAA Java calls were in fact different. Assuming
       // the BCDCHKs at n1n and n4n both raised hardware interrupts the fallback OOL path in case of n1n would have not
       // raised a Java exception and the execution would resume as normal. However in case on n6n the fallback OOL path
-      // may or may not raise a Java exception so exectuon could in fact diverge to a different path. Hence it is not
+      // may or may not raise a Java exception so execution could in fact diverge to a different path. Hence it is not
       // correct to common n5n and n2n in such cases.
       //
       // The following block of code checks for the above case and prevents commoning of n5n with n2n.

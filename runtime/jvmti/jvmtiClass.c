@@ -2102,7 +2102,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 									     J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas))));
 
 					/* Add the referenced Class item to the HT, we explicitly do it here in case the refered class
-					 * has not yet been added. Defering it to be done via the CFR_CONSTANT_Class case would 
+					 * has not yet been added. Deferring it to be done via the CFR_CONSTANT_Class case would 
 					 * prevent us from being able to save the index in htEntry->type.ref.classIndex (ie another
 					 * pass would be needed once the CFR_CONSTANT_Class case adds it) */
 					rc = jvmtiGetConstantPool_addClassOrString(translation, ref->classRefCPIndex, (U_8)CFR_CONSTANT_Class,

@@ -137,7 +137,7 @@ errorAtIndex(agentEnv *env, int index)
  * \brief	Log an error with the agent environment
  * \ingroup 	error
  *
- * @param[in] env 	agent envirnment
+ * @param[in] env 	agent environment
  * @param[in] err 	jvmti error code
  * @param[in] file 	source file where the error was logged, NULL if unavailable
  * @param[in] fnname	function name where the error was logged, NULL if unavailable

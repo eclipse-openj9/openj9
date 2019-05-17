@@ -194,7 +194,7 @@ ClassFileWriter::analyzeROMClass()
 	 * If there are multiple call sites referring to same InvokeDynamic CP entry,
 	 * then the contents get duplicated as many times.
 	 *
-	 * Eg: Say there are two InvokeDynamic entris in .class
+	 * Eg: Say there are two InvokeDynamic entries in .class
 	 *
 	 * 		InvokeDynamic1
 	 * 			bootstrap_method_attr_index1

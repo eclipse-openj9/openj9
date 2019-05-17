@@ -1815,7 +1815,7 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
       //                    There is no difference from normal JIT in these cases;
       //                    For modified case, we need to refresh the syncObjectTemp;
       // slot0 not active and notModified either:
-      //                    This is the most likely errie scenario we can encounter. For exception
+      //                    This is the most likely error scenario we can encounter. For exception
       //                    handling purpose, we have to reinstate slot0, and we cannot go wrong.
       // slot0 not active but modified:
       //                    We cannot do much about it until METADATA can carry the receiver info

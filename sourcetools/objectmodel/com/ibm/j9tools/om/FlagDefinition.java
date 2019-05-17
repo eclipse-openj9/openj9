@@ -65,7 +65,7 @@ public class FlagDefinition extends OMObject implements Comparable<FlagDefinitio
 	/**
 	 * A set of requires flags. 
 	 * Represents a depends-on linkage between flags. Indicates that the flag requires
-	 * that another flag be enabled. The flag which is dependended upon is identified 
+	 * that another flag be enabled. The flag which is dependent upon is identified 
 	 * by name using the flag attribute.
 	 */
 	protected Map<String, FlagDefinition> requires = new TreeMap<String, FlagDefinition>();

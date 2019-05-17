@@ -409,7 +409,7 @@ closeLibrary:
 /**
  * Load a JVMTI agent and call the agent's intialization function
  * @param vm Java VM
- * @param agentLibrary environemtn for the agent
+ * @param agentLibrary environment for the agent
  * @param name of the initialization function
  * @return JNI_ERR, JNI_OK
  */

@@ -254,7 +254,7 @@ public class ConfigurationRegistry {
 
 	/**
 	 * Used if a configuration is added with the same name as a previous one.
-	 * It is not a recommended practice to override the an exisiting configuration
+	 * It is not a recommended practice to override the an existing configuration
 	 * as it may produce unexpected results.
 	 * <p>
 	 * A configuration can be also defined as local if it was defined in the registry's
