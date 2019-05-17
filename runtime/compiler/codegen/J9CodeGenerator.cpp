@@ -74,7 +74,8 @@ J9::CodeGenerator::CodeGenerator() :
    _gpuSymbolMap(self()->comp()->allocator()),
    _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset()),
    _uncommonedNodes(self()->comp()->trMemory(), stackAlloc),
-   _liveMonitors(NULL)
+   _liveMonitors(NULL),
+   _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator()))
    {
    }
 
