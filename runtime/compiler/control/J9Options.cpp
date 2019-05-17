@@ -2860,7 +2860,7 @@ J9::Options::packOptions(TR::Options *origOptions)
    }
 
 TR::Options *
-J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT, TR_Memory *trMemory)
+J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT, TR_J9VMBase *fe, TR_Memory *trMemory)
    {
    TR::Options *options = (TR::Options *)trMemory->allocateHeapMemory(clientOptionsSize);
    memcpy(options, clientOptions, clientOptionsSize);
@@ -2882,6 +2882,8 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    // On JITaaS server, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    compInfoPT->getClientData()->setRtResolve(rtResolve);
+
+   _reportByteCodeInfoAtCatchBlock = fe->getReportByteCodeInfoAtCatchBlock();
 
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);

@@ -440,6 +440,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
          vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
          vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : NULL;
+         vmInfo._reportByteCodeInfoAtCatchBlock = comp->getOptions()->getReportByteCodeInfoAtCatchBlock();
          for (int32_t i = 0; i <= 7; i++)
             {
             vmInfo._arrayTypeClasses[i] = fe->getClassFromNewArrayTypeNonNull(i + 4);

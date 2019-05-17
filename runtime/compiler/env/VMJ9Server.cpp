@@ -1516,6 +1516,13 @@ TR_J9ServerVM::getROMMethodFromRAMMethod(J9Method *ramMethod)
    }
 
 bool
+TR_J9ServerVM::getReportByteCodeInfoAtCatchBlock()
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_reportByteCodeInfoAtCatchBlock;
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"

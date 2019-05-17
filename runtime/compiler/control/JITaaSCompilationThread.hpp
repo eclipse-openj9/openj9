@@ -136,6 +136,7 @@ class ClientSessionData
       bool _hasSharedClassCache;
       bool _elgibleForPersistIprofileInfo;
       TR_OpaqueClassBlock *_arrayTypeClasses[8];
+      bool _reportByteCodeInfoAtCatchBlock;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)

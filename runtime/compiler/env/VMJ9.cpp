@@ -6073,6 +6073,12 @@ TR_J9VMBase::getClassFromNewArrayTypeNonNull(int32_t arrayType)
    return clazz;
    }
 
+bool
+TR_J9VMBase::getReportByteCodeInfoAtCatchBlock()
+   {
+   return _compInfoPT->getCompilation()->getOptions()->getReportByteCodeInfoAtCatchBlock();
+   }
+
 /////////////////////////////////////////////////////
 // TR_J9VM
 /////////////////////////////////////////////////////
