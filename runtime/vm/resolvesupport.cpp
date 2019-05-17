@@ -957,12 +957,12 @@ illegalAccess:
 					J9FlattenedClassCache *flattenedClassCache = classFromCP->flattenedClassCache;
 					J9Class *flattenableClass = NULL;
 					UDATA index = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
-					flattenableClass = flattenedClassCache[index].clazz;
+					flattenableClass = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, index)->clazz;
 
 					if (J9_ARE_ALL_BITS_SET(flattenableClass->classFlags, J9ClassIsFlattened)) {
 						modifiers |= J9FieldFlagFlattened;
 
-						flattenedClassCache[index].offset = valueOffset;
+						J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, index)->offset = valueOffset;
 						valueOffset = index;
 
 						/* offset must be written to flattenedClassCache before fieldref is marked as resolved */
