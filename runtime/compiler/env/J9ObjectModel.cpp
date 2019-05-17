@@ -59,11 +59,20 @@ J9::ObjectModel::initialize()
 
    uintptr_t value;
 
-   // Discontiguous arraylets
-   //
+   // Compressed refs
    uintptr_t result = mmf->j9gc_modron_getConfigurationValueForKey(vm,
                                                                    j9gc_modron_configuration_discontiguousArraylets,
                                                                    &value);
+   if (result == 1 && value == 1)
+      _compressObjectReferences = true;
+   else
+      _compressObjectReferences = false;
+
+   // Discontiguous arraylets
+   //
+   result = mmf->j9gc_modron_getConfigurationValueForKey(vm,
+                                                         j9gc_modron_configuration_discontiguousArraylets,
+                                                         &value);
    if (result == 1 && value == 1)
       {
       _usesDiscontiguousArraylets = true;

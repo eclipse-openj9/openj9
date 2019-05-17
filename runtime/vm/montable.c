@@ -108,17 +108,14 @@ cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor*
  * @return an initialized J9HashTable on success, otherwise NULL
  */
 static J9HashTable*
-createMonitorTable(J9JavaVM *vm, char *tableName) {
-
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#define MONTABLE_FLAGS J9HASH_TABLE_ALLOCATE_ELEMENTS_USING_MALLOC32
-#else
-#define MONTABLE_FLAGS 0
-#endif
-
+createMonitorTable(J9JavaVM *vm, char *tableName)
+{
+	U_32 flags = 0;
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		flags = J9HASH_TABLE_ALLOCATE_ELEMENTS_USING_MALLOC32;
+	}
 	Assert_VM_false(NULL == tableName);
-	return hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), tableName, 64, sizeof(J9ObjectMonitor), 0, MONTABLE_FLAGS, OMRMEM_CATEGORY_VM, hashMonitorHash, hashMonitorCompare, NULL, vm);
-#undef MONTABLE_FLAGS
+	return hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), tableName, 64, sizeof(J9ObjectMonitor), 0, flags, OMRMEM_CATEGORY_VM, hashMonitorHash, hashMonitorCompare, NULL, vm);
 }
 
 UDATA

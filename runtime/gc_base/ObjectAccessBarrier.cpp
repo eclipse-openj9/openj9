@@ -51,24 +51,26 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 	OMR_VM *omrVM = env->getOmrVM();
 	
 #if defined (OMR_GC_COMPRESSED_POINTERS)
+	if (env->compressObjectReferences()) {
 
 #if defined(J9VM_GC_REALTIME)
-	/*
-	 * Do not allow 4-bit shift for Metronome
-	 * Cell Sizes Table for Segregated heap should be modified to have aligned to 16 values
-	 */
-	if (_extensions->isMetronomeGC()) {
-		if (DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT < omrVM->_compressedPointersShift) {
-			/* Non-standard NLS message required */
-			_extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_METRONOME_DOES_NOT_SUPPORT_4BIT_SHIFT;
-			return false;
+		/*
+		 * Do not allow 4-bit shift for Metronome
+		 * Cell Sizes Table for Segregated heap should be modified to have aligned to 16 values
+		 */
+		if (_extensions->isMetronomeGC()) {
+			if (DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT < omrVM->_compressedPointersShift) {
+				/* Non-standard NLS message required */
+				_extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_METRONOME_DOES_NOT_SUPPORT_4BIT_SHIFT;
+				return false;
+			}
 		}
-	}
 #endif /* J9VM_GC_REALTIME */
 
-	_compressedPointersShift = omrVM->_compressedPointersShift;
-	vm->compressedPointersShift = omrVM->_compressedPointersShift;
-	Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);
+		_compressedPointersShift = omrVM->_compressedPointersShift;
+		vm->compressedPointersShift = omrVM->_compressedPointersShift;
+		Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);
+	}
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
 	vm->objectAlignmentInBytes = omrVM->_objectAlignmentInBytes;
@@ -1548,11 +1550,11 @@ MM_ObjectAccessBarrier::compareAndSwapObject(J9VMThread *vmThread, J9Object *des
 		preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
 		protectIfVolatileBefore(vmThread, true, false, false);
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		result = ((U_32)(UDATA)compareValue == MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue));
-#else
-		result = ((UDATA)compareValue == MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue));
-#endif
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+			result = ((U_32)(UDATA)compareValue == MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue));
+		} else {
+			result = ((UDATA)compareValue == MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue));
+		}
 		protectIfVolatileAfter(vmThread, true, false, false);
 		if (result) {
 			postObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
@@ -1696,11 +1698,11 @@ MM_ObjectAccessBarrier::compareAndExchangeObject(J9VMThread *vmThread, J9Object 
 		preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
 		protectIfVolatileBefore(vmThread, true, false, false);
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		result = (J9Object *)(UDATA)MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue);
-#else
-		result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue);
-#endif
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+			result = (J9Object *)(UDATA)MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue);
+		} else {
+			result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue);
+		}
 
 		protectIfVolatileAfter(vmThread, true, false, false);
 		if (result) {
