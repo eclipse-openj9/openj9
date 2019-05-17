@@ -114,11 +114,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>Using JVM : ${sdk.executable}${sdk.executable.ext}</echo>
 		<echo>classname = "j9vm.test.corehelper.StackMapCoreGenerator"</echo>
 		<echo>Java VM Args:</echo>
-		<echo>	jvmarg = -Xshareclasses:name=ddrextjunitSCC,reset,modified=mod1</echo>
+		<echo>	jvmarg = -Xshareclasses:name=ddrextjunitSCC,reset -Xitsn1000</echo>
 		<echo>
 		</echo>
 		<java fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.corehelper.StackMapCoreGenerator" timeout="1200000" failonerror="true">
-			<jvmarg value="-Xshareclasses:name=ddrextjunitSCC,reset,modified=mod1" />
+			<jvmarg value="-Xshareclasses:name=ddrextjunitSCC,reset" />
 			<jvmarg value="-Xitsn1000" />
 			
 			<classpath refid="tck.class.path" />
