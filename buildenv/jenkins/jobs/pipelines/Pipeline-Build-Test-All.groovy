@@ -168,8 +168,8 @@ try {
             node(SETUP_LABEL) {
                 try {
                     checkout scm
-                    variableFile = load 'buildenv/jenkins/common/variables-functions'
-                    buildFile = load 'buildenv/jenkins/common/pipeline-functions'
+                    variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
+                    buildFile = load 'buildenv/jenkins/common/pipeline-functions.groovy'
 
                     // Determine if build is a PullRequest
                     if (ghprbPullId) {

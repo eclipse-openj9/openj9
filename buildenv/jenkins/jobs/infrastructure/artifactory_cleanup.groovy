@@ -39,7 +39,7 @@ timestamps {
     }
     node(LABEL) {
         checkout scm
-        def variableFile = load 'buildenv/jenkins/common/variables-functions'
+        def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
         variableFile.parse_variables_file()
         variableFile.set_artifactory_config()
 

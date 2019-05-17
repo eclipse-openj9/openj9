@@ -32,9 +32,9 @@ timeout(time: 10, unit: 'HOURS') {
         node(SETUP_LABEL) {
             try{
                 checkout scm
-                variableFile = load 'buildenv/jenkins/common/variables-functions'
+                variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                 variableFile.set_job_variables('build')
-                buildFile = load 'buildenv/jenkins/common/build'
+                buildFile = load 'buildenv/jenkins/common/build.groovy'
             } finally {
                 // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
                 cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
