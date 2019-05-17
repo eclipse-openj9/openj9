@@ -161,9 +161,11 @@ jobject getPlatformPropertyList(JNIEnv *env, const char *strings[], int propInde
 		strings[propIndex++] = userdir;
 	}
 
-	/* Get the timezone */
-	strings[propIndex++] = "user.timezone";
-	strings[propIndex++] = "";
+	if (JAVA_SPEC_VERSION < J2SE_V12) {
+		/* Get the timezone */
+		strings[propIndex++] = "user.timezone";
+		strings[propIndex++] = "";
+	}
 
 	/* Jazz 52075 JCL_J2SE is always true */
 
