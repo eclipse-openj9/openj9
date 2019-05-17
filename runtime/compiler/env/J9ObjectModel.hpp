@@ -49,6 +49,7 @@ public:
 
    ObjectModel() :
       OMR::ObjectModelConnector(),
+      _compressObjectReferences(false),
       _usesDiscontiguousArraylets(false),
       _arrayLetLeafSize(0),
       _arrayLetLeafLogSize(0),
@@ -112,17 +113,23 @@ public:
    uintptrj_t offsetOfIndexableSizeField();
 
    /**
-   * @brief: Returns the read barrier type of VM's GC
+   * @brief Returns the read barrier type of VM's GC
    */
    MM_GCReadBarrierType  readBarrierType()  { return _readBarrierType;  }
 
    /**
-   * @brief: Returns the write barrier type of VM's GC
+   * @brief Returns the write barrier type of VM's GC
    */
    MM_GCWriteBarrierType writeBarrierType() { return _writeBarrierType; }
 
+   /**
+   * @brief Returns whether or not object references are compressed
+   */
+   bool compressObjectReferences() { return _compressObjectReferences; }
+
 private:
 
+   bool                  _compressObjectReferences;
    bool                  _usesDiscontiguousArraylets;
    int32_t               _arrayLetLeafSize;
    int32_t               _arrayLetLeafLogSize;

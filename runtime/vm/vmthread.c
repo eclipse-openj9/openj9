@@ -117,15 +117,11 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 		/* Create the vmThread */
 		void *startOfMemoryBlock = NULL;
 		UDATA vmThreadAllocationSize = J9VMTHREAD_ALIGNMENT + ROUND_TO(sizeof(UDATA), vm->vmThreadSize);
-#if defined(OMR_GC_COMPRESSED_POINTERS)
 		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 			startOfMemoryBlock = (void *)j9mem_allocate_memory32(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
-		} else
-#else
-		{
+		} else {
 			startOfMemoryBlock = (void *)j9mem_allocate_memory(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
 		}
-#endif
 		if (NULL == startOfMemoryBlock) {
 			goto fail;
 		}
@@ -223,6 +219,7 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->readBarrierRangeCheckBase = UDATA_MAX;
 	newThread->readBarrierRangeCheckTop = 0;
 #ifdef OMR_GC_COMPRESSED_POINTERS
+	/* No need for a runtime check here - it would just waste cycles */
 	newThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
 	newThread->readBarrierRangeCheckTopCompressed = 0;
 #endif /* OMR_GC_COMPRESSED_POINTERS */
@@ -1392,11 +1389,11 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 	 */
 
 	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + vm->thrStaggerMax;
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-	stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
-#else
-	stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
-#endif
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+	} else {
+		stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+	}
 	if (stack != NULL) {
 		/* for hyperthreading platforms, make sure that stacks are relatively misaligned */
 		UDATA end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize;
@@ -1445,11 +1442,11 @@ freeJavaStack(J9JavaVM * vm, J9JavaStack * stack)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-	j9mem_free_memory32(stack);			
-#else
-	j9mem_free_memory(stack);
-#endif
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		j9mem_free_memory32(stack);			
+	} else {
+		j9mem_free_memory(stack);
+	}
 }
 
 
