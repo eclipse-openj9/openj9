@@ -116,6 +116,7 @@ class ClientSessionData
       IPTable_t *_IPData;
       bool _isMethodTracingEnabled;
       TR_OpaqueClassBlock * _owningClass;
+      bool _isCompiledWhenProfiling; // To record if the method is compiled when doing Profiling
       };
 
    // This struct contains information about VM that does not change during its lifetime.

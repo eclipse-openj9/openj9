@@ -78,7 +78,7 @@ protected:
    virtual bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry) override;
 
 private:
-   void validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method);
+   void validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method, bool fromPerCompilationCache, bool isCompiledWhenProfiling);
    bool _useCaching;
    // Statistics
    uint32_t _statsIProfilerInfoFromCache;  // IP cache answered the query

@@ -186,6 +186,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    //
    if (_useCaching)
       {
+      bool entryFromPerCompilationCache = false;
       // first, check persistent cache
       bool methodInfoPresent = false;
       entry = clientSessionData->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
@@ -193,6 +194,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          {
          // if no entry in persistent cache, check per-compilation cache
          entry = compInfoPT->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
+         entryFromPerCompilationCache = true;
          }
       if (methodInfoPresent)
          {
@@ -217,7 +219,18 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
             fprintf(stderr, "Error cached IP data for method %p bcIndex %u bytecode=%x: ipdata is empty but we have a cached entry=%p\n", 
                method, byteCodeIndex, bytecode, entry);
             }
-         validateCachedIPEntry(entry, clientData, methodStart, isMethodBeingCompiled, method);
+            
+            bool isCompiledWhenProfiling = false;
+            if(!entryFromPerCompilationCache)
+               {
+               auto & j9methodMap = clientSessionData->getJ9MethodMap();
+               auto it = j9methodMap.find((J9Method*)method);
+               if (it != j9methodMap.end())
+                  {
+                  isCompiledWhenProfiling = it->second._isCompiledWhenProfiling;
+                  }
+               }
+         validateCachedIPEntry(entry, clientData, methodStart, isMethodBeingCompiled, method, entryFromPerCompilationCache, isCompiledWhenProfiling);
 #endif
          return entry; // could be NULL
          }
@@ -603,7 +616,7 @@ TR_JITaaSClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *om
    }
 
 void
-TR_JITaaSIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method)
+TR_JITaaSIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method, bool fromPerCompilationCache, bool isCompiledWhenProfiling)
    {
    if (clientData) // client sent us some data
       {
@@ -662,7 +675,9 @@ TR_JITaaSIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR
                int32_t maxW;
                uintptrj_t domClazzClient = csInfoClient->getDominantClass(sumW, maxW);
                uintptrj_t domClazzServer = csInfoServer->getDominantClass(sumW, maxW);
-               TR_ASSERT(domClazzClient == domClazzServer, "Missmatch dominant class client=%p server=%p", (void*)domClazzClient, (void*)domClazzServer);
+               
+                  if(!fromPerCompilationCache && isCompiledWhenProfiling)
+                     TR_ASSERT(domClazzClient == domClazzServer, "Missmatch dominant class client=%p server=%p", (void*)domClazzClient, (void*)domClazzServer);            
                }
                break;
             default:
@@ -676,7 +691,7 @@ TR_JITaaSIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR
 // actually create an IProfiler entry and insert it into the IProfiler hashtable
 // The server must send this request to the client. However, if the server has
 // already cached this bcIndex corresponding to the call and if the new count
-// is not different than the old count, the mesage to the client can be skipped
+// is not different than the old count, the message to the client can be skipped
 void
 TR_JITaaSIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation * comp)
    {
@@ -711,7 +726,7 @@ TR_JITaaSIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
             // These types on entries are special, they may not have a j9class
             // pointer in the first slot, but they should have a weight
             CallSiteProfileInfo *csInfo = entry->asIPBCDataCallGraph()->getCGData();
-            TR_ASSERT(csInfo->_weight[0] != 0, "weigth of first slot must be non-zero for direct calls");
+            TR_ASSERT(csInfo->_weight[0] != 0, "weight of first slot must be non-zero for direct calls");
             if (csInfo->_weight[0] != count)
                {
                csInfo->_weight[0] = count; // update
