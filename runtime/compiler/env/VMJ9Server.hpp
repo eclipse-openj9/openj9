@@ -172,6 +172,7 @@ public:
    virtual bool isStringCompressionEnabledVM() override;
    virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp) override;
    virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod) override;
+   virtual bool getReportByteCodeInfoAtCatchBlock() override;
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);

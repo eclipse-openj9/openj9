@@ -938,6 +938,7 @@ public:
    virtual int64_t getCpuTimeSpentInCompThread(TR::Compilation * comp); // resolution is 0.5 sec or worse. Returns -1 if unavailable
 
    virtual void *             getClassLoader(TR_OpaqueClassBlock * classPointer);
+   virtual bool getReportByteCodeInfoAtCatchBlock();
 
    J9VMThread *            _vmThread;
    J9PortLibrary *         _portLibrary;
