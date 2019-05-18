@@ -324,7 +324,6 @@ uint32_t TR::ARMCallSnippet::getLength(int32_t estimatedSnippetStart)
 
 uint8_t *TR::ARMUnresolvedCallSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg()->fe());
    uint8_t *cursor = TR::ARMCallSnippet::emitSnippetBody();
 
@@ -388,13 +387,11 @@ uint8_t *TR::ARMUnresolvedCallSnippet::emitSnippetBody()
 
 uint32_t TR::ARMUnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    return TR::ARMCallSnippet::getLength(estimatedSnippetStart) + 8;
    }
 
 uint8_t *TR::ARMVirtualUnresolvedSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t            *cursor = cg()->getBinaryBufferCursor();
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMvirtualUnresolvedHelper, false, false, false);
@@ -439,7 +436,6 @@ uint32_t TR::ARMVirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStar
 
 uint8_t *TR::ARMInterfaceCallSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t            *cursor = cg()->getBinaryBufferCursor();
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMinterfaceCallHelper, false, false, false);

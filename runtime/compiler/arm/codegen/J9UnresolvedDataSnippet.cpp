@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,6 @@ J9::ARM::UnresolvedDataSnippet::getHelper()
 uint8_t *
 J9::ARM::UnresolvedDataSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t            *cursor = cg()->getBinaryBufferCursor();
 
    getSnippetLabel()->setCodeLocation(cursor);
@@ -126,7 +125,6 @@ J9::ARM::UnresolvedDataSnippet::emitSnippetBody()
 uint32_t
 J9::ARM::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    return 6 * 4;
    }
 
