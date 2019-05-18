@@ -182,7 +182,8 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_isClassContended(false),
 	_isClassUnmodifiable(context->isClassUnmodifiable()),
-	_isInnerClass(false)
+	_isInnerClass(false),
+	_needsStaticConstantInit(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
 
@@ -296,6 +297,7 @@ ClassFileOracle::walkFields()
 
 		if (isStatic) {
 			if (NULL != field->constantValueAttribute) {
+				_needsStaticConstantInit = true;
 				U_16 constantValueIndex = field->constantValueAttribute->constantValueIndex;
 				if (CFR_CONSTANT_String == _classFile->constantPool[constantValueIndex].tag) {
 					markStringAsReferenced(constantValueIndex);

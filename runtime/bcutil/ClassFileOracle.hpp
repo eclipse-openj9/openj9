@@ -924,6 +924,10 @@ class NameAndTypeIterator
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
 
+	bool needsStaticConstantInit() const {
+		return _needsStaticConstantInit;
+	}
+
 	U_8 constantDynamicType(U_16 cpIndex) const
 	{
 		J9CfrConstantPoolInfo* nas = &_classFile->constantPool[_classFile->constantPool[cpIndex].slot2];
@@ -996,6 +1000,7 @@ private:
 	bool _hasClinit;
 	bool _annotationRefersDoubleSlotEntry;
 	bool _isInnerClass;
+	bool _needsStaticConstantInit;
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;
