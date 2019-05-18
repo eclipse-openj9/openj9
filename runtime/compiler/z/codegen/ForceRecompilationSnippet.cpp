@@ -35,7 +35,6 @@
 uint8_t *
 TR::S390ForceRecompilationSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(cursor);
    TR::Compilation *comp = cg()->comp();

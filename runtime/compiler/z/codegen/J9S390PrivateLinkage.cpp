@@ -824,7 +824,6 @@ TR::S390PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
 void
 TR::S390PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex)
    {
-   // *this    swipeable for debugging purposeso
 
    mapSingleAutomatic(p, p->getRoundedSize(), stackIndex);
    }
