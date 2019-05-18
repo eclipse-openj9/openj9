@@ -182,7 +182,7 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 		Trc_VM_performVerification_noVerify(currentThread);
 	}
 
-	{
+	if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassNeedsStaticConstantInit)) {
 		/* Prepare the class - the event is sent after the class init status has been updated */
 		Trc_VM_performVerification_prepareClass(currentThread);
 		romClass = clazz->romClass;
