@@ -519,7 +519,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * TODO: behaviour of the test between two valueTypes will depend on the new spec(not finialized)
+	 * TODO: behaviour of the test between two valueTypes will depend on the new spec(not finalized)
 	 * 
 	 * Test ifacmp on value class
 	 * 

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ package java.lang.invoke;
 
 import java.lang.reflect.Modifier;
 
-/* InvokeGenericHandle is a MethodHandle subclass used to MethodHande.invokeGeneric
+/* InvokeGenericHandle is a MethodHandle subclass used to MethodHandle.invokeGeneric
  * with a specific signature on a MethodHandle.
  * <p>
  * The vmSlot will hold 0 as there is no actual method for it.

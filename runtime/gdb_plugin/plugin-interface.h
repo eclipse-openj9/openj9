@@ -138,7 +138,7 @@ struct plugin_ops {
   /*  Handle for the shared object plugin file */
   void *handle;
 
-  /*  Function pointers for the plugin funcions  */
+  /*  Function pointers for the plugin functions  */
 
   int (*get_version) (void);
   const char * (*get_name) (void);

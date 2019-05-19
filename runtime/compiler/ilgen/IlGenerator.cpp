@@ -164,7 +164,7 @@ TR_J9ByteCodeIlGenerator::genIL()
     * the optimization that replaces df.format(bd.doubleValue()) and
     * df.format(bd.floatValue()) with, respectively,
     * DecimalFormatHelper.formatAsDouble(df, bd) and
-    * DecimalFormatHelper.formasAsFloat(df, bd) in which bd is a BigDecimal object
+    * DecimalFormatHelper.formatAsFloat(df, bd) in which bd is a BigDecimal object
     * and df is DecimalFormat object. The latter pair of calls are much faster than
     * the former ones because it avoids many of the conversions that the former
     * performs.

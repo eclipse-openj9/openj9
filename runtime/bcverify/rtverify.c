@@ -500,7 +500,7 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	liveStack->stackBaseIndex = liveStack->stackTopIndex;
 
 	/* Jazz 105041: Initialize the 1st data slot on 'stack' with 'top' (placeholdler)
-	 * to avoid storing gargbage data type in the error message buffer
+	 * to avoid storing garbage data type in the error message buffer
 	 * when stack underflow occurs.
 	 */
 	liveStack->stackElements[liveStack->stackBaseIndex] = BCV_BASE_TYPE_TOP;

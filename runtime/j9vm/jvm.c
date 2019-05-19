@@ -2038,7 +2038,7 @@ exit:
 
 /**
  *	jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
- *  Return pointers to all the virtual machine instances that hvae been
+ *  Return pointers to all the virtual machine instances that have been
  *  created.
  *	This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *

@@ -173,7 +173,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       // The order of this code sync sequence is important. Don't try to common them
       // up and get out of order. For sync compilation, the old body must have been
       // fixed up already.
-      // update: the above is no longer true when gauarded counting recompilations is on.
+      // update: the above is no longer true when guarded counting recompilations is on.
       fixUpMethodCode(oldStartPC);
 
       bytesToSaveAtStart = getJitEntryOffset(linkageInfo) + 4;

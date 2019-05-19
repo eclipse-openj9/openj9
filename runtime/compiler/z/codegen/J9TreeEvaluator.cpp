@@ -5755,7 +5755,7 @@ bool genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR:
  *     Generates a dynamicCache test with helper call for instanceOf/ifInstanceOf node
  *
  *  \details
- *     This funcition generates a sequence to check per site cache for object class and cast class before calling out to jitInstanceOf helper
+ *     This function generates a sequence to check per site cache for object class and cast class before calling out to jitInstanceOf helper
  */
 static
 void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *cg, TR::Register *castClassReg, TR::Register *objClassReg, TR::Register *resultReg, TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *doneLabel, TR::LabelSymbol *helperCallLabel, TR::LabelSymbol *dynamicCacheTestLabel, TR::LabelSymbol *branchLabel, TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, bool dynamicCastClass, bool generateDynamicCache, bool cacheCastClass, bool ifInstanceOf, bool trueFallThrough )
@@ -6703,7 +6703,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
       bool helperCallForFailure = *iter != HelperCall;
       if (comp->getOption(TR_TraceCG))
          traceMsg(comp, "%s: Emitting helper call%s\n", node->getOpCode().getName(),helperCallForFailure?" for failure":"");
-      //Follwing code is needed to put the Helper Call Outlined.
+      //Following code is needed to put the Helper Call Outlined.
       if (!comp->getOption(TR_DisableOOL) && !outlinedSlowPath)
          {
          // As SuperClassTest is the costliest test and is guaranteed to give results for checkCast node. Hence it will always be second last test
@@ -11935,7 +11935,7 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 /**
- * tfinshEvaluator:  end a transaction
+ * tfinishEvaluator:  end a transaction
  */
 TR::Register *
 J9::Z::TreeEvaluator::tfinishEvaluator(TR::Node * node, TR::CodeGenerator * cg)

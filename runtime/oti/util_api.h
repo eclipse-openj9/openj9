@@ -2277,7 +2277,7 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 UDATA
 addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename);
 
-/* ---------------- genericSignalHander.c ---------------- */
+/* ---------------- genericSignalHandler.c ---------------- */
 
 /**
 * @brief generic signal handler that dumps the registers contents from the time of crash and aborts.
@@ -2347,7 +2347,7 @@ void props_file_do(j9props_file_t file, j9props_file_iterator iterator, void* us
  * Function to determine if the zos version is at least a given
  * release and version.  The implementation is based on uname(),
  * NOT on __osname() as the __osname() release numbers are not
- * guarenteed to increase.
+ * guaranteed to increase.
  *
  * For release and version numbers, see
  * 	http://publib.boulder.ibm.com/infocenter/zos/v1r10/index.jsp?topic=/com.ibm.zos.r10.bpxbd00/osnm.htm

@@ -2236,7 +2236,7 @@ fullTraversalFieldOffsetsNextDo(J9ROMFullTraversalFieldOffsetWalkState *state);
 /**
  * @brief Search for ramClass in flattened class cache
  *
- * @param flattenedClassCache[in]	A table of flattend instance field types
+ * @param flattenedClassCache[in]	A table of flattened instance field types
  * @param className[in]				Name of class to search
  * @param classNameLength[in]		Length of class name to search
  *
@@ -2248,7 +2248,7 @@ findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8
 /**
  * @brief Search for index of field in flattened class cache
  *
- * @param flattenedClassCache[in]	A table of flattend instance field types
+ * @param flattenedClassCache[in]	A table of flattened instance field types
  * @param nameAndSignature[in]		The name and signature of field to look for
  *
  * @return index if found 0 otherwise

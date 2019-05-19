@@ -811,7 +811,7 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 
 #if defined(J9VM_OPT_JVMTI)
 	/* Binds from within a JIT compile-time resolve must not run java code.
-	 * The only way that could happpen is from inside the JNI native method bind event
+	 * The only way that could happen is from inside the JNI native method bind event
 	 * in JVMTI.  If that event is not enabled, allow JNI natives to be bound at compile time.
 	 */
 	if (!runtimeBind) {

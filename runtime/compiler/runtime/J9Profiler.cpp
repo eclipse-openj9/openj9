@@ -2700,7 +2700,7 @@ TR_PersistentProfileInfo *TR_AccessedProfileInfo::compare(TR_PersistentMethodInf
 
 /**
  * For the current method.
- * More frequenct request, so avoid the overhead of the map.
+ * More frequent request, so avoid the overhead of the map.
  */
 TR_PersistentProfileInfo *TR_AccessedProfileInfo::get(TR::Compilation *comp)
    {

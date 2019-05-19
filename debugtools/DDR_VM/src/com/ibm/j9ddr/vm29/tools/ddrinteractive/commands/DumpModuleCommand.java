@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -204,13 +204,13 @@ public class DumpModuleCommand extends Command
 	}
 
 	/**
-	 * Check whether a givin package is exported. Both
+	 * Check whether a given package is exported. Both
 	 * `export <package>` and `export <package> to
 	 * <module>` are matched.
 	 * 
 	 * @param    packagePtr The package that is to be filtered.
 	 * @param    arg        Unused.
-	 * @return   true if the package is globaly exported or exported to a
+	 * @return   true if the package is globally exported or exported to a
 	 *           specific module.
 	 */
 	private static boolean filterPackageExported(J9PackagePointer packagePtr, String arg) throws CorruptDataException {

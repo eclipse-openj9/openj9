@@ -1809,7 +1809,7 @@ ZZ Following snippet prepares JIT helper call sequence
 ZZ which needs r14 to be free which holds address of
 ZZ Snippet from where this is called. 
 ZZ As jitResolveConstantDynamic is called via 
-ZZ SLOW_PATH_ONLY_HELPER glue, it is guranteed that
+ZZ SLOW_PATH_ONLY_HELPER glue, it is guaranteed that
 ZZ all the registers (volatile and non-volatile) are preserved.
 ZZ This allows us to use R0 to preserve R14 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveConstantDynamic)
@@ -2063,8 +2063,8 @@ ZZ
 
 ZZ Clobberable volatile regs r1,r2,r3,r14
 ZZ Preserve r0,rEP,r5,r6,r7
-ZZ For linux r6 and r7 are not used or clobbered,hense not saved
-ZZ For zos rEP(r15) is not clobbered, hense not saved
+ZZ For linux r6 and r7 are not used or clobbered, hence not saved
+ZZ For zos rEP(r15) is not clobbered, hence not saved
 
     L       CARG2,J9TR_J9Class_classLoader(r2)
 
@@ -2378,8 +2378,8 @@ ZZ  If they are same, no need to register the pic site
     JZ      ifCHMLcommonJitDispatch
 
 ZZ Need to preserve r14,rEP,r5,r6,r7
-ZZ For linux r6 and r7 are not used or clobbered,hense not saved
-ZZ For zos r14, rEP(r15) is not clobbered, hense not saved
+ZZ For linux r6 and r7 are not used or clobbered, hence not saved
+ZZ For zos r14, rEP(r15) is not clobbered, hence not saved
 
 ifdef([J9ZOS390],[dnl
     AHI_GPR J9SP,-(3*PTR_SIZE)

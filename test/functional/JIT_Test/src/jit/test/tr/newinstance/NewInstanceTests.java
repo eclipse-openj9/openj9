@@ -263,7 +263,7 @@ public class NewInstanceTests {
     public volatile Object vollyObjecty;
     @Test
     public void test015() {
-        vollyObjecty = new Object[0]; // foce the load of the class
+        vollyObjecty = new Object[0]; // force the load of the class
         // make a escape to prevent escape analysis from happening
         impl015("[Z");
         impl015("[I");

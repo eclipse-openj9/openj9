@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ class TR_ResolvedMethod;
 //              -4  dd      method linkage info and flags
 //               0  ??      first instruction of the method (must be atleast 2 bytes)
 //
-// With preexistence the prologue looks like the follwing
+// With preexistence the prologue looks like the following
 //
 //              -24 db      padding 1 byte
 //              -23 mov     edi, j9method

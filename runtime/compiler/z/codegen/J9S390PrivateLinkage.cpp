@@ -3170,7 +3170,7 @@ TR::S390PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR:
    TR::Register * javaResultReg;
 
    //In zOS XPLink, return register(GPR3) is not same as privateLinkage (GPR2)
-   // hense we need to add another dependency
+   // hence we need to add another dependency
    if (linkage->getIntegerReturnRegister() != getIntegerReturnRegister())
       {
       javaResultReg =  (resType.isAddress())? cg()->allocateCollectedReferenceRegister() : cg()->allocateRegister();

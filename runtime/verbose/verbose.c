@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1114,7 +1114,7 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 		(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_STACKMAPFRAME_VERIFICATION, verboseStackMapFrameVerification, NULL);
 	}
 	
-	/* Jazz 82615: Register the callback funtions for the error message framework if the VerifyErrorDetails option is specified */
+	/* Jazz 82615: Register the callback functions for the error message framework if the VerifyErrorDetails option is specified */
 	if(VERBOSE_SETTINGS_SET == verboseOptions->verifyErrorDetails) {
 		vm->verboseStruct->getCfrExceptionDetails = generateJ9CfrExceptionDetails;
 		vm->verboseStruct->getRtvExceptionDetails = generateJ9RtvExceptionDetails;

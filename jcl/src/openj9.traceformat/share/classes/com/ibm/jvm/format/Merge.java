@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,7 +121,7 @@ final public class Merge {
             if (traceRecordList.size() == 0 ) {               // if current record list is empty .....
                 Util.Debug.println("Merge: Finished");
                 TraceFormat.outStream.println(" ");
-                return null;                                  // we have finshed
+                return null;                                  // we have finished
             }
             getCurrentTraceRecordAndUpdateNextOldest();       // update currentTraceRecord and nextOldest
         }

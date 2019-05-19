@@ -438,7 +438,7 @@ publishMessage(qQueue *queue, qMessage *msg)
 	}
 
 	/* ensure that we can queue new messages now that msg has a fixed place in the queue */
-	/* CMVC 149252: moved this from just after the cmpxchg loop to here so that publishing is guarrenteed to have finished */
+	/* CMVC 149252: moved this from just after the cmpxchg loop to here so that publishing is guaranteed to have finished */
 	msg->next = NULL;
 	return TRUE;
 }
