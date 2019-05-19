@@ -58,7 +58,7 @@ public class TestVarHandleInfo {
 
 	@Test
 	public void testAccessModes() throws NoSuchFieldException, IllegalAccessException {
-		/* grab a VarHahnlde purely to check the accessModeType */
+		/* grab a VarHandle purely to check the accessModeType */
 		VarHandle vh = mylookup.findVarHandle(TestVarHandleInfo.class, "instanceField", Integer.class); //$NON-NLS-1$
 		for (String methName : accessModes) {
 			logger.debug(methName);

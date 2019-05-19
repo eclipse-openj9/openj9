@@ -381,7 +381,7 @@ public:
 	/**
 	 * Fetch the finalize link field of object.
 	 * @param object[in] the object to read
-	 * @param clazz[in] the class to read the fializeLinkOffset from
+	 * @param clazz[in] the class to read the finalizeLinkOffset from
 	 * @return the value stored in the object's finalizeLink field
 	 */
 	MMINLINE j9object_t getFinalizeLink(j9object_t object, J9Class *clazz)

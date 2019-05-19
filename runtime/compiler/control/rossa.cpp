@@ -1107,7 +1107,7 @@ onLoadInternal(
    if (!feWithoutThread)
       return -1;
 
-   /*aotmcc-move it here from below !!!! this is after the jitConfig->runtimeFlas=AOT is set*/
+   /*aotmcc-move it here from below !!!! this is after the jitConfig->runtimeFlags=AOT is set*/
    /*also jitConfig->javaVM = javaVM has to be set for the case we run j9.exe -Xnoaot ....*/
    J9VMThread *curThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, curThread);

@@ -26,7 +26,7 @@
 /**
  *  Walks the J9VMDllLoadInfo table looking for the entry for a specific library name. 
  *  
- *  @param aPool the pool hodling the DLL info
+ *  @param aPool the pool holding the DLL info
  *  @param dllName the name of the dll we are looking for
  *  @returns J9VMDllLoadInfo for the dll requested or NULL if not found
  */

@@ -555,7 +555,7 @@ J9::Node::hasIntermediateTruncation()
  * The shiftedPrecision is 5-1 = 4 and this > than the nodePrec of 3.
  * There is 1 truncated digit so reduce the shiftedPrecision by 1 to get the surviving digits value of 3.
  *
- * @note that the shift forumla for surviving digits degenerates to just getDecimalPrecision() when adjust == 0
+ * @note that the shift formula for surviving digits degenerates to just getDecimalPrecision() when adjust == 0
  */
 int32_t
 J9::Node::survivingDigits()

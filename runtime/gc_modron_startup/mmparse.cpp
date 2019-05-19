@@ -679,7 +679,7 @@ gcParseXlpOption(J9JavaVM *vm)
 		IDATA result = j9vmem_find_valid_page_size(0, &pageSize, &pageFlags, &isRequestedSizeSupported);
 
 		/*
-		 * j9vmem_find_valid_page_size happend to be changed to always return 0
+		 * j9vmem_find_valid_page_size happened to be changed to always return 0
 		 * However formally the function type still be IDATA so assert if it returns anything else
 		 */
 		Assert_MM_true(0 == result);

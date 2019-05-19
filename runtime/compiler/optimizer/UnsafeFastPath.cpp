@@ -759,7 +759,7 @@ int32_t TR_UnsafeFastPath::perform()
 
                addrCalc->setIsInternalPointer(true);
 
-               // Genarete a spine check, need a symref
+               // Generate a spine check, need a symref
                // We don't need a BNDCHK because these are unsafe calls from interal code
                TR::SymbolReference * bndCHKSymRef = comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(methodSymbol);
                TR::Node * spineCHK = TR::Node::create(node, TR::SpineCHK, 3);

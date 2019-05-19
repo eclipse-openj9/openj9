@@ -3342,7 +3342,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
  * be used for all three of them
  *
  * Due to performance penalty of mfence, a faster lockor on RSP is used
- * it achieve the same funtionaility but runs faster.
+ * it achieve the same functionality but runs faster.
  */
 TR::Register *J9::X86::TreeEvaluator::barrierFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -3788,7 +3788,7 @@ TR::Register *J9::X86::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGener
       }
    else
       {
-      //add low result and hight result together
+      //add low result and high result together
       TR::Register * inputHigh = inputReg->getHighOrder();
       TR::Register * inputLow = inputReg->getLowOrder();
       TR::Register * resultLow = bitCount(node, cg, inputLow, false);
@@ -9404,7 +9404,7 @@ getNodeIs64Bit(
     *
     * Don't use this function for 64-bit logic on IA32; instead, either (1) use
     * separate logic, or (2) use a different test for 64-bitness.  Usually this is
-    * not a hinderance, because 64-bit code on IA32 uses register pairs and other
+    * not a hindrance, because 64-bit code on IA32 uses register pairs and other
     * things that are totally different from their 32-bit counterparts.
     */
 

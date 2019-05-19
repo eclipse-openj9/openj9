@@ -3256,7 +3256,7 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 	scanCache->setCurrentlyBeingScanned();
 	bool hasPartiallyScannedObject = scanCache->_hasPartiallyScannedObject;
 	if (scanCache->isScanWorkAvailable()) {
-		/* we want to perform a NUMA-aware analogue to "heirarchical scanning" so this scan cache should pull other objects into its node */
+		/* we want to perform a NUMA-aware analogue to "hierarchical scanning" so this scan cache should pull other objects into its node */
 		MM_AllocationContextTarok *reservingContext = getContextForHeapAddress(env->_scanCache->scanCurrent);
 		do {
 			void *cacheAlloc = scanCache->cacheAlloc;

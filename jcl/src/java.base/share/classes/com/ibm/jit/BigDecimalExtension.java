@@ -8,7 +8,7 @@ import java.math.RoundingMode;
 import java.util.Arrays;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,7 @@ public class BigDecimalExtension implements java.math.BigDecimal.BigDecimalExten
     * We want the BigDecimal class to choose the best representation
     * for construction and operations.  We start assuming the LL
     * is the best representation.  Over the course of time, using
-    * hystersis, we might alter this decision.
+    * hysterisis, we might alter this decision.
     *
     * The constructors are annotated with the checks on deciding
     * which representation to use, and other APIs contribute

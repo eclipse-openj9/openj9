@@ -5771,7 +5771,7 @@ static void initJitGCMapCheckAsyncHook(J9JavaVM * vm, IDATA handlerKey, J9JITCon
    }
 
 
-//int32_t samplerThreadStateFreqencies[TR::CompilationInfo::SAMPLER_LAST_STATE+1] = {0, 2, 1000, 100000, INT_MAX, INT_MAX, -1};
+//int32_t samplerThreadStateFrequencies[TR::CompilationInfo::SAMPLER_LAST_STATE+1] = {0, 2, 1000, 100000, INT_MAX, INT_MAX, -1};
 char* samplerThreadStateNames[TR::CompilationInfo::SAMPLER_LAST_STATE+1] =
                                  {
                                    "NOT_INITIALIZED",

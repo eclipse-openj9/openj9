@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2786,7 +2786,7 @@ j9sock_setopt_int(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t
 	/* for LINUX in order to enable support sending the ipv6_flowinfo field we have to set the SEND_FLOWINFO option on the socket
 		In java one value is set that is used for both the traffic class in the flowinfo field and the IP_TOS option.  Therefore  if the caller is setting traffic class
 		then this indicates that we should also be setting the flowinfo field so we need to 
-		set this option.  Howerver it can only be set on IPv6 sockets */
+		set this option.  However it can only be set on IPv6 sockets */
 #if defined(IPv6_FUNCTION_SUPPORT)
 #if defined(LINUX) || defined(OSX)
 	if(( OS_IPPROTO_IP == platformLevel)&&(OS_IP_TOS==platformOption)&&(socketP->family == J9ADDR_FAMILY_AFINET6 )){

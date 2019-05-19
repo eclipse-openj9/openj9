@@ -11080,7 +11080,7 @@ TR::CompilationInfo::scheduleLPQAndBumpCount(TR::IlGeneratorMethodDetails &detai
    // If method is found, move it to main queue
    // We prevent concurrency issues by making sure the invocation count is 0 when adding to LPQ
    // We must make sure that if the method is not found in LPQ there is absolutely no way
-   // it can be present in main queue (invocation count being 0 should guatantee us that
+   // it can be present in main queue (invocation count being 0 should guarantee us that
    // because a method waiting in main queue should be marked QUEUED_FOR_COMPILATION)
    // We should put an assert that all ordinary async first time compilations in the main
    // queue are marked QUEUED_FOR_COMPILATION
