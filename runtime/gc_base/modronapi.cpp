@@ -670,7 +670,7 @@ j9gc_get_gc_cause(OMR_VMThread *omrVMthread)
 
 /**
  * API for the jit to call to find out the maximum allocation size, including the 
- * object header, that is guarenteed not to overflow the address range.
+ * object header, that is guaranteed not to overflow the address range.
  */
 UDATA
 j9gc_get_overflow_safe_alloc_size(J9JavaVM *javaVM)

@@ -311,7 +311,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
                     set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")
                 }
             }
-        } else { // Job faild (RED)
+        } else { // Job failed (RED)
             if (SLACK_CHANNEL) {
                 slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
             }

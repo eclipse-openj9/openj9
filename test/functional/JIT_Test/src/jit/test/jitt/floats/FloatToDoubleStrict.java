@@ -59,7 +59,7 @@ public class FloatToDoubleStrict extends jit.test.jitt.Test {
 
 		double epsilon=0;
 
-		//case A- Simple Case.  A double value that gurentees it fits into a float
+		//case A- Simple Case.  A double value that guarantees it fits into a float
 
             	float proper_value_a;
 		double widening_conversion_value_a;

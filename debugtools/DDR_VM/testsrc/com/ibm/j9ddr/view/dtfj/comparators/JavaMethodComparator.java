@@ -62,7 +62,7 @@ public class JavaMethodComparator extends DTFJComparator {
 			testJavaEquals(ddrJavaMethod, jextractJavaMethod, "getName");
 	}
 
-	// JEXTRACT has a bug where warm/cold compiled sections are not haneld properly.
+	// JEXTRACT has a bug where warm/cold compiled sections are not handled properly.
 	// DDR handles these sections properly so may return more sections than jextract.
 	
 	// When number of returned values are the same test that they are all the same.

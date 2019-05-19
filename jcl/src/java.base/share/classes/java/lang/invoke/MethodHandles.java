@@ -1327,7 +1327,7 @@ public class MethodHandles {
 
 		/**
 		 * Return a MethodHandle for the reflect constructor. The MethodType has a return type
-		 * of the declared class, and the arguments of the constructor.  The MehtodHnadle
+		 * of the declared class, and the arguments of the constructor.  The MethodHandle
 		 * creates a new object as through by newInstance.  
 		 * <p>
 		 * If the <code>accessible</code> flag is not set, then access checking

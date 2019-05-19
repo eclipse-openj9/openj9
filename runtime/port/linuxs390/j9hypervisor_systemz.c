@@ -310,7 +310,7 @@ check_hypfs_mount(struct J9PortLibrary *portLibrary, LinuxStaticInfo *staticInfo
 /**
  * @internal	Read /proc/sysinfo to get the VMName and system-z machine type
  * 		We are looking at the name of the topmost level guest (the one that
- * 		we are currently running in) in the hypervisor heirarchy.
+ * 		we are currently running in) in the hypervisor hierarchy.
  * 		VM00 always points to the top level guest in sysinfo
  *
  * @param [in]  portLibrary The port library

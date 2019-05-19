@@ -1755,7 +1755,7 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
     *  }
     *  return modifiers;
     */
-   // generatng "if (modifiers & J9AccClassInternalPrimitiveType)"
+   // generating "if (modifiers & J9AccClassInternalPrimitiveType)"
    TR::Node *iAndNode = TR::Node::create(TR::iand, 2,
                                        TR::Node::createLoad(callNode, modifiersSymRef),
                                        TR::Node::iconst(callNode, (int32_t)comp()->fej9()->constClassFlagsPrimitive()));
@@ -4183,7 +4183,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
    static char *trustedInterfacePattern = feGetEnv("TR_TrustedPolymorphicInterfaces");
    static TR::SimpleRegex *trustedInterfaceRegex = trustedInterfacePattern ? TR::SimpleRegex::create(trustedInterfacePattern) : NULL;
    // we need to be conservative about inlining potentially highly polymorphic interface calls for
-   // functional farameworks like scala - we limit this to hot and above
+   // functional frameworks like scala - we limit this to hot and above
    // if the callsite is highly polymorphic but the following conditions are meet, still inline the callee
    // 1. the compiling method is sorching
    // 2. the callee is scorching OR queued for veryhot/scorching compile

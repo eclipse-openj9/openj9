@@ -143,7 +143,7 @@ public class MutableCallSite extends CallSite {
 			 * target.  We use equivalenceCounter and equivalenceInterval to limit how often we
 			 * check structural equivalence.  If new targets are equivalent, then it is worthwhile
 			 * to always do the check.  Once they start being different, than we start to back off
-			 * on how frequently we check as the check itself must walk the two handle graphes and 
+			 * on how frequently we check as the check itself must walk the two handle graphs and 
 			 * this is expensive.
 			 *
 			 * It is important that every path in here sets this.target exactly once, or else we

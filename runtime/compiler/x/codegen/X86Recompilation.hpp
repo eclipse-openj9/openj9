@@ -61,7 +61,7 @@ class TR_ResolvedMethod;
 //              -4  dd      method linkage info and flags
 //               0  ??      first instruction of the method (must be atleast 2 bytes)
 //
-// With preexistence the prologue looks like the follwing
+// With preexistence the prologue looks like the following
 //
 //              -24 db      padding 1 byte
 //              -23 mov     edi, j9method

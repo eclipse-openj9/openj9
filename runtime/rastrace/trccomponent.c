@@ -320,7 +320,7 @@ removeModuleFromList(UtModuleInfo* module, UtComponentList *componentList)
 	UtComponentData *prevCompData;
 	UT_DBGOUT(2, ("<UT> removeModuleFromList: searching for module %s in componentList %p\n", module->name, componentList));
 
-	/* for flight controller functinality, any unloaded components should be moved onto an unloaded list, so their
+	/* for flight controller functionality, any unloaded components should be moved onto an unloaded list, so their
 	   formatting strings and a memcpy of their moduleInfo is available */
 	while ( compDataCursor != NULL ){
 		if ( 0 == strcmp(compDataCursor->componentName, module->name) ) {
@@ -664,7 +664,7 @@ unsigned char value, int level, const char *groupName, BOOLEAN suppressMessages,
 	return rc;
 }
 
-/* valid ranges passed in in componentName are of one of the follwing forms:
+/* valid ranges passed in in componentName are of one of the following forms:
  * tpnid{j9vm.10}
  * tpnid{j9vm.10-20}
  * j9vm.10

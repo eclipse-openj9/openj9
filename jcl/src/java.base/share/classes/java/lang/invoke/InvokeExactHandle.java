@@ -24,7 +24,7 @@ package java.lang.invoke;
 
 import java.lang.reflect.Modifier;
 
-/* InvokeExactHandle is a MethodHandle subclass used to MethodHande.invokeExact
+/* InvokeExactHandle is a MethodHandle subclass used to MethodHandle.invokeExact
  * with a specific signature on a MethodHandle.
  * <p>
  * The vmSlot will hold 0 as there is no actual method for it.

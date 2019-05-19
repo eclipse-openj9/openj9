@@ -133,7 +133,7 @@ reportTestExit(struct J9PortLibrary *portLibrary, const char *testName)
  * Given a format string and it's arguments display the string to the console.
  *
  * @param[in] portLibrary The port library
- * @param[in] foramt Format of string to be output
+ * @param[in] format Format of string to be output
  * @param[in] ... argument list for format string
  * 
  * @note Does not increment number of failed tests.
@@ -236,7 +236,7 @@ static void logTestFailure(struct J9PortLibrary *portLibrary, const char *fileNa
  * @param[in] fileName File requesting message output
  * @param[in] lineNumber Line number in the file of request
  * @param[in] testName Name of the test requesting output
- * @param[in] foramt Format of string to be output
+ * @param[in] format Format of string to be output
  * @param[in] ... argument list for format string
  *
  * @internal @note For UTH environment only, displaying the string is controlled by the verbose 

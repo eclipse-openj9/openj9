@@ -165,7 +165,7 @@ typedef struct lpar_info_format2_t {
 
         ushort   group_id;              /* ID of a LPAR group/aggregation    */
         ushort   pool_id;               /* ID of a shared pool */
-        char     pad1[36];              /* reserved for furture */
+        char     pad1[36];              /* reserved for future */
 
 } lpar_info_format2_t;
 

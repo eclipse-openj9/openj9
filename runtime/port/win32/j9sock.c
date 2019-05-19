@@ -808,7 +808,7 @@ retry:
 		}
 
 		/* for windows it seems to want to have it connect with an IN_ADDR any instead of with an 
-		   UNSPEC familty type so lets be accommodating */
+		   UNSPEC family type so lets be accommodating */
 
 
 		/* we need to disconnect on both sockets and swallow any expected errors */

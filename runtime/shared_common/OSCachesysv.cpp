@@ -948,7 +948,7 @@ SH_OSCachesysv::initializeHeader(const char* cacheDirName, J9PortShcVersion* ver
  *
  * @param [in] expectedVersionData  If not NULL, function checks the version data of the cache against the values in this struct
  * 
- * @return The address of the memory mapped area for the caller's process - This is not guranteed to be the same
+ * @return The address of the memory mapped area for the caller's process - This is not guaranteed to be the same
  * for two different process.
  *
  */

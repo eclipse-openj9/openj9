@@ -185,7 +185,7 @@ J9::X86::UnresolvedDataSnippet::getUnresolvedStaticStoreDeltaWithMemBarrier()
       return 0;
       }
 
-   // Find the delta between the start of the memory barrier that should be gaurding the store to the static field, and the start of the store instruction
+   // Find the delta between the start of the memory barrier that should be guarding the store to the static field, and the start of the store instruction
    //
    TR::Instruction *instIter = getDataReferenceInstruction();
    uint8_t *dataRefInstOffset = getDataReferenceInstruction()->getBinaryEncoding();

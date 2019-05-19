@@ -251,7 +251,7 @@ class RealRegisterManager
 /**   \brief Build a JIT helper call.
  *    \details
  *    It generates sequence that prepares parameters for the JIT helper function and generate a helper call.
- *    \param callNode The node for which you are generating a heleper call
+ *    \param callNode The node for which you are generating a helper call
  *    \param deps The pre register dependency conditions that will be filled by this function to attach within ICF
  *    \param returnReg TR::Register* allocated by consumer of this API to hold the result of the helper call,
  *           If passed, this function uses it to store return value from helper instead of allocating new register

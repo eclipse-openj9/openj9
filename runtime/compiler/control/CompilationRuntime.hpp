@@ -371,7 +371,7 @@ public:
       SAMPLER_STOPPED,
       SAMPLER_LAST_STATE, // must be the last one
       // If adding new state, one must add a new name as well in samplerThreadStateNames array
-      // and a frequency in samplerThreadStateFreqencies array
+      // and a frequency in samplerThreadStateFrequencies array
      };
 
    enum TR_SamplingThreadLifetimeStates

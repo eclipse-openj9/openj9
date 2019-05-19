@@ -3344,7 +3344,7 @@ jvmtiHookDynamicCodeUnload(J9HookInterface** hook, UDATA eventNum, void* eventDa
 	}
 
 	if (J9JVMTI_COMPILE_EVENT_THREAD_STATE_DEAD == jvmtiData->compileEventThreadState)	{
-		/* CMVC 183352 : This hoook may be triggered by freeClassLoader long after CompileEvent Thread died */
+		/* CMVC 183352 : This hook may be triggered by freeClassLoader long after CompileEvent Thread died */
 		goto NO_COMPILATION_THREAD;
 	} else {
 		/* Scan the compile event queue for a matching load event */

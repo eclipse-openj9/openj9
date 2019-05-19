@@ -36,7 +36,7 @@
 #include "j9sysinfo_helpers.h"
 #include "ut_j9prt.h"
 
-/* Foward declarations. */
+/* Forward declarations. */
 static int32_t
 computeCpuTime(struct J9PortLibrary *portLibrary, int64_t *cpuTime);
 

@@ -486,7 +486,7 @@ j9mem_test5(struct J9PortLibrary *portLibrary)
  * 
  * Self allocating port libraries call a function not available via the port library
  * table.  Need to verify that these functions have been correctly implemented.  These
- * functios are called by the port library management routines in @ref j9port.c "j9port.c".
+ * functions are called by the port library management routines in @ref j9port.c "j9port.c".
  * The API for these functions clearly state they must be implemented.
  * 
  * Verify @ref j9mem.c::j9mem_allocate_portLibrary "j9mem_allocate_portLibrary()" allocates

@@ -1320,7 +1320,7 @@ __arrayTranslateTROT:
 !----------------------------------------------------------------------
 ! To minimize conditional branches due to various configuration,
 ! e.g. data alignment and data size, we employed a decision table through
-! which one of the 64 hanlders is selected with 6-bit vector as described
+! which one of the 64 handlers is selected with 6-bit vector as described
 ! below.
 !
 ! How to compute parameters:

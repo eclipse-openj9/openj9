@@ -195,7 +195,7 @@ srpHashTableNew(
 	srpHashTable->functionUserData = functionUserData;
 	srpHashTable->flags = SRPHASHTABLE_CREATED_BY_SRPHASHTABLENEW;
 
-	/*SRPHASTABLEINTERNAL*/
+	/*SRPHASHTABLEINTERNAL*/
 	srpHashTableInternal = (J9SRPHashTableInternal *) (allocatedMemory);
 	srpHashTable->srpHashtableInternal = srpHashTableInternal;
 	srpHashTableInternal->tableSize = primeTableSize;
@@ -352,7 +352,7 @@ srpHashTableReset(
 	/*Set bits to 0*/
 	memset((char *)address + sizeof(J9SRPHashTableInternal), 0, ROUND_TO_SIZEOF_UDATA(sizeof(J9SRP) * tableSize));
 
-	/*SRPHASTABLEINTERNAL*/
+	/*SRPHASHTABLEINTERNAL*/
 	srpHashTableInternal = (J9SRPHashTableInternal *) (address);
 	srpHashTableInternal->tableSize = tableSize;
 	srpHashTableInternal->numberOfNodes = 0;

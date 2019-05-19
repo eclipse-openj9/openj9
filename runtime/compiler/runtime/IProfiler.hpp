@@ -58,7 +58,7 @@
  *
  *
  * For further details see "Experiences in Designing a Robust and Scalable
- * Interpreter Profiling Fraemwork" by Ian Gartley, Marius Pirvu, Vijay
+ * Interpreter Profiling Framework" by Ian Gartley, Marius Pirvu, Vijay
  * Sundaresan and Nikola Grecvski, published in *Code Generation and Optization (CGO)*, 2013. 
  */
 

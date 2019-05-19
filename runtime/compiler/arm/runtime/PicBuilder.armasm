@@ -196,7 +196,7 @@ L_rewriteBranch
 ;         r1  = target of branch
 ;         r14 = return address
 ;
-; branches to rewriteBranch guaranting that target is in range
+; branches to rewriteBranch guaranteeing that target is in range
 
 L_refreshHelper
 							; check if distance is within range

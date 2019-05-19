@@ -353,7 +353,7 @@ runTests(J9PortLibrary *portLib, char * id, J9SRPHashTable **srptable, UDATA *da
 
 	/**
 	 *  ensure the count is correct
-	 *  If srphastable is big enough to store all the elements,
+	 *  If srphashtable is big enough to store all the elements,
 	 *  then datalength should be equal to number of elements stored in srphashtable.
 	 *  Otherwise, srphashtable should be completely full.
 	 */
@@ -628,8 +628,8 @@ testSRPHashtableNewInRegion(J9PortLibrary *portLib, char * id, UDATA *data, U_32
 			goto fail;
 		} else {
 			/**
-			 *  If tableSize is 0, then srphastable can not be created.
-			 *  This is expected since there is not enough space to create minimum srphastable
+			 *  If tableSize is 0, then srphashtable can not be created.
+			 *  This is expected since there is not enough space to create minimum srphashtable
 			 *  which can store smallest prime number of elements which is 2.
 			 */
 			goto cont;

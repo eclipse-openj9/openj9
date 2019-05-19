@@ -135,7 +135,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 	private String bootTestsOutputPathSuffix = " Tests BootPath";
 
 	/**
-	 * Constructs a ConfigXMLHanler...
+	 * Constructs a ConfigXMLHandler...
 	 *
 	 * @param       filename    the file to be parsed
 	 *

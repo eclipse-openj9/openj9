@@ -417,7 +417,7 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 				J9HashTableState walkState;
 				/*
 				 * We believe that (NULL == classLoader->classHashTable) is set ONLY for DEAD class loader
-				 * so, if this pointer happend to be NULL at this point let it crash here
+				 * so, if this pointer happened to be NULL at this point let it crash here
 				 */
 				Assert_MM_true(NULL != classLoader->classHashTable);
 				clazz = _javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState);

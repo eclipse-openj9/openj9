@@ -48,7 +48,7 @@ import java.util.List;
  *
  * To use it in JUnit test case you may need to make a static task class instead
  * of a convenient inner task class, which may cause NotSerializableException
- * Since most of Hamrony unit test classes are not Serializable.
+ * Since most of Harmony unit test classes are not Serializable.
  *
  * Typical usage is like:
  * // Define the task

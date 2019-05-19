@@ -57,7 +57,7 @@ public class FloatToDoubleNotStrict extends jit.test.jitt.Test {
 	/*without adding strictfp should make this method not FP STRICT.  
 	This is Case 2.  */
 
-		//case A- Simple Case.  A double value that gurentees it fits into a float	
+		//case A- Simple Case.  A double value that guarantees it fits into a float	
                       
             	float proper_value_a;
 		double widening_conversion_value_a;
