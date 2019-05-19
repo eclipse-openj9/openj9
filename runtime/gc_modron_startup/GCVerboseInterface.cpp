@@ -96,7 +96,7 @@ dummygcDumpMemorySizes(J9JavaVM *javaVM)
 }
 
 /**
- * Initilises the verbose function table with the dummy routines.
+ * Initialises the verbose function table with the dummy routines.
  * @param table Pointer to the Verbose function table.
  */
 void

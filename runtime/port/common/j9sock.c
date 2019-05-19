@@ -801,7 +801,7 @@ j9sock_ipmreq_init(struct J9PortLibrary *portLibrary, j9ipmreq_t handle, uint32_
  * @param[in] portLibrary The port library.
  * @param[out] handle A pointer to the j9ipv6_mreq_struct to populate.
  * @param[in] ipmcast_addr The ip mulitcast address.
- * @param[in] ipv6mr_interface The ip mulitcast inteface.
+ * @param[in] ipv6mr_interface The ip mulitcast interface.
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code.
  *

@@ -141,7 +141,7 @@ public:
    static void separateNullCheck(TR::Compilation* comp, TR::TreeTop* tree, bool trace = false);
    /*
     * \brief
-    *    Generate a tree to report modification to a static final field after intialization.
+    *    Generate a tree to report modification to a static final field after initialization.
     *
     * \param node The java/lang/Class object
     *

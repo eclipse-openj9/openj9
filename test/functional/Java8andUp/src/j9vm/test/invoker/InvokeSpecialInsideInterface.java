@@ -44,7 +44,7 @@ interface Root {
  *	interface NodeInterface implements Root {
  *		default Boolean callRootIdentity(Object receiver) {
  *			// aload_0 replaced with aload_1
- * 	 		return Root.super.idenity();
+ * 	 		return Root.super.identity();
  *	 	}
  * 	}
  *
@@ -52,7 +52,7 @@ interface Root {
  *	class NodeClass implements NodeInterface {
  *		Boolean callRootIdentity(Object receiver) {
  *			// aload_0 replaced with aload_1
- *			return Root.super.idenity();
+ *			return Root.super.identity();
  *		}
  *	}
  */

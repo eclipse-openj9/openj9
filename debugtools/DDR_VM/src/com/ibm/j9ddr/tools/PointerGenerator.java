@@ -685,7 +685,7 @@ public class PointerGenerator {
 	}
 
 	/**
-	 * Quick hack to remove specific generated field implemenations because
+	 * Quick hack to remove specific generated field implementations because
 	 * they will interfere with changes to the implementation made my the user.
 	 *
 	 * You only have to add methods that would be generated but need to be altered

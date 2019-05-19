@@ -1663,7 +1663,7 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
       /*
        * The explicit parens value initialize the array,
        * which in turn value initializes each array member,
-       * which for ints is zero initializaiton.
+       * which for ints is zero initialization.
        */
       new (comp->trMemory(), allocKind, TR_Memory::BlockFrequencyInfo) int32_t[_numBlocks]() :
       NULL

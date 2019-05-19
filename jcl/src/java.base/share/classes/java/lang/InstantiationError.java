@@ -30,7 +30,7 @@ package java.lang;
  * of a class which has no visible constructors from
  * the location where new is invoked.
  * <p>
- * Note that this can only occur when inconsistant
+ * Note that this can only occur when inconsistent
  * class files are being loaded.
  *
  * @author		OTI

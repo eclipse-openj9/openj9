@@ -1397,7 +1397,7 @@ getParentCallCount(TR::CFG *cfg, TR::Node *node)
          }
       }
    else
-      { // It'ss a dummy block in estimate code size
+      { // It's a dummy block in estimate code size
         // The called frequency is set by estimate code size because at that time
         // we don't have the final caller information.
       int32_t callCount = cfg->_calledFrequency;

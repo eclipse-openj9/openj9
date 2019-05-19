@@ -186,7 +186,7 @@ MM_VerboseEventMetronomeGCEnd::formattedOutput(MM_VerboseOutputAgent *agent)
 {
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(_omrThread);
 	char timestamp[32];
-	/* Invervalms is reported as distance (in time) between this event and any of (whichever is the last one)
+	/* Intervalms is reported as distance (in time) between this event and any of (whichever is the last one)
 	 * trigger start, previous heartbeat or syncGC events */
 	U_64 timeSinceLastEvent = omrtime_hires_delta(_manager->getLastMetronomeTime(), _time, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 

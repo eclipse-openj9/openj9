@@ -554,7 +554,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					int totalLeafCount = (0 == tailLeafSize) ? fullSizeLeaves : (fullSizeLeaves + 1);
 					//CMVC 153943 : DTFJ fix for zero-length arraylets - remove code to add 1 to the leaf count in the event that it is 0.
 					//by always assuming there is a leaf means that when the image sections are determined it will cause an error as there
-					//is no space allocated in this instace beyond the size of the spine.
+					//is no space allocated in this instance beyond the size of the spine.
 					String nestedType = arrayForm.getLeafClass().getName();
 					//4-byte object alignment in realtime requires the long and double arraylets have padding which may need to be placed before the array data or after, depending on if the alignment succeeded at a natural boundary or not
 					boolean alignmentCandidate = (4 == _objectAlignment) && ("double".equals(nestedType) || "long".equals(nestedType));

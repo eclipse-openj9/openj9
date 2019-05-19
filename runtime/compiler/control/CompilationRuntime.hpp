@@ -1042,7 +1042,7 @@ private:
    TR_LowPriorityCompQueue _lowPriorityCompilationScheduler;
    TR_JProfilingQueue      _JProfilingQueue;
 
-   TR::CompilationTracingFacility _compilationTracingFacility; // Must be intialized before using
+   TR::CompilationTracingFacility _compilationTracingFacility; // Must be initialized before using
    TR_CpuEntitlement _cpuEntitlement;
    TR_JitSampleInfo  _jitSampleInfo;
    TR_SharedCacheRelocationRuntime _reloRuntime;

@@ -566,7 +566,7 @@ fixReturnsWithStackMaps(J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * s
 			if ((size & 0xE0) == 0) {
 				bcIndex += (size & 7);
 				if (size == 0) {
-					/* Must check for zero else it will infinitiely loop */
+					/* Must check for zero else it will infinitely loop */
 					/* Unknown bytecode - will fail verification later */
 					Trc_Map_fixReturnsWithStackMaps_UnknownBytecode(bc, (bcIndex - bcStart));
 					return BCT_ERR_NO_ERROR;

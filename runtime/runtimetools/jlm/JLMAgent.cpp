@@ -86,7 +86,7 @@ Agent_OnAttach(JavaVM * vm, char * options, void * reserved)
 
 /**
  * This method is used to initialize an instance
- * @returns true if initialiization was successful
+ * @returns true if initialization was successful
  */
 bool JLMAgent::init()
 {

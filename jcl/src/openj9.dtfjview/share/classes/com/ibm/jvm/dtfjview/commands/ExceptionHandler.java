@@ -236,7 +236,7 @@ public class ExceptionHandler {
 			}
 			Class<?> ic;
 			try {
-				//now check any possible super-interaces for this one
+				//now check any possible super-interfaces for this one
 				ic = Class.forName(interfaceName, true, ctx.getAddressSpace()
 						.getClass().getClassLoader());
 				om = checkInterfaces(ic, methodName);

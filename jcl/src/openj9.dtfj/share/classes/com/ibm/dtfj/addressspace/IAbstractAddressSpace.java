@@ -29,7 +29,7 @@ import com.ibm.dtfj.corereaders.MemoryRange;
 
 /**
  * @author jmdisher
- * The interface for the abstract interface.  Note that there will probably only ever be one implementor of 
+ * The interface for the abstract interface.  Note that there will probably only ever be one implementer of 
  * this interface so it will probably be flattened once it is frozen
  */
 public interface IAbstractAddressSpace 

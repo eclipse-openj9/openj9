@@ -3704,7 +3704,7 @@ private class MethodInfo {
 	}
 	
 	/**
-	 * Add a method to the list.  newMethod may be discarded if it is masked by an incumnbent method in the list.
+	 * Add a method to the list.  newMethod may be discarded if it is masked by an incumbent method in the list.
 	 * Also, an incumbent method may be removed if newMethod masks it.
 	 * In general, a target class inherits a method from its direct superclass or directly implemented interfaces unless:
 	 * 	- the method is static or private and the declaring class is not the target class 

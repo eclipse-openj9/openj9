@@ -48,7 +48,7 @@
 #define METHOD_POOL_SIZE_THRESHOLD 64
 #define MAX_SAMPLING_FREQUENCY     0x7FFFFFFF
 
-// Reasons for interupting a compilation
+// Reasons for interrupting a compilation
 const uint8_t GC_COMP_INTERRUPT       = 1;
 const uint8_t SHUTDOWN_COMP_INTERRUPT = 2;
 

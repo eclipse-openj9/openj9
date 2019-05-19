@@ -1689,7 +1689,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 		case RTV_SEND:
 			if (bc == JBinvokeinterface2) {
-				/* Set to point to JBinvokenterface */
+				/* Set to point to JBinvokeinterface */
 				bcIndex += 2;
 			}
 			index = PARAM_16(bcIndex, 1);

@@ -432,7 +432,7 @@ j9mm_iterate_object_slots(
 
 
 /**
- * Provide the arraylet idetification bitmask.  For builds that do not
+ * Provide the arraylet identification bitmask.  For builds that do not
  * support arraylets all values are set to 0.
  *
  * @return arrayletLeafSize

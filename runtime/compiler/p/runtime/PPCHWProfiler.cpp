@@ -74,7 +74,7 @@ static struct TR_PPCHWProfilerPMUConfig configs[NumProfilingConfigs] =
          {0, 0, 0, 0, 512, 0},
          {0, 0, 0, 0, sizeof(TR_PPCMethodHotnessSample), 0},
          {INVALID_SAMPLERATE, INVALID_SAMPLERATE, INVALID_SAMPLERATE, INVALID_SAMPLERATE, 1000000, INVALID_SAMPLERATE},
-         0 // XXX: Re-enable when intepreter is fixed //J9_JIT_TOGGLE_RI_ON_TRANSITION
+         0 // XXX: Re-enable when interpreter is fixed //J9_JIT_TOGGLE_RI_ON_TRANSITION
       },
       { // BlockHotness
          NULL,

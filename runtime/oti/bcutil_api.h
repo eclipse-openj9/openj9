@@ -251,7 +251,7 @@ internalLoadROMClass(J9VMThread *vmThread, J9LoadROMClassData *loadData, J9Trans
 * @param classPathEntryCount number of class path entries in classPath
 * @param options load options such as J9_FINDCLASS_FLAG_EXISTING_ONLY
 * @param flags flags such as BCU_BOOTSTRAP_ENTRIES_ONLY
-* @param [in/out] localBuffer contains values for entryInfex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
+* @param [in/out] localBuffer contains values for entryIndex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
 *
 * @return zero on success, -1 on failure.
 */

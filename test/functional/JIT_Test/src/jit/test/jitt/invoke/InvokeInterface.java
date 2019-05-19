@@ -68,7 +68,7 @@ public class InvokeInterface extends jit.test.jitt.Test {
 		}
 		
 		/* exercise the PIC by using three different 
-		 * implementors, and invoking each one twice 
+		 * implementers, and invoking each one twice 
 		 * */
 		if(5 != tstSendingInterfaceMethod(true, 5, new X())) {
 			Assert.fail("did not get back what was passed (send #1)");

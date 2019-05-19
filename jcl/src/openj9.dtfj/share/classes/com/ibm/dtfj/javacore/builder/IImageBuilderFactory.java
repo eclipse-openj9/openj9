@@ -32,7 +32,7 @@ public interface IImageBuilderFactory  {
 	/**
 	 * Usually, there is just one image builder factory per javacore
 	 * @param id unique
-	 * @return generated iamge builder factory
+	 * @return generated image builder factory
 	 */
 	public IImageBuilder generateImageBuilder(String id);
 }

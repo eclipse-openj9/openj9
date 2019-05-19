@@ -121,7 +121,7 @@ public interface JavaReference
 
     /**
      * Get a string describing the reference type.
-     * Implementors should not depend on the contents or identity of this string.
+     * Implementers should not depend on the contents or identity of this string.
      * e.g. "JNI Weak global reference", "Instance field 'MyClass.value'", "Constant pool string constant"
      * @return a String describing the reference type
      */

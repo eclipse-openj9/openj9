@@ -645,7 +645,7 @@ Java_com_ibm_j9ddr_corereaders_debugger_JniSearchableMemory_findPattern(JNIEnv *
 	rc = dbgFindPatternInRange(pattern, patternLength, patternAlignment, startSearchFrom, (UDATA) -1 - (UDATA) startSearchFrom, &bytesSearched);
 	(*env)->ReleaseByteArrayElements(env, whatBytes,  searchBytes, JNI_ABORT);
 	if (rc == NULL) {
-		return -1; // The various Java implementors of IMemory.findPattern return -1 for not found, so should we
+		return -1; // The various Java implementers of IMemory.findPattern return -1 for not found, so should we
 	} else {
 		return (jlong) (UDATA) rc;
 	}

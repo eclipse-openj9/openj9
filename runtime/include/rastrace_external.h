@@ -77,12 +77,12 @@ typedef struct OMRTraceLanguageInterface {
 	omr_error_t (*DetachCurrentThreadFromLanguageVM)(OMR_VMThread *omrVMThread);
 
 	/**
-	 * Pass unhandled trace options for implementor to handle.
+	 * Pass unhandled trace options for implementer to handle.
 	 */
 	SetLanguageTraceOptionFunc SetLanguageTraceOption;
 
 	/**
-	 * Report errors with trace options to the implementor's error stream.
+	 * Report errors with trace options to the implementer's error stream.
 	 */
 	ReportCommandLineErrorFunc ReportCommandLineError;
 } OMRTraceLanguageInterface;
@@ -290,13 +290,13 @@ omr_error_t setTraceHeaderInfo(const char * serviceInfo, const char * startupInf
  * Obtain the debug level for the trace engine. This is set by passing trace the
  * option debug=N (where N is a positive integer).
  *
- * This function allows trace implementors to write statements of the form:
+ * This function allows trace implementers to write statements of the form:
  * if ( getDebugLevel > N ) {
  * 		ReportCommandLineErrorFunc(....)
  * }
  * where ReportCommandLineErrorFunc is the same function (or the same underlying functionality)
  * as passed to the trace engine in field OMRTraceLanguageInterface.ReportCommandLineError when trace
- * was initialized. This allows trace implementors to integrate their own debugging messages
+ * was initialized. This allows trace implementers to integrate their own debugging messages
  * with those from the trace engine without having to create a separate debugging mechanism.
  *
  * @return The integer debug level the trace engine is using.
@@ -317,7 +317,7 @@ int32_t getDebugLevel(void);
  * This function exists to allow users to override the default implementation of
  * UtModuleInterface.Trace(void *env, UtModuleInfo *modInfo, uint32_t traceId, const char *spec, ...);
  * and pass in the var args arguments (since the use of var args prevents simply calling
- * the original UtModuleInterface.Trace function). This allows trace implementors to
+ * the original UtModuleInterface.Trace function). This allows trace implementers to
  * map from a per thread env parameter that is convenient for their application to a
  * UtThreadData. All the other parameters should be left unchanged.
  *

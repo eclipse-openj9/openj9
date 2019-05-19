@@ -48,7 +48,7 @@ public class UnwindInfo {
 	
 	/**
 	 * Constructor for UnwindInfo, takes the address in
-	 * the module where the unwind infomation can be found.
+	 * the module where the unwind information can be found.
 	 * @param address
 	 * @throws CorruptDataException 
 	 * @throws IOException 

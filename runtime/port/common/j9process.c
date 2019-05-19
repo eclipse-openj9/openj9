@@ -33,7 +33,7 @@
  * Creates a process and returns an opaque cookie representing the created process to be passed into 
  * other j9process functions.
  * 
- * The opaque cookie is an interally-declared J9ProcessHandle structure. Storage for the J9ProcessHandle 
+ * The opaque cookie is an internally-declared J9ProcessHandle structure. Storage for the J9ProcessHandle 
  * struct is created here; any resources it holds onto are destroyed by @ref j9process_close(). 
  * 
  * Inheritable handles vary on a per-platform basis and are inherited by the child process, 

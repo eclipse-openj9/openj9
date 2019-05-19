@@ -3338,7 +3338,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
  *  storeFence
  *
  * Since Java specification for loadfence and storefenc is stronger
- * than the intel specification, a full mfence instrcution have to
+ * than the intel specification, a full mfence instruction have to
  * be used for all three of them
  *
  * Due to performance penalty of mfence, a faster lockor on RSP is used
@@ -6965,7 +6965,7 @@ static void genInitObjectHeader(TR::Node             *node,
    // --------------------------------------------------------------------------------
    //
    // For dynamic array allocation, in case (very unlikely) the object array has a lock word, we just initialized it to 0 conservatively.
-   // In this case, if the original array is reserved, initializating the cloned object's lock word to 0 will force the
+   // In this case, if the original array is reserved, initializing the cloned object's lock word to 0 will force the
    // locking to go to the slow locking path.
    if (isDynamicAllocation)
       {

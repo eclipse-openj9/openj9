@@ -88,7 +88,7 @@ public class SignExtElimTest {
   }
 
   /**
-   * elim should not happen as indicies designed
+   * elim should not happen as indices designed
    * to overflow
    */
   @Test

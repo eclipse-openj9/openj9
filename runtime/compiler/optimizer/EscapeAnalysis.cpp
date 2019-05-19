@@ -5156,7 +5156,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
 
             if (fieldIsPresentInObject)
                {
-               // Special case handling of non-contiguous immmutable object:
+               // Special case handling of non-contiguous immutable object:
                // if it escapes in a cold block, need to ensure the temporary
                // that replaces it is correctly initialized
                if (candidate->escapesInColdBlock(_curBlock)
@@ -6378,7 +6378,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
       if (candidate->_kind == TR::newarray)
          {
          // TODO (Task 118458): We need to investigate the effect of using arrayset on small number of elements. This involves verifying the instruction
-         // sequences each induvidual codegen will generate and only if the codegens can handle arraysets of small number of elements in a performant manner
+         // sequences each individual codegen will generate and only if the codegens can handle arraysets of small number of elements in a performant manner
          // can we enable this optimization.
          const bool enableNewArrayArraySetPendingInvestigation = false;
 

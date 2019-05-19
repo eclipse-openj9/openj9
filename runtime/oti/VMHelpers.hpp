@@ -724,7 +724,7 @@ done:
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 *
-	 * @returns true if an immeidate async is pending, false if not
+	 * @returns true if an immediate async is pending, false if not
 	 */
 	static VMINLINE bool
 	immediateAsyncPending(J9VMThread *currentThread)
@@ -1397,7 +1397,7 @@ exit:
 	static VMINLINE void
 	reportFinalFieldModified(J9VMThread* currentThread, J9Class* fieldClass)
 	{
-		/** Only report modifications after class initalization
+		/** Only report modifications after class initialization
 		 *  Since final field write is allowed during class init process,
 		 *  JIT will not start to trust final field values until the class has completed initialization
 		 */

@@ -117,7 +117,7 @@ int j9sysinfo_numcpus_test3 (J9PortLibrary* portLibrary)
 }
 
 /**
- * Get inital target number of CPUS. Set user-specified to 3, then to 0. Get target number of CPUs. Validate number equals initial value.
+ * Get initial target number of CPUS. Set user-specified to 3, then to 0. Get target number of CPUs. Validate number equals initial value.
  *
  * @param[in] portLibrary The port library under test
  *

@@ -1312,7 +1312,7 @@ TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *method
 
    c->setPeekingSymRefTab(newSymRefTab);
 
-   // Do this so that all intermedate calls to c->getSymRefTab()
+   // Do this so that all intermediate calls to c->getSymRefTab()
    // in codegen.dev go to the new symRefTab
    //
    c->setCurrentSymRefTab(newSymRefTab);

@@ -6043,7 +6043,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
 
                //TODO: The code below pads up the object allocation size so that zero init code later
                //will have multiples of wordsize to work with. For now leaving this code as is, but
-               //check if its worthwhile to remove these extra instuctions added here for padding as
+               //check if its worthwhile to remove these extra instructions added here for padding as
                //zero init will be removed now.
                if (elementSize >= 2)
                   {

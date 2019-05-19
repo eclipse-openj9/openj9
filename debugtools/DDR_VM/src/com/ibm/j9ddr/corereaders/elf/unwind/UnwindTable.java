@@ -130,7 +130,7 @@ public class UnwindTable {
 		state.registerRules = new HashMap<Integer, RegisterRule>();
 
 		{
-//			out.printf("CIE has initial instuctions:\n");
+//			out.printf("CIE has initial instructions:\n");
 //			
 //			String s = "";
 //			for( byte b: fde.getCIE().getInitialInstructions() ) {
@@ -157,7 +157,7 @@ public class UnwindTable {
 		}
 
 		{
-//			System.err.printf("FDE has instuctions:\n");
+//			System.err.printf("FDE has instructions:\n");
 //			
 //			String s = "";
 //			for( byte b: fde.getCallFrameInstructions()) {

@@ -67,7 +67,7 @@ public class DummyClassGenerator extends ClassGenerator {
 					int bcIndex = ci.next();
 					int bc = ci.byteAt(bcIndex);
 					if (bc == Opcode.INVOKEINTERFACE) {
-						/* found invokeinterfce bytecode */
+						/* found invokeinterface bytecode */
 						cpIndex = ci.s16bitAt(bcIndex + 1);
 						break;
 					}

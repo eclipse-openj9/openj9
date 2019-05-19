@@ -791,7 +791,7 @@ fixClassSlot(J9VMThread* currentThread, J9Class** classSlot, J9HashTable *classP
 
 /*
  * For each replaced interface in classPairs, update the iTables of
- * all implementors to point at the new version of the class.
+ * all implementers to point at the new version of the class.
  */
 void
 fixITables(J9VMThread * currentThread, J9HashTable * classPairs)

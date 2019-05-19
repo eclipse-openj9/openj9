@@ -48,7 +48,7 @@
 		<echo>    ant -v -Dbuild.root=c:\temp\jclbuild all</echo>
 	</target>
 
-	<!-- Only call this target once the other JCL configs have been build invididually using this ANT build.xml file -->
+	<!-- Only call this target once the other JCL configs have been build individually using this ANT build.xml file -->
 	<target name="jcl_se.zip">
 		<fail unless='job.buildId'>This job requires a job.buildId defined</fail>
 		<zip destfile="${build.root}/build/j9jcl/jcl_se.zip" basedir="${build.root}/build/j9jcl/source" />

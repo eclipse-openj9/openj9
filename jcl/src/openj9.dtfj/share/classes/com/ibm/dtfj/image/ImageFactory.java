@@ -30,7 +30,7 @@ import javax.imageio.stream.ImageInputStream;
 
 /**
  * <p>This interface is used for classes which can produce instances of Image
- * implementors.</p>
+ * implementers.</p>
  *
  * <p>Classes that implement this interface should provide a zero argument, public
  * constructor so that they can be created using {@code Class.newInstance()}.</p>

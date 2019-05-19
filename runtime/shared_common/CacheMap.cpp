@@ -612,7 +612,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 		}
 		/* CMVC 160728:
 		 * Calling 'updateROMSegmentList()' here when J9SHR_CACHELET_SUPPORT is defined caused
-		 * the below assert to fail intermitently in SH_CompositeCacheImpl::countROMSegments().
+		 * the below assert to fail intermittently in SH_CompositeCacheImpl::countROMSegments().
 		 *
 		 * Trc_SHR_Assert_False((segment->baseAddress < getBaseAddress()) ||
 		 *                     (segment->heapTop > getCacheLastEffectiveAddress()));
@@ -660,7 +660,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 	return 0;
 }
 
-/* Assume cc is intialized OK */
+/* Assume cc is initialized OK */
 /* THREADING: Only ever single threaded */
 /* Creates a new ROMClass memory segment and adds it to the avl tree */
 J9MemorySegment* 
@@ -822,7 +822,7 @@ SH_CacheMap::updateROMSegmentListForCache(J9VMThread* currentThread, SH_Composit
 }
 
 /** 
- * Assume cc is intialized OK
+ * Assume cc is initialized OK
  * @retval 1 success
  * @retval 0 failure
  */

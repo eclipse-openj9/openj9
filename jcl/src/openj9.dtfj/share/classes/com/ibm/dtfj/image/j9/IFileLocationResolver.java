@@ -29,7 +29,7 @@ public interface IFileLocationResolver
 {
 	/**
 	 * Used to lookup files at runtime.  The fullPath is used as a hint for how to find the file and what
-	 * it is called but implementors are free to use whatever RI are necessary to find and return
+	 * it is called but implementers are free to use whatever RI are necessary to find and return
 	 * the adequate file
 	 * 
 	 * @param fullPath The full path to the file

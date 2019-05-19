@@ -164,7 +164,7 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 		}
 	}
 
-	/* walk innner classes SRPs block */
+	/* walk inner classes SRPs block */
 	srpCursor = J9ROMCLASS_INNERCLASSES(romClass);
 	count = romClass->innerClassCount;
 	rangeValid = callbacks->validateRangeCallback(romClass, srpCursor, count * sizeof(J9SRP), userData);

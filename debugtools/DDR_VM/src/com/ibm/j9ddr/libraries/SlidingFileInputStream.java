@@ -78,7 +78,7 @@ public class SlidingFileInputStream extends InputStream {
 	
 	
 	/**
-	 * Actually closes the underlying stream. The close() method does not close the stream so as to allow it's resuse.
+	 * Actually closes the underlying stream. The close() method does not close the stream so as to allow its resuse.
 	 * @throws IOException
 	 */
 	public void disposeStream() throws IOException {

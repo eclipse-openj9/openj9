@@ -523,7 +523,7 @@ done:
  * @param [in] env pointer to JVMTIEnv
  * @param [in] module module being updated
  * @param [in] service service to be added
- * @param [in] implClass implementor of the service
+ * @param [in] implClass implementer of the service
  *
  * @return jvmtiError, JVMTI_ERROR_NONE on success, non-zero on failure
  */
