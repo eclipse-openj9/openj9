@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -215,10 +215,11 @@ jobject getPlatformPropertyList(JNIEnv * env, const char *strings[], int propInd
 	strings[propIndex++] = "java.io.tmpdir";
 	strings[propIndex++] = getTmpDir(env, &envSpace);
 
-	/* Get the timezone */
-	strings[propIndex++] = "user.timezone";
-	strings[propIndex++] = "";
-
+	if (JAVA_SPEC_VERSION < J2SE_V12) {
+		/* Get the timezone */
+		strings[propIndex++] = "user.timezone";
+		strings[propIndex++] = "";
+	}
 
 	plist = createSystemPropertyList(env, strings, propIndex);
 	if (envSpace)
