@@ -121,7 +121,7 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 
 	memset(&rv_capabilities, 0, sizeof(jvmtiCapabilities));
 
-	/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
+	/* Get the JVMTI mutex to ensure to prevent multiple agents acquiring capabilities that can only be held by one agent at a time */
 
 	omrthread_monitor_enter(jvmtiData->mutex);
 
@@ -330,7 +330,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 		rc = JVMTI_ERROR_NOT_AVAILABLE;
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
-		/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
+		/* Get the JVMTI mutex to ensure to prevent multiple agents acquiring capabilities that can only be held by one agent at a time */
 
 		omrthread_monitor_enter(jvmtiData->mutex);
 
@@ -453,7 +453,7 @@ jvmtiRelinquishCapabilities(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(capabilities_ptr);
 
-	/* Get the JVMTI mutex to ensure to prevent multple agents releasing capabilities that can only be held by one agent at a time */
+	/* Get the JVMTI mutex to ensure to prevent multiple agents releasing capabilities that can only be held by one agent at a time */
 	/* Also prevents multiple threads from releasing capabilities in the same agent */
 
 	omrthread_monitor_enter(jvmtiData->mutex);

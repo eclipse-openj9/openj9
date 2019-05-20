@@ -1769,13 +1769,13 @@ J9HashTable *
 hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize);
 
 /**
- * @brief Locates and returns a structure containing load locatioin for the given class 
+ * @brief Locates and returns a structure containing load location for the given class 
  * Caller must acquire classLoaderModuleAndLocationMutex before making the call
  *
  * @param currentThread current thread pointer
  * @param clazz J9Class for which load location is to be searched
  *
- * @return pointer to J9ClassLocatioin for the given class, or NULL if not found
+ * @return pointer to J9ClassLocation for the given class, or NULL if not found
  */
 J9ClassLocation *
 findClassLocationForClass(J9VMThread *currentThread, J9Class *clazz);

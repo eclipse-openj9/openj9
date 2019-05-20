@@ -310,7 +310,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 	HEADING(PORTLIB, "Compiled Method Test");
 	rc |= testCompiledMethod(vm);
 
-	/* TODO: Temporarily disable due to problems with Manager statics and muliple CacheMaps */
+	/* TODO: Temporarily disable due to problems with Manager statics and multiple CacheMaps */
 #if defined(REMOVED_FOR_NOW)
 	HEADING(PORTLIB, "Byte Data Test");
 	rc |= testByteDataManager(vm);

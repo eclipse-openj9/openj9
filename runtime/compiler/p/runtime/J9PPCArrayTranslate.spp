@@ -1495,7 +1495,7 @@ __arrayTranslateTROT:
 ! Legends:
 !      ...   No data
 !      .PP   Partial block (missing a part at head)
-!      .P.   Partial block (imssing a part at both head and tail)
+!      .P.   Partial block (missing a part at both head and tail)
 !      PP.   Partial block (missing a part at tail)
 !      BBBB+ One or more 4x unrolled blocks
 !      BB    A pair of blocks

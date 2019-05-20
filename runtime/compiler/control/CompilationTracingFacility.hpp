@@ -40,7 +40,7 @@ struct J9VMThread;
 struct TR_CompilationTracingEntry
    {
    TR_PERSISTENT_ALLOC(TR_Memory::OptimizationPlan) // lie about the type as this is for debug only
-   uint16_t _J9VMThreadId; // last meaningfull bits from the vm thread pointer
+   uint16_t _J9VMThreadId; // last meaningful bits from the vm thread pointer
    uint8_t  _operation;
    uint8_t  _otherData;
    }; // TR_CompilationTracingEntry

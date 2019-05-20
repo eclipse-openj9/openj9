@@ -1346,7 +1346,7 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 	}
 
 	if (TRUE == xCheckFound) {
-		/* scan backwards for -Xcheck:memory.  There may be multiple -Xcheck options, so check them all, stop when we hit -Xcheck:memeory */
+		/* scan backwards for -Xcheck:memory.  There may be multiple -Xcheck options, so check them all, stop when we hit -Xcheck:memory */
 		for( argCursor = args->nOptions - 1 ; argCursor >= 0; argCursor-- ) {
 			char* memcheckArgs[2];
 
@@ -3181,8 +3181,8 @@ testBackupAndRestoreLibpath(void)
 		failed++;
 	}
 
-	/* The backup path is prefixed by mulitiple colons */
-	printf("TESTCASE_31: The backup path is prefixed by mulitiple colons\n");
+	/* The backup path is prefixed by multiple colons */
+	printf("TESTCASE_31: The backup path is prefixed by multiple colons\n");
 	setLibpath(":::abc");
 	backupLibpath(&bkp, strlen("abc"));
 	setLibpath("abc");
@@ -4661,7 +4661,7 @@ JVM_RawMonitorDestroy(void* mon)
 
 
 /**
- * Moniter enter
+ * Monitor enter
  *
  * @param mon pointer of the monitor
  * @return 0

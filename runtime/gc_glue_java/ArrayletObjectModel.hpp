@@ -245,7 +245,7 @@ public:
 	/**
 	 * We can't use memcpy because it may be not atomic for pointers, use this function instead
 	 * Copy data in UDATA words
-	 * If lenght is not times of UDATA one more word is copied
+	 * If length is not times of UDATA one more word is copied
 	 * @param destAddr address copy to
 	 * @param sourceAddr address copy from
 	 * @param lengthInBytes requested size in bytes

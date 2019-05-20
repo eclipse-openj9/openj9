@@ -21,7 +21,7 @@
 ################################################################################
 
 #TODO alot of this should really just be inherited from the OMR config
-#TODO we are assuming liunx at the moment
+#TODO we are assuming Linux at the moment
 if(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
     set(OMR_TOOLCONFIG "xlc")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -q64 -qalias=noansi")

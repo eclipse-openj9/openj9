@@ -749,10 +749,10 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 		} else if (lockID == J9SH_OSCACHE_MMAP_LOCKID_WRITELOCK) {
 			/*	CMVC 153095: Case 3
 			 * Another thread:
-			 *	- Owns RW monintor, and is waiting on (or owns) the RW lock.
+			 *	- Owns RW monitor, and is waiting on (or owns) the RW lock.
 			 * 
 			 * Current thread:
-			 *	- Owns W monintor, and gets EDEADLK on W lock.
+			 *	- Owns W monitor, and gets EDEADLK on W lock.
 			 *	
 			 * Note:
 			 *  - If the 'call stack' ends up here then it is known the current thread 

@@ -57,7 +57,7 @@ typedef enum {
 } gcMemoryParameters;
 
 /* When displaying, maximum number of characters required, plus the "-" i.e. -Xmox */
-#define MAXIMUM_GC_MEMORY_PARAMETER_LENGTH 8 /* -Xsoftmx is longer than the others (Lenght 5) */
+#define MAXIMUM_GC_MEMORY_PARAMETER_LENGTH 8 /* -Xsoftmx is longer than the others (length 5) */
 
 /**
  * Manipulate GC memory parameters.

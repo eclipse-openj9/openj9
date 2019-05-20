@@ -66,7 +66,7 @@ public class LookupInTests {
 	 * ****************************************/
 	
 	/**
-	 * Validates public access mode of a Lookup factory created by a call to MethodHandles.publicLookiup() 
+	 * Validates public access mode of a Lookup factory created by a call to MethodHandles.publicLookup() 
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.sanity" })

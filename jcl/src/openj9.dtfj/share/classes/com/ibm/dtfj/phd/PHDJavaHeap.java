@@ -243,7 +243,7 @@ class PHDJavaHeap implements JavaHeap {
 		/** Largest address - used to find if a JavaObject at a particular address might be in this chunk. */
 		final long maxAddress;
 		/**
-		 * Construct the metadeta for a chunk.
+		 * Construct the metadata for a chunk.
 		 * @param index
 		 * @param size
 		 * @param nextIndex

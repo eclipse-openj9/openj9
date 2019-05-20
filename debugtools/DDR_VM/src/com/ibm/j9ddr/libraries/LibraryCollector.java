@@ -41,7 +41,7 @@ import java.util.logging.SimpleFormatter;
 
 public class LibraryCollector {
 	/**
-	 * Used to indicated the overall outcome when invoking the libary collection process
+	 * Used to indicated the overall outcome when invoking the library collection process
 	 * @author Adam Pilkington
 	 *
 	 */

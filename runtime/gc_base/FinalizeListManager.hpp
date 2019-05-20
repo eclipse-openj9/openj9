@@ -300,7 +300,7 @@ public:
 	/**
 	 * Pop the first classloader on this off that has a non NULL gcThreadNotification
 	 * 
-	 * @return classLoader the first class loader on the list with a non NULL gcThreadNotifcation or NULL
+	 * @return classLoader the first class loader on the list with a non NULL gcThreadNotification or NULL
 	 */
 	J9ClassLoader *popRequiredClassLoaderForForcedClassLoaderUnload();
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */

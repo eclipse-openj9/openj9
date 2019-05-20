@@ -104,7 +104,7 @@ parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMA
  * Parses the Hypervisor Environment Variable string into a J9JavaVMArgInfoList list
  * removing leading and trailing quotes
  *
- * @param[in]	portLib 	The portLibary
+ * @param[in]	portLib 	The portLibrary
  * @param[in]	argBuffer 	pointer to the env var ENVVAR_IBM_JAVA_HYPERVISOR_SETTINGS
  * @param[in]	hypervisorArgumentsList	pointer to the parsed option strings
  *

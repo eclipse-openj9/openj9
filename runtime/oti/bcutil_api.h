@@ -245,7 +245,7 @@ internalLoadROMClass(J9VMThread *vmThread, J9LoadROMClassData *loadData, J9Trans
 * @param vmThread pointer to J9VMThread
 * @param moduleName name of the module containing the class; can be NULL
 * @param className name of the class to be located
-* @param classNameLength lenght of className
+* @param classNameLength length of className
 * @param classLoader pointer to J9ClassLoader loading the class
 * @param classPath pointer to class path entries
 * @param classPathEntryCount number of class path entries in classPath

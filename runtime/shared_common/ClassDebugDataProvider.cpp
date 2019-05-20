@@ -693,7 +693,7 @@ ClassDebugDataProvider::setPermission(J9VMThread* currentThread, AbstractMemoryP
 
 		if ( lntProtectHigh == lvtProtectLow) {
 			/* The whole debug area will be memory protected after the next call to setRegionPermissions().
-			 * Only new data is mportected, it is assumed the rest was protected earlier.
+			 * Only new data is mprotected, it is assumed the rest was protected earlier.
 			 */
 			UDATA startMprotect = ROUND_DOWN_TO(pageSize, (UDATA)lntProtectLow);
 			UDATA endMprotect = ROUND_UP_TO(pageSize, (UDATA)lvtProtectHigh);

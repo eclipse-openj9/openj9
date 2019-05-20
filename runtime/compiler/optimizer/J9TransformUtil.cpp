@@ -139,7 +139,7 @@ static bool isFinalFieldPointingAtRepresentableNativeStruct(TR::SymbolReference 
       case TR::SymbolReferenceTable::classFromJavaLangClassSymbol:
       case TR::SymbolReferenceTable::classFromJavaLangClassAsPrimitiveSymbol:
          // Note: We could also do vftSymbol, except replacing those with
-         // loadaddres mucks up indirect loads in ways the optimizer/codegen
+         // loadaddr mucks up indirect loads in ways the optimizer/codegen
          // isn't expecting yet
          TR_ASSERT(symRef->getSymbol()->isShadow(), "isFinalFieldPointingAtRepresentableNativeStruct expected shadow symbol");
          return true;

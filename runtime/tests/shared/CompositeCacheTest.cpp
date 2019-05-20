@@ -908,7 +908,7 @@ CompositeCacheTest::writeHashTest(J9JavaVM* vm, IDATA testCacheSize, SH_Composit
 	if (cc1a->testAndSetWriteHash(currentThread, 999) != 1) {
 		return 5;
 	}
-	/* muliple calls should return same result */
+	/* multiple calls should return same result */
 	if (cc1a->testAndSetWriteHash(currentThread, 999) != 1) {
 		return 6;
 	}

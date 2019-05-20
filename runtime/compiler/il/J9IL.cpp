@@ -34,7 +34,7 @@ TR::ILOpCodes J9::IL::opCodesForConst[] =
    TR::BadILOp,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
-   TR::BadILOp,    // TR::ZonedDecimalSignLeingSeparate
+   TR::BadILOp,    // TR::ZonedDecimalSignLeadingSeparate
    TR::BadILOp,    // TR::ZonedDecimalSignTrailingSeparate
    TR::BadILOp,    // TR::UnicodeDecimal
    TR::BadILOp,    // TR::UnicodeDecimalSignLeading
@@ -139,7 +139,7 @@ TR::ILOpCodes J9::IL::opCodesForRegisterLoad[] =
    TR::BadILOp,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
-   TR::BadILOp,    // TR::ZonedDecimalSignLeangSeparate
+   TR::BadILOp,    // TR::ZonedDecimalSignLeadingSeparate
    TR::BadILOp,    // TR::ZonedDecimalSignTrailingSeparate
    TR::BadILOp,    // TR::UnicodeDecimal
    TR::BadILOp,    // TR::UnicodeDecimalSignLeading
@@ -154,7 +154,7 @@ TR::ILOpCodes J9::IL::opCodesForRegisterStore[] =
    TR::BadILOp,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
-   TR::BadILOp,    // TR::ZonedDecimalSignLeangSeparate
+   TR::BadILOp,    // TR::ZonedDecimalSignLeadingSeparate
    TR::BadILOp,    // TR::ZonedDecimalSignTrailingSeparate
    TR::BadILOp,    // TR::UnicodeDecimal
    TR::BadILOp,    // TR::UnicodeDecimalSignLeading

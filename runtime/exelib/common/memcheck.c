@@ -951,7 +951,7 @@ static void memoryCheck_fill_bytes(OMRPortLibrary *portLib, U_8 *fillAddress, UD
 
 
 
-/* @internal	The portLibray passed on to other functions  must be the memCheckPortLib. */
+/* @internal	The portLibrary passed on to other functions  must be the memCheckPortLib. */
 static void 
 memoryCheck_free_memory(OMRPortLibrary *portLib, void *memoryPointer)
 {
@@ -2876,7 +2876,7 @@ memoryCheck_control(OMRPortLibrary *portLib, const char* key, UDATA value)
   *
   * @param portLibrary 
   * @param node J9MEMAVLTreeNode to print callSite information for
-  * @internal	The portLibray passed in should be the memCheckPortLib->
+  * @internal	The portLibrary passed in should be the memCheckPortLib->
   *
   */
 static void 
@@ -2927,7 +2927,7 @@ memoryCheck_dump_callSites(OMRPortLibrary *portLibrary, J9AVLTree *tree)
  *
  * @parm portLib OMRPortLibrary used to access the memory functions
  * @param tree J9AVLTree storing the callSite information
- * @internal	The portLibray passed in should be the memCheckPortLib.
+ * @internal	The portLibrary passed in should be the memCheckPortLib.
  */
 static void 
 memoryCheck_free_AVLTree(OMRPortLibrary *portLib, J9AVLTree *tree)
@@ -2948,7 +2948,7 @@ memoryCheck_free_AVLTree(OMRPortLibrary *portLib, J9AVLTree *tree)
  *
  * @parm portLib OMRPortLibrary used to access the memory functions
  * @param tree J9AVLTreeNode the node to free
- * @internal	The portLibray passed in should be the memCheckPortLib.
+ * @internal	The portLibrary passed in should be the memCheckPortLib.
  */
 static void 
 memoryCheck_free_AVLTreeNode(OMRPortLibrary *portLib, J9AVLTreeNode *node)
@@ -3177,7 +3177,7 @@ memoryCheck_print_stats_callSite_small(OMRPortLibrary *portLib, J9MEMAVLTreeNode
   *
   * @param portLibrary 
   * @param tree J9AVLTree storing the callSite information
-  * @internal	The portLibray passed in should be the memCheckPortLib->
+  * @internal	The portLibrary passed in should be the memCheckPortLib->
   *
   */
 static void 
@@ -3204,7 +3204,7 @@ memoryCheck_dump_callSites_small(OMRPortLibrary *portLibrary, J9AVLTree *tree)
   *
   * @param portLibrary 
   * @param node J9MEMAVLTreeNode to print callSite information for
-  * @internal	The portLibray passed in should be the memCheckPortLib.
+  * @internal	The portLibrary passed in should be the memCheckPortLib.
   */
 static void 
 memoryCheck_dump_callSite_small(OMRPortLibrary *portLibrary, J9AVLTreeNode *node)

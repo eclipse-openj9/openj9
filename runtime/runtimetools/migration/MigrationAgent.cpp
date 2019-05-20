@@ -27,7 +27,7 @@ static MigrationAgent* migrationAgent;
 
 
 /*
- * default timein millisconds that we wait after a check signal before deciding we are not likely to migrate after all
+ * default timein milliseconds that we wait after a check signal before deciding we are not likely to migrate after all
  * The number is currently quite high because the obervered times are quite high
  */
 #define DEFAULT_MIGRATE_WAIT_INTERVAL 200000

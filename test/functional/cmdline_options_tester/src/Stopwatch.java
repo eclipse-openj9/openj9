@@ -29,7 +29,7 @@ import java.text.*;
  * ToDo: Move to System.nanoTime() instead of System.currentTimeMillis() once test source 
  * is built with 1.5 or higher.
  * Currently millisecond calculation entirely depends on OS update of timer values
- * which happens only once in few tens of milliseconds. So getting milliseocnd directly from os may 
+ * which happens only once in few tens of milliseconds. So getting millisecond directly from os may 
  * not be accurate.
  * 
  */

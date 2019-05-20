@@ -52,7 +52,7 @@ public class MethodForNameOutputParser {
 	 * @param methodArguments JVM signature of the arguments to the method, e.g. "JI". 
 	 * 			This must be the full set of arguments or "null" to take the first matching method.
 	 * 
-	 * @return String representation of extracted j9metod address from
+	 * @return String representation of extracted J9Method address from
 	 * !methodforname extension. return null, if any error occurs or address
 	 * can not be found in given !methodforname output.
 	 */

@@ -125,7 +125,7 @@ final public class TraceRecordExternal extends TraceRecord {
                 if ( buffer[entry+2]==0 && buffer[entry+1]==0 ) {
                      Util.Debug.println("Entry with data length > 256");
 
-                     // remember the ID and lenght of the special entry
+                     // remember the ID and length of the special entry
                      longEntryID     = buffer[entry+3];
                      longEntryLength = Util.constructUnsignedByte(buffer,entry);
 

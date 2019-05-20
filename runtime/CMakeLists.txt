@@ -309,8 +309,8 @@ set(CMAKE_SHARED_LIBRARY_SUFFIX "${J9VM_SHARED_LIBRARY_SUFFIX}")
 ###
 ### Begin the definitions of our modules
 ###
-# TODO: a few subdirectories still neeed to be implemented (currently commented out)
-# TODO: most libriaries still need to be gated with if() statements
+# TODO: a few subdirectories still need to be implemented (currently commented out)
+# TODO: most libraries still need to be gated with if() statements
 
 if(J9VM_MODULE_BCUTIL)
 	add_subdirectory(bcutil)

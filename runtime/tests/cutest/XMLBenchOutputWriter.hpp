@@ -100,7 +100,7 @@ public:
 	 * @param chartName the name to be associated with the chart
 	 * @param chartImage the name of the file containing the chart
 	 * @param xAxisLabel the label for the X axis
-	 * @param yAxisLable the label for the Y axis
+	 * @param yAxisLabel the label for the Y axis
 	 * @param xAxisLog true if the X axis should be logarithmic
 	 * @param yAxisLog true if the Y axis should be logarithmic
 	 */

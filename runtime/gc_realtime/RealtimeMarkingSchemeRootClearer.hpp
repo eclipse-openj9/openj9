@@ -42,7 +42,7 @@
  */
 class MM_RealtimeMarkingSchemeRootClearer : public MM_RealtimeRootScanner
 {
-/* Data memebers / types */
+/* Data members / types */
 public:
 protected:
 private:

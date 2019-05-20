@@ -38,7 +38,7 @@
  * Called during initialization, this routine looks at the maximum size of the heap and expected
  * configuration (generations, regions, etc) and determines the approximate maximum number of chunks
  * that will be required for a sweep at any given time.  It is safe to underestimate the number of chunks,
- * as the sweep sectioning mechnanism will compensate, but the the expectation is that by having all
+ * as the sweep sectioning mechanism will compensate, but the the expectation is that by having all
  * chunk memory allocated in one go will keep the data localized and fragment system memory less.
  * @return estimated upper bound number of chunks that will be required by the system.
  */

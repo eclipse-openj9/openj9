@@ -1029,7 +1029,7 @@ MM_MemorySubSpaceTarok::performContract(MM_EnvironmentBase *env, MM_AllocateDesc
 	 */
 	maximumContractSize = getAvailableContractionSize(env, allocDescription);  
 	
-	/* round down to muliple of heap alignment */
+	/* round down to multiple of heap alignment */
 	maximumContractSize= MM_Math::roundToFloor(_extensions->heapAlignment, maximumContractSize);
 	
 	/* Decide by how much to contract */

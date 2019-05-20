@@ -167,7 +167,7 @@ public class BootstrapMethods {
 		return new ConstantCallSite( f0 );
 	}
 	
-	//For Negative test : Bootstrap method that attempts to return a non-existant method
+	//For Negative test : Bootstrap method that attempts to return a nonexistent method
 	public static CallSite bootstrap_call_invalid_method( Lookup lookup, String name, MethodType type ) throws Throwable {
 		MethodHandle mh = lookup.findStatic( String.class, "valueO", MethodType.methodType( String.class,Object.class ) );
 		return new ConstantCallSite( mh );

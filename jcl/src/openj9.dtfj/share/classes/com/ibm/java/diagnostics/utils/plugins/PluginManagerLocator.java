@@ -36,7 +36,7 @@ import com.ibm.java.diagnostics.utils.DTFJContext;
 
 /**
  * Locator class to hide the ASM classloading shimming that occurs when using 
- * the plugin mangager, allowing this to be shared by different plugin architectures
+ * the plugin manager, allowing this to be shared by different plugin architectures
  * rather than just the DTFJ based ones.
  * 
  * @author adam

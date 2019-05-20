@@ -36,7 +36,7 @@
  * by the port library and are not in the actual port library table, however there
  * are a few.
  * 
- * @note port library maintenace operations are not optional in the port library table.
+ * @note port library maintenance operations are not optional in the port library table.
  */
 #include <stdlib.h>
 #include <string.h>

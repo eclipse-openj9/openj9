@@ -233,7 +233,7 @@ j9file_test0(struct J9PortLibrary *portLibrary)
 		}
 
 		/* Not tested, implementation dependent.  No known functionality.
-		 * Startup is private to the portlibary, it is not re-entrant safe
+		 * Startup is private to the portlibrary, it is not re-entrant safe
 		 */
 		if (NULL == OMRPORT_FROM_J9PORT(PORTLIB)->file_startup) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->file_startup is NULL\n");
@@ -283,7 +283,7 @@ j9file_test0(struct J9PortLibrary *portLibrary)
 		}
 
 		/* Not tested, implementation dependent.  No known functionality.
-		 * Startup is private to the portlibary, it is not re-entrant safe
+		 * Startup is private to the portlibrary, it is not re-entrant safe
 		 */
 		if (NULL == OMRPORT_FROM_J9PORT(PORTLIB)->file_blockingasync_startup) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->file_blockingasync_startup is NULL\n");
@@ -752,7 +752,7 @@ j9file_test5(struct J9PortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "%s() returned valid file handle expected -1\n", FILE_OPEN_FUNCTION_NAME);
 	}
 
-	/* try to close a non existant file, should fail */
+	/* try to close a nonexistent file, should fail */
 	rc = FILE_CLOSE_FUNCTION(portLibrary, -1);
 	if (0 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "%s() returned %d expected %d\n", FILE_CLOSE_FUNCTION_NAME, rc, -1);
@@ -1666,7 +1666,7 @@ j9file_test12(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	/* try unlinking a non-existant file */
+	/* try unlinking a nonexistent file */
 	rc = j9file_unlink("rubbish");
 	if (-1 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9file_unlink() returned %d expected -1\n", rc);
@@ -1695,7 +1695,7 @@ j9file_test12(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	/* try unlinkdir of non-existant directory */
+	/* try unlinkdir of nonexistent directory */
 	rc = j9file_unlinkdir("rubbish");
 	if (0 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9file_unlinkdir() returned %d expected -1\n", rc);

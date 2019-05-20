@@ -167,7 +167,7 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
   .fallback:
 %endmacro
 
-; This code is called when we need to exit reserved montior with couple of possible
+; This code is called when we need to exit reserved monitor with couple of possible
 ; scenarios:
 ;   - more than one level of recursion
 ;   - FLC or INF are set

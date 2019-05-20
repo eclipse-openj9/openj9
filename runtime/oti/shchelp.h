@@ -45,7 +45,7 @@ extern "C" {
 /*	JVM feature bit flag(s)	*/
 /*
  * if there is a need for double digit features such as 10
- * version string leng is going to increase by 1
+ * version string length is going to increase by 1
  * J9SH_VERSION_STRING_LEN need to be changed accordingly *
  */
 #define J9SH_FEATURE_DEFAULT 0x0

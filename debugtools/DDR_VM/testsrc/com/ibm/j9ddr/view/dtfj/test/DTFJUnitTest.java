@@ -95,7 +95,7 @@ public abstract class DTFJUnitTest {
 	// Clones of DDR Objects to test.  These should pass equals test
 	static List<Object> ddrClonedObjects;
 
-	// Jxtract reference objects
+	// jextract reference objects
 	static List<Object> jextractTestObjects;
 	
 	public static class InvalidObjectException extends Exception {

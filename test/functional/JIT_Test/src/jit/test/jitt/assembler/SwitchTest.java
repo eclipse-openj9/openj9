@@ -79,7 +79,7 @@ public class SwitchTest extends jit.test.jitt.Test {
 			Assert.fail("SwitchTest->run: Incorrect result for test #1B!");
 
 
-		//CASE2: Choose Range of largr int case labels
+		//CASE2: Choose Range of large int case labels
 
 		int test2 = 2147483647;
 		int check2 = 0;

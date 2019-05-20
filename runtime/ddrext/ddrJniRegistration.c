@@ -88,7 +88,7 @@ static JNINativeMethod jniOutputStreamMemoryMethods[] = {
  * native methods with the class.
  * @param env java env
  * @param class Java class name.
- * @param mathods array of native methods
+ * @param methods array of native methods
  * @param nMethods size of array
  */
 static BOOLEAN

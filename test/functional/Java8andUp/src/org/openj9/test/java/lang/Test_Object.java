@@ -73,7 +73,7 @@ public class Test_Object {
 	static int slaveExitCount; // slaves completed ok
 
 	/**
-	 * The static variables below are used by the testNofity3 method
+	 * The static variables below are used by the testNotify3 method
 	 */
 	// Tunable input parameters - teste are the defaults
 	public static int MASTER_SLEEP_SECS3 = 1;

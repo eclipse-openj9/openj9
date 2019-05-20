@@ -5108,7 +5108,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    callLabel = generateLabelSymbol(cg);
    doneLabel = generateLabelSymbol(cg);
 
-   // TODO - primitive monitores are disabled. Enable it after testing
+   // TODO - primitive monitors are disabled. Enable it after testing
    //TR::TreeEvaluator::isPrimitiveMonitor(node, cg);
    //
    TR::LabelSymbol *helperReturnOOLLabel, *doneOOLLabel = NULL;
@@ -12232,7 +12232,7 @@ J9::Z::TreeEvaluator::forwardArrayCopySequenceGenerator(TR::Node *node, TR::Code
                                          node->getArrayCopyElementType() == TR::Address;
    if (mustGenerateOOLGuardedLoadPath)
       {
-      // It might be possible that we have constant byte lenght load and it is forward array copy.
+      // It might be possible that we have constant byte length load and it is forward array copy.
       // In this case if we need to do guarded Load then need to evaluate byteLenNode.
       if (byteLenReg == NULL)
          byteLenReg = cg->gprClobberEvaluate(byteLenNode);

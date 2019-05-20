@@ -285,7 +285,7 @@ static const struct { \
 #define internalExitVMToJNI internalReleaseVMAccess
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI */
 
-/* Move marcro MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_xxx from redirector.c in order to be referenced from IBM i series */
+/* Move macro MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_xxx from redirector.c in order to be referenced from IBM i series */
 #define MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_COMPRESSEDREFS	((U_64)57 * 1024 * 1024 * 1024)
 #define MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS	((U_64)25 * 1024 * 1024 * 1024)
 

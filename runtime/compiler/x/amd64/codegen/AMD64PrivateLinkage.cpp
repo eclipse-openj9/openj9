@@ -815,7 +815,7 @@ int32_t TR::AMD64PrivateLinkage::argAreaSize(TR::Node *callNode)
    // TODO: We only need this function because unresolved calls don't have a
    // TR::ResolvedMethodSymbol, and only TR::ResolvedMethodSymbol has
    // getParameterList().  If getParameterList() ever moves to TR::MethodSymbol,
-   // then this function becomes unneccessary.
+   // then this function becomes unnecessary.
    //
    TR::Node *child;
    int32_t  i;

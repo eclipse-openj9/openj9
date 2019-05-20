@@ -66,7 +66,7 @@ public class JavaMethodComparator extends DTFJComparator {
 	// DDR handles these sections properly so may return more sections than jextract.
 	
 	// When number of returned values are the same test that they are all the same.
-	// If the number siffer, remove all cold sections from DDR output and make sure remainders
+	// If the numbers differ, remove all cold sections from DDR output and make sure remainders
 	// match jextract output.  In this scenerio we must ignore the size of the jextract output since
 	// it too is incorrect
 	

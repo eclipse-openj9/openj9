@@ -316,7 +316,7 @@ public class ModularityHelper {
 	 *
 	 * @param    out            The printstream that will be provided to outputter
 	 * @param    filter         Used to determine whether a class will be output.
-	 *                          Will be run on all loaaded classes owned by the module.
+	 *                          Will be run on all loaded classes owned by the module.
 	 * @param    outputter      Used to output details about a class that was matched
 	 *                          by the filter. Will be run on any class that filter
 	 *                          returns true for.

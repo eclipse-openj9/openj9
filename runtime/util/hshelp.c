@@ -2292,7 +2292,7 @@ outOfMemory:
 			/* In non-fastHCR case when class is being redefined, the classLocation of original class
 			 * should now point to redefined class.
 			 * Get the classLocation for the original class, remove it from the hashtable
-			 * and a new classLoation with redefined class as the key.
+			 * and a new classLocation with redefined class as the key.
 			 */
 			J9ClassLocation *classLocation = NULL;
 

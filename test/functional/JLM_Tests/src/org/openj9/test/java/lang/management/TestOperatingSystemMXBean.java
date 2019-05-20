@@ -385,7 +385,7 @@ public class TestOperatingSystemMXBean {
 			// On Unix, we have two more attributes that the call
 			// mbs.getAttributes() cannot account for.  Check this.
 
-			// for reasons not yet clear, the JMX mechanismm does not
+			// for reasons not yet clear, the JMX mechanism does not
 			// "see" the OperatingSystemMXBean APIs getHardwareModel() and isHardwareEmulated(),
 			// which is why on Windows we see this discrepancy in attribute count.
 			// Should be 19 attributes on non-Unices and 21 (the UnixOperatingSystem bean adds

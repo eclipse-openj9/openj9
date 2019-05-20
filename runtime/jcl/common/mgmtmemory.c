@@ -758,7 +758,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 void JNICALL
 Java_com_ibm_lang_management_internal_MemoryNotificationThreadShutdown_sendShutdownNotification(JNIEnv *env, jobject instance)
 {
-	/* currently, the only queue is the heap usage notfication queue */
+	/* currently, the only queue is the heap usage notification queue */
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	J9MemoryNotification *notification = NULL;

@@ -342,7 +342,7 @@ public class LookupAPITests_Bind {
 	}
 
 	/**
-	 * Negaitve test : Lookup.bind() test with a protected method belonging to a super-class(receiver) that is on a different package than the lookup class.
+	 * Negative test : Lookup.bind() test with a protected method belonging to a super-class(receiver) that is on a different package than the lookup class.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

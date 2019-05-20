@@ -50,7 +50,7 @@ public class ImageProcessComparator extends DTFJComparator {
 	// getPointerSize()
 	// getRuntiems()
 	// getSignalName()
-	// getSignalNuumber()
+	// getSignalNumber()
 	// getThreads()
 	
 	public void testEquals(Object ddrObject, Object jextractObject, int members) {
