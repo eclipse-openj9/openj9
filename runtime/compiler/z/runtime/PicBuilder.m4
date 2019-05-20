@@ -267,7 +267,7 @@ ZZ   _interpreterUnresolvedSpecialGlue
 ZZ
 ZZ Description(s):
 ZZ
-ZZ   int _interperterUnresolvedSpecialGlue
+ZZ   int _interpreterUnresolvedSpecialGlue
 ZZ   =============================
 ZZ   Invoke jitResolveSpecialMethod to resolve a method and
 ZZ   update the snippet code
@@ -1580,7 +1580,7 @@ ifdef([TR_HOST_64BIT],[dnl
     AHI     r2,4 # integer is in the lower half of the 8 byte slot
 ])dnl
 LABEL(LclearD2)
-    L       r1,0(,r3)                # Data Ref. Instructon
+    L       r1,0(,r3)                # Data Ref. Instruction
     N       r1,4(,breg)              # Zero out the displacement field
     AR      r1,r2                    # Update the displacement field
     ST      r1,0(,r3)                # Store the result
@@ -2043,8 +2043,8 @@ ZZ                        # jit-to-jit offset, so we need to
     SRL     r2,16         # shift it to lower half
     AR_GPR  r2,r1         # Add offset to PCStart
 
-    LR_GPR  r3,r2        # jit-to-jit entry of implementor method
-    LR_GPR  r2,r14       # implementor class
+    LR_GPR  r3,r2        # jit-to-jit entry of implementer method
+    LR_GPR  r2,r14       # implementer class
 
     LR_GPR  r14,r0
 ifdef([TR_HOST_64BIT],[dnl

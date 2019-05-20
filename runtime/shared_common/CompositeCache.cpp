@@ -3843,7 +3843,7 @@ SH_CompositeCacheImpl::runExitCode(J9VMThread *currentThread)
 	unprotectHeaderReadWriteArea(currentThread, false);
 	Trc_SHR_Assert_Equals(_readWriteProtectCntr, 0);
 #endif
-	/* If mprotect=all is not set, then final value of _headerProtectCntr should be same is its inital value (= 1).
+	/* If mprotect=all is not set, then final value of _headerProtectCntr should be same is its initial value (= 1).
 	 * If mprotect=all is set, then above call to unprotectHeaderReadWriteArea() will set it to 1.
 	 */
 	Trc_SHR_Assert_Equals(_headerProtectCntr, 1);

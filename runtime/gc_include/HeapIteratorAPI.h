@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,7 +244,7 @@ jvmtiIterationControl
 j9mm_iterate_object_slots(J9JavaVM *javaVM, J9PortLibrary *portLibrary, J9MM_IterateObjectDescriptor *object, UDATA flags, jvmtiIterationControl (*func)(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *objectDesc, J9MM_IterateObjectRefDescriptor *refDesc, void *userData), void *userData);
 
 /**
- * Provide the arraylet idetification bitmask
+ * Provide the arraylet identification bitmask
  * @return arrayletPageSize
  * @return offset
  * @return width

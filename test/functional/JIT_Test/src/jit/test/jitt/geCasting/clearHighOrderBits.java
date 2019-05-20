@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,7 +130,7 @@ public class clearHighOrderBits extends jit.test.jitt.Test {
     return (int)b & 0xFF;
   }
 
-  // su2i - short integer to interger - zero extension NILH
+  // su2i - short integer to integer - zero extension NILH
   static int su2i( int x )
   {
     // cast to short and then back to int to get it go into su2iEvaluator.

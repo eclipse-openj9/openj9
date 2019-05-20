@@ -847,7 +847,7 @@ TR_ClassQueries::getSubClasses(TR_PersistentClassInfo *clazz,
    }
 
 
-// this method will return the number of implementors stored in the given implArray
+// this method will return the number of implementers stored in the given implArray
 // NOTE: if the number is larger than maxCount, it means that the collection failed
 // and we should not check the content of the implArray as it may contain bogus data
 int32_t
@@ -863,7 +863,7 @@ TR_ClassQueries::collectImplementorsCapped(TR_PersistentClassInfo *clazz,
    CollectImplementors collector(comp, clazz->getClassId(), implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod);
    collector.visitSubclass(clazz);
    collector.visit(clazz->getClassId(), locked);
-   return collector.getCount(); // return the number of implementors in the implArray
+   return collector.getCount(); // return the number of implementers in the implArray
    }
 
 int32_t

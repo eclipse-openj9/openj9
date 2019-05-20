@@ -501,7 +501,7 @@ ddrStart()
 		goto destroy;
 	}
 
-	/** Load and initalize a virtual machine. Start DDR on main thread **/
+	/** Load and initialize a virtual machine. Start DDR on main thread **/
 	if ((rc = (*createJVM)(&jvm, (void**) &env, &vm_args)) != 0) {
 		dbgPrint("DDR: Failed to create JavaVM. rc = %lx %d\n", rc, rc);
 		goto destroy;

@@ -165,7 +165,7 @@ postEventAll(UtEventSem * sem)
 
 /*******************************************************************************
  * name        - initTraceHeader
- * description - Inititializes the trace header.
+ * description - Initializes the trace header.
  * parameters  - void
  * returns     - OMR error code
  ******************************************************************************/
@@ -909,7 +909,7 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 
 		if (UT_GLOBAL(traceInCore)) {
 			/*
-			 *  Incore trace mode so reuse existing buffer, wrapping to the top
+			 *  In core trace mode so reuse existing buffer, wrapping to the top
 			 */
 			trcBuf = oldBuf;
 

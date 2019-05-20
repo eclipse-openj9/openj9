@@ -107,7 +107,7 @@ class TR_LoopAliasRefiner: public TR_LoopVersioner
     *   2       [iv:j, scale:dimsize1, invar:-1, invar:-1]     (j-1) *dimsize1
     *   3       [iv:k, scale:NULL, invar:NULL, isSub=true]      -k
 
-    * note that the scaling factor for integar (4) and any constant offset will be represented in
+    * note that the scaling factor for integer (4) and any constant offset will be represented in
     * CanonicalArrayReference,  since the basic form of the array must be followed when 
     * reconstructing the full array expression.
     */

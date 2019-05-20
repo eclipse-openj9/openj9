@@ -138,7 +138,7 @@ public class rc011 {
 	}
 
 	public boolean testReorderingInterfaceMethods() throws ClassNotFoundException {
-		// Ensure two implementors of the tested interfaces to prevent the
+		// Ensure two implementers of the tested interfaces to prevent the
 		// JIT from optimizing away the invokeinterface.
 		Class.forName("com.ibm.jvmti.tests.redefineClasses.rc011_testReorderingInterfaceMethods_O2b");
 		Class.forName("com.ibm.jvmti.tests.redefineClasses.rc011_testReorderingInterfaceMethods_O6b");

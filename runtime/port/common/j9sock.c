@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -801,7 +801,7 @@ j9sock_ipmreq_init(struct J9PortLibrary *portLibrary, j9ipmreq_t handle, uint32_
  * @param[in] portLibrary The port library.
  * @param[out] handle A pointer to the j9ipv6_mreq_struct to populate.
  * @param[in] ipmcast_addr The ip mulitcast address.
- * @param[in] ipv6mr_interface The ip mulitcast inteface.
+ * @param[in] ipv6mr_interface The ip mulitcast interface.
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code.
  *

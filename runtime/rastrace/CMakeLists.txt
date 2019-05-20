@@ -63,7 +63,7 @@ target_link_libraries(j9trc
 		j9thr
 		j9stackmap
 		omrcore
-		#TODO: why isnt this in the module.xml?
+		#TODO: why isn't this in the module.xml?
 		j9hookable
 )
 

@@ -2083,7 +2083,7 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
 /**
  *	jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
  *  Return a default configuration for the java virtual machine
- *  implementaiton.
+ *  implementation.
  *	This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *
  *  @param vm_args pointer to a vm-specific initialization structure
@@ -3599,7 +3599,7 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 	result = (void*)dlsym( (void*)handle, (char *)functionName );
 #else /* defined(WIN32) */
-#error "Please implemente jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
+#error "Please implement jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
 #endif /* defined(WIN32) */
 
 	Trc_SC_FindLibraryEntry_Exit(result);

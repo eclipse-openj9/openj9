@@ -891,7 +891,7 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
 /**
  *	jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
  *  Return a default configuration for the java virtual machine
- *  implementaiton.
+ *  implementation.
  *	This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *
  *  @param vm_args pointer to a vm-specific initialization structure

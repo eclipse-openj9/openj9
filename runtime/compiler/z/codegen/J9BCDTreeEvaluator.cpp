@@ -4469,7 +4469,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
             //
             // The temporary hint is the size of z but if performExplicitWidening is also set to true below then code will be generated to initialize up
             // to the size of z even though this extra initialized space will be unused for the rest of the operation.
-            // Nodes (x,y,z) that share the same hint are tracked and removed when the node is evaluated. At the current node's (y) initializion point
+            // Nodes (x,y,z) that share the same hint are tracked and removed when the node is evaluated. At the current node's (y) initialization point
             // only x,y will be in this list and only up to size=10 will be initialized.
             destLength = targetStorageReference->getMaxSharedNodeSize();
             }
@@ -6443,7 +6443,7 @@ int32_t getAddSubComputedResultPrecision(TR::Node *node, TR::CodeGenerator * cg)
  * -- pdmul
  * -- pddiv
  *
- * whose corresponding BCD vector instructrions are of VRI-f format.
+ * whose corresponding BCD vector instructions are of VRI-f format.
  */
 TR::Register *
 J9::Z::TreeEvaluator::pdArithmeticVectorEvaluatorHelper(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator * cg)
@@ -7116,7 +7116,7 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
 
 /*
  * \brief
- * Generate non-exception throwing intructions for pdModifyPrecision node to narrow or widen packed decimals.
+ * Generate non-exception throwing instructions for pdModifyPrecision node to narrow or widen packed decimals.
  * The generated instruction sequence does not validate the source packed decimals. Any invalid packed
  * decimals will be loaded as is and modified as if their digits and signs were valid.
 */

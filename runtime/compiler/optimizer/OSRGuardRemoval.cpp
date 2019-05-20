@@ -66,7 +66,7 @@ bool TR_OSRGuardRemoval::findMatchingOSRGuard(TR::Compilation *comp, TR::TreeTop
  * In NextGenHCR, OSR guards are inserted after certain yields to the VM, such as calls, monents and asyncchecks.
  * They must be placed there as the VM may decided during that yield that a method has been redefined. When execution
  * returns to the JITed code and the VM has announced a redefinition, the OSR guard will be patched and execution will
- * return to the VM immidiately.
+ * return to the VM immediately.
  *
  * However, if this yield has been removed, the OSR guard may no longer be necessary. For example, DAA could convert
  * a call into an equivalent tree. If this call had an OSR guard it could be removed as long as no other yield 

@@ -288,7 +288,7 @@ TR_J9InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, T
          {
          // call to invokeExactTargetAddress are generated out of thin air by our JSR292
          // implementation, but we never want the VM or anyone else to know this so we must
-         // always inlne the implementation
+         // always inline the implementation
          case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
             {
             TR::TreeTop *scanTT = callNodeTreeTop->getNextTreeTop();
@@ -2769,7 +2769,7 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
       // At this point we need to create another virtual guard v' for the
       // recursive call. v' needs a calleeIndex that is different from the one
       // for v (otherwise we cannot distinguish between the two virtual guards)
-      // We achieve this by artificially incrementing the inlinind depth as if
+      // We achieve this by artificially incrementing the inlining depth as if
       // we inlined calleeResolvedMethod again.
 
       TR::Node *vguardNode = createVirtualGuard(callNode,

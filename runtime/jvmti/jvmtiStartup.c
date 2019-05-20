@@ -407,7 +407,7 @@ closeLibrary:
 }
 
 /**
- * Load a JVMTI agent and call the agent's intialization function
+ * Load a JVMTI agent and call the agent's initialization function
  * @param vm Java VM
  * @param agentLibrary environment for the agent
  * @param name of the initialization function

@@ -54,7 +54,7 @@ class MM_CollectorLanguageInterfaceImpl;
  * all slots do, etc).
  * 
  * There are two levels of specialization for the scanner, structure walking and handling of elements.
- * Structure walking specialization, where the implementator can override the way in which we walk elements,
+ * Structure walking specialization, where the implementer can override the way in which we walk elements,
  * should be done rarely and in only extreme circumstances.  Handling of elements can be specialized for all
  * elements as well as for specific types of structures.
  * 
@@ -317,7 +317,7 @@ public:
 	}
 
 	/**
-	 * Return codes from root scanner complete phase calls that are allowable by implementators.
+	 * Return codes from root scanner complete phase calls that are allowable by implementers.
 	 */
 	typedef enum {
 		complete_phase_OK = 0,  /**< Continue scanning */

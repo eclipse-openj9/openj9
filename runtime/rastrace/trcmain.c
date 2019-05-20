@@ -885,7 +885,7 @@ freeTrace(UtThreadData **thr)
 		UT_DBGOUT(1, ("<UT thr="UT_POINTER_SPEC"> Error: cleanUpTrace called before trace has been finalized\n", thr));
 	}
 
-	/* so that we get cleaned up even in the case where trace hasn't initalized yet */
+	/* so that we get cleaned up even in the case where trace hasn't initialized yet */
 	destroyQueue(&UT_GLOBAL(outputQueue));
 
 	config = UT_GLOBAL(config);
@@ -1461,7 +1461,7 @@ trcGetComponents(UtThreadData **thr, char ***list, int32_t *number)
 
 /*******************************************************************************
  * name        - trcGetComponent
- * description - Return a bitmap tracepoints incleded in the build for a given
+ * description - Return a bitmap tracepoints included in the build for a given
  *               component.
  * parameters  - component name, format array
  * returns     - OMR error code

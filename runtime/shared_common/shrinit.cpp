@@ -2863,7 +2863,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 }
 
 /*
- * Allocates and initiliases SCAbstractAPI object.
+ * Allocates and initialises SCAbstractAPI object.
  *
  * @param	vm
  *

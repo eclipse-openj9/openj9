@@ -239,7 +239,7 @@ int32_t TR_GlobalLiveVariablesForGC::perform()
       //
       bool ignoreOSRuses = false; // Used to be set to true but we cannot set this to true because a variable may not be live in compiled code but may still be needed (live) in the interpreter
       /* for mimicInterpreterShape, because OSR points can extend the live range of autos 
-       * autos sharing the same slot in interperter might end up with overlapped
+       * autos sharing the same slot in interpreter might end up with overlapped
        * live range if OSRUses are not ignored
        */
       if (comp()->getOption(TR_MimicInterpreterFrameShape)) 

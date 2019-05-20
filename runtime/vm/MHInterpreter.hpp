@@ -649,7 +649,7 @@ protected:
 
 public:
 	/**
-	 * Run the MethodHandle using the intepreter dispatch target implementation.
+	 * Run the MethodHandle using the interpreter dispatch target implementation.
 	 *
 	 * @param methodHandle[in] the j.l.i.MethodHandle to run
 	 * @return the next action for the interpreter

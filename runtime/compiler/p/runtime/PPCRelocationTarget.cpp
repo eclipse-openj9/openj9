@@ -348,7 +348,7 @@ TR_PPCRelocationTarget::flushCache(uint8_t *codeStart, unsigned long size)
 void
 TR_PPCRelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
    {
-   /* apply constant to lis and ori insturctions
+   /* apply constant to lis and ori instructions
       lis  r0, high_16 bits
       ori  r0, r0, low_16 bits
     */

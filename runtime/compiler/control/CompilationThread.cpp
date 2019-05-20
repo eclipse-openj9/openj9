@@ -581,7 +581,7 @@ TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
       {
       TR::RawAllocator rawAllocator(jitConfig->javaVM);
       void * alloc = rawAllocator.allocate(sizeof(TR::CompilationInfo));
-      /* FIXME: Replace this with the appropriate intializers in the constructor */
+      /* FIXME: Replace this with the appropriate initializers in the constructor */
       /* Note: there are embedded objects in TR::CompilationInfo that rely on the fact
          that we do memset this object to 0 */
       memset(alloc, 0, sizeof(TR::CompilationInfo));
@@ -2325,7 +2325,7 @@ TR::CompilationInfoPerThread* TR::CompilationInfo::getCompInfoForThread(J9VMThre
 //-------------------------- startCompilationThread --------------------------
 // Start ONE compilation thread and initialize the associated
 // TR::CompilationInfoPerThread structure
-// This function returns immediatelly after the thread is created
+// This function returns immediately after the thread is created
 // Parameters:
 //   priority - the desired priority of the thread (0..5); negative number
 //               means that the priority will be computed automatically
@@ -3073,7 +3073,7 @@ IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)
    // It is possible that the shutdown signal came before this thread has had the time
    // to become fully initialized. If that's the case, the state will appear as STOPPING
    // instead of UNINITIALIZED. This can happen when we destroy the cache; the java app
-   // starts and finishes immediatelly
+   // starts and finishes immediately
    if (compInfoPT->getCompilationThreadState() == COMPTHREAD_SIGNAL_TERMINATE)
       {
       compInfoPT->setCompilationThreadState(COMPTHREAD_STOPPING);
@@ -4535,7 +4535,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
    if (_methodQueue)
       {
       // If the request is sync or AOT load or InstantReplay, take it now
-      if (compInfoPT->isDiagnosticThread() || // InstantReplay compilations must be processed immediatelly
+      if (compInfoPT->isDiagnosticThread() || // InstantReplay compilations must be processed immediately
          _methodQueue->_priority >= CP_SYNC_MIN ||       // sync comp
          _methodQueue->_methodIsInSharedCache == TR_yes) // very cheap relocation
          {

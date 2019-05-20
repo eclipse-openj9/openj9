@@ -2443,7 +2443,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo * persistentInfo = compInfo->getPersistentInfo();
 
-   // Here we need to set CompilationShouldBeIntrerrupted. Currently if the TR_EnableNoVMAccess is not
+   // Here we need to set CompilationShouldBeInterrupted. Currently if the TR_EnableNoVMAccess is not
    // set the compilation is stopped, but should be notify not to continue afterwards.
    //
    compInfo->setAllCompilationsShouldBeInterrupted();

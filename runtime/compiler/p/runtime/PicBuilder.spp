@@ -66,9 +66,9 @@
 
 #if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS)
 /* extract isolated field address in TenantDataxxx
-   MT_ComputeIsoaltedFieldAddress(32/64/obj, element_shift size 2/3)
+   MT_ComputeIsolatedFieldAddress(32/64/obj, element_shift size 2/3)
    assume
-   1. r3 has isoalted index address
+   1. r3 has isolated index address
    2. r7 contains RA in snippet
    3. r6 contains return address in mainline
    4. r4, r5 is free
@@ -571,7 +571,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	lwz	r29,1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r29,0, 5, 31				! Masking off flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	bcctrl  BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	lis     r4, IS_SyncSeq | IS_32BitLong
 	and.	r4, r29, r4				        ! Is it a volatile sync, or a long volatile 32-bit OS sequence?
@@ -706,7 +706,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	bc	BO_IF_NOT, CR0_EQ, .L_pTOC_update		! Is pTOC case?
 	lwz     r9, 4(r6)                                       ! load the second instr from memory reference sequence in the code cache
 	andis.  r29, r29, IS_32BitLong                          ! Mask off all bits but the IS_32BitLong bit
-	andc.   r8, r29, r26                                    ! if IS_32BitLong and it isnt really a volatile then
+	andc.   r8, r29, r26                                    ! if IS_32BitLong and it isn't really a volatile then
 	beq     .L_LoadTemplateInstruction                      ! dont branch,
 	cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r3_high                                 ! if so then use lwz r3,0(r11)
@@ -728,7 +728,7 @@ _interpreterUnresolvedInstanceDataGlue:
 
         lwz     r9,1*ALen(r7)                                   ! Load cp index for this field
 	andis.  r9, r9, IS_32BitLong                            ! Mask off all bits but the IS_32BitLong bit
-        andc.   r9, r9, r26                                     ! if IS_32BitLong and it isnt really a volatile then
+        andc.   r9, r9, r26                                     ! if IS_32BitLong and it isn't really a volatile then
         beq     .L_Skip2ndMemRefInstruction                     ! dont branch,
         cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r4_high                                 ! if so then use lwz r4,0(r11)
@@ -918,7 +918,7 @@ _interpreterUnresolvedClassGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr   CTR, r8						! Move callee address to CTR
 	bcctrl  BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	b       .L11.common_code				! not modified, r3: result
@@ -955,7 +955,7 @@ _interpreterUnresolvedClassGlue2:
       lwz     r4, 1*ALen(r7)                                  ! Load cp index for this field
       laddr   r5, 0(r7)                                       ! Load code cache RA
       rlwinm  r4, r4, 0, 5, 31                                ! Masking off the flag bits
-      addi    r5, r5, 1                                       ! Increament for EX search
+      addi    r5, r5, 1                                       ! Increment for EX search
       mtspr   CTR, r8                                         ! Move callee address to CTR
       bcctrl  BO_ALWAYS, CR0_LT                               ! Call to resolve: RTOC, r7
       b       .L11.common_code                                ! not modified, r3: result
@@ -992,7 +992,7 @@ _interpreterUnresolvedStringGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1056,7 +1056,7 @@ _interpreterUnresolvedConstantDynamicGlue:
         lwz     r4, 1*ALen(r7)                                  ! Load cp index for this field
         laddr   r5, 0(r7)                                       ! Load code cache RA
         rlwinm  r4, r4, 0, 5, 31                                ! Masking off the flag bits
-        addi    r5, r5, 1                                       ! Increament for EX search
+        addi    r5, r5, 1                                       ! Increment for EX search
         mtspr   CTR, r8                                         ! Move callee address to CTR
         bcctrl  BO_ALWAYS, CR0_LT                               ! Call to resolve: RTOC, r7
         laddr   r6, 0(r7)                                       ! Load code cache RA
@@ -1120,7 +1120,7 @@ _interpreterUnresolvedMethodTypeGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1184,7 +1184,7 @@ _interpreterUnresolvedMethodHandleGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1248,7 +1248,7 @@ _interpreterUnresolvedCallSiteTableEntryGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1311,7 +1311,7 @@ _interpreterUnresolvedMethodTypeTableEntryGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -3166,7 +3166,7 @@ _interfaceSlotsUnavailable:
         laddr   r12, 4*ALen(r11)                                ! Load the itable offset from the snippet
         andis.  r11,r12,J9TR_J9_ITABLE_OFFSET_TAG_BITS          ! Call the helper if the itable offset is tagged
         bne     .L.callHelper
-        laddrx  r12, r9, r12                                    ! Load the interpretre vft offset
+        laddrx  r12, r9, r12                                    ! Load the interpreter vft offset
         neg     r12, r12
         addi    r12, r12, J9TR_InterpVTableOffset               ! Convert to a JIT vft offset
         laddrx  r11, r10, r12                                   ! Load the method

@@ -1262,7 +1262,7 @@ public final class DecimalData
      * @param checkOverflow
      *            if true an <code>ArithmeticException</code> will be thrown if the decimal value does not fit in the
      *            specified precision (overflow)
-     * @return BigInteger the resulting BigIntger
+     * @return BigInteger the resulting BigInteger
      * 
      * @throws ArrayIndexOutOfBoundsException
      *             if an invalid array access occurs

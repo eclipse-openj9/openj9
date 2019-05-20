@@ -306,7 +306,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::treeSimplification                                                    },
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
    { OMR::cheapGlobalValuePropagationGroup                                      },
-   { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlinging might expose opportunities for dataAccessAccelerator
+   { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlining might expose opportunities for dataAccessAccelerator
    { OMR::globalCopyPropagation,                       OMR::IfVoluntaryOSR          },
    { OMR::lastLoopVersionerGroup,                      OMR::IfLoops                  },
    { OMR::globalDeadStoreElimination,                  OMR::IfEnabledAndLoops},

@@ -99,7 +99,7 @@ MM_MetronomeAlarmThread::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	/* TODO: The MM_Alarm classes don't quite have the newInstance/initalize
+	/* TODO: The MM_Alarm classes don't quite have the newInstance/initialize
 	 * pattern right, so we have to manually call initialize.
 	 */
 	_alarm = MM_Alarm::factory(env, _scheduler->_osInterface);

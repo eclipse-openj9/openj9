@@ -499,7 +499,7 @@ public class ObjectFactory {
 	 * @param 	inputStream 		the feature definition input stream
 	 * @return 	the newly loaded feature definition
 	 *
-	 * @throws InvalidFeatureDefinitionException 		thrown if errors are found while parsing the feature definition intput stream
+	 * @throws InvalidFeatureDefinitionException 		thrown if errors are found while parsing the feature definition input stream
 	 */
 	public FeatureDefinition loadFeatureDefinition(InputStream inputStream, String objectId) throws InvalidFeatureDefinitionException {
 		FeatureParser parser = new FeatureParser();

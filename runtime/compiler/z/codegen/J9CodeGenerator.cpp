@@ -1676,7 +1676,7 @@ J9::Z::CodeGenerator::examineNode(
             // 2) for perf to avoid a clobber evaluate (temp to temp move) of the already initialized reg -- instead begin using the store hint and leave the temp alone
             reg->setIsInitialized(false);
             }
-         else if (bestNode && bestNode->getOpCode().isStore() && node->getReferenceCount() >= 1) // use >= 1 so useNewStoreHint can always be used for ZAP widening on intializations
+         else if (bestNode && bestNode->getOpCode().isStore() && node->getReferenceCount() >= 1) // use >= 1 so useNewStoreHint can always be used for ZAP widening on initializations
             {
             if (self()->traceBCDCodeGen())
                traceMsg(self()->comp(),"\t\t\treg storageRef #%d with a store bestNode so do not update bestNode with node - %s (%p) refCount=%d\n",

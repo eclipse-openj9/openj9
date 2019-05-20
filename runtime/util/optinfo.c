@@ -488,7 +488,7 @@ getVariableTableForMethodDebugInfo(J9MethodDebugInfo *methodInfo) {
 			}
 		} else {
 			/* 
-			 * debug infomation is out of line, this slot is an SRP to the
+			 * debug information is out of line, this slot is an SRP to the
 			 * J9VariableInfo table
 			 */
 			return (SRP_GET(methodInfo->srpToVarInfo, U_8 *));

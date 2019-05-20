@@ -236,7 +236,7 @@ FindSingleJittedImplementer::visitSubclass(TR_PersistentClassInfo *cl)
             {
             if (!method->isSameMethod(_implementer))
                {
-               //found two compiled implementors
+               //found two compiled implementers
                stopTheWalk();
                _implementer = 0; // signal failure
                return false;
@@ -418,7 +418,7 @@ TR_ResolvedMethod * TR_PersistentCHTable::findSingleImplementer(
       return 0;
       }
 
-   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implementers if you can
    comp->enterHeuristicRegion();
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, cpIndexOrVftSlot, callerMethod, comp, locked, useGetResolvedInterfaceMethod);
    comp->exitHeuristicRegion();
@@ -468,7 +468,7 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
       return 0;
       }
 
-   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implementers if you can
    comp->enterHeuristicRegion();
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, cpIndex, callerMethod, comp, locked);
    comp->exitHeuristicRegion();
@@ -550,7 +550,7 @@ TR_PersistentCHTable::isKnownToHaveMoreThanTwoInterfaceImplementers(
    if (!classInfo)
       return false;
 
-   TR_ResolvedMethod *implArray[3]; // collect maximum 3 implemeters if you can
+   TR_ResolvedMethod *implArray[3]; // collect maximum 3 implementers if you can
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 3, cpIndex, callerMethod, comp, locked);
    return (implCount == 3);
    }
@@ -574,7 +574,7 @@ TR_PersistentCHTable::findSingleAbstractImplementer(
    if (TR::Compiler->cls.isInterfaceClass(comp, thisClass))
       return 0;
 
-   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implementers if you can
    comp->enterHeuristicRegion();
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, vftSlot, callerMethod, comp, locked);
    comp->exitHeuristicRegion();

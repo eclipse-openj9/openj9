@@ -286,7 +286,7 @@ patchBarrierWithNop:
       ; get the instruction descriptor and find the length of the store instruction
       ;
       mov         edx, dword  [esp + 144]                   ; get instruction descriptor address [esp + 116 + 24 + 4]
-      mov         bl, byte  [edx]                           ; get instruction length from instruciton descriptor
+      mov         bl, byte  [edx]                           ; get instruction length from instruction descriptor
       and         ebx, 0f0h                                 ; mask size of instruction
       shr         ebx, 4                                    ; shift size to last nibble of byte
       lea         ebx, [ebx - eq_MemFenceCallLength32] ; get the delta between the RA in the mainline code and
