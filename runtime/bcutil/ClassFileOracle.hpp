@@ -923,10 +923,7 @@ class NameAndTypeIterator
 	bool hasClinit() const { return _hasClinit; }
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
-
-	bool needsStaticConstantInit() const {
-		return _needsStaticConstantInit;
-	}
+	bool needsStaticConstantInit() const { return _needsStaticConstantInit; }
 
 	U_8 constantDynamicType(U_16 cpIndex) const
 	{
