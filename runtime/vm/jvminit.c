@@ -2076,7 +2076,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 		case ALL_VM_ARGS_CONSUMED :
 #if defined(J9VM_RAS_EYECATCHERS)
 			/*
-			 * defer initialization of network data until after heap allocated, since the intialization
+			 * defer initialization of network data until after heap allocated, since the initialization
 			 * can initiate DLL loads which prevent allocation of large heaps.
 			 */
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXREADIPINFOFORRAS, NULL);
@@ -5410,7 +5410,7 @@ runExitStages(J9JavaVM* vm, J9VMThread* vmThread)
 
 
 /**
- * PostInit load is used to load or intialize a library after initialization has completed.
+ * PostInit load is used to load or initialize a library after initialization has completed.
  * It is not currently protected by a mutex.
  * The library must be tagged with ALLOW_POST_INIT_LOAD in initializeDllLoadTable to allow this.
  * postInitLoadJ9DLL can be called on a library even if it is already loaded.

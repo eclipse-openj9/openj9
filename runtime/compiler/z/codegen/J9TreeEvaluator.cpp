@@ -266,7 +266,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    if (comp->getOption(TR_TraceCG))
       traceMsg(comp, "inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
 
-   // This evaluator function handles different indexOf() instrinsics, some of which are static calls without a
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
    // receiver. Hence, the need for static call check.
    const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
    const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
@@ -1248,7 +1248,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
          // test if class is interface of not.
          // if interface, we do the following.
          //
-         // insert isntanceof site snippet test
+         // insert instanceof site snippet test
          // cmp objectClassReg, classObjectClazzSnippet
          // jne helper call
          // cmp castclassreg, instanceOfClazzSnippet
@@ -5948,7 +5948,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
 
    // WARNING: It is not recommended to have two exit point in OOL section
    // In this case we need it in case of ifInstanceOf to save additional complex logic in mainline section
-   // In case if there is GLRegDeps attached to ifIntsanceOf node, it will be evaluated and attached as post dependency conditions
+   // In case if there is GLRegDeps attached to ifInstanceOf node, it will be evaluated and attached as post dependency conditions
    // at the end of node
    // We can take a risk of having two exit points in OOL here as there is no other register instruction between them
    if (ifInstanceOf)
@@ -9072,7 +9072,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
       heapAllocOOL->swapInstructionListsWithCompilation();
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 6: Initilize the new object header ==========================///
+      ///============================ STAGE 6: Initialize the new object header ==========================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (isArray)
          {
@@ -9725,7 +9725,7 @@ J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg,
 
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "readBar/arraycopy/OOL"), 1, TR::DebugCounter::Cheap);
 
-   // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instuction in ICF.
+   // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instruction in ICF.
    TR::RegisterDependencyConditions *loopDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 10, cg);
    TR::TreeEvaluator::generateMemToMemElementCopy(node, cg, byteSrcReg, byteDstReg, byteLenReg, srm, isForward, true, false, loopDeps);
 

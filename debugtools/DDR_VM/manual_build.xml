@@ -43,7 +43,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<!-- VM_VERSION is inherited from DDR_VM/generate.xml -->
 		<equals arg1="${VM_VERSION}" arg2="24" />
 		<then>
-			<!-- the RAS jars are in RASTools folder in 2.4 VM infrasstructure -->
+			<!-- the RAS jars are in RASTools folder in 2.4 VM infrastructure -->
 			<property name="RAS_BINARIES" location="${WORKSPACE}/../external/RASTools" />
 		</then>
 		<else>

@@ -1402,7 +1402,7 @@ MM_MemorySubSpaceTarok::checkForRatioExpand(MM_EnvironmentBase *env, UDATA bytes
 	maxFree = (UDATA)(((U_64)getActiveMemorySize()  * _extensions->heapFreeMaximumRatioMultiplier)
 														 / ((U_64)_extensions->heapFreeMaximumRatioDivisor));
 														 
-	/* If we have hit -Xmaxf limit already ...return immiediatley */													 
+	/* If we have hit -Xmaxf limit already ...return immediately */													 
 	if (currentFree >= maxFree) { 
 		Trc_MM_MemorySubSpaceTarok_checkForRatioExpand_Exit1(env->getLanguageVMThread());
 		return 0;

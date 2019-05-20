@@ -1824,7 +1824,7 @@ TR_UseTreeTopMap::buildAllMap()
    }
 
 /**
- * Build a map of use indicies to their parent TreeTops (usedef datastructure doesn't have this)
+ * Build a map of use indices to their parent TreeTops (usedef datastructure doesn't have this)
  */
 typedef TR_Pair<TR::Node,TR::TreeTop> UseInfo;
 void TR_UseTreeTopMap::buildUseTreeTopMap(TR::TreeTop* treeTop,TR::Node *node)
@@ -5234,7 +5234,7 @@ TR_CISCTransformer::extractMatchingRegion()
             }
          else
             {
-            // The node t is an inppropriate node!
+            // The node t is an inappropriate node!
             if (!empty)
                {
                if (!t->isNegligible() || !_T2P[t->getID()].isEmpty())

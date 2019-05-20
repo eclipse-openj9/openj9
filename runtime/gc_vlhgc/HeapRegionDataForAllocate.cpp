@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ MM_HeapRegionDataForAllocate::taskAsFreePool(MM_EnvironmentBase *env)
 
 	_region->setRegionType(MM_HeapRegionDescriptor::FREE);
 	_region->_allocateData._owningContext = NULL;
-	/* set _projectedLiveBytes to 'uninitialized' value. it will be initalized at the beginning of the first PGC */
+	/* set _projectedLiveBytes to 'uninitialized' value. it will be initialized at the beginning of the first PGC */
 	_region->_projectedLiveBytes = UDATA_MAX;
 	_region->_projectedLiveBytesDeviation = 0;
 	_region->setAge(0,0);
@@ -148,7 +148,7 @@ MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 	 */
 	MM_GCExtensions::getExtensions(env)->interRegionRememberedSet->clearReferencesToRegion(env, _region);
 	_region->setRegionType(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE);
-	/* set _projectedLiveBytes to 'uninitialized' value. it will be initalized at the beginning of the first PGC */
+	/* set _projectedLiveBytes to 'uninitialized' value. it will be initialized at the beginning of the first PGC */
 	_region->_projectedLiveBytes = UDATA_MAX;
 	_region->_projectedLiveBytesDeviation = 0;
 	_region->setAge(0,0);

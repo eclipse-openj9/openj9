@@ -38,7 +38,7 @@
  * Concurrents stack slot iterator.
  * Called for each slot in a threads active stack frames which contains a object reference.
  *
- * @param objectInidrect
+ * @param objectIndirect
  * @param localdata
  * @param isDerivedPointer
  * @param objectIndirectBase

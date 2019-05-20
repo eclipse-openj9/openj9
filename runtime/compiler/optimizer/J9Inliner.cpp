@@ -552,7 +552,7 @@ static TR_ResolvedMethod * findSingleImplementer(
       return 0;
       }
 
-   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implementers if you can
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, cpIndexOrVftSlot, callerMethod, comp, locked, useGetResolvedInterfaceMethod);
    return (implCount == 1 ? implArray[0] : 0);
    }

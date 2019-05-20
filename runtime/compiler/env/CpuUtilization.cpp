@@ -202,7 +202,7 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
       return;
       }
    
-   // Initialize the buffer; no need to intialize the _sampleSystemCpu and _sampleJvmCpu
+   // Initialize the buffer; no need to initialize the _sampleSystemCpu and _sampleJvmCpu
    // fields since we can just check if _timeStamp equals 0
    for (int32_t i = 0; i < _cpuUsageCircularBufferSize; i++)
       {

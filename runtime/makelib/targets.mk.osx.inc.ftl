@@ -105,7 +105,7 @@ CFLAGS += -DOSX -D_REENTRANT -D_FILE_OFFSET_BITS=64
 CXXFLAGS += -DOSX -D_REENTRANT -D_FILE_OFFSET_BITS=64
 CPPFLAGS += -DOSX -D_REENTRANT
 
-<#-- Add Position Indepdent compile flag -->
+<#-- Add Position Independent compile flag -->
 CFLAGS += -fPIC
 CXXFLAGS += -fPIC
 

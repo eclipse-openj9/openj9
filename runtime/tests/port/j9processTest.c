@@ -911,7 +911,7 @@ j9process_fireAndForget(struct J9PortLibrary *portLibrary)
 	}
 	/* Don't delete executable name (command[0]); system-owned. */
 
-/* TODO fix this test, result incorect where executing this test case after the dump tests */
+/* TODO fix this test, result incorrect where executing this test case after the dump tests */
 #if 0	
 	command[0] = "fake_pltest";
 	command[1] = "";

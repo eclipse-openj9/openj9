@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ interface Root {
  *	interface NodeInterface implements Root {
  *		default Boolean callRootIdentity(Object receiver) {
  *			// aload_0 replaced with aload_1
- * 	 		return Root.super.idenity();
+ * 	 		return Root.super.identity();
  *	 	}
  * 	}
  *
@@ -52,7 +52,7 @@ interface Root {
  *	class NodeClass implements NodeInterface {
  *		Boolean callRootIdentity(Object receiver) {
  *			// aload_0 replaced with aload_1
- *			return Root.super.idenity();
+ *			return Root.super.identity();
  *		}
  *	}
  */

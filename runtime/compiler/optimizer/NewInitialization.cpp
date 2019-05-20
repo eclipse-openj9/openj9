@@ -101,7 +101,7 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
    if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
       return 0;
 
-   // When TLH is batch cleared, explicit initializatio should be disabled.
+   // When TLH is batch cleared, explicit initialization should be disabled.
    if (comp()->fej9()->tlhHasBeenCleared())
       return 0;
 

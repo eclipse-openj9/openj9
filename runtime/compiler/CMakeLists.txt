@@ -163,7 +163,7 @@ set(TARGET_DEFINES
 # PASM2ASM about target includes.
 #
 # In the mean time, like the makefiles, this is is using
-# the inlcudes from the SDK
+# the includes from the SDK
 set(J9_INCLUDES
 	# From jitinclude.mk
 	${omr_SOURCE_DIR}/thread

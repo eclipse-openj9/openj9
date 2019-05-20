@@ -396,7 +396,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to test if the requested dumps are triggered to the specified file names.
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
-	 * @param test indicates if itis a local or remote test
+	 * @param test indicates if it is a local or remote test
 	 */	
 	private void triggerDumpToFile(OpenJ9DiagnosticsMXBean diagBean, String test) throws InvalidOptionException, FileNotFoundException, IOException {
 		boolean found = false;

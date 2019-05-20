@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,7 +176,7 @@ public class TraceRecord implements Comparable {
         this.bufferSize    = traceFile.traceFileHeader.getBufferSize();
         this.traceFile     = traceFile;
         this.start         = start;
-        this.currentTimeStamp = timeStamp; // for intial sort
+        this.currentTimeStamp = timeStamp; // for initial sort
 
         // Validity check the nextEntry field. Note that a value of -1                      ibm@51252
         // indicates that this record does not contain the start of a trace                 ibm@51252

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ public class InvokeInterface extends jit.test.jitt.Test {
 		}
 		
 		/* exercise the PIC by using three different 
-		 * implementors, and invoking each one twice 
+		 * implementers, and invoking each one twice 
 		 * */
 		if(5 != tstSendingInterfaceMethod(true, 5, new X())) {
 			Assert.fail("did not get back what was passed (send #1)");

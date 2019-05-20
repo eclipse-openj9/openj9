@@ -1981,7 +1981,7 @@ old_slow_jitRetranslateMethod(J9VMThread *currentThread)
 		 *
 		 *	- the caller is jitted
 		 *	- caller invokes a non-compiled method
-		 *	- interprerer submits target for compilation
+		 *	- interpreter submits target for compilation
 		 *	- during compilation, a decomp is added for the caller
 		 *	- target is successfully compiled
 		 *	- decomp record is updated such that the savedPCAddres points to where the jitted method would save the RA

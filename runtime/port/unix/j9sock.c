@@ -2131,7 +2131,7 @@ j9sock_ipmreq_init(struct J9PortLibrary *portLibrary, j9ipmreq_t handle, uint32_
  * @param[in] portLibrary The port library.
  * @param[out] handle A pointer to the j9ipv6_mreq_struct to populate.
  * @param[in] ipmcast_addr The ip mulitcast address.
- * @param[in] ipv6mr_interface The ip mulitcast inteface.
+ * @param[in] ipv6mr_interface The ip mulitcast interface.
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code.
  *
@@ -2485,7 +2485,7 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 		 * In the case of poll fails with EINTR, continue trying to poll since EINTR happens randomly for no reason.
 		 */
 		do {
-			/* Make sure revents is initilized to 0 before poll call. revents might not be initilized to 0 if this is not the first try of calling poll */
+			/* Make sure revents is initialized to 0 before poll call. revents might not be initialized to 0 if this is not the first try of calling poll */
 			pfds[0].revents = 0;
 			pfds[1].revents = 0;
 			pollrc = poll(pfds, numEntriesInPfd, timeoutms);

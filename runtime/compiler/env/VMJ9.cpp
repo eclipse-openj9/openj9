@@ -599,7 +599,7 @@ void TR_J9VMBase::addSharedCacheHint(J9Method * method, TR_SharedCacheHint hint)
 
       // There is only one scenario where concurrency *may* matter, so we don't get a lock
       // The scenario is where a compilation thread wants to register a hint about the method it's compiling at
-      // the same time that another thread is inling it *for the first time*. In that case, one of the hints
+      // the same time that another thread is inlining it *for the first time*. In that case, one of the hints
       // won't be registered. The affect, however is minimal, and likely to correct itself in the current run
       // (if the inlining hint is missed) or a subsequent run (if the other hint is missed).
       uint32_t scHints = getSharedCacheHint(vmThread, method, scConfig);
@@ -6336,7 +6336,7 @@ TR::SymbolReference* TR_J9VMBase::findOrCreateMethodSymRef(TR::Compilation* comp
    return result;
 }
 
-//Given an array of full method signatures (i.e., incluing full class name), this method
+//Given an array of full method signatures (i.e., including full class name), this method
 //gives symrefs for those methods. The number of input methods are given in methodCount.
 //The function returns the number of methods found
 //this function handles static and virtual functions only

@@ -49,7 +49,7 @@ public class FileSniffer {
 	//minidump identifier
 	private static final int MINIDUMP = 0x4D444D50;	//MDMP
 	
-	//userdump identfier
+	//userdump identifier
 	private static final int USERDUMP_1 = 0x55534552;
 	private static final int USERDUMP_2 = 0x44554D50;
 	

@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -445,7 +445,7 @@ public void testInterfaceMethodInheritance() {
 	
 	/*
 	 * As of Java 9, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
-	 * This means that the following methods are not inherited by implementors of M3:
+	 * This means that the following methods are not inherited by implementers of M3:
 	 * InterfaceTestClasses$I1.m1
 	 * InterfaceTestClasses$I1.m2
 	 * InterfaceTestClasses$I1.m3
@@ -502,7 +502,7 @@ public void testDefaultMethodInheritance() {
 	HashMap<Class, String[]> expectedMethods = new HashMap<>();
 	/*
 	 * As of Java 9, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
-	 * This means that the following methods are now hidden in implementors of SuperA:
+	 * This means that the following methods are now hidden in implementers of SuperA:
 	 * SuperDuper.abstractInSuperA_abstractInSuperDuper()
 	 * SuperDuper.abstractInSuperA_defaultInSuperDuper()
 	 */

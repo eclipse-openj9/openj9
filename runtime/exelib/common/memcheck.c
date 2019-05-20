@@ -1079,7 +1079,7 @@ memoryCheck_hashEqualFn(void *leftEntry, void *rightEntry, void *userData)
  * 
  * @param[in] vmemId	A valid J9PortVmemIdentifier struct pointer to reserved and committed memory.
  * @param[in] userData	An ignored parameter required by the format used by the hashTable fcn pointer.
- * @return The hashkey that will return the pointer to the J9PortVmemIdentifer struct for later use.
+ * @return The hashkey that will return the pointer to the J9PortVmemIdentifier struct for later use.
  */
 static UDATA 
 memoryCheck_hashFn(void *vmemId, void *userData)

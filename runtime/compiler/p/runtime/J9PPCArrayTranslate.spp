@@ -120,7 +120,7 @@
 ! entry arrayTranslateTRTO
 !----------------------------------------------------------------------
 !  Since we know we have a simple table with maximum valid character 'max', the
-!  conversion process can be implmented as follows:
+!  conversion process can be implemented as follows:
 !
 !    uint16 input[];
 !    uint8  output[];
@@ -538,7 +538,7 @@ __arrayTranslateTRTO255:
 ! entry arrayTranslateTROT255
 !----------------------------------------------------------------------
 !  Since we know we have a simple table with maximum valid character max, the
-!  conversion process can be implmented as follows:
+!  conversion process can be implemented as follows:
 !
 !    uint8   input[];
 !    uint16  output[];
@@ -907,7 +907,7 @@ __arrayTranslateTROT255:
 ! entry arrayTranslateTROT
 !----------------------------------------------------------------------
 !  Since we know we have a simple table with maximum valid character 'max', the
-!  conversion process can be implmented as follows:
+!  conversion process can be implemented as follows:
 !
 !    uint8   input[];
 !    uint16  output[];

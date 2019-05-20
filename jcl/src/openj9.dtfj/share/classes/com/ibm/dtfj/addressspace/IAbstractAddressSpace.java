@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ import com.ibm.dtfj.corereaders.MemoryRange;
 
 /**
  * @author jmdisher
- * The interface for the abstract interface.  Note that there will probably only ever be one implementor of 
+ * The interface for the abstract interface.  Note that there will probably only ever be one implementer of 
  * this interface so it will probably be flattened once it is frozen
  */
 public interface IAbstractAddressSpace 

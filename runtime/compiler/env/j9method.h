@@ -343,7 +343,7 @@ public:
    virtual void *                stringConstant(int32_t cpIndex);
    virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
    /** \brief
-    *     Retrieves the underlying type infomation for a given constant dynamic.
+    *     Retrieves the underlying type information for a given constant dynamic.
     *
     *  \param cpIndex
     *     The constant pool index of the constant dynamic.

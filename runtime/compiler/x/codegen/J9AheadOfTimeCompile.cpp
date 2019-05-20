@@ -343,7 +343,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       case TR_MethodObject:
-      //case TR_InterfaceObject: Shouldn't have branch that create inteface object for X86.
+      //case TR_InterfaceObject: Shouldn't have branch that create interface object for X86.
          {
          TR_ASSERT((relocation->getTargetKind() != TR_MethodObject), "relocation TR_MethodObject being created");
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();

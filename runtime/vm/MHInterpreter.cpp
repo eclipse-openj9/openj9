@@ -723,7 +723,7 @@ VM_MHInterpreter::impdep1()
 		_currentThread->arg0EA = UNTAGGED_A0(mtFrame);
 		_currentThread->sp = mhPtr - guardArgSlots;
 
-		/* Overwrite inital GWT_Handle with either GWT_Handle.trueTarget or GWT_Handle.falseTarget based upon testHandleReturnValue */
+		/* Overwrite initial GWT_Handle with either GWT_Handle.trueTarget or GWT_Handle.falseTarget based upon testHandleReturnValue */
 		j9object_t nextHandle = NULL;
 
 		if (0 == testReturnValue) {

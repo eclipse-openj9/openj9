@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +87,7 @@ finalizeForcedClassLoaderUnload(J9VMThread *vmThread)
 					}
 				}
 			}
-		} /* classLoaderIteroator */
+		} /* classLoaderIterator */
 	}
 
 #if defined(J9VM_THR_PREEMPTIVE)
@@ -198,7 +198,7 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 
 	finalizeListManager = extensions->finalizeListManager;
 	
-	/* Inititialize the defaults */
+	/* Initialize the defaults */
 	finalizeCycleInterval = extensions->finalizeCycleInterval;
 	finalizeCycleLimit = extensions->finalizeCycleLimit;
 

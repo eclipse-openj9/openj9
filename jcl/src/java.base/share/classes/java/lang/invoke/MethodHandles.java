@@ -1223,7 +1223,7 @@ public class MethodHandles {
 		
 		/**
 		 * Make a MethodHandle to the Reflect method.  If the method is non-static, the receiver argument
-		 * is treated as the intial argument in the MethodType.  
+		 * is treated as the initial argument in the MethodType.  
 		 * <p>
 		 * If m is a virtual method, normal virtual dispatch is used on each invocation.
 		 * <p>

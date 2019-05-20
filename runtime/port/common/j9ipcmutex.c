@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,7 @@ j9ipcmutex_startup(struct J9PortLibrary *portLibrary)
  * Acquires a named mutex for the calling process.
  *
  * If a Mutex with the same Name already exists, the function opens the existing Mutex and tries to lock it.
- * If another process already has the Mutex locked, the function will block indefinetely. 
+ * If another process already has the Mutex locked, the function will block indefinitely. 
  * If there is no Mutex with the same Name, the function will create it and lock it for the calling process of this function.
  *
  * @param[in] portLibrary The port library

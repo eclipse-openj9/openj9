@@ -1419,7 +1419,7 @@ TR_LinkedListProfilerInfo<T>::incrementOrCreate(T &value, uintptr_t **addrOfTota
    }
 
 /**
- * Array value profiling implemenation
+ * Array value profiling implementation
  * It will profile up to ARRAY_MAX_NUM_VALUES values and maintain a total frequency counter.
  */
 template <typename T>
@@ -1709,7 +1709,7 @@ class TR_BigDecimalValueInfo : public TR_GenericValueInfo<uint64_t>
    };
 
 /**
- * Typedefs for instansiations
+ * Typedefs for instantiations
  */
 typedef TR_GenericValueInfo<uint32_t>      TR_ValueInfo;
 typedef TR_GenericValueInfo<uint64_t>      TR_LongValueInfo;

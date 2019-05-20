@@ -703,7 +703,7 @@ int32_t TR_PseudoRegister::getSymbolDigits()
 // The input startDigit->endDigit range is a right to left range where the sign code (not considered a digit) has the index -1, and the first digit has index 0,
 // and the second digit has index 1 and so on...
 // pd number 06 66 6c   number is +06666
-// indicies  43 21 0x   with x=-1
+// indices  43 21 0x   with x=-1
 // Note that this range is not inclusive. For example if startDigit=1,endDigit=3 then the first index included in the range
 // is the startDigit value of 1 and the last number included in the range is endDigit-1=2 and the range size is 2 (endDigit-startDigit)
 // This input scheme is used so the node->getDecimalPrecision() and node->getSize() values can be used without change in most cases.

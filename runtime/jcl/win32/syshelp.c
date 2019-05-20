@@ -243,7 +243,7 @@ char* getPlatformFileEncoding(JNIEnv *env, char *codepage, int size, int encodin
 
 
 /**
- * Turns a platform independed DLL name into a platform specific one
+ * Turns a platform independent DLL name into a platform specific one
  */	
 void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 	strcpy(outPath,inPath);

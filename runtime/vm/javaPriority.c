@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ void initializeJavaPriorityMaps (J9JavaVM *javaVM) {
 		javaPriorityMax = JAVA_PRIORITY_MAX;
 
         /* Now we construct the reverse map. */
-        /* Initalize all mappings to -1 to indicate they have not been mapped yet */
+        /* Initialize all mappings to -1 to indicate they have not been mapped yet */
         for(i=0; i<=J9THREAD_PRIORITY_MAX; i++) {
                 javaVM->j9Thread2JavaPriorityMap[i] = -1;
         }
