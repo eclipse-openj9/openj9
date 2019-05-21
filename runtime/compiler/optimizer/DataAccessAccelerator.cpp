@@ -1270,11 +1270,6 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
          // correctly compute a new CP to relocate DAA OOL calls.
          bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
 
-         if (errorCheckingNode->getInt())
-            bcdchkNode->setBCDNodeOverflow();
-         else
-            bcdchkNode->resetBCDNodeOverflow();
-
          pdstore = TR::Node::create(op, 2, storeAddressNode, pdshlNode);
          }
       else
@@ -1676,11 +1671,6 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
       // Replacing TT with BCDCHK, so losing one reference.
       callNode->decReferenceCount();
 
-      if (overflow)
-         bcdchk->setBCDNodeOverflow();
-      else
-         bcdchk->resetBCDNodeOverflow();
-
       //create pd2i:
       pd2iNode = callNode;
       pd2iNode->setNumChildren(1);
@@ -1985,15 +1975,6 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
 
       TR::TreeTop * ttPdstore = TR::TreeTop::create(comp(), pdstore);
 
-      if (isCheckOverflow)
-         {
-         bcdchk->setBCDNodeOverflow();
-         }
-      else
-         {
-         bcdchk->resetBCDNodeOverflow();
-         }
-
       // Join treetops:
       TR::TreeTop * nextTT = treeTop->getNextTreeTop();
       TR::TreeTop * prevTT = treeTop->getPrevTreeTop();
@@ -2091,16 +2072,6 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
    // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
    // correctly compute a new CP to relocate DAA OOL calls.
    bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
-
-   if (isCheckOverflow)
-      bcdchkNode->setBCDNodeOverflow();
-   else
-      bcdchkNode->resetBCDNodeOverflow();
-
-   if (isRound)
-      bcdchkNode->setBCDNodeRounding();
-   else
-      bcdchkNode->resetBCDNodeRounding();
 
    TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);
    TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
@@ -2203,7 +2174,6 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
    // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
    // correctly compute a new CP to relocate DAA OOL calls.
    bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
-   bcdchkNode->setBCDNodeOverflow();
 
    //following pdstore
    TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);
