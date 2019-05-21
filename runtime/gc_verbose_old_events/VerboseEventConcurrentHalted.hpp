@@ -45,7 +45,7 @@ private:
 	UDATA	_tracedByHelpers; /**< the number of bytes traced by helper threads */
 	UDATA	_cardsCleaned; /**< the number of cards cleaned */
 	UDATA	_cardCleaningThreshold; /**< the number of free bytes at which we wish to start the card cleaning phase */
-	UDATA	_workStackOverflowOccured; /**< flag to indicate if workstack ovewrflow has occured */
+	UDATA	_workStackOverflowOccured; /**< flag to indicate if workstack overflow has occured */
 	UDATA	_workStackOverflowCount; /**< the number of times concurrent work stacks have overflowed */
 	UDATA	_isCardCleaningComplete;
 	UDATA	_scanClassesMode;

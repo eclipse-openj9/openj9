@@ -78,7 +78,7 @@ public class IpaTest
             bogus++;
         // call some method
         String answer = obj.work0(this);
-        // when work0 will be overriden, the new implementation will write 1
+        // when work0 will be overridden, the new implementation will write 1
         // to the field2, so getField2() should return a 1
         int i = getField2();
         if (i != 0)

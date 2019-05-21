@@ -1016,7 +1016,7 @@ TR_YesNoMaybe TR::CompilationInfo::detectCompThreadStarvation()
    for (int32_t compId = 0; compId < _compThreadIndex; compId++)
       {
       // We must look at all active threads because we want to avoid the
-      // case where they compete with each other (4 comp threads on a single procesor)
+      // case where they compete with each other (4 comp threads on a single processor)
       //
       TR::CompilationInfoPerThread *compInfoPT = _arrayOfCompilationInfoPerThread[compId];
       TR_ASSERT(compInfoPT, "compInfoPT must exist because we don't destroy compilation threads");
@@ -4695,7 +4695,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
 
 //----------------------------- computeCompThreadSleepTime ----------------------
 // Compute how much the compilation thread should sleep for throttling purposes
-// Parameters: compilationTimeMs is the wall clock time spent by previuous
+// Parameters: compilationTimeMs is the wall clock time spent by previous
 // compilation
 // The return value is in ms.
 //-------------------------------------------------------------------------------
@@ -6070,7 +6070,7 @@ void TR::CompilationInfo::queueForcedAOTUpgrade(TR_MethodToBeCompiled *originalE
          {
          if (!TR::Options::isQuickstartDetected())
             hotness = warm;
-         else  if (TR::Options::getCmdLineOptions()->getOption(TR_UpgradeBootstrapAtWarm))// This is a JIT option because it perteins to JIT compilations
+         else  if (TR::Options::getCmdLineOptions()->getOption(TR_UpgradeBootstrapAtWarm))// This is a JIT option because it pertains to JIT compilations
             {
             // To reduce affect on short applications like tomcat
             // upgrades to warm should be performed only outside the grace period
@@ -6658,7 +6658,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
             }
          }
 
-      // Check conditions for adding to JProfling queue.
+      // Check conditions for adding to JProfiling queue.
       // TODO: How should be AOT loads treated?
       if (_addToJProfilingQueue &&
          entry->_oldStartPC == 0 && startPC != 0)// Must be a first time compilation that succeeded
@@ -7207,7 +7207,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
 
             // Check if user allows us to do samplingJProfiling.
-            // If so, enable it programatically on a method by method basis
+            // If so, enable it programmatically on a method by method basis
             //
             if (!options->getOption(TR_DisableSamplingJProfiling))
                {

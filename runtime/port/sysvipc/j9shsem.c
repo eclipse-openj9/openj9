@@ -221,7 +221,7 @@ j9shsem_wait(struct J9PortLibrary *portLibrary, struct j9shsem_handle* handle, u
 }
 /**
  * reading the value of the semaphore in the set. This function
- * uses no synchronisation prmitives
+ * uses no synchronisation primitives
   * 
  * @pre caller has to deal with synchronisation issue.
  *
@@ -265,7 +265,7 @@ j9shsem_getVal(struct J9PortLibrary *portLibrary, struct j9shsem_handle* handle,
 /**
  * 
  * setting the value of the semaphore specified in semset. This function
- * uses no synchronisation prmitives
+ * uses no synchronisation primitives
  * 
  * @pre Caller has to deal with synchronisation issue.
  * 

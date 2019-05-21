@@ -6830,7 +6830,7 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
                                          blockLE->getEntry());
    blockLE->append(TR::TreeTop::create(comp, backIfLE));
 
-   // after these two pathes
+   // after these two paths
    //
    // Currently, blockAfter has no nodes.
    //

@@ -1374,7 +1374,7 @@ findOffset:
       and         rax, rcx
 
 patchWith5ByteNOP:
-      ;cmp word ptr[rax], eq_LORBinaryWord ; make sure we are pathcing over a lock or [esp] ;TEMP
+      ;cmp word ptr[rax], eq_LORBinaryWord ; make sure we are patching over a lock or [esp] ;TEMP
       ;je restoreRegs
 
       mov         ecx,    dword  [rax + 4]            ; load the existing dword with the last byte of the lock and the following 3 bytes

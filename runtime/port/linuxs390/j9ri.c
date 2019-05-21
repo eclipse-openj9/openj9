@@ -82,7 +82,7 @@ j9ri_rioff(void)
 /**
  * This is the signalHandler for the real-time RI signal.
  * The real-time signal is sent to the thread if the run-time instrumentation buffer is full,(ENOBUFS == siginfo->si_int ),
- * or if the runtime-instrumentation-halted interrupt occurrs.
+ * or if the runtime-instrumentation-halted interrupt occurs.
  * This is a dummy signalHandler because the JIT polls for buffer full by itself.
  */
 static void

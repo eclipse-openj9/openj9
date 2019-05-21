@@ -484,7 +484,7 @@ MM_RootScanner::scanThreads(MM_EnvironmentBase *env)
 
 /**
  * This function scans exactly one thread for potential roots.  It is designed as
- *    an overrideable subroutine of the primary functions scanThreads and scanSingleThread.
+ *    an overridable subroutine of the primary functions scanThreads and scanSingleThread.
  * @param walkThead the thread to be scanned
  * @param localData opaque data to be passed to the stack walker callback function.
  *   The root scanner fixes that callback function to the stackSlotIterator function

@@ -2196,7 +2196,7 @@ copyGPUtoHost(CudaInfo *cudaInfo, void **hostRef, CUdeviceptr deviceArray, int32
    CUdeviceptr deviceArrayInHash = parm_entry->deviceArray;
    bool isPinned = parm_entry->accessMode & ACCESS_PINNED;
 
-   // do copy only if (entry not valid OR overriden by forceCopy) AND data is modified in the GPU
+   // do copy only if (entry not valid OR overridden by forceCopy) AND data is modified in the GPU
    bool doCopy = ((!parm_entry->valid || forceCopy) && isNoCopyDtoH == 0)                       
                  && (deviceArrayInHash != NULL_DEVICE_PTR) && (deviceArrayInHash != BAD_DEVICE_PTR); // only when pointers are valid
 

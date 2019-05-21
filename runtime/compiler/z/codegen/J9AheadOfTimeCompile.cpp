@@ -800,7 +800,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
          //for optimizations where we are trying to relocate either profiled j9class or getfrom signature we can't use node to get the target address
          //so we need to pass it to relocation in targetaddress2 for now
-         //two instances where use this relotype in such way are: profile checkcast and arraystore check object check optimiztaions
+         //two instances where use this relotype in such way are: profile checkcast and arraystore check object check optimizations
 
          TR_OpaqueClassBlock *j9class = NULL;
          if (relocation->getTargetAddress2())

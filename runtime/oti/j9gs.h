@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/** Masks used for gsPrameters->flags */
+/** Masks used for gsParameters->flags */
 #define J9PORT_GS_ENABLED ((uint32_t) 0x1)
 #define J9PORT_GS_INITIALIZED ((uint32_t) 0x2)
 

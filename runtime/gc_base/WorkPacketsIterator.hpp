@@ -66,7 +66,7 @@ public:
 	/**
 	 * Create a MM_PacketListIterator instance to walk the lists in the given workPackets.
 	 * @param env[in] A GC thread
-	 * @paran workPackets[in] The MM_WorkPackets instance which the receiver will iterate in order to find MM_PacketList instances
+	 * @param workPackets[in] The MM_WorkPackets instance which the receiver will iterate in order to find MM_PacketList instances
 	 */
 	MM_PacketListIterator(MM_EnvironmentBase *env, MM_WorkPackets *workPackets);
 };

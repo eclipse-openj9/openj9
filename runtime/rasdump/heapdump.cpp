@@ -183,7 +183,7 @@ public :
 		return (DataType*)&_Buffer;
 	}
 
-	/* Method for locating the first occurence of a zero terminated substring in a string */
+	/* Method for locating the first occurrence of a zero terminated substring in a string */
 	inline LengthType find(const DataType* targetString, LengthType position = 0) const
 	{
 		/* Determine the length of the target string */

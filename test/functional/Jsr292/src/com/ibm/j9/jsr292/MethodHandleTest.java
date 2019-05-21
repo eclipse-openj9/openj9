@@ -406,7 +406,7 @@ public class MethodHandleTest{
 	 * ****************************/
 	
 	/**
-	 * Basic asSpreader test using a virtual method in the same packge 
+	 * Basic asSpreader test using a virtual method in the same package 
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

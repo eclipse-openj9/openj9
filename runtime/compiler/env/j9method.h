@@ -379,7 +379,7 @@ public:
     *     The constant pool index of the constant dynamic.
     *
     *  \return
-    *     Opauqe pointer to the slot containing the resolved constant dynamic value.
+    *     Opaque pointer to the slot containing the resolved constant dynamic value.
     */
    virtual void *                dynamicConstant(int32_t cpIndex);
    virtual void *                methodTypeConstant(int32_t cpIndex);

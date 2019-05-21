@@ -139,7 +139,7 @@ typedef struct lpar_info_format2_t {
         uint64_t dispatch_latency;      /* Max latency inbetween dispatches */
                                         /* of this LPAR on physCPUS in nsecs */
         uint     lpar_flags;
-#define LPAR_INFO2_CAPPED       0x01    /* Parition Capped */
+#define LPAR_INFO2_CAPPED       0x01    /* Partition Capped */
 #define LPAR_INFO2_AUTH_PIC     0x02    /* Authority granted for poolidle*/
 #define LPAR_INFO2_SMT_ENABLED  0x04    /* SMT Enabled */
 

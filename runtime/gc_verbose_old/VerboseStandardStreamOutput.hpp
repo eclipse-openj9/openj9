@@ -32,7 +32,7 @@
 class MM_EnvironmentBase;
 
 /**
- * Ouptut agent which directs verbosegc output to a standard stream.
+ * Output agent which directs verbosegc output to a standard stream.
  */
 class MM_VerboseStandardStreamOutput : public MM_VerboseOutputAgent
 {

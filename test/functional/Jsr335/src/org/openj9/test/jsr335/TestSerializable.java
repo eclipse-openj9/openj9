@@ -129,7 +129,7 @@ public class TestSerializable {
 		AssertJUnit.assertEquals(publicLambda.call(), reserialize(publicLambda).call());
 	}
 	
-	/** Test reserializing various primative types */
+	/** Test reserializing various primitive types */
 	@Test
 	public void testLocalLongLambda() throws Exception {
 		J_Method lamba = (J_Method & Serializable) () -> {

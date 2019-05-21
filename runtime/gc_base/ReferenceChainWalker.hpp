@@ -71,7 +71,7 @@ private:
 	J9MODRON_REFERENCE_CHAIN_WALKER_CALLBACK *_userCallback; /**< User callback function to be called on every reachable slot */
 	void *_userData; /**< User data to be passed to the user callback function */
 	bool _hasOverflowed; /**< Set when the queue has overflowed */
-	bool _isProcessingOverflow; /**< Set when the queue is currently proccessing the overflow */
+	bool _isProcessingOverflow; /**< Set when the queue is currently processing the overflow */
 	bool _isTerminating; /**< Set when no more callbacks should be queued */
 	bool _shouldPreindexInterfaceFields; /**< if true, indexes interface fields of the class being visited before class and superclass fields, otherwise, returns them in the order they appear in an object instance (CMVC 142897) */
 	MM_ReferenceChainWalkerMarkMap *_markMap;	/**< Mark Map created for Reference Chain Walker */

@@ -5101,8 +5101,8 @@ j9shr_storeGCHints(J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, 
 /**
  * Find the GC hints from the shared classes cache
  * @param[in] vmThread  The current thread
- * @param[out] heapSize1  The first heap size that has been previouly stored
- * @param[out] heapSize2  The second heap size that has been previouly stored
+ * @param[out] heapSize1  The first heap size that has been previously stored
+ * @param[out] heapSize2  The second heap size that has been previously stored
  *
  * @return 0 on success, -1 otherwise.
  */

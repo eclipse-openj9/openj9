@@ -188,7 +188,7 @@ TR_HOST=TR_HOST_S390
 
 <#if uma.spec.type.windows>
 # definitions for UMA_CPU
-# can be overriden by makefile including this one.
+# can be overridden by makefile including this one.
 ifndef UMA_CPU
 <#if uma.spec.processor.amd64>
   UMA_CPU:=AMD64
@@ -225,7 +225,7 @@ UMA_DOT_O=.obj
 UMA_DOT_O=.o
 </#if>
 
-# gather all the object files together, this can be overriden by a module
+# gather all the object files together, this can be overridden by a module
 #
 UMA_OBJECTS:=$(foreach suffix,$(UMA_SOURCE_SUFFIX_LIST),$(patsubst %$(suffix),%$(UMA_DOT_O),$(wildcard *$(suffix))))
 # Remove XXXexp.o from the object list.  Will be added, if needed, by the appropriate makefile.

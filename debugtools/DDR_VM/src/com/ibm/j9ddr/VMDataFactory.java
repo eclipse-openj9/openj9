@@ -352,7 +352,7 @@ public abstract class VMDataFactory {
 					if (System.getProperty(SEARCHEYECATCHER_PROPERTY) != null) {
 						return getStructureDataFileFromRASEyecatcher(process, start);
 					} else {
-						throw e1;		//no system property set so overrride
+						throw e1;		//no system property set so override
 					}
 				}
 			} else {

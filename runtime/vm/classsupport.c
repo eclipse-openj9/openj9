@@ -981,7 +981,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 					goto done;
 				}
 			}
-			/* Do not do the primtive type optimization if -Xfuture is on */
+			/* Do not do the primitive type optimization if -Xfuture is on */
 			if (0 == (vmThread->javaVM->runtimeFlags & J9_RUNTIME_XFUTURE)) {
 				if ((classNameLength <= 7) && ((classLoader == vmThread->javaVM->systemClassLoader) || (classLoader == vmThread->javaVM->applicationClassLoader))) {
 					switch(classNameLength) {

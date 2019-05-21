@@ -958,7 +958,7 @@ abstract class ProgramOption {
 
 	/* If an option is allowed but isn't specified on the command line the it is still added to the
 	 * options set, but with it's default value. If a subclass describes an optional argument then this
-	 * method should be overriden with a default value.
+	 * method should be overridden with a default value.
 	 */
 	void setDefault() {
 		throw new IllegalArgumentException("No default value available for "+getName());

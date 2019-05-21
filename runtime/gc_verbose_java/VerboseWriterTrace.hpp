@@ -32,7 +32,7 @@
 #include "VerboseWriter.hpp"
 
 /**
- * Ouptut agent which directs verbosegc output to a tracepoint.
+ * Output agent which directs verbosegc output to a tracepoint.
  */
 class MM_VerboseWriterTrace : public MM_VerboseWriter
 {

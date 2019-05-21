@@ -176,7 +176,7 @@ final public class TraceThread extends Vector implements com.ibm.jvm.trace.Trace
         if (tp != null) {
             return tp.getRawTimeStamp();
         } else {
-            /* occassionally we get duped by a corrupt or empty trace record
+            /* occasionally we get duped by a corrupt or empty trace record
                this clause will pick those instances up */
             if (size() > 0) {
                 popTopTraceRecord();

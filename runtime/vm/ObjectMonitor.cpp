@@ -316,7 +316,7 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 						if (spinOnFlatLock(currentThread, lwEA, object)) {
 							goto done;
 						}
-						/* Preemptively create the obhect monitor but do not assign it.
+						/* Preemptively create the object monitor but do not assign it.
 						 * This makes it impossible to fail in objectMonitorEnterBlocking.
 						 * This only affects reserved locks, as the non-reserved path in
 						 * the blocking code immediately calls monitorTableAt.

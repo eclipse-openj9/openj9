@@ -44,7 +44,7 @@ import org.w3c.dom.*;
  * (the reference to template.dtd is automatically intercepted).
  * <p>
  * Templates are created using the factory method getTemplate rather than being instantiated directly so only
- * one persistant instance is created for a given name.
+ * one persistent instance is created for a given name.
  */
 
 public class Template {

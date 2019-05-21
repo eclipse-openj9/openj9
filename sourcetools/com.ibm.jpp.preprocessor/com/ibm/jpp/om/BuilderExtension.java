@@ -120,7 +120,7 @@ public abstract class BuilderExtension {
 	}
 
 	/**
-	 * Notifies listeners that the preproces job has begun.
+	 * Notifies listeners that the preprocess job has begun.
 	 */
 	public void notifyBuildBegin() {
 		// nop    	

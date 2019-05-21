@@ -38,7 +38,7 @@ enum {
 };
 
 /**
- * Ouptut agent which directs verbosegc output to file.
+ * Output agent which directs verbosegc output to file.
  */
 class MM_VerboseFileLoggingOutput : public MM_VerboseOutputAgent
 {

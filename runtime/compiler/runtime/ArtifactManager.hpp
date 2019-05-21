@@ -114,7 +114,7 @@ public:
    @brief For a given method's J9JITExceptionTable, finds the appropriate hashtable in the AVL tree and inserts the exception table.
 
    Note, insertArtifact does not check to verify that an artifact's given range is not already occupied by an existing artifact.  This is because artifact ranges represent the virtual memory actually occupied by compiled code.
-   Thus, if two artifact ranges overlap, then two pieces of compiled code co-exist on top of each other, which is inherently incorrect.  If the possiblity occurs that two artifacts may legitimately have range values that overlap, checks will need to be added.
+   Thus, if two artifact ranges overlap, then two pieces of compiled code co-exist on top of each other, which is inherently incorrect.  If the possibility occurs that two artifacts may legitimately have range values that overlap, checks will need to be added.
 
    @param compiledMethod The J9JITExceptionTable representing the newly compiled method to insert into the artifacts.
    @return Returns true if successful, and false otherwise.

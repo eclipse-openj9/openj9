@@ -149,7 +149,7 @@ MM_ParallelPartialMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	}
 	env->_lastOverflowedRsclWithReleasedBuffers = NULL;
 	
-	/* record the thread-specific paralellism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
+	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
 	Trc_MM_ParallelPartialMarkTask_parallelStats(
 		env->getLanguageVMThread(),
 		(U_32)env->getSlaveID(),

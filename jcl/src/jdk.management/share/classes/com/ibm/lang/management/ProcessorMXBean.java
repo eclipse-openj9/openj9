@@ -81,7 +81,7 @@ public interface ProcessorMXBean extends PlatformManagedObject {
 
 	/**
 	 * Returns the target number of CPUs for the process. This is normally  
-	 * equal to {@link #getNumberBoundCPUs()}, but is overriden by active
+	 * equal to {@link #getNumberBoundCPUs()}, but is overridden by active
 	 * CPUs when it is set, e.g. using {@link #setNumberActiveCPUs(int)}.
 	 * 
 	 * @return	the number of CPUs the process is entitled to.

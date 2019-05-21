@@ -180,7 +180,7 @@ private:
 	 * Shareable thunk compilation is based on the ThunkTuple counting.
 	 * Shareable thunks then modify the MH.invocationCount on each invocation.  We
 	 * only want invocations from jitted code to drive CustomThunk compilation so the
-	 * interpreter needs to pre-emptively negate the modification to the invocationCount.
+	 * interpreter needs to preemptively negate the modification to the invocationCount.
 	 *
 	 * @param methodHandle[in] The MethodHandle to modify the count on
 	 */

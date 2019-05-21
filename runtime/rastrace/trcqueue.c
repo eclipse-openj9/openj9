@@ -597,7 +597,7 @@ acquireNextMessage(qSubscription *sub)
 		return NULL;
 	}
 
-	/* we now longer have the possibiity of needing a reference to the current last in unsubscribe, so we're done with it */
+	/* we now longer have the possibility of needing a reference to the current last in unsubscribe, so we're done with it */
 	if (sub->last != NULL && sub->savedReference == TRUE) {
 		UT_DBGOUT(5, ("<UT> removing reference to message "UT_POINTER_SPEC"\n", queue, sub->last));
 		sub->savedReference = FALSE;

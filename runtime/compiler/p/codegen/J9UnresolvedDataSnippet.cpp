@@ -244,7 +244,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 
    // CLInit case
    cursor += 4;
-   *(int32_t *)cursor = 0xdeadbeef; // Pached with lis via runtime code
+   *(int32_t *)cursor = 0xdeadbeef; // Patched with lis via runtime code
    cursor += 4;
    intptrj_t targetAddress = (intptrj_t)getAddressOfDataReference()+4;
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),

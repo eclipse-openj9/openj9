@@ -441,7 +441,7 @@ class TR_CHTable
 // As the last step at codegen time, TR_CHTable locks the classtable, commits all the information
 // into the Persistent table.
 //
-// At runtime, whenever a class is extended, or method is overriddent, one of the methods:
+// At runtime, whenever a class is extended, or method is overridden, one of the methods:
 //   methodGotOverridden() or classGotExtended is invoked by the class loader.  It is not necessary
 // to lock the class table, since the class loader already holds the lock.
 //

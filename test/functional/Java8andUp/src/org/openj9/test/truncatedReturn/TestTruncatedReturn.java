@@ -72,7 +72,7 @@ public class TestTruncatedReturn {
             String implMethodDesc = MethodType.methodType(type, int.class).toMethodDescriptorString();
 
 
-            // Create the test method which just returns the passed parama
+            // Create the test method which just returns the passed param
             MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC , implMethodName, implMethodDesc, null, null);
             mv.visitCode();
             mv.visitVarInsn(Opcodes.ILOAD, 0);

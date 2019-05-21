@@ -55,7 +55,7 @@ extern "C" {
  * @param[out] start the start address is returned in this pointer
  * @param[out] end the end address is returned in this pointer
  * 
- * @note this function is used by the JIT for barrier ommission optimizations
+ * @note this function is used by the JIT for barrier omission optimizations
  */
 void
 j9mm_get_guaranteed_nursery_range(J9JavaVM* javaVM, void** start, void** end)

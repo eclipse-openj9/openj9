@@ -117,7 +117,7 @@ Java_com_ibm_oti_vm_BootstrapClassLoader_addJar(JNIEnv *env, jobject receiver, j
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
-	/* If any error occcurred, throw OutOfMemoryError */
+	/* If any error occurred, throw OutOfMemoryError */
 	if (0 == newCount) {
 		vmFuncs->throwNativeOOMError(env, J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY);
 	}

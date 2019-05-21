@@ -313,7 +313,7 @@ int32_t TR_VarHandleTransformer::perform()
             // i.e. for the call set(B)V, the signature for method handle is (BLjava/lang/invoke/VarHandle;)V
             char *sig = method->signatureChars();
             int32_t sigLen = method->signatureLength();
-            char *sigChar = sig + 1; // skip the openning parenthesis
+            char *sigChar = sig + 1; // skip the opening parenthesis
             int32_t paramSigLen = 2; // paramSig is at least 2 parenthesis
             while(*sigChar != ')') { sigChar++; paramSigLen++;}
             char *mhSig = new (comp()->trStackMemory()) char[sigLen + VarHandleParmLength];

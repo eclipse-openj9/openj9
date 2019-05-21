@@ -108,7 +108,7 @@ private:
 	 * Generate messages about discovered problems.
 	 * @param vm - javaVM
 	 * @param clazz - class to scan
-	 * @return successful operetion complete code or error code
+	 * @return successful operation complete code or error code
 	 */
 	UDATA checkClassStatics(J9JavaVM* vm, J9Class* clazz);
 

@@ -3488,7 +3488,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
       // all the methods that deal with temps (parametertoargumentmapper, handleinjectedbasicblock,transforminlinedfunction) will consult these lists
       // usually, it will search a list, and if it doesn't find a temp, search the second list.
       // the problem is when inlining out of order and with the fact that both temp lists can be consulted, it is possible that a temp will get misused.
-      // an example will be a call lower down was inlined first and created a temp t1, for a paremeter (the block doesn't get split).  It gets added to availableTemps after inlining.
+      // an example will be a call lower down was inlined first and created a temp t1, for a parameter (the block doesn't get split).  It gets added to availableTemps after inlining.
       // After, higher up (in the same block) another call now gets inlined, and splits the block.  handleinjectedbasicblock now goes and breaks commoning around this higher up call.
       // when this happens, it can grab the temp t1 from the availableTemps list and reuse it for breaking commoning.  Now there are two stores to t1 in the same block.  If there was any
       // commoning that existed after the second store to t1 that was supposed to get broken, it will now load a bad value of t1.
@@ -5760,7 +5760,7 @@ TR_J9TransformInlinedFunction::isSyncReturnBlock(TR::Compilation *comp, TR::Bloc
    }
 
 /*
- * if the initialCalleeMethod of this callsite is not overriden, add this method as the target of the callsite
+ * if the initialCalleeMethod of this callsite is not overridden, add this method as the target of the callsite
  */
 bool
 TR_J9InlinerUtil::addTargetIfMethodIsNotOverridenInReceiversHierarchy(TR_IndirectCallSite *callsite)

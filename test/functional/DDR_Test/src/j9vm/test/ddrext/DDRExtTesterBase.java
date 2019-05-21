@@ -394,7 +394,7 @@ public class DDRExtTesterBase extends TestCase {
 	 * 
 	 * 	we would call getAddressFor with:
 	 * 
-	 *  	threadOuput = the string
+	 *  	threadOutput = the string
 	 *  	eyeCatcher 	= "(Thread-3"
 	 *  	cmd  		= "j9vmthread"
 	 *  	cmdDelimiter= "\t"

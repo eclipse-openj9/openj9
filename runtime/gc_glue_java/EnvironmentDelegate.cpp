@@ -297,7 +297,7 @@ MM_EnvironmentDelegate::enableInlineTLHAllocate()
 
 /**
  * Determine if inline TLH allocate is enabled; its enabled if realheapAlloc is NULL.
- * @return TRUE if inline TLH allocates currently enabled for this thread; FALSE otheriwse
+ * @return TRUE if inline TLH allocates currently enabled for this thread; FALSE otherwise
  */
 bool
 MM_EnvironmentDelegate::isInlineTLHAllocateEnabled()

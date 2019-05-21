@@ -9818,7 +9818,7 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node,
       genLoadAddressConstant(cg, node, (long) funcdescrptr, helperReg);
       }
 
-   // Store 7 paramters
+   // Store 7 parameters
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, metaReg,
          generateS390MemoryReference(sspReg, offset+0*ptrSize, cg));
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, srcObjReg,
@@ -10620,7 +10620,7 @@ extern TR::Register *inlineAtomicOps(
          {
          if (node->getNumChildren() > 1)
             {
-            // 2nd operant needs to be in a register
+            // 2nd operand needs to be in a register
             deltaChild = node->getSecondChild();
             deltaReg = cg->evaluate(deltaChild);
             cg->decReferenceCount(deltaChild);
@@ -11503,7 +11503,7 @@ VMgenerateCatchBlockBBStartPrologue(
       TR::RegisterDependencyConditions * dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
       dependencies->addPostCondition(tempReg1, cg->getEntryPointRegister());
       dependencies->addPostCondition(tempReg2, cg->getReturnAddressRegister());
-      // Branch to induceRecompilation helper routine if counter is 0 - based on condition code of the precedeing adds.
+      // Branch to induceRecompilation helper routine if counter is 0 - based on condition code of the preceding adds.
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
       cFlowRegionStart->setStartInternalControlFlow();
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, snippetLabel);

@@ -205,7 +205,7 @@ public:
     * Pure virtual method to process buffers from a given app thread.
     * @param vmThread The VM thread to query
     * @param fe The Front End
-    * @return false if the thread cannot be used for HW Profiling; true othewise.
+    * @return false if the thread cannot be used for HW Profiling; true otherwise.
     */
    virtual bool processBuffers(J9VMThread *vmThread, TR_J9VMBase *fe) = 0;
 

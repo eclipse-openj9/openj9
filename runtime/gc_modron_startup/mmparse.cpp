@@ -1432,7 +1432,7 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Parse the command line 
-	 * Order is important for paramters that match as substrings (-Xmrx/-Xmr)
+	 * Order is important for parameters that match as substrings (-Xmrx/-Xmr)
 	 */
 	result = option_set_to_opt(vm, OPT_XMCA, &index, EXACT_MEMORY_MATCH, &vm->ramClassAllocationIncrement);
 	if (OPTION_OK != result) {

@@ -331,7 +331,7 @@ public class SnapFormatCommand extends SnapBaseCommand {
 
 	/**
 	 * Options should be:
-	 *  -f ouputFile
+	 *  -f outputFile
 	 *  -t vmthread
 	 *  -d .dat file path
 	 */

@@ -141,7 +141,7 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sock_fdset_set, /* sock_fdset_set */
 	j9sock_fdset_clr, /* sock_fdset_clr */
 	j9sock_fdset_isset, /* sock_fdset_isset */
-	j9shsem_params_init, /* shsem_paramemeters_init */
+	j9shsem_params_init, /* shsem_parameters_init */
 	j9shsem_startup, /* shsem_startup */
 	j9shsem_shutdown, /* shsem_shutdown */
 	j9shsem_open, /* shsem_open */
@@ -578,7 +578,7 @@ j9port_isCompatible(struct J9PortLibraryVersion *expectedVersion)
  * @param[in] portLibrary The port library.
  * @param[in] offset The offset of the function to be queried.
  * 
- * @return 1 if the function is overriden, else 0.
+ * @return 1 if the function is overridden, else 0.
  *
  * j9port_isFunctionOverridden(portLibrary, offsetof(J9PortLibrary, mem_allocate_memory));
  */

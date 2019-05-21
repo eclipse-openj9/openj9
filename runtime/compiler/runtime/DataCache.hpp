@@ -39,7 +39,7 @@ private:
    TR_DataCache    *_next;      // to be able to chain them
    J9MemorySegment *_segment;   // the segment where the memory for the dataCache is
    J9VMThread      *_vmThread;  // thread that is actively working on this cache; could be NULL
-   uint8_t         *_allocationMark; // used if we want to give back memory up to previoulsy set mark
+   uint8_t         *_allocationMark; // used if we want to give back memory up to previously set mark
    //TR::Monitor       *_mutex;     // Is this needed?
    int32_t          _status;    // mostly RAS at this point
 public:

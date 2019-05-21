@@ -1081,7 +1081,7 @@ forceClassLoaderUnload(J9VMThread *vmThread, J9ClassLoader *classLoader)
 			
 			if ( J9THREAD_TIMED_OUT == waitResult ) {
 				/* Lock down the signalling mechanism. If we appear to be still linked up, it is safe to unlink
-				 *  (the class loader mutex is still in our posession)
+				 *  (the class loader mutex is still in our possession)
 				 */
 				Trc_FinalizeSupport_forceClassLoaderUnload_timedOut(vmThread,classLoader);
 				omrthread_monitor_enter(vmThread->gcClassUnloadingMutex);

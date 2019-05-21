@@ -573,7 +573,7 @@ printClass(J9VMThread* vmThread, J9Class* clazz, char* message, UDATA bootLoader
 
 /**
  * parse a set of -verbose: options and update a settings struct.
- * @param options set of null-separated verbose obptions (e.g. "class", "gc", etc.  Terminated by a double null
+ * @param options set of null-separated verbose options (e.g. "class", "gc", etc.  Terminated by a double null
  * @param verboseOptions STructure of flags indicating which verbosity to turn on
  * @return 0 if error, 1 if success
  */

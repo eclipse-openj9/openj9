@@ -217,7 +217,7 @@
  
  <!-- Tests for excessive GC handling -->
  <!-- This test should cause excessive with the FVT option and force an OOM.  We must make sure that the verbose log
- includes the excessive and the probgram output doesn't claim successful execution -->
+ includes the excessive and the program output doesn't claim successful execution -->
  <!-- We do this as two tests since we want to see both parts of this output individually -->
  <!-- -Xdump:none so that the OOM doesn't produce any diagnostic files -->
  <test id="Excessive GC throws OOM">

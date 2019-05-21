@@ -337,7 +337,7 @@ j9time_test3(struct J9PortLibrary *portLibrary)
 			/*grab new times*/
 			hiresTimeStop = j9time_hires_clock();
 			mtimeStop = j9time_msec_clock();
-			utimeStop = j9time_usec_clock();	/*higher-precision CLK should get presidence NaH!*/
+			utimeStop = j9time_usec_clock();	/*higher-precision CLK should get precedence NaH!*/
 	
 			hiresDeltaAsMillis = (U_32)j9time_hires_delta(hiresTimeStart, hiresTimeStop, J9PORT_TIME_DELTA_IN_MILLISECONDS);
 			hiresDeltaAsMicros = (U_32)j9time_hires_delta(hiresTimeStart, hiresTimeStop, J9PORT_TIME_DELTA_IN_MICROSECONDS);

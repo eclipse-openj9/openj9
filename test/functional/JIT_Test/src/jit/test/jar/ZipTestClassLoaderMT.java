@@ -32,7 +32,7 @@ import org.testng.log4testng.Logger;
 
 /**
  * @author mesbaha
- * ZipTestClassLoaderMT extends {@link jit.test.jar.ZipTestClassLoader} and overrides the procesZipFiles(java.lang.String) method 
+ * ZipTestClassLoaderMT extends {@link jit.test.jar.ZipTestClassLoader} and overrides the processZipFiles(java.lang.String) method 
  * in order to accommodate multi-threaded class loading.
  */
 public class ZipTestClassLoaderMT extends ZipTestClassLoader {

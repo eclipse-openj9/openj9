@@ -93,7 +93,7 @@ j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, 
 	/* peek into the port library implementation */
 	if (j9port_control("SIG_INTERNAL_HANDLER", (UDATA)&portLibraryInternalLEConditionHandler)) {
 		/* This will only happen if the portlibrary's support for LE condition handling either wasn't enabled at runtime
-		 * or was overidden after the fact. In either case, percolate */
+		 * or was overridden after the fact. In either case, percolate */
 #if defined(J9SIGNAL_DEBUG)
 		printf("\t *** j9port_control failed *** \n");
 #endif

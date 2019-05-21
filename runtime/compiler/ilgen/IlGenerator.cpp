@@ -447,7 +447,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       }
 
 
-   // Code perteining to the secondary/upgrade compilation queue
+   // Code pertaining to the secondary/upgrade compilation queue
    // If the method is small, doesn't have loops or calls, then do not try to upgrade it
    if (comp()->isOutermostMethod() && comp()->getOptimizationPlan()->shouldAddToUpgradeQueue())
       {

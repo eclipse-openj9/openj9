@@ -63,7 +63,7 @@ getReturnAddressOfJNINative(void *builderDSA) {
 	long DSASaveArea;
 	long targetAddress = -1;
 
-	/* Input paramaters to CEETBCK */
+	/* Input parameters to CEETBCK */
 	void *caaptr = (void *)_gtca();
 	void *ceetbckDSAPtr;
 	_INT4 ceetbckDSAFormat;

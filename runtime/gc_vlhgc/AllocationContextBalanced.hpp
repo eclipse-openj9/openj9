@@ -322,7 +322,7 @@ private:
 	 *
 	 * @param env[in] The thread attempting the allocation
 	 * @param subspace[in] The subSpace to which the allocated pool must be attached
-	 * @paran requestingContext[in] The context requesting a region from the receiver
+	 * @param requestingContext[in] The context requesting a region from the receiver
 	 * @return The region or NULL if there were none available in the heap
 	 */
 	MM_HeapRegionDescriptorVLHGC *acquireMPBPRegionFromHeap(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, MM_AllocationContextTarok *requestingContext);
@@ -367,7 +367,7 @@ private:
 	 *
 	 * @param env[in] The thread attempting the allocation
 	 * @param subSpace[in] The subSpace to which the allocated pool must be attached
-	 * @paran requestingContext[in] The context requesting a region from the receiver
+	 * @param requestingContext[in] The context requesting a region from the receiver
 	 * @return The region or NULL if there were none available in the receiver
 	 */
 	MM_HeapRegionDescriptorVLHGC *acquireMPBPRegionFromContext(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocationContextTarok *requestingContext);

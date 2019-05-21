@@ -294,7 +294,7 @@ public class J9DDRImageProcess implements ImageProcess {
 		if (process.getPlatform() == Platform.LINUX) {
 			//On Linux, the core file reader can easily fail to get the correct command line and executable
 			//(because of 80 char limit on command line in the ELF header).
-			//We pre-empt this by looking for the command line in the environment
+			//We preempt this by looking for the command line in the environment
 			String executableName = getExecutablePath();
 			
 			if (null == executableName) {

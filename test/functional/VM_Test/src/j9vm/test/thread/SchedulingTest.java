@@ -152,7 +152,7 @@ public class SchedulingTest {
 	 * @param line  The line of output to parse
 	 * @param threadName  The name of the thread that the line of output belongs to
 	 * @param expectedPolicy  The expected scheduling policy that the thread should have
-	 * @param expectedPriority  The expected scheduling priorirty that the thread should have
+	 * @param expectedPriority  The expected scheduling priority that the thread should have
 	 */
 	private void parseAndTestValues(String jvmOptions, boolean incrementMaxPriority, String line, String threadName, String expectedPolicy, int expectedPriority) {
 		String[] splitLine = line.split(POLICY_SEPARATOR);

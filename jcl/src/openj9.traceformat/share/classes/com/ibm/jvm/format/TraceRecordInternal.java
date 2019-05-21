@@ -181,7 +181,7 @@ final public class TraceRecordInternal extends TraceRecord {
         offset = entry;  // this is the first ( oldest) entry in this Record
         currentTimeStamp = upperWord.shiftLeft(32).or(Util.constructUnsignedLong(buffer, entry + TIMESTAMP_OFFSET, Util.INT));
         //currentTimeStamp = Util.constructUnsignedLong(buffer, entry + TIMESTAMP_OFFSET, Util.INT);
-        //Util.Debug.println("TraceBuffer: oldest offest = " + offset + " timeStamp = " + currentTimeStamp);
+        //Util.Debug.println("TraceBuffer: oldest offset = " + offset + " timeStamp = " + currentTimeStamp);
         //Util.printDump(buffer,bufferSize - headerSize);
         return;
     }

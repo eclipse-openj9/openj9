@@ -4046,7 +4046,7 @@ SH_CompositeCacheImpl::enterReadWriteAreaMutex(J9VMThread* currentThread, BOOLEA
 
 /**
  * Exit readWrite area mutex
- * Note that when the function returns, the readWrite area will be proected if mprotect is enabled.
+ * Note that when the function returns, the readWrite area will be protected if mprotect is enabled.
  * It will also have been msync'd if msync is enabled.
  *
  * @param [in] currentThread  Point to the J9VMThread struct for the current thread

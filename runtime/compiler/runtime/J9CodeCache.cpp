@@ -353,7 +353,7 @@ J9::CodeCache::addFreeBlock(OMR::FaintCacheBlock *block)
    // Tiered Code Cache
    if (metaData->startColdPC)
       {
-      // startPC of the cold code is preceeded by OMR::CodeCacheMethodHeader
+      // startPC of the cold code is preceded by OMR::CodeCacheMethodHeader
       OMR::CodeCacheMethodHeader *coldBlock = (OMR::CodeCacheMethodHeader*)(metaData->startColdPC-sizeof(OMR::CodeCacheMethodHeader));
       if (self()->addFreeBlock2((uint8_t *)coldBlock, (uint8_t *)coldBlock+coldBlock->_size))
          {}
@@ -434,7 +434,7 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
 
    if (metaData->startColdPC)
       {
-      // startPC of the cold code is preceeded by OMR::CodeCacheMethodHeader
+      // startPC of the cold code is preceded by OMR::CodeCacheMethodHeader
       OMR::CodeCacheMethodHeader *coldBlock = (OMR::CodeCacheMethodHeader*)((UDATA)metaData->startColdPC-sizeof(OMR::CodeCacheMethodHeader));
       if (self()->addFreeBlock2((uint8_t *)coldBlock, (uint8_t *)coldBlock+coldBlock->_size))
          {}

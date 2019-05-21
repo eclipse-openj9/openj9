@@ -3229,7 +3229,7 @@ int32_t TR_CISCTransformer::perform()
          if (loopNumber++ == disableLoopNumber)
             {
             restoreBitsKeepAliveCalls();
-            continue; // for debug perpose
+            continue; // for debug purpose
             }
 
          analyzeHighFrequencyLoop(graph, nextLoop); // Analyze if frequently iterated loop.

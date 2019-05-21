@@ -132,7 +132,7 @@ public class LockNurseryTest extends TestCase {
 	}
 	
 	/**
-	 * tests the case were had lockword in obect but that was removed and then we added one back
+	 * tests the case were had lockword in object but that was removed and then we added one back
 	 */
 	public void testObjectWithoutLockwordLockwordRemovedThenAdded(){
 		TestNatives natives = new TestNatives();

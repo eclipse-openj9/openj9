@@ -1166,7 +1166,7 @@ onLoadInternal(
           * the process is allowed to have; cap the maximum using the default 256m and use a 1m floor.
           * MAXXMMES is specified as the number of 1MB frames.
           * Use the default 2048 KB data cache. The default values for z/TPF can be
-          * overriden via the command line interface.
+          * overridden via the command line interface.
           */
          const uint16_t ZTPF_CODE_CACHE_DIVISOR = 5;
 

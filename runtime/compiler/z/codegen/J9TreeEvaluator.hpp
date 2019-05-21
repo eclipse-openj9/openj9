@@ -122,7 +122,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     *     also generate write barrier checks on \p byteSrcObjNode and \p byteDstObjNode.
     *
     *     When software concurrent scavenge is enabled, it generates a internal control flow that first checks if the current
-    *     execution is in the GC cycle and perfoms either a loop-based array copy or a helper call.
+    *     execution is in the GC cycle and performs either a loop-based array copy or a helper call.
     *
     *  \param node
     *     The reference arraycopy node.

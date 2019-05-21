@@ -1068,7 +1068,7 @@ j9sock_getaddrinfo_family(struct J9PortLibrary *portLibrary, j9addrinfo_t handle
 	OSADDRINFO *addr;
     	int i;
 
-	/* If we have the IPv6 functions then we'll cast to a OSADDRINFO othewise we have a hostent */
+	/* If we have the IPv6 functions then we'll cast to a OSADDRINFO otherwise we have a hostent */
 #ifdef IPv6_FUNCTION_SUPPORT
 	addr = (OSADDRINFO *) handle->addr_info;
 	for( i=0; i<index; i++ ) {

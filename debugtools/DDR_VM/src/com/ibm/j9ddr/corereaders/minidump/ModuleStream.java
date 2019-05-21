@@ -157,7 +157,7 @@ class ModuleStream extends LateInitializedStream
 					dump.addLibrary(module);
 				}
 			} catch (RuntimeException e) {
-				//Don't want to prevent RTE's propogating
+				//Don't want to prevent RTE's propagating
 				throw e;
 			} catch (Exception e) {
 			//this needs to be here in order to not fail completely whenever we

@@ -167,7 +167,7 @@ public class SoftmxRASTest1 {
 	}
 
 	/**
-	 * Starts a JVM in a subproces
+	 * Starts a JVM in a subprocess
 	 * @param xmxVal : -Xmx value to use in the command line of the JVM to be spawned
 	 * @param softmxVal : -Xsoftmx value to use in the command line of the JVM to be spawned
 	 * @param classToRun : The class that should be run using java

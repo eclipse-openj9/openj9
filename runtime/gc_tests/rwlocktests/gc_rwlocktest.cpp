@@ -54,7 +54,7 @@ void freeSupportThreadInfo(SupportThreadInfo* info);
 
 /**
  * This method is called to run the set of steps that will be run on a thread
- * @param info SupportThreadInfo structure that contains the information for the steps and other paramters
+ * @param info SupportThreadInfo structure that contains the information for the steps and other parameters
  *        that are used
  */
 static IDATA J9THREAD_PROC

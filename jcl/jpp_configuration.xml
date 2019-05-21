@@ -32,7 +32,7 @@
 		<source path="src"/>
 	</automatedtests>
 
-	<!-- GLOBAL PARAMETERS FOR ALL CONFIGURATIONS, CAN BE OVERWITTEN IN CONFIGURATION ELEMENT IF IT IS REQUIRED-->
+	<!-- GLOBAL PARAMETERS FOR ALL CONFIGURATIONS, CAN BE OVERWRITTEN IN CONFIGURATION ELEMENT IF IT IS REQUIRED-->
 	<globalParameters>
 		<parameter name="outputPathPrefix" value="pConfig "/>
 		<parameter name="outputPathSuffix" value=""/>

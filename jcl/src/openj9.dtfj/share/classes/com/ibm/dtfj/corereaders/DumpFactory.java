@@ -46,7 +46,7 @@ public class DumpFactory {
 				corefile = NewZosDump.dumpFromFile(stream);
 			}
 		} catch (CorruptCoreException e) {
-			//CMVC 161800 : only the z/OS core reader throws this exception and so propogate it back to the caller to retain the original error message
+			//CMVC 161800 : only the z/OS core reader throws this exception and so propagate it back to the caller to retain the original error message
 			throw new IOException("Core file was identified but found to be corrupt:  " + e.getMessage());
 		}
 

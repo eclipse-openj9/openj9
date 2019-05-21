@@ -30,7 +30,7 @@
 #include "VerboseOutputAgent.hpp"
 
 /**
- * Ouptut agent which directs verbosegc output to a tracepoint.
+ * Output agent which directs verbosegc output to a tracepoint.
  */
 class MM_VerboseTraceOutput : public MM_VerboseOutputAgent
 {

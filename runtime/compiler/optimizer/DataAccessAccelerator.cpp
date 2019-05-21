@@ -1240,7 +1240,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
           * We don't want to attach the callNode as a child to BCDCHK since it would be an aberration to the
           * definition of a BCDCHK node. BCDCHK node is already a special type of node, and all optimizations expect the
           * call (i2pd) to be inside the first child of BCDCHK. Attaching another call could cause many things to
-          * break as all optimizations such as Value Propogation don't expect it to be there. Attaching the callNode's children
+          * break as all optimizations such as Value Propagation don't expect it to be there. Attaching the callNode's children
           * to BCDCHK would be safe. We would whip up the call with these attached children during codegen
           * for the fallback of the fastpath.
           */
@@ -1562,7 +1562,7 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
        * We don't want to attach the callNode as a child to BCDCHK since it would be an aberration to the
        * definition of a BCDCHK node. BCDCHK node is already a special type of node, and all optimizations expect the
        * call (pd2i) to be in its first child. Attaching another call could cause many things to break as all
-       * optimizations such as Value Propogation don't expect it to be there. Attaching the callNode's children
+       * optimizations such as Value Propagation don't expect it to be there. Attaching the callNode's children
        * to BCDCHK would be safe. We would whip up the call with these attached children during codegen
        * for the fallback of the fastpath.
        */

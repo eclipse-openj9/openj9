@@ -57,7 +57,7 @@ j9tty_daemonize_test(struct J9PortLibrary *portLibrary)
 
 	j9tty_printf(PORTLIB, "pre-daemonize\n");
 	j9tty_daemonize();
-	/* outpuComment uses j9tty_vprintf */
+	/* outputComment uses j9tty_vprintf */
 	outputComment(PORTLIB, format , 1, 2, 3);
 	j9tty_printf(PORTLIB, "post-daemonize\n");
 

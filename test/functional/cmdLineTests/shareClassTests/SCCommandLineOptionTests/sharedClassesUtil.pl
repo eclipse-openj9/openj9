@@ -28,7 +28,7 @@
 use warnings;
 use strict;
 
-# greps the word in the dump file and returns true if the number of occurence
+# greps the word in the dump file and returns true if the number of occurrence
 # of the word matches with the number passed in as arg
 sub words_grep_from_file {
 	my ($dump_file, $grep_word, $num_of_expected_occurences) = @_;
