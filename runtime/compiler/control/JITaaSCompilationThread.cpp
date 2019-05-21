@@ -3600,7 +3600,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._staticAttributesCacheAOT = NULL;
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
    classInfoStruct._jitFieldsCache = NULL;
-
+   classInfoStruct.classFlags = std::get<19>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;
@@ -3684,7 +3684,8 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_M
    TR_OpaqueClassBlock * arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
    uintptrj_t totalInstanceSize = clazz->totalInstanceSize;
    uintptrj_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass, cp);
+   uintptrj_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass, cp, classFlags);
    }
 
 J9ROMClass *
@@ -3866,6 +3867,11 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
       case CLASSINFO_REMOTE_ROM_CLASS :
          {
          *(J9ROMClass **)data = classInfo.remoteRomClass;
+         }
+         break;
+      case CLASSINFO_CLASS_FLAGS :
+         {
+         *(uintptrj_t *)data = classInfo.classFlags;
          }
          break;
       default :

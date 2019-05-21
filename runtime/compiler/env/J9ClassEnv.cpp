@@ -96,13 +96,33 @@ J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
 
 
 uintptrj_t
+J9::ClassEnv::classFlagReservableWorldInitValue(TR_OpaqueClassBlock * classPointer)
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      uintptrj_t classFlags = 0;
+      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)classPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+#ifdef DEBUG
+      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classFlagsValue, classPointer);
+      uintptrj_t classFlagsRemote = std::get<0>(stream->read<uintptrj_t>());
+      // check that class flags from remote call is equal to the cached ones
+      classFlags = classFlags & J9ClassReservableLockWordInit;
+      classFlagsRemote = classFlagsRemote & J9ClassReservableLockWordInit;
+      TR_ASSERT(classFlags == classFlagsRemote, "remote call class flags is not equal to cached class flags");
+#endif
+      return classFlags & J9ClassReservableLockWordInit;
+      }
+   return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags) & J9ClassReservableLockWordInit;
+   }
+
+
+uintptrj_t
 J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classDepthAndFlags = 0;
       JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
-
       return (classDepthAndFlags & J9AccClassDepthMask);
       }
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
