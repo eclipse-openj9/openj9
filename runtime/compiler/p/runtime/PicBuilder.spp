@@ -706,7 +706,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	bc	BO_IF_NOT, CR0_EQ, .L_pTOC_update		! Is pTOC case?
 	lwz     r9, 4(r6)                                       ! load the second instr from memory reference sequence in the code cache
 	andis.  r29, r29, IS_32BitLong                          ! Mask off all bits but the IS_32BitLong bit
-	andc.   r8, r29, r26                                    ! if IS_32BitLong and it isn't really a volatile then
+	andc.   r8, r29, r26                                    ! if IS_32BitLong and it isnt really a volatile then
 	beq     .L_LoadTemplateInstruction                      ! dont branch,
 	cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r3_high                                 ! if so then use lwz r3,0(r11)
@@ -728,7 +728,7 @@ _interpreterUnresolvedInstanceDataGlue:
 
         lwz     r9,1*ALen(r7)                                   ! Load cp index for this field
 	andis.  r9, r9, IS_32BitLong                            ! Mask off all bits but the IS_32BitLong bit
-        andc.   r9, r9, r26                                     ! if IS_32BitLong and it isn't really a volatile then
+        andc.   r9, r9, r26                                     ! if IS_32BitLong and it isnt really a volatile then
         beq     .L_Skip2ndMemRefInstruction                     ! dont branch,
         cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r4_high                                 ! if so then use lwz r4,0(r11)
