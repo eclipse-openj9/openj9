@@ -1718,7 +1718,7 @@ done:
 
 
 /** 
- * \brief	Returnt the raw Constant Pool bytes for the specified class
+ * \brief	Return the raw Constant Pool bytes for the specified class
  * \ingroup	jvmtiClass 
  * 
  * 
@@ -1858,7 +1858,7 @@ done:
  *	ISSUES:
  *		The UTF8 and NameAndSignature constants are not stored on the constant pool and
  *		therefore do not have an "index" but rather use SRP references. This call will 
- *		create CP entries and update refering CP items accordingly
+ *		create CP entries and update referring CP items accordingly
  *
  *		The Long and Double type is defined by the spec to take _TWO_ constant pool entries
  *		instead of one. This creates a problem since our bytecode's cp indices have been

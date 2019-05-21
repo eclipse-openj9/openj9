@@ -113,7 +113,7 @@ public class cma001 {
 	 *  - modifies the class bytes to Vj, 
 	 *  - sets current version = Vj.
 	 * 
-	 * cma001 calls RetranformClasses() on cma001_TestClass_V1.
+	 * cma001 calls RetransformClasses() on cma001_TestClass_V1.
 	 * rca001's ClassFileLoadHook callback is invoked that performs following actions:
 	 * 	- verifies bytes received correspond to its expected version i.e. Vi,
 	 *  - modifies the class bytes to Vj, 
@@ -132,7 +132,7 @@ public class cma001 {
 	 *  - modifies the class bytes to Vj, 
 	 *  - sets current version = Vj.
 	 * 
-	 * cma001 calls RetranformClasses() on cma001_TestClass_V1.
+	 * cma001 calls RetransformClasses() on cma001_TestClass_V1.
 	 * rca001's ClassFileLoadHook callback is invoked that performs following actions:
 	 * 	- verifies bytes received correspond to its expected version i.e. Vi,
 	 *  - modifies the class bytes to Vj, 

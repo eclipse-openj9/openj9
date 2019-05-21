@@ -50,7 +50,7 @@ Agent_OnUnload(JavaVM * vm)
  * callback invoked by JVMTI when the agent is loaded
  * @param vm       [in] jvm that can be used by the agent
  * @param options  [in] options specified on command line for agent
- * @param reserver [in/out] reserved for future use
+ * @param reserved [in/out] reserved for future use
  */
 jint JNICALL
 Agent_OnLoad(JavaVM * vm, char * options, void * reserved)

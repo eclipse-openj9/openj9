@@ -48,7 +48,7 @@ public class ImageProcessComparator extends DTFJComparator {
 	// getID()
 	// getLibraries()
 	// getPointerSize()
-	// getRuntiems()
+	// getRuntimes()
 	// getSignalName()
 	// getSignalNumber()
 	// getThreads()

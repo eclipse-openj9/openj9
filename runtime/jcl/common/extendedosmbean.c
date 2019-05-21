@@ -222,7 +222,7 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getTotal
 	/* Now obtain the processor usage statistics on the underlying platform. */
 	rc = getProcessorUsage(env, &procInfo);
 	if (0 != rc) {
-		/* If processor usage statistics retieval failed for some reason, there is already a
+		/* If processor usage statistics retrieval failed for some reason, there is already a
 		 * pending exception. Returning a NULL anyway.
 		 */
 		return NULL;
@@ -287,7 +287,7 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProce
 	/* Now obtain the processor usage statistics on the underlying platform. */
 	rc = getProcessorUsage(env, &procInfo);
 	if (0 != rc) {
-		/* If processor usage statistics retieval failed for some reason, there is already a
+		/* If processor usage statistics retrieval failed for some reason, there is already a
 		 * pending exception. Returning a NULL anyway.
 		 */
 		return NULL;
@@ -381,7 +381,7 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getMemor
 
 	PORT_ACCESS_FROM_ENV(env);
 
-	/* Check whether MemoryUsage class has already been reseolved and cached. If not, do so now.*/
+	/* Check whether MemoryUsage class has already been resolved and cached. If not, do so now.*/
 	if (NULL == JCL_CACHE_GET(env, MID_com_ibm_lang_management_MemoryUsage_updateValues)) {
 		jclass localMemoryUsageRef;
 

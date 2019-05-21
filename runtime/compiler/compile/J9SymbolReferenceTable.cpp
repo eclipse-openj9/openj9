@@ -615,7 +615,7 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol *
 
       }
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
-   // isResovled = true, isUnresolvedInCP = false
+   // isResolved = true, isUnresolvedInCP = false
    initShadowSymbol(owningMethod, symRef, true, type, offset, false);
    return symRef;
    }

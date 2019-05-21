@@ -31,7 +31,7 @@
 #include "VerboseEvent.hpp"
 
 /**
- * Stores the data relating to the start of a concurrent remebered set scan
+ * Stores the data relating to the start of a concurrent remembered set scan
  * @ingroup GC_verbose_events
  */
 class MM_VerboseEventConcurrentRSScanStart : public MM_VerboseEvent

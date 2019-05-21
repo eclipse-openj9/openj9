@@ -81,7 +81,7 @@ public abstract class OMElementException extends OMException {
 	}
 	
 	/**
-	 * Retrives the column number for this exception.
+	 * Retrieves the column number for this exception.
 	 * 
 	 * @return	the column number
 	 */

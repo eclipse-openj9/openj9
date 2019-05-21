@@ -288,7 +288,7 @@ public class BuildInfo extends OMObject {
 	}
 
 	/**
-	 * Retrives the list of repository keys.
+	 * Retrieves the list of repository keys.
 	 * 
 	 * @return	the repository keys
 	 */

@@ -1030,7 +1030,7 @@ TR_RelocationRecordConstantPool::computeNewConstantPool(TR_RelocationRuntime *re
       // Find CP from inlined method
       // Assume that the inlined call site has already been relocated
       // And assumes that the method is resolved already, otherwise, we would not have properly relocated the
-      // ramMethod for the inlined callsite and trying to retreive stuff from the bogus pointer will result in error
+      // ramMethod for the inlined callsite and trying to retrieve stuff from the bogus pointer will result in error
       TR_InlinedCallSite *inlinedCallSite = (TR_InlinedCallSite *)getInlinedCallSiteArrayElement(reloRuntime->exceptionTable(), thisInlinedSiteIndex);
       J9Method *ramMethod = (J9Method *) inlinedCallSite->_methodInfo;
 

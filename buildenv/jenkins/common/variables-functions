@@ -493,7 +493,7 @@ def set_artifactory_config() {
     if (ARTIFACTORY_SERVER) {
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
         env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-        // Set Creds to env so that the parent pipeline can retireve them.
+        // Set Creds to env so that the parent pipeline can retrieve them.
         env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
         env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts // This is being used by the cleanup script

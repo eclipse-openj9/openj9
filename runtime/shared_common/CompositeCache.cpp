@@ -4103,7 +4103,7 @@ SH_CompositeCacheImpl::exitReadWriteAreaMutex(J9VMThread* currentThread, UDATA r
 		}
 
 		/**
-		 * Do assertion checks before relasing the lock to prevent others threads changing the values of
+		 * Do assertion checks before releasing the lock to prevent others threads changing the values of
 		 * _headerProtectCntr and _readWriteProtectCntr
 		 */
 		if (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL)) {

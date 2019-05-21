@@ -491,7 +491,7 @@ runTests(J9PortLibrary *portLib, char * id, J9SRPHashTable **srptable, UDATA *da
  * It has 3 stages.
  * 1. It uses exact required memory size to store all of the elements of data array.
  * 2. It uses 1 byte short memory to store all of the elements of data array.
- * 3. It uses 1000 byte bigger memory size than the size reuired to store all of the elements of data array.
+ * 3. It uses 1000 byte bigger memory size than the size required to store all of the elements of data array.
  *
  * @param 	portLib		Pointer to a port library.
  * @param 	id			Pointer to the test's name.

@@ -156,7 +156,7 @@ public class AllocationGenerator extends Thread {
 
        		if ((i < (long)largeAllocStart[sizeIndex] * keyCount)
        				|| (i > (long)largeAllocStop[sizeIndex] * keyCount)) {
-       			// this i ugly: we are not replacing old Index; revet back tha counter 
+       			// this i ugly: we are not replacing old Index; reset back tha counter 
      	        if (null != oldRecord) {
      	        	largeAllocCount[sizeIndex] += 1;
      	        }

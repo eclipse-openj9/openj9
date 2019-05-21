@@ -410,7 +410,7 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
  * @param *vm VM pointer
  * @param buffer_size Size of the buffer passed in
  * @param *options_buffer pointer to the buffer to be populated with data
- * @param *data_size pointer to integer to recieve the required size of buffer.
+ * @param *data_size pointer to integer to receive the required size of buffer.
  */
 omr_error_t
 queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size);

@@ -835,7 +835,7 @@ MM_MetronomeDelegate::allocateAccessBarrier(MM_EnvironmentBase *env)
 
 /**
  * Iterates over all threads and enables the double barrier for each thread by setting the
- * remebered set fragment index to the reserved index.
+ * remembered set fragment index to the reserved index.
  */
 void
 MM_MetronomeDelegate::enableDoubleBarrier(MM_EnvironmentBase *env)

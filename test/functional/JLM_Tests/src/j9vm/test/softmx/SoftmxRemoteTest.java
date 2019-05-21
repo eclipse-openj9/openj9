@@ -46,7 +46,7 @@ import javax.management.ObjectName;
 import com.ibm.lang.management.MemoryMXBean;
 
 /*
- * Start the RemotTestServer with softmx enabled and jmx enabled before run the test.
+ * Start the RemoteTestServer with softmx enabled and jmx enabled before run the test.
  */
 @Test(groups = { "level.extended" })
 public class SoftmxRemoteTest{

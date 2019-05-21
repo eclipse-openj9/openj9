@@ -31,7 +31,7 @@ import com.ibm.dtfj.image.MemoryAccessException;
 
 /**
  * @author jmdisher
- * This will have to be revisitted to support z/OS
+ * This will have to be revisited to support z/OS
  */
 public class ImagePointer implements com.ibm.dtfj.image.ImagePointer
 {

@@ -86,7 +86,7 @@ public class Src {
 	}
 
 	/**
-	 * Returns this source's relatiev path.
+	 * Returns this source's relative path.
 	 * 
 	 * @return		the relative path
 	 */

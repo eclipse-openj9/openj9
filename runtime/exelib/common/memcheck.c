@@ -2081,7 +2081,7 @@ found_block:
 	memStats.currentBytesAllocated -= topHeader->wrappedBlockSize;
 	memStats.currentBlocksAllocated -= 1;
 
-	/* update the J9MEMAVLTreeNode resposible for this memory block */
+	/* update the J9MEMAVLTreeNode responsible for this memory block */
 	memoryCheck_update_callSites_free(topHeader->node, topHeader->wrappedBlockSize);
 
 	if (!blockWasSkipped && (mode & J9_MCMODE_NEVER_FREE))  {
@@ -2922,7 +2922,7 @@ memoryCheck_dump_callSites(OMRPortLibrary *portLibrary, J9AVLTree *tree)
 
 
 /*
- * This function will start the recusive freeing of the nodes and the free
+ * This function will start the recursive freeing of the nodes and the free
  * the memory for the AVL Tree
  *
  * @parm portLib OMRPortLibrary used to access the memory functions
@@ -2943,7 +2943,7 @@ memoryCheck_free_AVLTree(OMRPortLibrary *portLib, J9AVLTree *tree)
 
 
 /*
- * This function will recusive over the left and right child of the given
+ * This function will recurse over the left and right child of the given
  * node and then free the memory for itself
  *
  * @parm portLib OMRPortLibrary used to access the memory functions

@@ -117,7 +117,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<!-- Tests 201 a-d verify shared cache is BCI disabled when only 'cacheRetransfomred is specified -->
+	<!-- Tests 201 a-d verify shared cache is BCI disabled when only 'cacheRetransformed' is specified -->
 	
 	<test id="Test 201-a Verify shared cache is BCI disabled when 'cacheRetransformed' is specified" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,cacheRetransformed -version</command>

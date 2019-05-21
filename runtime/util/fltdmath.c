@@ -2287,7 +2287,7 @@ static CANONICALFP canonicalMultiply( CANONICALFP u, CANONICALFP v ) {
 	presult->sign = pu->sign ^ pv->sign;
 	presult->exponent = pu->exponent + pv->exponent + 2;
 
-	/* If resulting value is too small to be reprented as a
+	/* If resulting value is too small to be represented as a
 	 * floating-point number, just return zero with the correct sign. */
 	if( presult->exponent < -(DPEXPONENT_BIAS+DPFRACTION_LENGTH) ) {
 		presult->exponent = 0;

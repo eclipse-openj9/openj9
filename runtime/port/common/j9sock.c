@@ -496,7 +496,7 @@ j9sock_gethostname(struct J9PortLibrary *portLibrary, char *buffer, int32_t leng
  * @param[in] sockaddr_size The size of "in_addr"
  * @param[out] name The hostname of the passed address in a preallocated buffer.
  * @param[in] name_length The length of the buffer pointed to by name
- * @param[in] flags Flags on how to form the repsonse (see man pages or doc for getnameinfo)
+ * @param[in] flags Flags on how to form the response (see man pages or doc for getnameinfo)
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code
  *
@@ -1281,7 +1281,7 @@ j9sock_shutdown_output(struct J9PortLibrary *portLibrary, j9socket_t sock)
 	return J9PORT_ERROR_SOCKET_OPFAILED;
 }
 /**
- * Creates a new j9sockaddr, refering to the specified port and address.  The only address family currently supported
+ * Creates a new j9sockaddr, referring to the specified port and address.  The only address family currently supported
  * is AF_INET.
  *
  * @param[in] portLibrary The port library.

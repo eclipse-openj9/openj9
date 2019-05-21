@@ -415,7 +415,7 @@ public class Tcb {
 
     /**
      * Return the linkage stack as an array of Lse entries. The length of the array will be zero
-     * if the linkage stack is empty. The top of the stack (as represnted by stcblsdp) is the
+     * if the linkage stack is empty. The top of the stack (as represented by stcblsdp) is the
      * first element in the array and the end of the stack (also sometimes referred to as
      * the first entry, aka stcbestk) is the last element in the array.
      */

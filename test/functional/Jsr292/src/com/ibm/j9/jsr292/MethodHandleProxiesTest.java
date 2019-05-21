@@ -255,7 +255,7 @@ public class MethodHandleProxiesTest {
 	}
 	
 	/**
-	 * Negative test for verifying target retrival failure for wrapperInstanceTarget method in case of non-wrapper instances.
+	 * Negative test for verifying target retrieval failure for wrapperInstanceTarget method in case of non-wrapper instances.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
