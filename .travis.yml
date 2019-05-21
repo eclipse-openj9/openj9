@@ -49,6 +49,7 @@ addons:
       - libxrender-dev
       - libxt-dev
       - libxtst-dev
+      - libxrandr-dev
       - make
       - nasm
       - pkg-config
