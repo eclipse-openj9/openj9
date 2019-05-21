@@ -160,7 +160,7 @@ public class ClassPathEntry {
 	}
 
 	/**
-	 * Returns wheter or not this classpath points to a local library
+	 * Returns whether or not this classpath points to a local library
 	 *
 	 * @return      <code>true</code> if this points to a local library, <code>false</code> otherwise
 	 */

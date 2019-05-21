@@ -124,7 +124,7 @@ public class SetClasspathTest {
 		loader.setClasspath(urls5);
 		/* TestB3 should be stored as ROMCLASS in cache, as there is no invalid URL in the classpath.
 		 * Do not load any class from InvalidClasspathResource3.jar otherwise it will get marked as 'confirmed' by the VM
-		 * and further tranformations to remove InvalidClasspathResource3.jar won't be allowed.
+		 * and further transformations to remove InvalidClasspathResource3.jar won't be allowed.
 		 */
 		Class.forName("TestB3", true, loader);
 		

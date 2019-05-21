@@ -186,7 +186,7 @@ MM_ReferenceChainWalker::tearDown(MM_EnvironmentBase *env)
  * and adds the slot to queue for scanning.
  * @param slotPtr pointer to the slot
  * @param type root or reference type (J9GC_ROOT_TYPE_* or J9GC_REFERENCE_TYPE_*)
- * @param index an index identifying the slot withing the sourceObj
+ * @param index an index identifying the slot within the sourceObj
  * @param sourceObj the object which contains this slot, or NULL if a root
  */
 void
@@ -215,7 +215,7 @@ MM_ReferenceChainWalker::doSlot(J9Object **slotPtr, IDATA type, IDATA index, J9O
  * and adds the slot to queue for scanning.
  * @param slotPtr pointer to the class slot
  * @param type root or reference type (J9GC_ROOT_TYPE_* or J9GC_REFERENCE_TYPE_*)
- * @param index an index identifying the slot withing the sourceObj
+ * @param index an index identifying the slot within the sourceObj
  * @param sourceObj the object which contains this slot, or NULL if a root
  */
 void
@@ -238,7 +238,7 @@ MM_ReferenceChainWalker::doClassSlot(J9Class **slotPtr, IDATA type, IDATA index,
  * If the slot is modified by the callback, stores the modified value back into the field.
  * @param slotPtr pointer to the field slot
  * @param type root or reference type (J9GC_ROOT_TYPE_* or J9GC_REFERENCE_TYPE_*)
- * @param index an index identifying the slot withing the sourceObj
+ * @param index an index identifying the slot within the sourceObj
  * @param sourceObj the object which contains this slot
  */
 void

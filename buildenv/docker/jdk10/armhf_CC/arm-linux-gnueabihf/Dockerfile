@@ -127,7 +127,7 @@ RUN cd /root/debs \
   && cp lib/arm-linux-gnueabihf/* ../gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc/lib/ \
   && rm -rf /root/debs
 
-# Env vars set here will be visibile in the running container, so can be
+# Env vars set here will be visible in the running container, so can be
 # used to convey configuration information to the build scripts.
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH

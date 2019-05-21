@@ -168,7 +168,7 @@ public class Builder {
 	}
 
 	/**
-	 * Returns wheter or not this builder will only do an incremental build.
+	 * Returns whether or not this builder will only do an incremental build.
 	 *
 	 * @return		<code>true</code> if the build is incremental, <code>false</code> otherwise
 	 */

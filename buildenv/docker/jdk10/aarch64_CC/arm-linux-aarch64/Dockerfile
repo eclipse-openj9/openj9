@@ -126,7 +126,7 @@ RUN cd /root/debs \
   && cp lib/aarch64-linux-gnu/* ../gcc-linaro-4.9.4-2017.01-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/lib/ \
   && rm -rf /root/debs
 
-# Env vars set here will be visibile in the running container, so can be
+# Env vars set here will be visible in the running container, so can be
 # used to convey configuration information to the build scripts.
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH

@@ -322,7 +322,7 @@ public class TestManager {
 		jarTesterMTDriver = new JarTesterMTDriver( multipleClassLoaderRequired, multiThreadedCompilationRequired, jarDir );
 		jarTesterMTDriver.start();
 
-		//TODO: Do we need to give the compilation thiread this time to index the jar?
+		//TODO: Do we need to give the compilation thread this time to index the jar?
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {

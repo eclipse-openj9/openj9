@@ -240,7 +240,7 @@ final class SecurityFrameInjector {
 		final MethodType originalMT = potentialInjectFrame.type;
 		
 		// SecurityFrames are always represented as:
-		// 1) VaragsCollectHandle -> AsTypeHandle -> RBH with bound value being an instance of SecurityFrame
+		// 1) VarargsCollectHandle -> AsTypeHandle -> RBH with bound value being an instance of SecurityFrame
 		// 2) AsTypeHandle -> RBH with bound value being an instance of SecurityFrame
 		// 3) RBH with bound value being an instance of SecurityFrame if signature is (Object[])Object
 		boolean mustBeVarags = false;

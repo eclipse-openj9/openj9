@@ -901,7 +901,7 @@ public class MethodHandleTest{
 	 * ****************************/
 	
 	/**
-	 * asFixedArity test to ensure MethodHandles.lookup().find* methods returned varargs handles for methods with the ACC_VARAGS bit
+	 * asFixedArity test to ensure MethodHandles.lookup().find* methods returned varargs handles for methods with the ACC_VARARGS bit
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
@@ -1179,7 +1179,7 @@ public class MethodHandleTest{
 	 * **************************************/
 	
 	/**
-	 * Test isVarargsCollector using a call to asVaragrsCollector
+	 * Test isVarargsCollector using a call to asVarargsCollector
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

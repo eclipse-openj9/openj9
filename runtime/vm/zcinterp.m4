@@ -165,7 +165,7 @@ dnl
 dnl 1. TX was a non-constrained transaction:
 dnl    If this was the case do not execute the read barrier and simply return to
 dnl    the fallback transaction abort JIT code to handle it by forcing condition
-dnl    code to be 2 with the below CL(G)FI instruction indicating a transitent 
+dnl    code to be 2 with the below CL(G)FI instruction indicating a transient 
 dnl    transaction abort.
 dnl
 dnl 2. TX was a constrained transaction:

@@ -2329,7 +2329,7 @@ public final class DecimalData
      * @param bigIntegerValue
      *            BigInteger value to be converted
      * @param unicodeDecimal
-     *            char array that will hold the Unicde decimal on a successful return
+     *            char array that will hold the Unicode decimal on a successful return
      * @param offset
      *            offset into <code>unicodeDecimal</code> where the Unicode Decimal is expected to be located
      * @param precision

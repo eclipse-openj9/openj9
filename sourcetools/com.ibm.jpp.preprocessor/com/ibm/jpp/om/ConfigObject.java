@@ -393,7 +393,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns thsi ConfigObject's immediate configuration dependencies.
+	 * Returns this ConfigObject's immediate configuration dependencies.
 	 *
 	 * @return      the configuration dependencies
 	 */

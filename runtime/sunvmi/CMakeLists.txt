@@ -41,5 +41,5 @@ target_link_libraries(sunvmi
 		j9util
 )
 
-# Note we need to make sure the gc hookgen/tracgen headers exist before we start compiling
+# Note we need to make sure the gc hookgen/tracegen headers exist before we start compiling
 add_dependencies(sunvmi omrgc_hookgen omrgc_tracegen)

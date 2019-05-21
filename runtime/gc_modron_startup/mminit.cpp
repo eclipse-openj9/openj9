@@ -1215,7 +1215,7 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 
 	/* Still need to verify the minimum size of Xmx/Xmdx is not less than the required
 	 * minimum subSpace size (oldSpace/NewSpace).  Do this verification after those minimum
-	 * values are verfied.
+	 * values are verified.
 	 */
 	return JNI_OK;
 

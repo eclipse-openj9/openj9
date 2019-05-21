@@ -45,7 +45,7 @@ public class TrampolineTest_Basic extends TestCase {
 	}
 
 	/**
-	 * Basic trampline tests where code caches are sufficiently distant from each other,
+	 * Basic trampoline tests where code caches are sufficiently distant from each other,
 	 * and inter-code cache dispatches are made.
 	 */
 	public void testTrampolineBasic(){

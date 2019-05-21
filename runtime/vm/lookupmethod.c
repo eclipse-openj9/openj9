@@ -577,7 +577,7 @@ doneItableSearch:
  *		J9_LOOK_ALLOW_FWD						Allow lookup to follow the forwarding chain
  *		J9_LOOK_NO_VISIBILITY_CHECK				Do not perform any visilbity checking
  *		J9_LOOK_NO_JLOBJECT						When doing an interface lookup, do not consider method in java.lang.Object
- *		J9_LOOK_REFLECT_CALL					Use reflection behaviour when dealing with module visilibity
+ *		J9_LOOK_REFLECT_CALL					Use reflection behaviour when dealing with module visibility
  *		J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS	Handle default method conflicts
  *		J9_LOOK_IGNORE_INCOMPATIBLE_METHODS		If a static/virtual conflict occurs, ignore and move on to the next class
  *

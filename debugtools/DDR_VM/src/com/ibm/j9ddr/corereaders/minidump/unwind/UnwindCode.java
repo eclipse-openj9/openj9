@@ -83,7 +83,7 @@ public class UnwindCode {
 	 * http://msdn.microsoft.com/en-US/library/ck9asaa9%28v=vs.80%29
 	 * The operations marked as untested haven't yet been found in any stack
 	 * (and are quite rare to find in the unwind info for dll's at all) so
-	 * if have found and corrected one please remove the unteseted label.
+	 * if have found and corrected one please remove the untested label.
 	 */
 	public String formatOp() throws CorruptDataException {
 		byte opCode = getOpCode();

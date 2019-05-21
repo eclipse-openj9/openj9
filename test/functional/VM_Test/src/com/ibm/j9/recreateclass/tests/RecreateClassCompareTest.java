@@ -130,7 +130,7 @@ public class RecreateClassCompareTest extends TestCase {
 	public void testStackMapTableTestWithBooleanArray() throws Exception {
 		System.out.println("Start testStackMapTableTestWithBooleanArray");
 		/* To follow the Java 9 Spec in which boolean arrays are different from byte arrays
-		 * in terms of verfication type, Recreated StackMapTableWithByteBooleanArrayTest is 
+		 * in terms of verification type, recreated StackMapTableWithByteBooleanArrayTest is 
 		 * expected to keep boolean array in verification_type array of StackMapTable.
 		 */
 		runTest(StackMapTableWithByteBooleanArrayTest.class, 0);

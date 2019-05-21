@@ -193,7 +193,7 @@ public class CommandParser {
 		}
 	}
 
-// TokenisinState classes
+// TokenisingState classes
 	
 	/**
 	 * A mini state machine. Each state receives a character and returns the next state.

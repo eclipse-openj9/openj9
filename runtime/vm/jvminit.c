@@ -5793,7 +5793,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 
 #ifdef J9VM_OPT_SIDECAR
-	/* Whinge about -Djava.compiler after extra VM options are added, but before mappings are set */
+	/* Whine about -Djava.compiler after extra VM options are added, but before mappings are set */
 	if (RC_FAILED == checkDjavacompiler(portLibrary, vm->vmArgsArray)) {
 		goto error;
 	}

@@ -1137,7 +1137,7 @@ processEarlyOptions(const char **opts)
 
 
 	/*
-	 *  Options are in name / value pairs, and termainate with a NULL
+	 *  Options are in name / value pairs, and terminate with a NULL
 	 */
 
 	for(i = 0; opts[i] != NULL; i += 2) {

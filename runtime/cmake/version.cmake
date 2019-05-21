@@ -21,7 +21,7 @@
 ################################################################################
 
 # Set up some default version variables.
-# Note as cache varaiables these can be overridden on the command line when invoking cmake
+# Note as cache variables these can be overridden on the command line when invoking cmake
 # Using the syntax `-D<VAR_NAME>=<VALUE>`
 
 set(JAVA_SPEC_VERSION "9" CACHE STRING "Version of Java to build")

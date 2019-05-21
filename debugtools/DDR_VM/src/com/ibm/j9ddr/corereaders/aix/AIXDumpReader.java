@@ -462,7 +462,7 @@ public abstract class AIXDumpReader extends AbstractCoreReader implements ILibra
 	//
 	// // Get the process environment variables
 	// Properties environment = new Properties();
-	// //on AIX, we should truse the env var pointer found in the core and
+	// //on AIX, we should trust the env var pointer found in the core and
 	// ignore whatever the XML told us it is since this internal value is more
 	// likely correct
 	// environment = getEnvironmentVariables(reg5);

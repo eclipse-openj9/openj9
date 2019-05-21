@@ -231,7 +231,7 @@ mapAllLocals(J9PortLibrary * portLibrary, J9ROMMethod * romMethod, PARALLEL_TYPE
 	@param romMethod Method containing the bytecodes to walk.
 	@param unknownsByPC Buffer used to store per-PC metadata (1 PARALLEL_TYPE per PC) + branch stack.
 	@param startPC Bytecode index to begin the walk.
-	@param localIndexBase Offset of the first local, usuually zero unless method has > PARALLEL_TYPE bits. 
+	@param localIndexBase Offset of the first local, usually zero unless method has > PARALLEL_TYPE bits. 
 	@param knownLocals Bitfield of locals whose types are known definitively.
 	@param knownObject Bitfield of locals which are definitively objects.
 	@param unknownsUpdated Pointer to a boolean value updated iff. any per-PC metadata was updated.

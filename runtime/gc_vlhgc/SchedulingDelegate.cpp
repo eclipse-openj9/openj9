@@ -745,7 +745,7 @@ MM_SchedulingDelegate::calculateKickoffHeadroom(MM_EnvironmentVLHGC *env, UDATA 
 UDATA
 MM_SchedulingDelegate::initializeKickoffHeadroom(MM_EnvironmentVLHGC *env)
 {
-	/* totoal free memory = total heap size - eden size */
+	/* total free memory = total heap size - eden size */
 	UDATA totalFreeMemory = _regionManager->getTotalHeapSize() - getCurrentEdenSizeInBytes(env);
 	return calculateKickoffHeadroom(env, totalFreeMemory);
 }

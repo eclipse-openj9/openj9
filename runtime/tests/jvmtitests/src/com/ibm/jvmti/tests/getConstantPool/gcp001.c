@@ -156,7 +156,7 @@ testGetConstantPool (JavaVM * vm, jvmtiEnv * jvmti_env, char *args)
 
 
 /** 
- * \brief	classLoad handler used to intercept loading of the 'testGetConstantPool' testt class
+ * \brief	classLoad handler used to intercept loading of the 'testGetConstantPool' test class
  * \ingroup	GetConstantPool
  * 
  * @param jvmti_env 

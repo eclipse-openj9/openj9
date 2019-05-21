@@ -450,7 +450,7 @@ isValidTypeChar(char character)
  * @param *env [in] JNI environment
  * @param templates [in] Array containing templates
  * @param formatStringsArray [out] Pointer to array of strings. Assigned by this method and populated with the UTF version of templates
- * @param callPatternsArray [out] Pointer to array of UDATA. Assigned by thsi method and populated with the call patterns for the templates.
+ * @param callPatternsArray [out] Pointer to array of UDATA. Assigned by this method and populated with the call patterns for the templates.
  * @param tracePointCount [out] Pointer to UDATA to be set to number of trace points (size of templates array)
  */
 static UDATA

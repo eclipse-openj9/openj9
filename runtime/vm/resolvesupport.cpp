@@ -1263,7 +1263,7 @@ incompat:
 		}
 	}
 
-	/* Select the correct method for invocation - ignore visilbility in the super send case */
+	/* Select the correct method for invocation - ignore visibility in the super send case */
 	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method, lookupOptions | J9_LOOK_NO_VISIBILITY_CHECK | J9_LOOK_IGNORE_INCOMPATIBLE_METHODS);
 	if (NULL == method) {
 		goto done;

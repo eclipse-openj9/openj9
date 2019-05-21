@@ -49,7 +49,7 @@ class TR_ResolvedMethod;
  *     The sampling recompilation snippet can be composed of two sub-snippets. Following the sub-snippets mini-
  *     trampolines (BRC instructions) are emitted which branch to the respective snippets (<ffffffec> and <ffffffe8>).
  *     This is done to simplify the patching logic as it keeps the offsets from the interpreter entry point
- *     (<00000000>) to the mini-trampilines constant. Following the mini-trampolines we emit metadata constants for
+ *     (<00000000>) to the mini-trampolines constant. Following the mini-trampolines we emit metadata constants for
  *     patching (<fffffff0>), the body info address (<fffffff4>), and the reserved word (<fffffffc>).
  *
  *     - VM Call Helper Snippet

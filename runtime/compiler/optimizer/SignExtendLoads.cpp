@@ -711,7 +711,7 @@ void TR_SignExtendLoads::ProcessNodeList(TR_ScratchList<TR::Node> &list,bool isA
                   break;
 
                default:
-                  if (i2lchild->getOpCode().isLong()) // get rid of unceccessary i2l
+                  if (i2lchild->getOpCode().isLong()) // get rid of unnecessary i2l
                      {
                      if (!performTransformation(comp(), "%sRemoving i2l node %p from parent %p\n", OPT_DETAILS, child,parentNode))
                         break;

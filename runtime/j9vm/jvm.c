@@ -3415,7 +3415,7 @@ JVM_OnExit(void (*func)(void))
  *	Attempts to load the shared library specified by libName.  If
  *	successful, returns the file handle, otherwise returns NULL.
  *
- *	@param libName a null termintated string containing the libName.
+ *	@param libName a null terminated string containing the libName.
  *
  *	@return the shared library's handle if successful, throws java/lang/UnsatisfiedLinkError on failure
  */
@@ -3499,7 +3499,7 @@ JVM_LoadSystemLibrary(const char *libName)
  *	Attempts to load the shared library specified by libName.  If
  *	successful, returns the file handle, otherwise returns NULL.
  *
- *	@param libName a null termintated string containing the libName.
+ *	@param libName a null terminated string containing the libName.
  *
  *	@return the shared library's handle if successful, throws java/lang/UnsatisfiedLinkError on failure
  *
