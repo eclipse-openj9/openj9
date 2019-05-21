@@ -54,6 +54,7 @@
 #define J9AccClassHasVerifyData 0x800000
 #define J9AccClassHotSwappedOut 0x4000000
 #define J9AccClassInnerClass 0x4000
+#define J9AccClassNeedsStaticConstantInit 0x10000
 #define J9AccClassIntermediateDataIsClassfile 0x20000
 #define J9AccClassInternalPrimitiveType 0x20000
 #define J9AccClassIsContended 0x1000000

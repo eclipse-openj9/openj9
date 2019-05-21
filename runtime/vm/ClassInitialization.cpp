@@ -182,68 +182,61 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 		Trc_VM_performVerification_noVerify(currentThread);
 	}
 
-	{
+	if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassNeedsStaticConstantInit)) {
 		/* Prepare the class - the event is sent after the class init status has been updated */
 		Trc_VM_performVerification_prepareClass(currentThread);
 		romClass = clazz->romClass;
-		UDATA *staticAddress = clazz->ramStatics;
+		UDATA *objectStaticAddress = clazz->ramStatics;
+		UDATA *singleStaticAddress = objectStaticAddress + romClass->objectStaticCount;
+		U_64 *doubleStaticAddress = (U_64*)(singleStaticAddress + romClass->singleScalarStaticCount);
+
+#if !defined(J9VM_ENV_DATA64)
+		if (0 != ((UDATA)doubleStaticAddress & (sizeof(U_64) - 1))) {
+			doubleStaticAddress += 1;
+		}
+#endif
+
 		/* initialize object slots first */
 		J9ROMFieldWalkState fieldWalkState;
 		J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 		while (field != NULL) {
 			U_32 modifiers = field->modifiers;
-			if (J9_ARE_ALL_BITS_SET(modifiers, (J9AccStatic | J9FieldFlagObject))) {
-				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant)) {
-					U_32 index = *(U_32*)romFieldInitialValueAddress(field);
-					J9ConstantPool *ramConstantPool = J9_CP_FROM_CLASS(clazz);
-					J9RAMStringRef *ramCPEntry = ((J9RAMStringRef*)ramConstantPool) + index;
-					j9object_t stringObject = ramCPEntry->stringObject;
-					if (NULL == stringObject) {
-						resolveStringRef(currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-						clazz = VM_VMHelpers::currentClass(clazz);
-						if (VM_VMHelpers::exceptionPending(currentThread)) {
-							goto done;
+			if (J9_ARE_ALL_BITS_SET(modifiers, J9AccStatic)) {
+				const bool hasConstantValue = J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant);
+			
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagObject)) {
+					if (hasConstantValue) {
+						U_32 index = *(U_32*)romFieldInitialValueAddress(field);
+						J9ConstantPool *ramConstantPool = J9_CP_FROM_CLASS(clazz);
+						J9RAMStringRef *ramCPEntry = ((J9RAMStringRef*)ramConstantPool) + index;
+						j9object_t stringObject = ramCPEntry->stringObject;
+						if (NULL == stringObject) {
+							resolveStringRef(currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+							clazz = VM_VMHelpers::currentClass(clazz);
+							if (VM_VMHelpers::exceptionPending(currentThread)) {
+								goto done;
+							}
+							stringObject = ramCPEntry->stringObject;
 						}
-						stringObject = ramCPEntry->stringObject;
+						J9STATIC_OBJECT_STORE(currentThread, clazz, (j9object_t*)objectStaticAddress, stringObject);
+						/* Overwriting NULL with a string that is in immortal, so no exception can occur */
 					}
-					J9STATIC_OBJECT_STORE(currentThread, clazz, (j9object_t*)staticAddress, stringObject);
-					/* Overwriting NULL with a string that is in immortal, so no exception can occur */
-				}
-				staticAddress += 1;
-			}
-			field = romFieldsNextDo(&fieldWalkState);
-		}
-		/* initialize single scalar slots next */
-		field = romFieldsStartDo(romClass, &fieldWalkState);
-		while (field != NULL) {
-			U_32 modifiers = field->modifiers;
-			if (J9AccStatic == (modifiers & (J9AccStatic | J9FieldFlagObject | J9FieldSizeDouble))) {
-				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant)) {
-					*(U_32*)staticAddress = *(U_32*)romFieldInitialValueAddress(field);
-				}
-				staticAddress += 1;
-			}
-			field = romFieldsNextDo(&fieldWalkState);
-		}
-		/* initialize double scalar slots last - 8-align the storage before starting */
-#if !defined(J9VM_ENV_DATA64)
-		if (0 != ((UDATA)staticAddress & (sizeof(U_64) - 1))) {
-			staticAddress += 1;
-		}
-#endif
-		{
-			U_64 *doubleStaticAddress = (U_64*)staticAddress;
-			field = romFieldsStartDo(romClass, &fieldWalkState);
-			while (field != NULL) {
-				U_32 modifiers = field->modifiers;
-				if (J9_ARE_ALL_BITS_SET(modifiers, (J9AccStatic | J9FieldSizeDouble))) {
-					if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant)) {
+					objectStaticAddress += 1;
+				} else if (0 == (modifiers & (J9FieldFlagObject | J9FieldSizeDouble))) {
+					if (hasConstantValue) {
+						*(U_32*)singleStaticAddress = *(U_32*)romFieldInitialValueAddress(field);
+					}
+					singleStaticAddress += 1;
+				} else if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldSizeDouble)) {
+					if (hasConstantValue) {
 						*doubleStaticAddress = *(U_64*)romFieldInitialValueAddress(field);
 					}
 					doubleStaticAddress += 1;
+				} else {
+					// Can't happen now - maybe in the future with valuetypes?
 				}
-				field = romFieldsNextDo(&fieldWalkState);
 			}
+			field = romFieldsNextDo(&fieldWalkState);
 		}
 	}
 done:

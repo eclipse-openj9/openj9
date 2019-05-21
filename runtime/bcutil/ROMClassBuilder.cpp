@@ -1077,7 +1077,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                      + AccClassInnerClass
  *                     + UNUSED
  *
- *                   + UNUSED
+ *                   + AccClassNeedsStaticConstantInit
  *                  + AccClassIntermediateDataIsClassfile
  *                 + AccClassUnsafe
  *                + AccClassAnnnotionRefersDoubleSlotEntry
@@ -1203,6 +1203,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 
 	if (classFileOracle->isInnerClass()) {
 		modifiers |= J9AccClassInnerClass;
+	}
+
+	if (classFileOracle->needsStaticConstantInit()) {
+		modifiers |= J9AccClassNeedsStaticConstantInit;
 	}
 
 	return modifiers;
