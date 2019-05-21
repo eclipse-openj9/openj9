@@ -36,40 +36,56 @@
 #include "runtime/J9ValueProfiler.hpp"
 #include "util_api.h"
 
+TR::Snippet *
+J9::TreeEvaluator::getFieldWatchInstanceSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, UDATA os)
+   {
+   return new (cg->trHeapMemory()) TR::J9WatchedInstanceFieldSnippet(cg, node, m, loc, os);
+   }
+
+TR::Snippet *
+J9::TreeEvaluator::getFieldWatchStaticSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, void *fieldAddress, J9Class *fieldClass)
+   {
+   return new (cg->trHeapMemory()) TR::J9WatchedStaticFieldSnippet(cg, node, m, loc, fieldAddress, fieldClass);
+   }
+
 void
 J9::TreeEvaluator::rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg)
    {
-   bool isWrite = node->getOpCode().isWrtBar();
-
    TR_ASSERT_FATAL(J9ClassHasWatchedFields >= std::numeric_limits<uint16_t>::min() && J9ClassHasWatchedFields <= std::numeric_limits<uint16_t>::max(), "Expecting value of J9ClassHasWatchedFields to be within 16 bits. Currently it's %d(%p).", J9ClassHasWatchedFields, J9ClassHasWatchedFields);
-   // Populate a data snippet with the required information so we can call a VM helper to report the fieldwatch event.
-   J9Method *owningMethod = reinterpret_cast<J9Method *>(node->getOwningMethod());
-   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   
+   // Populate a data snippet with the required information so we can call a VM helper to report the Field Watch event.
    TR::SymbolReference *symRef = node->getSymbolReference();
+   J9Method *owningMethod = reinterpret_cast<J9Method *>(node->getOwningMethod());
+   TR::Register *dataSnippetRegister = cg->allocateRegister();
+   bool isWrite = node->getOpCode().isWrtBar();
    bool isUnresolved = symRef->isUnresolved();
+   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   
    TR::Snippet *dataSnippet = NULL;
    if (symRef->getSymbol()->isStatic())
       {
       void *fieldAddress = isUnresolved ? reinterpret_cast<void *>(-1) : symRef->getSymbol()->getStaticSymbol()->getStaticAddress();
       J9Class *fieldClass = isUnresolved ? NULL : reinterpret_cast<J9Class *>(symRef->getOwningMethod(cg->comp())->getDeclaringClassFromFieldOrStatic(cg->comp(), symRef->getCPIndex()));
-      dataSnippet = new (cg->trHeapMemory()) TR::J9WatchedStaticFieldSnippet (cg, node, owningMethod, bcIndex, fieldAddress, fieldClass);
+      dataSnippet = TR::TreeEvaluator::getFieldWatchStaticSnippet(cg, node, owningMethod, bcIndex, fieldAddress, fieldClass);
       }
    else
       {
-      dataSnippet = new (cg->trHeapMemory()) TR::J9WatchedInstanceFieldSnippet(cg, node, owningMethod, bcIndex, isUnresolved ? -1 : symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
+      dataSnippet = TR::TreeEvaluator::getFieldWatchInstanceSnippet(cg, node, owningMethod, bcIndex, isUnresolved ? -1 : symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
       }
    cg->addSnippet(dataSnippet);
 
    // If unresolved, then we generate instructions to populate the data snippet's fields correctly at runtime.
    // Note: We also call the VM Helper routine to fill in the data snippet's fields if this is an AOT compilation.
    // Once the infrastructure to support AOT during fieldwatch is enabled and functionally correct, we can remove is check.
-   if (node->getSymbolReference()->isUnresolved() || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
+   if (isUnresolved || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
       {
       // Resolve and populate dataSnippet fields.
-      TR::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(cg, node, dataSnippet, isWrite, sideEffectRegister);
+      TR::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(cg, node, dataSnippet, isWrite, sideEffectRegister, dataSnippetRegister);
       }
-   // Generate instructions to call the VM helper and report the fieldwatch event.
-   TR::TreeEvaluator::generateTestAndReportFieldWatchInstructions(cg, node, dataSnippet, isWrite, sideEffectRegister, valueReg);
+   // Generate instructions to call the VM helper and report the fieldwatch event
+   TR::TreeEvaluator::generateTestAndReportFieldWatchInstructions(cg, node, dataSnippet, isWrite, sideEffectRegister, valueReg, dataSnippetRegister);
+
+   cg->stopUsingRegister(dataSnippetRegister);
    }
 
 TR::Register *
