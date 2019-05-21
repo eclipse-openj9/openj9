@@ -1841,7 +1841,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
          static char *disableHoist = feGetEnv("TR_disableHoist");
          if (!disableHoist &&
              comp->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-             !comp->getJittedMethodSymbol()->isNoTemps() &&
              comp->cg()->isMaterialized(constValueNode))
             {
             TR::Block *block = prevTreeTop->getEnclosingBlock();
