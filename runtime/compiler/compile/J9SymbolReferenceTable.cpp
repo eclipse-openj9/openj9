@@ -20,6 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if !defined(_ISOC99_SOURCE)
+#define _ISOC99_SOURCE 1
+#endif
+
 #include "codegen/CodeGenerator.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "compile/AliasBuilder.hpp"
@@ -52,6 +56,8 @@
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 
+#include <stdio.h>
+
 namespace J9
 {
 enum NonUserMethod
@@ -76,7 +82,10 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _unsafeJavaStaticVolatileSymRefs(NULL),
      _currentThreadDebugEventDataSymbol(0),
      _currentThreadDebugEventDataSymbolRefs(c->trMemory()),
-     _constantPoolAddressSymbolRefs(c->trMemory())
+     _constantPoolAddressSymbolRefs(c->trMemory()),
+     _resolvedFieldShadows(
+        std::less<ResolvedFieldShadowKey>(),
+        getTypedAllocator<ResolvedFieldShadowsEntry>(c->allocator()))
    {
    for (uint32_t i = 0; i < _numImmutableClasses; i++)
       _immutableSymRefNumbers[i] = new (trHeapMemory()) TR_BitVector(sizeHint, c->trMemory(), heapAlloc, growable);
@@ -608,43 +617,183 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol *
       return symRef;
    else
       {
-      sym = TR::Symbol::createRecognizedShadow(trHeapMemory(),type, recognizedField);
-      if (name)
-         {
-         sym->setNamedShadowSymbol();
-         sym->setName(name);
-         }
-
-      if (isVolatile)
-         sym->setVolatile();
-      if (isFinal)
-         sym->setFinal();
-      if (isPrivate)
-         sym->setPrivate();
-      static char *dontAliasShadowsToEarlierGIS = feGetEnv("TR_dontAliasShadowsToEarlierGIS");
-      if (aliasBuilder.mutableGenericIntShadowHasBeenCreated() && !dontAliasShadowsToEarlierGIS)
-         {
-         // Some previously-created GIS might actually refer to this shadow
-         aliasBuilder.setConservativeGenericIntShadowAliasing(true);
-         }
-
+      bool suppressGenericIntShadowAliasing = false;
+      sym = createShadowSymbol(
+         type,
+         isVolatile,
+         isPrivate,
+         isFinal,
+         suppressGenericIntShadowAliasing,
+         name,
+         recognizedField);
       }
+
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
    // isResolved = true, isUnresolvedInCP = false
    initShadowSymbol(owningMethod, symRef, true, type, offset, false);
    return symRef;
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findResolvedFieldShadow(
+   ResolvedFieldShadowKey key,
+   bool isVolatile,
+   bool isPrivate,
+   bool isFinal)
+   {
+   const auto entry = _resolvedFieldShadows.find(key);
+   if (entry == _resolvedFieldShadows.end())
+      return NULL;
+
+   TR::SymbolReference *symRef = entry->second;
+   int32_t refNum = symRef->getReferenceNumber();
+   TR::Symbol *sym = symRef->getSymbol();
+
+   // It's possible that isVolatile could vary in the future (for accesses
+   // with different memory ordering effects). If so, it should be made part
+   // of the key, and the two symRefs differing only in isVolatile should be
+   // considered to possibly alias.
+   TR_ASSERT_FATAL(sym->isVolatile() == isVolatile, "isVolatile mismatch #%d\n", refNum);
+   TR_ASSERT_FATAL(sym->isPrivate() == isPrivate, "isPrivate mismatch #%d\n", refNum);
+   TR_ASSERT_FATAL(sym->isFinal() == isFinal, "isFinal mismatch #%d\n", refNum);
+
+   return symRef;
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrFabricateShadowSymbol(
+   TR_OpaqueClassBlock *containingClass,
+   TR::DataType type,
+   uint32_t offset,
+   bool isVolatile,
+   bool isPrivate,
+   bool isFinal,
+   bool suppressGenericIntShadowAliasing,
+   const char *name,
+   const char *signature)
+   {
+   ResolvedFieldShadowKey key(containingClass, offset, type);
+   TR::SymbolReference *symRef = findResolvedFieldShadow(key, isVolatile, isPrivate, isFinal);
+   if (symRef != NULL)
+      return symRef;
+
+   int32_t classNameLen = 0;
+   const char *className =
+      TR::Compiler->cls.classNameChars(comp(), containingClass, classNameLen);
+
+   int qualifiedFieldNameSize = classNameLen + 1 + strlen(name) + 1 + strlen(signature) + 1;
+   char *qualifiedFieldName = (char*)trHeapMemory().allocate(qualifiedFieldNameSize);
+   snprintf(
+      qualifiedFieldName,
+      qualifiedFieldNameSize,
+      "%.*s.%s %s",
+      classNameLen,
+      className,
+      name,
+      signature);
+
+   TR::Symbol *sym = createShadowSymbol(
+      type,
+      isVolatile,
+      isPrivate,
+      isFinal,
+      suppressGenericIntShadowAliasing,
+      qualifiedFieldName,
+      TR::Symbol::UnknownField);
+
+   mcount_t methodIndex = mcount_t::valueOf(0);
+   int32_t cpIndex = -1;
+   symRef = new (trHeapMemory()) TR::SymbolReference(
+      self(),
+      sym,
+      methodIndex,
+      cpIndex);
+
+   bool isResolved = true;
+   bool isUnresolvedInCP = false;
+   initShadowSymbol(NULL, symRef, isResolved, type, offset, isUnresolvedInCP);
+
+   _resolvedFieldShadows.insert(std::make_pair(key, symRef));
+   return symRef;
+   }
+
+TR::Symbol *
+J9::SymbolReferenceTable::createShadowSymbol(
+   TR::DataType type,
+   bool isVolatile,
+   bool isPrivate,
+   bool isFinal,
+   bool suppressGenericIntShadowAliasing,
+   const char *name,
+   TR::Symbol::RecognizedField recognizedField)
+   {
+   TR::Symbol *sym = NULL;
+   if (recognizedField != TR::Symbol::UnknownField)
+      sym = TR::Symbol::createRecognizedShadow(trHeapMemory(), type, recognizedField);
+   else
+      sym = TR::Symbol::createShadow(trHeapMemory(), type);
+
+   if (name != NULL)
+      {
+      sym->setNamedShadowSymbol();
+      sym->setName(name);
+      }
+
+   if (isVolatile)
+      sym->setVolatile();
+
+   if (isPrivate)
+      sym->setPrivate();
+
+   if (isFinal)
+      sym->setFinal();
+
+   static char *dontAliasShadowsToEarlierGISEnv = feGetEnv("TR_dontAliasShadowsToEarlierGIS");
+   bool dontAliasShadowsToEarlierGIS =
+      suppressGenericIntShadowAliasing || dontAliasShadowsToEarlierGISEnv != NULL;
+
+   if (aliasBuilder.mutableGenericIntShadowHasBeenCreated() && !dontAliasShadowsToEarlierGIS)
+      {
+      // Some previously-created GIS might actually refer to this shadow
+      aliasBuilder.setConservativeGenericIntShadowAliasing(true);
+      }
+
+   return sym;
+   }
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore)
    {
-   TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
+   TR_ResolvedJ9Method * owningMethod =
+      static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());
+
    bool isVolatile = true, isFinal = false, isPrivate = false, isUnresolvedInCP;
    TR::DataType type = TR::NoType;
    uint32_t offset = 0;
    bool resolved = owningMethod->fieldAttributes(comp(), cpIndex, &offset, &type, &isVolatile, &isFinal, &isPrivate, isStore, &isUnresolvedInCP, true);
    bool sharesSymbol = false;
+
+   TR_OpaqueClassBlock *containingClass = NULL;
+
+   if (resolved)
+      {
+      bool isStatic = false;
+      containingClass =
+         owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, isStatic);
+
+      TR_ASSERT_FATAL(
+         containingClass != NULL,
+         "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p",
+         cpIndex,
+         owningMethod->getNonPersistentIdentifier());
+
+      ResolvedFieldShadowKey key(containingClass, offset, type);
+      TR::SymbolReference *symRef =
+         findResolvedFieldShadow(key, isVolatile, isPrivate, isFinal);
+
+      if (symRef != NULL)
+         return symRef;
+      }
 
    TR::Symbol * sym = 0;
 
@@ -660,22 +809,22 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
       }
    else
       {
-      if (recognizedField != TR::Symbol::UnknownField)
-         sym = TR::Symbol::createRecognizedShadow(trHeapMemory(),type, recognizedField);
-      else
-         sym = TR::Symbol::createShadow(trHeapMemory(),type);
-      if (isVolatile)
-         sym->setVolatile();
-      if (isFinal)
-         sym->setFinal();
-      if (isPrivate)
-         sym->setPrivate();
-      static char *dontAliasShadowsToEarlierGIS = feGetEnv("TR_dontAliasShadowsToEarlierGIS");
-      if (aliasBuilder.mutableGenericIntShadowHasBeenCreated() && !dontAliasShadowsToEarlierGIS)
+      bool suppressIntShadowAliasing = false;
+      if (containingClass != NULL)
          {
-         // Some previously-created GIS might actually refer to this shadow
-         aliasBuilder.setConservativeGenericIntShadowAliasing(true);
+         J9Class *j9class = reinterpret_cast<J9Class*>(containingClass);
+         if (J9_ARE_ANY_BITS_SET(j9class->classFlags, J9AccValueType))
+            suppressIntShadowAliasing = true;
          }
+
+      sym = createShadowSymbol(
+         type,
+         isVolatile,
+         isPrivate,
+         isFinal,
+         suppressIntShadowAliasing,
+         NULL,
+         recognizedField);
       }
 
    int32_t unresolvedIndex = resolved ? 0 : _numUnresolvedSymbols++;
@@ -693,6 +842,12 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
 
    if (cpIndex > 0)
       aliasBuilder.cpSymRefs().set(symRef->getReferenceNumber());
+
+   if (containingClass != NULL)
+      {
+      ResolvedFieldShadowKey key(containingClass, offset, type);
+      _resolvedFieldShadows.insert(std::make_pair(key, symRef));
+      }
 
    return symRef;
    }

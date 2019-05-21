@@ -36,6 +36,7 @@ namespace J9 { typedef J9::SymbolReferenceTable SymbolReferenceTableConnector; }
 
 #include <stddef.h>
 #include <stdint.h>
+#include <map>
 #include "env/jittypes.h"
 
 class TR_BitVector;
@@ -110,6 +111,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
    TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name = NULL);
+   TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *, TR::DataType, uint32_t, bool, bool, bool, bool, const char *, const char *);
 
    TR::SymbolReference * findOrCreateObjectNewInstanceImplSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateDLTBlockSymbolRef();
@@ -307,6 +309,48 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    private:
 
+   struct ResolvedFieldShadowKey
+      {
+      ResolvedFieldShadowKey(
+         TR_OpaqueClassBlock *containingClass,
+         uint32_t offset,
+         TR::DataType type)
+         : _containingClass(containingClass)
+         , _offset(offset)
+         , _type(type)
+         {}
+
+      TR_OpaqueClassBlock * const _containingClass;
+      const uint32_t _offset;
+      const TR::DataType _type;
+
+      bool operator<(const ResolvedFieldShadowKey &rhs) const
+         {
+         const ResolvedFieldShadowKey &lhs = *this;
+         std::less<void*> ptrLt;
+         if (ptrLt(lhs._containingClass, rhs._containingClass))
+            return true;
+         else if (ptrLt(rhs._containingClass, lhs._containingClass))
+            return false;
+         else if (lhs._offset < rhs._offset)
+            return true;
+         else if (lhs._offset > rhs._offset)
+            return false;
+         else if (lhs._type.getDataType() < rhs._type.getDataType())
+            return true;
+         else if (lhs._type.getDataType() > rhs._type.getDataType())
+            return false;
+         else
+            return false;
+         }
+      };
+
+   typedef std::pair<ResolvedFieldShadowKey, TR::SymbolReference*> ResolvedFieldShadowsEntry;
+   typedef TR::typed_allocator<ResolvedFieldShadowsEntry, TR::Allocator> ResolvedFieldShadowsAlloc;
+   typedef std::map<ResolvedFieldShadowKey, TR::SymbolReference*, std::less<ResolvedFieldShadowKey>, ResolvedFieldShadowsAlloc> ResolvedFieldShadows;
+
+   TR::SymbolReference * findResolvedFieldShadow(ResolvedFieldShadowKey key, bool, bool, bool);
+   TR::Symbol * createShadowSymbol(TR::DataType, bool, bool, bool, bool, const char *, TR::Symbol::RecognizedField);
    TR::SymbolReference * createShadowSymbolWithoutCpIndex(TR::ResolvedMethodSymbol *, bool , TR::DataType, uint32_t, bool);
    TR::SymbolReference * findJavaLangReferenceReferentShadowSymbol(TR_ResolvedMethod * owningMethod, TR::DataType, uint32_t);
 
@@ -324,6 +368,8 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *     Represents the set of symbol references to static volatile fields of Java objects.
     */
    TR_Array<TR::SymbolReference *> * _unsafeJavaStaticVolatileSymRefs;
+
+   ResolvedFieldShadows _resolvedFieldShadows;
    };
 
 }

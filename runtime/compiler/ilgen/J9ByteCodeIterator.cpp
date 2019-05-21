@@ -602,6 +602,10 @@ const uint8_t TR_J9ByteCodeIterator::_byteCodeFlags[] =
                              0x01, // J9BCmonitorenter
                              0x01, // J9BCmonitorexit
                              0x00, // J9BCwide
+                             0x01, // J9BCasyncCheck --- TODO: Is this the right size?
+                             0x03, // J9BCdefaultvalue
+                             0x03, // J9BCwithfield
+                             0x01, // J9BCbreakpoint --- TODO: Is this the right size?
                              0x01, // BCunknown
    };
 
