@@ -1308,8 +1308,8 @@ UDATA
 resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9Method **resolvedMethod, J9RAMVirtualMethodRef *ramCPEntry)
 {
 	UDATA vTableOffset = 0;
-	J9ROMMethodRef *romMethodRef;
-	J9Class *resolvedClass;
+	J9ROMMethodRef *romMethodRef = NULL;
+	J9Class *resolvedClass = NULL;
 	J9JavaVM *vm = vmStruct->javaVM;
 	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
 	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
@@ -1333,11 +1333,11 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	resolvedClass = resolveClassRef(vmStruct, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
 
 	/* If resolvedClass is NULL, the exception has already been set. */
-	if (resolvedClass != NULL) {
+	if (NULL != resolvedClass) {
 		J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
 		U_32 *cpShapeDescription = NULL;
-		J9Method *method;
-		J9Class *cpClass;
+		J9Method *method = NULL;
+		J9Class *cpClass = NULL;
 
 		/* Stack allocate a byte array for VarHandle method name and signature. The array size is:
 		 *  - J9ROMNameAndSignature
@@ -1607,7 +1607,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		Trc_VM_resolveVirtualMethodRef_lookupMethod(vmStruct, method);
 
 		/* If method is NULL, the exception has already been set. */
-		if (method != NULL) {
+		if (NULL != method) {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 			J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			/* Only allow non-interface method to call invokePrivate, private interface method should use "invokeInterface" bytecode
@@ -1615,13 +1615,13 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			 */
 			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
 				/* Private method found, will not be in vTable, point vTable index to invokePrivate */
-				if (ramCPEntry != NULL) {
+				if (NULL != ramCPEntry) {
 					ramCPEntry->method = method;
 					UDATA methodIndexAndArgCount = J9VTABLE_INVOKE_PRIVATE_OFFSET << 8;
 					methodIndexAndArgCount |= (ramCPEntry->methodIndexAndArgCount & 255);
 					ramCPEntry->methodIndexAndArgCount = methodIndexAndArgCount;
 				}
-				if (resolvedMethod != NULL) {
+				if (NULL != resolvedMethod) {
 					/* save away method for callee */
 					*resolvedMethod = method;
 				}
@@ -1630,7 +1630,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			{
 				/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
 				vTableOffset = getVTableOffsetForMethod(method, resolvedClass, vmStruct);
-				if (vTableOffset == 0) {
+				if (0 == vTableOffset) {
 					if (throwException) {
 						j9object_t errorString = methodToString(vmStruct, method);
 						setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
@@ -1638,12 +1638,10 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				} else {
 					if (ramCPEntry != NULL) {
 						UDATA argSlotCount = vTableOffset << 8;
-						J9RAMVirtualMethodRef *ramVirtualMethodRef = (J9RAMVirtualMethodRef *)&ramCP[cpIndex];
-						UDATA oldArgCount = ramVirtualMethodRef->methodIndexAndArgCount & 255;
-						argSlotCount |= oldArgCount;
+						argSlotCount |= (ramCPEntry->methodIndexAndArgCount & 255);
 						ramCPEntry->methodIndexAndArgCount = argSlotCount;
 					}
-					if (resolvedMethod != NULL) {
+					if (NULL != resolvedMethod) {
 						/* save away method for callee */
 						*resolvedMethod = method;
 					}
