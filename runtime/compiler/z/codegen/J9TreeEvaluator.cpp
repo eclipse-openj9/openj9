@@ -94,10 +94,10 @@ extern TR::Instruction * generateS390CompareOps(TR::Node * node, TR::CodeGenerat
 
 /* Moved from Codegen to FE */
 ///////////////////////////////////////////////////////////////////////////////////
-// Generate code to perform a comparison and branch to a snippet.
+// Generate code to perform a comparisson and branch to a snippet.
 // This routine is used mostly by bndchk evaluator.
 //
-// The comparison type is determined by the choice of CMP operators:
+// The comparisson type is determined by the choice of CMP operators:
 //   - fBranchOp:  Operator used for forward operation ->  A fCmp B
 //   - rBranchOp:  Operator user for reverse operation ->  B rCmp A <=> A fCmp B
 //
@@ -266,7 +266,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    if (comp->getOption(TR_TraceCG))
       traceMsg(comp, "inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
 
-   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // This evaluator function handles different indexOf() instrinsics, some of which are static calls without a
    // receiver. Hence, the need for static call check.
    const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
    const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
@@ -465,7 +465,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelS2HeadPartMatch);
 
       // Starting from the beginning of the partial match, load the next 16 bytes from s1 and redo s2 header search.
-      // This implies that the partial match will be re-matched by the next VSTRS. This can potentially benefit string
+      // This implies that the partial match will be re-matched by the next VSTRS. This can potentially benifit string
       // search cases where s2 is shorter than 16 bytes. For short s2 strings, string search can potentially be done in
       // the next VSTRS and can we avoid residue matching which requires several index adjustments that do not provide
       // performance benefits.
@@ -1248,7 +1248,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
          // test if class is interface of not.
          // if interface, we do the following.
          //
-         // insert instanceof site snippet test
+         // insert isntanceof site snippet test
          // cmp objectClassReg, classObjectClazzSnippet
          // jne helper call
          // cmp castclassreg, instanceOfClazzSnippet
@@ -1987,7 +1987,7 @@ VMwrtbarEvaluator(
       TR::SymbolReference * wbRef = NULL;
       if (gcMode == gc_modron_wrtbar_always)
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
-      else // use jitWriteBarrierStoreGenerational for both generational and gencon, because we inline card marking.
+      else // use jitWriteBarrierStoreGenerational for both generational and gencon, becaues we inline card marking.
          {
          static char *disable = feGetEnv("TR_disableGenWrtBar");
          wbRef = disable ?
@@ -2604,7 +2604,7 @@ J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::C
       //   ->secondChild
       //   #ENDIF
       // If we generate i2l node, we need to artificially set reference count of node to 1.
-      // After helper call is generated we decrease reference count of this node so that a register will be marked dead for RA.
+      // After helper call is generated we decrese reference count of this node so that a register will be marked dead for RA.
       TR::Node *secondChild = node->getSecondChild();
       if (TR::Compiler->target.is64Bit())
          {
@@ -3094,7 +3094,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          // Any constValue <= MAX_UNSIGNED_IMMEDIATE_VAL is taken here.
          // The length is assumed to be non-negative and is within [0, max_uint32] range.
-         // The index can be negative or [0, max_uint32]. An unconditional branch is generated if it's negative.
+         // The index can be negative or [0, max_uint32]. An unconditional bransh is generated if it's negative.
          // No need to use unconditional BRC because it requires a proceeding NO-OP instruction for proper signal
          // handling. And NOP+BRC is of the same length as CLFIT.
          TR::Register * testRegister = cg->evaluate(nonConstNode);
@@ -4054,7 +4054,7 @@ VMarrayStoreCHKEvaluator(
       }
 
    // Bringing back tests from outlined keeping only helper call in outlined section
-   // TODO Attaching helper call predependency to BRASL instruction and combine ICF conditions with post dependency conditions of
+   // TODO Attching helper call predependency to BRASL instruction and combine ICF conditions with post dependency conditions of
    // helper call should fix the issue of unnecessary spillings in ICF. Currently bringing the tests back to main line here but
    // check performance of both case.
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, wbLabel);
@@ -4114,10 +4114,9 @@ VMarrayStoreCHKEvaluator(
    generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, t1Reg,
       generateS390MemoryReference(t2Reg, owningObjectRegVal, 0, cg));
 
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, wbLabel);
    if (debugObj)
       debugObj->addInstructionComment(cursor, "Check if src.type is subclass");
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperCallLabel);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRNE, node, helperCallLabel);
    // FAIL
    arrayStoreCHKOOL = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel,wbLabel,cg);
    cg->getS390OutOfLineCodeSectionList().push_front(arrayStoreCHKOOL);
@@ -4270,7 +4269,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    //  We need deps to setup args for arrayStoreCHK helper and/or wrtBAR helper call.
    //  We need 2 more regs for inline version of arrayStoreCHK (txReg & tyReg).  We use RA/EP for these
    //  We then need two extra regs for memref for the actual store.
-   //  A seventh, eighth and ninth post dep may be needed to manufacture imm values
+   //  A seventh, eigth and ninth post dep may be needed to manufacture imm values
    //  used by the inlined version of arrayStoreCHK
    //  The tenth post dep may be needed to generateDirectCall if it creates a RegLitRefInstruction.
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg);
@@ -4364,7 +4363,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       }
 
    // Store for case where we have a NULL ptr detected at runtime and
-   // branches around the wrtbar
+   // branchec around the wrtbar
    //
    // For the non-NULL case we chose to simply exec the ST twice as this is
    // cheaper than branching around the a single ST inst.
@@ -5008,7 +5007,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          * BRC to end of this block if callResult is 0
          * load -1 to temp Register
          * compare with "-1 loded register", dataSnippet1, and if not update datasnippet with objectClassReg(Compare and Swap instr)
-         * if we didn't update, we don't update the next one->branch out to doneUpdateSnippetLabel
+         * if we didnot update, we don't update the next one->branch out to doneUpdateSnippetLabel
          * store dataSnippet2, castClassReg.//if we did update 1, we need to update both.
          * TestcallResultReg again to use in branch Instr
          * */
@@ -5016,7 +5015,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          TR::LabelSymbol *doneUpdateSnippetLabel = generateLabelSymbol(cg);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneUpdateSnippetLabel);
          TR::Register * tempNeg1LoadedRegister = cg->allocateRegister();
-         //we do not need post condition since this code resides in OOL only.
+         //we do not need post condtion since this code resides in OOL only.
 
          generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, tempNeg1LoadedRegister, -1);
 
@@ -5729,7 +5728,7 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
  *
  *  \details
  *     Note that if this function returns <c>false</c> the appropriate null test condition code will be set and the
- *     callee is responsible for generating the branch instruction to act on the condition code.
+ *     callee is responsible for generating the branh instruction to act on the condition code.
  */
 static
 bool genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Register* objectReg)
@@ -5755,7 +5754,7 @@ bool genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR:
  *     Generates a dynamicCache test with helper call for instanceOf/ifInstanceOf node
  *
  *  \details
- *     This function generates a sequence to check per site cache for object class and cast class before calling out to jitInstanceOf helper
+ *     This funcition generates a sequence to check per site cache for object class and cast class before calling out to jitInstanceOf helper
  */
 static
 void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *cg, TR::Register *castClassReg, TR::Register *objClassReg, TR::Register *resultReg, TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *doneLabel, TR::LabelSymbol *helperCallLabel, TR::LabelSymbol *dynamicCacheTestLabel, TR::LabelSymbol *branchLabel, TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, bool dynamicCastClass, bool generateDynamicCache, bool cacheCastClass, bool ifInstanceOf, bool trueFallThrough )
@@ -5948,7 +5947,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
 
    // WARNING: It is not recommended to have two exit point in OOL section
    // In this case we need it in case of ifInstanceOf to save additional complex logic in mainline section
-   // In case if there is GLRegDeps attached to ifInstanceOf node, it will be evaluated and attached as post dependency conditions
+   // In case if there is GLRegDeps attached to ifIntsanceOf node, it will be evaluated and attached as post dependency conditions
    // at the end of node
    // We can take a risk of having two exit points in OOL here as there is no other register instruction between them
    if (ifInstanceOf)
@@ -6119,7 +6118,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
              /*   #IF NextTest = GoToFalse
               *      branchCond = ifInstanceOf ? (!trueFallThrough ? COND_BE : COND_BNE ) : (init=true ? COND_BE : COND_BNE )
-              *      branchLabel = ifInstanceOf ? (!trueFallThrough ? trueLabel : falseLabel ) : doneLabel
+              *      brnachLabel = ifInstanceOf ? (!trueFallThrough ? trueLabel : falseLabel ) : doneLabel
               *      CGRJ castClassReg, objClassReg, branchCond, branchLabel
               *   #ELSE
               *      CGRJ castClassReg, objClassReg, COND_BE, trueLabel
@@ -6392,7 +6391,7 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
 
    // Fast path failure check
    //  TODO: For now we cannot handle Global regs in this path
-   //        due to possible collision with call out deps.
+   //        due to possible colision with call out deps.
    if (graDepNode && graDepsConflictWithInstanceOfDeps(graDepNode, instanceOfNode, cg))
       {
       return (TR::Register*) 1;
@@ -6703,7 +6702,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
       bool helperCallForFailure = *iter != HelperCall;
       if (comp->getOption(TR_TraceCG))
          traceMsg(comp, "%s: Emitting helper call%s\n", node->getOpCode().getName(),helperCallForFailure?" for failure":"");
-      //Following code is needed to put the Helper Call Outlined.
+      //Follwing code is needed to put the Helper Call Outlined.
       if (!comp->getOption(TR_DisableOOL) && !outlinedSlowPath)
          {
          // As SuperClassTest is the costliest test and is guaranteed to give results for checkCast node. Hence it will always be second last test
@@ -7120,7 +7119,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       numDeps +=2;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          {
-         numDeps +=2; // extra one for lit pool reg in disableZ9 mode
+         numDeps +=2; // extra one for lit pool reg in disablez9 mode
          }
       }
 #endif
@@ -7555,7 +7554,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       numDeps +=2;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          {
-         numDeps +=2; // extra one for lit pool reg in disableZ9 mode
+         numDeps +=2; // extra one for lit pool reg in disablez9 mode
          }
       }
 #endif
@@ -8566,7 +8565,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    /* Variables needed for Heap alloc OOL Opt */
    TR::Register * tempResReg;//Temporary register used to get the result from the BRASL call in heap alloc OOL
-   TR::RegisterDependencyConditions * heapAllocDeps1;//Dependencies needed for BRASL call in heap alloc OOL
+   TR::RegisterDependencyConditions * heapAllocDeps1;//Depenedencies needed for BRASL call in heap alloc OOL
    TR::Instruction *firstBRCToOOL = NULL;
    TR::Instruction *secondBRCToOOL = NULL;
 
@@ -8877,7 +8876,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                   debugObj->addInstructionComment(cursor, "Denotes start of OOL for allocating zero size arrays");
 
                   /* using TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-                   * for byte size for discontiguous 0 size arrays because later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
+                   * for byte size for discontinous 0 size arrays becasue later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
                    *
                    *
                    ----------- OOL: Beginning of out-of-line code section ---------------
@@ -9072,7 +9071,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
       heapAllocOOL->swapInstructionListsWithCompilation();
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 6: Initialize the new object header ==========================///
+      ///============================ STAGE 6: Initilize the new object header ==========================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (isArray)
          {
@@ -9725,7 +9724,7 @@ J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg,
 
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "readBar/arraycopy/OOL"), 1, TR::DebugCounter::Cheap);
 
-   // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instruction in ICF.
+   // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instuction in ICF.
    TR::RegisterDependencyConditions *loopDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 10, cg);
    TR::TreeEvaluator::generateMemToMemElementCopy(node, cg, byteSrcReg, byteDstReg, byteLenReg, srm, isForward, true, false, loopDeps);
 
@@ -11935,7 +11934,7 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 /**
- * tfinishEvaluator:  end a transaction
+ * tfinshEvaluator:  end a transaction
  */
 TR::Register *
 J9::Z::TreeEvaluator::tfinishEvaluator(TR::Node * node, TR::CodeGenerator * cg)
