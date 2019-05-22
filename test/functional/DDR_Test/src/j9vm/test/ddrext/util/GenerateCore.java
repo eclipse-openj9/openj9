@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ public class GenerateCore {
 	/**
 	 * @param args
 	 *            args[0] -- Java home e.g./bluebird/builds/bld_87583/SDK
-	 *            args[1] -- Optional, core dump locatiion.If not specify, store
+	 *            args[1] -- Optional, core dump location. If not specify, store
 	 *            the core dump to the default location e.g. under current build
 	 *            folder
 	 */

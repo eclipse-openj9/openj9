@@ -160,7 +160,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
 
    if (getProperties().getCallerCleanup() && memoryArgSize > 0)
       {
-      // adjust sp is neccessary, because for java, the stack is native stack, not java stack.
+      // adjust sp is necessary, because for java, the stack is native stack, not java stack.
       // we need to restore native stack sp properly to the correct place.
       TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
       TR_X86OpCodes op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? ADDRegImms() : ADDRegImm4();

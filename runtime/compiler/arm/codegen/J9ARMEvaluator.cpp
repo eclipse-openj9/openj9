@@ -928,7 +928,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
    cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
 #else
-   // Branch directly to jitMontiorExit
+   // Branch directly to jitMonitorExit
    TR::SymbolReference *symRef = node->getSymbolReference();
    instr = generateImmSymInstruction(cg, ARMOp_bl, node, (uint32_t)symRef->getMethodAddress(), deps, symRef);
    instr->setConditionCode(ARMConditionCodeNE);

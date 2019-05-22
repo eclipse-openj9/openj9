@@ -2944,7 +2944,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          classPair = (J9JITRedefinedClass *) ((char *) classPair->methodList + (classPair->methodCount * sizeof(struct J9JITMethodEquivalence)));
          }
       }
-   //for extended HCR under FSD, all the methods in code cache neeeds to be
+   //for extended HCR under FSD, all the methods in code cache needs to be
    //discarded because of inlining
    else
       {

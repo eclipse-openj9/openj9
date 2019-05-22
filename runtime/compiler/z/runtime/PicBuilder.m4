@@ -1733,7 +1733,7 @@ ZZ zLinux
 ])dnl
 
     LR_GPR  r1,r2
-    NR_GPR  r1,r0          # Remove low-tag of J9Metod ptr
+    NR_GPR  r1,r0          # Remove low-tag of J9Method ptr
     LR_GPR  r3,r14         # free up r14 for RA
     L_GPR   r14,eq_privateRA_inVUCallSnippet(r14) #load RA
     TM      eq_methodCompiledFlagOffset(r1),J9TR_MethodNotCompiledBit
@@ -2482,7 +2482,7 @@ LABEL(ifCHMLTypeCheckIFCPrivate)
 ZZ  Call fast_jitInstanceOf
 ZZ  with three args: VMthread, object, and castClass.
 ZZ
-ZZ  The call to this helper follows J9S390CHelperLinakge except
+ZZ  The call to this helper follows J9S390CHelperLinkage except
 ZZ  that all volatiles are saved here.
 ZZ  instance of result is indicated in return reg
 ZZ
@@ -2549,7 +2549,7 @@ ZZ zLinux
     LHI_GPR r2,~J9TR_J9_ITABLE_OFFSET_DIRECT
 ])dnl
 
-    NR_GPR  r1,r2         # Remove low-tag of J9Metod ptr
+    NR_GPR  r1,r2         # Remove low-tag of J9Method ptr
     L_GPR   r14,eq_codeRA_inInterfaceSnippet(r14)    #load RA
     TM      eq_methodCompiledFlagOffset(r1),J9TR_MethodNotCompiledBit
     JZ      L_jitted_private

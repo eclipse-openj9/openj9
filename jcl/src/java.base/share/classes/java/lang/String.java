@@ -1326,7 +1326,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	// the byte[] value of two Strings. In such cases we extract the String.value fields before entering the operation loop.
 	// However if chatAt is used inside the loop then the JIT will anchor the load of the value byte[] inside of the loop thus
 	// causing us to load the String.value on every iteration. This is very suboptimal and breaks some of the common idioms
-	// that we recognize. The most prominent one is the regionMathes arraycmp idiom that is not recognized unless this method
+	// that we recognize. The most prominent one is the regionMatches arraycmp idiom that is not recognized unless this method
 	// is being used.
 	char charAtInternal(int index, byte[] value) {
 		// Check if the String is compressed
@@ -5277,7 +5277,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	// the byte[] value of two Strings. In such cases we extract the String.value fields before entering the operation loop.
 	// However if chatAt is used inside the loop then the JIT will anchor the load of the value byte[] inside of the loop thus
 	// causing us to load the String.value on every iteration. This is very suboptimal and breaks some of the common idioms
-	// that we recognize. The most prominent one is the regionMathes arraycmp idiom that is not recognized unless this method
+	// that we recognize. The most prominent one is the regionMatches arraycmp idiom that is not recognized unless this method
 	// is being used.
 	char charAtInternal(int index, char[] value) {
 		// Check if the String is compressed

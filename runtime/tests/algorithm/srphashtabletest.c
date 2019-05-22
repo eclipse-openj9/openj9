@@ -176,7 +176,7 @@ userCheckIntegrityFn(void *in, void *userData) {
  * It runs userCheckIntegrityFn for every element in the SRPHashTable.
  * It also tries to find every element user passed by data array.
  * It fails if it is not supposed to find/not find the element.
- * First dataLenth elements of data array should be found in SRPHashtable
+ * First dataLength elements of data array should be found in SRPHashtable
  * and test fails if any of these elements can not be found.
  * Any element after the first dataLength elements of data array should not be found in SRPHashTable.
  * If any is found, then test fails.

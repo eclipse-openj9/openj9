@@ -13,7 +13,7 @@ import java.util.TreeMap;
 import examples.PackageExamples;
 
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -342,7 +342,7 @@ public class LookupAPITests_Bind {
 	}
 
 	/**
-	 * Negaitve test : Lookup.bind() test with a protected method belonging to a super-class(receiver) that is on a different package than the lookup class.
+	 * Negative test : Lookup.bind() test with a protected method belonging to a super-class(receiver) that is on a different package than the lookup class.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

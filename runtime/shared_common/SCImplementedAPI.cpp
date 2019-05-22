@@ -992,7 +992,7 @@ j9shr_classStoreTransaction_updateSharedClassSize(void * tobj, U_32 sizeUsed)
 }
 
 /**
- * Called by JCL natives, this function updates the metadtata (e.g. classpath info) for a shared ROMClass.
+ * Called by JCL natives, this function updates the metadata (e.g. classpath info) for a shared ROMClass.
  *
  * @param [in] currentThread thread calling this function
  * @param [in] classloader

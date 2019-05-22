@@ -2384,7 +2384,7 @@ done:;
 				ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
 #else /* FFI_NATIVE_RAW_API */
 				ffi_call(cif, FFI_FN(function), returnStorage, values);
-#endif /* FFI_NATOVE_RAW_API */
+#endif /* FFI_NATIVE_RAW_API */
 				ret = ffiSuccess;
 			}
 		}

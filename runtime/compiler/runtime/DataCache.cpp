@@ -522,7 +522,7 @@ void TR_DataCacheManager::fillDataCacheHeader(J9JITDataCacheHeader *hdr, uint32_
 // header of the record
 // The data cache does not have to be reserved
 // size may be rounded for alignment
-// There is a similar methos in J9VMBase. That one is supposed to be called
+// There is a similar methods in J9VMBase. That one is supposed to be called
 // from within a compilation. This method is supposed to be called outside a
 // compilation and when we don't need contiguous allocation.
 //----------------------------------------------------------------------------

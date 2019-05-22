@@ -250,7 +250,7 @@ public class ThreadInfo {
 	 * If thread contention monitoring is supported and enabled, returns the
 	 * total amount of time that the thread represented by this
 	 * <code>ThreadInfo</code> has spent blocked on any monitor objects. The
-	 * time is measued in milliseconds and will be measured over the time period
+	 * time is measured in milliseconds and will be measured over the time period
 	 * since thread contention was most recently enabled.
 	 * 
 	 * @return if thread contention monitoring is currently enabled, the number

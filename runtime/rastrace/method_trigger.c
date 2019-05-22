@@ -70,7 +70,7 @@ static const StackTraceFormattingFunction stackTraceFormattingFunctions[] = {
  *               rules (one of these exists for each method(...) clause
  *               specified by the user in the trigger property)
  *
- *               if any matches are found, the macthing method(s) need to
+ *               if any matches are found, the matching method(s) need to
  *               be traced.  addMethodBlockEntry is called to adds these
  *               methods to the triggerOnMethodBlocks chain and to flick
  *               their methodblock flag bits to say "trigger on entry to or
@@ -878,7 +878,7 @@ err:
 }
 
 /**************************************************************************
- * name        - doTriggerActionJstacktrace
+ * name        - doTriggerActionJStacktrace
  * description - generate java stack trace when trigger action met
  * parameters  - thr
  * returns     - void

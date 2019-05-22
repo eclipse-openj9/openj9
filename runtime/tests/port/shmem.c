@@ -1493,7 +1493,7 @@ exit:
 #if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 /*Note:
  * This is more than one test. The first test that fails blocks the rest of the test. The test should not fail :-) 
- * This test is meant to exercise the race conditions that can occur when mutliple vm's create sysv obj
+ * This test is meant to exercise the race conditions that can occur when multiple vm's create sysv obj
  * at the same time.
  */
 int
@@ -1551,7 +1551,7 @@ j9shmem_test15(J9PortLibrary *portLibrary, char* argv0)
 		}
 	}
 
-	/*This test starts multuple process we use a semaphore to synchronize the launch*/
+	/*This test starts multiple process we use a semaphore to synchronize the launch*/
 	launchSemaphore = openLaunchSemaphore(PORTLIB, TEST15_LAUNCH_SEM_NAME, 1);
 	if(-1 == launchSemaphore) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot open launch semaphore");

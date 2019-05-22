@@ -64,7 +64,7 @@ class Test {
 	static final int CORE_COUNT = Integer.getInteger(CORE_COUNT_PROPERTY, 2).intValue();
 	
 	/**
-	 * The time in millisecodns between capturing core files (if CORE_COUNT > 1)
+	 * The time in milliseconds between capturing core files (if CORE_COUNT > 1)
 	 * may be specified via
 	 *   -Dcmdline.coreintervalms=N
 	 * The default is one minute.

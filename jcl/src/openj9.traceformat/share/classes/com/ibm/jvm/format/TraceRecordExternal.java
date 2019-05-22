@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,7 +125,7 @@ final public class TraceRecordExternal extends TraceRecord {
                 if ( buffer[entry+2]==0 && buffer[entry+1]==0 ) {
                      Util.Debug.println("Entry with data length > 256");
 
-                     // remember the ID and lenght of the special entry
+                     // remember the ID and length of the special entry
                      longEntryID     = buffer[entry+3];
                      longEntryLength = Util.constructUnsignedByte(buffer,entry);
 

@@ -1600,7 +1600,7 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCac
  * @param [in] currentThread the thread calling this function
  * @param [in] sizes Size of the ROMClass, and its parts.
  * @param [in] pieces The results of successfully calling this method.
- * @param [in] classnameLength lenth of the class name
+ * @param [in] classnameLength length of the class name
  * @param [in] classnameData class name data
  * @param [in] cpw classpath wrapper
  * @param [in] partitionInCache partition info
@@ -1706,7 +1706,7 @@ SH_CacheMap::allocateROMClass(J9VMThread* currentThread, const J9RomClassRequire
  *
  * @param [in] currentThread the thread calling this function
  * @param [in] sizeToAlloc size in bytes of the new ROMClass to allocate
- * @param [in] classnameLength lenth of the class name
+ * @param [in] classnameLength length of the class name
  * @param [in] classnameData class name data
  * @param [in] cpw classpath wrapper
  * @param [in] partitionInCache partition info

@@ -132,7 +132,7 @@ interpreterUnresolvedStaticGlue:
       btr         eax, 0
       ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
       xchg        edi, eax
-      ; Skip code patching if the interpreter low-tag the RAM mathod
+      ; Skip code patching if the interpreter low-tag the RAM method
       jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
@@ -1038,7 +1038,7 @@ interpreterUnresolvedStaticGlue:
       btr         rax, 0
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
       mov         rdi, rax
-      ; Skip code patching if the interpreter low-tag the RAM mathod 
+      ; Skip code patching if the interpreter low-tag the RAM method 
       jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.

@@ -987,7 +987,7 @@ ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     AHI_GPR   r3,-2*PTR_SIZE    ZZ Otherwise, we move to previous slot
     J LSearchInterfaceSlotToPatch
 
-ZZ If we find a slot that mathces the same class pointer,
+ZZ If we find a slot that matches the same class pointer,
 ZZ we would patch the method entry point
 LABEL(LPatchInterfaceSlot)
     ST_GPR    rEP,PTR_SIZE(r3)

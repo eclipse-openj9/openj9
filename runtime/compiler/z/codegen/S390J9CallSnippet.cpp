@@ -554,7 +554,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    // Field used by nestmate private calls
    // J2I thunk address
-   // No explicit call to `addExternalReloation` because its relocation info is passed to CP_addr `addExternalReloation` call.
+   // No explicit call to `addExternalRelocation` because its relocation info is passed to CP_addr `addExternalRelocation` call.
    *(uintptrj_t *) cursor = (uintptrj_t) thunkAddress;
    j2iRelocInfo->data3 = (uintptrj_t)cursor - cpAddrPosition;    // data3 is the offset of CP_addr to J2I thunk
    AOTcgDiag1(comp, "add TR_J2IVirtualThunkPointer cursor=%x\n", cursor);
@@ -1077,7 +1077,7 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    // J2I thunk address.
-   // Note that J2I thunk relocation is associated with CP addr and the call to `addExternalReloation` uses CP-Addr cursor.
+   // Note that J2I thunk relocation is associated with CP addr and the call to `addExternalRelocation` uses CP-Addr cursor.
    *(intptrj_t *) cursor = (intptrj_t)_thunkAddress;
    j2iRelocInfo->data3 = (uintptrj_t)cursor - cpAddrPosition;  // data3 is the offset of CP_addr to J2I thunk
 

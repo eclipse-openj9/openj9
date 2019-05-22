@@ -88,7 +88,7 @@ j9time_test0(struct J9PortLibrary *portLibrary)
 	/* Verify that the time function pointers are non NULL */
 	
 	/* Not tested, implementation dependent.  No known functionality.
-	 * Startup is private to the portlibary, it is not re-entrant safe
+	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
 	if (NULL == OMRPORT_FROM_J9PORT(portLibrary)->time_startup) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->time_startup is NULL\n");
