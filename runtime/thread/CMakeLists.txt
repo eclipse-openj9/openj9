@@ -47,6 +47,9 @@ omr_add_exports(j9thr ${thread_exports})
 # Note: we need to pass EARLY_SOURCE_EVAL because the ddr logic chokes on
 # $<TARGET_OBJECTS:j9thr_obj> on older versions of cmake
 target_enable_ddr(j9thr j9ddr EARLY_SOURCE_EVAL)
+set_property(TARGET j9thr APPEND PROPERTY DDR_HEADERS
+	${j9vm_SOURCE_DIR}/oti/j9thread.h
+)
 
 install(
 	TARGETS j9thr

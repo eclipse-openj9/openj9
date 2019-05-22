@@ -72,3 +72,8 @@ target_link_libraries(j9codert_vm
 		j9vm_interface
 		j9vm_compiler_defines
 )
+
+target_enable_ddr(j9codert_vm j9ddr)
+set_property(TARGET j9codert_vm APPEND PROPERTY DDR_HEADERS
+	${j9vm_SOURCE_DIR}/oti/stackwalk.h
+)

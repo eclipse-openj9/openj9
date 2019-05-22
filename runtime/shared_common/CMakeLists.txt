@@ -67,3 +67,11 @@ target_link_libraries(j9shrcommon
 		j9utilcore
 		j9util
 )
+
+target_enable_ddr(j9shrcommon j9ddr)
+file(GLOB cpp_headers "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
+set_property(TARGET j9shrcommon APPEND PROPERTY DDR_HEADERS
+	${cpp_headers}
+	shrinit.h
+	sharedconsts.h
+)

@@ -68,6 +68,12 @@ omr_add_exports(j9dmp
 	J9VMDllMain
 )
 
+target_enable_ddr(j9dmp j9ddr)
+set_property(TARGET j9dmp APPEND PROPERTY DDR_HEADERS
+	rasdump_internal.h
+	dmpsup.h
+)
+
 install(
 	TARGETS j9dmp
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

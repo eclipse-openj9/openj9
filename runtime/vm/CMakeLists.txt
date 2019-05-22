@@ -213,6 +213,9 @@ if(J9VM_INTERP_TRACING)
 endif()
 
 target_enable_ddr(j9vm j9ddr)
+set_property(TARGET j9vm APPEND PROPERTY DDR_HEADERS
+	vm_internal.h
+)
 
 install(
 	TARGETS j9vm

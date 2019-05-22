@@ -62,3 +62,8 @@ target_link_libraries(j9realtime
 if(OMR_OS_WINDOWS)
 	target_link_libraries(j9realtime PRIVATE winmm.lib)
 endif()
+
+target_enable_ddr(j9realtime j9ddr)
+set_property(TARGET j9realtime PROPERTY DDR_HEADERS
+	Metronome.hpp
+)

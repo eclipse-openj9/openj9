@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,3 +62,15 @@ target_link_libraries(j9gcbase
 		omrgc
 )
 
+target_enable_ddr(j9gcbase j9ddr)
+set_property(TARGET j9gcbase PROPERTY DDR_HEADERS
+	FinalizerSupport.hpp
+	modron.h
+	ScavengerForwardedHeader.hpp
+
+	${j9vm_SOURCE_DIR}/gc_include/j9modron.h
+	${j9vm_SOURCE_DIR}/gc_include/HeapIteratorAPI.h
+	${j9vm_SOURCE_DIR}/gc_include/ResourceManagedSupport.h
+	${j9vm_SOURCE_DIR}/gc_glue_java/ObjectModel.hpp
+	${j9vm_SOURCE_DIR}/gc_glue_java/sizeclasses.h
+)

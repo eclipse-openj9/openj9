@@ -133,3 +133,8 @@ target_link_libraries(j9util
 		j9simplepool
 		j9stackmap
 )
+
+target_enable_ddr(j9util j9ddr)
+set_property(TARGET j9util APPEND PROPERTY DDR_HEADERS
+	filecache.h
+)
