@@ -3355,7 +3355,7 @@ TR::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
 ////////////////////////////////////////////////////////////////////////////////
 // TR::S390PrivateLinkage::mapIncomingParms - maps parameters onto the stack for the given method.
 //   This function iterates over the parameters, mapping them onto the stack, either right
-//   to left, or left to right, depending on S390Linakge properties.
+//   to left, or left to right, depending on S390Linkage properties.
 //   This code was removed from TR::S390PrivateLinkage::mapStack as it is common code that
 //   is now called by TR::S390PrivateLinkage::mapCompactedStack as well.
 ////////////////////////////////////////////////////////////////////////////////

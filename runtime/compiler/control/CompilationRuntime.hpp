@@ -838,7 +838,7 @@ public:
    /**
    * @brief Compute free physical memory taking into account container limits
    *
-   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered mmeory couldn't be read
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
    * @return                 A value representing the free physicalMemory
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
    */
@@ -851,7 +851,7 @@ public:
    * only refreshes it if more than "updatePeriodMs" have passed since the last update
    * If updatePeriodMs==-1, then updatePeriodMs uses a default value of 500 ms
    *
-   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered mmeory couldn't be read
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
    * @param updatePeriodMs   Indicates how often the cached values are refreshed
    * @return                 A value representing the free physicalMemory 
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error

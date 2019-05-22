@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -908,7 +908,7 @@ CompositeCacheTest::writeHashTest(J9JavaVM* vm, IDATA testCacheSize, SH_Composit
 	if (cc1a->testAndSetWriteHash(currentThread, 999) != 1) {
 		return 5;
 	}
-	/* muliple calls should return same result */
+	/* multiple calls should return same result */
 	if (cc1a->testAndSetWriteHash(currentThread, 999) != 1) {
 		return 6;
 	}

@@ -7267,7 +7267,7 @@ J9::Z::TreeEvaluator::pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
       {
       if (srcPrecision > resultPrecision)
          {
-         /* Packed decimal narrrowing with exception handling:
+         /* Packed decimal narrowing with exception handling:
           *
           * If the narrowing operation truncates non-zero digits (e.g. shift "123C" by 0 digts and keep 2 digits yields "23C")
           * and the 'checkOverflow' parameter is true, the JIT'ed sequence should trigger HW exception and

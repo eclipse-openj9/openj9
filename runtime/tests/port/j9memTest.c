@@ -184,7 +184,7 @@ j9mem_test0(struct J9PortLibrary *portLibrary)
 	/* Verify that the memory management function pointers are non NULL */
 	
 	/* Not tested, implementation dependent.  No known functionality.
-	 * Startup is private to the portlibary, it is not re-entrant safe
+	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
 	if (NULL == OMRPORT_FROM_J9PORT(PORTLIB)->mem_startup) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->mem_startup is NULL\n");

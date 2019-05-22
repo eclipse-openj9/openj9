@@ -197,7 +197,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    if (!lastNode) return changed;   // the last node of the peeling region
    TR_CISCNode *foundNode = lastNode->getSucc(0);
 
-   // Find the last non-neglible node
+   // Find the last non-negligible node
    if (lastNode->isNegligible())
       {
       TR_CISCNode *lastNonNegligble = NULL;

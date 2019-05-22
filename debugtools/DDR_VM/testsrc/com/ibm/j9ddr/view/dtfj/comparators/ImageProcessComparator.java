@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ public class ImageProcessComparator extends DTFJComparator {
 	// getPointerSize()
 	// getRuntiems()
 	// getSignalName()
-	// getSignalNuumber()
+	// getSignalNumber()
 	// getThreads()
 	
 	public void testEquals(Object ddrObject, Object jextractObject, int members) {

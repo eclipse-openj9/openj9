@@ -550,7 +550,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 					&& ((U_8 *)existingROMClass == context->intermediateClassData())
 				) {
 					/* 'existingROMClass' is same as the ROMClass corresponding to intermediate class data.
-					 * Based on the assumption that an agent is actually modifing the class file
+					 * Based on the assumption that an agent is actually modifying the class file
 					 * instead of just returning a copy of the classbytes it recieves,
 					 * this comparison can be avoided.
 					 */

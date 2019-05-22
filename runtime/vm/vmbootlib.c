@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -278,7 +278,7 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 #endif
 
 	/* No library path specified, just add the extension and try that */
-	/* temp fix.  Remove the second openFunc call once apps like javah have bootLibrayPaths */
+	/* temp fix.  Remove the second openFunc call once apps like javah have bootLibraryPaths */
 	result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, lazy);
 	if(result == J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
 		result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_DECORATE);

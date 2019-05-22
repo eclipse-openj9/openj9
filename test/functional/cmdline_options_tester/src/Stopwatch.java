@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ import java.text.*;
  * ToDo: Move to System.nanoTime() instead of System.currentTimeMillis() once test source 
  * is built with 1.5 or higher.
  * Currently millisecond calculation entirely depends on OS update of timer values
- * which happens only once in few tens of milliseconds. So getting milliseocnd directly from os may 
+ * which happens only once in few tens of milliseconds. So getting millisecond directly from os may 
  * not be accurate.
  * 
  */

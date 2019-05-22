@@ -640,7 +640,7 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
 
 /**
  * Determine whether the table should be reset or not, due to a selection
- * of bad values. Will reset the table if necesssary.
+ * of bad values. Will reset the table if necessary.
  *
  * \return True if the table was reset.
  */

@@ -6454,7 +6454,7 @@ SH_CompositeCacheImpl::tryAdjustMinMaxSizes(J9VMThread *currentThread, bool isJC
 		I_32 freeDebugBytes = (I_32)(_theca->localVariableTableNextSRP - _theca->lineNumberTableNextSRP);
 		U_32 maxUsedBytes = (maxLimit < (totalBytes - freeDebugBytes - J9SHR_MIN_GAP_BEFORE_METADATA)) ? maxLimit : (totalBytes - freeDebugBytes - J9SHR_MIN_GAP_BEFORE_METADATA);
 		/* The reserved AOT/JIT data space can only come from space between updateSRP and segmentSRP, so free space in debug area should be subtracted.
-		 * Leave at leaset J9SHR_MIN_GAP_BEFORE_METADATA, so J9SHR_MIN_GAP_BEFORE_METADATA should also be subtracted.
+		 * Leave at least J9SHR_MIN_GAP_BEFORE_METADATA, so J9SHR_MIN_GAP_BEFORE_METADATA should also be subtracted.
 		 */
 		if ((usedAOTBytesAfter - usedAOTBytesBefore + usedJITBytesAfter - usedJIBytesBefore + usedBytesBefore) > maxUsedBytes) {
 			CC_WARNING_TRACE(J9NLS_SHRC_CC_TOTAL_USED_BYTES_GRTHAN_MAXLIMIT, isJCLCall);

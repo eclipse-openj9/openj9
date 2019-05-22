@@ -2415,7 +2415,7 @@ public class MethodHandles {
 	 * and the third will be the item to write into the array
 	 * 
 	 * @param arrayType - the type of the array
-	 * @return a MehtodHandle able to write into the array
+	 * @return a MethodHandle able to write into the array
 	 * @throws IllegalArgumentException - if arrayType is not actually an array
 	 */
 	public static MethodHandle arrayElementSetter(Class<?> arrayType) throws IllegalArgumentException {

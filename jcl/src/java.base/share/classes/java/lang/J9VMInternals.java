@@ -524,7 +524,7 @@ final class J9VMInternals {
 	
 	/**
 	 * Format a message to be used when creating a NoSuchMethodException from the VM.
-	 * On failure returns methodSig ie the old style of NoSuchMethoException message
+	 * On failure returns methodSig ie the old style of NoSuchMethodException message
 	 * @param methodSig String representation of the signature of the called method
 	 * @param clazz1 The calling class, 
 	 * @param classPath1 Classpath used to load calling class. Only set when class is loaded by bootstrap loader

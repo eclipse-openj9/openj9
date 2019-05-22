@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -208,7 +208,7 @@ j9tty_test0(struct J9PortLibrary *portLibrary)
 	/* Verify that the TTY function pointers are non NULL */
 
 	/* Not tested, implementation dependent.  No known functionality.
-	 * Startup is private to the portlibary, it is not re-entrant safe
+	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
 	if (NULL == OMRPORT_FROM_J9PORT(portLibrary)->tty_startup) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->tty_startup is NULL\n");

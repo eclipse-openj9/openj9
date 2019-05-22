@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ public class Test_Object {
 	static int slaveExitCount; // slaves completed ok
 
 	/**
-	 * The static variables below are used by the testNofity3 method
+	 * The static variables below are used by the testNotify3 method
 	 */
 	// Tunable input parameters - teste are the defaults
 	public static int MASTER_SLEEP_SECS3 = 1;

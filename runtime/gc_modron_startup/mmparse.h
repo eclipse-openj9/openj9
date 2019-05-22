@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ typedef enum {
 } gcMemoryParameters;
 
 /* When displaying, maximum number of characters required, plus the "-" i.e. -Xmox */
-#define MAXIMUM_GC_MEMORY_PARAMETER_LENGTH 8 /* -Xsoftmx is longer than the others (Lenght 5) */
+#define MAXIMUM_GC_MEMORY_PARAMETER_LENGTH 8 /* -Xsoftmx is longer than the others (length 5) */
 
 /**
  * Manipulate GC memory parameters.

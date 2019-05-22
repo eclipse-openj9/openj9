@@ -2496,7 +2496,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_REVALIDATE_AOT_METHODS_EQUALS:
 	case RESULT_DO_FIND_AOT_METHODS_EQUALS:
 		if (0 == strcmp(vm->sharedCacheAPI->methodSpecs, SUB_OPTION_AOT_METHODS_OPERATION_HELP)) {
-			/* User has passed in findAotMethdos/invalidateAotMethods/revalidateAotMethods=help" */
+			/* User has passed in findAotMethods/invalidateAotMethods/revalidateAotMethods=help" */
 			const char* option = OPTION_FIND_AOT_METHODS_EQUALS;
 			if (RESULT_DO_INVALIDATE_AOT_METHODS_EQUALS == command) {
 				option = OPTION_INVALIDATE_AOT_METHODS_EQUALS;

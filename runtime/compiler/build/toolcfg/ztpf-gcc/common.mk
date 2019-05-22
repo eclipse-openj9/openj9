@@ -55,7 +55,7 @@ PERL?=perl
 
 #
 # z/Architecture arch and tune level
-# z/TPF uses z10 as minminum supported z/Architecture.
+# z/TPF uses z10 as minimum supported z/Architecture.
 # mtune of z9-109 allows builtin versions of memcpy, etc.
 # instead of calling "arch-optimized" glibc functions.
 #

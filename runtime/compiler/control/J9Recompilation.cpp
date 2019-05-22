@@ -75,7 +75,7 @@ J9::Recompilation::setupMethodInfo()
          }
 
       // During compilation methodInfo->nextOptLevel is the current optlevel
-      // ie. we pretend that the previous (non-extistent) compile has set this up
+      // ie. we pretend that the previous (nonexistent) compile has set this up
       // for us.  Mark this as a non-profiling compile.  Only sampleMethod
       // even enables profiling.
       //

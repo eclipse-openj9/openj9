@@ -881,7 +881,7 @@ public class ConfigObject {
 	}
 
 	/**
-	 * Returns the numbe of sources defined for this ConfigObject.
+	 * Returns the number of sources defined for this ConfigObject.
 	 *
 	 * @return      the number of defined sources
 	 */

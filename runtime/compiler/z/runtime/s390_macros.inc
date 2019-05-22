@@ -300,9 +300,9 @@ ZZ  # derive base pointer into table
     CONST_4BYTE(000000FF) # lshmask1 for patching
     CONST_4BYTE(0000FFFF) # lshmask2 for patching
     CONST_4BYTE(00FFFFFF) # lshmask3 for patching
-    CONST_4BYTE(FF000000) # mshmaks1 for patching
-    CONST_4BYTE(FFFF0000) # mshmaks2 for patching
-    CONST_4BYTE(FFFFFF00) # mshmaks3 for patching
+    CONST_4BYTE(FF000000) # mshmask1 for patching
+    CONST_4BYTE(FFFF0000) # mshmask2 for patching
+    CONST_4BYTE(FFFFFF00) # mshmask3 for patching
 
 LABEL($1PatchLbl0)
 

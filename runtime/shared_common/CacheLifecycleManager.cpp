@@ -653,7 +653,7 @@ j9shr_destroy_all_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA g
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_all_snapshot_getCacheDirFailed();
-		/* NLS meesge has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		return -1;
 	}
 	j9tty_printf(PORTLIB, "\n");

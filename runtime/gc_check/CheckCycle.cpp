@@ -453,7 +453,7 @@ GC_CheckCycle::run(GCCheckInvokedBy invokedBy, UDATA filterFlags)
  * pointer is unaligned, ie low_tagged.
  * 
  * This is not necessary if the Object Map is available as we can perform the
- * necessary check by calling the memeory manager j9gc_ext_is_liveObject() function
+ * necessary check by calling the memory manager j9gc_ext_is_liveObject() function
  * 
  */
 void

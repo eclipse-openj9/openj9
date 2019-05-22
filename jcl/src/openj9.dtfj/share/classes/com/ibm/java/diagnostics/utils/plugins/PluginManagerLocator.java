@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ import com.ibm.java.diagnostics.utils.DTFJContext;
 
 /**
  * Locator class to hide the ASM classloading shimming that occurs when using 
- * the plugin mangager, allowing this to be shared by different plugin architectures
+ * the plugin manager, allowing this to be shared by different plugin architectures
  * rather than just the DTFJ based ones.
  * 
  * @author adam

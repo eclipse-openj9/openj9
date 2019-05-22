@@ -188,7 +188,7 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
       }
    #endif
 
-   // Attempt to allocate a table of mutices
+   // Attempt to allocate a table of mutexes
    if (!TR::MonitorTable::init(privatePortLibrary, javaVM))
       goto _abort;
 
