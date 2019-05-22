@@ -79,8 +79,9 @@ public:
 			&& J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit);
 
 		/* Calculate the size of the object */
+		UDATA const headerSize = J9VMTHREAD_MIXED_HEADER_SIZE(currentThread);
 		UDATA dataSize = clazz->totalInstanceSize;
-		UDATA allocateSize = (dataSize + J9_OBJECT_HEADER_SIZE + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
+		UDATA allocateSize = (dataSize + headerSize + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
 		if (allocateSize < J9_GC_MINIMUM_OBJECT_SIZE) {
 			allocateSize = J9_GC_MINIMUM_OBJECT_SIZE;
 		}
@@ -141,17 +142,25 @@ public:
 		}
 
 		/* Initialize the object */
-		J9NonIndexableObject *objectHeader = (J9NonIndexableObject *) instance;
-		objectHeader->clazz = (j9objectclass_t)(UDATA)clazz;
-
-		if (initializeSlots) {
-			memset(objectHeader + 1, 0, dataSize);
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
+			J9NonIndexableObjectCompressed *objectHeader = (J9NonIndexableObjectCompressed*) instance;
+			objectHeader->clazz = (U_32)(UDATA)clazz;
+			if (initializeSlots) {
+				memset(objectHeader + 1, 0, dataSize);
+			}
+			if (initializeLockWord) {
+				*(U_32*)J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
+			}
+		} else {
+			J9NonIndexableObjectFull *objectHeader = (J9NonIndexableObjectFull*) instance;
+			objectHeader->clazz = (UDATA)clazz;
+			if (initializeSlots) {
+				memset(objectHeader + 1, 0, dataSize);
+			}
+			if (initializeLockWord) {
+				*(UDATA*)J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
+			}
 		}
-
-		if (initializeLockWord) {
-			*J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
-		}
-
 		if (memoryBarrier) {
 			VM_AtomicSupport::writeBarrier();
 		}
@@ -174,14 +183,15 @@ public:
 #endif /* J9VM_ENV_DATA64 */
 			{
 				/* Calculate the size of the object */
-				UDATA dataSize = ((UDATA)size) * J9ARRAYCLASS_GET_STRIDE(arrayClass);
-				UDATA allocateSize = (dataSize + sizeof(J9IndexableObjectContiguous) + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
+				UDATA const headerSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
+				UDATA const dataSize = ((UDATA)size) * J9ARRAYCLASS_GET_STRIDE(arrayClass);
+				UDATA allocateSize = (dataSize + headerSize + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
 				if (allocateSize < J9_GC_MINIMUM_OBJECT_SIZE) {
 					allocateSize = J9_GC_MINIMUM_OBJECT_SIZE;
 				}
 
 				/* Allocate the memory */
-				J9IndexableObjectContiguous *objectHeader = NULL;
+				j9object_t objectHeader = NULL;
 
 				switch(_gcAllocationType) {
 
@@ -190,7 +200,7 @@ public:
 					if (allocateSize <= ((UDATA) currentThread->heapTop - (UDATA) currentThread->heapAlloc)) {
 						U_8 *heapAlloc = currentThread->heapAlloc;
 						UDATA afterAlloc = (UDATA)heapAlloc + allocateSize;
-						objectHeader = (J9IndexableObjectContiguous*)heapAlloc;
+						objectHeader = (j9object_t)heapAlloc;
 						currentThread->heapAlloc = (U_8 *)afterAlloc;
 #if defined(J9VM_GC_TLH_PREFETCH_FTA)
 						currentThread->tlhPrefetchFTA -= allocateSize;
@@ -224,7 +234,7 @@ public:
 						UDATA cellSize = _sizeClasses->smallCellSizes[sizeClassIndex];
 
 						if (cellSize <= ((UDATA) cacheEntry->top - (UDATA) cacheEntry->current)) {
-							objectHeader = (J9IndexableObjectContiguous*)cacheEntry->current;
+							objectHeader = (j9object_t)cacheEntry->current;
 							cacheEntry->current = (UDATA *) ((UDATA) cacheEntry->current + cellSize);
 							/* The metronome pre write barrier might scan this object - always zero it */
 							initializeSlots = true;
@@ -243,26 +253,32 @@ public:
 				}
 
 				/* Initialize the object */
-				objectHeader->clazz = (j9objectclass_t)(UDATA)arrayClass;
-				objectHeader->size = size;
-
-				if (initializeSlots) {
-					memset(objectHeader + 1, 0, dataSize);
+				if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
+					J9IndexableObjectContiguousCompressed *header = (J9IndexableObjectContiguousCompressed*)objectHeader;
+					header->clazz = (U_32)(UDATA)arrayClass;
+					header->size = size;
+					if (initializeSlots) {
+						memset(header + 1, 0, dataSize);
+					}
+				} else {
+					J9IndexableObjectContiguousFull *header = (J9IndexableObjectContiguousFull*)objectHeader;
+					header->clazz = (UDATA)arrayClass;
+					header->size = size;
+					if (initializeSlots) {
+						memset(header + 1, 0, dataSize);
+					}
 				}
 				if (memoryBarrier) {
 					VM_AtomicSupport::writeBarrier();
 				}
-				instance = (j9object_t) objectHeader;
+				instance = objectHeader;
 			}
 		} else {
-			/* Discontiguous Array */
-#if J9SIZEOF_J9IndexableObjectDiscontiguous <= J9_GC_MINIMUM_OBJECT_SIZE
-
-			/* Calculate the object size */
+			/* Zero-length array is discontiguous - assume minimum object size */
 			UDATA allocateSize = J9_GC_MINIMUM_OBJECT_SIZE;
 
 			/* Allocate the memory */
-			J9IndexableObjectDiscontiguous *objectHeader = NULL;
+			j9object_t objectHeader = NULL;
 			switch(_gcAllocationType) {
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
@@ -271,7 +287,7 @@ public:
 				if (allocateSize <= ((UDATA) currentThread->heapTop - (UDATA) currentThread->heapAlloc)) {
 					U_8 *heapAlloc = currentThread->heapAlloc;
 					UDATA afterAlloc = (UDATA)heapAlloc + allocateSize;
-					objectHeader = (J9IndexableObjectDiscontiguous *) heapAlloc;
+					objectHeader = (j9object_t) heapAlloc;
 					currentThread->heapAlloc = (U_8 *)afterAlloc;
 #if defined(J9VM_GC_TLH_PREFETCH_FTA)
 					currentThread->tlhPrefetchFTA -= allocateSize;
@@ -298,7 +314,7 @@ public:
 					UDATA cellSize = _sizeClasses->smallCellSizes[sizeClassIndex];
 
 					if (cellSize <= ((UDATA) cacheEntry->top - (UDATA) cacheEntry->current)) {
-						objectHeader = (J9IndexableObjectDiscontiguous *) cacheEntry->current;
+						objectHeader = (j9object_t) cacheEntry->current;
 						cacheEntry->current = (UDATA *) ((UDATA) cacheEntry->current + cellSize);
 					} else {
 						return NULL;
@@ -315,14 +331,21 @@ public:
 			}
 
 			/* Initialize the object */
-			objectHeader->clazz = (j9objectclass_t)(UDATA)arrayClass;
-			objectHeader->mustBeZero = 0;
-			objectHeader->size = 0;
+			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
+				J9IndexableObjectDiscontiguousCompressed *header = (J9IndexableObjectDiscontiguousCompressed*)objectHeader;
+				header->clazz = (U_32)(UDATA)arrayClass;
+				header->mustBeZero = 0;
+				header->size = 0;
+			} else {
+				J9IndexableObjectDiscontiguousFull *header = (J9IndexableObjectDiscontiguousFull*)objectHeader;
+				header->clazz = (UDATA)arrayClass;
+				header->mustBeZero = 0;
+				header->size = 0;
+			}
 			if (memoryBarrier) {
 				VM_AtomicSupport::writeBarrier();
 			}
-			instance = (j9object_t) objectHeader;
-#endif /* J9SIZEOF_J9IndexableObjectDiscontiguous <= J9_GC_MINIMUM_OBJECT_SIZE */
+			instance = objectHeader;
 
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP) */
 

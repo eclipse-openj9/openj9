@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,25 +165,31 @@ Java_com_ibm_jit_JITHelpers_identityHashSaltPolicy(JNIEnv *env, jclass ignored)
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9ContiguousArrayHeaderSize(JNIEnv *env, jclass ignored)
 {
-	return (jint) sizeof(J9IndexableObjectContiguous);
+	return (jint) J9VMTHREAD_CONTIGUOUS_HEADER_SIZE((J9VMThread*)env);
 }
 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize(JNIEnv *env, jclass ignored)
 {
-	return (jint) sizeof(J9IndexableObjectDiscontiguous);
+	return (jint) J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE((J9VMThread*)env);
 }
 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9ObjectContiguousLengthOffset(JNIEnv *env, jclass ignored)
 {
-	return (jint) offsetof(J9IndexableObjectContiguous, size);
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES((J9VMThread*)env)) {
+		return (jint) offsetof(J9IndexableObjectContiguousCompressed, size);		
+	}
+	return (jint) offsetof(J9IndexableObjectContiguousFull, size);
 }
 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9ObjectDiscontiguousLengthOffset(JNIEnv *env, jclass ignored)
 {
-	return (jint) offsetof(J9IndexableObjectDiscontiguous, size);
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES((J9VMThread*)env)) {
+		return (jint) offsetof(J9IndexableObjectDiscontiguousCompressed, size);		
+	}
+	return (jint) offsetof(J9IndexableObjectDiscontiguousFull, size);
 }
 
 jboolean JNICALL

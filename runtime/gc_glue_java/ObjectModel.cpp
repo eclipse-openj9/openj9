@@ -34,7 +34,10 @@ GC_ObjectModel::initialize(MM_GCExtensionsBase *extensions)
 	
 	_mixedObjectModel = &(extensions->mixedObjectModel);
 	_indexableObjectModel = &(extensions->indexableObjectModel);
-	
+
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	getObjectModelDelegate()->setCompressObjectReferences(extensions->compressObjectReferences());
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	getObjectModelDelegate()->setMixedObjectModel(_mixedObjectModel);
 	getObjectModelDelegate()->setArrayObjectModel(_indexableObjectModel);
 

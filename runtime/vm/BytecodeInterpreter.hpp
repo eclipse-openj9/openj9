@@ -31,7 +31,6 @@
 #include "j9jclnls.h"
 #include "j9bcvnls.h"
 #include "bcnames.h"
-#include "lockNurseryUtil.h"
 #include "rommeth.h"
 #include "stackwalk.h"
 #include "ut_j9vm.h"
@@ -3746,7 +3745,7 @@ done:
 		} else {
 			J9Class *arrayClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, classObject);
 			if (J9CLASS_IS_ARRAY(arrayClazz)) {
-				returnSingleFromINL(REGISTER_ARGS, VM_UnsafeAPI::arrayBaseOffset((J9ArrayClass*)arrayClazz), 2);
+				returnSingleFromINL(REGISTER_ARGS, VM_UnsafeAPI::arrayBaseOffset(_currentThread, (J9ArrayClass*)arrayClazz), 2);
 			} else {
 				buildInternalNativeStackFrame(REGISTER_ARGS);
 				updateVMStruct(REGISTER_ARGS);

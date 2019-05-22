@@ -1174,10 +1174,10 @@ UDATA TR_J9VMBase::getObjectHeaderSizeInBytes()                     {return size
 UDATA TR_J9VMBase::getOffsetOfSuperclassesInClassObject()           {return offsetof(J9Class, superclasses);}
 UDATA TR_J9VMBase::getOffsetOfBackfillOffsetField()                 {return offsetof(J9Class, backfillOffset);}
 
-UDATA TR_J9VMBase::getOffsetOfContiguousArraySizeField()            {return TMP_OFFSETOF_J9INDEXABLEOBJECTCONTIGUOUS_SIZE;}
-UDATA TR_J9VMBase::getOffsetOfDiscontiguousArraySizeField()         {return TMP_OFFSETOF_J9INDEXABLEOBJECTDISCONTIGUOUS_SIZE;}
-UDATA TR_J9VMBase::getJ9ObjectContiguousLength()                    {return offsetof(J9IndexableObjectContiguous, size);}
-UDATA TR_J9VMBase::getJ9ObjectDiscontiguousLength()                 {return offsetof(J9IndexableObjectContiguous, size);}
+UDATA TR_J9VMBase::getOffsetOfContiguousArraySizeField()            {return TR::Compiler->om.offsetOfContiguousArraySizeField();}
+UDATA TR_J9VMBase::getOffsetOfDiscontiguousArraySizeField()         {return TR::Compiler->om.offsetOfDiscontiguousArraySizeField();}
+UDATA TR_J9VMBase::getJ9ObjectContiguousLength()                    {return TR::Compiler->om.offsetOfContiguousArraySizeField();}
+UDATA TR_J9VMBase::getJ9ObjectDiscontiguousLength()                 {return TR::Compiler->om.offsetOfContiguousArraySizeField();}
 
 UDATA TR_J9VMBase::getOffsetOfArrayClassRomPtrField()               {return offsetof(J9ArrayClass, romClass);}
 UDATA TR_J9VMBase::getOffsetOfClassRomPtrField()                    {return offsetof(J9Class, romClass);}

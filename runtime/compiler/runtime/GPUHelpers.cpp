@@ -883,8 +883,8 @@ cudaInfoHashRemove(CudaInfo *cudaInfo, void **hostref, int32_t elementSize)
    return NULL_DEVICE_PTR;
    }
 
-#define OBJECT_HEADER_SIZE sizeof(J9IndexableObjectContiguous)
-#define OBJECT_ARRAY_LENGTH_OFFSET (TMP_OFFSETOF_J9INDEXABLEOBJECTCONTIGUOUS_SIZE)
+#define OBJECT_HEADER_SIZE (TR::Compiler->om.compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
+#define OBJECT_ARRAY_LENGTH_OFFSET (TR::Compiler->om.offsetOfContiguousArraySizeField())
 #define HEADER_PADDING  (TR::CodeGenerator::GPUAlignment - OBJECT_HEADER_SIZE)
 
 #define     LOGSIZE     8192

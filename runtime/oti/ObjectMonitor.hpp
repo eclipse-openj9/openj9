@@ -24,9 +24,6 @@
 #define OBJECTMONITOR_HPP_
 
 #include "j9.h"
-#ifdef J9VM_THR_LOCK_NURSERY
-#include "lockNurseryUtil.h"
-#endif
 #include "j9modron.h"
 #include "j9consts.h"
 #include "vm_api.h"
