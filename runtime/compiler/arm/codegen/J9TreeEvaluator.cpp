@@ -137,6 +137,19 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
 
    }
 
+
+void
+J9::ARM::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg)
+   {
+   TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM platforms.\n");
+   }
+
+void
+J9::ARM::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister)
+   {
+   TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM platforms.\n");
+   }
+
 /**
  *  \brief
  *     Generates write barrier for non-simple arraycopy node

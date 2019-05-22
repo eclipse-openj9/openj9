@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,4 +32,6 @@ j9jit_files(
 	codegen/J9Instruction.cpp
 	codegen/J9Snippet.cpp
 	codegen/J9TreeEvaluator.cpp
+	codegen/J9WatchedInstanceFieldSnippet.cpp
+	codegen/J9WatchedStaticFieldSnippet.cpp
 )
