@@ -69,7 +69,7 @@ MM_RealtimeRootScanner::doClass(J9Class *clazz)
 void
 MM_RealtimeRootScanner::doClassSlot(J9Class **clazzPtr)
 {
-	_markingScheme->markClass(_env, *clazzPtr);
+	_realtimeGC->getRealtimeDelegate()->markClass(_env, *clazzPtr);
 }
 
 MM_RootScanner::CompletePhaseCode
@@ -77,7 +77,7 @@ MM_RealtimeRootScanner::scanClassesComplete(MM_EnvironmentBase *env)
 {
 	/* TODO: consider reactivating this call */
 	// reportScanningStarted(RootScannerEntity_ClassesComplete);
-	// _realtimeGC->doTracing(_env);
+	// _realtimeGC->completeMarking(_env);
 	// reportScanningEnded(RootScannerEntity_ClassesComplete);
 	return complete_phase_OK;
 }
