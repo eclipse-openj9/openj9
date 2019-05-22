@@ -192,7 +192,8 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 
 #if !defined(J9VM_ENV_DATA64)
 		if (0 != ((UDATA)doubleStaticAddress & (sizeof(U_64) - 1))) {
-			doubleStaticAddress += 1;
+			/* Increment by a U_32 to ensure 64 bit aligned */
+			doubleStaticAddress = (U_64*)(((U_32*)doubleStaticAddress) + 1);
 		}
 #endif
 
