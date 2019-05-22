@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,8 +34,8 @@ namespace J9 { typedef J9::ARM::TreeEvaluator TreeEvaluatorConnector; }
 #error J9::ARM::TreeEvaluator expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
+#include "il/symbol/LabelSymbol.hpp"
 
 namespace J9
 {
@@ -48,6 +48,17 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    public:
 
    static void genWrtbarForArrayCopy(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::CodeGenerator *cg);
+
+   /*
+    * Generates instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
+    * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
+    */
+   static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister);
+
+   /*
+    * Generate instructions for static/instance field access report.
+    */
+   static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg);
 
    };
 

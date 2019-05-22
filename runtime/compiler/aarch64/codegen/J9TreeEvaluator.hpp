@@ -36,6 +36,7 @@ namespace J9 { typedef J9::ARM64::TreeEvaluator TreeEvaluatorConnector; }
 
 
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
+#include "il/symbol/LabelSymbol.hpp"
 
 namespace J9
 {
@@ -47,6 +48,17 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
+   /*
+    * Generates instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
+    * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
+    */
+    static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister);
+
+   /*
+    * Generate instructions for static/instance field access report.
+    */
+    static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg);
+	
    };
 
 }
