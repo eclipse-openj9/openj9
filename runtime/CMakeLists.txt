@@ -264,6 +264,63 @@ target_link_libraries(j9vm_main_wrapper
 ###
 
 make_ddr_set(j9ddr)
+if(OMR_DDR)
+set_target_properties(j9ddr PROPERTIES
+       BLACKLIST "${CMAKE_CURRENT_SOURCE_DIR}/ddr/blacklist"
+       OVERRIDES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ddr/overrides"
+       BLOB "${CMAKE_CURRENT_BINARY_DIR}/j9ddr.dat"
+       SUPERSET "${CMAKE_BINARY_DIR}/superset.dat"
+)
+
+set_property(TARGET j9ddr PROPERTY DDR_HEADERS
+	oti/bcverify.h
+	oti/cfr.h
+	oti/dbg.h
+	oti/j9.h
+	oti/j9consts.h
+	oti/j9cp.h
+	oti/j9dump.h
+	oti/j9javaaccessflags.h
+	oti/j9modifiers_api.h
+	oti/j9nonbuilder.h
+	oti/j9port.h
+	oti/j9port_generated.h
+	oti/j9srphashtable.h
+	
+	oti/jlm.h
+	oti/libhlp.h
+	oti/memcheck.h
+	oti/monhelp.h
+	oti/romcookie.h
+	oti/shcdatatypes.h
+	oti/shcflags.h
+	oti/shchelp.h
+	oti/util_api.h
+
+	${CMAKE_CURRENT_BINARY_DIR}/j9cfg.h
+	${CMAKE_CURRENT_BINARY_DIR}/j9vmconstantpool.h
+
+	include/ibmjvmti.h
+	include/j9vmls.h
+	include/jvmri.h
+	include/vmi.h
+	include/zipsup.h
+)
+
+set_property(TARGET j9ddr PROPERTY INCLUDE_DIRECTORIES
+       $<TARGET_PROPERTY:j9vm_interface,INTERFACE_INCLUDE_DIRECTORIES>
+       ${J9VM_OMR_DIR}/gc/include
+       ${J9VM_OMR_DIR}/gc/base
+       ${J9VM_OMR_DIR}/gc/stats
+       ${J9VM_OMR_DIR}/gc/structs
+       ${j9vm_SOURCE_DIR}/gc_glue_java
+       ${j9vm_SOURCE_DIR}/gc_stats
+       ${j9vm_SOURCE_DIR}/gc_base
+       ${j9vm_SOURCE_DIR}/gc_include
+       ${CMAKE_CURRENT_BINARY_DIR}/omr/gc
+       ${CMAKE_CURRENT_BINARY_DIR}/omr
+)
+endif()
 
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
