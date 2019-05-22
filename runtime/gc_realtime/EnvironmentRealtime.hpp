@@ -29,7 +29,6 @@
 #include "OSInterface.hpp"
 #include "Scheduler.hpp"
 
-
 class MM_AllocationContextRealtime;
 class MM_HeapRegionDescriptorRealtime;
 class MM_RealtimeRootScanner;

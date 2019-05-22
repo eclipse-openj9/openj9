@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 /**
  * @file
  */ 
@@ -28,7 +27,7 @@
 #include "ut_j9mm.h"
 
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "GlobalGCStats.hpp"
 #include "RealtimeGC.hpp"
 #include "RealtimeMarkingScheme.hpp"
@@ -37,14 +36,17 @@
 void
 MM_RealtimeMarkTask::run(MM_EnvironmentBase *env)
 {
-	_markingScheme->markLiveObjects(MM_EnvironmentRealtime::getEnvironment(env));
+	_markingScheme->markLiveObjectsInit(env, false);
+	_markingScheme->markLiveObjectsRoots(env);
+	_markingScheme->markLiveObjectsScan(env);
+	_markingScheme->markLiveObjectsComplete(env);
 }
 
 void
 MM_RealtimeMarkTask::setup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 
 	extensions->realtimeGC->getRealtimeDelegate()->clearGCStatsEnvironment(env);
 	
@@ -64,7 +66,7 @@ void
 MM_RealtimeMarkTask::cleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 	MM_MetronomeDelegate *delegate = extensions->realtimeGC->getRealtimeDelegate();
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 

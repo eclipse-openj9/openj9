@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,13 +39,15 @@
 #include "MemorySubSpace.hpp"
 #include "MemorySubSpaceMetronome.hpp"
 #include "MemoryPoolSegregated.hpp"
+#include "ObjectAllocationInterface.hpp"
 #include "RootScanner.hpp"
 #include "RealtimeGC.hpp"
+#include "RealtimeMarkingScheme.hpp"
+#include "StackSlotValidator.hpp"
 
 class MM_Dispatcher;
 class MM_MemorySubSpace;
 class MM_MemorySubSpaceMetronome;
-class MM_RealtimeMarkingScheme;
 
 class MM_RealtimeRootScanner : public MM_RootScanner
 {
