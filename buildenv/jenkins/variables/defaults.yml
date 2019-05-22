@@ -433,7 +433,7 @@ x86-64_windows:
 #========================================#
 # Windows x86 64bits Large Heap
 #========================================#
-x86-64_windows:
+x86-64_windows_xl:
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
