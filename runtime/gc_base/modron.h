@@ -108,7 +108,7 @@ extern "C" mm_j9object_t j9gc_objaccess_pointerFromToken(J9VMThread *vmThread, f
 extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_j9object_t object);
 
 #if defined (OMR_GC_FULL_POINTERS)
-#define mmPointerFromToken(vmThread, token) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? j9gc_objaccess_pointerFromToken((vmThread), (token)) : ((mm_j9object_t)(token)))
+#define mmPointerFromToken(vmThread, token) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? j9gc_objaccess_pointerFromToken((vmThread), (token)) : ((mm_j9object_t)(UDATA)(token)))
 #define mmTokenFromPointer(vmThread, token) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? j9gc_objaccess_tokenFromPointer((vmThread), (token)) : ((fj9object_t)(object)))
 #else /* defined (OMR_GC_FULL_POINTERS) */
 #define mmPointerFromToken(vmThread, token) (j9gc_objaccess_pointerFromToken((vmThread), (token) ))

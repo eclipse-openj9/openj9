@@ -116,7 +116,7 @@ attachVMToOMR(J9JavaVM *vm)
 		omrVM->_language_vm = (void*)vm;
 		omrVM->_runtime = omrRuntime;
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-		omrVM->_compressObjectReferences = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES);
+		omrVM->_compressObjectReferences = J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm);
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		if (OMR_ERROR_NONE == omr_attach_vm_to_runtime(omrVM)) {
 			vm->omrRuntime = omrRuntime;
