@@ -130,7 +130,7 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 		} else if ((useAdvise) && (MEMORY_TYPE_JIT_SCRATCH_SPACE & segment->type)) {
 			j9mem_advise_and_free_memory(segment->baseAddress);
 		} else if (segment->type & (MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_UNDEAD_CLASS)) {
-			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 				j9mem_free_memory32(segment->baseAddress);
 			} else {
 				j9mem_free_memory(segment->baseAddress);
@@ -229,7 +229,7 @@ allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemPa
 		tmpAddr = j9vmem_reserve_memory_ex(&segment->vmemIdentifier, vmemParams);
 		Trc_VM_virtualRAMClassAlloc(tmpAddr);
 	} else if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
-		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 			tmpAddr = j9mem_allocate_memory32(segment->size, memoryCategory);
 		} else {
 			tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
