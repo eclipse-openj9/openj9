@@ -87,7 +87,8 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'x86-64_mac_xl'  : CURRENT_RELEASES,
          'x86-64_mac'     : CURRENT_RELEASES,
          'x86-32_windows' : ['8'],
-         'x86-64_windows' : CURRENT_RELEASES]
+         'x86-64_windows' : CURRENT_RELEASES,
+         'x86-64_windows_xl' : CURRENT_RELEASES]
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
@@ -102,6 +103,8 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','x86-64_lin
             'xlinuxcm' : ['x86-64_linux_cm'],
             'win32' : ['x86-32_windows'],
             'win' : ['x86-64_windows'],
+            'winlargeheap' : ['x86-64_windows_xl'],
+            'winxl' : ['x86-64_windows_xl'],
             'osx' : ['x86-64_mac'],
             'osxlargeheap' : ['x86-64_mac_xl'],
             'osxxl' : ['x86-64_mac_xl']]

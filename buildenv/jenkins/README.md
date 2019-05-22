@@ -51,15 +51,21 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Windows on x86-64
         - Spec: x86-64_windows
         - shortname: win
+    - Windows on x86-64 largeheap/non-compressed references
+        - Spec: x86-64_windows_xl
+        - shortname: winlargeheap or winxl
     - Windows on x86 (32bit, supported on JDK8 only)
-        Spec: x86-32_windows
-        Shortname: win32
+        - Spec: x86-32_windows
+        - Shortname: win32
     - OSX on x86-64
         - Spec: x86-64_mac
         - Shortname: osx
     - OSX on x86-64 largeheap/non-compressed references
         - Spec: x86-64_mac_xl
         - Shortname: osxlargeheap or osxxl
+    - ALL
+        - Launches a subset of 'all' platforms
+        - ppc64le_linux, s390x_linux, x86-64_linux, x86-64_linux_xl, ppc64_aix, x86-64_windows, x86-32_windows, x86-64_mac
 
 - OpenJ9 committers can request builds by commenting in a pull request
     - Format: `Jenkins <build type> <level>.<group> <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
