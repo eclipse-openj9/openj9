@@ -1954,15 +1954,6 @@ MM_IncrementalGenerationalGC::triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env)
 	/* these are assigned to temporary variable out-of-line since some preprocessors get confused if you have directives in macros */
 	UDATA approximateActiveFreeMemorySize = 0;
 	UDATA activeMemorySize = 0;
-
-	Assert_MM_true(!_extensions->isMetronomeGC());
-	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(), 
-		j9time_hires_clock(), 
-		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
-		_extensions->getForge()->getCurrentStatistics()
-	);
 	
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_END(
 		_extensions->omrHookInterface,
