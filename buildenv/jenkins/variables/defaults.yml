@@ -431,6 +431,39 @@ x86-64_windows:
       12: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
 #========================================#
+# Windows x86 64bits Large Heap
+#========================================#
+x86-64_windows:
+  boot_jdk:
+    8: '/cygdrive/c/openjdk/jdk7'
+    11: '/cygdrive/c/openjdk/jdk11'
+    12: '/cygdrive/c/openjdk/jdk11'
+    next: '/cygdrive/c/openjdk/jdk12'
+  release:
+    8: 'windows-x86_64-normal-server-release'
+    11: 'windows-x86_64-normal-server-release'
+    12: 'windows-x86_64-server-release'
+    next: 'windows-x86_64-server-release'
+  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
+  openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
+  extra_configure_options:
+    8: '--with-noncompressedrefs --with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    11: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    12: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    next: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+  node_labels:
+    build:
+      8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      12: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+  build_env:
+    vars:
+      8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+      11: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+      12: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+      next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+#========================================#
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
