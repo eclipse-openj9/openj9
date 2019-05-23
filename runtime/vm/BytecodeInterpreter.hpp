@@ -2413,6 +2413,8 @@ ffi_exit:
 		_currentThread->currentException = NULL;
 		/* Only report the event if the tag is set - this prevents reporting multiple throws of the same exception when returning from internal call-in */
 		if (_currentThread->privateFlags & J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW) {
+			/* Clear the flag once the entered the reporting branch */
+			_currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
 			if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW)) {
 				ALWAYS_TRIGGER_J9HOOK_VM_EXCEPTION_THROW(_vm->hookInterface, _currentThread, exception);
 				if (immediateAsyncPending()) {
