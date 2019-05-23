@@ -4546,10 +4546,9 @@ VMarrayStoreCHKEvaluator(
    generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, t1Reg,
       generateS390MemoryReference(t2Reg, owningObjectRegVal, 0, cg));
 
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, wbLabel);
    if (debugObj)
       debugObj->addInstructionComment(cursor, "Check if src.type is subclass");
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperCallLabel);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRNE, node, helperCallLabel);
    // FAIL
    arrayStoreCHKOOL = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel,wbLabel,cg);
    cg->getS390OutOfLineCodeSectionList().push_front(arrayStoreCHKOOL);
