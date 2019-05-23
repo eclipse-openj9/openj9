@@ -58,7 +58,7 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	-o $@ $(UMA_EXE_POSTFIX_FLAGS)
 </#assign>
 
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/gnu/all /ztpf/commit
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 ifndef j9vm_env_data64
   J9M31 = -m31
