@@ -102,7 +102,6 @@ pipelineJob("$JOB_NAME") {
             stringParam('SLACK_CHANNEL')
             stringParam('RESTART_TIMEOUT')
             stringParam('RESTART_TIMEOUT_UNITS')
-            stringParam('BUILD_LIST')
             choiceParam('AUTOMATIC_GENERATION', ['true', 'false'])
         } else if (jobType == 'build'){
             stringParam('NODE')

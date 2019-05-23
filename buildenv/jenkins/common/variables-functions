@@ -738,11 +738,6 @@ def set_vendor_variables() {
         dirs.addAll(params.VENDOR_TEST_DIRS.tokenize(','))
     }
 
-    BUILD_LIST = params.BUILD_LIST
-    if (!BUILD_LIST) {
-        BUILD_LIST = ''
-    }
-
     if (params.VENDOR_TEST_REPOS) {
         // populate the VENDOR_TEST_* maps
 
@@ -772,20 +767,11 @@ def set_vendor_variables() {
             // parse the vendor source multi-map
             // and populate the VENDOR_TEST_* maps
 
-             VARIABLES.vendor_source.test.each { entry ->
+            VARIABLES.vendor_source.test.each { entry ->
                 REPO_NAME = get_repo_name_from_url(entry.get('repo'))
-
                 VENDOR_TEST_REPOS_MAP[REPO_NAME] = entry.get('repo')
                 VENDOR_TEST_BRANCHES_MAP[REPO_NAME] = entry.get('branch')
                 VENDOR_TEST_DIRS_MAP[REPO_NAME] = entry.get('directory')
-
-                if (entry.get('build_list')) {
-                    // a comma separated list of vendor tests projects
-                    if (BUILD_LIST) {
-                        BUILD_LIST += ","
-                    }
-                    BUILD_LIST += entry.get('build_list').join(',')
-               }
             }
         }
     }

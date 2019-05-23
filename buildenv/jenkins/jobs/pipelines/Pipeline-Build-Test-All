@@ -125,8 +125,6 @@ PROMOTE = (params.PROMOTE) ? params.PROMOTE : ""
 echo "PROMOTE:'${PROMOTE}'"
 SLACK_CHANNEL = (params.SLACK_HANDLE) ? params.SLACK_HANDLE : ""
 echo "SLACK_CHANNEL:'${SLACK_CHANNEL}'"
-BUILD_LIST = (params.BUILD_LIST) ? params.BUILD_LIST : ""
-echo "BUILD_LIST:'${BUILD_LIST}'"
 BUILD_IDENTIFIER = (params.BUILD_IDENTIFIER) ? params.BUILD_IDENTIFIER : ""
 echo "BUILD_IDENTIFIER:'${BUILD_IDENTIFIER}'"
 AUTOMATIC_GENERATION = (params.AUTOMATIC_GENERATION) ? params.AUTOMATIC_GENERATION : 'true'
@@ -319,7 +317,6 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'RESTART_TIMEOUT', value: RESTART_TIMEOUT),
                     string(name: 'RESTART_TIMEOUT_UNITS', value: RESTART_TIMEOUT_UNITS),
                     string(name: 'SETUP_LABEL', value: SETUP_LABEL),
-                    string(name: 'BUILD_LIST', value: BUILD_LIST),
                     string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
                     string(name: 'EXTRA_GETSOURCE_OPTIONS', value: EXTRA_GETSOURCE_OPTIONS),
                     string(name: 'EXTRA_CONFIGURE_OPTIONS', value: EXTRA_CONFIGURE_OPTIONS),
