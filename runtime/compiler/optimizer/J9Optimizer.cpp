@@ -782,8 +782,6 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_VarHandleTransformer::create, OMR::varHandleTransformer);
    _opts[OMR::unsafeFastPath] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_UnsafeFastPath::create, OMR::unsafeFastPath);
-   _opts[OMR::trivialStoreSinking] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialSinkStores::create, OMR::trivialStoreSinking);
    _opts[OMR::idiomRecognition] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_CISCTransformer::create, OMR::idiomRecognition);
    _opts[OMR::loopAliasRefiner] =
