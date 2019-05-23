@@ -167,15 +167,13 @@ public class IPC {
 		}
 	}
 
-	/*[PR Jazz 30075] setupSemaphore was re-doing what createDirectoryAndSemaphore (now called prepareCommonDirectory) did already */
-
 	/**
-	 * 
+	 * Open a semaphore.  On Windows, use the global namespace if requested.
 	 * @param ctrlDir Location of the control file
 	 * @param SemaphoreName key used to identify the semaphore
 	 * @return non-zero on failure
 	 */
-	native static int openSemaphore(String ctrlDir, String SemaphoreName);
+	native static int openSemaphore(String ctrlDir, String SemaphoreName, boolean global);
 
 	/**
 	 * wait for a post on the semaphore for this VM. Use notify() to do the post
@@ -185,19 +183,25 @@ public class IPC {
 
 	/**
 	 * Open the semaphore, post to it, and close it
+	 * @param ctrlDir directory containing the semaphore
+	 * @param semaphoreName name of the semaphore
 	 * @param numberOfTargets number of times to post to the semaphore
+	 * @param global open the semaphore in the global namespace (Windows only)
 	 * @return 0 on success
 	 */
-	native static int notifyVm(String ctrlDir, String SemaphoreName,
-			int numberOfTargets);
+	native static int notifyVm(String ctrlDir, String semaphoreName,
+			int numberOfTargets, boolean global);
 
 	/**
 	 * Open the semaphore, decrement it without blocking to it, and close it
-	 * @param numberOfTargets number of times to decrement to the semaphore
+	 * @param ctrlDir directory containing the semaphore
+	 * @param semaphoreName name of the semaphore
+	 * @param numberOfTargets number of times to post to the semaphore
+	 * @param global open the semaphore in the global namespace (Windows only)
 	 * @return 0 on success
 	 */
-	static native int cancelNotify(String ctrlDir, String SemaphoreName,
-			int numberOfTargets);
+	static native int cancelNotify(String ctrlDir, String semaphoreName,
+			int numberOfTargets, boolean global);
 
 	/**
 	 * close but do not destroy this VM's notification semaphore.

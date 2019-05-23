@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,7 +230,7 @@ public abstract class CommonDirectory {
 	 */
 	static String openSemaphore() throws IOException {
 		String semName = MASTER_NOTIFIER; /*[PR Jazz 48044] semaphore name is a constant */
-		int status = IPC.openSemaphore(getCommonDirFileObject().getAbsolutePath(), semName);
+		int status = IPC.openSemaphore(getCommonDirFileObject().getAbsolutePath(), semName, true);
 		/*[MSG "K0538", "semaphore {0} status= {1}"]*/
 		if (SEMAPHORE_OKAY != status) {
 			throw new IOException(com.ibm.oti.util.Msg.getString("K0538" , semName, Integer.valueOf(status)));  //$NON-NLS-1$
@@ -246,7 +246,7 @@ public abstract class CommonDirectory {
 		int status = 0;
 		IPC.logMessage("reopenSemaphore"); //$NON-NLS-1$
 		closeSemaphore();
-		status = IPC.openSemaphore(getCommonDirFileObject().getAbsolutePath(), MASTER_NOTIFIER);		
+		status = IPC.openSemaphore(getCommonDirFileObject().getAbsolutePath(), MASTER_NOTIFIER, true);		
 		return status;
 	}
 
@@ -267,22 +267,24 @@ public abstract class CommonDirectory {
 	/**
 	 * Open the semaphore, post to it, and close it
 	 * @param numberOfTargets number of times to post to the semaphore
+	 * @param global Use the global semaphore (Windows only)
 	 * @return 0 on success
 	 */
-	public static int notifyVm(int numberOfTargets) {
+	public static int notifyVm(int numberOfTargets, boolean global) {
 		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("notifyVm ", numberOfTargets, " targets"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return IPC.notifyVm(getCommonDirFileObject().getAbsolutePath(), MASTER_NOTIFIER, numberOfTargets);
+		return IPC.notifyVm(getCommonDirFileObject().getAbsolutePath(), MASTER_NOTIFIER, numberOfTargets, global);
 	}
 
 	/**
 	 * Open the semaphore, decrement it without blocking to it, and close it
 	 * @param numberOfTargets number of times to decrement to the semaphore
+	 * @param global Use the global semaphore (Windows only)
 	 * @return 0 on success
 	 */
-	public static int cancelNotify(int numberOfTargets) {
-		return IPC.cancelNotify(getCommonDirPath(), MASTER_NOTIFIER, numberOfTargets);
+	public static int cancelNotify(int numberOfTargets, boolean global) {
+		return IPC.cancelNotify(getCommonDirPath(), MASTER_NOTIFIER, numberOfTargets, global);
 	}
 
 	/**
