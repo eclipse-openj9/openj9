@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@
 #define J9PORT_SHSEM_CREATIONMUTEX "j9shsemcreationMutex"
 #define J9PORT_SHSEM_WAITTIME (2000) /* wait time in ms for creationMutex */
 #define J9PORT_SHSEM_NAME_PREFIX "javasemaphore"
+#define GLOBAL_NAMESPACE_PREFIX "Global\\"
 
 /* Used Internally */
 #define DIR_SEP DIR_SEPARATOR
@@ -45,10 +46,11 @@
 #define SUCCESS 0
 #define SEMAPHORE_MAX I_32_MAX
 static j9shsem_handle* createsemHandle(struct J9PortLibrary *portLibrary, int nsems, char* baseName);
-static intptr_t createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle);
-static intptr_t openSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle);
+static intptr_t createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle, BOOLEAN global);
+static intptr_t openSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle, BOOLEAN global);
 static char*
 getSemaphoreFullName(struct J9PortLibrary* portLibrary, const struct J9PortShSemParameters *params);
+static wchar_t *convertToWindowsFormat(OMRPortLibrary *portLibrary, const char *source, wchar_t *destination, uintptr_t destinationSize, BOOLEAN global);
 
 int32_t
 j9shsem_params_init(struct J9PortLibrary *portLibrary, struct J9PortShSemParameters *params) 
@@ -58,8 +60,40 @@ j9shsem_params_init(struct J9PortLibrary *portLibrary, struct J9PortShSemParamet
  	params->permission = 0; /* No applicable in Windows */
  	params->controlFileDir = NULL; /* Directory in which to create control files (SysV semaphores only */
  	params->proj_id = 1; /* parameter used with semName to generate semaphore key */
+ 	params->global = 0; /* by default use the session namespace for the semaphore */
  	return 0;
 }
+
+/*
+ * Convert a UTF-8 string to UTF-16 and prepend a global name space prefix.
+ * This allows a user with multiple sessions to share the semaphore.
+ * @param portLibrary port library
+ * @param source original UTF-8 string
+ * @param global prepend global namespace prefix
+ * @param destination buffer to receive the UTF-16 string
+ * @param destinationSize size of destination buffer in UTF-16 characters
+ * @return the destination buffer or NULL on failure.
+ */
+static wchar_t*
+convertToWindowsFormat(OMRPortLibrary *portLibrary, const char *source, wchar_t *destination, uintptr_t destinationSize, BOOLEAN global) {
+	wchar_t *destinationCursor = destination;
+	wchar_t *result  = destination;
+
+	if (global) {
+		size_t prefixLength = strlen(GLOBAL_NAMESPACE_PREFIX);
+		wchar_t *result = port_convertFromUTF8(portLibrary, GLOBAL_NAMESPACE_PREFIX, destinationCursor, destinationSize);
+		destinationCursor += prefixLength;
+		destinationSize -= prefixLength;
+	}
+	if (NULL != result) {
+		result = port_convertFromUTF8(portLibrary, source, destinationCursor, destinationSize);
+	}
+	if (NULL != result) {
+		result = destination;
+	}
+	return result;
+}
+
 intptr_t 
 j9shsem_open(struct J9PortLibrary *portLibrary, struct j9shsem_handle **handle, const struct J9PortShSemParameters *params)
 {
@@ -75,6 +109,7 @@ j9shsem_open(struct J9PortLibrary *portLibrary, struct j9shsem_handle **handle, 
 	char *semaphoreFullName;
 	int i = 0;
 	wchar_t unicodeBuffer[UNICODE_BUFFER_SIZE], *unicodeSemaphoreName;
+	BOOLEAN global = (1 == params->global);
 	
 	Trc_PRT_shsem_j9shsem_open_Entry(params->semName, params->setSize, params->permission);
 	/* If global creation mutex doesn't exist, create it */
@@ -164,8 +199,9 @@ j9shsem_open(struct J9PortLibrary *portLibrary, struct j9shsem_handle **handle, 
 
 	Trc_PRT_shsem_j9shsem_open_waitglobalmutex(waitResult, windowsLastError);
 	omrstr_printf(semaphoreName, J9SH_MAXPATH, "%s", baseFile);
-	/* Convert the filename from UTF8 to Unicode */
-	unicodeSemaphoreName = port_convertFromUTF8(OMRPORTLIB, semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	/* Convert the filename from UTF8 to Unicode and prepend 'Global\'*/
+	unicodeSemaphoreName = convertToWindowsFormat(OMRPORTLIB,
+			semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE, global);
 	if (NULL == unicodeSemaphoreName) {
 		rc = J9PORT_ERROR_SHSEM_OPFAILED;
 	} else {
@@ -176,10 +212,10 @@ j9shsem_open(struct J9PortLibrary *portLibrary, struct j9shsem_handle **handle, 
   
 		if (shsem_handle->mainLock == NULL) {
 			Trc_PRT_shsem_j9shsem_open_Event2(semaphoreName);
-			rc = createSemaphore(portLibrary, shsem_handle);
+			rc = createSemaphore(portLibrary, shsem_handle, global);
 		} else {
 			Trc_PRT_shsem_j9shsem_open_Event1(semaphoreName);
-			rc = openSemaphore(portLibrary, shsem_handle);
+			rc = openSemaphore(portLibrary, shsem_handle, global);
 		}
 	}
 	
@@ -368,7 +404,7 @@ createsemHandle(struct J9PortLibrary *portLibrary, int nsems, char* baseName)
 }
 
 static intptr_t
-createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle)
+createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle, BOOLEAN global)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	uint32_t i;
@@ -379,7 +415,7 @@ createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_
 	Trc_PRT_shsem_j9shsem_createsemaphore_entered(shsem_handle->rootName);
 
 	/* Convert the semaphore name from UTF8 to Unicode */
-	unicodeSemaphoreName = port_convertFromUTF8(OMRPORTLIB, shsem_handle->rootName, unicodeBuffer, UNICODE_BUFFER_SIZE);
+	unicodeSemaphoreName = convertToWindowsFormat(OMRPORTLIB, shsem_handle->rootName, unicodeBuffer, UNICODE_BUFFER_SIZE, global);
 	if (NULL != unicodeSemaphoreName) {
 		shsem_handle->mainLock = CreateSemaphoreW(NULL, 0, SEMAPHORE_MAX, unicodeSemaphoreName);
 		if(unicodeBuffer != unicodeSemaphoreName) {
@@ -401,7 +437,7 @@ createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_
 		omrstr_printf(semaphoreName, J9SH_MAXPATH, "%s_set%d", shsem_handle->rootName, i);
 		Trc_PRT_shsem_j9shsem_createsemaphore_creatingset(i, semaphoreName);   
 		  
-		unicodeSemaphoreName = port_convertFromUTF8(OMRPORTLIB, semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE);
+		unicodeSemaphoreName = convertToWindowsFormat(OMRPORTLIB, semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE, global);
 		if (NULL != unicodeSemaphoreName) {
 			debugHandle = shsem_handle->semHandles[i] = CreateSemaphoreW(NULL, 0, SEMAPHORE_MAX, unicodeSemaphoreName);
 			if (unicodeBuffer != unicodeSemaphoreName) {
@@ -419,7 +455,7 @@ createSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_
 	return J9PORT_INFO_SHSEM_CREATED;
 }
 static intptr_t
-openSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle)
+openSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_handle, BOOLEAN global)
 {
 	/*Open and setup the semaphore arrays*/
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -436,7 +472,7 @@ openSemaphore(struct J9PortLibrary* portLibrary, struct j9shsem_handle* shsem_ha
 
 		/*convert the name to unicode*/
 		memset(unicodeBuffer, 0, UNICODE_BUFFER_SIZE * sizeof(wchar_t));
-		unicodeSemaphoreName = port_convertFromUTF8(OMRPORTLIB, semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE);
+		unicodeSemaphoreName = convertToWindowsFormat(OMRPORTLIB, semaphoreName, unicodeBuffer, UNICODE_BUFFER_SIZE, global);
 		if (NULL != unicodeSemaphoreName) {
 			shsem_handle->semHandles[i] = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, 0, unicodeSemaphoreName);
 			if (unicodeBuffer != unicodeSemaphoreName) {

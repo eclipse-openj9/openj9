@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -570,7 +570,7 @@ jlong JNICALL Java_com_ibm_jvm_Trace_getMicros(JNIEnv *env, jobject recv);
 
 /* attach API */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfDecrements);
+Java_com_ibm_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfDecrements, jboolean global);
 jint JNICALL
 Java_com_ibm_tools_attach_target_IPC_chownFileToTargetUid(JNIEnv *env, jclass clazz, jstring path, jlong uid);
 jlong JNICALL
@@ -592,7 +592,7 @@ Java_com_ibm_tools_attach_target_IPC_setupSemaphore(JNIEnv *env, jclass clazz, j
 jint JNICALL
 Java_com_ibm_tools_attach_target_IPC_openSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfPosts);
+Java_com_ibm_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfPosts, jboolean global);
 jint JNICALL
 Java_com_ibm_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz);
 void JNICALL
