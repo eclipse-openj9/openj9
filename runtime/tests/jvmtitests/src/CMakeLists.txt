@@ -180,4 +180,5 @@ target_link_libraries(jvmti_test_src
 	PRIVATE
 		j9vm_interface
 		j9vm_jvmtitest_includes
+		jvmti_test_agent
 )
