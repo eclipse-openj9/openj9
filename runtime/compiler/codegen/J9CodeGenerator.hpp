@@ -331,6 +331,11 @@ private:
 
    TR_BitVector *_liveMonitors;
 
+protected:
+
+   // isTemporaryBased storageReferences just have a symRef but some other routines expect a node so use the below to fill in this symRef on this node
+   TR::Node *_dummyTempStorageRefNode;
+
 public:
 
    static bool wantToPatchClassPointer(TR::Compilation *comp,
