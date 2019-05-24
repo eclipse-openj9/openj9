@@ -337,6 +337,9 @@ public:
 
    bool wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedClassPointer, const TR::Node *forNode);
 
+   bool getSupportsBigDecimalLongLookasideVersioning() { return _flags3.testAny(SupportsBigDecimalLongLookasideVersioning);}
+   void setSupportsBigDecimalLongLookasideVersioning() { _flags3.set(SupportsBigDecimalLongLookasideVersioning);}
+
    // --------------------------------------------------------------------------
    // GPU
    //
@@ -478,12 +481,13 @@ private:
 
    enum // Flags
       {
-      HasFixedFrameC_CallingConvention    = 0x00000001,
-      SupportsMaxPrecisionMilliTime       = 0x00000002,
-      SupportsInlineStringCaseConversion  = 0x00000004, /*! codegen inlining of Java string case conversion */
-      SupportsInlineStringIndexOf         = 0x00000008, /*! codegen inlining of Java string index of */
-      SupportsInlineStringHashCode        = 0x00000010, /*! codegen inlining of Java string hash code */
-      SupportsInlineConcurrentLinkedQueue = 0x00000020,
+      HasFixedFrameC_CallingConvention                    = 0x00000001,
+      SupportsMaxPrecisionMilliTime                       = 0x00000002,
+      SupportsInlineStringCaseConversion                  = 0x00000004, /*! codegen inlining of Java string case conversion */
+      SupportsInlineStringIndexOf                         = 0x00000008, /*! codegen inlining of Java string index of */
+      SupportsInlineStringHashCode                        = 0x00000010, /*! codegen inlining of Java string hash code */
+      SupportsInlineConcurrentLinkedQueue                 = 0x00000020,
+      SupportsBigDecimalLongLookasideVersioning           = 0x00000040, 
       };
 
    flags32_t _j9Flags;
