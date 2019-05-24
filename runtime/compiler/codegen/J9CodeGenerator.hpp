@@ -271,6 +271,8 @@ public:
 private:
 
    TR_HashTabInt _uncommonedNodes;               // uncommoned nodes keyed by the original nodes
+   
+   TR::list<TR::Node*> _nodesSpineCheckedList;
 
    uint16_t changeParmLoadsToRegLoads(TR::Node*node, TR::Node **regLoads, TR_BitVector *globalRegsWithRegLoad, TR_BitVector &killedParms, vcount_t visitCount); // returns number of RegLoad nodes created
 
