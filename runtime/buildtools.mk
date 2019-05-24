@@ -28,7 +28,12 @@ define \n
 endef
 
 ifndef SPEC
-$(error $(\n)ERROR: SPEC is not set.$(\n)USAGE: make -f buildtools.mk SPEC=<value> [TRC_THRESHOLD=<value>] [BUILD_ID=<value>]$(\n)SPEC is the name of the spec file without .spec. Be careful to use the right one, especially for default/compressed.$(\n)TRC_THRESHOLD is optional. Default value is 1.$(\n)BUILD_ID is optional. Default value is 000000.$(\n))
+$(error $(\n)\
+ERROR: SPEC is not set.$(\n)\
+USAGE: make -f buildtools.mk SPEC=<value> [TRC_THRESHOLD=<value>] [BUILD_ID=<value>]$(\n)\
+SPEC is the name of the spec file without .spec. Be careful to use the right one, especially for default/compressed.$(\n)\
+TRC_THRESHOLD is optional. Default value is 1.$(\n)\
+BUILD_ID is optional. Default value is 000000.$(\n))
 endif
 
 BUILD_ID      ?= 000000
@@ -68,8 +73,10 @@ ifneq (,$(CCACHE))
 endif
 
 ifneq (,$(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))))
+	EXEEXT := .exe
 	PATHSEP := ;
 else
+	EXEEXT :=
 	PATHSEP := :
 	J9_ROOT := $(shell pwd)
 endif
@@ -127,20 +134,26 @@ findAllFiles = \
 	$(foreach i,$(wildcard $1/*),$(call findAllFiles,$i,$2)) \
 	$(wildcard $1/$2)
 
-TRACEGEN_DEFINITION_TDF_FILES := $(strip $(call findAllFiles,.,*.tdf))
+TRACEGEN_DEFINITION_TDF_FILES := $(patsubst ./%,%,$(strip $(call findAllFiles,.,*.tdf)))
 TRACEGEN_DEFINITION_SENTINELS := $(patsubst %.tdf,%.tracesentinel,$(TRACEGEN_DEFINITION_TDF_FILES))
 
 %.tracesentinel : %.tdf
 	./tracegen -treatWarningAsError -generatecfiles -force -threshold $(TRC_THRESHOLD) -file $<
 	touch $@
 
+# re-run tracegen if the executable has changed
+$(TRACEGEN_DEFINITION_SENTINELS) : tracegen$(EXEEXT)
+
+all_tracesentinels : $(TRACEGEN_DEFINITION_SENTINELS)
+
 # process TDF files to generate RAS tracing headers and C files
-trace_merge : buildtrace
-	@$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' $(TRACEGEN_DEFINITION_SENTINELS)
+trace_merge : tracemerge$(EXEEXT) $(TRACEGEN_DEFINITION_SENTINELS)
 	./tracemerge -majorversion 5 -minorversion 1 -root .
 	touch $@
 
-tracing : trace_merge
+tracing : buildtrace
+	$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' all_tracesentinels
+	$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' trace_merge
 
 NLS_NLSTOOL := $(JAVA) -cp sourcetools/lib/j9nls.jar com.ibm.oti.NLSTool.J9NLS
 NLS_OPTIONS :=
@@ -157,8 +170,13 @@ HOOK_DEFINITION_SENTINELS := $(patsubst %.hdf,%.hooksentinel, $(HOOK_DEFINITION_
 	./hookgen $<
 	touch $@
 
+# re-run hookgen if the executable has changed
+$(HOOK_DEFINITION_SENTINELS) : hookgen$(EXEEXT)
+
+all_hooksentinels : $(HOOK_DEFINITION_SENTINELS)
+
 hooktool : buildhook
-	@$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' $(HOOK_DEFINITION_SENTINELS)
+	$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' all_hooksentinels
 
 # run configure to generate makefile
 OMRGLUE = ../gc_glue_java
@@ -263,4 +281,4 @@ endif
 makeLibDir :
 	mkdir -p lib
 
-.PHONY : buildtools checkSpec configure constantpool copya2e ddr hooktool makeLibDir nls tools tracing uma
+.PHONY : all_hooksentinels all_tracesentinels buildtools checkSpec configure constantpool copya2e ddr hooktool makeLibDir nls tools tracing uma
