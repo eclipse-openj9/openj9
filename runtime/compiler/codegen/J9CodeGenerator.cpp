@@ -2995,7 +2995,6 @@ J9::CodeGenerator::compressedReferenceRematerialization()
          node = tt->getNode();
          if (node->getOpCodeValue() == TR::BBStart && !node->getBlock()->isExtensionOfPreviousBlock())
             {
-            _compressedRefs.clear();
 
             ListIterator<TR::Node> nodesIt(&rematerializedNodes);
             for (TR::Node * rematNode = nodesIt.getFirst(); rematNode != NULL; rematNode = nodesIt.getNext())
@@ -3013,7 +3012,6 @@ J9::CodeGenerator::compressedReferenceRematerialization()
            {
            if (node->getFirstChild()->getVisitCount() == visitCount)
               alreadyVisitedFirstChild = true;
-           _compressedRefs.push_front(node->getFirstChild());
            }
 
          self()->rematerializeCompressedRefs(autoSymRef, tt, NULL, -1, node, visitCount, &rematerializedNodes);
