@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
 ###
 ### Basic housekeeping stuff
-### IE things which need to be set up before including J9vmPlatform
+### i.e. things which need to be set up before including J9vmPlatform
 ###
 
 include(cmake/version.cmake)
@@ -70,9 +70,9 @@ include(cmake/J9vmGenAsm.cmake)
 # Build everything with -fPIC (or equivalent).
 # We do this to ensure that our static libraries get built with -fPIC
 # (cmake automatically builds shared libraries with -fPIC)
-# TODO this has the side effect that we also build executables with -fPIE which we dont want.
+# TODO this has the side effect that we also build executables with -fPIE which we don't want.
 # Need to investigate if it's possible to get one without the other. If it's not we need
-# to explicitly tag individual targets which seem tedious
+# to explicitly tag individual targets which seems tedious.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(OMR_HOST_OS STREQUAL "osx")
@@ -103,7 +103,7 @@ if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
 
-#clean up the variables we used
+# clean up the variables we used
 set(versionStr)
 set(checkCondition)
 set(conditionalVersionString)
@@ -117,8 +117,8 @@ configure_file(include/j9lib.h.in j9lib.h)
 configure_file(include/j9version.h.in j9version.h)
 
 # Definition of add_hookgen pulled in from omr/cmake/modules/OmrHookgen.cmake
-# Here we handle all the .hdf files which dont have a more logical home.
-# ie. they live in directories where we dont need to build anything
+# Here we handle all the .hdf files which don't have a more logical home.
+# i.e. they live in directories where we don't need to build anything
 # and/or its hard to track down exactly who depends on them
 
 omr_add_hookgen(INPUT oti/j9jit.hdf)
@@ -128,7 +128,7 @@ omr_add_hookgen(INPUT gc_include/j9mm.hdf)
 
 # Wrap up the hookgen'd files in a named target
 # This is to work around the fact that CMake does not do proper dependency tracking
-# for generated files across different directories
+# for generated files across different directories.
 add_custom_target(j9vm_hookgen
 	DEPENDS
 		${CMAKE_CURRENT_BINARY_DIR}/jithook.h
@@ -154,38 +154,76 @@ else()
 	add_custom_target(j9vm_nlsgen)
 endif()
 
-# Generate jvmti header
 if(J9VM_IS_NON_STAGING)
 	set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 	file(MAKE_DIRECTORY "${J9VM_INCLUDE_DIR}")
 else()
 	set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 endif()
-add_custom_command(OUTPUT "${J9VM_INCLUDE_DIR}/jvmti.h"
-	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4"
-	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" > "jvmti.h"
+
+# On z/OS, some generated files must be converted to EBCDIC for consistency.
+# This macro is intended to be used as a replacement for add_custom_command
+# for those files.
+if(OMR_OS_ZOS)
+	macro(add_custom_ascii_command)
+		set(options)
+		set(singleValueArgs OUTPUT WORKING_DIRECTORY)
+		set(multiValueArgs COMMAND DEPENDS)
+		cmake_parse_arguments(opt "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+		add_custom_command(OUTPUT "${opt_OUTPUT}"
+			DEPENDS ${opt_DEPENDS}
+			COMMAND ${opt_COMMAND}
+			COMMAND iconv -f ISO8859-1 -t IBM-1047 < "${opt_OUTPUT}" > "${opt_OUTPUT}.tmp"
+			COMMAND mv -f "${opt_OUTPUT}.tmp" "${opt_OUTPUT}"
+			COMMAND chtag -t -c IBM-1047 "${opt_OUTPUT}"
+			VERBATIM
+			WORKING_DIRECTORY "${opt_WORKING_DIRECTORY}"
+		)
+	endmacro(add_custom_ascii_command)
+else()
+	macro(add_custom_ascii_command)
+		set(options)
+		set(singleValueArgs OUTPUT WORKING_DIRECTORY)
+		set(multiValueArgs COMMAND DEPENDS)
+		cmake_parse_arguments(opt "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+		add_custom_command(OUTPUT "${opt_OUTPUT}"
+			DEPENDS ${opt_DEPENDS}
+			COMMAND ${opt_COMMAND}
+			VERBATIM
+			WORKING_DIRECTORY "${opt_WORKING_DIRECTORY}"
+		)
+	endmacro(add_custom_ascii_command)
+endif()
+
+# generate headers
+
+add_custom_ascii_command(OUTPUT "${J9VM_INCLUDE_DIR}/jni.h"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4"
+	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4" ${ASCII_TO_NATIVE} > "jni.h"
 	VERBATIM
 	WORKING_DIRECTORY "${J9VM_INCLUDE_DIR}"
 )
-
-#Generate jni header
-add_custom_command(OUTPUT "${J9VM_INCLUDE_DIR}/jni.h" 
-	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4"
-   	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4" > "jni.h"
+add_custom_ascii_command(OUTPUT "${J9VM_INCLUDE_DIR}/jvmti.h"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4"
+	COMMAND m4 -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jvmti.h.m4" ${ASCII_TO_NATIVE} > "jvmti.h"
 	VERBATIM
 	WORKING_DIRECTORY "${J9VM_INCLUDE_DIR}"
 )
 
 # Note we do this here rather than in the redirector directory to work around
-# issues in cmake. If we did it there each target which consumed generated.c has
-# its own rule to create it. Which causes a race condition when building in parallel
-add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
+# issues in cmake. If we did it there each target which consumed generated.c would need
+# its own rule to create it, which leads race conditions when building in parallel.
+
+add_custom_ascii_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
 	DEPENDS oti/helpers.m4 redirector/generated.c.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/redirector/generated.c.m4" > generated.c
 	VERBATIM
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/redirector"
 )
-add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
+
+add_custom_ascii_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
 	DEPENDS oti/helpers.m4 redirector/forwarders.m4 j9vm/generated.h.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/j9vm/generated.h.m4" > generated.h
 	VERBATIM
@@ -211,7 +249,7 @@ endif()
 ###
 
 # j9vm_interface is used to hold properties we want to apply to everyone.
-# eg. adding oti/ to the include path. etc.
+# e.g. adding oti/ to the include path etc.
 add_library(j9vm_interface INTERFACE)
 target_include_directories(j9vm_interface
 	INTERFACE
@@ -297,7 +335,7 @@ add_dependencies(omrutil_obj j9vm_nlsgen run_cptool)
 # Note: this has to happen after we add_subdirectory omr
 
 # The string we append to the name of shared libs
-#set(versionStr "${J9VM_VERSION_MAJOR}${J9VM_VERSION_MINOR}")
+# set(versionStr "${J9VM_VERSION_MAJOR}${J9VM_VERSION_MINOR}")
 set(versionStr "29")
 
 # Save the old shared library suffix val (eg. '.so' or '.dll', so we can use it later if needed)
@@ -340,7 +378,7 @@ if(J9VM_MODULE_DDREXT)
 endif()
 if(OMR_HOST_OS STREQUAL "win")
 	# TODO: need to add windows support
-	#add_subdirectory(dfix)
+	# add_subdirectory(dfix)
 endif()
 if(J9VM_MODULE_EXELIB)
 	add_subdirectory(exelib)
@@ -361,9 +399,9 @@ if(J9VM_MODULE_GC_CHECK)
 	add_subdirectory(gc_check)
 endif()
 if(J9VM_MODULE_DDR)
-	#TODO: Does this need to be implemented? Or are we only going to bother to support
-	# new style DDR-Gen /w cmake
-	#add_subdirectory(gc_ddr)
+	# TODO: Does this need to be implemented? Or are we only going to bother to support
+	# new style ddrgen with cmake?
+	# add_subdirectory(gc_ddr)
 endif()
 if(J9VM_MODULE_GC_MODRON_STANDARD)
 	add_subdirectory(gc_modron_standard)
@@ -380,7 +418,7 @@ endif()
 if(J9VM_MODULE_GC_STRUCTS)
 	add_subdirectory(gc_structs)
 endif()
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(gc_tests)
 if(J9VM_MODULE_GC_TRACE)
 	add_subdirectory(gc_trace)
@@ -400,7 +438,7 @@ endif()
 if(J9VM_GC_VLHGC)
 	add_subdirectory(gc_verbose_handler_vlhgc)
 endif()
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(gc_verbose_java)
 add_subdirectory(gc_verbose_old)
 add_subdirectory(gc_verbose_old_events)
@@ -423,12 +461,12 @@ endif()
 if(J9VM_MODULE_J9VM)
 	add_subdirectory(j9vm)
 endif()
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jcl)
 if(J9VM_MODULE_JEXTRACTNATIVES)
 	add_subdirectory(jextractnatives)
 endif()
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jilgen)
 if(J9VM_MODULE_J9JIT_VM)
 	add_subdirectory(jit_vm)
@@ -443,7 +481,7 @@ add_subdirectory(jsigWrapper)
 if(J9VM_MODULE_JVMTI)
 	add_subdirectory(jvmti)
 endif()
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(libffi)
 add_subdirectory(mgmt)
 if(J9VM_MODULE_PORT)
@@ -489,7 +527,7 @@ endif()
 if(J9VM_MODULE_UTIL)
 	add_subdirectory(util)
 endif()
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(util_core)
 if(J9VM_MODULE_VERBOSE)
 	add_subdirectory(verbose)
@@ -504,11 +542,11 @@ add_subdirectory(vmchk)
 # TODO: need to add windows support
 if(J9VM_MODULE_WINDBG)
 	if(OMR_ENV_DATA32)
-		#add_subdirectory(win)
+		# add_subdirectory(win)
 	else()
-		#add_subdirectory(win_64)
+		# add_subdirectory(win_64)
 	endif()
-	#add_subdirectory(windbg)
+	# add_subdirectory(windbg)
 endif()
 if(J9VM_MODULE_ZIP)
 	add_subdirectory(zip)
@@ -517,5 +555,5 @@ if(J9VM_MODULE_ZLIB)
 	add_subdirectory(zlib)
 endif()
 
-#NOTE this is not conditional in the UMA module.xml
+# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(tests)

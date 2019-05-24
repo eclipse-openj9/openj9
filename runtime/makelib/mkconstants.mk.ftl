@@ -243,3 +243,20 @@ UMA_OBJECTS+=$(patsubst %.mc,%.res,$(wildcard *.mc))
 <#if uma.spec.type.windows>
 UMA_WINDOWS_PARRALLEL_HACK=-j $(NUMBER_OF_PROCESSORS)
 </#if>
+
+# On z/OS, some generated files must be converted to EBCDIC for consistency.
+# This macro is intended to be used in a rule where the target is initially
+# created with ASCII encoding and must be converted to EBCDIC, for example:
+#     m4 < input.m4 > output $(call CONVERT_ASCII_TO_NATIVE, output)
+<#if uma.spec.type.zos>
+ifeq ($(OPENJ9_BUILD),true)
+CONVERT_ASCII_TO_NATIVE = \
+	&& iconv -f ISO8859-1 -t IBM-1047 < $1 > $(strip $1).tmp \
+	&& mv -f $(strip $1).tmp $1 \
+	&& chtag -t -c IBM-1047 $1
+else
+CONVERT_ASCII_TO_NATIVE =
+endif
+<#else>
+CONVERT_ASCII_TO_NATIVE =
+</#if>

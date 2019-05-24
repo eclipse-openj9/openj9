@@ -101,6 +101,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<exclude-if condition="spec.linux_arm.*"/>
 				<exclude-if condition="spec.linux_aarch64.* and spec.flags.env_crossbuild" />
 				<exclude-if condition="spec.linux_ztpf.*"/>
+				<exclude-if condition="spec.zos_390.*"/>
 			</command>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-arm -r '9' ./constgen" type="all">
 				<include-if condition="spec.linux_arm.*"/>
@@ -110,6 +111,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</command>
 			<command line="sleep 20;cd $(UMA_PATH_TO_ROOT); if [ -x ../build_constgen.sh ] &amp;&amp; [ ! -e ../constgen.completed ] ; then ../build_constgen.sh ; fi" type="all">
 				<include-if condition="spec.linux_ztpf.*"/>
+			</command>
+			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; LIBPATH=.$(if $(LIBPATH),:$(LIBPATH)) ./constgen" type="all">
+				<include-if condition="spec.zos_390.*"/>
 			</command>
 		</commands>
 	</artifact>
