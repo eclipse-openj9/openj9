@@ -20,26 +20,16 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package java.util;
+package com.ibm.gpu.spi;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import com.ibm.gpu.spi.GPUAssist;
+/**
+ * GPUAssistHolder is an internal class used by java.util.Arrays.
+ */
+public final class GPUAssistHolder {
 
-final class GPUAssistHolder {
-	static final GPUAssist instance = AccessController.doPrivileged((PrivilegedAction<GPUAssist>) GPUAssistHolder::gpuAssist);
+	/**
+	 * The value of this field is updated as necessary by System.completeInitialization().
+	 */
+	public static GPUAssist instance = GPUAssist.NONE;
 
-	private static GPUAssist gpuAssist() {
-		ServiceLoader<GPUAssist.Provider> loaded = ServiceLoader.load(GPUAssist.Provider.class);
-
-		for (GPUAssist.Provider provider : loaded) {
-			GPUAssist assist = provider.getGPUAssist();
-
-			if (assist != null) {
-				return assist;
-			}
-		}
-
-		return GPUAssist.NONE;
-	}
 }
