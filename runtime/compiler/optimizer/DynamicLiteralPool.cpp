@@ -406,7 +406,7 @@ bool TR_DynamicLiteralPool::transformNeeded(TR::Node *grandParent, TR::Node *par
    // TR::arraytranslateAndTest may throw AIOB, but that is taken care of by the evaluator.  Also, the
    // iconst may be the character to search.
    if (parentOpCode.isBndCheck() && parentOpCodeValue != TR::arraytranslateAndTest)
-      return (cg()->bndsChkNeedsLiteralFromPool(child));
+      return false;
 
    // TR::arrayset evaluator expects to see const child, and it's evaluated
    // specially. Don't modify const children of TR::arrayset. See 74553
