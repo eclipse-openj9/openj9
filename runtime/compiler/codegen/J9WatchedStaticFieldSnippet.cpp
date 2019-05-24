@@ -22,6 +22,7 @@
 
 #include "codegen/J9WatchedStaticFieldSnippet.hpp"
 #include "codegen/Relocation.hpp"
+#include "il/SymbolReference.hpp"
 
 TR::J9WatchedStaticFieldSnippet::J9WatchedStaticFieldSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, void *fieldAddress, J9Class *fieldClass)
    : TR::Snippet(cg, node, generateLabelSymbol(cg), false)
