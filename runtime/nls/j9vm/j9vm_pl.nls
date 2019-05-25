@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1304,11 +1304,11 @@ J9NLS_VM_DEFAULT_METHOD_CONFLICT.system_action=
 J9NLS_VM_DEFAULT_METHOD_CONFLICT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED=Opcja -Xdiagnosticscollector nie jest obs\u0142ugiwana przez to \u015brodowisko JVM.
+J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED=
 # START NON-TRANSLATABLE
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.explanation=The JVM has been started with the -Xdiagnosticscollector option, which is no longer supported
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.system_action=The JVM continues to run
-J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.user_response=Refer to the IBM SDK documentation
+J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.explanation=NOTAG
+J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.system_action=
+J9NLS_VM_DIAGNOSTIC_COLLECTOR_NOT_SUPPORTED.user_response=
 # END NON-TRANSLATABLE
 
 # retVal, errno and errno2 should not be translated. They refer to internal variables.
