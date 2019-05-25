@@ -331,7 +331,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return Optional with a nominal descriptor of VarHandle instance
 	 */
 	public Optional<VarHandleDesc> describeConstable() {
-		/* this method should be overriden by types that are supported */
+		/* this method should be overridden by types that are supported */
 		return Optional.empty();
 	}
 

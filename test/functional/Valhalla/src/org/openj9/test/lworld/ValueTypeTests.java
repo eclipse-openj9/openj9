@@ -201,7 +201,7 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create a value type with double slot primative members
+	 * Create a value type with double slot primitive members
 	 * 
 	 * value Point2DComplex {
 	 * 	double d;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1147,7 +1147,7 @@ public class LookupAPITests_Unreflect {
 	/**
 	 * Negative test : unreflect a protected method from a level 2 protected inner class using the top level outer class lookup
 	 * belonging to a different package.
-	 * Basically we unreflect a method from protected inner class packagte1.C.D.E where the lookup class used is package2.F.
+	 * Basically we unreflect a method from protected inner class package1.C.D.E where the lookup class used is package2.F.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

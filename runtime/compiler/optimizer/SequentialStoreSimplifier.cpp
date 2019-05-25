@@ -2124,7 +2124,7 @@ bool TR_ArrayShiftTreeCollection::insertTree(TR::TreeTop * currTree)
 
 void TR_ArrayShiftTreeCollection::checkLoadStoreOrder()
    {
-   // we are checking for consistent offets of both the stores and the loads here
+   // we are checking for consistent offsets of both the stores and the loads here
    // only supporting inorder stores now since all platforms have not implemented reverse stores
    int32_t expectedOffsetDelta = _storeTrees[0]->getRootNode()->getOpCode().getSize();
    int32_t baseTargetOffset = _storeTrees[0]->getTargetAddress()->getOffset();

@@ -6610,7 +6610,7 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
          //
          TR::ResolvedMethodSymbol *owningMethodSymbol = candidate->_node->getSymbolReference()->getOwningMethodSymbol(comp());
          TR_OpaqueClassBlock *classObject = comp()->getObjectClassPointer();
-         ////the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 it is guarded by another check (see the first occurence of findOrCreateClassSymbol in EA; dememoizedConstructorCall
+         ////the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 it is guarded by another check (see the first occurrence of findOrCreateClassSymbol in EA; dememoizedConstructorCall
          TR::SymbolReference *classSymRef = getSymRefTab()->findOrCreateClassSymbol(owningMethodSymbol, -1, classObject, false);
          TR::Node *classNode = TR::Node::createWithSymRef(candidate->_node, TR::loadaddr, 0, classSymRef);
          candidate->_node->removeAllChildren();

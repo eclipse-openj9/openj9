@@ -620,7 +620,7 @@ ClassFileWriter::writeConstantPool()
 			case CFR_CONSTANT_Utf8:
 			{
 				J9UTF8 * utf8 = (J9UTF8 *) entry->address;
-				/* If this is an anonClass, we must build the classData with the origianl name, 
+				/* If this is an anonClass, we must build the classData with the original name, 
 				 * not the anonClass name. There is only one copy of the className in the ROMClass,
 				 * so replace the matching anonClassName reference with the originalClassName reference  
 				 */

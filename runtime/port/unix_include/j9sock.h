@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,7 @@ typedef struct hostent_data OSHOSTENT_DATA;
 #endif /* J9ZOS390 */
 #endif /* IPv6_FUNCTION_SUPPORT */
 
-/* defines for the unix error constants.  These may be overriden for specific platforms. */
+/* defines for the unix error constants.  These may be overridden for specific platforms. */
 #define J9PORT_ERROR_SOCKET_UNIX_CONNRESET 		ECONNRESET
 #define J9PORT_ERROR_SOCKET_UNIX_EAGAIN							EAGAIN
 #define J9PORT_ERROR_SOCKET_UNIX_EAFNOSUPPORT			EAFNOSUPPORT

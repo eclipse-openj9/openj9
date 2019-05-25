@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -181,7 +181,7 @@ final public class TraceRecordInternal extends TraceRecord {
         offset = entry;  // this is the first ( oldest) entry in this Record
         currentTimeStamp = upperWord.shiftLeft(32).or(Util.constructUnsignedLong(buffer, entry + TIMESTAMP_OFFSET, Util.INT));
         //currentTimeStamp = Util.constructUnsignedLong(buffer, entry + TIMESTAMP_OFFSET, Util.INT);
-        //Util.Debug.println("TraceBuffer: oldest offest = " + offset + " timeStamp = " + currentTimeStamp);
+        //Util.Debug.println("TraceBuffer: oldest offset = " + offset + " timeStamp = " + currentTimeStamp);
         //Util.printDump(buffer,bufferSize - headerSize);
         return;
     }

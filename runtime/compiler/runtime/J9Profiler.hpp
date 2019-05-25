@@ -812,7 +812,7 @@ class TR_AccessedProfileInfo
  * carry out at runtime. To achieve these, it maintains a list of all persistent profile
  * info. It will:
  *
- * 1) Deallocate persitent profile info. Once persistent profile info has a reference count
+ * 1) Deallocate persistent profile info. Once persistent profile info has a reference count
  *    of 0, its no longer needed. The profile info thread will detect this, removing the
  *    info from the list and deallocating its persistent memory.
  *

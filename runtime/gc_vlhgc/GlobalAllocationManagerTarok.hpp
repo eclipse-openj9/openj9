@@ -100,7 +100,7 @@ public:
 	 * Expands into the given region by finding an AllocationContextTarok to manage it.  Once this method returns, the given region will
 	 * be managed by a context.
 	 * @param env[in] The thread performing the expansion
-	 * @paran region[in] The region which was just expanded
+	 * @param region[in] The region which was just expanded
 	 */
 	void expand(MM_EnvironmentBase *env, MM_HeapRegionDescriptorVLHGC *region);
 	/**

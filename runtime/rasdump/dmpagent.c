@@ -1372,7 +1372,7 @@ fixDumpLabel(J9JavaVM *vm, const J9RASdumpSpec *spec, char **labelPtr, IDATA new
 							strncpy(prefix, exePath, sepChar-exePath);
 							prefix[sepChar-exePath] = '\0';
 						}
-						/* Do /not/ delete executable name (system-onwed string). */
+						/* Do /not/ delete executable name (system-owned string). */
 					}
 					else {
 						strcpy(prefix, ".");

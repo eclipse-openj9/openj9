@@ -1329,7 +1329,7 @@ j9sock_getaddrinfo_family(struct J9PortLibrary *portLibrary, j9addrinfo_t handle
     int i;
 
 
-	/* If we have the IPv6 functions then we'll cast to a OSADDRINFO othewise we have a hostent */
+	/* If we have the IPv6 functions then we'll cast to a OSADDRINFO otherwise we have a hostent */
 	if( PPG_sock_IPv6_FUNCTION_SUPPORT ) {
 
 	     addr = (OSADDRINFO *) handle->addr_info;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ void freeSupportThreadInfo(SupportThreadInfo* info);
 
 /**
  * This method is called to run the set of steps that will be run on a thread
- * @param info SupportThreadInfo structure that contains the information for the steps and other paramters
+ * @param info SupportThreadInfo structure that contains the information for the steps and other parameters
  *        that are used
  */
 static IDATA J9THREAD_PROC

@@ -1449,7 +1449,7 @@ TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, cons
       {
       dxPrintJ9RamAndRomMethod((J9Method *) addr);
       }
-   else if (stricmp_ignore_locale(className, "optimizationplan") == 0 && addr != NULL) // optimzationplan
+   else if (stricmp_ignore_locale(className, "optimizationplan") == 0 && addr != NULL) // optimizationplan
       {
       dxPrintOptimizationPlan((TR_OptimizationPlan *) addr);
       }

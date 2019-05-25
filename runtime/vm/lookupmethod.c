@@ -960,7 +960,7 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
 		memcpy(listString + offset, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 		offset += J9UTF8_LENGTH(className);
 	}
-	listString[listLength] = '\0'; /* Overalloced by 1 to enable null termination */
+	listString[listLength] = '\0'; /* Overallocated by 1 to enable null termination */
 
 	/* Write error message to buffer */
 	bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,

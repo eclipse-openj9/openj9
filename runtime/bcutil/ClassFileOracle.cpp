@@ -283,7 +283,7 @@ ClassFileOracle::walkFields()
 	U_16 fieldsCount = getFieldsCount();
 
 	/* CMVC 197718 : After the first compliance offense is detected, if we do not stop, annotations on subsequent fields
-	 * will not be parsed, resulting in all subsequent valid fields to be noted as not having proper @Length annotation, hence overwritting
+	 * will not be parsed, resulting in all subsequent valid fields to be noted as not having proper @Length annotation, hence overwriting
 	 * the good error message. Checking (OK == _buildResult) in for-loop condition achieves the desired error handling behavior.
 	 */
 	for (U_16 fieldIndex = 0; (OK == _buildResult) && (fieldIndex < fieldsCount); fieldIndex++) {

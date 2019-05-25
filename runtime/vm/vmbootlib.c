@@ -208,7 +208,7 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 		char classPathSeparator = (char) j9sysinfo_get_classpathSeparator();
 		J9VMSystemProperty *classpathSeparatorProperty = NULL;
 
-		/* update with value overriden by proxy if appropriate */
+		/* update with value overridden by proxy if appropriate */
 		getSystemProperty(vm, "path.separator", &classpathSeparatorProperty);
 		if (classpathSeparatorProperty != NULL) {
 			classPathSeparator = classpathSeparatorProperty->value[0];

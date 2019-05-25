@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2356,7 +2356,7 @@ TR_J9EstimateCodeSize::labelGraph(TR::CFG *cfg,
       else if (currentBlock->containsCall()) //only need to enqueue it if its not unsanitizeable already
          callBlocks->enqueue(currentBlock);
 
-      // Part 3:  Enqueue all Predacessors
+      // Part 3:  Enqueue all Predecessors
 
       for (auto e = currentBlock->getPredecessors().begin(); e != currentBlock->getPredecessors().end(); ++e)
          {

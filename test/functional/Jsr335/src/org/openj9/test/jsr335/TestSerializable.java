@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +129,7 @@ public class TestSerializable {
 		AssertJUnit.assertEquals(publicLambda.call(), reserialize(publicLambda).call());
 	}
 	
-	/** Test reserializing various primative types */
+	/** Test reserializing various primitive types */
 	@Test
 	public void testLocalLongLambda() throws Exception {
 		J_Method lamba = (J_Method & Serializable) () -> {

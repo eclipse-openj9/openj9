@@ -503,7 +503,7 @@ private:
 	 */
 	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 	{
-		/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwanbleSynchronizerList,
+		/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
 		 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list. 
 		 */
 		if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr)) {

@@ -1550,7 +1550,7 @@ IDATA
 VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved);
 
 /**
- * Initializes class path entries. Path of each class path entry is set using the 'classPath' provided as paramenter.
+ * Initializes class path entries. Path of each class path entry is set using the 'classPath' provided as parameter.
  * Each path in 'classPath' is seaprated by 'classPathSeparator'.
  * If 'initClassPathEntry' is TRUE, then each class path entry in initialized by calling 'initializeClassPathEntry()' function.
  *

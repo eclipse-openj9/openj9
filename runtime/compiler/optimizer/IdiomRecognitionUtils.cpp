@@ -1065,7 +1065,7 @@ createTableLoad(TR::Compilation *comp, TR::Node* repNode, uint8_t inputSize, uin
    }
 
 //*****************************************************************************************
-// It basically creates "ch1 op2 ch2", but it perfoms a simple constant folding.
+// It basically creates "ch1 op2 ch2", but it performs a simple constant folding.
 //*****************************************************************************************
 TR::Node*
 createOP2(TR::Compilation *comp, TR::ILOpCodes op2, TR::Node* ch1, TR::Node* ch2)

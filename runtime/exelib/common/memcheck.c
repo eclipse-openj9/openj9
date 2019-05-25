@@ -1031,7 +1031,7 @@ static UDATA memoryCheck_get_page_size(OMRPortLibrary *portLib)
  *
  * @param[in] entry	The hashTable node.
  * @param[in] userData	A pointer to an initialized OMRPortLibrary; The "memCheckPortLibrary" must be the one passed in.
- *					This is the portLibrary with its orginal functions
+ *					This is the portLibrary with its original functions
  * @return Always returns TRUE so that the nodes in the hash table will be deallocated.
  */
 static UDATA 
@@ -1092,7 +1092,7 @@ memoryCheck_hashFn(void *vmemId, void *userData)
 /**
  * This function unlocks all of the blocks on a given list.
  *
- * @param[in] portLib	An initialized OMRPortLibrary with its orginal functions
+ * @param[in] portLib	An initialized OMRPortLibrary with its original functions
  * @param[in] listHead	The block to start unlocking the list from. 
  * @param[in] lockFlags	The LockMode: lockMode to lock, unlockMode to unlock
  * @param[in] lockBody	Whether the body of the block needs to be unlocked. It should
@@ -1139,7 +1139,7 @@ memoryCheck_lockAllBlocks(OMRPortLibrary *portLib, J9MemoryCheckHeader *listHead
  * It is usually called through one of two macros: UNLOCK( portLib, header ) or LOCK( portLib, header ).
  *
  * @precondition The global variable "J9HashTable vmemIDTable" must be already initialized.
- * @param[in] portLib	An initialized OMRPortLibrary structure with its orginal functions
+ * @param[in] portLib	An initialized OMRPortLibrary structure with its original functions
  * @param[in] memcheckHeader	An initialized J9MemoryCheckheader.
  * @param[in] requestedMode	The flags to apply to the guardPages.  This should be either lockMode or unlockMode;
  * @return 0 on Success, -1 on failure
@@ -1212,7 +1212,7 @@ memoryCheck_lockGuardPages(OMRPortLibrary *portLib, void *memcheckHeader, UDATA 
  * one of two macros: UNLOCK_BODY( portLib, header ) or LOCK_BODY( portLib, header ).
  *
  * @precondition	The blockHeader must be unlocked before calling this function 
- * @param[in] portLib	An initialized OMRPortLibrary structure with its orginal functions
+ * @param[in] portLib	An initialized OMRPortLibrary structure with its original functions
  * @param[in] blockHeader	An initialized blockHeader which already has its guard pages unlocked.
  * @param[in] requestedMode	The flags to apply to the wrappedBlock.  This should be either lockMode or unlockMode;
  * @return 0 on Success, -1 on failure
@@ -1265,7 +1265,7 @@ memoryCheck_lockWrappedBlock(OMRPortLibrary *portLib, J9MemoryCheckHeader *block
 	We do this on every allocate and every free to make sure we notice trashing as early as possible.  If a
 	screwed up block is detected, details are printed to the console.  If possible, the scan is continued to print
 	out other screwed up blocks.  Returns FALSE if any blocks are screwed up, or TRUE if everything looks okay.  */
-/* @internal The passed in portLib should be the memCheckPortLib with its orginal functions */
+/* @internal The passed in portLib should be the memCheckPortLib with its original functions */
 
 static BOOLEAN memoryCheck_scan_all_blocks(OMRPortLibrary *portLib)
 {
@@ -2201,7 +2201,7 @@ memoryCheck_dump_bytes(OMRPortLibrary *portLib, void *dumpAddress, UDATA dumpSiz
 
 
 /**
-  * @param portLib	The "memCheckPortLib" with its orignal functions is the one that should be used here (I think that should read:
+  * @param portLib	The "memCheckPortLib" with its original functions is the one that should be used here (I think that should read:
   *   ""memCheckPortLib" should be passed into this function "
   */ 
 static void 
@@ -3244,7 +3244,7 @@ memoryCheck_update_callSites_free(J9MEMAVLTreeNode *node, UDATA byteAmount)
 
 
 /**
-  * @internal The portLibrary passed on will be the memCheckPortLibrary with its orginal functions
+  * @internal The portLibrary passed on will be the memCheckPortLibrary with its original functions
   */
 static void * 
 memoryCheck_reallocate_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer, UDATA byteAmount, const char * callsite, U_32 category)

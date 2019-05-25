@@ -1006,7 +1006,7 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
  *			-ACC_SYNTHETIC
  *			-ACC_ENUM
  *
- *		:: METHODPARAMATERS ::
+ *		:: METHODPARAMETERS ::
  *			-ACC_FINAL
  *			-ACC_SYNTHETIC
  *			-ACC_MANDATED

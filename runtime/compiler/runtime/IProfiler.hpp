@@ -59,7 +59,7 @@
  *
  * For further details see "Experiences in Designing a Robust and Scalable
  * Interpreter Profiling Framework" by Ian Gartley, Marius Pirvu, Vijay
- * Sundaresan and Nikola Grecvski, published in *Code Generation and Optization (CGO)*, 2013. 
+ * Sundaresan and Nikola Grecvski, published in *Code Generation and Optimization (CGO)*, 2013. 
  */
 
 #include "j9.h"

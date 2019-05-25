@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -523,7 +523,7 @@ class PHDJavaRuntime implements JavaRuntime {
 	 * @throws IOException 
 	 */
 	private void findLoaders(HeapdumpReader newreader) throws IOException {
-		// Where all the classes orginally have been put
+		// Where all the classes originally have been put
 		final PHDJavaClassLoader boot = loaders.get(null);
 		
 		// Might fail to find a class with a very corrupt dump
@@ -752,7 +752,7 @@ class PHDJavaRuntime implements JavaRuntime {
 									loaders.put(jo, newLoader);
 								}
 							} else {
-								// Replace with the offical object
+								// Replace with the official object
 								jo = newLoader.getObject();
 								loaderClass = jo.getJavaClass();
 							}

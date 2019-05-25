@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-#include "j9port.h" /* for definition of struct J9RIParamters */
+#include "j9port.h" /* for definition of struct J9RIParameters */
 #include "jithook_internal.h" /* for definition of struct J9JITHookInterface */
 
 #define J9_LOWEST_STACK_SLOT(vmThread) ((UDATA *) ((vmThread)->stackObject + 1))

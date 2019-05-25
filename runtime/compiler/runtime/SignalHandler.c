@@ -1049,7 +1049,7 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
                isDAAException = (ILC != 0);
 
                /*
-                * Special case for VPSOP + VTP sequence generated for checkPachedDecimal()
+                * Special case for VPSOP + VTP sequence generated for checkPackedDecimal()
                 *
                 * In the design of DAA tree, we would normally put exception throwing nodes under BCDCHK
                 * node and create a function call in the OOL path of a JIT-compiled method should exceptions be thrown.
@@ -1561,7 +1561,7 @@ static I_64 jitAMD64decodeDiv(J9PortLibrary* portLib, U_8 *rip, void *sigInfo, U
 		rip++; ++*ins_size;
 	}
 
-	/* REX Prefix if it exits must preceed the opcode */
+	/* REX Prefix if it exits must precede the opcode */
 	if (jitAMD64isREXPrefix(*rip)) {
 		REX_PREFIX = *rip;   /* save the rex prefix */
 		/* The REX prefix takes precedence over the legacy prefix */

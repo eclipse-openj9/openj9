@@ -693,7 +693,7 @@ TR_J9VM::initializeProcessorType()
       }
    else if (TR::Compiler->target.cpu.isPower())
       {
-      //We can have a "reported" processor and a "underlying" processsor.
+      //We can have a "reported" processor and a "underlying" processor.
       //See design 28980
       TR_Processor tp_reported;
       TR_Processor tp_underlying;

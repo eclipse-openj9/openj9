@@ -230,7 +230,7 @@ public class J9BCUtil {
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_ENUM
 	 *
-	 *		:: METHODPARAMATERS ::
+	 *		:: METHODPARAMETERS ::
 	 *			-ACC_FINAL
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_MANDATED

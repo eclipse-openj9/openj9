@@ -1578,7 +1578,7 @@ MTUnresolvedAddressLoad:
     lwzx r3, r3, r5                               ! r3 contains load result
     isync
     lwz    r4, 20(r7)                              ! get compressed shift size
-    sld    r3, r3, r4                              ! decompress poiter
+    sld    r3, r3, r4                              ! decompress pointer
     b .MTUnresolvedObjLoadRestore
 .MTUnresolvedObjLoadNoneIsolated:
     ld    r3, 0(r3)                               ! r3 contains load result
@@ -1782,7 +1782,7 @@ MTUnresolvedAddressStore:
     MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantDataObj, 2)
     ! compress store value
     lwz    r4, 20(r7)                              ! get compressed shift size
-    srd    r29, r29, r4                              ! compress poiter
+    srd    r29, r29, r4                              ! compress pointer
 
     lwsync
     stwx   r29, r3, r5                               ! r29 contains store value

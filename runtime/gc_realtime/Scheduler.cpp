@@ -755,7 +755,7 @@ MM_Scheduler::startUpThreads()
 
 	/* At this point, all GC threads have signalled that they are ready.
 	 * However, because Metronome uses omrthread_suspend/omrthread_resume to stop and
-	 * start threads, there is a race: the thread may have been pre-empted after
+	 * start threads, there is a race: the thread may have been preempted after
 	 * signalling but before suspending itself. An alternative may be to use
 	 * omrthread_park/unpark.
 	 */

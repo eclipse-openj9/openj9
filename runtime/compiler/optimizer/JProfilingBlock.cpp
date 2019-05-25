@@ -47,7 +47,7 @@ int32_t TR_JProfilingBlock::recompileThreshold = 500;
  * without regard to direction of the edges. Further for the purposes of placing counters
  * We need to add a special loopback edge connecting the CFG entry and exit nodes.
  * This class provides an edge iterator for a CFG node which presents all successors and
- * predecesors including those from the special loopback edge.
+ * predecessors including those from the special loopback edge.
  */
 class AdjacentBlockIterator
    {
@@ -656,7 +656,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
          edge->setId(edgeId++);
          TR::Block *to = edge->getTo()->asBlock();
      
-         // check if the spanning tree says we can ommit this edge
+         // check if the spanning tree says we can omit this edge
          if (block != to)
             {
             if (parent[block] == to)

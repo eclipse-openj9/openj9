@@ -224,7 +224,7 @@ ZZ   DC magic <hdr> 4 bytes
 ZZ     < possible load of args>
 ZZ   ST r14,x(r5)  <- jit entry point, will have been rewritten
 ZZ to be J <sampling code>
-ZZ Note that it's assumed the preprologe has saved r14 at 4(r5)
+ZZ Note that it's assumed the preprologue has saved r14 at 4(r5)
 ZZ ( that's 8(r5) on 64 bit systems)
 ZZ before entering this routine.
 ZZ ========================================================  ZZ
@@ -866,7 +866,7 @@ ZZ calculate r3 = (rEP-r3)/2
     CLEANSE(rEP)
 ifdef([MCC_SUPPORTED],[dnl
 ZZ Call MCC service for code patching of the resolved method.
-ZZ Paramters:
+ZZ Parameters:
 ZZ       j9method, callSite, newPC, extraArg
 ZZ  We have to load the arguments onto the stack to pass to
 ZZ  jitCallCFunction:
