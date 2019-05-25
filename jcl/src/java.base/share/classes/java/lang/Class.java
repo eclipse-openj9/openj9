@@ -3003,7 +3003,8 @@ public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
 
 /**
  * Cast this Class to a subclass of the specified Class. 
- * @param <U> cls the Class to cast to
+ * @param <U> the type for casting to
+ * @param cls the Class to cast to
  * @return this Class, cast to a subclass of the specified Class
  * 
  * @throws ClassCastException if this Class is not the same or a subclass

@@ -1000,6 +1000,15 @@ static ClassLoader getClassLoader(Class<?> clz) {
 /*[ENDIF]*/
 
 /*[IF Sidecar19-SE]*/
+/**
+ * Return the Platform classloader.
+ *
+ * If a security manager exists and it does not
+ * allow access a SecurityException will be thrown.
+ *
+ * @return the platformClassLoader
+ * @throws SecurityException if access to the platform classloader is denied
+ */
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
 	SecurityManager security = System.getSecurityManager();
@@ -2300,6 +2309,8 @@ ServicesCatalog getServicesCatalog() {
  * 					the module name
  * @param		resName String
  *					the name of the resource to find.
+ *
+ * @throws IOException when an error occurs
  */
 protected URL findResource(String moduleName, String resName) throws IOException {
 	URL result = null;
