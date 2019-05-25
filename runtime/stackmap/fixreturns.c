@@ -742,7 +742,7 @@ getNextStackIndex (U_8 * stackMapData, UDATA mapPC, UDATA stackMapCount)
 
 /* 
 	Calculate the stack depth from the current stack map.
-	Most occurences will be zero. 
+	Most occurrences will be zero. 
 */
 
 static UDATA

@@ -308,7 +308,7 @@ TR_S390Recompilation::generatePrePrologue()
 //-----------------------------------------------------------------------
 /*
  * Generate function prologue to support counting recompilation.  Assume that
-   generatePreProloge has stuck methodInfo address before magic word
+   generatePrePrologue has stuck methodInfo address before magic word
    There are two code gen possibilities: G5 or freeway+.  Freeway allows us to
    use LARL w/ -ve displacement and we can access the methodInfo in preprologue,
    however for simplicity's sake we'll just use the G5 solution.

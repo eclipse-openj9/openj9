@@ -1053,7 +1053,7 @@ public final class MethodType implements Serializable
 	
 	/**
 	 * Returns the appropriate wrapper class or the original class
-	 * @param primitveClass The class to convert to a wrapper class
+	 * @param primitiveClass The class to convert to a wrapper class
 	 * @return The wrapper class or the original class if no wrapper is available
 	 */
 	static Class<?> wrapPrimitive(Class<?> primitveClass) {

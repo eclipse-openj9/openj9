@@ -266,7 +266,7 @@ UMA_DLL_LINK_FLAGS+=-fprofile-arcs -ftest-coverage
 UMA_EXE_PREFIX_FLAGS+=-fprofile-arcs -ftest-coverage
 </#if>
 
-# Add posibility of debug flags
+# Add possibility of debug flags
 CFLAGS+=$(VMDEBUG)
 CXXFLAGS+=$(VMDEBUG)
 <#if uma.spec.type.windows>

@@ -1322,7 +1322,7 @@ TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *method
    TR_ByteCodeInfo bci;
 
    //incInlineDepth is a part of a hack to make InvariantArgumentPreexistence
-   //play nicely if getCurrentInlinedCallArgInfo is provided while peeeking.
+   //play nicely if getCurrentInlinedCallArgInfo is provided while peeking.
    //If we don't provide either dummy (default is set to NULL) or real argInfo we will end up
    //using the wrong argInfo coming from a CALLER rather than the peeking method.
    c->getInlinedCallArgInfoStack().push(argInfo);

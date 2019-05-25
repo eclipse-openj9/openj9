@@ -36,7 +36,7 @@ ifeq ($(PLATFORM),ppc64-linux64-clangLinter)
     export CC_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang
     export CXX_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang++
 else 
-    #default paths, unless overriden 
+    #default paths, unless overridden 
     export LLVM_CONFIG?=llvm-config
     export CC_PATH?=clang
     export CXX_PATH?=clang++

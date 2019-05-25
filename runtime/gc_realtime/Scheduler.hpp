@@ -181,7 +181,7 @@ public:
 	void showParameters(MM_EnvironmentBase *env);
 
 	/**
-	 * Set scheduling paramters on argument extensions object to
+	 * Set scheduling parameters on argument extensions object to
 	 * simulate Stop-The-World GC.  We simulate STW by running time-based,
 	 * with MMU, etc. parameters chosen so that the GC will not yield to the
 	 * mutator until an entire GC cycle has completed.

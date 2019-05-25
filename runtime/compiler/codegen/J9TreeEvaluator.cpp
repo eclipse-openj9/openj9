@@ -1034,7 +1034,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
 /*
  * if recordAll is true, record all result in classArray, skip MinProfiledCheckcastFrequency check
- * if probability is not null, record class' corresponding probablity in this array. Used for cost/benefit analysis for profiled check.
+ * if probability is not null, record class' corresponding probability in this array. Used for cost/benefit analysis for profiled check.
  */
 uint8_t
 J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(

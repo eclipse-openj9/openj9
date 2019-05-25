@@ -500,13 +500,13 @@ parseLocals (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9Bran
 		for (;localDelta; localDelta--) {
 			stackEntry = parseElement (verifyData, stackMapData);
 			if (localsCount >= maxLocals) {
-				/* Oveflow */
+				/* Overflow */
 				goto _overflow;
 			}
 			liveStack->stackElements[localsCount++] = stackEntry;
 			if ((BCV_BASE_TYPE_DOUBLE == stackEntry) || (BCV_BASE_TYPE_LONG == stackEntry)) {
 				if (localsCount >= maxLocals) {
-					/* Oveflow */
+					/* Overflow */
 					goto _overflow;
 				}
 				liveStack->stackElements[localsCount++] = BCV_BASE_TYPE_TOP;

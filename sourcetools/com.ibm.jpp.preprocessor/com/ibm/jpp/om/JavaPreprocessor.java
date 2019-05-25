@@ -206,7 +206,7 @@ public class JavaPreprocessor {
 	}
 
 	/**
-	 * Sets whether preprocessing for bootpath projoect or not
+	 * Sets whether preprocessing for bootpath project or not
 	 * @param       bootPath    true if bootPath project, otherwise false
 	 *
 	 */

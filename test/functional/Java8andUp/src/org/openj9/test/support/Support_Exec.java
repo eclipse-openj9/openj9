@@ -295,7 +295,7 @@ public class Support_Exec {
 				}
 			}
 			/* [PR 124106] interrupt() causes InternalError */
-			// propogate the interrupt
+			// propagate the interrupt
 			if (count > 0)
 				Thread.currentThread().interrupt();
 		}

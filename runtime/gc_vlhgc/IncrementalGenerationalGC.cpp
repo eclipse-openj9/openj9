@@ -694,7 +694,7 @@ MM_IncrementalGenerationalGC::collectorShutdown(MM_GCExtensionsBase *extensions)
 
 /**
  * Determine if a  expand is required 
- * @return expand size if rator expand required or 0 otheriwse
+ * @return expand size if rator expand required or 0 otherwise
  */
 U_32
 MM_IncrementalGenerationalGC::getGCTimePercentage(MM_EnvironmentBase *env)
@@ -1620,7 +1620,7 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 	}
 
 	/* Overflowing stable regions releases buffers to thread local pool. Move them now to the locked global pool.
-	 * (if this is run in context of non-GC thread there will be not further opportinities to do it).
+	 * (if this is run in context of non-GC thread there will be not further opportunities to do it).
 	 */
 	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }

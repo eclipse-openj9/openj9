@@ -359,7 +359,7 @@ hythread_isCompatible(struct HyThreadLibraryVersion *expectedVersion)
  * @param[in] threadLibrary The thread library.
  * @param[in] offset The offset of the function to be queried.
  * 
- * @return 1 if the function is overriden, else 0.
+ * @return 1 if the function is overridden, else 0.
  *
  * hythread_isFunctionOverridden(threadLibrary, offsetof(HyThreadLibrary, sem_init));
  */

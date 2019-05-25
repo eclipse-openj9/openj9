@@ -1885,7 +1885,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
           * 2. for all virtual calls, resolved or not, this load immediate is used by the VM to find where
           * the method is in the VFT table when doing J2I transitions. We need this negative offset in a register
           * because S390 load address instruction used to find VFT table entires can't handle negative offsets.
-          * (VFT table preceeds the J9Class in memory; as a result of this, all VFT entries are some negative offsets
+          * (VFT table precedes the J9Class in memory; as a result of this, all VFT entries are some negative offsets
           * away from the J9Class)
           *
           *

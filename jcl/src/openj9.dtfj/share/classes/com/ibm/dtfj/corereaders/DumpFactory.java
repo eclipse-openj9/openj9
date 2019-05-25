@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ public class DumpFactory {
 				corefile = NewZosDump.dumpFromFile(stream);
 			}
 		} catch (CorruptCoreException e) {
-			//CMVC 161800 : only the z/OS core reader throws this exception and so propogate it back to the caller to retain the original error message
+			//CMVC 161800 : only the z/OS core reader throws this exception and so propagate it back to the caller to retain the original error message
 			throw new IOException("Core file was identified but found to be corrupt:  " + e.getMessage());
 		}
 

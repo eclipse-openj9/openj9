@@ -1094,7 +1094,7 @@ found:
 					}
 
 					/* Always consume an entry from the super vTable.  Note that once the size hits zero and superclass becomes NULL,
-					 * superVTableReadCursor will never be dereferenced again, so it's value does not matter.  Also, there's no possibilty
+					 * superVTableReadCursor will never be dereferenced again, so it's value does not matter.  Also, there's no possibility
 					 * of superVTableSize rolling over again (once it's decremented beyond 0), and it wouldn't matter if it did, since
 					 * superclass will already be NULL.
 					 */

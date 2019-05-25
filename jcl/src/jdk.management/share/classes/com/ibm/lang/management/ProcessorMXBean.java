@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ public interface ProcessorMXBean extends PlatformManagedObject {
 
 	/**
 	 * Returns the target number of CPUs for the process. This is normally  
-	 * equal to {@link #getNumberBoundCPUs()}, but is overriden by active
+	 * equal to {@link #getNumberBoundCPUs()}, but is overridden by active
 	 * CPUs when it is set, e.g. using {@link #setNumberActiveCPUs(int)}.
 	 * 
 	 * @return	the number of CPUs the process is entitled to.

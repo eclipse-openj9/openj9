@@ -49,7 +49,7 @@ import com.ibm.jpp.xml.XMLParser;
  * {xmlfilepath}" to define a different default filepath</li>
  * <li>A second xml file can be defined using the command line argument (-xml
  * {xmlfilepath} {basedirectory}). With this command, the given xml file is
- * parsed for not only configuration setup, but relative source and ouput paths
+ * parsed for not only configuration setup, but relative source and output paths
  * for the build. The only other command line arguments currently allowed in
  * combination with -xml is -xmldefault. All build information
  * must be found inside the xml. More than one configuration to be built can be

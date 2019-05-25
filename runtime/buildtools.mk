@@ -43,7 +43,7 @@ FREEMARKER_JAR ?= $(CURDIR)/buildtools/freemarker.jar
 CMAKE_ARGS :=
 
 # We grab the C/C++ compilers detected by autoconf or provided by user, not
-# the CC/CXX variables defined by the makefiles, which potentitally include
+# the CC/CXX variables defined by the makefiles, which potentially include
 # the ccache command which will throw off cmake
 ifneq (,$(OPENJ9_CC))
   CMAKE_ARGS += "-DCMAKE_C_COMPILER=$(OPENJ9_CC)"

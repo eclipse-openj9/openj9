@@ -1914,7 +1914,7 @@ public final class DecimalData
             precision--;
         }
         
-        // Pre-emptive check overflow: 10 digits in Integer.MAX_VALUE
+        // Preemptive check overflow: 10 digits in Integer.MAX_VALUE
         if (checkOverflow && precision > 10) {
             throw new ArithmeticException(
                 "Decimal overflow - Unicode Decimal too large for an int");
@@ -2024,7 +2024,7 @@ public final class DecimalData
             precision--;
         }
         
-        // Pre-emptive check overflow: 19 digits in Long.MAX_VALUE
+        // Preemptive check overflow: 19 digits in Long.MAX_VALUE
         if (checkOverflow && precision > 19) {
             throw new ArithmeticException(
                 "Decimal overflow - Unicode Decimal too large for a long");

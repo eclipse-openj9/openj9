@@ -976,7 +976,7 @@ private:
    int32_t                _samplingThreadWaitTimeInDeepIdleToNotifyVM;
    int32_t                _numMethodsFoundInSharedCache;
    int32_t                _numInvRequestsInCompQueue; // number of invalidation requests present in the compilation queue
-   uint64_t               _lastReqStartTime; // time (ms) when procesing the last request started
+   uint64_t               _lastReqStartTime; // time (ms) when processing the last request started
    uint64_t               _lastCompilationsShouldBeInterruptedTime; // RAS
 // statistics
    int32_t                _statsOptLevels[numHotnessLevels]; // will be zeroed with memset

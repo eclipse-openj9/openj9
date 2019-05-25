@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public:
 	/**
 	 * Create a MM_PacketListIterator instance to walk the lists in the given workPackets.
 	 * @param env[in] A GC thread
-	 * @paran workPackets[in] The MM_WorkPackets instance which the receiver will iterate in order to find MM_PacketList instances
+	 * @param workPackets[in] The MM_WorkPackets instance which the receiver will iterate in order to find MM_PacketList instances
 	 */
 	MM_PacketListIterator(MM_EnvironmentBase *env, MM_WorkPackets *workPackets);
 };

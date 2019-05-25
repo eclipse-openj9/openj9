@@ -111,7 +111,7 @@ protected:
 
 public:
 	/**
-	 * In-place instantiation and initialization for mixed obect scanner.
+	 * In-place instantiation and initialization for mixed object scanner.
 	 * @param[in] env The scanning thread environment
 	 * @param[in] objectPtr The object to scan
 	 * @param[in] allocSpace Pointer to space for in-place instantiation (at least sizeof(GC_MixedObjectScanner) bytes)

@@ -694,7 +694,7 @@ LABEL(Ljitted)
 
 ifdef([MCC_SUPPORTED],[dnl
 ZZ Call MCC service for code patching of the resolved method.
-ZZ Paramters:
+ZZ Parameters:
 ZZ       j9method, callSite, newPC, extraArg
 ZZ  We have to load the arguments onto the stack to pass to
 ZZ  jitCallCFunction:
@@ -1439,7 +1439,7 @@ ZZ  # derive base pointer into table
     BRAS    breg,LDataResolve_common_code_instructions
 
 ZZ  First constant is a BRC 3 (jump by 6 bytes)
-ZZ  This is used to patch the orginal branch to
+ZZ  This is used to patch the original branch to
 ZZ  Snippet instruction, if the original branch
 ZZ  was not a BRCL (BRCL has its displacement patched
 ZZ  manually).  See comment for Unresolved*Data*Glue

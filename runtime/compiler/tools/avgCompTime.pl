@@ -32,7 +32,7 @@ if (@ARGV < 1) {
 }
 
 
-# hash of methods; each entry is an array of lines containing all occurences of that method in the vlog
+# hash of methods; each entry is an array of lines containing all occurrences of that method in the vlog
 my %methodHash;
 
 

@@ -754,7 +754,7 @@ buildInlineStackFrames(J9VMThread *currentThread, J9JITDecompileState *decompile
 
 
 /**
- * Peform decompilation after gather information from the stack walk.
+ * Perform decompilation after gather information from the stack walk.
  *
  * @param[in] *currentThread current thread
  * @param[in] *decompileState the decompilation state copied from the stack walk

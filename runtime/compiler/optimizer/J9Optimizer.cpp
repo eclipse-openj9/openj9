@@ -495,7 +495,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::stripMiningGroup,                      OMR::IfLoops     }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops     }, // tail-duplication in loops
    { OMR::blockSplitter,                         OMR::IfNews      }, // treeSimplification + blockSplitter + VP => opportunity for EA
-   { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must preceed escape analysis
+   { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must precede escape analysis
    { OMR::veryExpensiveGlobalValuePropagationGroup           },
    { OMR::dataAccessAccelerator                              }, //always run after GVP
    { OMR::osrGuardRemoval,                       OMR::IfEnabled }, // run after calls/monents/asyncchecks have been removed

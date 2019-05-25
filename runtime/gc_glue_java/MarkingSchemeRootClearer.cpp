@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -248,7 +248,7 @@ MM_MarkingSchemeRootClearer::scanUnfinalizedObjectsComplete(MM_EnvironmentBase *
 		/* ensure that all unfinalized processing is complete before we start marking additional objects */
 		env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
 		/* TODO: consider relaxing completeMarking into completeScan (which will skip over 'complete class marking' step).
-		 * This is to avoid potentianlly unnecessery sync point in class marking step. The class marking step that we do after
+		 * This is to avoid potentially unnecessery sync point in class marking step. The class marking step that we do after
 		 * phantom processing might be sufficient.
 		 */
 		_markingScheme->completeMarking(env);

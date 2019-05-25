@@ -385,7 +385,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
       {
       // Fastpath helper do not expects GC call in-between so only attaching them for normal dual mode helpers
       // As GC map is attached to instruction after RA is done, it is guaranteed that all the non-preserved register by system linkage are either stored in preserved register
-      // Or spilled to stack. We only need to mark preserved register in GC map. Only possiblity of non-preserved register containing a live object is in argument to helper which should be a clobberable copy of actual object.
+      // Or spilled to stack. We only need to mark preserved register in GC map. Only possibility of non-preserved register containing a live object is in argument to helper which should be a clobberable copy of actual object.
       cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
       }
 

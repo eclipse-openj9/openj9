@@ -86,7 +86,7 @@ struct J9JavaVM;
 #include <stdlib.h>
 
 #define PSAAOLD  0x224 ///< offset of current ASCB in prefixed save area (located at address 0x0)
-#define ASCBLDA  0x30  ///< offst of LDA field in ASCB
+#define ASCBLDA  0x30  ///< offset of LDA field in ASCB
 #define LDASTRTA 0x3c  ///< offset of user region start in LDA
 #define LDASIZA  0x40  ///< offset of maximum user region size in LDA
 #define LDAESTRA 0x4c  ///< offset of extended user region start in LDA
@@ -1926,7 +1926,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    compInfo->setVMStateOfCrashedThread(vmThread->omrVMThread->vmState);
 
    // create a compilation request
-   // NOTE: operator new() is overriden, and takes a storage object as a parameter
+   // NOTE: operator new() is overridden, and takes a storage object as a parameter
    // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
    //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
       {
@@ -2913,7 +2913,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
             if (staleMethod && freshMethod && compInfo->isCompiled(staleMethod))
                {
                startPC = TR::CompilationInfo::getJ9MethodStartPC(staleMethod);
-               // Update the ram method information in PersistenMethodInfo
+               // Update the ram method information in PersistentMethodInfo
                TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
                if (bodyInfo)
                   {

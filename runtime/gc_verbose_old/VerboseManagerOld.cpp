@@ -174,7 +174,7 @@ MM_VerboseManagerOld::initialize(MM_EnvironmentBase *env)
 
 /**
  * Tear down the structures managed by the MM_VerboseManagerOld.
- * Tears down the event stream and outut agents.
+ * Tears down the event stream and output agents.
  */
 void
 MM_VerboseManagerOld::tearDown(MM_EnvironmentBase *env)

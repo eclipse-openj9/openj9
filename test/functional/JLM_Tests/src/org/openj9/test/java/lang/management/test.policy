@@ -20,7 +20,7 @@ grant {
 	// allows anyone to listen on un-privileged ports
 	permission java.net.SocketPermission "localhost:1024-", "accept,connect,listen";
 
-	// "standard" properies that can be read by anyone
+	// "standard" properties that can be read by anyone
 
 	permission java.util.PropertyPermission "java.version", "read";
 	permission java.util.PropertyPermission "java.vendor", "read";

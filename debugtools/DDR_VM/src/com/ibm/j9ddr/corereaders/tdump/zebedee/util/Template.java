@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ import org.w3c.dom.*;
  * (the reference to template.dtd is automatically intercepted).
  * <p>
  * Templates are created using the factory method getTemplate rather than being instantiated directly so only
- * one persistant instance is created for a given name.
+ * one persistent instance is created for a given name.
  */
 
 public class Template {

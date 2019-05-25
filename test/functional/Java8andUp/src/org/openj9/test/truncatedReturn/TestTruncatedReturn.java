@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,7 @@ public class TestTruncatedReturn {
             String implMethodDesc = MethodType.methodType(type, int.class).toMethodDescriptorString();
 
 
-            // Create the test method which just returns the passed parama
+            // Create the test method which just returns the passed param
             MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC , implMethodName, implMethodDesc, null, null);
             mv.visitCode();
             mv.visitVarInsn(Opcodes.ILOAD, 0);
