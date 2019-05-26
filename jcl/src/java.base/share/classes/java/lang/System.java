@@ -918,7 +918,7 @@ public static Map<String, String> getenv() {
  * @return the Console or null
  */
 public static Console console() {
-	/*[PR CMVC 114090] System.console does not return null in subprocesss */
+	/*[PR CMVC 114090] System.console does not return null in subprocess */
 	/*[PR CMVC 114119] Console exists when stdin, stdout are redirected */
 	if (consoleInitialized) return console;
 	synchronized(System.class) {

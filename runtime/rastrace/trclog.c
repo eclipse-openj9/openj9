@@ -1644,7 +1644,7 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 		 *  Handle sequence counter wrap
 		 *
 		 *  It's not a problem if the sequence counter write is aborted/discarded
-		 *  by nodynamic because it applies to the *precedeing* tracepoints and
+		 *  by nodynamic because it applies to the *preceding* tracepoints and
 		 *  they'll have been discarded as well.
 		 */
 		if (lastSequence != (int32_t)(trcBuf->record.sequence>>32)) {
