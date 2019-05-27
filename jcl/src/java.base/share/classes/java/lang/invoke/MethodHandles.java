@@ -2007,7 +2007,8 @@ public class MethodHandles {
 	 * 
 	 * If a SecurityManager is present, this method requires <code>ReflectPermission("suppressAccessChecks")</code>.
 	 * 
-	 * @param expected the expected type of the underlying member
+	 * @param <T> the type of the underlying member
+	 * @param expected the expected Class of the underlying member
 	 * @param target the direct MethodHandle to be cracked
 	 * @return the underlying member of the <code>target</code> MethodHandle
 	 * @throws SecurityException if the caller does not have the required permission (<code>ReflectPermission("suppressAccessChecks")</code>)
