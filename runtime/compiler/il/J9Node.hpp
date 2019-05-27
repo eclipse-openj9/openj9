@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,14 +110,6 @@ public:
    int32_t getStorageReferenceSize();
    int32_t getStorageReferenceSourceSize();
 #endif
-
-   inline void setBCDNodeOverflow();
-   inline bool getBCDNodeOverflow();
-   inline void resetBCDNodeOverflow();
-
-   inline void setBCDNodeRounding();
-   inline bool getBCDNodeRounding();
-   inline void resetBCDNodeRounding();
 
    bool         isEvenPrecision();
    bool         isOddPrecision();
@@ -403,7 +395,6 @@ protected:
       // eventually should replace by exclusive representation (eg. enum)
       DecimalInfo _decimalInfo;    ///< hasDecimalInfo()
       // overflow/rounding option
-      uint8_t     _bcdFlags;       ///< hasBCDFlags()
       UnionPropertyB()
          {
          memset(this, 0, sizeof(UnionPropertyB)); ///< in C++11 notation: _unionPropertyB = {0};
