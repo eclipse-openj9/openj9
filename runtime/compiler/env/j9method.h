@@ -467,6 +467,14 @@ public:
    char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
    char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
 
+   /**
+    * @brief Create TR::ParameterSymbols from the signature of a method, and add them
+    *        to the ParameterList on the ResolvedMethodSymbol.
+    *
+    * @param[in] methodSym : the ResolvedMethodSymbol to create the parameter list for
+    */
+   virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
+
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
 
