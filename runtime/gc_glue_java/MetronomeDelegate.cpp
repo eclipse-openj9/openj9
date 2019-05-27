@@ -986,15 +986,16 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 					 */
 					hashTableResetFlag(classLoader->classHashTable, J9HASH_TABLE_DO_NOT_REHASH);
 
-					Assert_MM_true(NULL != classLoader->moduleHashTable);
-					J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-					while (NULL != modulePtr) {
-						J9Module * const module = *modulePtr;
+					if (NULL != classLoader->moduleHashTable) {
+						J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+						while (NULL != modulePtr) {
+							J9Module * const module = *modulePtr;
 
-						didWork |= _markingScheme->markObject(env, module->moduleObject);
-						didWork |= _markingScheme->markObject(env, module->moduleName);
-						didWork |= _markingScheme->markObject(env, module->version);
-						modulePtr = (J9Module**)hashTableNextDo(&walkState);
+							didWork |= _markingScheme->markObject(env, module->moduleObject);
+							didWork |= _markingScheme->markObject(env, module->moduleName);
+							didWork |= _markingScheme->markObject(env, module->version);
+							modulePtr = (J9Module**)hashTableNextDo(&walkState);
+						}
 					}
 				}
 			}
