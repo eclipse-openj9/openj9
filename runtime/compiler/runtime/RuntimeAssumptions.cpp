@@ -188,7 +188,7 @@ TR_PersistentCHTable::classGotUnloadedPost(
       if (scl  && !(scl->hasBeenVisited()))
          {
          scl->removeUnloadedSubClasses();
-         scl->setVisited(); //reseting is done in rossa
+         scl->setVisited(); //resetting is done in rossa
          _trPersistentMemory->getPersistentInfo()->addSuperClass(superClId);
          }
 
@@ -202,7 +202,7 @@ TR_PersistentCHTable::classGotUnloadedPost(
             if (scl && !(scl->hasBeenVisited()))
                {
                scl->removeUnloadedSubClasses();
-               scl->setVisited(); //reseting is done in rossa
+               scl->setVisited(); //resetting is done in rossa
                _trPersistentMemory->getPersistentInfo()->addSuperClass(superClId);
                }
             }

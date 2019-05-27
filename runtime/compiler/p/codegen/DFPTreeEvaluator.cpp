@@ -1374,7 +1374,7 @@ extern TR::Register *inlineBigDecimalScaledDivide(
    generateTrg1ImmInstruction(cg, TR::InstOpCode::mcrfs, node, crRegister, 0x3); //move FPSCR field 4 (bits 44 to 47)
 
    // assume inexact failed - so we'll load the result for BigDecimal class to test
-   // against an UNNECESSARY rouding mode....
+   // against an UNNECESSARY rounding mode....
    loadConstant(cg, node, 0, retRegister);
 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, labelEND, crRegister);

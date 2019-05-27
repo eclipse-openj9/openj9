@@ -2262,7 +2262,7 @@ ZZ # Load the address of the lookup class
     LR_GPR  r14,r0
     JNZ     ifCHMLcommonJitDispatch
 
-ZZ  #Load reciving object classPtr in R2
+ZZ  #Load receiving object classPtr in R2
 ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r2,J9TR_J9Object_class(,r1)
 ZZ # Read class offset

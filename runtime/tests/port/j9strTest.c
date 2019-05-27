@@ -518,7 +518,7 @@ j9str_test2(struct J9PortLibrary *portLibrary)
  * 	2. ime 0 
  * 	3. a known time (February 29th 2004 01:23:45)
  * 	4. Tokens that are not valid for str_ftime but are set by default in j9str_create_tokens. 
- * 		Check that these are not subsituted.
+ * 		Check that these are not substituted.
  *  5. Tokens that are not valid by default anywhere.
  * 
  * 

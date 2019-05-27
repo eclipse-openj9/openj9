@@ -732,7 +732,7 @@ public class BigDecimalExtension implements java.math.BigDecimal.BigDecimalExten
 
       if (-scale >= -398 && -scale <= 369){
 
-         // If the roundind mode is UNNECESSARY, then we can set
+         // If the rounding mode is UNNECESSARY, then we can set
          // the scale as if we were setting in the previous API
          // i.e. with no concern to rounding (the 3rd parameter)
          if (roundingMode == BigDecimal.ROUND_UNNECESSARY){

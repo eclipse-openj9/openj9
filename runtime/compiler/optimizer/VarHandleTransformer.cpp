@@ -92,7 +92,7 @@ struct X
 // Method names for unresolved VarHandle access methods
 static X VarHandleMethods[] =
       {
-      // We only get the original method name when the call is unresolved, but recognized method only works for resovled method
+      // We only get the original method name when the call is unresolved, but recognized method only works for resolved method
       // The list for resolved method is in j9method.cpp, any changes in this list must be reflected in the other
       // Notice this list has a tableIndex field to indicate the index of MethodHandle/MethodType of VarHandle access operation
       // in the handleTable/typeTable, check java/lang/invoke/VarHandle.java for the indice of the methods

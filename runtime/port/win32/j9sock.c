@@ -1552,7 +1552,7 @@ j9sock_gethostname(struct J9PortLibrary *portLibrary, char *buffer, int32_t leng
  * @param[in] sockaddr_size The size of "in_addr"
  * @param[out] name The hostname of the passed address in a preallocated buffer.
  * @param[in] name_length The length of the buffer pointed to by name
- * @param[in] flags Flags on how to form the repsonse (see man pages or doc for getnameinfo)
+ * @param[in] flags Flags on how to form the response (see man pages or doc for getnameinfo)
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code
  *
@@ -1952,7 +1952,7 @@ j9sock_getsockname(struct J9PortLibrary *portLibrary, j9socket_t handle, j9socka
 		}
 	}
 
-	/* if both sockets are open we cannot retun the address for either one as whichever one we return it is wrong in some 
+	/* if both sockets are open we cannot return the address for either one as whichever one we return it is wrong in some 
 	   cases. Therefore,  we reset the address to the ANY address and leave the port as is as it should be the same
        for both sockets (bind makes sure that when we open the two sockets we use the same port */
 	if ((handle->flags & SOCKET_IPV4_OPEN_MASK) && (handle->flags & SOCKET_IPV6_OPEN_MASK)) {
@@ -3206,7 +3206,7 @@ j9sock_shutdown_output(struct J9PortLibrary *portLibrary, j9socket_t sock)
 
 
 /**
- * Creates a new j9sockaddr, refering to the specified port and address.  The only address family currently supported
+ * Creates a new j9sockaddr, referring to the specified port and address.  The only address family currently supported
  * is AF_INET.
  *
  * @param[in] portLibrary The port library.

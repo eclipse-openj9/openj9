@@ -487,7 +487,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	 */
 	public long getHashcode() throws DataUnavailable, CorruptDataException
 	{
-		//currently, we know no difference between these two kinds of hashcodes (may be revisitted in the future)
+		//currently, we know no difference between these two kinds of hashcodes (may be revisited in the future)
 		return getPersistentHashcode();
 	}
 

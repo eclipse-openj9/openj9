@@ -161,7 +161,7 @@ J9::Recompilation::fixUpMethodCode(void * startPC)
    else
       {
       // Will overwrite the first instruction of the body--this should be a store of the link reg
-      // ie ST r14,4(r5).  Note that there will be precedeing loads for the args for the interpreter
+      // ie ST r14,4(r5).  Note that there will be preceding loads for the args for the interpreter
       // entry point and these vary depending on # args, hence add adjustment for jitEntryOffset
       int32_t jitEntryOffset = getJitEntryOffset(linkageInfo);
       int32_t * jitEntry = (int32_t *) ((uint8_t *) startPC + jitEntryOffset);

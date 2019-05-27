@@ -3729,7 +3729,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
 
       compInfo->debugPrint("\trequeueing interrupted compilation request", details, compThread);
 
-      // After releaseing the monitors and vm access below, we will loop back to the head of the loop, and retry the
+      // After releasing the monitors and vm access below, we will loop back to the head of the loop, and retry the
       // compilation.  Do not put the request back into the pool, instead requeue.
       //
       requeue();

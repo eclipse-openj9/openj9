@@ -2443,7 +2443,7 @@ TR_J9ByteCodeIlGenerator::saveStack(int32_t targetIndex, bool anchorLoads)
 // Bad code results if code following saveStack generated stores
 // attempts to load from one of the saved PPS slots. Two obvious
 // examples arise. For the first example see the comment before
-// TR_J9ByteCodeIlGenerator::genIfImp. Second, consider a treetop precedeing a
+// TR_J9ByteCodeIlGenerator::genIfImp. Second, consider a treetop preceding a
 // decompilation point. Nodes loaded from the PPS save region (i.e that
 // were live on entry to the block) may be referred to by treetops on
 // both sides of the decompilation point and thus may be killed by the
@@ -3572,7 +3572,7 @@ TR_J9ByteCodeIlGenerator::genIfTwoOperand(TR::ILOpCodes nodeop)
 // handlePendingPushSaveSideEffects is called to promote any such loads
 // to treetops preceding the saveStack generated stores.
 //
-// This API does not generate asynccheck, it's the caller's responsiblity
+// This API does not generate asynccheck, it's the caller's responsibility
 // to ensure one is generated for a backward branch.
 //
 int32_t
@@ -6412,7 +6412,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             // If condy is primitive type and resolved, load the primitive constant;
             // Otherwise, load using a CP symol (for resolved and unresolved object type),
             // and generate subsequent loadi for the unresolved primitive 'value' field if needed (because
-            // for unresolved primitive the resovle helper only returns an autobox'd object).
+            // for unresolved primitive the resolve helper only returns an autobox'd object).
             if (isCondyPrimitive)
                {
                char *autoboxClassSig = NULL;

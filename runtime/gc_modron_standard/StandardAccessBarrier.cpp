@@ -241,7 +241,7 @@ MM_StandardAccessBarrier::postObjectStore(J9VMThread *vmThread, J9Class *destCla
 {
 	j9object_t destObject = J9VM_J9CLASS_TO_HEAPCLASS(destClass);
 
-	/* destObject is guaranteed to be in old space, so the common code path will rememember objects appropriately here */
+	/* destObject is guaranteed to be in old space, so the common code path will remember objects appropriately here */
 	postObjectStoreImpl(vmThread, destObject, value);
 }
 

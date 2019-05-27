@@ -1713,7 +1713,7 @@ _illegalPrimitiveReturn:
 
 							/* the lazy evaluation would guarantee reasonCode reflects the first failure.
 							 * In all three functions, returned boolean value would indicate an error occurred and the reasonCode is set to BCV_ERR_INSUFFICIENT_MEMORY in OOM cases.
-							 * Hence, if any of the 3 conditions should fail, if it is not on OOM as readonCode would indicate, it must be a verification error.
+							 * Hence, if any of the 3 conditions should fail, if it is not on OOM as reasonCode would indicate, it must be a verification error.
 							 */
 							if ((FALSE == isClassCompatibleByName(verifyData, classIndex, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), &reasonCode))
 							|| (FALSE == isClassCompatible(verifyData, type, classIndex, &reasonCode))

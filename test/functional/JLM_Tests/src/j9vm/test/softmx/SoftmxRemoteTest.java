@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ import javax.management.ObjectName;
 import com.ibm.lang.management.MemoryMXBean;
 
 /*
- * Start the RemotTestServer with softmx enabled and jmx enabled before run the test.
+ * Start the RemoteTestServer with softmx enabled and jmx enabled before run the test.
  */
 @Test(groups = { "level.extended" })
 public class SoftmxRemoteTest{
