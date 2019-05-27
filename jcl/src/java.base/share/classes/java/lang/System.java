@@ -1339,12 +1339,34 @@ public interface Logger {
 	 * System loggers levels
 	 */
 	public enum Level {
+		/**
+		 * Enable all logging level messages
+		 */
 		ALL(Integer.MIN_VALUE),
+		/**
+		 * Enable TRACE level messages
+		 */
 		TRACE(400),
+		/**
+		 * Enable DEBUG level messages
+		 */
 		DEBUG(500),
+		/**
+		 * Enable INFO level messages
+		 */
 		INFO(800),
+		/**
+		 * Enable WARNING level messages
+		 */
 		WARNING(900),
+		/**
+		 * Enable ERROR level messages
+		 */
 		ERROR(1000),
+		/**
+		 *
+		 * Disable logging 
+		 */
 		OFF(Integer.MAX_VALUE);
 		
 		final int severity;

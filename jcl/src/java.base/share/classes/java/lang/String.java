@@ -3051,7 +3051,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/**
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
-	 * @param expr
+	 * @param regex 
 	 *			  the regular expression to match
 	 * @param substitute
 	 *			  the string to replace the matching substring with

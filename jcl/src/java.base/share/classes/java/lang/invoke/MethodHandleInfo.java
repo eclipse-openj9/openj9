@@ -131,7 +131,8 @@ public interface MethodHandleInfo {
 	 * Public members are reflected as if by <code>getMethod</code>, <code>getField</code> or <code>getConstructor</code>. 
 	 * Non-public members are reflected as if by <code>getDeclaredMethod</code>, <code>getDeclaredField</code> or <code>getDeclaredConstructor</code>.
 	 * 
-	 * @param expected The expected type of the returned Member
+	 * @param <T> The expected type of the returned Member
+	 * @param expected The expected Class of the returned Member
 	 * @param lookup The lookup that was used to create the MethodHandle, or a lookup object with equivalent access
 	 * @return A Method, Field or Constructor representing the underlying member of the MethodHandle
 	 * @throws NullPointerException If either argument is null

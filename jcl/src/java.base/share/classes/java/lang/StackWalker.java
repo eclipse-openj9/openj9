@@ -199,6 +199,7 @@ public final class StackWalker {
 	 * Traverse the calling thread's stack at the time this method is called and
 	 * apply {@code function} to each stack frame.
 	 * 
+	 * @param <T> the type of the return value from applying function to the stream 
 	 * @param function operation to apply to the stream
 	 * @param walkState Pointer to a J9StackWalkState struct
 	 * @return the value returned by {@code function}.
@@ -217,6 +218,7 @@ public final class StackWalker {
 	 * Traverse the calling thread's stack at the time this method is called and
 	 * apply {@code function} to each stack frame.
 	 * 
+	 * @param <T> the type of the return value from applying function to the stream 
 	 * @param function operation to apply to the stream
 	 * @return the value returned by {@code function}.
 	 */
