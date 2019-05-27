@@ -290,7 +290,6 @@ public class MemoryAllocator {
 //#define J9MEM_CATEGORY_CLASSLIB_GUI_MEDIALIB 34
 //#define J9MEM_CATEGORY_CLASSLIB_FONT 35
 //#define J9MEM_CATEGORY_CLASSLIB_SOUND 36
-//#define J9MEM_CATEGORY_NATIVE_PACKED_DATA 37
 //#define J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATEDBB 38
 
 
@@ -359,7 +358,6 @@ public class MemoryAllocator {
 		categoryCodesToNames.put(34l, "Medialib Image"); //#define J9MEM_CATEGORY_CLASSLIB_GUI_MEDIALIB 34
 		categoryCodesToNames.put(35l, "Font"); //#define J9MEM_CATEGORY_CLASSLIB_FONT 35
 		categoryCodesToNames.put(36l, "Sound"); //#define J9MEM_CATEGORY_CLASSLIB_SOUND 36
-		categoryCodesToNames.put(37l, "Native Packed Data"); //#define J9MEM_CATEGORY_NATIVE_PACKED_DATA 37
 		categoryCodesToNames.put(38l, "Direct Byte Buffers"); //#define J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATEDBB 38
 
 		// OMR Codes
