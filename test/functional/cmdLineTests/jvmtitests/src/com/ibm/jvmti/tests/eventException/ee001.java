@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,25 +21,29 @@
  *******************************************************************************/
 package com.ibm.jvmti.tests.eventException;
 
+import java.lang.reflect.Method;
+
 public class ee001 
 {
-    public native static void invoke();
+    public native static void invoke(Method m);
     public native static boolean check();
-	
-	public String helpException()
-	{
-		return "Test only single exception event gets thrown with JNI frame before handler";
-	}
     
-    public static void generateException() throws Exception {
+    public String helpException()
+    {
+        return "Test only single exception event gets thrown with JNI frame before handler";
+    }
+    
+    public static void generateException() throws Exception
+    {
         throw new Exception();
     }
 
-	public boolean testException()
-	{
+    public boolean testException() throws Exception
+    {
         boolean exceptionCaught = false;
+        Method m = ee001.class.getMethod("generateException");
         try {
-            invoke();
+            invoke(m);
         } catch (Exception e) {
             exceptionCaught = true;
         }

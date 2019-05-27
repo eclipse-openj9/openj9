@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,40 +34,40 @@ static jboolean exceptionEventFired;
 jint JNICALL
 ee001(agentEnv * agent_env, char * args)
 {
-	JVMTI_ACCESS_FROM_AGENT(agent_env);
-	jvmtiEventCallbacks callbacks;
+    JVMTI_ACCESS_FROM_AGENT(agent_env);
+    jvmtiEventCallbacks callbacks;
     jvmtiCapabilities capabilities;
-	jvmtiError err;
+    jvmtiError err;
 
-	env = agent_env;
+    env = agent_env;
 
-	exceptionEventFired = JNI_FALSE;
+    exceptionEventFired = JNI_FALSE;
 
-	memset(&capabilities, 0, sizeof(jvmtiCapabilities));
-	capabilities.can_generate_exception_events = 1;
-	err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
-	if (err != JVMTI_ERROR_NONE) {
-		error(env, err, "Failed to add capabilities");
-		return JNI_ERR;
-	}
+    memset(&capabilities, 0, sizeof(jvmtiCapabilities));
+    capabilities.can_generate_exception_events = 1;
+    err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
+    if (err != JVMTI_ERROR_NONE) {
+        error(env, err, "Failed to add capabilities");
+        return JNI_ERR;
+    }
 
-	/* Set the CompiledMethodLoad event callback */
-	memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
-	callbacks.Exception = exceptionThrowCB;
-	err = (*jvmti_env)->SetEventCallbacks(jvmti_env, &callbacks, sizeof(jvmtiEventCallbacks));
-	if (err != JVMTI_ERROR_NONE) {
-		error(env, err, "Failed to set callback for Exception events");
-		return JNI_ERR;
-	}
+    /* Set the Exception event callback */
+    memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
+    callbacks.Exception = exceptionThrowCB;
+    err = (*jvmti_env)->SetEventCallbacks(jvmti_env, &callbacks, sizeof(jvmtiEventCallbacks));
+    if (err != JVMTI_ERROR_NONE) {
+        error(env, err, "Failed to set callback for Exception events");
+        return JNI_ERR;
+    }
 
-	/* Enable the JVMTI_EVENT_EXCEPTION callback */
-	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION, NULL);
-	if (err != JVMTI_ERROR_NONE) {
-		error(env, err, "Failed to enable Exception event");
-		return JNI_ERR;
-	} 
+    /* Enable the JVMTI_EVENT_EXCEPTION callback */
+    err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION, NULL);
+    if (err != JVMTI_ERROR_NONE) {
+        error(env, err, "Failed to enable Exception event");
+        return JNI_ERR;
+    } 
 
-	return JNI_OK;
+    return JNI_OK;
 }
 
 static void JNICALL
@@ -86,20 +86,20 @@ exceptionThrowCB(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID
             error(env, JVMTI_ERROR_INTERNAL, "Failed to avoid duplicate event callback for Exception event");
         }
     }
-	
-	return;	
+    
+    return;	
 }
 
 
 void JNICALL
-Java_com_ibm_jvmti_tests_eventException_ee001_invoke(JNIEnv *jni_env, jclass cls, jstring method)
+Java_com_ibm_jvmti_tests_eventException_ee001_invoke(JNIEnv *jni_env, jclass cls, jobject method)
 {
-    jmethodID mid = (*jni_env)->GetStaticMethodID(jni_env, cls, EXCEPTION_METHOD, "()V");
+    jmethodID mid = (*jni_env)->FromReflectedMethod(jni_env, method);
     (*jni_env)->CallStaticVoidMethod(jni_env, cls, mid);
 }
 
 jboolean JNICALL
-Java_com_ibm_jvmti_tests_eventException_ee001_check(JNIEnv *jni_env, jclass cls, jstring method)
+Java_com_ibm_jvmti_tests_eventException_ee001_check(JNIEnv *jni_env, jclass cls)
 {
     return exceptionEventFired;
 }
