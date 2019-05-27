@@ -787,6 +787,32 @@ j9gc_allocation_threshold_changed(J9VMThread *currentThread)
 }
 
 /**
+ * Set the allocation sampling interval to trigger a J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING event
+ * 
+ * Examples:
+ * 	To trigger an event whenever 4K objects have been allocated:
+ *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)4096);
+ *	To trigger an event for every object allocation:
+ *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)0);
+ * The initial MM_GCExtensions::oolObjectSamplingBytesGranularity value is 16M
+ * or set by command line option "-Xgc:allocationSamplingGranularity".
+ * By default, the sampling interval is going to be set to 512 KB.
+ * 
+ * @parm[in] vmThread The current VM Thread
+ * @parm[in] samplingInterval The allocation sampling interval.
+ */
+void 
+j9gc_set_allocation_sampling_interval(J9VMThread *vmThread, UDATA samplingInterval)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
+	if (0 == samplingInterval) {
+		/* avoid (env->_oolTraceAllocationBytes) % 0 which could be undefined. */
+		samplingInterval = 1;
+	}
+	extensions->oolObjectSamplingBytesGranularity = samplingInterval;
+}
+
+/**
  * Sets the allocation threshold (VMDESIGN 2006) to trigger a J9HOOK_MM_ALLOCATION_THRESHOLD event
  * whenever an object is allocated on the heap whose is between the lower bound and the upper bound
  * of the allocation threshold range.
