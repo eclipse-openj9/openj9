@@ -517,10 +517,7 @@ TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cp
       }
    else
       {
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      bool validated = validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, needAOTValidation);
-      TR_ASSERT(validated, "field attributes from client and cache do not match");
-#endif
+      TR_ASSERT(validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, needAOTValidation), "field attributes from client and cache do not match");
       }
    
    bool result;
@@ -1644,6 +1641,9 @@ TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(cons
 bool
 TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
    {
+   // Validation should not be done against attributes cached per-resolved method
+   if (attributes.isUnresolvedInCP()) 
+      return true;
    if (!isStatic)
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
    else
@@ -2215,16 +2215,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * co
       }
    else
       {
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      if (!attributes.isUnresolvedInCP())
-         {
-         // Validate cached attributes from global cache.
-         // Do not validate locally cached attributes, because even if they are incorrect
-         // they only exist for the duration of one compilation
-         bool validated = validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool);
-         TR_ASSERT(validated, "static attributes from client and cache do not match");
-         }
-#endif
+      TR_ASSERT(validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool), "static attributes from client and cache do not match");
       }
    attributes.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
 
@@ -2307,10 +2298,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
       }
    else
       {
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      bool validated = validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool);
-      TR_ASSERT(validated, "static attributes from client and cache do not match");
-#endif
+      TR_ASSERT(validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool), "static attributes from client and cache do not match");
       }
    attributes.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
 
