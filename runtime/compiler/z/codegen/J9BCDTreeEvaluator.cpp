@@ -1900,7 +1900,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
    // 2. creatememoryreference from the StorageREference,
    // 3. Use the memory reference to create VUPKZ instruction
    //
-   // return the allocate PseudoRegister associate the storage refence to the Pseudo register
+   // return the allocate PseudoRegister associate the storage reference to the Pseudo register
    // return this pseudoregister/
    //
    TR_StorageReference *hint = node->getStorageReferenceHint();

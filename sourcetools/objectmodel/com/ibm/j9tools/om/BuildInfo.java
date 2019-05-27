@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2011 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -288,7 +288,7 @@ public class BuildInfo extends OMObject {
 	}
 
 	/**
-	 * Retrives the list of repository keys.
+	 * Retrieves the list of repository keys.
 	 * 
 	 * @return	the repository keys
 	 */

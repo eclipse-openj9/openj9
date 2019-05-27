@@ -3572,7 +3572,7 @@ TR_J9ByteCodeIlGenerator::genIfTwoOperand(TR::ILOpCodes nodeop)
 // handlePendingPushSaveSideEffects is called to promote any such loads
 // to treetops preceding the saveStack generated stores.
 //
-// This API does not generate asynccheck, it's the caller's responsiblity
+// This API does not generate asynccheck, it's the caller's responsibility
 // to ensure one is generated for a backward branch.
 //
 int32_t
@@ -6412,7 +6412,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             // If condy is primitive type and resolved, load the primitive constant;
             // Otherwise, load using a CP symol (for resolved and unresolved object type),
             // and generate subsequent loadi for the unresolved primitive 'value' field if needed (because
-            // for unresolved primitive the resovle helper only returns an autobox'd object).
+            // for unresolved primitive the resolve helper only returns an autobox'd object).
             if (isCondyPrimitive)
                {
                char *autoboxClassSig = NULL;

@@ -43,7 +43,7 @@ class TR_ResolvedMethod;
 // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 //
 // When changing the prologue or preprologue shape/size, all recompilation-related
-// code must be revisted to make sure it is kept consistent.
+// code must be revisited to make sure it is kept consistent.
 //
 // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING

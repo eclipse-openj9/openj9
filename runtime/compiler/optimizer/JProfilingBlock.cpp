@@ -826,7 +826,7 @@ void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounter
    }
 
 /**
- * Add runtime tests to the start of the method to trigger method reccompilation once the
+ * Add runtime tests to the start of the method to trigger method recompilation once the
  * appropriate number of method entries has occurred as determined by the raw block
  * count of the first block of the method.
  */   

@@ -2120,7 +2120,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
                                    TR::Compiler->om.generateCompressedObjectHeaders() // Classes are <2GB on CompressedRefs only.
                                    );
 
-            // Load the interface call data snippet pointer to register is requied for non-CLFI / BRCL sequence.
+            // Load the interface call data snippet pointer to register is required for non-CLFI / BRCL sequence.
             if (!useCLFIandBRCL)
                {
                cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
@@ -2604,7 +2604,7 @@ void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register
    //  As java stack is not yet restored , Make sure that no instruction in this function
    // should use stack.
    // If instruction uses literal pool, it must only be to do load, and such instruction's memory reference should be marked MemRefMustNotSpill
-   // so that in case of long disp, we will resue the target reg as a scratch reg
+   // so that in case of long disp, we will reuse the target reg as a scratch reg
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
    intptrj_t aValue = fej9->constAcquireVMAccessOutOfLineMask();

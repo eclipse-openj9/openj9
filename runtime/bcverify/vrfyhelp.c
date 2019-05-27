@@ -1037,7 +1037,7 @@ static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verif
 }
 
 /* return BCV_SUCCESS if field is found
- * retrun BCV_NOT_FOUND if field is not found
+ * return BCV_NOT_FOUND if field is not found
  * return BCV_FAIL otherwise
  */
 
@@ -1069,7 +1069,7 @@ static IDATA findFieldFromRamClass (J9Class ** ramClass, J9ROMFieldRef * field, 
 }
 
 /* return BCV_SUCCESS if method is found
- * retrun BCV_NOT_FOUND if method is not found
+ * return BCV_NOT_FOUND if method is not found
  * return BCV_FAIL otherwise
  */
 static IDATA 

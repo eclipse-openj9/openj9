@@ -7250,7 +7250,7 @@ bool TR_EscapeAnalysis::devirtualizeCallSites()
             {
             //need to fixup references to the original call
             //store return value to temp (after direct call and after cold call)
-            //load it back (instead of the refereces)
+            //load it back (instead of the references)
 
             TR::DataType dt = callNode->getDataType();
 

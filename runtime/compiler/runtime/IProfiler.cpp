@@ -2481,7 +2481,7 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
                   list->incrementOrCreate(address, &addrOfTotalFrequency, i, weight, &comp->trMemory()->heapMemoryRegion());
                   }
                }
-            // add resudial to last total frequency
+            // add residual to last total frequency
             *addrOfTotalFrequency = (*addrOfTotalFrequency) + csInfo->_residueWeight;
             }
          else

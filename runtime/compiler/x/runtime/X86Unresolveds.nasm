@@ -375,13 +375,13 @@ patchCmpxchgForLongStore:
 patchMainlineInstructionFromCache:
 
       mov         ecx, dword  [esp + 12]                            ; Load low dword of patch instruction in snippet BEFORE volatile resolution
-      mov         ebx, dword  [esp + 16]                            ; Load high dword of patch instruction in snippet BEFORE volatile resoluion
+      mov         ebx, dword  [esp + 16]                            ; Load high dword of patch instruction in snippet BEFORE volatile resolution
 
 
 patchMainlineInstruction:
 
 
-      mov         esi, dword  [esp]                                 ; Restor RA in mainline code.
+      mov         esi, dword  [esp]                                 ; Restore RA in mainline code.
       mov         edx, dword  [esp + 4]                             ; Restore the call instruction (edx:eax) that should have brought
       mov         eax, dword  [esp + 8]                             ; us to this snippet + the following 3 bytes.
 

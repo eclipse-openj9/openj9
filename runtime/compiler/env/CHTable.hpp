@@ -325,7 +325,7 @@ class TR_CHTable
      * an exception occurred.
      *
      * This worked perfectly when longjmp was used: when longjmp was issued, the
-     * code is still inside CHTable critical section, and hence reseting/modifying
+     * code is still inside CHTable critical section, and hence resetting/modifying
      * visited status flags was safe.
      *
      * However, this does not work with C++ exception handling and RAII managing
@@ -339,7 +339,7 @@ class TR_CHTable
      * critical section in its constructor and leaves in its destructor. When an
      * exception occurs in Step 2, C++ executes CHTableCriticalSection's destructor
      * before executing the exception handler; and hence the exception handling code
-     * is outside of CHTable critical section. In short, reseting/modifying visited
+     * is outside of CHTable critical section. In short, resetting/modifying visited
      * status flags in the exception handler is NOT safe.
      *
      * To solve the above mentioned issue, VisitTracker is introduced. It resets

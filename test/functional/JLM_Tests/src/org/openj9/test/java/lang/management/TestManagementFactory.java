@@ -739,7 +739,7 @@ public class TestManagementFactory {
 			AssertJUnit.assertNotNull(stdProxy);
 			AssertJUnit.assertTrue(proxy instanceof NotificationEmitter);
 			NotificationEmitter proxyEmitter = (NotificationEmitter)proxy;
-			// Verify that the notification info can be retreived OK
+			// Verify that the notification info can be retrieved OK
 			MBeanNotificationInfo[] notifications = proxyEmitter.getNotificationInfo();
 			AssertJUnit.assertNotNull(notifications);
 			AssertJUnit.assertTrue(notifications.length > 0);

@@ -995,10 +995,10 @@ LABEL(LPatchInterfaceSlot)
 
     END_FUNC(_checkAndPatchBrasl,PCHBRSL,9)
 
-ZZ Induce Recompilation asm rountine is just a wrapper to call the C
+ZZ Induce Recompilation asm routine is just a wrapper to call the C
 ZZ function induceRecompilation(VMThread,StartPC), which will patch
 ZZ the startPC in a thread-safe manner.
-ZZ This asm rountine sets up the appropriate parameters and uses the
+ZZ This asm routine sets up the appropriate parameters and uses the
 ZZ jitCallCFunction to invoke the induceRecompilation C routine.
 ZZ
 ZZ _induceRecompilation is called by a ForceRecompilationSnippet

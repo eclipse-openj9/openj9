@@ -411,7 +411,7 @@ done:
  *
  * @param [in] fromModule module containing package
  * @param [in] pkgName name must not contain '/' only '.'
- * @param [in] toModule module recinving access to package
+ * @param [in] toModule module receiving access to package
  *
  * @return JVMTI_ERROR_NONE if successfull, JVMTI_ERROR_INVALID_MODULE if either module is
  * invalid and JVMTI_ERROR_NULL_POINTER if either module is NULL
@@ -427,7 +427,7 @@ jvmtiAddModuleExports(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgNam
  *
  * @param [in] fromModule module containing package
  * @param [in] pkgName name must not contain '/' only '.'
- * @param [in] toModule module recinving access to package
+ * @param [in] toModule module receiving access to package
  *
  * @return JVMTI_ERROR_NONE if successfull, JVMTI_ERROR_INVALID_MODULE if either module is
  * invalid and JVMTI_ERROR_NULL_POINTER if either module is NULL

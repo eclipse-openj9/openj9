@@ -707,7 +707,7 @@ public class ObjectFactory {
 	}
 
 	/**
-	 * Retrives the set of valid {@link FeatureDefinition} IDs the factory's config directory.
+	 * Retrieves the set of valid {@link FeatureDefinition} IDs the factory's config directory.
 	 *
 	 * @return	the valid feature definition IDs
 	 */

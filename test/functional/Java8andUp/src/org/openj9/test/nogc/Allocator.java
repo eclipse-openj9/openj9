@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ public class Allocator extends Thread {
 
 			if ((i < (long) largeAllocStart[sizeIndex] * keyCount)
 					|| (i > (long) largeAllocStop[sizeIndex] * keyCount)) {
-				// this i ugly: we are not replacing old Index; revet back tha counter
+				// this i ugly: we are not replacing old Index; reset back tha counter
 				if (null != oldRecord) {
 					largeAllocCount[sizeIndex] += 1;
 				}

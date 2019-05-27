@@ -193,7 +193,7 @@ _exit:
  * @param vmThread vmthread token
  * @param nestMember the j9lass requesting the nesthost
  * @param nestHost the actual nest host, this may be NULL
- * @param errorCode the error code represting the exception to throw
+ * @param errorCode the error code representing the exception to throw
  * 					J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
  * 					J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
  * 					J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
