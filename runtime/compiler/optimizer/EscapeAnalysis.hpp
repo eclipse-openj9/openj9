@@ -39,6 +39,8 @@
 #include "optimizer/OptimizationManager.hpp"
 
 class TR_EscapeAnalysis;
+class TR_FlowSensitiveEscapeAnalysis;
+class TR_LocalFlushElimination;
 class TR_OpaqueClassBlock;
 class TR_ResolvedMethod;
 class TR_UseDefInfo;
@@ -458,10 +460,50 @@ class TR_EscapeAnalysis : public TR::Optimization
    bool     collectValueNumbersOfIndirectAccessesToObject(TR::Node *node, Candidate *candidate, TR::Node *indirectStore, TR::NodeChecklist& visited, int32_t baseChildVN = -1);
    void     checkDefsAndUses();
    bool     checkDefsAndUses(TR::Node *node, Candidate *candidate);
+
+   /**
+    * Walk through trees looking for \c aternary operations.  For the
+    * value operands of an \c aternary, populate \ref _nodeUsesThroughAternary
+    * with an entry mapping from the operand to a list containing the
+    * \c aternary nodes that refer to it.
+    *
+    * \see _nodeUsesThroughAternary
+    */
    void     gatherUsesThroughAternary(void);
+
+   /**
+    * Recursive implementation method for \ref gatherUsesThroughAternary
+    *
+    * \param[in] node The root of the subtree that is to be processed
+    * \param[inout] visited A bit vector indicating whether a node has
+    *                       already been visited
+    */
    void     gatherUsesThroughAternaryImpl(TR::Node *node, TR::NodeChecklist& visited);
-   void     printUsesThroughAternary(void);
+
+   /**
+    * Add an entry to \ref _nodeUsesThroughAternary mapping from the child node
+    * of \c aternaryNode at the specified index to the \c aternaryNode itself.
+    *
+    * \param[in] aternaryNode A node whose opcode is an \c aternary operation
+    * \param[in] idx The index of a child of \c aternaryNode
+    */
    void     associateAternaryWithChild(TR::Node *aternaryNode, int32_t idx);
+
+   /**
+    * Trace contents of \ref _nodeUsesThroughAternary
+    */
+   void     printUsesThroughAternary(void);
+
+   /**
+    * Check whether \c node, which is a use of the candidate for stack
+    * allocation, \c candidate, is itself used as one of the value operands
+    * in an \c aternary operation, as found in \ref _nodeUsesThroughAternary.
+    * If it is, the value number of any such \c aternary is added to the list
+    * of value numbers associated with the candidate.
+    *
+    * \param[in] node The use of \c candidate that is under consideration
+    * \param[in] candidate A candidate for stack allocation
+    */
    bool     checkUsesThroughAternary(TR::Node *node, Candidate *candidate);
    bool     checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candidate *candidate, bool isImmediateUse);
    bool     checkOverlappingLoopAllocation(TR::Node *useNode, Candidate *candidate);
@@ -651,11 +693,18 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_BitVector *             _vnTemp;
    TR_BitVector *             _vnTemp2;
 
-   typedef TR::typed_allocator<std::pair<TR::Node* const, TR_Array<TR::Node*>*>, TR::Region&> NodeToNodeArrayMapAllocator;
-   typedef std::less<TR::Node*> NodeComparator;
-   typedef std::map<TR::Node*, TR_Array<TR::Node*>*, NodeComparator, NodeToNodeArrayMapAllocator> NodeToNodeArrayMap;
+   typedef TR::typed_allocator<TR::Node *, TR::Region &> NodeDequeAllocator;
+   typedef std::deque<TR::Node *, NodeDequeAllocator> NodeDeque;
 
-   NodeToNodeArrayMap *       _nodeUsesThroughAternary;
+   typedef TR::typed_allocator<std::pair<TR::Node* const, NodeDeque*>, TR::Region&> NodeToNodeDequeMapAllocator;
+   typedef std::less<TR::Node*> NodeComparator;
+   typedef std::map<TR::Node*, NodeDeque*, NodeComparator, NodeToNodeDequeMapAllocator> NodeToNodeDequeMap;
+
+   /**
+    * A mapping from nodes to a \c deque of \c aternary nodes that directly
+    * reference them.
+    */
+   NodeToNodeDequeMap *       _nodeUsesThroughAternary;
 
    friend class TR_FlowSensitiveEscapeAnalysis;
    friend class TR_LocalFlushElimination;
