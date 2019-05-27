@@ -870,11 +870,12 @@ void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
    uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + 16);
    for (int32_t i=1; i<numHelpers; i++)
       {
-      *buffer = 0x58000110; //LDR R16 PC+8
+      *((int32_t *)buffer) = 0x58000110; //LDR R16 PC+8
       buffer += 1; 
       *buffer = 0xD61F0200; //BR R16
       buffer += 1;
-      *buffer = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
+      *((intptrj_t *)buffer) = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
+      buffer += 1;
       }
    }
 
@@ -888,7 +889,7 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    buffer += 1; 
    *buffer = 0xD61F0200; //BR R16
    buffer += 1;
-   *buffer = dispatcher;
+   *((intptrj_t *)buffer) = dispatcher;
    }
 
 bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)
@@ -902,7 +903,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
 
    distance = entryAddress - (uint8_t *)callSite;
    currentDistance = (branchInstr << 6) >> 4;
-   branchInstr &= 0xff000000;
+   branchInstr &= 0xfc000000;
    
    if (branchInstr != 0x94000000)
       {
@@ -913,7 +914,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
    if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines)
             || distance>(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateForwardOffset() 
             || distance<(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateBackwardOffset()
-   ){
+   )  {
       if (currentPC == newAddrOfCallee)
          {
          newTramp = currentTramp; 
@@ -921,7 +922,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
       else
          {
          newTramp = mcc_replaceTrampoline(reinterpret_cast<TR_OpaqueMethodBlock *>(callee), callSite, currentTramp, currentPC, newAddrOfCallee, false);
-         TR_ASSERT_FATAL(newTramp != NULL, "This is an internal error.\n");
+         TR_ASSERT_FATAL(newTramp != NULL, "Internal error: Could not replace trampoline.\n");
 
          if (currentTramp == NULL)
             {
@@ -938,7 +939,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
 
    if (currentDistance != distance)
       {
-      branchInstr |= (distance >> 2) & 0x00ffffff;
+      branchInstr |= (distance >> 2) & 0x03ffffff;
       *(int32_t *)callSite = branchInstr;
       }
 
