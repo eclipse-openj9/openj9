@@ -2034,12 +2034,15 @@ retry:
 			}
 		}
 
-		/* Write threadObject in exception slot to indicate current thread is performing the resolution */
-		ramCPEntry->exception = vmThread->threadObject;
+		J9Class *ramClass = J9_CLASS_FROM_CP(ramCP);
+
+		/* Write threadObject in exception slot to indicate current thread is performing the resolution
+		 * this is the equivalent of: ramCPEntry->exception = vmThread->threadObject;
+		 */
+		J9STATIC_OBJECT_STORE(vmThread, ramClass, &(ramCPEntry->exception), vmThread->threadObject);
 		omrthread_monitor_exit(vm->constantDynamicMutex);
 
 		/* Enter if not previously resolved */
-		J9Class *ramClass = ramCP->ramClass;
 		J9ROMClass *romClass = ramClass->romClass;
 		J9ROMConstantDynamicRef *romConstantRef = (J9ROMConstantDynamicRef*)(J9_ROM_CP_FROM_CP(ramCP) + cpIndex);
 		J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
@@ -2073,8 +2076,14 @@ retry:
 		}
 
 		omrthread_monitor_enter(vm->constantDynamicMutex);
-		ramCPEntry->value = value;
-		ramCPEntry->exception = exceptionObject;
+		/* Write the value and exceptionObject into the cp entry using
+		 * the store barriers so that the GC is notified of the stores.
+		 * This is the equivalent of doing:
+		 * 	ramCPEntry->value = value;
+		 *	ramCPEntry->exception = exceptionObject;
+		 */
+		J9STATIC_OBJECT_STORE(vmThread, ramClass, &(ramCPEntry->value), value);
+		J9STATIC_OBJECT_STORE(vmThread, ramClass, &(ramCPEntry->exception), exceptionObject);
 		omrthread_monitor_notify_all(vm->constantDynamicMutex);
 		omrthread_monitor_exit(vm->constantDynamicMutex);
 	}
