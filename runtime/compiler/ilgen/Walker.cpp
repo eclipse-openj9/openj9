@@ -2443,7 +2443,7 @@ TR_J9ByteCodeIlGenerator::saveStack(int32_t targetIndex, bool anchorLoads)
 // Bad code results if code following saveStack generated stores
 // attempts to load from one of the saved PPS slots. Two obvious
 // examples arise. For the first example see the comment before
-// TR_J9ByteCodeIlGenerator::genIfImp. Second, consider a treetop precedeing a
+// TR_J9ByteCodeIlGenerator::genIfImp. Second, consider a treetop preceding a
 // decompilation point. Nodes loaded from the PPS save region (i.e that
 // were live on entry to the block) may be referred to by treetops on
 // both sides of the decompilation point and thus may be killed by the
