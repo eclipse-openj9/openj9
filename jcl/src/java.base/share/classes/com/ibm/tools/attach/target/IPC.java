@@ -422,14 +422,16 @@ public class IPC {
 	 * Print the information about a throwable, including the exact class,
 	 * message, and stack trace.
 	 * @param msg User supplied message
-	 * @param thrown throwable
+	 * @param thrown Throwable object or null
 	 * @note nothing is printed if logging is disabled
 	 */
 	public static void logMessage(String msg, Throwable thrown) {
 		synchronized (accessorMutex) {
 			if (isLoggingEnabled()) {
 				printMessageWithHeader(msg, logStream);
-				thrown.printStackTrace(logStream);
+				if (null != thrown) {
+					thrown.printStackTrace(logStream);
+				}
 				logStream.flush();
 			}
 		}

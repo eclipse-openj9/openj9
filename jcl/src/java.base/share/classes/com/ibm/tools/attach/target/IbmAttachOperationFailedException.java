@@ -8,7 +8,7 @@ import java.io.IOException;
  */
 @SuppressWarnings("serial")
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@ public class IbmAttachOperationFailedException extends IOException {
 	public IbmAttachOperationFailedException() {
 		super("IbmAttachOperationFailedException"); //$NON-NLS-1$
 	}
+	
 	/**
 	 * Constructs a new instance of this class with its 
 	 * walkback and message filled in.
@@ -48,4 +49,26 @@ public class IbmAttachOperationFailedException extends IOException {
 	public IbmAttachOperationFailedException(String message) {
 		super(message);
 	}
+
+	/**
+	 * Constructs the exception with a message and a nested Throwable.
+	 * @param message text of the message
+	 * @param cause underlying Throwable
+	 */
+	public IbmAttachOperationFailedException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	@Override
+	public String toString() {
+		String result;
+		Throwable myCause = getCause();
+		if (null != myCause) {
+			result = String.format("\"%s\"; Caused by: \"%s\"", super.toString(), myCause.toString()); //$NON-NLS-1$
+		} else {
+			result = super.toString();
+		}
+		return result;
+	}
+	
 }
