@@ -1122,7 +1122,7 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 				if (strlen(J9SHAREDCLASSESHELPTEXT[i].option) > 27) {
 				/* Some help text has more than 28 chars, print them in two lines, e.g.
 				 * invalidateAotMethods=<method_specification>[,<method_specification>]
-                 *            Invalidate the AOT method(s) specified by the user.
+				 * Invalidate the AOT method(s) specified by the user.
 				 */
 					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
 					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %28s", "");
