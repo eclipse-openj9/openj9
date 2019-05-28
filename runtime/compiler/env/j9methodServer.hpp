@@ -153,7 +153,7 @@ namespace std
 // Since one cache contains different types of resolved methods, need to uniquely identify
 // each type. Apparently, the same cpIndex may refer to both virtual or special method,
 // for different method calls, so using TR_ResolvedMethodType is necessary.
-enum TR_ResolvedMethodType {VirtualFromCP, VirtualFromOffset, Interface, Static, Special, ImproperInterface};
+enum TR_ResolvedMethodType {VirtualFromCP, VirtualFromOffset, Interface, Static, Special, ImproperInterface, NoType};
 struct
 TR_ResolvedMethodKey
    {
@@ -274,6 +274,7 @@ public:
    static void createResolvedMethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    static void createResolvedMethodFromJ9MethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    bool addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key);
+   void cacheResolvedMethodsCallees();
 
 protected:
    JITaaS::J9ServerStream *_stream;

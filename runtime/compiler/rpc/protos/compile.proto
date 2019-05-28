@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+
 syntax = "proto3";
 
 package JITaaS;
@@ -103,6 +104,7 @@ enum J9ServerMessageType
    ResolvedMethod_isUnresolvedString = 148;
    ResolvedMethod_stringConstant = 149;
    ResolvedMethod_getResolvedVirtualMethod = 150;
+   ResolvedMethod_getMultipleResolvedMethods = 151;
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 160;
    ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 161;

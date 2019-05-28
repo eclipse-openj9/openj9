@@ -27,6 +27,7 @@
 #include "control/MethodToBeCompiled.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 #include "exceptions/DataCacheError.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
 
 ClientSessionData::ClassInfo &
 getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
@@ -1651,6 +1652,103 @@ TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(cons
    return added;
    }
 
+void
+TR_ResolvedJ9JITaaSServerMethod::cacheResolvedMethodsCallees()
+   {
+   // 1. Iterate through bytecodes and look for method invokes.
+   // If resolved method corresponding to an invoke is not cached, add it
+   // to the list of methods that will be sent to the client in one batch.
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   TR_J9ByteCodeIterator bci(0, this, fej9(), compInfoPT->getCompilation());
+   std::vector<int32_t> cpIndices;
+   std::vector<TR_ResolvedMethodType> methodTypes;
+   for(TR_J9ByteCode bc = bci.first(); bc != J9BCunknown; bc = bci.next())
+      {
+      // Identify all bytecodes that require a resolved method
+      int32_t cpIndex = bci.next2Bytes();
+      TR_ResolvedMethodType type = TR_ResolvedMethodType::NoType;
+      TR_ResolvedMethod *resolvedMethod;
+      switch (bc)
+         {
+         case J9BCinvokevirtual:
+            {
+            type = TR_ResolvedMethodType::VirtualFromCP;
+            break;
+            }
+         case J9BCinvokestaticsplit:
+            {
+            // falling through on purpose
+            cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
+            }
+         case J9BCinvokestatic:
+            {
+            type = TR_ResolvedMethodType::Static;
+            break;
+            }
+         case J9BCinvokespecialsplit:
+            {
+            // falling through on purpose
+            cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
+            }
+         case J9BCinvokespecial:
+            {
+            type = TR_ResolvedMethodType::Special;
+            break;
+            }
+         default:
+            {
+            // do nothing
+            break;
+            }
+         }
+
+      if (type != TR_ResolvedMethodType::NoType &&
+          !compInfoPT->getCachedResolvedMethod(
+             compInfoPT->getResolvedMethodKey(type, (TR_OpaqueClassBlock *) _ramClass, cpIndex),
+             this,
+             &resolvedMethod))
+         {
+         methodTypes.push_back(type);
+         cpIndices.push_back(cpIndex);
+         }
+      }
+
+   int32_t numMethods = methodTypes.size();
+   // If less than 2 methods, it's cheaper to create
+   // resolved method normally, because client won't
+   // have to deal with vectors
+   if (numMethods < 2)
+      return;
+
+   // 2. Send a remote query to mirror all uncached resolved methods
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getMultipleResolvedMethods, (TR_ResolvedJ9Method *) _remoteMirror, methodTypes, cpIndices);
+   auto recv = _stream->read<std::vector<J9Method *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITaaSServerMethodInfo>>();
+
+   // 3. Cache all received resolved methods
+   auto ramMethods = std::get<0>(recv);
+   auto vTableOffsets = std::get<1>(recv);
+   auto methodInfos = std::get<2>(recv);
+   TR_ASSERT(numMethods == ramMethods.size(), "Number of received methods does not match the number of requested methods");
+   for (int32_t i = 0; i < numMethods; ++i)
+      {
+      TR_ResolvedMethodType type = methodTypes[i];
+      TR_ResolvedMethod *resolvedMethod;
+      TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(type, (TR_OpaqueClassBlock *) _ramClass, cpIndices[i]);
+      if (std::get<0>(methodInfos[i]).remoteMirror &&
+         !compInfoPT->getCachedResolvedMethod(
+             key,
+             this,
+             &resolvedMethod))
+         {
+         compInfoPT->cacheResolvedMethod(
+            key,
+            (TR_OpaqueMethodBlock *) ramMethods[i],
+            vTableOffsets[i],
+            methodInfos[i]);
+         }
+      }
+   }
+
 bool
 TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
    {
@@ -1663,7 +1761,6 @@ TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9Method
    bool equal = attributes == clientAttributes;
    return equal;
    }
-
 
 TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
    : TR_ResolvedJ9JITaaSServerMethod(aMethod, fe, trMemory, owner, vTableSlot)
