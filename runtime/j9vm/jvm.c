@@ -4188,18 +4188,6 @@ isSignalReservedByJVM(jint sigNum)
 #if defined(SIGBREAK)
 		(SIGBREAK == sigNum) ||
 #endif /* defined(SIGBREAK) */
-#if defined(SIGABRT)
-		(SIGABRT == sigNum) ||
-#endif /* defined(SIGABRT) */
-#if defined(SIGCHLD)
-		(SIGCHLD == sigNum) ||
-#endif /* defined(SIGCHLD) */
-#if defined(SIGRECONFIG)
-		(SIGRECONFIG == sigNum) ||
-#endif /* defined(SIGRECONFIG) */
-#if defined(J9ZOS390) && defined(SIGUSR1)
-		(SIGUSR1 == sigNum) ||
-#endif /* defined(J9ZOS390) && defined(SIGUSR1) */
 		FALSE;
 }
 
