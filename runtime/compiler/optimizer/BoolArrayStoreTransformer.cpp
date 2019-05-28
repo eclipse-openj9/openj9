@@ -163,7 +163,10 @@ void TR_BoolArrayStoreTransformer::perform()
             _bstoreiBoolArrayTypeNodes->insert(_bstoreiUnknownArrayTypeNodes->begin(), _bstoreiUnknownArrayTypeNodes->end());
             }
          else
-            traceMsg(comp(), "only byte array exist as auto or checkcast type\n");
+            {
+            if (comp()->getOption(TR_TraceILGen))
+               traceMsg(comp(), "only byte array exist as auto or checkcast type\n");
+            }
          _bstoreiUnknownArrayTypeNodes->clear();
          }
       }
