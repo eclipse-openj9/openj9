@@ -1027,7 +1027,7 @@ setClassLoadingConstraintLinkageError(J9VMThread *vmThread, J9Class *methodOrFie
 	const char *nlsTemplate = j9nls_lookup_message(
 			J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 			J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT,
-			"loading constraint violation: %2$.*1$s not visible from %4$.*3$s");
+			"loading constraint violation: %.*s not visible from %.*s");
 	char * msg = expandNLSTemplate(
 			vmThread,
 			nlsTemplate,
