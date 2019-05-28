@@ -2350,30 +2350,27 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                   {
                   int32_t useIndex = cursor;
                   TR::Node *useNode = _useDefInfo->getNode(useIndex+_useDefInfo->getFirstUseIndex());
+
+                  // Only add this value number if it's not to be ignored
+                  if (_ignoreableUses->get(useNode->getGlobalIndex()))
+                     {
+                     continue;
+                     }
+
                   int32_t useNodeVN = _valueNumberInfo->getValueNumber(useNode);
                   int32_t i;
-                  bool valueNumberSeen = false;
 
                   for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
                      {
                      if (candidate->_valueNumbers->element(i) == useNodeVN)
                         {
-                        valueNumberSeen = true;
-
-                        // Only add this value number if it's not to be ignored
-                        if (!_ignoreableUses->get(candidate->_valueNumbers->element(i)))
-                           {
-                           break;
-                           }
+                        break;
                         }
                      }
 
                   if (i < 0)
                      {
-                     if (!valueNumberSeen)
-                        {
-                        candidate->_valueNumbers->add(useNodeVN);
-                        }
+                     candidate->_valueNumbers->add(useNodeVN);
 
                      if (candidate->isInsideALoop())
                         {
@@ -2406,7 +2403,7 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                         else
                            returnValue = false;
                         }
-                     if (!valueNumberSeen && !checkDefsAndUses(useNode, candidate))
+                     if (!checkDefsAndUses(useNode, candidate))
                         returnValue = false;
                      }
                   }
