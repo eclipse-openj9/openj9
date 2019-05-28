@@ -3133,7 +3133,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
             }
          else if ( comp->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen() || comp->getCurrentMethod()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact )
             {
-            // We're in JSR292 Inlining rounds, and we are ourselves an archetype specimen, so we can inline other archetype specimins whenever we see fit
+            // We're in JSR292 Inlining rounds, and we are ourselves an archetype specimen, so we can inline other archetype specimens whenever we see fit
             }
          else if ( comp->getMethodHotness() >= hot )
             {
