@@ -58,7 +58,7 @@ protected:
 	 * @param[in] flags Scanning context flags
 	 */
 	MMINLINE GC_PointerArrayObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t arrayPtr, fomrobject_t *basePtr, fomrobject_t *limitPtr, fomrobject_t *scanPtr, fomrobject_t *endPtr, uintptr_t flags)
-		: GC_IndexableObjectScanner(env, arrayPtr, basePtr, limitPtr, scanPtr, endPtr, flags)
+		: GC_IndexableObjectScanner(env, arrayPtr, basePtr, limitPtr, scanPtr, endPtr, ((endPtr - scanPtr) < _bitsPerScanMap) ? (((uintptr_t)1 << (endPtr - scanPtr)) - 1) : UDATA_MAX, sizeof(fomrobject_t), flags)
 		, _mapPtr(_scanPtr)
 	{
 		_typeId = __FUNCTION__;
