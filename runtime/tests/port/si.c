@@ -146,7 +146,7 @@ int j9sysinfo_test0 (J9PortLibrary* portLibrary, char* argv0)
 	 */
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	U_32 pid;
-	I_32 bufSize=575;		/*should sizeof(infoStirng), */
+	I_32 bufSize=575;		/*should sizeof(infoString), */
 	U_16 classpathSeparator;
 	UDATA number_CPUs;
 	char *result;

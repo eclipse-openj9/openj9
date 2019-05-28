@@ -974,7 +974,7 @@ MM_RealtimeAccessBarrier::markAndScanContiguousArray(MM_EnvironmentRealtime *env
 
 /**
  * Finds opportunities for doing the copy without executing Metronome WriteBarrier.
- * @return ARRAY_COPY_SUCCESSFUL if copy was succesful, ARRAY_COPY_NOT_DONE no copy is done
+ * @return ARRAY_COPY_SUCCESSFUL if copy was successful, ARRAY_COPY_NOT_DONE no copy is done
  */
 I_32
 MM_RealtimeAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
@@ -1001,7 +1001,7 @@ MM_RealtimeAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, 
 
 /**
  * Finds opportunities for doing the copy without executing Metronome WriteBarrier.
- * @return ARRAY_COPY_SUCCESSFUL if copy was succesful, ARRAY_COPY_NOT_DONE no copy is done
+ * @return ARRAY_COPY_SUCCESSFUL if copy was successful, ARRAY_COPY_NOT_DONE no copy is done
  */
 I_32
 MM_RealtimeAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)

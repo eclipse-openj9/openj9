@@ -1809,7 +1809,7 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
 
       parmIteratorIdx = 1;
 
-      // We have 4 scenarioes to deal with:
+      // We have 4 scenarios to deal with:
       // slot0StillActive:  no matter if slot0Modified or not, we cannot touch slot0 itself.
       //                    By and large, these should account for the majority cases for DLT.
       //                    There is no difference from normal JIT in these cases;

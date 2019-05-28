@@ -446,7 +446,7 @@ SH_CompositeCacheImpl::getRequiredConstrBytes(bool isNested, bool startupForStat
 
 
 /**
- * Get required bytes for a constructor including the common info sturcture.
+ * Get required bytes for a constructor including the common info structure.
  *
  * @return Number of bytes required for getRequiredConstrBytesWithCommonInfo
  */

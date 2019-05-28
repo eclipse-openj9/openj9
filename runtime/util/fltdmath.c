@@ -732,7 +732,7 @@ static int indexLeadingOne64(U_64 * lp)
 	}
 
 	leading = 31;
-	/* serach LOWER word */
+	/* search LOWER word */
 	mask = 0x80000000;
 	while (mask != 0 && IS_CLEAR(LOW_U32_FROM_LONG64_PTR(lp), mask)) {
 		mask = mask >> 1;

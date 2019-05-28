@@ -840,7 +840,7 @@ srpHashTableVerify(
 	} else  if (srptableInternal->tableSize == PRIMENUMBERHELPER_OUTOFRANGE){
 		Trc_srpHashTableVerify_tableSizeIncorrect(srptable, srptableInternal->tableSize, PRIMENUMBERHELPER_OUTOFRANGE);
 	} else if (NULL != nodes) {
-		/* Recompute table size and verify it against the one stored in SRP hashtable strcuture */
+		/* Recompute table size and verify it against the one stored in SRP hashtable structure */
 		recalculatedTableSize = srpHashTable_calculateTableSize(memorySize, entrySize, FALSE);
 		if (recalculatedTableSize != srptableInternal->tableSize) {
 			Trc_srpHashTableVerify_tableSizeIncorrect(srptable, srptableInternal->tableSize, recalculatedTableSize);

@@ -7190,7 +7190,7 @@ done:
 	 *
 	 * @param[in] lhs the lhs object of acmp bytecodes
 	 * @param[in] rhs the rhs object of acmp bytecodes
-	 * return true if they are substituable and false otherwise
+	 * return true if they are substitutable and false otherwise
 	 */
 	VMINLINE bool
 	acmp(j9object_t lhs, j9object_t rhs)

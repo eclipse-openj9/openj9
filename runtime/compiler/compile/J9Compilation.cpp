@@ -61,7 +61,7 @@
  * There should be no allocations that use the global operator new, since
  * all allocations should go through the JitMemory allocation routines.
  * To catch cases that we miss, we define global operator new and delete here.
- * (xlC won't link staticly with the -noe flag when we override these.)
+ * (xlC won't link statically with the -noe flag when we override these.)
  */
 bool firstCompileStarted = false;
 

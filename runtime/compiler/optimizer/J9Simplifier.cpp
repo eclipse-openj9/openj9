@@ -77,7 +77,7 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
       {
       // illegal to fold an intermediate truncation:
       // dd2zd p=20 srcP=13
-      //   zd2dd (no p specifed, but by data type, must be <= 16 and by srcP must be <= 13)
+      //   zd2dd (no p specified, but by data type, must be <= 16 and by srcP must be <= 13)
       //     zdX p=20
       // Folding gives an incorrect result if either srcP or the implied p of the zd2dd is 
       // less than p on the dd2zd

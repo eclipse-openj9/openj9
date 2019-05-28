@@ -103,7 +103,7 @@ extern TR::Instruction * generateS390CompareOps(TR::Node * node, TR::CodeGenerat
 //   - rBranchOp:  Operator user for reverse operation ->  B rCmp A <=> A fCmp B
 //
 // TODO - avoid code duplication, this routine may be able to merge with the one
-//        above which has the similiar logic.
+//        above which has the similar logic.
 ///////////////////////////////////////////////////////////////////////////////////
 TR::Instruction *
 generateS390CompareBranchLabel(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic branchOp, TR::InstOpCode::S390BranchCondition fBranchOpCond, TR::InstOpCode::S390BranchCondition rBranchOpCond,
@@ -5205,7 +5205,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
    if (performReferenceArrayTestInline)
       {
       // We expect the Array Test to either return True or False, There is no helper.
-      // Following debug counter gives staistics about how many Array Test We have.
+      // Following debug counter gives statistics about how many Array Test We have.
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
       genIsReferenceArrayTest(node, objClassReg, scratch1Reg, scratch2Reg, needsResult ? resultReg : NULL, falseLabel, trueLabel, needsResult, trueFallThrough, cg);
       }
@@ -6140,7 +6140,7 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
       }
    srm->reclaimScratchRegister(superClassArrReg);
    return dynamicCastClass;
-   //We expect Result of the test reflects in Condition Code. Callee shoud react on this.
+   //We expect Result of the test reflects in Condition Code. Callee should react on this.
    }
 
 /** \brief
@@ -7348,7 +7348,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
       if (testCastClassIsSuper)
          {
          // we should enable OOL only if the above compare has a high chance of passing
-         // the profiler tells us the probability of a suceessful check cast
+         // the profiler tells us the probability of a successful check cast
          TR_OpaqueClassBlock * castClassAddr = TR::TreeEvaluator::getCastClassAddress(castClassNode);
          TR_OpaqueClassBlock * topGuessClassAddr = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node);
          float topProb = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastTopProb(cg, node);

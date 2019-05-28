@@ -194,7 +194,7 @@ MM_VerboseHandlerOutputRealtime::handleInitializedInnerStanzas(J9HookInterface**
 void
 MM_VerboseHandlerOutputRealtime::handleEvent(MM_MetronomeIncrementStartEvent* eventData)
 {
-	/* if we are in a sync gc cycle, do nothing here and let the syngc stanza handle things */
+	/* if we are in a sync gc cycle, do nothing here and let the syncgc stanza handle things */
 	if (!_syncGCTriggered) {
 		if (0 == _heartbeatStartTime) {
 			_heartbeatStartTime = eventData->timestamp;

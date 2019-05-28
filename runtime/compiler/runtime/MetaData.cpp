@@ -1080,7 +1080,7 @@ populateBodyInfo(
       if (vm->isAOT_DEPRECATED_DO_NOT_USE())
          {
          // The allocation for the Persistent Method Info and the Persistent Jitted Body Info used to be allocated with the exception table.
-         // Exception tables are now being reaped on method recompilation.  As these need to be persistent, we need to allocate them seperately.
+         // Exception tables are now being reaped on method recompilation.  As these need to be persistent, we need to allocate them separately.
          // Later, we should probably reconsider what the structure for this whole method is and where it all belongs.
          //
          bool retryCompilation = false;

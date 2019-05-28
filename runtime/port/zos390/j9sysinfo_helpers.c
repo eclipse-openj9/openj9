@@ -154,7 +154,7 @@ computeCpuTime(struct J9PortLibrary *portLibrary, int64_t *cpuTime)
 		return J9PORT_ERROR_HYPERVISOR_LPDAT_QUERY_FAILED;
 	}
 
-	/* Sum up serivce units in capped and uncapped modes for all entries that are
+	/* Sum up service units in capped and uncapped modes for all entries that are
 	 * present - by default, there being 48 entries, unless configured otherwise.
 	 */
 	for (i = 0; i < lpdatp->serviceTableEntries; i++) {

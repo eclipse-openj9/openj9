@@ -351,7 +351,7 @@ bcvToBaseTypeNameIndex(UDATA bcvType);
  * on 'locals'/'stack' in liveStack or stackmap frame.
  * @param stackMapFrame - pointer to the current frame (liveStack) or the specified stackmap frame
  * @param methodInfo - pointer to the MethodContextInfo that holds all method-related data and utilities
- * @return TRUE on sucess or FALSE if out-of-memory
+ * @return TRUE on success or FALSE if out-of-memory
  */
 BOOLEAN
 prepareVerificationTypeBuffer(StackMapFrame* stackMapFrame, MethodContextInfo* methodInfo);

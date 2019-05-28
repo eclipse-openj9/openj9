@@ -612,11 +612,11 @@ printExpectedTypeFromStackMapFrame(MessageBuffer *msgBuf, J9BytecodeVerification
 		goto exit;
 	}
 
-	/* Walk thourgh the stackmap table for the specified stackmape frame */
+	/* Walk thourgh the stackmap table for the specified stackmap frame */
 	while (stackmapFrameIndex != errorTargetFrameIndex) {
 		stackmapFrameIndex += 1;
 		nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
-		/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
+		/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmap frame */
 		if (NULL == nextStackmapFrame) {
 			result = FALSE;
 			goto exit;
@@ -711,11 +711,11 @@ setStackMapFrameWithIndex(J9BytecodeVerificationData *verifyData, MethodContextI
 			goto exit;
 		}
 
-		/* Walk thourgh the stackmap table for the specified stackmape frame */
+		/* Walk thourgh the stackmap table for the specified stackmap frame */
 		while (stackmapFrameIndex != errorTargetFrameIndex) {
 			stackmapFrameIndex += 1;
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
-			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
+			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmap frame */
 			if (NULL == nextStackmapFrame) {
 				goto exit;
 			}
@@ -761,7 +761,7 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 		while (stackmapFrameIndex < (I_32)stackMapCount) {
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
 			stackmapFrameIndex += 1;
-			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
+			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmap frame */
 			if (NULL == nextStackmapFrame) {
 				goto exit;
 			}

@@ -438,7 +438,7 @@ determineAlignment(UDATA value)
  *
  * @param sourceOffset[in] the first value
  * @param destOffset[in] the second value
- * @param vsizealue[in] the third value
+ * @param size[in] the third value
  *
  * @returns the minimum common alignment of the three inputs
  */

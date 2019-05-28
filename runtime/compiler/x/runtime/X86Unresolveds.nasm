@@ -107,7 +107,7 @@
 ;
 ; NOTES:
 ;
-; [1] A POP is not strictly necessary to shapen the stack. The RA could be left on the
+; [1] A POP is not strictly necessary to shape the stack. The RA could be left on the
 ; stack and the new stack shape updated in getJitStaticMethodResolvePushes(). It
 ; was left this way because we have to dork with the RA anyways to get back from
 ; this function which will already cause a return mispredict. Leaving it as is
@@ -342,7 +342,7 @@ doLOCKORESP:
 
 
       ; Loading a long in 32 bit is done with a lock cmpxchng by default.
-      ; We need to swtitch the op bits of the instructions that performs loads for the lock cmpxchng setup
+      ; We need to switch the op bits of the instructions that performs loads for the lock cmpxchng setup
       ; to stores. We also need to patch over the lock cmpxchg with nops.
       ;
 patchLowerLong:
@@ -1010,7 +1010,7 @@ segment .text
 ; the interpreter which reads the parameters from the stack. The backspilling has
 ; already occured at this point.
 ;
-; [2] A POP is not strictly necessary to shapen the stack. The RA could be left on the
+; [2] A POP is not strictly necessary to shape the stack. The RA could be left on the
 ; stack and the new stack shape updated in getJitStaticMethodResolvePushes(). It
 ; was left this way because we have to dork with the RA anyways to get back from
 ; this function which will already cause a return mispredict. Leaving it as is

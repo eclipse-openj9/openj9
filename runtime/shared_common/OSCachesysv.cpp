@@ -1690,7 +1690,7 @@ SH_OSCachesysv::getHeaderSize(void)
  * @param [in] ctrlDirName  Cache directory
  * @param [in] groupPerm  Group permissions to open the cache directory
  * @param [in] cacheNameWithVGen current cache name
- * @param [out] cacheInfo stucture to be populated with cache statistics
+ * @param [out] cacheInfo structure to be populated with cache statistics
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
  * @return 0 on success
  */
@@ -1766,7 +1766,7 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
  * @param [in] ctrlDirName  Cache directory
  * @param [in] groupPerm  Group permissions to open the cache directory
  * @param [in] cacheNameWithVGen current cache name
- * @param [out] cacheInfo stucture to be populated with cache statistics
+ * @param [out] cacheInfo structure to be populated with cache statistics
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
  *
  * @return 0 on success
@@ -1968,7 +1968,7 @@ SH_OSCachesysv::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescripto
 
 /**
  * This method performs additional checks to catch scenarios that are not handled by permission and/or mode settings provided by operating system,
- * to avoid any unintended access to sempahore set.
+ * to avoid any unintended access to semaphore set.
  *
  * @param[in] lastErrorInfo	Pointer to store last portable error code and/or message
  *

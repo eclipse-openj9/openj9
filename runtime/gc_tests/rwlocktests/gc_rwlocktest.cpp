@@ -85,9 +85,9 @@ runRequest(SupportThreadInfo* info)
  * lock being used and zero out the counter
  *
  * @param functionsToRun an array of functions pointers. Each function will be run one in sequence synchronized
- *        using the monitor within the SupporThreadInfo
+ *        using the monitor within the SupportThreadInfo
  * @param numberFunctions the number of functions in the functionsToRun array
- * @returns a pointer to the newly created SupporThreadInfo
+ * @returns a pointer to the newly created SupportThreadInfo
  */
 SupportThreadInfo*
 createSupportThreadInfo(omrthread_entrypoint_t* functionsToRun, UDATA numberFunctions){
@@ -159,7 +159,7 @@ triggerNextStepDone(SupportThreadInfo* info){
  * This method starts a concurrent thread and runs the functions specified in the
  * SupportThreadInfo passed in.  It only returns once the first function has run
  *
- * @param info SupporThreadInfo structure containing the functions and lock for the tests
+ * @param info SupportThreadInfo structure containing the functions and lock for the tests
  * @returns 0 on success
  */
 IDATA
@@ -187,8 +187,8 @@ startConcurrentThread(SupportThreadInfo* info){
  * for a test
  ************************************************/
 /**
- * This step enters the lock in the SupporThreadInfo for read
- * @param info the SupporThreadInfo which can be used by the step
+ * This step enters the lock in the SupportThreadInfo for read
+ * @param info the SupportThreadInfo which can be used by the step
  */
 static IDATA J9THREAD_PROC
 enter_rwlock_read(SupportThreadInfo* info)
@@ -199,8 +199,8 @@ enter_rwlock_read(SupportThreadInfo* info)
 }
 
 /**
- * This step exits the lock in the SupporThreadInfo for read
- * @param info the SupporThreadInfo which can be used by the step
+ * This step exits the lock in the SupportThreadInfo for read
+ * @param info the SupportThreadInfo which can be used by the step
  */
 static IDATA J9THREAD_PROC
 exit_rwlock_read(SupportThreadInfo* info)
@@ -211,8 +211,8 @@ exit_rwlock_read(SupportThreadInfo* info)
 }
 
 /**
- * This step enters the lock in the SupporThreadInfo for write
- * @param info the SupporThreadInfo which can be used by the step
+ * This step enters the lock in the SupportThreadInfo for write
+ * @param info the SupportThreadInfo which can be used by the step
  */
 static IDATA J9THREAD_PROC
 enter_rwlock_write(SupportThreadInfo* info)
@@ -223,8 +223,8 @@ enter_rwlock_write(SupportThreadInfo* info)
 }
 
 /**
- * This step exits the lock in the SupporThreadInfo for write
- * @param info the SupporThreadInfo which can be used by the step
+ * This step exits the lock in the SupportThreadInfo for write
+ * @param info the SupportThreadInfo which can be used by the step
  */
 static IDATA
 J9THREAD_PROC exit_rwlock_write(SupportThreadInfo* info)
@@ -477,7 +477,7 @@ Test_RWLock_waitingWriterExcludes2ndReader(CuTest *tc)
 	infoReader = createSupportThreadInfo(functionsToRunReader, 2);
 	infoReader2 = createSupportThreadInfo(functionsToRunReader, 2);
 
-	/* SupporThreadInfo structures use the same lock (g_lock) */
+	/* SupportThreadInfo structures use the same lock (g_lock) */
 
 	/* start the first concurrent thread that will enter for read */
 	startConcurrentThread(infoReader2);
@@ -543,7 +543,7 @@ Test_RWLock_AllReadersProceedTest(CuTest *tc)
 	infoReader1 = createSupportThreadInfo(functionsToRunReader1, 2);
 	infoReader2 = createSupportThreadInfo(functionsToRunReader2, 2);
 
-	/* two SupporThreadInfo structures use the same lock(g_lock) */
+	/* two SupportThreadInfo structures use the same lock(g_lock) */
 
 	/* first enter the lock for write */
 	CuAssertTrue(tc, 0 == infoReader1->readCounter);

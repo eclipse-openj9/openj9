@@ -421,7 +421,7 @@ errorRet:
  * @param[in] filename the file we are opening
  * @param[in] groupPerm 1 if the file needs to have group read-write permission, 0 otherwise; used only when creating new control file
  *
- * @return 0 on sucess or less than 0 in the case of an error
+ * @return 0 on success or less than 0 in the case of an error
  */
 intptr_t
 ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, BOOLEAN * isReadOnlyFD, BOOLEAN canCreateNewFile, const char * filename, uintptr_t groupPerm)
@@ -590,7 +590,7 @@ ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, B
  * @param[in] portLibrary The port library
  * @param[in] fd the file descriptor we wish to close
  *
- * @return 0 on sucess or less than 0 in the case of an error
+ * @return 0 on success or less than 0 in the case of an error
  */
 
 intptr_t

@@ -3133,7 +3133,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
             }
          else if ( comp->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen() || comp->getCurrentMethod()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact )
             {
-            // We're in JSR292 Inlining rounds, and we are ourselves an archetype specimen, so we can inline other archetype specimina whenever we see fit
+            // We're in JSR292 Inlining rounds, and we are ourselves an archetype specimen, so we can inline other archetype specimins whenever we see fit
             }
          else if ( comp->getMethodHotness() >= hot )
             {
@@ -4487,7 +4487,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
       arraySizeSymRef = comp->getSymRefTab()->findOrCreateDiscontiguousArraySizeSymbolRef();
       }
 #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-   //TODO remove define s390 flags when x and power enable suport for inlining 0 size arrays
+   //TODO remove define s390 flags when x and power enable support for inlining 0 size arrays
    // clean up canGenerateArraylets() && TR::Compiler->om.useHybridArraylets() && TR::Compiler->om.isDiscontiguousArray(instanceSize) queries?
    else if (!comp->getOptions()->realTimeGC() && instanceSize == 0)
       {

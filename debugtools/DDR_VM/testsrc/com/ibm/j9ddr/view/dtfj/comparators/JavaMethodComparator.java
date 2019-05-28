@@ -67,7 +67,7 @@ public class JavaMethodComparator extends DTFJComparator {
 	
 	// When number of returned values are the same test that they are all the same.
 	// If the numbers differ, remove all cold sections from DDR output and make sure remainders
-	// match jextract output.  In this scenerio we must ignore the size of the jextract output since
+	// match jextract output.  In this scenario we must ignore the size of the jextract output since
 	// it too is incorrect
 	
 	public static void compareCompiledSections(JavaMethod ddrJavaMethod, JavaMethod jextractJavaMethod, DTFJComparator imageSectionComparator) {

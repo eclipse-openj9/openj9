@@ -2279,7 +2279,7 @@ TR_J9ByteCodeIlGenerator::stopCountingStackRefs()
 //
 // if there is no PPS (Pending Pop Stack) for the target bytecode
 // (Which must be the first in the target bb) we create one which is
-// subsequenly initialized with the current PPS.  This is just a
+// subsequently initialized with the current PPS.  This is just a
 // lazy initialization.
 //
 // When a bb is translated _stackTemps initially is a copy of the
@@ -2466,7 +2466,7 @@ TR_J9ByteCodeIlGenerator::saveStack(int32_t targetIndex, bool anchorLoads)
 // The job of handlePendingPushSaveSideEffects is to add additional
 // implicit control dependencies to the TR IL caused by the
 // decompilation points.  All loads of the PPS save region must occur
-// before decompilation points except in the specfic case when the load
+// before decompilation points except in the specific case when the load
 // would redundantly reload a value already in the PPS.
 //
 // If handlePendingPushSaveSideEffects is being called on the stack
@@ -6410,7 +6410,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             int32_t valueOffset = 0;
 
             // If condy is primitive type and resolved, load the primitive constant;
-            // Otherwise, load using a CP symol (for resolved and unresolved object type),
+            // Otherwise, load using a CP symbol (for resolved and unresolved object type),
             // and generate subsequent loadi for the unresolved primitive 'value' field if needed (because
             // for unresolved primitive the resolve helper only returns an autobox'd object).
             if (isCondyPrimitive)
@@ -7404,7 +7404,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
          performClassLookahead(_classInfo);
 
       // findFieldInfo will update node, if node is array shadow, as it set canBeArrayShadow=true
-      // For normal static findFieldInfo will not update node, it can't be arrayShadown store
+      // For normal static findFieldInfo will not update node, it can't be arrayShadow store
       // So set canBeArrayShadow false here
       //
       TR_PersistentFieldInfo * fieldInfo = _classInfo->getFieldInfo() ? _classInfo->getFieldInfo()->findFieldInfo(comp(), node, false) : NULL;

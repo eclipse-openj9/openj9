@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -717,7 +717,7 @@ StringInternTable::testNodePromotionWeight(J9SharedInvariantInternTable *table, 
 {
 	/* Only allow a node into the shared tree IF:
 	 * - If J9AVLTREE_DISABLE_SHARED_TREE_UPDATES is not set
-	 * - It is STRINGINTERNTABLENODE_FLAG_UTF8_IS_SHARED. This means that the string it points to is shared and has been succesfully relocated.
+	 * - It is STRINGINTERNTABLENODE_FLAG_UTF8_IS_SHARED. This means that the string it points to is shared and has been successfully relocated.
 	 * - If the intern weight of the node to be promoted is greater than the shared node being displaced,
 	 * - or if the node has a greater intern weight of > 100,
 	 */

@@ -53,7 +53,7 @@ GC_FinalizeListManager::unlock() const
 
 /**
  * create and initialize with defaults new instance of FinalizeListManager
- * @return Pointer to FinalizeListmanager if initialisation succesful, NULL otherwise
+ * @return Pointer to FinalizeListmanager if initialisation successful, NULL otherwise
  */
 GC_FinalizeListManager *
 GC_FinalizeListManager::newInstance(MM_EnvironmentBase *env)
@@ -84,7 +84,7 @@ GC_FinalizeListManager::kill(MM_EnvironmentBase *env)
 
 /**
  * initialize with default values and create the mutex
- * @return true if initialisation succesful, false otherwise.
+ * @return true if initialisation successful, false otherwise.
  */
 bool
 GC_FinalizeListManager::initialize()
