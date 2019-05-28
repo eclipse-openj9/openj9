@@ -939,7 +939,7 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
 	Assert_VM_true(methodsLength > 1);
 
 	errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-			J9NLS_VM_DEFAULT_METHOD_CONFLICT_LIST, "conflicting default methods for '%2$s%4$s' in %6$s from classes [%7$s]");
+			J9NLS_VM_DEFAULT_METHOD_CONFLICT_LIST, "conflicting default methods for '%*.s%*.s' in %*.s from classes [%s]");
 	
 	/* Construct class list string */
 	for (i = 0; i < methodsLength; i++) {
