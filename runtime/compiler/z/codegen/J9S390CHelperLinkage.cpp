@@ -87,7 +87,7 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       }
 #endif
 
-   // Platform specifc linkage settings
+   // Platform specific linkage settings
    if (TR::Compiler->target.isLinux())
       {
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);

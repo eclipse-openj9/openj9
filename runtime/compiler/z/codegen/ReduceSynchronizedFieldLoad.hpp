@@ -70,7 +70,7 @@ class ReduceSynchronizedFieldLoad
       }
 
    /** \brief
-    *     Inlines a fast synhronized field load sequence using a load pair disjoint (LPD) instruction.
+    *     Inlines a fast synchronized field load sequence using a load pair disjoint (LPD) instruction.
     *
     *  \param node
     *     The node which encapsulates the reduced tree sequence via an inlined call node. The node must have the
@@ -140,7 +140,7 @@ class ReduceSynchronizedFieldLoad
    *     The end of the monitored region.
    *
    *  \param synchronizedObjectNode
-   *     The object on which the monitored region is synchornized on.
+   *     The object on which the monitored region is synchronized on.
 
    *  \return
    *     The candidate load within the monitored region to perform the optimization on; <c>NULL</c> if no candidate 

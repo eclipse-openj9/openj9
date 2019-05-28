@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ public class LibraryResolverFactory
 	 * Paths can be substituted as:
 	 * -Dcom.ibm.j9ddr.path.mapping=original/path/1=new/path/1:original/path/2=new/path/2
 	 * (Note that : or ; is used to separate paths according to the platforms setting of
-	 * of File.pathSeperator. = is used to separate multiple pairs of mappings.)
+	 * of File.pathSeparator. = is used to separate multiple pairs of mappings.)
 	 */
 	public static final String PATH_MAPPING_SYSTEM_PROPERTY = "com.ibm.j9ddr.path.mapping";
 	private static final String MAPPING_SEPERATOR = "=";

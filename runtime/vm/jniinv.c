@@ -379,7 +379,7 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 				omrthread_monitor_exit(vm->runtimeFlagsMutex);
 			}
 			/* Do not acquire exclusive here as it may cause deadlocks with
-			 * the other thread shuting down.
+			 * the other thread shutting down.
 			 */
 			return JNI_ERR;
 		}
@@ -480,7 +480,7 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 		omrthread_monitor_enter(vm->runtimeFlagsMutex);
 	}
 
-	/* we only allow shudown code to run once */
+	/* we only allow shutdown code to run once */
 	
 	if(vm->runtimeFlags & J9_RUNTIME_SHUTDOWN_STARTED) {
 		if(vm->runtimeFlagsMutex != NULL) {

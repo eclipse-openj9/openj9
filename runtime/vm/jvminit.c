@@ -557,7 +557,7 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 		}
 
 #if defined(WIN32)
-		/* Do not attempt to exit while a JNI sharead library open is in progress */
+		/* Do not attempt to exit while a JNI shared library open is in progress */
 		omrthread_monitor_enter(vm->nativeLibraryMonitor);
 		omrthread_monitor_enter(vm->classLoaderBlocksMutex);
 #endif
@@ -870,7 +870,7 @@ freeJavaVM(J9JavaVM * vm)
 }
 
 /**
- * Do a runtime check of the processor and operating sytem to determine if
+ * Do a runtime check of the processor and operating system to determine if
  * this is a supported configuration.
  *
  * @param[in] portLibrary - the port library.

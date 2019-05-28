@@ -1069,7 +1069,7 @@ MM_MetronomeDelegate::postRequestExclusiveVMAccess(OMR_VMThread *threadRequestin
  * but not necessarily by the same thread.
  *
  * @param env the requesting thread.
- * @param block boolean input parameter specifing whether we should block and wait, if another party is requesting at the same time, or we return
+ * @param block boolean input parameter specifying whether we should block and wait, if another party is requesting at the same time, or we return
  * @return boolean returning whether request was successful or not (make sense only if block is set to FALSE)
  */
 uintptr_t

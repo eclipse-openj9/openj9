@@ -144,7 +144,7 @@
 #define J9DescriptionReturnTypeInt 0x6
 #define J9DescriptionReturnTypeDouble 0x7
 #define J9DescriptionReturnTypeLong 0x8
-/* ROM CP have 32 bit slots, currently the least significat 20 bits are in use
+/* ROM CP have 32 bit slots, currently the least significant 20 bits are in use
  * so the Constant Dynamic return types will be shifted left to use the free bits
  */
 #define J9DescriptionReturnTypeShift 20

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -390,7 +390,7 @@ doVerifyAndRemoveElement(void *element, void * voidUserData)
 
 /**
  * Fill simple pools with elements, remove some of them to create a free list
- * and test iteration over the elements with simpelpool_do() verifying and
+ * and test iteration over the elements with simplepool_do() verifying and
  * removing all the elements from the simple pool
  */
 static BOOLEAN
@@ -927,7 +927,7 @@ doVerifyAndCountElements(void *element, void * voidUserData)
 
 /**
  * Fill simple pools with elements, remove some of them to create a free list
- * and test iterate over the elements with simpelpool_checkConsistency() verifying and
+ * and test iterate over the elements with simplepool_checkConsistency() verifying and
  * removing all the elements from the simple pool
  */
 static BOOLEAN

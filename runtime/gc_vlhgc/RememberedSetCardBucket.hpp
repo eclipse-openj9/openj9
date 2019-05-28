@@ -146,7 +146,7 @@ public:
 	void compact(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Is bucket Empty (it is sufficent to check if the current buffer is empty)
+	 * Is bucket Empty (it is sufficient to check if the current buffer is empty)
 	 * return true if empty
 	 */
 	bool isEmpty(MM_EnvironmentVLHGC *env) {

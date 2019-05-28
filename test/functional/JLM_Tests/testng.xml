@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@
 			<class name="org.openj9.test.java.lang.management.TestManagementUtils" />
 			<class name="org.openj9.test.java.lang.management.TestLoggingMXBean" />
 			<!-- //not run in rtctest <class name="org.openj9.test.java.lang.management.TestJvmCpuMonitorMXBeanEx"/> -->
-			<!-- // This test runs fine when executed standaone, but when // executed
+			<!-- // This test runs fine when executed standalone, but when // executed
 				in batch (with other tests), it fails. <class name="org.openj9.test.java.lang.management.TestSharedClassMemoryMXBean"/> -->
 			<!-- // Fixing this test suite is out of scope - neither are these //
 				tests related to DynamicMBean V. StandardMBean nor do they // seem to have

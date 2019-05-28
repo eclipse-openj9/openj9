@@ -74,7 +74,7 @@ public class TraceSection {
 
     }
 
-    /** sumarizes the trace section
+    /** summarizes the trace section
      *
      * @return  null
      */

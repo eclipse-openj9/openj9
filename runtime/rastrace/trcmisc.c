@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ void decrementRecursionCounter(UtThreadData *thr)
 
 /*******************************************************************************
  * name        - expandString
- * description - take a string and substutue pid number for %p, date for
+ * description - take a string and substitute pid number for %p, date for
  *               %d and time for %t
  * parameters  - returnBuffer - the expanded string as return
  *               value - the original string

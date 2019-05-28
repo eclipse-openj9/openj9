@@ -2632,7 +2632,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    //fprintf(stderr, "stopCompilationThread\n");
    // if we compile on application thread, there is no compilation
    // request queue and there is no compilation thread
-   // The SMALL jit case is already treated separatelly
+   // The SMALL jit case is already treated separately
    if (!useSeparateCompilationThread())
       {
       acquireCompMonitor(vmThread);

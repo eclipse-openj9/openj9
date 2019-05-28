@@ -312,7 +312,7 @@ mapDumpOptions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 						agentOpts[j].kind = J9RAS_DUMP_OPT_DISABLED;
 					}
 				}
-				/* Map any specifed actions for this condition */
+				/* Map any specified actions for this condition */
 				mapDumpActions(vm, agentOpts, agentNum, cursor, i);
 			}
 		}

@@ -127,7 +127,7 @@ void
 MM_SchedulingDelegate::globalMarkPhaseCompleted(MM_EnvironmentVLHGC *env)
 {
 	/* Taking a snapshot of _liveSetBytesAfterPartialCollect from the last PGC.
-	 * This is slighly incorrect. We should take liveSetBytes at the beginning of next PGC
+	 * This is slightly incorrect. We should take liveSetBytes at the beginning of next PGC
 	 * (just before sweep is done)
 	 */
 	_liveSetBytesBeforeGlobalSweep = _liveSetBytesAfterPartialCollect;

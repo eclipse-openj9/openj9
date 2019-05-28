@@ -2041,7 +2041,7 @@ typedef struct J9JVMTIHCRJitEventData {
 	UDATA * dataCursor;      /*!< cursor into the data buffer */
 	UDATA * data;            /*!< data buffer containing the jit class redefinition event data */
 	UDATA classCount;        /*!< number of classes in the data buffer */
-	UDATA initialized;       /*!< indicates that the strucutre has been initialized and is ready for use and dealloc */
+	UDATA initialized;       /*!< indicates that the structure has been initialized and is ready for use and dealloc */
 } J9JVMTIHCRJitEventData;
 
 void

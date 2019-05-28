@@ -201,7 +201,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 	The lock has not already been inflated.
    returns:
 	NULL if out of memory
-	the inflated monitor, if succesful
+	the inflated monitor, if successful
  */
 J9ObjectMonitor * 
 objectMonitorInflate(J9VMThread* vmStruct, j9object_t object, UDATA lock) 

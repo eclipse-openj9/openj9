@@ -125,7 +125,7 @@ j9ipcmutex_acquire(struct J9PortLibrary *portLibrary, const char *name)
 			return -1;
 		}
 
-		/* sempahore created, set initial value */
+		/* semaphore created, set initial value */
 		arg.val = 1;
 		if (semctl(sid, 0, SETVAL, arg) == -1) {
 			semctl(sid, 0, IPC_RMID, arg); /* cleanup semaphore from system */

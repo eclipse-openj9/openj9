@@ -542,7 +542,7 @@ static BOOLEAN memoryCheck_parseOption(OMRPortLibrary *portLib, char const *opti
 	 *
 	 * Note, each site string is meant to be a prefix match to call site info.
 	 * if string is 'zip/', it will ignore all unfreed blocks with callsite string with 'zip/'
-	 * Conversely, if a call siteis abc/de.c, specifing a string of de.c will not be a match */
+	 * Conversely, if a call site is abc/de.c, specifying a string of de.c will not be a match */
 	char const *optStrIgnoreUnfreedCallsite = "ignoreUnfreedCallsite=";
 	size_t optLenIgnoreUnfreedCallsite = strlen(optStrIgnoreUnfreedCallsite);
 

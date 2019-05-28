@@ -339,7 +339,7 @@ MM_VerboseFileLoggingOutput::findInitialFile(MM_EnvironmentBase *env)
 
 /**
  * Opens the file to log output to and prints the header.
- * @return true on sucess, false otherwise
+ * @return true on success, false otherwise
  */
 bool
 MM_VerboseFileLoggingOutput::openFile(MM_EnvironmentBase *env)

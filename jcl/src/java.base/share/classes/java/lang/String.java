@@ -3138,7 +3138,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *
 	 * @param regex
 	 *			  Regular expression that is used as a delimiter
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException
 	 *				if the syntax of regex is invalid
@@ -3195,7 +3195,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * 
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException if the syntax of regex is invalid
 	 *
@@ -7465,7 +7465,7 @@ written authorization of the copyright holder.
 	 *
 	 * @param regex
 	 *			  Regular expression that is used as a delimiter
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException
 	 *				if the syntax of regex is invalid
@@ -7522,7 +7522,7 @@ written authorization of the copyright holder.
 	 * 
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException if the syntax of regex is invalid
 	 *

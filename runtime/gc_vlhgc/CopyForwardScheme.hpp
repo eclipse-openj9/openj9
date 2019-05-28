@@ -938,7 +938,7 @@ private:
 	 * The caller is responsible for calling rememberAndResetReferenceLists() on the list once it's released all locks.
 	 * @param env[in] the current thread
 	 * @param region[in] the tail region to convert
-	 * @param survivorBase the lowest address in the region where surviviro objects can be found
+	 * @param survivorBase the lowest address in the region where survivor objects can be found
 	 */
 	void convertTailCandidateToSurvivorRegion(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase);
 
@@ -1075,7 +1075,7 @@ public:
 	/**
 	 * Run a copy forward collection operation on the already determined collection set.
 	 * @param env[in] Main thread.
-	 * @return Flag indicating if the copy forward collection was succesful or not.
+	 * @return Flag indicating if the copy forward collection was successful or not.
 	 */
 	bool copyForwardCollectionSet(MM_EnvironmentVLHGC *env);
 

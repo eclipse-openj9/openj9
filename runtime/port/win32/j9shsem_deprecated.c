@@ -59,7 +59,7 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 {
 	/* TODO: what happens if setSize == 0? We used to allow the setSize to be 0 so that when the user trying to open
 		an existing semaphore they won't need to specify that. However because semaphore set is not part of Windows API
-		so we are emulating it using seperate name - we need code to find out how large a semaphore set is */
+		so we are emulating it using separate name - we need code to find out how large a semaphore set is */
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	char baseFile[J9SH_MAXPATH], mutexName[J9SH_MAXPATH];
 	j9shsem_handle* shsem_handle;

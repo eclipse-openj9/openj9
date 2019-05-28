@@ -138,7 +138,7 @@ queryVerbosegc(J9JavaVM *javaVM)
  * @param filename The name of the file or output stream to log to.
  * @param numFiles The number of files to log to.
  * @param numCycles The number of gc cycles to log to each file.
- * @return 1 if succesfull, 0 otherwise.
+ * @return 1 if successful, 0 otherwise.
  */
 static UDATA
 gcDebugVerboseStartupLogging(J9JavaVM *javaVM, char* filename, UDATA numFiles, UDATA numCycles)

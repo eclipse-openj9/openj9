@@ -124,7 +124,7 @@ platformSocketOption( int32_t portableSocketOption )
  * entity, as known to the communications layer. The exact format of the addr parameter 
  * is determined by the address family established when the socket was created. 
  * @param[in] sockHandle A pointer to a j9socket_t  which will point to the newly created 
- * socket once accept returns succesfully
+ * socket once accept returns successfully
  *
  * @return 
  * \arg 0 on success
@@ -1431,7 +1431,7 @@ j9sock_sockaddr_port(struct J9PortLibrary *portLibrary, j9sockaddr_t handle)
  * @param[in] portLibrary The port library.
  * @param[out]	handle Pointer pointer to the j9socket struct, to be allocated
  * @param[in] family The address family (currently, only J9SOCK_AFINET is supported)
- * @param[in] socktype Secifies what type of socket is created
+ * @param[in] socktype Specifies what type of socket is created
  * \arg J9SOCK_STREAM, for a stream socket
  * \arg J9SOCK_DGRAM, for a datagram socket
  * @param[in] protocol Type/family specific creation parameter (currently, only J9SOCK_DEFPROTOCOL supported).

@@ -967,7 +967,7 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
 	}
 
 #if defined(J9VM_OPT_JVMTI)
-	/* If the native is not found in any registered library, seach JVMTI agent libraries.
+	/* If the native is not found in any registered library, search JVMTI agent libraries.
 	 * The lookup hook calls lookupNativeAddress with bindJNINative = TRUE, so it must be TRUE
 	 * here in order to call the hook.
 	 */
@@ -1040,7 +1040,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 
 /**
  * Probes for the various JNI function names in the order specified by the JNI
- * specification (short then long).  JNI natives supercede INL equivalents.
+ * specification (short then long).  JNI natives supersede INL equivalents.
  * \param currentThread
  * \param nativeMethod The JNI native method to bind.
  * \param nativeLibrary The library to scan for the matching entrypoint.

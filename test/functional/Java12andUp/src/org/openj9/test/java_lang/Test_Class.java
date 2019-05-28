@@ -126,7 +126,7 @@ public class Test_Class {
 	}
 
 	/*
-	 * seperate test case for lambda expression because resolveConstantDesc is
+	 * separate test case for lambda expression because resolveConstantDesc is
 	 * expected to fail.
 	 */
 	private void describeConstableTestLambda(String testName) {

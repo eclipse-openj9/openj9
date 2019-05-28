@@ -427,7 +427,7 @@ IDATA storeAndFindTest(J9JavaVM* vm)
 		goto cleanup;
 	}
 
-	INFOPRINTF("Phase4 passed: The compiled method is succefully replaced in the cache\n");
+	INFOPRINTF("Phase4 passed: The compiled method is successfully replaced in the cache\n");
 
 	/* PHASE 5 Test the invalidate/revalidate operation on compiled method.
 	 * Attempt to invalidate the method
@@ -460,7 +460,7 @@ IDATA storeAndFindTest(J9JavaVM* vm)
 		ERRPRINTF("aotMethodOperation failed to revalidate method1 as expected\n");
 		rc = FAIL;
 	}
-	/* Try finding the method again, shoud be able to find */
+	/* Try finding the method again, should be able to find */
 	flags = 0;
 	foundMethod1 = cacheObject1->findCompiledMethod(vm->mainThread, romMethod1, &flags);
 	if (NULL == foundMethod1) {

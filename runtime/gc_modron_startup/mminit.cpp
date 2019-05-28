@@ -500,7 +500,7 @@ error_no_memory:
 }
 
 /**
- * Creates and initialized VM owned structers related to the heap
+ * Creates and initialized VM owned structures related to the heap
  * Calls low level heap initialization function
  * @return J9VMDLLMAIN_OK or J9VMDLLMAIN_FAILED
  */

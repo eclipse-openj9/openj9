@@ -593,7 +593,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 				} else
 				if (J9SHAREDCLASSESOPTIONS[i].parseType==PARSE_TYPE_STARTSWITH) {
 					if (options[compareToLen]=='\0') {
-						/* Potentially don't know verboseFlags yet, so this msg cannot be surpressed by "silent" */
+						/* Potentially don't know verboseFlags yet, so this msg cannot be suppressed by "silent" */
 						SHRINIT_ERR_TRACE1(1, J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION, options);
 						return RESULT_PARSE_FAILED;
 					}
@@ -607,7 +607,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 		}
 		
 		if (NULL == J9SHAREDCLASSESOPTIONS[i].option) {
-			/* Potentially don't know verboseFlags yet, so this msg cannot be surpressed by "silent" */
+			/* Potentially don't know verboseFlags yet, so this msg cannot be suppressed by "silent" */
 			SHRINIT_ERR_TRACE1(1, J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED, options);
 			return RESULT_PARSE_FAILED;
 		}
@@ -786,7 +786,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 				*runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES | J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
 				tempInt = strlen(SUB_OPTION_MPROTECT_NO_PARTIAL_PAGES);
 			} else {
-				/* Potentially don't know verboseFlags yet, so this msg cannot be surpressed by "silent" */
+				/* Potentially don't know verboseFlags yet, so this msg cannot be suppressed by "silent" */
 				SHRINIT_ERR_TRACE(1, J9NLS_SHRC_SHRINIT_MPROTECT_UNRECOGNISED);
 				return RESULT_PARSE_FAILED;
 			}

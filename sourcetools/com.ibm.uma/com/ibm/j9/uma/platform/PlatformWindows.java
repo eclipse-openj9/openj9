@@ -38,7 +38,7 @@ import com.ibm.uma.util.FileAssistant;
 public class PlatformWindows extends PlatformImplementation {
 	
 	static final String DEFAULT_RC_PRODUCT_NAME="IBM SDK, Java(tm) 2 Technology Edition";
-	/* version number with dots seperating four parts */
+	/* version number with dots separating four parts */
 	static final String OPENJDK_VERSION_NUMBER_FOUR_POSITIONS = System.getenv("OPENJDK_VERSION_NUMBER_FOUR_POSITIONS");
 	
 	public PlatformWindows( IConfiguration buildSpec ) {

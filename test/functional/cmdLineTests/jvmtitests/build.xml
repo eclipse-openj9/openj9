@@ -89,7 +89,7 @@
 			</else>
 		</if>
 
-		<!-- Compile VersionedClass separatedly -->
+		<!-- Compile VersionedClass separately -->
 		<copy file="${src}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass.java.dont_auto_compile"
 			tofile="${build}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass/VersionedClass.java"/>
 		<!-- If you modified the source and target level in this javac, you also need to modify the corresponding java class version

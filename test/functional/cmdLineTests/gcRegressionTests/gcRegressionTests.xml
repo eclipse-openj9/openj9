@@ -190,7 +190,7 @@
  	<output regex="no" type="failure">ASSERTION FAILED</output>
  </test>
  
- <!-- Tests Scavenger Backout - push every 3rd scavege be backout  -->
+ <!-- Tests Scavenger Backout - push every 3rd scavenge be backout  -->
  <test id="Scavenger Backout can be handled without assertion failures">
  	<command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -Xgc:fvtest=forceScavengerBackout -Xsoftrefthreshold0 $RT_ALLOCATION_CONTEXT_ARG$ -Xmx16m -Xms1m -Xgc:globalMaximumContraction=100 -Xgc:globalMinimumContraction=99 $CP$ com.ibm.tests.garbagecollector.TestContractionMain --noContract</command>
  	<!-- we don't really care if this test printed PASS or FAIL since we are testing a more generic situation than the test was originally

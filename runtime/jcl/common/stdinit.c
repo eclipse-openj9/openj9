@@ -664,7 +664,7 @@ addEndorsedBundles(J9PortLibrary *portLib, char *endorsedDir, char *path)
   * the value of any -Xbootclasspath: argument.  If no bootpath is explicitly specified then use a default
   * value appropriate for this class library.
   *
-  * @return  zero on sucess, non-zero on failure.
+  * @return  zero on success, non-zero on failure.
   *
   * @note Assumes that the VMI functions are available, and sysprops have been allocated.
   * @note Requires that the 'java.home' system property be available.

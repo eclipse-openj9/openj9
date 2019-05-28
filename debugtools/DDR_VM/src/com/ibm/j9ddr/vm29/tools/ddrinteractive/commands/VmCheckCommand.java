@@ -207,7 +207,7 @@ public class VmCheckCommand extends Command
 
 		reportMessage(out, "Checking classes");
 
-		// Stolen from RootScaner.scanClasses()
+		// Stolen from RootScanner.scanClasses()
 		// GCClassLoaderIterator gcClassLoaderIterator =
 		// GCClassLoaderIterator.from();
 		GCSegmentIterator segmentIterator = GCSegmentIterator.fromJ9MemorySegmentList(javaVM.classMemorySegments(), J9MemorySegment.MEMORY_TYPE_RAM_CLASS);
@@ -409,7 +409,7 @@ public class VmCheckCommand extends Command
 
 		reportMessage(out, "Checking ROM classes");
 
-		// Stolen from RootScaner.scanClasses()
+		// Stolen from RootScanner.scanClasses()
 		// GCClassLoaderIterator gcClassLoaderIterator =
 		// GCClassLoaderIterator.from();
 		GCSegmentIterator segmentIterator = GCSegmentIterator.fromJ9MemorySegmentList(vm.classMemorySegments(), J9MemorySegment.MEMORY_TYPE_RAM_CLASS);
@@ -647,7 +647,7 @@ public class VmCheckCommand extends Command
 	private void checkJ9MethodSanity(J9JavaVMPointer vm, PrintStream out) throws CorruptDataException {
 		reportMessage(out, "Checking methods");
 
-		// Stolen from RootScaner.scanClasses()
+		// Stolen from RootScanner.scanClasses()
 		// GCClassLoaderIterator gcClassLoaderIterator =
 		// GCClassLoaderIterator.from();
 		GCSegmentIterator segmentIterator = GCSegmentIterator.fromJ9MemorySegmentList(vm.classMemorySegments(), J9MemorySegment.MEMORY_TYPE_RAM_CLASS);

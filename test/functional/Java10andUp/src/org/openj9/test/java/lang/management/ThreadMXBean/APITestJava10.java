@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /*
- * Verify Java 10 additions, specfifically depth-limited stack traces.
+ * Verify Java 10 additions, specifically depth-limited stack traces.
  */
 public class APITestJava10 extends ThreadMXBeanTestCase {
 	private static final int MAXDEPTH = 10;

@@ -1145,7 +1145,7 @@ gcParseSovereignArguments(J9JavaVM *vm)
 	
 #endif /* J9VM_GC_LARGE_OBJECT_AREA) */
 
-	/* If user has specifed any of the following SOV options  then we just silently ignore them 
+	/* If user has specified any of the following SOV options  then we just silently ignore them 
 	 * 
 	 * -Xparroot
 	 * -XloratioN 

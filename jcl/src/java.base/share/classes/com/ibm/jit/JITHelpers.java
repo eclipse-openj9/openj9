@@ -574,7 +574,7 @@ public final class JITHelpers {
 	 * at the specified offset and moves towards the end of source array.
 	 * 
 	 * @param s1Value
-	 * 		 	the source character array to serach in
+	 * 		 	the source character array to search in
 	 * @param s1len
 	 * 		    the length of the source array
 	 * @param s2Value
@@ -621,7 +621,7 @@ public final class JITHelpers {
 	 * at the specified offset and moves towards the end of source array.
 	 * 
 	 * @param s1Value
-	 * 		 	the source character array to serach in
+	 * 		 	the source character array to search in
 	 * @param s1len
 	 * 		    the length of the source array
 	 * @param s2Value

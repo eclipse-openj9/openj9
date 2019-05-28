@@ -891,7 +891,7 @@ public class LookupAPITests_Find {
 	
 	
 	/******************************************************************************** 
-	 * findSetter, findGetter, findStaticSetter, findStatigGetter tests. 
+	 * findSetter, findGetter, findStaticSetter, findStaticGetter tests. 
 	 * COMBINATIONS: Cross package - public, private, public static, private static, 
 	 * protected, super-class, sub-class fields
 	 * ******************************************************************************/
