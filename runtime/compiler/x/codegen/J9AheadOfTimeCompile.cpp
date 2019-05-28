@@ -421,76 +421,11 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          }
     break;
-      case TR_VerifyClassObjectForAlloc:
-         {
-         TR::SymbolReference * classSymRef = (TR::SymbolReference *) relocation->getTargetAddress();
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress2();
-         TR::LabelSymbol *label = (TR::LabelSymbol *) recordInfo->data3;
-         TR::Instruction *instr = (TR::Instruction *) recordInfo->data4;
-
-         uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
-
-         *(uintptrj_t *)cursor = (uintptrj_t) recordInfo->data2; // inlined call site index
-         cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            {
-            TR_OpaqueClassBlock *classOfMethod = (TR_OpaqueClassBlock *)recordInfo->data5;
-            uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
-            *(uintptrj_t *)cursor = classID;
-            }
-         else
-            {
-            *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
-            }
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *)cursor = (uintptrj_t) branchOffset;
-         cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t) recordInfo->data1; // allocation size.
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_VerifyRefArrayForAlloc:
-         {
-
-         TR::SymbolReference * classSymRef = (TR::SymbolReference *) relocation->getTargetAddress();
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress2();
-         TR::LabelSymbol *label = (TR::LabelSymbol *) recordInfo->data3;
-         TR::Instruction *instr = (TR::Instruction *) recordInfo->data4;
-
-         uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
-
-         *(uintptrj_t *)cursor = (uintptrj_t) recordInfo->data2; // inlined call site index
-         cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            {
-            TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)recordInfo->data5;
-            uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(clazz));
-            *(uintptrj_t *)cursor = classID;
-            }
-         else
-            {
-            *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
-            }
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *)cursor = (uintptrj_t) branchOffset;
-         cursor += SIZEPOINTER;
-         }
-         break;
 
       case TR_AbsoluteMethodAddressOrderedPair:
          break;
 
       case TR_ConstantPoolOrderedPair:
-      case TR_Trampolines:
          {
          // Note: thunk relos should only be created for 64 bit
          *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index
@@ -527,7 +462,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
         break;
 
-      case TR_CheckMethodEnter:
       case TR_CheckMethodExit:
          {
          *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress();
@@ -554,8 +488,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          break;
          }
-      case TR_RamMethod:
-         break;
 
       case TR_ValidateClassByName:
          {
@@ -1078,7 +1010,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       case TR_ValidateClass:
-      case TR_ValidateInstanceField:
          {
          *(uintptrj_t*)cursor = (uintptrj_t) relocation->getTargetAddress(); // Inlined site index
          cursor += SIZEPOINTER;

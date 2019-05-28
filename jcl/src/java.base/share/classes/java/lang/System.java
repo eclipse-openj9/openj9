@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.io.*;
 import java.util.Map;
@@ -50,6 +49,10 @@ import sun.misc.SharedSecrets;
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
+/*[IF Sidecar19-SE]*/
+import com.ibm.gpu.spi.GPUAssist;
+import com.ibm.gpu.spi.GPUAssistHolder;
+/*[ENDIF] Sidecar19-SE */
 
 /**
  * Class System provides a standard place for programs
@@ -224,11 +227,15 @@ static void completeInitialization() {
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
 	/*[ENDIF]*/ //Sidecar18-SE-OpenJ9|Sidecar19-SE
-	/*[ENDIF] */ //!Sidecar19-SE_RAWPLUSJ9
+	/*[ENDIF]*/ //!Sidecar19-SE_RAWPLUSJ9
 		
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
-	
+
+	/*[IF Sidecar19-SE]*/
+	initGPUAssist();
+	/*[ENDIF] Sidecar19-SE */
+
 	/*[IF !Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9]*/
 	try {
 		if (null != systemInitialization) {
@@ -241,6 +248,40 @@ static void completeInitialization() {
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 }
 
+/*[IF Sidecar19-SE]*/
+private static void initGPUAssist() {
+	Properties props = internalGetProperties();
+
+	if ((props.getProperty("com.ibm.gpu.enable") == null) //$NON-NLS-1$
+	&& (props.getProperty("com.ibm.gpu.enforce") == null) //$NON-NLS-1$
+	) {
+		/*
+		 * The CUDA implementation of GPUAssist is not enabled by default:
+		 * one of the above properties must be set.
+		 */
+		return;
+	}
+
+	PrivilegedAction<GPUAssist> finder = new PrivilegedAction<GPUAssist>() {
+		@Override
+		public GPUAssist run() {
+			ServiceLoader<GPUAssist.Provider> loaded = ServiceLoader.load(GPUAssist.Provider.class);
+
+			for (GPUAssist.Provider provider : loaded) {
+				GPUAssist assist = provider.getGPUAssist();
+
+				if (assist != null) {
+					return assist;
+				}
+			}
+
+			return GPUAssist.NONE;
+		}
+	};
+
+	GPUAssistHolder.instance = AccessController.doPrivileged(finder);
+}
+/*[ENDIF] Sidecar19-SE */
 
 /**
  * Sets the value of the static slot "in" in the receiver

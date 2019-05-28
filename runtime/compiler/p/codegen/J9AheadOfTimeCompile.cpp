@@ -389,26 +389,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_Trampolines:
-         {
-         // constant pool address is placed as the last word of the header
-         if (TR::Compiler->target.is64Bit())
-            {
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) relocation->getTargetAddress2();
-            cursor += 8;
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) relocation->getTargetAddress();
-            cursor += 8;
-            }
-         else
-            {
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) relocation->getTargetAddress2();
-            cursor += 4;
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) relocation->getTargetAddress();
-            cursor += 4;
-            }
-         }
-         break;
-
       case TR_ResolvedTrampolines:
          {
          uint8_t *symbol = relocation->getTargetAddress();
@@ -441,7 +421,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_CheckMethodEnter:
       case TR_CheckMethodExit:
          {
          if (TR::Compiler->target.is64Bit())
@@ -455,9 +434,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             cursor += 4;
             }
          }
-         break;
-
-      case TR_RamMethod:
          break;
 
       case TR_RamMethodSequence:
@@ -673,72 +649,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_VerifyClassObjectForAlloc:
-         {
-         TR::SymbolReference * classSymRef = (TR::SymbolReference *) relocation->getTargetAddress();
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress2();
-         TR::LabelSymbol *label = (TR::LabelSymbol *) recordInfo->data3;
-         TR::Instruction *instr = (TR::Instruction *) recordInfo->data4;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) recordInfo->data2; // inlined call site index
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            {
-            TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)recordInfo->data5;
-            uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(clazz));
-            TR_ASSERT_FATAL(classID, "classID should exist!\n");
-            *(uintptrj_t *)cursor = classID;
-            }
-         else
-            {
-            *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
-            }
-         cursor += SIZEPOINTER;
-
-         uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
-         *(uintptrj_t *) cursor = (uintptrj_t) branchOffset;
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) recordInfo->data1; // allocation size.
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_VerifyRefArrayForAlloc:
-         {
-         TR::SymbolReference * classSymRef = (TR::SymbolReference *) relocation->getTargetAddress();
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress2();
-         TR::LabelSymbol *label = (TR::LabelSymbol *) recordInfo->data3;
-         TR::Instruction *instr = (TR::Instruction *) recordInfo->data4;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) recordInfo->data2; // inlined call site index
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            {
-            TR_OpaqueClassBlock *classOfMethod = (TR_OpaqueClassBlock *)recordInfo->data5;
-            uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
-            TR_ASSERT_FATAL(classID, "classID should exist!\n");
-            *(uintptrj_t *)cursor = classID;
-            }
-         else
-            {
-            *(uintptrj_t *)cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
-            }
-         cursor += SIZEPOINTER;
-
-         uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
-         *(uintptrj_t *) cursor = (uintptrj_t) branchOffset;
-         cursor += SIZEPOINTER;
-         }
-         break;
       case TR_GlobalValue:
          {
 #if defined(TR_HOST_64BIT)
@@ -1305,7 +1215,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
       case TR_ValidateClass:
-      case TR_ValidateInstanceField:
          {
          *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
          cursor += SIZEPOINTER;
