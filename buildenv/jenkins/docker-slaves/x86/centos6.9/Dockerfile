@@ -295,6 +295,19 @@ RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
   && echo "/usr/local/lib64" >> /etc/ld.so.conf.d/usr-local.conf \
   && ldconfig
 
+# Install ccache 3.4.2
+RUN cd /tmp \
+  && wget https://www.samba.org/ftp/ccache/ccache-3.4.2.tar.gz \
+  && tar -xzf ccache-3.4.2.tar.gz \
+  && rm -f ccache-3.4.2.tar.gz \
+  && cd /tmp/ccache-3.4.2 \
+  && ./configure \
+  && make clean \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf ccache-3.4.2
+
 # Expose SSH port and run SSHD
 EXPOSE 22
 
