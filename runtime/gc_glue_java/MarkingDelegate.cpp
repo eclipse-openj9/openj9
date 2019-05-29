@@ -322,20 +322,21 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									clazz = javaVM->internalVMFunctions->hashClassTableNextDo(&walkState);
 								}
 
-								Assert_MM_true(NULL != classLoader->moduleHashTable);
-								J9HashTableState moduleWalkState;
-								J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
-								while (NULL != modulePtr) {
-									J9Module * const module = *modulePtr;
+								if (NULL != classLoader->moduleHashTable) {
+									J9HashTableState moduleWalkState;
+									J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
+									while (NULL != modulePtr) {
+										J9Module * const module = *modulePtr;
 
-									_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
-									if (NULL != module->moduleName) {
-										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleName);
+										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
+										if (NULL != module->moduleName) {
+											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleName);
+										}
+										if (NULL != module->version) {
+											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
+										}
+										modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
 									}
-									if (NULL != module->version) {
-										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
-									}
-									modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
 								}
 							}
 						}

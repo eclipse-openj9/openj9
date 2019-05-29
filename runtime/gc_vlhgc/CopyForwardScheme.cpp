@@ -2718,23 +2718,24 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 				success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(clazz->classObject));
 			}
 
-			Assert_MM_true(NULL != classLoader->moduleHashTable);
-			J9HashTableState walkState;
-			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-			while (success && (NULL != modulePtr)) {
-				J9Module * const module = *modulePtr;
-				success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleObject));
-				if (success) {
-					if (NULL != module->moduleName) {
-						success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleName));
+			if (NULL != classLoader->moduleHashTable) {
+				J9HashTableState walkState;
+				J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+				while (success && (NULL != modulePtr)) {
+					J9Module * const module = *modulePtr;
+					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleObject));
+					if (success) {
+						if (NULL != module->moduleName) {
+							success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleName));
+						}
 					}
-				}
-				if (success) {
-					if (NULL != module->version) {
-						success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->version));
+					if (success) {
+						if (NULL != module->version) {
+							success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->version));
+						}
 					}
+					modulePtr = (J9Module**)hashTableNextDo(&walkState);
 				}
-				modulePtr = (J9Module**)hashTableNextDo(&walkState);
 			}
 		}
 	}
@@ -4378,23 +4379,24 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 									success = copyAndForward(env, clazzContext, (J9Object **)&(clazz->classObject));
 								}
 
-								Assert_MM_true(NULL != classLoader->moduleHashTable);
-								J9HashTableState walkState;
-								J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-								while (success && (NULL != modulePtr)) {
-									J9Module * const module = *modulePtr;
-									success = copyAndForward(env, getContextForHeapAddress(module->moduleObject), (J9Object **)&(module->moduleObject));
-									if (success) {
-										if (NULL != module->moduleName) {
-											success = copyAndForward(env, getContextForHeapAddress(module->moduleName), (J9Object **)&(module->moduleName));
+								if (NULL != classLoader->moduleHashTable) {
+									J9HashTableState walkState;
+									J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+									while (success && (NULL != modulePtr)) {
+										J9Module * const module = *modulePtr;
+										success = copyAndForward(env, getContextForHeapAddress(module->moduleObject), (J9Object **)&(module->moduleObject));
+										if (success) {
+											if (NULL != module->moduleName) {
+												success = copyAndForward(env, getContextForHeapAddress(module->moduleName), (J9Object **)&(module->moduleName));
+											}
 										}
-									}
-									if (success) {
-										if (NULL != module->version) {
-											success = copyAndForward(env, getContextForHeapAddress(module->version), (J9Object **)&(module->version));
+										if (success) {
+											if (NULL != module->version) {
+												success = copyAndForward(env, getContextForHeapAddress(module->version), (J9Object **)&(module->version));
+											}
 										}
+										modulePtr = (J9Module**)hashTableNextDo(&walkState);
 									}
-									modulePtr = (J9Module**)hashTableNextDo(&walkState);
 								}
 							}
 						}

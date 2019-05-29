@@ -800,23 +800,24 @@ MM_PartialMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Objec
 			rememberReferenceIfRequired(env, classLoaderObject, classObject);
 		}
 
-		Assert_MM_true(NULL != classLoader->moduleHashTable);
-		J9HashTableState walkState;
-		J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-		while (NULL != modulePtr) {
-			J9Module * const module = *modulePtr;
-			Assert_MM_true(NULL != module->moduleObject);
-			markObject(env, module->moduleObject);
-			rememberReferenceIfRequired(env, classLoaderObject, module->moduleObject);
-			if (NULL != module->moduleName) {
-				markObject(env, module->moduleName);
-				rememberReferenceIfRequired(env, classLoaderObject, module->moduleName);
+		if (NULL != classLoader->moduleHashTable) {
+			J9HashTableState walkState;
+			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+			while (NULL != modulePtr) {
+				J9Module * const module = *modulePtr;
+				Assert_MM_true(NULL != module->moduleObject);
+				markObject(env, module->moduleObject);
+				rememberReferenceIfRequired(env, classLoaderObject, module->moduleObject);
+				if (NULL != module->moduleName) {
+					markObject(env, module->moduleName);
+					rememberReferenceIfRequired(env, classLoaderObject, module->moduleName);
+				}
+				if (NULL != module->version) {
+					markObject(env, module->version);
+					rememberReferenceIfRequired(env, classLoaderObject, module->version);
+				}
+				modulePtr = (J9Module**)hashTableNextDo(&walkState);
 			}
-			if (NULL != module->version) {
-				markObject(env, module->version);
-				rememberReferenceIfRequired(env, classLoaderObject, module->version);
-			}
-			modulePtr = (J9Module**)hashTableNextDo(&walkState);
 		}
 	}
 }
@@ -843,20 +844,21 @@ MM_PartialMarkingScheme::scanClassLoaderSlots(MM_EnvironmentVLHGC *env, J9ClassL
 				markObject(env, (J9Object *) clazz->classObject);
 			}
 
-			Assert_MM_true(NULL != classLoader->moduleHashTable);
-			J9HashTableState walkState;
-			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-			while (NULL != modulePtr) {
-				J9Module * const module = *modulePtr;
-				Assert_MM_true(NULL != module->moduleObject);
-				markObject(env, module->moduleObject);
-				if (NULL != module->moduleName) {
-					markObject(env, module->moduleName);
+			if (NULL != classLoader->moduleHashTable) {
+				J9HashTableState walkState;
+				J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+				while (NULL != modulePtr) {
+					J9Module * const module = *modulePtr;
+					Assert_MM_true(NULL != module->moduleObject);
+					markObject(env, module->moduleObject);
+					if (NULL != module->moduleName) {
+						markObject(env, module->moduleName);
+					}
+					if (NULL != module->version) {
+						markObject(env, module->version);
+					} 
+					modulePtr = (J9Module**)hashTableNextDo(&walkState);
 				}
-				if (NULL != module->version) {
-					markObject(env, module->version);
-				} 
-				modulePtr = (J9Module**)hashTableNextDo(&walkState);
 			}
 		}
 	}
