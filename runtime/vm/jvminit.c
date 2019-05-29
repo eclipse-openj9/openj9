@@ -1874,20 +1874,23 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 				if (TRUE == enableGcOnIdle) {
 					vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_GC_ON_IDLE;
+					/*
+ 					 * 
+				  	 * CompactOnIdle is enabled only if XX:+IdleTuningGcOnIdle is set and:
+				  	 * 1. -XX:+IdleTuningCompactOnIdle is set, or
+				  	 * 2. running in container
+				  	 *
+				  	 * Setting Xtune:virtualized on java versions 9 or above does not enable CompactOnIdle.
+				  	 */
+					if ((argIndexCompactOnIdleEnable > argIndexCompactOnIdleDisable)
+					|| ((-1 == argIndexCompactOnIdleDisable) && inContainer)
+					) {
+						vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_COMPACT_ON_IDLE;
+					} else {
+						vm->vmRuntimeStateListener.idleTuningFlags &= ~(UDATA)J9_IDLE_TUNING_COMPACT_ON_IDLE;
+					}
 				} else {
 					vm->vmRuntimeStateListener.idleTuningFlags &= ~(UDATA)J9_IDLE_TUNING_GC_ON_IDLE;
-				}
-				/*
-				 * CompactOnIdle is enabled only if:
-				 * 1. -XX:+IdleTuningCompactOnIdle is set, or
-				 * 2. running in container
-				 */
-				if ((argIndexCompactOnIdleEnable > argIndexCompactOnIdleDisable)
-				|| ((-1 == argIndexCompactOnIdleDisable) && inContainer)
-				) {
-					vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_COMPACT_ON_IDLE;
-				} else {
-					vm->vmRuntimeStateListener.idleTuningFlags &= ~(UDATA)J9_IDLE_TUNING_COMPACT_ON_IDLE;
 				}
 				/* default ignore if idle tuning options not supported */
 				vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_IGNORE_UNRECOGNIZED_OPTIONS;
