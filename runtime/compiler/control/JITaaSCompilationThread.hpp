@@ -295,19 +295,72 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       bool getWaitToBeNotified() const { return _waitToBeNotified; }
       void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
 
-      void clearIProfilerMap();
       bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
       TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
       void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
       bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
       TR_ResolvedMethodKey getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject=NULL);
-      void clearResolvedMethodInfoMap(TR_Memory *trMemory);
 
-      void clearResolvedMirrorMethodsPersistIPInfo();
       void cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod);
       ResolvedMirrorMethodsPersistIP_t *getCachedResolvedMirrorMethodsPersistIPInfo() { return _resolvedMirrorMethodsPersistIPInfo; }
 
+      void clearPerCompilationCaches();
+
    private:
+      /* Template method for allocating a cache of type T on the heap.
+       * Cache pointer must be NULL.
+       */
+      template <typename T>
+      bool initializePerCompilationCache(T* &cache)
+         {
+         // Initialize map
+         TR_ASSERT(!cache, "Cache already initialized");
+         TR_Memory *trMemory = getCompilation()->trMemory();
+         cache = new (trMemory->trHeapMemory()) T(typename T::allocator_type(trMemory->heapMemoryRegion()));
+         return cache != NULL;
+         }
+      /* Template method for storing key-value pairs (of types K and V respectively)
+       * to a heap-allocated unordered map.
+       * If a map is NULL, will allocate it.
+       */
+      template <typename K, typename V>
+      void cacheToPerCompilationMap(UnorderedMap<K, V>* &map, const K &key, const V &value)
+         {
+         if (!map)
+            initializePerCompilationCache(map);
+         map->insert({key, value});
+         }
+
+      /* Template method for retrieving values from heap-allocated unordered map.
+       * If the map is NULL or value is not found, returns false.
+       * Otherwise, sets value to retrieved value and returns true
+       */
+      template <typename K, typename V>
+      bool getCachedValueFromPerCompilationMap(UnorderedMap<K, V>* &map, const K &key, V &value)
+         {
+         if (!map)
+            return false;
+         auto it = map->find(key);
+         if (it != map->end())
+            {
+            // Found entry at a given key
+            value = it->second;
+            return true;
+            }
+         return false;
+         }
+
+      /* Template method for clearing a heap-allocated cache.
+       * Simply sets pointer to cache to NULL.
+       */
+      template <typename T>
+      void clearPerCompilationCache(T* &cache)
+         {
+         // Since cache was heap-allocated,
+         // memory will be released automatically at the end of the compilation
+         cache = NULL;
+         }
+
       TR_PersistentMethodInfo *_recompilationMethodInfo;
       uint32_t _seqNo;
       bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand

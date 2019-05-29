@@ -2858,7 +2858,7 @@ outOfProcessCompilationEnd(
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>()
                                      );
-   compInfoPT->clearResolvedMirrorMethodsPersistIPInfo();
+   compInfoPT->clearPerCompilationCaches();
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
@@ -3928,7 +3928,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    entry._compInfoPT = this; // create the reverse link
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
-   clearResolvedMirrorMethodsPersistIPInfo();
+   clearPerCompilationCaches();
 
    _recompilationMethodInfo = NULL;
    // Release compMonitor before doing the blocking read
@@ -4365,49 +4365,30 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    }
 
-void
-TR::CompilationInfoPerThreadRemote::clearIProfilerMap()
-   {
-   // the map and all of its values should be freed automatically at the end of compilation,
-   // since they were allocated on the compilation heap memory
-   _methodIPDataPerComp = NULL;
-   }
-
 bool
 TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry)
    {
-   TR_Memory *trMemory = getCompilation()->trMemory();
-   if (!_methodIPDataPerComp)
-      {
-      // first time cacheIProfilerInfo called during current compilation
-      _methodIPDataPerComp = new (trMemory->trHeapMemory()) IPTableHeap_t(IPTableHeap_t::allocator_type(trMemory->heapMemoryRegion()));
-
-      if (!_methodIPDataPerComp)
-         // could not allocate from heap memory
-         return false;
-      }
-
    IPTableHeapEntry *entryMap = NULL;
-   auto it = _methodIPDataPerComp->find((J9Method *) method);
-   if (it == _methodIPDataPerComp->end())
+   if(!getCachedValueFromPerCompilationMap(_methodIPDataPerComp, (J9Method *) method, entryMap))
       {
-      // caching new method, initialize an entry map
-      entryMap = new (trMemory->trHeapMemory()) IPTableHeapEntry(IPTableHeapEntry::allocator_type(trMemory->heapMemoryRegion()));
-      if (!entryMap)
-         // could not allocate from heap memory
-         return false;
-      _methodIPDataPerComp->insert(std::make_pair((J9Method *) method, entryMap));
+      // Either first time cacheIProfilerInfo called during current compilation,
+      // so _methodIPDataPerComp is NULL, or caching a new method, entryMap not found
+      if (entry)
+         {
+         cacheToPerCompilationMap(entryMap, byteCodeIndex, entry);
+         }
+      else
+         {
+         // if entry is NULL, create entryMap, but do not cache anything
+         initializePerCompilationCache(entryMap);
+         }
+      cacheToPerCompilationMap(_methodIPDataPerComp, (J9Method *) method, entryMap); 
       }
-   else
+   else if (entry)
       {
-      entryMap = it->second;
+      // Adding an entry for already seen method (i.e. entryMap exists)
+      cacheToPerCompilationMap(entryMap, byteCodeIndex, entry);
       }
-
-   if (entry)
-      // entry could be NULL
-      // if all entries in a method are NULL, entryMap will be initialized but empty
-      entryMap->insert(std::make_pair(byteCodeIndex, entry));
-
    return true;
    }
 
@@ -4415,21 +4396,17 @@ TR_IPBytecodeHashTableEntry*
 TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent)
    {
    *methodInfoPresent = false;
-   if (!_methodIPDataPerComp)
-      // nothing has been cached during current compilation, so table is uninitialized
-      return NULL;
 
+   IPTableHeapEntry *entryMap = NULL;
    TR_IPBytecodeHashTableEntry *ipEntry = NULL;
-   auto it = _methodIPDataPerComp->find((J9Method *) method);
-   if (it != _methodIPDataPerComp->end())
+   
+   getCachedValueFromPerCompilationMap(_methodIPDataPerComp, (J9Method *) method, entryMap);
+   // methodInfoPresent=true means that we cached info for this method (i.e. entryMap is not NULL),
+   // but entry for this bytecode might not exist, which means it's NULL
+   if (entryMap)
       {
-      // methodInfoPresent=true means that we cached info for this method,
-      // but entry for this bytecode might not exist, which means it's NULL
       *methodInfoPresent = true;
-      IPTableHeapEntry *entryMap = it->second;
-      auto entryIt = entryMap->find(byteCodeIndex);
-      if (entryIt != entryMap->end())
-         ipEntry = entryIt->second;
+      getCachedValueFromPerCompilationMap(entryMap, byteCodeIndex, ipEntry);
       }
    return ipEntry;
    }
@@ -4441,23 +4418,7 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
    if (!useCaching)
       return;
 
-   TR::Compilation *comp = getCompilation();
-   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && comp->getSymbolValidationManager()->inHeuristicRegion())
-      {
-      // Problem: If inside of heuristic region, will not create SVM record, so if the same resolved method is queried again,
-      // but outside of heuristic region, we would return cached pointer and not create the validation record, which is wrong.
-      // Temporary solution: don't cache resolved methods if in heuristic region
-      // In a later change should fix it properly by creating SVM record even if retrieved it from cache.
-      return;
-      }
-
-   if (!_resolvedMethodInfoMap)
-      {
-      // Cache not initialized yet
-      _resolvedMethodInfoMap = new (comp->trMemory()->trHeapMemory()) TR_ResolvedMethodInfoCache(TR_ResolvedMethodInfoCache::allocator_type(comp->trMemory()->heapMemoryRegion()));
-      }
-   TR_ASSERT(_resolvedMethodInfoMap->find(key) == _resolvedMethodInfoMap->end(), "Should not cache the same method twice");
-   _resolvedMethodInfoMap->insert({key, {method, vTableSlot, methodInfo}});
+   cacheToPerCompilationMap(_resolvedMethodInfoMap, key, {method, vTableSlot, methodInfo});
    }
 
 // retrieve a resolved method from the cache
@@ -4466,14 +4427,10 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
 bool 
 TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
    {
-   if (!_resolvedMethodInfoMap)
-      return false;
-
-   auto it = _resolvedMethodInfoMap->find(key);
-   if (it != _resolvedMethodInfoMap->end())
+   TR_ResolvedMethodCacheEntry methodCacheEntry;
+   if (getCachedValueFromPerCompilationMap(_resolvedMethodInfoMap, key, methodCacheEntry))
       {
       auto comp = getCompilation();
-      auto methodCacheEntry = it->second;
       TR_OpaqueMethodBlock *method = methodCacheEntry.method;
       if (!method)
          {
@@ -4528,17 +4485,6 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
    return false;
    }
 
-void
-TR::CompilationInfoPerThreadRemote::clearResolvedMethodInfoMap(TR_Memory *trMemory)
-   {
-   if (_resolvedMethodInfoMap)
-      {
-      // the map and all of its values should be freed automatically at the end of compilation,
-      // since they were allocated on the compilation heap memory
-      _resolvedMethodInfoMap = NULL;
-      }
-   }
-
 TR_ResolvedMethodKey
 TR::CompilationInfoPerThreadRemote::getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject)
    {
@@ -4547,25 +4493,22 @@ TR::CompilationInfoPerThreadRemote::getResolvedMethodKey(TR_ResolvedMethodType t
    }
 
 void
-TR::CompilationInfoPerThreadRemote::clearResolvedMirrorMethodsPersistIPInfo()
-   {
-   // It should be freed automatically at the end of compilation,
-   // since they were allocated on the compilation heap memory
-   _resolvedMirrorMethodsPersistIPInfo = NULL;
-   }
-
-void
 TR::CompilationInfoPerThreadRemote::cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod)
    {
    if (!_resolvedMirrorMethodsPersistIPInfo)
       {
-      TR_Memory *trMemory = getCompilation()->trMemory();
-      _resolvedMirrorMethodsPersistIPInfo = new (trMemory->trHeapMemory()) ResolvedMirrorMethodsPersistIP_t(
-                                                                           ResolvedMirrorMethodsPersistIP_t::allocator_type(trMemory->heapMemoryRegion()));
-
+      initializePerCompilationCache(_resolvedMirrorMethodsPersistIPInfo);
       if (!_resolvedMirrorMethodsPersistIPInfo)
          return;
       }
 
    _resolvedMirrorMethodsPersistIPInfo->push_back(resolvedMethod);
+   }
+
+void
+TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
+   {
+   clearPerCompilationCache(_methodIPDataPerComp);
+   clearPerCompilationCache(_resolvedMethodInfoMap);
+   clearPerCompilationCache(_resolvedMirrorMethodsPersistIPInfo);
    }
