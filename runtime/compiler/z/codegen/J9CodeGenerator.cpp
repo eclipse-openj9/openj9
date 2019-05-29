@@ -238,6 +238,19 @@ J9::Z::CodeGenerator::doInlineAllocate(TR::Node *node)
    return true;
    }
 
+bool
+J9::Z::CodeGenerator::constLoadNeedsLiteralFromPool(TR::Node *node)
+   {
+   if (node->isClassUnloadingConst() || node->getType().isIntegral() || node->getType().isAddress())
+      {
+      return false;
+      }
+   else
+      {
+      return true;  // Floats/Doubles require literal pool
+      }
+   }
+
 TR::Recompilation *
 J9::Z::CodeGenerator::allocateRecompilationInfo()
    {

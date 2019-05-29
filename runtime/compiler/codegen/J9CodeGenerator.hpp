@@ -344,6 +344,8 @@ public:
    bool getSupportsBigDecimalLongLookasideVersioning() { return _flags3.testAny(SupportsBigDecimalLongLookasideVersioning);}
    void setSupportsBigDecimalLongLookasideVersioning() { _flags3.set(SupportsBigDecimalLongLookasideVersioning);}
 
+   bool constLoadNeedsLiteralFromPool(TR::Node *node) { return false; }
+
    // --------------------------------------------------------------------------
    // GPU
    //
