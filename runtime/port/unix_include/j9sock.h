@@ -50,7 +50,7 @@
 #else /* OSX */
 #include <malloc.h>
 #endif /* !OSX */
-#include <sys/socketvar.h>
+#include <sys/socket.h>
 #endif /* defined(J9ZOS390) */
 
 #if defined(AIXPPC)
