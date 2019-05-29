@@ -81,19 +81,21 @@ MM_RootScanner::doClassLoader(J9ClassLoader *classLoader)
 void
 MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 {
-	J9HashTableState moduleWalkState;
-	J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
-	while (NULL != modulePtr) {
-		J9Module * const module = *modulePtr;
+	if (NULL != classLoader->moduleHashTable) {
+		J9HashTableState moduleWalkState;
+		J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
+		while (NULL != modulePtr) {
+			J9Module * const module = *modulePtr;
 
-		doSlot(&module->moduleObject);
-		if (NULL != module->moduleName) {
-			doSlot(&module->moduleName);
+			doSlot(&module->moduleObject);
+			if (NULL != module->moduleName) {
+				doSlot(&module->moduleName);
+			}
+			if (NULL != module->version) {
+				doSlot(&module->version);
+			}
+			modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
 		}
-		if (NULL != module->version) {
-			doSlot(&module->version);
-		}
-		modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
 	}
 }
 

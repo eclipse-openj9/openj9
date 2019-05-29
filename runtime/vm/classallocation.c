@@ -168,12 +168,14 @@ allocateClassLoader(J9JavaVM *javaVM)
 
 	classLoader = pool_newElement(javaVM->classLoaderBlocks);
 
-	if (classLoader != NULL) {
+	if (NULL != classLoader) {
 		/* memset not required as the classLoaderBlocks pool returns zero'd memory */
 
 		classLoader->classHashTable = hashClassTableNew(javaVM, INITIAL_CLASSHASHTABLE_SIZE);
+#if JAVA_SPEC_VERSION > 8
 		classLoader->moduleHashTable = hashModuleNameTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
 		classLoader->packageHashTable = hashPackageTableNew(javaVM, INITIAL_PACKAGE_HASHTABLE_SIZE);
+#endif /* JAVA_SPEC_VERSION > 8 */
 		/* Allocate classLocationHashTable only for bootloader which is the first classloader to be allocated.
 		 * The classLoader being allocated must be the bootloader if javaVM->systemClassLoader is NULL.
 		 */
@@ -181,9 +183,11 @@ allocateClassLoader(J9JavaVM *javaVM)
 			classLoader->classLocationHashTable = hashClassLocationTableNew(javaVM, INITIAL_CLASSLOCATION_HASHTABLE_SIZE);
 		}
 
-		if ((NULL == classLoader->classHashTable) 
-			|| (NULL == classLoader->moduleHashTable) 
+		if ((NULL == classLoader->classHashTable)
+#if JAVA_SPEC_VERSION > 8
+			|| (NULL == classLoader->moduleHashTable)
 			|| (NULL == classLoader->packageHashTable)
+#endif /* JAVA_SPEC_VERSION > 8 */
 			|| ((NULL == javaVM->systemClassLoader) && (NULL == classLoader->classLocationHashTable))
 		) {
 			freeClassLoader(classLoader, javaVM, NULL, TRUE);
