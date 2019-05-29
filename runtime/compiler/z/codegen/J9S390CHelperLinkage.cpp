@@ -314,7 +314,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
     * #if (fastPathHelper)
     *    STG R5, @(vmThread+offsetOf(J9SP))
     *       #define zOS
-    *       LG DSA, @(vmThraed,offsetOfSSP)
+    *       LG DSA, @(vmThread,offsetOfSSP)
     *       XC offsetOFSSP(vmThread, pointerSize), offsetOfSSP(vmThread)
     *          #define 32Bit
     *          LG CAA, @(DSA+CAAOffset)

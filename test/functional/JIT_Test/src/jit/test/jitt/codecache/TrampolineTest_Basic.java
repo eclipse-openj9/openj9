@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ public class TrampolineTest_Basic extends TestCase {
 	}
 
 	/**
-	 * Basic trampline tests where code caches are sufficiently distant from each other,
+	 * Basic trampoline tests where code caches are sufficiently distant from each other,
 	 * and inter-code cache dispatches are made.
 	 */
 	public void testTrampolineBasic(){

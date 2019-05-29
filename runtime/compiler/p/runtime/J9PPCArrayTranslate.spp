@@ -1573,7 +1573,7 @@ __arrayTranslateTRTOSimpleVMX:
 	rlwinm	r0,r8,4,28,28		! r0 = (blockCount != 0) << 3			swBlock4Loop << 3
 	neg	r7,r12			! r7 = -trailerCount
 	or	r8,r3,r0	    	! r8 = (swSlowPath << 6) | (swHeader << 4) | (swBlock4Loop << 3) | (blockCount << 1)
-	rlwinm	r9,r7,1,31,31		! r0 = (traileCount != 0) << 0			swTrailer << 0
+	rlwinm	r9,r7,1,31,31		! r0 = (trailerCount != 0) << 0			swTrailer << 0
 	or	r0,r8,r9	    	! r0 = (swSlowPath << 6) | (swHeader << 4) | (swBlock4Loop << 3) | (blockCount << 1) | (swTrailer << 0)
 	mfctr	r7			! Restore maxChar
 

@@ -249,7 +249,7 @@ class TR_JitSampleInfo
 
 // The following class is used for tracking methods that have their invocation
 // count decremented due to a sample in interpreted code. When that happens
-// we add teh method to a list. When a method needs to be compiled we check
+// we add the method to a list. When a method needs to be compiled we check
 // the list and if the method is in the list we delete it and schedule a
 // SamplingJprofiling compilation for the count that has been skipped
 class TR_InterpreterSamplingTracking

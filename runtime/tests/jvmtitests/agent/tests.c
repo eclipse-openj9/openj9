@@ -27,7 +27,7 @@
 
 
 /**
- *  A list of all known tests. While adding new tesst, this is the only place that
+ *  A list of all known tests. While adding a new test, this is the only place that
  *  needs to be updated in order for the agent to recognize the test.
  */
 static jvmtiTest jvmtiTestList[] =

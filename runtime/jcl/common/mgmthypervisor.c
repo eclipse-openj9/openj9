@@ -40,7 +40,7 @@
 /**
 * Checks if running on a Virtualized environment or not. i.e On a Hypervisor or not
 *
-* Class:     com_ibm_virtalization_management_internal_HypervisorMXBeanImpl
+* Class:     com_ibm_virtualization_management_internal_HypervisorMXBeanImpl
 * Method:    isEnvironmentVirtual
 *
 * @param[in] env The JNI env.
@@ -67,7 +67,7 @@ Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_isEnvironme
 /**
 * Retrieves the Hypervisor Vendor Name
 *
-* Class:     com_ibm_virtalization_management_internal_HypervisorMXBeanImpl
+* Class:     com_ibm_virtualization_management_internal_HypervisorMXBeanImpl
 * Method:    getVendor
 *
 * @param[in] env The JNI env.

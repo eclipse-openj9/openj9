@@ -81,7 +81,7 @@ hashMonitorCompare(void *tableEntryKey, void *userKey, void *userData)
 	/* In a Concurrent GC where monitor object can *move* in a middle of GC cycle,
 	 * we need a proper barrier to get an up-to-date location of the monitor object
 	 * Only access to the table entry needs the barrier. The user provided key should already have an updated location of the objects,
-	 * since a read barrier had to be executed some time prior to the construction of the key, whereever the value is read from */
+	 * since a read barrier had to be executed some time prior to the construction of the key, wherever the value is read from */
 	j9object_t tableEntryObject = J9MONITORTABLE_OBJECT_LOAD_VM((J9JavaVM *)userData, &(tableEntryMonitor->userData));
 
 	return tableEntryObject == (j9object_t)userMonitor->userData;

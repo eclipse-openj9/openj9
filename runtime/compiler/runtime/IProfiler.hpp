@@ -554,7 +554,7 @@ public:
    void jitProfileParseBuffer(J9VMThread *vmThread);
    uint32_t getIProfilerThreadExitFlag() { return _iprofilerThreadExitFlag; }
    bool postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_8* dataStart, UDATA size);
-   // this is wapper of registered version, for the helper function, from JitRunTime
+   // this is wrapper of registered version, for the helper function, from JitRunTime
 
 private:
 #ifdef J9VM_INTERP_PROFILING_BYTECODES

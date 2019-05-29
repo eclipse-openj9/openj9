@@ -57,7 +57,7 @@ public class FlagDefinitions extends OMObject {
 	}
 
 	/**
-	 * Returns the runtime to wich this flag definition belongs to, or <code>null</code> if none.
+	 * Returns the runtime to which this flag definition belongs to, or <code>null</code> if none.
 	 * 
 	 * @return the runtime
 	 */

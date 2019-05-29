@@ -312,7 +312,7 @@ tgcHookScavengerDiscardedSpace(J9HookInterface** hook, UDATA eventNum, void* eve
 
 	tgcExtensions->printf("\n");
 	/* If _survivorTLHRemainderCount/_tenureTLHRemainderCount gets too high (in 1000s),
-	 * it may indicate that discard threasholds are too low (and possibly causing contention while popping/pushing scan queue
+	 * it may indicate that discard thresholds are too low (and possibly causing contention while popping/pushing scan queue
 	 */
 	tgcExtensions->printf("Scavenger flipped=%zu discard=%zu TLHRemainderReuse=%zu\n", stats->_flipBytes, stats->_flipDiscardBytes, stats->_survivorTLHRemainderCount);
 	tgcExtensions->printf("Scavenger tenured=%zu discard=%zu TLHRemainderReuse=%zu\n", stats->_tenureAggregateBytes, stats->_tenureDiscardBytes, stats->_tenureTLHRemainderCount);
