@@ -3046,7 +3046,7 @@ SH_CompositeCacheImpl::rollbackUpdate(J9VMThread* currentThread)
 }
 
 /**
- * Updatte value of _storedSegmentUsedBytes
+ * Update value of _storedSegmentUsedBytes
  *
  * Called before ::commitUpdate() if ROM Classes builder allocated more than it needed.
  *
@@ -5368,7 +5368,7 @@ SH_CompositeCacheImpl::allocateClassDebugData(J9VMThread* currentThread, U_16 cl
 }
 
 /**
- * Roll back uncommited changes made by the last call too 'allocateClassDebugData()'
+ * Roll back uncommitted changes made by the last call too 'allocateClassDebugData()'
  *
  * @param [in] currentThread the thread calling this function
  * @param [in] classnameLength ROMClass class name length
@@ -6376,7 +6376,7 @@ SH_CompositeCacheImpl::tryAdjustMinMaxSizes(J9VMThread *currentThread, bool isJC
 		goto done;
 	}
 
-	/* set the variables inside the wirte mutex */
+	/* set the variables inside the write mutex */
 	adjustMinAOT = (_sharedClassConfig->minAOT >= 0);
 	adjustMaxAOT = (_sharedClassConfig->maxAOT >= 0);
 	adjustMinJIT = (_sharedClassConfig->minJIT >= 0);
@@ -6611,7 +6611,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
 				/* J9SHR_BLOCK_SPACE_FULL is always unset together with J9SHR_AVAILABLE_SPACE_FULL, do not need to remove J9AVLTREE_DISABLE_SHARED_TREE_UPDATES
-				 * when unseting J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL, do it here is enough.
+				 * when unsetting J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL, do it here is enough.
 				 */
 				if (NULL != currentThread->javaVM->sharedInvariantInternTable) {
 					Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9AVLTREE_DISABLE_SHARED_TREE_UPDATES);
@@ -6684,7 +6684,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 
 	*_runtimeFlags &= ~flagUnset;
 	*_runtimeFlags |= flagSet;
-	/* JAZZ103 108287 Add wirte barrier to ensure the setting/unsetting of runtime flags happens before resetting 
+	/* JAZZ103 108287 Add write barrier to ensure the setting/unsetting of runtime flags happens before resetting 
 	 * _maxAOTUnstoredBytes/_maxJITUnstoredBytes/_softmxUnstoredBytes to 0.
 	 */
 	VM_AtomicSupport::writeBarrier();

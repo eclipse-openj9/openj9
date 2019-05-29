@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -160,7 +160,7 @@ public class ClassPathEntry {
 	}
 
 	/**
-	 * Returns wheter or not this classpath points to a local library
+	 * Returns whether or not this classpath points to a local library
 	 *
 	 * @return      <code>true</code> if this points to a local library, <code>false</code> otherwise
 	 */

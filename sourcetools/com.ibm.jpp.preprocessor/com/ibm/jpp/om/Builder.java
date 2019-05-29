@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,7 +168,7 @@ public class Builder {
 	}
 
 	/**
-	 * Returns wheter or not this builder will only do an incremental build.
+	 * Returns whether or not this builder will only do an incremental build.
 	 *
 	 * @return		<code>true</code> if the build is incremental, <code>false</code> otherwise
 	 */

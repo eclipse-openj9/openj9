@@ -1538,7 +1538,7 @@ TR::CompilationInfo::updateCompQueueAccountingOnDequeue(TR_MethodToBeCompiled *e
       TR_ASSERT(_numQueuedFirstTimeCompilations >= 0, "_numQueuedFirstTimeCompilations is negative : %d", _numQueuedFirstTimeCompilations);
       }
    // Note: queue weight is handled separately because a method that is currently being
-   // compiled is considered as bringing some weigth to the processing backlog
+   // compiled is considered as bringing some weight to the processing backlog
    }
 
 
@@ -4961,7 +4961,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
 
    // If compiling on this thread acquire the application thread monitor.
    // This is the monitor that prevents compilation on multiple application
-   // threadsat the same time. It is held for the duration of the compilation.
+   // threads at the same time. It is held for the duration of the compilation.
    //
    if (!useSeparateCompilationThread())
       {

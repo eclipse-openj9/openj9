@@ -470,7 +470,7 @@ countObjectTags(J9JVMTIObjectTag * entry, J9JVMTIObjectTagMatch * results)
  * @param env             jvmti environment
  * @param heap_filter     tag filter flags used to determine which objects are to be reported
  * @param klass           class filter 
- * @param initial_object  object to start following the references from. Set to null to start witht the Heap Roots
+ * @param initial_object  object to start following the references from. Set to null to start with the Heap Roots
  * @param callbacks       callbacks to be invoked for each reference type
  * @param user_data       user data to be passed back via the callbacks
  * @return                a jvmtiError value

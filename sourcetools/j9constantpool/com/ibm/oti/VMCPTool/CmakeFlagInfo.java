@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ class CmakeFlagInfo implements IFlagInfo {
 	private HashSet<String> seenFlags = new HashSet<String>();
 	private HashSet<String> setFlags = new HashSet<String>();
 
-	// Convert string  to  bool unsing same rules as cmake
+	// Convert string  to  bool using same rules as cmake
 	private static boolean strToBool(String str) {
 		str = str.trim().toUpperCase();
 		if (str.isEmpty() || str.equals("NO") || str.equals("FALSE") || str.equals("OFF") || str.endsWith("-NOTFOUND")) {

@@ -192,7 +192,7 @@ buildMethodError(J9CfrError * errorStruct, UDATA code, UDATA action, I_32 method
  * @param[in] pc - the pc value
  * @param[in] method - pointer to J9CfrMethod
  * @param[in] constantPoolPointer - pointer to the constant pool
- * @param[in] errorDataIndex - the index value when verification error occurs (e.g. constant pool index, local varible index, etc)
+ * @param[in] errorDataIndex - the index value when verification error occurs (e.g. constant pool index, local variable index, etc)
  * @param[in] stackmapFrameIndex - index to stack frame when error occurs
  * @param[in] stackmapFrameBCI - the bci value of the stackmap frame when error occurs
  */

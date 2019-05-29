@@ -437,7 +437,7 @@ TR::DefaultCompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                {
                // Possible scenario: a long activation method receives a MIL count of 1.
                // The method gets invoked and the count becomes 0 (but the compilation is not
-               // triggerred now, only when the counter would become negative).
+               // triggered now, only when the counter would become negative).
                // The method receives a sample while still being interpreted. We should probably
                // schedule a compilation
                if (logSampling)

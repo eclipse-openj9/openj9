@@ -162,7 +162,7 @@ sub generateOnDir {
 	while ( my $entry = readdir $dir ) {
 		next if $entry eq '.' or $entry eq '..';
 		my $tempExclude = 0;
-		# tmporary exclusion, remove this block when JCL_VERSION separation is removed
+		# temporary exclusion, remove this block when JCL_VERSION separation is removed
 		if (($jdkVersion ne "Panama") && ($jdkVersion ne "Valhalla")) {
 			my $JCL_VERSION = '';
 			if ( exists $ENV{'JCL_VERSION'} ) {

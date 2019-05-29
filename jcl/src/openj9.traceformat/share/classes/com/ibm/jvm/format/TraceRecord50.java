@@ -302,7 +302,7 @@ public class TraceRecord50 implements Comparable {
 	/**
 	 * primeRecord readies this UtTraceRecord to have its tracepoint data read.
 	 * 
-	 * Each tracepoint's length field is at the end of the tracepoint, so the traceoints are
+	 * Each tracepoint's length field is at the end of the tracepoint, so the tracepoints are
 	 * formatted backwards out of the record. To enable forward iteration, the whole record 
 	 * must be formatted into a queue, which is then iterated over in reverse order.
 	 * 

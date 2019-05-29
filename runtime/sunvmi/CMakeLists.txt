@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,5 +41,5 @@ target_link_libraries(sunvmi
 		j9util
 )
 
-# Note we need to make sure the gc hookgen/tracgen headers exist before we start compiling
+# Note we need to make sure the gc hookgen/tracegen headers exist before we start compiling
 add_dependencies(sunvmi omrgc_hookgen omrgc_tracegen)

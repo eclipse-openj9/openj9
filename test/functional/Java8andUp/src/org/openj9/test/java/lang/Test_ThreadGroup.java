@@ -483,7 +483,7 @@ public class Test_ThreadGroup {
 		final int TOTAL_DEPTH = 5;
 		ThreadGroup current = testRoot;
 		Vector groups = new Vector();
-		// To maintain teh invariant that a thread in the Vector is parent
+		// To maintain the invariant that a thread in the Vector is parent
 		// of the next one in the collection (and child of the previous one)
 		groups.addElement(testRoot);
 

@@ -1942,7 +1942,7 @@ TR_CISCTransformer::isInsideOfFastVersionedLoop(TR_RegionStructure *l)
 
 
 // createLoopCandidates populates the given list with natural loop candidates
-// whcih contains structure information and is not cold.  The return value of
+// which contains structure information and is not cold.  The return value of
 // this call dictates whether we found candidates or not.
 bool
 TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidates)

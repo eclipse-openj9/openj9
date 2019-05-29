@@ -889,7 +889,7 @@ TR_ClassQueries::collectLeafs(TR_PersistentClassInfo *clazz,
    {
    TR::ClassTableCriticalSection collectLeafs(comp->fe(), locked);
 
-   // keep a list of classes that were set visisted so that we can
+   // keep a list of classes that were set visited so that we can
    // easily reset the visited flag later-on
    TR_CHTable::VisitTracker marked(comp->trMemory());
 

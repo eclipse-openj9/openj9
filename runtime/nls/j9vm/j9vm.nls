@@ -425,7 +425,7 @@ J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR.user_response=Verify that the system has eno
 # END NON-TRANSLATABLE
 
 # argument is the unrecognized command line option
-# this occurs if you pass an unrecongized option to -Xthr. e.g. ./j9 -Xthr:foo
+# this occurs if you pass an unrecognized option to -Xthr. e.g. ./j9 -Xthr:foo
 J9NLS_VM_UNRECOGNIZED_XTHR_OPTION=-Xthr: unrecognized option --> \'%s\'
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNIZED_XTHR_OPTION.sample_input_1=foo
@@ -514,7 +514,7 @@ J9NLS_VM_JLM_HOLD_TIMES_NOT_SUPPORTED.user_response=
 # END NON-TRANSLATABLE
 
 # argument is the unrecognized command line option
-# this occurs if you pass an unrecongized option to -Xjni. e.g. ./j9 -Xjni:foo
+# this occurs if you pass an unrecognized option to -Xjni. e.g. ./j9 -Xjni:foo
 J9NLS_VM_UNRECOGNIZED_XJNI_OPTION=-Xjni: unrecognized option --> \'%s\'
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNIZED_XJNI_OPTION.sample_input_1=someoption

@@ -266,7 +266,7 @@ public class Tcb {
             long rbp = tcbrbp();
             long rbsecptr = 0;    /* The last RB read */
             long save2rbptr = 0;  /* The second to last RB read */
-            long save2XsbPtr = 0; /* XSB virutal address */
+            long save2XsbPtr = 0; /* XSB virtual address */
             long saveXsbAddr = 0;
             log.fine("for tcb " + hex(address) + ", rbp = " + hex(rbp));
             int countRbs = 0;

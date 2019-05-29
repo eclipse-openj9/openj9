@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public class GCHeapMapWordIterator extends GCIterator {
 		J9ObjectPointer nextObject = null;
 		
 		if (!_cache.eq(0)) {
-			/* TODO: lpnguyen, Note that numberOfTrailingZeros in java refers == numberOfLeadingZeros in C verison of this.. */
+			/* TODO: lpnguyen, Note that numberOfTrailingZeros in java refers == numberOfLeadingZeros in C version of this.. */
 			int trailingZeros = _cache.numberOfTrailingZeros();
 			long slotsToSkip = (trailingZeros * MM_HeapMap.J9MODRON_HEAP_SLOTS_PER_HEAPMAP_BIT);
 			_heapSlotCurrent = _heapSlotCurrent.add(slotsToSkip);

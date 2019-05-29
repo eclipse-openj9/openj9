@@ -69,7 +69,7 @@ ifndef NATIVE_TEST_LIBS
 	NATIVE_TEST_LIBS=$(TEST_JDK_HOME)$(D)..$(D)native-test-libs$(D)
 endif
 
-# if JCL_VESION is current check for default locations for native test libs
+# if JCL_VERSION is current check for default locations for native test libs
 # otherwise, native test libs are under NATIVE_TEST_LIBS
 ifneq (, $(findstring current, $(JCL_VERSION)))
 	ifneq (,$(findstring win,$(SPEC)))

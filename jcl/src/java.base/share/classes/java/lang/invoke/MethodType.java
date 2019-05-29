@@ -834,11 +834,11 @@ public final class MethodType implements Serializable
 	/**
 	 * Wrapper on {@link #methodType(Class, Class[])}.
 	 * <br>
-	 * Return a MethodType with an Object return and only Object parameters.  If isVarags is true, the
+	 * Return a MethodType with an Object return and only Object parameters.  If isVarargs is true, the
 	 * final parameter will be an Object[].  This Object[] parameter is NOT included in the numParameters
 	 * count. 
 	 * 
-	 * @param numParameters - number of parameters not including the isVarags parameter (if requested)
+	 * @param numParameters - number of parameters not including the isVarargs parameter (if requested)
 	 * @param isVarargs - if the Object[] parameter should be added
 	 * @return the requested MethodType object
 	 * @throws IllegalArgumentException if numParameters is less than 0 or greater than the allowed number of arguments (255 or 254 if isVarargs)

@@ -242,7 +242,7 @@ genStoreDFP(
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Register * objRegister = cg->evaluate(objAddrNode);
 
-   // query the VM for the field offset to wich we are going to store
+   // query the VM for the field offset to which we are going to store
    if (dfpFieldOffset == -1)
       {
       TR_OpaqueClassBlock * bigDClass = NULL;

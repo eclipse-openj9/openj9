@@ -595,7 +595,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	bcctrl  BO_ALWAYS, CR0_LT                               ! Call to ask if the field is volatile
 	cmpi	cr0, CmpAddr, r3, 0
 	bne     cr0, .L10.it_is_volatile
-	andis.  r4, r29, IS_32BitLong                           ! was it a potentially volatle long, 32-bit OS sequence?
+	andis.  r4, r29, IS_32BitLong                           ! was it a potentially volatile long, 32-bit OS sequence?
 	bne     cr0, .L.normal_patching
 	andis.	r4, r29, IS_SpecialDouble			! check the special double flag
 	bne	cr0, .L.yankTheCall

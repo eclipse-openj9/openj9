@@ -4157,7 +4157,7 @@ internalError:
 		} else {
 			updateVMStruct(REGISTER_ARGS);
 			J9ClassLoader* result = internalAllocateClassLoader(_vm, classLoaderObject);
-			VMStructHasBeenUpdated(REGISTER_ARGS); // likely unncessary - no code runs in internalAllocateClassLoader
+			VMStructHasBeenUpdated(REGISTER_ARGS); // likely unnecessary - no code runs in internalAllocateClassLoader
 			if (NULL == result) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				goto done;

@@ -1600,7 +1600,7 @@ static bool indirectDispatchWillBuildVirtualGuard(TR::Compilation *comp, TR::X86
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    // This method is used in vft mask instruction removal in buildIndirectDispatch
-   // if method will generate virutal call guard and build direct call, then skip vft mask instruction.
+   // if method will generate virtual call guard and build direct call, then skip vft mask instruction.
    if (site->getVirtualGuardKind() != TR_NoGuard && fej9->canDevirtualizeDispatch() )
       {
       if (comp->performVirtualGuardNOPing())

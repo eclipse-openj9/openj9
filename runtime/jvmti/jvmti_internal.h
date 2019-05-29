@@ -2575,7 +2575,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 /* ---------------- suspendhelper.cpp ---------------- */
 /**
 * @brief
-* @param currentThreasd
+* @param currentThread
 * @param thread
 * @param allowNull
 * @param currentThreadSuspended
