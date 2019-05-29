@@ -114,6 +114,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool canGeneratePDBinaryIntrinsic(TR::ILOpCodes opCode, TR::Node * op1PrecNode, TR::Node * op2PrecNode, TR::Node * resultPrecNode);
 
    bool constLoadNeedsLiteralFromPool(TR::Node *node);
+   
+   bool supportsTrapsInTMRegion(){ return TR::Compiler->target.isZOS();}
 
    using J9::CodeGenerator::addAllocatedRegister;
    void addAllocatedRegister(TR_PseudoRegister * temp);
