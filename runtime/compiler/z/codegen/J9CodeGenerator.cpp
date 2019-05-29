@@ -3528,6 +3528,24 @@ J9::Z::CodeGenerator::incRefCountForOpaquePseudoRegister(TR::Node * node, TR::Co
       }
    }
 
+//AN OVERLOAD OF ABOVE FUNCTION; DOES EXACTLY THE SAME JOB
+void
+J9::Z::CodeGenerator::incRefCountForOpaquePseudoRegister(TR::Node * node)
+   {
+   if (node->getOpaquePseudoRegister())
+      {
+      TR_OpaquePseudoRegister *reg = node->getOpaquePseudoRegister();
+      TR_StorageReference *ref = reg->getStorageReference();
+      if (ref && ref->isNodeBased() && ref->getNodeReferenceCount() > 0)
+         {
+         if (self()->traceBCDCodeGen())
+            self()->comp()->getDebug()->trace("\tnode %s (%p) with storageRef #%d (%s): increment nodeRefCount %d->%d when artificially incrementing ref count\n",
+               node->getOpCode().getName(),node,ref->getReferenceNumber(),self()->comp()->getDebug()->getName(ref->getSymbol()),ref->getNodeReferenceCount(),ref->getNodeReferenceCount()+1);
+         ref->incrementNodeReferenceCount();
+         }
+      }
+   }
+
 TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instruction* cursor, TR::LabelSymbol* vmCallHelperSnippetLabel)
    {
    TR::Compilation* comp = self()->comp();

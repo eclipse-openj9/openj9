@@ -260,6 +260,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 #endif
 
    void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp);
+   //OVERLOAD THE ABOVE FUNCTION
+   void incRefCountForOpaquePseudoRegister(TR::Node * node);
 
    /** \brief
     *     Generates a VM call helper sequence along with the necessary metadata in the instruction stream which when
