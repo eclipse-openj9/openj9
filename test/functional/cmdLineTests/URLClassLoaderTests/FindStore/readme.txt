@@ -34,7 +34,7 @@ FindStore.BuildInitial
 
 FindStore.StoreExplicit
 	Runs A_Main which will cause classes to be loaded from A.jar B.jar C.Jar and D.jar.
-	The classpath used specifies explcit paths.
+	The classpath used specifies explicit paths.
 	Nothing.jar is added as the 0th element of the classpath. This is used for testing classpath matching later.
 
 FindStore.StoreRelative

@@ -1573,7 +1573,7 @@ ZZ  If resolved offset is greater than 4k
     JH     LDataOOL
 
     L_GPR   r3,eq_codeRef_inDataSnippet(,r14) #DataRef instr location
-ZZ  needsToBeSignExtenedTo8Bytes
+ZZ  needsToBeSignExtendedTo8Bytes
 ifdef([TR_HOST_64BIT],[dnl
     CLI     0(r3),HEX(59)  #check if this is OC_C
     JNZ     LclearD2
@@ -2048,9 +2048,9 @@ ZZ                        # jit-to-jit offset, so we need to
 
     LR_GPR  r14,r0
 ifdef([TR_HOST_64BIT],[dnl
-    STPQ    r2,eq_implementorClass_inInterfaceSnippet(,r14)
+    STPQ    r2,eq_implementerClass_inInterfaceSnippet(,r14)
 ],[dnl
-    STM     r2,r3,eq_implementorClass_inInterfaceSnippet(r14)
+    STM     r2,r3,eq_implementerClass_inInterfaceSnippet(r14)
 ])dnl
 
 ZZ check if this picSite has already been registered,
@@ -2098,7 +2098,7 @@ ifdef([J9ZOS390],[dnl
 
     ST_GPR  J9SP,J9TR_VMThread_sp(r13)
 
-    LA      CARG2,eq_implementorClass_inInterfaceSnippet(r14)
+    LA      CARG2,eq_implementerClass_inInterfaceSnippet(r14)
 
 ZZ make the call
 
@@ -2532,7 +2532,7 @@ ZZ  restore all regs
     CHI_GPR CRINT,1
     JNE     ifCHMLcontinueLookup
 
-LABEL(ifCHMLInovkeIFCPrivate)
+LABEL(ifCHMLInvokeIFCPrivate)
 ZZ  remove low tag and call
     L_GPR   r0,eq_intfMethodIndex_inInterfaceSnippet(r14)
     LR_GPR  r3,r14         # free r14 for RA

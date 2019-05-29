@@ -31,7 +31,7 @@ use strict;
 # greps the word in the dump file and returns true if the number of occurrence
 # of the word matches with the number passed in as arg
 sub words_grep_from_file {
-	my ($dump_file, $grep_word, $num_of_expected_occurences) = @_;
+	my ($dump_file, $grep_word, $num_of_expected_occurrences) = @_;
 	my $counter = 0;
 
 	open(my $in,  "<",  $dump_file)  or die "TEST FAILED. unable to  read $dump_file";
@@ -43,7 +43,7 @@ sub words_grep_from_file {
 	}
 
 	close($in)  or die "TEST FAILED. unable to  close $dump_file";
-	return ( $counter == $num_of_expected_occurences );
+	return ( $counter == $num_of_expected_occurrences );
 }
 
 # removes a file if it exists and if it is not writable

@@ -37,7 +37,7 @@ set NAME=*%u
 if exist %TESTSCRIPT%.out (
     %1/java SimpleGrep "JVMSHRC147E Character * not valid for cache name" %TESTSCRIPT%.out 1
 )else (
-    echso %TESTSCRIPT%: TEST FAILED: No file created
+    echo %TESTSCRIPT%: TEST FAILED: No file created
 )    
 
 endlocal

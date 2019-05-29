@@ -45,7 +45,7 @@ for (my $i = 0; $i < scalar(@ARGV); $i++) {
 }
 
 if (!$failuremkarg) {
-	die "Please specify a vaild file path using --failuremk= option!";
+	die "Please specify a valid file path using --failuremk= option!";
 }
 
 my $failures = resultReporter();

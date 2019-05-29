@@ -80,7 +80,7 @@ Testcase Packages
 			The testSomething() method should return true on success and false on failure.
 
 
-		public String helpSomething() { return "testSomthing does something"; }
+		public String helpSomething() { return "testSomething does something"; }
 
 			The helpSomething() method should return a description of what the test does. The
 			"Something" part of the help method name must match the "Something" part of the
@@ -129,7 +129,7 @@ Adding new testcases
 	   method, the help method MUST start with a 'help' prefix.
 
 	   For ex:
-	      public String helpSomething() { return "testSomthing does something"; }
+	      public String helpSomething() { return "testSomething does something"; }
 
 	  NOTE that a help method is mandatory.
 

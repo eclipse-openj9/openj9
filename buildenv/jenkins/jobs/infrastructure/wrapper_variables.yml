@@ -149,7 +149,7 @@ PullRequest-OpenJDK:
         pull_request_builder:
             trigger_phrase: .*\bjenkins\s+(compile|test)\b.*
             cron: "H/5 * * * *"
-            admin_list: "Extentions"
+            admin_list: "Extensions"
             blacklist: "kenrai123"
             context: "Pull Request - OpenJDK"
             triggered_status: "Job Triggered"
@@ -163,6 +163,6 @@ general:
         PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
         RESTART_TIMEOUT: "Time allowed to restart a job"
         TIMEOUT_TIME: "Overall build timeout"
-    reprository_url: "https://github.com/eclipse/openj9.git"
-    reprository_branch: "refs/heads/master"
+    repository_url: "https://github.com/eclipse/openj9.git"
+    repository_branch: "refs/heads/master"
     pipeline_script_path: "buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-All"

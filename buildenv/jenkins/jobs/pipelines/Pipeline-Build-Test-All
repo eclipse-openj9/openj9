@@ -52,7 +52,7 @@
  *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
  *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
  *   VENDOR_BRANCH: String - the vendor branch to clone from
- *   VENDOR_CREDENTIALS_ID: String - the Jenkis credentials to connect to the vendor Git repository if VENDOR_REPO is a private repository
+ *   VENDOR_CREDENTIALS_ID: String - the Jenkins credentials to connect to the vendor Git repository if VENDOR_REPO is a private repository
  *   SETUP_LABEL: String - the node label(s) to run this job on; could be any node that has Git installed on it
  *   BUILD_NODE_LABELS: String - the labels of a node to compile and build the Eclipse OpenJ9 extensions for OpenJDK
  *   TEST_NODE_LABELS: String - the labels of a node to run tests on

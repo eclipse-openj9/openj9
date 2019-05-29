@@ -553,7 +553,7 @@ def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server
 
             build job: 'Cleanup_Artifactory', parameters: cleanup_job_params, wait: false
         } catch (any){
-            echo 'The Cleanup_Artifactory job is not availible'
+            echo 'The Cleanup_Artifactory job is not available'
         }
     }
 }
