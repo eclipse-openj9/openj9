@@ -607,17 +607,12 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
    if (unresolvedInCP)
       *unresolvedInCP = true;
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex, unresolvedInCP != NULL);
-   auto recv = _stream->read<J9Method *, bool, bool, TR_ResolvedJ9JITaaSServerMethodInfo>();
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex);
+   auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
    J9Method * ramMethod = std::get<0>(recv);
-   bool unresolved = std::get<1>(recv);
-   bool tookBranch = std::get<2>(recv);
-   auto methodInfo = std::get<3>(recv);
+   auto methodInfo = std::get<1>(recv);
 
-   if (unresolved && unresolvedInCP)
-      *unresolvedInCP = true;
-
-   if (tookBranch && ramMethod)
+   if (ramMethod)
       {
       bool createResolvedMethod = true;
       if (comp->getOption(TR_UseSymbolValidationManager))
