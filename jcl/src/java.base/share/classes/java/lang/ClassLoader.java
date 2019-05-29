@@ -596,13 +596,29 @@ final Class<?> defineClassInternal(
 }
 
 /*[IF Sidecar19-SE]*/
- /**
-  * Add a class's package name to this classloader's list of packages, if not already present.
+private static final class NamedPackageProvider implements java.util.function.Function<String, NamedPackage> {
+
+	private final Class<?> newClass;
+
+	NamedPackageProvider(Class<?> newClass) {
+		super();
+		this.newClass = newClass;
+	}
+
+	@Override
+	public NamedPackage apply(String pkgName) {
+		return new NamedPackage(pkgName, newClass.getModule());
+	}
+
+}
+
+/**
+ * Add a class's package name to this classloader's list of packages, if not already present.
  * @param newClass
  */
 void addPackageToList(Class<?> newClass) {
-	synchronized(packages) {
-		packages.computeIfAbsent(newClass.getPackageName(), pkgName->new NamedPackage(pkgName, newClass.getModule()));
+	synchronized (packages) {
+		packages.computeIfAbsent(newClass.getPackageName(), new NamedPackageProvider(newClass));
 	}
 }
 /*[ENDIF] Sidecar19-SE */
