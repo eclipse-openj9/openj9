@@ -490,6 +490,7 @@ sub writeTargets {
 	foreach my $test ( @{ $result->{'tests'} } ) {
 		my $count    = 0;
 		my @subtests = ();
+		my $testIterations = $iterations;
 		foreach my $var ( @{ $test->{'variation'} } ) {
 			my $jvmoptions = ' ' . $var . ' ';
 			$jvmoptions =~ s/\ NoOptions\ //x;
@@ -567,7 +568,8 @@ sub writeTargets {
 					$aotOptions = '$(AOT_OPTIONS) ';
 				} elsif ( $test->{'aot'} eq 'explicit' ) {
 					# When test tagged with aot explicit, its test command has aot options and runs multiple times explicitly.
-					$iterations = 1;
+					$testIterations = 1;
+					print $fhOut "$name: TEST_ITERATIONS=1\n";
 				}
 			}
 
@@ -623,10 +625,10 @@ sub writeTargets {
 			$command =~ s/\s+$//;
 
 			print $fhOut "$indent\{ ";
-			for (my $i = 1; $i <= $iterations; $i++) {
+			for (my $i = 1; $i <= $testIterations; $i++) {
 				print $fhOut "itercnt=$i; \\\n$indent\$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n";
 				print $fhOut "$indent$command;";
-				if ($i ne $iterations) {
+				if ($i ne $testIterations) {
 					print $fhOut " \\\n$indent";
 				}
 			}
