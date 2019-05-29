@@ -4499,9 +4499,24 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMirrorMethodsPersistIPInfo(TR_R
    }
 
 void
+TR::CompilationInfoPerThreadRemote::cacheNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex)
+   {
+   TR_OpaqueClassBlock *nullClazz = NULL;
+   cacheToPerCompilationMap(_classOfStaticMap, std::make_pair(ramClass, cpIndex), nullClazz);
+   }
+
+bool
+TR::CompilationInfoPerThreadRemote::getCachedNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex)
+   {
+   TR_OpaqueClassBlock *nullClazz;
+   return getCachedValueFromPerCompilationMap(_classOfStaticMap, std::make_pair(ramClass, cpIndex), nullClazz);
+   }
+
+void
 TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
    {
    clearPerCompilationCache(_methodIPDataPerComp);
    clearPerCompilationCache(_resolvedMethodInfoMap);
    clearPerCompilationCache(_resolvedMirrorMethodsPersistIPInfo);
+   clearPerCompilationCache(_classOfStaticMap);
    }
