@@ -42,7 +42,6 @@ import java.util.Queue;
 import java.util.Vector;
 import java.util.Collections;
 import java.util.WeakHashMap;
-import java.util.stream.Stream;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
@@ -52,6 +51,7 @@ import java.security.cert.Certificate;
 import java.lang.reflect.Modifier;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import jdk.internal.module.ServicesCatalog;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,7 +113,7 @@ public abstract class ClassLoader {
     private final Hashtable<String, NamedPackage> packages = new Hashtable<>();
   	private volatile ConcurrentHashMap<?, ?> classLoaderValueMap;
 	/*[ELSE]
-  	private final Hashtable<String, Package> packages = new Hashtable();
+  	private final Hashtable<String, Package> packages = new Hashtable<>();
 	/*[ENDIF] Sidecar19-SE*/
 	/*[PR CMVC 94437] fix deadlocks */
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
@@ -596,6 +596,10 @@ final Class<?> defineClassInternal(
 }
 
 /*[IF Sidecar19-SE]*/
+/**
+ * This class is a function that maps a package name to a newly created
+ * {@code NamedPackage} object for use below in updating the {@code packages} map.
+ */
 private static final class NamedPackageProvider implements java.util.function.Function<String, NamedPackage> {
 
 	private final Class<?> newClass;
@@ -2402,4 +2406,3 @@ public final boolean isRegisteredAsParallelCapable() {
 
 /*[ENDIF] Sidecar19-SE*/
 }
-
