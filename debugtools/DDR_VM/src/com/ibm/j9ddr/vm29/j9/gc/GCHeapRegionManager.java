@@ -145,12 +145,12 @@ public class GCHeapRegionManager
 		if(heapAddress.gte(_lowTableEdge) && heapAddress.lt(_highTableEdge)) {
 			result = tableDescriptorForAddress(heapAddress);
 		} else {
-			result = auxillaryDescriptorForAddress(heapAddress);
+			result = auxiliaryDescriptorForAddress(heapAddress);
 		}
 		return result;
 	}
 	
-	public GCHeapRegionDescriptor auxillaryDescriptorForAddress(AbstractPointer heapAddress)
+	public GCHeapRegionDescriptor auxiliaryDescriptorForAddress(AbstractPointer heapAddress)
 	{
 		for(int i = 0; i < _auxRegionCount; i++) {
 			GCHeapRegionDescriptor region = _auxRegionDescriptorList[i];
