@@ -675,7 +675,6 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
 		vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
 #endif /* OMR_GC_COMPRESSED_POINTERS */
-		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 
 		if (_extensions->isConcurrentScavengerHWSupported()) {
 			/* Concurrent Scavenger Page start address must be initialized */
@@ -707,10 +706,8 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		/*
 		 * By setting readBarrierRangeCheckTop to NULL and readBarrierRangeCheckBase to the highest possible address
 		 * it gives an empty range that contains no address. Therefore,
-		 * when decide whether to read barrier, a simple range is sufficient and
-		 * checking J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE can be skipped.
+		 * when decide whether to read barrier, a simple range is sufficient
 		 */
-		vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 		vmThread->readBarrierRangeCheckBase = UDATA_MAX;
 		vmThread->readBarrierRangeCheckTop = 0;
 #ifdef OMR_GC_COMPRESSED_POINTERS

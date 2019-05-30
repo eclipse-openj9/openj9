@@ -1908,8 +1908,6 @@ UDATA TR_J9VMBase::thisThreadGetGSIntermediateResultOffset()
  */
 UDATA TR_J9VMBase::thisThreadGetConcurrentScavengeActiveByteAddressOffset()
    {
-   TR_ASSERT_FATAL(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE == 0x20000,
-              "GSCS: The check weither concurrent scavenge is active is dependant on the flag being 0x20000");
    int32_t privateFlagsConcurrentScavengerActiveByteOffset = 5;
    return offsetof(J9VMThread, privateFlags) + privateFlagsConcurrentScavengerActiveByteOffset;
    }
