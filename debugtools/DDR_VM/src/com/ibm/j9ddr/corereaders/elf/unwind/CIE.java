@@ -116,24 +116,24 @@ class CIE {
 			cfiStream.read(new byte[remainder], 0, remainder); 
 		}
 
-		private void parseAugmentationData(ImageInputStream cfiStream, String augmenString) throws IOException {
+		private void parseAugmentationData(ImageInputStream cfiStream, String augmentString) throws IOException {
 
-			for( int i = 0; i < augmenString.length(); i++ ) {
-				if( 'z' == augmenString.charAt(i) ) {
-					// Skip this, it just means we have augmenation data. (We know that.)
+			for( int i = 0; i < augmentString.length(); i++ ) {
+				if( 'z' == augmentString.charAt(i) ) {
+					// Skip this, it just means we have augmentation data. (We know that.)
 					continue;
 				}
-				if( 'P' == augmenString.charAt(i) ) {
+				if( 'P' == augmentString.charAt(i) ) {
 					personalityRoutinePointerEncoding = cfiStream.readByte();
 					personalityRoutinePointer = this.unwind.readEncodedPC(cfiStream, personalityRoutinePointerEncoding);
 				}
-				if( 'L' == augmenString.charAt(i) ) {
+				if( 'L' == augmentString.charAt(i) ) {
 					lsdaPointerEncoding = cfiStream.readByte();
 				}
-				if( 'R' == augmenString.charAt(i) ) {
+				if( 'R' == augmentString.charAt(i) ) {
 					fdePointerEncoding = cfiStream.readByte();
 				}
-				if( 'S' == augmenString.charAt(i) ) {
+				if( 'S' == augmentString.charAt(i) ) {
 					signalHandlerFrame = true;
 				}
 			}

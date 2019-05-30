@@ -244,14 +244,14 @@ public class FindCommand extends BaseJdmpviewCommand{
 		if (findAtt.pattern.startsWith("0x")) {
 			findAtt.pattern = findAtt.pattern.substring(2);
 			findAtt.mode = binary;
-			allignBits();
+			alignBits();
 		}
 		else{
 			findAtt.mode = text;
 		}
 	}
 	
-	private void allignBits(){
+	private void alignBits(){
 		int patternLength = findAtt.pattern.length();
 		if (0 != patternLength%2){
 			findAtt.pattern = "0" + findAtt.pattern;

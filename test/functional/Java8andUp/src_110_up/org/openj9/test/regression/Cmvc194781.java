@@ -43,7 +43,7 @@ import jdk.internal.misc.Unsafe;
 public class Cmvc194781 {
 
 	@Test
-	public void testFrameIteratorSkipAnnontationForNonBootstrapClass() throws Throwable {
+	public void testFrameIteratorSkipAnnotationForNonBootstrapClass() throws Throwable {
 		final byte[] classBytes = FrameIteratorTestGenerator.dump();
 		
 		Unsafe unsafe = Unsafe.getUnsafe();

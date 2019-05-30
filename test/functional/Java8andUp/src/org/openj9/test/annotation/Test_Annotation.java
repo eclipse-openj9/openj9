@@ -1378,14 +1378,14 @@ public class Test_Annotation {
 
 	@Test
 	@TestAnnotation()
-	public void test_method_Enum_arra_getDefaultValue() throws Exception {
+	public void test_method_Enum_array_getDefaultValue() throws Exception {
 		Method method = ValueAnnotation.class.getMethod("enumArrayValue", (Class[])null);
 		myAssert(enumArrayValueDefault, (Enum[])method.getDefaultValue());
 	}
 
 	@Test
 	@TestAnnotation()
-	public void test_method_Class_arra_getDefaultValue() throws Exception {
+	public void test_method_Class_array_getDefaultValue() throws Exception {
 		Method method = ValueAnnotation.class.getMethod("classArrayValue", (Class[])null);
 		myAssert(classArrayValueDefault, (Class[])method.getDefaultValue());
 	}

@@ -43,7 +43,7 @@ import sun.misc.Unsafe;
 public class Cmvc194781 {
 
 	@Test
-	public void testFrameIteratorSkipAnnontationForNonBootstrapClass() throws Throwable {
+	public void testFrameIteratorSkipAnnotationForNonBootstrapClass() throws Throwable {
 		final byte[] classBytes = FrameIteratorTestGenerator.dump();
 		
 		/* Use reflect to get Unsafe so we can avoid the 'must be bootstrap' check */

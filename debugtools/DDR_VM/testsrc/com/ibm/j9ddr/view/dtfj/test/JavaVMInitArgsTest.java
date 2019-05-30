@@ -51,7 +51,7 @@ public class JavaVMInitArgsTest extends DTFJUnitTest {
 		// TODO: Can probably implement this better or re-use something like DTFJunitTest.invokeMethod()
 		boolean ddrDataUnavailable = false;
 		boolean ddrCorruptData = false;
-		boolean jextractDataUnavailabe = false;
+		boolean jextractDataUnavailable = false;
 		boolean jextractCorruptData = false;
 		
 		try {
@@ -65,12 +65,12 @@ public class JavaVMInitArgsTest extends DTFJUnitTest {
 		try {
 			jextractObjects.add(jextractJavaRuntime.getJavaVMInitArgs());
 		} catch (DataUnavailable e) {
-			jextractDataUnavailabe = true;
+			jextractDataUnavailable = true;
 		} catch (CorruptDataException e) {
 			jextractCorruptData = true;
 		}
 		
-		assertEquals(jextractDataUnavailabe, ddrDataUnavailable);
+		assertEquals(jextractDataUnavailable, ddrDataUnavailable);
 		assertEquals(jextractCorruptData, ddrCorruptData);
 	}
 	
