@@ -23,9 +23,9 @@
 /**
  * @author Matthew Kilner
  */
-public class Aligator implements Utilities.TestClass {
+public class Alligator implements Utilities.TestClass {
 
 	public String getLocation() {
-		return "Animals";
+		return "AnimalsJar";
 	}
 }
