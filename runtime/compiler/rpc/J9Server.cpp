@@ -46,11 +46,6 @@ namespace JITaaS
 int J9ServerStream::_numConnectionsOpened = 0;
 int J9ServerStream::_numConnectionsClosed = 0;
 
-bool useSSL(TR::PersistentInfo *info)
-   {
-   return info->getJITaaSSslKeys().size() || info->getJITaaSSslCerts().size() || info->getJITaaSSslRootCerts().size();
-   }
-
 J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    : J9Stream(),
    _msTimeout(timeout)
@@ -87,13 +82,6 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Could not finish compilation: %s", e.what());
       }
-   }
-
-void initSSL()
-   {
-   SSL_load_error_strings();
-   SSL_library_init();
-   OpenSSL_add_ssl_algorithms();
    }
 
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
@@ -177,20 +165,70 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    // verify server identity using standard method
    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
+
    return ctx;
    }
+
+static bool
+handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMsg)
+{
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "%s: errno=%d", errMsg, errno);
+   ERR_print_errors_fp(stderr);
+
+   close(connfd);
+   if (bio)
+      {
+      BIO_free_all(bio);
+      bio = NULL;
+      }
+   if (ssl)
+      {
+      SSL_free(ssl);
+      ssl = NULL;
+      }
+   return false;
+}
+
+static bool
+acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
+   {
+   SSL *ssl = SSL_new(sslCtx);
+   if (!ssl)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating SSL connection");
+
+   SSL_set_accept_state(ssl);
+
+   if (SSL_set_fd(ssl, connfd) != 1)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting SSL file descriptor");
+
+   if (SSL_accept(ssl) <= 0)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error accepting SSL connection");
+
+   bio = BIO_new_ssl(sslCtx, false);
+   if (!bio)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating new BIO");
+
+   if (BIO_set_ssl(bio, ssl, true) != 1)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting BIO SSL");
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
+                                                     connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
+   return true;
+   }
+
 
 void
 J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
    SSL_CTX *sslCtx = NULL;
-   if (useSSL(info))
+   if (J9Stream::useSSL(info))
       {
-      initSSL();
+      J9Stream::initSSL();
       sslCtx = createSSLContext(info);
-
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Sucessfully initialized SSL context");
       }
 
    uint32_t port = info->getJITaaSServerPort();
@@ -248,8 +286,6 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
       {
       struct sockaddr_in cli_addr;
       socklen_t clilen = sizeof(cli_addr);
-      SSL *ssl = NULL;
-      BIO *bio = NULL;
 
       int connfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
       if (connfd < 0)
@@ -259,59 +295,9 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
          continue;
          }
 
-      if (sslCtx)
-         {
-         ssl = SSL_new(sslCtx);
-         if (!ssl)
-            {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error creating SSL connection: errno=%d", errno);
-            ERR_print_errors_fp(stderr);
-            close(connfd);
-            SSL_free(ssl);
-            continue;
-            }
-         if (SSL_set_fd(ssl, connfd) != 1)
-            {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error setting SSL file descriptor: errno=%d", errno);
-            ERR_print_errors_fp(stderr);
-            close(connfd);
-            SSL_free(ssl);
-            continue;
-            }
-         if (SSL_accept(ssl) <= 0)
-            {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error accepting SSL connection: errno=%d", errno);
-            ERR_print_errors_fp(stderr);
-            close(connfd);
-            SSL_free(ssl);
-            continue;
-            }
-         SSL_set_accept_state(ssl);
-
-         bio = BIO_new_ssl(sslCtx, false);
-         if (!bio)
-            {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error creating new BIO: errno=%d", errno);
-            ERR_print_errors_fp(stderr);
-            close(connfd);
-            SSL_free(ssl);
-            continue;
-            }
-         if (BIO_set_ssl(bio, ssl, true) != 1)
-            {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error setting BIO SSL: errno=%d", errno);
-            ERR_print_errors_fp(stderr);
-            close(connfd);
-            BIO_free_all(bio);
-            SSL_free(ssl);
-            continue;
-            }
-         }
+      BIO *bio = NULL;
+      if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
+         continue;
 
       J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, bio, timeoutMs);
       compiler->compile(stream);
