@@ -47,12 +47,10 @@ int J9ClientStream::_numConnectionsClosed = 0;
 // This is called during startup from rossa.cpp
 void J9ClientStream::static_init(TR::PersistentInfo *info)
    {
-   if (!(info->getJITaaSSslKeys().size() || info->getJITaaSSslCerts().size() || info->getJITaaSSslRootCerts().size()))
+   if (!J9Stream::useSSL(info))
       return;
 
-   SSL_load_error_strings();
-   SSL_library_init();
-   OpenSSL_add_ssl_algorithms();
+   J9Stream::initSSL();
 
    SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
    if (!ctx)
@@ -68,6 +66,10 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
       ERR_print_errors_fp(stderr);
       exit(1);
       }
+
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+   SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION);
+#endif
 
    auto &sslKeys = info->getJITaaSSslKeys();
    auto &sslCerts = info->getJITaaSSslCerts();
@@ -116,7 +118,7 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
    _sslCtx = ctx;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Sucessfully initialized SSL context");
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
    }
 
 SSL_CTX *J9ClientStream::_sslCtx;
@@ -231,11 +233,14 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    if (BIO_set_ssl(bio, ssl, true) != 1)
       {
       ERR_print_errors_fp(stderr);
-      SSL_free(ssl);
       BIO_free_all(bio);
+      SSL_free(ssl);
       throw JITaaS::StreamFailure("Failed to set BIO SSL");
       }
 
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
+                                                            connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
    return bio;
    }
 
