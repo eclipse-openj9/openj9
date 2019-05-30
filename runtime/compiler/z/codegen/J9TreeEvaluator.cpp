@@ -7352,7 +7352,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
          TR_OpaqueClassBlock * castClassAddr = TR::TreeEvaluator::getCastClassAddress(castClassNode);
          TR_OpaqueClassBlock * topGuessClassAddr = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node);
          float topProb = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastTopProb(cg, node);
-         // experimental : set the probability threashold = 50% to enable OOL
+         // experimental : set the probability threshold = 50% to enable OOL
          if (!comp->getOption(TR_DisableOOL) && castClassAddr == topGuessClassAddr && topProb >= 0.5)
             {
             // OOL: Fall through if test passes, else call OOL sequence
@@ -12224,7 +12224,7 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    //                        (  3)      ==>aRegLoad at [0x00000000803f1568] (in &GPR_0048)
 
 
-   // TEBGIN 0(R0),0xFF00
+   // TBEGIN 0(R0),0xFF00
    // BRNEZ  OOL TM                        ; CC0 = success
    // ------ OOL TM ----
    // BRH    Block_Transient_Handler       ; CC2 = transient failure

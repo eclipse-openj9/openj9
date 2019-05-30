@@ -113,6 +113,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool supportsPackedShiftRight(int32_t resultPrecision, TR::Node *shiftSource, int32_t shiftAmount);
    bool canGeneratePDBinaryIntrinsic(TR::ILOpCodes opCode, TR::Node * op1PrecNode, TR::Node * op2PrecNode, TR::Node * resultPrecNode);
 
+   bool constLoadNeedsLiteralFromPool(TR::Node *node);
 
    using J9::CodeGenerator::addAllocatedRegister;
    void addAllocatedRegister(TR_PseudoRegister * temp);
@@ -260,6 +261,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 #endif
 
    void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp);
+   //OVERLOAD THE ABOVE FUNCTION
+   void incRefCountForOpaquePseudoRegister(TR::Node * node);
 
    /** \brief
     *     Generates a VM call helper sequence along with the necessary metadata in the instruction stream which when

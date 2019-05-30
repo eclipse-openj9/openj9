@@ -146,7 +146,7 @@ class ModuleStream extends LateInitializedStream
 				IModule module;
 				if( runtimeFunctionList != null ) {
 					module = new UnwindModule(as.getProcesses().iterator().next(),moduleName,symbols,sections, thisModule.imageBaseAddress, properties, runtimeFunctionList);
-					// Uncommend to dump unwind info as we find it. This is very verbose.
+					// Uncomment to dump unwind info as we find it. This is very verbose.
 					// ((UnwindModule)module).dumpUndwindInfo(System.err);
 				} else {
 					module = new Module(as.getProcesses().iterator().next(),moduleName,symbols,sections, thisModule.imageBaseAddress, properties);

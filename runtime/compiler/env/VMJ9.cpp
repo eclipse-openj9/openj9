@@ -2373,7 +2373,7 @@ TR_MarkHotField::mark(J9Class * clazz, bool isFixedClass)
 
    if ((*(UDATA *)((char *)clazz + offsetOfHotFields()) & 0x1))
       {
-      // temorary hack: tenure aligned classes can't have
+      // temporary hack: tenure aligned classes can't have
       // hot fields marked, we need another word for this
       if (_comp->getOption(TR_TraceMarkingOfHotFields))
          {
@@ -8261,7 +8261,7 @@ TR_J9VMBase::setInlineThresholds (TR::Compilation *comp, int32_t &callerWeightLi
      }
 
 
-   int32_t _adjustMaxCutOff = 200; //decrease the thershold to make it similar to r11 while we are big app
+   int32_t _adjustMaxCutOff = 200; //decrease the threshold to make it similar to r11 while we are big app
 
    static const char * adjustMaxCutOff = feGetEnv("TR_WarmInlineAdjustMaxCutOff");
 

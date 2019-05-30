@@ -118,7 +118,7 @@ J9TR_SCSnippet_method			EQU 4
 J9TR_USCSnippet_CPIndex			EQU 12
 J9TR_USCSnippet_CP			EQU 16
 
-; Unresvoled virtual call snippet
+; Unresolved virtual call snippet
 
 J9TR_UVCSnippet_returnAddress		EQU 0
 J9TR_UVCSnippet_CP			EQU 4
@@ -551,7 +551,7 @@ const_staticGlueTable
 const_nativeStaticHelper
 	DCD	_nativeStaticHelper
 
-; For vitual unresolved call, we generate following instructions
+; For virtual unresolved call, we generate following instructions
 ;  mov   r11, #0
 ;  add   r11, r11, #0 << 8
 ;  add   r11, r11, #0 << 16

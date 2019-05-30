@@ -289,7 +289,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
          }
       else
          {
-         // Mark the runtime assumptions so thay can be deleted at the end of the GC cycle.
+         // Mark the runtime assumptions so they can be deleted at the end of the GC cycle.
          // The 3rd parameter to markAssumptionsAndDetach determines whether we mark preprologue assumptions.
          // We should only do that if we are in class unloading and will be reclaiming the entire method body,
          // which means faintCacheBlock is NULL.

@@ -612,7 +612,7 @@ printExpectedTypeFromStackMapFrame(MessageBuffer *msgBuf, J9BytecodeVerification
 		goto exit;
 	}
 
-	/* Walk thourgh the stackmap table for the specified stackmap frame */
+	/* Walk through the stackmap table for the specified stackmap frame */
 	while (stackmapFrameIndex != errorTargetFrameIndex) {
 		stackmapFrameIndex += 1;
 		nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
@@ -711,7 +711,7 @@ setStackMapFrameWithIndex(J9BytecodeVerificationData *verifyData, MethodContextI
 			goto exit;
 		}
 
-		/* Walk thourgh the stackmap table for the specified stackmap frame */
+		/* Walk through the stackmap table for the specified stackmap frame */
 		while (stackmapFrameIndex != errorTargetFrameIndex) {
 			stackmapFrameIndex += 1;
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);

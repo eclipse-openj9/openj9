@@ -887,7 +887,7 @@ indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode)
    return false;
    }
 
-// isIndexVaraibleInList checks whether the induction (index) variable symbol(s)
+// isIndexVariableInList checks whether the induction (index) variable symbol(s)
 // from the given 'node' subtree is found inside 'nodeList'.
 //
 // Returns true if

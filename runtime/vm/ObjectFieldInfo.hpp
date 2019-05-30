@@ -325,7 +325,7 @@ public:
 
 	/**
 	 * Compute the total size of the object including padding to end on 8-byte boundary.
-	 * Update the backfill values to use for this class's fields and thoise of subclasses
+	 * Update the backfill values to use for this class's fields and those of subclasses
 	 * @return size of the object in bytes, not including the header
 	 */
 	U_32

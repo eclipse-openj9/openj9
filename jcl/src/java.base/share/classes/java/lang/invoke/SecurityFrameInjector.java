@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,7 +240,7 @@ final class SecurityFrameInjector {
 		final MethodType originalMT = potentialInjectFrame.type;
 		
 		// SecurityFrames are always represented as:
-		// 1) VaragsCollectHandle -> AsTypeHandle -> RBH with bound value being an instance of SecurityFrame
+		// 1) VarargsCollectHandle -> AsTypeHandle -> RBH with bound value being an instance of SecurityFrame
 		// 2) AsTypeHandle -> RBH with bound value being an instance of SecurityFrame
 		// 3) RBH with bound value being an instance of SecurityFrame if signature is (Object[])Object
 		boolean mustBeVarags = false;

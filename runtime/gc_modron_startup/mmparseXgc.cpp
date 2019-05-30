@@ -185,7 +185,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 #endif /* J9VM_GC_REALTIME */
 
-//todo tempoary option to allow LOA to be enabled for testing with non-default gc policies
+//todo temporary option to allow LOA to be enabled for testing with non-default gc policies
 //Remove once LOA code stable 
 #if defined(J9VM_GC_LARGE_OBJECT_AREA)
 

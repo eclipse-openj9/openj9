@@ -486,7 +486,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 
 				/* Two reasons for moving the code to check for full cache from SH_CompositeCacheImpl::startup()
 				 * to SH_CacheMap::startup():
-				 * 	- While marking cache full, last unsused pages are also protected, which ideally should be done
+				 * 	- While marking cache full, last unused pages are also protected, which ideally should be done
 				 * 	  after protecting pages belonging to ROMClass area and metadata area.
 				 * 	- Secondly, when setting cache full flags, the code expects to be holding the write mutex, which is not done in
 				 * 	  SH_CompositeCacheImpl::startup().
@@ -1894,7 +1894,7 @@ SH_CacheMap::allocateClassDebugData(J9VMThread* currentThread, U_16 classnameLen
 }
 
 /**
- * Roll back uncommited changes made by the last call too 'allocateClassDebugData()'
+ * Roll back uncommitted changes made by the last call too 'allocateClassDebugData()'
  *
  * @param [in] currentThread the thread calling this function
  * @param [in] classnameLength ROMClass class name length

@@ -149,7 +149,7 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 				clazz = VM_VMHelpers::currentClass(clazz);
 				bcvd->vmStruct = NULL;
 				if (0 != verifyResult) {
-					/* INL had a check for Object here which is unncessary in SE */
+					/* INL had a check for Object here which is unnecessary in SE */
 					if (-2 == verifyResult) {
 						omrthread_monitor_exit(bcvd->verifierMutex);
 						/* vmStruct is already up to date */

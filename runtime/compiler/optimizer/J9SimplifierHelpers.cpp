@@ -127,7 +127,7 @@ TR::Node *removeOperandWidening(TR::Node *node, TR::Node *parent, TR::Block *blo
          bool signWasKnownClean = node->hasKnownCleanSign();
          bool signWasAssumedClean = node->hasAssumedCleanSign();
 
-         node->setDecimalPrecision(maxShiftedPrecision);    // conservatively resets clean sign flags on an a trucation -- but this truncation cannot actually dirty a sign
+         node->setDecimalPrecision(maxShiftedPrecision);    // conservatively resets clean sign flags on a truncation -- but this truncation cannot actually dirty a sign
 
          if (signWasKnownClean)
             node->setHasKnownCleanSign(true);

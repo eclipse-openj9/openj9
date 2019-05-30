@@ -210,7 +210,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       // Putting a higher threshold limit to 10K currently to prohibit running profiling body for too long.
       int32_t threshold = recompileThreshold << (depth-1);
       // It is very unlikely that we have a very large depth of the loop which causes above value to become negative
-      // To safeguard this scenario, we also check if threshold is negative or zero we set this thrshold to maxLoopRecompileThreshold
+      // To safeguard this scenario, we also check if threshold is negative or zero we set this threshold to maxLoopRecompileThreshold
       TR::Node *cmpNode = TR::Node::createif(TR::ificmple, root, TR::Node::iconst(node, (threshold > 0 && threshold <= maxLoopRecompilationThreshold) ? threshold : maxLoopRecompilationThreshold), remainingCodeBlock->getEntry());
       TR::TreeTop *cmpFlag = TR::TreeTop::create(comp, cmpNode);
       cmpFlag->getNode()->setIsProfilingCode();

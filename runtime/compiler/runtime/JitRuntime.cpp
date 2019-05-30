@@ -203,7 +203,7 @@ J9::Recompilation::sampleMethod(
       bool newPlanCreated;
       TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
       // the plan needs to be created only when async compilation is possible
-      // Otherwise the compilation will be triggerred on next invocation
+      // Otherwise the compilation will be triggered on next invocation
       if (plan)
          {
          bool queued = false;

@@ -5430,7 +5430,7 @@ bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
       compInfo->getJITConfig()->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
       return false;
 
-   // Maybe the user wants to start throtling only after some time
+   // Maybe the user wants to start throttling only after some time
    if (crtTime < (uint64_t)TR::Options::_startThrottlingTime)
       return false;
 
@@ -5513,7 +5513,7 @@ void CPUThrottleLogic(TR::CompilationInfo *compInfo, uint64_t crtTime)
                             totalCompCPUUtilization > TR::Options::_compThreadCPUEntitlement;
       // We want to avoid situations where we end up throttling and all compilation threads
       // get activated working at full capacity (until, half a second later we discover that we throttle again)
-      // The solution is to go into a trasient state; so from TR_yes we go into TR_maybe and from TR_maybe we go into TR_no
+      // The solution is to go into a transient state; so from TR_yes we go into TR_maybe and from TR_maybe we go into TR_no
       compInfo->setExceedsCompCpuEntitlement(shouldThrottle ? TR_yes : oldThrottleValue == TR_yes ? TR_maybe : TR_no);
       // If the value changed we may want to print a message in the vlog
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance) &&
@@ -6500,7 +6500,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                {
                // Calculate CPU utilization and set throttle flag
                // This code needs to stay  before jitStateLogic because the decision to throttle
-               // application threads (taken in jitStateLogic) depends on the decision to trottle
+               // application threads (taken in jitStateLogic) depends on the decision to throttle
                // the compilation threads
                CalculateOverallCompCPUUtilization(compInfo, crtTime, samplerThread);
                CPUThrottleLogic(compInfo, crtTime);

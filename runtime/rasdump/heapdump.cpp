@@ -415,7 +415,7 @@ protected :
 	Buffer*        _Buffer;
 	
 private :
-	/* Prevent use of the unimplemmented copy constructor and assignment operator */
+	/* Prevent use of the unimplemented copy constructor and assignment operator */
 	inline Strings& operator=(const Strings& source);
 	inline Strings(const Strings& source);
 };

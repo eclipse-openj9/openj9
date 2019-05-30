@@ -1268,7 +1268,7 @@ verboseClassVerificationFallback(J9HookInterface** hook, UDATA eventNum, void* e
 }
 
 /*
- * This event callback is triggered before starting the verificaiton of each method.
+ * This event callback is triggered before starting the verification of each method.
  */
 static void
 verboseMethodVerificationStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)

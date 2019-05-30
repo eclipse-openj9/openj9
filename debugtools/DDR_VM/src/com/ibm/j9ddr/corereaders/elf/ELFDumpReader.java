@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -495,7 +495,7 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 			}
 		}
 		
-		// TODO - Sort modules. For the sake of tidyness.
+		// TODO - Sort modules. For the sake of tidiness.
 		_modules.addAll(allModules);
 		ELFFileReader readerForExectuableOnDiskOrAppended = getReaderForModuleOnDiskOrAppended(executableName);
 		_executable = createModuleFromElfReader(executableBaseAddress, executableName, executableELF, readerForExectuableOnDiskOrAppended);
@@ -1280,7 +1280,7 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 							ptr += _process.bytesPerPointer() * getOffsetToIPFromBP();
 							instructionPointer = maskInstructionPointer(_process.getPointerAt(ptr));
 							unwindTable = unwinder.getUnwindTableForInstructionAddress(instructionPointer);
-							// TODO - if we do tranistion back to unwinding with DWARF we need to get the registers right.
+							// TODO - if we do transition back to unwinding with DWARF we need to get the registers right.
 						} else {
 							logger.log(Level.FINER, "Base pointer is zero");
 						}

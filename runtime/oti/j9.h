@@ -92,7 +92,7 @@ typedef struct J9ClassLoaderWalkState {
 #define AOT_MINOR_VERSION 0
 
 
-/* temporary hack to ensure that we get the right verison of translate MethodHandle */
+/* temporary hack to ensure that we get the right version of translate MethodHandle */
 #define TRANSLATE_METHODHANDLE_TAKES_FLAGS
 
 /* temporary define to allow JIT work to promote and be enabled at the same time as the vm side */

@@ -203,44 +203,37 @@ public abstract class ClassLoader {
 			// ignore
 		}
 
-		/*[IF !Sidecar19-SE]*/
+		/*[IF Java11]*/
+		// This static method call ensures jdk.internal.loader.ClassLoaders.BOOT_LOADER initialization first
+		jdk.internal.loader.ClassLoaders.platformClassLoader();
+		if (bootstrapClassLoader.servicesCatalog != null) {
+			throw new InternalError("bootstrapClassLoader.servicesCatalog is NOT null "); //$NON-NLS-1$
+		}
+		bootstrapClassLoader.servicesCatalog = BootLoader.getServicesCatalog();
+		if (bootstrapClassLoader.classLoaderValueMap != null) {
+			throw new InternalError("bootstrapClassLoader.classLoaderValueMap is NOT null "); //$NON-NLS-1$
+		}
+		bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
+		applicationClassLoader = ClassLoaders.appClassLoader();
+		/*[ELSE] Java11 */
 		ClassLoader sysTemp = null;
-		/*[ENDIF]*/
 		// Proper initialization requires BootstrapLoader is the first loader instantiated
 		String systemLoaderString = System.internalGetProperties().getProperty("systemClassLoader"); //$NON-NLS-1$
 		if (null == systemLoaderString) {
-			/*[IF Sidecar19-SE]*/
-			// This static method call ensures jdk.internal.loader.ClassLoaders.BOOT_LOADER initialization first
-			jdk.internal.loader.ClassLoaders.platformClassLoader();
-			if (bootstrapClassLoader.servicesCatalog != null) {
-				throw new InternalError("bootstrapClassLoader.servicesCatalog is NOT null "); //$NON-NLS-1$
-			}
-			bootstrapClassLoader.servicesCatalog = BootLoader.getServicesCatalog();
-			if (bootstrapClassLoader.classLoaderValueMap != null) {
-				throw new InternalError("bootstrapClassLoader.classLoaderValueMap is NOT null "); //$NON-NLS-1$
-			}
-			bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
-			applicationClassLoader = ClassLoaders.appClassLoader();
-			/*[ELSE]*/
 			sysTemp = com.ibm.oti.vm.BootstrapClassLoader.singleton();
-			/*[ENDIF]*/
 		} else {
 			try {
-				/*[IF !Sidecar19-SE]*/
-				sysTemp = (ClassLoader)
-				/*[ENDIF]*/
-				Class.forName(systemLoaderString, true, null).newInstance();
+				sysTemp = (ClassLoader)Class.forName(systemLoaderString, true, null).newInstance();
 			} catch (Throwable x) {
 				x.printStackTrace();
 				System.exit(1);
 			}
 		}
-		/*[IF !Sidecar19-SE]*/
 		bootstrapClassLoader = sysTemp;
 		AbstractClassLoader.setBootstrapClassLoader(bootstrapClassLoader);
 		lazyClassLoaderInit = true;
 		applicationClassLoader = bootstrapClassLoader;
-		/*[ENDIF]*/
+		/*[ENDIF] Java11 */
 
 		/* [PR 78889] The creation of this classLoader requires lazy initialization. The internal classLoader struct
 		 * is created in the initAnonClassLoader call. The "new InternalAnonymousClassLoader()" call must be 

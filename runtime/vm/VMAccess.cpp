@@ -271,6 +271,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 				if (currentThread->inNative) {
+					TRIGGER_J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE(vm->hookInterface, vmThread, currentThread);
 #if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 					VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
@@ -1135,6 +1136,7 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			if (currentThread->inNative) {
+				TRIGGER_J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE(vm->hookInterface, vmThread, currentThread);
 				Assert_VM_false(J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT));
 #if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);

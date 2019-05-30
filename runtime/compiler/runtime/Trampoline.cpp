@@ -1129,7 +1129,7 @@ bool s390zOS64CodePatching(void *method, void *callSite, void *currentPC, void *
 
 
 // ZOS390 MCC Support: minimum hookup without callbacks.
-// Default executable space is limited to 2GB: No Trampolinoes required.
+// Default executable space is limited to 2GB: No Trampolines required.
 // Can increase executable space by enabling RMODE64, Trampolines will be required
 void s390zOS64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *numHelpers, int32_t* CCPreLoadedCodeSize)
    {
