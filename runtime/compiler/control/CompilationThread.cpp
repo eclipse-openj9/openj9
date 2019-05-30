@@ -9617,12 +9617,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR_DataCache *dataCache = NULL;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-   if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
-      {
-      // end of compilation, clear per-compilation caches
-      ((TR::CompilationInfoPerThreadRemote *) entry->_compInfoPT)->clearIProfilerMap();
-      ((TR::CompilationInfoPerThreadRemote *) entry->_compInfoPT)->clearResolvedMethodInfoMap(comp->trMemory());
-      }
 
    if (details.isNewInstanceThunk())
       {
