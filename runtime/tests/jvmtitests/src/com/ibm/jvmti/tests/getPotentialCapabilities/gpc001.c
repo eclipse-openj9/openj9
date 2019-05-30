@@ -131,52 +131,50 @@ Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilitie
 {
 	int availableCount = 0;
 	int unavailableCount = 0;
+	jboolean result = JNI_TRUE;
 	
 	getCapabilities(&initialCapabilities, &availableCount, &unavailableCount);
 
-	if (initialCapabilities.can_retransform_any_class == 0) {
+	if (!initialCapabilities.can_retransform_any_class) {
 		unavailableCount--;
 	}
 	
-	if (initialCapabilities.can_redefine_any_class == 0) {
-		unavailableCount--;
-	}
-	
-	/* s390 thread/port lib does not support this functionality */
-	if (initialCapabilities.can_get_current_thread_cpu_time == 0) {
+	if (!initialCapabilities.can_redefine_any_class) {
 		unavailableCount--;
 	}
 	
 	/* s390 thread/port lib does not support this functionality */
-	if (initialCapabilities.can_get_thread_cpu_time == 0) {
+	if (!initialCapabilities.can_get_current_thread_cpu_time) {
+		unavailableCount--;
+	}
+	
+	/* s390 thread/port lib does not support this functionality */
+	if (!initialCapabilities.can_get_thread_cpu_time) {
 		unavailableCount--;
 	}
 
-#if JAVA_SPEC_VERSION >= 11
-	/* Empty JEP331 implementation doesn't enable capability can_generate_sampled_object_alloc_events. */
-	if (initialCapabilities.can_generate_sampled_object_alloc_events == 0) {
-		unavailableCount--;
-	}
-#endif /* JAVA_SPEC_VERSION >= 11 */
-	
 	if (unavailableCount != 0) {
 		error(env, JVMTI_ERROR_INTERNAL, "Unexpected number [%d] of unavailable capabilities. Expected 0", unavailableCount);
 		return JNI_FALSE;
 	}
 
 #if JAVA_SPEC_VERSION >= 9
-	if (0 == initialCapabilities.can_generate_early_vmstart) {
+	if (!initialCapabilities.can_generate_early_vmstart) {
 		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_vmstart should be available in onload phase.");
-		return JNI_FALSE;
-	}
-
-	if (0 == initialCapabilities.can_generate_early_class_hook_events) {
+		result = JNI_FALSE;
+	} else if (!initialCapabilities.can_generate_early_class_hook_events) {
 		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_class_hook_events should be available in onload phase.");
-		return JNI_FALSE;
+		result = JNI_FALSE;
 	}
+#if JAVA_SPEC_VERSION >= 11
+	else if (!initialCapabilities.can_generate_sampled_object_alloc_events) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_sampled_object_alloc_events should be available in onload phase.");
+		result = JNI_FALSE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #endif /* JAVA_SPEC_VERSION >= 9 */
-	
-	return JNI_TRUE;
+
+	return result;
 }
 
 jboolean JNICALL

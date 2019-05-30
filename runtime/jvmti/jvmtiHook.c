@@ -446,7 +446,10 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 
 #if JAVA_SPEC_VERSION >= 11
 		case JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
-			return redirectorFunction(vmHook, J9HOOK_SAMPLED_OBJECT_ALLOCATE, jvmtiHookSampledObjectAlloc, OMR_GET_CALLSITE(), j9env);
+		{
+			J9JVMTIHookInterfaceWithID * gcHook = &j9env->gcHook;
+			return redirectorFunction(gcHook, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING, jvmtiHookSampledObjectAlloc, OMR_GET_CALLSITE(), j9env);
+		}
 
 #endif /* JAVA_SPEC_VERSION >= 11 */
 		case JVMTI_EVENT_NATIVE_METHOD_BIND:
@@ -2853,7 +2856,7 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 	ENSURE_EVENT_PHASE_LIVE(jvmtiHookSampledObjectAlloc, j9env);
 
 	if (NULL != callback) {
-		J9SampledObjectAllocateEvent *data = eventData;
+		MM_ObjectAllocationSamplingEvent *data = eventData;
 		J9VMThread *currentThread = data->currentThread;
 		jthread threadRef = NULL;
 		UDATA hadVMAccess = 0;
@@ -2862,14 +2865,12 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
 			j9object_t *objectRef = (j9object_t*) currentThread->arg0EA;
 			j9object_t *classRef = (j9object_t*) (currentThread->arg0EA - 1);
-			J9Class *clazz = NULL;
 			J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 
 			*objectRef = data->object;
-			clazz = J9OBJECT_CLAZZ(currentThread, data->object);
-			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(data->clazz);
 			vmFuncs->internalExitVMToJNI(currentThread);
-			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jobject) objectRef, (jclass) classRef, (jlong) data->size);
+			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jobject) objectRef, (jclass) classRef, (jlong) data->objectSize);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			data->object = *objectRef;
 			finishedEvent(currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, hadVMAccess, javaOffloadOldState);
