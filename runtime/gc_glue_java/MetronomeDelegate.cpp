@@ -388,7 +388,7 @@ MM_MetronomeDelegate::incrementalCollect(MM_EnvironmentRealtime *env)
 }
 
 void
-MM_MetronomeDelegate::doAuxilaryGCWork(MM_EnvironmentBase *env)
+MM_MetronomeDelegate::doAuxiliaryGCWork(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_FINALIZATION)
 	if(isFinalizationRequired()) {
