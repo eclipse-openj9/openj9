@@ -169,7 +169,7 @@ public class XMLDOMComparator {
 							return false;		//attribute names don't match
 						}
 						if(!attrJ9DDR.getNodeValue().equals(attrJExtract.getNodeValue())) {
-							messages.add("The atribute " + attrJ9DDR.getNodeName()+ " for node " + nodeName + " does not match : " + attrJ9DDR.getNodeValue() + " != " + attrJExtract.getNodeValue());
+							messages.add("The attribute " + attrJ9DDR.getNodeName()+ " for node " + nodeName + " does not match : " + attrJ9DDR.getNodeValue() + " != " + attrJExtract.getNodeValue());
 							return false;		//attribute values don't match
 						}
 					}

@@ -205,7 +205,7 @@ public class SoftmxRemoteTest{
 				new OutputStreamWriter(remoteServer.getOutputStream())), true);*/
 
 		logger.debug( "	Current max heap size:  " + ibmBean.getMaxHeapSize() + " bytes");
-		logger.debug(" 	Start Allocating New Object to approximal 80% of current max heap size.");
+		logger.debug(" 	Start Allocating New Object to approximately 80% of current max heap size.");
 
 
 		//RemoteTestServer will decrease max heap size to indicate allocation done, waiting for maximum 2 mins

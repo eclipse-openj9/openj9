@@ -2546,12 +2546,12 @@ J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.system_action=Th
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX=Vol\u00e1n\u00ed funkce SH_OSCachesysv::acquireWriteLock() pro semafor j9shsem_wait se nezda\u0159ilo, do\u0161lo k chyb\u011b %d.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX=Vol\u00e1n\u00ed funkce SH_OSCachesysv::acquireWriteLock() pro semafor j9shsem_wait se nezda\u0159ilo, do\u0161lo k chyb\u011b %d.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SYSVIPC_ERROR=Komunikace IPC syst\u00e9mu System V ohl\u00e1sila n\u00e1sleduj\u00edc\u00ed chybu: '%s'
@@ -2879,13 +2879,13 @@ J9NLS_SHRC_SHRINIT_API_CREATE_FAILURE.system_action=The JVM terminates, unless y
 J9NLS_SHRC_SHRINIT_API_CREATE_FAILURE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX=Vol\u00e1n\u00ed funkce SH_OSCachesysv::acquireWriteLock() pro semafor j9shsem_wait a ID semid %d se nezda\u0159ilo, do\u0161lo k chyb\u011b %d.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX=Vol\u00e1n\u00ed funkce SH_OSCachesysv::acquireWriteLock() pro semafor j9shsem_wait a ID semid %d se nezda\u0159ilo, do\u0161lo k chyb\u011b %d.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_2=1234
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_2=1234
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_STORE_CLASS_DEBUG_DATA=Povol\u00ed ukl\u00e1d\u00e1n\u00ed informac\u00ed o lad\u011bn\u00ed t\u0159\u00edd ve sd\u00edlen\u00e9 t\u0159\u00edd\u011b.

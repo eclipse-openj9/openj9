@@ -1228,7 +1228,7 @@ public class LookupAPITests_Unreflect {
 		
 		try {
 			level1InnerClassLookup_crossPackage.unreflect( innerclassMethod_Level2 );
-			System.out.println("IllegalAccessException NOT thrown while attempting to acccess " +
+			System.out.println("IllegalAccessException NOT thrown while attempting to access " +
 					"a protected method inside a level 2 protected inner class in a different package");
 		} catch ( IllegalAccessException e ) {
 			illegalAccessExceptionThrown = true;

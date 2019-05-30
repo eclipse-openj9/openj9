@@ -1926,7 +1926,7 @@ TraceException=Trc_SHR_API_j9shr_createSharedClass_NoCacheMap_EventObsolete Obso
 TraceEvent=Trc_SHR_API_j9shr_createSharedClass_CalledTwice1_EventObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : Info: tobj->newItemInCache != NULL"
 TraceEvent=Trc_SHR_API_j9shr_createSharedClass_CalledTwice2_EventObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : Info: tobj->cacheAreaForAllocate != NULL"
 TraceEvent=Trc_SHR_API_j9shr_createSharedClass_NoAlloc_EventObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : allocateROMClass : did not allocated required size %d bytes of shared memory for class %.*s"
-TraceEvent=Trc_SHR_API_j9shr_createSharedClass_OK_EventObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass :Successfully allcoated %d bytes for class %.*s at 0x%x"
+TraceEvent=Trc_SHR_API_j9shr_createSharedClass_OK_EventObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass :Successfully allocated %d bytes for class %.*s at 0x%x"
 TraceEvent=Trc_SHR_API_j9shr_createSharedClass_STLock_EventObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : Info: enterStringTableMutex() failed. localRuntimeFlags=%llx stringTableBytes=%u readOnly=%d localRebuild=%d cacheRebuild=%d classname=%.*s"
 TraceExit=Trc_SHR_API_j9shr_createSharedClass_ExitObsolete Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : exit"
 
@@ -2393,7 +2393,7 @@ TraceExit=Trc_SHR_OSC_Virt_startup_failed_dataLocks_init Obsolete NoEnv Overhead
 TraceEvent=Trc_SHR_OSC_Virt_startup_initialized_dataLocks Obsolete NoEnv Overhead=1 Level=5 Template="Trc_SHR_OSC_Virt_startup_initialized_dataLocks: Initialized the data locks"
 TraceExit=Trc_SHR_OSC_Virt_startup_badAcquireHeaderWriteLock Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Bad header write lock acquire"
 TraceEvent=Trc_SHR_OSC_Virt_startup_goodAcquireHeaderWriteLock Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Successfully acquired header lock"
-TraceEvent=Trc_SHR_OSC_Virt_startup_cacheAlreadyExists Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Cache alread exists"
+TraceEvent=Trc_SHR_OSC_Virt_startup_cacheAlreadyExists Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Cache already exists"
 TraceExit=Trc_SHR_OSC_Virt_startup_badAttach Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Bad attach"
 TraceExit=Trc_SHR_OSC_Virt_startup_cacheNotInitialized Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Uninitialized cache"
 TraceExit=Trc_SHR_OSC_Virt_startup_runningReadOnlyAndWrongLength Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Running read-only, cannot create cache"

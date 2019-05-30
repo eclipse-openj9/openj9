@@ -195,7 +195,7 @@ public class SoftmxLocalTest{
 			Assert.fail("Catch OutOfMemoryError before reaching 80% of current max heap size.");
 		}
 
-		logger.debug( "	Now we have used approximal 80% of current max heap size: " +  ibmBean.getHeapMemoryUsage().getUsed() + " bytes");
+		logger.debug( "	Now we have used approximately 80% of current max heap size: " +  ibmBean.getHeapMemoryUsage().getUsed() + " bytes");
 
 		long new_max_size = (long) (current_max_size * 0.5);
 		logger.debug("	Reset maximum heap size to 50% of original size: " + new_max_size);

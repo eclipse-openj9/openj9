@@ -908,7 +908,7 @@ void TR_PseudoRegister::addRangeOfZeroDigits(int32_t startDigit, int32_t endDigi
    if (rangeStart <= leftAlignedZeroDigits && rangeEnd > leftAlignedZeroDigits)
       {
       if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting leftAlignedZeroDigits to %d (leftAlignedZeroDigits %d + (rangeEnd %d - leftAlignedZeroDigits %d) because new range overlaps or is adjancent to current zero range\n",
+         traceMsg(comp(),"\t\tsetting leftAlignedZeroDigits to %d (leftAlignedZeroDigits %d + (rangeEnd %d - leftAlignedZeroDigits %d) because new range overlaps or is adjacent to current zero range\n",
             leftAlignedZeroDigits+(rangeEnd-leftAlignedZeroDigits),leftAlignedZeroDigits,rangeEnd,leftAlignedZeroDigits);
       setLeftAlignedZeroDigits(leftAlignedZeroDigits+(rangeEnd-leftAlignedZeroDigits));
       }

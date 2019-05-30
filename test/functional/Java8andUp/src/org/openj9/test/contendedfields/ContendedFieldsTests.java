@@ -75,7 +75,7 @@ public class ContendedFieldsTests {
 			}
 		}
 		paddingIncrement = jep142Restricted ? 0 : CACHE_LINE_SIZE;
-		logger.debug("architecture = " + osArch + " reference size = "+REFERENCE_SIZE+" cache line size = " + CACHE_LINE_SIZE+" object aligment="+FieldUtilities.OBJECT_ALIGNMENT+" contended fields "+(jep142Restricted? "": "un")+"restricted");
+		logger.debug("architecture = " + osArch + " reference size = "+REFERENCE_SIZE+" cache line size = " + CACHE_LINE_SIZE+" object alignment="+FieldUtilities.OBJECT_ALIGNMENT+" contended fields "+(jep142Restricted? "": "un")+"restricted");
 		logger.debug("=============================================================================");
 		vmConfigInitialized = true;
 	}

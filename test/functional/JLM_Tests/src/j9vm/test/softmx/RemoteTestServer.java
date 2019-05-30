@@ -83,7 +83,7 @@ public class RemoteTestServer {
 
 		memoryExhauster.usePercentageOfHeap(0.8);
 
-		log("Now we have used approximal 80% of current max heap size:  " + aBean.getHeapMemoryUsage().getUsed());
+		log("Now we have used approximately 80% of current max heap size:  " + aBean.getHeapMemoryUsage().getUsed());
 		log("Current committed max heap size is " + aBean.getHeapMemoryUsage().getCommitted());
 
 		//decrease max heap size 1024 bytes to notify SoftRemoteTest that allocation is done
