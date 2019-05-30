@@ -284,7 +284,9 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 	key.length = classNameLength;
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
-		return result->ramClass;
+		J9Class *clazz = result->ramClass;
+		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		return clazz;
 	} else {
 		return NULL;
 	}
@@ -532,7 +534,9 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
 	key.charData = (U_8 *)stringObject;
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
-		return result->ramClass;
+		J9Class *clazz = result->ramClass;
+		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		return clazz;
 	}
 	return NULL;
 }
