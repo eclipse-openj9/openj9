@@ -241,7 +241,7 @@ public class NestAttributeTest {
 	static public void testMethodAccessAllowed() throws Exception {
 		CustomClassLoader classloader = new CustomClassLoader();
 		byte[] bytes = ClassGenerator.methodAccessDump();
-		byte[] bytesInner = ClassGenerator.methodAcccess$InnerDump();
+		byte[] bytesInner = ClassGenerator.methodAccess$InnerDump();
 		Class<?> clazz = classloader.getClass("MethodAccess", bytes);
 		Class<?> clazzInner = classloader.getClass("MethodAccess$Inner", bytesInner);
 		Object instance = clazz.getDeclaredConstructor().newInstance();

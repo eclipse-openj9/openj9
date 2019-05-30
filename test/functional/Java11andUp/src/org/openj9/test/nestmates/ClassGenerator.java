@@ -178,7 +178,7 @@ public class ClassGenerator implements Opcodes {
 		return cw.toByteArray();
 	}
 
-	public static byte[] methodAcccess$InnerDump () throws Exception {
+	public static byte[] methodAccess$InnerDump () throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
 		
