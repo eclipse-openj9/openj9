@@ -157,7 +157,7 @@ endif
 # convert ascii to ebcdic on zos
 #######################################
 TOEBCDIC_CMD= \
-$(ECHO) $(Q)coverting asciii files to ebcdic$(Q); \
+$(ECHO) $(Q)converting ascii files to ebcdic$(Q); \
 find | grep \\.java$ | while read f; do echo $$f; iconv -f iso8859-1 -t ibm-1047 < $$f > $$f.ebcdic; rm $$f; mv $$f.ebcdic $$f; done; \
 find | grep \\.txt$ | while read f; do echo $$f; iconv -f iso8859-1 -t ibm-1047 < $$f > $$f.ebcdic; rm $$f; mv $$f.ebcdic $$f; done; \
 find | grep \\.mf$ | while read f; do echo $$f; iconv -f iso8859-1 -t ibm-1047 < $$f > $$f.ebcdic; rm $$f; mv $$f.ebcdic $$f; done; \

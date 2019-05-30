@@ -39,9 +39,9 @@ pipelineJob(job_name){
             scm{
                 git{
                     remote{
-                        url(reprository_url)
+                        url(repository_url)
                     }
-                    branch(reprository_branch)
+                    branch(repository_branch)
                     if (extra_git_options){
                         extensions{
                             cloneOption{

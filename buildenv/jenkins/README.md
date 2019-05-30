@@ -75,7 +75,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - `<platform>` is one of the platform shorthands above
     - `<version>` is the number of the supported release, e.g. 8 | 11 | next
 - Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
-- Note: For backward compatability `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
+- Note: For backward compatibility `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
 
 ###### Examples
 - Request a Compile-only build on all platforms and multiple versions by commenting in a PR

@@ -80,7 +80,7 @@ def getAdminList(admin_list_spec){
     def all_admin_lists = readYaml file: 'buildenv/jenkins/variables/admin_list.yml'
 
     switch(admin_list_spec) {
-        case 'Extentions':
+        case 'Extensions':
             admin_list.addAll(all_admin_lists.extensions)
             admin_list.addAll(all_admin_lists.openj9)
             admin_list.addAll(all_admin_lists.infra)
