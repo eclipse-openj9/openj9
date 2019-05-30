@@ -667,20 +667,20 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
 void
 J9::CodeCache::setInitialAllocationPointers()
    {
-   _warmCodeAllocBase = _warmCodeAlloc;
-   _coldCodeAllocBase = _coldCodeAlloc;
+   _warmCodeAllocBase = self()->getWarmCodeAlloc();
+   _coldCodeAllocBase = self()->getColdCodeAlloc();
    }
 
 void
 J9::CodeCache::resetAllocationPointers()
    {
    // Compute how much memory we give back to update the free space in the repository
-   size_t warmSize = _warmCodeAlloc - _warmCodeAllocBase;
-   size_t coldSize = _coldCodeAllocBase - _coldCodeAlloc;
+   size_t warmSize = self()->getWarmCodeAlloc() - _warmCodeAllocBase;
+   size_t coldSize = _coldCodeAllocBase - self()->getColdCodeAlloc();
    size_t freedSpace = warmSize + coldSize;
    _manager->increaseFreeSpaceInCodeCacheRepository(freedSpace);
-   _warmCodeAlloc = _warmCodeAllocBase;
-   _coldCodeAlloc = _coldCodeAllocBase;
+   self()->setWarmCodeAlloc(_warmCodeAllocBase);
+   self()->setColdCodeAlloc(_coldCodeAllocBase);
    }
 
 void
