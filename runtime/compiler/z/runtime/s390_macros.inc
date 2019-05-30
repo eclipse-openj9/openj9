@@ -112,8 +112,8 @@ SETVAL(eq_lastSlotField_inInterfaceSnippet,72)
 SETVAL(eq_firstSlot_inInterfaceSnippet,80)
 
 ZZ For single dynamic slot case
-SETVAL(eq_implementorClass_inInterfaceSnippet,48)
-SETVAL(eq_implementorMethod_inInterfaceSnippet,56)
+SETVAL(eq_implementerClass_inInterfaceSnippet,48)
+SETVAL(eq_implementerMethod_inInterfaceSnippet,56)
 SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,64)
 SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,65)
 
@@ -139,8 +139,8 @@ SETVAL(eq_lastSlotField_inInterfaceSnippet,36)
 SETVAL(eq_firstSlot_inInterfaceSnippet,40)
 
 ZZ For Single dynamic slot case
-SETVAL(eq_implementorClass_inInterfaceSnippet,24)
-SETVAL(eq_implementorMethod_inInterfaceSnippet,28)
+SETVAL(eq_implementerClass_inInterfaceSnippet,24)
+SETVAL(eq_implementerMethod_inInterfaceSnippet,28)
 SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,32)
 SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,33)
 

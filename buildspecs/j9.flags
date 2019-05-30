@@ -397,7 +397,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 	</flag>
 	<flag id="gc_generational">
 		<description>Does the VM use a multi-generational collector</description>
-		<ifRemoved>The VM does NOT use a multi-generatonal collector</ifRemoved>
+		<ifRemoved>The VM does NOT use a multi-generational collector</ifRemoved>
 	</flag>
 	<flag id="gc_heapCardTable">
 		<description>Means that the Java heap has a card table which is used to track modifications during the GC cycle (be it concurrent or incremental).</description>
@@ -408,7 +408,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 	</flag>
 	<flag id="gc_hybridArraylets">
 		<description>Arraylet header has bimodal shape in runtime, separate for contiguous and discontiguous arraylets </description>
-		<ifRemoved>Arraylet header has only one shape (same for contiguous and discontigous arraylets)</ifRemoved>
+		<ifRemoved>Arraylet header has only one shape (same for contiguous and discontiguous arraylets)</ifRemoved>
 		<requires>
 			<require flag="gc_arraylets"/>
 		</requires>
@@ -512,7 +512,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
 	<flag id="gc_nonZeroTLH">
-		<description>Allocator might use special non-zerowed thread local heap for objects</description>
+		<description>Allocator might use special non-zeroed thread local heap for objects</description>
 		<ifRemoved>Allocator uses a general thread local heap for objects</ifRemoved>
 		<requires>
 			<require flag="gc_threadLocalHeap"/>
@@ -619,7 +619,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<ifRemoved>The VM build will not be compiled</ifRemoved>
 	</flag>
 	<flag id="graph_copyJ2SEToToronto">
-		<description>Mirror J2SE rebuilds to Toronoto</description>
+		<description>Mirror J2SE rebuilds to Toronto</description>
 		<ifRemoved>Mirroring of J2SE rebuilds to toronto will not be done causing test failures</ifRemoved>
 		<requires>
 			<require flag="build_j2se"/>
@@ -689,7 +689,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 	</flag>
 	<flag id="graph_excludeFloatsanity">
 		<description>Indicates that this spec wishes to not run the floatsanity(g) test in the nightly build.</description>
-		<ifRemoved>The floatsasnity(g) test will be run in the nightly build, if otherwise included.</ifRemoved>
+		<ifRemoved>The floatsanity(g) test will be run in the nightly build, if otherwise included.</ifRemoved>
 	</flag>
 	<flag id="graph_excludeInvtest">
 		<description>Indicates that this spec wishes to not run the invtest in the nightly build.</description>
@@ -870,7 +870,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		</requires>
 	</flag>
 	<flag id="interp_customSpinOptions">
-		<description>Enables support for the "-Xthr:customSpinOptions=" option, which is used to specifiy class-specific spin parameters.</description>
+		<description>Enables support for the "-Xthr:customSpinOptions=" option, which is used to specify class-specific spin parameters.</description>
 		<ifRemoved>Disables support for the "-Xthr:customSpinOptions=" option.</ifRemoved>
 	</flag>
 	<flag id="interp_debugSupport">

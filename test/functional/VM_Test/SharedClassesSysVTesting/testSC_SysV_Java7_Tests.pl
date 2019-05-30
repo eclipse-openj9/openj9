@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,7 +356,7 @@ sub Test1
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	@semaphoreList = &listSysVSemaphores($osname);
 	$endCount = scalar(@semaphoreList);
@@ -393,7 +393,7 @@ sub Test2
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	@memoryList = &listSysVMemory($osname);
 	$endCount = scalar(@memoryList);
@@ -428,7 +428,7 @@ sub Test3
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 
 	my $semCount = scalar(&listSysVSemaphores($osname));
@@ -443,7 +443,7 @@ sub Test3
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	if  ($semCount != scalar(&listSysVSemaphores($osname))) {
 		print "\tTEST FAIL\n";
@@ -1507,7 +1507,7 @@ sub Test16
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	#$chmodcmd = "chmod ug+w ".$semfile;
 	#`$chmodcmd`;
@@ -1556,7 +1556,7 @@ sub Test17
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	my @memList = &listSysVMemory($osname);
 	my @semList = &listSysVSemaphores($osname);
@@ -1581,7 +1581,7 @@ sub Test17
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	my $cleanupCmd = "rm -f /tmp/javasharedresources/*".$cachename."*";
 	`$cleanupCmd`;
@@ -1626,7 +1626,7 @@ sub Test18
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	#my @stdout = `ipcs`;
 	#print @stdout,"\n";
@@ -1650,7 +1650,7 @@ sub Test18
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	#my @stdout = `ipcs`;
 	#print @stdout,"\n";
@@ -1737,7 +1737,7 @@ sub Test20
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	my @memList = &listSysVMemory($osname);
 	my @semList = &listSysVSemaphores($osname);
@@ -1754,7 +1754,7 @@ sub Test20
 	while (wait() != -1) {
 		$waitedfor = $waitedfor + 1;
 	}
-	printf("\tWe succesfully ran " . $waitedfor . " JVMs with shared classes.\n");
+	printf("\tWe successfully ran " . $waitedfor . " JVMs with shared classes.\n");
 
 	my $cleanupCmd = "rm -f /tmp/javasharedresources/*".$cachename."*";
 	`$cleanupCmd`;
@@ -2015,7 +2015,7 @@ sub listSysVSemaphores
 			#we expect 3 entries in this row ... the 1st three are kei,id,owner ...
 			#the rest are don't cares ...
 			if (@vals<3) {
-				die("ipcs did not return expected ouput");
+				die("ipcs did not return expected output");
 			}
 			my $key = $vals[$keyindex];
 			my $id  = $vals[$idindex];
@@ -2088,7 +2088,7 @@ sub listSysVMemory
 			#we expect 3 entries in this row ... the 1st three are kei,id,owner ...
 			#the rest are don't cares ...
 			if (@vals<3) {
-				die("ipcs did not return expected ouput");
+				die("ipcs did not return expected output");
 			}
 			my $key = $vals[$keyindex];
 			my $id  = $vals[$idindex];
