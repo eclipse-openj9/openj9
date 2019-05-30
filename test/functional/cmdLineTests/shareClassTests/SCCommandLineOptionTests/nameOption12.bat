@@ -1,7 +1,7 @@
 @echo off
 
 rem
-rem Copyright (c) 2004, 2018 IBM Corp. and others
+rem Copyright (c) 2004, 2019 IBM Corp. and others
 rem
 rem This program and the accompanying materials are made available under
 rem the terms of the Eclipse Public License 2.0 which accompanies this
