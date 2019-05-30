@@ -2757,8 +2757,8 @@ TR_DebugExt::dxPrintCodeCacheInfo(TR::CodeCache *cacheInfo)
       }
    TR::CodeCache *localCacheInfo = (TR::CodeCache*) dxMallocAndRead(sizeof(TR::CodeCache), cacheInfo);
    _dbgPrintf("TR::CodeCache = 0x%p\n", cacheInfo);
-   _dbgPrintf("  ->warmCodeAlloc = (U_8*)0x%p\n", localCacheInfo->_warmCodeAlloc);
-   _dbgPrintf("  ->coldCodeAlloc = (U_8*)0x%p\n", localCacheInfo->_coldCodeAlloc);
+   _dbgPrintf("  ->warmCodeAlloc = (U_8*)0x%p\n", localCacheInfo->getWarmCodeAlloc());
+   _dbgPrintf("  ->coldCodeAlloc = (U_8*)0x%p\n", localCacheInfo->getColdCodeAlloc());
    _dbgPrintf("  ->segment = (TR::CodeCacheMemorySegment*)0x%p\n", localCacheInfo->_segment);
    _dbgPrintf("  ->helperBase = (U_8*)0x%p\n", localCacheInfo->_helperBase);
    _dbgPrintf("  ->helperTop = (U_8*)0x%p\n", localCacheInfo->_helperTop);
