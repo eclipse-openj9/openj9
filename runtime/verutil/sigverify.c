@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,8 +201,10 @@ checkSignatureInlined (U_8* signatureBytes, UDATA signatureLength, UDATA *curren
 		cursor += 1; /* skip the 'L' */
 		bytesConsumed = verifyIdentifierUtf8Impl(cursor, signatureEnd, TRUE);
 
-		/* Identifier must end in a semicolon */
-		if ((bytesConsumed <= 0) || (';' != cursor[bytesConsumed])) {
+		/* Identifier must end in a semicolon.
+		 * Empty class names will be detected by the classloader.
+		 */
+		if ((bytesConsumed < 0) || (';' != cursor[bytesConsumed])) {
 			return -1;
 		} else {
 			cursor += bytesConsumed + 1; /* skip scanned characters and the terminating ';'  */
