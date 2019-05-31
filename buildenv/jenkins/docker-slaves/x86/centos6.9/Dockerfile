@@ -295,6 +295,23 @@ RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
   && echo "/usr/local/lib64" >> /etc/ld.so.conf.d/usr-local.conf \
   && ldconfig
 
+# Install Python3 v3.7.3
+RUN yum -y update \
+  && yum -y install \
+    zlib-devel \
+    libffi-devel \
+  && yum clean all \
+  && cd /tmp \
+  && wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz \
+  && tar -xJf Python-3.7.3.tar.xz \
+  && rm -f Python-3.7.3.tar.xz \
+  && cd /tmp/Python-3.7.3 \
+  && ./configure --prefix=/usr/local \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf Python-3.7.3
+
 # Expose SSH port and run SSHD
 EXPOSE 22
 
