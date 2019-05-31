@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2546,12 +2546,12 @@ J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.system_action=Th
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX=j9shsem_wait \u3078\u306e SH_OSCachesysv::acquireWriteLock() \u547c\u3073\u51fa\u3057\u304c\u30a8\u30e9\u30fc %d \u3067\u5931\u6557\u3057\u307e\u3057\u305f\u3002
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX=j9shsem_wait \u3078\u306e SH_OSCachesysv::acquireWriteLock() \u547c\u3073\u51fa\u3057\u304c\u30a8\u30e9\u30fc %d \u3067\u5931\u6557\u3057\u307e\u3057\u305f\u3002
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SYSVIPC_ERROR=System V IPC \u304c\u6b21\u306e\u30a8\u30e9\u30fc\u3092\u5831\u544a\u3057\u307e\u3057\u305f: '%s'
@@ -2879,13 +2879,13 @@ J9NLS_SHRC_SHRINIT_API_CREATE_FAILURE.system_action=The JVM terminates, unless y
 J9NLS_SHRC_SHRINIT_API_CREATE_FAILURE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX=semid %d \u3067 j9shsem_wait \u3078\u306e SH_OSCachesysv::acquireWriteLock() \u547c\u3073\u51fa\u3057\u304c\u30a8\u30e9\u30fc %d \u3067\u5931\u6557\u3057\u307e\u3057\u305f\u3002
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX=semid %d \u3067 j9shsem_wait \u3078\u306e SH_OSCachesysv::acquireWriteLock() \u547c\u3073\u51fa\u3057\u304c\u30a8\u30e9\u30fc %d \u3067\u5931\u6557\u3057\u307e\u3057\u305f\u3002
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_2=1234
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_2=1234
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_STORE_CLASS_DEBUG_DATA=\u5171\u7528\u30af\u30e9\u30b9\u3067\u30af\u30e9\u30b9\u30fb\u30c7\u30d0\u30c3\u30b0\u60c5\u5831\u306e\u4fdd\u7ba1\u3092\u6709\u52b9\u306b\u3057\u307e\u3059\u3002

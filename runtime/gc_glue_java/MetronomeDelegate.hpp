@@ -90,7 +90,7 @@ public:
 	void masterCleanupAfterGC(MM_EnvironmentBase *env);
 	void incrementalCollectStart(MM_EnvironmentRealtime *env);
 	void incrementalCollect(MM_EnvironmentRealtime *env);
-	void doAuxilaryGCWork(MM_EnvironmentBase *env);
+	void doAuxiliaryGCWork(MM_EnvironmentBase *env);
 	void clearGCStats();
 	void clearGCStatsEnvironment(MM_EnvironmentRealtime *env);
 	void mergeGCStats(MM_EnvironmentRealtime *env);

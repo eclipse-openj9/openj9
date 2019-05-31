@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,7 @@ public class ObjectSizeInfo extends Command
 		className = null;
 		includeArrays = true;
 		if (args.length > 2) {
-			out.append("Invalid number of argments" + nl);
+			out.append("Invalid number of arguments" + nl);
 			return false;
 		}
 		for (String a: args) {
@@ -106,7 +106,7 @@ public class ObjectSizeInfo extends Command
 			} else if (!a.startsWith("-")) {
 				className = a;
 			} else {
-				out.append("Invalid argment: " + a);
+				out.append("Invalid argument: " + a);
 			}
 		}
 		return true;

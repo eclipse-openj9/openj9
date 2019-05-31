@@ -130,10 +130,10 @@ public class OpenJ9AttachProvider extends AttachProvider {
 				}
 
 				boolean staleDirectory = true;
-				File advertisment = new File(f, Advertisement.getFilename());
+				File advertisement = new File(f, Advertisement.getFilename());
 				long uid = 0;
-				if (advertisment.exists()) {
-					OpenJ9VirtualMachineDescriptor descriptor = OpenJ9VirtualMachineDescriptor.fromAdvertisement(this, advertisment);
+				if (advertisement.exists()) {
+					OpenJ9VirtualMachineDescriptor descriptor = OpenJ9VirtualMachineDescriptor.fromAdvertisement(this, advertisement);
 					if (null != descriptor) {
 						long pid = descriptor.getProcessId();
 						uid = descriptor.getUid();
@@ -149,7 +149,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 						 * If getFileOwner fails, the uid will appear to be -1, and non-root users will ignore it.
 						 * CommonDirectory.deleteStaleDirectories() will handle the case of a target directory which does not have an advertisement directory.
 						 */
-						uid = CommonDirectory.getFileOwner(advertisment.getAbsolutePath());
+						uid = CommonDirectory.getFileOwner(advertisement.getAbsolutePath());
 					}
 				}
 

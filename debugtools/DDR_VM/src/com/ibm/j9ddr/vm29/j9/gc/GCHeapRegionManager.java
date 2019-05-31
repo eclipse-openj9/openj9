@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,12 +145,12 @@ public class GCHeapRegionManager
 		if(heapAddress.gte(_lowTableEdge) && heapAddress.lt(_highTableEdge)) {
 			result = tableDescriptorForAddress(heapAddress);
 		} else {
-			result = auxillaryDescriptorForAddress(heapAddress);
+			result = auxiliaryDescriptorForAddress(heapAddress);
 		}
 		return result;
 	}
 	
-	public GCHeapRegionDescriptor auxillaryDescriptorForAddress(AbstractPointer heapAddress)
+	public GCHeapRegionDescriptor auxiliaryDescriptorForAddress(AbstractPointer heapAddress)
 	{
 		for(int i = 0; i < _auxRegionCount; i++) {
 			GCHeapRegionDescriptor region = _auxRegionDescriptorList[i];

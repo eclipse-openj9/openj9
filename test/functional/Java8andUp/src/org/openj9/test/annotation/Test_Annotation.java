@@ -1,6 +1,6 @@
 package org.openj9.test.annotation;
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1378,14 +1378,14 @@ public class Test_Annotation {
 
 	@Test
 	@TestAnnotation()
-	public void test_method_Enum_arra_getDefaultValue() throws Exception {
+	public void test_method_Enum_array_getDefaultValue() throws Exception {
 		Method method = ValueAnnotation.class.getMethod("enumArrayValue", (Class[])null);
 		myAssert(enumArrayValueDefault, (Enum[])method.getDefaultValue());
 	}
 
 	@Test
 	@TestAnnotation()
-	public void test_method_Class_arra_getDefaultValue() throws Exception {
+	public void test_method_Class_array_getDefaultValue() throws Exception {
 		Method method = ValueAnnotation.class.getMethod("classArrayValue", (Class[])null);
 		myAssert(classArrayValueDefault, (Class[])method.getDefaultValue());
 	}

@@ -747,17 +747,17 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
 
    TR::SymbolReference *jitReleaseVMAccessSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());
-   TR::LabelSymbol *releaseVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
-   if (!releaseVMAcessSnippetLabel)
+   TR::LabelSymbol *releaseVMAccessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
+   if (!releaseVMAccessSnippetLabel)
       {
-      releaseVMAcessSnippetLabel = generateLabelSymbol(cg());
-      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, releaseVMAcessSnippetLabel, jitReleaseVMAccessSymRef));
+      releaseVMAccessSnippetLabel = generateLabelSymbol(cg());
+      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, jitReleaseVMAccessSymRef));
       }
 
    if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, releaseVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, releaseVMAccessSnippetLabel, cr0Reg);
    else
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAccessSnippetLabel, cr0Reg);
    }
 
 void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
@@ -774,17 +774,17 @@ void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
 
    TR::SymbolReference *jitAcquireVMAccessSymRef = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol());
-   TR::LabelSymbol *acquireVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
-   if (!acquireVMAcessSnippetLabel)
+   TR::LabelSymbol *acquireVMAccessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
+   if (!acquireVMAccessSnippetLabel)
       {
-      acquireVMAcessSnippetLabel = generateLabelSymbol(cg());
-      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, acquireVMAcessSnippetLabel, jitAcquireVMAccessSymRef));
+      acquireVMAccessSnippetLabel = generateLabelSymbol(cg());
+      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, acquireVMAccessSnippetLabel, jitAcquireVMAccessSymRef));
       }
 
    if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, acquireVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, acquireVMAccessSnippetLabel, cr0Reg);
    else
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, acquireVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, acquireVMAccessSnippetLabel, cr0Reg);
    }
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 

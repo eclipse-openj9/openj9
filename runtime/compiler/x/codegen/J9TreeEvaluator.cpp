@@ -12200,8 +12200,8 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    auto minus1 = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, MINUS1), cg);
    cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegMinus1, minus1, cg); iComment("-1");
 
-   auto ascciUpperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getAsciiMax()), cg);
-   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegAsciiUpperBnd, ascciUpperBnd, cg); iComment("maximum ascii value ");
+   auto asciiUpperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getAsciiMax()), cg);
+   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegAsciiUpperBnd, asciiUpperBnd, cg); iComment("maximum ascii value ");
 
    generateRegImmInstruction(MOV4RegImm4, node, result, 1, cg);
 

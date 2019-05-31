@@ -1842,7 +1842,7 @@ test23(J9JavaVM* vm)
 	}
 	
 	if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-		ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+		ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 		retval = TEST_ERROR;
 		goto done;
 	}
@@ -1920,7 +1920,7 @@ test24(J9JavaVM* vm)
 	}
 
 	if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-		ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+		ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 		retval = TEST_ERROR;
 		goto done;
 	}
@@ -2209,7 +2209,7 @@ test29(J9JavaVM* vm)
 		}
 
 		if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-			ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+			ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 			retval = TEST_ERROR;
 			goto done;
 		}
@@ -2274,7 +2274,7 @@ test29(J9JavaVM* vm)
 		}
 
 		if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-			ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+			ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 			retval = TEST_ERROR;
 			goto done;
 		}
