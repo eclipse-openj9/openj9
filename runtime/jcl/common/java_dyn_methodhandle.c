@@ -779,27 +779,6 @@ _done:
 	return result;
 }
 
-/* Install the accessClass into the J9VMThread so that the security-related stackwalks
- * can pull it back out.
- *
- * @param accessClass the Lookup.accessClass class
- */
-void JNICALL
-Java_java_lang_invoke_MethodHandles_00024Lookup_setAccessClassForSecuritCheck(JNIEnv *env, jclass ignored, jclass accessClass)
-{
-	J9VMThread *vmThread = (J9VMThread *) env;
-	J9JavaVM *vm = vmThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9Class *toInstall = NULL;
-
-	vmFuncs->internalEnterVMFromJNI(vmThread);
-	if (NULL != accessClass) {
-		toInstall = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(accessClass));
-	}
-	vmThread->methodHandlesLookupAccessClass = toInstall;
-	vmFuncs->internalExitVMToJNI(vmThread);
-}
-
 /* Return the field offset of the 'vmRef' field in j.l.Class.
  * Needed by the JIT in MethodHandle's static initializer before Unsafe
  * can be loaded.  The 'ignored' parameter is to work around a javac bug.
