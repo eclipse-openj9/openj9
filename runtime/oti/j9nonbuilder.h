@@ -4816,6 +4816,7 @@ typedef struct J9VMThread {
 	UDATA debugEventData6;
 	UDATA debugEventData7;
 	UDATA debugEventData8;
+	struct J9Class* methodHandlesLookupAccessClass;
 	struct J9ClassLoadingStackElement* classLoadingStack;
 	UDATA jitTransitionJumpSlot;
 	omrthread_monitor_t gcClassUnloadingMutex;
