@@ -462,14 +462,12 @@ void TR::PPCPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    ListIterator<TR::AutomaticSymbol>  automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol               *localCursor       = automaticIterator.getFirst();
    const TR::PPCLinkageProperties&    linkage           = getProperties();
-   TR::Machine *machine = cg()->machine();
    TR::RealRegister::RegNum regIndex;
    int32_t                           firstLocalOffset  = linkage.getOffsetToFirstLocal();
    uint32_t                          stackIndex        = firstLocalOffset;
    int32_t                           lowGCOffset        = stackIndex;
    TR::GCStackAtlas                  *atlas             = cg()->getStackAtlas();
    int32_t firstLocalGCIndex = atlas->getNumberOfParmSlotsMapped();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
    // map all garbage collected references together so can concisely represent
    // stack maps. They must be mapped so that the GC map index in each local
@@ -480,28 +478,27 @@ void TR::PPCPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    stackIndex -= numberOfLocalSlotsMapped * TR::Compiler->om.sizeofReferenceAddress();
 
    if (comp()->useCompressedPointers())
-   {
-        // If we have any local objects we have to make sure they're aligned properly when compressed pointers are used,
-        // otherwise pointer compression may clobber part of the pointer.
-        // Each auto's GC index will have already been aligned, we just need to make sure
-        // we align the starting stack offset.
-        uint32_t unalignedStackIndex = stackIndex;
-        stackIndex &= ~(fej9->getObjectAlignmentInBytes() - 1);
-        uint32_t paddingBytes = unalignedStackIndex - stackIndex;
-        if (paddingBytes > 0)
-        {
-            TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0, "Padding bytes should be a multiple of the slot/pointer size");
-            uint32_t paddingSlots = paddingBytes / TR::Compiler->om.sizeofReferenceAddress();
-            atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + paddingSlots);
-        }
-   }
-
+      {
+      // If we have any local objects we have to make sure they're aligned properly when compressed pointers are used,
+      // otherwise pointer compression may clobber part of the pointer.
+      // Each auto's GC index will have already been aligned, we just need to make sure
+      // we align the starting stack offset.
+      uint32_t unalignedStackIndex = stackIndex;
+      stackIndex &= ~(TR::Compiler->om.objectAlignmentInBytes() - 1);
+      uint32_t paddingBytes = unalignedStackIndex - stackIndex;
+      if (paddingBytes > 0)
+         {
+         TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0, "Padding bytes should be a multiple of the slot/pointer size");
+         uint32_t paddingSlots = paddingBytes / TR::Compiler->om.sizeofReferenceAddress();
+         atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + paddingSlots);
+         }
+      }
 
    // Map local references again to set the stack position correct according to
    // the GC map index.
    //
    for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
-   {
+      {
       if (localCursor->getGCMapIndex() >= 0)
          {
          localCursor->setOffset(stackIndex + TR::Compiler->om.sizeofReferenceAddress() * (localCursor->getGCMapIndex() - firstLocalGCIndex));
@@ -510,8 +507,7 @@ void TR::PPCPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
             atlas->setOffsetOfFirstInternalPointer(localCursor->getOffset() - firstLocalOffset);
             }
          }
-   }
-
+      }
 
    method->setObjectTempSlots((lowGCOffset - stackIndex) / TR::Compiler->om.sizeofReferenceAddress());
    lowGCOffset = stackIndex;
@@ -606,8 +602,7 @@ void TR::PPCPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
 void TR::PPCPrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? fej9->getObjectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
+   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.objectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
    int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
    if (roundedSize == 0)
       roundedSize = 4;
@@ -724,7 +719,6 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
    TR_HeapMemory trHeapMemory    = cg->trMemory();
    int32_t wordsToUnroll         = num;
    TR::Compilation* comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
 
    static bool disableVSXMemInit = (feGetEnv("TR_disableVSXMemInit") != NULL); //Disable toggle incase we break in production.
    bool use8Bytes                = ((cg->is64BitProcessor() && TR::Compiler->om.sizeofReferenceAddress() == 4) || TR::Compiler->om.sizeofReferenceAddress() == 8);
@@ -863,7 +857,6 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
                                     bool &saveLR)
    {
    TR::Compilation * comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Machine *machine = cg->machine();
    const TR::PPCLinkageProperties& properties = cg->getProperties();
    int32_t                    firstLocalOffset = properties.getOffsetToFirstLocal();
@@ -1273,15 +1266,14 @@ void TR::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
    TR_ASSERT(size<=UPPER_IMMED-1032, "Setting up a frame pointer anyway.");
    ListIterator<TR::AutomaticSymbol>  automaticIterator(&bodySymbol->getAutomaticList());
    TR::AutomaticSymbol               *localCursor       = automaticIterator.getFirst();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
    while (localCursor!=NULL)
       {
       TR_ASSERT(!comp()->useCompressedPointers() ||
-      !localCursor->isLocalObject() ||
-      !localCursor->isCollectedReference() ||
-      (localCursor->getOffset() & (fej9->getObjectAlignmentInBytes() - 1)) == 0,
-      "Stack allocated object not aligned to minimum required alignment");
+                !localCursor->isLocalObject() ||
+                !localCursor->isCollectedReference() ||
+                (localCursor->getOffset() & (TR::Compiler->om.objectAlignmentInBytes() - 1)) == 0,
+                "Stack allocated object not aligned to minimum required alignment");
       localCursor->setOffset(localCursor->getOffset() + size);
       localCursor = automaticIterator.getNext();
       }
