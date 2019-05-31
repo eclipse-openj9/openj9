@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -561,7 +561,7 @@ reportSuspectedPadding(J9PortLibrary *portLib, J9ROMClass *romClass, J9ROMClassG
 	} else if (nbytes > 6) {
 		nbytes = 6;
 	}
-	j9tty_printf(PORTLIB, "0x%p-0x%p [ %*.s", base + lastOffset, base + offset, 12 - 2*nbytes , "");
+	j9tty_printf(PORTLIB, "0x%p-0x%p [ %*s", base + lastOffset, base + offset, 12 - (2 * nbytes), "");
 
 	if (NULL != state->validateRangeCallback) {
 		rangeValid = state->validateRangeCallback(romClass, romBase + lastOffset, nbytes, NULL);
