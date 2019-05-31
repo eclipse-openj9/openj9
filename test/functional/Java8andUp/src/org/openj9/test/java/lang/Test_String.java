@@ -1102,7 +1102,7 @@ public class Test_String {
 		// assertTrue("Returned array is of different size", buf.length !=
 		// schars.length);
 		for (int i = 0; i < s.length(); i++)
-			AssertJUnit.assertTrue("Returned incorrect char aray", buf[i] == schars[i]);
+			AssertJUnit.assertTrue("Returned incorrect char array", buf[i] == schars[i]);
 	}
 
 	/**

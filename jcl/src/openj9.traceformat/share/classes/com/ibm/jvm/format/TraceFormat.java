@@ -539,7 +539,7 @@ final public class TraceFormat
 			}
 			if (((fileLength - dataStart) % bufferSize) != 0) {
 				outStream
-						.println("*** TraceFile is truncated, or corrupted, will ignore some incomplete data at the end, but process everything that is avaiable");
+						.println("*** TraceFile is truncated, or corrupted, will ignore some incomplete data at the end, but process everything that is available");
 				traceFileIsTruncatedOrCorrupt = true;
 			}
 			if (numberOfBuffers == 0) {

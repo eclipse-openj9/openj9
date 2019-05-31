@@ -5670,7 +5670,7 @@ typedef struct J9CInterpreterStackFrame {
 	 */
 #endif /* J9VM_ENV_DATA64 */
 #else /* J9VM_ARCH_X86 */
-#error Unknown architechture
+#error Unknown architecture
 #endif /* J9VM_ARCH_X86 */
 } J9CInterpreterStackFrame;
 

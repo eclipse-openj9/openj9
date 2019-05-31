@@ -109,7 +109,7 @@ protected:
 public:
 	void masterSetupForGC(MM_EnvironmentBase *env);
 	void masterCleanupAfterGC(MM_EnvironmentBase *env);
-	void doAuxilaryGCWork(MM_EnvironmentBase *env); /* Wake up finalizer thread. Discard segments freed by class unloading. */
+	void doAuxiliaryGCWork(MM_EnvironmentBase *env); /* Wake up finalizer thread. Discard segments freed by class unloading. */
 	void incrementalCollect(MM_EnvironmentRealtime *env);
 
 	virtual void *createSweepPoolState(MM_EnvironmentBase *env, MM_MemoryPool *memoryPool)

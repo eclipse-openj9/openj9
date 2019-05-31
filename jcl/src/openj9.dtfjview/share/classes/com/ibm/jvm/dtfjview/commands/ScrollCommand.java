@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,15 +48,15 @@ public class ScrollCommand extends BaseJdmpviewCommand{
 			return;
 		}
 		
-		long newMemAddrss = 0;
+		long newMemAddress = 0;
 		if(command.equals("+")) {
-			newMemAddrss = currentMemAddress.longValue() + currentNumBytesToPrint.intValue();
+			newMemAddress = currentMemAddress.longValue() + currentNumBytesToPrint.intValue();
 		}
 		if(command.equals("-")) {
-			newMemAddrss = currentMemAddress.longValue() - currentNumBytesToPrint.intValue();
+			newMemAddress = currentMemAddress.longValue() - currentNumBytesToPrint.intValue();
 		}
-		ctx.getProperties().put(Utils.CURRENT_MEM_ADDRESS, Long.valueOf(newMemAddrss));
-		ctx.execute("hexdump", new String[]{Long.toHexString(newMemAddrss),currentNumBytesToPrint.toString()}, out);
+		ctx.getProperties().put(Utils.CURRENT_MEM_ADDRESS, Long.valueOf(newMemAddress));
+		ctx.execute("hexdump", new String[]{Long.toHexString(newMemAddress),currentNumBytesToPrint.toString()}, out);
 	}
 
 	@Override

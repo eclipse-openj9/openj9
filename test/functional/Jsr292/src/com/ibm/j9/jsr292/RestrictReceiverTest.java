@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,7 +105,7 @@ public class RestrictReceiverTest {
 				e.printStackTrace();
 			}
 		}
-		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly acces member of class A via findVirtual", pass);
+		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly access member of class A via findVirtual", pass);
 	}
 	
 	/**
@@ -130,7 +130,7 @@ public class RestrictReceiverTest {
 				e.printStackTrace();
 			}
 		}
-		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly acces member of class A via findSpecial", pass);
+		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly access member of class A via findSpecial", pass);
 	}
 	
 	/**
@@ -150,7 +150,7 @@ public class RestrictReceiverTest {
 		} catch (Exception e) {
 			pass = true;// none of the classes have private access for invokespecial in class apackage.A
 		}
-		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly acces member of class A via findSpecial", pass);
+		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly access member of class A via findSpecial", pass);
 	}
 	
 	/**
@@ -173,7 +173,7 @@ public class RestrictReceiverTest {
 				e.printStackTrace();
 			}
 		}
-		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly acces member of class A via bind", pass);
+		AssertJUnit.assertTrue(testInstance.getClass().toString() + "did not properly access member of class A via bind", pass);
 	}
 	
 	/**

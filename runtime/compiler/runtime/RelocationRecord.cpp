@@ -1246,7 +1246,7 @@ TR_RelocationRecordConstantPoolWithIndex::getAbstractMethodFromCP(TR_RelocationR
    J9Method *method = NULL;
 
       {
-      TR::VMAccessCriticalSection getAbstractlMethodFromCP(reloRuntime->fej9());
+      TR::VMAccessCriticalSection getAbstractMethodFromCP(reloRuntime->fej9());
       abstractClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(reloRuntime->currentThread(),
                                                                                             cp,
                                                                                             romMethodRef->classRefCPIndex,

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,14 +244,14 @@ public class FindCommand extends BaseJdmpviewCommand{
 		if (findAtt.pattern.startsWith("0x")) {
 			findAtt.pattern = findAtt.pattern.substring(2);
 			findAtt.mode = binary;
-			allignBits();
+			alignBits();
 		}
 		else{
 			findAtt.mode = text;
 		}
 	}
 	
-	private void allignBits(){
+	private void alignBits(){
 		int patternLength = findAtt.pattern.length();
 		if (0 != patternLength%2){
 			findAtt.pattern = "0" + findAtt.pattern;

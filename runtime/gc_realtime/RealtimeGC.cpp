@@ -287,9 +287,9 @@ MM_RealtimeGC::verbose(MM_EnvironmentBase *env) {
  * @note only called by master thread.
  */
 void
-MM_RealtimeGC::doAuxilaryGCWork(MM_EnvironmentBase *env)
+MM_RealtimeGC::doAuxiliaryGCWork(MM_EnvironmentBase *env)
 {
-	_realtimeDelegate.doAuxilaryGCWork(env);
+	_realtimeDelegate.doAuxiliaryGCWork(env);
 	
 	/* Restart the caches for all threads. */
 	GC_OMRVMThreadListIterator vmThreadListIterator(_vm);
@@ -347,7 +347,7 @@ MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 	_sched->run(env, &sweepTask);
 	reportSweepEnd(env);
 
-	doAuxilaryGCWork(env);
+	doAuxiliaryGCWork(env);
 
 	/* Get all components to clean up after themselves at the end of a collect */
 	masterCleanupAfterGC(env);

@@ -1204,9 +1204,9 @@ SH_OSCachesysv::acquireWriteLock(UDATA lockID)
 		I_32 myerror = j9error_last_error_number();
 		if ( ((I_32)(myerror | 0xFFFF0000)) != J9PORT_ERROR_SYSV_IPC_ERRNO_EINTR) {
 #if !defined(WIN32)
-			OSC_ERR_TRACE2(J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX, j9shsem_deprecated_getid(_semhandle), myerror);
+			OSC_ERR_TRACE2(J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, j9shsem_deprecated_getid(_semhandle), myerror);
 #else
-			OSC_ERR_TRACE1(J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
+			OSC_ERR_TRACE1(J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
 #endif
 			Trc_SHR_OSC_enterMutex_Exit3(myerror);
 			Trc_SHR_Assert_ShouldNeverHappen();

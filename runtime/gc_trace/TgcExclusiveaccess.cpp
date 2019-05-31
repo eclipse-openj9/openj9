@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,13 +44,13 @@ printExclusiveAccessTimes(J9VMThread *vmThread)
 
 	U_64 exlusiveAccessTime = j9time_hires_delta(0, env->getExclusiveAccessTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS);
 	/* Note that these values were not being calculated in the GC and have been returning 0 for some time. */
-	U_64 preAquireExclusiveTime = (U_64)0;
-	U_64 postAquireExclusiveTime = (U_64)0;
+	U_64 preAcquireExclusiveTime = (U_64)0;
+	U_64 postAcquireExclusiveTime = (U_64)0;
 
 	tgcExtensions->printf("ExclusiveAccess Time(ms): total=\"%llu.%03.3llu\", preAcquire=\"%llu.%03.3llu\", postAcquire=\"%llu.%03.3llu\"\n",
 		exlusiveAccessTime /1000, exlusiveAccessTime % 1000,
-		preAquireExclusiveTime /1000, preAquireExclusiveTime % 1000,
-		postAquireExclusiveTime /1000, postAquireExclusiveTime % 1000);
+		preAcquireExclusiveTime /1000, preAcquireExclusiveTime % 1000,
+		postAcquireExclusiveTime /1000, postAcquireExclusiveTime % 1000);
 }
 
 /**
