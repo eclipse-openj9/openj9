@@ -386,6 +386,7 @@ AccessControlContext(AccessControlContext acc, DomainCombiner combiner, boolean 
 			/*[PR JAZZ 78139] java.security.AccessController.checkPermission invokes untrusted DomainCombiner.combine method */
 		}
 	}
+	// only AccessControlContext with STATE_AUTHORIZED authorizeState could have non-null domainCombiner
 	this.authorizeState = STATE_AUTHORIZED;
 	this.context = acc.context;
 	this.domainCombiner = combiner;
@@ -611,6 +612,7 @@ static boolean checkPermWithCachedPermImplied(Permission perm, Permission[] perm
  *  ProtectionDomain[] pdsImplied, Permission[] permsImplied, Permission[] permsNotImplied
  *
  * @param perm the permission to be checked
+ * @param activeDC the DomainCombiner to be invoked
  * @param accCurrent the current AccessControlContext to be checked
  * @param debug debug flags
  * @param pdsContext the current context to be checked
@@ -625,6 +627,7 @@ static boolean checkPermWithCachedPermImplied(Permission perm, Permission[] perm
  */
 static boolean checkPermissionWithCache(
 		Permission perm,
+		DomainCombiner activeDC,
 		Object[] pdsContext,
 		int debug,
 		AccessControlContext accCurrent,
@@ -664,15 +667,27 @@ static boolean checkPermissionWithCache(
 	if (null != accCurrent
 		&& (null != accCurrent.context || null != accCurrent.doPrivilegedAcc || null != accCurrent.limitedPerms || null != accCurrent.nextStackAcc)
 	) {
+		ProtectionDomain[] pdCombined;
+		if (activeDC == null) {
+			pdCombined = accCurrent.context;
+		} else {
+			pdCombined = activeDC.combine((ProtectionDomain[])pdsContext, accCurrent.context);
+		}
 		// accCurrent check either throwing a security exception (denied) or continue checking (the return value doesn't matter)
-		checkPermissionWithCache(perm, accCurrent.context, debug, accCurrent.doPrivilegedAcc, accCurrent.isLimitedContext, accCurrent.limitedPerms, accCurrent.nextStackAcc, cacheChecked);
+		checkPermissionWithCache(perm, activeDC, pdCombined, debug, accCurrent.doPrivilegedAcc, accCurrent.isLimitedContext, accCurrent.limitedPerms, accCurrent.nextStackAcc, cacheChecked);
 	}
 	if (isLimited && null != permsLimited) {
 		if (checkPermWithCachedPermImplied(perm, permsLimited, cacheChecked)) {
 			return true; // implied by a limited permission
 		}
 		if (null != accNext) {
-			checkPermissionWithCache(perm, accNext.context, debug, accNext.doPrivilegedAcc, accNext.isLimitedContext, accNext.limitedPerms, accNext.nextStackAcc, cacheChecked);
+			ProtectionDomain[] pdCombined;
+			if (activeDC == null) {
+				pdCombined = accNext.context;
+			} else {
+				pdCombined = activeDC.combine((ProtectionDomain[])pdsContext, accNext.context);
+			}
+			checkPermissionWithCache(perm, activeDC, pdCombined, debug, accNext.doPrivilegedAcc, accNext.isLimitedContext, accNext.limitedPerms, accNext.nextStackAcc, cacheChecked);			
 		}
 		return false; // NOT implied by any limited permission
 	}
@@ -736,7 +751,7 @@ public void checkPermission(Permission perm) throws AccessControlException {
 	if (debug) {
 		debug = debugHelper(perm);
 	}
-	checkPermissionWithCache(perm,  this.context, debug ? DEBUG_ENABLED | DEBUG_ACCESS_DENIED : DEBUG_DISABLED, this.doPrivilegedAcc,this.isLimitedContext, this.limitedPerms, this.nextStackAcc, new AccessCache());
+	checkPermissionWithCache(perm, null, this.context, debug ? DEBUG_ENABLED | DEBUG_ACCESS_DENIED : DEBUG_DISABLED, this.doPrivilegedAcc,this.isLimitedContext, this.limitedPerms, this.nextStackAcc, new AccessCache());
 }
 
 /**
