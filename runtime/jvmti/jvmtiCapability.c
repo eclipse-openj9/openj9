@@ -175,8 +175,7 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 
 #if JAVA_SPEC_VERSION >= 11
 	if (isEventHookable(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC)) {
-		/* hardcode to 0 (not enabled) for empty JEP331 implementation */
-		rv_capabilities.can_generate_sampled_object_alloc_events = 0;
+		rv_capabilities.can_generate_sampled_object_alloc_events = 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
@@ -315,7 +314,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 	jvmtiCapabilities potentialCapabilities;
 	jvmtiCapabilities newCapabilities;
-	UDATA i;
+	UDATA i = 0;
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	J9VMThread *currentThread = NULL;
 
@@ -358,7 +357,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 		/* can't request original method order after onLoad phase */
 
-		if (1 == newCapabilities.can_maintain_original_method_order) {
+		if (newCapabilities.can_maintain_original_method_order) {
 			if (J9_ARE_NO_BITS_SET(vm->requiredDebugAttributes, J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER)) {
 				if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
 					/* turn off ROMClassMethodSorting */
@@ -371,6 +370,16 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 				}
 			}
 		}
+
+#if JAVA_SPEC_VERSION >= 11
+		if (newCapabilities.can_generate_sampled_object_alloc_events) {
+			/* Initial sampling interval is MM_GCExtensions::oolObjectSamplingBytesGranularity which is 16M by default
+			 * or set by command line option -Xgc:allocationSamplingGranularity.
+			 * Set it to 512KB which is default sampling interval as per JEP 331 specification.
+			 */
+			vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(currentThread, 512 * 1024);
+		}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 		/* Always consider can_generate_compiled_method_load_events to be a newly-requested capability
 		 * so that hookNonEventCapabilities will fork the event thread if need be.
