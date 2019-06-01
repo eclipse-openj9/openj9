@@ -48,6 +48,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<object name="main"/>
 			<object name="pvdump"/>
 			<object name="romdump"/>
+			<object name="stubs"/>
 		</objects>
 		<libraries>
 			<library name="j9verutil"/>
