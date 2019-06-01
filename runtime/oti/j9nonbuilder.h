@@ -4816,7 +4816,6 @@ typedef struct J9VMThread {
 	UDATA debugEventData6;
 	UDATA debugEventData7;
 	UDATA debugEventData8;
-	struct J9Class* methodHandlesLookupAccessClass;
 	struct J9ClassLoadingStackElement* classLoadingStack;
 	UDATA jitTransitionJumpSlot;
 	omrthread_monitor_t gcClassUnloadingMutex;
@@ -4874,7 +4873,7 @@ typedef struct J9VMThread {
 	U_32 ludclBPOffset;
 #if defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
 	UDATA systemStackPointer;
-#if !defined(J9VM_ENV_DATA64)
+#if 0 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
 	U_32 zosPadTo8;
 #endif /* !J9VM_ENV_DATA64 */
 #endif /* J9VM_JIT_FREE_SYSTEM_STACK_POINTER */
@@ -4886,7 +4885,7 @@ typedef struct J9VMThread {
 	UDATA jitCurrentRIFlags;
 	UDATA jitPendingRIFlags;
 	struct J9RIParameters *riParameters;
-#if !defined(J9VM_ENV_DATA64)
+#if !defined(J9VM_ENV_DATA64) && defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
 	U_32 riPadTo8;
 #endif /* !J9VM_ENV_DATA64 */
 #endif /* J9VM_JIT_RUNTIME_INSTRUMENTATION */

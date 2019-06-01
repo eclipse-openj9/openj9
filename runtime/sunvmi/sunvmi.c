@@ -487,7 +487,6 @@ JVM_GetClassContext_Impl(JNIEnv *env)
 	walkState.skipCount = 1;
 	walkState.userData1 = (void *) 0;
 	walkState.userData2 = (void *) NULL;
-	walkState.userData3 = (void *) -1;
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 	vm->walkStackFrames(vmThread, &walkState);
@@ -555,7 +554,6 @@ JVM_GCNoCompact_Impl(void)
  * --------------------------
  * walkState->userData1 (UDATA) is the index of the current frame.  Its incremented for each frame visited.
  * walkState->userData2 (Object) is null or a Class[] holding the j.l.Class for each visited frame.
- * walkState->userData3 (IDATA) is the index of the frame where accessClass should be inserted if the method jliMethodHandles_Lookup_checkSecurity was found on the stack
  */
 static UDATA
 getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
@@ -584,22 +582,6 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 			/* first pass gets us the size of the array, second pass fills in the elements */
 			if (walkState->userData2 != NULL) {
 				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(currentClass);
-#if defined(J9VM_OPT_METHOD_HANDLE)
-#ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
-				/* check for non-static MethodHandles$Lookup methods */
-				if (walkState->method == ((J9JNIMethodID*)VM.jliMethodHandles_Lookup_checkSecurity)->method) {
-					walkState->userData3 = (void*)(n + 2);
-				}
-#endif /* !J9VM_IVE_RAW_BUILD */
-				if (walkState->userData3 == walkState->userData1) {
-					J9VMThread *walkThread = walkState->walkThread;
-					J9Class *accessClass = walkThread->methodHandlesLookupAccessClass;
-					
-					/* accessClass is inserted at jliMethodHandles_Lookup_checkSecurity + 2, which is where the SecurityManager expects the caller to be */
-					Assert_SunVMI_notNull(accessClass);
-					classObject = J9VM_J9CLASS_TO_HEAPCLASS(accessClass);
-				}
-#endif
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, walkState->userData2, (I_32)n, classObject);
 			}
 

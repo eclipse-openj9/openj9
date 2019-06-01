@@ -37,9 +37,6 @@ public class soae001 {
 		jvmtiResult = enable();
 		if (0 != jvmtiResult) {
 			System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.enable() failed with: " + jvmtiResult);
-			// following to be deleted when actual JEP331 implementation is in place
-			System.out.println("This is expected with an empty JEP331 implementation!");
-			result = true;
 		} else {
 			byte[] bytes;
 			bytes = new byte[DEFAULT_SAMPLING_RATE];
