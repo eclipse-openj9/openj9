@@ -98,6 +98,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced=NULL);
    static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced=NULL);
 
+   static TR::Register *loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    /*
     * @brief Calls helper function for float/double remainder
     * @param[in] node : node

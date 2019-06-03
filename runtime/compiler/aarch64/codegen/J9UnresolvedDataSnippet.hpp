@@ -83,6 +83,12 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
    TR::MemoryReference *setMemoryReference(TR::MemoryReference *mr) { return (_memoryReference = mr); }
 
    /**
+    * @brief Answers runtime helper
+    * @return runtime helper
+    */
+   TR_RuntimeHelper getHelper();
+
+   /**
     * @brief Emits the Snippet body
     * @return instruction cursor
     */

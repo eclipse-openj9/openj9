@@ -32,10 +32,15 @@
 	.globl	_interpreterUnresolvedClassGlue
 	.globl	_interpreterUnresolvedClassGlue2
 	.globl	_interpreterUnresolvedStringGlue
+	.globl	_interpreterUnresolvedMethodTypeGlue
+	.globl	_interpreterUnresolvedMethodHandleGlue
+	.globl	_interpreterUnresolvedCallSiteTableEntryGlue
+	.globl	_interpreterUnresolvedMethodTypeTableEntryGlue
 	.globl	_interpreterUnresolvedStaticDataGlue
 	.globl	_interpreterUnresolvedStaticDataStoreGlue
 	.globl	_interpreterUnresolvedInstanceDataGlue
 	.globl	_interpreterUnresolvedInstanceDataStoreGlue
+	.globl	_interpreterUnresolvedConstantDynamicGlue
 	.globl	_virtualUnresolvedHelper
 	.globl	_interfaceCallHelper
 	.globl	_interpreterVoidStaticGlue
@@ -54,10 +59,15 @@
 	.extern	jitResolveClass
 	.extern	jitResolveClassFromStaticField
 	.extern	jitResolveString
+	.extern	jitResolveMethodType
+	.extern	jitResolveMethodHandle
+	.extern	jitResolveInvokeDynamic
+	.extern	jitResolveHandleMethod
 	.extern	jitResolveStaticField
 	.extern	jitResolveStaticFieldSetter
 	.extern	jitResolveField
 	.extern	jitResolveFieldSetter
+	.extern	jitResolveConstantDynamic
 	.extern	jitResolveVirtualMethod
 	.extern	jitResolveInterfaceMethod
 	.extern	jitLookupInterfaceMethod
@@ -107,6 +117,14 @@
 	.set	J9TR_UVCSnippet_CPIndex,	16
 	.set	J9TR_UVCSnippet_method,		24
 	.set	J9TR_UVCSnippet_J2IThunk,	32
+
+// Unresolved data snippet
+
+	.set	J9TR_UDSnippet_codeCacheReturnAddress,	0
+	.set	J9TR_UDSnippet_CPIndex,		8
+	.set	J9TR_UDSnippet_CP,		16
+	.set	J9TR_UDSnippet_offset,		24
+	.set	J9TR_UDSnippet_template,	28
 
 	.text
 	.align 2
@@ -259,26 +277,352 @@ const_jitResolveStaticMethod:
 const_jitResolveSpecialMethod:
 	.dword	jitResolveSpecialMethod
 
+// Handles calls to unresolved data snippets
+//
+// in:		x3 = resolve helper address
+//		x30 = snippet data
+// trash:	x10, x11
+
+// mainline:
+//    b    UnresolvedDataSnippet ; change this to "movz extraReg, #0"
+//    movk extraReg, #0, LSL #16
+//    movk extraReg, #0, LSL #32
+//    movk extraReg, #0, LSL #48
+//
+L_mergedDataResolve:
+	ldr	x0, [x30, #J9TR_UDSnippet_CP]			// load CP
+	ldr	w1, [x30, #J9TR_UDSnippet_CPIndex]		// load CP index
+	ldr	x10, [x30, #J9TR_UDSnippet_codeCacheReturnAddress]	// load code cache RA
+	mov	x11, x30					// protect LR
+	add	x2, x10, #1					// increment for EX search
+	blr	x3						// call helper
+	tbnz	x0, #clinit_bit_number, L_UDclinitCase		// branch if the LSB (the "clinit" bit) was set in the resolved address
+	ldrsw	x6, [x11, #J9TR_UDSnippet_offset]		// load offset
+	add	x3, x0, x6					// add in offset to return value
+	ldr	w1, [x10, #4]					// fetch the first movk instruction
+	ubfx	x2, x3, #16, #16				// bits 16-31 of the address
+	orr	w1, w1, w2, LSL #5				// encode the address in the movk instruction
+	str	w1, [x10, #4]					// store the movk instruction
+	ldr	w1, [x10, #8]					// fetch the second movk instruction
+	ubfx	x2, x3, #32, #16				// bits 32-47 of the address
+	orr	w1, w1, w2, LSL #5				// encode the address in the movk instruction
+	str	w1, [x10, #8]					// store the movk instruction
+	ldr	w1, [x10, #12]					// fetch the third movk instruction
+	ubfx	x2, x3, #48, #16				// bits 48-63 of the address
+	orr	w1, w1, w2, LSL #5				// encode the address in the movk instruction
+	str	w1, [x10, #12]					// store the movk instruction
+	ldr	w11, [x11, #J9TR_UDSnippet_template]		// load instruction template (movz)
+	ubfx	x2, x3, #0, #16					// bits 0-15 of the address
+	orr	w11, w11, w2, LSL #5				// encode the address in the movz instruction
+	add	x0, x10, 4					// address of the first movk instruction
+	mov	x1, #12						// 3 instructions to flush
+	bl	flushICache					// flush movk instructions
+	mov	x0, x10						// address of the b instruction
+	str	w11, [x0]					// store the movz instruction
+	mov	x1, #4						// 1 instruction to flush
+	bl	flushICache					// flush movz instruction
+	mov	x30, x10					// return address
+	ldp	x0, x1, [J9SP, #0]				// restore regs
+	ldp	x2, x3, [J9SP, #16]
+	ldp	x4, x5, [J9SP, #32]
+	ldp	x6, x7, [J9SP, #48]
+	ldp	x8, x9, [J9SP, #64]
+	ldp	x10, x11, [J9SP, #80]
+	ldp	x12, x13, [J9SP, #96]
+	ldp	x14, x15, [J9SP, #112]
+	ldp	x16, x17, [J9SP, #128]
+	ldp	x18, x19, [J9SP, #144]
+	ldr	x21, [J9SP, #168] // not restoring J9SP
+	ldp	x22, x23, [J9SP, #176]
+	ldp	x24, x25, [J9SP, #192]
+	ldp	x26, x27, [J9SP, #208]
+	ldr	x28, [J9SP, #224]
+	add	J9SP, J9SP, #232
+	ret							// jump back to newly-written instruction sequence
+
+L_UDclinitCase:
+	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
+	ldr	w2, [x11, #J9TR_UDSnippet_template]		// load instruction template (movz)
+	ubfx	x2, x2, #0, #5					// destination register number
+	cmp	x2, #19
+	blt	L_UDclinitCase_noAdjust
+	sub	x2, x2, #2					// adjust for J9VMTHREAD (x19) and J9SP (x20) entries
+L_UDclinitCase_noAdjust:
+	ldrsw	x1, [x11, #J9TR_UDSnippet_offset]		// load offset
+	add	x0, x0, x1					// add the offset
+	str	x0, [J9SP, x2, LSL #3]				// store the resolved address
+	add	x30, x10, #16					// return address (skip movz/movk instructions)
+	ldp	x0, x1, [J9SP, #0]				// restore regs
+	ldp	x2, x3, [J9SP, #16]
+	ldp	x4, x5, [J9SP, #32]
+	ldp	x6, x7, [J9SP, #48]
+	ldp	x8, x9, [J9SP, #64]
+	ldp	x10, x11, [J9SP, #80]
+	ldp	x12, x13, [J9SP, #96]
+	ldp	x14, x15, [J9SP, #112]
+	ldp	x16, x17, [J9SP, #128]
+	ldp	x18, x19, [J9SP, #144]
+	ldr	x21, [J9SP, #168] // not restoring J9SP
+	ldp	x22, x23, [J9SP, #176]
+	ldp	x24, x25, [J9SP, #192]
+	ldp	x26, x27, [J9SP, #208]
+	ldr	x28, [J9SP, #224]
+	add	J9SP, J9SP, #232
+	ret
+
 _interpreterUnresolvedClassGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveClass			// load resolve helper address
+	b	L_mergedDataResolve
 
 _interpreterUnresolvedClassGlue2:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveClassFromStaticField	// load resolve helper address
+	b	L_mergedDataResolve
 
 _interpreterUnresolvedStringGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveString			// load resolve helper address
+	b	L_mergedDataResolve
+
+_interpreterUnresolvedMethodTypeGlue:
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveMethodType			// load resolve helper address
+	b	L_mergedDataResolve
+
+_interpreterUnresolvedMethodHandleGlue:
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveMethodHandle		// load resolve helper address
+	b	L_mergedDataResolve
+
+_interpreterUnresolvedCallSiteTableEntryGlue:
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveInvokeDynamic		// load resolve helper address
+	b	L_mergedDataResolve
+
+_interpreterUnresolvedMethodTypeTableEntryGlue:
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveHandleMethod		// load resolve helper address
+	b	L_mergedDataResolve
 
 _interpreterUnresolvedStaticDataGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveStaticField		// load resolve helper address
+	b	L_mergedDataResolve
 
 _interpreterUnresolvedStaticDataStoreGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveStaticFieldSetter		// load resolve helper address
+	b	L_mergedDataResolve
 
 _interpreterUnresolvedInstanceDataGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveField			// load resolve helper address
+	b	L_mergedDataResolve
 
 _interpreterUnresolvedInstanceDataStoreGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveFieldSetter		// load resolve helper address
+	b	L_mergedDataResolve
+
+_interpreterUnresolvedConstantDynamicGlue:
+	stp	x0, x1, [J9SP, #-232]!				// save regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	stp	x8, x9, [J9SP, #64]
+	stp	x10, x11, [J9SP, #80]
+	stp	x12, x13, [J9SP, #96]
+	stp	x14, x15, [J9SP, #112]
+	stp	x16, x17, [J9SP, #128]
+	stp	x18, x19, [J9SP, #144]
+	stp	x20, x21, [J9SP, #160]
+	stp	x22, x23, [J9SP, #176]
+	stp	x24, x25, [J9SP, #192]
+	stp	x26, x27, [J9SP, #208]
+	str	x28, [J9SP, #224]
+	ldr	x3, const_jitResolveConstantDynamic		// load resolve helper address
+	b	L_mergedDataResolve
+
+	.align	3
+const_jitResolveClass:
+	.dword	jitResolveClass
+const_jitResolveClassFromStaticField:
+	.dword	jitResolveClassFromStaticField
+const_jitResolveString:
+	.dword	jitResolveString
+const_jitResolveMethodType:
+	.dword	jitResolveMethodType
+const_jitResolveMethodHandle:
+	.dword	jitResolveMethodHandle
+const_jitResolveInvokeDynamic:
+	.dword	jitResolveInvokeDynamic
+const_jitResolveHandleMethod:
+	.dword	jitResolveHandleMethod
+const_jitResolveStaticField:
+	.dword	jitResolveStaticField
+const_jitResolveStaticFieldSetter:
+	.dword	jitResolveStaticFieldSetter
+const_jitResolveField:
+	.dword	jitResolveField
+const_jitResolveFieldSetter:
+	.dword	jitResolveFieldSetter
+const_jitResolveConstantDynamic:
+	.dword	jitResolveConstantDynamic
 
 // Handles calls to virtual unresolved call snippets
 //

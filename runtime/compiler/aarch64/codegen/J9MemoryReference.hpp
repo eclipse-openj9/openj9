@@ -46,6 +46,8 @@ namespace ARM64
 class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
    {
 public:
+   TR_ALLOC(TR_Memory::MemoryReference)
+
    /**
     * @brief Constructor
     * @param[in] cg : CodeGenerator object
@@ -97,8 +99,7 @@ public:
     * @param[in] len : length
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node, uint32_t len, TR::CodeGenerator *cg)
-      : OMR::MemoryReferenceConnector(node, len, cg) {}
+   MemoryReference(TR::Node *node, uint32_t len, TR::CodeGenerator *cg);
 
    /**
     * @brief Constructor
@@ -107,8 +108,20 @@ public:
     * @param[in] len : length
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node, TR::SymbolReference *symRef, uint32_t len, TR::CodeGenerator *cg)
-      : OMR::MemoryReferenceConnector(node, symRef, len, cg) {}
+   MemoryReference(TR::Node *node, TR::SymbolReference *symRef, uint32_t len, TR::CodeGenerator *cg);
+
+   /**
+    * @brief Adjustment for resolution
+    * @param[in] cg : CodeGenerator
+    */
+   void adjustForResolution(TR::CodeGenerator *cg);
+
+   /**
+    * @brief Assigns registers
+    * @param[in] currentInstruction : current instruction
+    * @param[in] cg : CodeGenerator
+    */
+   void assignRegisters(TR::Instruction *currentInstruction, TR::CodeGenerator *cg);
 
    /**
     * @brief Estimates the length of generated binary
