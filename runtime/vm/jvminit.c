@@ -1759,6 +1759,21 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 			}
 #endif
+			{
+				IDATA restoreStateIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XRESTORERAMSTATE, NULL);
+				IDATA saveStateIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XSAVERAMSTATE, NULL);
+				char *optionValue = NULL;
+				// If both restore (warm run) and save (cold run) are specified save state takes precedence
+				if (saveStateIndex >= 0) {
+					GET_OPTION_VALUE(saveStateIndex, '=', &optionValue);
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_COLD_RUN;
+				}
+				else if (restoreStateIndex >= 0) {
+					GET_OPTION_VALUE(restoreStateIndex, '=', &optionValue);
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_WARM_RUN;
+				}
+				vm->ramStateFilePath = optionValue;
+			}
 
 			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XDFPBD, NULL) >= 0) {
 				vm->runtimeFlags |= J9_RUNTIME_DFPBD;
