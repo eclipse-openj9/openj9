@@ -29,6 +29,13 @@ add_library(j9dyn_generic_test STATIC
 	${j9vm_SOURCE_DIR}/vm/ModularityHashTables.c
 	${j9vm_SOURCE_DIR}/vm/dllsup.c
 )
+
+# We need to add an explicit dependency since CMake doesn't track dependencies for generated files across directories
+add_dependencies(j9dyn_generic_test trc_j9vm)
+
+# And add the vm binary dir to our include path
+target_include_directories(j9dyn_generic_test PRIVATE ${j9vm_BINARY_DIR}/vm)
+
 target_link_libraries(j9dyn_generic_test
 	PRIVATE
 		j9vm_interface
