@@ -42,7 +42,7 @@ static J9ROMClass * createROMClassFromClassFile (J9VMThread *currentThread, J9Lo
 static void throwNoClassDefFoundError (J9VMThread* vmThread, J9LoadROMClassData * loadData);
 static void reportROMClassLoadEvents (J9VMThread* vmThread, J9ROMClass* romClass, J9ClassLoader* classLoader);
 static J9Class* checkForExistingClass (J9VMThread* vmThread, J9LoadROMClassData * loadData);
-static UDATA callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediateClassData, UDATA intermediateClassDataLength, UDATA translationFlags, UDATA classFileBytesReplacedByRIA, UDATA classFileBytesReplacedByRCA, J9TranslationLocalBuffer *localBuffer);
+static UDATA callDynamicLoader(J9VMThread* vmThread, J9LoadROMClassData *loadData, U_8 * intermediateClassData, UDATA intermediateClassDataLength, UDATA translationFlags, UDATA classFileBytesReplacedByRIA, UDATA classFileBytesReplacedByRCA, J9TranslationLocalBuffer *localBuffer);
 
 static BOOLEAN hasSamePackageName(J9ROMClass *anonROMClass, J9ROMClass *hostROMClass);
 static char* createErrorMessage(J9VMThread *vmStruct, J9ROMClass *anonROMClass, J9ROMClass *hostROMClass, const char* errorMsg);
@@ -163,7 +163,7 @@ internalDefineClass(
 		/* localBuffer should not be NULL */
 		Trc_BCU_Assert_True(NULL != localBuffer);
 
-		result = vm->internalVMFunctions->internalCreateRAMClassFromROMClass(vmThread, classLoader, romClass, options,
+		result = J9_VM_FUNCTION(vmThread, internalCreateRAMClassFromROMClass)(vmThread, classLoader, romClass, options,
 				NULL, loadData.protectionDomain, NULL, (IDATA)localBuffer->entryIndex, (IDATA)localBuffer->loadLocationType, NULL, hostClass);
 		if (NULL == result) {
 			/* ramClass creation failed - remember the orphan romClass for next time */
@@ -234,11 +234,11 @@ throwNoClassDefFoundError(J9VMThread* vmThread, J9LoadROMClassData * loadData)
 
 		Trc_BCU_throwNoClassDefFoundError_ErrorBuf(vmThread, errorBuf);
 
-		vm->internalVMFunctions->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (char *) errorBuf);
+		J9_VM_FUNCTION(vmThread, setCurrentExceptionUTF)(vmThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (char *) errorBuf);
 
 		j9mem_free_memory(errorBuf);
 	} else {
-		vm->internalVMFunctions->setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, NULL);
+		J9_VM_FUNCTION(vmThread, setCurrentException)(vmThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, NULL);
 	}
 
 	Trc_BCU_throwNoClassDefFoundError_Exit(vmThread);
@@ -552,7 +552,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* TODO toss tracepoint?? Trc_BCU_internalLoadROMClass_AttemptExisting(vmThread, segment, romAvailable, bytesRequired); */
 	/* Attempt dynamic load */
-	result = callDynamicLoader(vm, loadData, intermediateClassData, intermediateClassDataLength, translationFlags, classFileBytesReplacedByRIA, classFileBytesReplacedByRCA, localBuffer);
+	result = callDynamicLoader(vmThread, loadData, intermediateClassData, intermediateClassDataLength, translationFlags, classFileBytesReplacedByRIA, classFileBytesReplacedByRCA, localBuffer);
 
 	/* Free the class file bytes if necessary */
 doneFreeMem:
@@ -657,8 +657,9 @@ done:
 }
 
 static UDATA
-callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediateClassData, UDATA intermediateClassDataLength, UDATA translationFlags, UDATA classFileBytesReplacedByRIA, UDATA classFileBytesReplacedByRCA, J9TranslationLocalBuffer *localBuffer)
+callDynamicLoader(J9VMThread *vmThread, J9LoadROMClassData *loadData, U_8 * intermediateClassData, UDATA intermediateClassDataLength, UDATA translationFlags, UDATA classFileBytesReplacedByRIA, UDATA classFileBytesReplacedByRCA, J9TranslationLocalBuffer *localBuffer)
 {
+	J9JavaVM * vm = vmThread->javaVM;
 	BOOLEAN createIntermediateROMClass = FALSE;
 	UDATA result = BCT_ERR_NO_ERROR;
 	U_8 *intermediateData = NULL;
@@ -758,8 +759,7 @@ callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediat
 		&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
 		&& (NULL != loadData->romClass)
 	) {
-		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
-		J9Module *module = vm->internalVMFunctions->findModuleForPackage(currentThread, loadData->classLoader,
+		J9Module *module = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, loadData->classLoader,
 				loadData->className, (U_32) packageNameLength(loadData->romClass));
 		if (NULL != module) {
 			module->isLoose = TRUE;
@@ -903,10 +903,10 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 		/*Trc_BCU_internalLoadROMClass_NoMemory(vmThread);*/
 	} else {
 		if (errorUTF == NULL) {
-			vm->internalVMFunctions->setCurrentException(currentThread, exceptionNumber, NULL);
+			J9_VM_FUNCTION(currentThread, setCurrentException)(currentThread, exceptionNumber, NULL);
 		} else {
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			vm->internalVMFunctions->setCurrentExceptionUTF(currentThread, exceptionNumber, (const char*)errorUTF);
+			J9_VM_FUNCTION(currentThread, setCurrentExceptionUTF)(currentThread, exceptionNumber, (const char*)errorUTF);
 			j9mem_free_memory(errorUTF);
 		}
 	}
@@ -991,12 +991,11 @@ static void
 setIllegalArgumentExceptionHostClassAnonClassHaveDifferentPackages(J9VMThread *vmStruct, J9ROMClass *anonROMClass, J9ROMClass *hostROMClass) {
 	PORT_ACCESS_FROM_VMC(vmStruct);
 	const J9JavaVM *vm = vmStruct->javaVM;
-	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	/* Construct error string */
 	const char *errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES, NULL);
 	char *buf = createErrorMessage(vmStruct, anonROMClass, hostROMClass, errorMsg);
-	vmFuncs->setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, buf);
+	J9_VM_FUNCTION(vmStruct, setCurrentExceptionUTF)(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, buf);
 	j9mem_free_memory(buf);
 }
 
@@ -1025,7 +1024,7 @@ freeAnonROMClass(J9JavaVM *vm, J9ROMClass *romClass) {
 					 */
 					*previousSegmentPointerROM = nextSegmentROM;
 					/* Free memory segment corresponding to the ROM class. */
-					vm->internalVMFunctions->freeMemorySegment(vm, segmentROM, 1);
+					J9_VM_FUNCTION_VIA_JAVAVM(vm, freeMemorySegment)(vm, segmentROM, 1);
 					break;
 				}
 				previousSegmentPointerROM = &segmentROM->nextSegmentInClassLoader;
