@@ -27,6 +27,7 @@
 #include "codegen/ARM64SystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 J9::ARM64::CodeGenerator::CodeGenerator() :
       J9::CodeGenerator()
@@ -68,4 +69,28 @@ TR::Recompilation *
 J9::ARM64::CodeGenerator::allocateRecompilationInfo()
    {
    return TR_ARM64Recompilation::allocate(self()->comp());
+   }
+
+uint32_t
+J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node)
+   {
+   TR::CodeGenerator *cg = self();
+   uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
+
+   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
+      {
+      target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
+
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
+                      "Target address is out of range");
+      }
+
+   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(
+                             cursor,
+                             (uint8_t *)symRef,
+                             TR_HelperAddress, cg),
+                             __FILE__, __LINE__, node);
+
+   uintptr_t distance = target - (uintptr_t)cursor;
+   return TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x3ffffff); /* imm26 */
    }
