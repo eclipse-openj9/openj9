@@ -25,6 +25,7 @@ add_executable(cfdump
 	main.c
 	pvdump.c
 	romdump.c
+	stubs.c
 
 	${j9vm_BINARY_DIR}/vm/ut_j9vm.c
 	${j9vm_SOURCE_DIR}/vm/stringhelpers.cpp
