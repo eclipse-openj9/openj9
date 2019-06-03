@@ -8355,4 +8355,10 @@ written authorization of the copyright holder.
 		return builder.toString();
 	}	
 /*[ENDIF] Java12 */
+	
+/*[IF Java13]*/
+	boolean isLatin1() {
+	    return COMPACT_STRINGS && coder == LATIN1;
+	}
+/*[ENDIF] Java13 */
 }
