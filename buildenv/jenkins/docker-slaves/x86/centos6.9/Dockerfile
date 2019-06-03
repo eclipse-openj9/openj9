@@ -118,7 +118,8 @@ RUN yum -y update \
   && yum clean all \
   && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/cc \
   && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/gcc \
-  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++
+  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++ \
+  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/c++
 
 # Dependency required by test framework
 RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
