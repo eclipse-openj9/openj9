@@ -40,4 +40,21 @@
 			<group>functional</group>
 		</groups>
 	</test>
+	<test>
+		<testCaseName>cmdLineTester_loadLegacyLibraryTests</testCaseName>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DJAVA_HOME=$(Q)$(JAVA_HOME)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
+		-DPATHSEP=\\\\ -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)loadLibraryTest.jar$(Q) \
+		-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
+		-config $(Q)$(TEST_RESROOT)$(D)loadLibraryTest.xml$(Q) \
+		-nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<platformRequirements>os.osx</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+	</test>
 </playlist>
