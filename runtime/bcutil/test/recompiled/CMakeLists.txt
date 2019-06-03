@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-set_source_files_properties(${j9vm_BINARY_DIR}/bcutil/ut_j9bcu.c PROPERTIES GENERATED TRUE)
+set_source_files_properties(${j9vm_BINARY_DIR}/vm/ut_j9vm.c PROPERTIES GENERATED TRUE)
 add_library(j9dyn_generic_test STATIC
 
 	${j9vm_BINARY_DIR}/vm/ut_j9vm.c
