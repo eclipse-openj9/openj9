@@ -8355,4 +8355,15 @@ written authorization of the copyright holder.
 		return builder.toString();
 	}	
 /*[ENDIF] Java12 */
+	
+/*[IF Java13]*/
+	/*
+	 * Determine if current String object is LATIN1.
+	 * 
+	 * @return true if it is LATIN1, otherwise false.
+	 */
+	boolean isLatin1() {
+		return LATIN1 == coder();
+	}
+/*[ENDIF] Java13 */
 }
