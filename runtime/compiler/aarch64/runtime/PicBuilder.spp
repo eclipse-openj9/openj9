@@ -103,6 +103,7 @@ L_refreshHelper:
 	cmp	x3, x4
 	bne	L_outOfRange			// distance is out of +/-128MB range
 
+L_rewriteBranch:
 	ldr	w2, [x0]			// fetch branch instruction
 	ubfx	x1, x3, #2, #26			// distance >> 2, masking out sign bits
 	and	w2, w2, #0xFC000000		// mask out branch distance
