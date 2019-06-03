@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,14 @@
 ################################################################################
 
 set_source_files_properties(${j9vm_BINARY_DIR}/bcutil/ut_j9bcu.c PROPERTIES GENERATED TRUE)
-add_library(j9dyn_generic_test STATIC)
+add_library(j9dyn_generic_test STATIC
+
+	${j9vm_BINARY_DIR}/vm/ut_j9vm.c
+	${j9vm_SOURCE_DIR}/vm/stringhelpers.cpp
+	${j9vm_SOURCE_DIR}/vm/KeyHashTable.c
+	${j9vm_SOURCE_DIR}/vm/ModularityHashTables.c
+	${j9vm_SOURCE_DIR}/vm/dllsup.c
+)
 target_link_libraries(j9dyn_generic_test
 	PRIVATE
 		j9vm_interface
