@@ -64,7 +64,7 @@
 
 	<target name="generate.invokeStatic" depends="compile.generator" description="Run SimpleInvokeStaticGenerator to generate bytecode" >
 		<echo>Running SimpleInvokeStaticGenerator</echo>
-		<property name="build.javaexecutable.java" value="${JAVA_BIN}/java" />
+		<property name="build.javaexecutable.java" value="${TEST_JDK_HOME}/bin/java" />
 		<java classname="org.openj9.test.jsr335.interfaceStaticMethod.SimpleInvokeStaticGenerator" failonerror="true" fork="true" logError="true"
 				jvm="${build.javaexecutable.java}">
 			<classpath>

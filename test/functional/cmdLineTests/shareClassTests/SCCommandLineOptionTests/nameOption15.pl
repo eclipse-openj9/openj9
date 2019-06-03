@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2018 IBM Corp. and others
+# Copyright (c) 2009, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ use strict;
 use warnings;
 
 sub nameOption15test{
-	my ($java_bin,$cache_max_len_string)=@_;
+	my ($java_exe,$cache_max_len_string)=@_;
 	my $test_name = "nameOption15";
 
 	my $append_token=get_short_string_for_group();
@@ -44,12 +44,12 @@ sub nameOption15test{
 	if (is_windows_OS( )){
 		my $error_msg = "Escape character g not valid for cache name";
 		$expanded_token= "  "; #  dummy string with the same length as append_token
-		long_cache_name_fail_cases_test($java_bin, $test_name, $cache_max_len_string, $error_msg,
+		long_cache_name_fail_cases_test($java_exe, $test_name, $cache_max_len_string, $error_msg,
 			$append_token, $expanded_token);
 	}else {
 		my $group_name=get_group_name();
 		$expanded_token = $group_name;
-		cache_name_with_fixed_length_test($java_bin, $test_name, $cache_max_len_string, $append_token, 
+		cache_name_with_fixed_length_test($java_exe, $test_name, $cache_max_len_string, $append_token, 
 			$expanded_token);
 	}
 }		
