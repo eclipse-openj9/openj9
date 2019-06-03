@@ -257,7 +257,7 @@ checkForExistingClass(J9VMThread* vmThread, J9LoadROMClassData * loadData)
 
 	Trc_BCU_checkForExistingClass_Entry(vmThread, loadData->className, loadData->classLoader);
 
-	existingClass = hashClassTableAt(
+	existingClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(
 		loadData->classLoader,
 		loadData->className,
 		loadData->classNameLength);
@@ -759,7 +759,7 @@ callDynamicLoader(J9VMThread *vmThread, J9LoadROMClassData *loadData, U_8 * inte
 		&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
 		&& (NULL != loadData->romClass)
 	) {
-		J9Module *module = findModuleForPackage(vmThread, loadData->classLoader,
+		J9Module *module = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, loadData->classLoader,
 				loadData->className, (U_32) packageNameLength(loadData->romClass));
 		if (NULL != module) {
 			module->isLoose = TRUE;
