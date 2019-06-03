@@ -94,7 +94,7 @@ RUN cd /usr/local \
 # Create links for c++,g++,cc,gcc and for GCC to access the C library
 # There is a true at the end of the library link because it throws an error and it allows the container to be built
 RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
-  && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include | true \ 
+  && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include | true \
   && ln -s /usr/local/bin/g++-7.4 /usr/bin/g++-7 \
   && ln -s /usr/local/bin/gcc-7.4 /usr/bin/gcc-7
 
@@ -177,7 +177,8 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
-  && git fetch --all
+  && git fetch --all \
+  && git gc --aggressive --prune=all
 
 # Expose SSH port and run SSH
 EXPOSE 22
