@@ -64,13 +64,15 @@ struct J9VMThread;
 	<event>
 		<name>J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING</name>
 		<description>
-			Triggered when the object allocations sampling threshold is reached
+			Triggered when the object allocations sampling threshold is reached. The current thread has VM access,
+			but a handler may safely release and reacquire access.  If VM access is released, the listener is
+			responsible for keeping the object up-to-date.
 		</description>
 		<struct>MM_ObjectAllocationSamplingEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="U_64" name="timestamp" description="time of event" />
 		<data type="UDATA" name="eventid" description="unique identifier for event" />
-		<data type="j9object_t" name="object" description="the object which has been allocated." />
+		<data type="j9object_t" name="object" return="true" description="the object which has been allocated." />
 		<data type="struct J9Class*" name="clazz" description="the class of the object just allocated" />
 		<data type="uintptr_t" name="objectSize" description="the size of the object just allocated" />
 	</event>
