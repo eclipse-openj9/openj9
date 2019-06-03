@@ -43,8 +43,8 @@ public class soae001 {
 			System.out.println("Allocated a byte array with size " + bytes.length);
 			
 			int samplingResult = check();
-			if (1 != samplingResult) {
-				System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.check() failed, expected 1 but got: " + samplingResult);
+			if (samplingResult < 1) {
+				System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.check() failed, expected 1+ but got: " + samplingResult);
 			} else {
 				jvmtiResult = disable();
 				if (0 != jvmtiResult) {
