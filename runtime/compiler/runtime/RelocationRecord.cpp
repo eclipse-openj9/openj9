@@ -1124,7 +1124,7 @@ TR_RelocationRecordConstantPoolWithIndex::getSpecialMethodFromCP(TR_RelocationRu
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
 
    J9VMThread *vmThread = reloRuntime->currentThread();
-   TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) jitResolveSpecialMethodRef(vmThread, cp, cpIndex, J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+   TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) jitResolveSpecialMethodRef(vmThread, cp, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
    RELO_LOG(reloLogger, 6, "\tgetMethodFromCP: found special method %p\n", method);
    return method;
    }
@@ -1143,7 +1143,7 @@ TR_RelocationRecordConstantPoolWithIndex::getVirtualMethodFromCP(TR_RelocationRu
       UDATA vTableOffset = javaVM->internalVMFunctions->resolveVirtualMethodRefInto(javaVM->internalVMFunctions->currentVMThread(javaVM),
                                                                                    cp,
                                                                                    cpIndex,
-                                                                                   J9_RESOLVE_FLAG_AOT_LOAD_TIME,
+                                                                                   J9_RESOLVE_FLAG_JIT_COMPILE_TIME,
                                                                                    &method,
                                                                                    NULL);
       }
@@ -1175,7 +1175,7 @@ TR_RelocationRecordConstantPoolWithIndex::getStaticMethodFromCP(TR_RelocationRun
    TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) jitResolveStaticMethodRef(javaVM->internalVMFunctions->currentVMThread(javaVM),
                                                                                      cp,
                                                                                      cpIndex,
-                                                                                     J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+                                                                                     J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
    RELO_LOG(reloLogger, 6, "\tgetMethodFromCP: found static method %p\n", method);
    return method;
    }
@@ -1199,7 +1199,7 @@ TR_RelocationRecordConstantPoolWithIndex::getInterfaceMethodFromCP(TR_Relocation
       interfaceClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(reloRuntime->currentThread(),
                                                                                             cp,
                                                                                             romMethodRef->classRefCPIndex,
-                                                                                            J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+                                                                                            J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
@@ -1250,12 +1250,12 @@ TR_RelocationRecordConstantPoolWithIndex::getAbstractMethodFromCP(TR_RelocationR
       abstractClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(reloRuntime->currentThread(),
                                                                                             cp,
                                                                                             romMethodRef->classRefCPIndex,
-                                                                                            J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+                                                                                            J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
 
       vTableOffset = javaVM->internalVMFunctions->resolveVirtualMethodRefInto(reloRuntime->currentThread(),
                                                                               cp,
                                                                               cpIndex,
-                                                                              J9_RESOLVE_FLAG_AOT_LOAD_TIME,
+                                                                              J9_RESOLVE_FLAG_JIT_COMPILE_TIME,
                                                                               &method,
                                                                               NULL);
       }
@@ -1652,7 +1652,7 @@ TR_RelocationRecordClassAddress::computeNewClassAddress(TR_RelocationRuntime *re
 
       {
       TR::VMAccessCriticalSection computeNewClassObject(reloRuntime->fej9());
-      resolvedClass = javaVM->internalVMFunctions->resolveClassRef(vmThread, (J9ConstantPool *)newConstantPool, cpIndex, J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+      resolvedClass = javaVM->internalVMFunctions->resolveClassRef(vmThread, (J9ConstantPool *)newConstantPool, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
    RELO_LOG(reloRuntime->reloLogger(), 6,"\tcomputeNewClassObject: resolvedClass %p\n", resolvedClass);
@@ -2036,7 +2036,7 @@ TR_RelocationRecordInlinedAllocation::preparePrivateData(TR_RelocationRuntime *r
       clazz = javaVM->internalVMFunctions->resolveClassRef(javaVM->internalVMFunctions->currentVMThread(javaVM),
                                                                     newConstantPool,
                                                                     cpIndex(reloTarget),
-                                                                    J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+                                                                    J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
    bool inlinedCodeIsOkay = false;
@@ -3131,7 +3131,7 @@ TR_RelocationRecordValidateClass::getClassFromCP(TR_RelocationRuntime *reloRunti
       definingClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(javaVM->internalVMFunctions->currentVMThread(javaVM),
                                                                                            (J9ConstantPool *) void_cp,
                                                                                            cpIndex(reloTarget),
-                                                                                           J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+                                                                                           J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
    return definingClass;
