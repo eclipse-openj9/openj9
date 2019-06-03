@@ -534,6 +534,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _valueNumberInfo            = NULL;
    _otherDefsForLoopAllocation = NULL;
    _methodSymbol               = NULL;
+   _nodeUsesThroughAternary    = NULL;
    _repeatAnalysis             = false;
    _somethingChanged           = false;
    _inBigDecimalAdd            = false;
@@ -1702,6 +1703,9 @@ bool TR_EscapeAnalysis::isEscapePointCold(Candidate *candidate, TR::Node *node)
 void TR_EscapeAnalysis::checkDefsAndUses()
    {
    Candidate *candidate, *next;
+
+   gatherUsesThroughAternary();
+
    for (candidate = _candidates.getFirst(); candidate; candidate = next)
       {
       next = candidate->getNext();
@@ -1945,7 +1949,117 @@ void TR_EscapeAnalysis::checkDefsAndUses()
       }
    }
 
+void TR_EscapeAnalysis::printUsesThroughAternary(void)
+   {
+   if (trace())
+      {
+      if (_nodeUsesThroughAternary)
+         {
+         traceMsg(comp(), "\nNodes used through aternary operations\n");
 
+         for (auto mi = _nodeUsesThroughAternary->begin(); mi != _nodeUsesThroughAternary->end(); mi++)
+            {
+            TR::Node *key = mi->first;
+            int32_t nodeIdx = key->getGlobalIndex();
+
+            traceMsg(comp(), "   node [%p] n%dn is used by {", key, nodeIdx);
+
+            bool first = true;
+
+            for (auto di = mi->second->begin(), end = mi->second->end(); di != end; di++)
+               {
+               TR::Node *aternaryNode = *di;
+               traceMsg(comp(), "%s[%p] n%dn", (first ? "" : ", "), aternaryNode,
+                        aternaryNode->getGlobalIndex());
+               first = false;
+               }
+
+            traceMsg(comp(), "}\n");
+            }
+         }
+      else
+         {
+         traceMsg(comp(), "\nNo nodes used through aternary operations\n");
+         }
+      }
+   }
+
+void TR_EscapeAnalysis::gatherUsesThroughAternary(void)
+   {
+   TR::NodeChecklist visited(comp());
+   TR::TreeTop *tt = comp()->getStartTree();
+
+   for (; tt; tt = tt->getNextTreeTop())
+      {
+      TR::Node *node = tt->getNode();
+      gatherUsesThroughAternaryImpl(node, visited);
+      }
+
+   if (trace())
+      {
+      printUsesThroughAternary();
+      }
+   }
+
+void TR_EscapeAnalysis::gatherUsesThroughAternaryImpl(TR::Node *node, TR::NodeChecklist& visited)
+   {
+   if (visited.contains(node))
+      {
+      return;
+      }
+   visited.add(node);
+
+   for (int32_t i=0; i<node->getNumChildren(); i++)
+      {
+      gatherUsesThroughAternaryImpl(node->getChild(i), visited);
+      }
+
+   // If this is an aternary operation, for each of its child operands (other than
+   // the condition) add the aternary node to the array of nodes that use that child
+   if (node->getOpCode().isTernary() && node->getDataType() == TR::Address)
+      {
+      associateAternaryWithChild(node, 1);
+      associateAternaryWithChild(node, 2);
+      }
+   }
+
+void TR_EscapeAnalysis::associateAternaryWithChild(TR::Node *aternaryNode, int32_t idx)
+   {
+   TR::Region &stackMemoryRegion = trMemory()->currentStackRegion();
+   TR::Node *child = aternaryNode->getChild(idx);
+
+   NodeDeque *currChildUses;
+
+   if (NULL == _nodeUsesThroughAternary)
+      {
+      _nodeUsesThroughAternary =
+            new (trStackMemory()) NodeToNodeDequeMap((NodeComparator()),
+                                                     NodeToNodeDequeMapAllocator(stackMemoryRegion));
+      }
+
+   auto search = _nodeUsesThroughAternary->find(child);
+   bool nodeAlreadyMapsToAternary = false;
+
+   if (_nodeUsesThroughAternary->end() != search)
+      {
+      currChildUses = search->second;
+
+      // Does NodeDeque already contain this aternary node?
+      nodeAlreadyMapsToAternary =
+            (std::find(search->second->begin(), search->second->end(),
+                       aternaryNode) != search->second->end());
+      }
+   else
+      {
+      currChildUses = new (trStackMemory()) NodeDeque(stackMemoryRegion);
+      (*_nodeUsesThroughAternary)[child] = currChildUses;
+      }
+
+   if (!nodeAlreadyMapsToAternary)
+      {
+      currChildUses->push_back(aternaryNode);
+      }
+   }
 
 bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *node, Candidate *candidate, TR::Node *indirectStore, TR::NodeChecklist& visited, int32_t baseChildVN)
    {
@@ -2104,7 +2218,53 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
    }
 
 
+bool TR_EscapeAnalysis::checkUsesThroughAternary(TR::Node *node, Candidate *candidate)
+   {
+   bool returnValue = true;
 
+   if (_nodeUsesThroughAternary)
+      {
+      auto search = _nodeUsesThroughAternary->find(node);
+
+      // Is this node referenced directly by any aternary nodes?
+      if (_nodeUsesThroughAternary->end() != search)
+         {
+         for (auto di = search->second->begin(), end = search->second->end(); di != end; di++)
+            {
+            TR::Node* aternaryNode = *di;
+            int32_t aternaryVN = _valueNumberInfo->getValueNumber(aternaryNode);
+            int32_t i;
+
+            // Check whether this aternary has already been accounted for with this candidate
+            for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
+               {
+               if (candidate->_valueNumbers->element(i) == aternaryVN)
+                  {
+                  break;
+                  }
+               }
+
+            // If this aternary has not been accounted for with this candidate, check for its uses
+            if (i < 0)
+               {
+               candidate->_valueNumbers->add(aternaryVN);
+
+               if (trace())
+                  {
+                  traceMsg(comp(), "   Checking uses of node %p through aternary operation %p for candidate %p\n", node, aternaryNode, candidate->_node);
+                  }
+
+               if (!checkDefsAndUses(aternaryNode, candidate))
+                  {
+                  returnValue = false;
+                  }
+               }
+            }
+         }
+      }
+
+   return returnValue;
+   }
 
 
 bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
@@ -2112,9 +2272,16 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
    TR::Node *next;
    _useDefInfo->buildDefUseInfo();
    bool returnValue = true;
+
+   if (_nodeUsesThroughAternary && !checkUsesThroughAternary(node, candidate))
+      {
+      returnValue = false;
+      }
+
    for (next = _valueNumberInfo->getNext(node); next != node; next = _valueNumberInfo->getNext(next))
       {
       int32_t udIndex = next->getUseDefIndex();
+
       if (_useDefInfo->isDefIndex(udIndex))
          {
          if (next->getOpCode().isStore() && next->getSymbol()->isAutoOrParm())
@@ -2186,6 +2353,14 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                      }
                   }
                }
+            }
+         }
+
+      if (_useDefInfo->isUseIndex(udIndex))
+         {
+         if (_nodeUsesThroughAternary && !checkUsesThroughAternary(next, candidate))
+            {
+            returnValue = false;
             }
          }
       }
