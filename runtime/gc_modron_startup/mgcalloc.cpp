@@ -61,7 +61,7 @@ extern "C" {
 static uintptr_t stackIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 static void dumpStackFrames(J9VMThread *currentThread);
 static void traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields);
-static void traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
+static J9Object * traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
 static bool traceObjectCheck(J9VMThread *vmThread);
 
 #define STACK_FRAMES_TO_DUMP	8
@@ -215,7 +215,7 @@ traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t obj
 	return;
 }
 
-static void
+static J9Object *
 traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
 {
 	if(traceObjectCheck(vmThread)){
@@ -246,6 +246,7 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 		 */
 		env->_oolTraceAllocationBytes = (env->_oolTraceAllocationBytes) % byteGranularity;
 	}
+	return object;
 }
 
 /* Required to check if we're going to trace or not since a java stack trace needs
@@ -436,7 +437,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 		dumpStackFrames(vmThread);
 		TRIGGER_J9HOOK_MM_PRIVATE_OUT_OF_MEMORY(extensions->privateHookInterface, vmThread->omrVMThread, j9time_hires_clock(), J9HOOK_MM_PRIVATE_OUT_OF_MEMORY, memorySpace, memorySpace->getName());
 	} else {
-		traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired);
+		objectPtr = traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired);
 		if (extensions->isStandardGC()) {
 			if (OMR_GC_ALLOCATE_OBJECT_TENURED == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_TENURED)) {
 				/* Object must be allocated in Tenure if it is requested */
@@ -559,7 +560,7 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 				highThreshold);
 		}
 		
-		traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired, (uintptr_t)numberOfIndexedFields);
+		objectPtr = traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired, (uintptr_t)numberOfIndexedFields);
 		if (extensions->isStandardGC()) {
 			if (OMR_GC_ALLOCATE_OBJECT_TENURED == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_TENURED)) {
 				/* Object must be allocated in Tenure if it is requested */
