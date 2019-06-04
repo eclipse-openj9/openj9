@@ -2329,11 +2329,17 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
          {
          if (!self()->getOption(TR_DisablePersistIProfile))
             {
-            TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-            static char * dnipdsp = feGetEnv("TR_DisableNoIProfilerDuringStartupPhase");
-            if (compInfo->isWarmSCC() == TR_yes && !dnipdsp) // turn off Iprofiler only for the warm runs
+            // Turn off Iprofiler for the warm runs, but not if we cache only bootstrap classes
+            // This is because we may be missing IProfiler information for non-bootstrap classes
+            // that could not be stored in SCC
+            if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
                {
-               self()->setOption(TR_NoIProfilerDuringStartupPhase);
+               TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+               static char * dnipdsp = feGetEnv("TR_DisableNoIProfilerDuringStartupPhase");
+               if (compInfo->isWarmSCC() == TR_yes && !dnipdsp)
+                  {
+                  self()->setOption(TR_NoIProfilerDuringStartupPhase);
+                  }
                }
             }
          }
