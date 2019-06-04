@@ -345,6 +345,9 @@ public:
    void setSupportsBigDecimalLongLookasideVersioning() { _flags3.set(SupportsBigDecimalLongLookasideVersioning);}
 
    bool constLoadNeedsLiteralFromPool(TR::Node *node) { return false; }
+   
+   // Java, likely Z
+   bool supportsTrapsInTMRegion() { return true; }
 
    // --------------------------------------------------------------------------
    // GPU
