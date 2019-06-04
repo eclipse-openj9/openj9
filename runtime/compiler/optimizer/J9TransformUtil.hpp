@@ -48,7 +48,7 @@ class OMR_EXTENSIBLE TransformUtil : public OMR::TransformUtilConnector
 public:
    static TR::TreeTop *generateRetranslateCallerWithPrepTrees(TR::Node *node, TR_PersistentMethodInfo::InfoBits reason, TR::Compilation *comp);
    static int32_t getLoopNestingDepth(TR::Compilation *comp, TR::Block *block);
-   static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp);
+   static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp);
 
    static TR::Node *generateArrayElementShiftAmountTrees(
          TR::Compilation *comp,
