@@ -260,8 +260,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool inlineCryptoMethod(TR::Node *node, TR::Register *&resultReg);
 #endif
 
-   void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp);
-   //OVERLOAD THE ABOVE FUNCTION
    void incRefCountForOpaquePseudoRegister(TR::Node * node);
 
    /** \brief
