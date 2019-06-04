@@ -1601,7 +1601,7 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    }
 
 bool
-TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key)
+TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key, TR_OpaqueMethodBlock *method)
    {
    // This method should be called whenever this resolved method is fetched from
    // cache during AOT compilation, because
@@ -1611,9 +1611,7 @@ TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(cons
    int32_t cpIndex = key.cpIndex;
    TR_OpaqueClassBlock *classObject = key.classObject;
    bool added = false;
-   TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) _ramMethod;
-   TR_ResolvedJ9Method *owner = static_cast<TR_ResolvedJ9Method *>(owningMethod());
-   J9ConstantPool *cp = (J9ConstantPool *) owner->cp();
+   J9ConstantPool *cp = (J9ConstantPool *) static_cast<TR_ResolvedJ9Method *>(this)->cp();
    switch (key.type)
       {
       case VirtualFromCP:
@@ -1625,7 +1623,7 @@ TR_ResolvedJ9JITaaSServerMethod::addValidationRecordForCachedResolvedMethod(cons
       case Interface:
          added = svm->addInterfaceMethodFromCPRecord(
             method,
-            (TR_OpaqueClassBlock *) ((TR_J9VM *) _fe)->getClassFromMethodBlock(owner->getPersistentIdentifier()),
+            (TR_OpaqueClassBlock *) ((TR_J9VM *) _fe)->getClassFromMethodBlock(getPersistentIdentifier()),
             classObject,
             cpIndex);
          break;
