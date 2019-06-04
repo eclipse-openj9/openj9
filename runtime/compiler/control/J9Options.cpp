@@ -850,9 +850,6 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_iprofilerSamplesBeforeTurningOff, 0, "P%d", NOT_IN_SUBSET},
    {"itFileNamePrefix=",  "L<filename>\tprefix for itrace filename",
         TR::Options::setStringForPrivateBase, offsetof(TR_JitPrivateConfig,itraceFileNamePrefix), 0, "P%s"},
-#if defined(AIXPPC)
-   {"j2prof",             0, SET_JITCONFIG_RUNTIME_FLAG(J9JIT_J2PROF) },
-#endif
    {"jProfilingEnablementSampleThreshold=", "M<nnn>\tNumber of global samples to allow generation of JProfiling bodies",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_jProfilingEnablementSampleThreshold, 0, "F%d", NOT_IN_SUBSET },
    {"kcaoffsets",         "I\tGenerate a header file with offset data for use with KCA", TR::Options::kcaOffsets, 0, 0, "F" },

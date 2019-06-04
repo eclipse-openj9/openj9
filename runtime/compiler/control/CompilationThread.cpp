@@ -112,8 +112,6 @@ static void printCompFailureInfo(TR::Compilation * comp, const char * reason);
 
 #if defined(AIXPPC)
 #include <unistd.h>
-extern FILE *j2Profile;
-extern void  j2Prof_methodReport(TR_Method * vmMethod, TR::Compilation * comp);
 #endif
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
@@ -9607,11 +9605,6 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
       if (!vm.isAOT_DEPRECATED_DO_NOT_USE())
          {
-#if defined(AIXPPC)
-         if (j2Profile != NULL)
-            j2Prof_methodReport(compilee->convertToMethod(), compiler);
-#endif
-
          if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
             {
             OMR::CodeCacheMethodHeader *ccMethodHeader;
