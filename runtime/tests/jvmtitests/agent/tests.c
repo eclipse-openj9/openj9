@@ -134,6 +134,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "soae001", soae001, "com.ibm.jvmti.tests.samplingObjectAllocation.soae001", "Test JEP331 low-overhead sampling heap object allocation" },
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	{ "gsp001", gsp001, "com.ibm.jvmti.tests.getSystemProperty.gsp001", "Ensure JVMTI GetSystemProperty can retrieve certain system properties at early phrase" },
+	{ "ee001", ee001, "com.ibm.jvmti.tests.eventException.ee001", "Ensure only single JVMTI Exception event gets generated with JNI frame before handler" },
 	{ NULL, NULL, NULL, NULL }
 };
 

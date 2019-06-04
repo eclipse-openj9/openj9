@@ -173,6 +173,8 @@ add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/samplingObjectAllocation/soae001.c
 	
 	com/ibm/jvmti/tests/getSystemProperty/gsp001.c
+
+	com/ibm/jvmti/tests/eventException/ee001.c
 )
 
 
