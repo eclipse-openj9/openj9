@@ -373,11 +373,17 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 #if JAVA_SPEC_VERSION >= 11
 		if (newCapabilities.can_generate_sampled_object_alloc_events) {
+			if (J9_ARE_ANY_BITS_SET(jvmtiData->flags, J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED)) {
+				rc = JVMTI_ERROR_NOT_AVAILABLE;
+				goto fail;
+			}
+
 			/* Initial sampling interval is MM_GCExtensions::oolObjectSamplingBytesGranularity which is 16M by default
 			 * or set by command line option -Xgc:allocationSamplingGranularity.
 			 * Set it to 512KB which is default sampling interval as per JEP 331 specification.
 			 */
 			vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(currentThread, 512 * 1024);
+			jvmtiData->flags |= J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED;
 		}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
@@ -453,8 +459,8 @@ jvmtiRelinquishCapabilities(jvmtiEnv* env,
 	J9JavaVM * vm = j9env->vm;
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 	jvmtiCapabilities removedCapabilities;
-	UDATA i;
-	jvmtiError rc;
+	UDATA i = 0;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiRelinquishCapabilities_Entry(env);
 
@@ -466,6 +472,13 @@ jvmtiRelinquishCapabilities(jvmtiEnv* env,
 	/* Also prevents multiple threads from releasing capabilities in the same agent */
 
 	omrthread_monitor_enter(jvmtiData->mutex);
+
+#if JAVA_SPEC_VERSION >= 11
+		if (capabilities_ptr->can_generate_sampled_object_alloc_events) {
+			/* The default sampling interval is not changed. */
+			jvmtiData->flags &= ~J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED;
+		}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	/* Verify the requested capabilities */
 
@@ -483,7 +496,6 @@ jvmtiRelinquishCapabilities(jvmtiEnv* env,
 	}
 
 	omrthread_monitor_exit(jvmtiData->mutex);
-	rc = JVMTI_ERROR_NONE;
 
 done:
 	TRACE_JVMTI_RETURN(jvmtiRelinquishCapabilities);
