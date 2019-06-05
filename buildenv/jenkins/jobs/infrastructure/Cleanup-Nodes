@@ -233,14 +233,15 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 
                         if (aComputer.isOffline() && !(aComputer.getOfflineCause() instanceof OfflineCause.UserCause)) {
                             // reconnect slave (asynchronously)
-                            aComputer.connect(false)
-                            aComputer.setTemporarilyOffline(false, null)
-                            aComputer.waitUntilOnline()
-                        }
+                            println("${label}: Reconnecting...")
+                            aComputer.connect(true)
 
-                        if (aComputer.isOffline()) {
-                            echo "Node: ${JENKINS_URL}${aComputer.getUrl()} - Status: offline - Cause: ${aComputer.getOfflineCause().toString()}"
-                            offlineNodes.add("<${JENKINS_URL}${aComputer.getUrl()}|${aComputer.getDisplayName()}>")
+                            if (aComputer.isOffline()) {
+                                echo "Node: ${JENKINS_URL}${aComputer.getUrl()} - Status: offline - Cause: ${aComputer.getOfflineCause().toString()}"
+                                offlineNodes.add("<${JENKINS_URL}${aComputer.getUrl()}|${aComputer.getDisplayName()}>")
+                            } else {
+                                println("${label} is back online: ${aComputer.isOnline()}")
+                            }
                         }
                     }
                 }
@@ -300,10 +301,6 @@ def sanitize_node(nodeName) {
     //reconnect slave
     timeout(time: RECONNECT_TIMEOUT.toInteger(), unit: 'MINUTES') {
         println("\t ${nodeName}: Disconnecting...")
-        waitUntil {
-            // wait for Jenkins to disconnect the slave after kill -9 or reboot
-            return (workingComputer.getNode().getRootPath() == null)
-        }
         workingComputer.disconnect(null)
         workingComputer.waitUntilOffline()
 
@@ -311,10 +308,6 @@ def sanitize_node(nodeName) {
         workingComputer.connect(false)
         workingComputer.setTemporarilyOffline(false, null)
         workingComputer.waitUntilOnline()
-        waitUntil {
-            // wait for slave agent to relaunch
-            return (workingComputer.getChannel() != null)
-        }
         println("\t ${nodeName} is back online: ${workingComputer.isOnline()}")
     }
 }
