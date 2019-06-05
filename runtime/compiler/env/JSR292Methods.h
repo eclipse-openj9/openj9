@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,4 +47,9 @@
 
 #define JSR292_ArgumentMoverHandle  "java/lang/invoke/ArgumentMoverHandle"
 
+#define JSR292_StaticFieldGetterHandle "java/lang/invoke/StaticFieldGetterHandle"
+#define JSR292_StaticFieldSetterHandle "java/lang/invoke/StaticFieldSetterHandle"
+
+#define JSR292_FieldGetterHandle "java/lang/invoke/FieldGetterHandle"
+#define JSR292_FieldSetterHandle "java/lang/invoke/FieldSetterHandle"
 #endif
