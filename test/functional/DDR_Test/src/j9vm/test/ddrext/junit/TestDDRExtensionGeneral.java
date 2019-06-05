@@ -170,7 +170,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	public void testRanges() {
-		if (SetupConfig.getDDRContxt() != null
+		if (SetupConfig.getDDRContext() != null
 				&& SetupConfig.getDDRInstance() == null) {
 			log.info("This test is not applicable in context of DDR pluigin for native debuggers");
 			return;
@@ -204,7 +204,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	public void testContext() {
-		if (SetupConfig.getDDRContxt() != null
+		if (SetupConfig.getDDRContext() != null
 				&& SetupConfig.getDDRInstance() == null) {
 			log.info("This test is not applicable in context of DDR pluigin for native debuggers");
 			return;
@@ -303,7 +303,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	 * then run cmd for reloaded plugin.
 	 */
 	public void testPlugins() {
-		if (SetupConfig.getDDRContxt() != null
+		if (SetupConfig.getDDRContext() != null
 				&& SetupConfig.getDDRInstance() == null) {
 			log.info("This test is not applicable in context of DDR plugin for native debuggers");
 			return;

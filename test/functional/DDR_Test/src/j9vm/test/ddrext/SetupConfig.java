@@ -142,7 +142,7 @@ public class SetupConfig {
 		ddrInstance = null;
 	}
 
-	public static Context getDDRContxt() {
+	public static Context getDDRContext() {
 		return ddrContext;
 	}
 }
