@@ -38,7 +38,7 @@ import com.ibm.j9ddr.view.dtfj.comparators.JavaMethodComparator;
 
 public class JavaMethodTest extends DTFJUnitTest {
 	
-	public static final Comparator<Object> COMPILIED_SECTIONS_SORT_ORDER = new Comparator<Object>() {
+	public static final Comparator<Object> COMPILED_SECTIONS_SORT_ORDER = new Comparator<Object>() {
 		public int compare(Object o1, Object o2) {
 			ImageSection i1 = (ImageSection) o1;
 			ImageSection i2 = (ImageSection) o2;
