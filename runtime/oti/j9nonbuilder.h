@@ -5029,6 +5029,7 @@ typedef struct J9JavaVM {
 	struct J9PortLibrary * portLibrary;
 	UDATA j2seVersion;
 	void* zipCachePool;
+	char* ramStateFilePath;
 	struct J9VMInterface vmInterface;
 	struct HarmonyVMInterface harmonyVMInterface;
 	UDATA dynamicLoadClassAllocationIncrement;
