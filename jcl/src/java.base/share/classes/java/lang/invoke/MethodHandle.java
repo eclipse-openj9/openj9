@@ -1039,11 +1039,17 @@ public abstract class MethodHandle
 				break;
 			case 3: {
 				int cpValue = cp.getIntAt(index);
-				Class<?> argClass;
+				Class<?> argClass = null;
 				if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
 					argClass = varargsComponentType;
 				} else {
-					argClass = bsm.type.parameterType(staticArgIndex);
+					/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
+					* If the number of static arguments is greater than the number of argument slots in the bsm
+					* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
+					*/
+					if (staticArgIndex < bsmTypeArgCount) {
+						argClass = bsm.type.parameterType(staticArgIndex);
+					}
 				}
 				if (argClass == Short.TYPE) {
 					cpEntry = (short) cpValue;
@@ -1201,11 +1207,17 @@ public abstract class MethodHandle
 					break;
 				case 3: {
 					int cpValue = cp.getIntAt(index);
-					Class<?> argClass;
+					Class<?> argClass = null;
 					if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
 						argClass = varargsComponentType;
 					} else {
-						argClass = bsm.type.parameterType(staticArgIndex);
+						/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
+						* If the number of static arguments is greater than the number of argument slots in the bsm
+						* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
+						*/
+						if (staticArgIndex < bsmTypeArgCount) {
+							argClass = bsm.type.parameterType(staticArgIndex);
+						}
 					}
 					if (argClass == Short.TYPE) {
 						cpEntry = (short) cpValue;
