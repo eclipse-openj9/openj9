@@ -858,6 +858,109 @@ void armCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 #endif /* TR_TARGET_ARM */
 
 
+#if defined(TR_TARGET_ARM64)
+
+void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
+   {
+   *numTempTrampolines = 0;
+   }
+
+void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
+   {
+   uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + 16);
+   for (int32_t i=1; i<numHelpers; i++)
+      {
+      *((int32_t *)buffer) = 0x58000110; //LDR R16 PC+8
+      buffer += 1; 
+      *buffer = 0xD61F0200; //BR R16
+      buffer += 1;
+      *((intptrj_t *)buffer) = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
+      buffer += 1;
+      }
+   }
+
+void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
+   {
+   uint32_t *buffer = (uint32_t *)trampPtr;
+   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
+
+   *buffer = 0x58000110; //LDR R16 PC+8
+   buffer += 1; 
+   *buffer = 0xD61F0200; //BR R16
+   buffer += 1;
+   *((intptrj_t *)buffer) = dispatcher;
+   }
+
+bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)
+   {
+   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newAddrOfCallee);
+   uint8_t        *entryAddress = (uint8_t *)newAddrOfCallee + linkInfo->getReservedWord();
+   intptrj_t       distance;
+   int32_t         currentDistance;
+   int32_t         branchInstr = *(int32_t *)callSite;
+   void           *newTramp;
+
+   distance = entryAddress - (uint8_t *)callSite;
+   currentDistance = (branchInstr << 6) >> 4;
+   branchInstr &= 0xfc000000;
+   
+   if (branchInstr != 0x94000000)
+      {
+      // This is not a 'bl' instruction -- Don't patch
+      return true;
+      }
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines)
+            || distance>(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateForwardOffset() 
+            || distance<(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateBackwardOffset()
+   )  {
+      if (currentPC == newAddrOfCallee)
+         {
+         newTramp = currentTramp; 
+         }
+      else
+         {
+         newTramp = mcc_replaceTrampoline(reinterpret_cast<TR_OpaqueMethodBlock *>(callee), callSite, currentTramp, currentPC, newAddrOfCallee, false);
+         TR_ASSERT_FATAL(newTramp != NULL, "Internal error: Could not replace trampoline.\n");
+
+         if (currentTramp == NULL)
+            {
+            arm64CreateMethodTrampoline(newTramp, newAddrOfCallee, callee);
+            }
+         else
+            {
+            *((uint32_t*)currentTramp+1) = (uint32_t)entryAddress;
+            }
+         }
+
+      distance = (uint8_t *)newTramp - (uint8_t *)callSite;
+      }
+
+   if (currentDistance != distance)
+      {
+      branchInstr |= (distance >> 2) & 0x03ffffff;
+      *(int32_t *)callSite = branchInstr;
+      }
+
+   return true;
+   }
+
+void arm64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *numHelpers, int32_t* CCPreLoadedCodeSize)
+   {
+   *trampolineSize = 16;
+   callBacks[0] = (void *)&arm64CodeCacheConfig;
+   callBacks[1] = (void *)&arm64CreateHelperTrampolines;
+   callBacks[2] = (void *)&arm64CreateMethodTrampoline;
+   callBacks[3] = (void *)&arm64CodePatching;
+   callBacks[4] = (void *)0; // CreatePreLoadedCCPreLoadedCode
+   *CCPreLoadedCodeSize = 0;
+   *numHelpers = TR_ARM64numRuntimeHelpers;
+   }
+
+#endif /* TR_TARGET_ARM64 */
+
+
 #if defined(J9ZOS390) && defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT)
 
 //-----------------------------------------------------------------------------
@@ -1462,6 +1565,14 @@ void setupCodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCall
    if (TR::Compiler->target.cpu.isARM())
       {
       armCodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
+      return;
+      }
+#endif
+
+#if defined(TR_TARGET_ARM64)
+   if (TR::Compiler->target.cpu.isARM64())
+      {
+      arm64CodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
       return;
       }
 #endif
