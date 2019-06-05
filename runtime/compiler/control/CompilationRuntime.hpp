@@ -240,7 +240,7 @@ class TR_JitSampleInfo
 
 // The following class is used for tracking methods that have their invocation
 // count decremented due to a sample in interpreted code. When that happens
-// we add teh method to a list. When a method needs to be compiled we check
+// we add the method to a list. When a method needs to be compiled we check
 // the list and if the method is in the list we delete it and schedule a
 // SamplingJprofiling compilation for the count that has been skipped
 class TR_InterpreterSamplingTracking
@@ -362,7 +362,7 @@ public:
       SAMPLER_STOPPED,
       SAMPLER_LAST_STATE, // must be the last one
       // If adding new state, one must add a new name as well in samplerThreadStateNames array
-      // and a frequency in samplerThreadStateFreqencies array
+      // and a frequency in samplerThreadStateFrequencies array
      };
 
    enum TR_SamplingThreadLifetimeStates
@@ -904,7 +904,7 @@ public:
    /**
    * @brief Compute free physical memory taking into account container limits
    *
-   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered mmeory couldn't be read
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
    * @return                 A value representing the free physicalMemory
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
    */
@@ -917,7 +917,7 @@ public:
    * only refreshes it if more than "updatePeriodMs" have passed since the last update
    * If updatePeriodMs==-1, then updatePeriodMs uses a default value of 500 ms
    *
-   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered mmeory couldn't be read
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
    * @param updatePeriodMs   Indicates how often the cached values are refreshed
    * @return                 A value representing the free physicalMemory 
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
@@ -1080,7 +1080,7 @@ private:
    int32_t                _samplingThreadWaitTimeInDeepIdleToNotifyVM;
    int32_t                _numMethodsFoundInSharedCache;
    int32_t                _numInvRequestsInCompQueue; // number of invalidation requests present in the compilation queue
-   uint64_t               _lastReqStartTime; // time (ms) when procesing the last request started
+   uint64_t               _lastReqStartTime; // time (ms) when processing the last request started
    uint64_t               _lastCompilationsShouldBeInterruptedTime; // RAS
 // statistics
    int32_t                _statsOptLevels[numHotnessLevels]; // will be zeroed with memset
@@ -1146,7 +1146,7 @@ private:
    TR_LowPriorityCompQueue _lowPriorityCompilationScheduler;
    TR_JProfilingQueue      _JProfilingQueue;
 
-   TR::CompilationTracingFacility _compilationTracingFacility; // Must be intialized before using
+   TR::CompilationTracingFacility _compilationTracingFacility; // Must be initialized before using
    TR_CpuEntitlement _cpuEntitlement;
    TR_JitSampleInfo  _jitSampleInfo;
    TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;

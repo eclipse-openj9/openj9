@@ -457,7 +457,7 @@ scarPreconfigure(J9JavaVM * vm)
 
 		rc = loadClasslibPropertiesFile(vm, &i);
 		if (rc <= 0) {
-			/* loadClasslibPropertiesFile can't find any bootpath from classlib.properties, bail. */
+			/* loadClasslibPropertiesFile can't find any bootpath from classlib.properties, fail. */
 			goto error;
 		}
 

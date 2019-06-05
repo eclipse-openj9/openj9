@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -248,15 +248,12 @@ MM_EnvironmentDelegate::reacquireCriticalHeapAccess(uintptr_t data)
         VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 }
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 void
 MM_EnvironmentDelegate::forceOutOfLineVMAccess()
 {
-	Assert_MM_true(MM_GCExtensions::getExtensions(_env->getOmrVM())->concurrentScavenger);
-	J9VMThread *vmThread = (J9VMThread *)_env->getOmrVMThread()->_language_vmthread;
-	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE);
+	J9VMThread *vmThread = (J9VMThread *)_env->getLanguageVMThread();
+	VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 }
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #if defined (J9VM_GC_THREAD_LOCAL_HEAP)
 /**
@@ -300,7 +297,7 @@ MM_EnvironmentDelegate::enableInlineTLHAllocate()
 
 /**
  * Determine if inline TLH allocate is enabled; its enabled if realheapAlloc is NULL.
- * @return TRUE if inline TLH allocates currently enabled for this thread; FALSE otheriwse
+ * @return TRUE if inline TLH allocates currently enabled for this thread; FALSE otherwise
  */
 bool
 MM_EnvironmentDelegate::isInlineTLHAllocateEnabled()

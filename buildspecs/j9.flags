@@ -228,6 +228,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<preclude flag="env_sharedLibsUseGlobalTable"/>
 		</precludes>
 	</flag>
+	<flag id="env_crossbuild">
+		<description>Use toolchain for cross build.</description>
+		<ifRemoved>Build uses native build environment.</ifRemoved>
+	</flag>
 	<flag id="env_data64">
 		<description>Default register width is 64-bits.</description>
 		<ifRemoved>Default register width is 32-bits.</ifRemoved>
@@ -393,7 +397,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 	</flag>
 	<flag id="gc_generational">
 		<description>Does the VM use a multi-generational collector</description>
-		<ifRemoved>The VM does NOT use a multi-generatonal collector</ifRemoved>
+		<ifRemoved>The VM does NOT use a multi-generational collector</ifRemoved>
 	</flag>
 	<flag id="gc_heapCardTable">
 		<description>Means that the Java heap has a card table which is used to track modifications during the GC cycle (be it concurrent or incremental).</description>
@@ -404,7 +408,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 	</flag>
 	<flag id="gc_hybridArraylets">
 		<description>Arraylet header has bimodal shape in runtime, separate for contiguous and discontiguous arraylets </description>
-		<ifRemoved>Arraylet header has only one shape (same for contiguous and discontigous arraylets)</ifRemoved>
+		<ifRemoved>Arraylet header has only one shape (same for contiguous and discontiguous arraylets)</ifRemoved>
 		<requires>
 			<require flag="gc_arraylets"/>
 		</requires>
@@ -508,7 +512,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
 	<flag id="gc_nonZeroTLH">
-		<description>Allocator might use special non-zerowed thread local heap for objects</description>
+		<description>Allocator might use special non-zeroed thread local heap for objects</description>
 		<ifRemoved>Allocator uses a general thread local heap for objects</ifRemoved>
 		<requires>
 			<require flag="gc_threadLocalHeap"/>
@@ -615,7 +619,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<ifRemoved>The VM build will not be compiled</ifRemoved>
 	</flag>
 	<flag id="graph_copyJ2SEToToronto">
-		<description>Mirror J2SE rebuilds to Toronoto</description>
+		<description>Mirror J2SE rebuilds to Toronto</description>
 		<ifRemoved>Mirroring of J2SE rebuilds to toronto will not be done causing test failures</ifRemoved>
 		<requires>
 			<require flag="build_j2se"/>
@@ -685,7 +689,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 	</flag>
 	<flag id="graph_excludeFloatsanity">
 		<description>Indicates that this spec wishes to not run the floatsanity(g) test in the nightly build.</description>
-		<ifRemoved>The floatsasnity(g) test will be run in the nightly build, if otherwise included.</ifRemoved>
+		<ifRemoved>The floatsanity(g) test will be run in the nightly build, if otherwise included.</ifRemoved>
 	</flag>
 	<flag id="graph_excludeInvtest">
 		<description>Indicates that this spec wishes to not run the invtest in the nightly build.</description>
@@ -866,7 +870,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		</requires>
 	</flag>
 	<flag id="interp_customSpinOptions">
-		<description>Enables support for the "-Xthr:customSpinOptions=" option, which is used to specifiy class-specific spin parameters.</description>
+		<description>Enables support for the "-Xthr:customSpinOptions=" option, which is used to specify class-specific spin parameters.</description>
 		<ifRemoved>Disables support for the "-Xthr:customSpinOptions=" option.</ifRemoved>
 	</flag>
 	<flag id="interp_debugSupport">
@@ -1047,6 +1051,10 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Controls if the VM includes support for romImageLoad and romImageUnload</description>
 		<ifRemoved>No facility for installing jxes or romImages</ifRemoved>
 	</flag>
+	<flag id="ive_rawBuild">
+		<description>Pure OpenJDK Java code without any OpenJ9 modifications</description>
+		<ifRemoved>No raw builds</ifRemoved>
+	</flag>
 	<flag id="jit_32bitUses64bitRegisters">
 		<description>Allow the 32 bit JIT to use the 64 bit registers</description>
 		<ifRemoved></ifRemoved>
@@ -1090,13 +1098,6 @@ Only available on zOS</description>
 	<flag id="jit_gcOnResolveSupport">
 		<description>Controls if the JIT VM interface supports gcOnResolve.</description>
 		<ifRemoved>gcOnResolve has no effect, saving space</ifRemoved>
-		<requires>
-			<require flag="interp_nativeSupport"/>
-		</requires>
-	</flag>
-	<flag id="jit_highWordRegisters">
-		<description>Controls whether JIT supports two values in a single wide register.</description>
-		<ifRemoved>Each register can contain only a single value.</ifRemoved>
 		<requires>
 			<require flag="interp_nativeSupport"/>
 		</requires>

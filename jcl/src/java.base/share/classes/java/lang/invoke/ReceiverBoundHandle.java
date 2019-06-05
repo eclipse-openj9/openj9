@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,7 +114,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	/* Null check the receiver if the handle isn't for a static method.
 	 * This is the lowest risk change for this failure.
 	 * TODO: Investigate introducing a new handle subclass: 
-	 * NullRecieverBoundHandle as a subclass of RBH that only
+	 * NullReceiverBoundHandle as a subclass of RBH that only
 	 * throws NPE.  We should always know at creation time
 	 * which kind of handle it will be - NRBH or RBH.
 	 * 

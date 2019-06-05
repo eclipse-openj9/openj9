@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,16 @@ if(OMR_HOST_OS STREQUAL "linux")
 	target_link_libraries(j9thr PUBLIC pthread)
 endif()
 
+# OMR keeps track of the exported symbols, and attaches them to j9thr_obj
+get_target_property(thread_exports j9thr_obj EXPORTED_SYMBOLS)
+omr_add_exports(j9thr ${thread_exports})
+
+# Note: we need to pass EARLY_SOURCE_EVAL because the ddr logic chokes on
+# $<TARGET_OBJECTS:j9thr_obj> on older versions of cmake
+target_enable_ddr(j9thr j9ddr EARLY_SOURCE_EVAL)
+
 install(
 	TARGETS j9thr
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

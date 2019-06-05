@@ -4,7 +4,7 @@ define(`ZZ',`**')
 define(`ZZ',`##')
 ')dnl
 
-ZZ Copyright (c) 2000, 2018 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -260,14 +260,14 @@ ZZ             DC <Const Pool Indx> // Constant Pool Index
 ZZ ===================================================================
 ZZ
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterUnresolvedSpecialGlue
+ZZ PICBuilder routine _interpreterUnresolvedSpecialGlue
 ZZ
 ZZ Exports:
 ZZ   _interpreterUnresolvedSpecialGlue
 ZZ
 ZZ Description(s):
 ZZ
-ZZ   int _interperterUnresolvedSpecialGlue
+ZZ   int _interpreterUnresolvedSpecialGlue
 ZZ   =============================
 ZZ   Invoke jitResolveSpecialMethod to resolve a method and
 ZZ   update the snippet code
@@ -312,7 +312,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveSpecialMethod)
     END_FUNC(_interpreterUnresolvedSpecialGlue,intpUnrSpG,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStaticGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticGlue
 ZZ
 ZZ ===================================================================
 
@@ -337,7 +337,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveStaticMethod)
     END_FUNC(_interpreterUnresolvedStaticGlue,intpUnrStG,12)
 
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterUnresolvedDirectVirtualGlue
+ZZ PICBuilder routine _interpreterUnresolvedDirectVirtualGlue
 ZZ
 ZZ ===================================================================
 
@@ -504,7 +504,7 @@ ZZ   Go through j2iTransition
 
 
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterVoidStaticGlue
+ZZ PICBuilder routine _interpreterVoidStaticGlue
 ZZ
 ZZ ===================================================================
 
@@ -522,7 +522,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStatic0)
     END_FUNC(_interpreterVoidStaticGlue,intpVStG,10)
 
 ZZ ===================================================================
-ZZ PICBuider routine _interpreterSyncVoidStaticGlue
+ZZ PICBuilder routine _interpreterSyncVoidStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncVoidStaticGlue,intpSVStG)
@@ -539,7 +539,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSync0)
     END_FUNC(_interpreterSyncVoidStaticGlue,intpSVStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterIntStaticGlue
+ZZ  PICBuilder routine - _interpreterIntStaticGlue
 ZZ
 ZZ ===================================================================
 
@@ -557,7 +557,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStatic1)
     END_FUNC(_interpreterIntStaticGlue,intpIStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncIntStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncIntStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncIntStaticGlue,intpSIStG)
@@ -574,7 +574,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSync1)
     END_FUNC(_interpreterSyncIntStaticGlue,intpSIStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterLongStaticGlue
+ZZ  PICBuilder routine - _interpreterLongStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterLongStaticGlue,intpLStG)
@@ -591,7 +591,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncJ)
     END_FUNC(_interpreterLongStaticGlue,intpLStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncLongStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncLongStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncLongStaticGlue,intpSLStG)
@@ -608,7 +608,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncJ)
     END_FUNC(_interpreterSyncLongStaticGlue,intpSLStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterFloatStaticGlue
+ZZ  PICBuilder routine - _interpreterFloatStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterFloatStaticGlue,intpFStG)
@@ -625,7 +625,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncF)
     END_FUNC(_interpreterFloatStaticGlue,intpFStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncFloatStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncFloatStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncFloatStaticGlue,intpSFStG)
@@ -642,7 +642,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncF)
     END_FUNC(_interpreterSyncFloatStaticGlue,intpSFStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterDoubleStaticGlue
+ZZ  PICBuilder routine - _interpreterDoubleStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterDoubleStaticGlue,intpDStG)
@@ -659,7 +659,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_icallVMprJavaSendStaticSyncD)
     END_FUNC(_interpreterDoubleStaticGlue,intpDStG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterSyncDoubleStaticGlue
+ZZ  PICBuilder routine - _interpreterSyncDoubleStaticGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterSyncDoubleStaticGlue,intpSDStG)
@@ -694,7 +694,7 @@ LABEL(Ljitted)
 
 ifdef([MCC_SUPPORTED],[dnl
 ZZ Call MCC service for code patching of the resolved method.
-ZZ Paramters:
+ZZ Parameters:
 ZZ       j9method, callSite, newPC, extraArg
 ZZ  We have to load the arguments onto the stack to pass to
 ZZ  jitCallCFunction:
@@ -823,7 +823,7 @@ ZZ End of LStaticGlueCallFixer
     END_FUNC(_interpreterSyncDoubleStaticGlue,intpSDStG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _nativeStaticHelper
+ZZ  PICBuilder routine - _nativeStaticHelper
 ZZ
 ZZ ===================================================================
 
@@ -851,7 +851,7 @@ ZZ
 ZZ This glue function is called by an unresolved call data snippet.
 ZZ It in turn calls a VM routine (i.e. jitResolve{Class,ClassFrom-
 ZZ StaticField,StaticField,StaticFieldSetter}) to resolve an
-ZZ unresolved class/field, stores the resolved adderss in the literal
+ZZ unresolved class/field, stores the resolved address in the literal
 ZZ pool, patches mainline code, and returns to the point
 ZZ where the call was originally made in the code cache.
 ZZ
@@ -896,7 +896,7 @@ ZZ properly.
 ZZ ===================================================================
 ZZ
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedClassGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedClassGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedClassGlue,intpUCG)
@@ -919,7 +919,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClass)
     END_FUNC(_interpreterUnresolvedClassGlue,intpUCG,9)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedClassGlue2
+ZZ  PICBuilder routine - _interpreterUnresolvedClassGlue2
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedClassGlue2,intpUCG2)
@@ -942,7 +942,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClassFromStaticField)
     END_FUNC(_interpreterUnresolvedClassGlue2,intpUCG2,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStringGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStringGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedStringGlue,intpUSG)
@@ -965,7 +965,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveString)
     END_FUNC(_interpreterUnresolvedStringGlue,intpUSG,9)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedMethodTypeGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodTypeGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedMethodTypeGlue,intpUMTG)
@@ -988,7 +988,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodType)
     END_FUNC(_interpreterUnresolvedMethodTypeGlue,intpUMTG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedMethodHandleGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodHandleGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedMethodHandleGlue,intpUMHG)
@@ -1011,7 +1011,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodHandle)
     END_FUNC(_interpreterUnresolvedMethodHandleGlue,intpUMHG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedCallSiteTableEntryGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedCallSiteTableEntryGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedCallSiteTableEntryGlue,intpUCSG)
@@ -1034,7 +1034,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveInvokeDynamic)
     END_FUNC(_interpreterUnresolvedCallSiteTableEntryGlue,intpUCSG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedMethodTypeTableEntryGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodTypeTableEntryGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedMethodTypeTableEntryGlue,intpUMT)
@@ -1057,7 +1057,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveHandleMethod)
     END_FUNC(_interpreterUnresolvedMethodTypeTableEntryGlue,intpUMT,9)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt32Load
+ZZ  PICBuilder routine - MTUnresolvedInt32Load
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt32Load,intpMTI32L)
@@ -1084,7 +1084,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedInt32Load,intpMTI32L,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt64Load
+ZZ  PICBuilder routine - MTUnresolvedInt64Load
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt64Load,intpMTI64L)
@@ -1111,7 +1111,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedInt64Load,intpMTI64L,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedFloatLoad
+ZZ  PICBuilder routine - MTUnresolvedFloatLoad
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedFloatLoad,intpMTFL)
@@ -1138,7 +1138,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedFloatLoad,intpMTFL,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedDoubleLoad
+ZZ  PICBuilder routine - MTUnresolvedDoubleLoad
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedDoubleLoad,intpMTDL)
@@ -1165,7 +1165,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(MTUnresolvedDoubleLoad,intpMTDL,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedAddressLoad
+ZZ  PICBuilder routine - MTUnresolvedAddressLoad
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedAddressLoad,intpMTAL)
@@ -1181,7 +1181,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     LR_GPR  r0,r14
     BASR    r14,rEP                      # Call jitResolvedStaticField
 
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     LHI     r1,2                                 # shift for addr
 ],[dnl
     LHI     r1,3                                 # shift for addr
@@ -1192,8 +1192,8 @@ ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
     JZ      LMTStaticAddressLoadNoneIsolated
 
     MTComputeStaticAddress(AddressLoad,Obj)
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
-    LLGF    r3,0(,r2)                        # load comprssed val
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
+    LLGF    r3,0(,r2)                        # load compressed val
     SLLG    r3,r3,0(r1)                       # decompress
     STG     r3,(2*PTR_SIZE)(,r5)             # store val into r2
 ],[dnl
@@ -1212,7 +1212,7 @@ LABEL(LMTStaticAddressLoadBRANCHEND)
     END_FUNC(MTUnresolvedAddressLoad,intpMTAL,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt32Store
+ZZ  PICBuilder routine - MTUnresolvedInt32Store
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt32Store,intpMTI32S)
@@ -1239,7 +1239,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedInt32Store,intpMTI32S,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedInt64Store
+ZZ  PICBuilder routine - MTUnresolvedInt64Store
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedInt64Store,intpMTI64S)
@@ -1266,7 +1266,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedInt64Store,intpMTI64S,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedFloatStore
+ZZ  PICBuilder routine - MTUnresolvedFloatStore
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedFloatStore,intpMTFS)
@@ -1293,7 +1293,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedFloatStore,intpMTFS,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedDoubleStore
+ZZ  PICBuilder routine - MTUnresolvedDoubleStore
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedDoubleStore,intpMTDS)
@@ -1320,7 +1320,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     END_FUNC(MTUnresolvedDoubleStore,intpMTDS,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - MTUnresolvedAddressStore
+ZZ  PICBuilder routine - MTUnresolvedAddressStore
 ZZ
 ZZ ===================================================================
     START_FUNC(MTUnresolvedAddressStore,intpMTAS)
@@ -1350,7 +1350,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
     LG      r1,28(,r14)               # load CP word
     LG      r7,(PTR_SIZE)(,r5)        # load JIT r1, obj to store
 
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     SLLG    r2,r2,2                   # col offset, data size
     SLLG    r6,r6,2                   # row offset, compressed
     LLGF    r3,8(r6,r3)               # tenantData[row]
@@ -1387,7 +1387,7 @@ LABEL(LMTUnresolvedAddressStoreNonIsolated)
     END_FUNC(MTUnresolvedAddressStore,intpMTAS,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStaticDataGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticDataGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedStaticDataGlue,intpUStDG)
@@ -1410,7 +1410,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
     END_FUNC(_interpreterUnresolvedStaticDataGlue,intpUStDG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedStaticDataStoreGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticDataStoreGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedStaticDataStoreGlue,intpUStDSG)
@@ -1439,7 +1439,7 @@ ZZ  # derive base pointer into table
     BRAS    breg,LDataResolve_common_code_instructions
 
 ZZ  First constant is a BRC 3 (jump by 6 bytes)
-ZZ  This is used to patch the orginal branch to
+ZZ  This is used to patch the original branch to
 ZZ  Snippet instruction, if the original branch
 ZZ  was not a BRCL (BRCL has its displacement patched
 ZZ  manually).  See comment for Unresolved*Data*Glue
@@ -1454,7 +1454,7 @@ ZZ  at the end, otherwise, we would be loading off the wrong
 ZZ  and unaligned address!
 LABEL(LPatchData)
     TML     r2,HEX(0001)    # data is masked for clinit?
-    JZ      LPatchLitPool   # if no, jump accordinly
+    JZ      LPatchLitPool   # if no, jump accordingly
     LR_GPR  r0,r2           # save the resolved data in r0
     NILL    r2,HEX(FFFE)    # mask off the lower bit
 
@@ -1508,7 +1508,7 @@ ZZ Now we jump back to mainline code.
     END_FUNC(_interpreterUnresolvedStaticDataStoreGlue,intpUStDSG,12)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedInstanceDataGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedInstanceDataGlue
 ZZ
 ZZ ===================================================================
 
@@ -1533,7 +1533,7 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveField)
     END_FUNC(_interpreterUnresolvedInstanceDataGlue,intpUIDG,10)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interpreterUnresolvedInstanceDataStoreGlue
+ZZ  PICBuilder routine - _interpreterUnresolvedInstanceDataStoreGlue
 ZZ
 ZZ ===================================================================
     START_FUNC(_interpreterUnresolvedInstanceDataStoreGlue,intpUIDSG)
@@ -1573,14 +1573,14 @@ ZZ  If resolved offset is greater than 4k
     JH     LDataOOL
 
     L_GPR   r3,eq_codeRef_inDataSnippet(,r14) #DataRef instr location
-ZZ  needsToBeSignExtenedTo8Bytes
+ZZ  needsToBeSignExtendedTo8Bytes
 ifdef([TR_HOST_64BIT],[dnl
     CLI     0(r3),HEX(59)  #check if this is OC_C
     JNZ     LclearD2
     AHI     r2,4 # integer is in the lower half of the 8 byte slot
 ])dnl
 LABEL(LclearD2)
-    L       r1,0(,r3)                # Data Ref. Instructon
+    L       r1,0(,r3)                # Data Ref. Instruction
     N       r1,4(,breg)              # Zero out the displacement field
     AR      r1,r2                    # Update the displacement field
     ST      r1,0(,r3)                # Store the result
@@ -1630,7 +1630,7 @@ LABEL(LDataOOLExit)
     END_FUNC(_interpreterUnresolvedInstanceDataStoreGlue,intpUIDSG,11)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _virtualUnresolvedHelper
+ZZ  PICBuilder routine - _virtualUnresolvedHelper
 ZZ  Handles unresolved virtual and unresolved nestmate private methods
 ZZ
 ZZ  For unresolved virtual call targets, this routine calls VM helper
@@ -1733,7 +1733,7 @@ ZZ zLinux
 ])dnl
 
     LR_GPR  r1,r2
-    NR_GPR  r1,r0          # Remove low-tag of J9Metod ptr
+    NR_GPR  r1,r0          # Remove low-tag of J9Method ptr
     LR_GPR  r3,r14         # free up r14 for RA
     L_GPR   r14,eq_privateRA_inVUCallSnippet(r14) #load RA
     TM      eq_methodCompiledFlagOffset(r1),J9TR_MethodNotCompiledBit
@@ -1809,7 +1809,7 @@ ZZ Following snippet prepares JIT helper call sequence
 ZZ which needs r14 to be free which holds address of
 ZZ Snippet from where this is called. 
 ZZ As jitResolveConstantDynamic is called via 
-ZZ SLOW_PATH_ONLY_HELPER glue, it is guranteed that
+ZZ SLOW_PATH_ONLY_HELPER glue, it is guaranteed that
 ZZ all the registers (volatile and non-volatile) are preserved.
 ZZ This allows us to use R0 to preserve R14 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveConstantDynamic)
@@ -1832,7 +1832,7 @@ ZZ Branch instruction in mainline will be patched here with NOP
     END_FUNC(_jitResolveConstantDynamic,jRCD,6)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interfaceCallHelper
+ZZ  PICBuilder routine - _interfaceCallHelper
 ZZ
 ZZ ===================================================================
     START_FUNC(_interfaceCallHelper,ifCH)
@@ -1883,7 +1883,7 @@ LABEL(LcontinueLookup)
 ZZ  # Load address of interface table & slot number
     LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)  # Load this
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r1,J9TR_J9Object_class(,r1)
 ZZ # Load lookup class offset
     LLGFR   r1,r1
@@ -1900,7 +1900,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
     LR_GPR  r14,r0
 ZZ                                  # return interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)  # Load this
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -1918,7 +1918,7 @@ LABEL(LcommonJitDispatch)         # interpVtable offset in r2
     LNR_GPR r2,r2                 # negative the interpVtable offset
     AHI_GPR r2,J9TR_InterpVTableOffset
     LR_GPR  r0,r2                 # J9 requires the offset in R0
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -1937,7 +1937,7 @@ ZZ # Load address of the lookup class
     END_FUNC(_interfaceCallHelper,ifCH,6)
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interfaceCallHelperSingleDynamicSlot
+ZZ  PICBuilder routine - _interfaceCallHelperSingleDynamicSlot
 ZZ
 ZZ ===================================================================
     START_FUNC(_interfaceCallHelperSingleDynamicSlot,ifCH1)
@@ -1988,7 +1988,7 @@ LABEL(ifCH1LcontinueLookup)
 ZZ  # Load address of interface table & slot number
     LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r1,J9TR_J9Object_class(,r1)
 ZZ # Load lookup class offset
     LLGFR   r1,r1
@@ -2005,7 +2005,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
 ZZ                                # return interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -2018,7 +2018,7 @@ ZZ # Load the addr of the lookup class
     TM   eq_methodCompiledFlagOffset(r3),J9TR_MethodNotCompiledBit
     JNZ     ifCH1LcommonJitDispatch
 
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r2,J9TR_J9Object_class(,r1)
 ZZ # Read class offset
     LLGFR   r2,r2
@@ -2043,14 +2043,14 @@ ZZ                        # jit-to-jit offset, so we need to
     SRL     r2,16         # shift it to lower half
     AR_GPR  r2,r1         # Add offset to PCStart
 
-    LR_GPR  r3,r2        # jit-to-jit entry of implementor method
-    LR_GPR  r2,r14       # implementor class
+    LR_GPR  r3,r2        # jit-to-jit entry of implementer method
+    LR_GPR  r2,r14       # implementer class
 
     LR_GPR  r14,r0
 ifdef([TR_HOST_64BIT],[dnl
-    STPQ    r2,eq_implementorClass_inInterfaceSnippet(,r14)
+    STPQ    r2,eq_implementerClass_inInterfaceSnippet(,r14)
 ],[dnl
-    STM     r2,r3,eq_implementorClass_inInterfaceSnippet(r14)
+    STM     r2,r3,eq_implementerClass_inInterfaceSnippet(r14)
 ])dnl
 
 ZZ check if this picSite has already been registered,
@@ -2063,12 +2063,12 @@ ZZ
 
 ZZ Clobberable volatile regs r1,r2,r3,r14
 ZZ Preserve r0,rEP,r5,r6,r7
-ZZ For linux r6 and r7 are not used or clobbered,hense not saved
-ZZ For zos rEP(r15) is not clobbered, hense not saved
+ZZ For linux r6 and r7 are not used or clobbered, hence not saved
+ZZ For zos rEP(r15) is not clobbered, hence not saved
 
     L       CARG2,J9TR_J9Class_classLoader(r2)
 
-ZZ  for J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+ZZ  for OMR_GC_COMPRESSED_POINTERS
 ZZ  may need to convert r2 to J9Class
 
     L       CARG1,eq_intfAddr_inInterfaceSnippet(,r14)
@@ -2098,7 +2098,7 @@ ifdef([J9ZOS390],[dnl
 
     ST_GPR  J9SP,J9TR_VMThread_sp(r13)
 
-    LA      CARG2,eq_implementorClass_inInterfaceSnippet(r14)
+    LA      CARG2,eq_implementerClass_inInterfaceSnippet(r14)
 
 ZZ make the call
 
@@ -2162,7 +2162,7 @@ LABEL(ifCH1LcommonJitDispatch)      # interpVtable offset in rEP
     AHI_GPR rEP,J9TR_InterpVTableOffset
     LR_GPR  r0,rEP                  # J9 requires the offset in R0
     L_GPR   r1,(2*PTR_SIZE)(J9SP)   # Restore "this"
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of lookup class
     LLGFR   r3,r3
@@ -2181,7 +2181,7 @@ ZZ # Load the address of lookup class
 
 
 ZZ ===================================================================
-ZZ  PICBuider routine - _interfaceCallHelperMultiSlots
+ZZ  PICBuilder routine - _interfaceCallHelperMultiSlots
 ZZ
 ZZ ===================================================================
     START_FUNC(_interfaceCallHelperMultiSlots,ifCHM)
@@ -2231,7 +2231,7 @@ LABEL(ifCHMLcontinueLookup)
 ZZ  # Load address of interface table & slot number
     LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r1,J9TR_J9Object_class(,r1)
 ZZ # Load offset of lookup class
     LLGFR   r1,r1
@@ -2248,7 +2248,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
 ZZ                          # returned interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -2262,8 +2262,8 @@ ZZ # Load the address of the lookup class
     LR_GPR  r14,r0
     JNZ     ifCHMLcommonJitDispatch
 
-ZZ  #Load reciving object classPtr in R2
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ZZ  #Load receiving object classPtr in R2
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r2,J9TR_J9Object_class(,r1)
 ZZ # Read class offset
     LLGFR   r2,r2
@@ -2300,7 +2300,7 @@ ZZ  so just dispatch
     JZ      ifCHMLcommonJitDispatch
 
 ZZ Try to atomically update lastCachedSlot
-ZZ value to be stored(r1) begining with firstSlot
+ZZ value to be stored(r1) beginning with firstSlot
     L_GPR   r0,eq_firstSlotField_inInterfaceSnippet(r14)
     AHI_GPR r0,-2*PTR_SIZE
 LABEL(ifCHMCSLoopBegin)
@@ -2327,7 +2327,7 @@ LABEL(ifCHMLoopTillUpdate)
 
 ZZ  current slot is now updated,
 ZZ  Lets see if it has same classPtr as we are trying to store
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r0,J9TR_J9Object_class(,r1)
 ZZ # Read class offset
     LLGFR   r0,r0
@@ -2349,7 +2349,7 @@ ZZ slot we contended for last time
 LABEL(ifCHMUpdateCacheSlot)
 ZZ store class pointer and method EP in the current empty slot
     ST_GPR  r3,PTR_SIZE(,r1)
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     ST  r2,0(,r1)
 ],[dnl
     ST_GPR  r2,0(,r1)
@@ -2363,7 +2363,7 @@ ZZ  Load pic address as second address
     L_GPR   r0,J9TR_J9Class_classLoader(CARG1)
 
 ZZ  Load class pointer as first argument
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       CARG1,0(CARG2)   # May need to convert offset to J9Class
     LLGFR   CARG1,CARG1
 ],[dnl
@@ -2378,8 +2378,8 @@ ZZ  If they are same, no need to register the pic site
     JZ      ifCHMLcommonJitDispatch
 
 ZZ Need to preserve r14,rEP,r5,r6,r7
-ZZ For linux r6 and r7 are not used or clobbered,hense not saved
-ZZ For zos r14, rEP(r15) is not clobbered, hense not saved
+ZZ For linux r6 and r7 are not used or clobbered, hence not saved
+ZZ For zos r14, rEP(r15) is not clobbered, hence not saved
 
 ifdef([J9ZOS390],[dnl
     AHI_GPR J9SP,-(3*PTR_SIZE)
@@ -2447,7 +2447,7 @@ LABEL(ifCHMLcommonJitDispatch)    # interpVtable offset in rEP
     AHI_GPR rEP,J9TR_InterpVTableOffset
     LR_GPR  r0,rEP                # J9 requires the offset in R0
     L_GPR   r1,(2*PTR_SIZE)(J9SP) # Restore "this"
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -2482,7 +2482,7 @@ LABEL(ifCHMLTypeCheckIFCPrivate)
 ZZ  Call fast_jitInstanceOf
 ZZ  with three args: VMthread, object, and castClass.
 ZZ
-ZZ  The call to this helper follows J9S390CHelperLinakge except
+ZZ  The call to this helper follows J9S390CHelperLinkage except
 ZZ  that all volatiles are saved here.
 ZZ  instance of result is indicated in return reg
 ZZ
@@ -2532,7 +2532,7 @@ ZZ  restore all regs
     CHI_GPR CRINT,1
     JNE     ifCHMLcontinueLookup
 
-LABEL(ifCHMLInovkeIFCPrivate)
+LABEL(ifCHMLInvokeIFCPrivate)
 ZZ  remove low tag and call
     L_GPR   r0,eq_intfMethodIndex_inInterfaceSnippet(r14)
     LR_GPR  r3,r14         # free r14 for RA
@@ -2549,7 +2549,7 @@ ZZ zLinux
     LHI_GPR r2,~J9TR_J9_ITABLE_OFFSET_DIRECT
 ])dnl
 
-    NR_GPR  r1,r2         # Remove low-tag of J9Metod ptr
+    NR_GPR  r1,r2         # Remove low-tag of J9Method ptr
     L_GPR   r14,eq_codeRA_inInterfaceSnippet(r14)    #load RA
     TM      eq_methodCompiledFlagOffset(r1),J9TR_MethodNotCompiledBit
     JZ      L_jitted_private

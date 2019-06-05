@@ -1098,11 +1098,11 @@ public class Test_String {
 		char[] schars = s.toCharArray();
 		// Spec seems to indicate that this should be true, but the JDK does not
 		// return
-		// a buufer of the correct length either.
+		// a buffer of the correct length either.
 		// assertTrue("Returned array is of different size", buf.length !=
 		// schars.length);
 		for (int i = 0; i < s.length(); i++)
-			AssertJUnit.assertTrue("Returned incorrect char aray", buf[i] == schars[i]);
+			AssertJUnit.assertTrue("Returned incorrect char array", buf[i] == schars[i]);
 	}
 
 	/**

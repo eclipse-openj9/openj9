@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -175,11 +174,14 @@ j9mm_iterate_spaces(
 		spaceDesc.classPointerOffset = TMP_OFFSETOF_J9OBJECT_CLAZZ;
 		spaceDesc.classPointerSize = sizeof(j9objectclass_t);
 		spaceDesc.fobjectPointerDisplacement = 0;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-		spaceDesc.fobjectPointerScale = (UDATA)1 << vm->compressedPointersShift;
-#else /* J9VM_GC_COMPRESSED_POINTERS */
-		spaceDesc.fobjectPointerScale = 1;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			spaceDesc.fobjectPointerScale = (UDATA)1 << vm->compressedPointersShift;
+		} else
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+		{
+			spaceDesc.fobjectPointerScale = 1;
+		}
 		spaceDesc.fobjectSize = sizeof(fj9object_t);
 		spaceDesc.memorySpace = defaultMemorySpace;
 
@@ -430,7 +432,7 @@ j9mm_iterate_object_slots(
 
 
 /**
- * Provide the arraylet idetification bitmask.  For builds that do not
+ * Provide the arraylet identification bitmask.  For builds that do not
  * support arraylets all values are set to 0.
  *
  * @return arrayletLeafSize

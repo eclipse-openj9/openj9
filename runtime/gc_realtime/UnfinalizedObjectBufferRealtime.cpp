@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +26,9 @@
 
 #include "UnfinalizedObjectBufferRealtime.hpp"
 
-#include "HeapRegionDescriptorRealtime.hpp"
+#include "GCExtensions.hpp"
+#include "MetronomeDelegate.hpp"
+#include "RealtimeGC.hpp"
 #include "UnfinalizedObjectList.hpp"
 
 MM_UnfinalizedObjectBufferRealtime::MM_UnfinalizedObjectBufferRealtime(MM_GCExtensions *extensions, UDATA maxObjectCount)
@@ -74,7 +75,7 @@ MM_UnfinalizedObjectBufferRealtime::flushImpl(MM_EnvironmentBase* env)
 	MM_UnfinalizedObjectList *unfinalizedObjectList = &extensions->unfinalizedObjectLists[_unfinalizedObjectListIndex];
 	unfinalizedObjectList->addAll(env, _head, _tail);
 	_unfinalizedObjectListIndex += 1;
-	if (MM_HeapRegionDescriptorRealtime::getUnfinalizedObjectListCount(env) == _unfinalizedObjectListIndex) {
+	if (extensions->realtimeGC->getRealtimeDelegate()->getUnfinalizedObjectListCount(env) == _unfinalizedObjectListIndex) {
 		_unfinalizedObjectListIndex = 0;
 	}
 }

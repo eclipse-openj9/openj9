@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -406,7 +406,7 @@ public class MethodHandleTest{
 	 * ****************************/
 	
 	/**
-	 * Basic asSpreader test using a virtual method in the same packge 
+	 * Basic asSpreader test using a virtual method in the same package 
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
@@ -901,7 +901,7 @@ public class MethodHandleTest{
 	 * ****************************/
 	
 	/**
-	 * asFixedArity test to ensure MethodHandles.lookup().find* methods returned varargs handles for methods with the ACC_VARAGS bit
+	 * asFixedArity test to ensure MethodHandles.lookup().find* methods returned varargs handles for methods with the ACC_VARARGS bit
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
@@ -1179,7 +1179,7 @@ public class MethodHandleTest{
 	 * **************************************/
 	
 	/**
-	 * Test isVarargsCollector using a call to asVaragrsCollector
+	 * Test isVarargsCollector using a call to asVarargsCollector
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

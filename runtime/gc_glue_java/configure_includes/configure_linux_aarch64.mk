@@ -30,9 +30,6 @@ CONFIGURE_ARGS += \
 OPENJ9_CC_PREFIX ?= aarch64-linux-gnu
 
 CONFIGURE_ARGS += \
-	--host=$(OPENJ9_CC_PREFIX) \
-	--build=x86_64-pc-linux-gnu \
-	'OMR_CROSS_CONFIGURE=yes' \
 	--enable-OMRTHREAD_LIB_UNIX \
 	--enable-OMR_ARCH_AARCH64 \
 	--enable-OMR_ENV_DATA64 \
@@ -40,30 +37,36 @@ CONFIGURE_ARGS += \
 	--enable-OMR_GC_TLH_PREFETCH_FTA \
 	--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 
-ifeq (linux_aarch64_cmprssptrs, $(SPEC))
+ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 	CONFIGURE_ARGS += \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
 		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
 endif
 
-ifeq (default,$(origin AS))
-	AS = $(OPENJ9_CC_PREFIX)-as
-endif
-ifeq (default,$(origin CC))
-	CC = $(OPENJ9_CC_PREFIX)-gcc
-endif
-ifeq (default,$(origin CXX))
-	CXX = $(OPENJ9_CC_PREFIX)-g++
-endif
-ifeq (default,$(origin AR))
-	AR = $(OPENJ9_CC_PREFIX)-ar
+ifneq (,$(findstring _cross,$(SPEC)))
+	CONFIGURE_ARGS += \
+	--host=$(OPENJ9_CC_PREFIX) \
+	--build=x86_64-pc-linux-gnu \
+	'OMR_CROSS_CONFIGURE=yes'
+
+	ifeq (default,$(origin AS))
+		AS = $(OPENJ9_CC_PREFIX)-as
+	endif
+	ifeq (default,$(origin CC))
+		CC = $(OPENJ9_CC_PREFIX)-gcc
+	endif
+	ifeq (default,$(origin CXX))
+		CXX = $(OPENJ9_CC_PREFIX)-g++
+	endif
+	ifeq (default,$(origin AR))
+		AR = $(OPENJ9_CC_PREFIX)-ar
+	endif
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'
 CONFIGURE_ARGS += 'CC=$(CC)'
 CONFIGURE_ARGS += 'CXX=$(CXX)'
-CONFIGURE_ARGS += 'OBJCOPY=$(OPENJ9_CC_PREFIX)-objcopy'
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 

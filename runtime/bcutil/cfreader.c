@@ -50,7 +50,7 @@ static U_8 attributeTagFor (J9CfrConstantPoolInfo *utf8, BOOLEAN stripDebugAttri
 static I_32 readAnnotations (J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32 annotationCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
 static I_32 readTypeAnnotation (J9CfrClassFile * classfile, J9CfrTypeAnnotation * pAnnotations, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
 static I_32 readAnnotationElement (J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnnotationElement, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
-static I_32 checkClassVersion (J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted);
+static I_32 checkClassVersion (J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags);
 static BOOLEAN utf8EqualUtf8 (J9CfrConstantPoolInfo *utf8a, J9CfrConstantPoolInfo *utf8b);
 static BOOLEAN utf8Equal (J9CfrConstantPoolInfo* utf8, char* string, UDATA length);
 static I_32 readMethods (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags);
@@ -2168,53 +2168,62 @@ _errorFound:
 
 
 /*
-	Check the class file in @classfile.
-
-	According the the JVMS 2nd ed: (1.2)
-		"Implementations of version 1.2 of the Java 2 platform can support
-		class file formats of versions in the range 45.0 through 46.0 inclusive."
-
-	According to http://access1.sun.com/SRDs/srd_repository/tools.pdf (1.3)
-		"The Java virtual machine (JVM) now accepts class files with version
-		numbers 45.3 through 47.0, inclusive."
-
-	According to http://home.ott.oti.com/teams/bluebird/doc/cldcng-f/CLDCSpecification1.1.pdf
-		"The class file format numbers used by different JDK versions are as follows:
-		- The 45.* (usually 45.3) version number identified JDK 1.1 class files
-		- The 46.* version number identifies JDK 1.2 class files.
-		- The 47.* version number identifies JDK 1.3 class files.
-		- The 48.* version number identifies JDK 1.4 class files."
-
-	- 49.* are JDK 5.0 class files (aka JDK 1.5)
-
-	Returns -1 on error, 0 on success.
-*/
+ * Java allows non-zero minor versions if the major version is less than
+ * the max supported version for this release:
+ * 	Java 8 - v52
+ * 	Java 11 - v55
+ * 	Java 12 - v56
+ *
+ * Starting in Java 12, only 0 & -1 are valid minor versions for classfiles with
+ * version >= 56.  The -1 version is only allowed when combined with the max 
+ * supported version for this release and the --enable-preview flag is specified.
+ *
+ * Returns -1 on error, 0 on success.
+ */
 
 static I_32 
-checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted)
+checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
 {
+	const U_32 offset = 6;
+	const U_16 max_allowed_version = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
+	const U_16 majorVersion = classfile->majorVersion;
+	const U_16 minorVersion = classfile->minorVersion;
 	U_32 errorCode = J9NLS_CFR_ERR_MAJOR_VERSION__ID;
-	U_32 offset = 6;
-	U_16 max_allowed_version = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
 
 	/* Support versions 45.0 -> <whatever is legal for this VM> */
-	if((classfile->majorVersion >= 45) && (classfile->majorVersion <= max_allowed_version)) {
-		/* check minor version numbers */
-		if (classfile->majorVersion < max_allowed_version) {
-			return 0;
-		}
-
-		if (0 == classfile->minorVersion) {
-			/* only .0 is a valid minor version for max class major version */
-			return 0;
-		}
+	if (majorVersion == max_allowed_version) {
 		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
+		if (0 == minorVersion) {
+			return 0;
+		} else if (0xffff == minorVersion) {
+			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
+			/* Preview flags won't be set for Java 8 & earlier (excluding cfdump) */
+			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion | BCT_EnablePreview)) {
+				return 0;
+			}
+		}
+	} else if ((majorVersion >= 45) && (majorVersion < max_allowed_version)) {
+		errorCode = J9NLS_CFR_ERR_MINOR_VERSION__ID;
+		if (majorVersion <= 55) {
+			/* versions prior to and including Java 11, allow any minor */
+			return 0;
+		}
+		/* only .0 is the only valid minor version for this range */
+		if (0 == minorVersion) {
+			return 0;
+		}
+		if (0xffff == minorVersion) {
+			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
+			/* Allow cfdump to dump preview classes from other releases */
+			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
+				return 0;
+			}
+		}
 	}
 
 	buildError((J9CfrError *) segment, errorCode, CFR_ThrowUnsupportedClassVersionError, offset);
 	return -1;
 }
-
 
 /*
 	Check the class file in @classfile.
@@ -2368,7 +2377,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 /*
 	Read the class file from the bytes in @data.
 	Returns:
-		-2 on insufficent space
+		-2 on insufficient space
 		-1 on error
 		0 on success
 		(required segment size)
@@ -2453,7 +2462,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	NEXT_U16(classfile->majorVersion, index);
 
 	/* Ensure that this is a supported class file version. */
-	if (checkClassVersion(classfile, segment, vmVersionShifted)) {
+	if (checkClassVersion(classfile, segment, vmVersionShifted, flags)) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);
 		return -1;
 	}
@@ -2479,7 +2488,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	/* Space for the constant pool */
 
 	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_ANON)) {
-		/* Pre-emptively add new entry to the end of the constantPool for the modified anonClassName.
+		/* Preemptively add new entry to the end of the constantPool for the modified anonClassName.
 		 * If it turns out we dont need it, simply reduce the constantPoolCount by 1, which is
 		 * cheaper than allocating twice.
 		 *
@@ -2522,6 +2531,26 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		offset = index - data - 2;
 		goto _errorFound;
 	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/*
+	 * TODO This behaviour is based on the LW2 spec http://cr.openjdk.java.net/~fparain/L-world/LW2-JVMS-draft-20181009.pdf.
+	 * In the future the CFR_ACC_VALUE_TYPE class access bit will be replaced by a ValObject subtyping relationship. We will
+	 * likely keep the bit in the romClass class, but it will no longer appear in .class files.
+	 *
+	 * The LW10 prototype will likely still be enabled with a -XX:+EnableValhalla flag so a check and error message similar
+	 * to this will be required.
+	 */
+
+	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set */
+	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
+		&& J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)
+	) {
+		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED__ID;
+		offset = index - data - 2;
+		goto _errorFound;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	/* mask access flags to remove unused access bits */
 	classfile->accessFlags &= CFR_CLASS_ACCESS_MASK;
@@ -2648,9 +2677,13 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 			return result;
 		}
 	} else {
-		/* special checking to look for jsr's if -noverify - the verifyFunction normally scans and tags 
-			for inlining methods and classes that contain jsr's */
-		hasRET = checkForJsrs(classfile);
+		/* Special checking to look for jsr's if -noverify - the verifyFunction normally scans and tags
+		 * for inlining methods and classes that contain jsr's unless the class file version is 51 or
+		 * greater as jsr / ret are always illegal in that case
+		 */
+		if (classfile->majorVersion < 51) {
+			hasRET = checkForJsrs(classfile);
+		}
 	}
 	VERBOSE_END(ParseClassFileVerifyClass);
 

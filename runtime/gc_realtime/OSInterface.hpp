@@ -1,4 +1,3 @@
- 
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -29,11 +28,8 @@
 #if !defined(OSINTERFACE_HPP_)
 #define OSINTERFACE_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
-
 #include "Base.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 
 class MM_EnvironmentBase;
 class MM_OSInterface;
@@ -45,7 +41,7 @@ class MM_ProcessorInfo;
 #endif /* WIN32 */
 
 
-		
+	
 /**
  * @todo Provide class documentation
  * @ingroup GC_Metronome
@@ -54,19 +50,17 @@ class MM_OSInterface : public MM_BaseVirtual
 {
 /* Data members / types */
 public:
-	MM_GCExtensions *_extensions;
-	U_64 _j9time_hires_clock_nanoSecondMultiplyFactor;  /**< The results of j9time_hires_clock must be multiplied by this value, if non-zero, to obtain time in micro-seconds. */
-	U_64 _j9time_hires_clock_nanoSecondDivideFactor;  /**< If the MultiplyFactor is zero, the results of j9time_hires_clock must be divided by this value, to obtain time in micro-seconds. */
-	I_64 _j9time_hires_clock_nanoSecondOffset;  /**< After multiplying by the above factor, subtract the offset to obtain time relative to machine boot time. */
+	MM_GCExtensionsBase *_extensions;
+	U_64 _omrtime_hires_clock_nanoSecondMultiplyFactor;  /**< The results of j9time_hires_clock must be multiplied by this value, if non-zero, to obtain time in micro-seconds. */
+	U_64 _omrtime_hires_clock_nanoSecondDivideFactor;  /**< If the MultiplyFactor is zero, the results of j9time_hires_clock must be divided by this value, to obtain time in micro-seconds. */
+	I_64 _omrtime_hires_clock_nanoSecondOffset;  /**< After multiplying by the above factor, subtract the offset to obtain time relative to machine boot time. */
 	U_64 _ticksPerMicroSecond;
 protected:
 private:
-	J9JavaVM *_vm;
-	UDATA _numProcessors;
+	OMR_VM *_vm;
+	uintptr_t _numProcessors;
 	U_64 _physicalMemoryBytes;
 	MM_ProcessorInfo *_processorInfo;
-	char _hostname[256];
-	char *_ipAddrString;
 	
 /* Methods */
 public:
@@ -80,11 +74,10 @@ public:
 	bool hiresTimerAvailable();
 	bool rtcTimerAvailable();
 	bool itTimerAvailable();
-	UDATA getNumbersOfProcessors() {return _numProcessors;}
+	uintptr_t getNumbersOfProcessors() {return _numProcessors;}
 	
 	MM_OSInterface() :
-		_processorInfo(NULL),
-		_ipAddrString(NULL)
+		_processorInfo(NULL)
 	{
 		_typeId = __FUNCTION__;
 	}

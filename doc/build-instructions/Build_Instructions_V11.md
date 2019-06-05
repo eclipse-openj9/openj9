@@ -48,6 +48,7 @@ This build process provides detailed instructions for building a Linux x86-64 bi
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
 If you want to build a binary for Linux on a different architecture, such as Power Systems&trade; or z Systems&trade;, the process is very similar and any additional information for those architectures are included as Notes :pencil: as we go along.
+See [AArch64 section](#aarch64) for building for AArch64 Linux.
 
 ### 1. Prepare your system
 :penguin:
@@ -229,7 +230,6 @@ JCL      - 98f2038 based on jdk-11+28)
   - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
-
 :penguin: *Congratulations!* :tada:
 
 ----------------------------------
@@ -352,7 +352,6 @@ JCL      - e5c64f5 based on jdk-11+21)
   - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
-
 :blue_book: *Congratulations!* :tada:
 
 ----------------------------------
@@ -461,7 +460,6 @@ Note: there is no need to specify --with-toolchain-version for 2017 as it will b
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
-
 ### 4. build
 :ledger:
 Now you're ready to build OpenJDK with OpenJ9:
@@ -503,7 +501,6 @@ JCL      - a786f96b13 based on jdk-11+21)
   - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
-
 :ledger: *Congratulations!* :tada:
 
 ----------------------------------
@@ -523,6 +520,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
+- [binutils 2.32](https://formulae.brew.sh/formula/binutils)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
@@ -654,4 +652,137 @@ JCL      - 9da99f8b97 based on jdk-11+28)
 
 ## AArch64
 
-:construction: Build process for AArch64 (ARMv8 64-bit) Linux is under preparation.
+:construction: This section is still under construction.
+
+:penguin:
+The following instructions guide you through the process of building an **OpenJDK V11** binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
+
+### 1. Prepare your system
+
+The binary can be built on your AArch64 Linux system, or in a Docker container :whale: on x86-64 Linux.
+
+Note: Building on x86-64 without Docker is not tested.
+
+### 2. Get the source
+:penguin:
+First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
+```
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
+```
+Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
+```
+cd openj9-openjdk-jdk11
+```
+Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
+
+```
+bash get_source.sh
+```
+
+### 3. Prepare for build on AArch64 Linux
+
+You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
+
+- GNU C/C++ compiler (The Docker image uses GCC 7.3)
+- [AArch64 Linux JDK](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot), which is used as the boot JDK.
+- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
+
+See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
+
+### 4. Create the Docker image
+
+If you build the binary on x86-64 Linux, run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
+```
+cd openj9/buildenv/docker/jdk11/aarch64_CC/arm-linux-aarch64
+docker build -t openj9aarch64 -f Dockerfile .
+```
+
+Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk11` in your local system:
+```
+docker run -v /<host_directory>/openj9-openjdk-jdk11:/root/openj9-openjdk-jdk11 -it openj9aarch64
+```
+
+Then go to the `openj9-openjdk-jdk11` directory:
+```
+cd /root/openj9-openjdk-jdk11
+```
+
+### 5. Configure
+:penguin:
+When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+
+For building on AArch64 Linux:
+```
+bash configure --with-freemarker-jar=/<path_to>/freemarker.jar \
+               --with-boot-jdk=/<path_to_boot_JDK> \
+               --disable-warnings-as-errors
+```
+
+For building in the Docker container:
+```
+bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
+               --with-x=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/ \
+               --with-freetype-include=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/include/freetype2 \
+               --with-freetype-lib=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/lib \
+               --with-freemarker-jar=/root/freemarker.jar \
+               --with-boot-jdk=/root/bootjdk11 \
+               --with-build-jdk=/root/bootjdk11 \
+               --disable-warnings-as-errors
+```
+
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`
+
+  where:
+
+  - `system` uses the package installed OpenSSL library in the system.  Use this option when you build on your AArch64 Linux system.
+  - `path_to_library` uses an OpenSSL v1.1.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
+  - Using `--with-openssl=fetched` will fail during the build in the Docker environment.
+
+### 6. Build
+:penguin:
+Now you're ready to build OpenJDK with OpenJ9:
+```
+make all
+```
+
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
+- **build/linux-aarch64-normal-server-release/images/jdk**
+
+Copy its contents to your AArch64 Linux device.
+
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-aarch64-normal-server-release/images/jre** directory.
+
+### 6. Test
+:penguin:
+For a simple test, try running the `java -version` command.
+Change to your jdk directory on AArch64 Linux:
+```
+cd jdk
+```
+Run:
+```
+bin/java -Xint -version
+```
+
+Here is some sample output:
+
+```
+openjdk version "11.0.2-internal" 2019-01-15
+OpenJDK Runtime Environment (build 11.0.2-internal+0-adhoc..openj9-openjdk-jdk11)
+Eclipse OpenJ9 VM (build master-03a061a, JRE 11 Linux aarch64-64-Bit 20190208_000000 (JIT disabled, AOT disabled)
+OpenJ9   - 03a061a
+OMR      - a8ca0e6
+JCL      - fd5cc89 based on jdk-11.0.2+7)
+```
+
+:pencil: The JIT compiler for AArch64 is not supported at the time of writing this.  If you don't disable the JIT compiler with the `-Xint` option, you will see a warning for `libj9jit29.so`.
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+:penguin: *Congratulations!* :tada:

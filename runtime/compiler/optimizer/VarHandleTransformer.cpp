@@ -92,7 +92,7 @@ struct X
 // Method names for unresolved VarHandle access methods
 static X VarHandleMethods[] =
       {
-      // We only get the original method name when the call is unresolved, but recognized method only works for resovled method
+      // We only get the original method name when the call is unresolved, but recognized method only works for resolved method
       // The list for resolved method is in j9method.cpp, any changes in this list must be reflected in the other
       // Notice this list has a tableIndex field to indicate the index of MethodHandle/MethodType of VarHandle access operation
       // in the handleTable/typeTable, check java/lang/invoke/VarHandle.java for the indice of the methods
@@ -313,7 +313,7 @@ int32_t TR_VarHandleTransformer::perform()
             // i.e. for the call set(B)V, the signature for method handle is (BLjava/lang/invoke/VarHandle;)V
             char *sig = method->signatureChars();
             int32_t sigLen = method->signatureLength();
-            char *sigChar = sig + 1; // skip the openning parenthesis
+            char *sigChar = sig + 1; // skip the opening parenthesis
             int32_t paramSigLen = 2; // paramSig is at least 2 parenthesis
             while(*sigChar != ')') { sigChar++; paramSigLen++;}
             char *mhSig = new (comp()->trStackMemory()) char[sigLen + VarHandleParmLength];

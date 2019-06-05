@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ ifeq ($(PLATFORM),ppc64-linux64-clangLinter)
     export CC_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang
     export CXX_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang++
 else 
-    #default paths, unless overriden 
+    #default paths, unless overridden 
     export LLVM_CONFIG?=llvm-config
     export CC_PATH?=clang
     export CXX_PATH?=clang++
@@ -96,7 +96,7 @@ include $(JIT_MAKE_DIR)/toolcfg/common.mk
 # is different from an automake build.
 #
 ifneq ("$(CMAKE_BUILD_DIR)","")
-CXX_INCLUDES+=$(CMAKE_BUILD_DIR)/runtime $(CMAKE_BUILD_DIR)/runtime/omr $(CMAKE_BUILD_DIR)/runtime/nls
+CXX_INCLUDES+=$(CMAKE_BUILD_DIR)/runtime $(CMAKE_BUILD_DIR)/runtime/omr $(CMAKE_BUILD_DIR)/runtime/nls $(CMAKE_BUILD_DIR)/runtime/include
 endif
 
 #

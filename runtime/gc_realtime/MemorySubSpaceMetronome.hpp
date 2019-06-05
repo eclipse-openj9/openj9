@@ -1,6 +1,5 @@
- 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +23,8 @@
 #if !defined(MEMORYSUBSPACEMETRONOME_HPP_)
 #define MEMORYSUBSPACEMETRONOME_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "MemorySubSpaceSegregated.hpp"
 
@@ -46,7 +45,7 @@ private:
 	 */
 	void *allocateMixedObjectOrArraylet(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, AllocateType allocType);
 	void collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCode, MM_AllocateDescription *allocDescription);
-	
+
 protected:
 	bool initialize(MM_EnvironmentBase *env);
 
@@ -60,12 +59,10 @@ public:
 
 	virtual void systemGarbageCollect(MM_EnvironmentBase *env, U_32 gcCode);
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#if defined(J9VM_GC_ARRAYLETS)
+#if defined(OMR_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
+#endif /* defined(OMR_GC_ARRAYLETS) */
 
-
- 	void yieldWhenRequested(MM_EnvironmentBase *env);
  	void collect(MM_EnvironmentBase *env, MM_GCCode gcCode);
 
 	

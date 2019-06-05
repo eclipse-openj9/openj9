@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,42 @@ target_include_directories(j9vmtest
 		"${j9vm_BINARY_DIR}/j9vm"
 )
 
+omr_add_exports(j9vmtest
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetSystemPackage
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetSystemPackages
+	Java_com_ibm_oti_jvmtests_SupportJVM_GCNoCompact
+	Java_com_ibm_oti_jvmtests_SupportJVM_MaxObjectInspectionAge
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetArrayLength
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetPrimitiveArrayElementWCodeParam
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetShortArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetIntArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetLongArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetByteArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetCharArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetFloatArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetDoubleArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_GetBooleanArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetPrimitiveArrayElementWCodeParam
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetShortArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetIntArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetLongArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetByteArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetCharArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetFloatArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetDoubleArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_SetBooleanArrayElement
+	Java_com_ibm_oti_jvmtests_SupportJVM_ArrayCopy
+)
+
+if(NOT JAVA_SPEC_VERSION LESS 11)
+	omr_add_exports(j9vmtest Java_com_ibm_oti_jvmtests_SupportJVM_GetNanoTimeAdjustment)
+endif()
+
+
 install(
 	TARGETS j9vmtest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

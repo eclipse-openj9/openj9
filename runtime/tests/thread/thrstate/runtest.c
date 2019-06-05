@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -586,7 +586,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 		/*Soft realtime options*/
 		|| (vmOptionsTableAddOption(&vmOptionsTable, "-Xgcpolicy:metronome", NULL) != J9CMDLINE_OK)
 #endif /* defined (J9VM_GC_REALTIME) */
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		|| (vmOptionsTableAddOption(&vmOptionsTable, "-Xcompressedrefs", NULL) != J9CMDLINE_OK)
 #else
 		|| (vmOptionsTableAddOption(&vmOptionsTable, "-Xnocompressedrefs", NULL) != J9CMDLINE_OK)

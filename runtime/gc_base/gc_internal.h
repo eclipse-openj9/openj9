@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -236,8 +235,9 @@ extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreI64(J9VMThread *vmThread, j9
 extern J9_CFUNC J9Object * j9gc_get_memoryController(J9VMThread *vmContext, J9Object *objectPtr);
 extern J9_CFUNC void j9gc_set_memoryController(J9VMThread *vmThread, J9Object* objectPtr, J9Object *memoryController);
 extern J9_CFUNC const char* omrgc_get_version(OMR_VM *omrVM);
-extern J9_CFUNC void j9gc_startGCIfTimeExpired(J9VMThread* vmThread);
+extern J9_CFUNC void j9gc_startGCIfTimeExpired(OMR_VMThread* vmThread);
 extern J9_CFUNC void j9gc_allocation_threshold_changed(J9VMThread* currentThread);
+extern J9_CFUNC void j9gc_set_allocation_sampling_interval(J9VMThread* vmThread, UDATA samplingInterval);
 extern J9_CFUNC void j9gc_set_allocation_threshold(J9VMThread* vmThread, UDATA low, UDATA high);
 extern J9_CFUNC void j9gc_objaccess_recentlyAllocatedObject(J9VMThread *vmThread, J9Object *dstObject);
 extern J9_CFUNC void j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass);

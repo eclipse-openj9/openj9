@@ -891,7 +891,7 @@ public class LookupAPITests_Find {
 	
 	
 	/******************************************************************************** 
-	 * findSetter, findGetter, findStaticSetter, findStatigGetter tests. 
+	 * findSetter, findGetter, findStaticSetter, findStaticGetter tests. 
 	 * COMBINATIONS: Cross package - public, private, public static, private static, 
 	 * protected, super-class, sub-class fields
 	 * ******************************************************************************/
@@ -1072,7 +1072,7 @@ public class LookupAPITests_Find {
 	
 	/**
 	 * Negative test : findSetter, findGetter test using private fields of an inner classes (level 1 deep)
-	 * where the lookup class is the top level outer class belonging to a diffrent package.
+	 * where the lookup class is the top level outer class belonging to a different package.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
@@ -1570,7 +1570,7 @@ public class LookupAPITests_Find {
 	}
 	
 	/**
-	 * findVirtual test using a protected overridden method that belogs to the super-class which the lookup class extends.
+	 * findVirtual test using a protected overridden method that belongs to the super-class which the lookup class extends.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

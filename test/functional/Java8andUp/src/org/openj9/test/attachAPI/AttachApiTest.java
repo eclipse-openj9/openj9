@@ -21,7 +21,10 @@
  *******************************************************************************/
 package org.openj9.test.attachAPI;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Properties;
 
+import org.openj9.test.util.PlatformInfo;
 import org.openj9.test.util.StringPrintStream;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
@@ -62,6 +66,12 @@ abstract class AttachApiTest {
 
 	protected static void log(String outLine) {
 		logger.debug(outLine);
+	}
+	
+	public void logProperties(Properties props) {
+		PrintStream stream = StringPrintStream.factory();
+		props.keySet().stream().sorted().forEach(k -> stream.println(k + "=" + props.getProperty((String)k))); //$NON-NLS-1$ 
+		logger.debug(stream.toString());
 	}
 
 	void setVmOptions(String option) {
@@ -199,6 +209,26 @@ abstract class AttachApiTest {
 			/* ignore */
 		}
 		return outputLines;
+	}
+
+	/**
+	 * Find an executable in the jdk directory and fail if it is missing.
+	 * @param commandRoot Base name of the command, without ".exe" 
+	 */
+	protected void getJdkUtilityPath(final String commandRoot) {
+		final String commandWithSuffix = 
+				PlatformInfo.isWindows() ? commandRoot + ".exe" : commandRoot;
+		String javaHomeString = System.getProperty("java.home");
+		File javaHome = new File(javaHomeString);
+		File javaHomeBin = new File(javaHome, "bin");
+		File  commandFile = new File(javaHomeBin, commandWithSuffix);
+		if (!commandFile.exists()) { /* Java 8 has 2 bin directories, and JAVA_HOME is probably pointing at jre */
+			log("Did not find " + commandFile.getAbsolutePath());
+			File javaHomeParentBin = new File(javaHome.getParentFile(), "bin");
+			commandFile = new File(javaHomeParentBin, commandWithSuffix);
+			assertTrue("Did not find " + commandFile.getAbsolutePath(), commandFile.exists());
+		}
+		commandName = commandFile.getAbsolutePath();
 	}
 	
 }

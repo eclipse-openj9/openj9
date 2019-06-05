@@ -1326,7 +1326,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	// the byte[] value of two Strings. In such cases we extract the String.value fields before entering the operation loop.
 	// However if chatAt is used inside the loop then the JIT will anchor the load of the value byte[] inside of the loop thus
 	// causing us to load the String.value on every iteration. This is very suboptimal and breaks some of the common idioms
-	// that we recognize. The most prominent one is the regionMathes arraycmp idiom that is not recognized unless this method
+	// that we recognize. The most prominent one is the regionMatches arraycmp idiom that is not recognized unless this method
 	// is being used.
 	char charAtInternal(int index, byte[] value) {
 		// Check if the String is compressed
@@ -2222,35 +2222,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 
 		if (coder == UTF16) {
-			/*[IF Sidecar19-SE-OpenJ9]*/
 			return StringUTF16.lastIndexOfLatin1(s1Value, s1Length, s2Value, s2Length, fromIndex);
-			/*[ELSE] Sidecar19-SE-OpenJ9*/
-			// jdk9-b148 does not support the StringUTF16.lastIndexOfLatin1 API so we reimplement it here for compatibility
-			String s1 = new String(value, coder);
-			String s2 = str;
-
-			char firstChar = s2.charAtInternal(0, s2Value);
-
-			while (true) {
-				int i = s1.lastIndexOf(firstChar, fromIndex);
-
-				if (i == -1) {
-					return -1;
-				}
-
-				int o1 = i;
-				int o2 = 0;
-
-				while (++o2 < s2Length && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value))
-					;
-
-				if (o2 == s2Length) {
-					return i;
-				}
-
-				fromIndex = i - 1;
-			}
-			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		}
 
 		return -1;
@@ -3027,7 +2999,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public boolean contentEquals(StringBuffer buffer) {
 		synchronized (buffer) {
-			/*[IF Sidecar19-SE-OpenJ9]*/
 			int s1Length = lengthInternal();
 			int sbLength = buffer.length();
 
@@ -3056,16 +3027,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Otherwise we have a LATIN1 String and a UTF16 StringBuffer
 			return StringUTF16.contentEquals(s1Value, sbValue, s1Length);
-			/*[ELSE] Sidecar19-SE-OpenJ9*/
-            // jdk9-b148 builds cannot handle the new StringBuffer / StringBuilder so reimplement this API in a naive way
-			int sbLength = buffer.length();
-
-			if (lengthInternal() != sbLength) {
-				return false;
-			}
-			
-            return regionMatches(0, new String(buffer), 0, sbLength);
-			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		}
 	}
 
@@ -3090,7 +3051,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/**
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
-	 * @param expr
+	 * @param regex 
 	 *			  the regular expression to match
 	 * @param substitute
 	 *			  the string to replace the matching substring with
@@ -3177,7 +3138,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *
 	 * @param regex
 	 *			  Regular expression that is used as a delimiter
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException
 	 *				if the syntax of regex is invalid
@@ -3234,7 +3195,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * 
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException if the syntax of regex is invalid
 	 *
@@ -5316,7 +5277,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	// the byte[] value of two Strings. In such cases we extract the String.value fields before entering the operation loop.
 	// However if chatAt is used inside the loop then the JIT will anchor the load of the value byte[] inside of the loop thus
 	// causing us to load the String.value on every iteration. This is very suboptimal and breaks some of the common idioms
-	// that we recognize. The most prominent one is the regionMathes arraycmp idiom that is not recognized unless this method
+	// that we recognize. The most prominent one is the regionMatches arraycmp idiom that is not recognized unless this method
 	// is being used.
 	char charAtInternal(int index, char[] value) {
 		// Check if the String is compressed
@@ -6066,36 +6027,41 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char[] s1Value = s1.value;
 			char[] s2Value = s2.value;
 
-			if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
-				// both s1 and s2 are compressed
-				return helpers.intrinsicIndexOfStringLatin1(s1Value, s1len, s2Value, s2len, start);
-			} else if (s1.count < 0 && s2.count < 0) {
-				// both s1 and s2 are decompressed
-				return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
-			} else {
-				// s1 decompressed and s2 compressed
-				char firstChar = s2.charAtInternal(0, s2Value);
+			if (enableCompression) {
+				if (null == compressionFlag || (s1.count | s2.count) >= 0) {
+					// Both s1 and s2 are compressed.
+					return helpers.intrinsicIndexOfStringLatin1(s1Value, s1len, s2Value, s2len, start);
+				} else if ((s1.count & s2.count) < 0) {
+					// Both s1 and s2 are decompressed.
+					return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
+				} else {
+					// Mixed case.
+					char firstChar = s2.charAtInternal(0, s2Value);
 
-				while (true) {
-					int i = indexOf(firstChar, start);
+					while (true) {
+						int i = indexOf(firstChar, start);
 
-					// Handles subCount > count || start >= count
-					if (i == -1 || s2len + i > s1len) {
-						return -1;
+						// Handles subCount > count || start >= count.
+						if (i == -1 || s2len + i > s1len) {
+							return -1;
+						}
+
+						int o1 = i;
+						int o2 = 0;
+
+						while (++o2 < s2len && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value))
+							;
+
+						if (o2 == s2len) {
+							return i;
+						}
+
+						start = i + 1;
 					}
-
-					int o1 = i;
-					int o2 = 0;
-
-					while (++o2 < s2len && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value))
-						;
-
-					if (o2 == s2len) {
-						return i;
-					}
-
-					start = i + 1;
 				}
+			} else {
+				// Both s1 and s2 are decompressed.
+				return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
 			}
 		} else {
 			return start < s1len ? start : s1len;
@@ -7499,7 +7465,7 @@ written authorization of the copyright holder.
 	 *
 	 * @param regex
 	 *			  Regular expression that is used as a delimiter
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException
 	 *				if the syntax of regex is invalid
@@ -7556,7 +7522,7 @@ written authorization of the copyright holder.
 	 * 
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
-	 * @return The array of strings which are splitted around the regex
+	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException if the syntax of regex is invalid
 	 *
@@ -8389,4 +8355,15 @@ written authorization of the copyright holder.
 		return builder.toString();
 	}	
 /*[ENDIF] Java12 */
+	
+/*[IF Java13]*/
+	/*
+	 * Determine if current String object is LATIN1.
+	 * 
+	 * @return true if it is LATIN1, otherwise false.
+	 */
+	boolean isLatin1() {
+		return LATIN1 == coder();
+	}
+/*[ENDIF] Java13 */
 }

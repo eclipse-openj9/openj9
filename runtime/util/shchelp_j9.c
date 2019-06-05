@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,11 +57,11 @@ getJVMFeature(J9JavaVM *vm)
 	U_32 ret = J9SH_FEATURE_DEFAULT;
 
 #if defined(J9VM_ENV_DATA64)
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-	ret |= J9SH_FEATURE_COMPRESSED_POINTERS;
-#else 	
-	ret |= J9SH_FEATURE_NON_COMPRESSED_POINTERS;
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		ret |= J9SH_FEATURE_COMPRESSED_POINTERS;
+	} else {
+		ret |= J9SH_FEATURE_NON_COMPRESSED_POINTERS;
+	}
 #endif /* defined(J9VM_ENV_DATA64) */
 	return ret;
 }

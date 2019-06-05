@@ -754,7 +754,7 @@ buildInlineStackFrames(J9VMThread *currentThread, J9JITDecompileState *decompile
 
 
 /**
- * Peform decompilation after gather information from the stack walk.
+ * Perform decompilation after gather information from the stack walk.
  *
  * @param[in] *currentThread current thread
  * @param[in] *decompileState the decompilation state copied from the stack walk
@@ -958,7 +958,7 @@ decompileOuterFrame(J9VMThread * currentThread, J9JITDecompileState * decompileS
 	currentThread->j2iFrame = currentJ2iFrame;
 
 	/* If the outer framed failed a method monitor enter, hide the interpreted version to prevent exception throw
-	 * from exitting the monitor that was never entered.
+	 * from exiting the monitor that was never entered.
 	 */
 	if (J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE == resolveFrameType) {
 		newTempBase[-1] |= J9SF_A0_INVISIBLE_TAG;
@@ -1838,7 +1838,7 @@ osrAllFramesSize(J9VMThread *currentThread, J9JITExceptionTable *metaData, void 
  * Perform an OSR (fill in the OSR buffer) for the frame represented in the stack walk state.
  *
  * Note that the JITted stack frame will be copied to (osrScratchBuffer + osrScratchBufferSize).
- * This function assumes that the buffer has been alllocated large enough.
+ * This function assumes that the buffer has been allocated large enough.
  *
  * @param[in] *currentThread current thread
  * @param[in] *walkState stack walk state (already at the OSR point)

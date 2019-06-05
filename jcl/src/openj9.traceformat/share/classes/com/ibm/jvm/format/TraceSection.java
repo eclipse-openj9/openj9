@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,13 +68,13 @@ public class TraceSection {
         Util.Debug.println("TraceSection: modification:        " + modification);
         Util.Debug.println("TraceSection: startPlatform:       " + startPlatform);
         Util.Debug.println("TraceSection: startSystem:         " + startSystem);
-        Util.Debug.println("TraceSection: type:                " + type); //  0=internal 1=extrenal
+        Util.Debug.println("TraceSection: type:                " + type); //  0=internal 1=external
         Util.Debug.println("TraceSection: generations:         " + generations);
         Util.Debug.println("TraceSection: pointerSize:         " + pointerSize);
 
     }
 
-    /** sumarizes the trace section
+    /** summarizes the trace section
      *
      * @return  null
      */

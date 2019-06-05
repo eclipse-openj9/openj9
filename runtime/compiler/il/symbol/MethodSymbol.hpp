@@ -43,7 +43,7 @@ protected:
 
 private:
 
-   // When adding another class to the heirarchy, add it as a friend here
+   // When adding another class to the hierarchy, add it as a friend here
    friend class J9::MethodSymbol;
    friend class OMR::MethodSymbol;
 

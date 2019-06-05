@@ -23,9 +23,11 @@
 #include "j9cfg.h"
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "env/VMJ9.h"
@@ -73,12 +75,11 @@ J9::Power::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
 
-#if 0   
    if (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() &&
-      !comp->getOption(TR_DisableFastStringIndexOf) && !TR::Compiler->om.canGenerateArraylets())
+      TR::Compiler->target.is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
+      !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringIndexOf();
-#endif
-   
+
    if (!comp->getOption(TR_DisableReadMonitors))
       cg->setSupportsReadOnlyLocks();
 
@@ -440,7 +441,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             TR::Register *tempReg = self()->allocateRegister();
             TR::RegisterDependencyConditions *deps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(1, 2, self()->trMemory());
             deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
-            addDependency(deps, condReg, TR::RealRegister::NoReg, TR_CCR, self());
+            TR::addDependency(deps, condReg, TR::RealRegister::NoReg, TR_CCR, self());
 
             if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
                {

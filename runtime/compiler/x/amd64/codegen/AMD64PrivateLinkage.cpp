@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "codegen/AMD64JNILinkage.hpp"
 
 #include <stdint.h>
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -817,7 +818,7 @@ int32_t TR::AMD64PrivateLinkage::argAreaSize(TR::Node *callNode)
    // TODO: We only need this function because unresolved calls don't have a
    // TR::ResolvedMethodSymbol, and only TR::ResolvedMethodSymbol has
    // getParameterList().  If getParameterList() ever moves to TR::MethodSymbol,
-   // then this function becomes unneccessary.
+   // then this function becomes unnecessary.
    //
    TR::Node *child;
    int32_t  i;
@@ -943,7 +944,7 @@ int32_t TR::AMD64PrivateLinkage::buildPrivateLinkageArgs(TR::Node               
    // we're going to align the stack depend on the alignment property
    // adjust = something
    // allocateSize = parmAreaSize + adjust;
-   // then subtract stackpointer with alocateSize
+   // then subtract stackpointer with allocateSize
    uint32_t alignedParmAreaSize = parmAreaSize;
 
    if (!getProperties().getReservesOutgoingArgsInPrologue() && !callNode->getSymbol()->castToMethodSymbol()->isHelper())

@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ public class Test_Executable {
 			/*
 			 * InnerClass should not have any method and should have one constructor:
 			 * WithParams$InnerClass(withParamsClass.class this$0)
-			 * Paremeter : this$0 should be final and mandated
+			 * Parameter : this$0 should be final and mandated
 			 *
 			 */
 			checkExecutableCount(methods, 0, true, "InnerClass");
@@ -265,7 +265,7 @@ public class Test_Executable {
 			/*
 			 * InnerClass should not have any method and should have one constructor:
 			 * WithParams$InnerClass(withParamsClass.class this$0)
-			 * Paremeter : this$0 should be final and mandated
+			 * Parameter : this$0 should be final and mandated
 			 *
 			 */
 			checkExecutableCount(methods, 0, true, "InnerClass");

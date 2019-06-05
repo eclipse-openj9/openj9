@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or 
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -417,7 +417,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.system_action=
 J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
-#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numberic1024_WARN
+#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\nWARNING: The command line argument \"%s\" has been deprecated.\nWARNING: Use the -X equivalent.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.sample_input_1=-mca:
@@ -806,7 +806,7 @@ J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.user_response=
 
 # diagnostic collector help
 
-J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=\n\  -Xdiagnosticscollector enable the Diagnostics Collector
+J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=

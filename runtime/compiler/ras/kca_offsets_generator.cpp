@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 
 /*
   * This file is used to write a header file that can be used with KCA so
-  * that it knows the offset information required to corrently work with this
+  * that it knows the offset information required to correctly work with this
   * JVM.
   *
   * How to modify:
@@ -53,7 +53,7 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
    char szCMPRSS[8];
    char szRT[4];
 
-   #if defined(J9VM_GC_COMPRESSED_POINTERS)
+   #if defined(OMR_GC_COMPRESSED_POINTERS)
    strcpy( szCMPRSS, "_CMPRSS" );
    #else
    szCMPRSS[0]='\0';
@@ -173,7 +173,7 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       fprintf( file, "#define VM_JITCONFIG               (%d)\n", offsetof(J9JavaVM,jitConfig) );
       fprintf( file, "#define VM_BOOLARRAYCLASS          (%d)\n", offsetof(J9JavaVM,booleanArrayClass) );
       fprintf( file, "#define VM_CMPRSS_DISPLACEMENT     (%d)\n", 0 );
-      #if defined(J9VM_GC_COMPRESSED_POINTERS)
+      #if defined(OMR_GC_COMPRESSED_POINTERS)
       fprintf( file, "#define VM_CMPRSS_SHIFT            (%d)\n", offsetof(J9JavaVM,compressedPointersShift) );
       #else
       fprintf( file, "#define VM_CMPRSS_SHIFT            (%d)\n", 0 );

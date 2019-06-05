@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ MM_InterRegionRememberedSet::flushBuffersForDecommitedRegions(MM_EnvironmentVLHG
 
 		/* At this point there should be no non-empty buffers used by decommitted regions.
 		 * Now, walk the global pool of free buffers, and remove them from the list if they are owned by decommitted region.
-		 * Before that, move all free buffes from thread local pools to the global
+		 * Before that, move all free buffers from thread local pools to the global
 		 */
 
 		releaseCardBufferControlBlockLocalPools(env);
@@ -265,13 +265,16 @@ MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC* env)
 	_regionTable = _heapRegionManager->_regionTable;
 	_tableDescriptorSize = _heapRegionManager->_tableDescriptorSize;
 	UDATA baseOfHeap = (UDATA) (_heapRegionManager->_regionTable)->getLowAddress();
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-	_cardToRegionShift = _heapRegionManager->_regionShift - CARD_SIZE_SHIFT;
-	_cardToRegionDisplacement = baseOfHeap >> CARD_SIZE_SHIFT;
-#else
-	_cardToRegionShift = _heapRegionManager->_regionShift;
-	_cardToRegionDisplacement = baseOfHeap;
-#endif
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+	if (env->compressObjectReferences()) {
+		_cardToRegionShift = _heapRegionManager->_regionShift - CARD_SIZE_SHIFT;
+		_cardToRegionDisplacement = baseOfHeap >> CARD_SIZE_SHIFT;
+	} else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	{
+		_cardToRegionShift = _heapRegionManager->_regionShift;
+		_cardToRegionDisplacement = baseOfHeap;
+	}
 	_cardTable = ext->cardTable;
 
 	return true;

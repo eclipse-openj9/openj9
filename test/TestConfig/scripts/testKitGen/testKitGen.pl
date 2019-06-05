@@ -43,6 +43,7 @@ my $iterations     = 1;
 my $testFlag       = '';
 my @allLevels      = ( "sanity", "extended", "special" );
 my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
+my @allTypes       = ( "regular", "native" );
 my @allImpls       = ( "openj9", "ibm", "hotspot", "sap" );
 
 foreach my $argv (@ARGV) {
@@ -115,6 +116,6 @@ if ( !$impl ) {
 
 # run make file generator
 
-runmkgen( $projectRootDir, \@allLevels, \@allGroups, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList, $iterations, $testFlag );
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allTypes, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList, $iterations, $testFlag );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";

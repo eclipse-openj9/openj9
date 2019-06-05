@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,29 +48,29 @@ _ENTRY globalLeConditionHandlerENTRY = { (_POINTER)&j9vm_inline_le_condition_han
  * so the protected function's signature must be known at compile time. But, in this case the protected function
  * is a Java native, who's signature we of course don't know at compile time.
  *
- * j9vm_inline_le_condition_handler uses j9port_control to obtain a function pointer to the handler, j9vm_le_condition_handler,
- * which j9sig_protect_ceehdlr registers (using CEEHDLR) on calls to the port library's sig_protect function.
+ * j9vm_inline_le_condition_handler uses j9port_control to obtain a function pointer to the handler, omrsig_le_condition_handler,
+ * which omrsig_protect_ceehdlr registers (using CEEHDLR) on calls to the port library's sig_protect function.
  *
- * j9vm_inline_le_condition_handler then creates and provides the J9ZOSLEConditionHandlerRecord expected by the port library's
- * 	j9vm_le_condition_handler and calls j9vm_le_condition_handler directly
+ * j9vm_inline_le_condition_handler then creates and provides the OMRZOSLEConditionHandlerRecord expected by the port library's
+ * 	omrsig_le_condition_handler and calls omrsig_le_condition_handler directly
  *
  * @param[in]	_FEEDBACK *fc 		condition token representing the condition for which this handler was invoked
- * 										- forwarded to the j9vm_le_condition_handler.
- * @param[in]	_INT4 *token 		points to a J9VMThread*. Needed to obtain the portlibrary and by the the J9ZOSLEConditionHandlerRecord.
+ * 										- forwarded to the omrsig_le_condition_handler.
+ * @param[in]	_INT4 *token 		points to a J9VMThread*. Needed to obtain the portlibrary and by the the OMRZOSLEConditionHandlerRecord.
  * @param[out]	_INT4 *leResult		tells the OS what to do when the condition handler returns.
- * 										- forwarded to the j9vm_le_condition_handler
- * @param[out]	_FEEDBACK *newfc	forwarded to the j9vm_le_condition_handler
+ * 										- forwarded to the omrsig_le_condition_handler
+ * @param[out]	_FEEDBACK *newfc	forwarded to the omrsig_le_condition_handler
  *
  * @see J9VMPlatformDependentZOS390#enterSEH:vmThreadWrapper:
  * @see j9portcontrol.c#j9port_control()
- * @see j9signal_ceehdlr.c#j9vm_le_condition_handler()
- * @see j9signal_ceehdlr.c#j9sig_protect_ceehdlr()
+ * @see omrsignal_ceehdlr.c#omrsig_le_condition_handler()
+ * @see omrsignal_ceehdlr.c#omrsig_protect_ceehdlr()
  */
 void
 j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDBACK *newfc)
 {
 
- 	struct J9ZOSLEConditionHandlerRecord thisRecord;
+ 	struct OMRZOSLEConditionHandlerRecord thisRecord;
 	J9VMThread* vmThread = (J9VMThread *) *token;
 	PORT_ACCESS_FROM_VMC(vmThread);
 	void (*portLibraryInternalLEConditionHandler)(_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDBACK *newfc);
@@ -80,9 +80,9 @@ j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, 
 	printf("j9vm_inline_le_condition_handler, fc->tok_msgno: %i, fc->tok_facid: %s, fc->tok_sev: %i\n", fc->tok_msgno, e2a_func(fc->tok_facid, 3), fc->tok_sev);fflush(NULL);
 #endif
 
-	memset(&thisRecord, 0, sizeof(J9ZOSLEConditionHandlerRecord));
+	memset(&thisRecord, 0, sizeof(OMRZOSLEConditionHandlerRecord));
 
-	/* Fake up the J9ZOSLEConditionHandlerRecord as if j9sig_protect_ceehdlr() had created it */
+	/* Fake up the OMRZOSLEConditionHandlerRecord as if omrsig_protect_ceehdlr() had created it */
 	thisRecord.portLibrary = PORTLIB;
 	thisRecord.handler = structuredSignalHandler;
 	thisRecord.handler_arg = vmThread;
@@ -93,7 +93,7 @@ j9vm_inline_le_condition_handler (_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, 
 	/* peek into the port library implementation */
 	if (j9port_control("SIG_INTERNAL_HANDLER", (UDATA)&portLibraryInternalLEConditionHandler)) {
 		/* This will only happen if the portlibrary's support for LE condition handling either wasn't enabled at runtime
-		 * or was overidden after the fact. In either case, percolate */
+		 * or was overridden after the fact. In either case, percolate */
 #if defined(J9SIGNAL_DEBUG)
 		printf("\t *** j9port_control failed *** \n");
 #endif

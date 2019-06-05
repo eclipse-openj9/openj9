@@ -28,6 +28,7 @@
 #include "j9cfg.h"
 #include "j9consts.h"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "env/VMJ9.h"
 #include "il/ILOps.hpp"
@@ -252,7 +253,7 @@ ReduceSynchronizedFieldLoad::perform()
    {
    bool transformed = false;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
       {
       if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
          {
@@ -327,10 +328,10 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                      // When concurrent scavenge is enabled we need to load the object reference using a read barrier however
                      // there is no guarded load alternative for the LPD instruction. As such this optimization cannot be carried
                      // out for object reference loads under concurrent scavenge.
-                     if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && loadNode->getDataType().isAddress())
+                     if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && loadNode->getDataType().isAddress())
                         {
                         TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", cg->comp()->signature()));
-                        
+
                         break;
                         }
 
@@ -444,7 +445,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
 
       if (opcode.hasSymbolReference() || opcode.isBranch())
          {
-         if (loadNode == NULL && 
+         if (loadNode == NULL &&
             opcode.isLoadIndirect() && (opcode.isRef() || opcode.isInt() || opcode.isLong()) &&
             currentNode->getFirstChild() == synchronizedObjectNode)
             {

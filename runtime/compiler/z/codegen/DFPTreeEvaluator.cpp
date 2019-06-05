@@ -40,7 +40,6 @@
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Snippets.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 #include "z/codegen/J9TreeEvaluator.hpp"
 
 /**
@@ -85,7 +84,7 @@ const int32_t len = 22;
 /*
  *  No need to stopUsingRegister(FPR) because the RA does
  *  not check for liveliness of these regs on zSeries (yet).
- *  But we'll do it anways.
+ *  But we'll do it anyways.
  */
 
 /*
@@ -208,7 +207,7 @@ genLoadDFP(
       fprRegister = cg->allocateRegister(TR_FPR);
 
       // move it from GPR to FPR
-      if (TR::Compiler->target.cpu.getS390SupportsFPE())
+      if (TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility())
          {
          generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister);
          }
@@ -243,7 +242,7 @@ genStoreDFP(
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Register * objRegister = cg->evaluate(objAddrNode);
 
-   // query the VM for the field offset to wich we are going to store
+   // query the VM for the field offset to which we are going to store
    if (dfpFieldOffset == -1)
       {
       TR_OpaqueClassBlock * bigDClass = NULL;
@@ -1376,7 +1375,7 @@ inlineBigDecimalFromPackedConverter(
    //we will have a label so that our OOL path could be redirected to the end of inlining method.
    outlinedHelperCall->swapInstructionListsWithCompilation();
 
-   //put dec reference here because we may need to use it to actually evalute the call node
+   //put dec reference here because we may need to use it to actually evaluate the call node
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getChild(3));
 
@@ -1445,7 +1444,7 @@ inlineBigDecimalToPackedConverter(
    // load the dfp value into register
    TR::Register * dfpRegister = genLoadDFP(node, cg, node->getFirstChild());
 
-   // convert the dfp value into packed decimak
+   // convert the dfp value into packed decimal
    TR::Register * retRegister = cg->allocateRegister();
    if(signedPacked == 1)
       {
@@ -1553,7 +1552,7 @@ dfp2fpHelper(TR::Node * node, TR::CodeGenerator * cg)
       bits 58-59:   Target-radix-dependent controls
       bits 60-63:   PFPO rounding method
 **********************************************************/
-   int32_t funcCode = 0x01 << 24;   // perform radix convertion
+   int32_t funcCode = 0x01 << 24;   // perform radix conversion
    int32_t srcTypeCode, tgtTypeCode;
    switch (tgtType)
       {
@@ -1839,7 +1838,7 @@ Conversion is performed in compliance with what's described in 'zOS XLC V1R10 La
            floating-point number is positive, or 0 otherwise.
        - If the integer type is signed, the result is the most negative or positive representable
            number according to the sign of the floating-point number
-currently tobey follows this rule for DFP to singned/unsigned int, but seems not for short/byte types
+currently tobey follows this rule for DFP to signed/unsigned int, but seems not for short/byte types
      where the upper bits are simple choped off, i think it's just a bug in tobey
 
      DFP to fixed type conversions are expanded in WCode IlGen phase, so don't need it here anymore
@@ -2273,7 +2272,7 @@ J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // RTC 91058: The COBOL runtime was previously setting the IEEE divide-by-zero mask
    // on when it was first brought up, so COBOL programs would terminate with an
-   // expection on a divide by zero. In a mixed-language environment, other languages
+   // exception on a divide by zero. In a mixed-language environment, other languages
    // might want to handle the exception instead of terminate. To accommodate this,
    // the runtime will no longer set the divide-by-zero mask. COBOL programs will then
    // need to ensure the mask is on exactly when an exception would be hit.

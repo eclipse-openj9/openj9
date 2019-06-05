@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -843,7 +843,7 @@ _nextBranch:
 			variable8 = (U_8) (bc - CFR_BC_aload_0);
 			if (jsrData && (variable8 < inlineBuffers->maxLocals)) {
 				if (jsrData->locals[variable8]) {
-					/* Jazz 82615: Set the verose error type and the local variable index in the case of illegal load operation */
+					/* Jazz 82615: Set the verbose error type and the local variable index in the case of illegal load operation */
 					inlineBuffers->verboseErrorType = BCV_ERR_JSR_ILLEGAL_LOAD_OPERATION;
 					inlineBuffers->errorLocalIndex = (U_32)variable8;
 					goto _verifyError;
@@ -857,7 +857,7 @@ _nextBranch:
 			NEXT_U8(variable8, bcIndex);
 			if (jsrData && (variable8 < inlineBuffers->maxLocals)) {
 				if (jsrData->locals[variable8]) {
-					/* Jazz 82615: Set the verose error type and the local variable index in the case of illegal load operation */
+					/* Jazz 82615: Set the verbose error type and the local variable index in the case of illegal load operation */
 					inlineBuffers->verboseErrorType = BCV_ERR_JSR_ILLEGAL_LOAD_OPERATION;
 					inlineBuffers->errorLocalIndex = (U_32)variable8;
 					goto _verifyError;
@@ -1036,7 +1036,7 @@ _nextBranch:
 			break;
 
 		/*	START OF DUP CODES */
-		/* DUPS can legally duplicate return adresses */
+		/* DUPS can legally duplicate return addresses */
 
 		case CFR_BC_dup:
 			value = popStack(jsrData);
@@ -1303,7 +1303,7 @@ _nextBranch:
 				NEXT_U16(variable16, bcIndex);
 				if (jsrData && ((UDATA) variable16 < inlineBuffers->maxLocals)) {
 					if (jsrData->locals[variable16]) {
-						/* Jazz 82615: Set the verose error type and the local variable index in the case of illegal load operation */
+						/* Jazz 82615: Set the verbose error type and the local variable index in the case of illegal load operation */
 						inlineBuffers->verboseErrorType = BCV_ERR_JSR_ILLEGAL_LOAD_OPERATION;
 						inlineBuffers->errorLocalIndex = (U_32)variable16;
 						goto _verifyError;

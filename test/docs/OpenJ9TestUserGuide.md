@@ -30,7 +30,7 @@ For JIT-as-a-Service testing, refer to [Testing.md](https://github.com/eclipse/o
 
 ```
 cd openj9/test/TestConfig
-export JAVA_BIN=<path to JDK bin directory that you wish to test>
+export TEST_JDK_HOME=<path to JDK directory that you wish to test>
 export SPEC=linux_x86-64_cmprssptrs
 make -f run_configure.mk
 make _sanity
@@ -45,15 +45,33 @@ tools should be installed on your test machine to run tests.
 ### 1. Configure environment:
 
   * environment variables
-    ```
-    JAVA_BIN=<path to JDK bin directory that you wish to test>
-    SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
-    JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value)
-    JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
-    BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
-    NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as JDK_HOME)
-    ```
 
+    required:
+    ```
+    TEST_JDK_HOME=<path to JDK directory that you wish to test>
+    BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
+    ```
+    optional:
+    ```
+    SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test, could be auto detected)
+    JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value, could be auto detected)
+    JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value, could be auto detected)
+    NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as TEST_JDK_HOME)
+    ```
+  * auto detection:
+  
+    By default, AUTO_DETECT is turned on. SPEC, JDK_VERSION, and JDK_IMPL do not need to be exported.
+    If you do not wish to use AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can export AUTO_DETECT to false.
+    ```
+    export AUTO_DETECT=false
+    ```
+    e.g.,
+    ```
+    export AUTO_DETECT=false
+    export SPEC=linux_x86-64_cmprssptrs
+    export JDK_VERSION=8
+    export JDK_IMPL=openj9
+    ```
 Please refer *.spec files in [buildspecs](https://github.com/eclipse/openj9/tree/master/buildspecs)
 for possible SPEC values.
 
@@ -92,6 +110,13 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
       - level:   [sanity|extended] (extended default value)
       - group:   [functional|system|openjdk|external|perf|jck] (required 
                  to provide one group per test)
+      - type:    [regular|native] (if a test is tagged with native, it means this
+                 test needs to run with test image (native test libs); 
+                 NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used, 
+                 native test libs download link needs to be provided in addition to SDK 
+                 download link in CUSTOMIZED_SDK_URL; for details, please refer to 
+                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins); 
+                 default to regular)
       - impl:    [openj9|hotspot] (filter test based on exported JDK_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
@@ -124,11 +149,39 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
     make _sanity
     ```
 
+  * type of tests <br />
+    make _type <br />
+    e.g., 
+    ```
+    make _native
+    ```
+
   * level of tests with specified group <br />
     make _level.group <br />
     e.g., 
     ```
     make _sanity.functional
+    ```
+
+  * level of tests with specified type <br />
+    make _level.type <br />
+    e.g., 
+    ```
+    make _sanity.native
+    ```
+
+  * group of tests with specified type <br />
+    make _group.type <br />
+    e.g., 
+    ```
+    make _functional.native
+    ```
+
+  * specify level, group and type together <br />
+    make _level.group.type <br />
+    e.g., 
+    ```
+    make _sanity.functional.native
     ```
 
   * a specific individual test <br />
@@ -210,6 +263,22 @@ target
     ```
     element that you want to exclude.
 
+    If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
+
+    ```    
+        make _testA    // testA has <disabled> tag in playlist.xml  
+        make _disabled.sanity.functional
+        make _disabled.extended
+    ```
+
+    Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
+
+    ```    
+        make _echo.disabled.testA
+        make _echo.disabled.sanity.functional
+        make _echo.disabled.extended
+    ```
+
   * temporarily on all platforms
 
     Depends on the JDK_VERSION, add a line in the
@@ -272,12 +341,22 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
     testng logger (and not System.out.print statements). In this way,
     we can not only direct that output to console, but also to various
     other clients (WIP).  At the end of a test run, the results are
-    summarized to show which tests passed / failed / skipped.  This gives
+    summarized to show which tests are passed / failed / disabled / skipped.  This gives
     you a quick view of the test names and numbers in each category
-    (passed/failed/skipped).  If you've piped the output to a file, or
+    (passed/failed/disabled/skipped).  If you've piped the output to a file, or
     if you like scrolling up, you can search for and find the specific
     output of the tests that failed (exceptions or any other logging
     that the test produces).
+
+    - `SKIPPED` tests
+
+      If a test is skipped, it means that this test cannot be run on this
+      platform due to jvm options, platform requirements and/or test
+      capabilities.
+
+    - `DISABLED` tests
+
+      If a test is disabled, it means that this test is disabled using `<disabled>` tag in playlist.xml.
 
   * in html files
 

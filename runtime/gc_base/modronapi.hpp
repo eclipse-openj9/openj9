@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,6 +88,7 @@ UDATA j9gc_get_object_size_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr);
 UDATA j9gc_get_object_total_footprint_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr);
 j9object_t j9gc_get_memoryController(J9VMThread *vmContext, j9object_t objectPtr);
 void j9gc_set_memoryController(J9VMThread *vmThread, j9object_t objectPtr, j9object_t memoryController);
+void j9gc_set_allocation_sampling_interval(J9VMThread *vmThread, UDATA samplingInterval);
 void j9gc_set_allocation_threshold(J9VMThread *vmThread, UDATA low, UDATA high);
 UDATA j9gc_get_bytes_allocated_by_thread(J9VMThread *vmThread);
 void j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *masterCpuMillis, U_64 *slaveCpuMillis, U_32 *maxThreads, U_32 *currentThreads);

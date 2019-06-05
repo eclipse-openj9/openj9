@@ -23,10 +23,22 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
+#if JAVA_SPEC_VERSION >= 9
+#define JVMTI_9_ENTRY(name) name
+#else /* JAVA_SPEC_VERSION >= 9 */
+#define JVMTI_9_ENTRY(name) NULL
+#endif /* JAVA_SPEC_VERSION >= 9 */
+
+#if JAVA_SPEC_VERSION >= 11
+#define JVMTI_11_ENTRY(name) name
+#else /* JAVA_SPEC_VERSION >= 11 */
+#define JVMTI_11_ENTRY(name) NULL
+#endif /* JAVA_SPEC_VERSION >= 11*/
+
 jvmtiNativeInterface jvmtiFunctionTable = {
 	NULL,
 	jvmtiSetEventNotificationMode,
-	jvmtiGetAllModules,
+	JVMTI_9_ENTRY(jvmtiGetAllModules),
 	jvmtiGetAllThreads,
 	jvmtiSuspendThread,
 	jvmtiResumeThread,
@@ -63,7 +75,7 @@ jvmtiNativeInterface jvmtiFunctionTable = {
 	jvmtiRawMonitorNotifyAll,
 	jvmtiSetBreakpoint,
 	jvmtiClearBreakpoint,
-	jvmtiGetNamedModule,
+	JVMTI_9_ENTRY(jvmtiGetNamedModule),
 	jvmtiSetFieldAccessWatch,
 	jvmtiClearFieldAccessWatch,
 	jvmtiSetFieldModificationWatch,
@@ -117,12 +129,12 @@ jvmtiNativeInterface jvmtiFunctionTable = {
 	jvmtiIsMethodObsolete,
 	jvmtiSuspendThreadList,
 	jvmtiResumeThreadList,
-	jvmtiAddModuleReads,
-	jvmtiAddModuleExports,
-	jvmtiAddModuleOpens,
-	jvmtiAddModuleUses,
-	jvmtiAddModuleProvides,
-	jvmtiIsModifiableModule,
+	JVMTI_9_ENTRY(jvmtiAddModuleReads),
+	JVMTI_9_ENTRY(jvmtiAddModuleExports),
+	JVMTI_9_ENTRY(jvmtiAddModuleOpens),
+	JVMTI_9_ENTRY(jvmtiAddModuleUses),
+	JVMTI_9_ENTRY(jvmtiAddModuleProvides),
+	JVMTI_9_ENTRY(jvmtiIsModifiableModule),
 	jvmtiGetAllStackTraces,
 	jvmtiGetThreadListStackTraces,
 	jvmtiGetThreadLocalStorage,
@@ -179,7 +191,7 @@ jvmtiNativeInterface jvmtiFunctionTable = {
 	jvmtiGetOwnedMonitorStackDepthInfo,
 	jvmtiGetObjectSize,
 	jvmtiGetLocalInstance,
-	jvmtiSetHeapSamplingInterval,
+	JVMTI_11_ENTRY(jvmtiSetHeapSamplingInterval),
 };
 
 

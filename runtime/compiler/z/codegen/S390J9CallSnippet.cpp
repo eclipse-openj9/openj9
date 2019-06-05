@@ -34,7 +34,6 @@
 #include "il/Node_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 #include "runtime/CodeCacheManager.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 
 uint8_t *
 TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR::CodeGenerator * cg)
@@ -254,7 +253,6 @@ TR::S390J9CallSnippet::emitSnippetBody()
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   // *this   swipeable for debugger
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    TR::Node * callNode = getNode();
    TR::SymbolReference * methodSymRef =  getRealMethodSymbolReference();
@@ -391,7 +389,6 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   // *this   swipeable for debugger
    uint8_t * cursor = TR::S390J9CallSnippet::emitSnippetBody();
 
    TR::SymbolReference * methodSymRef = getNode()->getSymbolReference();
@@ -482,14 +479,12 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
 uint32_t
 TR::S390UnresolvedCallSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    return TR::S390CallSnippet::getLength(estimatedSnippetStart) + sizeof(uintptrj_t) + sizeof(int32_t);
    }
 
 uint8_t *
 TR::S390VirtualSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    return NULL;
    }
 
@@ -502,7 +497,6 @@ TR::S390VirtualSnippet::getLength(int32_t  estimatedSnippetStart)
 uint8_t *
 TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    TR::Node * callNode = getNode();
    TR::Compilation *comp = cg()->comp();
@@ -560,7 +554,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    // Field used by nestmate private calls
    // J2I thunk address
-   // No explicit call to `addExternalReloation` because its relocation info is passed to CP_addr `addExternalReloation` call.
+   // No explicit call to `addExternalRelocation` because its relocation info is passed to CP_addr `addExternalRelocation` call.
    *(uintptrj_t *) cursor = (uintptrj_t) thunkAddress;
    j2iRelocInfo->data3 = (uintptrj_t)cursor - cpAddrPosition;    // data3 is the offset of CP_addr to J2I thunk
    AOTcgDiag1(comp, "add TR_J2IVirtualThunkPointer cursor=%x\n", cursor);
@@ -616,7 +610,6 @@ TR::S390InterfaceCallSnippet::S390InterfaceCallSnippet(
 uint8_t *
 TR::S390InterfaceCallSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(cursor);
    TR::Compilation *comp = cg()->comp();
@@ -648,7 +641,7 @@ TR::S390InterfaceCallSnippet::emitSnippetBody()
    *(int16_t *) cursor = 0xC0E0;
    cursor += sizeof(int16_t);
 
-   // Place holder.  Proper offset will be calulated by relocation.
+   // Place holder.  Proper offset will be calculated by relocation.
    *(int32_t *) cursor = 0xDEADBEEF;
    cursor += sizeof(int32_t);
 
@@ -1084,7 +1077,7 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    // J2I thunk address.
-   // Note that J2I thunk relocation is associated with CP addr and the call to `addExternalReloation` uses CP-Addr cursor.
+   // Note that J2I thunk relocation is associated with CP addr and the call to `addExternalRelocation` uses CP-Addr cursor.
    *(intptrj_t *) cursor = (intptrj_t)_thunkAddress;
    j2iRelocInfo->data3 = (uintptrj_t)cursor - cpAddrPosition;  // data3 is the offset of CP_addr to J2I thunk
 

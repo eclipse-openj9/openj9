@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -573,7 +573,7 @@ printClass(J9VMThread* vmThread, J9Class* clazz, char* message, UDATA bootLoader
 
 /**
  * parse a set of -verbose: options and update a settings struct.
- * @param options set of null-separated verbose obptions (e.g. "class", "gc", etc.  Terminated by a double null
+ * @param options set of null-separated verbose options (e.g. "class", "gc", etc.  Terminated by a double null
  * @param verboseOptions STructure of flags indicating which verbosity to turn on
  * @return 0 if error, 1 if success
  */
@@ -1114,7 +1114,7 @@ setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorSt
 		(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_STACKMAPFRAME_VERIFICATION, verboseStackMapFrameVerification, NULL);
 	}
 	
-	/* Jazz 82615: Register the callback funtions for the error message framework if the VerifyErrorDetails option is specified */
+	/* Jazz 82615: Register the callback functions for the error message framework if the VerifyErrorDetails option is specified */
 	if(VERBOSE_SETTINGS_SET == verboseOptions->verifyErrorDetails) {
 		vm->verboseStruct->getCfrExceptionDetails = generateJ9CfrExceptionDetails;
 		vm->verboseStruct->getRtvExceptionDetails = generateJ9RtvExceptionDetails;
@@ -1268,7 +1268,7 @@ verboseClassVerificationFallback(J9HookInterface** hook, UDATA eventNum, void* e
 }
 
 /*
- * This event callback is triggered before starting the verificaiton of each method.
+ * This event callback is triggered before starting the verification of each method.
  */
 static void
 verboseMethodVerificationStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)

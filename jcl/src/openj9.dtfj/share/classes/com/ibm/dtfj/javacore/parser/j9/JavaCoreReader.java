@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,7 +146,7 @@ public class JavaCoreReader {
 		if (head.indexOf(sectionEyeCatcher) >= 0) {
 			int idx = head.indexOf(charsetEyeCatcher);
 			
-			/* The charset eyecather is much newer, so may not be present */
+			/* The charset eyecatcher is much newer, so may not be present */
 			if (idx >= 0) {
 				idx += charsetEyeCatcher.length();
 				String javacoreCharset = head.substring(idx).trim();

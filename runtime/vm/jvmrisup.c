@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -613,7 +613,7 @@ static int JNICALL rasDumpRegister(JNIEnv *env, int (JNICALL *func)(JNIEnv *env2
 	}
 	
 	memset(rda, 0, sizeof(*rda));
-	/* change this to filter on a java core when that facility is avaiable. */
+	/* change this to filter on a java core when that facility is available. */
 	/* for now just run when anything unexpected happens! */
 	rda->nextPtr = NULL;
 	rda->shutdownFn = rasDumpAgentShutdownFn;

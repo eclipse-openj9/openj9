@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ omr_trc_getTraceFileIterator(OMRPortLibrary* portLib, char* fileName, UtTraceFil
 
 	/* Check for a valid looking header. */
 	if (dummyHeader.endianSignature != UT_ENDIAN_SIGNATURE) {
-		/* TODO - If this is the wrong endianess we'll either need to fix up the header
+		/* TODO - If this is the wrong endianness we'll either need to fix up the header
 		 * and change the formatter to cope with files from other platforms OR document
 		 * that the native formatter can't cope with that.
 		 */
@@ -86,7 +86,7 @@ omr_trc_getTraceFileIterator(OMRPortLibrary* portLib, char* fileName, UtTraceFil
 
 	/* Check for a valid looking header. */
 	if (header->endianSignature != UT_ENDIAN_SIGNATURE) {
-		/* TODO - If this is the wrong endianess we'll either need to fix up the header
+		/* TODO - If this is the wrong endianness we'll either need to fix up the header
 		 * and change the formatter to cope with files from other platforms OR document
 		 * that the native formatter can't cope with that.
 		 */
@@ -292,7 +292,7 @@ getU_16FromBuffer(UtTraceRecord *record, uint32_t offset, int32_t isBigEndian)
 	data[0] = getUnsignedByteFromBuffer(record, offset);
 	data[1] = getUnsignedByteFromBuffer(record, offset + 1);
 
-	/* integer values are written out in platform endianess */
+	/* integer values are written out in platform endianness */
 	if (isBigEndian) {
 		ret = (data[0] << 8) | (data[1]);
 	} else {
@@ -312,7 +312,7 @@ getU_32FromBuffer(UtTraceRecord *record, uint32_t offset, int32_t isBigEndian)
 	data[2] = getUnsignedByteFromBuffer(record, offset + 2);
 	data[3] = getUnsignedByteFromBuffer(record, offset + 3);
 
-	/* integer values are written out in platform endianess */
+	/* integer values are written out in platform endianness */
 	if (isBigEndian) {
 		ret = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
 	} else {
@@ -336,7 +336,7 @@ getU_64FromBuffer(UtTraceRecord *record, uint32_t offset, int32_t isBigEndian)
 	data[6] = getUnsignedByteFromBuffer(record, offset + 6);
 	data[7] = getUnsignedByteFromBuffer(record, offset + 7);
 
-	/* integer values are written out in platform endianess */
+	/* integer values are written out in platform endianness */
 	if (isBigEndian) {
 		ret = ((uint64_t)data[0] << 56) | ((uint64_t)data[1] << 48) | ((uint64_t)data[2] << 40) | ((uint64_t)data[3] << 32)
 				| ((uint64_t)data[4] << 24) | ((uint64_t)data[5] << 16) | ((uint64_t)data[6] << 8) | ((uint64_t)data[7]);
@@ -879,7 +879,7 @@ omr_trc_formatNextTracePoint(UtTracePointIterator *iter, char *buffer, uint32_t 
 		return NULL;
 	}
 
-	/* if this is a circular buffer, that we have alread moved to the end of, and 
+	/* if this is a circular buffer, that we have already moved to the end of, and 
 	 * the current tracepoint length takes us back before where formatting originally
 	 * started in this buffer, then we have found the partially overwritten tracepoint
 	 * that means we have got to the end of this buffer. */

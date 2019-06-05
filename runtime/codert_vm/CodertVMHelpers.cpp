@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -180,7 +180,7 @@ jitMethodFailedTranslation(J9VMThread *currentThread, J9Method *method)
 {
 	J9JITConfig *jitConfig = currentThread->javaVM->jitConfig;
 	if (J9_ARE_NO_BITS_SET(jitConfig->runtimeFlags, J9JIT_TOSS_CODE)) {
-		/* Natives are already set corectly before the translation attempt */
+		/* Natives are already set correctly before the translation attempt */
 		if (J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccNative)) {
 			method->extra = (void*)(UDATA)(IDATA)J9_JIT_NEVER_TRANSLATE;
 		}

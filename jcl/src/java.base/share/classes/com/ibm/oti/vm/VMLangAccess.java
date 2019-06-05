@@ -11,7 +11,7 @@ import sun.reflect.ConstantPool;
 
 
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -138,10 +138,10 @@ public interface VMLangAccess {
 	public Object createInternalRamClass(long addr);
 	
 	/**
-	 * Returns a ConstanPool object
+	 * Returns a ConstantPool object
 	 * 
 	 * @param internalRamClass An object ref to an internalRamClass
-	 * @return ContanstPool instance
+	 * @return ConstantPool instance
 	 */
 	public ConstantPool getConstantPool(Object internalRamClass);
 
@@ -155,4 +155,18 @@ public interface VMLangAccess {
 	public void addPackageToList(Class<?> newClass, ClassLoader loader);
 	/*[ENDIF] Sidecar19-SE */
 
+	/**
+	 * Create a thread that it has runnable as its run object, has threadName as its name, has contextClassLoader as its context ClassLoader,
+	 * has an option to be part of system thread group, has an option to inherit ThreadLocals or not, and has an option to set isDaemon.
+	 * 
+	 * @param       runnable                A java.lang.Runnable whose method <code>run</code> will be executed by the new Thread
+	 * @param       threadName              Name for the Thread being created
+	 * @param       isSystemThreadGroup     A boolean indicating whether the thread to be created belongs to the system thread group
+	 * @param       inheritThreadLocals     A boolean indicating whether to inherit initial values for inheritable thread-local variables
+	 * @param       isDaemon                Indicates whether or not the Thread being created is a daemon thread
+	 * @param       contextClassLoader      The context ClassLoader
+	 * 
+	 * @return      A java.lang.Thread created
+	 */
+	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader);
 }

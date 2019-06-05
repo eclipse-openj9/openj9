@@ -57,7 +57,7 @@ class TR_SignExtendLoads : public TR::Optimization
 
    friend struct HashTable;
 
-   // Hash table mapping of nodes to lists of refering nodes
+   // Hash table mapping of nodes to lists of referring nodes
    //
    struct HashTableEntry
       {

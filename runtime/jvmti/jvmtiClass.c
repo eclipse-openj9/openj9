@@ -1017,6 +1017,58 @@ fixWatchedFields(J9JavaVM *vm, J9HashTable *classHashTable)
 	}
 }
 
+/**
+ * Update the method ordering table for an interface class. The cases are:
+ *
+ * 1) A reodering is required and none exists yet
+ *		Assign the remap array to the interface class
+ * 2) A reordring is not required, and the class already has one
+ *		Free and NULL the interface class ordering array
+ * 3) A reodering is required and the class already has one
+ *		Copy the method remap over the existing ordering in the class
+ * 4) No reordering required and the class does not have one
+ *		Do nothing
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] count The number of explicitly-redefined classes
+ * @param[in] classPair Pointer to the array of class pairs (of size count)
+ */
+static void
+updateInterfaceMethodOrdering(J9VMThread *currentThread, jint count, J9JVMTIClassPair *classPair)
+{
+	while (0 != count) {
+		J9Class *interfaceClass = classPair->originalRAMClass;
+		J9ROMClass *romClass = interfaceClass->romClass;
+		if (J9ROMCLASS_IS_INTERFACE(romClass)) {
+			U_32 *ordering = J9INTERFACECLASS_METHODORDERING(interfaceClass);
+			U_32 *remap = classPair->methodRemapIndices;
+			if (NULL == ordering) {
+				/* No reordering exists yet */
+				if (NULL != remap) {
+					/* First reordering required - assign the remap array and NULL it
+					 * in the pair to prevent it being freed.
+					 */
+					J9INTERFACECLASS_SET_METHODORDERING(interfaceClass, remap);
+					classPair->methodRemapIndices = NULL;
+				}
+			} else {
+				/* Ordering already exists */
+				if (NULL == remap) {
+					/* Back to the original ordering, discard the ordering array */
+					PORT_ACCESS_FROM_VMC(currentThread);
+					J9INTERFACECLASS_SET_METHODORDERING(interfaceClass, NULL);
+					j9mem_free_memory(ordering);
+				} else {
+					/* Reordering still required - copy the remap array over the existing ordering */
+					memcpy(ordering, remap, romClass->romMethodCount * sizeof(U_32));
+				}
+			}
+		}
+		classPair += 1;
+		count -= 1;
+	}
+}
+
 
 static jvmtiError
 redefineClassesCommon(jvmtiEnv* env,
@@ -1126,9 +1178,6 @@ redefineClassesCommon(jvmtiEnv* env,
 				/* Fix JNI */
 				fixJNIRefs(currentThread, classPairs, TRUE, extensionsUsed);
 
-				/* Update the iTables of any classes which implement a replaced interface */
-				fixITablesForFastHCR(currentThread, classPairs);
-
 				/* Fix resolved constant pool references to point to new methods. */
 				fixConstantPoolsForFastHCR(currentThread, classPairs, methodPairs);
 
@@ -1139,6 +1188,9 @@ redefineClassesCommon(jvmtiEnv* env,
 
 				/* Flush the reflect method cache */
 				flushClassLoaderReflectCache(currentThread, classPairs);
+
+				/* Store the method remap indices for redefined interface classes */
+				updateInterfaceMethodOrdering(currentThread, class_count, specifiedClasses);
 
 				/* Indicate that a redefine has occurred */
 				vm->hotSwapCount += 1;
@@ -1666,7 +1718,7 @@ done:
 
 
 /** 
- * \brief	Returnt the raw Constant Pool bytes for the specified class
+ * \brief	Return the raw Constant Pool bytes for the specified class
  * \ingroup	jvmtiClass 
  * 
  * 
@@ -1806,7 +1858,7 @@ done:
  *	ISSUES:
  *		The UTF8 and NameAndSignature constants are not stored on the constant pool and
  *		therefore do not have an "index" but rather use SRP references. This call will 
- *		create CP entries and update refering CP items accordingly
+ *		create CP entries and update referring CP items accordingly
  *
  *		The Long and Double type is defined by the spec to take _TWO_ constant pool entries
  *		instead of one. This creates a problem since our bytecode's cp indices have been
@@ -2050,7 +2102,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 									     J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas))));
 
 					/* Add the referenced Class item to the HT, we explicitly do it here in case the refered class
-					 * has not yet been added. Defering it to be done via the CFR_CONSTANT_Class case would 
+					 * has not yet been added. Deferring it to be done via the CFR_CONSTANT_Class case would 
 					 * prevent us from being able to save the index in htEntry->type.ref.classIndex (ie another
 					 * pass would be needed once the CFR_CONSTANT_Class case adds it) */
 					rc = jvmtiGetConstantPool_addClassOrString(translation, ref->classRefCPIndex, (U_8)CFR_CONSTANT_Class,
@@ -2318,7 +2370,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot1);
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot2);
 #endif				
-				/* Skip additional CP entry. See JVM spec v2 section 4.4.5 for the briliant rationale */
+				/* Skip additional CP entry. See JVM spec v2 section 4.4.5 for the brilliant rationale */
 				sunCpIndex++;
 
 				break;

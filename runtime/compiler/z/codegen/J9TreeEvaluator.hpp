@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,49 +34,8 @@ namespace J9 { typedef J9::Z::TreeEvaluator TreeEvaluatorConnector; }
 #error J9::Z::TreeEvaluator expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-
+#include "codegen/Snippet.hpp"
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
-
-
-
-//#define TRACE_EVAL
-#if defined(TRACE_EVAL)
-//
-// this is a handy thing to turn on if you want to figure out what the common
-// code generator is mapping nodes to and what is really being driven through
-// evaluation.
-// It is not on by default (too noisy and expensive) but can be enabled
-// by just defining TRACE_EVAL for this file
-//
-// If we wanted to enable this by default, it would make sense to create a
-// new 'phase' for debugging that could be queried and to have the macro
-// be a test of the tracing before making a function call out, e.g.
-// instead of PRINT_ME(...) we would have:
-// if (compilation->getOutFile() != NULL && compilation->getTraceEval())
-//   {
-//     print("iadd", compilation->getOutFile());
-//   }
-// and then traceEval would be a forced no-inline method
-//
-// Add another version of PRINT_ME, undef EVAL_BLOCK to go back to the old one
-#define EVAL_BLOCK
-#if defined (EVAL_BLOCK)
-#define PRINT_ME(string,node,cg) TR::Delimiter evalDelimiter(cg->comp(), cg->comp()->getOption(TR_TraceCG), "EVAL", string)
-#else
-void
-PRINT_ME(char * string, TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Compilation * compilation = cg->comp();
-   TR::FILE *outFile = compilation->getOutFile();
-   if (outFile != NULL)
-      {
-      diagnostic("EVAL: %s\n", string);
-      }
-   }
-#endif
-#else
-#define PRINT_ME(string,node,cg)
-#endif
 
 #define INSN_HEAP cg->trHeapMemory()
 
@@ -90,8 +49,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
-   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -114,6 +71,83 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static float interpreterProfilingInstanceOfOrCheckCastTopProb(TR::CodeGenerator * cg, TR::Node * node);
+
+   /**
+    * \brief
+    * In concurrent scavenge (CS) mode, this is used to evaluate ardbari nodes and inlined-compare-and-swap to
+    * generate a guarded load software sequence that is functionally equivalent to LGG/LLGFSG instructions on z.
+    *
+    * \param node
+    *       the read barrier node to evaluate
+    *
+    * \param cg
+    *       the code generator object
+    *
+    * \param resultReg
+    *       the read barrier's result register
+    *
+    * \param memRef
+    *       a memory reference to the reference field to load from
+    *
+    * \param deps
+    *       A register dependency condition pointer used when the software read barrier, which itself is an internal
+    *       control flow (ICF), is built inside another ICF. This is the outer ICF's dependency conditions.
+    *       When the deps parameter is not NULL, this evaluator helper does not build its own dependencies. Instead,
+    *       it builds on top of this outer deps.
+    *
+    * \param produceUnshiftedValue
+    *       A flag to make this evaluator produce unshifted reference loads for compressed reference Java.
+    *       For compressed reference builds, a guarded reference field load normally produces a
+    *       reference (64-bit value).
+    *       However, for compressed reference array copy, it is faster to do 32-bit load, 32-bit range check,
+    *       and 32-bit stores. Hence, eliminating the need for shift instructions (compression and decompression).
+    *
+    * \return
+    *       returns a register that contains the reference field.
+   */
+   static TR::Register *generateSoftwareReadBarrier(TR::Node* node,
+                                                    TR::CodeGenerator* cg,
+                                                    TR::Register* resultReg,
+                                                    TR::MemoryReference* memRef,
+                                                    TR::RegisterDependencyConditions* deps = NULL,
+                                                    bool produceUnshiftedValue = false);
+
+   /** \brief
+    *     Evaluates a reference arraycopy node. If software concurrent scavenge is not enabled, it generates an
+    *     MVC memory-memory copy for a forward arraycopy and a
+    *     loop based on the reference size for a backward arraycopy. For runtimes which support it, this function will
+    *     also generate write barrier checks on \p byteSrcObjNode and \p byteDstObjNode.
+    *
+    *     When software concurrent scavenge is enabled, it generates a internal control flow that first checks if the current
+    *     execution is in the GC cycle and performs either a loop-based array copy or a helper call.
+    *
+    *  \param node
+    *     The reference arraycopy node.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    */
+   static TR::Register *referenceArraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *generateConstantLengthReferenceArrayCopy(TR::Node *node, TR::CodeGenerator *cg);
+
+   static void generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeGenerator *cg, TR::MemoryReference *srcMemRef,
+                                                TR::MemoryReference *dstMemRef,
+                                                TR_S390ScratchRegisterManager *srm,
+                                                TR::DataType elenmentType,
+                                                bool needsGuardedLoad,
+                                                TR::RegisterDependencyConditions* deps = NULL);
+
+   static void forwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg,
+                                                           TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                                           TR::Register *byteLenReg, TR::Node *byteLenNode,
+                                                           TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel);
+   static TR::RegisterDependencyConditions * backwardArrayCopySequenceGenerator(TR::Node *node, TR::CodeGenerator *cg,
+                                                            TR::Register *byteSrcReg, TR::Register *byteDstReg,
+                                                            TR::Register *byteLenReg, TR::Node *byteLenNode,
+                                                            TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *mergeLabel);
+
 
 
    /*           START BCD Evaluators          */
@@ -225,6 +259,36 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static TR::Register *pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
+
+   /** \brief
+    *     Helper to generate a VPSOP instruction.
+    *
+    *  \param node 
+    *     The node to which the instruction is associated.
+    *  \param cg 
+    *     The codegen object.
+    *  \param setPrecision
+    *     Determines whether the VPSOP instruction will set precision.
+    *  \param precision
+    *     The new precision value.
+    *  \param signedStatus
+    *     Determines whether positive results will carry the preferred positive sign 0xC if true or 0xF if false.
+    *  \param soType
+    *     See enum SignOperationType.
+    *  \param signValidityCheck
+    *     Checks if originalSignCode is a valid sign.
+    *  \param digitValidityCheck
+    *     Validate the input digits
+    *  \param sign
+    *     The new sign. Used if signOpType is SignOperationType::setSign. Possible values include:
+    *       - positive: 0xA, 0xC 
+    *       - negative: 0xB, 0xD
+    *       - unsigned: 0xF
+    *  \param setConditionCode
+    *     Determines if this instruction sets ConditionCode or not.
+    *  \param ignoreDecimalOverflow
+    *     Turns on the Instruction Overflow Mask (IOM) so no decimal overflow is triggered
+    */
    static TR::Register *vectorPerformSignOperationHelper(TR::Node *node,
                                                          TR::CodeGenerator *cg,
                                                          bool setPrecision,
@@ -232,8 +296,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
                                                          bool signedStatus,
                                                          SignOperationType soType,
                                                          bool signValidityCheck = false,
+                                                         bool digitValidityCheck = true,
                                                          int32_t sign = 0,
-                                                         bool setConditionCode = true);
+                                                         bool setConditionCode = true,
+                                                         bool ignoreDecimalOverflow = false);
 
    static TR::Register *pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -393,7 +459,28 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static void         restoreGPR7(TR::Node *node, TR::CodeGenerator *cg);   
+   static void         restoreGPR7(TR::Node *node, TR::CodeGenerator *cg);
+
+   /*
+    * Generate instructions for static/instance field access report.
+    */ 
+   static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg);
+
+   /*
+    * Generate instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
+    * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
+    */
+   static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister);
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 }
 

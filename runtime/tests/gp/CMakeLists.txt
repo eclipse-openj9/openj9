@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,9 +29,22 @@ add_library(gptest SHARED
 target_link_libraries(gptest
 	PRIVATE
 		j9vm_interface
-		pthread
+		${OMR_PLATFORM_THREAD_LIBRARY}
 )
 target_include_directories(gptest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+omr_add_exports(gptest
+	Java_VMBench_GPTests_GPTest_gpFloat
+	Java_VMBench_GPTests_GPTest_gpIll
+	Java_VMBench_GPTests_GPTest_gpRead
+	Java_VMBench_GPTests_GPTest_gpWrite
+	Java_VMBench_GPTests_GPTest_gpHardwareFloat
+	Java_VMBench_GPTests_GPTest_gpHardwareRead
+	Java_VMBench_GPTests_GPTest_gpSoftwareFloat
+	Java_VMBench_GPTests_GPTest_gpSoftwareRead
+	Java_VMBench_GPTests_GPTest_gpAbort
+)
+
 install(
 	TARGETS gptest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

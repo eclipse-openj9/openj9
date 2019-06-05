@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,7 +144,7 @@ public class AllClassesCommand extends Command
 			/* Maximum 3 arguments can be specified as in: 
 			 * 	!allclasses rom ram 0x1000..0x2000 
 			 */
-			out.append("Invalid number of argments" + nl);
+			out.append("Invalid number of arguments" + nl);
 			return false;
 		}
 		switch (args.length) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ public class IpaTest
             bogus++;
         // call some method
         String answer = obj.work0(this);
-        // when work0 will be overriden, the new implementation will write 1
+        // when work0 will be overridden, the new implementation will write 1
         // to the field2, so getField2() should return a 1
         int i = getField2();
         if (i != 0)

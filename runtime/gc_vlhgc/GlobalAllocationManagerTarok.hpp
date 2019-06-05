@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ class MM_GlobalAllocationManagerTarok : public MM_GlobalAllocationManager
 public:
 protected:
 private:
-	MM_AllocationContextBalanced **_perNodeContextSets; /**< an array which is extensions->numaNodes elements long, containing the "first" AllocationContextVLHGC in each corresponding per-node cicular list */
+	MM_AllocationContextBalanced **_perNodeContextSets; /**< an array which is extensions->numaNodes elements long, containing the "first" AllocationContextVLHGC in each corresponding per-node circular list */
 
 	MM_RuntimeExecManager _runtimeExecManager; /**< A helper object used to intercept Runtime.exec() and manage affinity to workaround limitations on Linux */
 
@@ -100,7 +100,7 @@ public:
 	 * Expands into the given region by finding an AllocationContextTarok to manage it.  Once this method returns, the given region will
 	 * be managed by a context.
 	 * @param env[in] The thread performing the expansion
-	 * @paran region[in] The region which was just expanded
+	 * @param region[in] The region which was just expanded
 	 */
 	void expand(MM_EnvironmentBase *env, MM_HeapRegionDescriptorVLHGC *region);
 	/**

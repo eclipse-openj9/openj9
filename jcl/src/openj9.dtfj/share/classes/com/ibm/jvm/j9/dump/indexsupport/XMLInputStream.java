@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -338,7 +338,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	/**
 	 * Allows the process to peek ahead in the stream and see what the next closing tag is.
 	 * It handles peeks beyond the end of the current buffer contents.
-	 * @param the delimeter which indicates the end of the tag name
+	 * @param the delimiter which indicates the end of the tag name
 	 * @return the name of the tag found
 	 * @throws IOException re-throw exceptions.
 	 */

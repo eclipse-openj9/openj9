@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -248,7 +248,7 @@ testStringInternTableSRPRangeCheck(J9PortLibrary *portLib)
 	J9ClassLoader dummyClassLoader;
 	J9ClassLoader dummyClassLoader2;
 	J9ClassLoader dummySystemClassLoader;
-	/* Not needed for this testing. Used as one paremeter to create shared invariant intern table */
+	/* Not needed for this testing. Used as one parameter to create shared invariant intern table */
 	J9SharedCacheHeader dummyHeader;
 	/* String to be interned in string intern tables */
 	const char *commonString;

@@ -88,7 +88,7 @@ inline uint32_t getJitEntryOffset(TR_LinkageInfo *linkageInfo)
 #endif
 
 /* Functions used by AOT runtime to fixup recompilation info for AOT */
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 uint32_t *getLinkageInfo(void * startPC);
 uint32_t isRecompMethBody(void *li);
 void fixPersistentMethodInfo(void *table, bool isJITaaS);
@@ -170,6 +170,7 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_UsesEnableStringCompressionFolding        0x00000008
 #define TR_AOTMethodHeader_StringCompressionEnabled                  0x00000010
 #define TR_AOTMethodHeader_UsesSymbolValidationManager               0x00000020
+#define TR_AOTMethodHeader_TMDisabled                                0x00000040
 
 
 

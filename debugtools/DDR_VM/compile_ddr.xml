@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2010, 2018 IBM Corp. and others
+  Copyright (c) 2010, 2019 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@
 		<!-- VM_VERSION is inherited from DDR_VM/generate.xml -->
 		<equals arg1="${VM_VERSION}" arg2="24" />
 		<then>
-			<!-- the RAS jars are in RASTools folder in 2.4 VM infrasstructure -->
+			<!-- the RAS jars are in RASTools folder in 2.4 VM infrastructure -->
 			<property name="dtfj_interface_dir"   value="../RASTools"/>
 			<!-- !snapformat only compiles against a traceformat.jar with the API included  -->
 			<property name="traceformat.jar"   value="${j9_core_lib}/traceformat.jar"/>

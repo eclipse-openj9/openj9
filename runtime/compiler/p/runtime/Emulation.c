@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -796,7 +796,7 @@ int32_t p9emu_process(p9emu_ctx_t *ctx, ucontext_t *uctx)
 UDATA jitPPCEmulation(J9VMThread *vmThread, void *sigInfo)
    {
 #ifdef LINUX
-   J9UnixSignalInfo *unixSigInfo = (J9UnixSignalInfo *)sigInfo;
+   OMRUnixSignalInfo *unixSigInfo = (OMRUnixSignalInfo *)sigInfo;
    if (p9emu_process(&p9emu_ctx, unixSigInfo->platformSignalInfo.context) != 0)
       {
       return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;

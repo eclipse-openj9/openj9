@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -222,6 +222,21 @@ public:
 	bool isClassUnsafe() const { return J9_FINDCLASS_FLAG_UNSAFE == (_findClassFlags & J9_FINDCLASS_FLAG_UNSAFE); }
 	bool isClassAnon() const { return J9_FINDCLASS_FLAG_ANON == (_findClassFlags & J9_FINDCLASS_FLAG_ANON); }
 	bool alwaysSplitBytecodes() const { return J9_ARE_ANY_BITS_SET(_bctFlags, BCT_AlwaysSplitBytecodes); }
+
+	bool isClassUnmodifiable() const {
+		bool unmodifiable = false;
+		if (NULL != _javaVM) {
+			if ((J2SE_VERSION(_javaVM) >= J2SE_V11) && isClassAnon()) {
+				unmodifiable = true;
+			} else if (NULL == J9VMJAVALANGOBJECT_OR_NULL(_javaVM)) {
+				/* Object is currently only allowed to be redefined in fast HCR */
+				if (areExtensionsEnabled(_javaVM)) {
+					unmodifiable = true;
+				}
+			}
+		}
+		return unmodifiable;
+	}
 
 	bool isIntermediateClassDataShareable() const {
 		bool shareable = false;

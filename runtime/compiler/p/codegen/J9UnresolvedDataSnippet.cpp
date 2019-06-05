@@ -69,71 +69,70 @@ J9::Power::UnresolvedDataSnippet::UnresolvedDataSnippet(
 
 uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t *cursor = cg()->getBinaryBufferCursor();
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::SymbolReference *glueRef;
+   TR_RuntimeHelper refNum;
 
    if (getDataSymbol()->getShadowSymbol() != NULL) // instance data
       {
       if (isUnresolvedStore())
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataStoreGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedInstanceDataStoreGlue;
       else
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedInstanceDataGlue;
       }
    else if (getDataSymbol()->isClassObject())
       {
       if (getDataSymbol()->addressIsCPIndexOfStatic())
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue2, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedClassGlue2;
       else
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedClassGlue;
       }
    else if (getDataSymbol()->isConstString())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStringGlue, false, false, false);
+      refNum = TR_PPCinterpreterUnresolvedStringGlue;
       }
    else if (getDataSymbol()->isConstMethodType())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedMethodTypeGlue;
       }
    else if (getDataSymbol()->isConstMethodHandle())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodHandleGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedMethodHandleGlue;
       }
    else if (getDataSymbol()->isCallSiteTableEntry())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedCallSiteTableEntryGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedCallSiteTableEntryGlue;
       }
    else if (getDataSymbol()->isMethodTypeTableEntry())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeTableEntryGlue, false, false, false);
+      refNum = TR_interpreterUnresolvedMethodTypeTableEntryGlue;
       }
    else if (getDataSymbol()->isConstantDynamic())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedConstantDynamicGlue, false, false, false);
+      refNum = TR_PPCinterpreterUnresolvedConstantDynamicGlue;
       }
    else // must be static data
       {
       if (isUnresolvedStore())
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataStoreGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedStaticDataStoreGlue;
       else
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataGlue, false, false, false);
+         refNum = TR_PPCinterpreterUnresolvedStaticDataGlue;
       }
 
+   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(refNum, false, false, false);
    getSnippetLabel()->setCodeLocation(cursor);
 
-   intptrj_t distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
-   if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
-      TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor), "Helper address is out of range");
       }
 
-
    // bl distance
-   *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
+   *(int32_t *)cursor = 0x48000001 | ((helperAddress - (intptrj_t)cursor) & 0x03fffffc);
    cg()->addProjectSpecializedRelocation(cursor,(uint8_t *)glueRef, NULL, TR_HelperAddress,
                           __FILE__,
                           __LINE__,
@@ -245,11 +244,12 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 
    // CLInit case
    cursor += 4;
-   *(int32_t *)cursor = 0xdeadbeef; // Pached with lis via runtime code
+   *(int32_t *)cursor = 0xdeadbeef; // Patched with lis via runtime code
    cursor += 4;
-   intptrj_t ra_distance = ((intptrj_t)getAddressOfDataReference()+4) - (intptrj_t)cursor;
-   TR_ASSERT(ra_distance<=BRANCH_FORWARD_LIMIT && ra_distance>=BRANCH_BACKWARD_LIMIT, "Return address is more than 32MB.\n");
-   *(int32_t *)cursor = 0x48000000 | (ra_distance & 0x03fffffc);
+   intptrj_t targetAddress = (intptrj_t)getAddressOfDataReference()+4;
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+                   "Return address is out of range");
+   *(int32_t *)cursor = 0x48000000 | ((targetAddress - (intptrj_t)cursor) & 0x03fffffc);
 
    return cursor+4;
    }
@@ -258,8 +258,6 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    {
-
-   // *this  swipeable for debugger
    uint8_t            *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
@@ -359,7 +357,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
 
 uint32_t J9::Power::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    TR::Compilation* comp = cg()->comp();
    return 28+2*TR::Compiler->om.sizeofReferenceAddress();
    }

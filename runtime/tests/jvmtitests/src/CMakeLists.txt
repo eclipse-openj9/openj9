@@ -171,6 +171,10 @@ add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/setNativeMethodPrefix/snmp001.c
 	
 	com/ibm/jvmti/tests/samplingObjectAllocation/soae001.c
+	
+	com/ibm/jvmti/tests/getSystemProperty/gsp001.c
+
+	com/ibm/jvmti/tests/eventException/ee001.c
 )
 
 
@@ -178,4 +182,5 @@ target_link_libraries(jvmti_test_src
 	PRIVATE
 		j9vm_interface
 		j9vm_jvmtitest_includes
+		jvmti_test_agent
 )

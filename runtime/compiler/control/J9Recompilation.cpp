@@ -89,7 +89,7 @@ J9::Recompilation::setupMethodInfo()
          }
 
       // During compilation methodInfo->nextOptLevel is the current optlevel
-      // ie. we pretend that the previous (non-extistent) compile has set this up
+      // ie. we pretend that the previous (nonexistent) compile has set this up
       // for us.  Mark this as a non-profiling compile.  Only sampleMethod
       // even enables profiling.
       //
@@ -308,7 +308,7 @@ J9::Recompilation::endOfCompilation()
       _bodyInfo->setHasLoops        (_compilation->mayHaveLoops());
       _bodyInfo->setUsesPreexistence(_compilation->usesPreexistence());
 
-      // if the only future compliation can be a forced one (preexistence)
+      // if the only future compilation can be a forced one (preexistence)
       // do not sample this method.  If this is a counting based compilation
       // disable sampling as well
       //

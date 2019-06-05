@@ -166,12 +166,15 @@ public:
       Java_lang_Character_value,
       Java_lang_Short_value,
       Java_lang_Boolean_value,
+      Java_lang_Class_enumVars,
+      Java_lang_ClassEnumVars_cachedEnumConstants,
       assertionsDisabled,
       NumRecognizedFields
       };
 
    static RecognizedField searchRecognizedField(TR::Compilation *, TR_ResolvedMethod * owningMethodSymbol, int32_t cpIndex, bool isStatic);
    RecognizedField  getRecognizedField();
+   const char *owningClassNameCharsForRecognizedField(int32_t & length);
 
    /**
     * TR_RecognizedShadowSymbol

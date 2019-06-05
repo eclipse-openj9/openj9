@@ -24,6 +24,12 @@
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "env/VMJ9.h"
+#include "x/runtime/X86Runtime.hpp"
+#include "env/JitConfig.hpp"
+
+// This is a workaround to avoid J9_PROJECT_SPECIFIC macros in x/env/OMRCPU.cpp
+// Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
+TR::JitConfig * TR::JitConfig::instance() { return NULL; }
 
 namespace J9
 {
@@ -31,64 +37,45 @@ namespace J9
 namespace X86
 {
 
+TR_X86CPUIDBuffer *
+CPU::queryX86TargetCPUID()
+   {
+   static TR_X86CPUIDBuffer buf = { {'U','n','k','n','o','w','n','B','r','a','n','d'} };
+   jitGetCPUID(&buf);
+   return &buf;
+   }
+
 const char *
-CPU::getX86ProcessorVendorId(TR::Compilation *comp)
+CPU::getProcessorVendorId()
    {
-   return comp->fej9()->getX86ProcessorVendorId();
+   return self()->getX86ProcessorVendorId();
    }
 
 uint32_t
-CPU::getX86ProcessorSignature(TR::Compilation *comp)
+CPU::getProcessorSignature()
    {
-   return comp->fej9()->getX86ProcessorSignature();
-   }
-
-uint32_t
-CPU::getX86ProcessorFeatureFlags(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorFeatureFlags();
-   }
-
-uint32_t
-CPU::getX86ProcessorFeatureFlags2(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorFeatureFlags2();
-   }
-
-uint32_t
-CPU::getX86ProcessorFeatureFlags8(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorFeatureFlags8();
+   return self()->getX86ProcessorSignature();
    }
 
 bool
-CPU::testOSForSSESupport(TR::Compilation *comp)
+CPU::testOSForSSESupport()
    {
-   return comp->fej9()->testOSForSSESupport();
+   return true; // VM guarantees SSE/SSE2 are available
    }
 
-void
-CPU::setX86ProcessorFeatureFlags(uint32_t flags)
+bool
+CPU::hasPopulationCountInstruction()
    {
-   _featureFlags = flags;
-   }
-
-void
-CPU::setX86ProcessorFeatureFlags2(uint32_t flags2)
-   {
-   _featureFlags2 = flags2;
-   }
-
-void
-CPU::setX86ProcessorFeatureFlags8(uint32_t flags8)
-   {
-   _featureFlags8 = flags8;
+   if ((self()->getX86ProcessorFeatureFlags2() & TR_POPCNT) != 0x00000000)
+      return true;
+   else
+      return false;
    }
 
 TR_ProcessorFeatureFlags
 CPU::getProcessorFeatureFlags()
    {
-   TR_ProcessorFeatureFlags processorFeatureFlags = { {_featureFlags, _featureFlags2, _featureFlags} };
+   TR_ProcessorFeatureFlags processorFeatureFlags = { {self()->getX86ProcessorFeatureFlags(), self()->getX86ProcessorFeatureFlags2(), self()->getX86ProcessorFeatureFlags8()} };
    return processorFeatureFlags;
    }
 

@@ -615,7 +615,7 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol *
 
       }
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
-   // isResovled = true, isUnresolvedInCP = false
+   // isResolved = true, isUnresolvedInCP = false
    initShadowSymbol(owningMethod, symRef, true, type, offset, false);
    return symRef;
    }
@@ -1514,7 +1514,7 @@ J9::SymbolReferenceTable::checkUserField(TR::SymbolReference *symRef)
    static const char *userField = feGetEnv("TR_UserField");
    if (!userField)
       {
-      // In the absense of further analysis, treat everything as user fields
+      // In the absence of further analysis, treat everything as user fields
       setHasUserField(true);
       return;
       }

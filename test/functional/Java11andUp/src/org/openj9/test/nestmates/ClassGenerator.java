@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,7 +178,7 @@ public class ClassGenerator implements Opcodes {
 		return cw.toByteArray();
 	}
 
-	public static byte[] methodAcccess$InnerDump () throws Exception {
+	public static byte[] methodAccess$InnerDump () throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
 		

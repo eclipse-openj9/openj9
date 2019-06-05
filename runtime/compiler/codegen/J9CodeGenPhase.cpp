@@ -58,6 +58,11 @@ J9::CodeGenPhase::getNumPhases()
    return static_cast<int>(TR::CodeGenPhase::LastJ9Phase);
    }
 
+void 
+J9::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
+   {
+   cg->fixUpProfiledInterfaceGuardTest();
+   }
 
 void
 J9::CodeGenPhase::performAllocateLinkageRegistersPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
@@ -92,7 +97,7 @@ J9::CodeGenPhase::performInsertEpilogueYieldPointsPhase(TR::CodeGenerator * cg, 
    // insert asyncchecks for non-loopy large methods that contain no calls
    // (important for sunflow where the second hottest method is one such)
    //
-   // FIXME: the value for methodContiansCalls is not computed until
+   // FIXME: the value for methodContainsCalls is not computed until
    // after the main tree traversal (below). However, we can't move
    // this code after the loop because the inserted yield points need
    // to be lowered by the same loop.
@@ -145,6 +150,8 @@ J9::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
 	      return "IdentifyUnneededByteConvsPhase";
       case LateSequentialConstantStoreSimplificationPhase:
          return "LateSequentialConstantStoreSimplification";
+      case FixUpProfiledInterfaceGuardTest:
+         return "FixUpProfiledInterfaceGuardTest";
       default:
          return OMR::CodeGenPhaseConnector::getName(phase);
       }

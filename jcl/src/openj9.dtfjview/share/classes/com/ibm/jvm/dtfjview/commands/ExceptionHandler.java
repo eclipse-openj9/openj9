@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -236,7 +236,7 @@ public class ExceptionHandler {
 			}
 			Class<?> ic;
 			try {
-				//now check any possible super-interaces for this one
+				//now check any possible super-interfaces for this one
 				ic = Class.forName(interfaceName, true, ctx.getAddressSpace()
 						.getClass().getClassLoader());
 				om = checkInterfaces(ic, methodName);

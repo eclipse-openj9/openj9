@@ -23,7 +23,9 @@
 #include "p/codegen/PPCJNILinkage.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Machine.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
@@ -200,8 +202,8 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
       {
       gr30Reg = cg()->allocateRegister();
       gr31Reg = cg()->allocateRegister();
-      addDependency(deps, gr30Reg, TR::RealRegister::gr30, TR_GPR, cg());
-      addDependency(deps, gr31Reg, TR::RealRegister::gr31, TR_GPR, cg());
+      TR::addDependency(deps, gr30Reg, TR::RealRegister::gr30, TR_GPR, cg());
+      TR::addDependency(deps, gr31Reg, TR::RealRegister::gr31, TR_GPR, cg());
       }
 
    if (killNonVolatileGPRs)
@@ -211,26 +213,26 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
       if (TR::Compiler->target.is32Bit())
          {
          // gr15 and gr16 are reserved in 64-bit, normal non-volatile in 32-bit
-         addDependency(deps, NULL, TR::RealRegister::gr15, TR_GPR, cg());
-         addDependency(deps, NULL, TR::RealRegister::gr16, TR_GPR, cg());
+         TR::addDependency(deps, NULL, TR::RealRegister::gr15, TR_GPR, cg());
+         TR::addDependency(deps, NULL, TR::RealRegister::gr16, TR_GPR, cg());
          }
-      addDependency(deps, NULL, TR::RealRegister::gr17, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr18, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr19, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr20, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr21, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr22, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr23, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr24, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr25, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr26, TR_GPR, cg());
-      addDependency(deps, NULL, TR::RealRegister::gr27, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr17, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr18, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr19, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr20, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr21, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr22, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr23, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr24, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr25, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr26, TR_GPR, cg());
+      TR::addDependency(deps, NULL, TR::RealRegister::gr27, TR_GPR, cg());
 #ifndef J9VM_INTERP_ATOMIC_FREE_JNI
       if (!dropVMAccess)
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
          {
-         addDependency(deps, NULL, TR::RealRegister::gr28, TR_GPR, cg());
-         addDependency(deps, NULL, TR::RealRegister::gr29, TR_GPR, cg());
+         TR::addDependency(deps, NULL, TR::RealRegister::gr28, TR_GPR, cg());
+         TR::addDependency(deps, NULL, TR::RealRegister::gr29, TR_GPR, cg());
          }
       }
 
@@ -246,7 +248,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
       else
          {
          gr2Reg = cg()->allocateRegister();
-         addDependency(deps, gr2Reg, TR::RealRegister::gr2, TR_GPR, cg());
+         TR::addDependency(deps, gr2Reg, TR::RealRegister::gr2, TR_GPR, cg());
          }
       }
 
@@ -267,7 +269,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
          OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
          for (int32_t cnt=0; cnt < deps->getAddCursorForPre(); cnt++)
             map.addDependency(deps->getPreConditions()->getRegisterDependency(cnt), cnt);
-         
+
          TR::Register *addrArg, *posArg, *lenArg, *wasteArg;
          if (crc32m2)
             {
@@ -277,7 +279,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
 
             generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
             }
-         
+
          if (crc32m3)
             {
             addrArg = map.getSourceWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr4):(TR::RealRegister::gr5));
@@ -336,7 +338,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
                {
                gr3Reg = cg()->allocateRegister();
                returnRegister = gr3Reg;
-               addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
+               TR::addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
                }
             else
                {
@@ -351,7 +353,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
                {
                gr3Reg = cg()->allocateRegister();
                returnRegister = gr3Reg;
-               addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
+               TR::addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
                }
             else
                {
@@ -363,7 +365,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
             if (!gr3Reg)
                {
                gr3Reg = cg()->allocateRegister();
-               addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
+               TR::addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
                highReg = gr3Reg;
                }
             else
@@ -380,14 +382,14 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
          if (!gr3Reg)
             {
             gr3Reg = cg()->allocateRegister();
-            addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
+            TR::addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
             }
          break;
       case TR::call:
          if (!gr3Reg)
             {
             gr3Reg = cg()->allocateRegister();
-            addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
+            TR::addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
             }
          returnRegister = NULL;
          break;
@@ -395,7 +397,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
          if (!gr3Reg)
             {
             gr3Reg = cg()->allocateRegister();
-            addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
+            TR::addDependency(deps, gr3Reg, TR::RealRegister::gr3, TR_GPR, cg());
             }
          returnRegister = NULL;
          TR_ASSERT( false, "Unknown direct call Opcode.");
@@ -631,8 +633,8 @@ void TR::PPCJNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDependen
    TR::Register *gr29Reg = cg()->allocateRegister();
    TR::Register *cr0Reg = deps->searchPreConditionRegister(TR::RealRegister::cr0);
 
-   addDependency(deps, gr28Reg, TR::RealRegister::gr28, TR_GPR, cg());
-   addDependency(deps, gr29Reg, TR::RealRegister::gr29, TR_GPR, cg());
+   TR::addDependency(deps, gr28Reg, TR::RealRegister::gr28, TR_GPR, cg());
+   TR::addDependency(deps, gr29Reg, TR::RealRegister::gr29, TR_GPR, cg());
 
    intptrj_t aValue;
 
@@ -745,17 +747,17 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
 
    TR::SymbolReference *jitReleaseVMAccessSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());
-   TR::LabelSymbol *releaseVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
-   if (!releaseVMAcessSnippetLabel)
+   TR::LabelSymbol *releaseVMAccessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
+   if (!releaseVMAccessSnippetLabel)
       {
-      releaseVMAcessSnippetLabel = generateLabelSymbol(cg());
-      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, releaseVMAcessSnippetLabel, jitReleaseVMAccessSymRef));
+      releaseVMAccessSnippetLabel = generateLabelSymbol(cg());
+      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, jitReleaseVMAccessSymRef));
       }
 
    if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, releaseVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, releaseVMAccessSnippetLabel, cr0Reg);
    else
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAccessSnippetLabel, cr0Reg);
    }
 
 void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
@@ -772,17 +774,17 @@ void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
 
    TR::SymbolReference *jitAcquireVMAccessSymRef = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol());
-   TR::LabelSymbol *acquireVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
-   if (!acquireVMAcessSnippetLabel)
+   TR::LabelSymbol *acquireVMAccessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
+   if (!acquireVMAccessSnippetLabel)
       {
-      acquireVMAcessSnippetLabel = generateLabelSymbol(cg());
-      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, acquireVMAcessSnippetLabel, jitAcquireVMAccessSymRef));
+      acquireVMAccessSnippetLabel = generateLabelSymbol(cg());
+      cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, acquireVMAccessSnippetLabel, jitAcquireVMAccessSymRef));
       }
 
    if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, acquireVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, acquireVMAccessSnippetLabel, cr0Reg);
    else
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, acquireVMAcessSnippetLabel, cr0Reg);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, acquireVMAccessSnippetLabel, cr0Reg);
    }
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
@@ -1028,7 +1030,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                   }
                else
                   {
-                  addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                  TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   }
                }
             else // numIntegerArgs >= properties.getNumIntArgRegs()
@@ -1049,7 +1051,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                if (numIntegerArgs & 1)
                   {
                   if (numIntegerArgs < properties.getNumIntArgRegs())
-                     addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   numIntegerArgs++;
                   }
                }
@@ -1094,9 +1096,9 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                else
                   {
                   if (TR::Compiler->target.is64Bit())
-                     addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   else
-                     addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   }
                if (TR::Compiler->target.is32Bit())
                   {
@@ -1116,7 +1118,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                         dependencies->addPostCondition(resultReg, TR::RealRegister::gr4);
                         }
                      else
-                        addDependency(dependencies, argRegister->getRegisterPair()->getLowOrder(), properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
+                        TR::addDependency(dependencies, argRegister->getRegisterPair()->getLowOrder(), properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
                      }
                   else // numIntegerArgs == properties.getNumIntArgRegs()-1
                      {
@@ -1177,7 +1179,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                   dependencies->addPostCondition(resultReg, (r == 0) ? TR::RealRegister::fp1 : TR::RealRegister::fp2);
                   }
                else
-                  addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  TR::addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else if (!aix_style_linkage)
                // numFloatArgs >= properties.getNumFloatArgRegs()
@@ -1198,7 +1200,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                      dependencies->addPostCondition(bReg, TR::RealRegister::gr3);
                      }
                   else
-                     addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                   }
                else // numIntegerArgs >= properties.getNumIntArgRegs()
                   {
@@ -1250,7 +1252,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                   dependencies->addPostCondition(resultReg, (r==0) ? TR::RealRegister::fp1 : TR::RealRegister::fp2);
                   }
                else
-                  addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  TR::addDependency(dependencies, argReg, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
                }
             else if (!aix_style_linkage)
                // numFloatArgs >= properties.getNumFloatArgRegs()
@@ -1274,12 +1276,12 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
                      dependencies->addPostCondition(bReg, TR::RealRegister::gr3);
                      }
                   else
-                        addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                     TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
 
                   if (TR::Compiler->target.is32Bit())
                      {
                      if ((numIntegerArgs+1) < properties.getNumIntArgRegs())
-                           addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
+                        TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs+1), TR_GPR, cg());
                      else
                         {
                         mref = getOutgoingArgumentMemRef(argSize, argReg, TR::InstOpCode::stfd, pushToMemory[argIndex++], 8, properties);
@@ -1314,7 +1316,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
          }
       else
          {
-         addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+         TR::addDependency(dependencies, NULL, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
          }
       numIntegerArgs++;
       }
@@ -1329,17 +1331,17 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
    liveRegs = cg()->getLiveRegisters(TR_VRF);
    liveVMX = (!liveRegs || liveRegs->getNumberOfLiveRegisters() > 0);
 
-   addDependency(dependencies, NULL, TR::RealRegister::fp0, TR_FPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::gr12, TR_GPR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr0, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr1, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr5, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr6, TR_CCR, cg());
-   addDependency(dependencies, NULL, TR::RealRegister::cr7, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::fp0, TR_FPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr0, TR_GPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr11, TR_GPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr12, TR_GPR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr0, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr1, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr5, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr6, TR_CCR, cg());
+   TR::addDependency(dependencies, NULL, TR::RealRegister::cr7, TR_CCR, cg());
    if (!isFastJNI && aix_style_linkage)
-      addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg());
+      TR::addDependency(dependencies, NULL, TR::RealRegister::gr2, TR_GPR, cg());
 
    int32_t floatRegsUsed = (numFloatArgs>properties.getNumFloatArgRegs())?properties.getNumFloatArgRegs():numFloatArgs;
 
@@ -1357,7 +1359,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
          if (!properties.getPreserved((TR::RealRegister::RegNum)i) ||
              (!isFastJNI  && !isHelper))
             {
-            addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
+            TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
             }
 
          }
@@ -1370,7 +1372,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
       if (!properties.getPreserved((TR::RealRegister::RegNum)i) || liveVSXVector ||
           (!isFastJNI))
          {
-         addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_FPR, cg());
+         TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_FPR, cg());
          }
       }
 
@@ -1426,9 +1428,9 @@ TR::Register *TR::PPCJNILinkage::pushJNIReferenceArg(TR::Node *child)
             generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, child, pushRegister, 0);
 
             TR::RegisterDependencyConditions *conditions = new (trHeapMemory()) TR::RegisterDependencyConditions(3, 3, trMemory());
-            addDependency(conditions, pushRegister, TR::RealRegister::NoReg, TR_GPR, cg());
-            addDependency(conditions, whatReg, TR::RealRegister::NoReg, TR_GPR, cg());
-            addDependency(conditions, condReg, TR::RealRegister::NoReg, TR_CCR, cg());
+            TR::addDependency(conditions, pushRegister, TR::RealRegister::NoReg, TR_GPR, cg());
+            TR::addDependency(conditions, whatReg, TR::RealRegister::NoReg, TR_GPR, cg());
+            TR::addDependency(conditions, condReg, TR::RealRegister::NoReg, TR_CCR, cg());
 
             generateDepLabelInstruction(cg(), TR::InstOpCode::label, child, nonNullLabel, conditions);
             conditions->stopUsingDepRegs(cg(), pushRegister);
@@ -1471,9 +1473,9 @@ TR::Register *TR::PPCJNILinkage::pushJNIReferenceArg(TR::Node *child)
             generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, child, pushRegister, 0);
 
             TR::RegisterDependencyConditions *conditions = new (trHeapMemory()) TR::RegisterDependencyConditions(3, 3, trMemory());
-            addDependency(conditions, pushRegister, TR::RealRegister::NoReg, TR_GPR, cg());
-            addDependency(conditions, whatReg, TR::RealRegister::NoReg, TR_GPR, cg());
-            addDependency(conditions, condReg, TR::RealRegister::NoReg, TR_CCR, cg());
+            TR::addDependency(conditions, pushRegister, TR::RealRegister::NoReg, TR_GPR, cg());
+            TR::addDependency(conditions, whatReg, TR::RealRegister::NoReg, TR_GPR, cg());
+            TR::addDependency(conditions, condReg, TR::RealRegister::NoReg, TR_CCR, cg());
 
             generateDepLabelInstruction(cg(), TR::InstOpCode::label, child, nonNullLabel, conditions);
             conditions->stopUsingDepRegs(cg(), pushRegister);

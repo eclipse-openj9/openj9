@@ -23,7 +23,6 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/runtime/Recomp.cpp \
-    compiler/x/runtime/X86PicBuilderC.cpp \
     compiler/x/runtime/X86RelocationTarget.cpp \
     compiler/x/runtime/X86ArrayTranslate.nasm \
     compiler/x/runtime/X86Codert.nasm \

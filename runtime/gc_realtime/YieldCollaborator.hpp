@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #if !defined(YIELDCOLLABORATOR_HPP_)
 #define YIELDCOLLABORATOR_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "EnvironmentBase.hpp"
 
@@ -52,16 +52,16 @@ private:
 	MM_YieldCollaborator *_prev;
 	
 	omrthread_monitor_t *_mutex;
-	volatile UDATA *_count;
-	volatile UDATA _yieldIndex;
-	volatile UDATA _yieldCount;
+	volatile uintptr_t *_count;
+	volatile uintptr_t _yieldIndex;
+	volatile uintptr_t _yieldCount;
 	ResumeEvent _resumeEvent;
 
 public:
 	
 	void setResumeEvent(ResumeEvent resumeEvent) { _resumeEvent = resumeEvent; }
 	ResumeEvent getResumeEvent() { return _resumeEvent; }	
-	UDATA getYieldCount() const { return _yieldCount; }
+	uintptr_t getYieldCount() const { return _yieldCount; }
 	
 	MM_YieldCollaborator *push(MM_YieldCollaborator *prev) {
 		_prev = prev;

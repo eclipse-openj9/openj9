@@ -76,11 +76,7 @@ public final class LoggingMXBeanImpl
 /*[IF Sidecar19-SE]*/
 		try {
 
-/*[IF Sidecar19-SE-OpenJ9]*/
 			Module java_logging = ModuleLayer.boot().findModule("java.logging").get(); //$NON-NLS-1$
-/*[ELSE]
-			Module java_logging = Layer.boot().findModule("java.logging").get(); //$NON-NLS-1$
-/*[ENDIF]*/
 			Class<?>[] logClasses = AccessController.doPrivileged((PrivilegedAction<Class<?>[]>)
 				() -> new Class[] {
 					Class.forName(java_logging, "java.util.logging.LogManager"), //$NON-NLS-1$

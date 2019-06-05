@@ -180,9 +180,9 @@ private:
 	 * Shareable thunk compilation is based on the ThunkTuple counting.
 	 * Shareable thunks then modify the MH.invocationCount on each invocation.  We
 	 * only want invocations from jitted code to drive CustomThunk compilation so the
-	 * interpreter needs to pre-emptively negate the modification to the invocationCount.
+	 * interpreter needs to preemptively negate the modification to the invocationCount.
 	 *
-	 * @param methodHandle[in] The MethodHandle to modify the coun on
+	 * @param methodHandle[in] The MethodHandle to modify the count on
 	 */
 	VMINLINE void
 	modifyMethodHandleCountForI2J(REGISTER_ARGS_LIST, j9object_t methodHandle)
@@ -2251,7 +2251,7 @@ done:;
 	getFFIType(U_8 j9ntc) {
 		static const ffi_type * const J9NtcToFFI[] = {
 				&ffi_type_void,		/* J9NtcVoid */
-				&ffi_type_uint8,	/* J9NtcBoolean */
+				&ffi_type_uint32,	/* J9NtcBoolean */
 				&ffi_type_sint8,	/* J9NtcByte */
 				&ffi_type_uint16,	/* J9NtcChar */
 				&ffi_type_sint16,	/* J9NtcShort */
@@ -2362,7 +2362,7 @@ done:;
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
 					if ((J9NtcShort == argTypes[i]) || (J9NtcChar == argTypes[i])) {
 						values[i + extraArgs] = (void *)((UDATA)values[i + extraArgs] + extraBytesShortAndChar);
-					}else if ((J9NtcByte == argTypes[i]) || (J9NtcBoolean == argTypes[i])) {
+					}else if (J9NtcByte == argTypes[i]) {
 						values[i + extraArgs] = (void *)((UDATA)values[i + extraArgs] + extraBytesBoolAndByte);
 					}
 #endif /*J9VM_ENV_LITTLE_ENDIAN */
@@ -2384,7 +2384,7 @@ done:;
 				ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
 #else /* FFI_NATIVE_RAW_API */
 				ffi_call(cif, FFI_FN(function), returnStorage, values);
-#endif /* FFI_NATOVE_RAW_API */
+#endif /* FFI_NATIVE_RAW_API */
 				ret = ffiSuccess;
 			}
 		}
@@ -2413,6 +2413,8 @@ ffi_exit:
 		_currentThread->currentException = NULL;
 		/* Only report the event if the tag is set - this prevents reporting multiple throws of the same exception when returning from internal call-in */
 		if (_currentThread->privateFlags & J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW) {
+			/* Clear the flag once the entered the reporting branch */
+			_currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
 			if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_EXCEPTION_THROW)) {
 				ALWAYS_TRIGGER_J9HOOK_VM_EXCEPTION_THROW(_vm->hookInterface, _currentThread, exception);
 				if (immediateAsyncPending()) {
@@ -2729,15 +2731,20 @@ done:
 		J9Class *componentClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
 		J9Class *arrayClazz = componentClazz->arrayClass;
 		if (NULL == arrayClazz) {
+			buildInternalNativeStackFrame(REGISTER_ARGS);
+			updateVMStruct(REGISTER_ARGS);
 			arrayClazz = internalCreateArrayClass(_currentThread, 
 				(J9ROMArrayClass *) J9ROMIMAGEHEADER_FIRSTCLASS(_currentThread->javaVM->arrayROMClasses), 
 				componentClazz);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			if (VM_VMHelpers::exceptionPending(_currentThread) || (NULL == arrayClazz)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			restoreInternalNativeStackFrame(REGISTER_ARGS);
 		}
-		if (NULL == arrayClazz) {
-			rc = GOTO_THROW_CURRENT_EXCEPTION;
-		} else {
-			returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(arrayClazz), 1);
-		}
+		returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(arrayClazz), 1);
+done:
 		return rc;
 	}
 
@@ -4150,7 +4157,7 @@ internalError:
 		} else {
 			updateVMStruct(REGISTER_ARGS);
 			J9ClassLoader* result = internalAllocateClassLoader(_vm, classLoaderObject);
-			VMStructHasBeenUpdated(REGISTER_ARGS); // likely unncessary - no code runs in internalAllocateClassLoader
+			VMStructHasBeenUpdated(REGISTER_ARGS); // likely unnecessary - no code runs in internalAllocateClassLoader
 			if (NULL == result) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				goto done;
@@ -6315,7 +6322,7 @@ resolve:
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
 					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
 				)) {
 					/* Store not allowed - run the resolve code to throw the exception */
@@ -6524,7 +6531,7 @@ resolve:
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
 					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
 				)) {
 					/* Store not allowed - run the resolve code to throw the exception */
@@ -7178,6 +7185,56 @@ done:
 		return rc;
 	}
 
+	/*
+	 * Determine if the two objects are substitutable
+	 *
+	 * @param[in] lhs the lhs object of acmp bytecodes
+	 * @param[in] rhs the rhs object of acmp bytecodes
+	 * return true if they are substitutable and false otherwise
+	 */
+	VMINLINE bool
+	acmp(j9object_t lhs, j9object_t rhs)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		bool acmpResult = false;
+		if (rhs == lhs) {
+			acmpResult = true;
+		} else if ((NULL == rhs) || (NULL == lhs)) {
+			acmpResult = false;
+		} else {
+			J9Class * lhsClass = J9OBJECT_CLAZZ(_currentThread, lhs);
+			J9Class * rhsClass = J9OBJECT_CLAZZ(_currentThread, rhs);
+			if ((J9_IS_J9CLASS_VALUETYPE(rhsClass)
+				&& J9_IS_J9CLASS_VALUETYPE(lhsClass))
+				&& (rhsClass == lhsClass)
+			) {
+				acmpResult = isSubstitutable(lhs, rhs);
+			}
+		}
+		return acmpResult;
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+		return (rhs == lhs);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/*
+	 * Determine if the two valueTypes are substitutable when rhs.class equals lhs.class
+	 *
+	 * @param[in] lhs the lhs object of acmp bytecodes and it's a valueType
+	 * @param[in] rhs the rhs object of acmp bytecodes and it's a valueType
+	 * return true if they are substitutable and false otherwise
+	 */
+	VMINLINE bool
+	isSubstitutable(j9object_t lhs, j9object_t rhs)
+	{
+		/*
+		 * TODO: this will be updated in a future PR.
+		 */
+		return false;
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 	/* ..., lhs, rhs => ... */
 	VMINLINE VM_BytecodeAction
 	ifacmpeq(REGISTER_ARGS_LIST)
@@ -7187,7 +7244,7 @@ done:
 		j9object_t lhs = *(j9object_t*)(_sp + 1);
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(U_8));
 		_sp += 2;
-		if (lhs == rhs) {
+		if(acmp(lhs, rhs)) {
 			_pc += *(I_16*)(_pc + 1);
 			if (NULL != profilingCursor) {
 				*profilingCursor = 1;
@@ -7211,7 +7268,7 @@ done:
 		j9object_t lhs = *(j9object_t*)(_sp + 1);
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(U_8));
 		_sp += 2;
-		if (lhs != rhs) {
+		if(!acmp(lhs, rhs)) {
 			_pc += *(I_16*)(_pc + 1);
 			if (NULL != profilingCursor) {
 				*profilingCursor = 1;
@@ -7292,7 +7349,7 @@ retry:
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
 		J9Class* volatile resolvedClass = ramCPEntry->value;
-		if ((NULL != resolvedClass) && !J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(resolvedClass->romClass)) {
+		if ((NULL != resolvedClass) && J9ROMCLASS_ALLOCATES_VIA_NEW(resolvedClass->romClass)) {
 			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
 				j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
 				if (NULL == instance) {
@@ -7550,28 +7607,42 @@ done:
 		if (NULL == obj) {
 			rc = THROW_NPE;
 		} else {
-			IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, obj);
-			/* Monitor enter can only fail in the nonblocking case, which does not
-			 * release VM access, so the immediate async and failed enter cases are
-			 * mutually exclusive.
-			 */
-			if (0 == monitorRC) {
-				rc = THROW_MONITOR_ALLOC_FAIL;
-			} else {
-				if (J9_UNEXPECTED(!VM_ObjectMonitor::recordBytecodeMonitorEnter(_currentThread, (j9object_t)monitorRC, _arg0EA))) {
-					objectMonitorExit(_currentThread, obj);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			J9Class * objClass = J9OBJECT_CLAZZ(_currentThread, obj);
+			if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
+				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(objClass->romClass);
+				buildInternalNativeStackFrame(REGISTER_ARGS);
+				updateVMStruct(REGISTER_ARGS);
+				prepareForExceptionThrow(_currentThread);
+				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			{
+				IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, obj);
+				/* Monitor enter can only fail in the nonblocking case, which does not
+				 * release VM access, so the immediate async and failed enter cases are
+				 * mutually exclusive.
+				 */
+				if (0 == monitorRC) {
 					rc = THROW_MONITOR_ALLOC_FAIL;
+				} else {
+					if (J9_UNEXPECTED(!VM_ObjectMonitor::recordBytecodeMonitorEnter(_currentThread, (j9object_t)monitorRC, _arg0EA))) {
+						objectMonitorExit(_currentThread, obj);
+						rc = THROW_MONITOR_ALLOC_FAIL;
+						if (immediateAsyncPending()) {
+							rc = GOTO_ASYNC_CHECK;
+						}
+						goto done;
+					}
 					if (immediateAsyncPending()) {
 						rc = GOTO_ASYNC_CHECK;
+						goto done;
 					}
-					goto done;
+					_pc += 1;
+					_sp += 1;
 				}
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				}
-				_pc += 1;
-				_sp += 1;
 			}
 		}
 done:
@@ -7588,12 +7659,26 @@ done:
 		if (NULL == obj) {
 			rc = THROW_NPE;
 		} else {
-			IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, obj);
-			if (0 != monitorRC) {
-				rc = THROW_ILLEGAL_MONITOR_STATE;
-			} else {
-				VM_ObjectMonitor::recordBytecodeMonitorExit(_currentThread, obj);
-				_pc += 1;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) 
+			J9Class * objClass = J9OBJECT_CLAZZ(_currentThread, obj);
+			if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
+				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(objClass->romClass);
+				buildInternalNativeStackFrame(REGISTER_ARGS);
+				updateVMStruct(REGISTER_ARGS);
+				prepareForExceptionThrow(_currentThread);
+				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			{
+				IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, obj);
+				if (0 != monitorRC) {
+					rc = THROW_ILLEGAL_MONITOR_STATE;
+				} else {
+					VM_ObjectMonitor::recordBytecodeMonitorExit(_currentThread, obj);
+					_pc += 1;
+				}
 			}
 		}
 		return rc;
@@ -8197,7 +8282,7 @@ retry:
 		updateVMStruct(REGISTER_ARGS);
 
 		if (NULL == resolvedClass) {
-			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE);
+			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS);
 		} else if (!J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
 			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
 			setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));

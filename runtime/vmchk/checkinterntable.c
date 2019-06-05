@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,49 +32,49 @@
 #include "util_api.h"
 #include "vmcheck.h"
 
+static BOOLEAN verifyJ9ClassLoader(J9JavaVM *vm, J9ClassLoader *classLoader);
+
 /*
  *	J9LocalInternTableSanity sanity:
- *		if J9JavaVM->dynamicLoadBuffers != NULL
+ *		if (J9JavaVM->dynamicLoadBuffers != NULL) && (J9JavaVM->dynamicLoadBuffers->romClassBuilder != NULL)
  *			invariantInternTree check:
  *				For each J9InternHashTableEntry
  *					Ensure J9InternHashTableEntry->utf8 is valid
  *					Ensure J9InternHashTableEntry->classLoader is valid
  */
-
-static BOOLEAN verifyJ9ClassLoader(J9JavaVM *vm, J9ClassLoader *classLoader);
-
-
 void
 checkLocalInternTableSanity(J9JavaVM *vm)
 {
 	UDATA count = 0;
-	J9TranslationBufferSet *dynamicLoadBuffers;
+	J9TranslationBufferSet *dynamicLoadBuffers = NULL;
 
 	vmchkPrintf(vm, "  %s Checking ROM intern string nodes>\n", VMCHECK_PREFIX);
 
 	dynamicLoadBuffers = (J9TranslationBufferSet *)DBG_ARROW(vm, dynamicLoadBuffers);
-	if (dynamicLoadBuffers != NULL) {
+	if (NULL != dynamicLoadBuffers) {
 		J9DbgROMClassBuilder *romClassBuilder = (J9DbgROMClassBuilder *)DBG_ARROW(dynamicLoadBuffers, romClassBuilder);
-		/* We don't need to use DBG_ARROW() below because we are taking its address (not dereferencing it).. */
-		J9DbgStringInternTable *stringInternTable = &(romClassBuilder->stringInternTable);
-		J9InternHashTableEntry *node= (J9InternHashTableEntry*)DBG_ARROW(stringInternTable, headNode);
+		if (NULL != romClassBuilder) {
+			/* We don't need to use DBG_ARROW() below because we are taking its address (not dereferencing it).. */
+			J9DbgStringInternTable *stringInternTable = &(romClassBuilder->stringInternTable);
+			J9InternHashTableEntry *node = (J9InternHashTableEntry*)DBG_ARROW(stringInternTable, headNode);
 
-		while (NULL != node) {
-			J9ClassLoader *classLoader = (J9ClassLoader *)DBG_ARROW(node, classLoader);
-			if (J9_ARE_NO_BITS_SET(DBG_ARROW(classLoader, gcFlags), J9_GC_CLASS_LOADER_DEAD)) {
-				J9UTF8 *utf8 = (J9UTF8 *)DBG_ARROW(node, utf8);
-				if (FALSE == verifyUTF8(utf8)) {
-					vmchkPrintf(vm, " %s - Invalid utf8=0x%p for node=0x%p>\n",
-						VMCHECK_FAILED, utf8, node);
-				}
+			while (NULL != node) {
+				J9ClassLoader *classLoader = (J9ClassLoader *)DBG_ARROW(node, classLoader);
+				if (J9_ARE_NO_BITS_SET(DBG_ARROW(classLoader, gcFlags), J9_GC_CLASS_LOADER_DEAD)) {
+					J9UTF8 *utf8 = (J9UTF8 *)DBG_ARROW(node, utf8);
+					if (FALSE == verifyUTF8(utf8)) {
+						vmchkPrintf(vm, " %s - Invalid utf8=0x%p for node=0x%p>\n",
+								VMCHECK_FAILED, utf8, node);
+					}
 
-				if (FALSE == verifyJ9ClassLoader(vm, classLoader)) {
-					vmchkPrintf(vm, " %s - Invalid classLoader=0x%p for node=0x%p>\n",
-						VMCHECK_FAILED, classLoader, node);
+					if (FALSE == verifyJ9ClassLoader(vm, classLoader)) {
+						vmchkPrintf(vm, " %s - Invalid classLoader=0x%p for node=0x%p>\n",
+								VMCHECK_FAILED, classLoader, node);
+					}
 				}
+				count += 1;
+				node = (J9InternHashTableEntry *)DBG_ARROW(node, nextNode);
 			}
-			count++;
-			node = (J9InternHashTableEntry *)DBG_ARROW(node, nextNode);
 		}
 	}
 

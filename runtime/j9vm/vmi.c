@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,7 +176,7 @@ JVM_GetSystemPackages(JNIEnv* env)
  *
  * @return Package information as a string.
  *
- * @note In the current implementation, the spearator is not guaranteed to be '/', not is a directory guaranteed to be
+ * @note In the current implementation, the separator is not guaranteed to be '/', not is a directory guaranteed to be
  * terminated with a slash. It is also unclear what the expected implementation is for UNC paths.
  *
  * @note see CMVC defects 81175 and 92979

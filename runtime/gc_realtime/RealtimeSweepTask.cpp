@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +24,7 @@
 #include "ut_j9mm.h"
 
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "GlobalGCStats.hpp"
 #include "RealtimeSweepTask.hpp"
 #include "SweepSchemeRealtime.hpp"
@@ -33,34 +32,34 @@
 void
 MM_RealtimeSweepTask::run(MM_EnvironmentBase *envBase)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
 	_sweepScheme->sweep(env);
 }
 
 void
 MM_RealtimeSweepTask::setup(MM_EnvironmentBase *envBase)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
 
 	env->_sweepStats.clear();
 
 	/* record that this thread is participating in this cycle */
-	env->_sweepStats._gcCount = MM_GCExtensions::getExtensions(env)->globalGCStats.gcCount;
+	env->_sweepStats._gcCount = env->getExtensions()->globalGCStats.gcCount;
 }
 
 void
 MM_RealtimeSweepTask::cleanup(MM_EnvironmentBase *envBase)
 {
-	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase->getOmrVMThread());
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	MM_GlobalGCStats *finalGCStats = &MM_GCExtensions::getExtensions(env)->globalGCStats;
+	MM_GlobalGCStats *finalGCStats = &env->getExtensions()->globalGCStats;
 	finalGCStats->sweepStats.merge(&env->_sweepStats);
 
 	Trc_MM_RealtimeSweepTask_parallelStats(
 		env->getLanguageVMThread(),
 		(U_32)env->getSlaveID(), 
-		(U_32)j9time_hires_delta(0, env->_sweepStats.idleTime, J9PORT_TIME_DELTA_IN_MILLISECONDS), 
+		(U_32)omrtime_hires_delta(0, env->_sweepStats.idleTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
 		env->_sweepStats.sweepChunksProcessed, 
-		(U_32)j9time_hires_delta(0, env->_sweepStats.mergeTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
+		(U_32)omrtime_hires_delta(0, env->_sweepStats.mergeTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS));
 }

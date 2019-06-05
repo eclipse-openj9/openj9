@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2018 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -112,8 +112,8 @@ SETVAL(eq_lastSlotField_inInterfaceSnippet,72)
 SETVAL(eq_firstSlot_inInterfaceSnippet,80)
 
 ZZ For single dynamic slot case
-SETVAL(eq_implementorClass_inInterfaceSnippet,48)
-SETVAL(eq_implementorMethod_inInterfaceSnippet,56)
+SETVAL(eq_implementerClass_inInterfaceSnippet,48)
+SETVAL(eq_implementerMethod_inInterfaceSnippet,56)
 SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,64)
 SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,65)
 
@@ -139,8 +139,8 @@ SETVAL(eq_lastSlotField_inInterfaceSnippet,36)
 SETVAL(eq_firstSlot_inInterfaceSnippet,40)
 
 ZZ For Single dynamic slot case
-SETVAL(eq_implementorClass_inInterfaceSnippet,24)
-SETVAL(eq_implementorMethod_inInterfaceSnippet,28)
+SETVAL(eq_implementerClass_inInterfaceSnippet,24)
+SETVAL(eq_implementerMethod_inInterfaceSnippet,28)
 SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,32)
 SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,33)
 
@@ -300,9 +300,9 @@ ZZ  # derive base pointer into table
     CONST_4BYTE(000000FF) # lshmask1 for patching
     CONST_4BYTE(0000FFFF) # lshmask2 for patching
     CONST_4BYTE(00FFFFFF) # lshmask3 for patching
-    CONST_4BYTE(FF000000) # mshmaks1 for patching
-    CONST_4BYTE(FFFF0000) # mshmaks2 for patching
-    CONST_4BYTE(FFFFFF00) # mshmaks3 for patching
+    CONST_4BYTE(FF000000) # mshmask1 for patching
+    CONST_4BYTE(FFFF0000) # mshmask2 for patching
+    CONST_4BYTE(FFFFFF00) # mshmask3 for patching
 
 LABEL($1PatchLbl0)
 
@@ -312,7 +312,7 @@ ZZ  # is the dest. word aligned?
     JNZ       $1PatchLbl1 # no, process accordingly
 
 ZZ
-ZZ 4-bytes patching in word aligneded address.
+ZZ 4-bytes patching in word aligned address.
 ZZ Doing so is straightforward.
 ZZ
     ST        r1,0(r2)              # replace the value
@@ -540,7 +540,7 @@ define(MTComputeStaticAddress,[dnl
     NILH    r2,0                      # get col index
     SLLG    r2,r2,0(r1)               # col offset, data size
 
-ifdef([J9VM_INTERP_COMPRESSED_OBJECT_HEADER],[dnl
+ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     LGR     r14,r0                    # restore r14
     LG      r1,28(,r14)               # load CP word
     SRLG    r1,r1,8                   # shift amount

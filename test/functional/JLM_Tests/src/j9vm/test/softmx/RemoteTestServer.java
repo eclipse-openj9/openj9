@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,7 @@ public class RemoteTestServer {
 
 		memoryExhauster.usePercentageOfHeap(0.8);
 
-		log("Now we have used approximal 80% of current max heap size:  " + aBean.getHeapMemoryUsage().getUsed());
+		log("Now we have used approximately 80% of current max heap size:  " + aBean.getHeapMemoryUsage().getUsed());
 		log("Current committed max heap size is " + aBean.getHeapMemoryUsage().getCommitted());
 
 		//decrease max heap size 1024 bytes to notify SoftRemoteTest that allocation is done

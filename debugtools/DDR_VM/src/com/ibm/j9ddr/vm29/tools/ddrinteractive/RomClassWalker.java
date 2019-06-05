@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,7 +172,7 @@ public class RomClassWalker extends ClassWalker {
 			srpCursor = srpCursor.add(1);
 		}
 
-		/* walk innner classes SRPs block */
+		/* walk inner classes SRPs block */
 		srpCursor = romClass.innerClasses();
 		count = romClass.innerClassCount().intValue();
 		classWalkerCallback.addSection(clazz, srpCursor, count * SelfRelativePointer.SIZEOF, "innerClassesSRPs", true);

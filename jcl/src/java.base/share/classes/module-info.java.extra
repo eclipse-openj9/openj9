@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,16 +20,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-  /*[IF PLATFORM-mz31 | PLATFORM-mz64 | PLATFORM-xz64]*/
-  exports com.ibm.jit.crypto to ibm.crypto.hdwrcca;
-  /*[ENDIF]*/
-  exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
-  exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.jvm, openj9.sharedclasses;
-  exports com.ibm.oti.util to java.management, jdk.attach, jdk.management, openj9.sharedclasses;
-  exports com.ibm.tools.attach.target to jdk.attach;
-  exports jdk.internal.org.objectweb.asm to openj9.dtfj, openj9.dtfjview;
-  // Following allows dtfj/dtfjview modules invoke module addReads & addExports programmatically via reflection APIs
-  exports jdk.internal.module to openj9.dtfj, openj9.dtfjview;
-  uses com.ibm.sharedclasses.spi.SharedClassProvider;
-  uses com.ibm.gpu.spi.GPUAssist.Provider;
-  exports com.ibm.gpu.spi to openj9.gpu;
+
+/*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
+
+/*[IF PLATFORM-mz31 | PLATFORM-mz64 | PLATFORM-xz64]*/
+exports com.ibm.jit.crypto to ibm.crypto.hdwrcca;
+/*[ENDIF]*/
+exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
+exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.jvm, openj9.sharedclasses;
+exports com.ibm.oti.util to java.management, jdk.attach, jdk.jcmd, jdk.management, openj9.sharedclasses;
+exports com.ibm.tools.attach.target to jdk.attach, jdk.jcmd, jdk.management;
+exports openj9.tools.attach.diagnostics.spi to jdk.attach, jdk.jcmd;
+exports openj9.tools.attach.diagnostics.base to jdk.jcmd;
+exports jdk.internal.org.objectweb.asm to openj9.dtfj, openj9.dtfjview;
+// Following allows dtfj/dtfjview modules invoke module addReads & addExports programmatically via reflection APIs
+exports jdk.internal.module to openj9.dtfj, openj9.dtfjview;
+uses com.ibm.sharedclasses.spi.SharedClassProvider;
+uses openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider;
+uses com.ibm.gpu.spi.GPUAssist.Provider;
+exports com.ibm.gpu.spi to openj9.gpu;

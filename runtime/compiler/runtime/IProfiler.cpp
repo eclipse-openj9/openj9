@@ -298,7 +298,7 @@ TR_IProfiler::walkILTreeForEntries(uintptrj_t *pcEntries, uint32_t &numEntries, 
                      // that means the entry is locked by another thread. going to abort the
                      // storage of iprofiler information for this method
                      {
-                     // In some corener cases of invoke interface, we may come across the same entry
+                     // In some corner cases of invoke interface, we may come across the same entry
                      // twice under 2 different bytecodes. In that case, the other entry has been
                      // locked by this thread and is in the list of entries, so don't abort.
                      bool found = false;
@@ -2463,7 +2463,7 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
                   list->incrementOrCreate(address, &addrOfTotalFrequency, i, weight, &comp->trMemory()->heapMemoryRegion());
                   }
                }
-            // add resudial to last total frequency
+            // add residual to last total frequency
             *addrOfTotalFrequency = (*addrOfTotalFrequency) + csInfo->_residueWeight;
             }
          else
@@ -3911,7 +3911,7 @@ void TR_IProfiler::processWorkingQueue()
 
 extern "C" void stopInterpreterProfiling(J9JITConfig *jitConfig);
 
-/* Lower value will more aggressivly skip samples as the number of unloaded classes increasses */
+/* Lower value will more aggressively skip samples as the number of unloaded classes increases */
 static const int IP_THROTTLE = 32;
 
 #if defined(NETWORK_ORDER_BYTECODE)
@@ -4336,18 +4336,18 @@ TR_IPHashedCallSite::operator new (size_t size) throw()
 inline
 uintptrj_t CallSiteProfileInfo::getClazz(int index)
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
    //support for convert code, when it is implemented, "uncompress"
    return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)(uintptrj_t)_clazz[index]);
 #else
    return (uintptrj_t)_clazz[index]; //things are just stored as regular pointers otherwise
-#endif //J9VM_GC_COMPRESSED_POINTERS
+#endif //OMR_GC_COMPRESSED_POINTERS
    }
 
 inline
 void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
    {
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
    //support for convert code, when it is implemented, do compression
    TR_OpaqueClassBlock * compressedOffset = J9JitMemory::convertClassPtrToClassOffset((J9Class *)clazzPointer); //compressed 32bit pointer
    //if we end up with something in the top 32bits, our compression is no good...
@@ -4355,7 +4355,7 @@ void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
    _clazz[index] = (uint32_t)((uintptrj_t)compressedOffset); //ditch the top zeros
 #else
    _clazz[index] = (uintptrj_t)clazzPointer;
-#endif //J9VM_GC_COMPRESSED_POINTERS
+#endif //OMR_GC_COMPRESSED_POINTERS
    }
 
 uintptrj_t
@@ -4384,7 +4384,7 @@ CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
    }
 
 // Supporting code for dumping IProfiler data to stderr to track possible 
-// performance issues due to insuficient or wrong IProfiler info
+// performance issues due to insufficient or wrong IProfiler info
 // Code is currently inactive. To actually use one must issue
 // iProfiler->dumpIPBCDataCallGraph(vmThread)
 // in some part of the code (typically at shutdown time) 
@@ -4406,7 +4406,7 @@ class TR_AggregationHT
          };
       class TR_AggregationHTNode
          {
-         TR_AggregationHTNode *_next; // for chaning
+         TR_AggregationHTNode *_next; // for chaining
          J9ROMMethod *_romMethod; // this is the key
          J9ROMClass  *_romClass;
          TR_CGChainedEntry *_IPData;
@@ -4638,7 +4638,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
 // This method will be executing on a single thread and it will acquire VM access as needed
 // to prevent the GC from modifying the BC hashtable as we walk.
 // Application threads may add new data to the IProfiler hashtable, but this is not an impediment.
-// Temporary data structures will be allocated using persistent memory which will be dealocated
+// Temporary data structures will be allocated using persistent memory which will be deallocated
 // at the end.
 // Parameter: the vmThread it is executing on.
 void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
@@ -4687,7 +4687,7 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
             J9ROMClass * romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)pc, &loader);
             if (romClass)
                {
-               //J9ROMMethod * romMethod = vmFunctions->findROMMethodInROMClass(vmThread, romClass, (UDATA)pc, NULL);
+               //J9ROMMethod * romMethod = vmFunctions->findROMMethodInROMClass(vmThread, romClass, (UDATA)pc);
                J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
                J9ROMMethod *desiredMethod = NULL;
                //fprintf(stderr, "Scanning %u romMethods...\n", romClass->romMethodCount);

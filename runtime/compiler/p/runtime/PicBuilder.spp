@@ -64,11 +64,11 @@
 #define maskVFT(reg)    rlwinm reg, reg, 0, 0, 31-J9TR_RequiredClassAlignmentInBits
 #endif
 
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS)
 /* extract isolated field address in TenantDataxxx
-   MT_ComputeIsoaltedFieldAddress(32/64/obj, element_shift size 2/3)
+   MT_ComputeIsolatedFieldAddress(32/64/obj, element_shift size 2/3)
    assume
-   1. r3 has isoalted index address
+   1. r3 has isolated index address
    2. r7 contains RA in snippet
    3. r6 contains return address in mainline
    4. r4, r5 is free
@@ -571,7 +571,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	lwz	r29,1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r29,0, 5, 31				! Masking off flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	bcctrl  BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	lis     r4, IS_SyncSeq | IS_32BitLong
 	and.	r4, r29, r4				        ! Is it a volatile sync, or a long volatile 32-bit OS sequence?
@@ -595,7 +595,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	bcctrl  BO_ALWAYS, CR0_LT                               ! Call to ask if the field is volatile
 	cmpi	cr0, CmpAddr, r3, 0
 	bne     cr0, .L10.it_is_volatile
-	andis.  r4, r29, IS_32BitLong                           ! was it a potentially volatle long, 32-bit OS sequence?
+	andis.  r4, r29, IS_32BitLong                           ! was it a potentially volatile long, 32-bit OS sequence?
 	bne     cr0, .L.normal_patching
 	andis.	r4, r29, IS_SpecialDouble			! check the special double flag
 	bne	cr0, .L.yankTheCall
@@ -706,7 +706,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	bc	BO_IF_NOT, CR0_EQ, .L_pTOC_update		! Is pTOC case?
 	lwz     r9, 4(r6)                                       ! load the second instr from memory reference sequence in the code cache
 	andis.  r29, r29, IS_32BitLong                          ! Mask off all bits but the IS_32BitLong bit
-	andc.   r8, r29, r26                                    ! if IS_32BitLong and it isnt really a volatile then
+	andc.   r8, r29, r26                                    ! if IS_32BitLong and it is not really a volatile then
 	beq     .L_LoadTemplateInstruction                      ! dont branch,
 	cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r3_high                                 ! if so then use lwz r3,0(r11)
@@ -728,7 +728,7 @@ _interpreterUnresolvedInstanceDataGlue:
 
         lwz     r9,1*ALen(r7)                                   ! Load cp index for this field
 	andis.  r9, r9, IS_32BitLong                            ! Mask off all bits but the IS_32BitLong bit
-        andc.   r9, r9, r26                                     ! if IS_32BitLong and it isnt really a volatile then
+        andc.   r9, r9, r26                                     ! if IS_32BitLong and it is not really a volatile then
         beq     .L_Skip2ndMemRefInstruction                     ! dont branch,
         cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r4_high                                 ! if so then use lwz r4,0(r11)
@@ -918,7 +918,7 @@ _interpreterUnresolvedClassGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr   CTR, r8						! Move callee address to CTR
 	bcctrl  BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	b       .L11.common_code				! not modified, r3: result
@@ -955,7 +955,7 @@ _interpreterUnresolvedClassGlue2:
       lwz     r4, 1*ALen(r7)                                  ! Load cp index for this field
       laddr   r5, 0(r7)                                       ! Load code cache RA
       rlwinm  r4, r4, 0, 5, 31                                ! Masking off the flag bits
-      addi    r5, r5, 1                                       ! Increament for EX search
+      addi    r5, r5, 1                                       ! Increment for EX search
       mtspr   CTR, r8                                         ! Move callee address to CTR
       bcctrl  BO_ALWAYS, CR0_LT                               ! Call to resolve: RTOC, r7
       b       .L11.common_code                                ! not modified, r3: result
@@ -992,7 +992,7 @@ _interpreterUnresolvedStringGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1056,7 +1056,7 @@ _interpreterUnresolvedConstantDynamicGlue:
         lwz     r4, 1*ALen(r7)                                  ! Load cp index for this field
         laddr   r5, 0(r7)                                       ! Load code cache RA
         rlwinm  r4, r4, 0, 5, 31                                ! Masking off the flag bits
-        addi    r5, r5, 1                                       ! Increament for EX search
+        addi    r5, r5, 1                                       ! Increment for EX search
         mtspr   CTR, r8                                         ! Move callee address to CTR
         bcctrl  BO_ALWAYS, CR0_LT                               ! Call to resolve: RTOC, r7
         laddr   r6, 0(r7)                                       ! Load code cache RA
@@ -1120,7 +1120,7 @@ _interpreterUnresolvedMethodTypeGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1184,7 +1184,7 @@ _interpreterUnresolvedMethodHandleGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1248,7 +1248,7 @@ _interpreterUnresolvedCallSiteTableEntryGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1311,7 +1311,7 @@ _interpreterUnresolvedMethodTypeTableEntryGlue:
 	lwz	r4, 1*ALen(r7)					! Load cp index for this field
 	laddr	r5, 0(r7)					! Load code cache RA
 	rlwinm	r4, r4, 0, 5, 31				! Masking off the flag bits
-	addi	r5, r5, 1					! Increament for EX search
+	addi	r5, r5, 1					! Increment for EX search
 	mtspr	CTR, r8						! Move callee address to CTR
 	bcctrl	BO_ALWAYS, CR0_LT				! Call to resolve: RTOC, r7
 	laddr	r6, 0(r7)					! Load code cache RA
@@ -1403,7 +1403,7 @@ MTUnresolvedInt32Load:
 .MTUnresolvedInt32Load:
 #endif
 	startproc.MTUnresolvedInt32Load:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 	#include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1442,7 +1442,7 @@ MTUnresolvedInt64Load:
 .MTUnresolvedInt64Load:
 #endif
 	startproc.MTUnresolvedInt64Load:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1481,7 +1481,7 @@ MTUnresolvedFloatLoad:
 .MTUnresolvedFloatLoad:
 #endif
 	startproc.MTUnresolvedFloatLoad:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1520,7 +1520,7 @@ MTUnresolvedDoubleLoad:
 .MTUnresolvedDoubleLoad:
 #endif
 	startproc.MTUnresolvedDoubleLoad:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1558,7 +1558,7 @@ MTUnresolvedAddressLoad:
 .MTUnresolvedAddressLoad:
 #endif
 	startproc.MTUnresolvedAddressLoad:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1578,7 +1578,7 @@ MTUnresolvedAddressLoad:
     lwzx r3, r3, r5                               ! r3 contains load result
     isync
     lwz    r4, 20(r7)                              ! get compressed shift size
-    sld    r3, r3, r4                              ! decompress poiter
+    sld    r3, r3, r4                              ! decompress pointer
     b .MTUnresolvedObjLoadRestore
 .MTUnresolvedObjLoadNoneIsolated:
     ld    r3, 0(r3)                               ! r3 contains load result
@@ -1599,7 +1599,7 @@ MTUnresolvedInt32Store:
 .MTUnresolvedInt32Store:
 #endif
 	startproc.MTUnresolvedInt32Store:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1640,7 +1640,7 @@ MTUnresolvedInt64Store:
 .MTUnresolvedInt64Store:
 #endif
 	startproc.MTUnresolvedInt64Store:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1681,7 +1681,7 @@ MTUnresolvedFloatStore:
 .MTUnresolvedFloatStore:
 #endif
 	startproc.MTUnresolvedFloatStore:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1722,7 +1722,7 @@ MTUnresolvedDoubleStore:
 .MTUnresolvedDoubleStore:
 #endif
 	startproc.MTUnresolvedDoubleStore:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1762,7 +1762,7 @@ MTUnresolvedAddressStore:
 .MTUnresolvedAddressStore:
 #endif
 	startproc.MTUnresolvedAddressStore:
-#if defined(TR_HOST_64BIT) && defined(J9VM_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
+#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
 #include "p/runtime/SaveGPRs.inc"
 	mfcr    r0
 	stw     r0,-4(J9SP)					! Save CR also
@@ -1782,7 +1782,7 @@ MTUnresolvedAddressStore:
     MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantDataObj, 2)
     ! compress store value
     lwz    r4, 20(r7)                              ! get compressed shift size
-    srd    r29, r29, r4                              ! compress poiter
+    srd    r29, r29, r4                              ! compress pointer
 
     lwsync
     stwx   r29, r3, r5                               ! r29 contains store value
@@ -2702,7 +2702,7 @@ _virtualUnresolvedHelper:
 .L.directDispatch:							! J9SP-96,r5(offset),r11,RTOC
 	laddr	r3, 7*ALen(J9SP)					! Restore object ptr: this
 	laddr	r0, VirtualRAOffset(r11)				! Load code cache RA
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
         lwz     r6, J9TR_J9Object_class(r3)                                               ! Load class offset
         ! may need to convert class offset to J9Class
 #else
@@ -2824,7 +2824,7 @@ _interfaceCallHelper:
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
 #endif
 	mtspr	CTR, r5						! Prepare for long jump
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r3, J9TR_J9Object_class(r4)				! Load the class offset
 #else
 	laddr	r3, J9TR_J9Object_class(r4)				! Load the class
@@ -2884,7 +2884,7 @@ _interfaceCallHelper:
 	mtspr	CTR, r5						! Prepare for long jump
 	mr	r5, r11						! Load code cache RA
 	addi	r4, r11, 3*ALen					! Address of interface table&slot number
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r3, J9TR_J9Object_class(r6)				! Load the class offset
 #else
 	laddr	r3, J9TR_J9Object_class(r6)				! Load the class
@@ -2892,7 +2892,7 @@ _interfaceCallHelper:
 	maskVFT(r3)
 	bcctrl	BO_ALWAYS, CR0_LT					! Call to look up method
 	laddr	r5, 7*ALen(J9SP)					! Load:  this
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r6, J9TR_J9Object_class(r5)				! Load the class offset
 	! may need to convert class offset to J9Class
 #else
@@ -2945,7 +2945,7 @@ _interfaceCallHelper:
 	bl	.__refreshHelper					! save:	RTOC, r6, r10, r11
 #endif
 	laddr	r4, 5*ALen(r11)					! Load slot1 class
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
         ! may need to convert class offset to J9Class pointer
 #endif
 	laddr	r5, 3*ALen(r11)					! Resolved class
@@ -2959,7 +2959,7 @@ _interfaceCallHelper:
 	neg	r4, r3
 	addi	r12, r4,J9TR_InterpVTableOffset			! Must set it up in r12
 	laddr	r3, 7*ALen(J9SP)					! Restore "this"
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r5, J9TR_J9Object_class(r3)				! class offset
         ! may need to convert class offset to J9Class pointer
 #else
@@ -3013,7 +3013,7 @@ _interfaceCompeteSlot2:
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
 #endif
 	laddr	r6, 7*ALen(J9SP)					! Load "this"
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r3, J9TR_J9Object_class(r6)				! Load the class offset
 #else
 	laddr	r3, J9TR_J9Object_class(r6)				! Load the class
@@ -3024,7 +3024,7 @@ _interfaceCompeteSlot2:
 	mr	r5, r11						! Load code cache RA
 	bcctrl	BO_ALWAYS, CR0_LT					! Call to look up
 	laddr	r5, 7*ALen(J9SP)					! Load:  this
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r6, J9TR_J9Object_class(r5)				! Load the class offset
         ! may need to convert class offset to J9Class
 #else
@@ -3081,7 +3081,7 @@ _interfaceCompeteSlot2:
 #endif
 	or	r3, r6, r6					! Restore r3
 	laddr	r4, 7*ALen(r11)					! Load slot2 class
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
         ! may need to convert class offset to J9Class pointer
 #endif
 	laddr	r5, 3*ALen(r11)					! Resolved class
@@ -3151,7 +3151,7 @@ _interfaceSlotsUnavailable:
 #ifndef NO_HELPER_LASTITABLE_CHECK
         ! Before going to the VM helper, check if the receiver class lastITable matches the interface class
         ! of the method being called and if so, use it to quickly look up the vtable offset and make the call
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
         lwz     r10, J9TR_J9Object_class(r3)                    ! Load class
 #else  
         laddr   r10, J9TR_J9Object_class(r3)                    ! Load class
@@ -3166,7 +3166,7 @@ _interfaceSlotsUnavailable:
         laddr   r12, 4*ALen(r11)                                ! Load the itable offset from the snippet
         andis.  r11,r12,J9TR_J9_ITABLE_OFFSET_TAG_BITS          ! Call the helper if the itable offset is tagged
         bne     .L.callHelper
-        laddrx  r12, r9, r12                                    ! Load the interpretre vft offset
+        laddrx  r12, r9, r12                                    ! Load the interpreter vft offset
         neg     r12, r12
         addi    r12, r12, J9TR_InterpVTableOffset               ! Convert to a JIT vft offset
         laddrx  r11, r10, r12                                   ! Load the method
@@ -3196,7 +3196,7 @@ _interfaceSlotsUnavailable:
 #else
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load address of final helper
 #endif
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	lwz	r3, J9TR_J9Object_class(r3)				! Load class
 #else
 	laddr	r3, J9TR_J9Object_class(r3)				! Load class

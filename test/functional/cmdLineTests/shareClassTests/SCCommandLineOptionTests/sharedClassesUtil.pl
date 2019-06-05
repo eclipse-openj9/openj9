@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2018 IBM Corp. and others
+# Copyright (c) 2009, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,10 @@
 use warnings;
 use strict;
 
-# greps the word in the dump file and returns true if the number of occurence
+# greps the word in the dump file and returns true if the number of occurrence
 # of the word matches with the number passed in as arg
 sub words_grep_from_file {
-	my ($dump_file, $grep_word, $num_of_expected_occurences) = @_;
+	my ($dump_file, $grep_word, $num_of_expected_occurrences) = @_;
 	my $counter = 0;
 
 	open(my $in,  "<",  $dump_file)  or die "TEST FAILED. unable to  read $dump_file";
@@ -43,7 +43,7 @@ sub words_grep_from_file {
 	}
 
 	close($in)  or die "TEST FAILED. unable to  close $dump_file";
-	return ( $counter == $num_of_expected_occurences );
+	return ( $counter == $num_of_expected_occurrences );
 }
 
 # removes a file if it exists and if it is not writable
@@ -452,12 +452,12 @@ sub long_cache_name_err_msg {
 		. " Cache not created.";
 }
 
-# error msg to indicate that the cache name could not accomodate the expansion of %g
+# error msg to indicate that the cache name could not accommodate the expansion of %g
 sub copy_groupname_err_msg {
 	return "Error copying groupname into cache name";
 }
 
-# error msg to indicate that the cache name could not accomodate the expansion of %u
+# error msg to indicate that the cache name could not accommodate the expansion of %u
 sub copy_username_err_msg {
 	return "The cache name is too long when the user name is included";
 }

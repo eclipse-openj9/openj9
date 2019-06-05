@@ -400,9 +400,16 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                   prevTree->join(dupTree);
                   dupTree->join(currTree);
 
-                  TR::SymbolReference *symRef = dupNode->getSymbolReference();
+                  TR::SymbolReference *symRef = node->getSymbolReference();
                   TR::SymbolReference *vecSymRef = pSPMDInfo->getVectorSymRef(symRef);
-                  TR_ASSERT(vecSymRef != NULL, "Vector PIV SymRef is NULL during SIMD transformation");
+                  if (vecSymRef == NULL)
+                     {
+                     vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector()); // need to handle alignment?
+                     pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
+
+                     if (trace)
+                         traceMsg(comp, "   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+                     }
 
                   TR::ILOpCode scalarOp = node->getOpCode();
                   TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOp.getOpCodeValue());
@@ -2700,7 +2707,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExits(List<TR::Block>* exitBlocks
       {
       TR::TreeTop *insertionPoint = exitBlock->getEntry();
       
-      TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 5);
+      TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
       helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       regionExitGPUNode->setSymbolReference(helper);
@@ -2714,11 +2721,8 @@ void TR_SPMDKernelParallelizer::insertGPURegionExits(List<TR::Block>* exitBlocks
       // ptxSourceID
       regionExitGPUNode->setAndIncChild(2, TR::Node::create(insertionPoint->getNode(), TR::iconst, 0, gpuPtxCount));
 
-      // flush block number
-      regionExitGPUNode->setAndIncChild(3, TR::Node::create(insertionPoint->getNode(), TR::iconst, 0, 0));
-
       // **liveSymRef
-      regionExitGPUNode->setAndIncChild(4, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, liveSymRef));
+      regionExitGPUNode->setAndIncChild(3, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, liveSymRef));
 
       TR::Node *treetopNode = TR::Node::create(TR::treetop, 1, regionExitGPUNode);
       TR::TreeTop *initTreeTop = TR::TreeTop::create(comp(), treetopNode, 0, 0);
@@ -2773,7 +2777,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExitInRegionExits(List<TR::Block>
 
       TR::TreeTop *insertionPoint = regionExitGPUBlock->getEntry();
 
-      TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 5);
+      TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
       helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       regionExitGPUNode->setSymbolReference(helper);
@@ -2787,11 +2791,8 @@ void TR_SPMDKernelParallelizer::insertGPURegionExitInRegionExits(List<TR::Block>
       // ptxSourceID
       regionExitGPUNode->setAndIncChild(2, TR::Node::create(insertionPoint->getNode(), TR::iconst, 0, gpuPtxId));
 
-      // flush block number
-      regionExitGPUNode->setAndIncChild(3, TR::Node::create(insertionPoint->getNode(), TR::iconst, 0, 0));
-
       // **liveSymRef
-      regionExitGPUNode->setAndIncChild(4, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, liveSymRef));
+      regionExitGPUNode->setAndIncChild(3, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, liveSymRef));
 
       TR::Node *treetopNode = TR::Node::create(TR::treetop, 1, regionExitGPUNode);
       TR::TreeTop *initTreeTop = TR::TreeTop::create(comp(), treetopNode, 0, 0);

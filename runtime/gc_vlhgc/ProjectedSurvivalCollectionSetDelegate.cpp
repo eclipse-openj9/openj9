@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,8 +174,9 @@ MM_ProjectedSurvivalCollectionSetDelegate::createNurseryCollectionSet(MM_Environ
 		if (region->containsObjects()) {
 			bool regionHasCriticalRegions = (0 != region->_criticalRegionsInUse);
 			bool isSelectionForCopyForward = env->_cycleState->_shouldRunCopyForward;
-			/* allow jniCritical regions are part of nursery collectionSet for copyforward */
-			if (region->getRememberedSetCardList()->isAccurate() && (!isSelectionForCopyForward || !regionHasCriticalRegions || (regionHasCriticalRegions && region->isEden()))) {
+			/* Allow jniCritical Eden regions are part of Nursery collectionSet in CopyForwardHybrid mode */
+			if (region->getRememberedSetCardList()->isAccurate() && (!isSelectionForCopyForward || !regionHasCriticalRegions || (regionHasCriticalRegions && (_extensions->tarokEnableCopyForwardHybrid || (0 != _extensions->fvtest_forceCopyForwardHybridRatio)) && region->isEden()))) {
+
 				if(MM_CompactGroupManager::isRegionInNursery(env, region)) {
 					/* on collection phase, mark all non-overflowed regions and those that RSCL is not being rebuilt */
 					/* sweep/compact flags are set in ReclaimDelegate */
@@ -265,8 +266,8 @@ MM_ProjectedSurvivalCollectionSetDelegate::createRateOfReturnCollectionSet(MM_En
 			if (MM_CompactGroupManager::isRegionDCSSCandidate(env, region)) {
 				bool regionHasCriticalRegions = (0 != region->_criticalRegionsInUse);
 				bool isSelectionForCopyForward = env->_cycleState->_shouldRunCopyForward;
-				/* allow jniCritical regions are part ofRateOfReturnCollectionSet for copyforward */
-				if (region->getRememberedSetCardList()->isAccurate() && (!isSelectionForCopyForward || !regionHasCriticalRegions || (regionHasCriticalRegions && region->isEden()))) {
+
+				if (region->getRememberedSetCardList()->isAccurate() && (!isSelectionForCopyForward || !regionHasCriticalRegions)) {
 					_dynamicSelectionRegionList[sortListSize] = region;
 					sortListSize += 1;
 				}

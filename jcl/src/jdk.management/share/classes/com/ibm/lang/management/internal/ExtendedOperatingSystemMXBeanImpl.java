@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -627,6 +627,12 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 			int precisionVaue = is100ns ? NO_SCALE_FACTOR : NS_SCALE_FACTOR; /* if 1 ns resolution, scale the result up by 100 */
 			return precisionVaue;
 		}
+	}
+
+	@Override
+	public boolean isProcessRunning(long pid) {
+		com.ibm.java.lang.management.internal.RuntimeMXBeanImpl.checkMonitorPermission();
+		return com.ibm.tools.attach.target.IPC.processExists(pid);
 	}
 
 }

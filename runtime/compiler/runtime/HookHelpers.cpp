@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,10 +119,10 @@ namespace  {
       pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->markAssumptionsAndDetach(metaData, reclaimPrePrologueAssumptions);
       }
 
-   inline void reclaimMarkedAssumptionsFromRAT()
+   inline void reclaimMarkedAssumptionsFromRAT(int cleanUpCount)
       {
       // expunge any runtime assumptions in the RAT that have previously been marked
-      pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT();
+      pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(cleanUpCount);
       }
    
    // We need to update the nextMethod and prevMethod pointers of the J9JITExceptionTable that
@@ -174,7 +174,7 @@ namespace  {
             // Make a copy of just the J9JITExceptionTable Struct (excluding the variable length section)
             memcpy((uint8_t *)stubMetadata, (uint8_t *)metaData, numBytes);
             
-            // Set the various pointers to NULL since this J9JITExeptionTable has no variable length section
+            // Set the various pointers to NULL since this J9JITExceptionTable has no variable length section
             // However, the bodyInfo needs to exist.
             stubMetadata->inlinedCalls = NULL;
             stubMetadata->gcStackAtlas = NULL;
@@ -289,7 +289,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
          }
       else
          {
-         // Mark the runtime assumptions so thay can be deleted at the end of the GC cycle.
+         // Mark the runtime assumptions so they can be deleted at the end of the GC cycle.
          // The 3rd parameter to markAssumptionsAndDetach determines whether we mark preprologue assumptions.
          // We should only do that if we are in class unloading and will be reclaiming the entire method body,
          // which means faintCacheBlock is NULL.
@@ -413,12 +413,16 @@ void jitRemoveAllMetaDataForClassLoader(J9VMThread * vmThread, J9ClassLoader * c
    classLoader->jitMetaDataList = NULL;
    }
 
-void jitReclaimMarkedAssumptions()
+void jitReclaimMarkedAssumptions(bool isEager)
    {
-   static const char *useOldRAReclaim = feGetEnv("TR_useOldRAReclaim");
-   if (!useOldRAReclaim)
+   static char *forceAggressiveRATCleaning = feGetEnv("TR_forceAggressiveRATCleaning");
+   if (isEager || forceAggressiveRATCleaning)
       {
-      reclaimMarkedAssumptionsFromRAT();
+      reclaimMarkedAssumptionsFromRAT(-1);
+      }
+   else
+      {
+      reclaimMarkedAssumptionsFromRAT(100);
       }
    }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -226,6 +226,8 @@ public:
 
 	bool isAddressInROMClassSegment(const void* address);
 
+	bool isAddressInMetaDataArea(const void* address) const;
+
 	bool isAddressInCache(const void* address);
 
 	void runExitCode(J9VMThread *currentThread);
@@ -396,7 +398,7 @@ public:
 	bool canStoreClasspaths(void) const;
 
 	IDATA restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, bool* cacheExist);
-	void dontNeedMetadata(J9VMThread *currentThread, const void* startAddress, size_t length);
+	void dontNeedMetadata(J9VMThread *currentThread);
 
 	void changePartialPageProtection(J9VMThread *currentThread, void *addr, bool readOnly, bool phaseCheck = true);
 
@@ -411,6 +413,10 @@ public:
 	void increaseUnstoredBytes(U_32 blockBytes, U_32 aotBytes, U_32 jitBytes);
 
 	bool isNewCache(void);
+
+	bool updateAccessedShrCacheMetadataBounds(J9VMThread* currentThread, uintptr_t const * metadataAddress);
+
+	bool isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA metadataAddress) const;
 
 private:
 	J9SharedClassConfig* _sharedClassConfig;
@@ -498,6 +504,10 @@ private:
 	bool _reduceStoreContentionDisabled;
 
 	bool _initializingNewCache;
+
+	UDATA  _minimumAccessedShrCacheMetadata;
+
+	UDATA _maximumAccessedShrCacheMetadata;
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 	/**

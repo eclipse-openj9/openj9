@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -487,7 +487,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	 */
 	public long getHashcode() throws DataUnavailable, CorruptDataException
 	{
-		//currently, we know no difference between these two kinds of hashcodes (may be revisitted in the future)
+		//currently, we know no difference between these two kinds of hashcodes (may be revisited in the future)
 		return getPersistentHashcode();
 	}
 
@@ -544,7 +544,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 				try
 				{
 					int instanceSize = arrayForm.getInstanceSize(this);
-					//the instance size will include the header and the actual data inside the array so seperate them
+					//the instance size will include the header and the actual data inside the array so separate them
 					long contentDataSize = (long)(instanceSize - objectHeaderSize);
 					//get the number of leaves, excluding the tail leaf (the tail leaf is the final leaf which points back into the spine).  There won't be one if there is isn't a remainder in this calculation since it would be empty
 					int fullSizeLeaves = (int)(contentDataSize / _arrayletLeafSize);
@@ -554,7 +554,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					int totalLeafCount = (0 == tailLeafSize) ? fullSizeLeaves : (fullSizeLeaves + 1);
 					//CMVC 153943 : DTFJ fix for zero-length arraylets - remove code to add 1 to the leaf count in the event that it is 0.
 					//by always assuming there is a leaf means that when the image sections are determined it will cause an error as there
-					//is no space allocated in this instace beyond the size of the spine.
+					//is no space allocated in this instance beyond the size of the spine.
 					String nestedType = arrayForm.getLeafClass().getName();
 					//4-byte object alignment in realtime requires the long and double arraylets have padding which may need to be placed before the array data or after, depending on if the alignment succeeded at a natural boundary or not
 					boolean alignmentCandidate = (4 == _objectAlignment) && ("double".equals(nestedType) || "long".equals(nestedType));

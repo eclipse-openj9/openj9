@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2011 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * The Feature class defines the elements of a J9 Build Spec Feature.  It encompases flags and sources
+ * The Feature class defines the elements of a J9 Build Spec Feature.  It encompasses flags and sources
  * which are common among multiple build specifications and should be re-used.
  * 
  * @author 	Gabriel Castro

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -564,7 +564,7 @@ public class XlpOptionsTestRunner extends Runner {
 				boolean isVerboseOutputPresent = false;
 				
 				for (String line : outputList) {
-					/* If large page size is supported, -verbose:sizes should display the page size and type used by JVM for heap alloation */
+					/* If large page size is supported, -verbose:sizes should display the page size and type used by JVM for heap allocation */
 					if (line.trim().startsWith("-Xlp:objectheap:pagesize=")) {
 						isVerboseOutputPresent = true;
 						/* Parse -Xlp:objectheap statement to get page size and type used by JVM for heap allocation */

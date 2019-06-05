@@ -104,7 +104,7 @@ static bool avoidTransformingStringLoops(TR::Compilation* comp)
    }
 
 //*****************************************************************************************
-// It partially peels the loop body to aligh the top of the region
+// It partially peels the loop body to align the top of the region
 //*****************************************************************************************
 bool
 ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
@@ -139,7 +139,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
          if (!chk->isOutsideOfLoop())
             {
             if (disptrace) traceMsg(comp, "ChangeAlignmentOfRegion : (t:%d p:%d) no need to change alignment\n",t->getID(),pTop->getID());
-            return changed;        // Find pTop! Already alighed correctly
+            return changed;        // Find pTop! Already aligned correctly
             }
          }
       if (t->getNumSuccs() < 1)
@@ -197,7 +197,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    if (!lastNode) return changed;   // the last node of the peeling region
    TR_CISCNode *foundNode = lastNode->getSucc(0);
 
-   // Find the last non-neglible node
+   // Find the last non-negligible node
    if (lastNode->isNegligible())
       {
       TR_CISCNode *lastNonNegligble = NULL;
@@ -612,7 +612,7 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
       if (DISPTRACE(trans)) traceMsg(comp, "moveStoreOutOfLoopForward failed because targetList is empty.\n");
       success0 = false;
       }
-   // check if decendents of p include an array load
+   // check if descendants of p include an array load
    if (!getThreeNodesForArray(p, &ixload, &aload, &iload, true))
       {
       if (DISPTRACE(trans)) traceMsg(comp, "moveStoreOutOfLoopForward failed because decendents of pid:%d don't include an array load.\n", p->getID());
@@ -887,7 +887,7 @@ indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode)
    return false;
    }
 
-// isIndexVaraibleInList checks whether the induction (index) variable symbol(s)
+// isIndexVariableInList checks whether the induction (index) variable symbol(s)
 // from the given 'node' subtree is found inside 'nodeList'.
 //
 // Returns true if
@@ -1714,7 +1714,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
                                      okDest);
       }
 
-   // Check existance of nullchk
+   // Check existence of nullchk
    // Insert (nullchk), findbytes, and result store instructions
    listT = P2T + P->getImportantNode(2)->getID();
    TR::TreeTop *last;
@@ -2166,7 +2166,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
    TR::Node * top = TR::Node::create(TR::treetop, 1, findBytesNode);
    TR::Node * storeToIndVar = TR::Node::createStore(indexVarSymRef, findBytesNode);
 
-   // Check existance of nullchk
+   // Check existence of nullchk
    // Insert (nullchk), findbytes, and result store instructions
    listT = P2T + P->getImportantNode(2)->getID();
    TR::TreeTop *last;
@@ -5761,8 +5761,21 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    lengthNode = createBytesFromElement(comp, trans->isGenerateI2L(), lengthNode, elementSize);
 
    // Prepare the arraycopy node.
-   bool needWriteBarrier = comp->getOptions()->needWriteBarriers() &&
-                           (inStoreNode->getOpCodeValue() == TR::awrtbari);
+   bool needWriteBarrier = false;
+   if (inStoreNode->getOpCodeValue() == TR::awrtbari)
+      {
+      switch (TR::Compiler->om.writeBarrierType())
+         {
+         case gc_modron_wrtbar_oldcheck:
+         case gc_modron_wrtbar_cardmark:
+         case gc_modron_wrtbar_cardmark_and_oldcheck:
+         case gc_modron_wrtbar_cardmark_incremental:
+            needWriteBarrier = true;
+            break;
+         default:
+            break;
+         }
+      }
 
    if (!comp->cg()->getSupportsReferenceArrayCopy() && needWriteBarrier)
       {
@@ -6817,7 +6830,7 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
                                          blockLE->getEntry());
    blockLE->append(TR::TreeTop::create(comp, backIfLE));
 
-   // after these two pathes
+   // after these two paths
    //
    // Currently, blockAfter has no nodes.
    //

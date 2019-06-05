@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 
 // Recompilation Support Runtime methods
 //
@@ -161,7 +161,7 @@ J9::Recompilation::fixUpMethodCode(void * startPC)
    else
       {
       // Will overwrite the first instruction of the body--this should be a store of the link reg
-      // ie ST r14,4(r5).  Note that there will be preceeding loads for the args for the interpreter
+      // ie ST r14,4(r5).  Note that there will be preceding loads for the args for the interpreter
       // entry point and these vary depending on # args, hence add adjustment for jitEntryOffset
       int32_t jitEntryOffset = getJitEntryOffset(linkageInfo);
       int32_t * jitEntry = (int32_t *) ((uint8_t *) startPC + jitEntryOffset);
@@ -308,7 +308,7 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
       // The order of this code sync sequence is important. Don't try to common them
       // up and get out of order. For sync compilation, the old body must have been
       // fixed up already.
-      // update: the above is no longer true when gauarded counting recompilations is on.
+      // update: the above is no longer true when guarded counting recompilations is on.
       fixUpMethodCode(oldStartPC);
       }
 

@@ -133,7 +133,7 @@ int32_t TR_JitProfiler::performOnNode(TR::Node *node, TR::TreeTop *tt)
    if ( _checklist->contains(node) )
       return changesPerformed;
 
-   // Profile address if node is an indrect call
+   // Profile address if node is an indirect call
    if (
         node->getOpCode().isCall() &&
         ( comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeStatic) &&

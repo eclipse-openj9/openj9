@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,6 +93,7 @@ import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 
 public class J9BCUtil {
 	private static final String nl = System.getProperty("line.separator");
@@ -229,7 +230,7 @@ public class J9BCUtil {
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_ENUM
 	 *
-	 *		:: METHODPARAMATERS ::
+	 *		:: METHODPARAMETERS ::
 	 *			-ACC_FINAL
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_MANDATED
@@ -556,7 +557,7 @@ public class J9BCUtil {
 
 		out.append(String.format("Sun Access Flags (0x%s): ", Long.toHexString(romClass.modifiers().longValue())));
 		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
-		
+		out.append(nl);
 		out.append(String.format("J9  Access Flags (0x%s): ", Long.toHexString(romClass.extraModifiers().longValue())));
 		dumpClassJ9ExtraModifiers(out, romClass.extraModifiers().longValue());
 		out.append(nl);
@@ -691,10 +692,12 @@ public class J9BCUtil {
 	}
 
 
+	private static final long J9AccClassIsUnmodifiableBit = J9ConstantHelper.getLong(J9JavaAccessFlags.class, "J9AccClassIsUnmodifiable", 0);
+
 	/*
-	 * Dump a printed representation of the specified @accessFlags to stdout.
-	 * Answer zero on success
+	 * Dump a printed representation of the specified @accessFlags to @out.
 	 */
+
 	private static void dumpClassJ9ExtraModifiers(PrintStream out, long accessFlags) {
 		if ((accessFlags & J9CfrClassFile.CFR_ACC_REFERENCE_WEAK) != 0)
 			out.append("(weak) ");
@@ -708,6 +711,8 @@ public class J9BCUtil {
 			out.append("(preverified) ");
 		if ((accessFlags & J9JavaAccessFlags.J9AccClassAnonClass) != 0)
 			out.append("(anonClass) ");
+		if ((accessFlags & J9AccClassIsUnmodifiableBit) != 0)
+			out.append("(unmodifiable) ");
 	}
 
 	private static void dumpEnclosingMethod(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {

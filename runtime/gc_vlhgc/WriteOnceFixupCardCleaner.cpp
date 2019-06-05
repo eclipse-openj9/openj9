@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ MM_WriteOnceFixupCardCleaner::clean(MM_EnvironmentBase *envModron, void *lowAddr
 		}
 		break;
 	case CARD_MARK_COMPACT_TRANSITION:
-		/* presently, this state needs to be treated much the same was as PGC_MUST_SCAN but we know that any objects under the card which point to other regions have been rememebered */
+		/* presently, this state needs to be treated much the same was as PGC_MUST_SCAN but we know that any objects under the card which point to other regions have been remembered */
 		rememberedOnly = true;
 	case CARD_PGC_MUST_SCAN:
 		if (_isGlobalMarkPhaseRunning) {

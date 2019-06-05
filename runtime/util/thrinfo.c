@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 #define READU_ADDR(fieldAddr) dbgReadUDATA((UDATA *)(fieldAddr))
 #define READP(field) ((void *)READU(field))
 #define READP_ADDR(fieldAddr) ((void *)READU_ADDR(fieldAddr))
-#if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 #define READMON(field) dbgReadU32((U_32 *)&(field))
 #define READMON_ADDR(fieldAddr) dbgReadU32((U_32 *)(fieldAddr))
 #else
@@ -39,7 +39,7 @@
 #define LOCAL_TO_TARGET(addr) dbgLocalToTarget(addr)
 
 /* This explicit conversion breaks the GC abstraction. Don't use this for in-process code. */
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 #define J9OBJECT_FROM_FJ9OBJECT(vm, fobj) ((j9object_t)(((UDATA)(fobj)) << (vm)->compressedPointersShift))
 #else
 #define J9OBJECT_FROM_FJ9OBJECT(vm, fobj) ((j9object_t)(UDATA)(fobj))

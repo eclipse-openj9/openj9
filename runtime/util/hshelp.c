@@ -316,7 +316,7 @@ fixJNIFieldIDs(J9VMThread * currentThread, J9Class * originalClass, J9Class * re
 }
 
 /*
- * @param currenThread
+ * @param currentThread
  * @param oldMethod
  * @param newMethod
  * @param equivalent
@@ -791,7 +791,7 @@ fixClassSlot(J9VMThread* currentThread, J9Class** classSlot, J9HashTable *classP
 
 /*
  * For each replaced interface in classPairs, update the iTables of
- * all implementors to point at the new version of the class.
+ * all implementers to point at the new version of the class.
  */
 void
 fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
@@ -951,77 +951,6 @@ findMethodInVTable(J9Method *method, UDATA *vTable)
 	}
 
 	return (UDATA)-1;
-}
-
-
-void
-fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs)
-{
-	J9JVMTIClassPair *classPair;
-	J9HashTableState hashTableState;
-	UDATA updateITables = FALSE;
-
-	/* This is only necessary if methods were re-ordered in an interface update. */
-	classPair = hashTableStartDo(classPairs, &hashTableState);
-	while (NULL != classPair) {
-		J9ROMClass *romClass = classPair->originalRAMClass->romClass;
-
-		if ((0 != (romClass->modifiers & J9AccInterface)) && (NULL != classPair->methodRemap)) {
-			updateITables = TRUE;
-			break;
-		}
-		classPair = hashTableNextDo(&hashTableState);
-	}
-
-	if (updateITables) {
-		J9JavaVM *vm = currentThread->javaVM;
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		J9Class *clazz;
-		J9ClassWalkState classWalkState;
-
-		clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, NULL);
-		while (NULL != clazz) {
-
-			if (!J9_IS_CLASS_OBSOLETE(clazz) && (0 == (clazz->romClass->modifiers & J9AccInterface))) {
-				J9ITable *iTable = (J9ITable *)clazz->iTable;
-				J9ITable *superITable = NULL;
-				UDATA classDepth = J9CLASS_DEPTH(clazz);
-
-				if (0 != classDepth) {
-					 superITable = (J9ITable *) GET_SUPERCLASS(clazz)->iTable;
-				}
-
-				while (superITable != iTable) {
-					J9ITable *allInterfaces = (J9ITable*)iTable->interfaceClass->iTable;
-					UDATA *iTableMethods = (UDATA *)(iTable + 1);
-					do {
-						J9Class *interfaceClass = allInterfaces->interfaceClass;
-						J9JVMTIClassPair exemplar;
-						J9JVMTIClassPair *result;
-						UDATA methodCount = interfaceClass->romClass->romMethodCount;
-
-						exemplar.originalRAMClass = interfaceClass;
-						result = hashTableFind(classPairs, &exemplar);
-						if ((NULL != result) && (NULL != result->methodRemap)) {
-							UDATA methodIndex;
-							UDATA *vTableHeader = (UDATA *)J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
-	
-							for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
-								UDATA vTableIndex = findMethodInVTable(&interfaceClass->ramMethods[methodIndex], vTableHeader);
-								iTableMethods[methodIndex] = J9VTABLE_OFFSET_FROM_INDEX(vTableIndex);
-							}
-						}
-						iTableMethods += methodCount;
-						allInterfaces = allInterfaces->next;
-					} while (NULL != allInterfaces);
-					iTable = iTable->next;
-				}
-			}
-
-			clazz = vmFuncs->allClassesNextDo(&classWalkState);
-		}
-		vmFuncs->allClassesEndDo(&classWalkState);
-	}
 }
 
 
@@ -1709,6 +1638,9 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 					UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 					UDATA newMethodIndex = methodIndex;
 					UDATA tagsAndArgCount = methodIndexAndArgCount & (J9_ITABLE_INDEX_TAG_BITS | 0xFF);
+					/* In fast HCR, both vTable and iTable indices are stable, so only the direct method
+					 * (via RAM method index) case can possibly be affected by method reordering.
+					 */
 					if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
 						/* Private interface method or non-vTable Object method */
 						if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
@@ -1726,45 +1658,12 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 								if (NULL != methodResult) {
 									J9Method *newMethod = methodResult->newMethod;
 									newMethodIndex = newMethod - J9_CLASS_FROM_METHOD(newMethod)->ramMethods;
+									/* Fix the index in the resolved CP entry, retaining the argCount and tag bits */
+									methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | tagsAndArgCount);
 								}
 							}
-						}
-					} else if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
-						/* vTable Object method - vTable indices are stable in fast HCR, so no need to update */
-					} else {
-						/* Standard interface method - find the appropriate segment for the referenced method
-						 * within the resolvedClass iTable.  This is fast HCR (no addition or removal of
-						 * methods), so the shape of the iTables cannot change, just the ordering
-						 * of methods within them.
-						 */
-						J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
-						for(;;) {
-							J9Class *interfaceClass = allInterfaces->interfaceClass;
-							UDATA methodCount = J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceClass);
-							if (methodIndex < methodCount) {
-								classPair.originalRAMClass = interfaceClass;
-								classResult = hashTableFind(classHashTable, &classPair);
-								/* If the class was not replaced, no need to update the constant pool */
-								if (NULL != classResult) {
-									J9Class *obsoleteClass = classResult->replacementClass.ramClass;
-									if (NULL != obsoleteClass) {
-										/* If the referenced method was not reordered, no need to update the constant pool */
-										methodPair.oldMethod = iTableMethodAtIndex(obsoleteClass, methodIndex);
-										methodResult = hashTableFind(methodHashTable, &methodPair);
-										if (NULL != methodResult) {
-											newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
-										}
-									}
-								}
-								/* iTable segment was located, stop the scan */
-								break;
-							}
-							methodIndex -= methodCount;
-							allInterfaces = allInterfaces->next;
 						}
 					}
-					/* Fix the index in the resolved CP entry, retaining the argCount and tag bits */
-					methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | tagsAndArgCount);
 				}
 				break;
 			}
@@ -2034,7 +1933,7 @@ copyPreservedValues(J9VMThread * currentThread, J9HashTable * classPairs, UDATA 
 			 * Do not do this for abstract or interface classes, which can not be
 			 * instantiated (and hence may reuse the totalInstanceSize field as something else).
 			 */
-			if (!J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(originalRAMClass->romClass)) {
+			if (J9ROMCLASS_ALLOCATE_USES_TOTALINSTANCESIZE(originalRAMClass->romClass)) {
 				originalRAMClass->totalInstanceSize = (UDATA)-256;
 			}
 		}
@@ -2156,7 +2055,7 @@ fixReturnsInUnsafeMethods(J9VMThread * currentThread, J9HashTable * classPairs)
     while (classPair != NULL) {
         J9Class * replacementRAMClass = classPair->replacementClass.ramClass;
 
-        if ((replacementRAMClass != NULL) && J9ROMCLASS_IS_UNSAFE(replacementRAMClass->romClass)) {
+        if ((replacementRAMClass != NULL) && J9CLASS_IS_EXEMPT_FROM_VALIDATION(replacementRAMClass)) {
              vmFuncs->fixUnsafeMethods(currentThread, (jclass) &replacementRAMClass->classObject);
         }
         classPair = hashTableNextDo(&hashTableState);
@@ -2393,7 +2292,7 @@ outOfMemory:
 			/* In non-fastHCR case when class is being redefined, the classLocation of original class
 			 * should now point to redefined class.
 			 * Get the classLocation for the original class, remove it from the hashtable
-			 * and a new classLoation with redefined class as the key.
+			 * and a new classLocation with redefined class as the key.
 			 */
 			J9ClassLocation *classLocation = NULL;
 
@@ -3232,25 +3131,7 @@ verifyClassesCanBeReplaced(J9VMThread * currentThread, jint class_count, const j
 jboolean
 classIsModifiable(J9JavaVM * vm, J9Class * clazz)
 {
-	jboolean rc = JNI_TRUE;
-
-	if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(clazz->romClass)) {
-		rc = JNI_FALSE;
-	} else if (clazz == J9VMJAVALANGJ9VMINTERNALS_OR_NULL(vm)) {
-		rc = JNI_FALSE;
-	} else if ((J2SE_VERSION(vm) >= J2SE_V11) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsAnonymous)) {
-		rc = JNI_FALSE;
-	}
-
-	/* Object is currently only allowed to be redefined in fast HCR */
-	if (areExtensionsEnabled(vm)) {
-		if (0 == J9CLASS_DEPTH(clazz)) {
-			/* clazz is Object */
-			rc = JNI_FALSE;
-		}
-	}
-
-	return rc;
+	return !J9ROMCLASS_IS_UNMODIFIABLE(clazz->romClass);
 }
 
 jvmtiError
@@ -3278,7 +3159,7 @@ reloadROMClasses(J9VMThread * currentThread, jint class_count, const jvmtiClassD
 		 * For example, redefined class: sun.reflect.GeneratedMethodAccessor* (unsafe)
 		 * that has a superclass sun.reflect.MethodAccessorImpl */
 
-		if (J9ROMCLASS_IS_UNSAFE(originalRAMClass->romClass)) {
+		if (J9CLASS_IS_EXEMPT_FROM_VALIDATION(originalRAMClass)) {
 			options = options | J9_FINDCLASS_FLAG_UNSAFE;
 		}
 		loadData.classLoader = originalRAMClass->classLoader;
@@ -3385,7 +3266,7 @@ verifyNewClasses(J9VMThread * currentThread, jint class_count, J9JVMTIClassPair 
 	 */
 	for (i = 0; i < class_count; ++i) {
 		/* Do not run bytecode verification on unsafe classes */
-		if (!J9ROMCLASS_IS_UNSAFE(classPairs[i].replacementClass.romClass)) {
+		if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(classPairs[i].originalRAMClass)) {
 			IDATA result = 0;
 
 			verifyData->classLoader = classPairs[i].originalRAMClass->classLoader;
@@ -3777,13 +3658,13 @@ hshelpUTRegister(J9JavaVM *vm)
  *
  * @param[in]     currentThread
  * @param[in]     jitEventData       event data describing redefined classes
- * @param[in]     extensionsEnabled  specifies if the extensions are enabled, allways true if FSD is on
+ * @param[in]     extensionsEnabled  specifies if the extensions are enabled, always true if FSD is on
  * @return none
  *
  * Notify the JIT of the changes. Enabled extensions mean that the JIT has
  * been initialized in FSD mode. We need to dump the whole code cache in such a case.
  * If the extensions have NOT been enabled we take the smarter code path and ask the
- * jit to patch the compiled code to accound for the redefined classes.
+ * jit to patch the compiled code to account for the redefined classes.
  */
 void
 jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled)

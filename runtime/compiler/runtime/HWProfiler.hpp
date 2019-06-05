@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -205,7 +205,7 @@ public:
     * Pure virtual method to process buffers from a given app thread.
     * @param vmThread The VM thread to query
     * @param fe The Front End
-    * @return false if the thread cannot be used for HW Profiling; true othewise.
+    * @return false if the thread cannot be used for HW Profiling; true otherwise.
     */
    virtual bool processBuffers(J9VMThread *vmThread, TR_J9VMBase *fe) = 0;
 

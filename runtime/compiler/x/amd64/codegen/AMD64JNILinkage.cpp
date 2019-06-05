@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -90,18 +91,8 @@ TR::Register *TR::AMD64JNILinkage::processJNIReferenceArg(TR::Node *child)
 
       if (needsNullParameterCheck)
          {
-      TR::MemoryReference *tempMR = generateX86MemoryReference(refReg, 0, cg());
-         generateMemImmInstruction(CMPMemImms(), child, tempMR, 0, cg());
-
-         TR::MemoryReference *tempMR2 = generateX86MemoryReference(refReg, 0, cg());
-
-         TR::LabelSymbol *notNullLabel = generateLabelSymbol(cg());
-         generateLabelInstruction(JNE4, child, notNullLabel, cg());
-         generateRegMemInstruction(LRegMem(), child, refReg, tempMR2, cg());
-         generateLabelInstruction(LABEL, child, notNullLabel, cg());
-
-         tempMR->decNodeReferenceCounts(cg());
-         tempMR2->decNodeReferenceCounts(cg());
+         generateMemImmInstruction(CMPMemImms(), child, generateX86MemoryReference(refReg, 0, cg()), 0, cg());
+         generateRegMemInstruction(CMOVERegMem(), child, refReg, generateX86MemoryReference(cg()->findOrCreateConstantDataSnippet<intptr_t>(child, 0), cg()), cg());
          }
       }
    else
@@ -117,8 +108,6 @@ int32_t TR::AMD64JNILinkage::computeMemoryArgSize(
    TR::Node *callNode,
    int32_t first,
    int32_t last,
-   int8_t direction,
-   bool isJNI,
    bool passThread)
    {
    int32_t size= 0;
@@ -133,7 +122,7 @@ int32_t TR::AMD64JNILinkage::computeMemoryArgSize(
    // that the evaluation order is left-to-right and that the JNI env
    // pointer will be in a register as the first argument.
    //
-   if (isJNI && passThread)
+   if (passThread)
       {
       TR_ASSERT(!_systemLinkage->getProperties().passArgsRightToLeft(), "JNI argument evaluation expected to be left-to-right");
       TR_ASSERT(_systemLinkage->getProperties().getNumIntegerArgumentRegisters() > 0, "JNI env pointer expected to be passed in a register.");
@@ -145,7 +134,7 @@ int32_t TR::AMD64JNILinkage::computeMemoryArgSize(
 
    bool allocateOnCallerFrame = false;
 
-   for (int32_t i = first; i != last; i += direction)
+   for (int32_t i = first; i != last; i++)
       {
       TR::Node *child = callNode->getChild(i);
       TR::DataType type = child->getDataType();
@@ -202,7 +191,6 @@ int32_t TR::AMD64JNILinkage::computeMemoryArgSize(
 int32_t TR::AMD64JNILinkage::buildArgs(
       TR::Node *callNode,
       TR::RegisterDependencyConditions *deps,
-      bool isJNI,
       bool passThread,
       bool passReceiver)
    {
@@ -216,38 +204,27 @@ int32_t TR::AMD64JNILinkage::buildArgs(
    int32_t                  offset            = 0;
    uint16_t                 numIntArgs        = 0,
                             numFloatArgs      = 0;
-   int32_t                  first, last, direction;
+   int32_t                  first, last;
 
    int32_t                  numCopiedRegs = 0;
    TR::Register             *copiedRegs[TR::X86LinkageProperties::MaxArgumentRegisters];
 
-   if (_systemLinkage->getProperties().passArgsRightToLeft())
-      {
-      TR_ASSERT(!isJNI, "JNI dispatch expected to be left-to-right.");
-      first = lastNodeArgument;
-      last  = firstNodeArgument - 1;
-      direction = -1;
-      }
-   else
-      {
-      if (!passReceiver)
-         first = firstNodeArgument + 1;
-      else first = firstNodeArgument;
-      last  = lastNodeArgument + 1;
-      direction = 1;
-      }
+   TR_ASSERT(!_systemLinkage->getProperties().passArgsRightToLeft(), "JNI dispatch expected to be left-to-right.");
+
+   if (!passReceiver)
+      first = firstNodeArgument + 1;
+   else first = firstNodeArgument;
+   last = lastNodeArgument + 1;
 
    // We need to know how many arguments will be passed on the stack in order to add the right
    // amount of slush first for proper alignment.
    //
-   int32_t memoryArgSize = computeMemoryArgSize(callNode, first, last, direction, isJNI, passThread);
+   int32_t memoryArgSize = computeMemoryArgSize(callNode, first, last, passThread);
 
    // For JNI callout there may be some extra information (such as the VMThread pointer)
    // that has been preserved on the stack that must be accounted for in this calculation.
    //
-   int32_t adjustedMemoryArgSize = memoryArgSize;
-   if (isJNI)
-      adjustedMemoryArgSize += _JNIDispatchInfo.argSize;
+   int32_t adjustedMemoryArgSize = memoryArgSize + _JNIDispatchInfo.argSize;
 
    if (adjustedMemoryArgSize > 0)
       {
@@ -263,7 +240,7 @@ int32_t TR::AMD64JNILinkage::buildArgs(
 
    // Evaluate the JNI env pointer first.
    //
-   if (isJNI && passThread)
+   if (passThread)
       {
       TR::RealRegister::RegNum rregIndex = _systemLinkage->getProperties().getIntegerArgumentRegister(0);
       TR::Register *argReg = cg()->allocateRegister();
@@ -294,7 +271,7 @@ int32_t TR::AMD64JNILinkage::buildArgs(
       }
 
    int32_t i;
-   for (i = first; i != last; i += direction)
+   for (i = first; i != last; i++)
       {
       TR::Node *child = callNode->getChild(i);
       TR::DataType type = child->getDataType();
@@ -328,7 +305,7 @@ int32_t TR::AMD64JNILinkage::buildArgs(
          }
 
       TR::Register *vreg;
-      if (isJNI && type == TR::Address)
+      if (type == TR::Address)
          vreg = processJNIReferenceArg(child);
       else
          vreg = cg()->evaluate(child);
@@ -544,40 +521,24 @@ void TR::AMD64JNILinkage::buildJNICallOutFrame(
    //    1:   frame flags
    //    0:   RAM method
    //
-   TR::X86RegImmInstruction *instr = generateRegImmInstruction(
-      SUBRegImms(),
-      callNode,
-      espReal,
-      _JNIDispatchInfo.numJNIFrameSlotsPushed * TR::Compiler->om.sizeofReferenceAddress(),
-      cg());
 
    // Build stack frame in Java stack.  Tag current bp.
    //
-   uintptrj_t tagBits = fej9->constJNICallOutFrameSpecialTag();
+   uintptrj_t tagBits = 0;
 
    // If the current method is simply a wrapper for the JNI call, hide the call-out stack frame.
    //
+   static_assert(IS_32BIT_SIGNED(J9SF_A0_INVISIBLE_TAG), "J9SF_A0_INVISIBLE_TAG must fit in immediate");
    if (resolvedMethod == comp()->getCurrentMethod())
-      tagBits |= fej9->constJNICallOutFrameInvisibleTag();
+      tagBits |= J9SF_A0_INVISIBLE_TAG;
 
    // Push tag bits (savedA0 slot).
    //
-   TR::MemoryReference *tempMR = generateX86MemoryReference(espReal, 4*TR::Compiler->om.sizeofReferenceAddress(), cg());
-   if (tagBits <= 0x7fffffff)
-      {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, tagBits, cg());
-      }
-   else
-      {
-      if (!scratchReg)
-         scratchReg = cg()->allocateRegister();
-
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, tagBits, cg());
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
-      }
+   generateImmInstruction(PUSHImm4, callNode, tagBits, cg());
 
    // (skip savedPC slot).
    //
+   generateImmInstruction(PUSHImm4, callNode, 0, cg());
 
    // Push return address in this frame (savedCP slot).
    //
@@ -595,68 +556,37 @@ void TR::AMD64JNILinkage::buildJNICallOutFrame(
 
    returnAddressInstr->setReloKind(TR_AbsoluteMethodAddress);
 
-
-   generateMemRegInstruction(
-      S8MemReg,
-      callNode,
-      generateX86MemoryReference(espReal, 2*TR::Compiler->om.sizeofReferenceAddress(), cg()),
-      scratchReg,
-      cg());
+   generateRegInstruction(PUSHReg, callNode, scratchReg, cg());
 
    // Push frame flags.
    //
-   tempMR = generateX86MemoryReference(espReal, TR::Compiler->om.sizeofReferenceAddress(), cg());
-   uintptrj_t frameFlags = fej9->constJNICallOutFrameFlags();
-   if (frameFlags <= 0x7fffffff)
-      {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, frameFlags, cg());
-      }
-   else
-      {
-      if (!scratchReg)
-         scratchReg = cg()->allocateRegister();
-
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, frameFlags, cg());
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
-      }
+   static_assert(IS_32BIT_SIGNED(J9_SSF_JIT_JNI_CALLOUT), "J9_SSF_JIT_JNI_CALLOUT must fit in immediate");
+   generateImmInstruction(PUSHImm4, callNode, J9_SSF_JIT_JNI_CALLOUT, cg());
 
    // Push the RAM method for the native.
    //
-   static const int reloTypes[] = {TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst};
-   int reloType = callSymbol->getMethodKind()-1; //method kinds are 1-based!!
-
-   tempMR = generateX86MemoryReference(espReal, 0, cg());
+   auto tempMR = generateX86MemoryReference(espReal, 0, cg());
    uintptrj_t methodAddr = (uintptrj_t) resolvedMethod->resolvedMethodAddress();
-   if (methodAddr <= 0x7fffffff && !TR::Compiler->om.nativeAddressesCanChangeSize())
+   if (IS_32BIT_SIGNED(methodAddr) && !TR::Compiler->om.nativeAddressesCanChangeSize())
       {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, methodAddr, cg());
+      generateImmInstruction(PUSHImm4, callNode, methodAddr, cg());
       }
    else
       {
       if (!scratchReg)
          scratchReg = cg()->allocateRegister();
 
+      static const int reloTypes[] = { TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst };
+      int reloType = callSymbol->getMethodKind() - 1; //method kinds are 1-based!!
       TR_ASSERT(reloTypes[reloType], "There shouldn't be direct JNI interface calls!");
       generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, methodAddr, cg(), reloTypes[reloType]);
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
+      generateRegInstruction(PUSHReg, callNode, scratchReg, cg());
       }
 
    // Store out pc and literals values indicating the callout frame.
    //
-   tempMR = generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaPCOffset(), cg());
-   uintptrj_t frameType = fej9->constJNICallOutFrameType();
-   if (frameType <= 0x7fffffff)
-      {
-      generateMemImmInstruction(SMemImm4(), callNode, tempMR, frameType, cg());
-      }
-   else
-      {
-      if (!scratchReg)
-         scratchReg = cg()->allocateRegister();
-
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, frameType, cg());
-      generateMemRegInstruction(S8MemReg, callNode, tempMR, scratchReg, cg());
-      }
+   static_assert(IS_32BIT_SIGNED(J9SF_FRAME_TYPE_JIT_JNI_CALLOUT), "J9SF_FRAME_TYPE_JIT_JNI_CALLOUT must fit in immediate");
+   generateMemImmInstruction(SMemImm4(), callNode, generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaPCOffset(), cg()), J9SF_FRAME_TYPE_JIT_JNI_CALLOUT, cg());
 
    if (scratchReg)
       cg()->stopUsingRegister(scratchReg);
@@ -787,7 +717,7 @@ void TR::AMD64JNILinkage::buildOutgoingJNIArgsAndDependencies(
 
    // Evaluate outgoing arguments on the system stack and build pre-conditions.
    //
-   _JNIDispatchInfo.argSize += buildArgs(callNode, _JNIDispatchInfo.callPostDeps, true, passThread, passReceiver);
+   _JNIDispatchInfo.argSize += buildArgs(callNode, _JNIDispatchInfo.callPostDeps, passThread, passReceiver);
 
    // Build post-conditions.
    //
@@ -1115,8 +1045,8 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
-   static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-   generateMemImmInstruction(CMP4MemImm4,
+   static_assert(IS_32BIT_SIGNED(J9_PUBLIC_FLAGS_VM_ACCESS), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
+   generateMemImmInstruction(J9_PUBLIC_FLAGS_VM_ACCESS < 128 ? CMP4MemImms : CMP4MemImm4,
                              callNode,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
                              J9_PUBLIC_FLAGS_VM_ACCESS,
@@ -1152,8 +1082,8 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
-   static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-   generateMemImmInstruction(CMP4MemImm4,
+   static_assert(IS_32BIT_SIGNED(J9_PUBLIC_FLAGS_VM_ACCESS), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
+   generateMemImmInstruction(J9_PUBLIC_FLAGS_VM_ACCESS < 128 ? CMP4MemImms : CMP4MemImm4,
                              callNode,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
                              J9_PUBLIC_FLAGS_VM_ACCESS,
@@ -1233,23 +1163,14 @@ void TR::AMD64JNILinkage::cleanupReturnValue(
 
 void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
    {
-   TR::Register *scratchReg  = cg()->allocateRegister();
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
    // Check exceptions.
    //
-   generateRegMemInstruction(
-      LRegMem(),
-      callNode,
-      scratchReg,
-      generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset(), cg()),
-      cg());
+   generateMemImmInstruction(CMPMemImms(), callNode, generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset(), cg()), 0, cg());
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
-   generateRegRegInstruction(TESTRegReg(), callNode, scratchReg, scratchReg, cg());
-   cg()->stopUsingRegister(scratchReg);
-
    TR::Instruction *instr = generateLabelInstruction(JNE4, callNode, snippetLabel, cg());
 
    uint32_t gcMap = _systemLinkage->getProperties().getPreservedRegisterMapForGC();
@@ -1257,7 +1178,6 @@ void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
       {
       gcMap |= (_JNIDispatchInfo.argSize<<14);
       }
-
    instr->setNeedsGCMap(gcMap);
 
    TR::Snippet *snippet =
@@ -1276,36 +1196,18 @@ void TR::AMD64JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
    // leave a bunch of pinned garbage behind that screws up the gc quality forever.
    //
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   uintptrj_t flagValue = fej9->constJNIReferenceFrameAllocatedFlags();
-   uintptrj_t flagsOffset = fej9->constJNICallOutFrameFlagsOffset();
+   static_assert(IS_32BIT_SIGNED(J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS), "J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS must fit in immediate");
 
    TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
    TR::LabelSymbol *refPoolSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *refPoolRestartLabel = generateLabelSymbol(cg());
 
-   if (TR::Compiler->target.is64Bit() && (flagValue > 0x7fffffff))
-      {
-      TR::Register *scratchReg = cg()->allocateRegister();
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, flagValue, cg());
-      generateMemRegInstruction(
-         TEST8MemReg,
-         callNode,
-         generateX86MemoryReference(espReal, flagsOffset, cg()),
-         scratchReg,
-         cg());
-      cg()->stopUsingRegister(scratchReg);
-      }
-   else
-      {
-      TR_X86OpCodes op = (flagValue <= 255) ? TEST1MemImm1 : (TESTMemImm4());
-      generateMemImmInstruction(
-         op,
-         callNode,
-         generateX86MemoryReference(espReal, flagsOffset, cg()),
-         flagValue,
-         cg());
-      }
+   generateMemImmInstruction(J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS <= 255 ? TEST1MemImm1 : TESTMemImm4(),
+                             callNode,
+                             generateX86MemoryReference(espReal, fej9->constJNICallOutFrameFlagsOffset(), cg()),
+                             J9_SSF_JIT_JNI_FRAME_COLLAPSE_BITS,
+                             cg());
 
    generateLabelInstruction(JNE4, callNode, refPoolSnippetLabel, cg());
    generateLabelInstruction(LABEL, callNode, refPoolRestartLabel, cg());
@@ -1405,20 +1307,6 @@ TR::Register *TR::AMD64JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
    bool wrapRefs;
    bool passReceiver;
    bool passThread;
-
-   //TR::ResolvedMethodSymbol *resolvedMethodSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
-   //TR_ResolvedMethod       *resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
-   //TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-
-   //bool dropVMAccess = !fej9->jniRetainVMAccess(resolvedMethod);
-   //bool isJNIGCPoint = !fej9->jniNoGCPoint(resolvedMethod);
-   //bool killNonVolatileGPRs = isJNIGCPoint;
-   //bool checkExceptions = !fej9->jniNoExceptionsThrown(resolvedMethod);
-   //bool createJNIFrame = !fej9->jniNoNativeMethodFrame(resolvedMethod);
-   //bool tearDownJNIFrame = !fej9->jniNoSpecialTeardown(resolvedMethod);
-   //bool wrapRefs = !fej9->jniDoNotWrapObjects(resolvedMethod);
-   //bool passReceiver = !fej9->jniDoNotPassReceiver(resolvedMethod);
-   //bool passThread = !fej9->jniDoNotPassThread(resolvedMethod);
 
    if (!isGPUHelper)
       {

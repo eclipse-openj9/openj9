@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,13 @@ J9DDRConstantTableBegin(TRBuildFlags)
 	#define host_ARM 0
 #endif
 J9DDRConstantTableEntryWithValue("host_ARM", host_ARM)
+
+#if defined(TR_HOST_AARCH64)
+	#define host_AARCH64 1
+#else
+	#define host_AARCH64 0
+#endif
+J9DDRConstantTableEntryWithValue("host_AARCH64", host_AARCH64)
 
 #if defined(TR_HOST_IA32)
 	#define host_IA32 1

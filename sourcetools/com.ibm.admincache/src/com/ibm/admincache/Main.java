@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@
  * Modified on November 15th, 2005 by Marius Lut
  * - add mandatory option -outPath
  * - delete the old logic dealing with backup orig files
- * - add logic that accomodates relative/canonical full path file name
+ * - add logic that accommodates relative/canonical full path file name
  *   passed to jxeinajar
  * - fix the searchPath option problems
  * - if the input file is .zip file make the output file extension .zip too

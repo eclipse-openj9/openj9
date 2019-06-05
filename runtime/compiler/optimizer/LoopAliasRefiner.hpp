@@ -103,11 +103,11 @@ class TR_LoopAliasRefiner: public TR_LoopVersioner
     * intArray[dimsize1*(j-1+dimsize2*(i+1))-k] (aka intArray[i+1, j-1, -k]
     * would result in a list like:
     *  element       node                               equiv expr
-    *   1       [iv:i, scale:dimsize1*dimsize2, invar:+1]    (i+1) * dimsize1* dimesize2
+    *   1       [iv:i, scale:dimsize1*dimsize2, invar:+1]    (i+1) * dimsize1* dimsize2
     *   2       [iv:j, scale:dimsize1, invar:-1, invar:-1]     (j-1) *dimsize1
     *   3       [iv:k, scale:NULL, invar:NULL, isSub=true]      -k
 
-    * note that the scaling factor for integar (4) and any constant offset will be represented in
+    * note that the scaling factor for integer (4) and any constant offset will be represented in
     * CanonicalArrayReference,  since the basic form of the array must be followed when 
     * reconstructing the full array expression.
     */

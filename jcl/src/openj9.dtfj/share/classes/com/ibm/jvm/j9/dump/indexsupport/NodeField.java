@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ public class NodeField extends NodeAbstract
 {
 	public NodeField(JavaClass theClass, Attributes attributes)
 	{
-		//an instance field which is decendent of JavaClass in the XML
+		//an instance field which is descendant of JavaClass in the XML
 		//<field class="0x17be60" name="path" sig="Ljava/lang/String;" modifiers="0x20082" offset="16"/>
 		long classID = _longFromString(attributes.getValue("class"));	//the ID of the class where the field is declared
 		String name = attributes.getValue("name");

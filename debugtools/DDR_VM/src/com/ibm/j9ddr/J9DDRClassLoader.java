@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ import com.ibm.j9ddr.corereaders.memory.IProcess;
  * classpath to be equal to the Application class loader's classpath.
  *
  * While the user may replace the application class loader with their own
- * implementation, the applicaton class loader MUST be a subclass of
+ * implementation, the application class loader MUST be a subclass of
  * URLClassLoader.
  */
 public class J9DDRClassLoader extends SecureClassLoader {

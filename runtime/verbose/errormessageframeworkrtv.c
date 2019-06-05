@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -259,7 +259,7 @@ pushLiveStackToVerificationTypeBuffer(StackMapFrame* stackMapFrame, J9BytecodeVe
 	}
 
 	/* Step forward by 1 slot to point to the non-top element or the 2nd slot of long/double
-	 * as we retreat 1 step when the non-top element was defectd in the for loop.
+	 * as we retreat 1 step when the non-top element was detected in the for loop.
 	 */
 	if (nonTopFound) {
 		lastIndex += 1;
@@ -612,11 +612,11 @@ printExpectedTypeFromStackMapFrame(MessageBuffer *msgBuf, J9BytecodeVerification
 		goto exit;
 	}
 
-	/* Walk thourgh the stackmap table for the specified stackmape frame */
+	/* Walk through the stackmap table for the specified stackmap frame */
 	while (stackmapFrameIndex != errorTargetFrameIndex) {
 		stackmapFrameIndex += 1;
 		nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
-		/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
+		/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmap frame */
 		if (NULL == nextStackmapFrame) {
 			result = FALSE;
 			goto exit;
@@ -711,11 +711,11 @@ setStackMapFrameWithIndex(J9BytecodeVerificationData *verifyData, MethodContextI
 			goto exit;
 		}
 
-		/* Walk thourgh the stackmap table for the specified stackmape frame */
+		/* Walk through the stackmap table for the specified stackmap frame */
 		while (stackmapFrameIndex != errorTargetFrameIndex) {
 			stackmapFrameIndex += 1;
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
-			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
+			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmap frame */
 			if (NULL == nextStackmapFrame) {
 				goto exit;
 			}
@@ -761,7 +761,7 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 		while (stackmapFrameIndex < (I_32)stackMapCount) {
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
 			stackmapFrameIndex += 1;
-			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
+			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmap frame */
 			if (NULL == nextStackmapFrame) {
 				goto exit;
 			}

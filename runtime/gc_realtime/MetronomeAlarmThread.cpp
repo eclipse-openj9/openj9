@@ -28,7 +28,7 @@
 #include "omrutil.h"
 
 #include "MetronomeAlarmThread.hpp"
-#include "MetronomeAlarmThreadDelegate.hpp"
+#include "MetronomeDelegate.hpp"
 #include "OSInterface.hpp"
 #include "RealtimeGC.hpp"
 #include "Timer.hpp"
@@ -47,7 +47,7 @@ MM_MetronomeAlarmThread::newInstance(MM_EnvironmentBase *env)
 {
 	MM_MetronomeAlarmThread *alarmThread;
 	
-	alarmThread = (MM_MetronomeAlarmThread *)env->getForge()->allocate(sizeof(MM_MetronomeAlarmThread), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	alarmThread = (MM_MetronomeAlarmThread *)env->getForge()->allocate(sizeof(MM_MetronomeAlarmThread), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (alarmThread) {
 		new(alarmThread) MM_MetronomeAlarmThread(env);
 		if (!alarmThread->initialize(env)) {
@@ -99,7 +99,7 @@ MM_MetronomeAlarmThread::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	/* TODO: The MM_Alarm classes don't quite have the newInstance/initalize
+	/* TODO: The MM_Alarm classes don't quite have the newInstance/initialize
 	 * pattern right, so we have to manually call initialize.
 	 */
 	_alarm = MM_Alarm::factory(env, _scheduler->_osInterface);
@@ -116,7 +116,7 @@ MM_MetronomeAlarmThread::initialize(MM_EnvironmentBase *env)
 int J9THREAD_PROC
 MM_MetronomeAlarmThread::metronomeAlarmThreadWrapper(void* userData)
 {
-	return MM_MetronomeAlarmThreadDelegate::metronomeAlarmThreadWrapper(userData);
+	return MM_MetronomeDelegate::metronomeAlarmThreadWrapper(userData);
 }
 
 /**

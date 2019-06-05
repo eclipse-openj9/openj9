@@ -71,6 +71,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	const char *j2se_version_info = NULL;
 	const char *jitEnabled = "";
 	const char *aotEnabled = "";
+	const char *memInfo = NULL;
 #define BUFFER_SIZE 512
 
 	/* The actual allowed BUFFER_SIZE is 512, the extra 1 char is added to check for overflow */
@@ -116,6 +117,13 @@ jint computeFullVersionString(J9JavaVM* vm)
 			j2se_version_info = "12.?";
 		}
 		break;
+	case J2SE_V13:
+		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V13) {
+			j2se_version_info = "13";
+		} else {
+			j2se_version_info = "13.?";
+		}
+		break;
 	default:
 		j2se_version_info = "?.?.?";
 	}
@@ -124,16 +132,12 @@ jint computeFullVersionString(J9JavaVM* vm)
 	osarch = j9sysinfo_get_CPU_architecture();
 
 #ifdef J9VM_ENV_DATA64
-	#ifdef J9VM_GC_COMPRESSED_POINTERS
-		#define MEM_INFO "-64-Bit Compressed References "
-	#else
-		#define MEM_INFO "-64-Bit "
-	#endif
+	memInfo = J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? "64-Bit Compressed References": "64-Bit";
 #else
 	#if defined(J9ZOS390) || defined(S390)
-		#define MEM_INFO "-31-Bit "
+		memInfo = "31-Bit";
 	#else
-		#define MEM_INFO "-32-Bit "
+		memInfo = "32-Bit";
 	#endif
 #endif
 
@@ -156,10 +160,11 @@ jint computeFullVersionString(J9JavaVM* vm)
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
 	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
-			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
+			"JRE %s %s %s-%s %s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
 			j2se_version_info,
 			(NULL != osname ? osname : " "),
 			osarch,
+			memInfo,
 			EsBuildVersionString,
 			jitEnabled,
 			aotEnabled)) {

@@ -1,7 +1,7 @@
 package j9vm.test.romclasscreation;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@ import java.io.*;
 /**
  * This test checks that the VM removes the orphan ROM class
  * from the romClassOrphans hash table once the RAM class has
- * been loaded succesfully. It uses a custom class loader to
+ * been loaded successfully. It uses a custom class loader to
  * first load a class whose superclass is not found, which should
  * produce an orphan ROM class, followed by allowing the class
  * loader to find the parent class and trying to load the class

@@ -21,7 +21,7 @@
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
 # Then include a known_hosts file next to the Dockerfile, with github as a saved host
 # This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
-# Make sure you are in the directory contianing the Dockerfile, authorized_keys file, and known_hosts file
+# Make sure you are in the directory containing the Dockerfile, authorized_keys file, and known_hosts file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
@@ -40,9 +40,10 @@ RUN yum -y update \
     bzip2 \
     ca-certificates \
     cups-devel \
-    cmake \
     cpio \
+    curl-devel `# This is being used for git` \
     elfutils-libelf-devel \
+    expat-devel `# This is being used for the xml parser and git` \
     file-devel \
     file-libs \
     flex \
@@ -50,6 +51,7 @@ RUN yum -y update \
     fontconfig-devel \
     freetype-devel \
     gettext \
+    gettext-devel `# This is being used for git` \
     glibc \
     glibc-common \
     glibc-devel \
@@ -72,12 +74,13 @@ RUN yum -y update \
     nasm \
     numactl-devel \
     ntp \
-    openssl-devel \
+    openssl-devel `# This is being used in git, etc` \
     openssh-server \
     openssh-clients \
     perl-CPAN \
     perl-DBI \
     perl-devel \
+    perl-ExtUtils-MakeMaker `# This is being used for git` \
     perl-GD \
     perl-libwww-perl \
     perl-Time-HiRes \
@@ -87,6 +90,7 @@ RUN yum -y update \
     xorg-x11-server-Xvfb \
     xz \
     zip \
+    zlib-devel `# This is being used for git` \
   && yum clean all
 
 RUN yum -y update \
@@ -106,11 +110,6 @@ RUN cd /usr/src/ \
   && cd .. \
   && rm -rf /usr/src/autoconf-2.69
 
-# Dependency required by test framework
-RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
-  && cpanm Text::CSV \
-  && cpanm JSON
-
 # Install GCC-7.3
 RUN yum -y update \
   && yum -y install centos-release-scl \
@@ -119,19 +118,50 @@ RUN yum -y update \
   && yum clean all \
   && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/cc \
   && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/gcc \
-  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++ 
+  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++
+
+# Dependency required by test framework
+RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
+  && cpanm Text::CSV \
+  && cpanm JSON \
+  && cpanm XML::Parser
+
+# Install make 4.1
+RUN cd /tmp \
+  && wget -O make-4.1.tar.gz "http://ftp.gnu.org/gnu/make/make-4.1.tar.gz" \
+  && tar xvf make-4.1.tar.gz \
+  && rm -f make-4.1.tar.gz \
+  && cd make-4.1/ \
+  && ./configure \
+  && make \
+  && make install \
+  && rm -f /usr/local/bin/gmake \
+  && ln -s /usr/local/bin/make /usr/local/bin/gmake \
+  && cd .. \
+  && rm -rf /tmp/make-4.1
+
+# Install nasm-2.13.03
+RUN cd /tmp \
+  && wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.03/nasm-2.13.03.tar.gz \
+  && tar xzf nasm-2.13.03.tar.gz \
+  && rm /tmp/nasm-2.13.03.tar.gz \
+  && cd /tmp/nasm-2.13.03 \
+  && ./configure -prefix=/usr/local \
+  && make install \
+  && rm -rf /tmp/nasm-2.13.03
+
+# Install cmake version 3.11.4
+RUN cd /tmp \
+  && wget https://cmake.org/files/v3.11/cmake-3.11.4.tar.gz \
+  && tar xzf cmake-3.11.4.tar.gz \
+  && rm cmake-3.11.4.tar.gz \
+  && cd /tmp/cmake-3.11.4 \
+  && ./configure \
+  && make \
+  && make install
 
 #Building and setting up git version 2.5.3
-RUN yum -y update \
-  && yum -y install \
-    curl-devel \
-    expat-devel \
-    gettext-devel \
-    openssl-devel \
-    perl-ExtUtils-MakeMaker \
-    zlib-devel \
-  && yum clean all \
-  && cd /usr/src \
+RUN cd /usr/src \
   && wget https://www.kernel.org/pub/software/scm/git/git-2.5.3.tar.gz \
   && tar xzf git-2.5.3.tar.gz \
   && rm git-2.5.3.tar.gz \
@@ -184,7 +214,7 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 # Setup boot JDK for building Java 8
 RUN ln -s java-1.7.0 /usr/lib/jvm/java-1.7.0-openjdk
 
-# Setup boot JDK for building Java 11
+# Setup boot JDK for building Java 11 and 12
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && cd /usr/lib/jvm/adoptojdk-java-11 \
   && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
@@ -193,6 +223,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv $(ls | grep -i jdk-11) bootjdk11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
+
+# Setup boot JDK for building Java 13 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
+  && cd /usr/lib/jvm/adoptojdk-java-12 \
+  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
+  && tar -xzf bootjdk12.tar.gz \
+  && rm -f bootjdk12.tar.gz \
+  && mv $(ls | grep -i jdk-12) bootjdk12 \
+  && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
+  && rm -rf bootjdk12
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
@@ -221,21 +261,26 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
-  && git fetch --all
+  && git fetch --all \
+  && git gc --aggressive --prune=all
 
-# Install OpenSSL v1.1.0
+# Install OpenSSL v1.1.1b
+# Required for JITaaS  & Crypto functional testing
 RUN cd /tmp \
-  && wget https://www.openssl.org/source/old/1.1.0/openssl-1.1.0g.tar.gz \
-  && tar -xzf openssl-1.1.0g.tar.gz \
-  && rm -f openssl-1.1.0g.tar.gz \
-  && cd /tmp/openssl-1.1.0g \
-  && ./config -Wl,-rpath,/usr/local/lib64 \
+  && wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1b.tar.gz \
+  && tar -xzf OpenSSL_1_1_1b.tar.gz \
+  && rm -f OpenSSL_1_1_1b.tar.gz \
+  && cd /tmp/openssl-OpenSSL_1_1_1b \
+  && ./config --prefix=/usr/local/openssl-1.1.1b --openssldir=/usr/local/openssl-1.1.1b \
   && make \
   && make install \
   && cd .. \
-  && rm -rf openssl-1.1.0g
+  && rm -rf openssl-OpenSSL_1_1_1b \
+  && echo "/usr/local/openssl-1.1.1b/lib" > /etc/ld.so.conf.d/openssl-1.1.1b.conf \
+  && echo "PATH=/usr/local/openssl-1.1.1b/bin:$PATH" > /etc/environment
 
 # Install Protobuf v3.5.1
+# Required for JITaaS
 RUN cd /tmp \
   && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
   && tar -xzf protobuf-cpp-3.5.1.tar.gz \
@@ -246,9 +291,27 @@ RUN cd /tmp \
   && make install \
   && cd .. \
   && rm -rf protobuf-3.5.1
+# Run ldconfig to create necessary links and cache to protobuf libraries
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
+  && echo "/usr/local/lib64" >> /etc/ld.so.conf.d/usr-local.conf \
+  && ldconfig
 
-# Run ldconfig to create necessary links and cache to shared libraries
-RUN ldconfig
+# Install Python3 v3.7.3
+RUN yum -y update \
+  && yum -y install \
+    zlib-devel \
+    libffi-devel \
+  && yum clean all \
+  && cd /tmp \
+  && wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz \
+  && tar -xJf Python-3.7.3.tar.xz \
+  && rm -f Python-3.7.3.tar.xz \
+  && cd /tmp/Python-3.7.3 \
+  && ./configure --prefix=/usr/local \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf Python-3.7.3
 
 # Expose SSH port and run SSHD
 EXPOSE 22

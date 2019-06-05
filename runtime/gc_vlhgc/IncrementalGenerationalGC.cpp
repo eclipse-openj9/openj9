@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -694,7 +694,7 @@ MM_IncrementalGenerationalGC::collectorShutdown(MM_GCExtensionsBase *extensions)
 
 /**
  * Determine if a  expand is required 
- * @return expand size if rator expand required or 0 otheriwse
+ * @return expand size if rator expand required or 0 otherwise
  */
 U_32
 MM_IncrementalGenerationalGC::getGCTimePercentage(MM_EnvironmentBase *env)
@@ -1238,8 +1238,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
 	}
 
-	/* For Non CopyForwardHybrid mode, we don't allow any eden rgions with jniCritical for copyforward, if there is any, would switch MarkCompact PGC mode
-	 * For CopyForwardHybrid mode, we do not care about jniCritical eden regions, the eden rgions with jniCritical would be marked instead copyforwarded during collection.*/
+	/* For Non CopyForwardHybrid mode, we don't allow any eden regions with jniCritical for copyforward, if there is any, would switch MarkCompact PGC mode
+	 * For CopyForwardHybrid mode, we do not care about jniCritical eden regions, the eden regions with jniCritical would be marked instead copyforwarded during collection.*/
 	if (!_extensions->tarokEnableCopyForwardHybrid && (0 == _extensions->fvtest_forceCopyForwardHybridRatio)) {
 		if (env->_cycleState->_shouldRunCopyForward) {
 			MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -1316,9 +1316,31 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 
 	UDATA desiredCompactWork = _schedulingDelegate.getDesiredCompactWork();
 	UDATA estimatedSurvivorRequired = _copyForwardDelegate.estimateRequiredSurvivorBytes(env);
+
+	MM_GlobalAllocationManagerTarok *allocationmanager = (MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager;
+	UDATA freeRegions = allocationmanager->getFreeRegionCount();
+	double estimatedReguiredSurvivorRegions = _schedulingDelegate.getAverageSurvivorSetRegionCount();
+	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
+	/* Adjust estimatedReguiredSurvivorRegions if extensions->fvtest_forceCopyForwardHybridRatio is set(for testing purpose) */
+	if ((0 != extensions->fvtest_forceCopyForwardHybridRatio) && (100 >= extensions->fvtest_forceCopyForwardHybridRatio)) {
+		estimatedReguiredSurvivorRegions = estimatedReguiredSurvivorRegions * (100 - extensions->fvtest_forceCopyForwardHybridRatio) / 100;
+	}
+
+	if ((_extensions->tarokEnableCopyForwardHybrid || (0 != _extensions->fvtest_forceCopyForwardHybridRatio)) && (_schedulingDelegate.isPGCAbortDuringGMP() || _schedulingDelegate.isFirstPGCAfterGMP()) && (estimatedReguiredSurvivorRegions > freeRegions)) {
+		double edenSurvivorRate = _schedulingDelegate.getAvgEdenSurvivalRateCopyForward(env);
+		UDATA regionCountRequiredMarkOnly = 0;
+		if (0 != edenSurvivorRate) {
+			regionCountRequiredMarkOnly = (UDATA)((estimatedReguiredSurvivorRegions - freeRegions) / edenSurvivorRate);
+		} else {
+			regionCountRequiredMarkOnly = _schedulingDelegate.getCurrentEdenSizeInRegions(env);
+		}
+		/* set the number of the selected eden regions to nonEvacuated region to avoid potential abort case */
+		_copyForwardDelegate.setReservedNonEvacuatedRegions(regionCountRequiredMarkOnly);
+	}
+
 	bool useSlidingCompactor = ((estimatedSurvivorRequired + desiredCompactWork) > freeMemoryForSurvivor);
 	Trc_MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward_ChooseCompactor(env->getLanguageVMThread(), estimatedSurvivorRequired, desiredCompactWork, freeMemoryForSurvivor, useSlidingCompactor ? "sliding" : "copying");
-	
+
 	if (!useSlidingCompactor) {
 		_reclaimDelegate.createRegionCollectionSetForPartialGC(env, desiredCompactWork);
 		/* no external compact work -- it's all being done using copy-forward */
@@ -1598,7 +1620,7 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 	}
 
 	/* Overflowing stable regions releases buffers to thread local pool. Move them now to the locked global pool.
-	 * (if this is run in context of non-GC thread there will be not further opportinities to do it).
+	 * (if this is run in context of non-GC thread there will be not further opportunities to do it).
 	 */
 	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }
@@ -1932,15 +1954,6 @@ MM_IncrementalGenerationalGC::triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env)
 	/* these are assigned to temporary variable out-of-line since some preprocessors get confused if you have directives in macros */
 	UDATA approximateActiveFreeMemorySize = 0;
 	UDATA activeMemorySize = 0;
-
-	Assert_MM_true(!_extensions->isMetronomeGC());
-	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(), 
-		j9time_hires_clock(), 
-		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
-		_extensions->getForge()->getCurrentStatistics()
-	);
 	
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_END(
 		_extensions->omrHookInterface,

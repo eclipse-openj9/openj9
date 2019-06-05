@@ -49,10 +49,6 @@
 #include "infra/Flags.hpp"
 #include "ras/Debug.hpp"
 
-TR::Symbol::RecognizedField
-J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * owningMethod, int32_t cpIndex, bool isStatic)
-   {
-
     struct F
       {
       TR::Symbol::RecognizedField id;
@@ -62,7 +58,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
       const char *fieldStr;   // "<field>"
       uint16_t fieldLen;
       const char *sigStr;    // "<signature>"
-      uint16_t totalLen;      // should be compatable with TR_ResolvedMethod->fieldName()
+      uint16_t totalLen;      // should be compatible with TR_ResolvedMethod->fieldName()
       };
    #define r(id, c, f, s)   id, c, sizeof(c)-1, f, sizeof(f)-1, s, (sizeof(c)-1)+(sizeof(f)-1)+(sizeof(s)-1) + 3
 
@@ -163,9 +159,14 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
        {r(TR::Symbol::Java_lang_Character_value,                      "java/lang/Character", "value", "C")},
        {r(TR::Symbol::Java_lang_Short_value,                          "java/lang/Short", "value", "S")},
        {r(TR::Symbol::Java_lang_Boolean_value,                        "java/lang/Boolean", "value", "Z")},
+       {r(TR::Symbol::Java_lang_Class_enumVars,                       "java/lang/Class", "enumVars", "Ljava/lang/Class$EnumVars;")},
+       {r(TR::Symbol::Java_lang_ClassEnumVars_cachedEnumConstants,    "java/lang/Class$EnumVars", "cachedEnumConstants", "[Ljava/lang/Object;")},
        {TR::Symbol::UnknownField}
       };
 
+TR::Symbol::RecognizedField
+J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * owningMethod, int32_t cpIndex, bool isStatic)
+   {
    struct FP
       {
       struct F   *fieldInfo;
@@ -180,8 +181,9 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
         */
        {recognizedFieldName_c, 17, 22},
        {0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},
-       {recognizedFieldName_j, 16, 52}
+       {recognizedFieldName_j, 14, 52}
       };
+
    const char minClassPrefix = 'c';
    const char maxClassPrefix = 'j';
 
@@ -272,6 +274,38 @@ J9::Symbol::getRecognizedField()
    }
 
 /**
+ * Return the owning class name of this recognized field.
+ * Return null if this symbol does not have a recognized field.
+ */
+const char *
+J9::Symbol::owningClassNameCharsForRecognizedField(int32_t & length)
+   {
+   TR_ASSERT(isShadow(), "Must be a shadow symbol");
+   TR::Symbol::RecognizedField recognizedField = self()->getRecognizedField();
+   TR_ASSERT(TR::Symbol::UnknownField != recognizedField, "Symbol should have a valid recognized field");
+   for (int i = 0; recognizedFieldName_c[i].id != TR::Symbol::UnknownField; ++i)
+      {
+      F &knownField = recognizedFieldName_c[i];
+      if (knownField.id == recognizedField)
+         {
+         length = knownField.classLen;
+         return knownField.classStr;
+         }
+      }
+   for (int i = 0; recognizedFieldName_j[i].id != TR::Symbol::UnknownField; ++i)
+      {
+      F &knownField = recognizedFieldName_j[i];
+      if (knownField.id == recognizedField)
+         {
+         length = knownField.classLen;
+         return knownField.classStr;
+         }
+      }
+
+   return NULL;
+   }
+
+/**
  * Sets the data type of a symbol, and the size, if the size can be inferred
  * from the data type.
  */
@@ -310,6 +344,8 @@ J9::Symbol::createRecognizedShadow(AllocatorType m, TR::DataType d, RecognizedFi
    auto * sym = createShadow(m, d);
    sym->_recognizedField = f;
    sym->_flags.set(RecognizedShadow);
+   if ((f == TR::Symbol::Java_lang_Class_enumVars) || (f == TR::Symbol::Java_lang_ClassEnumVars_cachedEnumConstants))
+      sym->_flags.set(RecognizedKnownObjectShadow);
    return sym;
    }
 
@@ -320,6 +356,8 @@ J9::Symbol::createRecognizedShadow(AllocatorType m, TR::DataType d, uint32_t s, 
    auto * sym = createShadow(m,d,s);
    sym->_recognizedField = f;
    sym->_flags.set(RecognizedShadow);
+   if ((f == TR::Symbol::Java_lang_Class_enumVars) || (f == TR::Symbol::Java_lang_ClassEnumVars_cachedEnumConstants))
+      sym->_flags.set(RecognizedKnownObjectShadow);
    return sym;
    }
 

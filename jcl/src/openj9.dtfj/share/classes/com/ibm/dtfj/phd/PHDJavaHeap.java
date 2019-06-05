@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,7 +243,7 @@ class PHDJavaHeap implements JavaHeap {
 		/** Largest address - used to find if a JavaObject at a particular address might be in this chunk. */
 		final long maxAddress;
 		/**
-		 * Construct the metadeta for a chunk.
+		 * Construct the metadata for a chunk.
 		 * @param index
 		 * @param size
 		 * @param nextIndex

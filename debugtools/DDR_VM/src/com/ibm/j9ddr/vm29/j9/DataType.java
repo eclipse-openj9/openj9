@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ public abstract class DataType {
 
 	// Static methods
 	
-	// Invoked via reflection from VMDataFacotry.getVMData(IProcess);
+	// Invoked via reflection from VMDataFactory.getVMData(IProcess);
 	public static void init(IProcess process, StructureReader structureReader) {
 		DataType.process = process;
 		SIZEOF_BOOL = structureReader.getSizeOfBool();

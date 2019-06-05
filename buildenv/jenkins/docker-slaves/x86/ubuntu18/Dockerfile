@@ -22,7 +22,7 @@
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
 # Then include a known_hosts file next to the Dockerfile, with github as a saved host
 # This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
-# Make sure you are in the directory contianing the Dockerfile, authorized_keys file, and known_hosts file
+# Make sure you are in the directory containing the Dockerfile, authorized_keys file, and known_hosts file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
@@ -44,6 +44,7 @@ RUN apt-get update \
     autoconf \
     build-essential \
     curl \
+    libexpat1-dev `# This is being used for the xml parser` \
     g++-7 \
     gcc-7 \
     gdb \
@@ -57,7 +58,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV
+RUN echo yes | cpan install JSON Text::CSV XML::Parser
 
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
@@ -77,6 +78,39 @@ RUN mkdir /var/run/sshd \
 
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+# Install OpenSSL v1.1.1b
+# Required for JITaaS & Crypto functional testing
+RUN cd /tmp \
+  && wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1b.tar.gz \
+  && tar -xzf OpenSSL_1_1_1b.tar.gz \
+  && rm -f OpenSSL_1_1_1b.tar.gz \
+  && cd /tmp/openssl-OpenSSL_1_1_1b \
+  && ./config --prefix=/usr/local/openssl-1.1.1b --openssldir=/usr/local/openssl-1.1.1b \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf openssl-OpenSSL_1_1_1b \
+  && echo "/usr/local/openssl-1.1.1b/lib" > /etc/ld.so.conf.d/openssl-1.1.1b.conf \
+  && echo "PATH=/usr/local/openssl-1.1.1b/bin:$PATH" > /etc/environment
+
+# Install Protobuf v3.5.1
+# Required for JITaaS
+RUN cd /tmp \
+  && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+  && tar -xzf protobuf-cpp-3.5.1.tar.gz \
+  && rm -f protobuf-cpp-3.5.1.tar.gz \
+  && cd /tmp/protobuf-3.5.1 \
+  && ./configure \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf protobuf-3.5.1
+
+# Run ldconfig to create necessary links and cache to shared libraries
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
+  && echo "/usr/local/lib64" >> /etc/ld.so.conf.d/usr-local.conf \
+  && ldconfig
 
 # Expose SSH port and run SSH
 EXPOSE 22

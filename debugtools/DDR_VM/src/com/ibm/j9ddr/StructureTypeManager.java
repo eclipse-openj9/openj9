@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,7 +156,7 @@ public class StructureTypeManager
 		}
 	}
 
-	private static final Pattern CVQualifierPattern = Pattern.compile("\\s*\\b(const|volatile)\\s+");
+	private static final Pattern CVQualifierPattern = Pattern.compile("\\s*\\b(const|volatile)\\b\\s*");
 
 	public int getType(String rawType)
 	{

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -241,7 +241,7 @@ public class NestAttributeTest {
 	static public void testMethodAccessAllowed() throws Exception {
 		CustomClassLoader classloader = new CustomClassLoader();
 		byte[] bytes = ClassGenerator.methodAccessDump();
-		byte[] bytesInner = ClassGenerator.methodAcccess$InnerDump();
+		byte[] bytesInner = ClassGenerator.methodAccess$InnerDump();
 		Class<?> clazz = classloader.getClass("MethodAccess", bytes);
 		Class<?> clazzInner = classloader.getClass("MethodAccess$Inner", bytesInner);
 		Object instance = clazz.getDeclaredConstructor().newInstance();

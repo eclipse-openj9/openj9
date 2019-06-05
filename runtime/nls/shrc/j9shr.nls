@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or 
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -2540,12 +2540,12 @@ J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.system_action=Th
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX=SH_OSCachesysv::acquireWriteLock() call to j9shsem_wait has failed with error %d.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX=SH_OSCachesysv::acquireWriteLock() call to j9shsem_wait has failed with error %d.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
-J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
+J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SYSVIPC_ERROR=System V IPC reported the following error '%s'
@@ -2873,13 +2873,13 @@ J9NLS_SHRC_SHRINIT_API_CREATE_FAILURE.system_action=The JVM terminates, unless y
 J9NLS_SHRC_SHRINIT_API_CREATE_FAILURE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX=SH_OSCachesysv::acquireWriteLock() call to j9shsem_wait on semid %d has failed with error %d.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX=SH_OSCachesysv::acquireWriteLock() call to j9shsem_wait on semid %d has failed with error %d.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_2=1234
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
-J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_1=-1
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.sample_input_2=1234
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.explanation=An error occurred waiting on a semaphore.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.system_action=If this error happens during shared class cache startup, the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. Otherwise the JVM fails to store data in shared class cache.
+J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_STORE_CLASS_DEBUG_DATA=Enables the storage of class debug information in the shared class.
@@ -5462,7 +5462,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSM_ERROR_V1.user_response=Contact 
 
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY=Error recovery: attempting to use shared cache in readonly mode if the shared memory region exists, in response to "-Xshareclasses:nonfatal" option.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.explanation=An error occurred in shared class processing. Presence of "-Xshareclasses:nonfatal" option causes JVM to attemp to use shared cache in readonly mode.
+J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.explanation=An error occurred in shared class processing. Presence of "-Xshareclasses:nonfatal" option causes JVM to attempt to use shared cache in readonly mode.
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.system_action=The JVM attempts to attach to the shared memory segment of the shared class cache in the readonly mode if it exists.
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.user_response=No action required.
 # END NON-TRANSLATABLE
@@ -5742,7 +5742,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.user_response=Previous error messages may in
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=Failed to acquire the mutex of cache \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.sample_input_1=myCaches
-J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while aqcuiring a cache mutex.
+J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while acquiring a cache mutex.
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.system_action=The JVM fails to complete the operation of creating the snapshot of a non-persistent shared cache.
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
@@ -6101,7 +6101,7 @@ J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.user_response=Correct the format of the m
 
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX=Failed to get the cache write mutex
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.explanation=An error has occurred in acquring the write mutex of the cache.
+J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.explanation=An error has occurred in acquiring the write mutex of the cache.
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.system_action=The JVM failed to perform the required operation on the AOT methods.
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
@@ -6693,4 +6693,47 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW=The shared cache directory path is too long.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.explanation=The directory path requested is bigger than the internal buffer space
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Failed to use user's home as the default shared cache directory. Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Failed to use user's home as the default shared cache directory. The path is too long. Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Failed to use user's home as the default shared cache directory. It is on a Network File System. Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Failed to use user's home as the default shared cache directory. Error code is %1$d.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.user_response=Please fix the setting of home directory according to the error code and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_NO_SPACE=Failed to allocate native memory required to get the shared cache directory.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_NO_SPACE.explanation=Cannot allocate native memory.
+J9NLS_SHRC_GET_DIR_NO_SPACE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_NO_SPACE.user_response=Ensure the process has enough native memory to run.
 # END NON-TRANSLATABLE

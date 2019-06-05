@@ -1,4 +1,4 @@
-#        Copyright (c) 2000, 2018 IBM Corp. and others
+#        Copyright (c) 2000, 2019 IBM Corp. and others
 #
 #        This program and the accompanying materials are made available under
 #        the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,6 +86,9 @@ export BUILD_CONFIG?=prod
   export PLATFORM=s390-linux-gcc
 <#elseif uma.spec.id?starts_with("linux_arm_linaro")>
   export PLATFORM=arm-linux-gcc-cross
+</#if>
+<#if uma.spec.id?starts_with("linux_aarch64")>
+  export PLATFORM=aarch64-linux-gcc
 </#if>
 <#if uma.spec.id?starts_with("osx_x86-64")>
   export PLATFORM=amd64-osx-clang

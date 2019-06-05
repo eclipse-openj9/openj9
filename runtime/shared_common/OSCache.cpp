@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,11 +178,12 @@ SH_OSCache::removeCacheVersionAndGen(char* buffer, UDATA bufferSize, UDATA versi
  * @param [out] buffer  The buffer to write the result into
  * @param [in] bufferSize  The size of the buffer in bytes
  * @param [in] cacheType  The Type of cache
+ * @param [in] allowVerbose Whether to allow verbose message.
  *
  * @return 0 on success or -1 for failure  
  */
 IDATA
-SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType)
+SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType, bool allowVerbose)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc;
@@ -210,7 +211,34 @@ SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDA
 #endif /*defined(OPENJ9_BUILD) */
 
 	rc = j9shmem_getDir(ctrlDirName, flags, buffer, bufferSize);
-	if (rc == -1) {
+
+	if (rc < 0) {
+		if (allowVerbose
+			&& J9_ARE_ANY_BITS_SET(vm->sharedCacheAPI->verboseFlags, J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT | J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+		) {
+		switch(rc) {
+			case J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW:
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_BUF_OVERFLOW);
+				break;
+			case J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME:
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME);
+				break;
+			case J9PORT_ERROR_SHMEM_GET_DIR_HOME_BUF_OVERFLOW:
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW);
+				break;
+			case J9PORT_ERROR_SHMEM_GET_DIR_HOME_ON_NFS:
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_HOME_ON_NFS);
+				break;
+			case J9PORT_ERROR_SHMEM_GET_DIR_CANNOT_STAT_HOME:
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME, j9error_last_error_number());
+				break;
+			case J9PORT_ERROR_SHMEM_NOSPACE:
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_SHRC_GET_DIR_NO_SPACE);
+				break;
+			default:
+				break;
+			}
+		}
 		Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed1(ctrlDirName);
 		return -1;
 	}
@@ -331,7 +359,7 @@ SH_OSCache::commonStartup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirP
 	IDATA rc = SH_OSCache::getCacheDir(vm, ctrlDirName, _cacheDirName, J9SH_MAXPATH, versionData->cacheType);
 	if (rc == -1) {
 		Trc_SHR_OSC_commonStartup_getCacheDir_fail();
-		OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_GETCACHEDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		return -1;
 	}
 	rc = SH_OSCache::createCacheDir(PORTLIB, _cacheDirName, cacheDirPerm, ctrlDirName == NULL);

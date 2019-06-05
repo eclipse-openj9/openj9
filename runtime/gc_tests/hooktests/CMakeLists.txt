@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,10 @@ target_link_libraries(hooktests
 		j9vm_gc_includes
 )
 
+omr_add_exports(hooktests JVM_OnLoad)
+
 install(
 	TARGETS hooktests
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2019, 2019 IBM Corp. and others
  *
@@ -88,9 +87,9 @@
 #include "ParallelHeapWalker.hpp"
 #include "ParallelSweepScheme.hpp"
 #include "PointerArrayObjectScanner.hpp"
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 #include "ReadBarrierVerifier.hpp"
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 #include "ReferenceChainWalkerMarkMap.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "ReferenceObjectList.hpp"
@@ -515,12 +514,12 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		}
 		extensions->objectModel.setObjectClassAndFlags(objectPtr, forwardedClass, forwardedFlags);
 
-#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
 		 * as well or it may be already reversed - such fixup will be completed at in a later pass.
 		 */
 		originalForwardedHeader->restoreDestroyedOverlap();
-#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 		MM_ObjectAccessBarrier* barrier = extensions->accessBarrier;
 
@@ -547,7 +546,7 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 	}
 }
 
-#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 void
 MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *originalForwardedHeader, MM_MemorySubSpaceSemiSpace *subSpaceNew)
 {
@@ -585,13 +584,13 @@ MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHe
 		}
 	}
 }
-#endif /* defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 void
 MM_ScavengerDelegate::private_addOwnableSynchronizerObjectInList(MM_EnvironmentStandard *env, omrobjectptr_t object)
 {
 	omrobjectptr_t link = MM_GCExtensions::getExtensions(_extensions)->accessBarrier->isObjectInOwnableSynchronizerList(object);
-	/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwanbleSynchronizerList,
+	/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
 	 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list. */
 	if (NULL != link) {
 		/* this method expects the caller (scanObject) never pass the same object twice, which could cause circular loop when walk through the list.
@@ -672,11 +671,10 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		 */
 		vmThread->readBarrierRangeCheckBase = (UDATA)base;
 		vmThread->readBarrierRangeCheckTop = (UDATA)top - 1;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
 		vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
-		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 		if (_extensions->isConcurrentScavengerHWSupported()) {
 			/* Concurrent Scavenger Page start address must be initialized */
@@ -708,13 +706,11 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		/*
 		 * By setting readBarrierRangeCheckTop to NULL and readBarrierRangeCheckBase to the highest possible address
 		 * it gives an empty range that contains no address. Therefore,
-		 * when decide whether to read barrier, a simple range is sufficient and
-		 * checking J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE can be skipped.
+		 * when decide whether to read barrier, a simple range is sufficient
 		 */
-		vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 		vmThread->readBarrierRangeCheckBase = UDATA_MAX;
 		vmThread->readBarrierRangeCheckTop = 0;
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
 		vmThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
 		vmThread->readBarrierRangeCheckTopCompressed = 0;
 #endif
@@ -722,7 +718,7 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 }
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 void
 MM_ScavengerDelegate::poisonSlots(MM_EnvironmentBase *env)
 {
@@ -734,7 +730,7 @@ MM_ScavengerDelegate::healSlots(MM_EnvironmentBase *env)
 {
 	((MM_ReadBarrierVerifier *)_extensions->accessBarrier)->healSlots(env);
 }
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 MM_ScavengerDelegate::MM_ScavengerDelegate(MM_EnvironmentBase* env)
 	: _omrVM(MM_GCExtensions::getExtensions(env)->getOmrVM())

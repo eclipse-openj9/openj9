@@ -843,16 +843,16 @@ j9shr_classStoreTransaction_createSharedClass(void * tobj, const J9RomClassRequi
 	
 	/*ROM Class size must be doubled aligned*/
 	if (0 != (sizes->romClassSizeFullSize & (sizeof(U_64) - 1))) {
-		Trc_SHR_Assert_True(0 != (sizes->romClassSizeFullSize & (sizeof(U_64) - 1)));
 		Trc_SHR_API_j9shr_createSharedClass_DblAlign_Event(currentThread);
+		Trc_SHR_Assert_ShouldNeverHappen();
 		retval = -1;
 		goto done;
 	}
 
 	/*ROM Class size must be doubled aligned*/
 	if (0 != (sizes->romClassMinimalSize & (sizeof(U_64) - 1))) {
-		Trc_SHR_Assert_True(0 != (sizes->romClassMinimalSize & (sizeof(U_64) - 1)));
 		Trc_SHR_API_j9shr_createSharedClass_DblAlign_Event(currentThread);
+		Trc_SHR_Assert_ShouldNeverHappen();
 		retval = -1;
 		goto done;
 	}
@@ -992,7 +992,7 @@ j9shr_classStoreTransaction_updateSharedClassSize(void * tobj, U_32 sizeUsed)
 }
 
 /**
- * Called by JCL natives, this function updates the metadtata (e.g. classpath info) for a shared ROMClass.
+ * Called by JCL natives, this function updates the metadata (e.g. classpath info) for a shared ROMClass.
  *
  * @param [in] currentThread thread calling this function
  * @param [in] classloader

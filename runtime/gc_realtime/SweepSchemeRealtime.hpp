@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #if !defined(SWEEPSCHEMEREALTIME_HPP_)
 #define SWEEPSCHEMEREALTIME_HPP_
 
-#include "j9.h"
+#include "omr.h"
 
 #include "RealtimeGC.hpp"
 #include "SweepSchemeSegregated.hpp"
@@ -38,11 +38,11 @@ class MM_SweepSchemeRealtime : public MM_SweepSchemeSegregated
 	 * Data members
 	 */
 private:
-	MM_RealtimeGC *_realtimeGC; /**< The staccatoGC that this sweepScheme is associated with */
+	MM_RealtimeGC *_realtimeGC; /**< The RealtimeGC that this sweepScheme is associated with */
 	MM_Scheduler *_scheduler;
-	UDATA _coalesceFreeRegionCount;
-	UDATA _sweepSmallRegionCount;
-	UDATA _yieldSmallRegionCount;
+	uintptr_t _coalesceFreeRegionCount;
+	uintptr_t _sweepSmallRegionCount;
+	uintptr_t _yieldSmallRegionCount;
 
 protected:
 public:
@@ -51,12 +51,12 @@ public:
 	 * Function members
 	 */
 private:
-	virtual void yieldFromSweep(MM_EnvironmentBase *env, UDATA yieldSlackTime = 0);
+	virtual void yieldFromSweep(MM_EnvironmentBase *env, uintptr_t yieldSlackTime = 0);
 
-	virtual UDATA resetCoalesceFreeRegionCount(MM_EnvironmentBase *env);
-	virtual bool updateCoalesceFreeRegionCount(UDATA range);
+	virtual uintptr_t resetCoalesceFreeRegionCount(MM_EnvironmentBase *env);
+	virtual bool updateCoalesceFreeRegionCount(uintptr_t range);
 
-	virtual UDATA resetSweepSmallRegionCount(MM_EnvironmentBase *env, UDATA yieldSmallRegionCount);
+	virtual uintptr_t resetSweepSmallRegionCount(MM_EnvironmentBase *env, uintptr_t yieldSmallRegionCount);
 	virtual bool updateSweepSmallRegionCount();
 
 protected:

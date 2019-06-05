@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,7 +118,7 @@ J9TR_SCSnippet_method			EQU 4
 J9TR_USCSnippet_CPIndex			EQU 12
 J9TR_USCSnippet_CP			EQU 16
 
-; Unresvoled virtual call snippet
+; Unresolved virtual call snippet
 
 J9TR_UVCSnippet_returnAddress		EQU 0
 J9TR_UVCSnippet_CP			EQU 4
@@ -196,7 +196,7 @@ L_rewriteBranch
 ;         r1  = target of branch
 ;         r14 = return address
 ;
-; branches to rewriteBranch guaranting that target is in range
+; branches to rewriteBranch guaranteeing that target is in range
 
 L_refreshHelper
 							; check if distance is within range
@@ -551,7 +551,7 @@ const_staticGlueTable
 const_nativeStaticHelper
 	DCD	_nativeStaticHelper
 
-; For vitual unresolved call, we generate following instructions
+; For virtual unresolved call, we generate following instructions
 ;  mov   r11, #0
 ;  add   r11, r11, #0 << 8
 ;  add   r11, r11, #0 << 16

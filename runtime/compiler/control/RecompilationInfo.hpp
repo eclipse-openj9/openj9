@@ -267,7 +267,7 @@ class TR_PersistentMethodInfo
     *
     * Several threads may attempt to manipulate reference counts on these at once, potentially
     * resulting in a deallocation before it was intended. The low bit of the relevant pointer
-    * is reused to avoid these sitatuions. All accesses to _bestProfileInfo and _recentProfileInfo
+    * is reused to avoid these situations. All accesses to _bestProfileInfo and _recentProfileInfo
     * should consider this.
     */
    TR_PersistentProfileInfo *getBestProfileInfo() { return getForSharedInfo(&_bestProfileInfo); }
@@ -276,7 +276,7 @@ class TR_PersistentMethodInfo
    void setRecentProfileInfo(TR_PersistentProfileInfo * ppi) { setForSharedInfo(&_recentProfileInfo, ppi); }
 
    // ### IMPORTANT ###
-   // Method info must alway be the first field in this structure
+   // Method info must always be the first field in this structure
    // Flags must always be second
    private:
    TR_OpaqueMethodBlock                  *_methodInfo;
@@ -324,7 +324,7 @@ class TR_PersistentJittedBodyInfo
    friend class J9::Options;
    friend class TR_DebugExt;
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
    friend void fixPersistentMethodInfo(void *table, bool isJITaaS);
 #endif
 

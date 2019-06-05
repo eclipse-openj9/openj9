@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -732,7 +732,7 @@ static int indexLeadingOne64(U_64 * lp)
 	}
 
 	leading = 31;
-	/* serach LOWER word */
+	/* search LOWER word */
 	mask = 0x80000000;
 	while (mask != 0 && IS_CLEAR(LOW_U32_FROM_LONG64_PTR(lp), mask)) {
 		mask = mask >> 1;
@@ -2287,7 +2287,7 @@ static CANONICALFP canonicalMultiply( CANONICALFP u, CANONICALFP v ) {
 	presult->sign = pu->sign ^ pv->sign;
 	presult->exponent = pu->exponent + pv->exponent + 2;
 
-	/* If resulting value is too small to be reprented as a
+	/* If resulting value is too small to be represented as a
 	 * floating-point number, just return zero with the correct sign. */
 	if( presult->exponent < -(DPEXPONENT_BIAS+DPFRACTION_LENGTH) ) {
 		presult->exponent = 0;

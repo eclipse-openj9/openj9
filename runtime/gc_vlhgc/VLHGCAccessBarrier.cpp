@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ MM_VLHGCAccessBarrier::postObjectStore(J9VMThread *vmThread, J9Class *destClass,
 {
 	j9object_t destObject = J9VM_J9CLASS_TO_HEAPCLASS(destClass);
 
-	/* destObject is guaranteed to be in old space, so the common code path will rememember objects appropriately here */
+	/* destObject is guaranteed to be in old space, so the common code path will remember objects appropriately here */
 	postObjectStoreImpl(vmThread, destObject, value);
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -483,7 +483,7 @@ public class Test_ThreadGroup {
 		final int TOTAL_DEPTH = 5;
 		ThreadGroup current = testRoot;
 		Vector groups = new Vector();
-		// To maintain teh invariant that a thread in the Vector is parent
+		// To maintain the invariant that a thread in the Vector is parent
 		// of the next one in the collection (and child of the previous one)
 		groups.addElement(testRoot);
 
@@ -1428,7 +1428,7 @@ public class Test_ThreadGroup {
 	}
 
 	private boolean verifyThreadList(ThreadGroup root, ThreadGroup onlyChildGroup, String listOutput) {
-		// We expect that @root has only 1 subgraoup, @onlyChildGroup. The
+		// We expect that @root has only 1 subgroup, @onlyChildGroup. The
 		// output from
 		// method 'list' is stored in @listOutput
 		if (listOutput.length() == 0) {

@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.io.*;
 import java.util.Map;
@@ -50,6 +49,10 @@ import sun.misc.SharedSecrets;
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
+/*[IF Sidecar19-SE]*/
+import com.ibm.gpu.spi.GPUAssist;
+import com.ibm.gpu.spi.GPUAssistHolder;
+/*[ENDIF] Sidecar19-SE */
 
 /**
  * Class System provides a standard place for programs
@@ -224,11 +227,15 @@ static void completeInitialization() {
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
 	/*[ENDIF]*/ //Sidecar18-SE-OpenJ9|Sidecar19-SE
-	/*[ENDIF] */ //!Sidecar19-SE_RAWPLUSJ9
+	/*[ENDIF]*/ //!Sidecar19-SE_RAWPLUSJ9
 		
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
-	
+
+	/*[IF Sidecar19-SE]*/
+	initGPUAssist();
+	/*[ENDIF] Sidecar19-SE */
+
 	/*[IF !Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9]*/
 	try {
 		if (null != systemInitialization) {
@@ -241,6 +248,40 @@ static void completeInitialization() {
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 }
 
+/*[IF Sidecar19-SE]*/
+private static void initGPUAssist() {
+	Properties props = internalGetProperties();
+
+	if ((props.getProperty("com.ibm.gpu.enable") == null) //$NON-NLS-1$
+	&& (props.getProperty("com.ibm.gpu.enforce") == null) //$NON-NLS-1$
+	) {
+		/*
+		 * The CUDA implementation of GPUAssist is not enabled by default:
+		 * one of the above properties must be set.
+		 */
+		return;
+	}
+
+	PrivilegedAction<GPUAssist> finder = new PrivilegedAction<GPUAssist>() {
+		@Override
+		public GPUAssist run() {
+			ServiceLoader<GPUAssist.Provider> loaded = ServiceLoader.load(GPUAssist.Provider.class);
+
+			for (GPUAssist.Provider provider : loaded) {
+				GPUAssist assist = provider.getGPUAssist();
+
+				if (assist != null) {
+					return assist;
+				}
+			}
+
+			return GPUAssist.NONE;
+		}
+	};
+
+	GPUAssistHolder.instance = AccessController.doPrivileged(finder);
+}
+/*[ENDIF] Sidecar19-SE */
 
 /**
  * Sets the value of the static slot "in" in the receiver
@@ -398,9 +439,6 @@ private static void ensureProperties(boolean isInitialization) {
 
 /*[IF Java12]*/
 	java.lang.VersionProps.init(initializedProperties);
-	/* VersionProps.init(systemProperties) above sets java.specification.version value which is used to set java.vm.specification.version. */
-	initializedProperties.put("java.vm.specification.version", initializedProperties.get("java.specification.version")); //$NON-NLS-1$ //$NON-NLS-2$
-	initializedProperties.put("java.vm.vendor", initializedProperties.get("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
 /*[ELSE]
 	/* VersionProps.init requires systemProperties to be set */
 	systemProperties = initializedProperties;
@@ -460,7 +498,7 @@ private static void ensureProperties(boolean isInitialization) {
 
 /* Converts a Map<String, String> to a properties object.
  * 
- * The sytem properties will be initialized as a Map<String, String> type to be compatible
+ * The system properties will be initialized as a Map<String, String> type to be compatible
  * with jdk.internal.misc.VM and java.lang.VersionProps APIs.
  */
 private static void initializeSystemProperties(Map<String, String> mapProperties) {
@@ -1342,12 +1380,34 @@ public interface Logger {
 	 * System loggers levels
 	 */
 	public enum Level {
+		/**
+		 * Enable all logging level messages
+		 */
 		ALL(Integer.MIN_VALUE),
+		/**
+		 * Enable TRACE level messages
+		 */
 		TRACE(400),
+		/**
+		 * Enable DEBUG level messages
+		 */
 		DEBUG(500),
+		/**
+		 * Enable INFO level messages
+		 */
 		INFO(800),
+		/**
+		 * Enable WARNING level messages
+		 */
 		WARNING(900),
+		/**
+		 * Enable ERROR level messages
+		 */
 		ERROR(1000),
+		/**
+		 *
+		 * Disable logging 
+		 */
 		OFF(Integer.MAX_VALUE);
 		
 		final int severity;

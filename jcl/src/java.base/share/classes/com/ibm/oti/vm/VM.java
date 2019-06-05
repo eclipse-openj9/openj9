@@ -2,7 +2,7 @@
 
 package com.ibm.oti.vm;
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,7 +242,7 @@ static final native ClassLoader getStackClassLoader(int depth);
  * @param loaderType
  *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader 
  *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader 
- *            J9_CLASSLOADER_TYPE_OTHERS   - other classlader
+ *            J9_CLASSLOADER_TYPE_OTHERS   - other classloader
  * @param parallelCapable
  *            true if the loader has registered as parallel capable
  */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2018 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -206,7 +206,7 @@ public class JavaPreprocessor {
 	}
 
 	/**
-	 * Sets whether preprocessing for bootpath projoect or not
+	 * Sets whether preprocessing for bootpath project or not
 	 * @param       bootPath    true if bootPath project, otherwise false
 	 *
 	 */
@@ -792,7 +792,7 @@ public class JavaPreprocessor {
 
 	/**
 	 * Each preprocessor may use a single instance of this class to replace
-	 * specially-formatted calls to Msg.getString() with appropiate
+	 * specially-formatted calls to Msg.getString() with appropriate
 	 * String-valued expressions at preprocess time.
 	 */
 	private final class MsgCallInliner {
@@ -1684,7 +1684,7 @@ public class JavaPreprocessor {
 		}
 
 		// Find the last ']' on the line to allow arguments to include that
-		// character, but this means that ']' cannot be used in commments
+		// character, but this means that ']' cannot be used in comments
 		// after the command on the same line.
 		int positionOfClose = lineLength;
 

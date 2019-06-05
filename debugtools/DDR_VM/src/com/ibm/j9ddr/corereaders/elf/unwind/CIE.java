@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,33 +107,33 @@ class CIE {
 			cfiStream.read(initialInstructions, 0, initialInstructions.length);
 //			System.err.printf("Initial instructions: %s\n", Unwind.byteArrayToHexString(initialInstructions));
 			
-			// Advance to finish on a word boundry.
+			// Advance to finish on a word boundary.
 			int remainder = (int)(cfiStream.getStreamPosition() % this.unwind.process.bytesPerPointer());
 			
 			// We don't need to skip but printing 0 nicely
 			// confirms we ended up in the right place.
-//			System.err.printf("Skipping %d bytes to end on word boundry\n", remainder);
+//			System.err.printf("Skipping %d bytes to end on word boundary\n", remainder);
 			cfiStream.read(new byte[remainder], 0, remainder); 
 		}
 
-		private void parseAugmentationData(ImageInputStream cfiStream, String augmenString) throws IOException {
+		private void parseAugmentationData(ImageInputStream cfiStream, String augmentString) throws IOException {
 
-			for( int i = 0; i < augmenString.length(); i++ ) {
-				if( 'z' == augmenString.charAt(i) ) {
-					// Skip this, it just means we have augmenation data. (We know that.)
+			for( int i = 0; i < augmentString.length(); i++ ) {
+				if( 'z' == augmentString.charAt(i) ) {
+					// Skip this, it just means we have augmentation data. (We know that.)
 					continue;
 				}
-				if( 'P' == augmenString.charAt(i) ) {
+				if( 'P' == augmentString.charAt(i) ) {
 					personalityRoutinePointerEncoding = cfiStream.readByte();
 					personalityRoutinePointer = this.unwind.readEncodedPC(cfiStream, personalityRoutinePointerEncoding);
 				}
-				if( 'L' == augmenString.charAt(i) ) {
+				if( 'L' == augmentString.charAt(i) ) {
 					lsdaPointerEncoding = cfiStream.readByte();
 				}
-				if( 'R' == augmenString.charAt(i) ) {
+				if( 'R' == augmentString.charAt(i) ) {
 					fdePointerEncoding = cfiStream.readByte();
 				}
-				if( 'S' == augmenString.charAt(i) ) {
+				if( 'S' == augmentString.charAt(i) ) {
 					signalHandlerFrame = true;
 				}
 			}

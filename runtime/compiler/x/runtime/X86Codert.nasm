@@ -26,7 +26,7 @@ eq_floats_Offset              equ 128
 eq_gprs_Offset                equ 0
 
 eq_gpr_size                   equ 8
-%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
    eq_vft_pointer_size        equ 4
 %else
    eq_vft_pointer_size        equ 8
@@ -389,7 +389,7 @@ dremloop:
 
 
 ; The assumption is that this thunk method would be called from a 32-bit runtime only.
-; Otherwise, the stack offsets will have to change to accomodate the correct size of return
+; Otherwise, the stack offsets will have to change to accommodate the correct size of return
 ; address.
 ;
         align 16
@@ -406,7 +406,7 @@ SSEfloatRemainderIA32Thunk:
 
 
 ; The assumption is that this thunk method would be called from a 32-bit runtime only.
-; Otherwise, the stack offsets will have to change to accomodate the correct size of return
+; Otherwise, the stack offsets will have to change to accommodate the correct size of return
 ; address.
 ;
         align 16

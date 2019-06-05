@@ -27,8 +27,7 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
 
 ```
     cd openj9/test/TestConfig
-    export JAVA_BIN=/my/openj9/sdk/bin
-    export SPEC=linux_x86-64_cmprssptrs
+    export TEST_JDK_HOME=/my/openj9/jdk
     make -f run_configure.mk   // generates makefiles
     make compile               // downloads test related material/libs
                                // and compiles test material
@@ -102,20 +101,42 @@ add a line to `TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt`
 
 ## 4) How to execute a different group of tests?
 
-Test can be run with different levels, groups or combination of
-level.group.
+Test can be run with different levels, groups and types or combination of two 
+(i.e., level.group, level.type, group.type) or three (i.e., level.group.type)
 
 Supported levels are `sanity|extended`
 
 Supported groups  are `functional|system|openjdk|external|perf|jck`
 
+Supported groups  are `regular|native`
+
 ```
     make _sanity
     make _functional
     make _extended.perf
+    make _sanity.native
+    make _extended.functional.native
 ```
 
-## 5) How to execute a directory of tests?
+## 5) How to execute disabled tests?
+
+If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
+
+```    
+    make _testA    // testA has <disabled> tag in playlist.xml  
+    make _disabled.sanity.functional
+    make _disabled.extended
+```
+
+Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
+
+```    
+    make _echo.disabled.testA
+    make _echo.disabled.sanity.functional
+    make _echo.disabled.extended
+```
+
+## 6) How to execute a directory of tests?
 
 The example below executes all of the sanity tests found within the
 JIT_Test directory
@@ -128,35 +149,35 @@ or
     cd ../functional/JIT_Test; make -f autoGen.mk _sanity
 ```
 
-## 6) How to run an individual JCK?
+## 7) How to run an individual JCK?
 
 Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/jck/README.md) for details.
 
-## 7) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
+## 8) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
 
-User can run tests against different java version and/or java
+User can run tests against different jdk version and/or jdk
 implementation. While the default values of these variables match a
 typical use case for OpenJ9 developers, there are also many cases
 where developers need to verify features for a specific version or
 compare behaviour against a particular implementation.
 
-JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value)
+There is no extra step needed.
+By default, AUTO_DETECT is turned on, and the test framework will 
+auto detect SPEC, JDK_IMPL, and JDK_VERSION. Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#1-configure-environment) for
+details and examples. 
 
-JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
-
-```
-    export JDK_VERSION=8
-    export JDK_IMPL=hotspot
-```
-
-## 8) How to interpret test results?
+## 9) How to interpret test results?
 - test results summary
 
 At the end of each run, test results summary will be printed:
 
 ```
     TEST TARGETS SUMMARY
-    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    DISABLED test targets:
+	    cmdLineTester_pltest_tty_extended_0
+	    cmdLineTester_pltest_numcpus_notBound_0
+        ...
     PASSED test targets:
         cmdLineTester_javaAssertions_0
         cmdLineTester_LazyClassLoading_0
@@ -165,8 +186,8 @@ At the end of each run, test results summary will be printed:
         TestAttachAPIEnabling_SE80_0
         TestFileLocking_SE80_0
 
-    TOTAL: 84   EXECUTED: 84   PASSED: 82   FAILED: 2   SKIPPED: 0
-    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    TOTAL: 91   EXECUTED: 84   PASSED: 82   FAILED: 2   DISABLED: 7   SKIPPED: 0
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ```
 
 You can find the failed test output in console output.
@@ -185,7 +206,7 @@ If a test is skipped, it means that this test cannot be run on this
 platform due to jvm options, platform requirements and/or test
 capabilities.
 
-## 9) How to rerun failed tests?
+## 10) How to rerun failed tests?
 
 `failed.mk` will be generated if there is any failed test target.
 We can rerun failed tests as following:

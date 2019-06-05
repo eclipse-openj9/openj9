@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,11 +216,11 @@ done:
 	static VMINLINE j9objectmonitor_t
 	compareAndSwapLockword(j9objectmonitor_t volatile *lockEA, j9objectmonitor_t oldValue, j9objectmonitor_t newValue, bool readBeforeCAS = false)
 	{
-#if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchangeU32(lockEA, oldValue, newValue, readBeforeCAS);
-#else /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchange(lockEA, oldValue, newValue, readBeforeCAS);
-#endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 		return contents;
 	}
 
@@ -392,7 +392,7 @@ done:
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param object[in] the object whose monitor was just entered
-	 * @param arg0EA[in] the curent arg0EA
+	 * @param arg0EA[in] the current arg0EA
 	 *
 	 * @returns	true on success, false if out of memory
 	 */
@@ -426,7 +426,7 @@ done:
 	 * record for the object is found, nothing happens.
 	 *
 	 * @param currentThread[in] the current J9VMThread
-	 * @param object[in] the object whose monitor was just exitted
+	 * @param object[in] the object whose monitor was just exited
 	 * @param recordList[in/out] pointer to the head of the monitor enter record list to update
 	 */
 	static VMINLINE void
@@ -459,7 +459,7 @@ done:
 	 * record for the object is found, nothing happens.
 	 *
 	 * @param currentThread[in] the current J9VMThread
-	 * @param object[in] the object whose monitor was just exitted
+	 * @param object[in] the object whose monitor was just exited
 	 */
 	static VMINLINE void
 	recordBytecodeMonitorExit(J9VMThread *currentThread, j9object_t object)
@@ -476,7 +476,7 @@ done:
 	 * record for the object is found, nothing happens.
 	 *
 	 * @param currentThread[in] the current J9VMThread
-	 * @param object[in] the object whose monitor was just exitted
+	 * @param object[in] the object whose monitor was just exited
 	 */
 	static VMINLINE void
 	recordJNIMonitorExit(J9VMThread *currentThread, j9object_t object)

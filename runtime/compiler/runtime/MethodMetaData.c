@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -285,7 +285,7 @@ static void printMetaData(J9TR_MethodMetaData * methodMetaData)
 
    if (methodMetaData->flags & JIT_METADATA_IS_STUB)
       {
-      printf("Stub Metadata 0x%p, nothing to dump", methodMetaData);
+      printf("Stub Metadata 0x%p, nothing to dump\n", methodMetaData);
       return;
       }
    
@@ -313,43 +313,42 @@ static void printMapTable(TR_StackMapTable * stackMapTable, U_8 * addressOfFirst
 static void fastwalkDebug(J9TR_MethodMetaData * methodMetaData, UDATA offsetPC, TR_StackMapTable * stackMapTable, TR_MapTableEntry * mapTableEntry)
    {
    if (methodMetaData && (methodMetaData->flags & JIT_METADATA_IS_STUB))
+      printf("Stub Metadata 0x%p, nothing to dump\n", methodMetaData);
+   else
       {
-      printf("Stub Metadata 0x%p, nothing to dump", methodMetaData);
-      return;
-      }
-   
-   UDATA fourByteOffsets = HAS_FOUR_BYTE_OFFSET(methodMetaData);
-   J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) methodMetaData->gcStackAtlas;
-   void * stackMap1 = 0;
-   void * inlineMap1 = 0;
-   void * stackMap2 = 0;
-   void * inlineMap2 = 0;
-   TR_MapIterator iter1, iter2;
-   U_8 * addressOfFirstMap = 0;
+      UDATA fourByteOffsets = HAS_FOUR_BYTE_OFFSET(methodMetaData);
+      J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) methodMetaData->gcStackAtlas;
+      void * stackMap1 = 0;
+      void * inlineMap1 = 0;
+      void * stackMap2 = 0;
+      void * inlineMap2 = 0;
+      TR_MapIterator iter1, iter2;
+      U_8 * addressOfFirstMap = 0;
 
-   /* Find the stack map and the inline map using a linear search. */
-   initializeIterator(&iter1, methodMetaData);
-   addressOfFirstMap = iter1._nextMap;
-   findMapsAtPC(&iter1, offsetPC, &stackMap1, &inlineMap1, fourByteOffsets);
+      /* Find the stack map and the inline map using a linear search. */
+      initializeIterator(&iter1, methodMetaData);
+      addressOfFirstMap = iter1._nextMap;
+      findMapsAtPC(&iter1, offsetPC, &stackMap1, &inlineMap1, fourByteOffsets);
 
-   /* Find the stack map and the inline map using the fastwalk method. */
-   initializeIteratorWithSpecifiedMap(&iter2, methodMetaData, (U_8 *) (getFirstStackMap(stackAtlas) + mapTableEntry->_stackMapOffset), mapTableEntry->_mapCount);
-   findMapsAtPC(&iter2, offsetPC, &stackMap2, &inlineMap2, fourByteOffsets);
+      /* Find the stack map and the inline map using the fastwalk method. */
+      initializeIteratorWithSpecifiedMap(&iter2, methodMetaData, (U_8 *) (getFirstStackMap(stackAtlas) + mapTableEntry->_stackMapOffset), mapTableEntry->_mapCount);
+      findMapsAtPC(&iter2, offsetPC, &stackMap2, &inlineMap2, fourByteOffsets);
 
-   /* Ensure the maps found by each method are the same. */
-   if ((stackMap1 != stackMap2) || (inlineMap1 != inlineMap2))
-      {
-      printf("FASTWALK DEBUG:\n");
-      printf("stackMap found by linear walk is %p\n", stackMap1);
-      printf("stackMap found by fastwalk method is %p\n", stackMap2);
-      printf("inlineMap found by linear walk is %p\n", inlineMap1);
-      printf("inlineMap found by fastwalk method is %p\n", inlineMap2);
+      /* Ensure the maps found by each method are the same. */
+      if ((stackMap1 != stackMap2) || (inlineMap1 != inlineMap2))
+         {
+         printf("FASTWALK DEBUG:\n");
+         printf("stackMap found by linear walk is %p\n", stackMap1);
+         printf("stackMap found by fastwalk method is %p\n", stackMap2);
+         printf("inlineMap found by linear walk is %p\n", inlineMap1);
+         printf("inlineMap found by fastwalk method is %p\n", inlineMap2);
 
-      printMetaData(methodMetaData);
-      printMapTable(stackMapTable, addressOfFirstMap);
+         printMetaData(methodMetaData);
+         printMapTable(stackMapTable, addressOfFirstMap);
 
-      assert(stackMap1 == stackMap2);
-      assert(inlineMap1 == inlineMap2);
+         assert(stackMap1 == stackMap2);
+         assert(inlineMap1 == inlineMap2);
+         }
       }
    }
 #endif /* defined(DEBUG) */
@@ -1421,11 +1420,9 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 #endif
             tempJitDescriptionCursorForRegs = (U_8 *)stackMap;
 
-#ifdef TR_HOST_S390
-            tempJitDescriptionCursorForRegs += 12; /*skip register map, register save description word and HighWordRegisterMap word */
-#else
+            /* Skip the register map and register save description */
             tempJitDescriptionCursorForRegs += 8;
-#endif
+
             if (((walkState->jitInfo->endPC - walkState->jitInfo->startPC) >= 65535) || (alignStackMaps))
                {
                tempJitDescriptionCursorForRegs += 8;
@@ -1614,15 +1611,6 @@ U_32 getJitRegisterMap(J9TR_MethodMetaData * methodMetaData, void * stackMap)
    return *((U_32*)GET_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap));
    }
 
-U_32 getJitHighWordRegisterMap(J9TR_MethodMetaData * methodMetaData, void * stackMap)
-   {
-#ifdef TR_HOST_S390
-   return *((U_32*)GET_HIGHWORD_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap));
-#else
-   return 0;
-#endif
-   }
-
 U_8 * getJitStackSlots(J9TR_MethodMetaData * metaData, void * stackMap)
    {
    U_8 * cursor = GET_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(metaData), stackMap);
@@ -1746,6 +1734,9 @@ void jitAddSpilledRegisters(J9StackWalkState * walkState, void * stackMap)
          }
       while (savedGPRs != 0);
       }
+#elif defined(TR_HOST_ARM64)
+   // TODO: Implement this
+   assert(0);
 #else
 #error Unknown TR_HOST type
 #endif

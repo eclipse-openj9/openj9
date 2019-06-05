@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ package java.lang;
  * of a class which has no visible constructors from
  * the location where new is invoked.
  * <p>
- * Note that this can only occur when inconsistant
+ * Note that this can only occur when inconsistent
  * class files are being loaded.
  *
  * @author		OTI

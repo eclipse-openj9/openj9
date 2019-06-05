@@ -22,7 +22,7 @@
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
 # Then include a known_hosts file next to the Dockerfile, with github as a saved host
 # This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
-# Make sure you are in the directory contianing the Dockerfile, authorized_keys file, and known_hosts file
+# Make sure you are in the directory containing the Dockerfile, authorized_keys file, and known_hosts file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
@@ -41,9 +41,10 @@ RUN yum -y update \
     bzip2 \
     ca-certificates \
     cups-devel \
-    cmake \
     cpio \
+    curl-devel `# This is being used for git` \
     elfutils-libelf-devel \
+    expat-devel `# This is being used for the xml parser and git` \
     file-devel \
     file-libs \
     flex \
@@ -51,6 +52,7 @@ RUN yum -y update \
     fontconfig-devel \
     freetype-devel \
     gettext \
+    gettext-devel `# This is being used for git` \
     glibc \
     glibc-common \
     glibc-devel \
@@ -69,12 +71,13 @@ RUN yum -y update \
     mpfr-devel \
     numactl-devel \
     ntp \
-    openssl-devel \
+    openssl-devel `# This is being used in git` \
     openssh-server \
     openssh-clients \
     perl-CPAN \
     perl-DBI \
     perl-devel \
+    perl-ExtUtils-MakeMaker `# This is being used for git` \
     perl-GD \
     perl-libwww-perl \
     perl-Time-HiRes \
@@ -84,6 +87,7 @@ RUN yum -y update \
     xorg-x11-server-Xvfb \
     xz \
     zip \
+    zlib-devel `# This is being used for git` \
     libdwarf-devel \
   && yum clean all
 
@@ -99,11 +103,6 @@ RUN cd /usr/src/ \
   && cd .. \
   && rm -rf /usr/src/autoconf-2.69
 
-# Dependency required by test framework
-RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
-  && cpanm Text::CSV \
-  && cpanm JSON
-
 # Install GCC-7.3.1
 RUN cd /usr/local \
   && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
@@ -116,18 +115,25 @@ RUN cd /usr/local \
 # Edit ldconfig to connect this library
 RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
   && ldconfig
+  
+# Dependency required by test framework
+RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
+  && cpanm Text::CSV \
+  && cpanm JSON \
+  && cpanm XML::Parser
 
+# Install cmake version 3.11.4
+RUN cd /tmp \
+  && wget https://cmake.org/files/v3.11/cmake-3.11.4.tar.gz \
+  && tar xzf cmake-3.11.4.tar.gz \
+  && rm cmake-3.11.4.tar.gz \
+  && cd /tmp/cmake-3.11.4 \
+  && ./configure \
+  && make \
+  && make install
+  
 #Building and setting up git version 2.5.3
-RUN yum -y update \
-  && yum -y install \
-    curl-devel \
-    expat-devel \
-    gettext-devel \
-    openssl-devel \
-    zlib-devel \
-    perl-ExtUtils-MakeMaker \
-  && yum clean all \
-  && cd /usr/src \
+RUN cd /usr/src \
   && wget https://www.kernel.org/pub/software/scm/git/git-2.5.3.tar.gz \
   && tar xzf git-2.5.3.tar.gz \
   && rm git-2.5.3.tar.gz \
@@ -185,7 +191,7 @@ RUN cd /tmp \
 # Setup boot JDK for building Java 8
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
   && cd /usr/lib/jvm/adoptojdk-java-80 \
-  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/nightly/openjdk8?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
+  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
   && tar -xzf bootjdk8.tar.gz \
   && rm -f bootjdk8.tar.gz \
   && mv $(ls | grep -i jdk8) bootjdk8 \
@@ -195,15 +201,25 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
 # Allow jenkins to find JDK8
 RUN ln -s /usr/lib/jvm/adoptojdk-java-80/bin/java /usr/bin/java
 
-# Setup boot JDK for building Java 11
+# Setup boot JDK for building Java 11 and 12
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && cd /usr/lib/jvm/adoptojdk-java-11 \
-  && wget -O bootjdk11.tar.gz "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk11u-2018-11-26-07-41/OpenJDK11U-jdk_ppc64le_linux_openj9_2018-11-26-07-41.tar.gz" \
+  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
   && tar -xzf bootjdk11.tar.gz \
   && rm -f bootjdk11.tar.gz \
   && mv $(ls | grep -i jdk-11) bootjdk11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
+
+# Setup boot JDK for building Java 13 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
+  && cd /usr/lib/jvm/adoptojdk-java-12 \
+  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
+  && tar -xzf bootjdk12.tar.gz \
+  && rm -f bootjdk12.tar.gz \
+  && mv $(ls | grep -i jdk-12) bootjdk12 \
+  && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
+  && rm -rf bootjdk12
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
@@ -223,6 +239,23 @@ RUN cd /usr/src \
   && cd .. \
   && rm -rf /usr/src/curl-7.29.0
 
+# Install Python3 v3.7.3
+RUN yum -y update \
+  && yum -y install \
+    zlib-devel \
+    libffi-devel \
+  && yum clean all \
+  && cd /tmp \
+  && wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz \
+  && tar -xJf Python-3.7.3.tar.xz \
+  && rm -f Python-3.7.3.tar.xz \
+  && cd /tmp/Python-3.7.3 \
+  && ./configure --prefix=/usr/local \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf Python-3.7.3
+
 # Setup a reference repository cache for faster clones in the container
 RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
@@ -232,7 +265,8 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
-  && git fetch --all
+  && git fetch --all \
+  && git gc --aggressive --prune=all
 
 # set up sshd config
 RUN mkdir /var/run/sshd \

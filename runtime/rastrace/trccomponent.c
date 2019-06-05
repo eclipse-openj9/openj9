@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
+/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatibility */
 #if defined(LINUX) && !defined(J9ZTPF)
 #define _GNU_SOURCE
 #endif /* defined(LINUX) && !defined(J9ZTPF) */
@@ -320,7 +320,7 @@ removeModuleFromList(UtModuleInfo* module, UtComponentList *componentList)
 	UtComponentData *prevCompData;
 	UT_DBGOUT(2, ("<UT> removeModuleFromList: searching for module %s in componentList %p\n", module->name, componentList));
 
-	/* for flight controller functinality, any unloaded components should be moved onto an unloaded list, so their
+	/* for flight controller functionality, any unloaded components should be moved onto an unloaded list, so their
 	   formatting strings and a memcpy of their moduleInfo is available */
 	while ( compDataCursor != NULL ){
 		if ( 0 == strcmp(compDataCursor->componentName, module->name) ) {
@@ -664,7 +664,7 @@ unsigned char value, int level, const char *groupName, BOOLEAN suppressMessages,
 	return rc;
 }
 
-/* valid ranges passed in in componentName are of one of the follwing forms:
+/* valid ranges passed in in componentName are of one of the following forms:
  * tpnid{j9vm.10}
  * tpnid{j9vm.10-20}
  * j9vm.10

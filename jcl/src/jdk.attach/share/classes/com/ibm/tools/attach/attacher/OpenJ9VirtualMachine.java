@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.attacher;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -265,6 +265,18 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		parseResponse(response);
 	}
 
+	/**
+	 * Request thread information, including stack traces, from a target VM.
+	 * 
+	 * @return properties object containing serialized thread information
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties getThreadInfo() throws IOException {
+		IPC.logMessage("enter getThreadInfo"); //$NON-NLS-1$
+		AttachmentConnection.streamSend(commandStream, Command.GET_THREAD_GROUP_INFO);
+		return IPC.receiveProperties(responseStream, true);
+	}
+
 	private void lockAllAttachNotificationSyncFiles(
 			List<VirtualMachineDescriptor> vmds) {
 
@@ -416,7 +428,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				} else {
 					lockAllAttachNotificationSyncFiles(vmds);
 					numberOfTargets = CommonDirectory.countTargetDirectories();
-					int status = CommonDirectory.notifyVm(numberOfTargets);
+					int status = CommonDirectory.notifyVm(numberOfTargets, descriptor.isGlobalSemaphore());
 					/*[MSG "K0532", "status={0}"]*/
 					if ((IPC.JNI_OK != status)
 							&& (CommonDirectory.J9PORT_INFO_SHSEM_OPENED_STALE != status)) {
@@ -456,7 +468,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				}
 				if (numberOfTargets > 0) { /*[PR 48044] if number of targets is 0, then the VM is attaching to itself  and the semaphore was not involved */
 					unlockAllAttachNotificationSyncFiles();
-					CommonDirectory.cancelNotify(numberOfTargets);
+					CommonDirectory.cancelNotify(numberOfTargets, descriptor.isGlobalSemaphore());
 
 					if (numberOfTargets > 2) {
 						try {

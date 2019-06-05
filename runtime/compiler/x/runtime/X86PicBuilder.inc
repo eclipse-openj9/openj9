@@ -23,18 +23,6 @@
 ;                                    COMMON
 ; --------------------------------------------------------------------------------
 
-; Binary encoding of the MFENCE instruction.  Not all assemblers can handle the mnemonic.
-;
-%macro tr_mfence 0
-      db          00Fh
-      db          0AEh
-      db          0F0h
-%endmacro
-
-%macro MEMORY_FENCE 0
-      tr_mfence
-%endmacro
-
 eq_WideCPIndexPush                equ 000800000h
 eq_ResolveWithoutPatchingMainline equ 000400000h
 eq_ResolveWithoutPatchingSnippet  equ 000200000h
@@ -115,7 +103,7 @@ eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is pos
 ; ClassPtrReg32 must be the lower part of ClassPtrReg64
 ;
 %macro LoadClassPointerFromObjectHeader 3 ;ObjectReg, ClassPtrReg64, ClassPtrReg32
-%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
         mov     %3, dword [%1 + J9TR_J9Object_class] ; read only 32 bits and zero extend
         and     %3, eq_ObjectClassMask
 %else

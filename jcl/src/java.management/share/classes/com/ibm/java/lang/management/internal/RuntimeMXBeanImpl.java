@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,12 +71,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05F5")); //$NON-NLS-1$
 		}
 
-		SecurityManager security = System.getSecurityManager();
-		
-		if (security != null) {
-			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
-		}
-
+		checkMonitorPermission();
 		return VM.getVMLangAccess().internalGetProperties().getProperty("sun.boot.class.path"); //$NON-NLS-1$
 	}
 
@@ -213,10 +208,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	 */
 	@Override
 	public final List<String> getInputArguments() {
-		SecurityManager security = System.getSecurityManager();
-		if (security != null) {
-			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
-		}
+		checkMonitorPermission();
 		return ManagementUtils.convertStringArrayToList(VM.getVMArgs());
 	}
 
@@ -242,6 +234,14 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	@Override
 	public final ObjectName getObjectName() {
 		return objectName;
+	}
+
+	public static void checkMonitorPermission() {
+		SecurityManager security = System.getSecurityManager();
+		
+		if (security != null) {
+			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
+		}
 	}
 
 }

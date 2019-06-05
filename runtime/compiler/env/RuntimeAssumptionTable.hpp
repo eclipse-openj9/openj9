@@ -113,10 +113,18 @@ class TR_RuntimeAssumptionTable
    int32_t getAssumptionCount(int32_t tableId) const { return assumptionCount[tableId]; }
    int32_t getReclaimedAssumptionCount(int32_t tableId) const { return reclaimedAssumptionCount[tableId]; }
    void incReclaimedAssumptionCount(int32_t tableId) { reclaimedAssumptionCount[tableId]++; }
-   void detachFromRAT(OMR::RuntimeAssumption *assumption);
+   void markForDetachFromRAT(OMR::RuntimeAssumption *assumption);
 
    void markAssumptionsAndDetach(void *reclaimedMetaData, bool reclaimPrePrologueAssumptions = false);
-   void reclaimMarkedAssumptionsFromRAT();
+
+   /**
+    * Walk the table removing entries that have been marked as detached.
+    *
+    * If a clean-up count is specified at most that number of entries will be
+    * removed from the table - this is used to rate limit clean-up activity
+    * and amortize the cost over time.
+    */
+   void reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount = -1);
 
    int32_t countRatAssumptions();
 
@@ -124,7 +132,6 @@ class TR_RuntimeAssumptionTable
    friend class OMR::RuntimeAssumption;
    void addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel);
    int32_t reclaimAssumptions(void *md, OMR::RuntimeAssumption **hashTable, OMR::RuntimeAssumption **possiblyRelevantHashTable);
-   void markForDetachFromRAT(OMR::RuntimeAssumption *assumption);
 
    // My table of hash tables; init() allocate memory and populate it
    TR_RatHT _tables[LastAssumptionKind];

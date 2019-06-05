@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ibm.tools.attach.target.AttachHandler;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
@@ -50,7 +49,7 @@ public class TestSunAttachClasses extends AttachApiTest {
 	@Test
 	public void testAttachToSelf() {
 		logger.debug("starting " + testName);
-		String myVmid = com.ibm.tools.attach.target.AttachHandler.getVmId();
+		String myVmid = TargetManager.getVmId();
 		setVmOptions("-Dcom.ibm.tools.attach.logging=yes");
 		
 		try {
@@ -147,7 +146,7 @@ public class TestSunAttachClasses extends AttachApiTest {
 	@BeforeMethod
 	protected void setUp(Method testMethod) {
 		testName = testMethod.getName();
-		if (!AttachHandler.waitForAttachApiInitialization()) {
+		if (!TargetManager.waitForAttachApiInitialization()) {
 			TargetManager.dumpLogs(true);
 			fail("main process did not initialize attach API");
 		}

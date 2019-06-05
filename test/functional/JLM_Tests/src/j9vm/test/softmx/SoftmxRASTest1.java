@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,7 +167,7 @@ public class SoftmxRASTest1 {
 	}
 
 	/**
-	 * Starts a JVM in a subproces
+	 * Starts a JVM in a subprocess
 	 * @param xmxVal : -Xmx value to use in the command line of the JVM to be spawned
 	 * @param softmxVal : -Xsoftmx value to use in the command line of the JVM to be spawned
 	 * @param classToRun : The class that should be run using java

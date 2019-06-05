@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,12 +63,21 @@ target_link_libraries(j9trc
 		j9thr
 		j9stackmap
 		omrcore
-		#TODO: why isnt this in the module.xml?
+		#TODO: why isn't this in the module.xml?
 		j9hookable
 )
+
+omr_add_exports(j9trc
+	JVM_OnUnload
+	JVM_OnLoad
+	J9VMDllMain
+)
+
+target_enable_ddr(j9trc j9ddr)
 
 install(
 	TARGETS j9trc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
 

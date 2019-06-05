@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ public class FileSniffer {
 	//minidump identifier
 	private static final int MINIDUMP = 0x4D444D50;	//MDMP
 	
-	//userdump identfier
+	//userdump identifier
 	private static final int USERDUMP_1 = 0x55534552;
 	private static final int USERDUMP_2 = 0x44554D50;
 	
@@ -60,6 +60,10 @@ public class FileSniffer {
     //XCOFF identifiers
 	private static final int CORE_DUMP_XX_VERSION = 0xFEEDDB2;
 	private static final int CORE_DUMP_X_VERSION = 0xFEEDDB1;
+
+	//MACHO identifiers
+	private static final int MACHO_64 = 0xFEEDFACF;
+	private static final int MACHO_64_REV = 0xCFFAEDFE;
     
     private static int[] coreid = new int[]{ELF, MINIDUMP, DR1, DR2};
     
@@ -72,11 +76,12 @@ public class FileSniffer {
     
     //the format for a core file
     public enum CoreFormatType {
-    	ELF,
-    	MINIDUMP,
-    	MVS,
-    	XCOFF,
-    	USERDUMP,
+		ELF,
+		MINIDUMP,
+		MVS,
+		XCOFF,
+		USERDUMP,
+		MACHO,
     	UNKNOWN
     }
     
@@ -109,6 +114,11 @@ public class FileSniffer {
 			//potential AIX core file version strings are at offset 4, so use the second header
 			if((header2 == CORE_DUMP_X_VERSION) || (header2 == CORE_DUMP_XX_VERSION)) {
 				return CoreFormatType.XCOFF;
+			}
+			if((header == MACHO_64) || (header == MACHO_64_REV)) {
+				if (isMachCoreFile(iis, header)) {
+					return CoreFormatType.MACHO;
+				}
 			}
 			return CoreFormatType.UNKNOWN;
 		} finally {
@@ -144,6 +154,11 @@ public class FileSniffer {
 			//potential AIX core file version strings are at offset 4, so use the second header
 			if((header2 == CORE_DUMP_X_VERSION) || (header2 == CORE_DUMP_XX_VERSION)) {
 				return true;
+			}
+			if((header == MACHO_64) || (header == MACHO_64_REV)) {
+				if (isMachCoreFile(iis, header)) {
+					return true;
+				}
 			}
 			return false;
 		} finally {
@@ -186,6 +201,21 @@ public class FileSniffer {
 		}	 
 		iis.setByteOrder(originalOrder);
 		return isCore;
+	}
+
+	/* Check if file is a core file. The file header (found in
+	 * /usr/include/mach-o/loader.h) has 'filetype' as the 4th member,
+	 * and '#define MH_CORE 0x4' as the constant for core file type.
+	*/
+	private static boolean isMachCoreFile(ImageInputStream iis, int header) throws IOException {
+		ByteOrder originalOrder = iis.getByteOrder();
+		if (header == MACHO_64_REV) {
+			iis.setByteOrder(iis.getByteOrder() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
+		}
+		iis.seek(12);
+		int filetype = iis.readInt();
+		iis.setByteOrder(originalOrder);
+		return filetype == 4;
 	}
 	
 	public static boolean isJavaCoreFile(InputStream in, long filesize) throws IOException {
@@ -230,7 +260,7 @@ public class FileSniffer {
 		if (head.indexOf(sectionEyeCatcher) >= 0) {
 			int idx = head.indexOf(charsetEyeCatcher);
 			
-			/* The charset eyecather is much newer, so may not be present */
+			/* The charset eyecatcher is much newer, so may not be present */
 			if (idx >= 0) {
 				idx += charsetEyeCatcher.length();
 				String javacoreCharset = head.substring(idx).trim();

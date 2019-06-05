@@ -1659,8 +1659,12 @@ JVM_IsSupportedJNIVersion(jint version)
 	case JNI_VERSION_1_4:
 	case JNI_VERSION_1_6:
 	case JNI_VERSION_1_8:
+#if JAVA_SPEC_VERSION >= 9
 	case JNI_VERSION_9:
+#endif /* JAVA_SPEC_VERSION >= 9 */
+#if JAVA_SPEC_VERSION >= 10
 	case JNI_VERSION_10:
+#endif /* JAVA_SPEC_VERSION >= 10 */
 		return JNI_TRUE;
 
 	default:
@@ -2709,7 +2713,7 @@ JVM_DefineClassWithSourceCond(jint arg0, jint arg1, jint arg2, jint arg3, jint a
 jobject JNICALL
 JVM_EnqueueOperation(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
 {
-	assert(!"JVM_EnqueueOperation() stubbed!");
+	assert(!"A HotSpot VM Attach API is attempting to connect to an OpenJ9 VM. This is not supported.");
 	return NULL;
 }
 

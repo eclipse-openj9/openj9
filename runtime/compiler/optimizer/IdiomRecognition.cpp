@@ -1565,7 +1565,7 @@ TR_CISCGraph::importUDchains(TR::Compilation *comp, TR_UseDefInfo *useDefInfo, b
 
 
 //*****************************************************************************************
-// Defragement dagIds and set _noFragmentDagId
+// Defragment dagIds and set _noFragmentDagId
 //*****************************************************************************************
 int32_t
 TR_CISCGraph::defragDagId()
@@ -1824,7 +1824,7 @@ TR_UseTreeTopMap::buildAllMap()
    }
 
 /**
- * Build a map of use indicies to their parent TreeTops (usedef datastructure doesn't have this)
+ * Build a map of use indices to their parent TreeTops (usedef datastructure doesn't have this)
  */
 typedef TR_Pair<TR::Node,TR::TreeTop> UseInfo;
 void TR_UseTreeTopMap::buildUseTreeTopMap(TR::TreeTop* treeTop,TR::Node *node)
@@ -1942,7 +1942,7 @@ TR_CISCTransformer::isInsideOfFastVersionedLoop(TR_RegionStructure *l)
 
 
 // createLoopCandidates populates the given list with natural loop candidates
-// whcih contains structure information and is not cold.  The return value of
+// which contains structure information and is not cold.  The return value of
 // this call dictates whether we found candidates or not.
 bool
 TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidates)
@@ -3229,7 +3229,7 @@ int32_t TR_CISCTransformer::perform()
          if (loopNumber++ == disableLoopNumber)
             {
             restoreBitsKeepAliveCalls();
-            continue; // for debug perpose
+            continue; // for debug purpose
             }
 
          analyzeHighFrequencyLoop(graph, nextLoop); // Analyze if frequently iterated loop.
@@ -3448,7 +3448,7 @@ TR_CISCTransformer::computeEmbeddedForData()
    uint8_t *const result = _embeddedForData;
    bool ret = false;
    bool skipScreening = false;
-   const bool enableWriteBarrierConversion = !comp()->getOptions()->generateWriteBarriers();
+   const bool enableWriteBarrierConversion = TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_none;
 
    memset(result, 0, _sizeResult);
    TR_CISCNode *p, *t;
@@ -4301,7 +4301,7 @@ TR_CISCTransformer::analyzeConnectionOnePairChild(TR_CISCNode *const p, TR_CISCN
    const uint32_t tmpIdx = idx(pn->getID(), 0);
    int32_t successCount = 0;
    TR_CISCNode *tnBefore = t;
-   while(true)  // we may need to analyze decendant for tn because of negligible nodes (e.g. iload)
+   while(true)  // we may need to analyze descendant for tn because of negligible nodes (e.g. iload)
       {
       uint8_t chiData = result[tmpIdx + tn->getID()];
       if (chiData == _Embed)
@@ -4991,7 +4991,7 @@ TR_CISCTransformer::areAllNodesIncluded(TR_CISCNodeRegion *r)
          }
       }
 
-   // Reset the ID of the idiom nodes correspoing to each target node in the region r.
+   // Reset the ID of the idiom nodes corresponding to each target node in the region r.
    ni.set((ListHeadAndTail<TR_CISCNode>*)r);
    for (t = ni.getFirst(); t; t = ni.getNext())
       {
@@ -5234,7 +5234,7 @@ TR_CISCTransformer::extractMatchingRegion()
             }
          else
             {
-            // The node t is an inppropriate node!
+            // The node t is an inappropriate node!
             if (!empty)
                {
                if (!t->isNegligible() || !_T2P[t->getID()].isEmpty())
@@ -5399,7 +5399,7 @@ TR_CISCTransformer::countP2T(TR_CISCNode *p, bool inLoop)
 
 //*****************************************************************************************
 // Return a representative target node corresponding to p
-// 0 for no-existance
+// 0 for no-existence
 //*****************************************************************************************
 TR_CISCNode *
 TR_CISCTransformer::getP2TRep(TR_CISCNode *p)
@@ -5420,7 +5420,7 @@ TR_CISCTransformer::getP2TRep(TR_CISCNode *p)
 
 //*****************************************************************************************
 // Return a representative target node *in the cycle* corresponding to p
-// 0 for no-existance
+// 0 for no-existence
 //*****************************************************************************************
 TR_CISCNode *
 TR_CISCTransformer::getP2TRepInLoop(TR_CISCNode *p, TR_CISCNode *exclude)
@@ -5784,7 +5784,7 @@ TR_CISCTransformer::analyzeSuccessorBlock(TR::Node *ignoreTree)
 
 
 //*****************************************************************************************
-// It sets one successsor "target" to the block.
+// It sets one successor "target" to the block.
 //*****************************************************************************************
 void
 TR_CISCTransformer::setSuccessorEdge(TR::Block *block, TR::Block *target)
@@ -5847,7 +5847,7 @@ TR_CISCTransformer::searchOtherBlockInSuccBlocks(TR::Block *target0)
 
 
 //*****************************************************************************************
-// It sets two successsors "target0" and "target1" to the block.
+// It sets two successors "target0" and "target1" to the block.
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::setSuccessorEdges(TR::Block *block, TR::Block *target0, TR::Block *target1)
@@ -5928,7 +5928,7 @@ TR_CISCTransformer::searchPredecessorOfBlock(TR::Block *block)
 
 //*****************************************************************************************
 // It decides whether we generate versioning code and modifies the target blocks.
-// It returns the block that fast code will be appened.
+// It returns the block that fast code will be appended.
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *startTop, TR::Node *lengthNode, List<TR::Node> *guardList)
@@ -5961,7 +5961,7 @@ TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *
 
 //*****************************************************************************************
 // It decides whether we generate versioning code and modifies the target blocks.
-// It returns the block that fast code will be appeneded.
+// It returns the block that fast code will be appended.
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *startTop, List<TR::Node> *guardList)
@@ -6144,7 +6144,7 @@ TR_CISCTransformer::isDeadStore(TR::Node *node)
 
 //*****************************************************************************************
 // It basically skips blocks containing only a goto statement.
-// It can aditionally skip nodes for dead stores and the node specified by "ignoreTree"
+// It can additionally skip nodes for dead stores and the node specified by "ignoreTree"
 //*****************************************************************************************
 TR::Block *
 TR_CISCTransformer::skipGoto(TR::Block *block, TR::Node *ignoreTree)
@@ -7170,7 +7170,7 @@ TR_CISCTransformer::countGoodArrayIndex(TR::SymbolReference *inductionVariableSy
 
 //*****************************************************************************
 // It performs very simple optimizations using UD/DU chains.
-// Curretly, it performs:
+// Currently, it performs:
 //   (1) redundant BNDCHK elimination. necessary for very early phase, such as in the earlyGlobalOpts phase
 //*****************************************************************************
 bool
@@ -7559,7 +7559,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
    T->importUDchains(comp(), _useDefInfo);
 
    // It performs very simple optimizations using UD/DU chains.
-   // Curretly, it performs:
+   // Currently, it performs:
    //   (1) redundant BNDCHK elimination.
    simpleOptimization();
    if (trace())

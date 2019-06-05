@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@ j9shsem_deprecated_wait(struct J9PortLibrary *portLibrary, struct j9shsem_handle
 }
 /**
  * reading the value of the semaphore in the set. This function
- * uses no synchronisation prmitives
+ * uses no synchronisation primitives
   * 
  * @pre caller has to deal with synchronisation issue.
  *
@@ -144,7 +144,7 @@ j9shsem_deprecated_getVal(struct J9PortLibrary *portLibrary, struct j9shsem_hand
 /**
  * 
  * setting the value of the semaphore specified in semset. This function
- * uses no synchronisation prmitives
+ * uses no synchronisation primitives
  * 
  * @pre Caller has to deal with synchronisation issue.
  * 

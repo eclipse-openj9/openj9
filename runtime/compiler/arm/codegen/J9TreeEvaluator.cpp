@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,8 +27,10 @@
 #include "thrdsup.h"
 #include "thrtypes.h"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
@@ -66,7 +68,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
    TR::Options *options = comp->getOptions();
    TR::Node *wrtbarNode = NULL;
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
-   TR_WriteBarrierKind gcMode = options->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
@@ -79,7 +81,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
       definitelyNonHeapObject = wrtbarNode->isNonHeapObjectWrtBar();
       }
 
-   TR_ASSERT((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && !definitelyNonHeapObject,
+   TR_ASSERT((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !definitelyNonHeapObject,
          "VMCardCheckEvaluator: Invalid call to cardCheckEvaluator\n");
 
    if (!definitelyNonHeapObject)
@@ -89,7 +91,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
 
       // Balanced policy must always dirty the card table.
       //
-      if (gcMode != TR_WrtbarCardMarkIncremental)
+      if (gcMode != gc_modron_wrtbar_cardmark_incremental)
          {
          uint32_t base, rotate;
 
@@ -135,6 +137,19 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
 
    }
 
+
+void
+J9::ARM::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg)
+   {
+   TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM platforms.\n");
+   }
+
+void
+J9::ARM::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister)
+   {
+   TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM platforms.\n");
+   }
+
 /**
  *  \brief
  *     Generates write barrier for non-simple arraycopy node
@@ -150,10 +165,10 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
    TR::Compilation * comp = cg->comp();
    bool ageCheckIsNeeded = false;
    bool cardMarkIsNeeded = false;
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
-   ageCheckIsNeeded = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
-   cardMarkIsNeeded = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental);
+   ageCheckIsNeeded = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   cardMarkIsNeeded = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    if (!ageCheckIsNeeded && !cardMarkIsNeeded)
       {
@@ -169,15 +184,15 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
       TR::LabelSymbol *doneLabel;
       TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierBatchStoreSymbolRef(comp->getMethodSymbol());
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          temp1Reg = cg->allocateRegister();
          temp2Reg = cg->allocateRegister();
          doneLabel = generateLabelSymbol(cg);
 
          conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-         addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
          TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
@@ -197,12 +212,12 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
          conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
          }
 
-      addDependency(conditions, dstObjReg, TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(conditions, dstObjReg, TR::RealRegister::gr0, TR_GPR, cg);
 
       TR::Instruction *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress(), NULL, wbRef);
       gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
          }
@@ -210,7 +225,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
       cg->machine()->setLinkRegisterKilled(true);
       cg->setHasCall();
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          cg->stopUsingRegister(temp1Reg);
          cg->stopUsingRegister(temp2Reg);
@@ -225,10 +240,10 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
          TR::Register *temp3Reg = cg->allocateRegister();
          TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
 
-         addDependency(conditions, dstObjReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-         addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, dstObjReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
          VMCardCheckEvaluator(node, dstObjReg, temp1Reg, temp2Reg, temp3Reg, conditions, cg);
 

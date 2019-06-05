@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ import java.lang.Thread.State;
 import com.ibm.jvm.Dump;
 
 /**
- * CMVC 194091. Cross-delegation of non-explicitly synchronized paralle-incapable classloaders should deadlock (sic).
+ * CMVC 194091. Cross-delegation of non-explicitly synchronized parallel-incapable classloaders should deadlock (sic).
  * This is because reference implementation implicitly locks the classloader in the VM and, per CMVC 193900,
  * J9 does likewise.
  * registering as parallel capable prevents deadlock.

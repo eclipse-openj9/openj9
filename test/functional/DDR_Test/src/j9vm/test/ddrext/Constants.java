@@ -159,13 +159,13 @@ public class Constants {
 
 	public static final String SHRC_SCOPESTATS = "scopestats";
 	// may need expansion - seems like the orphan output is very much tied with the dump produced
-	public static final String SHRC_SCOPESTATS_SUCCESS_KEY = "SCOPE,vm.jar,j9utf8,BYTEDATA Summary,ROMClass";
+	public static final String SHRC_SCOPESTATS_SUCCESS_KEY = "SCOPE,(rt|vm).jar,j9utf8,BYTEDATA Summary,ROMClass";
 	// may need expansion - seems like the orphan output is very much tied with the dump produced
 	public static final String SHRC_SCOPESTATS_SUCCESS_KEY_JAVA9 = "SCOPE,lib[[/\\\\]]modules,j9utf8,BYTEDATA Summary,ROMClass";
 	public static final String SHRC_SCOPESTATS_FAILURE_KEY = "no shared cache";
 
 	public static final String SHRC_BYTESTATS = "bytestats";
-	public static final String SHRC_BYTESTATS_SUCCESS_KEY = "vm.jar";
+	public static final String SHRC_BYTESTATS_SUCCESS_KEY = "(rt|vm).jar";
 	public static final String SHRC_BYTESTATS_SUCCESS_KEY_JAVA9 = "BYTEDATA !j9x";
 	public static final String SHRC_BYTESTATS_FAILURE_KEY = "UNKNOWN\\(,no shared cache";
 
@@ -257,18 +257,18 @@ public class Constants {
 	public static final String SHRC_JITHSTATS_FAILURE_KEY = "no shared cache,JITPROFILE data length 0 metadata 0";
 
 	public static final String SHRC_FINDJITH = "findjith";
-	public static final String SHRC_FINDJITH_METHODNAME = "run";
-	public static final String SHRC_FINDJITH_SUCCESS_KEY = "run\\(\\)Ljava/lang/.*,JITHINT data !j9x,.*/Object";
+	public static final String SHRC_FINDJITH_METHODNAME = "<init>";
+	public static final String SHRC_FINDJITH_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,java/.*";
 	public static final String SHRC_FINDJITH_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_FINDJITHP = "findjithp";
-	public static final String SHRC_FINDJITHP_METHODPREFIX = "r";
-	public static final String SHRC_FINDJITHP_SUCCESS_KEY = "run\\(\\)Ljava/lang/.*,JITHINT data !j9x,.*/Object";
+	public static final String SHRC_FINDJITHP_METHODPREFIX = "<init>";
+	public static final String SHRC_FINDJITHP_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,java/.*";
 	public static final String SHRC_FINDJITHP_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_JITHFOR = "jithfor";
-	public static final String SHRC_JITHFOR_METHODNAME = "run";
-	public static final String SHRC_JITHFOR_SUCCESS_KEY = "run\\(\\)Ljava/lang/.*,JITHINT data !j9x,.*/Object";
+	public static final String SHRC_JITHFOR_METHODNAME = "<init>";
+	public static final String SHRC_JITHFOR_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,(java|sun)/.*";
 	public static final String SHRC_JITHFOR_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_RTFLAGS = "rtflags";
@@ -281,12 +281,11 @@ public class Constants {
 																	// determine
 	/* The following are constants related to Class related extensions */
 	public static final String ALL_CLASSES_CMD = "allclasses";
-	public static final String ALL_CLASSES_SUCCESS_KEY = "com/ibm/dtfj/tck/tests/javaruntime/TestJavaRuntime_getHeapRoots,com/ibm/dtfj/tck/tests/javaruntime/TestJavaStackFrame_getHeapRoots,"
-			+ "com/ibm/dtfj/tck/tests/javaruntime/TestJavaThreadInspection,com/ibm/dtfj/tests/junit/JavaFieldTest,com/ibm/dtfj/tests/junit/JavaObjectTest";
+	public static final String ALL_CLASSES_SUCCESS_KEY = "j9vm/test/corehelper/CoreGen,j9vm/test/corehelper/SimpleThread";
 	public static final String ALL_CLASSESS_FAILURE_KEY = "";
 
 	public static final String J9CLASSSHAPE_CMD = "j9classshape";
-	public static final String J9CLASSSHAPE_TEST_CLASS = "com/ibm/dtfj/tests/junit/JavaObjectTest";
+	public static final String J9CLASSSHAPE_TEST_CLASS = "j9vm/test/corehelper/SimpleThread";
 	public static final String J9CLASSSHAPE_SUCCESS_KEY = "_object,"+J9CLASSSHAPE_TEST_CLASS;
 
 	public static final String J9VTABLES_CMD = "j9vtables";

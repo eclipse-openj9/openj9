@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "modron.h"
+#include "objectdescription.h"
 
 #include "Bits.hpp"
 
@@ -83,6 +84,17 @@ public:
 	getSizeInBytesWithHeader(J9Object *objectPtr)
 	{
 		return getSizeInBytesWithoutHeader(objectPtr) + sizeof(J9Object);
+	}
+	
+	/**
+	* Returns an address of first data slot of the object
+	* @param objectPtr Pointer to the object
+	* @return Address of first data slot of the object
+	*/
+	MMINLINE fomrobject_t *
+	getHeadlessObject(J9Object *objectPtr)
+	{
+		return (fomrobject_t *)((uint8_t*)objectPtr + getHeaderSize(objectPtr));
 	}
 	
 	/**

@@ -97,7 +97,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 				J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
 				J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)));
 #endif
-	if (J9ROMCLASS_IS_UNSAFE(sourceClass->romClass) == 0) {
+	if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(sourceClass)) {
 		if ( modifiers & J9AccPublic ) {
 			/* Public */
 			if ((sourceClass != destClass)
@@ -193,7 +193,7 @@ _exit:
  * @param vmThread vmthread token
  * @param nestMember the j9lass requesting the nesthost
  * @param nestHost the actual nest host, this may be NULL
- * @param errorCode the error code represting the exception to throw
+ * @param errorCode the error code representing the exception to throw
  * 					J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
  * 					J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
  * 					J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR

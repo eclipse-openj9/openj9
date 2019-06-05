@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,18 @@ ifeq ($(PLATFORM),arm-linux-gcc-cross)
         export AS=$(OPENJ9_CC_PREFIX)-as
     endif
     PLATFORM=arm-linux-gcc
+endif
+
+ifeq ($(PLATFORM),aarch64-linux-gcc)
+    ifeq (default,$(origin CC))
+        export CC=$(OPENJ9_CC_PREFIX)-gcc
+    endif
+    ifeq (default,$(origin CXX))
+        export CXX=$(OPENJ9_CC_PREFIX)-g++
+    endif
+    ifeq (default,$(origin AS))
+        export AS=$(OPENJ9_CC_PREFIX)-as
+    endif
 endif
 
 ifneq ($(findstring DPROD_WITH_ASSUMES, $(USERCFLAGS)),)

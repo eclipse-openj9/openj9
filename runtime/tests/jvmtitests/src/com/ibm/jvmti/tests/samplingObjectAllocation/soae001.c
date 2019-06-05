@@ -32,6 +32,8 @@ static void JNICALL sampledObjectAlloc(jvmtiEnv *jvmti_env, JNIEnv *jni_env, jth
 /* the number of time the callback sampledObjectAlloc invoked */
 static jint soaeResult = 0;
 
+#if JAVA_SPEC_VERSION >= 11
+
 jint JNICALL
 soae001(agentEnv *agent_env, char *args)
 {
@@ -120,3 +122,4 @@ Java_com_ibm_jvmti_tests_samplingObjectAllocation_soae001_check(JNIEnv *jni_env,
 {
 	return soaeResult;
 }
+#endif /* JAVA_SPEC_VERSION >= 11 */

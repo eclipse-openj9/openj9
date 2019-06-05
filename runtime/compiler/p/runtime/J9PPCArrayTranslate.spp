@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2018 IBM Corp. and others
+!! Copyright (c) 2000, 2019 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@
 ! entry arrayTranslateTRTO
 !----------------------------------------------------------------------
 !  Since we know we have a simple table with maximum valid character 'max', the
-!  conversion process can be implmented as follows:
+!  conversion process can be implemented as follows:
 !
 !    uint16 input[];
 !    uint8  output[];
@@ -538,7 +538,7 @@ __arrayTranslateTRTO255:
 ! entry arrayTranslateTROT255
 !----------------------------------------------------------------------
 !  Since we know we have a simple table with maximum valid character max, the
-!  conversion process can be implmented as follows:
+!  conversion process can be implemented as follows:
 !
 !    uint8   input[];
 !    uint16  output[];
@@ -907,7 +907,7 @@ __arrayTranslateTROT255:
 ! entry arrayTranslateTROT
 !----------------------------------------------------------------------
 !  Since we know we have a simple table with maximum valid character 'max', the
-!  conversion process can be implmented as follows:
+!  conversion process can be implemented as follows:
 !
 !    uint8   input[];
 !    uint16  output[];
@@ -1320,7 +1320,7 @@ __arrayTranslateTROT:
 !----------------------------------------------------------------------
 ! To minimize conditional branches due to various configuration,
 ! e.g. data alignment and data size, we employed a decision table through
-! which one of the 64 hanlders is selected with 6-bit vector as described
+! which one of the 64 handlers is selected with 6-bit vector as described
 ! below.
 !
 ! How to compute parameters:
@@ -1495,7 +1495,7 @@ __arrayTranslateTROT:
 ! Legends:
 !      ...   No data
 !      .PP   Partial block (missing a part at head)
-!      .P.   Partial block (imssing a part at both head and tail)
+!      .P.   Partial block (missing a part at both head and tail)
 !      PP.   Partial block (missing a part at tail)
 !      BBBB+ One or more 4x unrolled blocks
 !      BB    A pair of blocks
@@ -1573,7 +1573,7 @@ __arrayTranslateTRTOSimpleVMX:
 	rlwinm	r0,r8,4,28,28		! r0 = (blockCount != 0) << 3			swBlock4Loop << 3
 	neg	r7,r12			! r7 = -trailerCount
 	or	r8,r3,r0	    	! r8 = (swSlowPath << 6) | (swHeader << 4) | (swBlock4Loop << 3) | (blockCount << 1)
-	rlwinm	r9,r7,1,31,31		! r0 = (traileCount != 0) << 0			swTrailer << 0
+	rlwinm	r9,r7,1,31,31		! r0 = (trailerCount != 0) << 0			swTrailer << 0
 	or	r0,r8,r9	    	! r0 = (swSlowPath << 6) | (swHeader << 4) | (swBlock4Loop << 3) | (blockCount << 1) | (swTrailer << 0)
 	mfctr	r7			! Restore maxChar
 
@@ -1633,7 +1633,7 @@ __arrayTranslateTRTOSimpleVMX:
 !----------------------------------------------------------------------
 ! macro macroArrayTranslateHeader
 !----------------------------------------------------------------------
-	! Header processing (paritial block with missing part at start)
+	! Header processing (partial block with missing part at start)
 	!
 	!   Reg.        Input           Output          Use
 	!-------------------------------------------------------------------
@@ -1941,7 +1941,7 @@ ifelse($6, `1', ` \
 !----------------------------------------------------------------------
 ! entry partialVectr010
 !----------------------------------------------------------------------
-	! Partial block processing (paritial block with missing at both start and end
+	! Partial block processing (partial block with missing at both start and end
 	!
 	! ...|...OOOOOOOOO....|...
 	!        A        A

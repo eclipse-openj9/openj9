@@ -60,9 +60,7 @@ public:
 
    bool isPureFunction();
 
-   TR_RuntimeHelper getVMCallHelper(TR::Compilation *comp);
-   TR_RuntimeHelper getVMCallHelper();
-   static TR_RuntimeHelper getVMCallHelperFor(TR::DataType returnType, bool isSynchronized, bool isNative, TR::Compilation *comp);
+   TR_RuntimeHelper getVMCallHelper() { return TR_j2iTransition; } // deprecated
 
    bool safeToSkipNullChecks();
    bool safeToSkipBoundChecks();

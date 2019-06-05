@@ -1,4 +1,4 @@
-dnl Copyright (c) 2018, 2018 IBM Corp. and others
+dnl Copyright (c) 2018, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,7 +91,7 @@ define([get_function_arg_size], [eval(get_function_arg_size_impl($@))])
 
 # decorate_impl(func_name, ignored, ignored, ignored, ARGS ...)
 # Given a function name and a list of C-style argument strings, get the decorated function name.
-# This uses Microsft-style C name mangling for stdcall functions.
+# This uses Microsoft-style C name mangling for stdcall functions.
 # see https://docs.microsoft.com/en-us/cpp/build/reference/decorated-names#FormatC
 # ex: decorate_impl("foo", ignored, ignored,ignored, "int foo", "int bar") => "_foo@8"
 define([decorate_impl], [_$1@get_function_arg_size(mshift(4,$@))])

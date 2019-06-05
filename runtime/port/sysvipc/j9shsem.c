@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,7 @@ j9shsem_params_init(struct J9PortLibrary *portLibrary, struct J9PortShSemParamet
  	params->controlFileDir = NULL; /* Directory in which to create control files (SysV semaphores only */
  	params->proj_id = 1; /* parameter used with semName to generate semaphore key */
  	params->deleteBasefile = 1; /* set to 0 to retain the basefile when destroying the semaphore. */
+ 	params->global = 0; /* global is used on Windows only */
  	return 0;
 }
 
@@ -221,7 +222,7 @@ j9shsem_wait(struct J9PortLibrary *portLibrary, struct j9shsem_handle* handle, u
 }
 /**
  * reading the value of the semaphore in the set. This function
- * uses no synchronisation prmitives
+ * uses no synchronisation primitives
   * 
  * @pre caller has to deal with synchronisation issue.
  *
@@ -265,7 +266,7 @@ j9shsem_getVal(struct J9PortLibrary *portLibrary, struct j9shsem_handle* handle,
 /**
  * 
  * setting the value of the semaphore specified in semset. This function
- * uses no synchronisation prmitives
+ * uses no synchronisation primitives
  * 
  * @pre Caller has to deal with synchronisation issue.
  * 

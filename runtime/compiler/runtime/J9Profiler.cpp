@@ -1663,7 +1663,7 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
       /*
        * The explicit parens value initialize the array,
        * which in turn value initializes each array member,
-       * which for ints is zero initializaiton.
+       * which for ints is zero initialization.
        */
       new (comp->trMemory(), allocKind, TR_Memory::BlockFrequencyInfo) int32_t[_numBlocks]() :
       NULL
@@ -2700,7 +2700,7 @@ TR_PersistentProfileInfo *TR_AccessedProfileInfo::compare(TR_PersistentMethodInf
 
 /**
  * For the current method.
- * More frequenct request, so avoid the overhead of the map.
+ * More frequent request, so avoid the overhead of the map.
  */
 TR_PersistentProfileInfo *TR_AccessedProfileInfo::get(TR::Compilation *comp)
    {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,7 @@ int j9sysinfo_numcpus_test3 (J9PortLibrary* portLibrary)
 }
 
 /**
- * Get inital target number of CPUS. Set user-specified to 3, then to 0. Get target number of CPUs. Validate number equals initial value.
+ * Get initial target number of CPUS. Set user-specified to 3, then to 0. Get target number of CPUs. Validate number equals initial value.
  *
  * @param[in] portLibrary The port library under test
  *

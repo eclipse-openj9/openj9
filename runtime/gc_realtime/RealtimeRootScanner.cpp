@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +69,7 @@ MM_RealtimeRootScanner::doClass(J9Class *clazz)
 void
 MM_RealtimeRootScanner::doClassSlot(J9Class **clazzPtr)
 {
-	_markingScheme->markClass(_env, *clazzPtr);
+	_realtimeGC->getRealtimeDelegate()->markClass(_env, *clazzPtr);
 }
 
 MM_RootScanner::CompletePhaseCode
@@ -78,7 +77,7 @@ MM_RealtimeRootScanner::scanClassesComplete(MM_EnvironmentBase *env)
 {
 	/* TODO: consider reactivating this call */
 	// reportScanningStarted(RootScannerEntity_ClassesComplete);
-	// _realtimeGC->doTracing(_env);
+	// _realtimeGC->completeMarking(_env);
 	// reportScanningEnded(RootScannerEntity_ClassesComplete);
 	return complete_phase_OK;
 }
@@ -102,7 +101,7 @@ MM_RealtimeRootScanner::scanThreads(MM_EnvironmentBase *env)
 	localData.env = env;
 
 	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
- 		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread);
+		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (GC_UNMARK == walkThreadEnv->_allocationColor) {
 			if (GC_UNMARK == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_allocationColor, GC_UNMARK, GC_MARK)) {
 				if (scanOneThread(env, walkThread, (void*) &localData)) {
@@ -289,7 +288,7 @@ MM_RealtimeRootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 	reportScanningStarted(RootScannerEntity_MonitorLookupCaches);
 	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
 	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
-		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread);
+		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (FALSE == walkThreadEnv->_monitorCacheCleared) {
 			if (FALSE == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_monitorCacheCleared, FALSE, TRUE)) {
 #if defined(J9VM_THR_LOCK_NURSERY)
@@ -317,7 +316,7 @@ MM_RealtimeRootScanner::scanStringTable(MM_EnvironmentBase *env)
 		/* We can't rely on using _unmarkedImpliesCleared because clearable phase can mark more objects.
 		 * Only at this point can we assume unmarked strings are truly dead.
 		 */
-		_realtimeGC->_unmarkedImpliesStringsCleared = true;
+		_realtimeGC->getRealtimeDelegate()->_unmarkedImpliesStringsCleared = true;
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 	MM_RootScanner::scanStringTable(env);

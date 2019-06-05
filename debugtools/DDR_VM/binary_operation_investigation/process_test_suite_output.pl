@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright (c) 2009, 2017 IBM Corp. and others
+# Copyright (c) 2009, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ END
 		
 		my ($type1,$value1,$operation,$type2,$value2,$result_type,$result1,$result2) = $csv->fields();
 		
-		die "Could't parse $line" unless defined $result2;
+		die "Couldn't parse $line" unless defined $result2;
 		
 		$type1 =~ s/_//g;
 		$type2 =~ s/_//g;

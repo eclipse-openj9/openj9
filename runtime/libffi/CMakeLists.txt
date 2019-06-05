@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,10 +42,12 @@ if(OMR_ARCH_X86)
 	endif()
 
 	target_include_directories(ffi PUBLIC x86)
-	if(OMR_HOST_OS STREQUAL "linux")
+	if(OMR_OS_LINUX)
 		target_include_directories(ffi PUBLIC preconf/xa)
-	elseif(OMR_HOST_OS STREQUAL "osx")
+	elseif(OMR_OS_OSX)
 		target_include_directories(ffi PUBLIC preconf/oa)
+	elseif(OMR_OS_WINDOWS)
+		target_include_directories(ffi PUBLIC preconf/wa)
 	else()
 		message(SEND_ERROR "Unsupported OS")
 	endif()
@@ -54,8 +56,21 @@ if(OMR_ARCH_X86)
 		PRIVATE
 		x86/ffi.c
 		x86/ffi64.c
-		x86/sysv.S
 	)
+
+	if(OMR_OS_WINDOWS)
+		# We are assuming we are using an MSVC toolchain
+		add_custom_command(
+			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/win64.asm
+			COMMAND ${CMAKE_C_COMPILER} -nologo -EP -P  -I ${CMAKE_CURRENT_SOURCE_DIR}/preconf/wa -I ${CMAKE_CURRENT_SOURCE_DIR}/x86 -Fiwin64.asm  ${CMAKE_CURRENT_SOURCE_DIR}/x86/win64.S
+			DEPENDS x86/win64.S
+		)
+		target_sources(ffi PRIVATE win64.asm)
+		set_source_files_properties(win64.asm PROPERTIES LANGUAGE ASM_MASM)
+	else()
+		target_sources(ffi PRIVATE x86/sysv.S)
+	endif()
+
 	if(OMR_HOST_OS STREQUAL "linux")
 		target_sources(ffi
 			PRIVATE

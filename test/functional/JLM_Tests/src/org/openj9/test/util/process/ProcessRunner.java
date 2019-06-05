@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ import java.util.List;
  *
  * To use it in JUnit test case you may need to make a static task class instead
  * of a convenient inner task class, which may cause NotSerializableException
- * Since most of Hamrony unit test classes are not Serializable.
+ * Since most of Harmony unit test classes are not Serializable.
  *
  * Typical usage is like:
  * // Define the task

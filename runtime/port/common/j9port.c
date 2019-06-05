@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,7 +141,7 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sock_fdset_set, /* sock_fdset_set */
 	j9sock_fdset_clr, /* sock_fdset_clr */
 	j9sock_fdset_isset, /* sock_fdset_isset */
-	j9shsem_params_init, /* shsem_paramemeters_init */
+	j9shsem_params_init, /* shsem_parameters_init */
 	j9shsem_startup, /* shsem_startup */
 	j9shsem_shutdown, /* shsem_shutdown */
 	j9shsem_open, /* shsem_open */
@@ -489,7 +489,7 @@ cleanup:
  *
  * @return size of port library on success, zero on failure
  *
- * @note The portlibrary version must be compatabile with the that which we are compiled against
+ * @note The portlibrary version must be compatible with the that which we are compiled against
  */
 uintptr_t 
 j9port_getSize(struct J9PortLibraryVersion *version)
@@ -578,7 +578,7 @@ j9port_isCompatible(struct J9PortLibraryVersion *expectedVersion)
  * @param[in] portLibrary The port library.
  * @param[in] offset The offset of the function to be queried.
  * 
- * @return 1 if the function is overriden, else 0.
+ * @return 1 if the function is overridden, else 0.
  *
  * j9port_isFunctionOverridden(portLibrary, offsetof(J9PortLibrary, mem_allocate_memory));
  */
@@ -608,7 +608,7 @@ j9port_isFunctionOverridden(struct J9PortLibrary *portLibrary, uintptr_t offset)
  * @return 0 on success, negative return value on failure
  *
  * @note portLibrary will be NULL on failure
- * @note The portlibrary version must be compatabile with the that which we are compiled against
+ * @note The portlibrary version must be compatible with the that which we are compiled against
  * @note @ref j9port_shutdown_library will deallocate this memory as part of regular shutdown
  */
 int32_t

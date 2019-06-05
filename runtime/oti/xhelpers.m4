@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2018 IBM Corp. and others
+dnl Copyright (c) 1991, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -158,7 +158,7 @@ dnl C linkage for windows:
 dnl	argument GPRs: RCX RDX R8 R9
 dnl	preserved: RBX RDI RSI R12-R15 XMM6-15
 
-define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,$1,3,_r8,$1,4,_r9,{ERROR})})
+define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,$1,3,r8,$1,4,r9,{ERROR})})
 
 define({FASTCALL_C},{
 	sub _rsp,4*J9TR_pointerSize
@@ -179,7 +179,7 @@ dnl C linkage for linux:
 dnl	argument GPRs: RDI RSI RDX RCX R8 R9
 dnl	preserved: RBX R12-R15, no XMM
 
-define({PARM_REG},{ifelse($1,1,_rdi,$1,2,_rsi,$1,3,_rdx,$1,4,_rcx,$1,5,_r8,$1,6,_r9,{ERROR})})
+define({PARM_REG},{ifelse($1,1,_rdi,$1,2,_rsi,$1,3,_rdx,$1,4,_rcx,$1,5,r8,$1,6,r9,{ERROR})})
 
 define({FASTCALL_C},{
 	CALL_C_FUNC($1,0,0)

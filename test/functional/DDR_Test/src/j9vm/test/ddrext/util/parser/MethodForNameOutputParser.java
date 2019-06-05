@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ public class MethodForNameOutputParser {
 	 * @param methodArguments JVM signature of the arguments to the method, e.g. "JI". 
 	 * 			This must be the full set of arguments or "null" to take the first matching method.
 	 * 
-	 * @return String representation of extracted j9metod address from
+	 * @return String representation of extracted J9Method address from
 	 * !methodforname extension. return null, if any error occurs or address
 	 * can not be found in given !methodforname output.
 	 */

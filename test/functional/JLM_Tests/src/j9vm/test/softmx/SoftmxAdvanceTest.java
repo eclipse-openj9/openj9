@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,7 +177,7 @@ public class SoftmxAdvanceTest {
 
 		/* add a waiting time between performing GC and checking for free physical memory in the OS*/
 		try {
-			logger.debug("Going to sleep for 5 seconds after Agressive GC..");
+			logger.debug("Going to sleep for 5 seconds after Aggressive GC..");
 			Thread.currentThread().sleep(5000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -187,7 +187,7 @@ public class SoftmxAdvanceTest {
 		long postMemSize = ibmOSMBean.getFreePhysicalMemorySize();
 
 		logger.debug(
-				"	After resetting softmx and performing an aggresive GC to force heap to shrink, the OS free physical memory size is: "
+				"	After resetting softmx and performing an aggressive GC to force heap to shrink, the OS free physical memory size is: "
 						+ postMemSize + " bytes");
 
 		/*if -Xsoftmx is not present on the command line, -XX option will be ignored, use default setting, which are different on different OS's.

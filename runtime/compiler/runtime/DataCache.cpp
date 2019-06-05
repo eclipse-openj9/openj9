@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -309,7 +309,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
 //       Pointer to TR_DataCache that can be used exclusively by this thread
 //       or NULL if cannot get any dataCache
 // Side efects:
-//       Aquires/releases dataCache mutex internally
+//       Acquires/releases dataCache mutex internally
 //----------------------------------------------------------------------------
 TR_DataCache* TR_DataCacheManager::reserveAvailableDataCache(J9VMThread *vmThread, uint32_t sizeHint)
    {
@@ -367,7 +367,7 @@ TR_DataCache* TR_DataCacheManager::reserveAvailableDataCache(J9VMThread *vmThrea
 //---------------------------- makeDataCacheAvailable ------------------------
 // Put the designated dataCache back into the list of available data caches
 // Side efects:
-//       Aquires/releases dataCache mutex internally
+//       Acquires/releases dataCache mutex internally
 //----------------------------------------------------------------------------
 void TR_DataCacheManager::makeDataCacheAvailable(TR_DataCache *dataCache)
    {
@@ -419,7 +419,7 @@ uint8_t* TR_DataCache::allocateDataCacheSpace(int32_t size)
    {
    uint8_t *base = 0;
    size = TR_DataCacheManager::alignToMachineWord(size);
-   // dataCache is manipulated exclussively by a single thread
+   // dataCache is manipulated exclusively by a single thread
    if (_segment->heapAlloc + size <= _segment->heapTop)
       {
       base = _segment->heapAlloc;
@@ -454,7 +454,7 @@ uint8_t* TR_DataCache::allocateDataCacheSpace(int32_t size)
 // Ret value:
 //      pointer to allocated space
 // Side efects:
-//       Aquires/releases dataCache mutex internally
+//       Acquires/releases dataCache mutex internally
 //-----------------------------------------------------------------------------
 uint8_t* TR_DataCacheManager::allocateDataCacheSpace(uint32_t size)
 {
@@ -522,7 +522,7 @@ void TR_DataCacheManager::fillDataCacheHeader(J9JITDataCacheHeader *hdr, uint32_
 // header of the record
 // The data cache does not have to be reserved
 // size may be rounded for alignment
-// There is a similar methos in J9VMBase. That one is supposed to be called
+// There is a similar methods in J9VMBase. That one is supposed to be called
 // from within a compilation. This method is supposed to be called outside a
 // compilation and when we don't need contiguous allocation.
 //----------------------------------------------------------------------------

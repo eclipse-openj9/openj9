@@ -745,7 +745,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
          else if (trace())
             traceMsg(comp(), "   block_%d is empty\n", next->getNumber());
 
-         // Shift the cusor to the end of the next block
+         // Shift the cursor to the end of the next block
          cursor = next->getExit();
          blocksToVisit->set(next->getNumber());
          }

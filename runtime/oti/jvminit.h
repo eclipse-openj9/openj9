@@ -114,7 +114,7 @@ extern "C" {
 #define FIND_NEXT_ARG_IN_VMARGS_FORWARD(match, optionName, optionValue, lastArgIndex) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, ((match | ((lastArgIndex+1) << STOP_AT_INDEX_SHIFT)) | SEARCH_FORWARD), optionName, optionValue, FALSE)
 #define FIND_AND_CONSUME_ARG_FORWARD(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, (match | SEARCH_FORWARD), optionName, optionValue, TRUE)
 
-/* REMOVE - FOR BACKWARDS COMPATABILITY */
+/* REMOVE - FOR BACKWARDS COMPATIBILITY */
 #define FIND_AND_CONSUME_ARG2(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, TRUE)
 #define VMARGS_OPTION(element) vm->vmArgsArray->actualVMArgs->options[element].optionString
 #define GET_OPTION_VALUE2(element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, resultPtr, 0, delimChar, 0, NULL)
@@ -268,6 +268,7 @@ enum INIT_STAGE {
 #define VMOPT_XDUMP  "-Xdump"
 #define VMOPT_XDUMP_NONE  "-Xdump:none"
 #define VMOPT_XDUMP_DIRECTORY_EQUALS  "-Xdump:directory="
+#define VMOPT_XDUMP_TOOL_OUTOFMEMORYERROR_EXEC_EQUALS "-Xdump:tool:events=systhrow,filter=java/lang/OutOfMemoryError,exec="
 #define VMOPT_XARGENCODING "-Xargencoding"
 #define VMOPT_XARGENCODINGCOLON "-Xargencoding:"
 #define VMOPT_XARGENCODINGUTF8 "-Xargencoding:utf8"
@@ -309,6 +310,8 @@ enum INIT_STAGE {
 #define VMOPT_XXVM_IGNOREUNRECOGNIZED "-XXvm:ignoreUnrecognized"
 #define VMOPT_XXIGNOREUNRECOGNIZEDVMOPTIONSENABLE "-XX:+IgnoreUnrecognizedVMOptions"
 #define VMOPT_XXIGNOREUNRECOGNIZEDVMOPTIONSDISABLE "-XX:-IgnoreUnrecognizedVMOptions"
+#define VMOPT_XXIGNOREUNRECOGNIZEDXXCOLONOPTIONSENABLE "-XX:+IgnoreUnrecognizedXXColonOptions"
+#define VMOPT_XXIGNOREUNRECOGNIZEDXXCOLONOPTIONSDISABLE "-XX:-IgnoreUnrecognizedXXColonOptions"
 #define VMOPT_X142BOOSTGCTHRPRIO "-X142BoostGCThrPrio"
 #define VMOPT_XREALTIME "-Xrealtime"
 #define VMOPT_XNORTSJ "-Xnortsj"
@@ -372,6 +375,11 @@ enum INIT_STAGE {
 #define VMOPT_XXENABLEPOSITIVEHASHCODE "-XX:+PositiveIdentityHash"
 #define VMOPT_XXDISABLEPOSITIVEHASHCODE "-XX:-PositiveIdentityHash"
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define VMOPT_XXENABLEVALHALLA "-XX:+EnableValhalla"
+#define VMOPT_XXDISABLEVALHALLA "-XX:-EnableValhalla"
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 
 #define VMOPT_XUSE_CEEHDLR "-XCEEHDLR"
@@ -413,8 +421,6 @@ enum INIT_STAGE {
 #define VMOPT_XLP_CODECACHE "-Xlp:codecache:"
 #define VMOPT_XTLHPREFETCH "-XtlhPrefetch"
 
-#define VMOPT_XDIAGNOSTICSCOLLECTOR "-Xdiagnosticscollector"
-
 #define VMOPT_XXALLOWNONVIRTUALCALLS "-XX:+AllowNonVirtualCalls"
 #define VMOPT_XXDONTALLOWNONVIRTUALCALLS "-XX:-AllowNonVirtualCalls"
 
@@ -434,6 +440,16 @@ enum INIT_STAGE {
 
 #define VMOPT_XXUSECONTAINERSUPPORT "-XX:+UseContainerSupport"
 #define VMOPT_XXNOUSECONTAINERSUPPORT "-XX:-UseContainerSupport"
+
+#define VMOPT_XXREADIPINFOFORRAS "-XX:+ReadIPInfoForRAS"
+#define VMOPT_XXNOREADIPINFOFORRAS "-XX:-ReadIPInfoForRAS"
+#define VMOPT_ENABLE_PREVIEW "--enable-preview"
+
+#define VMOPT_XXNLSMESSAGES "-XX:+NLSMessages"
+#define VMOPT_XXNONLSMESSAGES  "-XX:-NLSMessages"
+
+#define VMOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
+#define VMOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
 
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
@@ -461,11 +477,7 @@ enum INIT_STAGE {
 #define MAPOPT_XP "-Xp"
 #define MAPOPT_XHEALTHCENTER "-Xhealthcenter"
 #define MAPOPT_XHEALTHCENTER_COLON "-Xhealthcenter:"
-#define MAPOPT_XDIAGNOSTICSCOLLECTOR "-Xdiagnosticscollector"
-#define MAPOPT_XDIAGNOSTICSCOLLECTOR_COLON "-Xdiagnosticscollector:"
 #define MAPOPT_XSOFTREFTHRESHOLD "-Xsoftrefthreshold"
-#define MAPOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
-#define MAPOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
 #define MAPOPT_XXJITDIRECTORY "-XXjitdirectory="
 #define MAPOPT_XSHARE_ON "-Xshare:on"
 #define MAPOPT_XSHARE_OFF "-Xshare:off"
@@ -477,6 +489,7 @@ enum INIT_STAGE {
 #define MAPOPT_XXHEAPDUMPPATH_EQUALS "-XX:HeapDumpPath="
 #define MAPOPT_XXMAXHEAPSIZE_EQUALS "-XX:MaxHeapSize="
 #define MAPOPT_XXINITIALHEAPSIZE_EQUALS "-XX:InitialHeapSize="
+#define MAPOPT_XXONOUTOFMEMORYERROR_EQUALS "-XX:OnOutOfMemoryError="
 
 #define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 

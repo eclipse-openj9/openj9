@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2014 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ void XMLBenchOutputWriter::kill()
 /**
  * This method can be used to create an instanced of this class
  *
- * @param portLib the port library that should be assocaited with the class
+ * @param portLib the port library that should be associated with the class
  * @param createOutput set this to true if you want xml output to be created
  */
 XMLBenchOutputWriter* XMLBenchOutputWriter::newInstance(J9PortLibrary* portlib, bool createOutput) {
@@ -109,7 +109,7 @@ void XMLBenchOutputWriter::endCharts()
  * @param chartName the name to be associated with the chart
  * @param chartImage the name of the file containing the chart
  * @param xAxisLabel the label for the X axis
- * @param yAxisLable the label for the Y axis
+ * @param yAxisLabel the label for the Y axis
  * @param xAxisLog true if the X axis should be logarithmic
  * @param yAxisLog true if the Y axis should be logarithmic
  */

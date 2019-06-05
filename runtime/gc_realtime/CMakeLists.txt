@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 
 add_library(j9realtime STATIC
 	AllocationContextRealtime.cpp
-	BarrierSynchronization.cpp
 	ConfigurationRealtime.cpp
 	EnvironmentRealtime.cpp
 	GlobalAllocationManagerRealtime.cpp
@@ -59,3 +58,7 @@ target_link_libraries(j9realtime
 		omrgc
 		j9gcbase
 )
+
+if(OMR_OS_WINDOWS)
+	target_link_libraries(j9realtime PRIVATE winmm.lib)
+endif()

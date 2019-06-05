@@ -202,8 +202,9 @@ char *compilationErrorNames[]={
    "compilationEnforceProfiling", //49
    "compilationSymbolValidationManagerFailure", //50
    "compilationAOTNoSupportForAOTFailure", //51
-   "compilationStreamFailure", //52
-   "compilationStreamLostMessage", // 53
+   "compilationAOTValidateTMFailure", //52
+   "compilationStreamFailure", //53
+   "compilationStreamLostMessage", // 54
    "compilationMaxError"
 };
 
@@ -301,9 +302,9 @@ j9jit_testarossa_err(
             if (fe->isAsyncCompilation())
                return 0; // early return because the method is queued for compilation
             }
-         // If PersistentJittedBody contains the profile Info and has BlockFrequencyInfo, it will set the 
+         // If PersistentJittedBody contains the profile Info and has BlockFrequencyInfo, it will set the
          // isQueuedForRecompilation field which can be used by the jitted code at runtime to skip the profiling
-         // code if it has made request to recompile this method. 
+         // code if it has made request to recompile this method.
          if (jbi && jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
             jbi->getProfileInfo()->getBlockFrequencyInfo()->setIsQueuedForRecompilation();
 
@@ -1107,10 +1108,6 @@ onLoadInternal(
    if (!TR::CompilationInfo::createCompilationInfo(jitConfig))
       return -1;
 
-#if defined(TR_TARGET_X86)
-   TR_J9VM::initializeX86ProcessorInfo(jitConfig);
-#endif
-
    if (!TR_J9VMBase::createGlobalFrontEnd(jitConfig, TR::CompilationInfo::get()))
       return -1;
 
@@ -1118,7 +1115,7 @@ onLoadInternal(
    if (!feWithoutThread)
       return -1;
 
-   /*aotmcc-move it here from below !!!! this is after the jitConfig->runtimeFlas=AOT is set*/
+   /*aotmcc-move it here from below !!!! this is after the jitConfig->runtimeFlags=AOT is set*/
    /*also jitConfig->javaVM = javaVM has to be set for the case we run j9.exe -Xnoaot ....*/
    J9VMThread *curThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, curThread);
@@ -1144,7 +1141,7 @@ onLoadInternal(
       jitConfig->dataCacheKB = 2048;
 
       //zOS will set the code cache to create at startup after options are enabled below
-#if !defined(J9ZOS390)	
+#if !defined(J9ZOS390)
       if (!isQuickstart) // for -Xquickstart start with one code cache
          numCodeCachesToCreateAtStartup = 4;
 #endif
@@ -1177,7 +1174,7 @@ onLoadInternal(
           * the process is allowed to have; cap the maximum using the default 256m and use a 1m floor.
           * MAXXMMES is specified as the number of 1MB frames.
           * Use the default 2048 KB data cache. The default values for z/TPF can be
-          * overriden via the command line interface.
+          * overridden via the command line interface.
           */
          const uint16_t ZTPF_CODE_CACHE_DIVISOR = 5;
 
@@ -1256,9 +1253,9 @@ onLoadInternal(
 
    // Now that the options have been processed we can initialize the RuntimeAssumptionTables
    // If we cannot allocate various runtime assumption hash tables, fail the JVM
-   
+
    // Allocate trampolines for z/OS 64-bit
-#if defined(J9ZOS390)	
+#if defined(J9ZOS390)
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableRMODE64) && !isQuickstart)
       numCodeCachesToCreateAtStartup = 4;
 #endif
@@ -1436,7 +1433,7 @@ onLoadInternal(
 #ifdef TR_TARGET_S390
    // Need to let VM know that we will be using a machines vector facility (so it can save/restore preserved regs),
    // early in JIT startup to prevent subtle FP bugs
-   if (TR::Compiler->target.cpu.getS390SupportsVectorFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableSIMD))
+   if (TR::Compiler->target.cpu.getSupportsVectorFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableSIMD))
       {
       javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
       }
@@ -1534,7 +1531,7 @@ onLoadInternal(
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler = TR_JProfilerThread::allocate();
       if (!(((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler))
          {
-         TR::Options::getCmdLineOptions()->setOption(TR_DisableJProfilerThread); 
+         TR::Options::getCmdLineOptions()->setOption(TR_DisableJProfilerThread);
          }
       }
    else
@@ -1549,15 +1546,16 @@ onLoadInternal(
    if (TR::Options::_hwProfilerEnabled == TR_yes)
       {
 #if defined(TR_HOST_S390) && defined(BUILD_Z_RUNTIME_INSTRUMENTATION)
-      if (TR::Compiler->target.cpu.getS390SupportsRI())
+      if (TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility())
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = TR_ZHWProfiler::allocate(jitConfig);
 #elif defined(TR_HOST_POWER)
-#if !defined(J9OS_I5_V6R1) && !defined(J9OS_I5_V7R2) /* We may support it since i 7.3. */
+#if !defined(J9OS_I5)
+/* We disable it on current releases. May enable in future. */
       TR_Processor processor = portLibCall_getProcessorType();
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = processor >= TR_PPCp8 ? TR_PPCHWProfiler::allocate(jitConfig) : NULL;
 #else
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = NULL;
-#endif /* !defined(J9OS_I5_V6R1) && !defined(J9OS_I5_V7R2) */
+#endif /* !defined(J9OS_I5) */
 #endif
 
       //Initialize VM support for RI.
@@ -1636,7 +1634,7 @@ onLoadInternal(
       }
 
 #if defined(TR_HOST_S390)
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       {
       // TODO (Guarded Storage): With the change to prevent lower trees, there's
       // an outstanding DLT issue where a LLGFSG is generated when loading the
@@ -1644,6 +1642,13 @@ onLoadInternal(
       // issue is fixed.
       TR::Options::getCmdLineOptions()->setOption(TR_DisableDynamicLoopTransfer);
       }
+#endif
+
+#if defined(TR_HOST_ARM64)
+   // DLT support is not available in AArch64 yet.
+   // OpenJ9 issue #5917 tracks the work to enable.
+   //
+   TR::Options::getCmdLineOptions()->setOption(TR_DisableDynamicLoopTransfer);
 #endif
 
 #if defined(TR_HOST_POWER)

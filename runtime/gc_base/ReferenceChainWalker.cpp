@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ MM_ReferenceChainWalker::tearDown(MM_EnvironmentBase *env)
  * and adds the slot to queue for scanning.
  * @param slotPtr pointer to the slot
  * @param type root or reference type (J9GC_ROOT_TYPE_* or J9GC_REFERENCE_TYPE_*)
- * @param index an index identifying the slot withing the sourceObj
+ * @param index an index identifying the slot within the sourceObj
  * @param sourceObj the object which contains this slot, or NULL if a root
  */
 void
@@ -215,7 +215,7 @@ MM_ReferenceChainWalker::doSlot(J9Object **slotPtr, IDATA type, IDATA index, J9O
  * and adds the slot to queue for scanning.
  * @param slotPtr pointer to the class slot
  * @param type root or reference type (J9GC_ROOT_TYPE_* or J9GC_REFERENCE_TYPE_*)
- * @param index an index identifying the slot withing the sourceObj
+ * @param index an index identifying the slot within the sourceObj
  * @param sourceObj the object which contains this slot, or NULL if a root
  */
 void
@@ -238,7 +238,7 @@ MM_ReferenceChainWalker::doClassSlot(J9Class **slotPtr, IDATA type, IDATA index,
  * If the slot is modified by the callback, stores the modified value back into the field.
  * @param slotPtr pointer to the field slot
  * @param type root or reference type (J9GC_ROOT_TYPE_* or J9GC_REFERENCE_TYPE_*)
- * @param index an index identifying the slot withing the sourceObj
+ * @param index an index identifying the slot within the sourceObj
  * @param sourceObj the object which contains this slot
  */
 void
@@ -303,7 +303,7 @@ MM_ReferenceChainWalker::popObject()
 		while (_hasOverflowed && !_isProcessingOverflow) {
 			/* We can completely clear out the overflow now.  Field ordering has been keep
 			 * via the ordering of doSlot calls.  This is done here as it keeps the queue
-			 * and overflow seperate from the scanning.
+			 * and overflow separate from the scanning.
 			 */
 
 			_isProcessingOverflow = true;

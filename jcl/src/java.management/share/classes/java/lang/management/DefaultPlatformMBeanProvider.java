@@ -66,12 +66,7 @@ final class DefaultPlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		/* LoggingMXBeanImpl depends on java.logging. If java.logging is not 
 		 * available exclude this component.
 		 */
-/*[IF Sidecar19-SE-OpenJ9]*/
-		if (ModuleLayer.boot().findModule("java.logging").isPresent()) //$NON-NLS-1$
-/*[ELSE]
-		if (Layer.boot().findModule("java.logging").isPresent()) //$NON-NLS-1$
-/*[ENDIF]*/
-		{
+		if (ModuleLayer.boot().findModule("java.logging").isPresent()) { //$NON-NLS-1$
 			ComponentBuilder.create(LoggingMXBeanImpl.getInstance())
 				.addInterface(java.lang.management.PlatformLoggingMXBean.class)
 				.register(allComponents);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -320,12 +321,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
    deps->addPreCondition(ediRegister, TR::RealRegister::edi, self());
 
    TR::SymbolReference *helperSymRef =
-      self()->symRefTab()->findOrCreateRuntimeHelper(
-         TR::X86CallSnippet::getDirectToInterpreterHelper(
-            methodSymbol,
-            methodSymbol->getMethod()->returnType(),
-            methodSymbol->isSynchronised()),
-         false, false, false);
+      self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
 
    if (TR::Compiler->target.is64Bit())
       {
@@ -424,7 +420,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
 
    if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      status = curCache->reserveNTrampolines(numTrampolines);
+      status = curCache->reserveSpaceForTrampoline_bridge(numTrampolines);
       if (status != OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
          {
          // Current code cache is no good. Must unreserve
@@ -435,8 +431,13 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
             newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID());
             if (newCache)
                {
-               status = newCache->reserveNTrampolines(numTrampolines);
-               TR_ASSERT(status == OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS, "Failed to reserve trampolines in fresh code cache.");
+               status = newCache->reserveSpaceForTrampoline_bridge(numTrampolines);
+
+               if (status != OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
+                  {
+                  TR_ASSERT(0, "Failed to reserve trampolines in fresh code cache.");
+                  newCache->unreserve();
+                  }
                }
             }
          }

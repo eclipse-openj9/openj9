@@ -505,7 +505,7 @@ void helperConvertIntegerToFloat(I_32 *src, jfloat *dst);
 /**
 * @brief Helper function called by VM interpreter, using pointers 
 *        to values. Converts a long number to double precision.
-* @param[in] *src Pointer to long value to be converted to doble.
+* @param[in] *src Pointer to long value to be converted to double.
 * @param[out] *dst Pointer to the resulting double value.
 * @return Void.
 *
@@ -1299,14 +1299,13 @@ void validateLibrary(J9JavaVM *javaVM, J9NativeLibrary *library);
 * @param *vm
 * @param *romMethod
 * @param *romClass
-* @param offset
 * @param *classLoader
 * @param relativePC
 * @param *romClass
 * @return UDATA
 */
 UDATA
-getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA offset, J9ClassLoader *classLoader, UDATA relativePC);
+getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, J9ClassLoader *classLoader, UDATA relativePC);
 
 /**
 * @brief
@@ -2042,7 +2041,7 @@ typedef struct J9JVMTIHCRJitEventData {
 	UDATA * dataCursor;      /*!< cursor into the data buffer */
 	UDATA * data;            /*!< data buffer containing the jit class redefinition event data */
 	UDATA classCount;        /*!< number of classes in the data buffer */
-	UDATA initialized;       /*!< indicates that the strucutre has been initialized and is ready for use and dealloc */
+	UDATA initialized;       /*!< indicates that the structure has been initialized and is ready for use and dealloc */
 } J9JVMTIHCRJitEventData;
 
 void
@@ -2062,9 +2061,6 @@ fixSubclassHierarchy (J9VMThread * currentThread, J9HashTable* classHashTable);
 
 void
 fixITables(J9VMThread * currentThread, J9HashTable* classHashTable);
-
-void
-fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classHashTable);
 
 void
 fixArrayClasses(J9VMThread * currentThread, J9HashTable* classHashTable);
@@ -2281,7 +2277,7 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 UDATA
 addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename);
 
-/* ---------------- genericSignalHander.c ---------------- */
+/* ---------------- genericSignalHandler.c ---------------- */
 
 /**
 * @brief generic signal handler that dumps the registers contents from the time of crash and aborts.
@@ -2351,7 +2347,7 @@ void props_file_do(j9props_file_t file, j9props_file_iterator iterator, void* us
  * Function to determine if the zos version is at least a given
  * release and version.  The implementation is based on uname(),
  * NOT on __osname() as the __osname() release numbers are not
- * guarenteed to increase.
+ * guaranteed to increase.
  *
  * For release and version numbers, see
  * 	http://publib.boulder.ibm.com/infocenter/zos/v1r10/index.jsp?topic=/com.ibm.zos.r10.bpxbd00/osnm.htm

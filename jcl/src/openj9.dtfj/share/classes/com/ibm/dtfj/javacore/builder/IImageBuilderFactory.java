@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ public interface IImageBuilderFactory  {
 	/**
 	 * Usually, there is just one image builder factory per javacore
 	 * @param id unique
-	 * @return generated iamge builder factory
+	 * @return generated image builder factory
 	 */
 	public IImageBuilder generateImageBuilder(String id);
 }

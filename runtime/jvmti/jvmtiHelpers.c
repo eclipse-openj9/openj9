@@ -471,7 +471,7 @@ javaOffloadSwitchOff(J9JVMTIEnv * j9env, J9VMThread * currentThread, UDATA event
 	vm = currentThread->javaVM;
 
 	/* There are two cases for zAAP switching:
-	 * 1) The agent libary (most likely created by customer) calls GetEnv() at any time when required 
+	 * 1) The agent library (most likely created by customer) calls GetEnv() at any time when required 
 	 *    but doesn't need to call GetEnv() in Agent_OnLoad. Thus, it may be possible for j9env->library 
 	 *    to be NULL if JVMTI is used directly by the VM.
 	 * 2) The flag in J9NativeLibrary->doSwitching requires it to do zAAP switching.

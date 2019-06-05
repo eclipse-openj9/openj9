@@ -1069,7 +1069,7 @@ static const char * const excludeArray[] = {
    "java/lang/reflect/AccessibleObject.invokeD(Ljava/lang/Object;[Ljava/lang/Object;)D",
    "java/lang/reflect/AccessibleObject.invokeL(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;",
-   "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;"
+   "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;"
 };
@@ -1184,7 +1184,7 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
 
    // For methods that are resolved but are still interpreted and have high counts
    // we can assume the method is cold
-   // We do this for direct calls and currenly not-overridden virtual calls
+   // We do this for direct calls and currently not-overridden virtual calls
    // For overridden virtual calls we may decide at some point to traverse all the
    // existing targets to see if they are all interpreted with high counts
    //
@@ -1226,7 +1226,7 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
    if ((!comp->getOption(TR_DisableDFP)) &&
        (
 #ifdef TR_TARGET_S390
-       TR::Compiler->target.cpu.getS390SupportsDFP() ||
+       TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility() ||
 #endif
        TR::Compiler->target.cpu.supportsDecimalFloatingPoint()) && sym != NULL)
       {
@@ -1310,7 +1310,7 @@ TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *method
 
    c->setPeekingSymRefTab(newSymRefTab);
 
-   // Do this so that all intermedate calls to c->getSymRefTab()
+   // Do this so that all intermediate calls to c->getSymRefTab()
    // in codegen.dev go to the new symRefTab
    //
    c->setCurrentSymRefTab(newSymRefTab);
@@ -1320,7 +1320,7 @@ TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *method
    TR_ByteCodeInfo bci;
 
    //incInlineDepth is a part of a hack to make InvariantArgumentPreexistence
-   //play nicely if getCurrentInlinedCallArgInfo is provided while peeeking.
+   //play nicely if getCurrentInlinedCallArgInfo is provided while peeking.
    //If we don't provide either dummy (default is set to NULL) or real argInfo we will end up
    //using the wrong argInfo coming from a CALLER rather than the peeking method.
    c->getInlinedCallArgInfoStack().push(argInfo);
@@ -2183,7 +2183,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
    if (comp->getOption(TR_DisableDFP) ||
        (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.getS390SupportsDFP()
+       || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
          ) ||
           !TR_J9MethodBase::isBigDecimalMethod(j9method)))
@@ -6068,8 +6068,8 @@ TR_ResolvedJ9Method::isConstantDynamic(I_32 cpIndex)
 // If first slot is non null, the CP entry is resolved to a non-null value.
 // Else if second slot is the class object of j/l/Void, the CP entry is resolved to null (0) value.
 // We retrieve the Void class object via javaVM->voidReflectClass->classObject,
-// which is protected by VMAccessCrtitical section to ensure vm access.
-// Other casese, the CP entry is considered unresolved.
+// which is protected by VMAccessCritical section to ensure vm access.
+// Other cases, the CP entry is considered unresolved.
 bool
 TR_ResolvedJ9Method::isUnresolvedConstantDynamic(I_32 cpIndex)
    {
@@ -6546,7 +6546,7 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
       // ILGen macros currently must be resolved for correctness, or else they
       // are not recognized and expanded.  If we have unresolved calls, we can't
       // tell whether they're ilgen macros because the recognized-method system
-      // only works on resovled methods.
+      // only works on resolved methods.
       //
       if (ramMethod)
          skipForDebugging = false;
@@ -7109,6 +7109,104 @@ TR_ResolvedJ9Method::fieldIsFromLocalClass(int32_t cpIndex)
       return true;
    else
       return false;
+   }
+
+
+void
+TR_ResolvedJ9Method::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
+   {
+   if (methodSym->getTempIndex() != -1)
+      return;
+
+   const char *className    = classNameChars();
+   const int   classNameLen = classNameLength();
+   const char *sig          = signatureChars();
+   const int   sigLen       = signatureLength();
+   const char *sigEnd       = sig + sigLen;
+
+   ListAppender<TR::ParameterSymbol> la(&methodSym->getParameterList());
+   TR::ParameterSymbol *parmSymbol;
+   int32_t slot;
+   int32_t ordinal = 0;
+   if (methodSym->isStatic())
+      {
+      slot = 0;
+      }
+   else
+      {
+      parmSymbol = methodSym->comp()->getSymRefTab()->createParameterSymbol(methodSym, 0, TR::Address);
+      parmSymbol->setOrdinal(ordinal++);
+
+      int32_t len = classNameLen; // len is passed by reference and changes during the call
+      char * s = classNameToSignature(className, len, methodSym->comp(), heapAlloc);
+
+      la.add(parmSymbol);
+      parmSymbol->setTypeSignature(s, len);
+
+      slot = 1;
+      }
+
+   const char *s = sig;
+   TR_ASSERT(*s == '(', "Bad signature for method: <%s>", s);
+   ++s;
+
+   uint32_t parmSlots = numberOfParameterSlots();
+   for (int32_t parmIndex = 0; slot < parmSlots; ++parmIndex)
+      {
+      TR::DataType type = parmType(parmIndex);
+      int32_t size = methodSym->convertTypeToSize(type);
+      if (size < 4) type = TR::Int32;
+
+      const char *end = s;
+
+      // Walk past array dims, if any
+      while (*end == '[')
+         {
+         ++end;
+         }
+
+      // Walk to the end of the class name, if this is a class name
+      if (*end == 'L')
+         {
+         // Assume the form is L<classname>; where <classname> is
+         // at least 1 char and therefore skip the first 2 chars
+         end += 2;
+         end = (char *)memchr(end, ';', sigEnd - end);
+         TR_ASSERT(end != NULL, "Unexpected NULL, expecting to find a parm of the form L<classname>;");
+         }
+
+      // The static_cast<int>(...) is added as a work around for an XLC bug that results in the
+      // pointer subtraction below getting converted into a 32-bit signed integer subtraction
+      int len = static_cast<int>(end - s) + 1;
+
+      parmSymbol = methodSym->comp()->getSymRefTab()->createParameterSymbol(methodSym, slot, type);
+      parmSymbol->setOrdinal(ordinal++);
+      parmSymbol->setTypeSignature(s, len);
+
+      s += len;
+
+      la.add(parmSymbol);
+      if (type == TR::Int64 || type == TR::Double)
+         {
+         slot += 2;
+         }
+      else
+         {
+         ++slot;
+         }
+      }
+
+   int32_t lastInterpreterSlot = parmSlots + numberOfTemps();
+
+   if ((methodSym->isSynchronised() || methodSym->getResolvedMethod()->isNonEmptyObjectConstructor()) &&
+       methodSym->comp()->getOption(TR_MimicInterpreterFrameShape))
+      {
+      ++lastInterpreterSlot;
+      }
+
+   methodSym->setTempIndex(lastInterpreterSlot, methodSym->comp()->fe());
+
+   methodSym->setFirstJitTempIndex(methodSym->getTempIndex());
    }
 
 

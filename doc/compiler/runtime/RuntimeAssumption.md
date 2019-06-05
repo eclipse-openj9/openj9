@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2000, 2018 IBM Corp. and others
+Copyright (c) 2000, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,44 +75,32 @@ In cases where runtime assumption reclaiming is done during a gc cycle, it's ver
 important that we minimize the processing time so that we don't unduly extend
 the GC pause times.
 
+The Runtime Assumption Table (RAT) employs a mark-sweep style of clean-up. When an
+assumption needs to be removed from the table because it is no longer being used
+or is no longer valid, a bit is set on the assumption. This bit means that all
+searches of the RAT via the public APIs will never return a pointer to the 
+'dead' assumption. Internally, the assumption remains in the table's linked lists.
+
+At the start of every GC cycle, the JIT will allow the Runtime Assumption Table 
+to clean-up a fixed number of entries. This is done by walking the buckets in 
+the table and checking if the bucket has been recorded as containing dead entries.
+Once a bucket with dead entries is identified we walk the linked list looking for
+dead assumptions. When one is found we check if the assumption is currently in a
+JIT'd body circular linked list. If it is, a walk of that linked list is done
+removing all dead entries from that list. Once completed the dead assumption is
+removed from the bucket linked list.
+
+This staged approach allows us to amortize the clean-up of the assumptions over
+time and minimizes the amount of clean-up done during any single period where
+execution is stopped. Prior to the conversion to lazy removal you could have 
+long pauses when the assumption table had to eagerly clean up all of the dead
+assumptions.
+
 Currently there are two methods for removing runtime assumptions. The first is to
 remove assumptions one at a time which can be costly if many assumptions are being 
 removed in sequence during a GC cycle. The second method is to mark a set of 
 assumptions that are going to be removed and then do a single scan of the runtime 
 assumption table to remove all the marked assumptions in one pass.
-
-**Implementation details** for the marking runtime assumption reclaiming method:
-
-An array of bools is created, one element in the array for each assumption "kind"
-in the *runtime assumption table* (RAT). The bool is set to "true" when at least 
-one assumption of that "kind" has been marked. In the Hashtable of assumptions 
-(there is one hashtable for each assumption "kind") an array of 32bit integers is 
-created that matches the number of buckets in the hashtable. This array of 
-integers is used to count the number of marked assumptions in each hashtable 
-bucket.
-
-When an assumption is marked *markForDetachFromRAT()* the bool array and a 
-hashtable integer array is updated. Marking is implemented as a low-order bit 
-being set on the "next" pointer *_nextAssumptionForSameJittedBody* and therefore 
-it's important that the assumption is detached from the JIT body linked-list when 
-marking happens. The routine *markAssumptionsAndDetach()* is responsible for 
-detaching JIT body assumptions from the body linked-list and marking assumptions.
-
-After all assumptions have been marked that are in need of being reclaimed, we 
-can initiate a single pass over the RAT using *reclaimMarkedAssumptionsFromRAT()*. 
-For each assumption "kind" hashtable which has been marked as having at least 
-one marked assumption and for each hashtable bucket that has a marked count that 
-is greater then zero, we walk the buckets linked-list removing any marked 
-assumption.
-
-This mark and sweep process allows us to efficiently remove assumptions from the 
-RAT without having to have a "previous" pointer in the runtime assumption 
-structure. Since the number of runtime assumptions can at times number in the 
-hundreds of thousands, it's important to keep the runtime assumption structure as 
-compact as possible. The mark and sweep reclaiming process is now used for all
-cases of assumption reclaiming during a GC cycle, but it can be disabled by
-setting the *TR_useOldRAReclaim* environment variable to "1" which will cause
-the "one at a time" reclaiming process to be used during GC cycles.
 
 ---
 

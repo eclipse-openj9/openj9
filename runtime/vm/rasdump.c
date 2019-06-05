@@ -58,7 +58,7 @@ void J9RASInitialize (J9JavaVM* javaVM);
 void J9RASShutdown (J9JavaVM* javaVM);
 void J9RASCheckDump(J9JavaVM* javaVM);
 void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
-static J9RAS* allocateRASStruct(J9PortLibrary* portLib);
+static J9RAS* allocateRASStruct(J9JavaVM *javaVM);
 
 JNIEXPORT struct {
 	union {
@@ -294,7 +294,7 @@ J9RASInitialize(J9JavaVM* javaVM)
 	const char *osarch = j9sysinfo_get_CPU_architecture();
 	const char *osname = j9sysinfo_get_OS_type();
 	const char *osversion = j9sysinfo_get_OS_version();
-	J9RAS *rasStruct = allocateRASStruct(PORTLIB);
+	J9RAS *rasStruct = allocateRASStruct(javaVM);
 
 	memset(rasStruct, 0, sizeof(J9RAS));
 	strcpy((char*)rasStruct->eyecatcher, "J9VMRAS");
@@ -390,6 +390,8 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 		javaVersion = "JRE 11";
 	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {
 		javaVersion = "JRE 12";
+	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V13) {
+		javaVersion = "JRE 13";
 	} else {
 		javaVersion = "UNKNOWN";
 	}
@@ -424,7 +426,7 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	}
 }
 
-#if !defined(J9ZOS390) && !defined(J9ZTPF) && defined(J9VM_GC_COMPRESSED_POINTERS)
+#if !defined(J9ZOS390) && !defined(J9ZTPF) && defined(OMR_GC_COMPRESSED_POINTERS)
 #define ALLOCATE_RAS_DATA_IN_SUBALLOCATOR
 #endif
 
@@ -433,7 +435,7 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 #endif
 
 static J9RAS*
-allocateRASStruct(J9PortLibrary* portLib)
+allocateRASStruct(J9JavaVM *javaVM)
 {
 	J9RAS* candidate = (J9RAS*)GLOBAL_DATA(_j9ras_);
 	/*
@@ -448,45 +450,46 @@ allocateRASStruct(J9PortLibrary* portLib)
 	 * Compressed references: the RAS data is relocated to the JVM suballocator once the latter is created.
 	 */
 #if !defined(USE_STATIC_RAS_STRUCT) && !defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR)
+	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+		/* if not z/OS or AIX32 */
 
-	/* if not z/OS or AIX32 */
+		J9PortVmemParams params;
+		J9PortVmemIdentifier identifier;
+		J9AllocatedRAS* result = NULL;
+		UDATA pageSize;
+		UDATA roundedSize;
 
-	J9PortVmemParams params;
-	J9PortVmemIdentifier identifier;
-	J9AllocatedRAS* result = NULL;
-	UDATA pageSize;
-	UDATA roundedSize;
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-	PORT_ACCESS_FROM_PORT(portLib);
-
-	pageSize = j9vmem_supported_page_sizes()[0];
-	if (0 == pageSize) { /* problems in the port library */
-		return candidate;
-	}
-	j9vmem_vmem_params_init(&params);
+		pageSize = j9vmem_supported_page_sizes()[0];
+		if (0 == pageSize) { /* problems in the port library */
+			return candidate;
+		}
+		j9vmem_vmem_params_init(&params);
 #if defined (AIXPPC)
-	/* the low 768MB is out of bounds on AIX. Don't even bother trying */
-	params.startAddress = (void *)0x30000000;
+		/* the low 768MB is out of bounds on AIX. Don't even bother trying */
+		params.startAddress = (void *)0x30000000;
 #else /* defined (AIXPPC) */
-	params.startAddress = (void *)pageSize;
+		params.startAddress = (void *)pageSize;
 #endif /* defined (AIXPPC) */
-	params.endAddress = OMR_MIN((void *) candidate, (void *) (UDATA) 0xffffffff); /* don't bother allocating after the static */
-	params.byteAmount = sizeof(J9AllocatedRAS);
-	params.pageSize = pageSize;
-	/* round up byteAmount to pageSize */
-	roundedSize = params.byteAmount + params.pageSize - 1;
-	params.byteAmount = roundedSize - (roundedSize % params.pageSize);
-	params.mode = J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_COMMIT;
-	params.options = J9PORT_VMEM_ALLOC_DIR_BOTTOM_UP;
+		params.endAddress = OMR_MIN((void *) candidate, (void *) (UDATA) 0xffffffff); /* don't bother allocating after the static */
+		params.byteAmount = sizeof(J9AllocatedRAS);
+		params.pageSize = pageSize;
+		/* round up byteAmount to pageSize */
+		roundedSize = params.byteAmount + params.pageSize - 1;
+		params.byteAmount = roundedSize - (roundedSize % params.pageSize);
+		params.mode = J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_COMMIT;
+		params.options = J9PORT_VMEM_ALLOC_DIR_BOTTOM_UP;
 #if defined(J9ZTPF)
-	params.options |= J9PORT_VMEM_ZTPF_USE_31BIT_MALLOC;
+		params.options |= J9PORT_VMEM_ZTPF_USE_31BIT_MALLOC;
 #endif
-	params.category = OMRMEM_CATEGORY_VM;
+		params.category = OMRMEM_CATEGORY_VM;
 
-	result = j9vmem_reserve_memory_ex(&identifier, &params);
-	if (NULL != result) {
-		memcpy(&result->vmemid, &identifier, sizeof(identifier));
-		candidate = &result->ras;
+		result = j9vmem_reserve_memory_ex(&identifier, &params);
+		if (NULL != result) {
+			memcpy(&result->vmemid, &identifier, sizeof(identifier));
+			candidate = &result->ras;
+		}
 	}
 #endif /* !defined(USE_STATIC_RAS_STRUCT) && !defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
 	return candidate;
@@ -495,28 +498,32 @@ allocateRASStruct(J9PortLibrary* portLib)
 void J9RelocateRASData(J9JavaVM* javaVM) {
 	/* See comments for allocateRASStruct concerning compressed references and z/OS */
 #if !defined(USE_STATIC_RAS_STRUCT) && defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR)
-	PORT_ACCESS_FROM_JAVAVM(javaVM);
-	J9RAS * result = j9mem_allocate_memory32(sizeof(J9RAS), OMRMEM_CATEGORY_VM);
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		J9RAS * result = j9mem_allocate_memory32(sizeof(J9RAS), OMRMEM_CATEGORY_VM);
 
-	if (NULL != result) {
-		memcpy(result, (J9RAS*)GLOBAL_DATA(_j9ras_), sizeof(J9RAS));
-		javaVM->j9ras = result;
-		memset((J9RAS*)GLOBAL_DATA(_j9ras_), 0, sizeof(J9RAS));
+		if (NULL != result) {
+			memcpy(result, (J9RAS*)GLOBAL_DATA(_j9ras_), sizeof(J9RAS));
+			javaVM->j9ras = result;
+			memset((J9RAS*)GLOBAL_DATA(_j9ras_), 0, sizeof(J9RAS));
+		}
 	}
 #endif /* defined(USE_STATIC_RAS_STRUCT) && defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
 	return;
 }
 
 static void
-freeRASStruct(J9PortLibrary* portLib, J9RAS* rasStruct)
+freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
 {
 #if !defined(USE_STATIC_RAS_STRUCT)
 	if (rasStruct != GLOBAL_DATA(_j9ras_)) { /* dynamic allocation may have failed */
-		PORT_ACCESS_FROM_PORT(portLib);
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 #if defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) /* memory was allocated using j9vmem_reserve_memory_ex */
-		j9mem_free_memory32(rasStruct);
-#else
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+			j9mem_free_memory32(rasStruct);
+		} else
+#endif /* defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
 		{
 			J9AllocatedRAS* allocatedStruct = (J9AllocatedRAS*)rasStruct;
 			J9PortVmemIdentifier identifier;
@@ -530,7 +537,6 @@ freeRASStruct(J9PortLibrary* portLib, J9RAS* rasStruct)
 			memcpy(&identifier, &allocatedStruct->vmemid, sizeof(identifier));
 			j9vmem_free_memory(allocatedStruct, sizeof(J9AllocatedRAS), &identifier);
 		}
-#endif /* defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
 	}
 #endif /* defined(USE_STATIC_RAS_STRUCT) */
 }
@@ -561,7 +567,7 @@ J9RASShutdown(J9JavaVM *javaVM)
 		j9mem_free_memory(systemInfo);
 	}
 
-	freeRASStruct(PORTLIB, javaVM->j9ras);
+	freeRASStruct(javaVM, javaVM->j9ras);
 	javaVM->j9ras = NULL;
 }
 
@@ -572,20 +578,26 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 	j9addrinfo_t hints;
 	U_64 startTime, endTime;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	/* measure the time taken to call the socket APIs, so we can issue a warning */
 	startTime = j9time_current_time_millis();
 
 	/* get the host name and IP addresses */
-	if (0 != j9sock_gethostname((char*)rasStruct->hostname,  sizeof(rasStruct->hostname) )) {
+	if (0 != omrsysinfo_get_hostname((char*)rasStruct->hostname,  sizeof(rasStruct->hostname) )) {
 		/* error so null the buffer so we don't try to work with it on the other side */
 		memset(rasStruct->hostname, 0, sizeof(rasStruct->hostname));
 	}
 	/* ensure that the string is properly terminated */
 	rasStruct->hostname[sizeof(rasStruct->hostname)-1] = '\0';
 
+#if defined(J9OS_I5)
+	/* set AI_ADDRCONFIG(0x08) to fix low performance of inactive ipv6 resolving */
+	j9sock_getaddrinfo_create_hints( &hints, (I_16) J9ADDR_FAMILY_UNSPEC, 0, J9PROTOCOL_FAMILY_UNSPEC, 0x08 ); 
+#else
 	/* create the hints structure for both IPv4 and IPv6 */
 	j9sock_getaddrinfo_create_hints( &hints, (I_16) J9ADDR_FAMILY_UNSPEC, 0, J9PROTOCOL_FAMILY_UNSPEC, 0 );
+#endif
 	/* rasStruct->hostname can't simply be localhost since that is always 127.0.0.1 */
 	if (0 !=  j9sock_getaddrinfo((char*)rasStruct->hostname, hints, &addrinfo )) {
 		/* error so null the buffer so we don't try to work with it on the other side */

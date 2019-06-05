@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ public void testThreads() {
 	}
 	// test three
 	// receiver monitor contended all the time
-	// shared object different per thread so not contension anywhere
+	// shared object different per thread so not contention anywhere
 	for (loop = 1; loop < MAXTHREADS; loop++) {
 		Thread threads[] = new Thread[loop];
 		timer.reset();

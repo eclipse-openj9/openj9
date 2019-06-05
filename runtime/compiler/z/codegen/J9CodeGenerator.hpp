@@ -113,6 +113,9 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool supportsPackedShiftRight(int32_t resultPrecision, TR::Node *shiftSource, int32_t shiftAmount);
    bool canGeneratePDBinaryIntrinsic(TR::ILOpCodes opCode, TR::Node * op1PrecNode, TR::Node * op2PrecNode, TR::Node * resultPrecNode);
 
+   bool constLoadNeedsLiteralFromPool(TR::Node *node);
+   
+   bool supportsTrapsInTMRegion(){ return TR::Compiler->target.isZOS();}
 
    using J9::CodeGenerator::addAllocatedRegister;
    void addAllocatedRegister(TR_PseudoRegister * temp);
@@ -259,7 +262,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool inlineCryptoMethod(TR::Node *node, TR::Register *&resultReg);
 #endif
 
-   void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp);
+   void incRefCountForOpaquePseudoRegister(TR::Node * node);
 
    /** \brief
     *     Generates a VM call helper sequence along with the necessary metadata in the instruction stream which when
@@ -300,6 +303,40 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     *    per node.
     */
    int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 45; }
+
+   /** \brief
+    *     Sets whether decimal overflow or fixed point overflow checks should be generated for instructions which
+    *     support such by-passes.
+    *
+    *  \note
+    *     This is applicable to z15 hardware accelerated vector packed decimal operations and is typically used to
+    *     control whether the ignore overflow mask (IOM) bit is set in vector packed decimal instructions.
+    */
+   void setIgnoreDecimalOverflowException(bool v)
+      {
+      _ignoreDecimalOverflowException = v;
+      }
+
+   /** \brief
+    *     Gets whether decimal overflow or fixed point overflow checks should be generated for instructions which
+    *     support such by-passes.
+    *
+    *  \note
+    *     This is applicable to z15 hardware accelerated vector packed decimal operations and is typically used to
+    *     control whether the ignore overflow mask (IOM) bit is set in vector packed decimal instructions.
+    */
+   bool getIgnoreDecimalOverflowException()
+      {
+      return _ignoreDecimalOverflowException;
+      }
+
+   private:
+
+   /** \brief
+    *     Determines whether decimal overflow or fixed point overflow checks should be generated for instructions which
+    *     support such by-passes.
+    */
+   bool _ignoreDecimalOverflowException;
    };
 
 }

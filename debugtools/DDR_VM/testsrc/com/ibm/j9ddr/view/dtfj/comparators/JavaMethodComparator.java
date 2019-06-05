@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,12 +62,12 @@ public class JavaMethodComparator extends DTFJComparator {
 			testJavaEquals(ddrJavaMethod, jextractJavaMethod, "getName");
 	}
 
-	// JEXTRACT has a bug where warm/cold compiled sections are not haneld properly.
+	// JEXTRACT has a bug where warm/cold compiled sections are not handled properly.
 	// DDR handles these sections properly so may return more sections than jextract.
 	
 	// When number of returned values are the same test that they are all the same.
-	// If the number siffer, remove all cold sections from DDR output and make sure remainders
-	// match jextract output.  In this scenerio we must ignore the size of the jextract output since
+	// If the numbers differ, remove all cold sections from DDR output and make sure remainders
+	// match jextract output.  In this scenario we must ignore the size of the jextract output since
 	// it too is incorrect
 	
 	public static void compareCompiledSections(JavaMethod ddrJavaMethod, JavaMethod jextractJavaMethod, DTFJComparator imageSectionComparator) {

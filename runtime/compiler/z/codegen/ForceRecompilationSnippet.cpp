@@ -35,7 +35,6 @@
 uint8_t *
 TR::S390ForceRecompilationSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(cursor);
    TR::Compilation *comp = cg()->comp();
@@ -55,7 +54,7 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    *(int16_t *) cursor = 0xC0E0;
    cursor += sizeof(int16_t);
 
-   // Place holder.  Proper offset will be calulated by relocation.
+   // Place holder.  Proper offset will be calculated by relocation.
    *(int32_t *) cursor = 0xDEADBEEF;
    cursor += sizeof(int32_t);
 

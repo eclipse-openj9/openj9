@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.AfterClass;
@@ -62,7 +61,9 @@ import com.ibm.lang.management.ProcessingCapacityNotificationInfo;
 
 // These classes are not public API.
 import com.ibm.java.lang.management.internal.MemoryMXBeanImpl;
+import com.ibm.java.lang.management.internal.MemoryNotificationInfoUtil;
 import com.ibm.lang.management.internal.ExtendedOperatingSystemMXBeanImpl;
+import com.ibm.lang.management.internal.ProcessingCapacityNotificationInfoUtil;
 
 @SuppressWarnings({ "nls", "static-method", "unused" })
 @Test(groups = { "level.sanity" })
@@ -77,6 +78,7 @@ public class TestManagementFactory {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
+		// do nothing
 	}
 
 	@Test
@@ -326,7 +328,6 @@ public class TestManagementFactory {
 			proxy.setVerbose(!initialVal);
 			AssertJUnit.assertTrue(proxy.isVerbose() != initialVal);
 			proxy.setVerbose(initialVal);
-
 		} catch (IOException e) {
 			Assert.fail("Unexpected IOException : " + e.getMessage());
 			e.printStackTrace();
@@ -353,7 +354,6 @@ public class TestManagementFactory {
 					logger.debug("UnsupportedOperationException occurred, as expected: " + t.getMessage());
 				}
 			}
-
 		} catch (IOException e) {
 			Assert.fail("Unexpected IOException : " + e.getMessage());
 			e.printStackTrace();
@@ -505,7 +505,7 @@ public class TestManagementFactory {
 			try {
 				MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 				MemoryNotificationInfo info = new MemoryNotificationInfo("Bob", mu, 42);
-				CompositeData cd = TestUtil.toCompositeData(info);
+				CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 				Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 						new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 				notification.setUserData(cd);
@@ -549,7 +549,7 @@ public class TestManagementFactory {
 			try {
 				MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 				MemoryNotificationInfo info = new MemoryNotificationInfo("Tim", mu, 42);
-				CompositeData cd = TestUtil.toCompositeData(info);
+				CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 				Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 						new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 				notification.setUserData(cd);
@@ -595,7 +595,7 @@ public class TestManagementFactory {
 			// Fire off a notification and ensure that the listener receives it.
 			MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 			MemoryNotificationInfo info = new MemoryNotificationInfo("Marcel", mu, 42);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 					new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -657,7 +657,7 @@ public class TestManagementFactory {
 			// Fire off a notification and ensure that the listener receives it.
 			MemoryUsage mu = new MemoryUsage(1, 2, 3, 4);
 			MemoryNotificationInfo info = new MemoryNotificationInfo("Marcel", mu, 42);
-			CompositeData cd = TestUtil.toCompositeData(info);
+			CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(info);
 			Notification notification = new Notification(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
 					new ObjectName(ManagementFactory.MEMORY_MXBEAN_NAME), 42);
 			notification.setUserData(cd);
@@ -739,7 +739,7 @@ public class TestManagementFactory {
 			AssertJUnit.assertNotNull(stdProxy);
 			AssertJUnit.assertTrue(proxy instanceof NotificationEmitter);
 			NotificationEmitter proxyEmitter = (NotificationEmitter)proxy;
-			// Verify that the notification info can be retreived OK
+			// Verify that the notification info can be retrieved OK
 			MBeanNotificationInfo[] notifications = proxyEmitter.getNotificationInfo();
 			AssertJUnit.assertNotNull(notifications);
 			AssertJUnit.assertTrue(notifications.length > 0);
@@ -781,7 +781,6 @@ public class TestManagementFactory {
 			AssertJUnit.assertEquals(proxy.isVerbose(), ManagementFactory.getMemoryMXBean().isVerbose());
 
 			// TODO : Test out setVerbose when the VM API is implemented.
-
 		} catch (IOException e) {
 			Assert.fail("Unexpected IOException : " + e.getMessage());
 			e.printStackTrace();
@@ -1091,7 +1090,7 @@ public class TestManagementFactory {
 			// Fire off a notification and ensure that the listener receives it.
 			try {
 				ProcessingCapacityNotificationInfo info = new ProcessingCapacityNotificationInfo(24);
-				CompositeData cd = TestUtil.toCompositeData(info);
+				CompositeData cd = ProcessingCapacityNotificationInfoUtil.toCompositeData(info);
 				Notification notification = new Notification(
 						ProcessingCapacityNotificationInfo.PROCESSING_CAPACITY_CHANGE,
 						new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 12);
@@ -1139,7 +1138,7 @@ public class TestManagementFactory {
 			// Fire off a notification and ensure that the listener receives it.
 			try {
 				ProcessingCapacityNotificationInfo info = new ProcessingCapacityNotificationInfo(240);
-				CompositeData cd = TestUtil.toCompositeData(info);
+				CompositeData cd = ProcessingCapacityNotificationInfoUtil.toCompositeData(info);
 				Notification notification = new Notification(
 						ProcessingCapacityNotificationInfo.PROCESSING_CAPACITY_CHANGE,
 						new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME), 12);

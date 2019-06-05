@@ -252,4 +252,28 @@
 			<subset>11+</subset>
 		</subsets>
 	</test>
+	<test>
+		<testCaseName>JCL_TEST_Java-Lang-Invoke</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+			-testnames JCL_TEST_Java-Lang-Invoke \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+	</test>
 </playlist>

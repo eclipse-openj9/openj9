@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -907,6 +907,7 @@ class NameAndTypeIterator
 	bool hasEmptyFinalizeMethod() const { return _hasEmptyFinalizeMethod; }
 	bool hasFinalFields() const { return _hasFinalFields; }
 	bool isClassContended() const { return _isClassContended; }
+	bool isClassUnmodifiable() const { return _isClassUnmodifiable; }
 	bool hasNonStaticNonAbstractMethods() const { return _hasNonStaticNonAbstractMethods; }
 	bool hasFinalizeMethod() const { return _hasFinalizeMethod; }
 	bool isCloneable() const { return _isCloneable; }
@@ -922,6 +923,7 @@ class NameAndTypeIterator
 	bool hasClinit() const { return _hasClinit; }
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
+	bool needsStaticConstantInit() const { return _needsStaticConstantInit; }
 
 	U_8 constantDynamicType(U_16 cpIndex) const
 	{
@@ -949,6 +951,7 @@ private:
 		JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION,
 		JAVA8_CONTENDED_ANNOTATION,
 		CONTENDED_ANNOTATION,
+		UNMODIFIABLE_ANNOTATION,
 		KNOWN_ANNOTATION_COUNT
 	};
 
@@ -988,11 +991,13 @@ private:
 	bool _isSerializable;
 	bool _isSynthetic;
 	bool _isClassContended;
+	bool _isClassUnmodifiable;
 	bool _hasVerifyExcludeAttribute;
 	bool _hasFrameIteratorSkipAnnotation;
 	bool _hasClinit;
 	bool _annotationRefersDoubleSlotEntry;
 	bool _isInnerClass;
+	bool _needsStaticConstantInit;
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;

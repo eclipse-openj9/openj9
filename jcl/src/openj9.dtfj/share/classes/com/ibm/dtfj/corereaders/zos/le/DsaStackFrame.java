@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -323,7 +323,7 @@ public class DsaStackFrame {
                 } else {
                     /* 
                      * Check whether this module is a wrapped
-                     * trnsfer vector.                      
+                     * transfer vector.                      
                      *   If the module entry-point + 0 = X'47F0Fxxx'
                      *      (a 'BR xxx(15)' instruction)           
                      *     Calculate the address of the signature:

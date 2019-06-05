@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,37 @@ target_link_libraries(j9zlib
 	PRIVATE
 		j9vm_interface
 )
+
+omr_add_exports(j9zlib
+	j9zlib_adler32
+	j9zlib_compress
+	j9zlib_compress2
+	j9zlib_crc32
+	j9zlib_deflate
+	j9zlib_deflateCopy
+	j9zlib_deflateEnd
+	j9zlib_deflateInit_
+	j9zlib_deflateInit2_
+	j9zlib_deflateParams
+	j9zlib_deflateReset
+	j9zlib_deflateSetDictionary
+	j9zlib_get_crc_table
+	j9zlib_inflate
+	j9zlib_inflateCopy
+	j9zlib_inflateEnd
+	j9zlib_inflateInit_
+	j9zlib_inflateInit2_
+	j9zlib_inflateReset
+	j9zlib_inflateSetDictionary
+	j9zlib_inflateSync
+	j9zlib_inflateSyncPoint
+	j9zlib_uncompress
+	j9zlib_zError
+	j9zlib_zlibVersion
+)
+
 install(
 	TARGETS j9zlib
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

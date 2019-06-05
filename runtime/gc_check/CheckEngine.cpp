@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -97,7 +96,7 @@ static J9Object* convertPointerFromToken(J9JavaVM *javaVM, fj9object_t token);
 #define J9MODRON_GCCHK_J9CLASS_EYECATCHER (UDATA)0x99669966
 
 /**
- * Clear the counts of OwnableSynchronzierObjects
+ * Clear the counts of OwnableSynchronizerObjects
  */
 void
 GC_CheckEngine::clearCountsForOwnableSynchronizerObjects()
@@ -574,7 +573,7 @@ GC_CheckEngine::checkJ9Class(J9JavaVM *javaVM, J9Class *clazzPtr, J9MemorySegmen
 		return J9MODRON_GCCHK_RC_CLASS_POINTER_UNALIGNED;
 	}
 
-	/* Check that the class header containes the expected values */
+	/* Check that the class header contains the expected values */
 	UDATA ret = checkJ9ClassHeader(javaVM, clazzPtr);
 	if (J9MODRON_GCCHK_RC_OK != ret) {
 		return ret;
@@ -1535,11 +1534,10 @@ isPointerInRange(void *pointer, void *start, void *end)
 static J9Object* 
 convertPointerFromToken(J9JavaVM* vm, fj9object_t token)
 {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)	
-	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
-	return barrier->convertPointerFromToken(token);
-#else 
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
+		return barrier->convertPointerFromToken(token);
+	}
 	return (J9Object*)token;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
 }
 #endif /* J9VM_GC_ARRAYLETS && !J9VM_GC_HYBRID_ARRAYLETS */

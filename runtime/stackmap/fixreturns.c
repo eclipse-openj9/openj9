@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -566,7 +566,7 @@ fixReturnsWithStackMaps(J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * s
 			if ((size & 0xE0) == 0) {
 				bcIndex += (size & 7);
 				if (size == 0) {
-					/* Must check for zero else it will infinitiely loop */
+					/* Must check for zero else it will infinitely loop */
 					/* Unknown bytecode - will fail verification later */
 					Trc_Map_fixReturnsWithStackMaps_UnknownBytecode(bc, (bcIndex - bcStart));
 					return BCT_ERR_NO_ERROR;
@@ -742,7 +742,7 @@ getNextStackIndex (U_8 * stackMapData, UDATA mapPC, UDATA stackMapCount)
 
 /* 
 	Calculate the stack depth from the current stack map.
-	Most occurences will be zero. 
+	Most occurrences will be zero. 
 */
 
 static UDATA

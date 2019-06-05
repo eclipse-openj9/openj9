@@ -294,7 +294,7 @@ typedef struct jvmtiGcp_translationEntry {
  
 typedef struct jvmtiGcp_translation {
 	J9HashTable			*ht;	/*!< A HashTable of reindexed constant pool items contained in jvmtiGcp_translationEntry entries */
-	jvmtiGcp_translationEntry	**cp;	/*!< An array of J9HashTable nodes indexed by the translated SUN constant pool indeces */
+	jvmtiGcp_translationEntry	**cp;	/*!< An array of J9HashTable nodes indexed by the translated SUN constant pool indices */
 	J9ROMConstantPoolItem 		*romConstantPool;	/*!< J9RomClass constant pool for the class under translation */
 	U_32				cpSize;		/*!< Number of translated constant pool items */
 	U_32				totalSize;	/*!< Total number of bytes required for writing the translated constant pool */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ public class CoreInfoCommand extends Command
 	
 	public CoreInfoCommand()
 	{
-		addCommand("coreinfo", "", "Prints commandline ,platform and -version info of VM found in the current core file.");
+		addCommand("coreinfo", "", "Prints commandline, platform and -version info of VM found in the current core file.");
 	}
 	
 	/**
@@ -61,7 +61,7 @@ public class CoreInfoCommand extends Command
      * @param out PrintStream to print the output to the console.
      */
 	private void printUsage (PrintStream out) {
-		out.println("coreinfo - Prints commandline ,platform and -version info of VM found in the current core file.");
+		out.println("coreinfo - Prints commandline, platform and -version info of VM found in the current core file.");
 	}
 	
 	/**

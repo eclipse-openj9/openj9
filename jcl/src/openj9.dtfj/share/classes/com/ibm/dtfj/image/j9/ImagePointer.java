@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ import com.ibm.dtfj.image.MemoryAccessException;
 
 /**
  * @author jmdisher
- * This will have to be revisitted to support z/OS
+ * This will have to be revisited to support z/OS
  */
 public class ImagePointer implements com.ibm.dtfj.image.ImagePointer
 {

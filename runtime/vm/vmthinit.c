@@ -100,11 +100,11 @@ void freeVMThread(J9JavaVM *vm, J9VMThread *vmThread)
 		j9mem_free_memory(vmThread->riParameters);
 	}
 #endif /* defined(J9VM_PORT_RUNTIME_INSTRUMENTATION) */
-#if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
-	j9mem_free_memory32(vmThread->startOfMemoryBlock);
-#else
-	j9mem_free_memory(vmThread->startOfMemoryBlock);
-#endif
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		j9mem_free_memory32(vmThread->startOfMemoryBlock);
+	} else {
+		j9mem_free_memory(vmThread->startOfMemoryBlock);
+	}
 }
 
 void terminateVMThreading(J9JavaVM *vm)

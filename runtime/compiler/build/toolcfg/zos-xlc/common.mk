@@ -82,31 +82,31 @@ CX_FLAGS+=\
     -qlanglvl=extended0x \
     -qhaltonmsg=CCN6102 \
     -Wc,rostring \
-    -Wc,enum\(4\) \
+    -Wc,"enum(4)" \
     -Wc,xplink \
     -Wc,NOANSIALIAS \
     -Wa,asa,goff,xplink \
     -Wc,DLL,EXPORTALL \
     -Wa,DLL \
-    -Wc,FLOAT\(IEEE,FOLD,AFP\) \
-    -Wc,ARCH\($(ARCHLEVEL)\) \
-    -Wc,TUNE\($(TUNELEVEL)\) \
-    -Wc,TARGET\($(TGTLEVEL)\)
+    -Wc,"FLOAT(IEEE,FOLD,AFP)" \
+    -Wc,"ARCH($(ARCHLEVEL))" \
+    -Wc,"TUNE($(TUNELEVEL))" \
+    -Wc,"TARGET($(TGTLEVEL))"
 
 # Now we get to do this awesome thing because of EBCDIC
 CX_FLAGS+=\
     -qnosearch \
     $(patsubst %,-I%,$(PRODUCT_INCLUDES)) \
     -DIBM_ATOE \
-    -Wc,convlit\(ISO8859-1\) \
+    -Wc,"convlit(ISO8859-1)" \
     -qsearch=$(J9SRC)/a2e/headers \
     -qsearch=/usr/include \
     -qsearch=$(A2E_INCLUDE_PATH)
 
 CXX_FLAGS+=\
     -+ \
-    -Wc,SUPPRESS\(CCN6281,CCN6090\) \
-    -Wc,TMPLPARSE\(NO\) \
+    -Wc,"SUPPRESS(CCN6281,CCN6090)" \
+    -Wc,"TMPLPARSE(NO)" \
     -Wc,EXH
 
 CX_DEFINES_DEBUG+=DEBUG
@@ -114,7 +114,7 @@ CX_FLAGS_DEBUG+=-g
 
 CX_DEFAULTOPT=-O3
 CX_OPTFLAG?=$(CX_DEFAULTOPT)
-CX_FLAGS_PROD+=$(CX_OPTFLAG) -Wc,INLINE\(auto,noreport,600,5000\)
+CX_FLAGS_PROD+=$(CX_OPTFLAG) -Wc,"INLINE(auto,noreport,600,5000)"
 
 ifeq ($(HOST_BITS),64)
     CX_FLAGS+=-Wc,lp64
@@ -189,6 +189,10 @@ ifeq ($(HOST_BITS),64)
 
     ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
         M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+    endif
+
+    ifneq (,$(shell grep 'define J9VM_GC_COMPRESSED_POINTERS' $(J9SRC)/include/j9cfg.h))
+        M4_DEFINES+=OMR_GC_COMPRESSED_POINTERS
     endif
 endif
 

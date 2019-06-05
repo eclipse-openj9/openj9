@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,18 @@ target_compile_definitions(hythr
 		-DHYTHREAD_LIBRARY_DEFINE
 )
 
+omr_add_exports(hythr
+	hythread_allocate_library
+	hythread_create_library
+	hythread_getSize
+	hythread_getVersion
+	hythread_init_library
+	hythread_isCompatible
+	hythread_startup_library
+)
+
 install(
 	TARGETS hythr
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

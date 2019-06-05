@@ -27,7 +27,7 @@
 
 
 /**
- *  A list of all known tests. While adding new tesst, this is the only place that
+ *  A list of all known tests. While adding a new test, this is the only place that
  *  needs to be updated in order for the agent to recognize the test.
  */
 static jvmtiTest jvmtiTestList[] =
@@ -125,10 +125,16 @@ static jvmtiTest jvmtiTestList[] =
 	{ "rnwr001",   rnwr001,   "com.ibm.jvmti.tests.registerNativesWithRetransformation.rnwr001", "Test RegisterNatives JNI API in FSD" },
 	{ "aln001",    aln001,    "com.ibm.jvmti.tests.agentLibraryNatives.aln001",               "Test natives in agent libraries" },
 	{ "rbc001",   rbc001,   "com.ibm.jvmti.tests.redefineBreakpointCombo.rbc001", "Test Redefine-breakpoint combination"},
+#if JAVA_SPEC_VERSION >= 9
 	{ "mt001",   mt001,   "com.ibm.jvmti.tests.modularityTests.mt001", "Test Modularity functions"},
+#endif /* JAVA_SPEC_VERSION >= 9 */
 	{ "nmr001",     nmr001,    "com.ibm.jvmti.tests.nestMatesRedefinition.nmr001", "Test nestmates redefinition"},
 	{ "snmp001",     snmp001,    "com.ibm.jvmti.tests.setNativeMethodPrefix.snmp001", "Tests setting a native method prefix and disposing a subsequent environment"},
+#if JAVA_SPEC_VERSION >= 11	
 	{ "soae001", soae001, "com.ibm.jvmti.tests.samplingObjectAllocation.soae001", "Test JEP331 low-overhead sampling heap object allocation" },
+#endif /* JAVA_SPEC_VERSION >= 11 */
+	{ "gsp001", gsp001, "com.ibm.jvmti.tests.getSystemProperty.gsp001", "Ensure JVMTI GetSystemProperty can retrieve certain system properties at early phrase" },
+	{ "ee001", ee001, "com.ibm.jvmti.tests.eventException.ee001", "Ensure only single JVMTI Exception event gets generated with JNI frame before handler" },
 	{ NULL, NULL, NULL, NULL }
 };
 

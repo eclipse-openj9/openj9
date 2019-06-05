@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,8 +44,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ibm.tools.attach.target.AttachHandler;
-import com.ibm.tools.attach.target.IPC;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.spi.AttachProvider;
@@ -62,14 +60,13 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 
 	@BeforeMethod
 	protected void setUp(Method testMethod) throws Exception {
-		if (!AttachHandler.waitForAttachApiInitialization()) {
+		if (!TargetManager.waitForAttachApiInitialization()) {
 			TargetManager.dumpLogs(true);
 			Assert.fail("main process did not initialize attach API");
 		}
 		tempStorage = new File(commonDirectory, "_temp");
 		testName = testMethod.getName();
 		logger.debug("starting " + testName);
-		IPC.logMessage("Starting test ", testName);
 	}
 
 	@AfterMethod
@@ -536,7 +533,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 				null);
 		tgt.syncWithTarget();
 		long staleDirectoryPid = getPidFromDirectory(staleDirectory);
-		if (!IPC.processExists(staleDirectoryPid)) {
+		if (!TargetManager.isProcessRunning(staleDirectoryPid)) {
 			AssertJUnit.assertFalse(
 					"stale target directory not removed "
 							+ staleDirectory.getAbsolutePath(),
@@ -572,7 +569,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 		AttachProvider myProvider = providers.get(0);
 		myProvider.listVirtualMachines();
 		long staleDirectoryPid = getPidFromDirectory(staleDirectory);
-		if (!IPC.processExists(staleDirectoryPid)) {
+		if (!TargetManager.isProcessRunning(staleDirectoryPid)) {
 			AssertJUnit.assertFalse("stale directory not removed", staleDirectory.exists());
 		}
 	}

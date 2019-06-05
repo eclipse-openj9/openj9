@@ -233,7 +233,7 @@ void TR_CHTable::cleanupNewlyExtendedInfo(TR::Compilation *comp)
          TR_PersistentClassInfo * cl = table->findClassInfo(classId);
          // The class may have been unloaded during this compilation and the search may return NULL
          // This method is called even if we abort the compilation. Hence, killing the
-         // compilation after a class unload (which we already do) is not ehough
+         // compilation after a class unload (which we already do) is not enough
          // If we get really unlucky a new class could be unloaded exactly in the place of the
          // unloaded one (the window of time is very small for this to occur). However, resetting
          // the flag for the newly loaded class is not going to create any problems (it's
@@ -858,7 +858,7 @@ TR_ClassQueries::getSubClasses(TR_PersistentClassInfo *clazz,
    }
 
 
-// this method will return the number of implementors stored in the given implArray
+// this method will return the number of implementers stored in the given implArray
 // NOTE: if the number is larger than maxCount, it means that the collection failed
 // and we should not check the content of the implArray as it may contain bogus data
 int32_t
@@ -874,7 +874,7 @@ TR_ClassQueries::collectImplementorsCapped(TR_PersistentClassInfo *clazz,
    CollectImplementors collector(comp, clazz->getClassId(), implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod);
    collector.visitSubclass(clazz);
    collector.visit(clazz->getClassId(), locked);
-   return collector.getCount(); // return the number of implementors in the implArray
+   return collector.getCount(); // return the number of implementers in the implArray
    }
 
 int32_t
@@ -900,7 +900,7 @@ TR_ClassQueries::collectLeafs(TR_PersistentClassInfo *clazz,
    {
    TR::ClassTableCriticalSection collectLeafs(comp->fe(), locked);
 
-   // keep a list of classes that were set visisted so that we can
+   // keep a list of classes that were set visited so that we can
    // easily reset the visited flag later-on
    TR_CHTable::VisitTracker marked(comp->trMemory());
 

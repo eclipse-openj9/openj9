@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,6 @@
 #define TRAMPOLINE_SIZE       16
 #define OFFSET_IPIC_TO_CALL   32
 #endif
-
-#define BRANCH_FORWARD_LIMIT      (0x01fffffc)
-#define BRANCH_BACKWARD_LIMIT     ((int32_t)0xfe000000)
 
 extern TR_Processor portLibCall_getProcessorType();
 
@@ -323,7 +320,8 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
       distance = entryAddress - (uint8_t *)callSite;
       currentDistance = ((oldBits << 6) >> 6) & 0xfffffffc;
       oldBits &= 0xfc000003;
-      if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines) || distance>BRANCH_FORWARD_LIMIT || distance<BRANCH_BACKWARD_LIMIT)
+      if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines) ||
+          !TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)entryAddress, (intptrj_t)callSite))
          {
          if (currentPC == newPC)
             {
@@ -433,7 +431,7 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
          const intptrj_t *obj = *(intptrj_t **)((intptrj_t)extra + sizeof(intptrj_t));
          // Discard high order 32 bits via cast to uint32_t to avoid shifting and masking when using compressed refs
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
          intptrj_t currentReceiverJ9Class = *(uint32_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
 #else
          intptrj_t currentReceiverJ9Class = *(intptrj_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
@@ -495,8 +493,6 @@ void ppcCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
    }
 
 #undef TRAMPOLINE_SIZE
-#undef BRANCH_FORWARD_LIMIT
-#undef BRANCH_BACKWARD_LIMIT
 
 #endif /*(TR_TARGET_POWER)*/
 
@@ -933,7 +929,7 @@ void s390zOS64CreateHelperTrampoline(void *trampPtr, int32_t numHelpers)
 
       static bool enableIIHF = (feGetEnv("TR_IIHF") != NULL);
 
-      if (!enableIIHF) 
+      if (!enableIIHF)
          {
          // Trampoline Code:
          // zOS Linkage rEP = r15.
@@ -1111,7 +1107,7 @@ bool s390zOS64CodePatching(void *method, void *callSite, void *currentPC, void *
             s390zOS64CreateMethodTrampoline(newTramp, newPC, method);
             }
          else
-            {  
+            {
             // Patch the existing trampoline.
             // Should not require Self-loops in patching since trampolines addresses
             // should be aligned by 8-bytes, and STG is atomic.
@@ -1133,7 +1129,7 @@ bool s390zOS64CodePatching(void *method, void *callSite, void *currentPC, void *
 
 
 // ZOS390 MCC Support: minimum hookup without callbacks.
-// Default executable space is limited to 2GB: No Trampolinoes required.
+// Default executable space is limited to 2GB: No Trampolines required.
 // Can increase executable space by enabling RMODE64, Trampolines will be required
 void s390zOS64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *numHelpers, int32_t* CCPreLoadedCodeSize)
    {
@@ -1228,7 +1224,7 @@ void s390zLinux64CreateHelperTrampoline(void *trampPtr, int32_t numHelpers)
 
       if (enableIIHF)
          {
-         //Alternative Trampoline code 
+         //Alternative Trampoline code
          // IIHF rEP addr
          // IILF rEP addr
          // BRC  rEP
@@ -1236,7 +1232,7 @@ void s390zLinux64CreateHelperTrampoline(void *trampPtr, int32_t numHelpers)
          uint32_t low = (uint32_t)helperAddr;
          uint32_t high = (uint32_t)(helperAddr >> 32);
 
-         // IIHF rEP, mAddr;	  
+         // IIHF rEP, mAddr;
          *(int16_t *)buffer = 0xC008 + (rEP << 4);
          buffer += sizeof(int16_t);
          *(int32_t *)buffer = 0x00000000 + high;
@@ -1299,7 +1295,7 @@ void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *met
    intptrj_t dispatcher = (intptrj_t)((uint8_t *) startPC + linkInfo->getReservedWord());
 
    static bool enableIIHF = (feGetEnv("TR_IIHF") != NULL);
-  
+
    if (enableIIHF)
       {
       //Alternative Trampoline code
@@ -1355,7 +1351,7 @@ void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *met
       // DC mAddr
       *(intptrj_t *)buffer = dispatcher;
       buffer += sizeof(intptrj_t);
-      }   
+      }
    }
 
 // zLinux64 Code Patching.

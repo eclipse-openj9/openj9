@@ -349,12 +349,8 @@ public:
 	/**
 	 * Checks whether the class must be initialized before using it.
 	 *
-	 * Non-isolated classes which have been successfully initialized or are in the process
+	 * Classes which have been successfully initialized or are in the process
 	 * of being initialized by the current thread do not need to be initialized.
-	 *
-	 * Isolated classes which have been successfully initialized on the current tenant
-	 * or are in the process of being initialized on the current tenant by the current thread
-	 * do not need to be initialized.
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param j9clazz[in] the J9Class to query
@@ -367,7 +363,6 @@ public:
 		bool requiresInitialization = true;
 		UDATA initStatus = j9clazz->initializeStatus;
 		if ((J9ClassInitSucceeded == initStatus) || (((UDATA)currentThread) == initStatus)) {
-			/* Non-isolated class either fully initialized or initializing on the current thread */
 			requiresInitialization = false;
 		}
 		return requiresInitialization;
@@ -729,7 +724,7 @@ done:
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 *
-	 * @returns true if an immeidate async is pending, false if not
+	 * @returns true if an immediate async is pending, false if not
 	 */
 	static VMINLINE bool
 	immediateAsyncPending(J9VMThread *currentThread)
@@ -1358,7 +1353,15 @@ exit:
 			}
 			break;
 		case J9NtcBoolean:
-			*returnStorage = ((UDATA)(U_8)(0 != *returnStorage));
+		{
+			U_32 returnValue = (U_32)*returnStorage;
+			U_8 * returnAddress = (U_8 *)&returnValue;
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+			*returnStorage = (UDATA)(0 != returnAddress[0]);
+#else
+			*returnStorage = (UDATA)(0 != returnAddress[3]);
+#endif /*J9VM_ENV_LITTLE_ENDIAN */
+		}
 			break;
 		case J9NtcByte:
 			*returnStorage = (UDATA)(IDATA)(I_8)*returnStorage;
@@ -1394,7 +1397,7 @@ exit:
 	static VMINLINE void
 	reportFinalFieldModified(J9VMThread* currentThread, J9Class* fieldClass)
 	{
-		/** Only report modifications after class initalization
+		/** Only report modifications after class initialization
 		 *  Since final field write is allowed during class init process,
 		 *  JIT will not start to trust final field values until the class has completed initialization
 		 */
@@ -1403,7 +1406,7 @@ exit:
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT)) {
 				J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
 				vmFuncs->acquireSafePointVMAccess(currentThread);
-				/* check class flag again after aquiring VM access */
+				/* check class flag again after acquiring VM access */
 				if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
 					J9JITConfig* jitConfig = vm->jitConfig;
 					if (NULL != jitConfig) {
@@ -1448,18 +1451,19 @@ exit:
 	}
 
 	/**
-	 * Checks whether a ROM class enforces the final field setting rules.
+	 * Checks whether a class enforces the final field setting rules.
 	 * Classes which are class file version 53 or above enforce the rule
-	 * unless the class was defined via Unsafe.
+	 * unless the class was defined in a way that exempts it from validation.
 	 *
-	 * @param romClass[in] the J9ROMClass to test
+	 * @param ramClass[in] the J9Class to test
 	 *
 	 * @returns true if the class enforces the rules, false if not
 	 */
 	static VMINLINE bool
-	romClassChecksFinalStores(J9ROMClass *romClass)
+	ramClassChecksFinalStores(J9Class *ramClass)
 	{
-		return (romClass->majorVersion >= 53) && !J9ROMCLASS_IS_UNSAFE(romClass);
+		return (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramClass))
+			&& (ramClass->romClass->majorVersion >= 53);
 	}
 
 };

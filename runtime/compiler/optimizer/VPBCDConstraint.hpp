@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ const TR_BCDSignCode signConstraintToBCDSignMap[TR_Sign_Num_Types] =   {
                                                                        bcd_minus,        // TR_Sign_Minus_Clean
                                                                        };
 
-// Given any two sign contraints what is the conservative (i.e. merged) constraint that both satisfy.
+// Given any two sign constraints what is the conservative (i.e. merged) constraint that both satisfy.
 // For example if constraint1 = Plus and constraint2 = Minus then the common constraint is Preferred as both Plus and Minus are preferred signs
 const TR_BCDSignConstraint signConstraintMergeMap[TR_Sign_Num_Types][TR_Sign_Num_Types] =
  //                         Unknown          Clean             Preferred           Plus               Minus              Unsigned          Minus_Clean

@@ -80,6 +80,7 @@ typedef enum TR_AOTFeatureFlags
    TR_FeatureFlag_AsyncCompilation              = 0x00000400,     //async compilation - switch to interpreter code NOT generated
    TR_FeatureFlag_ConcurrentScavenge            = 0x00000800,
    TR_FeatureFlag_SoftwareReadBarrier           = 0x00001000,
+   TR_FeatureFlag_UsesTM                        = 0x00002000,
    TR_FeatureFlag_SanityCheckEnd                = 0x80000000
    } TR_AOTFeatureFlags;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,7 +163,10 @@ void TR_BoolArrayStoreTransformer::perform()
             _bstoreiBoolArrayTypeNodes->insert(_bstoreiUnknownArrayTypeNodes->begin(), _bstoreiUnknownArrayTypeNodes->end());
             }
          else
-            traceMsg(comp(), "only byte array exist as auto or checkcast type\n");
+            {
+            if (comp()->getOption(TR_TraceILGen))
+               traceMsg(comp(), "only byte array exist as auto or checkcast type\n");
+            }
          _bstoreiUnknownArrayTypeNodes->clear();
          }
       }
@@ -482,7 +485,7 @@ int TR_BoolArrayStoreTransformer::getArrayDimension(TR::Node *node, bool boolTyp
  *    The subtree to look at
  *
  * \parm typeInfo
- *    The type infomation of each auto at the current subtree
+ *    The type information of each auto at the current subtree
  *
  * \parm boolArrayNodes
  *    Load of autos or parms that are [Z
@@ -515,7 +518,7 @@ void TR_BoolArrayStoreTransformer::findLoadAddressAutoAndFigureOutType(TR::Node 
 
 /*
  * \brief
- *   This function caculcates the type info of each auto and figure out whether a
+ *   This function calculcates the type info of each auto and figure out whether a
  *   bstorei node is for boolean array
  *
  * \parm block

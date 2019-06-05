@@ -55,7 +55,7 @@ public class Test_MethodType {
 
 		MethodTypeDesc desc = descOp.orElseThrow();
 
-		/* verify that descriptor can be resolved. Otherwise a ReflectiveOperationExeption will be thrown */
+		/* verify that descriptor can be resolved. Otherwise a ReflectiveOperationException will be thrown */
 		MethodType resolveType = (MethodType)desc.resolveConstantDesc(MethodHandles.lookup());
 
 		logger.debug(testName + ": Descriptor of original type is: " + type.descriptorString() + " descriptor of descriptor is: " + resolveType.descriptorString());

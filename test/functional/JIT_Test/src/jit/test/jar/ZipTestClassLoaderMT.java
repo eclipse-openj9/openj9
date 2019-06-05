@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ import org.testng.log4testng.Logger;
 
 /**
  * @author mesbaha
- * ZipTestClassLoaderMT extends {@link jit.test.jar.ZipTestClassLoader} and overrides the procesZipFiles(java.lang.String) method 
+ * ZipTestClassLoaderMT extends {@link jit.test.jar.ZipTestClassLoader} and overrides the processZipFiles(java.lang.String) method 
  * in order to accommodate multi-threaded class loading.
  */
 public class ZipTestClassLoaderMT extends ZipTestClassLoader {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ findROMClassInSegment(J9VMThread *vmThread, J9MemorySegment *memorySegment, UDAT
 }
 
 J9ROMMethod * 
-findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA methodPC, UDATA *offset)
+findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA methodPC)
 {
 	J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
 	U_32 i;
@@ -59,9 +59,6 @@ findROMMethodInROMClass(J9VMThread *vmThread, J9ROMClass *romClass, UDATA method
 	for (i = 0; i < romClass->romMethodCount; i++) {
 		if ((methodPC >= (UDATA)currentMethod) && (methodPC < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(currentMethod))) {
 			 /* found the method */
-			if (offset != NULL) {
-				*offset = i;
-			}
 			return currentMethod;
 		}
 		currentMethod = nextROMMethod(currentMethod);

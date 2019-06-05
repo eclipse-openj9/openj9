@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -450,7 +450,7 @@ isValidTypeChar(char character)
  * @param *env [in] JNI environment
  * @param templates [in] Array containing templates
  * @param formatStringsArray [out] Pointer to array of strings. Assigned by this method and populated with the UTF version of templates
- * @param callPatternsArray [out] Pointer to array of UDATA. Assigned by thsi method and populated with the call patterns for the templates.
+ * @param callPatternsArray [out] Pointer to array of UDATA. Assigned by this method and populated with the call patterns for the templates.
  * @param tracePointCount [out] Pointer to UDATA to be set to number of trace points (size of templates array)
  */
 static UDATA
@@ -802,7 +802,7 @@ countArguments(const UDATA pattern)
  * Trace method that all other com.ibm.jvm.Trace.trace() methods call through.
  *
  * @param env JNI environment
- * @param handle Application trace handle (returned from registerApplicaton)
+ * @param handle Application trace handle (returned from registerApplication)
  * @param traceId Id of trace point to trace
  * @param methodSignature the signature of the method that supplied the arguments
  *

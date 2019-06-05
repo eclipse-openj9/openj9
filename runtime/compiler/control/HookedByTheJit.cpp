@@ -90,7 +90,7 @@ struct J9JavaVM;
 #include <stdlib.h>
 
 #define PSAAOLD  0x224 ///< offset of current ASCB in prefixed save area (located at address 0x0)
-#define ASCBLDA  0x30  ///< offst of LDA field in ASCB
+#define ASCBLDA  0x30  ///< offset of LDA field in ASCB
 #define LDASTRTA 0x3c  ///< offset of user region start in LDA
 #define LDASIZA  0x40  ///< offset of maximum user region size in LDA
 #define LDAESTRA 0x4c  ///< offset of extended user region start in LDA
@@ -430,7 +430,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
    if (!optionsJIT->getOption(TR_DisableDFP) && !optionsAOT->getOption(TR_DisableDFP)
        && (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.getS390SupportsDFP()
+       || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
        )
        && TR_J9MethodBase::isBigDecimalMethod(method)
@@ -491,7 +491,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             else if (!TR::Options::getCountsAreProvidedByUser())
                {
                // Because C-interpreter is slower we need to rely more on jitted code
-               // This means compiling more, but we have to be carefull
+               // This means compiling more, but we have to be careful
                // Let's use some smaller than normal counts, but only if
                // 1) Quickstart - because we don't risk losing iprofiling info
                // 2) GracePeriod - because we want to limit the number of 'extra'
@@ -1484,6 +1484,7 @@ static void jitHookGlobalGCStart(J9HookInterface * * hookInterface, UDATA eventN
 
    if (jitConfig && jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
       printf("\n{GGC");
+   jitReclaimMarkedAssumptions(false);
    }
 
 static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1506,6 +1507,7 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
       printf("\n<jit: enabling stack tracing at gc %d>", jitConfig->gcCount);
       TR::Options::getCmdLineOptions()->setVerboseOption(TR_VerboseGc);
       }
+   jitReclaimMarkedAssumptions(false);
    }
 
 static void jitHookGlobalGCEnd(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1934,7 +1936,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    compInfo->setVMStateOfCrashedThread(vmThread->omrVMThread->vmState);
 
    // create a compilation request
-   // NOTE: operator new() is overriden, and takes a storage object as a parameter
+   // NOTE: operator new() is overridden, and takes a storage object as a parameter
    // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
    //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
       {
@@ -2477,7 +2479,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo * persistentInfo = compInfo->getPersistentInfo();
 
-   // Here we need to set CompilationShouldBeIntrerrupted. Currently if the TR_EnableNoVMAccess is not
+   // Here we need to set CompilationShouldBeInterrupted. Currently if the TR_EnableNoVMAccess is not
    // set the compilation is stopped, but should be notify not to continue afterwards.
    //
    compInfo->setAllCompilationsShouldBeInterrupted();
@@ -2951,7 +2953,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
             if (staleMethod && freshMethod && compInfo->isCompiled(staleMethod))
                {
                startPC = TR::CompilationInfo::getJ9MethodStartPC(staleMethod);
-               // Update the ram method information in PersistenMethodInfo
+               // Update the ram method information in PersistentMethodInfo
                TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
                if (bodyInfo)
                   {
@@ -2982,7 +2984,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          classPair = (J9JITRedefinedClass *) ((char *) classPair->methodList + (classPair->methodCount * sizeof(struct J9JITMethodEquivalence)));
          }
       }
-   //for extended HCR under FSD, all the methods in code cache neeeds to be
+   //for extended HCR under FSD, all the methods in code cache needs to be
    //discarded because of inlining
    else
       {
@@ -4641,7 +4643,7 @@ void JitShutdown(J9JITConfig * jitConfig)
 
       // free the IProfiler structures
 
-      // Dealllocate the buffers used for interpreter profiling
+      // Deallocate the buffers used for interpreter profiling
       // Must be called when we are sure that no java thread can be running
       // Or at least that Java threads do not try to collect IProfiler info
       // We turn off IProfiler above, but let's add another check
@@ -5377,6 +5379,9 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
 
       if (newState == IDLE_STATE)
          {
+         static char *disableIdleRATCleanup = feGetEnv("TR_disableIdleRATCleanup");
+         if (disableIdleRATCleanup == NULL)
+            persistentInfo->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(-1);
          }
 
       // Logic related to IdleCPU exploitation
@@ -5483,7 +5488,7 @@ bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
       compInfo->getJITConfig()->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
       return false;
 
-   // Maybe the user wants to start throtling only after some time
+   // Maybe the user wants to start throttling only after some time
    if (crtTime < (uint64_t)TR::Options::_startThrottlingTime)
       return false;
 
@@ -5587,7 +5592,7 @@ void CPUThrottleLogic(TR::CompilationInfo *compInfo, uint64_t crtTime)
                             totalCompCPUUtilization > TR::Options::_compThreadCPUEntitlement;
       // We want to avoid situations where we end up throttling and all compilation threads
       // get activated working at full capacity (until, half a second later we discover that we throttle again)
-      // The solution is to go into a trasient state; so from TR_yes we go into TR_maybe and from TR_maybe we go into TR_no
+      // The solution is to go into a transient state; so from TR_yes we go into TR_maybe and from TR_maybe we go into TR_no
       compInfo->setExceedsCompCpuEntitlement(shouldThrottle ? TR_yes : oldThrottleValue == TR_yes ? TR_maybe : TR_no);
       // If the value changed we may want to print a message in the vlog
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance) &&
@@ -5846,7 +5851,7 @@ static void initJitGCMapCheckAsyncHook(J9JavaVM * vm, IDATA handlerKey, J9JITCon
    }
 
 
-//int32_t samplerThreadStateFreqencies[TR::CompilationInfo::SAMPLER_LAST_STATE+1] = {0, 2, 1000, 100000, INT_MAX, INT_MAX, -1};
+//int32_t samplerThreadStateFrequencies[TR::CompilationInfo::SAMPLER_LAST_STATE+1] = {0, 2, 1000, 100000, INT_MAX, INT_MAX, -1};
 char* samplerThreadStateNames[TR::CompilationInfo::SAMPLER_LAST_STATE+1] =
                                  {
                                    "NOT_INITIALIZED",
@@ -5927,7 +5932,7 @@ void getOutOfIdleStates(TR::CompilationInfo::TR_SamplerStates expectedState, TR:
    if (compInfo->getSamplerState() == expectedState)
       {
       J9JavaVM * vm = compInfo->getJITConfig()->javaVM;
-      // Now aquire the monitor and do another test
+      // Now acquire the monitor and do another test
       j9thread_monitor_enter(vm->vmThreadListMutex);
       getOutOfIdleStatesUnlocked(expectedState, compInfo, reason);
       j9thread_monitor_exit(vm->vmThreadListMutex);
@@ -6119,9 +6124,9 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
 /// Change inlining aggressiveness based on 'time' since we last entered
 /// JIT startup phase. Inlining aggressiveness is a number between 100 and 0
 /// with 100 meaning 'be very aggressive' and 0 meaning 'be very conservative'
-/// 'time' is not wall clock time becaue the algorithm would be dependent on
+/// 'time' is not wall clock time because the algorithm would be dependent on
 /// machine speed/capability and load. Instead 'time' can be expressed in
-/// terms of CPU cycles consummed by the JVM or number of samples taken
+/// terms of CPU cycles consumed by the JVM or number of samples taken
 /// by application threads. Both are a loose measure of how much work the
 /// JVM has done.
 void inlinerAggressivenessLogic(TR::CompilationInfo *compInfo)
@@ -6575,7 +6580,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                {
                // Calculate CPU utilization and set throttle flag
                // This code needs to stay  before jitStateLogic because the decision to throttle
-               // application threads (taken in jitStateLogic) depends on the decision to trottle
+               // application threads (taken in jitStateLogic) depends on the decision to throttle
                // the compilation threads
                CalculateOverallCompCPUUtilization(compInfo, crtTime, samplerThread);
                CPUThrottleLogic(compInfo, crtTime);
@@ -6867,7 +6872,7 @@ static void jitHookReleaseCodeGlobalGCEnd(J9HookInterface **hook, UDATA eventNum
    MM_GlobalGCEndEvent *event = (MM_GlobalGCEndEvent *)eventData;
    J9VMThread  *vmThread  = (J9VMThread*)event->currentThread->_language_vmthread;
    jitReleaseCodeStackWalk(vmThread->omrVMThread);
-   jitReclaimMarkedAssumptions();
+   jitReclaimMarkedAssumptions(true);
    }
 
 static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
@@ -6879,14 +6884,14 @@ static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum,
       condYield = event->condYieldFromGCFunction;
 
    jitReleaseCodeStackWalk(omrVMThread,condYield);
-   jitReclaimMarkedAssumptions();
+   jitReclaimMarkedAssumptions(true);
    }
 
 static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
    {
    MM_LocalGCEndEvent *event = (MM_LocalGCEndEvent *)eventData;
    jitReleaseCodeStackWalk(event->currentThread);
-   jitReclaimMarkedAssumptions();
+   jitReclaimMarkedAssumptions(true);
    }
 
 

@@ -47,7 +47,7 @@ int32_t TR_JProfilingBlock::recompileThreshold = 500;
  * without regard to direction of the edges. Further for the purposes of placing counters
  * We need to add a special loopback edge connecting the CFG entry and exit nodes.
  * This class provides an edge iterator for a CFG node which presents all successors and
- * predecesors including those from the special loopback edge.
+ * predecessors including those from the special loopback edge.
  */
 class AdjacentBlockIterator
    {
@@ -77,7 +77,7 @@ class AdjacentBlockIterator
             return;
             }
          }
-      // handle the loopback edge from start to end with an artifically high frequency
+      // handle the loopback edge from start to end with an artificially high frequency
       // to make sure the edge is included in the computed MST
       if (cfg->getStart()->asBlock() == _block
           && !_visitedBlocks.contains(cfg->getEnd()->asBlock()))
@@ -87,7 +87,7 @@ class AdjacentBlockIterator
          _visitedBlocks.add(_current);
          return;
          }
-      // handle the loopbacke dge from end to start with an artificially high frequency
+      // handle the loopback edge from end to start with an artificially high frequency
       // to make sure the edge is included in the computed MST
       if (cfg->getEnd()->asBlock() == _block
           && !_visitedBlocks.contains(cfg->getStart()->asBlock()))
@@ -656,7 +656,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
          edge->setId(edgeId++);
          TR::Block *to = edge->getTo()->asBlock();
      
-         // check if the spanning tree says we can ommit this edge
+         // check if the spanning tree says we can omit this edge
          if (block != to)
             {
             if (parent[block] == to)
@@ -723,7 +723,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                }
             }
          // we have a critical edge and so need to split it to insert the counter
-         // the only exception being for excepiton edges where we want to just count the catch for performance
+         // the only exception being for exception edges where we want to just count the catch for performance
          else
             {
             insertionBlock = block->splitEdge(block, to, comp(), NULL, true);
@@ -773,7 +773,7 @@ TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures()
    }
 
 /**
- * A debug method to print how to derrive the block frequency of each block from
+ * A debug method to print how to derive the block frequency of each block from
  * the counters which have been inserted into the compiled method body
  * \param componentCounters The counter data structure to print
  */
@@ -826,7 +826,7 @@ void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounter
    }
 
 /**
- * Add runtime tests to the start of the method to trigger method reccompilation once the
+ * Add runtime tests to the start of the method to trigger method recompilation once the
  * appropriate number of method entries has occurred as determined by the raw block
  * count of the first block of the method.
  */   
@@ -972,7 +972,7 @@ int32_t TR_JProfilingBlock::perform()
    TR_BitVector** componentCounters = (TR_BitVector**)new (comp()->trMemory(), persistentAlloc, TR_Memory::BlockFrequencyInfo) void**[comp()->getFlowGraph()->getNextNodeNumber()*2]();
    blockFrequencyInfo->setCounterDerivationInfo(componentCounters);
 
-   // now we need to dervie the equations for the frequency of all edges and blocks in terms
+   // now we need to derive the equations for the frequency of all edges and blocks in terms
    // of the counted blocks - first initialize edges trivially computable from directly counted blocks
    EdgeFrequencyInfo edgeInfo(comp(), &loopBack, numEdges, stackMemoryRegion, trace());
    for (CFGNodeIterator iter(cfg, this); iter.currentBlock() != NULL; ++iter)
@@ -1045,7 +1045,7 @@ int32_t TR_JProfilingBlock::perform()
          }
       }
 
-   // process our work list of blocks derriving counters and queuing more blocks as we learn more
+   // process our work list of blocks deriving counters and queuing more blocks as we learn more
    while (!Q.empty())
       {
       TR::Block *block = Q.top().second;

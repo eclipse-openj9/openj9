@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/OMRRealRegister.cpp \
     omr/compiler/z/codegen/OMRRegister.cpp \
     omr/compiler/z/codegen/OMRRegisterDependency.cpp \
-    omr/compiler/z/codegen/OMRRegisterPair.cpp \
     omr/compiler/z/codegen/OMRSnippet.cpp \
     omr/compiler/z/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/z/codegen/OpMemToMem.cpp \
@@ -50,8 +49,14 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/S390Peephole.cpp \
     omr/compiler/z/codegen/S390Snippets.cpp \
     omr/compiler/z/codegen/SystemLinkage.cpp \
+    omr/compiler/z/codegen/SystemLinkageLinux.cpp \
+    omr/compiler/z/codegen/SystemLinkagezOS.cpp \
     omr/compiler/z/codegen/TranslateEvaluator.cpp \
-    omr/compiler/z/codegen/UnaryEvaluator.cpp
+    omr/compiler/z/codegen/UnaryEvaluator.cpp \
+    omr/compiler/z/codegen/snippet/PPA1Snippet.cpp \
+    omr/compiler/z/codegen/snippet/PPA2Snippet.cpp \
+    omr/compiler/z/codegen/snippet/XPLINKCallDescriptorSnippet.cpp \
+    omr/compiler/z/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/DFPTreeEvaluator.cpp \
@@ -66,7 +71,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9S390CHelperLinkage.cpp \
     compiler/z/codegen/J9S390PrivateLinkage.cpp \
     compiler/z/codegen/J9S390Snippet.cpp \
-    compiler/z/codegen/J9S390SystemLinkage.cpp \
+    compiler/z/codegen/J9SystemLinkageLinux.cpp \
+    compiler/z/codegen/J9SystemLinkagezOS.cpp \
     compiler/z/codegen/J9TreeEvaluator.cpp \
     compiler/z/codegen/J9BCDTreeEvaluator.cpp \
     compiler/z/codegen/J9UnresolvedDataSnippet.cpp \

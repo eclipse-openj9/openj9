@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ USHORT MjVersion;
 USHORT MnVersion;
 
 // ExtensionApiVersion() is called by the debugger to insure that
-// your routines were written to a compatibile interface version.
+// your routines were written to a compatible interface version.
 #ifdef J9VM_ENV_DATA64
 EXT_API_VERSION Version = { 3, 5, EXT_API_VERSION_NUMBER64, 0 };
 #else

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 add_tracegen(j9scar.tdf)
 
 # Note we add all the actual sources to this interface library.
-# This is so that we can reuse them in jvm_b150/jvm_b156 without having to explictly re-list all the files
+# This is so that we can reuse them in jvm_b150/jvm_b156 without having to explicitly re-list all the files
 add_library(jvm_common INTERFACE)
 target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/j7verify.c
@@ -56,9 +56,9 @@ target_link_libraries(jvm_common
 		j9hashtable
 		j9pool
 		j9vmi
-		# TODO these are platform specific
-		pthread
-		dl
+
+		${CMAKE_DL_LIBS}
+		${OMR_PLATFORM_THREAD_LIBRARY}
 )
 
 target_include_directories(jvm_common
@@ -77,9 +77,15 @@ target_link_libraries(jvm
 		jvm_common
 		j9util
 )
+
+if(OMR_OS_WINDOWS)
+	target_link_libraries(jvm PRIVATE ws2_32)
+endif()
 add_dependencies(jvm omrgc_hookgen)
+include(exports.cmake)
 
 install(
 	TARGETS jvm
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

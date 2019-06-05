@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,9 +140,9 @@ extern HY_CFUNC I_32 hythread_allocate_library (struct HyThreadLibraryVersion
 
 /** @} */
 /**
- * @name Thread library version and compatability queries
+ * @name Thread library version and compatibility queries
  * @anchor ThreadVersionControl
- * Determine thread library compatability and version.
+ * Determine thread library compatibility and version.
  * @{
  */
 extern HY_CFUNC UDATA hythread_getSize (struct HyThreadLibraryVersion

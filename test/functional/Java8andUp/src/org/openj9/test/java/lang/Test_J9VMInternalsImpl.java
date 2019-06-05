@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ public class Test_J9VMInternalsImpl {
 					"try instantiating a Class that cannot be loaded because of LinkageError, then enable loading of the class and still fail to load"); //$NON-NLS-1$
 			/*
 			 * There is magic here. The ClassLoader will:
-			 * - throw OutOfMemoryErorr the first time NCDFEHelper is loaded
+			 * - throw OutOfMemoryError the first time NCDFEHelper is loaded
 			 * - throw LinkageError the second time NCDFEHelper is loaded
 			 * - load NCDFEHelper in all subsequent attempts
 			 */

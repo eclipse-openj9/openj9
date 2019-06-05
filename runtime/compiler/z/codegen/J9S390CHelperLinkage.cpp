@@ -25,6 +25,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
@@ -47,7 +48,7 @@
 #include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390J9CallSnippet.hpp"
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -65,20 +66,9 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setRegisterFlag(TR::RealRegister::GPR13, Preserved);
    setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
-   if (TR::Compiler->target.is64Bit())
-      {
-      setRegisterFlag(TR::RealRegister::HPR8, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR9, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR10, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR11, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR13, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR15, Preserved);
-      }
-
 #if defined(ENABLE_PRESERVED_FPRS)
    // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
-   // preserved. 
+   // preserved.
    if (TR::Compiler->target.isLinux() && TR::Compiler->target.is32Bit())
       {
       setRegisterFlag(TR::RealRegister::FPR4, Preserved);
@@ -97,19 +87,12 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       }
 #endif
 
-   // Platform specifc linkage settings
+   // Platform specific linkage settings
    if (TR::Compiler->target.isLinux())
       {
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
       setRegisterFlag(TR::RealRegister::GPR12, Preserved);
-
-      if (TR::Compiler->target.is64Bit())
-         {
-         setRegisterFlag(TR::RealRegister::HPR6, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR7, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-         }
 
       setReturnAddressRegister(TR::RealRegister::GPR14);
       setIntegerReturnRegister(TR::RealRegister::GPR2);
@@ -129,7 +112,7 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       // TODO When we add support for more than 3 arguments, we should change this number to 5.
       setNumIntegerArgumentRegisters(3);
       }
-   
+
    if (TR::Compiler->target.isZOS())
       {
       setRegisterFlag(TR::RealRegister::GPR14, Preserved);
@@ -137,15 +120,13 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       if (TR::Compiler->target.is64Bit())
          {
          setRegisterFlag(TR::RealRegister::GPR12, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-         setRegisterFlag(TR::RealRegister::HPR14, Preserved);
 
-         setPreservedRegisterMapForGC(0x0000FF00); 
+         setPreservedRegisterMapForGC(0x0000FF00);
          }
       else
          {
          // 31-Bit zOS will need GPR12 for CAA register so it won't be preserved. For all other variant it is preserved
-         setPreservedRegisterMapForGC(0x0000EF00); 
+         setPreservedRegisterMapForGC(0x0000EF00);
          }
 
       if (codeGen->getSupportsVectorRegisters())
@@ -185,7 +166,7 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setLongDoubleReturnRegister4(TR::RealRegister::FPR4);
    setLongDoubleReturnRegister6(TR::RealRegister::FPR6);
    setStackPointerRegister(TR::RealRegister::GPR5);
-   setMethodMetaDataRegister(TR::RealRegister::GPR13); 
+   setMethodMetaDataRegister(TR::RealRegister::GPR13);
    }
 
 
@@ -256,7 +237,7 @@ class RealRegisterManager
          }
       return deps;
       }
-   
+
    inline uint8_t numberOfRegistersInUse() const
       {
       return _numberOfRegistersInUse;
@@ -270,11 +251,11 @@ class RealRegisterManager
 /**   \brief Build a JIT helper call.
  *    \details
  *    It generates sequence that prepares parameters for the JIT helper function and generate a helper call.
- *    \param callNode The node for which you are generating a heleper call
+ *    \param callNode The node for which you are generating a helper call
  *    \param deps The pre register dependency conditions that will be filled by this function to attach within ICF
  *    \param returnReg TR::Register* allocated by consumer of this API to hold the result of the helper call,
  *           If passed, this function uses it to store return value from helper instead of allocating new register
- *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator. 
+ *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator.
  */
 TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR::Register *returnReg)
    {
@@ -283,7 +264,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
    bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof;
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
-   for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastHPR; i++)
+   for (int i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters; i++)
       {
       if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
          {
@@ -305,12 +286,12 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
          TR_ASSERT(false,"Parameters on Stack not supported yet");
       childNodeRegDeps->addPostConditionIfNotAlreadyInserted(callNode->getChild(i)->getRegister(), TR::RealRegister::AssignAny);
       }
-   
+
    TR::Register *javaStackPointerRegister = NULL;
   /* On zOS, we need to use GPR7 as return address for fastPath helper calls
    * Following line will use the System linkage's return address register for fast path
    * And for regular dual mode helper, private linkage's return address register
-   */ 
+   */
    TR::RealRegister::RegNum regRANum = isFastPathOnly ? self()->getReturnAddressRegister() : cg()->getReturnAddressRegister();
    TR::Register *regRA = RealRegisters.use(regRANum);
 #if defined(J9ZOS390)
@@ -321,10 +302,10 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
 
    TR::RegisterDependencyConditions * postDeps = RealRegisters.buildRegisterDependencyConditions(regRANum);
    // If buildDirectDispatch is called within ICF we need to pass the dependencies which will be used there, else we need single dependencylist to be attached to the BRASL
-   // We return postdependency conditions back to evaluator to merge with ICF condition and attach to merge label 
+   // We return postdependency conditions back to evaluator to merge with ICF condition and attach to merge label
    if (isHelperCallWithinICF )
       *deps = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(postDeps, childNodeRegDeps, cg());
-   
+
    int padding = 0;
    uint32_t offsetJ9SP =  static_cast<uint32_t>(offsetof(J9VMThread, sp));
    TR::Instruction *cursor = NULL;
@@ -333,7 +314,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
     * #if (fastPathHelper)
     *    STG R5, @(vmThread+offsetOf(J9SP))
     *       #define zOS
-    *       LG DSA, @(vmThraed,offsetOfSSP)
+    *       LG DSA, @(vmThread,offsetOfSSP)
     *       XC offsetOFSSP(vmThread, pointerSize), offsetOfSSP(vmThread)
     *          #define 32Bit
     *          LG CAA, @(DSA+CAAOffset)
@@ -344,7 +325,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
     *       NOP // Padding for zOS return from helper
     *       STG DSA, @(vmThread, offsetOfSSP)
     *    LG R5, @(vmThread, offsetOfJ9SP)
-    * #endif      
+    * #endif
     */
 
    if (isFastPathOnly)
@@ -404,7 +385,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
       {
       // Fastpath helper do not expects GC call in-between so only attaching them for normal dual mode helpers
       // As GC map is attached to instruction after RA is done, it is guaranteed that all the non-preserved register by system linkage are either stored in preserved register
-      // Or spilled to stack. We only need to mark preserved register in GC map. Only possiblity of non-preserved register containing a live object is in argument to helper which should be a clobberable copy of actual object. 
+      // Or spilled to stack. We only need to mark preserved register in GC map. Only possibility of non-preserved register containing a live object is in argument to helper which should be a clobberable copy of actual object.
       cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
       }
 
@@ -444,6 +425,6 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    // We need to fill returnReg only if it requested by evaluator or node returns value or address
    if (returnReg != NULL)
       generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, returnReg,  RealRegisters.use(isFastPathOnly ? getIntegerReturnRegister():getLongHighReturnRegister()), cursor);
-   
+
    return returnReg;
    }

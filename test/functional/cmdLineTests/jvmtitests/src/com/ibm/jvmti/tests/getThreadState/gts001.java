@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,7 +154,7 @@ public class gts001 {
 	
 	/* this test can only be used when we put a j9thread_sleep(5000) in startJavaThread in
 	 * vmThread.c to widen the window between when the thread is marked started
-	 * and when the vmThread reference is populated.  Remove the RunMaually prefix
+	 * and when the vmThread reference is populated.  Remove the RunManually prefix
 	 * to add the test back to the set that you are running
 	 */
 	public boolean RunManuallytestDistinguishStartingFromTerminated() {

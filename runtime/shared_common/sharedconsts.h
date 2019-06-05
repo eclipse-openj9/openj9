@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@
  *
  * Total chars needed  = 11 + 8 + 64 + 1 + 3 = 87 chars.
  *
- * Add 1 to above length to accomodate NULL char.
+ * Add 1 to above length to accommodate NULL char.
  * Reference:  getCacheVersionAndGen function
  */
 #define CACHE_ROOT_MAXLEN 88

@@ -3,7 +3,7 @@
 package com.ibm.jit;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ package com.ibm.jit;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+import com.ibm.oti.vm.J9UnmodifiableClass;
 import java.lang.reflect.Field;
 import java.lang.reflect.Array;
 import com.ibm.oti.vm.VM;
@@ -41,13 +42,11 @@ import sun.reflect.CallerSensitive;
  * The <code>JITHelpers</code> class contains methods used by the JIT to optimize certain primitive operations.
  */
 @SuppressWarnings("javadoc")
+@J9UnmodifiableClass
 public final class JITHelpers {
 
 	private static final JITHelpers helpers;
 	private static final Unsafe unsafe;
-	// If JITHelpers class is loaded at startup, so is DecimalFormatHelper. The latter is needed
-	// to optimize DecimalFormat.format(bd.doubleValue()) optimization in jit.
-	private static final DecimalFormatHelper dummyDecFormat = new DecimalFormatHelper();
 
 	private JITHelpers() {
 	}
@@ -575,7 +574,7 @@ public final class JITHelpers {
 	 * at the specified offset and moves towards the end of source array.
 	 * 
 	 * @param s1Value
-	 * 		 	the source character array to serach in
+	 * 		 	the source character array to search in
 	 * @param s1len
 	 * 		    the length of the source array
 	 * @param s2Value
@@ -622,7 +621,7 @@ public final class JITHelpers {
 	 * at the specified offset and moves towards the end of source array.
 	 * 
 	 * @param s1Value
-	 * 		 	the source character array to serach in
+	 * 		 	the source character array to search in
 	 * @param s1len
 	 * 		    the length of the source array
 	 * @param s2Value

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ MM_VerboseEventMetronomeSynchronousGCEnd::consumeEvents(void)
 
 	/* Find previous (matching) SyncGC start event */
 	if (NULL != (eventSyncGCStart = (MM_VerboseEventMetronomeSynchronousGCStart *)eventStream->returnEvent(J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START, _manager->getPrivateHookInterface(), (MM_VerboseEvent *)this))){
-		/* Copy over all relevant atributes from SyncGC start event, to be used later in formattedOutput */
+		/* Copy over all relevant attributes from SyncGC start event, to be used later in formattedOutput */
 		_heapFreeBefore = eventSyncGCStart->getHeapFree();
 		_startTime = eventSyncGCStart->getTimeStamp();
 		strncpy(_timestamp, eventSyncGCStart->getTimestamp(), 32);		
@@ -104,7 +104,7 @@ MM_VerboseEventMetronomeSynchronousGCEnd::formattedOutput(MM_VerboseOutputAgent 
 	/* Get the timestamp of any of previous heartbeat or trigger event, needed to calculate intervalms.
 	 * Intervalms reported will be between that previous event and the mayching syncGC start event (not end event!) */
 	if (manager->getLastMetronomeTime()) {
-		/* SyncGC due to OOM is preceeded by a trigger start event, so that lastMetronomeTime is for sure non 0 */
+		/* SyncGC due to OOM is preceded by a trigger start event, so that lastMetronomeTime is for sure non 0 */
 		timeSinceLastEvent = omrtime_hires_delta(manager->getLastMetronomeTime(), _startTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 	} else {
 		/* SyncGC due to explicit GC may happen before any trigger start event, so lastMetronomeTime may or may not be 0 */

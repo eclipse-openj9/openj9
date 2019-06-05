@@ -335,7 +335,7 @@ Java_VMBench_GPTests_GPTest_gpSoftwareFloat(JNIEnv *env, jclass clazz, jobject a
 	 * and hence terminate the process before the abort handler
 	 * completes executing.
 	 *
-	 * We would need to differentite from pthread_kill(pthread_self()) in the expected results for this to work */
+	 * We would need to differentiate from pthread_kill(pthread_self()) in the expected results for this to work */
 	kill(getpid(), SIGFPE);
 #endif
 #endif
@@ -352,7 +352,7 @@ Java_VMBench_GPTests_GPTest_gpSoftwareRead(JNIEnv *env, jclass clazz, jobject ar
 	 * and hence terminate the process before the abort handler
 	 * completes executing.
 	 *
-	 * We would need to differentite from pthread_kill(pthread_self()) in the expected results for this to work */
+	 * We would need to differentiate from pthread_kill(pthread_self()) in the expected results for this to work */
 	kill(getpid(), SIGSEGV); /* this is not valid as the java testcase might simply complete execution and hence terminate the process before the abort handler completes executing */
 #endif
 #endif

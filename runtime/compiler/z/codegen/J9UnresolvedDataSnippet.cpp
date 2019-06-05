@@ -415,7 +415,6 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 uint32_t
 J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    uint32_t length = (TR::Compiler->target.is64Bit() ? (14 + 5 * sizeof(uintptrj_t)) : (12 + 5 * sizeof(uintptrj_t)));
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
@@ -432,7 +431,6 @@ J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    {
-   // *this   swipeable for debugger
 
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Unresolved Data Snippet");

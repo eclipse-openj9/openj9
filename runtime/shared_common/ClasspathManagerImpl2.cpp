@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -974,8 +974,8 @@ SH_ClasspathManagerImpl2::localValidate_CheckAndTimestampManually(J9VMThread* cu
 			 * and running this check, store the stale item (markStale happens later) and return -1
 			 * which will cause the FIND to fail. 
 			 */
-			/* doTryLockJar = false for non-boostrap because we are trying to load from the cache, not from disk, so JARs may not yet be locked by the classloader.
-				Boostrap loader is always helperID==0 and it DOES lock its jars, so this is safe. */
+			/* doTryLockJar = false for non-bootstrap because we are trying to load from the cache, not from disk, so JARs may not yet be locked by the classloader.
+				Bootstrap loader is always helperID==0 and it DOES lock its jars, so this is safe. */
 			if (rc == 1) {
 				Trc_SHR_CMI_localValidate_CheckAndTimestampManually_DetectedStaleCPEI(currentThread, foundItem);
 				if (!(*staleItem)) {
@@ -1109,8 +1109,8 @@ SH_ClasspathManagerImpl2::validate(J9VMThread* currentThread, ROMClassWrapper* f
 				ClasspathEntryItem* foundItem = testCPI->itemAt(i);
 				IDATA tsChangedVal;
 
-				/* doTryLockJar = false for non-boostrap because we are trying to load from the cache, not from disk, so JARs may not yet be locked by the classloader.
-					Boostrap loader is always helperID==0 and it DOES lock its jars, so this is safe. */
+				/* doTryLockJar = false for non-bootstrap because we are trying to load from the cache, not from disk, so JARs may not yet be locked by the classloader.
+					Bootstrap loader is always helperID==0 and it DOES lock its jars, so this is safe. */
 				tsChangedVal = hasTimestampChanged(currentThread, foundItem, NULL, (compareTo->getHelperID()==0));
 				if (tsChangedVal==JAR_LOCKED && i==jarsLockedToIndex+1) {
 					jarsLockedToIndex = i;

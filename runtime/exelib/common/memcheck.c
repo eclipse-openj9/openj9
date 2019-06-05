@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -542,7 +542,7 @@ static BOOLEAN memoryCheck_parseOption(OMRPortLibrary *portLib, char const *opti
 	 *
 	 * Note, each site string is meant to be a prefix match to call site info.
 	 * if string is 'zip/', it will ignore all unfreed blocks with callsite string with 'zip/'
-	 * Conversly, if a call siteis abc/de.c, specifing a string of de.c will not be a match */
+	 * Conversely, if a call site is abc/de.c, specifying a string of de.c will not be a match */
 	char const *optStrIgnoreUnfreedCallsite = "ignoreUnfreedCallsite=";
 	size_t optLenIgnoreUnfreedCallsite = strlen(optStrIgnoreUnfreedCallsite);
 
@@ -951,7 +951,7 @@ static void memoryCheck_fill_bytes(OMRPortLibrary *portLib, U_8 *fillAddress, UD
 
 
 
-/* @internal	The portLibray passed on to other functions  must be the memCheckPortLib. */
+/* @internal	The portLibrary passed on to other functions  must be the memCheckPortLib. */
 static void 
 memoryCheck_free_memory(OMRPortLibrary *portLib, void *memoryPointer)
 {
@@ -1031,7 +1031,7 @@ static UDATA memoryCheck_get_page_size(OMRPortLibrary *portLib)
  *
  * @param[in] entry	The hashTable node.
  * @param[in] userData	A pointer to an initialized OMRPortLibrary; The "memCheckPortLibrary" must be the one passed in.
- *					This is the portLibrary with its orginal functions
+ *					This is the portLibrary with its original functions
  * @return Always returns TRUE so that the nodes in the hash table will be deallocated.
  */
 static UDATA 
@@ -1079,7 +1079,7 @@ memoryCheck_hashEqualFn(void *leftEntry, void *rightEntry, void *userData)
  * 
  * @param[in] vmemId	A valid J9PortVmemIdentifier struct pointer to reserved and committed memory.
  * @param[in] userData	An ignored parameter required by the format used by the hashTable fcn pointer.
- * @return The hashkey that will return the pointer to the J9PortVmemIdentifer struct for later use.
+ * @return The hashkey that will return the pointer to the J9PortVmemIdentifier struct for later use.
  */
 static UDATA 
 memoryCheck_hashFn(void *vmemId, void *userData)
@@ -1092,7 +1092,7 @@ memoryCheck_hashFn(void *vmemId, void *userData)
 /**
  * This function unlocks all of the blocks on a given list.
  *
- * @param[in] portLib	An initialized OMRPortLibrary with its orginal functions
+ * @param[in] portLib	An initialized OMRPortLibrary with its original functions
  * @param[in] listHead	The block to start unlocking the list from. 
  * @param[in] lockFlags	The LockMode: lockMode to lock, unlockMode to unlock
  * @param[in] lockBody	Whether the body of the block needs to be unlocked. It should
@@ -1139,7 +1139,7 @@ memoryCheck_lockAllBlocks(OMRPortLibrary *portLib, J9MemoryCheckHeader *listHead
  * It is usually called through one of two macros: UNLOCK( portLib, header ) or LOCK( portLib, header ).
  *
  * @precondition The global variable "J9HashTable vmemIDTable" must be already initialized.
- * @param[in] portLib	An initialized OMRPortLibrary structure with its orginal functions
+ * @param[in] portLib	An initialized OMRPortLibrary structure with its original functions
  * @param[in] memcheckHeader	An initialized J9MemoryCheckheader.
  * @param[in] requestedMode	The flags to apply to the guardPages.  This should be either lockMode or unlockMode;
  * @return 0 on Success, -1 on failure
@@ -1212,7 +1212,7 @@ memoryCheck_lockGuardPages(OMRPortLibrary *portLib, void *memcheckHeader, UDATA 
  * one of two macros: UNLOCK_BODY( portLib, header ) or LOCK_BODY( portLib, header ).
  *
  * @precondition	The blockHeader must be unlocked before calling this function 
- * @param[in] portLib	An initialized OMRPortLibrary structure with its orginal functions
+ * @param[in] portLib	An initialized OMRPortLibrary structure with its original functions
  * @param[in] blockHeader	An initialized blockHeader which already has its guard pages unlocked.
  * @param[in] requestedMode	The flags to apply to the wrappedBlock.  This should be either lockMode or unlockMode;
  * @return 0 on Success, -1 on failure
@@ -1265,7 +1265,7 @@ memoryCheck_lockWrappedBlock(OMRPortLibrary *portLib, J9MemoryCheckHeader *block
 	We do this on every allocate and every free to make sure we notice trashing as early as possible.  If a
 	screwed up block is detected, details are printed to the console.  If possible, the scan is continued to print
 	out other screwed up blocks.  Returns FALSE if any blocks are screwed up, or TRUE if everything looks okay.  */
-/* @internal The passed in portLib should be the memCheckPortLib with its orginal functions */
+/* @internal The passed in portLib should be the memCheckPortLib with its original functions */
 
 static BOOLEAN memoryCheck_scan_all_blocks(OMRPortLibrary *portLib)
 {
@@ -1633,7 +1633,7 @@ memoryCheck_wrapper_allocate_memory(OMRPortLibrary *portLib, UDATA byteAmount, c
 			/* we're in mode = J9_MCMODE_MPROTECT */
 			/* Allocate the structure.  
 			 * NOTE: memCheckPortLib->mem_allocate_memory is the "allocator" function (because we can't be
-			 *  using the subAllocator in conjuction with mode J9_MCMODE_MPROTECT).
+			 *  using the subAllocator in conjunction with mode J9_MCMODE_MPROTECT).
 			 * 		making it clear that we are using memCheckPortLib->mem_allocate_memory here because the 
 			 * 		corresponding free is done using memCheckPortLib->mem_free_memory (and we don't want to pass in
 			 * 		a deallocator to memoryCheck_wrapper_allocate_memory
@@ -2081,7 +2081,7 @@ found_block:
 	memStats.currentBytesAllocated -= topHeader->wrappedBlockSize;
 	memStats.currentBlocksAllocated -= 1;
 
-	/* update the J9MEMAVLTreeNode resposible for this memory block */
+	/* update the J9MEMAVLTreeNode responsible for this memory block */
 	memoryCheck_update_callSites_free(topHeader->node, topHeader->wrappedBlockSize);
 
 	if (!blockWasSkipped && (mode & J9_MCMODE_NEVER_FREE))  {
@@ -2201,7 +2201,7 @@ memoryCheck_dump_bytes(OMRPortLibrary *portLib, void *dumpAddress, UDATA dumpSiz
 
 
 /**
-  * @param portLib	The "memCheckPortLib" with its orignal functions is the one that should be used here (I think that should read:
+  * @param portLib	The "memCheckPortLib" with its original functions is the one that should be used here (I think that should read:
   *   ""memCheckPortLib" should be passed into this function "
   */ 
 static void 
@@ -2876,7 +2876,7 @@ memoryCheck_control(OMRPortLibrary *portLib, const char* key, UDATA value)
   *
   * @param portLibrary 
   * @param node J9MEMAVLTreeNode to print callSite information for
-  * @internal	The portLibray passed in should be the memCheckPortLib->
+  * @internal	The portLibrary passed in should be the memCheckPortLib->
   *
   */
 static void 
@@ -2922,12 +2922,12 @@ memoryCheck_dump_callSites(OMRPortLibrary *portLibrary, J9AVLTree *tree)
 
 
 /*
- * This function will start the recusive freeing of the nodes and the free
+ * This function will start the recursive freeing of the nodes and the free
  * the memory for the AVL Tree
  *
  * @parm portLib OMRPortLibrary used to access the memory functions
  * @param tree J9AVLTree storing the callSite information
- * @internal	The portLibray passed in should be the memCheckPortLib.
+ * @internal	The portLibrary passed in should be the memCheckPortLib.
  */
 static void 
 memoryCheck_free_AVLTree(OMRPortLibrary *portLib, J9AVLTree *tree)
@@ -2943,12 +2943,12 @@ memoryCheck_free_AVLTree(OMRPortLibrary *portLib, J9AVLTree *tree)
 
 
 /*
- * This function will recusive over the left and right child of the given
+ * This function will recurse over the left and right child of the given
  * node and then free the memory for itself
  *
  * @parm portLib OMRPortLibrary used to access the memory functions
  * @param tree J9AVLTreeNode the node to free
- * @internal	The portLibray passed in should be the memCheckPortLib.
+ * @internal	The portLibrary passed in should be the memCheckPortLib.
  */
 static void 
 memoryCheck_free_AVLTreeNode(OMRPortLibrary *portLib, J9AVLTreeNode *node)
@@ -2974,7 +2974,7 @@ memoryCheck_free_AVLTreeNode(OMRPortLibrary *portLib, J9AVLTreeNode *node)
  * @param insertNode The node which will be inserted into the tree
  * @param walk The current search position in the tree
  *
- * @return IDATA the difference bewtween the two strings alphabetically
+ * @return IDATA the difference between the two strings alphabetically
  *
  */
 static IDATA 
@@ -3020,7 +3020,7 @@ memoryCheck_print_stats_callSite(OMRPortLibrary *portLib, J9MEMAVLTreeNode *node
  * @param search The char * to search for
  * @param walk The current search position in the tree
  *
- * @return IDATA the difference bewtween the two strings alphabetically
+ * @return IDATA the difference between the two strings alphabetically
  *
  */
 static IDATA 
@@ -3177,7 +3177,7 @@ memoryCheck_print_stats_callSite_small(OMRPortLibrary *portLib, J9MEMAVLTreeNode
   *
   * @param portLibrary 
   * @param tree J9AVLTree storing the callSite information
-  * @internal	The portLibray passed in should be the memCheckPortLib->
+  * @internal	The portLibrary passed in should be the memCheckPortLib->
   *
   */
 static void 
@@ -3204,7 +3204,7 @@ memoryCheck_dump_callSites_small(OMRPortLibrary *portLibrary, J9AVLTree *tree)
   *
   * @param portLibrary 
   * @param node J9MEMAVLTreeNode to print callSite information for
-  * @internal	The portLibray passed in should be the memCheckPortLib.
+  * @internal	The portLibrary passed in should be the memCheckPortLib.
   */
 static void 
 memoryCheck_dump_callSite_small(OMRPortLibrary *portLibrary, J9AVLTreeNode *node)
@@ -3244,7 +3244,7 @@ memoryCheck_update_callSites_free(J9MEMAVLTreeNode *node, UDATA byteAmount)
 
 
 /**
-  * @internal The portLibrary passed on will be the memCheckPortLibrary with its orginal functions
+  * @internal The portLibrary passed on will be the memCheckPortLibrary with its original functions
   */
 static void * 
 memoryCheck_reallocate_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer, UDATA byteAmount, const char * callsite, U_32 category)

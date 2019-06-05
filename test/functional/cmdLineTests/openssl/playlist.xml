@@ -34,8 +34,6 @@
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)openssl.xml$(Q) \
 		-verbose -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
-		<!-- Temporarily exclude on aix until OpenSSL is enabled on aix -->
-		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -46,4 +44,5 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
+
 </playlist>

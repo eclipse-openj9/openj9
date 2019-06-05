@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ extern "C" {
  * @param[out] start the start address is returned in this pointer
  * @param[out] end the end address is returned in this pointer
  * 
- * @note this function is used by the JIT for barrier ommission optimizations
+ * @note this function is used by the JIT for barrier omission optimizations
  */
 void
 j9mm_get_guaranteed_nursery_range(J9JavaVM* javaVM, void** start, void** end)

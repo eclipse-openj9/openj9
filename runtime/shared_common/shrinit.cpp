@@ -27,7 +27,7 @@
 
 /* Notes on string usage:
  * This details what strings are allocated where and which are null-terminated.
- * String data can either come in from JNI in the jcl helpers (shared.c) or from the boostrap loader.
+ * String data can either come in from JNI in the jcl helpers (shared.c) or from the bootstrap loader.
  * Strings we care about are:
  * - Class name
  * 		In the helper API, UTF bytes/length are obtained from the JNI calls. These are only required for the duration of the find/store call so are not copied.
@@ -593,7 +593,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 				} else
 				if (J9SHAREDCLASSESOPTIONS[i].parseType==PARSE_TYPE_STARTSWITH) {
 					if (options[compareToLen]=='\0') {
-						/* Potentially don't know verboseFlags yet, so this msg cannot be surpressed by "silent" */
+						/* Potentially don't know verboseFlags yet, so this msg cannot be suppressed by "silent" */
 						SHRINIT_ERR_TRACE1(1, J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION, options);
 						return RESULT_PARSE_FAILED;
 					}
@@ -607,7 +607,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 		}
 		
 		if (NULL == J9SHAREDCLASSESOPTIONS[i].option) {
-			/* Potentially don't know verboseFlags yet, so this msg cannot be surpressed by "silent" */
+			/* Potentially don't know verboseFlags yet, so this msg cannot be suppressed by "silent" */
 			SHRINIT_ERR_TRACE1(1, J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED, options);
 			return RESULT_PARSE_FAILED;
 		}
@@ -786,7 +786,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 				*runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES | J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
 				tempInt = strlen(SUB_OPTION_MPROTECT_NO_PARTIAL_PAGES);
 			} else {
-				/* Potentially don't know verboseFlags yet, so this msg cannot be surpressed by "silent" */
+				/* Potentially don't know verboseFlags yet, so this msg cannot be suppressed by "silent" */
 				SHRINIT_ERR_TRACE(1, J9NLS_SHRC_SHRINIT_MPROTECT_UNRECOGNISED);
 				return RESULT_PARSE_FAILED;
 			}
@@ -1122,7 +1122,7 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 				if (strlen(J9SHAREDCLASSESHELPTEXT[i].option) > 27) {
 				/* Some help text has more than 28 chars, print them in two lines, e.g.
 				 * invalidateAotMethods=<method_specification>[,<method_specification>]
-                 *            Invalidate the AOT method(s) specified by the user.
+				 * Invalidate the AOT method(s) specified by the user.
 				 */
 					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
 					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %28s", "");
@@ -2496,7 +2496,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_REVALIDATE_AOT_METHODS_EQUALS:
 	case RESULT_DO_FIND_AOT_METHODS_EQUALS:
 		if (0 == strcmp(vm->sharedCacheAPI->methodSpecs, SUB_OPTION_AOT_METHODS_OPERATION_HELP)) {
-			/* User has passed in findAotMethdos/invalidateAotMethods/revalidateAotMethods=help" */
+			/* User has passed in findAotMethods/invalidateAotMethods/revalidateAotMethods=help" */
 			const char* option = OPTION_FIND_AOT_METHODS_EQUALS;
 			if (RESULT_DO_INVALIDATE_AOT_METHODS_EQUALS == command) {
 				option = OPTION_INVALIDATE_AOT_METHODS_EQUALS;
@@ -2863,7 +2863,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 }
 
 /*
- * Allocates and initiliases SCAbstraceAPI object.
+ * Allocates and initialises SCAbstractAPI object.
  *
  * @param	vm
  *
@@ -4358,7 +4358,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 
 	if (-1 == SH_OSCache::getCacheDir(vm, vm->sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_INIT_j9shr_createCacheSnapshot_getCacheDirFailed();
-		SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		rc = -1;
 	} else {
 		IDATA fd = 0;
@@ -4806,10 +4806,8 @@ static IDATA
 checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType)
 {
 	IDATA ret = -1;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType)) {
-		SHRINIT_ERR_TRACE(vm->sharedCacheAPI->verboseFlags, J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 	} else {
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), versionData);
 		versionData->cacheType = cacheType;
@@ -4910,7 +4908,8 @@ isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
 	bool ret = true;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (-1 == SH_OSCache::getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
+	if (-1 == j9shr_getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
+		/* use j9shr_getCacheDir() instead of SH_OSCache::getCacheDir() to avoid duplicated NLS message if SH_OSCache::getCacheDir() failed */
 		Trc_SHR_INIT_isFreeDiskSpaceLow_getDirFailed();
 		goto done;
 	}
@@ -5102,8 +5101,8 @@ j9shr_storeGCHints(J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, 
 /**
  * Find the GC hints from the shared classes cache
  * @param[in] vmThread  The current thread
- * @param[out] heapSize1  The first heap size that has been previouly stored
- * @param[out] heapSize2  The second heap size that has been previouly stored
+ * @param[out] heapSize1  The first heap size that has been previously stored
+ * @param[out] heapSize2  The second heap size that has been previously stored
  *
  * @return 0 on success, -1 otherwise.
  */
@@ -5126,6 +5125,23 @@ j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2)
 		returnVal = 0;
 	}
 	return returnVal;
+}
+
+/**
+ * Determine the directory to use for the cache file or control file(s)
+ *
+ * @param [in] vm  A J9JavaVM
+ * @param [in] ctrlDirName  The control dir name
+ * @param [out] buffer  The buffer to write the result into
+ * @param [in] bufferSize  The size of the buffer in bytes
+ * @param [in] cacheType  The Type of cache
+ *
+ * @return 0 on success or -1 for failure
+ */
+IDATA
+j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType)
+{
+	return SH_OSCache::getCacheDir(vm, ctrlDirName, buffer, bufferSize, cacheType, false);
 }
 
 } /* extern "C" */

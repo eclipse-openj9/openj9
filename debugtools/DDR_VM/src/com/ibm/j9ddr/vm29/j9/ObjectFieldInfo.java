@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ public class ObjectFieldInfo {
 	public static final int fj9object_t_SizeOf =
 			(J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF);
 	public static final int j9objectmonitor_t_SizeOf =
-			(J9BuildFlags.interp_smallMonitorSlot ? U32.SIZEOF : UDATA.SIZEOF);
+			(J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF);
 
 	int instanceObjectCount;
 	int instanceSingleCount;

@@ -96,7 +96,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	}
 	
 	/**
-	 *  @param objPointer array object who's elements we are outputing to dst
+	 *  @param objPointer array object who's elements we are outputting to dst
 	 *  @param dst destination array where we will output the elements
 	 *  @param start starting index of the elements we are interested in
 	 *  @param length number of elements to output 

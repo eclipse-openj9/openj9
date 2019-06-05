@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ public interface ThreadMXBean extends java.lang.management.ThreadMXBean
      * Find the native (operating system assigned) thread identifiers corresponding
      * to a unique TID (as returned by java/lang/Thread.getId()). When querying multiple threadIDs, 
      * consider using getNativeThreadIds(long[]) as it is more efficient than getNativeThreadId().
-     * @param threadId The Java runtime alloted thread identifier.
+     * @param threadId The Java runtime allocated thread identifier.
      * @return Operating system assigned native thread identifier. If the thread corresponding to the
      * 			ID is no longer alive or does not exist, -1 is returned.
      * @throws IllegalArgumentException is thrown if the thread identifier passed is invalid (&lt;=0).

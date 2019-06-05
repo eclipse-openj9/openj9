@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -170,7 +170,7 @@ j9vmem_verify_functiontable_slots(struct J9PortLibrary *portLibrary)
 	/* Verify that the memory management function pointers are non NULL */
 	
 	/* Not tested, implementation dependent.  No known functionality.
-	 * Startup is private to the portlibary, it is not re-entrant safe
+	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
 	if (NULL == OMRPORT_FROM_J9PORT(portLibrary)->vmem_startup) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->vmem_startup is NULL\n");
@@ -251,7 +251,7 @@ exit:
 #if defined(J9ZOS390)
 /**
  * Returns TRUE if the given page size and flags corresponds to new page sizes added in z/OS.
- * z/OS traditionally supports 4K and 1M fixed pages.
+ * z/OS tradditionally supports 4K and 1M fixed pages.
  * 1M pageable and 2G fixed, added recently, are considered new page sizes.
  */
 BOOLEAN

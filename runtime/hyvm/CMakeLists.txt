@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,9 +41,19 @@ target_link_libraries(harmony_jvm
 )
 
 # We actually want the library to be named "jvm.{so|dll}"
-set_target_properties(harmony_jvm PROPERTIES LIBRARY_OUTPUT_NAME "jvm")
+set_target_properties(harmony_jvm PROPERTIES
+	LIBRARY_OUTPUT_NAME "jvm"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+omr_add_exports(harmony_jvm
+	JNI_CreateJavaVM
+	JNI_GetCreatedJavaVMs
+	JNI_GetDefaultJavaVMInitArgs
+)
 
 install(
 	TARGETS harmony_jvm
 	LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

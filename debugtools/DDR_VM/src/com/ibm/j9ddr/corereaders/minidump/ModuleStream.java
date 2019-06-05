@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,7 +146,7 @@ class ModuleStream extends LateInitializedStream
 				IModule module;
 				if( runtimeFunctionList != null ) {
 					module = new UnwindModule(as.getProcesses().iterator().next(),moduleName,symbols,sections, thisModule.imageBaseAddress, properties, runtimeFunctionList);
-					// Uncommend to dump unwind info as we find it. This is very verbose.
+					// Uncomment to dump unwind info as we find it. This is very verbose.
 					// ((UnwindModule)module).dumpUndwindInfo(System.err);
 				} else {
 					module = new Module(as.getProcesses().iterator().next(),moduleName,symbols,sections, thisModule.imageBaseAddress, properties);
@@ -157,7 +157,7 @@ class ModuleStream extends LateInitializedStream
 					dump.addLibrary(module);
 				}
 			} catch (RuntimeException e) {
-				//Don't want to prevent RTE's propogating
+				//Don't want to prevent RTE's propagating
 				throw e;
 			} catch (Exception e) {
 			//this needs to be here in order to not fail completely whenever we

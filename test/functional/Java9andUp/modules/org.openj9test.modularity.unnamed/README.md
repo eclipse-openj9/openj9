@@ -1,5 +1,5 @@
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2019 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,5 +27,5 @@ org.openj9test.modularity.unnamed   ---> the folder containing this README and t
   |
   |-- org.openj9.test.unnamed   ---> package name
                           |
-                          |-- UnnamedDummy   ---> target class field/method/constructor with references to module org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy.Dumm
+                          |-- UnnamedDummy   ---> target class field/method/constructor with references to module org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy.Dummy
                           |-- UnnamedReflectObjects   ---> providing reflection objects from class UnnamedDummy above

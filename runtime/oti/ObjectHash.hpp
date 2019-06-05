@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,20 +44,17 @@ public:
 private:
 
 	static VMINLINE void
-	setHasBeenHashed(j9object_t objectPtr)
+	setHasBeenHashed(J9JavaVM *vm, j9object_t objectPtr)
 	{
-		volatile j9objectclass_t* flagsPtr = (j9objectclass_t*)&((J9Object*)objectPtr)->clazz;
-		j9objectclass_t oldFlags = 0;
-		j9objectclass_t newFlags = 0;
-		do {
-			oldFlags = *flagsPtr;
-			newFlags = oldFlags | OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			VM_AtomicSupport::bitOrU32(
+				(uint32_t*)&((J9Object*)objectPtr)->clazz,
+				(uint32_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
+		} else {
+			VM_AtomicSupport::bitOr(
+				(uintptr_t*)&((J9Object*)objectPtr)->clazz,
+				(uintptr_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
 		}
-#if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
-		while (oldFlags != VM_AtomicSupport::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
-		while (oldFlags != VM_AtomicSupport::lockCompareExchange(flagsPtr, (UDATA)oldFlags, (UDATA)newFlags));
-#endif /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
 	}
 
 	static VMINLINE U_32
@@ -217,7 +214,7 @@ public:
 
 			/* Technically, one should use J9OBJECT_FLAGS_FROM_CLAZZ macro to fetch the clazz flags.
 			 * However, considering the need to optimize hashcode code path and how we actually use
-			 * the flag, it is sufficent to fetch objectPointer->clazz.
+			 * the flag, it is sufficient to fetch objectPointer->clazz.
 			 */
 			UDATA flags = (UDATA)(((J9Object*)objectPointer)->clazz);
 
@@ -244,7 +241,7 @@ public:
 
 			} else {
 				if (J9_ARE_NO_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS)) {
-					setHasBeenHashed(objectPointer);
+					setHasBeenHashed(vm, objectPointer);
 				}
 				hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
 			}

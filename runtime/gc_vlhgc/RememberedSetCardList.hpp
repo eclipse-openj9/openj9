@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -162,7 +162,7 @@ public:
 	void releaseBuffers(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Release buffers only for the bucked assocated with current thread.
+	 * Release buffers only for the bucked associated with current thread.
 	 */
 	void releaseBuffersForCurrentThread(MM_EnvironmentVLHGC *env);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ platformSocketOption( int32_t portableSocketOption )
  * entity, as known to the communications layer. The exact format of the addr parameter 
  * is determined by the address family established when the socket was created. 
  * @param[in] sockHandle A pointer to a j9socket_t  which will point to the newly created 
- * socket once accept returns succesfully
+ * socket once accept returns successfully
  *
  * @return 
  * \arg 0 on success
@@ -496,7 +496,7 @@ j9sock_gethostname(struct J9PortLibrary *portLibrary, char *buffer, int32_t leng
  * @param[in] sockaddr_size The size of "in_addr"
  * @param[out] name The hostname of the passed address in a preallocated buffer.
  * @param[in] name_length The length of the buffer pointed to by name
- * @param[in] flags Flags on how to form the repsonse (see man pages or doc for getnameinfo)
+ * @param[in] flags Flags on how to form the response (see man pages or doc for getnameinfo)
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code
  *
@@ -801,7 +801,7 @@ j9sock_ipmreq_init(struct J9PortLibrary *portLibrary, j9ipmreq_t handle, uint32_
  * @param[in] portLibrary The port library.
  * @param[out] handle A pointer to the j9ipv6_mreq_struct to populate.
  * @param[in] ipmcast_addr The ip mulitcast address.
- * @param[in] ipv6mr_interface The ip mulitcast inteface.
+ * @param[in] ipv6mr_interface The ip mulitcast interface.
  *
  * @return	0, if no errors occurred, otherwise the (negative) error code.
  *
@@ -1281,7 +1281,7 @@ j9sock_shutdown_output(struct J9PortLibrary *portLibrary, j9socket_t sock)
 	return J9PORT_ERROR_SOCKET_OPFAILED;
 }
 /**
- * Creates a new j9sockaddr, refering to the specified port and address.  The only address family currently supported
+ * Creates a new j9sockaddr, referring to the specified port and address.  The only address family currently supported
  * is AF_INET.
  *
  * @param[in] portLibrary The port library.
@@ -1431,7 +1431,7 @@ j9sock_sockaddr_port(struct J9PortLibrary *portLibrary, j9sockaddr_t handle)
  * @param[in] portLibrary The port library.
  * @param[out]	handle Pointer pointer to the j9socket struct, to be allocated
  * @param[in] family The address family (currently, only J9SOCK_AFINET is supported)
- * @param[in] socktype Secifies what type of socket is created
+ * @param[in] socktype Specifies what type of socket is created
  * \arg J9SOCK_STREAM, for a stream socket
  * \arg J9SOCK_DGRAM, for a datagram socket
  * @param[in] protocol Type/family specific creation parameter (currently, only J9SOCK_DEFPROTOCOL supported).

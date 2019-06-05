@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,18 @@ target_link_libraries(hyprtshim
 		j9thr
 )
 
+omr_add_exports(hyprtshim
+	hyport_allocate_library
+	hyport_create_library
+	hyport_getSize
+	hyport_getVersion
+	hyport_init_library
+	hyport_isCompatible
+	hyport_startup_library
+)
+
 install(
 	TARGETS hyprtshim
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

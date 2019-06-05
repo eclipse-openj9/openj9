@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,6 +178,19 @@ public class MethodHandleAPI_arrayConstructor {
 		Assert.assertEquals(methodType(String[].class, int.class), mhArrayConstructor.type());
 		String[] stringArray = (String[])mhArrayConstructor.invokeExact(3);
 		Assert.assertEquals(3, stringArray.length);
+	}
+	
+	/**
+	 * arrayConstructor test for a StringBuffer array
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" }, invocationCount = 2)
+	public static void test_arrayConstructor_StringBufferArray() throws Throwable {
+		MethodHandle arrayLength = MethodHandles.arrayLength(StringBuffer[].class);
+		MethodHandle mhArrayConstructor = MethodHandles.arrayConstructor(StringBuffer[].class);
+		Assert.assertEquals(mhArrayConstructor.type(), methodType(StringBuffer[].class, int.class));
+		StringBuffer[] stringBufferArray = (StringBuffer[])mhArrayConstructor.invokeExact(10);
+		Assert.assertEquals((int)arrayLength.invokeExact(stringBufferArray), 10);
 	}
 	
 	/**

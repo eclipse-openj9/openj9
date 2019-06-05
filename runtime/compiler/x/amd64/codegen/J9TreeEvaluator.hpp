@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
 
    static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    };
 

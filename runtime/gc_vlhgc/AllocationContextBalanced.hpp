@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ private:
 	MM_AllocationContextBalanced *_nextSibling; /**< Instances of the receiver are built into a circular linked-list.  This points to the next adjacent downstream neighbour in this list (may be pointing to this if there is only one context in the node) */
 	MM_AllocationContextBalanced *_cachedReplenishPoint;	/**< The sibling context which most recently replenished the receiver */
 	MM_AllocationContextBalanced *_stealingCousin;	/**< A context in the "next" node which the receiver will use for spilling memory requests across NUMA nodes.  Points back at the receiver if this is non-NUMA */
-	MM_AllocationContextBalanced *_nextToSteal;	/**< A pointer to the next context we will try to steal from (we steal in a round-robin to try to distribute the heap's assymetry).  Points back at the receiver if this is non-NUMA */
+	MM_AllocationContextBalanced *_nextToSteal;	/**< A pointer to the next context we will try to steal from (we steal in a round-robin to try to distribute the heap's asymmetry).  Points back at the receiver if this is non-NUMA */
 	MM_HeapRegionManager *_heapRegionManager; /**< A cached pointer to the HeapRegionManager */
 	UDATA *_freeProcessorNodes;	/**< The array listing all the NUMA node numbers which account for the nodes with processors but no memory plus an empty slot for each context to use (element 0 is used by this context) - this is used when setting affinity */
 	UDATA _freeProcessorNodeCount;	/**< The length, in elements, of the _freeProcessorNodes array (always at least 1 after startup) */
@@ -322,7 +322,7 @@ private:
 	 *
 	 * @param env[in] The thread attempting the allocation
 	 * @param subspace[in] The subSpace to which the allocated pool must be attached
-	 * @paran requestingContext[in] The context requesting a region from the receiver
+	 * @param requestingContext[in] The context requesting a region from the receiver
 	 * @return The region or NULL if there were none available in the heap
 	 */
 	MM_HeapRegionDescriptorVLHGC *acquireMPBPRegionFromHeap(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, MM_AllocationContextTarok *requestingContext);
@@ -367,7 +367,7 @@ private:
 	 *
 	 * @param env[in] The thread attempting the allocation
 	 * @param subSpace[in] The subSpace to which the allocated pool must be attached
-	 * @paran requestingContext[in] The context requesting a region from the receiver
+	 * @param requestingContext[in] The context requesting a region from the receiver
 	 * @return The region or NULL if there were none available in the receiver
 	 */
 	MM_HeapRegionDescriptorVLHGC *acquireMPBPRegionFromContext(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocationContextTarok *requestingContext);

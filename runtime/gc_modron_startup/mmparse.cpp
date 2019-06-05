@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -680,7 +679,7 @@ gcParseXlpOption(J9JavaVM *vm)
 		IDATA result = j9vmem_find_valid_page_size(0, &pageSize, &pageFlags, &isRequestedSizeSupported);
 
 		/*
-		 * j9vmem_find_valid_page_size happend to be changed to always return 0
+		 * j9vmem_find_valid_page_size happened to be changed to always return 0
 		 * However formally the function type still be IDATA so assert if it returns anything else
 		 */
 		Assert_MM_true(0 == result);
@@ -1146,7 +1145,7 @@ gcParseSovereignArguments(J9JavaVM *vm)
 	
 #endif /* J9VM_GC_LARGE_OBJECT_AREA) */
 
-	/* If user has specifed any of the following SOV options  then we just silently ignore them 
+	/* If user has specified any of the following SOV options  then we just silently ignore them 
 	 * 
 	 * -Xparroot
 	 * -XloratioN 
@@ -1229,7 +1228,7 @@ _error:
  * Wrapper for scan_udata, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the udata
  * @param value address of the storage for the udata to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1255,7 +1254,7 @@ scan_udata_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *arg
  * Wrapper for scan_udata, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the udata
  * @param value address of the storage for the udata to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1281,7 +1280,7 @@ scan_u32_helper(J9JavaVM *javaVM, char **cursor, U_32 *value, const char *argNam
  * Wrapper for scan_long, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the u_64
  * @param value address of the storage for the U_64 to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1307,7 +1306,7 @@ scan_u64_helper(J9JavaVM *javaVM, char **cursor, U_64 *value, const char *argNam
  * Wrapper for scan_hex, that provides readable error messages.
  * @param cursor address of the pointer to the string to parse for the hex value
  * @param value address of the storage for the hex value to be read
- * @param argName string containing the arguement name to be used in error reporting
+ * @param argName string containing the argument name to be used in error reporting
  * @return true if parsing was successful, false otherwise.
  */
 bool
@@ -1433,7 +1432,7 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Parse the command line 
-	 * Order is important for paramters that match as substrings (-Xmrx/-Xmr)
+	 * Order is important for parameters that match as substrings (-Xmrx/-Xmr)
 	 */
 	result = option_set_to_opt(vm, OPT_XMCA, &index, EXACT_MEMORY_MATCH, &vm->ramClassAllocationIncrement);
 	if (OPTION_OK != result) {
@@ -1452,20 +1451,22 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		goto _error;
 	}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)	/* This should be J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
-	if (-1 != index) {
-		extensions->suballocatorInitialSize = optionValue;
-	}
-	if(0 == extensions->suballocatorInitialSize) {
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, OPT_XMCRS, (UDATA)0);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		if (-1 != index) {
+			extensions->suballocatorInitialSize = optionValue;
+		}
+		if(0 == extensions->suballocatorInitialSize) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, OPT_XMCRS, (UDATA)0);
 			return JNI_EINVAL;
-	}
+		}
 #define FOUR_GB ((UDATA)4 * 1024 * 1024 * 1024)
-	if(extensions->suballocatorInitialSize >= FOUR_GB) {
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, OPT_XMCRS);
+		if(extensions->suballocatorInitialSize >= FOUR_GB) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, OPT_XMCRS);
 			return JNI_EINVAL;
+		}
 	}
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	memoryParameters[opt_Xmcrs] = index;
 

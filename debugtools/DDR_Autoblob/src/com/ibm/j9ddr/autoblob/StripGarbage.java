@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,7 +123,7 @@ public class StripGarbage
 	 * Removes multi-line or single sections from the supplied data. It assumes that the data is continued over multiple lines by use of the \ character.
 	 * @param data string to scan matches for
 	 * @param pattern regex describing the start of the match
-	 * @param blockID string describing how a multi-line block is identifed e.g. { or \
+	 * @param blockID string describing how a multi-line block is identified e.g. { or \
 	 * @param terminator string describing the termination of a the multi-line match (note this is currently not a reg-ex)
 	 * @return the altered data or if no matches were found the unchanged data
 	 */

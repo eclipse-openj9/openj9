@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,16 +20,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "j9protos.h"
-#include "j9consts.h"
-#include "modronopt.h"
-#include "ModronAssertions.h"
+#include "omr.h"
+#include "omrcfg.h"
 #include "omrutilbase.h"
 
 #include "EnvironmentRealtime.hpp"
 #include "OSInterface.hpp"
+
 #include "Timer.hpp"
 
 /**
@@ -42,7 +38,7 @@ MM_Timer::newInstance(MM_EnvironmentBase* env, MM_OSInterface* osInterface)
 {
 	MM_Timer* timer;
 	
-	timer = (MM_Timer*)env->getForge()->allocate(sizeof(MM_Timer), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	timer = (MM_Timer*)env->getForge()->allocate(sizeof(MM_Timer), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL != timer) {
 		new(timer) MM_Timer();
 		if (!timer->initialize(env, osInterface)) {

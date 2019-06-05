@@ -26,6 +26,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/SnippetGCMap.hpp"
 #include "compile/Compilation.hpp"
@@ -42,7 +43,7 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "runtime/CodeCacheManager.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 
 TR::S390StackCheckFailureSnippet::S390StackCheckFailureSnippet
                         (TR::CodeGenerator        *cg,
