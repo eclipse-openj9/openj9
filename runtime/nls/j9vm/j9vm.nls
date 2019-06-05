@@ -1824,7 +1824,7 @@ J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define mo
 # No arguments
 J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=Only bootstrap or platform classloader can define package java or java.*.
 # START NON-TRANSLATABLE
-J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than boostrap or platform classloader can't define package java or java.*.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than bootstrap or platform classloader can't define package java or java.*.
 J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.system_action=The JVM will throw a java/lang/LayerInstantiationException.
 J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.user_response=Don't define package java or java.*.
 # END NON-TRANSLATABLE
