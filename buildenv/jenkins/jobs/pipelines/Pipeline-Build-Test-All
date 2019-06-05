@@ -294,8 +294,8 @@ try {
 
 def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION) {
     stage ("${JOB_NAME}") {
-        SCM_BRANCH = (ghprbPullId) ? "origin/pr/${ghprbPullId}/merge" : 'refs/heads/master'
-        SCM_REFSPEC = (ghprbPullId) ? "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge" : ''
+        SCM_BRANCH = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "origin/pr/${ghprbPullId}/merge" : 'refs/heads/master'
+        SCM_REFSPEC = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge" : ''
         JOB = build job: JOB_NAME,
                 parameters: [
                     string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),

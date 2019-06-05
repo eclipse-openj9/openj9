@@ -69,9 +69,9 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
   logs:
-    Nightly: 10
+    Nightly: 30
     Release: 10
-    OMR: 20
+    OMR: 30
     OpenJDK8: 20
     OpenJDK11: 20
     OpenJDK12: 20
@@ -91,6 +91,7 @@ tests_targets:
     ? extended.system
     ? sanity.functional
     ? sanity.system
+ghprbGhRepository_openj9: 'eclipse/openj9'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
