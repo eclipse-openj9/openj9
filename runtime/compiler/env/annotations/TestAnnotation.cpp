@@ -21,12 +21,12 @@
  *******************************************************************************/
 
 #include "TestAnnotation.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "compile/ResolvedMethod.hpp"
 
@@ -40,18 +40,18 @@ TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *
 
   _isValid=false;
   TR::Symbol *sym = symRef->getSymbol();
- 
+
 
   TR_ResolvedMethod *resolved = symRef->getOwningMethod(_comp);
   J9Class * clazz = (J9Class *)resolved->containingClass();
 
   if(!loadAnnotation(clazz,kTestAnnotation)) return;
-  
+
   int32_t *intptr;
   float *fltptr;
   double *dblptr;
   int64_t *longptr;
- 
+
   J9SRP *strPtr;
   if(getValue(symRef,"intField",kInt,&intptr))
      {
@@ -106,8 +106,8 @@ TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *
      buf[len] = '\0';
      printf("Found string %s\n",buf);
      }
-    
-  
+
+
   _isValid=true;
 }
 

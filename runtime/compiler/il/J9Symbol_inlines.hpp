@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,28 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_RESOLVEDMETHODSYMBOL_INCL
-#define TR_RESOLVEDMETHODSYMBOL_INCL
+#ifndef J9_SYMBOL_INLINES_INCL
+#define J9_SYMBOL_INLINES_INCL
 
-#include "il/symbol/J9ResolvedMethodSymbol.hpp"
-#include "infra/Annotations.hpp"
+#include "il/J9Symbol.hpp"
+#include "il/OMRSymbol_inlines.hpp"
 
-class TR_ResolvedMethod;
-namespace TR { class Compilation; }
-
-namespace TR
-{
-
-class OMR_EXTENSIBLE ResolvedMethodSymbol : public J9::ResolvedMethodSymbolConnector
-   {
-public:
-
-   ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Compilation *comp) :
-      J9::ResolvedMethodSymbolConnector(method, comp) {}
-
-   };
-
-}
-
-#endif
-
+#endif // J9_SYMBOL_INLINES_INCL

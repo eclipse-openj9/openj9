@@ -46,15 +46,15 @@
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
 #include "il/DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
 #include "ras/DebugCounter.hpp"
 #include "env/VMJ9.h"
 #include "z/codegen/J9S390Snippet.hpp"
@@ -7433,7 +7433,7 @@ J9::Z::TreeEvaluator::vectorPerformSignOperationHelper(TR::Node *node,
       }
 
    // Bit 4-5 Sign Operation, 6 Positive Sign code, 7 Sign validation on V2
-   uint8_t constImm4 = signOpType << 2; 
+   uint8_t constImm4 = signOpType << 2;
 
    if (signOpType == SignOperationType::setSign)
       {
@@ -7548,7 +7548,7 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    else
       {
       TR_ASSERT_FATAL((shiftAmount >= -32 && shiftAmount <= 31), "TR::pdshl/r shift amount (%d )not in range [-32, 31]", shiftAmount);
-      
+
       if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
          {
          decimalPrecision |= 0x80;

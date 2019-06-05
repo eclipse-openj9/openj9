@@ -25,8 +25,8 @@ j9jit_files(
 	il/J9IL.cpp
 	il/J9Node.cpp
 	il/J9SymbolReference.cpp
-	il/symbol/J9MethodSymbol.cpp
-	il/symbol/J9ResolvedMethodSymbol.cpp
-	il/symbol/J9StaticSymbol.cpp
-	il/symbol/J9Symbol.cpp
+	il/J9MethodSymbol.cpp
+	il/J9ResolvedMethodSymbol.cpp
+	il/J9StaticSymbol.cpp
+	il/J9Symbol.cpp
 )

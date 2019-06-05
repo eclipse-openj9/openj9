@@ -34,9 +34,9 @@
 #include "compile/Compilation.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/List.hpp"
 
 TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)

@@ -133,14 +133,14 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/il/OMRNode.cpp \
     omr/compiler/il/OMRSymbolReference.cpp \
     omr/compiler/il/OMRTreeTop.cpp \
-    omr/compiler/il/symbol/OMRAutomaticSymbol.cpp \
-    omr/compiler/il/symbol/OMRLabelSymbol.cpp \
-    omr/compiler/il/symbol/OMRMethodSymbol.cpp \
-    omr/compiler/il/symbol/OMRParameterSymbol.cpp \
-    omr/compiler/il/symbol/OMRRegisterMappedSymbol.cpp \
-    omr/compiler/il/symbol/OMRResolvedMethodSymbol.cpp \
-    omr/compiler/il/symbol/OMRStaticSymbol.cpp \
-    omr/compiler/il/symbol/OMRSymbol.cpp \
+    omr/compiler/il/OMRAutomaticSymbol.cpp \
+    omr/compiler/il/OMRLabelSymbol.cpp \
+    omr/compiler/il/OMRMethodSymbol.cpp \
+    omr/compiler/il/OMRParameterSymbol.cpp \
+    omr/compiler/il/OMRRegisterMappedSymbol.cpp \
+    omr/compiler/il/OMRResolvedMethodSymbol.cpp \
+    omr/compiler/il/OMRStaticSymbol.cpp \
+    omr/compiler/il/OMRSymbol.cpp \
     omr/compiler/ilgen/IlGenRequest.cpp \
     omr/compiler/infra/Assert.cpp \
     omr/compiler/infra/BitVector.cpp \
@@ -315,10 +315,10 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/il/J9IL.cpp \
     compiler/il/J9Node.cpp \
     compiler/il/J9SymbolReference.cpp \
-    compiler/il/symbol/J9MethodSymbol.cpp \
-    compiler/il/symbol/J9ResolvedMethodSymbol.cpp \
-    compiler/il/symbol/J9StaticSymbol.cpp \
-    compiler/il/symbol/J9Symbol.cpp \
+    compiler/il/J9MethodSymbol.cpp \
+    compiler/il/J9ResolvedMethodSymbol.cpp \
+    compiler/il/J9StaticSymbol.cpp \
+    compiler/il/J9Symbol.cpp \
     compiler/ilgen/ClassLookahead.cpp \
     compiler/ilgen/IlGenerator.cpp \
     compiler/ilgen/J9ByteCodeIterator.cpp \

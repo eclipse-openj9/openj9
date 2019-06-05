@@ -20,12 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "il/symbol/J9MethodSymbol.hpp"
-
 #include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
-#include "il/symbol/MethodSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "runtime/J9Runtime.hpp"
 
@@ -444,8 +442,8 @@ static TR::RecognizedMethod extraCanSkipChecksOnArrayCopies[] =
    TR::java_util_Arrays_copyOf_short,
    TR::java_util_Arrays_copyOf_char,
    TR::java_util_Arrays_copyOf_boolean,
-   TR::java_util_Arrays_copyOf_int,   
-   TR::java_util_Arrays_copyOf_long, 
+   TR::java_util_Arrays_copyOf_int,
+   TR::java_util_Arrays_copyOf_long,
    TR::java_util_Arrays_copyOf_float,
    TR::java_util_Arrays_copyOf_double,
    TR::java_util_Arrays_copyOf_Object1,
@@ -467,7 +465,7 @@ J9::MethodSymbol::safeToSkipChecksOnArrayCopies()
    if (!disableExtraCopyOfOpts)
       for (int i = 0; extraCanSkipChecksOnArrayCopies[i] != TR::unknownMethod; ++i)
          if (extraCanSkipChecksOnArrayCopies[i] == methodId)
-            return true;         
+            return true;
 
    return false;
    }

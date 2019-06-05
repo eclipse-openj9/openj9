@@ -20,59 +20,48 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_METHODSYMBOL_INCL
-#define J9_METHODSYMBOL_INCL
-
-/*
- * The following #define and typedef must appear before any #includes in this file
- */
-#ifndef J9_METHODSYMBOL_CONNECTOR
-#define J9_METHODSYMBOL_CONNECTOR
-namespace J9 { class MethodSymbol; }
-namespace J9 { typedef J9::MethodSymbol MethodSymbolConnector; }
-#endif
-
-#include "il/symbol/OMRMethodSymbol.hpp"
+#ifndef TR_STATICSYMBOL_INCL
+#define TR_STATICSYMBOL_INCL
 
 #include <stdint.h>
-#include "codegen/LinkageConventionsEnum.hpp"
-#include "compile/Method.hpp"
 #include "il/DataTypes.hpp"
-#include "runtime/J9Runtime.hpp"
-
-namespace TR { class Compilation; }
-
-namespace J9
-{
+#include "il/J9StaticSymbol.hpp"
 
 /**
- * Symbol for methods, along with information about the method
+ * A symbol with an address
  */
-class OMR_EXTENSIBLE MethodSymbol : public OMR::MethodSymbolConnector
+namespace TR
+{
+
+class OMR_EXTENSIBLE StaticSymbol : public J9::StaticSymbolConnector
    {
 
 protected:
 
-   MethodSymbol(TR_LinkageConventions lc = TR_Private, TR::Method * m = NULL) :
-      OMR::MethodSymbolConnector(lc, m) { }
+   StaticSymbol(TR::DataType d) :
+      J9::StaticSymbolConnector(d) { }
 
-public:
+   StaticSymbol(TR::DataType d, void * address) :
+      J9::StaticSymbolConnector(d,address) { }
 
-   bool isPureFunction();
+   StaticSymbol(TR::DataType d, uint32_t s) :
+      J9::StaticSymbolConnector(d, s) { }
 
-   TR_RuntimeHelper getVMCallHelper() { return TR_j2iTransition; } // deprecated
+private:
 
-   bool safeToSkipNullChecks();
-   bool safeToSkipBoundChecks();
-   bool safeToSkipDivChecks();
-   bool safeToSkipCheckCasts();
-   bool safeToSkipArrayStoreChecks();
-   bool safeToSkipZeroInitializationOnNewarrays();
-   bool safeToSkipChecksOnArrayCopies();
+   // When adding another class to the hierarchy, add it as a friend here
+   friend class J9::StaticSymbol;
+   friend class OMR::StaticSymbol;
 
    };
 
 }
+
+/**
+ * To isolate the addition of the _inlines.hpp file from OMR, where the OMR
+ * layer versions would be empty stubs, I've added this here.
+ */
+#include "il/StaticSymbol_inlines.hpp"
 
 #endif
 

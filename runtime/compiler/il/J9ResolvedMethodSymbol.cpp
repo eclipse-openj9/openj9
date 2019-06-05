@@ -21,7 +21,7 @@
 
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "compile/Compilation.hpp"
 
 

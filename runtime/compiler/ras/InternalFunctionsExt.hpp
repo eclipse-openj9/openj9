@@ -29,8 +29,8 @@
 #include "env/FilePointerDecl.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/RegisterMappedSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
 #include "ras/Debug.hpp"
 #include "ras/InternalFunctions.hpp"
 

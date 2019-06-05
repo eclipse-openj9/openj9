@@ -23,7 +23,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
 #include "compile/Compilation.hpp"
-#include "il/symbol/StaticSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 
 uint8_t *
 J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()

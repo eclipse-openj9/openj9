@@ -26,7 +26,7 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/StaticSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "optimizer/LocalCSE.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 

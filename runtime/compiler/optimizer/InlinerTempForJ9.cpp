@@ -38,9 +38,10 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/PreExistence.hpp"
@@ -54,7 +55,6 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "optimizer/Structure.hpp"                        // TR_RegionAnalysis
 #include "optimizer/StructuralAnalysis.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "control/Recompilation.hpp"                      //TR_PersistentJittedBodyInfo
 #include "control/RecompilationInfo.hpp"                  //TR_PersistentJittedBodyInfo
 #include "optimizer/EstimateCodeSize.hpp"

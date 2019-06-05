@@ -30,9 +30,9 @@
 #include "il/Node_inlines.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
+#include "il/StaticSymbol.hpp"
+#include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
-#include "il/symbol/StaticSymbol_inlines.hpp"
 #include "il/SymbolReference.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
@@ -45,7 +45,7 @@
 
 /**
  * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
- */ 
+ */
 int32_t J9::TransformUtil::getLoopNestingDepth(TR::Compilation *comp, TR::Block *block)
    {
    TR_RegionStructure *region = block->getParentStructureIfExists(comp->getFlowGraph());

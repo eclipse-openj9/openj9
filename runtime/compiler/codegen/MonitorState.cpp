@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,8 @@
 #include "codegen/MonitorState.hpp"
 #include "il/Block.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/List.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,12 +21,12 @@
  *******************************************************************************/
 
 #include "env/annotations/TRNoSideFXAnnotation.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 
 TR_NoSideFXAnnotation::TR_NoSideFXAnnotation(TR::Compilation *comp,TR::SymbolReference *symRef):
@@ -35,11 +35,11 @@ TR_NoSideFXAnnotation::TR_NoSideFXAnnotation(TR::Compilation *comp,TR::SymbolRef
    TR_ResolvedMethod *resolvedMethod= symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
    TR_ASSERT(resolvedMethod,"symref NULL\n");
    TR_ASSERT(comp,"comp NULL\n");
-   
+
    _isValid=false;
-   
+
    J9Class * clazz = (J9Class *)resolvedMethod->containingClass();
-   
+
    if(!loadAnnotation(clazz,kX10NoSideFx)) return;
    if(NULL == getTaggedAnnotationInfoEntry(symRef,kX10NoSideFx)) return;
    if(false)printf("Found no sfx of %s in %s\n",resolvedMethod->signature(comp->trMemory()),comp->signature());

@@ -43,7 +43,7 @@
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
-#include "il/symbol/StaticSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"

@@ -20,13 +20,13 @@
  *******************************************************************************/
 
 #include "optimizer/PreEscapeAnalysis.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/TreeTop.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/TreeTop.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/OptimizationManager.hpp"
 

@@ -34,9 +34,9 @@
 #include "codegen/TreeEvaluator.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "arm/codegen/ARMInstruction.hpp"
 #include "arm/codegen/GenerateInstructions.hpp"
 

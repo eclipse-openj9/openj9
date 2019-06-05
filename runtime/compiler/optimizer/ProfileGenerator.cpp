@@ -43,12 +43,12 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -140,7 +140,7 @@ int32_t TR_ProfileGenerator::perform()
                   firstChild->incReferenceCount();
                   node->getFirstChild()->recursivelyDecReferenceCount();
                   node->setFirst(firstChild);
-                  
+
                   TR::Node::recreate(node, TR::treetop);
                   }
                else if (node->getOpCode().isStore())
