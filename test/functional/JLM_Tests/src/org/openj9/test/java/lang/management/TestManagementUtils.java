@@ -98,7 +98,7 @@ public class TestManagementUtils {
 	 * Test method for 'com.ibm.lang.management.ManagementUtils.getCompilationBean()'
 	 */
 	@Test
-	public final void testGetCompliationBean() {
+	public final void testGetCompilationBean() {
 		// TODO Auto-generated method stub
 
 	}

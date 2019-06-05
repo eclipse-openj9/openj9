@@ -378,7 +378,7 @@ public class TestManager {
 	public static boolean stopCompilation() {
 		/*Stop class compilation*/
 		JarTesterMT jarTesterMT = jarTesterMTDriver.getJartesterMT();
-		jarTesterMT.stopComopilation();
+		jarTesterMT.stopCompilation();
 
 		boolean jarTesterStopped = false;
 

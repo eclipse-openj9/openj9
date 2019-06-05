@@ -68,7 +68,7 @@ public class JarTesterMT extends ZipTester {
 	/**
 	 * This method is used externally to issue a request to stop all compilation threads
 	 */
-	public void stopComopilation() {
+	public void stopCompilation() {
 		((ZipTestClassLoaderMT)loader).stopCompilation();
 	}
 	
