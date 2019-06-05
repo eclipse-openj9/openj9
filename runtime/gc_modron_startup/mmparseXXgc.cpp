@@ -965,6 +965,36 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue ;
 		}
 
+		if (try_scan(&scan_start, "darkMatterCompactThreshold=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "darkMatterCompactThreshold=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->darkMatterCompactThreshold = ((float)percentage) / 100.0f;
+			continue;
+		}
+		
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
+		if (try_scan(&scan_start, "gcOnIdleCompactThreshold=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "gcOnIdleCompactThreshold=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcOnIdleCompactThreshold = ((float)percentage) / 100.0f;
+			continue;
+		}
+#endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
+
 #if defined (J9VM_GC_VLHGC)
 		if (try_scan(&scan_start, "fvtest_tarokSimulateNUMA=")) {
 			UDATA simulatedNodeCount = 0;
