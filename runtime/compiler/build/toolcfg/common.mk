@@ -20,7 +20,6 @@
 
 J9_VERSION?=29
 J9LIBS = j9jit_vm j9codert_vm j9util j9utilcore j9pool j9avl j9stackmap j9hashtable
-VERSION_MAJOR?=9
 
 OMR_DIR ?= $(J9SRC)/omr
 -include $(OMR_DIR)/omrmakefiles/jitinclude.mk

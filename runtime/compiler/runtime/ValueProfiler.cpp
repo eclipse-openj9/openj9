@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@
 
 /**
  * Construct a ByteInfo. Used to profile UTF16 strings.
- * String will become persistently allocated only through the copy constuctor.
+ * String will become persistently allocated only through the copy constructor.
  * Assignment and custom constructors will just set fields.
  */
 TR_ByteInfo::TR_ByteInfo(const TR_ByteInfo &orig) : length(orig.length), chars(NULL)

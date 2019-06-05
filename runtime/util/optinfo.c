@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,7 +296,7 @@ getNextLineNumberFromTable(U_8 **currentLineNumber, J9LineNumber *lineNumber)
 		ilineNumber = (ulineNumber ^ m) - m; /* sign extend from 9bit */
 		lineNumber->lineNumber += ilineNumber;
 		currentLineNumberPtr++;
-	} else if (0xC0 == (*currentLineNumberPtr & 0xE0)) { /* Comparing the 3 most significative bits to 110 */
+	} else if (0xC0 == (*currentLineNumberPtr & 0xE0)) { /* Comparing the 3 most significant bits to 110 */
 		U_32 const m = 1U << (14 - 1);
 		U_32 ulineNumber;
 		I_32 ilineNumber;
@@ -312,7 +312,7 @@ getNextLineNumberFromTable(U_8 **currentLineNumber, J9LineNumber *lineNumber)
 		ilineNumber = (ulineNumber ^ m) - m; /* sign extend from 14bit */
 		lineNumber->lineNumber += ilineNumber;
 		currentLineNumberPtr += 2;
-	} else if (0xE0 == (*currentLineNumberPtr & 0xF0)) { /* Comparing the 4 most significative bits to 1110 */
+	} else if (0xE0 == (*currentLineNumberPtr & 0xF0)) { /* Comparing the 4 most significant bits to 1110 */
 		I_32 lineNumberOffset;
 		U_8 firstByte = *currentLineNumberPtr;
 		/* 5 bytes encoded : 1110000Y xxxxxxxx xxxxxxxx YYYYYYYY YYYYYYYY */
@@ -488,7 +488,7 @@ getVariableTableForMethodDebugInfo(J9MethodDebugInfo *methodInfo) {
 			}
 		} else {
 			/* 
-			 * debug infomation is out of line, this slot is an SRP to the
+			 * debug information is out of line, this slot is an SRP to the
 			 * J9VariableInfo table
 			 */
 			return (SRP_GET(methodInfo->srpToVarInfo, U_8 *));
@@ -581,7 +581,7 @@ variableInfoNextDo(J9VariableInfoWalkState *state)
 		firstByte = READ_U8(state->variableTablePtr);
 		state->values.visibilityLength += ((firstByte ^ m8) - m8); /* sign extend from 8bit */;
 		state->variableTablePtr += sizeof(U_8);
-	} else if (0xC0 == (firstByte & 0xE0)) { /* Comparing the 3 most significative bits to 110 */
+	} else if (0xC0 == (firstByte & 0xE0)) { /* Comparing the 3 most significant bits to 110 */
 		/* 110xYYYY YYYYYZZZ ZZZZZZZZ */
 		U_32 const m9 = 1U << (9 - 1);
 		U_32 const m11 = 1U << (11 - 1);
@@ -599,7 +599,7 @@ variableInfoNextDo(J9VariableInfoWalkState *state)
 		startVisibilityUnsigned = (result >> 11) & 0x1FF;
 		state->values.startVisibility += ((startVisibilityUnsigned ^ m9) - m9); /* sign extend from 9bit */;
 		state->values.visibilityLength += (((result & 0x7FF) ^ m11) - m11); /* sign extend from 11bit */;
-	} else if (0xE0 == (firstByte & 0xF0)) { /* Comparing the 4 most significative bits to 1110 */
+	} else if (0xE0 == (firstByte & 0xF0)) { /* Comparing the 4 most significant bits to 1110 */
 		/* 1110xxZZ ZZZZZZZZ ZZZZZZZZ YYYYYYYY YYYYYYYY */
 		U_32 const m16 = 1U << (16 - 1);
 		U_32 const m18 = 1U << (18 - 1);
@@ -619,7 +619,7 @@ variableInfoNextDo(J9VariableInfoWalkState *state)
 		startVisibilityUnsigned = twoBytes;
 		state->variableTablePtr += sizeof(U_16);
 		state->values.startVisibility += ((startVisibilityUnsigned ^ m16) - m16); /* sign extend from 16bit */;
-	} else if (0xF0 == (firstByte)) { /* Comparing the 8 most significative bits to 0xF0 */
+	} else if (0xF0 == (firstByte)) { /* Comparing the 8 most significant bits to 0xF0 */
 		/* 11110000	FULL DATA in case it overflow in some classes */
 		I_32 integerValue;
 		state->variableTablePtr += sizeof(U_8);
@@ -695,7 +695,7 @@ getSimpleNameForROMClass(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMClass *r
 }
 
 UDATA
-getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA offset, J9ClassLoader *classLoader, UDATA relativePC)
+getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ROMClass *romClass, J9ClassLoader *classLoader, UDATA relativePC)
 {
 	UDATA bytecodeSize = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
 	UDATA number = (UDATA)-1;

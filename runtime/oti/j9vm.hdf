@@ -267,6 +267,27 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMAcquireVMAccessEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
+	
+	<event>
+		<name>J9HOOK_VM_RELEASEVMACCESS</name>
+		<description>
+				Triggered after a thread releases VM access.
+		</description>
+		<struct>J9VMReleaseVMAccessEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE</name>
+		<description>
+				Triggered during acquire exclusive thread loop, when encountered a thread in native (which we did not count for exclusive).
+				This hook serves similar purpose as J9HOOK_VM_RELEASEVMACCESS, to ensure that required work for thread in native
+				is performed before exclusive access is obtained. 
+		</description>
+		<struct>J9VMAcquringExclusiveInNativeEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="calling thread" />
+		<data type="struct J9VMThread*" name="targetThread" description="thread in native" />
+	</event>
 
 	<event>
 		<name>J9HOOK_VM_THREAD_CRASH</name>
@@ -1277,16 +1298,5 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMRuntimeStateChanged</struct>
 		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
 		<data type="U_32" name="state" description="the VM runtime state" />
-	</event>
-	
-	<event>
-		<name>J9HOOK_SAMPLED_OBJECT_ALLOCATE</name>
-		<description>
-			Triggered when the size of objects specified via SetHeapSamplingInterval have been allocated. See JVMTI spec for details.
-		</description>
-		<struct>J9SampledObjectAllocateEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="j9object_t" name="object" return="true" description="the object which was just allocated" />
-		<data type="UDATA" name="size" description="the number of bytes allocated" />
 	</event>
 </interface>

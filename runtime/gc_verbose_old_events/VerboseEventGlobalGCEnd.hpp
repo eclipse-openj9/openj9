@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@ private:
 	 * Passed Data 
 	 * @{
 	 */
-	UDATA _workStackOverflowOccured; /**< flag to indicate if workstack ovewrflow has occured */
+	UDATA _workStackOverflowOccured; /**< flag to indicate if workstack overflow has occured */
 	UDATA _workStackOverflowCount; /**< the number of times concurrent work stacks have overflowed */
 	UDATA _workpacketCount; /**< the number of workpackets used */
 	UDATA _weakReferenceClearCount; /**< number of weak references cleared */

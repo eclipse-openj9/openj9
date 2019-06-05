@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ buildVerifyErrorString( J9JavaVM *javaVM, J9CfrError *error, U_8* className, UDA
 		 * The error message framework is not required when the -XX:-VerifyErrorDetails option is specified.
 		 */
 		if (J9_ARE_ALL_BITS_SET(javaVM->bytecodeVerificationData->verificationFlags, J9_VERIFY_ERROR_DETAILS)) {
-			/* Jazz 82615: The value of detailedErrMsg may change if the inital byteArray is insufficient to contain the error message framework.
+			/* Jazz 82615: The value of detailedErrMsg may change if the initial byteArray is insufficient to contain the error message framework.
 			 * Under such circumstances, it points to the address of newly allocated memory.
 			 */
 			detailedErrMsg = byteArray;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ import com.ibm.uma.util.FileAssistant;
 public class PlatformWindows extends PlatformImplementation {
 	
 	static final String DEFAULT_RC_PRODUCT_NAME="IBM SDK, Java(tm) 2 Technology Edition";
-	/* version number with dots seperating four parts */
+	/* version number with dots separating four parts */
 	static final String OPENJDK_VERSION_NUMBER_FOUR_POSITIONS = System.getenv("OPENJDK_VERSION_NUMBER_FOUR_POSITIONS");
 	
 	public PlatformWindows( IConfiguration buildSpec ) {
@@ -174,10 +174,21 @@ public class PlatformWindows extends PlatformImplementation {
 				);
 		fa.writeToDisk();
 	}
-	
+
+	private static void checkVersion() throws UMAException {
+		if (OPENJDK_VERSION_NUMBER_FOUR_POSITIONS == null) {
+			throw new UMAException("OPENJDK_VERSION_NUMBER_FOUR_POSITIONS is not defined in the environment");
+		}
+	}
+
 	// TODO: move to template
 	void writeExecutableResourceFile(Artifact artifact) throws UMAException {
-		if ( artifact.getType() != Artifact.TYPE_EXECUTABLE ) return;
+		if (artifact.getType() != Artifact.TYPE_EXECUTABLE) {
+			return;
+		}
+
+		checkVersion();
+
 		GregorianCalendar calendar = new GregorianCalendar();
 		String filename = UMA.getUma().getRootDirectory() + artifact.getContainingModule().getFullName() + "/" + artifact.getTargetNameWithScope() + ".rc";
 		FileAssistant fa = new FileAssistant(filename);
@@ -196,8 +207,8 @@ public class PlatformWindows extends PlatformImplementation {
 				"#include \"j9version.h\"\n" +
 				"\n" +
 				"VS_VERSION_INFO VERSIONINFO\n" +
-				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
-				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
+				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace('.', ',') + "\n" +
+				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace('.', ',') + "\n" +
 				" FILEFLAGSMASK 0x3fL\n" +
 				" FILEFLAGS 0x0L\n" +
 				" FILEOS VOS_NT_WINDOWS32\n" +
@@ -493,7 +504,12 @@ public class PlatformWindows extends PlatformImplementation {
 
 	// TODO: move to template file
 	void writeSharedLibResourceFile(Artifact artifact) throws UMAException {
-		if ( artifact.getType() != Artifact.TYPE_SHARED && artifact.getType() != Artifact.TYPE_BUNDLE ) return;
+		if (artifact.getType() != Artifact.TYPE_SHARED && artifact.getType() != Artifact.TYPE_BUNDLE) {
+			return;
+		}
+
+		checkVersion();
+
 		GregorianCalendar calendar = new GregorianCalendar();
 		String filename = UMA.getUma().getRootDirectory() + artifact.getContainingModule().getFullName() + "/" + artifact.getTargetNameWithScope() + ".rc";
 		FileAssistant fa = new FileAssistant(filename);
@@ -512,8 +528,8 @@ public class PlatformWindows extends PlatformImplementation {
 				"#include \"j9version.h\"\n" +
 				"\n" +
 				"VS_VERSION_INFO VERSIONINFO\n" +
-				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
-				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
+				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace('.', ',') + "\n" +
+				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace('.', ',') + "\n" +
 				" FILEFLAGSMASK 0x3fL\n" +
 				" FILEFLAGS 0x0L\n" +
 				" FILEOS VOS_NT_WINDOWS32\n" +
@@ -541,7 +557,6 @@ public class PlatformWindows extends PlatformImplementation {
 				"END\n"
 		);
 		fa.writeToDisk();
-
 	}
 	
 	@Override

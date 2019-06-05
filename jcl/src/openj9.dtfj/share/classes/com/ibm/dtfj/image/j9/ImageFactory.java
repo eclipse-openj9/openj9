@@ -52,6 +52,10 @@ import com.ibm.dtfj.utils.file.J9FileImageInputStream;
 import com.ibm.dtfj.utils.file.ManagedImageSource;
 import com.ibm.dtfj.utils.file.MultipleCandidateException;
 
+/*[IF Sidecar19-SE]*/
+import jdk.internal.module.Modules;
+/*[ENDIF] Sidecar19-SE*/
+
 public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
 	static final class ImageReference {
@@ -76,29 +80,16 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		 * module via reflection APIs for use by j9ddr.jar.
 		 */
 		try {
-			Class<?> modulesClass = Class.forName("jdk.internal.module.Modules"); //$NON-NLS-1$
-			Class<?> moduleClass;
+			Module baseModule = String.class.getModule();
 
-			try {
-				moduleClass = Class.forName("java.lang.Module"); //$NON-NLS-1$
-			} catch (ClassNotFoundException e) {
-				// fallback to name before b165
-				moduleClass = Class.forName("java.lang.reflect.Module"); //$NON-NLS-1$
-			}
+			Modules.addExportsToAllUnnamed(baseModule, "jdk.internal.org.objectweb.asm"); //$NON-NLS-1$
 
-			Method exportToAll = modulesClass.getDeclaredMethod("addExportsToAllUnnamed", //$NON-NLS-1$ 
-					moduleClass, String.class);
+			Module thisModule = ImageFactory.class.getModule();
 
-			Method getModule = Class.class.getDeclaredMethod("getModule"); //$NON-NLS-1$
-			Object baseModule = getModule.invoke(String.class);
-			Object thisModule = getModule.invoke(ImageFactory.class);
-
-			exportToAll.invoke(null, baseModule, "jdk.internal.org.objectweb.asm"); //$NON-NLS-1$
-
-			exportToAll.invoke(null, thisModule, "com.ibm.dtfj.image.j9"); //$NON-NLS-1$
-			exportToAll.invoke(null, thisModule, "com.ibm.dtfj.utils.file"); //$NON-NLS-1$
-			exportToAll.invoke(null, thisModule, "com.ibm.java.diagnostics.utils"); //$NON-NLS-1$
-			exportToAll.invoke(null, thisModule, "com.ibm.java.diagnostics.utils.commands"); //$NON-NLS-1$
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.image.j9"); //$NON-NLS-1$
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.utils.file"); //$NON-NLS-1$
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.java.diagnostics.utils"); //$NON-NLS-1$
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.java.diagnostics.utils.commands"); //$NON-NLS-1$
 		} catch (Exception e) {
 			throw new InternalError("Failed to adjust module exports", e); //$NON-NLS-1$
 		}

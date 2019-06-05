@@ -39,7 +39,7 @@
 class MM_ObjectAccessBarrierAPI
 {
 	friend class MM_ObjectAccessBarrier;
-	friend class MM_StaccatoAccessBarrier;
+	friend class MM_RealtimeAccessBarrier;
 
 /* Data members & types */
 public:
@@ -47,9 +47,9 @@ protected:
 private:
 	const UDATA _writeBarrierType;
 	const UDATA _readBarrierType;
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	const UDATA _compressedPointersShift;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /* Methods */
 public:
@@ -60,9 +60,9 @@ public:
 	MM_ObjectAccessBarrierAPI(J9VMThread *currentThread)
 		: _writeBarrierType(currentThread->javaVM->gcWriteBarrierType)
 		, _readBarrierType(currentThread->javaVM->gcReadBarrierType)
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		, _compressedPointersShift(currentThread->javaVM->compressedPointersShift)
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 	{}
 
 	static VMINLINE void
@@ -991,6 +991,7 @@ public:
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 
+			preStaticReadObject(vmThread, clazz, destAddress);
 			preStaticStoreObject(vmThread, classObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -1032,6 +1033,7 @@ public:
 		} else {
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 
+			preStaticReadObject(vmThread, clazz, destAddress);
 			preStaticStoreObject(vmThread, classObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -1975,11 +1977,11 @@ public:
 	static VMINLINE fj9object_t
 	convertTokenFromPointer(j9object_t pointer, UDATA compressedPointersShift)
 	{
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		return (fj9object_t)((UDATA)pointer >> compressedPointersShift);
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		return (fj9object_t)pointer;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 	}
 
 	/**
@@ -1991,11 +1993,11 @@ public:
 	static VMINLINE j9object_t
 	convertPointerFromToken(fj9object_t token, UDATA compressedPointersShift)
 	{
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		return (mm_j9object_t)((UDATA)token << compressedPointersShift);
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		return (mm_j9object_t)token;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 	}
 
 	/* Return an j9object_t that can be stored in the constantpool.
@@ -2134,7 +2136,6 @@ protected:
 		internalPreReadObject(vmThread, object, srcAddress);
 	}
 	
-
 	/**
 	 * Read a non-object address (pointer to internal VM data) from an object.
 	 * This function is only concerned with moving the actual data. Do not re-implement
@@ -2602,11 +2603,11 @@ protected:
 	VMINLINE fj9object_t
 	internalConvertTokenFromPointer(j9object_t pointer)
 	{
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		return convertTokenFromPointer(pointer, _compressedPointersShift);
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		return (fj9object_t)pointer;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 	}
 
 	/**
@@ -2618,11 +2619,11 @@ protected:
 	VMINLINE j9object_t
 	internalConvertPointerFromToken(fj9object_t token)
 	{
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 		return convertPointerFromToken(token, _compressedPointersShift);
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 		return (mm_j9object_t)token;
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 	}
 
 private:
@@ -2908,11 +2909,11 @@ private:
 			}
 			newFlags = (oldFlags & ~J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_CLEAR) | J9_OBJECT_HEADER_REMEMBERED_BITS_TO_SET;
 		}
-#if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		while (oldFlags != VM_AtomicSupport::lockCompareExchangeU32(flagsPtr, oldFlags, newFlags));
-#else /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		while (oldFlags != VM_AtomicSupport::lockCompareExchange(flagsPtr, (UDATA)oldFlags, (UDATA)newFlags));
-#endif /* defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 		return result;
 	}

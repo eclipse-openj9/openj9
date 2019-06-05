@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ j9tty_daemonize_test(struct J9PortLibrary *portLibrary)
 
 	j9tty_printf(PORTLIB, "pre-daemonize\n");
 	j9tty_daemonize();
-	/* outpuComment uses j9tty_vprintf */
+	/* outputComment uses j9tty_vprintf */
 	outputComment(PORTLIB, format , 1, 2, 3);
 	j9tty_printf(PORTLIB, "post-daemonize\n");
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -534,7 +534,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			 *
 			 * Attempt to find it.
 			 * 
-			 * Note: When comparing classes it is expected that the context conatins the 
+			 * Note: When comparing classes it is expected that the context contains the 
 			 * rom class being compared to. 'prevROMClass' is used to backup the romClass 
 			 * currently in the context, so the compare loop can set the romClass in the 
 			 * context accordingly.
@@ -550,8 +550,8 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 					&& ((U_8 *)existingROMClass == context->intermediateClassData())
 				) {
 					/* 'existingROMClass' is same as the ROMClass corresponding to intermediate class data.
-					 * Based on the assumption that an agent is actually modifing the class file
-					 * instead of just returning a copy of the classbytes it recieves,
+					 * Based on the assumption that an agent is actually modifying the class file
+					 * instead of just returning a copy of the classbytes it receives,
 					 * this comparison can be avoided.
 					 */
 					continue;
@@ -584,13 +584,16 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			sizeRequirements.romClassMinimalSize =
 					U_32(sizeInformation.rcWithOutUTF8sSize
 					+ sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize);
+			/* round up to sizeof(U_64) */
+			sizeRequirements.romClassMinimalSize += (sizeof(U_64) - 1);
+			sizeRequirements.romClassMinimalSize &= ~(sizeof(U_64) - 1);
 
 			sizeRequirements.romClassSizeFullSize =
 					U_32(sizeRequirements.romClassMinimalSize
 					+ sizeInformation.lineNumberSize
 					+ sizeInformation.variableInfoSize);
 			/* round up to sizeof(U_64) */
-			sizeRequirements.romClassSizeFullSize += sizeof(U_64);
+			sizeRequirements.romClassSizeFullSize += (sizeof(U_64) - 1);
 			sizeRequirements.romClassSizeFullSize &= ~(sizeof(U_64)-1);
 
 
@@ -1024,6 +1027,9 @@ ROMClassBuilder::finishPrepareAndLaydown(
 	 * Record the romSize as the final size of the ROMClass with interned strings space removed.
 	 */
 	U_32 romSize = U_32(sizeInformation->rcWithOutUTF8sSize + sizeInformation->utf8sSize + sizeInformation->rawClassDataSize + sizeInformation->varHandleMethodTypeLookupTableSize);
+	/* round up to sizeof(U_64) */
+	romSize += (sizeof(U_64) - 1);
+	romSize &= ~(sizeof(U_64) - 1);
 
 	/*
 	 * update the SRP Offset Table with the base addresses for main ROMClass section (RC_TAG),
@@ -1064,24 +1070,24 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                             + UNUSED
  *                            + UNUSED
  *                           + UNUSED
- *                          + AccClassAnonClass;
+ *                          + AccClassAnonClass
  *
  *                        + AccSynthetic (matches Oracle modifier position)
  *                       + AccClassUseBisectionSearch
  *                      + AccClassInnerClass
  *                     + UNUSED
  *
- *                   + UNUSED
+ *                   + AccClassNeedsStaticConstantInit
  *                  + AccClassIntermediateDataIsClassfile
  *                 + AccClassUnsafe
  *                + AccClassAnnnotionRefersDoubleSlotEntry
  *
  *              + AccClassBytecodesModified
  *             + AccClassHasEmptyFinalize
- *            + UNUSED
+ *            + AccClassIsUnmodifiable
  *           + AccClassHasVerifyData
  *
- *         + J9AccClassIsContended
+ *         + AccClassIsContended
  *        + AccClassHasFinalFields
  *       + AccClassHasClinit
  *      + AccClassHasNonStaticNonAbstractMethods
@@ -1125,6 +1131,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 
 	if ( classFileOracle->isClassContended() ) {
 		modifiers |= J9AccClassIsContended;
+	}
+
+	if ( classFileOracle->isClassUnmodifiable() ) {
+		modifiers |= J9AccClassIsUnmodifiable;
 	}
 
 	U_32 classNameindex = classFileOracle->getClassNameIndex();
@@ -1193,6 +1203,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 
 	if (classFileOracle->isInnerClass()) {
 		modifiers |= J9AccClassInnerClass;
+	}
+
+	if (classFileOracle->needsStaticConstantInit()) {
+		modifiers |= J9AccClassNeedsStaticConstantInit;
 	}
 
 	return modifiers;

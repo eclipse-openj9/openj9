@@ -2366,7 +2366,7 @@ TR_J9EstimateCodeSize::labelGraph(TR::CFG *cfg,
       else if (currentBlock->containsCall()) //only need to enqueue it if its not unsanitizeable already
          callBlocks->enqueue(currentBlock);
 
-      // Part 3:  Enqueue all Predacessors
+      // Part 3:  Enqueue all Predecessors
 
       for (auto e = currentBlock->getPredecessors().begin(); e != currentBlock->getPredecessors().end(); ++e)
          {

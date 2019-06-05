@@ -23,6 +23,7 @@
 #include "p/codegen/CallSnippet.hpp"
 
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/SnippetGCMap.hpp"
@@ -36,11 +37,6 @@
 #include "p/codegen/PPCAOTRelocation.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/CodeCacheManager.hpp"
-
-#if defined(AIXPPC)
-extern FILE *j2Profile;
-extern void  j2Prof_thunkReport(uint8_t *startP, uint8_t *endP, uint8_t *sig);
-#endif
 
 uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
    {
@@ -335,15 +331,12 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
 uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    {
 
-   // *this   swipeable for debugger
    uint8_t       *cursor = cg()->getBinaryBufferCursor();
    TR::Node       *callNode = getNode();
    TR::SymbolReference *methodSymRef = (_realMethodSymbolReference)?_realMethodSymbolReference:callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    TR::SymbolReference *glueRef;
-   intptrj_t       distance;
    bool isNativeStatic = false;
-   void *trmpln=NULL;
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
@@ -356,17 +349,18 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
                                                                  methodSymbol->isSynchronised(), isNativeStatic, cg());
    glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(runtimeHelper, false, false, false);
 
-   distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
-   if (!(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
-      TR_ASSERT(distance<=BRANCH_FORWARD_LIMIT && distance>=BRANCH_BACKWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
+                      "Helper address is out of range");
       }
+
    // 'b glueRef' for jitInduceOSRAtCurrentPC, 'bl glueRef' otherwise
    // we use "b" for induceOSR because we want the helper to think that it's been called from the mainline code and not from the snippet.
    int32_t branchInstruction = (glueRef->isOSRInductionHelper()) ? 0x48000000 : 0x48000001;
-   *(int32_t *)cursor = branchInstruction | (distance & 0x03fffffc);
+   *(int32_t *)cursor = branchInstruction | ((helperAddress - (intptrj_t)cursor) & 0x03fffffc);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
       __FILE__, __LINE__, callNode);
 
@@ -448,7 +442,6 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
 uint32_t TR::PPCCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
    TR::Compilation* comp = cg()->comp();
-   // *this   swipeable for debugger
    return((instructionCountForArguments(getNode(), cg())*4) + 2*TR::Compiler->om.sizeofReferenceAddress() + 8);
    }
 
@@ -456,7 +449,6 @@ uint8_t *TR::PPCUnresolvedCallSnippet::emitSnippetBody()
    {
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   // *this   swipeable for debugger
    uint8_t *cursor = TR::PPCCallSnippet::emitSnippetBody();
 
    TR::SymbolReference *methodSymRef = (_realMethodSymbolReference)?_realMethodSymbolReference:getNode()->getSymbolReference();
@@ -519,13 +511,11 @@ uint8_t *TR::PPCUnresolvedCallSnippet::emitSnippetBody()
 uint32_t TR::PPCUnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
    TR::Compilation* comp = cg()->comp();
-   // *this   swipeable for debugger
    return TR::PPCCallSnippet::getLength(estimatedSnippetStart) + 8 + TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint8_t *TR::PPCVirtualSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    return(NULL);
    }
 
@@ -536,13 +526,11 @@ uint32_t TR::PPCVirtualSnippet::getLength(int32_t estimatedSnippetStart)
 
 uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t       *cursor = cg()->getBinaryBufferCursor();
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Node       *callNode = getNode();
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCvirtualUnresolvedHelper, false, false, false);
-   intptrj_t  distance;
    void *thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
    uint8_t *j2iThunkRelocationPoint;
 
@@ -553,18 +541,18 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
       cursor += 4;
       }
 
-   distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
    getSnippetLabel()->setCodeLocation(cursor);
 
-   if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
-      TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
-         "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
+                      "Helper address is out of range");
       }
 
    // bl glueRef
-   *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
+   *(int32_t *)cursor = 0x48000001 | ((helperAddress - (intptrj_t)cursor) & 0x03fffffc);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
       __FILE__, __LINE__, callNode);
    cursor += 4;
@@ -574,7 +562,7 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
     * This is used to have 'blr's return to their corresponding 'bl's when handling private nestmate calls.
     * Ideally, 'blr's return to their corresponding 'bl's in other cases as well but currently that does not happen.
     */
-   distance = (intptrj_t)getReturnLabel()->getCodeLocation() - (intptrj_t)cursor;
+   intptrj_t distance = (intptrj_t)getReturnLabel()->getCodeLocation() - (intptrj_t)cursor;
    *(int32_t *)cursor = 0x48000000 | (distance & 0x03fffffc);
 
    TR_ASSERT(gcMap().isGCSafePoint() && gcMap().getStackMap(), "Virtual call snippets must have GC maps when preserving the link stack");
@@ -655,14 +643,12 @@ uint32_t TR::PPCVirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStar
 
 uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    {
-   // *this   swipeable for debugger
    uint8_t       *cursor = cg()->getBinaryBufferCursor();
    uint8_t       *blAddress;
    TR::Node       *callNode = getNode();
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterfaceCallHelper, false, false, false);
-   intptrj_t  distance;
    void *thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
    uint8_t *j2iThunkRelocationPoint;
 
@@ -676,19 +662,18 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
       cursor += 4;
       }
 
-   distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
-
    getSnippetLabel()->setCodeLocation(cursor);
 
-   if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
+   intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor) - (intptrj_t)cursor;
-      TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
-             "CodeCache is more than 32MB.\n");
+      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
+                      "Helper address is out of range");
       }
 
    // bl glueRef
-   *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
+   *(int32_t *)cursor = 0x48000001 | ((helperAddress - (intptrj_t)cursor) & 0x03fffffc);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_HelperAddress, cg()),
                              __FILE__, __LINE__, callNode);
    blAddress = cursor;
@@ -696,7 +681,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
 
    // Rather than placing the return address as data after the 'bl', place a 'b' back to main line code
    // This insures that all 'blr's return to their corresponding 'bl's
-   distance = (intptrj_t)getReturnLabel()->getCodeLocation() - (intptrj_t)cursor;
+   intptrj_t distance = (intptrj_t)getReturnLabel()->getCodeLocation() - (intptrj_t)cursor;
    *(int32_t *)cursor = 0x48000000 | (distance & 0x03fffffc);
 
    TR_ASSERT(gcMap().isGCSafePoint() && gcMap().getStackMap(), "Interface call snippets must have GC maps when preserving the link stack");
@@ -791,11 +776,11 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    *(intptrj_t *)(cursor+2*TR::Compiler->om.sizeofReferenceAddress()) = -1;
    *(intptrj_t *)(cursor+3*TR::Compiler->om.sizeofReferenceAddress()) = (intptrj_t)blAddress;
 
-   // Register for relation of the 1st target addess
+   // Register for relation of the 1st target address
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
-   // Register for relaction of the 2nd target address
+   // Register for relocation of the 2nd target address
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+3*TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
@@ -834,7 +819,6 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
 
 uint32_t TR::PPCInterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   // *this   swipeable for debugger
    /*
     * 4 = Code alignment may add 4 to the length. To be conservative it is always part of the estimate.
     * 8 = Two instructions. One bl and one b instruction.
@@ -976,30 +960,6 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
    // patch size of thunk
    *(int32_t *)thunk = sizeThunk;
 
-#if defined(AIXPPC)
-   if (j2Profile != NULL) {
-      char         sigbuffer[1024], *signature;
-      TR_Method *amethod;
-      int32_t      len;
-
-      amethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-      if (amethod == NULL)
-         {
-         signature = NULL;
-         }
-      else
-         {
-         len = amethod->signatureLength();
-         if (len >= 1024)
-            len = 1023;
-         memcpy(sigbuffer, amethod->signatureChars(), len);
-         sigbuffer[len] = '\0';
-         signature = sigbuffer;
-         }
-      j2Prof_thunkReport(returnValue, buffer, (uint8_t *)signature);
-      }
-#endif
-
    ppcCodeSync(thunk, codeSize);
 
    return(returnValue);
@@ -1116,30 +1076,6 @@ TR_J2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode,
    // bcctr
    *(int32_t *)buffer = 0x4e800420;
    buffer += 4;
-
-#if defined(AIXPPC)
-   if (j2Profile != NULL) {
-      char         sigbuffer[1024], *signature;
-      TR_Method *amethod;
-      int32_t      len;
-
-      amethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-      if (amethod == NULL)
-         {
-         signature = NULL;
-         }
-      else
-         {
-         len = amethod->signatureLength();
-         if (len >= 1024)
-            len = 1023;
-         memcpy(sigbuffer, amethod->signatureChars(), len);
-         sigbuffer[len] = '\0';
-         signature = sigbuffer;
-         }
-      j2Prof_thunkReport(thunk->entryPoint(), buffer, (uint8_t *)signature);
-      }
-#endif
 
    ppcCodeSync(thunk->entryPoint(), codeSize);
 
@@ -1442,7 +1378,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCUnresolvedCallSnippet * snippet)
    {
-   // *this   swipeable for debugger
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation() + snippet->getLength(0) - (8+sizeof(intptrj_t));
 
    TR::SymbolReference *methodSymRef = snippet->getNode()->getSymbolReference();
@@ -1488,13 +1423,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCUnresolvedCallSnippet * snippet)
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualSnippet * snippet)
    {
-   // *this   swipeable for debugger
    }
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualUnresolvedSnippet * snippet)
    {
-   // *this   swipeable for debugger
    uint8_t            *cursor   = snippet->getSnippetLabel()->getCodeLocation();
    TR::Node            *callNode = snippet->getNode();
 
@@ -1544,7 +1477,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualUnresolvedSnippet * snippet)
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
    {
-   // *this   swipeable for debugger
    uint8_t            *cursor   = snippet->getSnippetLabel()->getCodeLocation();
    TR::Node            *callNode = snippet->getNode();
 

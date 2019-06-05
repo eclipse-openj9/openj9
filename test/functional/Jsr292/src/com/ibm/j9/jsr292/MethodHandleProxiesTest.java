@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -255,7 +255,7 @@ public class MethodHandleProxiesTest {
 	}
 	
 	/**
-	 * Negative test for verifying target retrival failure for wrapperInstanceTarget method in case of non-wrapper instances.
+	 * Negative test for verifying target retrieval failure for wrapperInstanceTarget method in case of non-wrapper instances.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })

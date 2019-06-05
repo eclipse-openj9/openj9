@@ -77,7 +77,7 @@ TR_JProfilingRecompLoopTest::perform()
            * this information. 
            * We also keep local list of ByteCodeInfo for each test locations (asyncchecknode) in the extended basic blocks.
            * This can avoid adding multiple tests for multiple locations with same byte code info in extended basic block.
-           * As soon as we encounter a block which is not extenstion of previous block, we clear the list of byte code info.
+           * As soon as we encounter a block which is not extensions of previous block, we clear the list of byte code info.
            */    
          if (!currentBlock->isExtensionOfPreviousBlock() && !addedLocationBCIList.empty())
             addedLocationBCIList.clear();
@@ -159,7 +159,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
    TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
    TR::CFG *cfg = comp->getFlowGraph();
    // TODO: We should do experiment with fixing the structure instead of invalidating and do compile time
-   // Experimemt to see which is better.
+   // Experiment to see which is better.
    cfg->invalidateStructure();
 
    // Following environment sets up the base recompilation threshold for the loop.
@@ -210,7 +210,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       // Putting a higher threshold limit to 10K currently to prohibit running profiling body for too long.
       int32_t threshold = recompileThreshold << (depth-1);
       // It is very unlikely that we have a very large depth of the loop which causes above value to become negative
-      // To safeguard this scenario, we also check if threshold is negative or zero we set this thrshold to maxLoopRecompileThreshold
+      // To safeguard this scenario, we also check if threshold is negative or zero we set this threshold to maxLoopRecompileThreshold
       TR::Node *cmpNode = TR::Node::createif(TR::ificmple, root, TR::Node::iconst(node, (threshold > 0 && threshold <= maxLoopRecompilationThreshold) ? threshold : maxLoopRecompilationThreshold), remainingCodeBlock->getEntry());
       TR::TreeTop *cmpFlag = TR::TreeTop::create(comp, cmpNode);
       cmpFlag->getNode()->setIsProfilingCode();

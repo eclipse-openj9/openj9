@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 1991, 2017 IBM Corp. and others
+# Copyright (c) 1991, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -257,7 +257,7 @@ OPTIMIZE_OUTPUT_VHDL   = NO
 # extension. Doxygen has a built-in mapping, but you can override or extend it 
 # using this tag. The format is ext=language, where ext is a file extension, 
 # and language is one of the parsers supported by doxygen: IDL, Java, 
-# Javascript, CSharp, C, C++, D, PHP, Objective-C, Python, Fortran, VHDL, C, 
+# JavaScript, CSharp, C, C++, D, PHP, Objective-C, Python, Fortran, VHDL, C, 
 # C++. For instance to make doxygen treat .inc files as Fortran files (default 
 # is PHP), and .f files as C (default is Fortran), use: inc=Fortran f=C. Note 
 # that for custom extensions you also need to set FILE_PATTERNS otherwise the 
@@ -709,7 +709,6 @@ INPUT                  = DoxygenSupport.txt \
                          ../gc_modron_standard \
                          ../gc_modron_startup \
                          ../gc_realtime \
-                         ../gc_staccato \
                          ../gc_stats \
                          ../gc_structs \
                          ../gc_tests \
@@ -974,7 +973,7 @@ HTML_STYLESHEET        =
 # user-defined cascading style sheet that is included after the standard 
 # style sheets created by doxygen. Using this option one can overrule 
 # certain style aspects. This is preferred over using HTML_STYLESHEET 
-# since it does not replace the standard style sheet and is therefor more 
+# since it does not replace the standard style sheet and is therefore more 
 # robust against future updates. Doxygen will copy the style sheet file to 
 # the output directory.
 
@@ -1234,7 +1233,7 @@ EXT_LINKS_IN_WINDOW    = NO
 
 FORMULA_FONTSIZE       = 10
 
-# Use the FORMULA_TRANPARENT tag to determine whether or not the images 
+# Use the FORMULA_TRANSPARENT tag to determine whether or not the images 
 # generated for formulas are transparent PNGs. Transparent PNGs are 
 # not supported properly for IE 6.0, but are supported on all modern browsers. 
 # Note that when changing this option you need to delete any form_*.png files 
@@ -1243,7 +1242,7 @@ FORMULA_FONTSIZE       = 10
 FORMULA_TRANSPARENT    = YES
 
 # Enable the USE_MATHJAX option to render LaTeX formulas using MathJax 
-# (see http://www.mathjax.org) which uses client side Javascript for the 
+# (see http://www.mathjax.org) which uses client side JavaScript for the 
 # rendering instead of using prerendered bitmaps. Use this if you do not 
 # have LaTeX installed or if you want to formulas look prettier in the HTML 
 # output. When enabled you may also need to install MathJax separately and 
@@ -1285,7 +1284,7 @@ MATHJAX_EXTENSIONS     =
 SEARCHENGINE           = YES
 
 # When the SERVER_BASED_SEARCH tag is enabled the search engine will be 
-# implemented using a web server instead of a web client using Javascript. 
+# implemented using a web server instead of a web client using JavaScript. 
 # There are two flavours of web server based search depending on the 
 # EXTERNAL_SEARCH setting. When disabled, doxygen will generate a PHP script for 
 # searching and an index file used by the script. When EXTERNAL_SEARCH is 
@@ -1781,7 +1780,7 @@ UML_LOOK               = NO
 # the class node. If there are many fields or methods and many nodes the 
 # graph may become too big to be useful. The UML_LIMIT_NUM_FIELDS 
 # threshold limits the number of items for each type to make the size more 
-# managable. Set this to 0 for no limit. Note that the threshold may be 
+# manageable. Set this to 0 for no limit. Note that the threshold may be 
 # exceeded by 50% before the limit is enforced.
 
 UML_LIMIT_NUM_FIELDS   = 10

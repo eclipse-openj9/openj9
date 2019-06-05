@@ -26,6 +26,7 @@
 #include "codegen/GuardedDevirtualSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/MethodSymbol.hpp"

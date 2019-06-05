@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -322,7 +322,7 @@ public class TestManager {
 		jarTesterMTDriver = new JarTesterMTDriver( multipleClassLoaderRequired, multiThreadedCompilationRequired, jarDir );
 		jarTesterMTDriver.start();
 
-		//TODO: Do we need to give the compilation thiread this time to index the jar?
+		//TODO: Do we need to give the compilation thread this time to index the jar?
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {

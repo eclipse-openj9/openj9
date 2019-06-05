@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,7 @@ private:
 	U_64 _allocationAge; /**< allocation age (number of bytes allocated since the last attempted allocation) */
 	U_64 _lowerAgeBound; /**< lowest possible age of any object in this region */
 	U_64 _upperAgeBound; /**< highest possible age of any object in this region */
-	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object in the region. used for age merging math in surivovor regions */
+	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object in the region. used for age merging math in survivor regions */
 	UDATA _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
@@ -267,7 +267,7 @@ public:
 	}
 
 	/**
-	 * @return True if region is in survivor set (there is no explict flag, but info is inferred from _survivorBase being non-null
+	 * @return True if region is in survivor set (there is no explicit flag, but info is inferred from _survivorBase being non-null
 	 */
 	MMINLINE bool isSurvivorRegion() { return NULL != _copyForwardData._survivorBase; }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ j9time_test0(struct J9PortLibrary *portLibrary)
 	/* Verify that the time function pointers are non NULL */
 	
 	/* Not tested, implementation dependent.  No known functionality.
-	 * Startup is private to the portlibary, it is not re-entrant safe
+	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
 	if (NULL == OMRPORT_FROM_J9PORT(portLibrary)->time_startup) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->time_startup is NULL\n");
@@ -337,7 +337,7 @@ j9time_test3(struct J9PortLibrary *portLibrary)
 			/*grab new times*/
 			hiresTimeStop = j9time_hires_clock();
 			mtimeStop = j9time_msec_clock();
-			utimeStop = j9time_usec_clock();	/*higher-precision CLK should get presidence NaH!*/
+			utimeStop = j9time_usec_clock();	/*higher-precision CLK should get precedence NaH!*/
 	
 			hiresDeltaAsMillis = (U_32)j9time_hires_delta(hiresTimeStart, hiresTimeStop, J9PORT_TIME_DELTA_IN_MILLISECONDS);
 			hiresDeltaAsMicros = (U_32)j9time_hires_delta(hiresTimeStart, hiresTimeStop, J9PORT_TIME_DELTA_IN_MICROSECONDS);
@@ -504,7 +504,7 @@ j9time_nano_time_direction(struct J9PortLibrary *portLibrary)
 #if defined(WIN32) || defined(WIN64)
 	/**
 	 * On Windows, if QueryPerformanceCounter is used on a multiprocessor computer,
-	 * time might be different accross CPUs. Therefore skip this test and only
+	 * time might be different across CPUs. Therefore skip this test and only
 	 * re-enable if we develop thread affinity support.
 	 */
 	{

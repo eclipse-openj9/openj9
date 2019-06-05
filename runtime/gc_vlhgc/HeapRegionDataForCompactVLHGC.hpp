@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ public:
 	void * volatile _nextRebuildCandidate;	/**< The address within the region where our next attempt at mark map rebuilding must begin */
     void *_nextMoveEventCandidate;	/**< The address within the region where our next attempt at object move event reporting must begin */
     bool _isCompactDestination;	/**< True if planning for the current compaction has decided to relocate objects from other regions into this one */
-    UDATA _vineDepth;	/**< The longest path from this region to a region with no compaction prequisites, following the prerequisite chain.  This is updated during planning and is used to select the optimal extra compaction region */
+    UDATA _vineDepth;	/**< The longest path from this region to a region with no compaction prerequisites, following the prerequisite chain.  This is updated during planning and is used to select the optimal extra compaction region */
     MM_AllocationContextTarok *_previousContext; /**< Points to the previous context which did own a region prior to evacuation in the case where it is selected as a new compact destination prior to recycling */
     double _projectedLiveBytesRatio; /**< (estimate of live bytes in region) / (post move region size in bytes).  More or less the same thing as survival rate.  */
 protected:

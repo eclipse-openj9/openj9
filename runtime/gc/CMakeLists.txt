@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,11 +26,7 @@ add_library(j9gc SHARED
 
 )
 
-if(OMR_TOOLCONFIG STREQUAL "gnu")
-	if(OMR_ARCH_X86)
-		target_compile_options(j9gc PRIVATE -fpeel-loops)
-	endif()
-elseif(OMR_TOOLCONFIG STREQUAL "msvc")
+if(OMR_TOOLCONFIG STREQUAL "msvc")
 	target_compile_options(j9gc PRIVATE /w34189)
 endif()
 
@@ -54,7 +50,6 @@ target_link_libraries(j9gc
 		j9gctrc
 		j9gctrcstandard
 		j9gctrcvlhgc
-		j9staccato
 		j9realtime
 		j9gcvlhgc
 		omrgc
@@ -86,7 +81,15 @@ target_include_directories(j9gc
 		$<TARGET_PROPERTY:omrgc,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
+omr_add_exports(j9gc
+	JVM_OnLoad
+	J9VMDllMain
+)
+
+target_enable_ddr(j9gc j9ddr)
+
 install(
 	TARGETS j9gc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

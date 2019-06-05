@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,7 +119,7 @@ private:
 	UDATA _threadsWaiting;	/**< The number of threads waiting for work on _workListMonitor */
 	bool _moveFinished;	/**< A flag set when all move work is done to allow all threads waiting for work to exit the monitor */
 	bool _rebuildFinished;	/**< A flag set when all mark map rebuilding work is done to allow all threads waiting for work to exit the monitor */
-	UDATA _lockCount; /**< Number of locks initialized for compact groups, based on NUMA. Stored for control to make sure that we dealocate same number that we allocated in initialize. */
+	UDATA _lockCount; /**< Number of locks initialized for compact groups, based on NUMA. Stored for control to make sure that we deallocate same number that we allocated in initialize. */
 
 	class MM_CompactGroupDestinations {
 		/* Fields */
@@ -175,7 +175,7 @@ private:
 	 * @note inlined in the implementation so this method MUST be private
 	 * @param env[in] A GC thread
 	 * @param objectPtr[in] The pointer to look up to see its new, forwarded, location
-	 * @param cache[in] The cache to use for fast resolve attmpets for objectPtr (may be NULL)
+	 * @param cache[in] The cache to use for fast resolve attempts for objectPtr (may be NULL)
 	 * @return The forwarded location of the given objectPtr
 	 */
 	J9Object *getForwardWrapper(MM_EnvironmentVLHGC *env, J9Object *objectPtr, J9MM_FixupCache *cache);
@@ -503,7 +503,7 @@ private:
 	 */
 	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 	{
-		/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwanbleSynchronizerList,
+		/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
 		 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list. 
 		 */
 		if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr)) {

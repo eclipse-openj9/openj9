@@ -952,7 +952,7 @@ class CheckEngine
 					//		if ((NULL == classToCast) || (0 == instanceOfOrCheckCast(J9GC_J9OBJECT_CLAZZ(*address), classToCast))) {
 					// The issue is that we can't simply call "internalFindClassUTF8" in DDR.
 					// We could guess at the behaviour of the ClassLoader, but that makes 
-					// distingushing a real problem from a weird ClassLoader delegation
+					// distinguishing a real problem from a weird ClassLoader delegation
 					// model difficult.
 				}
 	
@@ -982,7 +982,7 @@ class CheckEngine
 			return J9MODRON_GCCHK_RC_CLASS_POINTER_UNALIGNED;
 		}
 		
-		/* Check that the class header containes the expected values */
+		/* Check that the class header contains the expected values */
 		int ret = checkJ9ClassHeader(clazz);
 		if (J9MODRON_GCCHK_RC_OK != ret) {
 			return ret;

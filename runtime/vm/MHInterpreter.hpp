@@ -405,7 +405,15 @@ foundITable:
 	{
 		switch (returnType) {
 		case J9NtcBoolean:
-			*returnStorage = (UDATA)(U_8)*returnStorage;
+		{
+			U_32 returnValue = (U_32)*returnStorage;
+			U_8 * returnAddress = (U_8 *)&returnValue;
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+			*returnStorage = (UDATA)(0 != returnAddress[0]);
+#else
+			*returnStorage = (UDATA)(0 != returnAddress[3]);
+#endif /*J9VM_ENV_LITTLE_ENDIAN */
+		}
 			break;
 		case J9NtcByte:
 			*returnStorage = (UDATA)(IDATA)(I_8)*returnStorage;
@@ -641,7 +649,7 @@ protected:
 
 public:
 	/**
-	 * Run the MethodHandle using the intepreter dispatch target implementation.
+	 * Run the MethodHandle using the interpreter dispatch target implementation.
 	 *
 	 * @param methodHandle[in] the j.l.i.MethodHandle to run
 	 * @return the next action for the interpreter
@@ -653,7 +661,7 @@ public:
 	 * FilterReturn:
 	 * 		[ ... MH bytecodeframe returnSlot0 returnslot1] --> [ ... MH returnSlot0 returnslot1]
 	 * ConstructorHandle:
-	 * 		[ ... newUnitializedObject bytecodeframe] --> [ ... newInitializedObject]
+	 * 		[ ... newUninitializedObject bytecodeframe] --> [ ... newInitializedObject]
 	 * FoldHandle:
 	 * 		Refer to the implementation in MHInterpreter.cpp
 	 * GuardWithTestHandle:

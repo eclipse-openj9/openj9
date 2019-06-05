@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ public class SlidingFileInputStream extends InputStream {
 	
 	
 	/**
-	 * Actually closes the underlying stream. The close() method does not close the stream so as to allow it's resuse.
+	 * Actually closes the underlying stream. The close() method does not close the stream so as to allow its reuse.
 	 * @throws IOException
 	 */
 	public void disposeStream() throws IOException {

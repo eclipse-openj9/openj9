@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2008, 2018 IBM Corp. and others
+  Copyright (c) 2008, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 	<variable name="mode204" value="-Xshareclasses:name=HelloWorldSanity"/>
 
 	<!-- Set variables up -->
-	<variable name="JAVAC_DIR" value="$JDK_HOME$/bin"/>
+	<variable name="JAVAC_DIR" value="$TEST_JDK_HOME$/bin"/>
 	<variable name="UTILS_JAR" value="$UTILS_DIR$/utils.jar"/>
 
 	<variable name="currentMode" value="$mode204$"/>

@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -68,9 +67,9 @@
 #if defined(J9VM_GC_VLHGC)
 #include "ConfigurationIncrementalGenerational.hpp"
 #endif /* J9VM_GC_VLHGC */
-#if defined(J9VM_GC_STACCATO)
-#include "ConfigurationStaccato.hpp"
-#endif /* J9VM_GC_STACCATO */
+#if defined(J9VM_GC_REALTIME)
+#include "ConfigurationRealtime.hpp"
+#endif /* J9VM_GC_REALTIME */
 #include "ClassLoaderManager.hpp"
 #include "Debug.hpp"
 #include "Dispatcher.hpp"
@@ -99,9 +98,9 @@
 #include "ObjectHeapIteratorSegregated.hpp"
 #include "SizeClasses.hpp"
 #endif /* J9VM_GC_SEGRGATED_HEAP */
-#if defined(J9VM_GC_STACCATO)
+#if defined(J9VM_GC_REALTIME)
 #include "RememberedSetSATB.hpp"
-#endif /* J9VM_GC_STACCATO */
+#endif /* J9VM_GC_REALTIME */
 #include "Scavenger.hpp"
 #include "StringTable.hpp"
 #include "Validator.hpp"
@@ -167,7 +166,7 @@ initializeMutatorModelJava(J9VMThread* vmThread)
 		if (extensions->isConcurrentScavengerEnabled()) {
 			/* Ensure that newly created threads invoke VM access using slow path, so that the associated hook is invoked.
 			 * GC will register to the hook to enable local thread resources if a thread happens to be created in a middle of Concurrent Scavenge */
-			setEventFlag(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS_ACQUIRE);
+			setEventFlag(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
 		}
 
 #if defined(J9VM_GC_GENERATIONAL)
@@ -483,7 +482,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	}
 
 #if defined(J9VM_GC_IDLE_HEAP_MANAGER)
-	if (extensions->gcOnIdle || extensions->compactOnIdle) {
+	if (extensions->gcOnIdle) {
 		/* Enable idle tuning only for gencon policy */
 		if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {
 			extensions->idleGCManager = MM_IdleGCManager::newInstance(&env);
@@ -501,7 +500,7 @@ error_no_memory:
 }
 
 /**
- * Creates and initialized VM owned structers related to the heap
+ * Creates and initialized VM owned structures related to the heap
  * Calls low level heap initialization function
  * @return J9VMDLLMAIN_OK or J9VMDLLMAIN_FAILED
  */
@@ -856,19 +855,6 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 
 	/* Number of GC threads must be initialized at this point */
 	Assert_MM_true(0 < extensions->gcThreadCount);
-#if defined (J9VM_GC_REALTIME)
-	/*
-	 * The split available lists are populated during sweep by GC threads,
-	 * each slave inserts into its corresponding split list as it finishes sweeping a region,
-	 * which also removes the contention when inserting to a global list.
-	 * So the split count equals the number of gc threads.
-	 * NOTE: The split available list mechanism assumes the slave IDs are in the range of [0, gcThreadCount-1].
-	 * This is currently the case, as _statusTable in ParallelDispacher also replies on slave IDs be in this range
-	 * as it uses the slave ID as index into the status array. If slave IDs ever fall out of the above range,
-	 * split available list would likely loose the performance advantage.
-	 */
-	extensions->splitAvailableListSplitAmount = extensions->gcThreadCount;
-#endif /* J9VM_GC_REALTIME */
 
 	/* initialize packet lock splitting factor */
 	if (0 == extensions->packetListSplit) {
@@ -1114,57 +1100,59 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 	extensions->memoryMax = MM_Math::roundToFloor(extensions->regionSize, extensions->memoryMax);
 	extensions->maxSizeDefaultMemorySpace = MM_Math::roundToFloor(extensions->regionSize, extensions->maxSizeDefaultMemorySpace);
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
-	if (extensions->shouldAllowShiftingCompression) {
-		if (extensions->shouldForceSpecifiedShiftingCompression) {
-			extensions->heapCeiling = NON_SCALING_LOW_MEMORY_HEAP_CEILING << extensions->forcedShiftingCompressionAmount;
+#if defined (OMR_GC_COMPRESSED_POINTERS)
+	if (extensions->compressObjectReferences()) {
+		if (extensions->shouldAllowShiftingCompression) {
+			if (extensions->shouldForceSpecifiedShiftingCompression) {
+				extensions->heapCeiling = NON_SCALING_LOW_MEMORY_HEAP_CEILING << extensions->forcedShiftingCompressionAmount;
+			} else {
+				extensions->heapCeiling = LOW_MEMORY_HEAP_CEILING;
+			}
 		} else {
-			extensions->heapCeiling = LOW_MEMORY_HEAP_CEILING;
+			extensions->heapCeiling = NON_SCALING_LOW_MEMORY_HEAP_CEILING;
 		}
-	} else {
-		extensions->heapCeiling = NON_SCALING_LOW_MEMORY_HEAP_CEILING;
-	}
 
 #if defined(J9ZOS39064)
-	{
-		/*
-		 * In order to support Compressed References ZOS should support one of:
-		 * - 2_TO_64 to support heaps allocation below 64GB
-		 * - 2_TO_32 to support heaps allocation below 32GB
-		 */
-		UDATA maxHeapForCR = 0;
-		switch (getUserExtendedPrivateAreaMemoryType()) {
-		case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-		default:
-			/* options are not supported, heap allocation will fail eventually */
-			break;
-		case ZOS64_VMEM_2_TO_32G:
-			maxHeapForCR = DEFAULT_LOW_MEMORY_HEAP_CEILING;
-			break;
-		case ZOS64_VMEM_2_TO_64G:
-			maxHeapForCR = LOW_MEMORY_HEAP_CEILING;
-			break;
-		}
+		{
+			/*
+			 * In order to support Compressed References ZOS should support one of:
+			 * - 2_TO_64 to support heaps allocation below 64GB
+			 * - 2_TO_32 to support heaps allocation below 32GB
+			 */
+			UDATA maxHeapForCR = 0;
+			switch (getUserExtendedPrivateAreaMemoryType()) {
+			case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+			default:
+				/* options are not supported, heap allocation will fail eventually */
+				break;
+			case ZOS64_VMEM_2_TO_32G:
+				maxHeapForCR = DEFAULT_LOW_MEMORY_HEAP_CEILING;
+				break;
+			case ZOS64_VMEM_2_TO_64G:
+				maxHeapForCR = LOW_MEMORY_HEAP_CEILING;
+				break;
+			}
 
-		if (0 == maxHeapForCR) {
-			/* Redirector should not allow to run Compressed References JVM if options are not available */
-			Assert_MM_unreachable();
-			/* Fail to initialize if assertions are off */
-			return JNI_ERR;
+			if (0 == maxHeapForCR) {
+				/* Redirector should not allow to run Compressed References JVM if options are not available */
+				Assert_MM_unreachable();
+				/* Fail to initialize if assertions are off */
+				return JNI_ERR;
+			}
+	
+			/* Adjust heap ceiling value if it is necessary */
+			if (extensions->heapCeiling > maxHeapForCR) {
+				extensions->heapCeiling = maxHeapForCR;
+			}
 		}
-
-		/* Adjust heap ceiling value if it is necessary */
-		if (extensions->heapCeiling > maxHeapForCR) {
-			extensions->heapCeiling = maxHeapForCR;
-		}
-	}
 #endif /* defined(J9ZOS39064) */
 
-	if (extensions->memoryMax > (extensions->heapCeiling - J9GC_COMPRESSED_POINTER_NULL_REGION_SIZE)) {
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_OVERFLOW, displayXmxOrMaxRAMPercentage(memoryParameters));
-		return JNI_ERR;
+		if (extensions->memoryMax > (extensions->heapCeiling - J9GC_COMPRESSED_POINTER_NULL_REGION_SIZE)) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_OVERFLOW, displayXmxOrMaxRAMPercentage(memoryParameters));
+			return JNI_ERR;
+		}
 	}
-#endif /* defined (J9VM_GC_COMPRESSED_POINTERS) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 	/* Verify Xmx is too small */
 	if (extensions->memoryMax < minimumSizeValue) {
@@ -1227,7 +1215,7 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 
 	/* Still need to verify the minimum size of Xmx/Xmdx is not less than the required
 	 * minimum subSpace size (oldSpace/NewSpace).  Do this verification after those minimum
-	 * values are verfied.
+	 * values are verified.
 	 */
 	return JNI_OK;
 
@@ -1552,10 +1540,12 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 		extensions->allocationIncrement = MM_Math::roundToCeiling(extensions->regionSize, extensions->allocationIncrement);
 	}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-	/* Align the Xmcrs if necessary */
-	extensions->suballocatorInitialSize = MM_Math::roundToCeiling(SUBALLOCATOR_ALIGNMENT, extensions->suballocatorInitialSize);
-#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+		/* Align the Xmcrs if necessary */
+		extensions->suballocatorInitialSize = MM_Math::roundToCeiling(SUBALLOCATOR_ALIGNMENT, extensions->suballocatorInitialSize);
+	}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	return JNI_OK;
 
@@ -2838,7 +2828,7 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 	case gc_policy_metronome:
 		extensions->gcModeString = "-Xgcpolicy:metronome";
 		omrVM->gcPolicy = J9_GC_POLICY_METRONOME;
-		result = MM_ConfigurationStaccato::newInstance(&env);
+		result = MM_ConfigurationRealtime::newInstance(&env);
 		break;
 
 	case gc_policy_balanced:
@@ -2953,6 +2943,12 @@ gcInitializeDefaults(J9JavaVM* vm)
 		/* after we parsed cmd line options, check if we can obey the request to run CS (valid for Gencon only) */
 		if (extensions->concurrentScavengerForced) {
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER)
+			/*
+            * x86 and POWER do not respect -XXgc:softwareRangeCheckReadBarrier and have it set to true always.
+			*
+			* Z is the only consumer that actually uses -XXgc:softwareRangeCheckReadBarrier
+			* to overwrite HW concurrent scavenge.
+			*/
 			extensions->softwareRangeCheckReadBarrier = true;
 #endif /* J9VM_ARCH_X86 || J9VM_ARCH_POWER */
 			if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
@@ -2962,9 +2958,16 @@ gcInitializeDefaults(J9JavaVM* vm)
 				bool hwSupported = j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
 						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS);
 
-				/* Software Barrier request overwrites HW usage */
-				extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareRangeCheckReadBarrier;
-				extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
+				if (hwSupported) {
+					/* Software Barrier request overwrites HW usage on supported HW */
+					extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareRangeCheckReadBarrier;
+					extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
+				} else {
+					extensions->concurrentScavengerHWSupport = false;
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390)
+					extensions->concurrentScavenger = true;
+#endif /*J9VM_ARCH_X86 || J9VM_ARCH_POWER || J9VM_ARCH_S390 */
+				}
 			} else {
 				/* running interpreted is ok on any h/w */
 				extensions->concurrentScavenger = true;

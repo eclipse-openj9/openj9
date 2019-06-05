@@ -452,7 +452,10 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
                }
             }
 
-         if (comp()->isOutermostMethod() && !optimizer()->isIlGenOpt() && !comp()->getOption(TR_DisableDecimalFormatPeephole))
+         // check that the helper class is available before invoking the matcher
+         TR_OpaqueClassBlock *DFHClass = fe()->getClassFromSignature("com/ibm/jit/DecimalFormatHelper", 31, comp()->getCurrentMethod());
+         if (comp()->isOutermostMethod() && !optimizer()->isIlGenOpt() && !comp()->getOption(TR_DisableDecimalFormatPeephole) &&
+            DFHClass != NULL)
             {
             TR::TreeTop *newTree = detectFormatPattern(tt, exit, callNode);
             if (newTree)
@@ -1843,7 +1846,7 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
    if (stringCount > MAX_STRINGS)
       return 0;
    if (stringCount == 2 && !findSymRefForOptMethod(SPH_String_init_SS))
-      return 0; // cannot do it because we do not have the appropiate constructor
+      return 0; // cannot do it because we do not have the appropriate constructor
    if (stringCount == 3 && !findSymRefForOptMethod(SPH_String_init_SSS))
       return 0; // same as above
 
@@ -2052,6 +2055,7 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
       initTree->getNode()->setAndIncChild(0,appendedString[0]);
       }
 
+   removeAllocationFenceOfNew(newTree);
    removePendingPushOfResult(newTree);
    TR::TransformUtil::removeTree(comp(), newTree);
 
@@ -2133,6 +2137,19 @@ void TR_StringPeepholes::removePendingPushOfResult(TR::TreeTop *callTreeTop)
             TR::TransformUtil::removeTree(comp(), cursor);
          cursor = cursor->getNextTreeTop();
          }
+      }
+   }
+
+// If new tree is going to be removed, the allocationfence on the new node
+// has to be removed as well
+void TR_StringPeepholes::removeAllocationFenceOfNew(TR::TreeTop *newTreeTop)
+   {
+   TR::TreeTop *cursor = newTreeTop->getNextTreeTop();
+   if (cursor
+       && cursor->getNode()->getOpCodeValue() == TR::allocationFence
+       && cursor->getNode()->getFirstChild() == newTreeTop->getNode()->getFirstChild())
+      {
+      TR::TransformUtil::removeTree(comp(), cursor);
       }
    }
 

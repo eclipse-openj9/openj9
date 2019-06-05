@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ typedef J9Object* languageobjectptr_t;
 typedef J9Object* omrobjectptr_t;
 typedef J9IndexableObject* omrarrayptr_t;
 
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 typedef U_32 fomrobject_t;
 typedef U_32 fomrarray_t;
 #else

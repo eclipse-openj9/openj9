@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,8 +59,8 @@ public:
 		UDATA _copiedBytes; /**< The number of bytes copied into survivor regions for this compact group by the owning thread */
 		UDATA _liveObjects; /**< The number of live objects found in evacuate regions for this compact group by the owning thread (i.e. objects copied FROM or WITHIN this compact group) */
 		UDATA _liveBytes; /**< The number of live bytes found in evacuate regions for this compact group by the owning thread */
-		UDATA _scannedObjects; /**< The number of objects scanned in abort recovery in regions in this compact group */
-		UDATA _scannedBytes; /**< The number of objects scanned in abort recovery in regions in this compact group */
+		UDATA _scannedObjects; /**< The number of objects scanned in abort recovery/nonEvacuated regions in this compact group */
+		UDATA _scannedBytes; /**< The number of objects scanned in abort recovery/nonEvacuated regions in this compact group */
 	};
 	
 	MM_CopyForwardCompactGroupStats _edenStats; /**< Data about objects from Eden regions */

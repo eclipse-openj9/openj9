@@ -22,7 +22,7 @@
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
 # Then include a known_hosts file next to the Dockerfile, with github as a saved host
 # This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
-# Make sure you are in the directory contianing the Dockerfile and authorized_keys file
+# Make sure you are in the directory containing the Dockerfile and authorized_keys file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
@@ -48,6 +48,7 @@ RUN apt-get update \
     autoconf \
     build-essential \
     curl \
+    libexpat1-dev `# This is being used for the xml parser` \
     g++-7 \
     gcc-7 \
     gdb \
@@ -62,14 +63,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV
-
-# Create links for c++,g++,cc,gcc
-RUN rm /usr/bin/c++ /usr/bin/g++ /usr/bin/cc /usr/bin/gcc \
-  && ln -s g++ /usr/bin/c++ \
-  && ln -s g++-4.8 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-4.8 /usr/bin/gcc
+RUN echo yes | cpan install JSON Text::CSV XML::Parser
 
 # Install ccache
 RUN apt-get update \

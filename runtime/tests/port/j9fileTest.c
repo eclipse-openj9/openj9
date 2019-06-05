@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -233,7 +233,7 @@ j9file_test0(struct J9PortLibrary *portLibrary)
 		}
 
 		/* Not tested, implementation dependent.  No known functionality.
-		 * Startup is private to the portlibary, it is not re-entrant safe
+		 * Startup is private to the portlibrary, it is not re-entrant safe
 		 */
 		if (NULL == OMRPORT_FROM_J9PORT(PORTLIB)->file_startup) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->file_startup is NULL\n");
@@ -283,7 +283,7 @@ j9file_test0(struct J9PortLibrary *portLibrary)
 		}
 
 		/* Not tested, implementation dependent.  No known functionality.
-		 * Startup is private to the portlibary, it is not re-entrant safe
+		 * Startup is private to the portlibrary, it is not re-entrant safe
 		 */
 		if (NULL == OMRPORT_FROM_J9PORT(PORTLIB)->file_blockingasync_startup) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->file_blockingasync_startup is NULL\n");
@@ -752,7 +752,7 @@ j9file_test5(struct J9PortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "%s() returned valid file handle expected -1\n", FILE_OPEN_FUNCTION_NAME);
 	}
 
-	/* try to close a non existant file, should fail */
+	/* try to close a nonexistent file, should fail */
 	rc = FILE_CLOSE_FUNCTION(portLibrary, -1);
 	if (0 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "%s() returned %d expected %d\n", FILE_CLOSE_FUNCTION_NAME, rc, -1);
@@ -1666,7 +1666,7 @@ j9file_test12(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	/* try unlinking a non-existant file */
+	/* try unlinking a nonexistent file */
 	rc = j9file_unlink("rubbish");
 	if (-1 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9file_unlink() returned %d expected -1\n", rc);
@@ -1695,7 +1695,7 @@ j9file_test12(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	/* try unlinkdir of non-existant directory */
+	/* try unlinkdir of nonexistent directory */
 	rc = j9file_unlinkdir("rubbish");
 	if (0 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9file_unlinkdir() returned %d expected -1\n", rc);
@@ -2294,7 +2294,7 @@ j9file_create_status_file(J9PortLibrary* portLibrary, const char* filename, cons
 }
 
 /*
- * Helper function used by File Locking tests below to check for the existance
+ * Helper function used by File Locking tests below to check for the existence
  * of a status file from the other child in the test
  */
 IDATA
@@ -4139,7 +4139,7 @@ j9file_test_long_file_name(struct J9PortLibrary *portLibrary)
 	char *readBufPtr;
 	char *longDirName = "\\abcdefghijklmnopqrstuvwx";
 #define MIN_LENGTH (MAX_PATH + 1)
-#define FILENAME_LENGTH MIN_LENGTH*2 /* double the size to accomodate a file size that is just under twice MIN_LENGTH */
+#define FILENAME_LENGTH MIN_LENGTH*2 /* double the size to accommodate a file size that is just under twice MIN_LENGTH */
 	char filePathName[FILENAME_LENGTH];
 	IDATA fd;
 	char cwd[FILENAME_LENGTH];

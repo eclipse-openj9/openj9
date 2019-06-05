@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,38 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
    static TR_OpaqueClassBlock * getCastClassAddress(TR::Node * castClassNode);
    static bool instanceOfOrCheckCastIsFinalArray(TR::Node * castClassNode, TR::CodeGenerator *cg);
 
+   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *frdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *drdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *brdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static void rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg); 
+
+   /*
+    * \brief
+    *   Sets the node representing the value to be written for an indirect wrtbar. Returns
+    *   true/false if the correct pattern was found (i.e. if compressedReferences is being used).
+    *
+    * \note
+    *   For address type nodes using compressedrefs, the compressed refs sequence is skipped
+    *   from the sub tree and the uncompressed address value is set to sourceChild.
+    *   For all other cases, sourceChild is set to the secondChild.
+    */
+   static bool getIndirectWrtbarValueNode(TR::CodeGenerator *cg, TR::Node *node, TR::Node*& sourceChild, bool incSrcRefCount);
    static void evaluateLockForReservation(TR::Node *node, bool *reservingLock, bool *normalLockPreservingReservation, TR::CodeGenerator *cg);
    static bool isPrimitiveMonitor (TR::Node *node, TR::CodeGenerator *cg);
    static bool isDummyMonitorEnter (TR::Node *node, TR::CodeGenerator *cg);

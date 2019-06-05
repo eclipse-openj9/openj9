@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ private:
 public:
 
 	/**
-	 * @return size of interned strin cache size
+	 * @return size of interned string cache size
 	 */
 	static UDATA getCacheSize() { return cacheSize; }
 	/**

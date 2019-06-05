@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -899,8 +899,8 @@ MM_MemorySubSpaceTarok::collectorExpand(MM_EnvironmentBase *env)
 
 /**
  * Perform the contraction/expansion based on decisions made by checkResize.
- * Adjustements in contraction size is possible (because compaction might have yielded less then optimal results),
- * therefore allocDesriptor is still passed.
+ * Adjustments in contraction size is possible (because compaction might have yielded less then optimal results),
+ * therefore allocDescriptor is still passed.
  * @return the actual amount of resize (having IDATA return result will contain valid value only if contract/expand size is half of maxOfUDATA)
  */
 IDATA
@@ -1029,7 +1029,7 @@ MM_MemorySubSpaceTarok::performContract(MM_EnvironmentBase *env, MM_AllocateDesc
 	 */
 	maximumContractSize = getAvailableContractionSize(env, allocDescription);  
 	
-	/* round down to muliple of heap alignment */
+	/* round down to multiple of heap alignment */
 	maximumContractSize= MM_Math::roundToFloor(_extensions->heapAlignment, maximumContractSize);
 	
 	/* Decide by how much to contract */
@@ -1300,7 +1300,7 @@ MM_MemorySubSpaceTarok::calculateExpandSize(MM_EnvironmentBase *env, UDATA bytes
 	/* and how much do we need free after this GC to meet -Xminf ? */
 	minimumFree = (getActiveMemorySize() / _extensions->heapFreeMinimumRatioDivisor) * _extensions->heapFreeMinimumRatioMultiplier;
 	
-	/* The derired free is the sum of these 2 rounded to heapAlignment */
+	/* The desired free is the sum of these 2 rounded to heapAlignment */
 	desiredFree= MM_Math::roundToCeiling(_extensions->heapAlignment, minimumFree + bytesRequired);
 
 	if(desiredFree <= currentFree) {
@@ -1402,7 +1402,7 @@ MM_MemorySubSpaceTarok::checkForRatioExpand(MM_EnvironmentBase *env, UDATA bytes
 	maxFree = (UDATA)(((U_64)getActiveMemorySize()  * _extensions->heapFreeMaximumRatioMultiplier)
 														 / ((U_64)_extensions->heapFreeMaximumRatioDivisor));
 														 
-	/* If we have hit -Xmaxf limit already ...return immiediatley */													 
+	/* If we have hit -Xmaxf limit already ...return immediately */													 
 	if (currentFree >= maxFree) { 
 		Trc_MM_MemorySubSpaceTarok_checkForRatioExpand_Exit1(env->getLanguageVMThread());
 		return 0;

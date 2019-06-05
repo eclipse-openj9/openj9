@@ -35,16 +35,26 @@ add_library(jvm_redirect SHARED
 target_link_libraries(jvm_redirect
 	PRIVATE
 		j9vm_interface
-		dl
+		${CMAKE_DL_LIBS}
 )
 target_include_directories(jvm_redirect
 	PRIVATE
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
-set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
+set_target_properties(jvm_redirect PROPERTIES
+	LIBRARY_OUTPUT_NAME jvm
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	ARCHIVE_OUTPUT_NAME redirector_jvm
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+# The redirector should have the same exports as the jvm
+get_target_property(jvm_exports jvm EXPORTED_SYMBOLS)
+omr_add_exports(jvm_redirect ${jvm_exports})
 
 install(
 	TARGETS jvm_redirect
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}/redirector
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}/redirector
 )

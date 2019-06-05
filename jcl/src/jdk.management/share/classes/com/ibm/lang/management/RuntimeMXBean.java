@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,7 +113,40 @@ public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 	public VMIdleStates getVMIdleState();
 
 	/**
-	 * Return true if JVM state is idle. Otherwise returns false
+	 * @return  true if JVM state is idle. Otherwise returns false
 	 */
 	public boolean isVMIdle();
+	
+	/**
+	 * Query the state of the Attach API. Return false if the Attach API is:
+	 * - still initializing
+	 * - disabled
+	 * - terminated by VM shutdown
+	 * @return true if Attach API is initialized
+	 * @since   1.8
+	 */
+	public boolean isAttachApiInitialized();
+
+	/**
+	 * Query the state of the Attach API. Return true if the Attach API is:
+	 * - disabled
+	 * - terminated by VM shutdown
+	 * and false if it is
+	 * - still initializing
+	 * - initialized and running
+	 * @return true if Attach API is terminated
+	 * @since   1.8
+	 */
+	public boolean isAttachApiTerminated();
+
+	/**
+	 * This is provided for the benefit of applications which use attach API to load JVMTI agents 
+	 * into their own JVMs.
+	 * 
+	 * @return Attach API Virtual Machine ID of this VM
+	 * @since   1.8
+
+	 */
+	public String getVmId();
+
 }

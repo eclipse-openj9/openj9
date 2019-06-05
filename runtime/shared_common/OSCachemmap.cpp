@@ -58,7 +58,7 @@
  * @param [in]  piconfig Pointer to a configuration structure
  * @param [in]  numLocks The number of locks to be initialized
  * @param [in]  createFlag Indicates whether cache is to be opened or created.
- * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existsing cache
+ * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existing cache
  * \args J9SH_OSCACHE_OPEXIST Open an existing cache only, failed if it doesn't exist.
  * @param [in]  verboseFlags Verbose flags
  * @param [in]  openMode Mode to open the cache in. Any of the following flags:
@@ -691,7 +691,7 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 			 *	- Owns W monitor, W lock, RW monitor, and gets EDADLK on RW lock
 			 *
 			 * Notes:
-			 *	- This means other JVMs caused EDEADLK becuase they are holding RW, and
+			 *	- This means other JVMs caused EDEADLK because they are holding RW, and
 			 *	  waiting on W in a sequence that gives fcntl the impression of deadlock
 			 *	- If current thread owns the W monitor, it must also own the W lock 
 			 *	  if the call stack ended up here.
@@ -716,7 +716,7 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 			 *	- Current thread owns the RW monitor, and gets EDEADLK on RW lock
 			 *
 			 * Note:
-			 *  - Deadlock might caused by the order in which threads have taken taken locks, when compaired to another JVM.
+			 *  - Deadlock might caused by the order in which threads have taken taken locks, when compared to another JVM.
 			 *  - In the recovery code below the first release of the RW Monitor is to ensure SCStoreTransactions
 			 *    can complete.
 			 *
@@ -749,10 +749,10 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 		} else if (lockID == J9SH_OSCACHE_MMAP_LOCKID_WRITELOCK) {
 			/*	CMVC 153095: Case 3
 			 * Another thread:
-			 *	- Owns RW monintor, and is waiting on (or owns) the RW lock.
+			 *	- Owns RW monitor, and is waiting on (or owns) the RW lock.
 			 * 
 			 * Current thread:
-			 *	- Owns W monintor, and gets EDEADLK on W lock.
+			 *	- Owns W monitor, and gets EDEADLK on W lock.
 			 *	
 			 * Note:
 			 *  - If the 'call stack' ends up here then it is known the current thread 
@@ -1678,7 +1678,7 @@ SH_OSCachemmap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescripto
 void * 
 SH_OSCachemmap::getAttachedMemory()
 {
-	/* This method should only be called betwen calls to 
+	/* This method should only be called between calls to 
 	 * internalAttach and internalDetach
 	 */
 	return _dataStart;

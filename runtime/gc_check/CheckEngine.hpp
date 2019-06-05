@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,7 @@ private:
 	 * Generate messages about discovered problems.
 	 * @param vm - javaVM
 	 * @param clazz - class to scan
-	 * @return successful operetion complete code or error code
+	 * @return successful operation complete code or error code
 	 */
 	UDATA checkClassStatics(J9JavaVM* vm, J9Class* clazz);
 

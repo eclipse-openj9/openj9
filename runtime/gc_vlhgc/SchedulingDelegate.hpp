@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -373,6 +373,11 @@ public:
 	void firstPGCAfterGMPCompleted();
 
 	/**
+	 * return whether a PGC Abort happens during GMP
+	 */
+	bool isPGCAbortDuringGMP() {return _disableCopyForwardDuringCurrentGlobalMarkPhase;}
+
+	/**
 	 * return whether the following PGC is required to do global sweep (typically, first PGC after GMP completed)
 	 */
 	bool isGlobalSweepRequired() { return _globalSweepRequired; }
@@ -419,7 +424,7 @@ public:
 
 	/**
 	 * Determine what type of PGC should be run next PGC cycle (Copy-Forward, Mark-Sweep-Compact etc)
-	 * The result is not explicitely returned, but implicitely through CycleState, class member flag etc.
+	 * The result is not explicitly returned, but implicitly through CycleState, class member flag etc.
 	 * @param env[in] the master GC thread
 	 */
 	void determineNextPGCType(MM_EnvironmentVLHGC *env);
@@ -455,6 +460,8 @@ public:
 	 */
 	void heapReconfigured(MM_EnvironmentVLHGC *env);
 	
+	double getAvgEdenSurvivalRateCopyForward(MM_EnvironmentVLHGC *env) { return _edenSurvivalRateCopyForward; }
+
 	MM_SchedulingDelegate(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
 };
 

@@ -64,6 +64,7 @@
 #define J9ROMCLASS_FINALIZE_NEEDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassFinalizeNeeded)
 #define J9ROMCLASS_IS_CLONEABLE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassCloneable)
 #define J9ROMCLASS_ANNOTATION_REFERS_DOUBLE_SLOT_ENTRY(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassAnnnotionRefersDoubleSlotEntry)
+#define J9ROMCLASS_IS_UNMODIFIABLE(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsUnmodifiable)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.
@@ -105,8 +106,13 @@
 #define J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod) \
 	((((romMethod)->modifiers) & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor)
 
-#define J9ROMCLASS_IS_ABSTRACT_OR_INTERFACE(romClass) \
-	J9_ARE_ANY_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface)
+/* Class instances are allocated via the new bytecode */
+#define J9ROMCLASS_ALLOCATES_VIA_NEW(romClass) \
+	J9_ARE_NO_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface | J9AccClassArray | J9AccValueType)
+
+/* Class instances are allocated via J9RAMClass->totalInstanceSize */
+#define J9ROMCLASS_ALLOCATE_USES_TOTALINSTANCESIZE(romClass) \
+	J9_ARE_NO_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface | J9AccClassArray)
 
 /* Only public vTable methods go into the iTable */
 #define J9ROMMETHOD_IN_ITABLE(romMethod) \

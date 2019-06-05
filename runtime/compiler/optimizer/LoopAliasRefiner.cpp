@@ -131,7 +131,7 @@ void TR_LoopAliasRefiner::collectArrayAliasCandidates(TR::Node *parentArrayNode,
  * look for array
  * array defs contains all candidate array definitions found.  useCandidates are an ordered sequence of candidate
  * defs and uses
- * Versioning processes loops from outer to inner.  If there are no probelms refining an outer loop,
+ * Versioning processes loops from outer to inner.  If there are no problems refining an outer loop,
  * there is no reason to refine the inner ones.  If a given candidate cannot be analysed, allow
  * reprocessing of that particular loop, if it is a child loop.
  */

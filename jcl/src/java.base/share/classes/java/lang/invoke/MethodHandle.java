@@ -331,6 +331,8 @@ public abstract class MethodHandle
 	 * Invoke the receiver MethodHandle against the supplied arguments.  The types of the arguments 
 	 * must be an exact match for the MethodType of the MethodHandle.
 	 * 
+	 * @param args The argument list for the polymorphic signature call
+	 * 
 	 * @return The return value of the method
 	 * @throws Throwable - To ensure type safety, must be marked as throwing Throwable.
 	 * @throws WrongMethodTypeException - If the resolved method type is not exactly equal to the MethodHandle's type
@@ -342,6 +344,7 @@ public abstract class MethodHandle
 	 * are not an exact match for the MethodType of the MethodHandle, conversions will be applied as 
 	 * possible.  The signature and the MethodHandle's MethodType must have the same number of arguments.
 	 * 
+	 * @param args The argument list for the polymorphic signature call
 	 * @return The return value of the method.  May be converted according to the conversion rules.
 	 * @throws Throwable - To ensure type safety, must be marked as throwing Throwable.
 	 * @throws WrongMethodTypeException  - If the resolved method type cannot be converted to the MethodHandle's type
@@ -349,18 +352,11 @@ public abstract class MethodHandle
 	 */
 	public final native @PolymorphicSignature Object invoke(Object... args) throws Throwable, WrongMethodTypeException, ClassCastException;
 	
-	/*
-	 * Lookup all the VMDispatchTargets and store them into 'targets' array.
-	 * 'targets' must be large enough to hold all the dispatch targets.
-	 * 
-	 */
-	private static native boolean lookupVMDispatchTargets(long[] targets);
-	
 	/**
-     * The MethodType of the MethodHandle.  Invocation must match this MethodType.
-     *   
+	 * The MethodType of the MethodHandle.  Invocation must match this MethodType.
+	 *
 	 * @return the MethodType of the MethodHandle.  
-     */
+	 */
 	public MethodType type() {
 		return type;
 	}
@@ -840,6 +836,14 @@ public abstract class MethodHandle
 	}
 /*[ENDIF]*/
 
+	/**
+	 * Bind the value as the first argument to the MethodHandle
+	 *
+	 * @param value the object to bind in
+	 * @return a new MethodHandle with the bound argument
+	 * @throws IllegalArgumentException if the value is not compatible with the first argument
+	 * @throws ClassCastException if the value can't be cast to the type of the first argument
+	 */
 	public MethodHandle bindTo(Object value) throws IllegalArgumentException, ClassCastException {
 		/*
 		 * Check whether the first parameter has a reference type assignable from value. Note that MethodType.parameterType(0) will

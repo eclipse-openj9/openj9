@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -284,7 +284,9 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 	key.length = classNameLength;
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
-		return result->ramClass;
+		J9Class *clazz = result->ramClass;
+		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		return clazz;
 	} else {
 		return NULL;
 	}
@@ -532,23 +534,9 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
 	key.charData = (U_8 *)stringObject;
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
-#if 0
-		/* TODO stefanbu This path appears deprecated, userData was previously cast to J9VMToken. */
-		void * userData = table->functionUserData;
-		J9UTF8 * foundName = J9ROMCLASS_CLASSNAME(result->ramClass->romClass);
-		j9object_t charArray = J9VMJAVALANGSTRING_VALUE((J9VMThread *)userData, stringObject);
-		U_32 i = 0;
-		U_32 end = i + J9VMJAVALANGSTRING_LENGTH((J9VMThread *)userData, stringObject);
-
-		printf("looking for ");
-		while (i < end) {
-			U_16 c = J9JAVAARRAYOFCHAR_LOAD((J9VMThread *)userData, charArray, i);
-			printf("%c", c);
-			++i;
-		}
-		printf(" and found %.*s\n", J9UTF8_LENGTH(foundName), J9UTF8_DATA(foundName));
-#endif
-		return result->ramClass;
+		J9Class *clazz = result->ramClass;
+		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		return clazz;
 	}
 	return NULL;
 }

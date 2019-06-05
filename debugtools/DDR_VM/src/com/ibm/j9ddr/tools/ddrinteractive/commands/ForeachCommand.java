@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ public class ForeachCommand extends Command
 	{
 		/* Concatenate:
 		 * 		<command> <command_args>
-		 * Replacing any occurence of token with <foreach_args>
+		 * Replacing any occurrence of token with <foreach_args>
 		 */
 		String[] newArgs = new String[args.length - commandIndex - 1];
 		System.arraycopy(args, commandIndex + 1, newArgs, 0, args.length - commandIndex - 1);

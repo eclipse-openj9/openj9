@@ -711,7 +711,7 @@ TraceEvent=Trc_PRT_sig_can_protect_J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION_suppor
 
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_ex_requested_large_page_outside_available_range Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory_ex requested large pages outside of available range, startAddress=%p, endAddress=%p"
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_ex_reverting_to_default_page_size Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory_ex reverting to default page size"
-TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size, byteAmout: %u, numPages: %u"
+TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory_ex_large_page_request_failed_reverting_to_default_page_size, byteAmount: %u, numPages: %u"
 
 TraceException=Trc_PRT_file_open_Exception1 Obsolete Group=j9file Overhead=1 Level=1 NoEnv Template="j9file_open returns failure, filename = %s, flags (%d) are incorrect"
 TraceException=Trc_PRT_file_open_Exception2 Obsolete Group=j9file Overhead=1 Level=1 NoEnv Template="j9file_open returns failure, filename = %s, os errno = %d, portable errno = %d"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (c) 2006, 2018 IBM Corp. and others
+   Copyright (c) 2006, 2019 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 -->
 
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
-        
+
 	<exports group="all">
 		<export name="j9port_allocate_library" />
 		<export name="j9port_create_library" />
@@ -40,17 +40,40 @@
 			<xi:include href="vendor_port_default.xml"></xi:include>
 		</xi:fallback>
 	</xi:include>
-	
+
 	<!-- ri_support.xml can contain the RI support on z/OS-->
 	<xi:include href="ri_support.xml">
 		<xi:fallback>
 			<xi:include href="ri_support_default.xml"></xi:include>
 		</xi:fallback>
 	</xi:include>
-	
-	<objects group="all">
-		<object name="j9gp" />
 
+	<objects group="all">
+		<object name="j9csrsi">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9csrsi_wrp">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gp" />
+		<object name="j9gs"/>
+		<object name="j9gs_get_supported">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_load_gscb">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_s390">
+			<include-if condition="spec.linux_390.*"/>
+			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.linux_ztpf.*"/>
+		</object>
+		<object name="j9gs_store_gscb">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9guardedstorage">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
 		<object name="j9hypervisor"/>
 		<object name="j9hypervisor_common"/>
 		<object name="j9hypervisor_i386" >
@@ -71,8 +94,8 @@
 			<include-if condition="spec.linux_390.*"/>
 			<include-if condition="spec.linux_390-64.*"/>
 		</object>
-
 		<object name="j9ipcmutex" />
+		<object name="j9mem_basic" />
 		<object name="j9mprotect">
 			<include-if condition="spec.zos_390.*"/>
 			<exclude-if condition="spec.zos_390-64.*"/>
@@ -81,52 +104,20 @@
 			<include-if condition="spec.zos_390.*"/>
 			<exclude-if condition="spec.zos_390-64.*"/>
 		</object>
-		<object name="j9SysvIPCWrappers">
-			<exclude-if condition="spec.win_x86.*"/>
-		</object>
-		
 		<object name="j9port" />
+		<object name="j9portcontrol" />
 		<object name="j9process" />
-		<object name="j9gs"/>
-		<object name="j9guardedstorage">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_get_supported">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_load_gscb">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_store_gscb">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9csrsi">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9csrsi_wrp">
-			<include-if condition="spec.zos_390.*"/>
-		</object>
-		<object name="j9gs_s390">
-			<include-if condition="spec.linux_390.*"/>
-			<include-if condition="spec.zos_390.*"/>
-			<include-if condition="spec.linux_ztpf.*"/>
-			<exclude-if condition="spec.linux_x86.*"/>
-			<exclude-if condition="spec.win_x86.*"/>
-		</object>
 		<object name="j9ri">
 			<include-if condition="spec.flags.port_runtimeInstrumentation"/>
 		</object>
-		
 		<object name="j9sharedhelper">
 			<exclude-if condition="spec.win_x86.*"/>
 		</object>
 		<object name="j9shmem" />
 		<object name="j9shsem" />
 		<object name="j9shsem_deprecated" />
-
 		<object name="j9sock" />
 		<object name="j9sockptb" />
-
 		<object name="j9sysinfo" />
 		<object name="j9sysinfo_helpers">
 			<include-if condition="spec.linux_x86.*"/>
@@ -135,15 +126,16 @@
 			<include-if condition="spec.zos_390.*"/>
 			<include-if condition="spec.osx_x86.*"/>
 		</object>
-		<object name="j9mem_basic" />
-		<object name="j9portcontrol" />
+		<object name="j9SysvIPCWrappers">
+			<exclude-if condition="spec.win_x86.*"/>
+		</object>
 		<object name="protect_helpers">
 			<include-if condition="spec.zos_390.*"/>
 			<exclude-if condition="spec.zos_390-64.*"/>
 		</object>
 		<object name="ut_j9prt" />
 	</objects>
-	
+
 	<!-- vendor_port_flags.xml can contain vendor specific configuration -->
 	<xi:include href="vendor_port_flags.xml">
 		<xi:fallback>
@@ -226,7 +218,7 @@
 			<include path="j9oti"/>
 			<include path="j9include"/>
 		</includes>
-		
+
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1">
 				<exclude-if condition="spec.linux_ppc.*"/>
@@ -235,7 +227,7 @@
 				<exclude-if condition="spec.linux_390.*" />
 				<exclude-if condition="spec.linux_390-64.*" />
 			</makefilestub>
-			
+
 			<makefilestub data="OMRPORT_SRCDIR=$(OMR_DIR)/port/" />
 
 			<makefilestub data="ifdef I5_VERSION">
@@ -302,11 +294,11 @@
 				<include-if condition="spec.linux_390.*"/>
 				<include-if condition="spec.linux_ztpf.*"/>
 			</vpath>
-			
+
 			<vpath pattern="%" path="ztpf" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_ztpf.*"/>
 			</vpath>
-			
+
 			<vpath pattern="%" path="linuxarm" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_arm.*"/>
 			</vpath>
@@ -348,16 +340,20 @@
 			<library name="j9thr"/>
 			<library name="j9utilcore"/>
 			<library name="j9avl" type="external"/>
-			<library name="j9hashtable" type="external"/>						
+			<library name="j9hashtable" type="external"/>
 			<library name="omrsig">
 				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
 			</library>
-			<library name="socket" type="macro"/>			
+			<library name="socket" type="macro"/>
 			<library name="j9pool" type="external"/>
 			<library name="omrglue" type="external"/>
 			<library name="iconv" type="system">
 				<include-if condition="spec.aix_.*"/>
 				<include-if condition="spec.osx_x86.*"/>
+			</library>
+			<library name="rt" type="system">
+				<include-if condition="spec.linux_.*"/>
+				<exclude-if condition="spec.linux_ztpf.*"/>
 			</library>
 			<library name="perfstat" type="system">
 				<include-if condition="spec.aix_.*"/>

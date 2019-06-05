@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -532,7 +532,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		 */
 		if ((IDATA) TRUE == isInterfaceClass(verifyData, targetName, targetLength, reasonCode)) {
 			/* targetClass must be either java/lang/Cloneable or java/io/Serializable
-			 * in the case when sourceClass is an arary type (sourceArity > 0).
+			 * in the case when sourceClass is an array type (sourceArity > 0).
 			 */
 			if (((CLONEABLE_CLASS_NAME_LENGTH == targetLength) && ((0 == strncmp((const char*)targetName, CLONEABLE_CLASS_NAME, CLONEABLE_CLASS_NAME_LENGTH))))
 			|| ((SERIALIZEABLE_CLASS_NAME_LENGTH == targetLength) && (0 == strncmp((const char*)targetName, SERIALIZEABLE_CLASS_NAME, SERIALIZEABLE_CLASS_NAME_LENGTH)))
@@ -769,7 +769,7 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 		if (J9_ARE_ALL_BITS_SET(error->verificationFlags, J9_VERIFY_ERROR_DETAILS)
 		&& (0 != error->errorDetailCode)
 		) {
-			/* Jazz 82615: The value of detailedErrMsg may change if the inital byteArray is insufficient to contain the error message framework.
+			/* Jazz 82615: The value of detailedErrMsg may change if the initial byteArray is insufficient to contain the error message framework.
 			 * Under such circumstances, it points to the address of newly allocated memory.
 			 */
 			detailedErrMsg = byteArray;
@@ -1037,7 +1037,7 @@ static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verif
 }
 
 /* return BCV_SUCCESS if field is found
- * retrun BCV_NOT_FOUND if field is not found
+ * return BCV_NOT_FOUND if field is not found
  * return BCV_FAIL otherwise
  */
 
@@ -1069,7 +1069,7 @@ static IDATA findFieldFromRamClass (J9Class ** ramClass, J9ROMFieldRef * field, 
 }
 
 /* return BCV_SUCCESS if method is found
- * retrun BCV_NOT_FOUND if method is not found
+ * return BCV_NOT_FOUND if method is not found
  * return BCV_FAIL otherwise
  */
 static IDATA 

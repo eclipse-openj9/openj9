@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public class LookupInTests {
 	 * ****************************************/
 	
 	/**
-	 * Validates public access mode of a Lookup factory created by a call to MethodHandles.publicLookiup() 
+	 * Validates public access mode of a Lookup factory created by a call to MethodHandles.publicLookup() 
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.sanity" })

@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -41,6 +42,8 @@ import java.util.Objects;
 import org.openj9.test.util.StringPrintStream;
 import org.testng.log4testng.Logger;
 
+import com.ibm.lang.management.OperatingSystemMXBean;
+import com.ibm.lang.management.RuntimeMXBean;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
@@ -106,16 +109,29 @@ class TargetManager {
 
 	/**
 	 * Wait until the JVM's attach API has initialized
-	 * @return success if true, false if attach API is disabled or error
+	 * @return success if true, false if attach API is disabled or error, or does not initialize in 100 s.
 	 */
 	public static boolean waitForAttachApiInitialization() {
 		boolean result = false;
-		try {
-			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
-			final Method waitForAttachApiInitialization = attachHandlerClass.getMethod("waitForAttachApiInitialization");
-			result = (boolean) waitForAttachApiInitialization.invoke(attachHandlerClass);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			logger.error("error waiting for attach API initialization: "+e.getMessage());
+		int tries = 100;
+		RuntimeMXBean bean = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
+		while (tries > 0) {
+			logger.debug("Poll attach API status");
+			if (bean.isAttachApiInitialized()) {
+				result = true;
+				logger.debug("attach API initialized");
+				break;
+			} else if (bean.isAttachApiTerminated()) {
+				logger.debug("attach API terminated");
+				result = false;
+				break;
+			} 
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				break;
+			}
+			--tries;
 		}
 		return result;
 	}
@@ -141,15 +157,8 @@ class TargetManager {
 	 * @return Process ID or null on error
 	 */
 	public static String getVmId() {
-		String result = null;
-		try {
-			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
-			final Method getVmId = attachHandlerClass.getMethod("getVmId");
-			result = (String) getVmId.invoke(attachHandlerClass);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			logger.error("error getting process ID: "+e.getMessage());
-		}
-		return result;
+		RuntimeMXBean bean = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
+		return bean.getVmId();
 	}
 	
 	/*
@@ -523,6 +532,11 @@ class TargetManager {
 			result = proc.waitFor();
 		}
 		return result;
+	}
+
+	public static boolean isProcessRunning(long pid) {
+		OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+		return bean.isProcessRunning(pid);
 	}
 
 }

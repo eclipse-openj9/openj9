@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,12 +33,45 @@ target_link_libraries(jsig
 
 		omrsig
 		omrutil
-		dl
+		${CMAKE_DL_LIBS}
 )
 
 target_include_directories(jsig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+omr_add_exports(jsig
+	signal
+	jsig_handler
+	jsig_primary_signal
+)
+if(NOT OMR_OS_WINDOWS)
+	omr_add_exports(jsig
+		sigaction
+		sigset
+		sigignore
+		bsd_signal
+		jsig_primary_sigaction
+	)
+	if(NOT OMR_OS_ZOS)
+		omr_add_exports(jsig
+			sysv_signal
+		)
+	endif()
+endif()
+if(OMR_OS_LINUX)
+	omr_add_exports(jsig
+		__sysv_signal
+		ssignal
+	)
+endif()
+
+if(J9VM_IS_NON_STAGING)
+	set_target_properties(jsig PROPERTIES
+		ARCHIVE_OUTPUT_DIRECTORY ${j9vm_BINARY_DIR}/lib
+	)
+endif()
+
 install(
 	TARGETS jsig
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2015 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -340,7 +340,7 @@ public class DsaStackFrame {
                 } else {
                     /* 
                      * Check whether this module is a wrapped
-                     * trnsfer vector.                      
+                     * transfer vector.                      
                      *   If the module entry-point + 0 = X'47F0Fxxx'
                      *      (a 'BR xxx(15)' instruction)           
                      *     Calculate the address of the signature:
@@ -547,7 +547,7 @@ public class DsaStackFrame {
                 if (in_dsafmt == US_FORMAT) {
                     next_instruction_address = CeedsaTemplate.getCeedsar14(inputStream, in_dsa);
                 } else {
-                    /* Downstack DSA.  The return address is in the calless DSA. If the
+                    /* Downstack DSA.  The return address is in the callees DSA. If the
                      * callee dsa was supplied, obtain the return address from reg7.
                      * If no callee DSA, see if the CAA is also CEEKTBCK's CAA. If they 
                      * are the same, this means that the DSA is on CEEKTBCK's BackChain.
@@ -905,7 +905,7 @@ public class DsaStackFrame {
                         /* state variable locator */
                         if ((ppa1h_flag3 & 0x80) != 0)
                             opt_ptr = opt_ptr + 4;
-                        /* Argumnet Area Length */
+                        /* Argument Area Length */
                         if ((ppa1h_flag3 & 0x40) != 0)
                             opt_ptr = opt_ptr + 4;
                         /* FP reg save area locator */
@@ -1022,7 +1022,7 @@ public class DsaStackFrame {
                 /* state variable locator */
                 if ((ppa1flags3 & 0x80) != 0)
                     ptrnam = ptrnam + 4;
-                /* Argumnet Area Length */
+                /* Argument Area Length */
                 if ((ppa1flags3 & 0x40) != 0)
                     ptrnam = ptrnam + 4;
                 /* FP reg save area locator */

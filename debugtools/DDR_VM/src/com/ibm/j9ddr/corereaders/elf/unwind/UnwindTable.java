@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,7 +130,7 @@ public class UnwindTable {
 		state.registerRules = new HashMap<Integer, RegisterRule>();
 
 		{
-//			out.printf("CIE has initial instuctions:\n");
+//			out.printf("CIE has initial instructions:\n");
 //			
 //			String s = "";
 //			for( byte b: fde.getCIE().getInitialInstructions() ) {
@@ -157,7 +157,7 @@ public class UnwindTable {
 		}
 
 		{
-//			System.err.printf("FDE has instuctions:\n");
+//			System.err.printf("FDE has instructions:\n");
 //			
 //			String s = "";
 //			for( byte b: fde.getCallFrameInstructions()) {

@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +28,8 @@
 #if !defined(INCREMENTAL_PARALLEL_TASK_HPP_)
 #define INCREMENTAL_PARALLEL_TASK_HPP_
 
-#include "j9.h"
+#include "omr.h"
+#include "omrcfg.h"
 #include "omrthread.h"
 
 #include "ParallelTask.hpp"
@@ -42,7 +42,7 @@
 class MM_IncrementalParallelTask : public MM_ParallelTask
 {
 private:
-	UDATA _entryCount;
+	uintptr_t _entryCount;
 	MM_YieldCollaborator _yieldCollaborator;
 
 protected:

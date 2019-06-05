@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,17 +30,14 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ibm.tools.attach.target.AttachHandler;
-
 /**
  * This test must be invoked via testng.  Running the main method will return only the status of the attach API.
  *
  */
-@SuppressWarnings({"nls","boxing"})
+@SuppressWarnings({"nls"})
 public class TestAttachAPIEnabling extends AttachApiTest {
-	private static final Integer ATTACH_API_ENABLED_CODE = 12;
-	private static final Integer ATTACH_API_DISABLED_CODE = 13;
-	private static boolean verbose = false;
+	private static final int ATTACH_API_ENABLED_CODE = 12;
+	private static final int ATTACH_API_DISABLED_CODE = 13;
 	static final String ATTACH_ENABLE_PROPERTY = "-Dcom.ibm.tools.attach.enable=";
 
 	private ArrayList<String> defaultVmArgs;
@@ -52,7 +49,7 @@ public class TestAttachAPIEnabling extends AttachApiTest {
 
 	@Test(groups = { "level.extended" })
 	public void testImplicitEnableSetting() {
-		Integer expectedExitCode;
+		int expectedExitCode;
 		String osName = System.getProperty("os.name");
 		if (osName.equals("z/OS")) {
 			expectedExitCode = ATTACH_API_DISABLED_CODE;
@@ -66,7 +63,7 @@ public class TestAttachAPIEnabling extends AttachApiTest {
 
 	@Test(groups = { "level.extended" })
 	public void testExplicitEnable() {
-		Integer expectedExitCode = ATTACH_API_ENABLED_CODE;
+		int expectedExitCode = ATTACH_API_ENABLED_CODE;
 		defaultVmArgs.add(ATTACH_ENABLE_PROPERTY+"yes");
 		logger.debug("verify attach API enabled by system property");
 		runAndCheckChildProcess(expectedExitCode);
@@ -74,16 +71,16 @@ public class TestAttachAPIEnabling extends AttachApiTest {
 
 	@Test(groups = { "level.extended" })
 	public void testExplicitDisable() {
-		Integer expectedExitCode = ATTACH_API_DISABLED_CODE;
+		int expectedExitCode = ATTACH_API_DISABLED_CODE;
 		defaultVmArgs.add(ATTACH_ENABLE_PROPERTY+"no");
 		logger.debug("verify attach API disabled by system property");
 		runAndCheckChildProcess(expectedExitCode);
 	}
 
-	private void runAndCheckChildProcess(Integer expectedExitCode) {
+	private void runAndCheckChildProcess(int expectedExitCode) {
 		Process tgt = launchTarget(defaultVmArgs);
 		try {
-			Integer rc = tgt.waitFor();
+			int rc = tgt.waitFor();
 			AssertJUnit.assertEquals("attach API not enabled by system property", expectedExitCode, rc);
 		} catch (InterruptedException e) {
 			logExceptionInfoAndFail(e);
@@ -91,12 +88,13 @@ public class TestAttachAPIEnabling extends AttachApiTest {
 	}
 
 	/**
+	 * This class also serves as a target application for the test.
 	 * Exits with status 1 if attach API is enabled, 0 otherwise.
 	 * @param args not used.
 	 */
 	public static void main(String[] args) {
 
-		boolean isAttachApiEnabled = AttachHandler.waitForAttachApiInitialization();
+		boolean isAttachApiEnabled = TargetManager.waitForAttachApiInitialization();
 		System.exit(isAttachApiEnabled? ATTACH_API_ENABLED_CODE:ATTACH_API_DISABLED_CODE);
 	}
 
@@ -130,19 +128,15 @@ public class TestAttachAPIEnabling extends AttachApiTest {
 		argBuffer.add(this.getClass().getName());
 		args = new String[argBuffer.size()];
 		argBuffer.toArray(args);
-		if (verbose ) {
-			System.out.print("\n");
-			for (int i = 0; i < args.length; ++i) {
-				System.out.print(args[i] + " ");
-			}
-			System.out.print("\n");
+		for (int i = 0; i < args.length; ++i) {
+			logger.debug(args[i] + " ");
 		}
 		try {
 			Process target = me.exec(args);
 			return target;
 		} catch (IOException e) {
 			logStackTrace(e);
-			Assert.fail("target failed to launch");
+			Assert.fail("target failed to launch", e);
 			return null;
 		}
 	}

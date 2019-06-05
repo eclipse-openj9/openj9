@@ -552,7 +552,7 @@ static TR_ResolvedMethod * findSingleImplementer(
       return 0;
       }
 
-   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   TR_ResolvedMethod *implArray[2]; // collect maximum 2 implementers if you can
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, cpIndexOrVftSlot, callerMethod, comp, locked, useGetResolvedInterfaceMethod);
    return (implCount == 1 ? implArray[0] : 0);
    }
@@ -888,6 +888,13 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
                   continue;
                /* call getResolvedMethod again to generate the validation records */
                TR_ResolvedMethod* target_method = getResolvedMethod (tempreceiverClass);
+
+               /* it is possible for getResolvedMethod to return NULL, since there might be
+                * a problem when generating validation records
+                */
+               if (!target_method)
+                  continue;
+
                TR_OpaqueClassBlock *classOfMethod = target_method->classOfMethod();
                SVM_ASSERT_ALREADY_VALIDATED(comp()->getSymbolValidationManager(), classOfMethod);
                }

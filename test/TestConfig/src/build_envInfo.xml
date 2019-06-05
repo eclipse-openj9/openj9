@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2019, 2019 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<project name="Build Env Info" default="build" basedir=".">
+	<description>
+    	Build Env Info
+	</description>
+
+	<property name="src" location="../src" />
+	<property name="build" location="./bin" />
+
+	<target name="init">
+		<mkdir dir="${build}" />
+	</target>
+
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source  ">
+		<echo>Ant version is ${ant.version}</echo>
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===debug:                        on</echo>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${TEST_JDK_HOME}/bin/javac" includeAntRuntime="false" encoding="ISO-8859-1"/>
+	</target>
+
+	<target name="dist" depends="compile" description="generate the distribution">
+		<jar jarfile="./EnvDetector.jar" filesonly="true">
+			<fileset dir="${build}"/>
+			<manifest>
+				<attribute name="Main-Class" value="org.openj9.envInfo.EnvDetector"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run" depends="dist">
+		<property name="javaexecutable.java" value="${TEST_JDK_HOME}/bin/java" />
+		<java jar="./EnvDetector.jar" fork="true" failonerror="true" jvm="${javaexecutable.java}">
+			<arg value="JavaInfo"/>
+		</java>
+	</target>
+
+	<target name="clean" description="clean up">
+		<delete file="../autoGenEnv.mk" />
+		<delete dir="${build}" />
+		<delete file="EnvDetector.jar" />
+	</target>
+
+	<target name="build">
+		<antcall target="clean" inheritall="true" />
+		<antcall target="run" inheritall="true" />
+	</target>
+
+</project>

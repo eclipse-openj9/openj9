@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,11 +43,11 @@ public class rc019a {
 			}
 			Util.redefineClass(getClass(), rc019_Super.class, rc019_Super.class);
 			System.out.println("After redefine:");
-			String aftetDirect = o.getValue();
+			String afterDirect = o.getValue();
 			String afterJNI = getValue(o);
-			System.out.println("	Direct getValue() = " + aftetDirect);
+			System.out.println("	Direct getValue() = " + afterDirect);
 			System.out.println("	JNI    getValue() = " + afterJNI);
-			if (aftetDirect != afterJNI) {
+			if (afterDirect != afterJNI) {
 				System.out.println("FAIL: values do not match");
 				return false;
 			}

@@ -640,7 +640,7 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
 
 /**
  * Determine whether the table should be reset or not, due to a selection
- * of bad values. Will reset the table if necesssary.
+ * of bad values. Will reset the table if necessary.
  *
  * \return True if the table was reset.
  */
@@ -817,8 +817,8 @@ TR_HashTableProfilerInfo<T>::initialHashConfig(HashFunction &hash, T value)
 
    // A bit index hash should try to nominate one bit that is zero for all
    // A bit shift hash should try to nominate one bit that is zero for all and to the left of all
-   if (getHashType() == BitIndexHash && ~value != 0 ||
-       getHashType() == BitShiftHash && (~value >> 8) != 0)
+   if (((getHashType() == BitIndexHash) && (~value != 0)) ||
+       ((getHashType() == BitShiftHash) && ((~value >> 8) != 0)))
       {
       size_t firstZero = 0;
       if (getHashType() == BitShiftHash)
@@ -1419,7 +1419,7 @@ TR_LinkedListProfilerInfo<T>::incrementOrCreate(T &value, uintptr_t **addrOfTota
    }
 
 /**
- * Array value profiling implemenation
+ * Array value profiling implementation
  * It will profile up to ARRAY_MAX_NUM_VALUES values and maintain a total frequency counter.
  */
 template <typename T>
@@ -1709,7 +1709,7 @@ class TR_BigDecimalValueInfo : public TR_GenericValueInfo<uint64_t>
    };
 
 /**
- * Typedefs for instansiations
+ * Typedefs for instantiations
  */
 typedef TR_GenericValueInfo<uint32_t>      TR_ValueInfo;
 typedef TR_GenericValueInfo<uint64_t>      TR_LongValueInfo;

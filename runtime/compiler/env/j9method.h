@@ -371,7 +371,7 @@ public:
    virtual void *                stringConstant(int32_t cpIndex);
    virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
    /** \brief
-    *     Retrieves the underlying type infomation for a given constant dynamic.
+    *     Retrieves the underlying type information for a given constant dynamic.
     *
     *  \param cpIndex
     *     The constant pool index of the constant dynamic.
@@ -401,13 +401,13 @@ public:
     */
    virtual bool                  isUnresolvedConstantDynamic(int32_t cpIndex);
    /** \brief
-    *     Retrieve the adress of the slot containing the constant dynamic.
+    *     Retrieve the address of the slot containing the constant dynamic.
     *
     *  \param cpIndex
     *     The constant pool index of the constant dynamic.
     *
     *  \return
-    *     Opauqe pointer to the slot containing the resolved constant dynamic value.
+    *     Opaque pointer to the slot containing the resolved constant dynamic value.
     */
    virtual void *                dynamicConstant(int32_t cpIndex);
    virtual void *                methodTypeConstant(int32_t cpIndex);
@@ -504,6 +504,14 @@ public:
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
 
    static bool isInvokePrivateVTableOffset(UDATA vTableOffset);
+
+   /**
+    * @brief Create TR::ParameterSymbols from the signature of a method, and add them
+    *        to the ParameterList on the ResolvedMethodSymbol.
+    *
+    * @param[in] methodSym : the ResolvedMethodSymbol to create the parameter list for
+    */
+   virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }

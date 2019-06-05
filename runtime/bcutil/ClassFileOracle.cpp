@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,7 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define CONTENDED_SIGNATURE "Ljdk/internal/vm/annotation/Contended;"
 		{CONTENDED_SIGNATURE, sizeof(CONTENDED_SIGNATURE)},
 #undef CONTENDED_SIGNATURE
+		{J9_UNMODIFIABLE_CLASS_ANNOTATION, sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION)},
 		{0, 0}
 };
 
@@ -180,7 +181,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_nestMembers(NULL),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_isClassContended(false),
-	_isInnerClass(false)
+	_isClassUnmodifiable(context->isClassUnmodifiable()),
+	_isInnerClass(false),
+	_needsStaticConstantInit(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
 
@@ -280,7 +283,7 @@ ClassFileOracle::walkFields()
 	U_16 fieldsCount = getFieldsCount();
 
 	/* CMVC 197718 : After the first compliance offense is detected, if we do not stop, annotations on subsequent fields
-	 * will not be parsed, resulting in all subsequent valid fields to be noted as not having proper @Length annotation, hence overwritting
+	 * will not be parsed, resulting in all subsequent valid fields to be noted as not having proper @Length annotation, hence overwriting
 	 * the good error message. Checking (OK == _buildResult) in for-loop condition achieves the desired error handling behavior.
 	 */
 	for (U_16 fieldIndex = 0; (OK == _buildResult) && (fieldIndex < fieldsCount); fieldIndex++) {
@@ -294,6 +297,7 @@ ClassFileOracle::walkFields()
 
 		if (isStatic) {
 			if (NULL != field->constantValueAttribute) {
+				_needsStaticConstantInit = true;
 				U_16 constantValueIndex = field->constantValueAttribute->constantValueIndex;
 				if (CFR_CONSTANT_String == _classFile->constantPool[constantValueIndex].tag) {
 					markStringAsReferenced(constantValueIndex);
@@ -447,11 +451,15 @@ ClassFileOracle::walkAttributes()
 				knownAnnotations = addAnnotationBit(knownAnnotations, CONTENDED_ANNOTATION);
 				knownAnnotations = addAnnotationBit(knownAnnotations, JAVA8_CONTENDED_ANNOTATION);
 			}
+			knownAnnotations = addAnnotationBit(knownAnnotations, UNMODIFIABLE_ANNOTATION);
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
 				if (containsKnownAnnotation(foundAnnotations, CONTENDED_ANNOTATION) || containsKnownAnnotation(foundAnnotations, JAVA8_CONTENDED_ANNOTATION)) {
 					_isClassContended = true;
+				}
+				if (containsKnownAnnotation(foundAnnotations, UNMODIFIABLE_ANNOTATION)) {
+					_isClassUnmodifiable = true;
 				}
 			}
 			break;

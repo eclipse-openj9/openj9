@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
 import static com.ibm.tools.attach.target.IPC.loggingStatus;
 
 /**
- * This class represents the advertisement directory representing a potentisal attach API target VM.
+ * This class represents the advertisement directory representing a potential attach API target VM.
  */
 public final class TargetDirectory {
 
@@ -192,7 +192,7 @@ public final class TargetDirectory {
 	static boolean ensureMyAdvertisementExists(String myVmId) {
 		if (!AttachHandler.isAttachApiInitialized()) {
 			/* 
-			 * either initialization is in progrees and sync file will be created, 
+			 * either initialization is in progress and sync file will be created, 
 			 * or initialization failed or was terminated so we cannot create the file 
 			 */
 			IPC.logMessage("ensureTargetDirectoryExists: attach API not initialized"); //$NON-NLS-1$	

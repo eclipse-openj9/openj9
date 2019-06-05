@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ class ClassTableCriticalSection
     * @brief Declare the beginning of a critical section, constructing the
     * TR::ClassTableCriticalSection object and acquiring the Class Table Mutex.
     * @param fe The TR_FrontEnd object used to acquire the Class Table Mutex
-    * @param locked An optional parameter to prevent re-acquring the Class Table Mutex if
+    * @param locked An optional parameter to prevent reacquiring the Class Table Mutex if
     * it has already been acquired
     */
    ClassTableCriticalSection(TR_FrontEnd *fe, bool locked = false)

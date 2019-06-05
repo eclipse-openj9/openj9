@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ private:
 	UDATA	_tracedByHelpers; /**< the number of bytes traced by helper threads */
 	UDATA	_cardsCleaned; /**< the number of cards cleaned */
 	UDATA	_cardCleaningPhase1Threshold; /**< the number of free bytes at which we wish to start the first card cleaning phase */
-	UDATA	_workStackOverflowOccured; /**< flag to indicate if workstack ovewrflow has occured */
+	UDATA	_workStackOverflowOccured; /**< flag to indicate if workstack overflow has occured */
 	UDATA	_workStackOverflowCount; /**< the number of times concurrent work stacks have overflowed */
 	UDATA 	_threadsToScanCount; /**< the number of threads which were live at kickoff whose stacks needed to be scanned */
 	UDATA	_threadsScannedCount; /**< the actual number of threads whose stacks were scanned */

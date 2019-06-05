@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -473,34 +473,44 @@ public class ManagementFactory {
 		static {
 			platformServer = MBeanServerFactory.createMBeanServer();
 
-			PrivilegedAction<?> action = (PrivilegedAction<?>) ServerHolder::registerPlatformBeans;
+			final class Registration implements PrivilegedAction<Void> {
 
-			AccessController.doPrivileged(action);
-		}
+				private final MBeanServer server;
 
-		private static Void registerPlatformBeans() {
-			for (PlatformManagedObject bean : ManagementUtils.getAllAvailableMXBeans()) {
-				ObjectName objectName = bean.getObjectName();
-
-				if (platformServer.isRegistered(objectName)) {
-					continue;
+				Registration(MBeanServer server) {
+					super();
+					this.server = server;
 				}
 
-				try {
-					platformServer.registerMBean(bean, objectName);
-				} catch (InstanceAlreadyExistsException | MBeanRegistrationException | NullPointerException e) {
-					if (ManagementUtils.VERBOSE_MODE) {
-						e.printStackTrace(System.err);
+				@Override
+				public Void run() {
+					for (PlatformManagedObject bean : ManagementUtils.getAllAvailableMXBeans()) {
+						ObjectName objectName = bean.getObjectName();
+
+						if (server.isRegistered(objectName)) {
+							continue;
+						}
+
+						try {
+							server.registerMBean(bean, objectName);
+						} catch (InstanceAlreadyExistsException | MBeanRegistrationException | NullPointerException e) {
+							if (ManagementUtils.VERBOSE_MODE) {
+								e.printStackTrace(System.err);
+							}
+						} catch (NotCompliantMBeanException e) {
+							e.printStackTrace();
+							if (ManagementUtils.VERBOSE_MODE) {
+								e.printStackTrace(System.err);
+							}
+						}
 					}
-				} catch (NotCompliantMBeanException e) {
-					e.printStackTrace();
-					if (ManagementUtils.VERBOSE_MODE) {
-						e.printStackTrace(System.err);
-					}
+
+					return null;
 				}
+
 			}
 
-			return null;
+			AccessController.doPrivileged(new Registration(platformServer));
 		}
 
 	}

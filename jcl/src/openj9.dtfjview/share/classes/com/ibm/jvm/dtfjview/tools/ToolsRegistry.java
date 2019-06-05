@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,7 +175,7 @@ public class ToolsRegistry {
 	}
 	
 	/**
-	 * To execute a Jdmpview commmand.
+	 * To execute a Jdmpview command.
 	 * <p>
 	 * @param jdmpviewCommand	The Jdmpview command.
 	 * @param out	The PrintStream.

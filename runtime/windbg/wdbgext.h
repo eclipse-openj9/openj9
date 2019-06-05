@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 
 // Include file for WinDbg kernel debugger extensions.
 // Note that you will typically NOT want to simply include
-// <wdbgexts.h> in your projects because of dependancies
+// <wdbgexts.h> in your projects because of dependencies
 // on some Windows definitions.  Include this file instead.
 //
 

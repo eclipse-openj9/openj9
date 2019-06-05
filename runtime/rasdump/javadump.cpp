@@ -120,7 +120,7 @@ UDATA handlerIterateStackTrace      (struct J9PortLibrary *, U_32, void *, void 
 UDATA handlerWriteJavaLangThreadInfo(struct J9PortLibrary *, U_32, void *, void *);
 UDATA handlerWriteStacks            (struct J9PortLibrary *, U_32, void *, void *);
 
-/* associated structures for passing arguements are below the JavaCoreDumpWriter declaration */
+/* associated structures for passing arguments are below the JavaCoreDumpWriter declaration */
 }
 
 static IDATA vmthread_comparator(struct J9AVLTree *tree, struct J9AVLTreeNode *insertNode, struct J9AVLTreeNode *walkNode);
@@ -4093,7 +4093,7 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 	J9AbstractThread* osThread =  NULL;
 
-	/* Extract the corrseponding OS thread */
+	/* Extract the corresponding OS thread */
 	if (vmThread != NULL) {
 		osThread = (J9AbstractThread*)vmThread->osThread;
 

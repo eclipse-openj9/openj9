@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,12 +45,12 @@
 	<target name="compile_generator" depends="init" description="Compile CondyGenerator">
 		<echo>Compiling CondyTest helpers</echo>
 		<echo>Ant version is ${ant.version}"</echo>
-		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:		${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:			${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<include name="**/condy/BootstrapMethods.java" />
@@ -62,7 +62,7 @@
 	</target>
 
 	<target name="generate_condy" depends="compile_generator" description="Run Condugenerator to generate bytecode" >
-		<property name="javaexecutable.java" value="${JAVA_BIN}/java" />
+		<property name="javaexecutable.java" value="${TEST_JDK_HOME}/bin/java" />
 		<echo>Running CondyGenerator</echo>
 		<java classname="org.openj9.test.condy.CondyGenerator" fork="true" failonerror="true" logError="true" jvm="${javaexecutable.java}">
 			<jvmarg value="-Xverify:none" />
@@ -82,10 +82,10 @@
 	<target name="compile" depends="generate_condy" description="Using java ${JDK_VERSION} to compile the source" >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:		${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:			${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>

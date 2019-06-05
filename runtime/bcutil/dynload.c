@@ -472,7 +472,7 @@ convertToOSFilename (J9JavaVM * javaVM, U_8 * dir, UDATA dirLength, U_8 * module
 
 /* 
 	Verify that the internal dynamic loader buffers used to hold the Sun class file are large enough
-	to accomodate @sunClassFileSize bytes.  Grow buffers if neccessary.
+	to accommodate @sunClassFileSize bytes.  Grow buffers if necessary.
 
 	Return 0 on success, non-zero on error.
 */

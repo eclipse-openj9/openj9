@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -245,13 +245,13 @@ internalLoadROMClass(J9VMThread *vmThread, J9LoadROMClassData *loadData, J9Trans
 * @param vmThread pointer to J9VMThread
 * @param moduleName name of the module containing the class; can be NULL
 * @param className name of the class to be located
-* @param classNameLength lenght of className
+* @param classNameLength length of className
 * @param classLoader pointer to J9ClassLoader loading the class
 * @param classPath pointer to class path entries
 * @param classPathEntryCount number of class path entries in classPath
 * @param options load options such as J9_FINDCLASS_FLAG_EXISTING_ONLY
 * @param flags flags such as BCU_BOOTSTRAP_ENTRIES_ONLY
-* @param [in/out] localBuffer contains values for entryInfex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
+* @param [in/out] localBuffer contains values for entryIndex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
 *
 * @return zero on success, -1 on failure.
 */

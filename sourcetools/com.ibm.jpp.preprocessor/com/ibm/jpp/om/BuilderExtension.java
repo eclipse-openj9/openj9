@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@ public abstract class BuilderExtension {
 	}
 
 	/**
-	 * Notifies listeners that the preproces job has begun.
+	 * Notifies listeners that the preprocess job has begun.
 	 */
 	public void notifyBuildBegin() {
 		// nop    	

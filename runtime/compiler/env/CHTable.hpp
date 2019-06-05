@@ -257,7 +257,7 @@ class TR_PreXRecompile : public OMR::LocationRedirectRuntimeAssumption
    public:
 
    // NOTE: this function should be the first non-inline function in the class
-   // to make sure that the compiler puts the vtable in codege.dev
+   // to make sure that the compiler puts the vtable in codegen.dev
    virtual void dumpInfo();
 
    virtual void compensate(TR_FrontEnd *vm, bool isSMP, void *newAddress);
@@ -326,7 +326,7 @@ class TR_CHTable
      * an exception occurred.
      *
      * This worked perfectly when longjmp was used: when longjmp was issued, the
-     * code is still inside CHTable critical section, and hence reseting/modifying
+     * code is still inside CHTable critical section, and hence resetting/modifying
      * visited status flags was safe.
      *
      * However, this does not work with C++ exception handling and RAII managing
@@ -340,7 +340,7 @@ class TR_CHTable
      * critical section in its constructor and leaves in its destructor. When an
      * exception occurs in Step 2, C++ executes CHTableCriticalSection's destructor
      * before executing the exception handler; and hence the exception handling code
-     * is outside of CHTable critical section. In short, reseting/modifying visited
+     * is outside of CHTable critical section. In short, resetting/modifying visited
      * status flags in the exception handler is NOT safe.
      *
      * To solve the above mentioned issue, VisitTracker is introduced. It resets
@@ -446,7 +446,7 @@ class TR_CHTable
 // As the last step at codegen time, TR_CHTable locks the classtable, commits all the information
 // into the Persistent table.
 //
-// At runtime, whenever a class is extended, or method is overriddent, one of the methods:
+// At runtime, whenever a class is extended, or method is overridden, one of the methods:
 //   methodGotOverridden() or classGotExtended is invoked by the class loader.  It is not necessary
 // to lock the class table, since the class loader already holds the lock.
 //

@@ -55,7 +55,6 @@ extern "C" {
 #define JIT_HELPER(x) extern "C" void x()
 #endif
 
-
 /* #include "VM.hpp" */
 
 JIT_HELPER(jitAcquireVMAccess);  // asm calling-convention helper
@@ -90,7 +89,6 @@ JIT_HELPER(jitNewObject);  // asm calling-convention helper
 JIT_HELPER(jitObjectHashCode);  // asm calling-convention helper
 JIT_HELPER(jitPostJNICallOffloadCheck);  // asm calling-convention helper
 JIT_HELPER(jitPreJNICallOffloadCheck);  // asm calling-convention helper
-JIT_HELPER(jitReadBarrier);  // asm calling-convention helper
 JIT_HELPER(jitReferenceArrayCopy);  // asm calling-convention helper
 JIT_HELPER(jitReleaseVMAccess);  // asm calling-convention helper
 JIT_HELPER(jitReportMethodEnter);  // asm calling-convention helper
@@ -150,7 +148,6 @@ JIT_HELPER(jitWriteBarrierStore);  // asm calling-convention helper
 JIT_HELPER(jitWriteBarrierStoreGenerational);  // asm calling-convention helper
 JIT_HELPER(jitWriteBarrierStoreGenerationalAndConcurrentMark);  // asm calling-convention helper
 JIT_HELPER(jitWriteBarrierStoreMetronome);  // asm calling-convention helper
-JIT_HELPER(traceExecutable);  // asm calling-convention helper
 JIT_HELPER(jitDecompileAfterAllocation);  // asm calling-convention helper
 JIT_HELPER(jitDecompileAfterMonitorEnter);  // asm calling-convention helper
 JIT_HELPER(jitDecompileAtCurrentPC);  // asm calling-convention helper
@@ -166,6 +163,7 @@ JIT_HELPER(jitReportInstanceFieldRead); // asm calling-convention helper
 JIT_HELPER(jitReportInstanceFieldWrite); // asm calling-convention helper
 JIT_HELPER(jitReportStaticFieldRead); // asm calling-convention helper
 JIT_HELPER(jitReportStaticFieldWrite); // asm calling-convention helper
+JIT_HELPER(jitSoftwareReadBarrier);  // asm calling-convention helper
 
 #ifdef __cplusplus
 }

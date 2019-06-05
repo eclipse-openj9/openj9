@@ -90,7 +90,7 @@ tgcInstantiateExtensions(J9JavaVM *javaVM)
 }
 
 /**
- * Consume arguments found in the -Xtgc: (tgc_colon) arguement list.
+ * Consume arguments found in the -Xtgc: (tgc_colon) argument list.
  * @return true if parsing was successful, 0 otherwise.
  */
 bool

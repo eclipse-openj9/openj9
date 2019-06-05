@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +23,8 @@
 #if !defined(REALTIMEMARKTASK_HPP_)
 #define REALTIMEMARKTASK_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "j9modron.h"
+#include "omr.h"
+#include "omrcfg.h"
 
 #include "CycleState.hpp"
 #include "IncrementalParallelTask.hpp"
@@ -46,7 +44,7 @@ private:
 	MM_CycleState *_cycleState;  /**< Collection cycle state active for the task */
 
 public:
-	virtual UDATA getVMStateID() { return OMRVMSTATE_GC_MARK; };
+	virtual uintptr_t getVMStateID() { return OMRVMSTATE_GC_MARK; };
 	
 	virtual void run(MM_EnvironmentBase *env);
 	virtual void setup(MM_EnvironmentBase *env);

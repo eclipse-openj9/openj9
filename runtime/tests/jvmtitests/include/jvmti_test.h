@@ -24,7 +24,7 @@
 
 #include "j9comp.h"
 #include "jvmti.h"
-
+#include "j9cfg.h"
 
 /* TODO: remove */
 #define BUFFER_SIZE 65536
@@ -244,5 +244,7 @@ jint JNICALL mt001(agentEnv * agent_env, char * args);
 jint JNICALL nmr001(agentEnv * agent_env, char * args);
 jint JNICALL snmp001(agentEnv * agent_env, char * args);
 jint JNICALL soae001(agentEnv * agent_env, char * args);
+jint JNICALL gsp001(agentEnv *agent_env, char *args);
+jint JNICALL ee001(agentEnv *agent_env, char *args);
 
 #endif /*JVMTI_TEST_H_*/

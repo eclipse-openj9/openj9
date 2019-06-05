@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,7 +296,7 @@ typedef struct jvmtiStackInfoExtended {
  * softMaxBytes - the soft limit for the available space in the cache. This is the new field included when COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 or later is specified
  * 
  * If IBM adds new information to this structure, it will be added
- * to the end to preserve backwards compability, and
+ * to the end to preserve backwards compatibility, and
  * COM_IBM_ITERATE_SHARED_CACHES_VERSION will be incremented.
  */
 typedef struct jvmtiSharedCacheInfo {

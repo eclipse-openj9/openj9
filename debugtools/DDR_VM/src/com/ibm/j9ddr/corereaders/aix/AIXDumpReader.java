@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -462,7 +462,7 @@ public abstract class AIXDumpReader extends AbstractCoreReader implements ILibra
 	//
 	// // Get the process environment variables
 	// Properties environment = new Properties();
-	// //on AIX, we should truse the env var pointer found in the core and
+	// //on AIX, we should trust the env var pointer found in the core and
 	// ignore whatever the XML told us it is since this internal value is more
 	// likely correct
 	// environment = getEnvironmentVariables(reg5);

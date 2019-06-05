@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,15 +39,15 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9TranslationBufferSet *dynFuncs;
-	J9ClassLoader *classLoader;
+	J9TranslationBufferSet *dynFuncs = NULL;
+	J9ClassLoader *classLoader = NULL;
 	UDATA retried = FALSE;
 	UDATA utf8Length = 0;
 	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	U_8 *utf8Name = NULL;
 	U_8 *classBytes = NULL;
 	J9Class *clazz = NULL;
-	jclass result;
+	jclass result = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	UDATA isContiguousClassBytes = 0;
 	J9ROMClass *loadedClass = NULL;
@@ -56,14 +56,18 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
 
 	if (vm->dynamicLoadBuffers == NULL) {
-		throwNewInternalError(env, "Dynamic loader is unavailable");
-		return NULL;
+		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+			throwNewInternalError(env, "Dynamic loader is unavailable");
+		}
+		goto done;
 	}
 	dynFuncs = vm->dynamicLoadBuffers;
 
 	if (classRep == NULL) {
-		throwNewNullPointerException(env, NULL);
-		return NULL;
+		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+			throwNewNullPointerException(env, NULL);
+		}
+		goto done;
 	}
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
@@ -72,18 +76,22 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 		vmFuncs->internalExitVMToJNI(currentThread);
 		/* Make a "flat" copy of classRep */
 		if (length < 0) {
-			throwNewIndexOutOfBoundsException(env, NULL);
-			return NULL;
+			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+				throwNewIndexOutOfBoundsException(env, NULL);
+			}
+			goto done;
 		}
 		classBytes = j9mem_allocate_memory(length, J9MEM_CATEGORY_CLASSES);
 		if (classBytes == NULL) {
-			vmFuncs->throwNativeOOMError(env, 0, 0);
-			return NULL;
+			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+				vmFuncs->throwNativeOOMError(env, 0, 0);
+			}
+			goto done;
 		}
 		(*env)->GetByteArrayRegion(env, classRep, offset, length, (jbyte *)classBytes);
 		if ((*env)->ExceptionCheck(env)) {
 			j9mem_free_memory(classBytes);
-			return NULL;
+			goto done;
 		}
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 	}
@@ -123,7 +131,9 @@ retry:
 	if (vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length) != NULL) {
 		/* Bad, we have already defined this class - fail */
 		omrthread_monitor_exit(vm->classTableMutex);
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
+		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
+		}
 		goto done;
 	}
 
@@ -202,12 +212,25 @@ retry:
 	}
 
 done:
-	if ((clazz == NULL) && (currentThread->currentException == NULL)) {
-		/* should not get here -- throw the default exception just in case */
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR, NULL);
+	if (NULL == clazz) {
+		if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+			/*
+			 * The caller signalled that the name is invalid. Leave the result NULL and
+			 * clear any pending exception; the caller will throw NoClassDefFoundError.
+			 */
+			currentThread->currentException = NULL;
+ 			currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+		} else if (NULL == currentThread->currentException) {
+			/* should not get here -- throw the default exception just in case */
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR, NULL);
+		}
+	} else {
+		result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+
+		if ((NULL != result) && J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz)) {
+			vmFuncs->fixUnsafeMethods(currentThread, result);
+		}
 	}
-			
-	result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 

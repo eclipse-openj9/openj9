@@ -413,8 +413,12 @@
 		<return type="success" value="1"/>
 	</test>
 
-	<test id="soae001">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:soae001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
-		<return type="success" value="1"/>
+	<test id="gsp001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gsp001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+	<test id="ee001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:ee001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
 	</test>
 </suite>

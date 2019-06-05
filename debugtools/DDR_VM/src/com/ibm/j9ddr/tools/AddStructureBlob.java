@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -142,7 +142,7 @@ public class AddStructureBlob {
 		}		
 	}
 	
-	//the order in which files are added is controlled by a properties file, it expects the -f parameter to point to a directory containg
+	//the order in which files are added is controlled by a properties file, it expects the -f parameter to point to a directory containing
 	//either blobs or supersets
 	private void addFromPropertiesFile(J9DDRStructureStore store) throws IOException, StructureMismatchError {
 		String directoryName = opts.get("-d");

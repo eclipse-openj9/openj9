@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
   * ant 1.7.1 or above with ant-contrib.jar
   * make 3.81 or above (recommend make 4.1 or above on windows)
-  * perl 5.10.1 or above with JSON and Text::CSV module installed
+  * perl 5.10.1 or above with JSON, Text::CSV and XML::Parser module installed
   * curl 7.20.0 or above (needs -J/--remote-header-name support)
   
   * docker (needed if you wish to run docker-based application tests)

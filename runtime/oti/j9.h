@@ -92,7 +92,7 @@ typedef struct J9ClassLoaderWalkState {
 #define AOT_MINOR_VERSION 0
 
 
-/* temporary hack to ensure that we get the right verison of translate MethodHandle */
+/* temporary hack to ensure that we get the right version of translate MethodHandle */
 #define TRANSLATE_METHODHANDLE_TAKES_FLAGS
 
 /* temporary define to allow JIT work to promote and be enabled at the same time as the vm side */
@@ -123,6 +123,9 @@ typedef struct J9ClassLoaderWalkState {
 #define J9CLASS_SHAPE(ramClass) ((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK)
 #define J9CLASS_IS_ARRAY(ramClass) ((J9CLASS_FLAGS(ramClass) & J9AccClassRAMArray) != 0)
 #define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
+
+#define J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz) \
+	(J9ROMCLASS_IS_UNSAFE((clazz)->romClass) || J9_ARE_ANY_BITS_SET((clazz)->classFlags, J9ClassIsExemptFromValidation))
 
 #define IS_STRING_COMPRESSION_ENABLED(vmThread) (FALSE != ((vmThread)->javaVM)->strCompEnabled)
 
@@ -282,7 +285,7 @@ static const struct { \
 #define internalExitVMToJNI internalReleaseVMAccess
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI */
 
-/* Move marcro MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_xxx from redirector.c in order to be referenced from IBM i series */
+/* Move macro MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_xxx from redirector.c in order to be referenced from IBM i series */
 #define MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_COMPRESSEDREFS	((U_64)57 * 1024 * 1024 * 1024)
 #define MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS	((U_64)25 * 1024 * 1024 * 1024)
 
@@ -322,9 +325,13 @@ static const struct { \
 
 /* Macros for ValueTypes */
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsValueType)
+#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
+#define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
+#define J9_VALUETYPE_FLATTENED_SIZE(clazz)((clazz)->totalInstanceSize - (clazz)->backfillOffset)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
+#define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
+#define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #if defined(OPENJ9_BUILD)
@@ -337,5 +344,32 @@ static const struct { \
 #else /* defined(OPENJ9_BUILD) */
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
 #endif /* defined(OPENJ9_BUILD) */
+
+/* Annotation name which indicates that a class is not allowed to be modified by
+ * JVMTI ClassFileLoadHook or RedefineClasses.
+ */
+#define J9_UNMODIFIABLE_CLASS_ANNOTATION "Lcom/ibm/oti/vm/J9UnmodifiableClass;"
+
+typedef struct {
+	char tag;
+	char zero;
+	char size;
+	char data[LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION)];
+} J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA;
+
+#if 0 /* Until compile error are resolved */
+#if defined(__cplusplus)
+/* Hide the asserts from DDR */
+#if !defined(TYPESTUBS_H)
+static_assert((sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA) == (3 + LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION))), "Annotation structure is not packed correctly");
+/* '/' is the lowest numbered character which appears in the annotation name (assume
+ * that no '$' exists in there). The name length must be smaller than '/' in order
+ * to ensure that there are no overlapping substrings which would mandate a more
+ * complex matching algorithm.
+ */
+static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), "Annotation contains invalid characters");
+#endif /* !TYPESTUBS_H */
+#endif /* __cplusplus */
+#endif /* 0 */
 
 #endif /* J9_H */

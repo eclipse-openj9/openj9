@@ -253,7 +253,8 @@ typedef struct  J9PortShSemParameters {
  	const char* controlFileDir; /* Directory in which to create control files (SysV semaphores only) */
  	uint8_t proj_id; /* parameter used with semName to generate semaphore key */
  	uint32_t deleteBasefile : 1; /* delete the base file (used to generate the semaphore key) when destroying the semaphore */
- } J9PortShSemParameters;
+ 	uint32_t global : 1; /* Windows only: use the global namespace for the sempahore */
+} J9PortShSemParameters;
 /**
  * @name Process Handle
  * J9ProcessHandle is a pointer to the opaque structure J9ProcessHandleStruct.
@@ -347,6 +348,7 @@ typedef enum J9ProcessorArchitecture {
 	PROCESSOR_S390_GP11,
 	PROCESSOR_S390_GP12,
 	PROCESSOR_S390_GP13,
+	PROCESSOR_S390_GP14,
 
 	PROCESSOR_PPC_UNKNOWN,
 	PROCESSOR_PPC_7XX,
@@ -400,7 +402,7 @@ typedef struct J9ProcessorDesc {
 } J9ProcessorDesc;
 
 /* PowerPC features
- * Auxlliary Vector Hardware Capability (AT_HWCAP) features for PowerPC.
+ * Auxiliary Vector Hardware Capability (AT_HWCAP) features for PowerPC.
  */
 #define J9PORT_PPC_FEATURE_32                    31 /* 32-bit mode.  */
 #define J9PORT_PPC_FEATURE_64                    30 /* 64-bit mode.  */
@@ -529,6 +531,18 @@ typedef struct J9ProcessorDesc {
 
 /* STFLE bit 57 - Message-security-assist-extension-5 facility */
 #define J9PORT_S390_FEATURE_MSA_EXTENSION_5 57
+
+/* z15 facilities */
+
+/* STFLE bit 61 - Miscellaneous-instruction-extensions facility 3 */ 
+#define J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_3 61
+
+/* STFLE bit 148 - Vector enhancements facility 2 */
+#define J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_2 148
+
+/* STFLE bit 152 - Vector packed decimal enhancement facility */
+#define J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY 152
+
 
 /*  Linux on Z features
  *  Auxiliary Vector Hardware Capability (AT_HWCAP) features for Linux on Z.

@@ -317,6 +317,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _abortFlag(false)
 	, _abortInProgress(false)
 	, _regionCountCannotBeEvacuated(0)
+	, _regionCountReservedNonEvacuated(0)
 	, _cacheLineAlignment(0)
 	, _clearableProcessingStarted(false)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -619,9 +620,13 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 				region->getOwnableSynchronizerObjectList()->startOwnableSynchronizerProcessing();
 				Assert_MM_true(region->getRememberedSetCardList()->isAccurate());
 				if ((region->_criticalRegionsInUse > 0) || (randomDecideForceNonEvacuatedRegion(_extensions->fvtest_forceCopyForwardHybridRatio))) {
-					/* set the region is noEvacation for copyforward collector */
+					/* set the region is noEvacuation for copyforward collector */
 					region->_markData._noEvacuation = true;
 					_regionCountCannotBeEvacuated += 1;
+				} else if ((_regionCountReservedNonEvacuated > 0) && region->isEden()){
+					_regionCountReservedNonEvacuated -= 1;
+					_regionCountCannotBeEvacuated += 1;
+					region->_markData._noEvacuation = true;
 				} else {
 					region->_markData._noEvacuation = false;
 				}
@@ -633,6 +638,9 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 		region->getReferenceObjectList()->resetPriorLists();
 		Assert_MM_false(region->_copyForwardData._requiresPhantomReferenceProcessing);
 	}
+
+	/* reset _regionCountReservedNonEvacuated */
+	_regionCountReservedNonEvacuated = 0;
 	/* ideally allocationStats._ownableSynchronizerObjectCount should be equal with ownableSynchronizerCountInEden, 
 	 * in case partial constructing ownableSynchronizerObject has been moved during previous PGC, notification for new allocation would happen after gc,
 	 * so it is counted for new allocation, but not in Eden region. loose assertion for this special case
@@ -658,7 +666,8 @@ MM_CopyForwardScheme::postProcessRegions(MM_EnvironmentVLHGC *env)
 				static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._nonEdenEvacuateRegionCount += 1;
 			}
 		} else if (region->isSurvivorRegion() && !region->isTailFilledSurvivorRegion()) {
-			if (region->isEden()) {
+			/* check Eden Survivor Regions */
+			if (0 == region->getLogicalAge()) {
 				static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._edenSurvivorRegionCount += 1;
 			} else {
 				static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._nonEdenSurvivorRegionCount += 1;
@@ -1416,7 +1425,7 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 }
 
 MMINLINE bool
-MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, volatile j9object_t* objectPtrIndirect)
+MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, volatile j9object_t* objectPtrIndirect, bool leafType)
 {
 	J9Object *originalObjectPtr = *objectPtrIndirect;
 	J9Object *objectPtr = originalObjectPtr;
@@ -1434,7 +1443,7 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 			Assert_GC_true_with_message(env, (UDATA)0x99669966 == forwardHeader.getPreservedClass()->eyecatcher, "Invalid class in objectPtr=%p\n", originalObjectPtr);
 
 
-			objectPtr = copy(env, reservingContext, &forwardHeader);
+			objectPtr = copy(env, reservingContext, &forwardHeader, leafType);
 			if (NULL == objectPtr) {
 				success = false;
 			} else if (originalObjectPtr != objectPtr) {
@@ -1448,12 +1457,12 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 }
 
 MMINLINE bool
-MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, GC_SlotObject *slotObject)
+MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, GC_SlotObject *slotObject, bool leafType)
 {
 	J9Object *value = slotObject->readReferenceFromSlot();
 	J9Object *preservedValue = value;
 
-	bool success = copyAndForward(env, reservingContext, &value);
+	bool success = copyAndForward(env, reservingContext, &value, leafType);
 
 	if (success) {
 		if(preservedValue != value) {
@@ -1662,7 +1671,7 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 		localStats->_copyBytesTotal += totalCopiedBytes;
 		localStats->_scanObjectsTotal += compactGroup->_edenStats._scannedObjects + compactGroup->_nonEdenStats._scannedObjects;
 		localStats->_scanBytesTotal += compactGroup->_edenStats._scannedBytes + compactGroup->_nonEdenStats._scannedBytes;
-		
+
 		localStats->_copyObjectsEden += compactGroup->_edenStats._copiedObjects;
 		localStats->_copyBytesEden += compactGroup->_edenStats._copiedBytes;
 		localStats->_scanObjectsEden += compactGroup->_edenStats._scannedObjects;
@@ -1706,7 +1715,7 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats.merge(&env->_irrsStats);
 	omrthread_monitor_exit(_extensions->gcStatsMutex);
 	
-	/* record the thread-specific paralellism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
+	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
 	Trc_MM_CopyForwardScheme_parallelStats(
 		env->getLanguageVMThread(),
 		(U_32)env->getSlaveID(),
@@ -2026,7 +2035,7 @@ MM_CopyForwardScheme::getContextForHeapAddress(void *address)
 }
 
 J9Object *
-MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader)
+MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType)
 {
 	J9Object *result = NULL;
 	J9Object *object = forwardedHeader->getObject();
@@ -2039,12 +2048,16 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 	}
 
 	if (_abortInProgress || noEvacuation) {
-		/* Once threads agreed that abort is in progress or the object is in noEvacation region, only mark/push should be happening, no attempts even to allocate/copy */
+		/* Once threads agreed that abort is in progress or the object is in noEvacuation region, only mark/push should be happening, no attempts even to allocate/copy */
 
 		if (_markMap->atomicSetBit(object)) {
 			Assert_MM_false(MM_ScavengerForwardedHeader(object).isForwardedPointer());
-			env->_workStack.push(env, object);
+			/* don't need to push leaf object in work stack */
+			if (!leafType) {
+				env->_workStack.push(env, object);
+			}
 		}
+
 		result = object;
 	} else {
 		UDATA hotFieldAlignmentDescriptor = 0;
@@ -2207,14 +2220,15 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 	if (GC_ObjectModel::SCAN_MIXED_OBJECT == _extensions->objectModel.getScanType(clazz)) {
 		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
 		/* For now we only support leaf children in small objects. If the leaf description isn't immediate, ignore it to keep the code simple. */
-		if(1 == (instanceLeafDescription & 1)) {
-			fj9object_t* scanPtr = (fj9object_t*)( objectPtr + 1 );
+		if (1 == (instanceLeafDescription & 1)) {
+			fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 			UDATA leafBits = instanceLeafDescription >> 1;
 			while (0 != leafBits) {
-				if(1 == (leafBits & 1)) {
+				if (1 == (leafBits & 1)) {
 					/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 					GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
-					copyAndForward(env, reservingContext, objectPtr, &slotObject);
+					/* pass leaf flag into copy method for optimizing abort case and hybrid case (don't need to push leaf object in work stack) */
+					copyAndForward(env, reservingContext, objectPtr, &slotObject, true);
 				}
 				leafBits >>= 1;
 				scanPtr += 1;
@@ -2382,6 +2396,70 @@ MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *en
 	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 }
 
+/**
+ *  Iterate the slot reference and parse and pass leaf bit of the reference to copy forward
+ *  to avoid to push leaf object to work stack in case the reference need to be marked instead of copied.
+ */
+MMINLINE bool
+MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr) {
+	bool success = true;
+	fj9object_t *endScanPtr;
+	UDATA *descriptionPtr;
+	UDATA descriptionBits;
+	UDATA descriptionIndex;
+#if defined(J9VM_GC_LEAF_BITS)
+	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+	UDATA leafBits;
+#endif /* J9VM_GC_LEAF_BITS */
+
+	/* Object slots */
+	volatile fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
+	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
+
+	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
+	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+
+	if (((UDATA)descriptionPtr) & 1) {
+		descriptionBits = ((UDATA)descriptionPtr) >> 1;
+#if defined(J9VM_GC_LEAF_BITS)
+		leafBits = ((UDATA)leafPtr) >> 1;
+#endif /* J9VM_GC_LEAF_BITS */
+	} else {
+		descriptionBits = *descriptionPtr++;
+#if defined(J9VM_GC_LEAF_BITS)
+		leafBits = *leafPtr++;
+#endif /* J9VM_GC_LEAF_BITS */
+	}
+	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+
+	while (success && (scanPtr < endScanPtr)) {
+		/* Determine if the slot should be processed */
+		if (descriptionBits & 1) {
+			GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
+
+		/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
+#if defined(J9VM_GC_LEAF_BITS)
+			success = copyAndForward(env, reservingContext, objectPtr, &slotObject, 1 == (leafBits & 1));
+#else /* J9VM_GC_LEAF_BITS */
+			success = copyAndForward(env, reservingContext, objectPtr, &slotObject);
+#endif /* J9VM_GC_LEAF_BITS */
+		}
+		descriptionBits >>= 1;
+#if defined(J9VM_GC_LEAF_BITS)
+		leafBits >>= 1;
+#endif /* J9VM_GC_LEAF_BITS */
+		if (descriptionIndex-- == 0) {
+			descriptionBits = *descriptionPtr++;
+#if defined(J9VM_GC_LEAF_BITS)
+			leafBits = *leafPtr++;
+#endif /* J9VM_GC_LEAF_BITS */
+			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+		}
+		scanPtr += 1;
+	}
+	return success;
+}
+
 void
 MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
@@ -2392,16 +2470,9 @@ MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 
 	bool success = copyAndForwardObjectClass(env, reservingContext, objectPtr);
 
-	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, objectPtr);
-	GC_SlotObject *slotObject = NULL;
-	while (success && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
-		if(_tracingEnabled) {
-			PORT_ACCESS_FROM_ENVIRONMENT(env);
-			j9tty_printf(PORTLIB, "   Slot %p value: %p\n", slotObject->readAddressFromSlot(), slotObject->readReferenceFromSlot());
-		}
-
-		/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-		success = copyAndForward(env, reservingContext, objectPtr, slotObject);
+	if (success) {
+		/* Iteratoring and copyforwarding  the slot reference with leaf bit */
+		success = iterateAndCopyforwardSlotReference(env, reservingContext, objectPtr);
 	}
 
 	updateScanStats(env, objectPtr, reason);
@@ -2441,13 +2512,10 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	}
 	
 	GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
-	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, objectPtr);
-	GC_SlotObject *slotObject = NULL;
-	while (success && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
-		if ((slotObject->readAddressFromSlot() != referentPtr.readAddressFromSlot()) || referentMustBeMarked) {
-			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-			success = copyAndForward(env, reservingContext, objectPtr, slotObject);
-		}
+
+	/* Iteratoring and copyforwarding  the slot reference */
+	if (success) {
+		success = iterateAndCopyforwardSlotReference(env, reservingContext, objectPtr);
 	}
 
 	if (SCAN_REASON_OVERFLOWED_REGION == reason) {
@@ -2650,23 +2718,24 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 				success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(clazz->classObject));
 			}
 
-			Assert_MM_true(NULL != classLoader->moduleHashTable);
-			J9HashTableState walkState;
-			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-			while (success && (NULL != modulePtr)) {
-				J9Module * const module = *modulePtr;
-				success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleObject));
-				if (success) {
-					if (NULL != module->moduleName) {
-						success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleName));
+			if (NULL != classLoader->moduleHashTable) {
+				J9HashTableState walkState;
+				J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+				while (success && (NULL != modulePtr)) {
+					J9Module * const module = *modulePtr;
+					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleObject));
+					if (success) {
+						if (NULL != module->moduleName) {
+							success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleName));
+						}
 					}
-				}
-				if (success) {
-					if (NULL != module->version) {
-						success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->version));
+					if (success) {
+						if (NULL != module->version) {
+							success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->version));
+						}
 					}
+					modulePtr = (J9Module**)hashTableNextDo(&walkState);
 				}
-				modulePtr = (J9Module**)hashTableNextDo(&walkState);
 			}
 		}
 	}
@@ -2898,7 +2967,7 @@ MM_CopyForwardScheme::aliasToCopyCache(MM_EnvironmentVLHGC *env, MM_CopyScanCach
 	Assert_MM_unimplemented();
 #if 0
 	/* VMDESIGN 1359.
-	 * Only alias the _surviorCopyScanCache IF there are 0 threads waiting.  If the current thread is the only producer and
+	 * Only alias the _survivorCopyScanCache IF there are 0 threads waiting.  If the current thread is the only producer and
 	 * it aliases it's survivor cache then it will be the only thread able to consume.  This will alleviate the stalling issues
 	 * described in the above mentioned design.
 	 */
@@ -3063,7 +3132,7 @@ MM_CopyForwardScheme::incrementalScanMixedObjectSlots(MM_EnvironmentVLHGC *env, 
 
 	if (!hasPartiallyScannedObject) {
 		/* finished previous object, step up for next one */
-		mixedObjectIterator.initialize(objectPtr);
+		mixedObjectIterator.initialize(_javaVM->omrVM, objectPtr);
 	} else {
 		/* retrieve partial scan state of cache */
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
@@ -3145,7 +3214,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 
 	if (!hasPartiallyScannedObject) {
 		/* finished previous object, step up for next one */
-		mixedObjectIterator.initialize(objectPtr);
+		mixedObjectIterator.initialize(_javaVM->omrVM, objectPtr);
 	} else {
 		/* retrieve partial scan state of cache */
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
@@ -3188,7 +3257,7 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 	scanCache->setCurrentlyBeingScanned();
 	bool hasPartiallyScannedObject = scanCache->_hasPartiallyScannedObject;
 	if (scanCache->isScanWorkAvailable()) {
-		/* we want to perform a NUMA-aware analogue to "heirarchical scanning" so this scan cache should pull other objects into its node */
+		/* we want to perform a NUMA-aware analogue to "hierarchical scanning" so this scan cache should pull other objects into its node */
 		MM_AllocationContextTarok *reservingContext = getContextForHeapAddress(env->_scanCache->scanCurrent);
 		do {
 			void *cacheAlloc = scanCache->cacheAlloc;
@@ -4310,23 +4379,24 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 									success = copyAndForward(env, clazzContext, (J9Object **)&(clazz->classObject));
 								}
 
-								Assert_MM_true(NULL != classLoader->moduleHashTable);
-								J9HashTableState walkState;
-								J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
-								while (success && (NULL != modulePtr)) {
-									J9Module * const module = *modulePtr;
-									success = copyAndForward(env, getContextForHeapAddress(module->moduleObject), (J9Object **)&(module->moduleObject));
-									if (success) {
-										if (NULL != module->moduleName) {
-											success = copyAndForward(env, getContextForHeapAddress(module->moduleName), (J9Object **)&(module->moduleName));
+								if (NULL != classLoader->moduleHashTable) {
+									J9HashTableState walkState;
+									J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+									while (success && (NULL != modulePtr)) {
+										J9Module * const module = *modulePtr;
+										success = copyAndForward(env, getContextForHeapAddress(module->moduleObject), (J9Object **)&(module->moduleObject));
+										if (success) {
+											if (NULL != module->moduleName) {
+												success = copyAndForward(env, getContextForHeapAddress(module->moduleName), (J9Object **)&(module->moduleName));
+											}
 										}
-									}
-									if (success) {
-										if (NULL != module->version) {
-											success = copyAndForward(env, getContextForHeapAddress(module->version), (J9Object **)&(module->version));
+										if (success) {
+											if (NULL != module->version) {
+												success = copyAndForward(env, getContextForHeapAddress(module->version), (J9Object **)&(module->version));
+											}
 										}
+										modulePtr = (J9Module**)hashTableNextDo(&walkState);
 									}
-									modulePtr = (J9Module**)hashTableNextDo(&walkState);
 								}
 							}
 						}
@@ -5419,7 +5489,7 @@ MM_CopyForwardScheme::setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC* env, 
 	}
 
 	region->setAge(newAllocationAge, logicalAge);
-	/* reset aging auxilary datea for future usage */
+	/* reset aging auxiliary datea for future usage */
 	region->setAllocationAgeSizeProduct(0.0);
 
 }

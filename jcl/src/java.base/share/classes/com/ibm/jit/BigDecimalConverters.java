@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import com.ibm.jit.BigDecimalExtension;
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ public class BigDecimalConverters extends BigDecimalExtension {
          long longPack = 0;
          if (packedDecimal.length == 8)
          {
-            // explicitely unrolled loop to take advantage of sequential load
+            // explicitly unrolled loop to take advantage of sequential load
             longPack = ((long)(packedDecimal[0] & 0xFF) << 56)
                 + ((long)(packedDecimal[1] & 0xFF) << 48)
                 + ((long)(packedDecimal[2] & 0xFF) << 40)

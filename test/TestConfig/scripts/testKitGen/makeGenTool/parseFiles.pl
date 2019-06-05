@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,13 @@ use warnings;
 use Data::Dumper;
 use feature 'say';
 use Text::CSV;
+use XML::Parser;
+
+my $mode = {};
+my $modes = {};
+my $currentEle = '';
+my $eleStr = '';
+my $eleArr = [];
 
 # specs that are specified in this array will be ignored.
 # That is, all modes will not run on these specs even if these specs exist.
@@ -116,53 +123,43 @@ sub parseOttawaCSV {
 }
 
 sub parseModesXML {
-	my %modes = ();
-	my $file  = $_[0];
-	my $fhIn;
-	if (!open( $fhIn, '<', $file )) {
-        	say "Cannot open modes.xml. You can provide the file with option --modeXml=<path>.";
-        	return;
+	my ( $file ) = @_;
+	my $parser = new XML::Parser(Handlers => {Start => \&modes_handle_start,
+										End   => \&modes_handle_end,
+										Char  => \&modes_handle_char});
+	$parser->parsefile($file);
+	return $modes; 
+}
+
+sub modes_handle_start {
+	my ($p, $elt, %atts) = @_;
+	if ($elt eq 'mode') {
+		$eleStr = '';
+		$mode = {};
+		$mode->{'mode'} = $atts{'number'};
+		$mode->{'invalidSpecs'} = undef;
+		$mode->{'clArg'} = [];
+	} elsif ($elt eq 'description') {
+		$eleStr = '';
+		$currentEle = 'description';
+	} elsif ($elt eq 'clArg') {
+		$eleStr = '';
+		$currentEle = 'clArg';
 	}
-	while ( my $line = <$fhIn> ) {
+}
 
-		# matching line <mode number="107-OSR">
-		if ( $line =~ /(mode)\W*number.*"(.+?)"/ ) {
-			my %mode = ();
-			$mode{$1} = $2;
-
-			my @keys = ( "description", "clArg" );
-			my @args = ();
-
-			# read next line in the file
-			while ( my $nextLine = <$fhIn> ) {
-				foreach my $i ( 0 .. $#keys ) {
-					if ( $nextLine =~ /($keys[$i])>(.+?)(<\/$keys[$i])/ ) {
-						my $value = $2;
-
-						# clArg line - <clArg>-Xgcpolicy:optthruput</clArg>
-						if ( $keys[$i] =~ /$keys[1]/ ) {
-							push( @args, $value );
-						}
-						else {
-							$mode{ $keys[$i] } = $value;
-						}
-						$mode{'invalidSpecs'} = undef;
-					}
-				}
-				if ( $nextLine =~ /<\/mode/ ) {
-
-					# add args array into mode hash
-					$mode{ $keys[1] } = \@args;
-
-					# break out the loop
-					last;
-				}
-			}
-
-			# add mode into modes hash
-			$modes{ $mode{'mode'} } = \%mode;
-		}
+sub modes_handle_end {
+	my ($p, $elt) = @_;
+	if ($elt eq 'mode') {
+		$modes->{ $mode->{'mode'} } = $mode;
+	} elsif (($elt eq 'description') && ($currentEle eq 'description')) {
+		$mode->{'description'} = $eleStr;
+	} elsif (($elt eq 'clArg') && ($currentEle eq 'clArg')) {
+		push (@{$mode->{'clArg'}}, $eleStr);
 	}
-	close $fhIn;
-	return \%modes;
+}
+
+sub modes_handle_char {
+	my ($p, $str) = @_;
+	$eleStr .= $str;
 }

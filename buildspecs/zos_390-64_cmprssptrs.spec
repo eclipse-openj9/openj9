@@ -170,7 +170,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="jit_freeSystemStackPointer" value="true"/>
 		<flag id="jit_fullSpeedDebug" value="true"/>
 		<flag id="jit_gcOnResolveSupport" value="true"/>
-		<flag id="jit_highWordRegisters" value="true"/>
 		<flag id="jit_newDualHelpers" value="true"/>
 		<flag id="jit_newInstancePrototype" value="true"/>
 		<flag id="jit_runtimeInstrumentation" value="true"/>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,7 +192,7 @@ ClasspathItem::addItem(J9InternalVMFunctions* functionTable, const char* path, U
 	Trc_SHR_CPI_addItem_Entry(pathLen, path, protocol);
 
 	if (entries==itemsAdded) {
-		/* Cannot access verbose level, so this is not surpressed by "silent". However, it's a "should never happen" message. */
+		/* Cannot access verbose level, so this is not suppressed by "silent". However, it's a "should never happen" message. */
 		PORT_ACCESS_FROM_PORT(portlib);
 		CLASSPATHITEM_ERR_TRACE(J9NLS_SHRC_CPI_TOO_MANY_ITEMS);
 		Trc_SHR_CPI_addItem_ExitTooMany();

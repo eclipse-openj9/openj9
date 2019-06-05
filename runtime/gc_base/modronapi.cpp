@@ -65,9 +65,9 @@ j9gc_modron_global_collect(J9VMThread *vmThread)
  * <ul>
  * 	<li>J9MMCONSTANT_IMPLICIT_GC_DEFAULT - collect due to normal GC activity</li>
  *  <li>J9MMCONSTANT_IMPLICIT_GC_AGGRESSIVE - second collect since first collect was insufficient</li>
- * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE - collect due to scavanger percolate</li>
- * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_UNLOADING_CLASSES - collect due to scavanger percolate (unloading classes)</li>
- * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_AGGRESSIVE - collect due to aggressive scavanger percolate</li>
+ * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE - collect due to scavenger percolate</li>
+ * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_UNLOADING_CLASSES - collect due to scavenger percolate (unloading classes)</li>
+ * 	<li>J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_AGGRESSIVE - collect due to aggressive scavenger percolate</li>
  * 	<li>J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC - Java code has requested a System.gc()</li>
  *  <li>J9MMCONSTANT_EXPLICIT_GC_NOT_AGGRESSIVE - Java code has requested a non-compacting GC via JVM_GCNoCompact</li>
  *  <li>J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY - a native out of memory has occurred -- attempt to recover as much native memory as possible</li>
@@ -670,7 +670,7 @@ j9gc_get_gc_cause(OMR_VMThread *omrVMthread)
 
 /**
  * API for the jit to call to find out the maximum allocation size, including the 
- * object header, that is guarenteed not to overflow the address range.
+ * object header, that is guaranteed not to overflow the address range.
  */
 UDATA
 j9gc_get_overflow_safe_alloc_size(J9JavaVM *javaVM)
@@ -784,6 +784,32 @@ j9gc_allocation_threshold_changed(J9VMThread *currentThread)
 	vmFuncs->J9CancelAsyncEvent(vm, currentThread, key);
 	memoryManagerTLHAsyncCallbackHandler(currentThread, key, (void*)vm);
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP) */
+}
+
+/**
+ * Set the allocation sampling interval to trigger a J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING event
+ * 
+ * Examples:
+ * 	To trigger an event whenever 4K objects have been allocated:
+ *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)4096);
+ *	To trigger an event for every object allocation:
+ *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)0);
+ * The initial MM_GCExtensions::oolObjectSamplingBytesGranularity value is 16M
+ * or set by command line option "-Xgc:allocationSamplingGranularity".
+ * By default, the sampling interval is going to be set to 512 KB.
+ * 
+ * @parm[in] vmThread The current VM Thread
+ * @parm[in] samplingInterval The allocation sampling interval.
+ */
+void 
+j9gc_set_allocation_sampling_interval(J9VMThread *vmThread, UDATA samplingInterval)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
+	if (0 == samplingInterval) {
+		/* avoid (env->_oolTraceAllocationBytes) % 0 which could be undefined. */
+		samplingInterval = 1;
+	}
+	extensions->oolObjectSamplingBytesGranularity = samplingInterval;
 }
 
 /**

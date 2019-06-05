@@ -59,7 +59,7 @@
  * decimal overflow exception.
  *
  * We make a function call in the out-of-line section to the original DAA API function to handle exceptions in the mainline.
- * To achive this, we make use of the addressNode and the callParam-x nodes attached to the BCDCHK node.
+ * To achieve this, we make use of the addressNode and the callParam-x nodes attached to the BCDCHK node.
  * In OOL section evaluation, we make a callNode with callParam 1-n attached to it; after the call, the correct pdOpNode
  * results need to be copied from the addressNode location to the pdOpNode storage reference. This copying makes
  * sure its following pdstorei (usually right after the BCDCHK node) is copying the correct content; and is only done correctly

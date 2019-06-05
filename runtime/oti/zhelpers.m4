@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2018 IBM Corp. and others
+dnl Copyright (c) 1991, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -170,7 +170,7 @@ define({CURRENT_LONG},$1)
 define({CURRENT_SHORT},CONCAT(J9SYM,SYM_COUNT))
 START_FUNC(CURRENT_LONG,CURRENT_SHORT)
 })
-define({END_CURRENT},{END_FUNC(CURRENT_LONG,CURRENT_SHORT,eval(1+len(CURRENT_SHORT)))})
+define({END_CURRENT},{END_FUNC(CURRENT_LONG,CURRENT_SHORT,eval(1+len(CURRENT_LONG)))})
 
 ifdef({J9ZOS390},{
 
@@ -220,7 +220,7 @@ PPAZ$2      DS    0F
         DC    XL.4'0',AL.4(0)    
         DC    AL4(CODELZ$2)     
         DC    H'$3'       
-        DC    CL$3'Z$2'  
+        DC    CL$3'Z$1'  
         DC    AL4(Z$2-PPAZ$2) 
 })
 define({J9_AMODE},64)

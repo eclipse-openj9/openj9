@@ -113,17 +113,17 @@ getCapabilities(jvmtiCapabilities * caps, int * availableCount, int * unavailabl
 	PRINT_CAPABILITY(can_retransform_any_class);
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_heap_events);
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_threads_events);
-	
-	/* JVMTI 9.0 */
-	if (env->jvmtiVersion >= JVMTI_VERSION_9) {
-		PRINT_CAPABILITY(can_generate_early_vmstart);
-		PRINT_CAPABILITY(can_generate_early_class_hook_events);
-	}
 
+#if JAVA_SPEC_VERSION >= 9   
+	/* JVMTI 9.0 */
+	PRINT_CAPABILITY(can_generate_early_vmstart);
+	PRINT_CAPABILITY(can_generate_early_class_hook_events);
+#endif /* JAVA_SPEC_VERSION >= 9 */
+
+#if JAVA_SPEC_VERSION >= 11
 	/* JVMTI 11 */
-	if (env->jvmtiVersion >= JVMTI_VERSION_11) {
-		PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
-	}
+	PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 }
 
 jboolean JNICALL
@@ -131,52 +131,50 @@ Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilitie
 {
 	int availableCount = 0;
 	int unavailableCount = 0;
+	jboolean result = JNI_TRUE;
 	
 	getCapabilities(&initialCapabilities, &availableCount, &unavailableCount);
 
-	if (initialCapabilities.can_retransform_any_class == 0) {
+	if (!initialCapabilities.can_retransform_any_class) {
 		unavailableCount--;
 	}
 	
-	if (initialCapabilities.can_redefine_any_class == 0) {
-		unavailableCount--;
-	}
-	
-	/* s390 thread/port lib does not support this functionality */
-	if (initialCapabilities.can_get_current_thread_cpu_time == 0) {
+	if (!initialCapabilities.can_redefine_any_class) {
 		unavailableCount--;
 	}
 	
 	/* s390 thread/port lib does not support this functionality */
-	if (initialCapabilities.can_get_thread_cpu_time == 0) {
+	if (!initialCapabilities.can_get_current_thread_cpu_time) {
+		unavailableCount--;
+	}
+	
+	/* s390 thread/port lib does not support this functionality */
+	if (!initialCapabilities.can_get_thread_cpu_time) {
 		unavailableCount--;
 	}
 
-	if (env->jvmtiVersion >= JVMTI_VERSION_11) {
-		/* Empty JEP331 implementation doesn't enable capability can_generate_sampled_object_alloc_events. */
-		if (initialCapabilities.can_generate_sampled_object_alloc_events == 0) {
-			unavailableCount--;
-		}
-	}
-	
 	if (unavailableCount != 0) {
 		error(env, JVMTI_ERROR_INTERNAL, "Unexpected number [%d] of unavailable capabilities. Expected 0", unavailableCount);
 		return JNI_FALSE;
 	}
 
-	if (env->jvmtiVersion >= JVMTI_VERSION_9) {
-		if (0 == initialCapabilities.can_generate_early_vmstart) {
-			error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_vmstart should be available in onload phase.");
-			return JNI_FALSE;
-		}
-
-		if (0 == initialCapabilities.can_generate_early_class_hook_events) {
-			error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_class_hook_events should be available in onload phase.");
-			return JNI_FALSE;
-		}
+#if JAVA_SPEC_VERSION >= 9
+	if (!initialCapabilities.can_generate_early_vmstart) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_vmstart should be available in onload phase.");
+		result = JNI_FALSE;
+	} else if (!initialCapabilities.can_generate_early_class_hook_events) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_class_hook_events should be available in onload phase.");
+		result = JNI_FALSE;
 	}
-	
-	return JNI_TRUE;
+#if JAVA_SPEC_VERSION >= 11
+	else if (!initialCapabilities.can_generate_sampled_object_alloc_events) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_sampled_object_alloc_events should be available in onload phase.");
+		result = JNI_FALSE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
+#endif /* JAVA_SPEC_VERSION >= 9 */
+
+	return result;
 }
 
 jboolean JNICALL
@@ -213,18 +211,18 @@ Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyLiveCapabilities(
 		error(env, JVMTI_ERROR_INTERNAL, "Unexpected number [%d] of available capabilities.", availableCount);
 		return JNI_FALSE;
 	}
-	
-	if (env->jvmtiVersion >= JVMTI_VERSION_9) {
-		if (1 == capabilities.can_generate_early_vmstart) {
-			error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_vmstart should not be available in live phase.");
-			return JNI_FALSE;
-		}
-		
-		if (1 == capabilities.can_generate_early_class_hook_events) {
-			error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_class_hook_events should not be available in the live phase.");
-			return JNI_FALSE;
-		}
+
+#if JAVA_SPEC_VERSION >= 9
+	if (1 == capabilities.can_generate_early_vmstart) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_vmstart should not be available in live phase.");
+		return JNI_FALSE;
 	}
+		
+	if (1 == capabilities.can_generate_early_class_hook_events) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_class_hook_events should not be available in the live phase.");
+		return JNI_FALSE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 	return JNI_TRUE;
 }

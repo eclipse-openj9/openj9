@@ -22,7 +22,7 @@
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
 # Then include a known_hosts file next to the Dockerfile, with github as a saved host
 # This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
-# Make sure you are in the directory contianing the Dockerfile, authorized_keys file, and known_hosts file
+# Make sure you are in the directory containing the Dockerfile, authorized_keys file, and known_hosts file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
@@ -44,9 +44,9 @@ RUN apt-get update \
     autoconf \
     build-essential \
     ca-certificates \
-    cmake \
     cpio \
     curl \
+    libexpat1-dev `# This is being used for the xml parser` \
     file \
     gdb \
     git \
@@ -82,7 +82,8 @@ RUN apt-get update \
 # Dependency required by test framework
 RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
   && cpanm Text::CSV \
-  && cpanm JSON
+  && cpanm JSON \
+  && cpanm XML::Parser
 
 # Install GCC-7.4
 RUN cd /usr/local \
@@ -93,13 +94,24 @@ RUN cd /usr/local \
 # Create links for c++,g++,cc,gcc and for GCC to access the C library
 # There is a true at the end of the library link because it throws an error and it allows the container to be built
 RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
-  && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include | true \ 
+  && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include | true \
   && ln -s /usr/local/bin/g++-7.4 /usr/bin/g++-7 \
   && ln -s /usr/local/bin/gcc-7.4 /usr/bin/gcc-7
 
 # Edit ldconfig to connect the new libstdc++.so* library
 RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
   && ldconfig
+
+# Install cmake version 3.11.4
+RUN cd /tmp \
+  && wget https://cmake.org/files/v3.11/cmake-3.11.4.tar.gz \
+  && tar xzf cmake-3.11.4.tar.gz \
+  && rm cmake-3.11.4.tar.gz \
+  && cd /tmp/cmake-3.11.4 \
+  && ./configure \
+  && make \
+  && make install
+
 
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
@@ -137,6 +149,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
 
+# Download and install boot JDK from AdoptOpenJDK for java 13 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
+  && cd /usr/lib/jvm/adoptojdk-java-12 \
+  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
+  && tar -xzf bootjdk12.tar.gz \
+  && rm -f bootjdk12.tar.gz \
+  && mv $(ls | grep -i jdk-12) bootjdk12 \
+  && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
+  && rm -rf bootjdk12
+
 # Set up sshd config
 RUN mkdir /var/run/sshd \
   && sed -i 's/#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config \
@@ -155,7 +177,8 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
-  && git fetch --all
+  && git fetch --all \
+  && git gc --aggressive --prune=all
 
 # Expose SSH port and run SSH
 EXPOSE 22

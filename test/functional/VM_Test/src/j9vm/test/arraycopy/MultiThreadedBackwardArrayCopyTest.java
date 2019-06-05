@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,7 +96,7 @@ public class MultiThreadedBackwardArrayCopyTest implements Runnable {
 
 	// Create a unique String object
 	private static Object createValidValue(int i) {
-		// Create array of bytes to spreadout the objects
+		// Create array of bytes to spread out the objects
 		byte [] unused = new byte[17832];
 		return Integer.toString(i);
 	}

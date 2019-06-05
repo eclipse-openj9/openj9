@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,7 +246,7 @@ public class Tcb {
          *                                                                 
          * 1) Single RB on the input TCB RB chain                          
          *    a) If current linkage stack is empty, registers are extracted
-         *       from the input TCB and PSW is extraced from the current   
+         *       from the input TCB and PSW is extracted from the current   
          *       RB.                                                       
          *    b) If linkage stack is present, and non-fast path Kernel     
          *       call has been issued, registers and PSW are extracted     
@@ -266,7 +266,7 @@ public class Tcb {
             long rbp = tcbrbp();
             long rbsecptr = 0;    /* The last RB read */
             long save2rbptr = 0;  /* The second to last RB read */
-            long save2XsbPtr = 0; /* XSB virutal address */
+            long save2XsbPtr = 0; /* XSB virtual address */
             long saveXsbAddr = 0;
             log.fine("for tcb " + hex(address) + ", rbp = " + hex(rbp));
             int countRbs = 0;
@@ -415,7 +415,7 @@ public class Tcb {
 
     /**
      * Return the linkage stack as an array of Lse entries. The length of the array will be zero
-     * if the linkage stack is empty. The top of the stack (as represnted by stcblsdp) is the
+     * if the linkage stack is empty. The top of the stack (as represented by stcblsdp) is the
      * first element in the array and the end of the stack (also sometimes referred to as
      * the first entry, aka stcbestk) is the last element in the array.
      */

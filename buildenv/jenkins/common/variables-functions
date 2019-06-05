@@ -337,8 +337,8 @@ def get_user_credentials_id(KEY) {
 * to run a Jenkins job.
 * Fetches the labels from the variables file when the node is not set as build
 * parameter.
-* The node's labels could be a single label - e.g. label1 - or a boolean 
-* expression - e.g. label1 && label2 || label3. 
+* The node's labels could be a single label - e.g. label1 - or a boolean
+* expression - e.g. label1 && label2 || label3.
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
@@ -447,24 +447,38 @@ def get_date() {
 def set_test_variables() {
     set_release()
     set_jdk_folder()
-    
-    if ( SPEC ==~ /.*valhalla.*/) {
-        JAVA_VERSION = "Valhalla"
-    } else {
-        JAVA_VERSION = "SE" + "${SDK_VERSION}" + "0"
-    }
     TEST_DEPENDENCIES_JOB_NAME = VARIABLES.test_dependencies_job_name
 }
 
 /*
-* Set TESTS_TARGETS, indicating the level of testing. 
+* Set TESTS_TARGETS, indicating the level of testing.
 */
 def set_test_targets() {
     TESTS_TARGETS = params.TESTS_TARGETS
     if (!TESTS_TARGETS) {
-        // set default TESTS_TARGETS for pipeline job (run all tests)
-        TESTS_TARGETS = "_sanity,_extended"
+        // set default TESTS_TARGETS for pipeline job (fetch from variables file)
+        TESTS_TARGETS = get_default_test_targets()
     }
+
+    EXCLUDED_TESTS = []
+    if (VARIABLES."${SPEC}".excluded_tests) {
+        def excludedTests = get_value(VARIABLES."${SPEC}".excluded_tests, SDK_VERSION)
+        if (excludedTests) {
+            EXCLUDED_TESTS.addAll(excludedTests.keySet())
+        }
+    }
+
+    echo "TESTS_TARGETS: ${TESTS_TARGETS}"
+    echo "EXCLUDED_TESTS: ${EXCLUDED_TESTS}"
+}
+
+def get_default_test_targets() {
+    if (VARIABLES.tests_targets && VARIABLES.tests_targets.default) {
+        // VARIABLES.tests_targets.default is a map where all values are null
+        return VARIABLES.tests_targets.default.keySet().join(',')
+    }
+
+    return ''
 }
 
 def set_slack_channel() {
@@ -479,12 +493,15 @@ def set_artifactory_config() {
     if (ARTIFACTORY_SERVER) {
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
         env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-        // Set Creds to env so that the parent pipeline can retireve them.
+        // Set Creds to env so that the parent pipeline can retrieve them.
         env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
+        env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts // This is being used by the cleanup script
+        env.ARTIFACTORY_MANUAL_CLEANUP = VARIABLES.artifactory_manual_cleanup // This is being used by the cleanup script
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+        echo "Artifactory Manual Cleanup: ${env.ARTIFACTORY_MANUAL_CLEANUP}"
     }
 }
 
@@ -512,11 +529,18 @@ def set_build_identifier() {
                 BUILD_IDENTIFIER = "${BUILD_USER_EMAIL}"
             }
         } else {
-            echo "WARNING: Can't determine appropriate BUILD_DENTIFIER automatically. Please add it as a build parameter if you would like it set."
+            echo "WARNING: Can't determine appropriate BUILD_IDENTIFIER automatically. Please add it as a build parameter if you would like it set."
         }
     }
     if (BUILD_IDENTIFIER) {
         currentBuild.displayName = "#${BUILD_NUMBER} - ${BUILD_IDENTIFIER}"
+    }
+}
+
+def set_custom_description() {
+    if (params.CUSTOM_DESCRIPTION){
+        def TMP_DESC = (currentBuild.description) ? "<br>" + currentBuild.description : ""
+        currentBuild.description = CUSTOM_DESCRIPTION + TMP_DESC
     }
 }
 
@@ -529,6 +553,14 @@ def add_string_params(PARAMETERS_TO_ADD) {
         PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
     }
 }
+
+def add_pr_to_description() {
+    if (params.ghprbPullId) {
+        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+        currentBuild.description = TMP_DESC + "<a href=https://github.com/${params.ghprbGhRepository}/pull/${params.ghprbPullId}>PR #${params.ghprbPullId}</a>"
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -550,6 +582,9 @@ def set_job_variables(job_type) {
         // ignore when ARGS is not set
     }
 
+    // Add custom description
+    set_custom_description()
+
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
@@ -558,6 +593,7 @@ def set_job_variables(job_type) {
             set_build_variables()
             set_sdk_variables()
             set_artifactory_config()
+            add_pr_to_description()
             break
         case "pullRequest":
             // set the node the pull request job would run on
@@ -566,6 +602,7 @@ def set_job_variables(job_type) {
             set_build_variables()
             set_sdk_variables()
             set_test_variables()
+            set_artifactory_config()
             break
         case "pipeline":
             // set variables for a pipeline job
@@ -576,6 +613,7 @@ def set_job_variables(job_type) {
             set_test_targets()
             set_slack_channel()
             set_restart_timeout()
+            add_pr_to_description()
             break
         case "wrapper":
             //set variable for pipeline all/personal
@@ -585,7 +623,7 @@ def set_job_variables(job_type) {
             set_restart_timeout()
             break
         default:
-            error("Unknown Jenkins job type!")
+            error("Unknown Jenkins job type:'${job_type}'")
     }
 }
 
@@ -604,6 +642,27 @@ def validate_arguments(ARGS) {
             // exported as environment variables and it will overwrite the
             // make SPEC variable set in the configure phase in build.build() method
             SPEC = params.get(arg)
+
+            // TEMPORARILY MAP old spec names to new spec names for PR builds.
+            // This can be removed in #2836.
+            def REVERSE_SPEC_MAP = [
+                    'aix_ppc-64_cmprssptrs' : 'ppc64_aix',
+                    'linux_ppc-64_cmprssptrs_le' : 'ppc64le_linux',
+                    'linux_390-64_cmprssptrs' : 's390x_linux',
+                    'zos_390-64_cmprssptrs' : 's390x_zos',
+                    'linux_x86-64_cmprssptrs' : 'x86-64_linux',
+                    'linux_x86-64' : 'x86-64_linux_xl',
+                    'linux_x86-64_cmprssptrs_cmake' : 'x86-64_linux_cm',
+                    'win_x86' : 'x86-32_windows',
+                    'win_x86-64_cmprssptrs' : 'x86-64_windows',
+                    'osx_x86-64': 'x86-64_mac_xl',
+                    'osx_x86-64_cmprssptrs' : 'x86-64_mac']
+
+            if (REVERSE_SPEC_MAP.keySet().contains(SPEC)) {
+                echo "Converting SPEC:'${SPEC}'..."
+                SPEC = REVERSE_SPEC_MAP[SPEC]
+                echo "to SPEC:'${SPEC}'"
+            }
         }
     }
 }
@@ -710,7 +769,7 @@ def set_vendor_variables() {
         // fetch from variables file
 
         if (VARIABLES.vendor_source && VARIABLES.vendor_source.test) {
-            // parse the vendor source multi-map 
+            // parse the vendor source multi-map
             // and populate the VENDOR_TEST_* maps
 
              VARIABLES.vendor_source.test.each { entry ->
@@ -768,7 +827,7 @@ def get_repo_name_from_url(URL) {
 */
 def get_build_releases(releases_by_specs) {
     def build_releases = []
-    
+
     // find releases to build based on given specs
     releases_by_specs.values().each { versions ->
         build_releases.addAll(versions)
@@ -797,32 +856,36 @@ def get_build_specs_by_release(version, specs) {
  * and test. Returns a map of releases by specs.
  */
 def get_specs(SUPPORTED_SPECS) {
-    def RELEASES = []
-    def PLATFORMS = []
     def SPECS = [:]
 
-    // get releases 
-    params.each { key, value  ->
-        if ((key.indexOf('Java') != -1) && (value == true)) {
-            RELEASES.add(key.substring(4))
+    if (!RELEASES) {
+        // get releases
+        params.each { key, value  ->
+            if ((key.indexOf('Java') != -1) && (value == true)) {
+                RELEASES.add(key.substring(4))
+            }
         }
     }
+    echo "RELEASES:'${RELEASES}'"
 
-    // get specs
-    if (!params.PLATFORMS || (params.PLATFORMS.trim() == 'all')) {
-        // build and test all supported specs
-        PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
-    } else {
-        PLATFORMS.addAll(params.PLATFORMS.split(","))
+    if (!PLATFORMS) {
+        // get specs
+        if (!params.PLATFORMS || (params.PLATFORMS.trim() == 'all')) {
+            // build and test all supported specs
+            PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
+        } else {
+            PLATFORMS.addAll(params.PLATFORMS.split(","))
+        }
     }
-
+    echo "PLATFORMS:'${PLATFORMS}'"
     def RELEASES_STR = RELEASES.join(',')
 
+    // Setup SPEC map
     PLATFORMS.each { SPEC ->
         SPEC = SPEC.trim()
         if (!SUPPORTED_SPECS.keySet().contains(SPEC)) {
             echo "Warning: Unknown or unsupported platform: ${SPEC}"
-            continue
+            return
         }
 
         if (RELEASES) {
@@ -843,7 +906,7 @@ def get_specs(SUPPORTED_SPECS) {
     if (!SPECS) {
         error("Invalid PLATFORMS (${params.PLATFORMS}) and/or Java versions selections(${RELEASES_STR})!")
     }
-
+    echo "SPECS:'${SPECS}'"
     return SPECS
 }
 
@@ -894,7 +957,7 @@ def set_build_extra_options(build_specs=null) {
                         //      EXTRA_CONFIGURE_OPTIONS_JDK<release>_<spec>
                         //      EXTRA_MAKE_OPTIONS_JDK<release>_<spec>
                         def extraOptions = params."${it}_JDK${release}_${spec}"
-                        if (!extraOptions) {
+                        if (!extraOptions && VARIABLES."${spec}") {
                             extraOptions = get_value(VARIABLES."${spec}"."${it.toLowerCase()}", release)
                         }
 
@@ -992,7 +1055,7 @@ def set_adoptopenjdk_tests_repository(build_releases=null) {
 }
 
 // Creates a job using the job DSL plugin on Jenkins
-def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
+def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
 
     // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
     // This allows us to know what the default values are without being told explicitly.
@@ -1010,10 +1073,9 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
         VENDOR_CREDENTIALS_ID_DEFAULT = ''
     }
 
-    // Configruing the build discarder in the downstream project
+    // Configuring the build discarder in the downstream project
 
-    DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, downstreamJobType)
-    DISCARDER_NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, downstreamJobType)
+    DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, id)
 
     def params = [:]
     params.put('JOB_NAME', JOB_NAME)
@@ -1025,7 +1087,6 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType){
     params.put('VENDOR_CREDENTIALS_ID_DEFAULT', VENDOR_CREDENTIALS_ID_DEFAULT)
     params.put('jobType', downstreamJobType)
     params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
-    params.put('DISCARDER_NUM_ARTIFACTS', DISCARDER_NUM_ARTIFACTS)
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
 

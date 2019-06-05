@@ -433,7 +433,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 						}
 						++cursor;
 					}
-					*(++cursor) = '\0';		/* explicity null-terminate the "array". There is no danger of walking beyond the buffer here because of bufSize-1 in call above. */
+					*(++cursor) = '\0';		/* explicitly null-terminate the "array". There is no danger of walking beyond the buffer here because of bufSize-1 in call above. */
 				}
 				if (errorFound != OPTION_OK) {
 					return errorFound;
@@ -677,9 +677,9 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	J9JavaVMArgInfo *optArg = NULL;
 	
 	PORT_ACCESS_FROM_PORT(portLib);
-	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
-		Assert_Util_unreachable();
-	}
+#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+	Assert_Util_unreachable();
+#endif /* J9VM_IVE_RAW_BUILD */
 
 	argumentLength = sizeof(VMOPT_XJCL_COLON) + dllNameLength - 1; /* sizeof called twice, each includes the \0 */
 	argString = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
@@ -1069,6 +1069,13 @@ addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *
 
 }
 
+#if !defined(OPENJ9_BUILD)
+/* Function reads the J9NLS_J2SE_EXTRA_OPTIONS to get a -D define to set the IBM java version.
+ * This isn't needed in OpenJ9 and using this is one of the items that forces the NLS message
+ * catalogs to be parsed  early in startup
+ *
+ * Disable for OpenJ9 but leave in place for IBM to be handled in a separate cleanup item
+ */
 IDATA
 addJavaPropertiesOptions(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
@@ -1112,6 +1119,7 @@ addJavaPropertiesOptions(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumen
 	}
 	return 0;
 }
+#endif /* !OPENJ9_BUILD */
 
 /*
  * parseOptionsFileText() removes tabs and spaces following a newline.

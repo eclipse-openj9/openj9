@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
  * @ingroup Port
  * @brief Per-thread buffer for platform-dependent socket information.
  *
- * Per thread buffers are used to store information that is not sharable among the threads.  
+ * Per thread buffers are used to store information that is not shareable among the threads.  
  * For example when an OS system call fails the error code associated with that error is
  * relevant to the thread that called the OS function; it has no meaning to any other thread.
  *

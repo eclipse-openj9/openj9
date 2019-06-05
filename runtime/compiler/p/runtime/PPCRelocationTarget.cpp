@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -322,7 +322,9 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
 
 bool TR_PPCRelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
    {
-   return !(((IDATA)(helperAddress - baseLocation) <=BRANCH_FORWARD_LIMIT) && ((IDATA)(helperAddress - baseLocation) >=BRANCH_BACKWARD_LIMIT));
+   return
+      !TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
+      TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines);
    }
 
 uint8_t *
@@ -346,7 +348,7 @@ TR_PPCRelocationTarget::flushCache(uint8_t *codeStart, unsigned long size)
 void
 TR_PPCRelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
    {
-   /* apply constant to lis and ori insturctions
+   /* apply constant to lis and ori instructions
       lis  r0, high_16 bits
       ori  r0, r0, low_16 bits
     */

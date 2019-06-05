@@ -199,7 +199,7 @@ TextFileStream::writeVPrintf(const char *format, ...)
 {
 	/* Currently, this appears to be the max buffer size needed. We use
 	 * this routine to print 128-bit values and, in this case, we need
-	 * a buffer of at least size 33 in order to accomodate the '\0'. 
+	 * a buffer of at least size 33 in order to accommodate the '\0'. 
 	 */
 	char buffer[35];
 	PORT_ACCESS_FROM_PORT(_PortLibrary);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -941,9 +941,9 @@ extern HY_CFUNC I_32 hyport_allocate_library (struct
 
 /** @} */
 /**
- * @name Port library version and compatability queries
+ * @name Port library version and compatibility queries
  * @anchor PortVersionControl
- * Determine port library compatability and version.
+ * Determine port library compatibility and version.
  * @{
  */
 extern HY_CFUNC UDATA hyport_getSize (struct HyPortLibraryVersion

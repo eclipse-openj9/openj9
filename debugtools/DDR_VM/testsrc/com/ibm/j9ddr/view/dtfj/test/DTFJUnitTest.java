@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,7 @@ public abstract class DTFJUnitTest {
 	// Clones of DDR Objects to test.  These should pass equals test
 	static List<Object> ddrClonedObjects;
 
-	// Jxtract reference objects
+	// jextract reference objects
 	static List<Object> jextractTestObjects;
 	
 	public static class InvalidObjectException extends Exception {

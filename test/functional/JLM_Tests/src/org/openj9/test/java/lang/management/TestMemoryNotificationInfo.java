@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.AfterClass;
@@ -32,6 +31,8 @@ import java.lang.management.MemoryUsage;
 
 import javax.management.openmbean.CompositeData;
 
+// This class is not public API.
+import com.ibm.java.lang.management.internal.MemoryNotificationInfoUtil;
 
 @Test(groups = { "level.sanity" })
 public class TestMemoryNotificationInfo {
@@ -82,7 +83,7 @@ public class TestMemoryNotificationInfo {
 
 	@Test
 	public final void testFrom() {
-		CompositeData cd = TestUtil.toCompositeData(goodMNI);
+		CompositeData cd = MemoryNotificationInfoUtil.toCompositeData(goodMNI);
 		AssertJUnit.assertNotNull(cd);
 		MemoryNotificationInfo mni = MemoryNotificationInfo.from(cd);
 		AssertJUnit.assertNotNull(mni);

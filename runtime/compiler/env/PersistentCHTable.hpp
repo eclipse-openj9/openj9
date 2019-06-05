@@ -82,14 +82,14 @@ class TR_PersistentCHTable
    virtual void classGotUnloadedPost(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
    virtual void classGotRedefined(TR_FrontEnd *vm, TR_OpaqueClassBlock *oldClassId, TR_OpaqueClassBlock *newClassId);
    virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
-   virtual void resetVisitedClasses(); // highly time consumming
+   virtual void resetVisitedClasses(); // highly time consuming
 
 #ifdef DEBUG
    void dumpStats(TR_FrontEnd *);
 #endif
 
    protected:
-   void removeAssumptionFromList(OMR::RuntimeAssumption **list, OMR::RuntimeAssumption *assumption, OMR::RuntimeAssumption *prev);
+   void removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption);
    TR_LinkHead<TR_PersistentClassInfo> *getClasses() { return _classes; }
 
    private:

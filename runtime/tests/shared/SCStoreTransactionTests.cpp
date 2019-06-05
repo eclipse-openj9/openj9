@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +129,7 @@ testSCStoreTransaction(J9JavaVM* vm)
 	rc |= test22(vm);
 	
 
-	/*The tests below excercise the class debug area of the cache*/
+	/*The tests below exercise the class debug area of the cache*/
 	if (0 < ClassDebugDataProvider::getRecommendedPercentage()) {
 		rc |= test23(vm);
 		rc |= test24(vm);
@@ -1842,7 +1842,7 @@ test23(J9JavaVM* vm)
 	}
 	
 	if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-		ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+		ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 		retval = TEST_ERROR;
 		goto done;
 	}
@@ -1920,7 +1920,7 @@ test24(J9JavaVM* vm)
 	}
 
 	if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-		ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+		ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 		retval = TEST_ERROR;
 		goto done;
 	}
@@ -2209,7 +2209,7 @@ test29(J9JavaVM* vm)
 		}
 
 		if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-			ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+			ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 			retval = TEST_ERROR;
 			goto done;
 		}
@@ -2274,7 +2274,7 @@ test29(J9JavaVM* vm)
 		}
 
 		if (FALSE == j9shr_isAddressInCache(vm, romclassmem, sizes.romClassMinimalSize)) {
-			ERRPRINTF("Allcoated memory doesn't appear to be in the cache\n");
+			ERRPRINTF("Allocated memory doesn't appear to be in the cache\n");
 			retval = TEST_ERROR;
 			goto done;
 		}

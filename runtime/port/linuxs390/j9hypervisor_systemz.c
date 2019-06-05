@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -310,7 +310,7 @@ check_hypfs_mount(struct J9PortLibrary *portLibrary, LinuxStaticInfo *staticInfo
 /**
  * @internal	Read /proc/sysinfo to get the VMName and system-z machine type
  * 		We are looking at the name of the topmost level guest (the one that
- * 		we are currently running in) in the hypervisor heirarchy.
+ * 		we are currently running in) in the hypervisor hierarchy.
  * 		VM00 always points to the top level guest in sysinfo
  *
  * @param [in]  portLibrary The port library
@@ -404,7 +404,7 @@ get_hypfs_attribute(struct J9PortLibrary *portLibrary, const char *filepath, con
 	val = fgets(attribVal, PATH_MAX, hypfsFP);
 	fclose(hypfsFP);
 
-	if ('\0' == attribVal) {
+	if ('\0' == *attribVal) {
 		Trc_PRT_get_hypfs_attribute_failed(filename, J9PORT_ERROR_HYPERVISOR_HYPFS_READ_FAILED);
 		return J9PORT_ERROR_HYPERVISOR_HYPFS_READ_FAILED;
 	}
@@ -511,7 +511,7 @@ errorout:
  *		files and recreates them with the latest data.
  *		The above operation is very dicey when multiple processes are writing to the update file
  *		and reading from the hypfs files. hypfs also does not allow two writes to the "update"
- *		file within the span of a second. To prevent issues with multiple processes accesing hypfs
+ *		file within the span of a second. To prevent issues with multiple processes accessing hypfs
  *		at the same time, the following protocol is followed
  *		1. check the file write time of the "update" file using stat.
  *		2. If the write has happened within the last second, go to step 5
@@ -638,7 +638,7 @@ log_hypervisor_error(struct J9PortLibrary *portLibrary, uint32_t module_name, ui
  * Get Linux usage info from hypfs and constants from /proc/sysinfo
  *
  * @param [in]  portLibrary The port library
- * @param [in]  staticInfo  Constats
+ * @param [in]  staticInfo  Constants
  * @param [out] linuxInfo   Caller supplied LinuxzVMInfo that gets updated
  *
  * @return	0 on success, negative value on failure

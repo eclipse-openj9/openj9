@@ -46,8 +46,11 @@ function(j9vm_gen_asm)
 		set(m4_defines "-DLINUX")
 	elseif(OMR_HOST_OS STREQUAL "osx")
 		set(m4_defines "-DOSX")
+	elseif(OMR_OS_WINDOWS)
+		set(m4_defines "-DWIN32")
+	else()
+		message(SEND_ERROR "Unsupported platform")
 	endif()
-	#TODO need to add other platforms here
 
 	foreach(define IN LISTS opt_DEFINES)
 		list(APPEND m4_defines "-D${define}")
@@ -66,9 +69,14 @@ function(j9vm_gen_asm)
 		get_filename_component(base_name "${m4_file}" NAME_WE)
 		
 		add_custom_command(
-			OUTPUT ${base_name}.s
+			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${base_name}.s
 			DEPENDS ${m4_file} run_constgen
 			COMMAND m4 ${m4_includes} ${m4_defines} ${CMAKE_CURRENT_SOURCE_DIR}/${m4_file} > ${base_name}.s
+			VERBATIM
 		)
+		if(OMR_OS_WINDOWS)
+			# On windows we have to set the language, because we have ASM_MASM and ASM_NASM both enabled
+			set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${base_name}.s PROPERTIES LANGUAGE ASM_MASM)
+		endif()
 	endforeach()
 endfunction(j9vm_gen_asm)

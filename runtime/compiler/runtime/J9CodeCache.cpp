@@ -53,19 +53,6 @@
 #include "env/IO.hpp"
 #include "runtime/HookHelpers.hpp"
 
-
-/*
- *  *  Debugging help
- *   */
-#ifdef CODECACHE_DEBUG
-#define mcc_printf if (CodeCacheDebug) printf
-#define mcc_hashprintf /*printf*/
-#else
-#define mcc_printf
-#define mcc_hashprintf
-#endif
-
-
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 
 #define addFreeBlock2(start, end) addFreeBlock2WithCallSite((start), (end), __FILE__, __LINE__)
@@ -366,7 +353,7 @@ J9::CodeCache::addFreeBlock(OMR::FaintCacheBlock *block)
    // Tiered Code Cache
    if (metaData->startColdPC)
       {
-      // startPC of the cold code is preceeded by OMR::CodeCacheMethodHeader
+      // startPC of the cold code is preceded by OMR::CodeCacheMethodHeader
       OMR::CodeCacheMethodHeader *coldBlock = (OMR::CodeCacheMethodHeader*)(metaData->startColdPC-sizeof(OMR::CodeCacheMethodHeader));
       if (self()->addFreeBlock2((uint8_t *)coldBlock, (uint8_t *)coldBlock+coldBlock->_size))
          {}
@@ -452,7 +439,7 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
 
    if (metaData->startColdPC)
       {
-      // startPC of the cold code is preceeded by OMR::CodeCacheMethodHeader
+      // startPC of the cold code is preceded by OMR::CodeCacheMethodHeader
       OMR::CodeCacheMethodHeader *coldBlock = (OMR::CodeCacheMethodHeader*)((UDATA)metaData->startColdPC-sizeof(OMR::CodeCacheMethodHeader));
       if (self()->addFreeBlock2((uint8_t *)coldBlock, (uint8_t *)coldBlock+coldBlock->_size))
          {}
@@ -666,21 +653,13 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
       OMR::CodeCacheHashEntry *entry = _unresolvedMethodHT->findUnresolvedMethod(cp, cpIndex);
       if (!entry)
          {
-         // don't have any reservation for this particular name/classLoader, make one
-         OMR::CodeCacheTrampolineCode *trampoline = self()->reserveSpaceForTrampoline();
-         if (trampoline)
+         // There isn't a reservation for this particular name/classLoader, make one
+         //
+         retValue = self()->reserveSpaceForTrampoline_bridge();
+         if (retValue == OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
             {
             if (!self()->addUnresolvedMethod(cp, cpIndex))
                retValue = OMR::CodeCacheErrorCode::ERRORCODE_FATALERROR; // couldn't allocate memory from VM
-            }
-         else // no space in this code cache; must allocate a new one
-            {
-            _almostFull = TR_yes;
-            retValue = OMR::CodeCacheErrorCode::ERRORCODE_INSUFFICIENTSPACE;
-            if (config.verboseCodeCache())
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache %p marked as full in reserveUnresolvedTrampoline", this);
-               }
             }
          }
       }
@@ -693,20 +672,20 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
 void
 J9::CodeCache::setInitialAllocationPointers()
    {
-   _warmCodeAllocBase = _warmCodeAlloc;
-   _coldCodeAllocBase = _coldCodeAlloc;
+   _warmCodeAllocBase = self()->getWarmCodeAlloc();
+   _coldCodeAllocBase = self()->getColdCodeAlloc();
    }
 
 void
 J9::CodeCache::resetAllocationPointers()
    {
    // Compute how much memory we give back to update the free space in the repository
-   size_t warmSize = _warmCodeAlloc - _warmCodeAllocBase;
-   size_t coldSize = _coldCodeAllocBase - _coldCodeAlloc;
+   size_t warmSize = self()->getWarmCodeAlloc() - _warmCodeAllocBase;
+   size_t coldSize = _coldCodeAllocBase - self()->getColdCodeAlloc();
    size_t freedSpace = warmSize + coldSize;
    _manager->increaseFreeSpaceInCodeCacheRepository(freedSpace);
-   _warmCodeAlloc = _warmCodeAllocBase;
-   _coldCodeAlloc = _coldCodeAllocBase;
+   self()->setWarmCodeAlloc(_warmCodeAllocBase);
+   self()->setColdCodeAlloc(_coldCodeAllocBase);
    }
 
 void

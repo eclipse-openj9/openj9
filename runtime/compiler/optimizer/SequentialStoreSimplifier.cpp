@@ -29,7 +29,6 @@
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/FrontEnd.hpp"
-#include "codegen/Linkage.hpp"
 #include "codegen/StorageInfo.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -1842,7 +1841,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
          static char *disableHoist = feGetEnv("TR_disableHoist");
          if (!disableHoist &&
              comp->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-             !comp->getJittedMethodSymbol()->isNoTemps() &&
              comp->cg()->isMaterialized(constValueNode))
             {
             TR::Block *block = prevTreeTop->getEnclosingBlock();
@@ -2126,7 +2124,7 @@ bool TR_ArrayShiftTreeCollection::insertTree(TR::TreeTop * currTree)
 
 void TR_ArrayShiftTreeCollection::checkLoadStoreOrder()
    {
-   // we are checking for consistent offets of both the stores and the loads here
+   // we are checking for consistent offsets of both the stores and the loads here
    // only supporting inorder stores now since all platforms have not implemented reverse stores
    int32_t expectedOffsetDelta = _storeTrees[0]->getRootNode()->getOpCode().getSize();
    int32_t baseTargetOffset = _storeTrees[0]->getTargetAddress()->getOffset();

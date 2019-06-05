@@ -867,7 +867,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java8MajorVersionShifted)
 				&& (bc != CFR_BC_invokevirtual) && (info->tag == CFR_CONSTANT_InterfaceMethodref)
 				) {
-					/* JVMS 4.9.1 Static Contraints:
+					/* JVMS 4.9.1 Static Constraints:
 					 * The indexbyte operands of each invokespecial and invokestatic instruction must represent
 					 * a valid index into the constant_pool table. The constant pool entry referenced by that
 					 * index must be either of type CONSTANT_Methodref or of type CONSTANT_InterfaceMethodref.
@@ -1313,6 +1313,12 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					slotCount = 0;
 					if ((frameType >= CFR_STACKMAP_SAME_LOCALS_1_STACK) && (frameType <= CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED)) {
 						slotCount = 1;
+
+						/* The stackmap entry is invalid if the size of stack (1 slot) exceeds the size of the max stack.*/
+						if (code->maxStack < slotCount) {
+							errorCode = FATAL_CLASS_FORMAT_ERROR;
+							goto _failedCheck;
+						}
 					}
 					if (frameType >= CFR_STACKMAP_CHOP_3) {
 						slotCount = (IDATA) frameType - CFR_STACKMAP_APPEND_BASE;

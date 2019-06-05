@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
  * Parses a string source pertaining to a tag line from a javacore, and returns
  * a map of tokens, where the token type (java.lang.String) is the key and token value (java.lang.String)is the value.
  * 
- * The Line Rule is generally referenced internally by the framework, so the subtype implementators don't
+ * The Line Rule is generally referenced internally by the framework, so the subtype implementers don't
  * need to worry about where a line rule is being used. All that needs to be done is implementing
  * the logic of how to parse a string, and how to generate the tokens.
  *

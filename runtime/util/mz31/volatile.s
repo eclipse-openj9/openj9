@@ -1,4 +1,4 @@
-* Copyright (c) 1991, 2017 IBM Corp. and others
+* Copyright (c) 1991, 2019 IBM Corp. and others
 *
 * This program and the accompanying materials are made
 * available under the terms of the Eclipse Public License 2.0
@@ -120,8 +120,8 @@ longVolatileRead_CONSTANTS    DS    0H
         lm   r0,r1,0(r3)
         lr   r3,r1
         lr   r2,r0
-        lm   r4,r15,2048(r4)                      * small frame: restor\
-               e volatile registers (including returnAddress and oldSP)\
+        lm   r4,r15,2048(r4)                     * small frame: restore\
+               volatile registers (including returnAddress and oldSP)\
 
         br   r7
 CODELLONGVOLATILEREAD      EQU *-LONGVOLATILEREAD
@@ -189,8 +189,8 @@ longVolatileWrite_CONSTANTS    DS    0H
         lr   r1,r2
         stm  r0,r1,0(r5)
         bcr ALWAYS,r0 # readwrite barrier
-        lm   r4,r15,2048(r4)                      * small frame: restor\
-               e volatile registers (including returnAddress and oldSP)\
+        lm   r4,r15,2048(r4)                     * small frame: restore\
+               volatile registers (including returnAddress and oldSP)\
 
         br   r7
 CODELLONGVOLATILEWRITE      EQU *-LONGVOLATILEWRITE

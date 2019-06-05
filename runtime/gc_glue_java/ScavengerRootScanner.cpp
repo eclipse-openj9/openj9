@@ -49,7 +49,7 @@ void
 MM_ScavengerRootScanner::startUnfinalizedProcessing(MM_EnvironmentBase *env)
 {
 	if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-		_scavenger->getDelegate()->setShouldScavengeUnfinalizedObjects(false);
+		_scavengerDelegate->setShouldScavengeUnfinalizedObjects(false);
 
 		MM_HeapRegionDescriptorStandard *region = NULL;
 		GC_HeapRegionIteratorStandard regionIterator(env->getExtensions()->getHeap()->getHeapRegionManager());
@@ -60,7 +60,7 @@ MM_ScavengerRootScanner::startUnfinalizedProcessing(MM_EnvironmentBase *env)
 					MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
 					list->startUnfinalizedProcessing();
 					if (!list->wasEmpty()) {
-						_scavenger->getDelegate()->setShouldScavengeUnfinalizedObjects(true);
+						_scavengerDelegate->setShouldScavengeUnfinalizedObjects(true);
 					}
 				}
 			}
@@ -75,7 +75,7 @@ MM_ScavengerRootScanner::scavengeFinalizableObjects(MM_EnvironmentStandard *env)
 
 	/* this code must be run single-threaded and we should only be here if work is actually required */
 	Assert_MM_true(env->_currentTask->isSynchronized());
-	Assert_MM_true(_scavenger->getDelegate()->getShouldScavengeFinalizableObjects());
+	Assert_MM_true(_scavengerDelegate->getShouldScavengeFinalizableObjects());
 	Assert_MM_true(finalizeListManager->isFinalizableObjectProcessingRequired());
 
 	{

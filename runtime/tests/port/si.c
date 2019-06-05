@@ -146,7 +146,7 @@ int j9sysinfo_test0 (J9PortLibrary* portLibrary, char* argv0)
 	 */
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	U_32 pid;
-	I_32 bufSize=575;		/*should sizeof(infoStirng), */
+	I_32 bufSize=575;		/*should sizeof(infoString), */
 	U_16 classpathSeparator;
 	UDATA number_CPUs;
 	char *result;
@@ -1762,7 +1762,7 @@ j9sysinfo_test_get_tmp4(struct J9PortLibrary *portLibrary)
 #endif /* !defined(WIN32) */
 
 /*
- * Test j9sysinfo_get_cwd when the buffer size == 0, then allocate required ammount of bites and try again.
+ * Test j9sysinfo_get_cwd when the buffer size == 0, then allocate required amount of bites and try again.
  * Expected result size of buffer required
  */
 I_32

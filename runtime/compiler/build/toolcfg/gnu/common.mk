@@ -173,6 +173,10 @@ ifeq ($(HOST_ARCH),arm)
     CX_FLAGS+=-fPIC -mfloat-abi=hard -mfpu=vfp -march=armv6 -marm
 endif
 
+ifeq ($(HOST_ARCH),aarch64)
+    CX_FLAGS+=-fPIC
+endif
+
 ifeq ($(C_COMPILER),clang)
     CX_FLAGS+=-Wno-parentheses -Werror=header-guard
 endif
@@ -352,6 +356,9 @@ ifeq ($(HOST_ARCH),z)
         ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
             M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
         endif
+        ifneq (,$(shell grep 'define J9VM_GC_COMPRESSED_POINTERS' $(J9SRC)/include/j9cfg.h))
+            M4_DEFINES+=OMR_GC_COMPRESSED_POINTERS
+        endif
     endif
 
     ifeq ($(BUILD_CONFIG),debug)
@@ -392,7 +399,29 @@ ifeq ($(HOST_ARCH),arm)
 
     SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
     SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
-endif
+endif # HOST_ARCH == arm
+
+#
+# Setup CPP to preprocess AArch64 Assembly Files
+#
+ifeq ($(HOST_ARCH),aarch64)
+    SPP_CMD=$(CC)
+
+    SPP_INCLUDES=$(PRODUCT_INCLUDES)
+    SPP_DEFINES+=$(CX_DEFINES)
+    SPP_FLAGS+=$(CX_FLAGS)
+
+    ifeq ($(BUILD_CONFIG),debug)
+        SPP_FLAGS+=$(SPP_FLAGS_DEBUG)
+    endif
+
+    ifeq ($(BUILD_CONFIG),prod)
+        SPP_FLAGS+=$(SPP_FLAGS_PROD)
+    endif
+
+    SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
+    SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
+endif # HOST_ARCH == aarch64
 
 #
 # Finally setup the linker

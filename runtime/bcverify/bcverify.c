@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -500,13 +500,13 @@ parseLocals (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9Bran
 		for (;localDelta; localDelta--) {
 			stackEntry = parseElement (verifyData, stackMapData);
 			if (localsCount >= maxLocals) {
-				/* Oveflow */
+				/* Overflow */
 				goto _overflow;
 			}
 			liveStack->stackElements[localsCount++] = stackEntry;
 			if ((BCV_BASE_TYPE_DOUBLE == stackEntry) || (BCV_BASE_TYPE_LONG == stackEntry)) {
 				if (localsCount >= maxLocals) {
-					/* Oveflow */
+					/* Overflow */
 					goto _overflow;
 				}
 				liveStack->stackElements[localsCount++] = BCV_BASE_TYPE_TOP;
@@ -1351,7 +1351,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 	maxStack = J9_MAX_STACK_FROM_ROM_METHOD(romMethod);
 
 	/* Jazz 105041: Initialize the 1st data slot on 'stack' with 'top' (placeholdler)
-	 * to avoid storing gargbage data type in the error message buffer
+	 * to avoid storing garbage data type in the error message buffer
 	 * when stack underflow occurs.
 	 */
 	liveStack->stackElements[liveStack->stackBaseIndex] = BCV_BASE_TYPE_TOP;
@@ -1689,7 +1689,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 		case RTV_SEND:
 			if (bc == JBinvokeinterface2) {
-				/* Set to point to JBinvokenterface */
+				/* Set to point to JBinvokeinterface */
 				bcIndex += 2;
 			}
 			index = PARAM_16(bcIndex, 1);
@@ -1708,11 +1708,11 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			stackTop -= getSendSlotsFromSignature(J9UTF8_DATA(utf8string));
 
 			if ((JBinvokestatic != bc) 
-				&& (JBinvokedynamic != bc)
-				&& (JBinvokestaticsplit != bc)
+			&& (JBinvokedynamic != bc)
+			&& (JBinvokestaticsplit != bc)
 			) {
 				if ((JBinvokespecial == bc) 
-					|| (JBinvokespecialsplit == bc)
+				|| (JBinvokespecialsplit == bc)
 				) {
 
 					type = POP;
@@ -2290,7 +2290,7 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 	J9BytecodeVerificationData * verifyData;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	JavaVM* jniVM = (JavaVM*)javaVM;
-    J9ThreadEnv* threadEnv;
+	J9ThreadEnv* threadEnv;
 
 	(*jniVM)->GetEnv(jniVM, (void**)&threadEnv, J9THREAD_VERSION_1_1);
 
@@ -2430,8 +2430,9 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 		if (!((romMethod->modifiers & J9AccNative) || (romMethod->modifiers & J9AccAbstract))) {
 			BOOLEAN isInitMethod = FALSE;
 
-	        /* BCV_TARGET_STACK_HEADER_UDATA_SIZE for pc/stackBase/stackEnd in J9BranchTargetStack and */
-	        /* BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE for late overflow detection of longs/doubles */
+			/* BCV_TARGET_STACK_HEADER_UDATA_SIZE for pc/stackBase/stackEnd in J9BranchTargetStack and
+			 * BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE for late overflow detection of longs/doubles
+			 */
 			verifyData->stackSize = (J9_MAX_STACK_FROM_ROM_METHOD(romMethod)
 									+ J9_ARG_COUNT_FROM_ROM_METHOD(romMethod)
 									+ J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod)
@@ -2452,7 +2453,6 @@ _fallBack:
 			createStackMaps = !classVersionRequiresStackmaps && (verifyData->ignoreStackMaps || !hasStackMaps);
 
 			if (createStackMaps) {
-				
 				verifyData->stackMapsCount = buildBranchMap(verifyData);
 				
 				if (verifyData->stackMapsCount == (UDATA)BCV_ERR_INTERNAL_ERROR) {

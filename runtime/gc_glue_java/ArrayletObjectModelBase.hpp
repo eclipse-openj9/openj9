@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,7 +131,7 @@ public:
 	{
 		bool needAlignment = false;
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		/* Compressed pointers require that each leaf starts at 8 aligned address.
 		 * Otherwise compressed leaf pointers will not work with shift value of 3.
 		 */

@@ -1,4 +1,4 @@
-// Copyright (c) 2017, 2018 IBM Corp. and others
+// Copyright (c) 2017, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,24 +21,37 @@
 Executable=module
 DATFileName=J9TraceFormat.dat
 
-TraceEntry=Trc_MODULE_freeJ9Module_entry Overhead=1 Level=5 Test Template="free module %s"
+TraceEntry=Trc_MODULE_freeJ9Module_entry Obsolete Overhead=1 Level=5 Test Template="free module %s"
 TraceExit=Trc_MODULE_freeJ9Module_exit NoEnv Overhead=1 Level=5 Test Template=" free j9module(%p)"
 
-TraceEvent=Trc_MODULE_creation_package Overhead=1 Level=4 Test Template="add package %s for module %s"
+TraceEvent=Trc_MODULE_creation_package Obsolete Overhead=1 Level=4 Test Template="add package %s for module %s"
 
-TraceEvent=Trc_MODULE_definition Overhead=1 Level=5 Template="JVM_DefineModule() define module %s"
+TraceEvent=Trc_MODULE_definition Obsolete Overhead=1 Level=5 Template="JVM_DefineModule() define module %s"
 
-TraceEvent=Trc_MODULE_set_bootloader_unnamed_module Overhead=1 Level=5 Template="JVM_SetBootLoaderUnnamedModule() set unnamed module for boot loader"
+TraceEvent=Trc_MODULE_set_bootloader_unnamed_module Obsolete Overhead=1 Level=5 Template="JVM_SetBootLoaderUnnamedModule() set unnamed module for boot loader"
 
-TraceEvent=Trc_MODULE_add_module_exports Overhead=1 Level=5 Test Template="export package %s in module %s to module %s"
-TraceEvent=Trc_MODULE_add_module_exports_to_all Overhead=1 Level=5 Test Template="export package %s in module %s to all modules"
-TraceEvent=Trc_MODULE_add_module_exports_to_all_unnamed Overhead=1 Level=5 Test Template="export package %s in module %s to all unnamed modules"
+TraceEvent=Trc_MODULE_add_module_exports Obsolete Overhead=1 Level=5 Test Template="export package %s in module %s to module %s"
+TraceEvent=Trc_MODULE_add_module_exports_to_all Obsolete Overhead=1 Level=5 Test Template="export package %s in module %s to all modules"
+TraceEvent=Trc_MODULE_add_module_exports_to_all_unnamed Obsolete Overhead=1 Level=5 Test Template="export package %s in module %s to all unnamed modules"
 
-TraceEvent=Trc_MODULE_add_reads_module Overhead=1 Level=5 Test Template="JVM_AddReadsModule() add read from module %s to module %s"
+TraceEvent=Trc_MODULE_add_reads_module Obsolete Overhead=1 Level=5 Test Template="JVM_AddReadsModule() add read from module %s to module %s"
 
-TraceEvent=Trc_MODULE_add_module_package Overhead=1 Level=5 Test Template="JVM_AddModulePackage() add package %s to module %s"
+TraceEvent=Trc_MODULE_add_module_package Obsolete Overhead=1 Level=5 Test Template="JVM_AddModulePackage() add package %s to module %s"
 
-TraceEvent=Trc_MODULE_setting_package Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s, module: %s"
+TraceEvent=Trc_MODULE_setting_package Obsolete Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s, module: %s"
 
 TraceException=Trc_VM_checkVisibility_failed_with_errortype Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) failed, error type: %s"
 TraceException=Trc_VM_checkVisibility_failed_with_errortype_romclass Overhead=1 Level=1 Template="checkVisibility from romClass=%p (%.*s) j9mod=%p to romClass=%p (%.*s) j9mod=%p failed, packagedef'n errcode=%zu, error type: %s"
+
+TraceEntry=Trc_MODULE_freeJ9ModuleV2_entry Overhead=1 Level=5 Test Template="free module %s (0x%p)"
+TraceEvent=Trc_MODULE_createPackage Overhead=1 Level=4 Test Template="add package %s for module %s (0x%p)"
+TraceEvent=Trc_MODULE_defineModule Overhead=1 Level=5 Template="JVM_DefineModule() defines module %s (0x%p)"
+TraceEvent=Trc_MODULE_setBootloaderUnnamedModule Overhead=1 Level=5 Template="JVM_SetBootLoaderUnnamedModule() sets unnamed module (0x%p) for boot loader"
+TraceEvent=Trc_MODULE_addModuleExports Overhead=1 Level=5 Test Template="export package %s in module %s (0x%p) to module %s (0x%p)"
+TraceEvent=Trc_MODULE_addModuleExportsToAll Overhead=1 Level=5 Test Template="export package %s in module %s (0x%p) to all modules"
+TraceEvent=Trc_MODULE_addModuleExportsToAllUnnamed Overhead=1 Level=5 Test Template="export package %s in module %s (0x%p) to all unnamed modules"
+TraceEvent=Trc_MODULE_addReadsModule Overhead=1 Level=5 Test Template="JVM_AddReadsModule() adds read from module %s (0x%p) to module %s (0x%p)"
+TraceEvent=Trc_MODULE_addModulePackage Overhead=1 Level=5 Test Template="JVM_AddModulePackage() adds package %s to module %s (0x%p)"
+TraceEvent=Trc_MODULE_setPackage Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s (0x%p), module: %s (0x%p)"
+TraceEvent=Trc_MODULE_invokeHashTableAtPut Overhead=1 Level=5 Test Template="%s invokes hashTableAtPut() : 0x%p->table (0x%p), value (0x%p, 0x%p) collisionIsFailure (%s)"
+TraceEvent=Trc_MODULE_hashTableAtPut NoEnv Overhead=1 Level=5 Test Template="hashTableAtPut() : table (0x%p), value (0x%p) node (0x%p) collisionIsFailure(false)"

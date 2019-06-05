@@ -1,7 +1,7 @@
 package com.ibm.j9.offload.tests.library;
 
 /*******************************************************************************
- * Copyright (c) 2008, 2012 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ public class LibraryTest extends TestCase {
 	/**
 	 * method that can be used to run the test by itself
 	 * 
-	 * @param args no valid arugments
+	 * @param args no valid arguments
 	 */
 	public static void main (String[] args) {
 		junit.textui.TestRunner.run(suite());

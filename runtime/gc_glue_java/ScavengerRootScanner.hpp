@@ -38,6 +38,7 @@
 #include "ReferenceObjectBuffer.hpp"
 #include "RootScanner.hpp"
 #include "Scavenger.hpp"
+#include "ScavengerDelegate.hpp"
 #include "ScavengerRootClearer.hpp"
 #include "ScavengerThreadRescanner.hpp"
 #include "StackSlotValidator.hpp"
@@ -56,6 +57,7 @@ class MM_ScavengerRootScanner : public MM_RootScanner
 private:
 	MM_Scavenger *_scavenger;
 	MM_ScavengerRootClearer _rootClearer;
+	MM_ScavengerDelegate *_scavengerDelegate;
 
 protected:
 
@@ -77,6 +79,7 @@ public:
 		: MM_RootScanner(env)
 		, _scavenger(scavenger)
 		, _rootClearer(env, scavenger)
+		, _scavengerDelegate(scavenger->getDelegate())
 	{
 		_typeId = __FUNCTION__;
 		setNurseryReferencesOnly(true);
@@ -146,7 +149,7 @@ public:
 	{
 		reportScanningStarted(RootScannerEntity_FinalizableObjects);
 		/* synchronization can be expensive so skip it if there's no work to do */
-		if (_scavenger->getDelegate()->getShouldScavengeFinalizableObjects()) {
+		if (_scavengerDelegate->getShouldScavengeFinalizableObjects()) {
 			if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 				scavengeFinalizableObjects(MM_EnvironmentStandard::getEnvironment(env));
 				env->_currentTask->releaseSynchronizedGCThreads(env);

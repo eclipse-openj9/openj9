@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ import javax.imageio.stream.ImageInputStream;
 
 /**
  * <p>This interface is used for classes which can produce instances of Image
- * implementors.</p>
+ * implementers.</p>
  *
  * <p>Classes that implement this interface should provide a zero argument, public
  * constructor so that they can be created using {@code Class.newInstance()}.</p>

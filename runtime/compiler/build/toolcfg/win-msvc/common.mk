@@ -78,10 +78,9 @@ CX_DEFINES+=\
     $(TARGET_DEFINES) \
     CRTAPI1=_cdecl \
     CRTAPI2=_cdecl \
-    _WIN95 \
-    _WIN32_WINDOWS=0x400 \
-    _WIN32_IE=0x300 \
-    WINVER=0x400 \
+    _WIN32_WINDOWS=0x601 \
+    _WIN32_WINNT=0x0601 \
+    WINVER=0x601\
     _WIN32 \
     WIN32 \
     _CRT_SECURE_NO_WARNINGS \
@@ -124,7 +123,6 @@ endif
 
 ifeq ($(HOST_BITS),64)
     CX_DEFINES+=\
-        _WIN32_WINNT=0x0400 \
         _WINSOCKAPI_ \
         J9HAMMER
 endif
@@ -214,8 +212,14 @@ SOLINK_FLAGS+=-nologo -nodefaultlib -incremental:no -debug
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 SOLINK_SLINK+=$(PRODUCT_SLINK) j9thr j9hookable kernel32 oldnames msvcrt msvcprt ws2_32
 
-ifneq (,$(filter 2015 2017, $(MSVC_VERSION)))
-    SOLINK_SLINK+=ucrt vcruntime
+ifeq ($(origin MSVC_VERSION), undefined)
+    ifneq (,$(filter 14.0 15.0, $(VisualStudioVersion)))
+        SOLINK_SLINK+=ucrt vcruntime
+    endif
+else
+    ifneq (,$(filter 2015 2017, $(MSVC_VERSION)))
+        SOLINK_SLINK+=ucrt vcruntime
+    endif
 endif
 
 SOLINK_DEF?=$(JIT_SCRIPT_DIR)/j9jit.def

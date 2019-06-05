@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -194,7 +194,7 @@ ClassFileWriter::analyzeROMClass()
 	 * If there are multiple call sites referring to same InvokeDynamic CP entry,
 	 * then the contents get duplicated as many times.
 	 *
-	 * Eg: Say there are two InvokeDynamic entris in .class
+	 * Eg: Say there are two InvokeDynamic entries in .class
 	 *
 	 * 		InvokeDynamic1
 	 * 			bootstrap_method_attr_index1
@@ -620,7 +620,7 @@ ClassFileWriter::writeConstantPool()
 			case CFR_CONSTANT_Utf8:
 			{
 				J9UTF8 * utf8 = (J9UTF8 *) entry->address;
-				/* If this is an anonClass, we must build the classData with the origianl name, 
+				/* If this is an anonClass, we must build the classData with the original name, 
 				 * not the anonClass name. There is only one copy of the className in the ROMClass,
 				 * so replace the matching anonClassName reference with the originalClassName reference  
 				 */

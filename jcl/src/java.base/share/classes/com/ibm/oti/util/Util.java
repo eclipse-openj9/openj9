@@ -1,8 +1,12 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.oti.util;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +29,7 @@ package com.ibm.oti.util;
 
 import java.io.UTFDataFormatException;
 import java.io.UnsupportedEncodingException;
+import java.security.ProtectionDomain;
 
 public final class Util {
 
@@ -210,4 +215,132 @@ public static boolean doesClassLoaderDescendFrom(ClassLoader currentLoader, Clas
 	}
 	return true;
 }
+
+/**
+ * Provide a way of printing text without
+ * allocating memory, in particular without String concatenation.
+ * Used when printing a stack trace for an OutOfMemoryError.
+ * @param buf Buffer to receive string
+ * @param s New data for string
+ */
+public static void appendTo(Appendable buf, CharSequence s) {
+	try {
+		buf.append(s);
+	} catch (java.io.IOException e) {
+		/* ignore */
+	}
+}
+
+@SuppressWarnings("all")
+private static final String digitChars[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ 
+/**
+ * Helper method for output with PrintStream and PrintWriter
+ * @param buf Buffer to receive string
+ * @param number number to be converted to a sequence of chars
+ */
+public static void appendTo(Appendable buf, int number) {
+	int j = 1;
+	int i = 0;
+	for (i = number; i >= 10; i /= 10) {
+		j *= 10;
+	}
+	Util.appendTo(buf, digitChars[i]);
+	while (j >= 10) {
+		number -= j * i;
+		j /= 10;
+		i = number / j;
+		appendTo(buf, digitChars[i]);
+	}
+}
+
+/**
+ * Helper method to print text without constructing new String objects
+ * @param buf destination for new text
+ * @param s text to append
+ * @param indents number of tabs to prepend
+ */
+public static void appendTo(Appendable buf, CharSequence s, int indents) {
+	for (int i=0; i<indents; i++) {
+		appendTo(buf, "\t"); //$NON-NLS-1$
+	}
+	appendTo(buf, s);
+}
+
+/**
+ * Helper method to print text without constructing new String objects
+ * @param buf destination for new text
+ */
+public static void appendLnTo(Appendable buf) {		
+	if (buf instanceof PrintStream) {
+		((PrintStream)buf).println();
+	} else if (buf instanceof PrintWriter) {
+		((PrintWriter)buf).println();
+	} else {
+		appendTo(buf, "\n"); //$NON-NLS-1$
+	}
+}
+
+/**
+ * Print a stack frame without allocating memory directly.
+ * @param e StackTraceElement to add
+ * @param elementSource location of the source file.  May be null.
+ * @param buf Receiver for the text
+ * @param extended add additional information
+ */
+public static void printStackTraceElement(StackTraceElement e, Object elementSource, Appendable buf, boolean extended) {
+	/*[IF Sidecar19-SE]*/
+	final java.lang.String modName = e.getModuleName();
+	if (null != modName) {
+		appendTo(buf, modName);
+		if (extended) {
+			String mVer = e.getModuleVersion();
+			if (null != mVer) {
+				appendTo(buf, "@"); //$NON-NLS-1$
+				appendTo(buf, mVer);
+			}
+		}
+		appendTo(buf, "/"); //$NON-NLS-1$
+	} else if (extended) {
+		appendTo(buf, "app//"); //$NON-NLS-1$
+	}
+	/*[ENDIF] Sidecar19-SE*/
+	appendTo(buf, e.getClassName());
+	appendTo(buf, "."); //$NON-NLS-1$
+	appendTo(buf, e.getMethodName());
+
+	appendTo(buf, "("); //$NON-NLS-1$
+	if (e.isNativeMethod()) {
+		appendTo(buf, "Native Method"); //$NON-NLS-1$
+	} else {
+		String fileName = e.getFileName();
+
+		if (fileName == null) {
+			appendTo(buf, "Unknown Source"); //$NON-NLS-1$
+		} else {
+			int lineNumber = e.getLineNumber();
+
+			appendTo(buf, fileName);
+			if (lineNumber >= 0) {
+				appendTo(buf, ":"); //$NON-NLS-1$
+				appendTo(buf, lineNumber);
+			}
+		}
+	}
+	appendTo(buf, ")"); //$NON-NLS-1$
+
+	/* Support for -verbose:stacktrace */
+	if (elementSource != null) {
+		appendTo(buf, " from "); //$NON-NLS-1$
+		if (elementSource instanceof String) {
+			appendTo(buf, (String)elementSource);
+		} else if (elementSource instanceof ProtectionDomain) {
+			ProtectionDomain pd = (ProtectionDomain)elementSource;
+			appendTo(buf, pd.getClassLoader().toString());
+			appendTo(buf, "("); //$NON-NLS-1$
+			appendTo(buf, pd.getCodeSource().getLocation().toString());
+			appendTo(buf, ")"); //$NON-NLS-1$
+		}
+	}
+}
+
 }

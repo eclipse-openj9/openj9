@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.target;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,5 +54,6 @@ public interface Command {
 	static final String GET_AGENT_PROPERTIES = "ATTACH_GETAGENTPROPERTIES"; //$NON-NLS-1$
 	static final String START_MANAGEMENT_AGENT = "ATTACH_START_MANAGEMENT_AGENT"; //$NON-NLS-1$
 	static final String START_LOCAL_MANAGEMENT_AGENT = "ATTACH_START_LOCAL_MANAGEMENT_AGENT"; //$NON-NLS-1$
+	static final String GET_THREAD_GROUP_INFO = "ATTACH_GET_THREAD_INFO"; //$NON-NLS-1$
 
 }

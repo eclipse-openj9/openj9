@@ -89,11 +89,15 @@ dumpCapabilities(J9JavaVM * vm, const jvmtiCapabilities *capabilities, const cha
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_threads_events);
 
 	/* JVMTI 9.0 */
+#if JAVA_SPEC_VERSION >= 9
 	PRINT_CAPABILITY(can_generate_early_vmstart);
 	PRINT_CAPABILITY(can_generate_early_class_hook_events);
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 	/* JVMTI 11 */
+#if JAVA_SPEC_VERSION >= 11
 	PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #undef PRINT_CAPABILITY
 }
 
@@ -117,7 +121,7 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 
 	memset(&rv_capabilities, 0, sizeof(jvmtiCapabilities));
 
-	/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
+	/* Get the JVMTI mutex to ensure to prevent multiple agents acquiring capabilities that can only be held by one agent at a time */
 
 	omrthread_monitor_enter(jvmtiData->mutex);
 
@@ -168,11 +172,12 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	if (isEventHookable(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC)) {
 		rv_capabilities.can_generate_vm_object_alloc_events = 1;
 	}
-	
+
+#if JAVA_SPEC_VERSION >= 11
 	if (isEventHookable(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC)) {
-		/* hardcode to 0 (not enabled) for empty JEP331 implementation */
-		rv_capabilities.can_generate_sampled_object_alloc_events = 0;
+		rv_capabilities.can_generate_sampled_object_alloc_events = 1;
 	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (isEventHookable(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND)) {
 		rv_capabilities.can_generate_native_method_bind_events = 1;
@@ -282,10 +287,12 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 		rv_capabilities.can_generate_resource_exhaustion_heap_events = 1;
 	}
 
+#if JAVA_SPEC_VERSION >= 9
 	if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
 		rv_capabilities.can_generate_early_vmstart = 1;
 		rv_capabilities.can_generate_early_class_hook_events = 1;
 	}
+#endif /* JAVA_SPEC_VERSION >= 9 */
 
 	rc = JVMTI_ERROR_NONE;
 	omrthread_monitor_exit(jvmtiData->mutex);
@@ -307,7 +314,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 	jvmtiCapabilities potentialCapabilities;
 	jvmtiCapabilities newCapabilities;
-	UDATA i;
+	UDATA i = 0;
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 	J9VMThread *currentThread = NULL;
 
@@ -322,7 +329,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 		rc = JVMTI_ERROR_NOT_AVAILABLE;
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
-		/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
+		/* Get the JVMTI mutex to ensure to prevent multiple agents acquiring capabilities that can only be held by one agent at a time */
 
 		omrthread_monitor_enter(jvmtiData->mutex);
 
@@ -350,7 +357,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 		/* can't request original method order after onLoad phase */
 
-		if (1 == newCapabilities.can_maintain_original_method_order) {
+		if (newCapabilities.can_maintain_original_method_order) {
 			if (J9_ARE_NO_BITS_SET(vm->requiredDebugAttributes, J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER)) {
 				if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
 					/* turn off ROMClassMethodSorting */
@@ -363,6 +370,16 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 				}
 			}
 		}
+
+#if JAVA_SPEC_VERSION >= 11
+		if (newCapabilities.can_generate_sampled_object_alloc_events) {
+			/* Initial sampling interval is MM_GCExtensions::oolObjectSamplingBytesGranularity which is 16M by default
+			 * or set by command line option -Xgc:allocationSamplingGranularity.
+			 * Set it to 512KB which is default sampling interval as per JEP 331 specification.
+			 */
+			vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(currentThread, 512 * 1024);
+		}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 		/* Always consider can_generate_compiled_method_load_events to be a newly-requested capability
 		 * so that hookNonEventCapabilities will fork the event thread if need be.
@@ -445,7 +462,7 @@ jvmtiRelinquishCapabilities(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(capabilities_ptr);
 
-	/* Get the JVMTI mutex to ensure to prevent multple agents releasing capabilities that can only be held by one agent at a time */
+	/* Get the JVMTI mutex to ensure to prevent multiple agents releasing capabilities that can only be held by one agent at a time */
 	/* Also prevents multiple threads from releasing capabilities in the same agent */
 
 	omrthread_monitor_enter(jvmtiData->mutex);
@@ -548,9 +565,11 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC);
 	}
 
+#if JAVA_SPEC_VERSION >= 11
 	if (capabilities->can_generate_sampled_object_alloc_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC);
 	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (capabilities->can_generate_object_free_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_OBJECT_FREE);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ public class JavaVMInitArgsTest extends DTFJUnitTest {
 		// TODO: Can probably implement this better or re-use something like DTFJunitTest.invokeMethod()
 		boolean ddrDataUnavailable = false;
 		boolean ddrCorruptData = false;
-		boolean jextractDataUnavailabe = false;
+		boolean jextractDataUnavailable = false;
 		boolean jextractCorruptData = false;
 		
 		try {
@@ -65,12 +65,12 @@ public class JavaVMInitArgsTest extends DTFJUnitTest {
 		try {
 			jextractObjects.add(jextractJavaRuntime.getJavaVMInitArgs());
 		} catch (DataUnavailable e) {
-			jextractDataUnavailabe = true;
+			jextractDataUnavailable = true;
 		} catch (CorruptDataException e) {
 			jextractCorruptData = true;
 		}
 		
-		assertEquals(jextractDataUnavailabe, ddrDataUnavailable);
+		assertEquals(jextractDataUnavailable, ddrDataUnavailable);
 		assertEquals(jextractCorruptData, ddrCorruptData);
 	}
 	

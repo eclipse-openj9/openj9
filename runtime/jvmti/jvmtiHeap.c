@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -470,7 +470,7 @@ countObjectTags(J9JVMTIObjectTag * entry, J9JVMTIObjectTagMatch * results)
  * @param env             jvmti environment
  * @param heap_filter     tag filter flags used to determine which objects are to be reported
  * @param klass           class filter 
- * @param initial_object  object to start following the references from. Set to null to start witht the Heap Roots
+ * @param initial_object  object to start following the references from. Set to null to start with the Heap Roots
  * @param callbacks       callbacks to be invoked for each reference type
  * @param user_data       user data to be passed back via the callbacks
  * @return                a jvmtiError value
@@ -698,7 +698,7 @@ heapReferenceFilter(J9JVMTIHeapData * iteratorData)
 {
 
 	/* If the class filter is set, check if this reference is what we are looking for,
-	 * otherwise continue itterating */
+	 * otherwise continue iterating */
 	if ((iteratorData->classFilter != NULL) && (iteratorData->classFilter != iteratorData->clazz)) {
 		if (iteratorData->event.type == J9JVMTI_HEAP_EVENT_NONE_REPORT_NOFOLLOW) {
 			return JVMTI_ITERATION_IGNORE;
@@ -1364,7 +1364,7 @@ iterateThroughHeapCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDes
 	clazz = J9OBJECT_CLAZZ_VM(vm, object);
 
 	/* If the class filter is set, check if this references is what we are looking for,
-	 * otherwise continue itterating */
+	 * otherwise continue iterating */
 	if ((iteratorData->classFilter != NULL) && (iteratorData->classFilter != clazz)) {
 		return JVMTI_ITERATION_CONTINUE;
 	}

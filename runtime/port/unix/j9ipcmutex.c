@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ union semun {
  * Acquires a named mutex for the calling process.
  *
  * If a Mutex with the same Name already exists, the function opens the existing Mutex and tries to lock it.
- * If another process already has the Mutex locked, the function will block indefinetely. 
+ * If another process already has the Mutex locked, the function will block indefinitely. 
  * If there is no Mutex with the same Name, the function will create it and lock it for the calling process of this function.
  *
  * @param[in] portLibrary The port library
@@ -125,7 +125,7 @@ j9ipcmutex_acquire(struct J9PortLibrary *portLibrary, const char *name)
 			return -1;
 		}
 
-		/* sempahore created, set initial value */
+		/* semaphore created, set initial value */
 		arg.val = 1;
 		if (semctl(sid, 0, SETVAL, arg) == -1) {
 			semctl(sid, 0, IPC_RMID, arg); /* cleanup semaphore from system */
@@ -176,7 +176,7 @@ j9ipcmutex_release(struct J9PortLibrary *portLibrary, const char *name)
 	/* get size required for semaphore path and name */
 	sPathLen = nameLen + sizeof("/tmp/");
 
-	/* check if length of semaphore name is empty or if it exeeds max size for path */
+	/* check if length of semaphore name is empty or if it exceeds max size for path */
 	if (nameLen == 0) {
 		return -1;
 	}

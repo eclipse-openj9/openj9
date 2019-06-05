@@ -89,9 +89,9 @@ MM_RegionBasedOverflowVLHGC::tearDown(MM_EnvironmentBase *env)
  * Empty a packet on overflow
  * 
  * Empty a packet to resolve overflow by dirtying the appropriate 
- * cards for each object withing a given packet
+ * cards for each object within a given packet
  * 
- * @param packet - Reference to packet to be empited
+ * @param packet - Reference to packet to be emptied
  * @param type - ignored for concurrent collector
  *  
  */
@@ -218,7 +218,7 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 			}
 		} else if ((OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT == envVLHGC->_cycleState->_type) && (GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT == scantype)) {
 			/* JAZZ 63834 handle new ownableSynchronizer processing in overflowed case
-		 	 * new processing currently only for CopyForwardScheme colloctor
+		 	 * new processing currently only for CopyForwardScheme collector
 		 	 */
 			if (isEvacuateRegion(region) && (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr))) {
 				/* To avoid adding duplication item (abort case the object need to be rescan and interregions remembered objects) 

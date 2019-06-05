@@ -23,6 +23,7 @@
 #include "x/codegen/CallSnippet.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/SnippetGCMap.hpp"
 #include "env/CompilerEnv.hpp"
@@ -773,88 +774,16 @@ TR::X86CallSnippet::alignCursorForCodePatching(
    }
 
 
-// Determine the appropriate interpreted dispatch helper based on the return
-// type of the target method.
-//
-TR_RuntimeHelper TR::X86CallSnippet::getInterpretedDispatchHelper(
-   TR::SymbolReference  *methodSymRef,
-   TR::DataType         type,
-   bool                  isSynchronized,
-   TR::CodeGenerator    *cg)
-   {
-   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-
-   if (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative())
-      return TR_icallVMprJavaSendNativeStatic;
-
-   if (methodSymbol->isHelper() &&
-       methodSymRef->isOSRInductionHelper())
-      {
-      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
-      }
-
-   TR_RuntimeHelper helper;
-
-   switch (type)
-      {
-      case TR::NoType:
-         helper = TR_X86interpreterVoidStaticGlue; break;
-
-      case TR::Int8:
-      case TR::Int16:
-      case TR::Int32:
-         helper = TR_X86interpreterIntStaticGlue; break;
-
-      case TR::Address:
-         helper = TR_X86interpreterAddressStaticGlue; break;
-
-      case TR::Int64:
-         helper = TR_X86interpreterLongStaticGlue; break;
-
-      case TR::Float:
-         helper = TR_X86interpreterFloatStaticGlue; break;
-
-      case TR::Double:
-         helper = TR_X86interpreterDoubleStaticGlue; break;
-
-      default:
-         TR_ASSERT(0, "Bad return data type for a call node.  DataType was %s\n",
-               cg->comp()->getDebug()->getName(type));
-         return (TR_RuntimeHelper)0;
-      }
-
-   if (isSynchronized)
-      {
-      // Choose the synchronized form of dispatch helper.
-      //
-      helper = (TR_RuntimeHelper)(((int32_t)helper)+1);
-      }
-
-   return helper;
-   }
-
-
-TR_RuntimeHelper
-TR::X86CallSnippet::getDirectToInterpreterHelper(
-   TR::MethodSymbol   *methodSymbol,
-   TR::DataType        type,
-   bool                synchronised)
-   {
-   return methodSymbol->getVMCallHelper();
-   }
-
-
 uint8_t *TR::X86CallSnippet::emitSnippetBody()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
-   uint8_t            *cursor = cg()->getBinaryBufferCursor();
-   TR::SymbolReference *methodSymRef = _realMethodSymbolReference ? _realMethodSymbolReference : getNode()->getSymbolReference();
-   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-   int32_t             disp32;
-   TR::Compilation *comp = cg()->comp();
+   TR::Compilation*     comp         = cg()->comp();
+   TR_J9VMBase*         fej9         = (TR_J9VMBase *)(cg()->fe());
+   TR::SymbolReference* methodSymRef = _realMethodSymbolReference ? _realMethodSymbolReference : getNode()->getSymbolReference();
+   TR::MethodSymbol*    methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   uint8_t*             cursor       = cg()->getBinaryBufferCursor();
 
    bool needToSetCodeLocation = true;
-   bool isJitInduceOSRCall = false;
+   bool isJitInduceOSRCall    = false;
 
    if (TR::Compiler->target.is64Bit() &&
        methodSymbol->isHelper() &&
@@ -890,21 +819,21 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       // 64-bit
       // ======
       //       align 8
-      // (10)  call  interpreterUnresolved{Static|Special}Glue  ; replaced with "mov rdi, 0x0000aabbccddeeff"
-      // (5)   call  updateInterpreterDispatchGlueSite          ; replaced with "JMP disp32"
-      // (2)   dw    2-byte glue method helper index
-      // (8)   dq    cpAddr
-      // (4)   dd    cpIndex
+      // (10)  CALL  interpreterUnresolved{Static|Special}Glue  ; replaced with "mov rdi, 0x0000aabbccddeeff"
+      // (5)   JMP   interpreterStaticAndSpecialGlue
+      // (2)   DW    2-byte glue method helper index
+      // (8)   DQ    cpAddr
+      // (4)   DD    cpIndex
       //
       // 32-bit
       // ======
       //       align 8
-      // (5)   call  interpreterUnresolved{Static|Special}Glue  ; replaced with "mov edi, 0xaabbccdd"
+      // (5)   CALL  interpreterUnresolved{Static|Special}Glue  ; replaced with "mov edi, 0xaabbccdd"
       // (3)   NOP
-      // (5)   call  updateInterpreterDispatchGlueSite          ; replaced with "JMP disp32"
-      // (2)   dw    2-byte glue method helper index
-      // (4)   dd    cpAddr
-      // (4)   dd    cpIndex
+      // (5)   JMP   interpreterStaticAndSpecialGlue
+      // (2)   DW    2-byte glue method helper index
+      // (4)   DD    cpAddr
+      // (4)   DD    cpIndex
       //
 
       TR_ASSERT(!isJitInduceOSRCall || !forceUnresolvedDispatch, "calling jitInduceOSR is not supported yet under AOT\n");
@@ -930,14 +859,13 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(resolutionHelper, false, false, false);
 
       *cursor++ = 0xe8;    // CALL
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helperSymRef);
-      *(int32_t *)cursor = disp32;
+      *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, helperSymRef);
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory())
-         TR::ExternalRelocation(cursor,
-                                    (uint8_t *)helperSymRef,
-                                    TR_HelperAddress,
-                                    cg()),  __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                    (uint8_t *)helperSymRef,
+                                                                                    TR_HelperAddress,
+                                                                                    cg()),
+                                  __FILE__, __LINE__, getNode());
       cursor += 4;
 
       if (TR::Compiler->target.is64Bit())
@@ -955,25 +883,22 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          cursor = cg()->generatePadding(cursor, 3);
          }
 
-      // CALL updateInterpreterDispatchGlueSite
+      // JMP interpreterStaticAndSpecialGlue
       //
       helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue, false, false, false);
 
       *cursor++ = 0xe9;    // JMP
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helperSymRef);
-      *(int32_t *)cursor = disp32;
+      *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, helperSymRef);
 
-      cg()->addExternalRelocation(new (cg()->trHeapMemory())
-         TR::ExternalRelocation(cursor,
-                                    (uint8_t *)helperSymRef,
-                                    TR_HelperAddress,
-                                    cg()),  __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                    (uint8_t*)helperSymRef,
+                                                                                    TR_HelperAddress,
+                                                                                    cg()),
+                                  __FILE__, __LINE__, getNode());
       cursor += 4;
 
       // DW dispatch helper index for the method's return type.
-      //
-      TR_RuntimeHelper dispatchHelper = getInterpretedDispatchHelper(methodSymRef, getNode()->getDataType(), false, cg());
-      *(uint16_t *)cursor = (uint16_t)dispatchHelper;
+      // this argument is not in use and hence will be cleaned-up in a subsequent changeset.
       cursor += 2;
 
       // DD/DQ cpAddr
@@ -981,16 +906,12 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       intptrj_t cpAddr = (intptrj_t)methodSymRef->getOwningMethod(comp)->constantPool();
       *(intptrj_t *)cursor = cpAddr;
 
-      TR::Relocation *relocation;
-
-      relocation = new (cg()->trHeapMemory()) TR::ExternalRelocation(
-            cursor,
-            *(uint8_t **)cursor,
-             getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-            TR_ConstantPool,
-            cg());
-
-      cg()->addExternalRelocation(relocation, __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                    *(uint8_t **)cursor,
+                                                                                    getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                    TR_ConstantPool,
+                                                                                    cg()),
+                                  __FILE__, __LINE__, getNode());
       cursor += sizeof(intptrj_t);
 
       // DD cpIndex
@@ -1006,13 +927,13 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       // ======
 
       // (10)  MOV rdi, 0x0000aabbccddeeff                      ; load RAM method
-      // (5)   JMP interpreter{*}StaticGlue
+      // (5)   JMP interpreterStaticAndSpecialGlue
       //
       // 32-bit
       // ======
       //
-      // (5)   mov edi, 0xaabbccdd                              ; load RAM method
-      // (5)   JMP interpreter{*}StaticGlue
+      // (5)   MOV edi, 0xaabbccdd                              ; load RAM method
+      // (5)   JMP interpreterStaticAndSpecialGlue
       //
 
       if (needToSetCodeLocation)
@@ -1051,12 +972,12 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                  (uint8_t *)ramMethod,
-                                                                  (uint8_t *)TR::SymbolType::typeMethod,
-                                                                  TR_SymbolFromManager,
-                                                                  cg()),  __FILE__, __LINE__, getNode());
+                                                                                          (uint8_t *)ramMethod,
+                                                                                          (uint8_t *)TR::SymbolType::typeMethod,
+                                                                                          TR_SymbolFromManager,
+                                                                                          cg()),
+                                        __FILE__, __LINE__, getNode());
             }
-
 
          // HCR in TR::X86CallSnippet::emitSnippetBody register the method address
          //
@@ -1066,28 +987,22 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          cursor += sizeof(intptrj_t);
          }
 
-      // JMP imm32
+      // JMP interpreterStaticAndSpecialGlue
       //
       *cursor++ = 0xe9;
 
-      TR_RuntimeHelper dispatchHelper;
+      TR::SymbolReference* dispatchSymRef =
+          methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper() ? methodSymRef :
+                                                                             cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue, false, false, false);
 
-      dispatchHelper = getInterpretedDispatchHelper(
-         methodSymRef,
-         getNode()->getDataType(),
-         methodSymbol->isSynchronised(),
-         cg());
-      TR::SymbolReference *dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(dispatchHelper, false, false, false);
-
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, dispatchSymRef);
-      *(int32_t *)cursor = disp32;
+      *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, dispatchSymRef);
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                            (uint8_t *)dispatchSymRef,
-                                                            TR_HelperAddress,
-                                                            cg()),  __FILE__, __LINE__, getNode());
+                                                                                    (uint8_t *)dispatchSymRef,
+                                                                                    TR_HelperAddress,
+                                                                                    cg()),
+                                  __FILE__, __LINE__, getNode());
       cursor += 4;
-
       }
 
    return cursor;

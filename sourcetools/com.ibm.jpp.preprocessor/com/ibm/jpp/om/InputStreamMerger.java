@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Attempts to seamlessy merge two input streams so that they behave as one.
+ * Attempts to seamlessly merge two input streams so that they behave as one.
  */
 public class InputStreamMerger extends InputStream {
 	private final InputStream prepend;

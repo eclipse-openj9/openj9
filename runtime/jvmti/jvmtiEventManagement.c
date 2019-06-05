@@ -150,9 +150,11 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 					ENSURE_CAPABILITY(env, can_generate_vm_object_alloc_events);
 					break;
 
+#if JAVA_SPEC_VERSION >= 11
 				case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
 					ENSURE_CAPABILITY(env, can_generate_sampled_object_alloc_events);
 					break;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 				case JVMTI_EVENT_NATIVE_METHOD_BIND:
 					ENSURE_CAPABILITY(env, can_generate_native_method_bind_events);

@@ -223,7 +223,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 
    // asheikh 2005-05-05: Code Cache Reclamation does not work on ppc
    // without counting method bodies.  _countingPatchCallSite still refers
-   // to the methodInfo poitner in the snippet area.
+   // to the methodInfo pointer in the snippet area.
    if (linkageInfo->isSamplingMethodBody() && !codeMemoryWasAlreadyReleased)
       {
       if(DEBUG_ARM_RECOMP)

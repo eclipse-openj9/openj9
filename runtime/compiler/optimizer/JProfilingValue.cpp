@@ -498,7 +498,7 @@ TR_JProfilingValue::addProfilingTrees(
    if (optionalTest)
       {
       TR::SymbolReference *storedObjectSymRef = NULL;
-      // If we have generated an optionalTest means we might be dereferencing an Object in profiing trees and to avoid
+      // If we have generated an optionalTest means we might be dereferencing an Object in profiling trees and to avoid
       // dereferencing NULL we generate a NULL test. Most commonly when we profile VFT Pointers.
       // In this case we need to store object in temp slot and replace subbsequent reference to that object
       // Usually splitting of block takes care of uncommoning but in cases when we have a first reference of these objects in the

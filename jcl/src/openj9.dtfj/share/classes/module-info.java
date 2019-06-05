@@ -21,6 +21,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+/*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
+
 /**
  * Diagnostic Tool Framework for Java&trade; (DTFJ)
  *
@@ -29,19 +31,19 @@
  * tools. DTFJ works with data from a system dump or a Javadump.
  */
 module openj9.dtfj {
-	requires transitive java.desktop;
-	requires transitive java.logging;
-	requires java.xml;
-	requires openj9.traceformat;
-	/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
-	requires com.ibm.jzos;
-	/*[ENDIF]*/
-	exports com.ibm.dtfj.image;
-	exports com.ibm.dtfj.image.j9 to openj9.dtfjview;
-	exports com.ibm.dtfj.java;
-	exports com.ibm.dtfj.runtime;
-	exports com.ibm.dtfj.utils.file to openj9.dtfjview;
-	exports com.ibm.java.diagnostics.utils to openj9.dtfjview;
-	exports com.ibm.java.diagnostics.utils.commands to openj9.dtfjview;
-	exports com.ibm.java.diagnostics.utils.plugins to openj9.dtfjview;
+  requires transitive java.desktop;
+  requires transitive java.logging;
+  requires java.xml;
+  requires openj9.traceformat;
+  /*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
+  requires com.ibm.jzos;
+  /*[ENDIF]*/
+  exports com.ibm.dtfj.image;
+  exports com.ibm.dtfj.image.j9 to openj9.dtfjview;
+  exports com.ibm.dtfj.java;
+  exports com.ibm.dtfj.runtime;
+  exports com.ibm.dtfj.utils.file to openj9.dtfjview;
+  exports com.ibm.java.diagnostics.utils to openj9.dtfjview;
+  exports com.ibm.java.diagnostics.utils.commands to openj9.dtfjview;
+  exports com.ibm.java.diagnostics.utils.plugins to openj9.dtfjview;
 }

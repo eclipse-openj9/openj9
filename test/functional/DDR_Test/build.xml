@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,10 +37,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8" />
 		<then>
-			<property name="j9ddr" location="${JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
+			<property name="j9ddr" location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
 		</then>
 		<else>
-			<property name="j9ddr" location="${JDK_HOME}/lib/ddr/j9ddr.jar" />
+			<property name="j9ddr" location="${TEST_JDK_HOME}/lib/ddr/j9ddr.jar" />
 		</else>
 	</if>
 
@@ -52,10 +52,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:       yes</echo>
-		<echo>===executable: ${compiler.javac}</echo>
-		<echo>===debug:      on</echo>
-		<echo>===destdir:    ${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}" />
 			<src path="${transformerListener}" />
@@ -97,18 +97,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</target>
 
 	<!-- Temporarily disable compilation on zos until ddr is supported; github.com/eclipse/openj9/issues/1511 -->
-	<!-- Temporarily disable compilation osx until ddr is supported; github.com/eclipse/openj9/issues/3366 -->
 	<target name="build" >
 		<echo>os.name: ${os.name}</echo>
 		<if>
-			<and>
-				<not>
-					<equals arg1="${os.name}" arg2="z/OS" />
-				</not>
-				<not>
-					<matches string="${os.name}" pattern="(Mac OS X)" />
-				</not>
-			</and>
+			<not>
+				<equals arg1="${os.name}" arg2="z/OS" />
+			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>

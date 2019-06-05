@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-   Copyright (c) 2017, 2018 IBM Corp. and others
+   Copyright (c) 2017, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,10 +63,10 @@
 		<echo>Ant version is ${ant.version}</echo>
 		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:			${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:				${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<if>
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -86,10 +86,10 @@
 		<echo>Ant version is ${ant.version}</echo>
 		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:			${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:				${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<if>
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -109,10 +109,10 @@
 		<echo>Ant version is ${ant.version}</echo>
 		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:			${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:				${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<if>
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -131,10 +131,10 @@
 		<echo>Compiling the test source code</echo>
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:				yes</echo>
-		<echo>===executable:			${compiler.javac}</echo>
-		<echo>===debug:				on</echo>
-		<echo>===destdir:				${DEST}</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
 		<if>
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>

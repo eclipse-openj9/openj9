@@ -854,7 +854,7 @@ END_PROC(jitFillOSRBufferReturn)
 
 dnl Expects r3 to already contain the vmThread.
 dnl Expects r4 to already contain the address being loaded from.
-START_PROC(jitReadBarrier)
+START_PROC(jitSoftwareReadBarrier)
 ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
 	staddr r0,JIT_GPR_SAVE_SLOT(0)
 	SAVE_LR
@@ -875,10 +875,10 @@ ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
 	laddr r0,JIT_GPR_SAVE_SLOT(0)
 	blr
 },{
-dnl jitReadBarrier is not supported if OMR_GC_CONCURRENT_SCAVENGER is not set
+dnl jitSoftwareReadBarrier is not supported if OMR_GC_CONCURRENT_SCAVENGER is not set
 	trap
 })
-END_PROC(jitReadBarrier)
+END_PROC(jitSoftwareReadBarrier)
 
 dnl Expects r3 to already contain vmThread.
 dnl Expects r4 to already contain srcObj.

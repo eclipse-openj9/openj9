@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ public class TraceFileHeaderWriter {
 	 * flavours.
 	 * 
 	 * @param snapTraceFileName the filename to write the trace header to
-	 * @param bigEndian true if the dump came from a big endian sytem.
+	 * @param bigEndian true if the dump came from a big endian system.
 	 * @param cpuCount the number of cpu's on the system the dump came from
 	 * @param wordSize the wordsize of the system the dump came from
 	 * @param bufferSize the size of the trace buffers in the dump

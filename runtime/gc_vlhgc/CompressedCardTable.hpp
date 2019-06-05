@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ public:
 	/**
 	 * Set all Compressed Cards correspondent with given heap range dirty for partial collect
 	 * @param startHeapAddress start heap address
-	 * @param endHeapAddress end heap adress
+	 * @param endHeapAddress end heap address
 	 */
 	void setCompressedCardsDirtyForPartialCollect(void *startHeapAddress, void *endHeapAddress);
 
@@ -73,7 +73,7 @@ public:
 	 * Card is going to be marked dirty if original card is dirty for partial collect
 	 * @param env current thread environment
 	 * @param startHeapAddress start heap address
-	 * @param endHeapAddress end heap adress
+	 * @param endHeapAddress end heap address
 	 */
 	void rebuildCompressedCardTableForPartialCollect(MM_EnvironmentBase *env, void *startHeapAddress, void *endHeapAddress);
 
@@ -173,7 +173,7 @@ private:
 	 * @param env current thread environment
 	 * @param cardCleaner given Card Cleaner
 	 * @param startHeapAddress start heap address
-	 * @param endHeapAddress end heap adress
+	 * @param endHeapAddress end heap address
 	 */
 	void cleanCardsInRange(MM_EnvironmentBase *env, MM_CardCleaner *cardCleaner, void *startHeapAddress, void *endHeapAddress);
 };

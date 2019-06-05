@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ private:
 	/* indicator of whether the agent should stop doing its action */
 	bool _done;
 
-	/* monitor used to co-ordinate with the thread that calls runAction on each interval */
+	/* monitor used to coordinate with the thread that calls runAction on each interval */
 	omrthread_monitor_t _monitor;
 
 	/* env that interval thread can use when running jni */

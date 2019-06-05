@@ -51,7 +51,7 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
      _symRefTab(symRefTab),
      _classLookaheadSymRefTab(NULL),
      _blockAddedVisitCount(comp->incVisitCount()),
-     _generateWriteBarriersForGC(comp->getOptions()->getGcMode() != TR_WrtbarNone),
+     _generateWriteBarriersForGC(TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none),
      _generateWriteBarriersForFieldWatch(comp->getOption(TR_EnableFieldWatch)),
      _generateReadBarriersForFieldWatch(comp->getOption(TR_EnableFieldWatch)),
      _suppressSpineChecks(false),
@@ -163,7 +163,7 @@ TR_J9ByteCodeIlGenerator::genIL()
     * the optimization that replaces df.format(bd.doubleValue()) and
     * df.format(bd.floatValue()) with, respectively,
     * DecimalFormatHelper.formatAsDouble(df, bd) and
-    * DecimalFormatHelper.formasAsFloat(df, bd) in which bd is a BigDecimal object
+    * DecimalFormatHelper.formatAsFloat(df, bd) in which bd is a BigDecimal object
     * and df is DecimalFormat object. The latter pair of calls are much faster than
     * the former ones because it avoids many of the conversions that the former
     * performs.
@@ -448,7 +448,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       }
 
 
-   // Code perteining to the secondary/upgrade compilation queue
+   // Code pertaining to the secondary/upgrade compilation queue
    // If the method is small, doesn't have loops or calls, then do not try to upgrade it
    if (comp()->isOutermostMethod() && comp()->getOptimizationPlan()->shouldAddToUpgradeQueue())
       {
@@ -1367,7 +1367,7 @@ TR_J9ByteCodeIlGenerator::genDFPGetHWAvailable()
 
       bool is390DFP =
 #ifdef TR_TARGET_S390
-         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getS390SupportsDFP();
+         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
 #else
          false;
 #endif
@@ -1810,13 +1810,13 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
 
       parmIteratorIdx = 1;
 
-      // We have 4 scenarioes to deal with:
+      // We have 4 scenarios to deal with:
       // slot0StillActive:  no matter if slot0Modified or not, we cannot touch slot0 itself.
       //                    By and large, these should account for the majority cases for DLT.
       //                    There is no difference from normal JIT in these cases;
       //                    For modified case, we need to refresh the syncObjectTemp;
       // slot0 not active and notModified either:
-      //                    This is the most likely errie scenario we can encounter. For exception
+      //                    This is the most likely error scenario we can encounter. For exception
       //                    handling purpose, we have to reinstate slot0, and we cannot go wrong.
       // slot0 not active but modified:
       //                    We cannot do much about it until METADATA can carry the receiver info

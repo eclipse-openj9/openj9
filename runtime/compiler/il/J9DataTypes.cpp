@@ -55,7 +55,7 @@ static TR::ILOpCodes conversionMapTR2OMR[TR::NumTypes-TR::NumOMRTypes][TR::NumOM
 //                                       No      Int8     Int16    Int32     Int64   Float     Double    Addr     VectorInt8 VectorInt16 VectorInt32 VectorInt64 VectorFloat VectorDouble
    {
 /* DecimalFloat */                     { TR_Bad, TR::df2b,TR::df2s,TR::df2i,TR::df2l,TR::df2f, TR::df2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalFloat
-/* DecimalDouble */                    { TR_Bad, TR::dd2b,TR::dd2s,TR::dd2i,TR::dd2l,TR::dd2f, TR::dd2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalDoubl
+/* DecimalDouble */                    { TR_Bad, TR::dd2b,TR::dd2s,TR::dd2i,TR::dd2l,TR::dd2f, TR::dd2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalDouble
 /* DecimalLongDouble */                { TR_Bad, TR::de2b,TR::de2s,TR::de2i,TR::de2l,TR::de2f, TR::de2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalLongD
 /* PackedDecimal */                    { TR_Bad, TR_Bad,  TR_Bad,  TR::pd2i,TR::pd2l,TR::pd2f, TR::pd2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // PackedDecima
 /* ZonedDecimal */                     { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal

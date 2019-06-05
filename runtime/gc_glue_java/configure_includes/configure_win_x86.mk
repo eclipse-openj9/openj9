@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,20 +56,6 @@ ifeq (win_x86-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
-ifeq (win_x86-64_cmprssptrs_sp, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_WIN32 \
-		--enable-OMR_ARCH_X86 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_GC_TLH_PREFETCH_FTA \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
-		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-endif
-
 ifeq (win_x86-64, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_WIN32 \
@@ -93,17 +79,6 @@ ifeq (win_x86-64_purec, $(SPEC))
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
-ifeq (win_x86-64_sp, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_WIN32 \
-		--enable-OMR_ARCH_X86 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_TLH_PREFETCH_FTA \
-		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-endif
-
 ifeq (win_x86, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_WIN32 \
@@ -115,16 +90,6 @@ ifeq (win_x86, $(SPEC))
 endif
 
 ifeq (win_x86_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_WIN32 \
-		--enable-OMR_ARCH_X86 \
-		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_TLH_PREFETCH_FTA \
-		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-endif
-
-ifeq (win_x86_sp, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \

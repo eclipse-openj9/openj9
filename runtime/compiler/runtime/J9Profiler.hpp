@@ -137,7 +137,7 @@ class TR_PersistentProfileInfo
    static TR_PersistentProfileInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
 
    /**
-    * Methods for managing reference count to this info from persistent data stuctures, such
+    * Methods for managing reference count to this info from persistent data structures, such
     * as MethodInfo and from jitted code.
     */
    static void decRefCount(TR_PersistentProfileInfo* info);
@@ -657,9 +657,9 @@ class TR_BlockFrequencyInfo
    TR_ByteCodeInfo * const _blocks;
    int32_t         * const _frequencies;
 
-   // counterDeriviationInfo is used by JProfiling to store which counters to add and subtract to derrive
+   // counterDerivationInfo is used by JProfiling to store which counters to add and subtract to derive
    // the frequency of a basic block. A NULL entry represents no counters, a low tagged entry represents
-   // a single block which can be obtained by right shifiting the entry by 1, otherwise it will be a pointer
+   // a single block which can be obtained by right shifting the entry by 1, otherwise it will be a pointer
    // to a TR_BitVector holding the counters to add together
    TR_BitVector    ** _counterDerivationInfo;
    int32_t         _entryBlockNumber;
@@ -812,7 +812,7 @@ class TR_AccessedProfileInfo
  * carry out at runtime. To achieve these, it maintains a list of all persistent profile
  * info. It will:
  *
- * 1) Deallocate persitent profile info. Once persistent profile info has a reference count
+ * 1) Deallocate persistent profile info. Once persistent profile info has a reference count
  *    of 0, its no longer needed. The profile info thread will detect this, removing the
  *    info from the list and deallocating its persistent memory.
  *

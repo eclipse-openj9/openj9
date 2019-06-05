@@ -27,8 +27,11 @@
 		<testCaseName>jsr335tests_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
+			<variation>Mode600</variation>
 			<variation>Mode101</variation>
+			<variation>Mode601</variation>
 			<variation>Mode110</variation>
+			<variation>Mode610</variation>
 			<variation>Mode301</variation>
 			<variation>Mode501</variation>
 		</variations>
@@ -53,8 +56,11 @@
 		<testCaseName>jsr335tests</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
+			<variation>Mode600</variation>
 			<variation>Mode101</variation>
+			<variation>Mode601</variation>
 			<variation>Mode110</variation>
+			<variation>Mode610</variation>
 			<variation>Mode301</variation>
 			<variation>Mode501</variation>
 		</variations>

@@ -342,9 +342,7 @@
 	<test>
 		<testCaseName>TestJava9AttachAPI</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	-Djava.sidecar=$(Q)--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJava9AttachAPI \

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,7 @@ MM_EnvironmentVLHGC::initializeGCThread()
 	UDATA threadPoolSize = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 	/* Make this thread aware of its RSCL buckets for all regions */
 	_rememberedSetCardBucketPool = &extensions->rememberedSetCardBucketPool[getSlaveID() * threadPoolSize];
-    /* Associate buckets with approprate RSCL (each RSCL maintains a list of its own buckets) */
+    /* Associate buckets with appropriate RSCL (each RSCL maintains a list of its own buckets) */
 	extensions->interRegionRememberedSet->threadLocalInitialize(this);
 }
 

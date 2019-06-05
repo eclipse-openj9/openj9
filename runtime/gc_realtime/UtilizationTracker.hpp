@@ -1,6 +1,5 @@
- 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,11 +28,7 @@
 #if !defined(UTILIZATIONTRACKER_HPP_)
 #define UTILIZATIONTRACKER_HPP_
 
-#include "j9.h"
-#include "j9cfg.h"
-
 #include "Base.hpp"
-#include "GCExtensions.hpp"
 #include "Metronome.hpp"
 
 class MM_EnvironmentBase;
@@ -45,7 +40,6 @@ class MM_Scheduler;
 /**
  * This class tracks the current mutator utilization by remembering what executed (and the interleaving)
  * in the last time window.  When gang-scheduling (aka Metronome) there will be only one instance globally.
- * For Staccato, there will be one instance per thread.
  *
  * @todo Potentially make the backing data-structure dynamic or dependent on the time-window size.
  *
@@ -63,7 +57,7 @@ private:
 	double _targetUtilization;                            /**< The minimum target utilization we are trying to maintain.  Typically, 70%. */
 	U_64 _maxGCSlice;                                     /**< The maximum we would like the GC to run at a time.  Typically, 500us. */
 	U_64 _nanosLeftInCurrentSlice;                        /**< How many nanos are left in the current time slice before we violate either _maxGCSlice or utilization target. */
-	double _currentUtilization;                           /**< The current utilization exclusing the current incomplete time slice. */
+	double _currentUtilization;                           /**< The current utilization excluding the current incomplete time slice. */
 	U_64 _lastUpdateTime;
 	
 	double _timeSliceDuration[UTILIZATION_WINDOW_SIZE];   /**< How long is the time slice in seconds? */

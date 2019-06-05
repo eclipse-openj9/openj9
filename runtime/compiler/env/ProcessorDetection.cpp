@@ -466,108 +466,6 @@ TR_J9VMBase::getPPCSupportsVSXRegisters()
 
 // -----------------------------------------------------------------------------
 
-extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
-
-char TR_J9VMBase::x86VendorID[] = {'U','n','k','n','o','w','n','B','r','a','n','d','\0'};
-bool TR_J9VMBase::x86VendorIDInitialized = false;
-
-void
-TR_J9VMBase::initializeX86ProcessorInfo(J9JITConfig *jitConfig)
-   {
-   TR_ASSERT(jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-
-   // Terminate the vendor ID with NULL before returning.
-   //
-   strncpy(x86VendorID, queryX86TargetCPUID(jitConfig->javaVM)->_vendorId, 12);
-   x86VendorID[12] = '\0';
-   x86VendorIDInitialized = true;
-
-   // Initialize processorFeatureFlags
-   //
-#if defined(TR_TARGET_X86)
-   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags);
-   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags2(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags2);
-   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags8(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags8);
-#endif // TR_TARGET_X86
-   }
-
-
-const char *
-TR_J9VMBase::getX86ProcessorVendorId()
-   {
-   TR_ASSERT(x86VendorIDInitialized, "X86 Vendor ID has not yet been initialized");
-   return x86VendorID;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorSignature()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_processorSignature;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorFeatureFlags()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_featureFlags;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorFeatureFlags2()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_featureFlags2;
-   }
-
-uint32_t
-TR_J9VMBase::getX86ProcessorFeatureFlags8()
-   {
-   TR_ASSERT(_jitConfig, "jitConfig is not defined!");
-   TR_ASSERT(_jitConfig->javaVM, "jitConfig->javaVM is not defined!");
-   return queryX86TargetCPUID(_jitConfig->javaVM)->_featureFlags8;
-   }
-
-bool
-TR_J9VMBase::testOSForSSESupport()
-   {
-   return true; // VM guarantees SSE/SSE2 are available
-   }
-
-bool
-TR_J9VMBase::getX86SupportsSSE4_1()
-   {
-   uint32_t flags = getX86ProcessorFeatureFlags2();
-   if ((flags & 0x00080000) != 0x00080000)
-      return false;
-   return true;
-   }
-
-bool
-TR_J9VMBase::getX86SupportsHLE()
-   {
-   uint32_t flags8 = getX86ProcessorFeatureFlags8();
-   if ((flags8 & TR_HLE) != 0x00000000)
-      return true;
-   else return false;
-   }
-
-bool
-TR_J9VMBase::getX86SupportsPOPCNT()
-   {
-   uint32_t flags2 = getX86ProcessorFeatureFlags2();
-   if ((flags2 & TR_POPCNT) != 0x00000000)
-      return true;
-   else return false;
-   }
-
-
-// -----------------------------------------------------------------------------
-
 // For Verbose Log
 int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
    {
@@ -665,93 +563,7 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
       {
       int32_t machineId = TR::Compiler->target.cpu.TO_PORTLIB_get390MachineId();
 
-      switch (machineId)
-         {
-         case TR_FREEWAY:
-            returnValue = snprintf(processorName, stringLength, "z900 (%d)", machineId);
-         break;
-
-         case TR_Z800:
-            returnValue = snprintf(processorName, stringLength, "z800 (%d)", machineId);
-         break;
-
-         // zPDT
-         case TR_MIRAGE:
-         case TR_MIRAGE2:
-            returnValue = snprintf(processorName, stringLength, "zPDT (%d)", machineId);
-         break;
-
-         case TR_TREX:
-            returnValue = snprintf(processorName, stringLength, "z990 (%d)", machineId);
-         break;
-
-         case TR_Z890:
-            returnValue = snprintf(processorName, stringLength, "z890 (%d)", machineId);
-         break;
-
-         case TR_GOLDEN_EAGLE:
-            returnValue = snprintf(processorName, stringLength, "z9 (%d)", machineId);
-         break;
-
-         case TR_Z9BC:
-            returnValue = snprintf(processorName, stringLength, "z9BC (%d)", machineId);
-         break;
-
-         case TR_Z10:
-            returnValue = snprintf(processorName, stringLength, "z10 (%d)", machineId);
-         break;
-
-         case TR_Z10BC:
-            returnValue = snprintf(processorName, stringLength, "z10BC (%d)", machineId);
-         break;
-
-         case TR_ZG:
-            returnValue = snprintf(processorName, stringLength, "z196 (%d)", machineId);
-         break;
-
-         case TR_ZGMR:
-            returnValue = snprintf(processorName, stringLength, "z114 (%d)", machineId);
-         break;
-
-         case TR_ZEC12:
-            returnValue = snprintf(processorName, stringLength, "zEC12 (%d)", machineId);
-         break;
-
-         case TR_ZEC12MR:
-            returnValue = snprintf(processorName, stringLength, "zBC12 (%d)", machineId);
-         break;
-
-         case TR_Z13:
-            returnValue = snprintf(processorName, stringLength, "z13 (%d)", machineId);
-         break;
-
-         case TR_Z13s:
-            returnValue = snprintf(processorName, stringLength, "z13s (%d)", machineId);
-         break;
-
-         case TR_Z14:
-            returnValue = snprintf(processorName, stringLength, "z14 (%d)", machineId);
-         break;
-
-         case TR_Z14s:
-            returnValue = snprintf(processorName, stringLength, "z14s (%d)", machineId);
-         break;
-
-         case TR_ZNEXT:
-            returnValue = snprintf(processorName, stringLength, "zNext (%d)", machineId);
-         break;
-
-         case TR_ZNEXTs:
-            returnValue = snprintf(processorName, stringLength, "zNexts (%d)", machineId);
-         break;
-
-         default:
-            // Unknown machine id, simply print out the machine model number
-            returnValue = snprintf(processorName, stringLength, "(%d)", machineId);
-         break;
-         }
-
-      return returnValue;
+      return snprintf(processorName, stringLength, "%s (%d)", TR::Compiler->target.cpu.getProcessorName(machineId), machineId);
       }
 #endif
 
@@ -827,35 +639,39 @@ TR_J9VM::initializeProcessorType()
 #ifdef TR_TARGET_S390
       // For AOT shared classes cache processor compatibility purposes, the following
       // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.getS390SupportsZNext())
+      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zNext))
+         {
+         TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
+         }
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z15))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ14())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ13())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZEC12())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ196())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ10())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ9())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z9))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp7);
          }
-      else if (TR::Compiler->target.cpu.getS390SupportsZ990())
+      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z990))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp6);
          }
@@ -877,7 +693,7 @@ TR_J9VM::initializeProcessorType()
       }
    else if (TR::Compiler->target.cpu.isPower())
       {
-      //We can have a "reported" processor and a "underlying" processsor.
+      //We can have a "reported" processor and a "underlying" processor.
       //See design 28980
       TR_Processor tp_reported;
       TR_Processor tp_underlying;
@@ -902,10 +718,11 @@ TR_J9VM::initializeProcessorType()
       }
    else if (TR::Compiler->target.cpu.isX86())
       {
-      const char *vendor = getX86ProcessorVendorId();
-      uint32_t processorSignature = getX86ProcessorSignature();
+      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
+      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
 
       TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
+
       TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
              && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
       }

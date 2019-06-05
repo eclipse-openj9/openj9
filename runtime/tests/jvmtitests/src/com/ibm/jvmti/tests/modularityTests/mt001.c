@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "jvmti_test.h"
 
 static agentEnv * env;
+#if JAVA_SPEC_VERSION >= 9
 
 jint JNICALL
 mt001(agentEnv * agent_env, char * args)
@@ -102,3 +103,4 @@ Java_com_ibm_jvmti_tests_modularityTests_mt001_addModuleProvides(JNIEnv * jni_en
 
 	return (jint) (*jvmti_env)->AddModuleProvides(jvmti_env, module, service, implClass);;
 }
+#endif /* JAVA_SPEC_VERSION >= 9 */

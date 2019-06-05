@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,8 @@ public class JniArgTests {
 
 	final double test_jdouble[] = { 11.1, 12.2, 13.3, 14.4, 15.5, 16.6, 17.7, 18.8, 19.9, 20.10, 21.11, 22.12, 23.13, 24.14, 25.15, 26.16, };
 
+	final boolean test_jboolean[] = {true, false};
+	
 	public static void main(String[] args) {
 		System.loadLibrary( "jniargtests" );
 		JniArgTests jniArgTests = new JniArgTests();
@@ -64,6 +66,7 @@ public class JniArgTests {
 		long   retval_long;
 		float  retval_float;
 		double retval_double;
+		boolean retval_boolean;
 
 
 
@@ -2727,8 +2730,75 @@ public class JniArgTests {
 		if ( retval_long != test_jlong[0] ) {
 			logRetValError("Return value error:  nativeBBSSIJFDIFDFDFDBBSSIJFDrJ got: " + retval_long + " expected: " + test_jlong[0]);
 		}
+		
+		
+		boolean[] backChannel = new boolean[]{false};
+		retval_boolean = nativeIZrZ(0, backChannel);  // value = 0x0, return false
+		if (retval_boolean != test_jboolean[1]) {
+			logRetValError("Return value error 1:  nativeIZrZ got: " + retval_boolean + " expected: " + test_jboolean[1]);
+		}
+		if (backChannel[0] != test_jboolean[1]) {
+			logRetValError("Boolean array error 1:  nativeIZrZ got: " + backChannel[0] + " expected: " + test_jboolean[1]);
+		}
+		
+		backChannel[0] = false;
+		retval_boolean = nativeIZrZ(1, backChannel);   // value = 0x1, return true
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error 2:  nativeIZrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
+		}
+		if (backChannel[0] != test_jboolean[0]) {
+			logRetValError("Boolean array error 2:  nativeIZrZ got: " + backChannel[0] + " expected: " + test_jboolean[0]);
+		}
+		
+		backChannel[0] = false;
+		retval_boolean = nativeIZrZ(254, backChannel); // value = 0xFE, return true
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error 3:  nativeIZrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
+		}
+		if (backChannel[0] != test_jboolean[0]) {
+			logRetValError("Boolean array error 3 :  nativeIZrZ got: " + backChannel[0] + " expected: " + test_jboolean[0]);
+		}
+		
+		backChannel[0] = false;
+		retval_boolean = nativeIZrZ(3840, backChannel); // value = 0xF00, return false
+		if (retval_boolean != test_jboolean[1]) {
+			logRetValError("Return value error 4:  nativeIZrZ got: " + retval_boolean + " expected: " + test_jboolean[1]);
+		}
+		if (backChannel[0] != test_jboolean[1]) {
+			logRetValError("Boolean array error 4:  nativeIZrZ got: " + backChannel[0] + " expected: " + test_jboolean[1]);
+		}
+		
+		backChannel[0] = false;
+		retval_boolean = nativeIZrZ(4094, backChannel); // value = 0xFFE, return true
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error 5:  nativeIZrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
+		}
+		if (backChannel[0] != test_jboolean[0]) {
+			logRetValError("Boolean array error 5:  nativeIZrZ got: " + backChannel[0] + " expected: " + test_jboolean[0]);
+		}
+		
+		
+		retval_boolean = nativeZIZIZIZIZIrZ(test_jboolean[0], test_jint[1], test_jboolean[1], test_jint[2], test_jboolean[0], test_jint[3], test_jboolean[1], test_jint[4], test_jboolean[0], test_jint[5]);
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error:  nativeZIZIZIZIZIrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
+		}
+		
+		
+		retval_boolean = nativeIZIZIZIZIZrZ(test_jint[1], test_jboolean[1], test_jint[2], test_jboolean[0], test_jint[3], test_jboolean[1], test_jint[4], test_jboolean[0], test_jint[5], test_jboolean[1]);
+		if (retval_boolean != test_jboolean[1]) {
+			logRetValError("Return value error:  nativeIZIZIZIZIZrZ got: " + retval_boolean + " expected: " + test_jboolean[1]);
+		}
 
-
+		
+		retval_boolean = nativeZZZZZZZZZZrZ(test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0]);
+		if (retval_boolean != test_jboolean[0]) {
+			logRetValError("Return value error:  nativeZZZZZZZZZZrZ got: " + retval_boolean + " expected: " + test_jboolean[0]);
+		}
+		
+		retval_boolean = nativeIIIIIZZZZZrZ(test_jint[1], test_jint[2], test_jint[3], test_jint[4], test_jint[5], test_jboolean[0], test_jboolean[1], test_jboolean[0], test_jboolean[1], test_jboolean[0]);
+		if (retval_boolean != test_jboolean[1]) {
+			logRetValError("Return value error:  nativeIIIIIZZZZZrZ got: " + retval_boolean + " expected: " + test_jboolean[1]);
+		}
 }
 
 	native void logRetValError(String arg);
@@ -3621,5 +3691,14 @@ public class JniArgTests {
 	native long nativeDFDFDFDFDFDFrJ(double arg1, float arg2, double arg3, float arg4, double arg5, float arg6, double arg7, float arg8, double arg9, float arg10, double arg11, float arg12 );
 
 	native long nativeBBSSIJFDIFDFDFDBBSSIJFDrJ(byte arg1, byte arg2, short arg3, short arg4, int arg5, long arg6, float arg7, double arg8, int arg9, float arg10, double arg11, float arg12, double arg13, float arg14, double arg15, byte arg16, byte arg17, short arg18, short arg19, int arg20, long arg21, float arg22, double arg23 );
+	
+	native boolean nativeIZrZ(int value, boolean[] backChannel);
+	
+	native boolean nativeZIZIZIZIZIrZ(boolean arg1, int arg2, boolean arg3, int arg4, boolean arg5, int arg6, boolean arg7, int arg8, boolean arg9, int arg10);
 
+	native boolean nativeIZIZIZIZIZrZ(int arg1, boolean arg2, int arg3, boolean arg4, int arg5, boolean arg6, int arg7, boolean arg8, int arg9, boolean arg10);
+
+	native boolean nativeZZZZZZZZZZrZ(boolean arg1, boolean arg2, boolean arg3, boolean arg4, boolean arg5, boolean arg6, boolean arg7, boolean arg8, boolean arg9, boolean arg10);
+
+	native boolean nativeIIIIIZZZZZrZ(int arg1, int arg2, int arg3, int arg4, int arg5, boolean arg6, boolean arg7, boolean arg8, boolean arg9, boolean arg10);
 }

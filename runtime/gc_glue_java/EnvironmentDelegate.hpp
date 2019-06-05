@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,21 +108,21 @@ public:
 	 * structures such as the heap. Requests for VM access will be blocked if any other thread is
 	 * requesting or has obtained exclusive VM access until exclusive VM access is released.
 	 *
-	 * This implementation is not pre-emptive. Threads that have obtained shared VM access must
+	 * This implementation is not preemptive. Threads that have obtained shared VM access must
 	 * check frequently whether any other thread is requesting exclusive VM access and release
 	 * shared VM access as quickly as possible in that event.
 	 */
 	void acquireVMAccess();
 
 	/**
-	 * Release shared VM acccess.
+	 * Release shared VM access.
 	 */
 	void releaseVMAccess();
 
 	/**
 	 * Check whether another thread is requesting exclusive VM access. This method must be
 	 * called frequently by all threads that are holding shared VM access if the VM access framework
-	 * is not pre-emptive. If this method returns true, the calling thread should release shared
+	 * is not preemptive. If this method returns true, the calling thread should release shared
 	 * VM access as quickly as possible and reacquire it if necessary.
 	 *
 	 * @return true if another thread is waiting to acquire exclusive VM access
@@ -137,7 +137,7 @@ public:
 	void acquireExclusiveVMAccess();
 
 	/**
-	 * Release exclusive VM acccess. If no other thread is waiting for exclusive VM access
+	 * Release exclusive VM access. If no other thread is waiting for exclusive VM access
 	 * this method will notify all threads waiting for shared VM access to continue and
 	 * acquire shared VM access.
 	 */
@@ -151,9 +151,7 @@ public:
 
 	void reacquireCriticalHeapAccess(uintptr_t data);
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void forceOutOfLineVMAccess();
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)
 	/**

@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ dnl
 dnl 1. TX was a non-constrained transaction:
 dnl    If this was the case do not execute the read barrier and simply return to
 dnl    the fallback transaction abort JIT code to handle it by forcing condition
-dnl    code to be 2 with the below CL(G)FI instruction indicating a transitent 
+dnl    code to be 2 with the below CL(G)FI instruction indicating a transient 
 dnl    transaction abort.
 dnl
 dnl 2. TX was a constrained transaction:
@@ -194,7 +194,7 @@ PLACE_LABEL(L_GS_CALL_HELPER)
 
 dnl Load the updated object pointer into CARG2
     LG CARG1,J9TR_VMThread_gsParameters_operandAddr(J9VMTHREAD)
-ifdef({ASM_J9VM_GC_COMPRESSED_POINTERS},{
+ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{
 dnl Some objects may be stored in a decompressed format on the heap.
 dnl A typical example of this may be static objects. For such objects
 dnl we must not decompress via the compressedPointersShift value. To
@@ -242,23 +242,7 @@ PLACE_LABEL(L_GS_FORCE_CRASH)
 END_CURRENT
 })
 
-define({HANDLE_SOFTWARE_READ_BARRIER},{
-BEGIN_HELPER($1)
-    SAVE_ALL_REGS($1)
-    ST_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
-    LR_GPR CARG1,J9VMTHREAD
-    L_GPR CRA,J9TR_VMThread_javaVM(J9VMTHREAD)
-    L_GPR CRA,J9TR_JavaVM_invokeJ9ReadBarrier(CRA)
-    CALL_INDIRECT(CRA)
-    L_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
-    ST_GPR J9SP,JIT_GPR_SAVE_SLOT(J9SP)
-    RESTORE_ALL_REGS_AND_SWITCH_TO_JAVA_STACK($1)
-    BR r14
-END_CURRENT
-})
-
 HANDLE_HARDWARE_READ_BARRIER(handleHardwareReadBarrier)
-HANDLE_SOFTWARE_READ_BARRIER(handleSoftwareReadBarrier)
 })
 
     FILE_END

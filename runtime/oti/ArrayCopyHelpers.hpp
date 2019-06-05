@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -161,7 +161,7 @@ private:
 	static VMINLINE void
 	copyForwardU8(U_8 *dest, U_8 *source, UDATA count)
 	{
-		/* Use memmove instead of memcpy becuase memcpy does not work on Ubuntu 10.04 */
+		/* Use memmove instead of memcpy because memcpy does not work on Ubuntu 10.04 */
 		memmove((void *)dest, (void *)source, count);
 	}
 	

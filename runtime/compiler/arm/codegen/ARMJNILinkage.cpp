@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,12 @@
 
 #include "arm/codegen/ARMInstruction.hpp"
 #include "codegen/CallSnippet.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
@@ -438,7 +441,7 @@ printf("subtracting %d slots from SP\n", numStackParmSlots); fflush(stdout);
                   }
                else
                   {
-                  addDependency(dependencies, reg, jniLinkageProperties.getIntegerArgumentRegister(numIntegerArgRegIndex), TR_GPR, codeGen);
+                  TR::addDependency(dependencies, reg, jniLinkageProperties.getIntegerArgumentRegister(numIntegerArgRegIndex), TR_GPR, codeGen);
                   }
                }
             else
@@ -608,7 +611,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
                   dependencies->addPostCondition(resultReg, TR::RealRegister::fp0);
                   }
                else
-                  addDependency(dependencies, reg, jniLinkageProperties.getFloatArgumentRegister(numFloatArgRegIndex), TR_FPR, codeGen);
+                  TR::addDependency(dependencies, reg, jniLinkageProperties.getFloatArgumentRegister(numFloatArgRegIndex), TR_FPR, codeGen);
                }
             else
                {
@@ -642,7 +645,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
             }
          else
             {
-            addDependency(dependencies, NULL, realReg, TR_GPR, codeGen);
+            TR::addDependency(dependencies, NULL, realReg, TR_GPR, codeGen);
             }
          }
       }
@@ -666,7 +669,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
                }
             else
                {
-               addDependency(dependencies, NULL, realReg, TR_FPR, codeGen);
+               TR::addDependency(dependencies, NULL, realReg, TR_FPR, codeGen);
                }
             }
          }
@@ -675,7 +678,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
    // add dependencies for other volatile registers; for virtual calls,
    // dependencies on gr11 and gr14 have already been added above
 #ifndef LOCK_R14
-   addDependency(dependencies, NULL, TR::RealRegister::gr14, TR_GPR, codeGen);
+   TR::addDependency(dependencies, NULL, TR::RealRegister::gr14, TR_GPR, codeGen);
 #endif
 
    for (i = 0; i < numMemArgs; i++)
@@ -724,12 +727,12 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    // kill all values in non-volatile registers so that the
    // values will be in a stack frame in case GC looks for them
-   addDependency(deps, NULL, TR::RealRegister::gr4, TR_GPR, codeGen);
-   addDependency(deps, NULL, TR::RealRegister::gr5, TR_GPR, codeGen);
-   addDependency(deps, NULL, TR::RealRegister::gr6, TR_GPR, codeGen);
-   addDependency(deps, NULL, TR::RealRegister::gr9, TR_GPR, codeGen);
-   addDependency(deps, NULL, TR::RealRegister::gr10, TR_GPR, codeGen);
-   addDependency(deps, NULL, TR::RealRegister::gr11, TR_GPR, codeGen);
+   TR::addDependency(deps, NULL, TR::RealRegister::gr4, TR_GPR, codeGen);
+   TR::addDependency(deps, NULL, TR::RealRegister::gr5, TR_GPR, codeGen);
+   TR::addDependency(deps, NULL, TR::RealRegister::gr6, TR_GPR, codeGen);
+   TR::addDependency(deps, NULL, TR::RealRegister::gr9, TR_GPR, codeGen);
+   TR::addDependency(deps, NULL, TR::RealRegister::gr10, TR_GPR, codeGen);
+   TR::addDependency(deps, NULL, TR::RealRegister::gr11, TR_GPR, codeGen);
 
    // set up dependency for the return register
    TR::Register *gr0Reg = deps->searchPreConditionRegister(TR::RealRegister::gr0);
@@ -763,7 +766,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
                {
                gr0Reg = codeGen->allocateRegister();
                returnRegister = gr0Reg;
-               addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
+               TR::addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
                }
             else
                {
@@ -781,7 +784,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
             if (!gr0Reg)
                {
                gr0Reg = codeGen->allocateRegister();
-               addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
+               TR::addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
                highReg = gr0Reg;
                }
             else
@@ -795,7 +798,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
             if (!gr0Reg)
                {
                 gr0Reg = codeGen->allocateRegister();
-                addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
+                TR::addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
                 lowReg = gr0Reg;
                }
             else
@@ -814,7 +817,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
          if (!gr0Reg)
             {
             gr0Reg = codeGen->allocateRegister();
-            addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
+            TR::addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
             }
          break;
 #endif
@@ -822,7 +825,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
           if (!gr0Reg)
              {
              gr0Reg = codeGen->allocateRegister();
-             addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
+             TR::addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
              }
          returnRegister = NULL;
          break;
@@ -830,7 +833,7 @@ TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
           if (!gr0Reg)
              {
              gr0Reg = codeGen->allocateRegister();
-             addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
+             TR::addDependency(deps, gr0Reg, TR::RealRegister::gr0, TR_GPR, codeGen);
              }
          returnRegister = NULL;
          TR_ASSERT(0, "Unknown direct call opode.\n");

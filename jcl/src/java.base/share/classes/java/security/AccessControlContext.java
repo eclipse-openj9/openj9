@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,9 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar19-SE]*/
 import sun.security.util.FilePermCompat;
-/*[ENDIF] Sidecar19-SE-OpenJ9*/
+/*[ENDIF] Sidecar19-SE*/
 
 /**
  * An AccessControlContext encapsulates the information which is needed
@@ -524,11 +524,11 @@ static int checkPermWithCachedPDsImplied(Permission perm, Object[] toCheck, Acce
 					}
 				}
 			}
-			/*[IF Sidecar19-SE-OpenJ9]*/
+			/*[IF Sidecar19-SE]*/
 			if (!((ProtectionDomain) domain).impliesWithAltFilePerm(perm)) {
 			/*[ELSE]*/
 			if (!((ProtectionDomain) domain).implies(perm)) {
-			/*[ENDIF] Sidecar19-SE-OpenJ9*/
+			/*[ENDIF] Sidecar19-SE*/
 				return i; // NOT implied
 			}
 		}
@@ -585,9 +585,9 @@ static boolean checkPermWithCachedPermImplied(Permission perm, Permission[] perm
 					}
 				}
 			}
-			/*[IF Sidecar19-SE-OpenJ9]*/
+			/*[IF Sidecar19-SE]*/
 			permsLimited[j] = FilePermCompat.newPermPlusAltPath(permsLimited[j]);
-			/*[ENDIF] Sidecar19-SE-OpenJ9*/
+			/*[ENDIF] Sidecar19-SE*/
 			if (!notImplied && permsLimited[j].implies(perm)) {
 				success = true; // just implied
 				if (null != cacheChecked) {

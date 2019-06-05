@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ public:
 	virtual U_8* allocate(UDATA byteAmount) = 0;
 
 	/* 
-	 * allocate multiple memory regions to accomodate out of line debug information
+	 * allocate multiple memory regions to accommodate out of line debug information
 	 * with sizes as specified by the argument list.
 	 */
 	virtual bool allocateWithOutOfLineData(AllocatedBuffers *allocatedBuffers, UDATA byteAmount, UDATA lineNumberByteAmount, UDATA variableInfoByteAmount) { return false; }

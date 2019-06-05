@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,7 @@ public class ContendedFieldsTests {
 			}
 		}
 		paddingIncrement = jep142Restricted ? 0 : CACHE_LINE_SIZE;
-		logger.debug("architecture = " + osArch + " reference size = "+REFERENCE_SIZE+" cache line size = " + CACHE_LINE_SIZE+" object aligment="+FieldUtilities.OBJECT_ALIGNMENT+" contended fields "+(jep142Restricted? "": "un")+"restricted");
+		logger.debug("architecture = " + osArch + " reference size = "+REFERENCE_SIZE+" cache line size = " + CACHE_LINE_SIZE+" object alignment="+FieldUtilities.OBJECT_ALIGNMENT+" contended fields "+(jep142Restricted? "": "un")+"restricted");
 		logger.debug("=============================================================================");
 		vmConfigInitialized = true;
 	}

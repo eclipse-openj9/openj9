@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,7 @@ public:
 	U_64 _maxAllocationAge;  /**< max allocation age (of an object or region) in this compact group) */
 	/* TODO: lpnguyen group everything into anonymous structs */
 
-	double _projectedInstantaneousSurvivalRate; /**< surivor rate between this and previous age group */
+	double _projectedInstantaneousSurvivalRate; /**< survivor rate between this and previous age group */
 	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
 	double _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit; /**< same as _projectedInstantaneousSurvivalRatePerAgeUnit, but for this PGC (not an average over time) */
 
@@ -104,7 +104,7 @@ private:
 	 * Auxiliary function used by updateProjectedSurvivalRate. If an age group is at the boundary of Eden, it returns the size fractions on either sides.
  	 * @param env[in] The Master GC thread
 	 * @param ageInThisAgeGroup[in] Age-size of the age group
-	 * @param ageInThisComactGroup[in] Age-size of the compact group
+	 * @param ageInThisCompactGroup[in] Age-size of the compact group
 	 * @param currentAge[in] Current age of objects in this group
 	 * @param edenFractionOfCompactGroup[out]
 	 * @param nonEdenFractionOfCompactGroup[out]

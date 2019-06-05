@@ -394,11 +394,11 @@ getObjectClass(JNIEnv *env, jobject obj)
 jint JNICALL
 getVersion(JNIEnv *env)
 {
-	if (J2SE_VERSION(((J9VMThread*)env)->javaVM) >= J2SE_V11) {
-		return JNI_VERSION_10;
-	} else {
-		return JNI_VERSION_1_8;
-	}
+#if JAVA_SPEC_VERSION >= 10
+	return JNI_VERSION_10;
+#else /* JAVA_SPEC_VERSION >= 10 */
+	return JNI_VERSION_1_8;
+#endif /* JAVA_SPEC_VERSION >= 10 */
 }
 
 jsize JNICALL

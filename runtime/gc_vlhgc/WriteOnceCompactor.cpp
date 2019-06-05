@@ -1265,42 +1265,43 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 		/*
 		 * Fixup modules
 		 */
-		Assert_MM_true(NULL != classLoader->moduleHashTable);
-		J9HashTableState walkState;
-		J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
+		if (NULL != classLoader->moduleHashTable) {
+			J9HashTableState walkState;
+			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 
-		volatile j9object_t * slotPtr = NULL;
-		J9Object* originalObject = NULL;
+			volatile j9object_t * slotPtr = NULL;
+			J9Object* originalObject = NULL;
 
-		while (NULL != modulePtr) {
-			J9Module * const module = *modulePtr;
+			while (NULL != modulePtr) {
+				J9Module * const module = *modulePtr;
 
-			slotPtr = &module->moduleObject;
+				slotPtr = &module->moduleObject;
 
-			originalObject = *slotPtr;
-			J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
-			*slotPtr = forwardedObject;
-			_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
-
-			slotPtr = &module->moduleName;
-
-			originalObject = *slotPtr;
-			if (NULL != originalObject) {
+				originalObject = *slotPtr;
 				J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
 				*slotPtr = forwardedObject;
 				_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
+
+				slotPtr = &module->moduleName;
+
+				originalObject = *slotPtr;
+				if (NULL != originalObject) {
+					J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
+					*slotPtr = forwardedObject;
+					_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
+				}
+
+				slotPtr = &module->version;
+
+				originalObject = *slotPtr;
+				if (NULL != originalObject) {
+					J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
+					*slotPtr = forwardedObject;
+					_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
+				}
+
+				modulePtr = (J9Module**)hashTableNextDo(&walkState);
 			}
-
-			slotPtr = &module->version;
-
-			originalObject = *slotPtr;
-			if (NULL != originalObject) {
-				J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
-				*slotPtr = forwardedObject;
-				_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
-			}
-
-			modulePtr = (J9Module**)hashTableNextDo(&walkState);
 		}
 
 		/* We can't fixup remembered set for defined and referenced classes here since we 

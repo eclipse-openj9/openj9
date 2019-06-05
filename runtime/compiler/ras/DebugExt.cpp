@@ -1135,7 +1135,7 @@ TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, cons
 
    /*
     * Re-process arguments here
-    * The delimiter is space or comma (maintain compatability with j9)
+    * The delimiter is space or comma (maintain compatibility with j9)
     * The algorithm is not bullet proof, but should be sufficient for us
     */
    #define ARGSIZE 200
@@ -1449,7 +1449,7 @@ TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, cons
       {
       dxPrintJ9RamAndRomMethod((J9Method *) addr);
       }
-   else if (stricmp_ignore_locale(className, "optimizationplan") == 0 && addr != NULL) // optimzationplan
+   else if (stricmp_ignore_locale(className, "optimizationplan") == 0 && addr != NULL) // optimizationplan
       {
       dxPrintOptimizationPlan((TR_OptimizationPlan *) addr);
       }
@@ -2561,7 +2561,6 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tList<TR::Instruction> _staticMethodPICSites = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_staticMethodPICSites) - (char*)localCompiler) );
    _dbgPrintf("\tList<TR_Snippet> _snippetsToBePatchedOnClassUnload = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_snippetsToBePatchedOnClassUnload) - (char*)localCompiler) );
    _dbgPrintf("\tList<TR_Snippet> _methodSnippetsToBePatchedOnClassUnload = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_methodSnippetsToBePatchedOnClassUnload) - (char*)localCompiler) );
-   _dbgPrintf("\tList<TR_Pair<TR_Snippet,TR_ResolvedMethod> > _snippetsToBePatchedOnRegisterNative = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_snippetsToBePatchedOnRegisterNative) - (char*)localCompiler) );
    _dbgPrintf("\t&(TR::SymbolReferenceTable _symRefTab) = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_symRefTab) - (char*)localCompiler) );
    _dbgPrintf("\tTR::Options *_options = 0x%p\n",localCompiler->_options);
    _dbgPrintf("\tuint32_t _returnInfo = %d\n",localCompiler->_returnInfo);
@@ -2759,8 +2758,8 @@ TR_DebugExt::dxPrintCodeCacheInfo(TR::CodeCache *cacheInfo)
       }
    TR::CodeCache *localCacheInfo = (TR::CodeCache*) dxMallocAndRead(sizeof(TR::CodeCache), cacheInfo);
    _dbgPrintf("TR::CodeCache = 0x%p\n", cacheInfo);
-   _dbgPrintf("  ->warmCodeAlloc = (U_8*)0x%p\n", localCacheInfo->_warmCodeAlloc);
-   _dbgPrintf("  ->coldCodeAlloc = (U_8*)0x%p\n", localCacheInfo->_coldCodeAlloc);
+   _dbgPrintf("  ->warmCodeAlloc = (U_8*)0x%p\n", localCacheInfo->getWarmCodeAlloc());
+   _dbgPrintf("  ->coldCodeAlloc = (U_8*)0x%p\n", localCacheInfo->getColdCodeAlloc());
    _dbgPrintf("  ->segment = (TR::CodeCacheMemorySegment*)0x%p\n", localCacheInfo->_segment);
    _dbgPrintf("  ->helperBase = (U_8*)0x%p\n", localCacheInfo->_helperBase);
    _dbgPrintf("  ->helperTop = (U_8*)0x%p\n", localCacheInfo->_helperTop);
@@ -3022,7 +3021,7 @@ TR_DebugExt::dxPrintRuntimeAssumption(OMR::RuntimeAssumption *ra)
    OMR::RuntimeAssumption *localRuntimeAssumption = (OMR::RuntimeAssumption*) dxMallocAndRead(sizeof(OMR::RuntimeAssumption), ra);
    _dbgPrintf("((OMR::RuntimeAssumption*)0x%p)->_key=0x%x, ", ra, localRuntimeAssumption->_key);
    _dbgPrintf(" ->_next= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNext());
-   _dbgPrintf(" ->_nextAssumptionForSameJittedBody= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextAssumptionForSameJittedBody());
+   _dbgPrintf(" ->_nextAssumptionForSameJittedBody= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextAssumptionForSameJittedBodyEvenIfDead());
    dxFree(localRuntimeAssumption);
    }
 void
@@ -3035,18 +3034,20 @@ TR_DebugExt::dxPrintRuntimeAssumptionList(OMR::RuntimeAssumption *ra)
       }
    OMR::RuntimeAssumption *localRuntimeAssumption = (OMR::RuntimeAssumption*) dxMallocAndRead(sizeof(OMR::RuntimeAssumption), ra);
    _dbgPrintf("((OMR::RuntimeAssumption*)0x%p)->_key=0x%x, ", ra, localRuntimeAssumption->_key);
-   _dbgPrintf(" ->_next= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNext());
-   _dbgPrintf(" ->_nextAssumptionForSameJittedBody= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextAssumptionForSameJittedBody());
-   OMR::RuntimeAssumption *nextRuntimeAssumption = localRuntimeAssumption->getNextAssumptionForSameJittedBody();
+   _dbgPrintf("((OMR::RuntimeAssumption*)0x%p)->isMarkedForDetach()=%d, ", ra, localRuntimeAssumption->isMarkedForDetach());
+   _dbgPrintf(" ->_next= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextEvenIfDead());
+   _dbgPrintf(" ->_nextAssumptionForSameJittedBody= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextAssumptionForSameJittedBodyEvenIfDead());
+   OMR::RuntimeAssumption *nextRuntimeAssumption = localRuntimeAssumption->getNextAssumptionForSameJittedBodyEvenIfDead();
    dxFree(localRuntimeAssumption);
 
    while (nextRuntimeAssumption != ra)
       {
       OMR::RuntimeAssumption *localRuntimeAssumption = (OMR::RuntimeAssumption*) dxMallocAndRead(sizeof(OMR::RuntimeAssumption), nextRuntimeAssumption);
       _dbgPrintf("((OMR::RuntimeAssumption*)0x%p)->_key=0x%x, ", nextRuntimeAssumption, localRuntimeAssumption->_key);
-      _dbgPrintf(" ->_next= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNext());
-      _dbgPrintf(" ->_nextAssumptionForSameJittedBody= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextAssumptionForSameJittedBody());
-      nextRuntimeAssumption = localRuntimeAssumption->getNextAssumptionForSameJittedBody();
+      _dbgPrintf("((OMR::RuntimeAssumption*)0x%p)->isMarkedForDetach()=%d, ", nextRuntimeAssumption, localRuntimeAssumption->isMarkedForDetach());
+      _dbgPrintf(" ->_next= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextEvenIfDead());
+      _dbgPrintf(" ->_nextAssumptionForSameJittedBody= !trprint runtimeassumption 0x%p\n", localRuntimeAssumption->getNextAssumptionForSameJittedBodyEvenIfDead());
+      nextRuntimeAssumption = localRuntimeAssumption->getNextAssumptionForSameJittedBodyEvenIfDead();
       dxFree(localRuntimeAssumption);
       }
    _dbgPrintf("Finish printing runtimeassumptionlist\n");

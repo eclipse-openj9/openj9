@@ -33,6 +33,8 @@
 			<class name="org.openj9.test.java_lang_invoke.Test_MethodHandle" />
 			<class name="org.openj9.test.java_lang_invoke.Test_VarHandle" />
 			<class name="org.openj9.test.java_lang_invoke.Test_VarHandleDesc" />
+			<class name="org.openj9.test.java_lang_constant.Test_DynamicConstantDesc" />
+			<class name="org.openj9.test.java_lang_constant.Test_DynamicCallSiteDesc" />
 		</classes>
 	</test>
 

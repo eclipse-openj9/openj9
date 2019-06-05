@@ -22,6 +22,7 @@
 
 #include "x/codegen/X86PrivateLinkage.hpp"
 
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -661,7 +662,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
    //
    const bool frameIsSmall  = peakSize < STACKCHECKBUFFER;
    const bool frameIsMedium = !frameIsSmall;
-   
+
    if (trace)
       {
       traceMsg(comp(), "\nFrame size: %c%c locals=%d frame=%d peak=%d\n",
@@ -1322,7 +1323,7 @@ void TR::X86CallSite::computeProfiledTargets()
 
          // PMR 05447,379,000 getTopValue may return array length profile data instead of a class pointer
          // (when the virtual call feeds an arraycopy method length parameter). We need to defend this case to
-         // avoid attempting to use the length as a pointer, so use asAdressInfo() to gate assignment of topValue.
+         // avoid attempting to use the length as a pointer, so use asAddressInfo() to gate assignment of topValue.
          uintptrj_t topValue = (valueInfo) ? valueInfo->getTopValue() : 0;
 
          // if the call to hashcode is a virtual call node, the top value was already inlined.
@@ -1600,7 +1601,7 @@ static bool indirectDispatchWillBuildVirtualGuard(TR::Compilation *comp, TR::X86
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    // This method is used in vft mask instruction removal in buildIndirectDispatch
-   // if method will generate virutal call guard and build direct call, then skip vft mask instruction.
+   // if method will generate virtual call guard and build direct call, then skip vft mask instruction.
    if (site->getVirtualGuardKind() != TR_NoGuard && fej9->canDevirtualizeDispatch() )
       {
       if (comp->performVirtualGuardNOPing())
@@ -1667,7 +1668,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
          */
          TR::MemoryReference  *sourceMR = generateX86MemoryReference(vftChild, cg());
          TR::Register *reg = cg()->allocateRegister();
-         // as vftChild->getOpCode().isLoadIndirect is true here, need set excpetionpoint
+         // as vftChild->getOpCode().isLoadIndirect is true here, need set exception point
          TR::Instruction * instr = TR::TreeEvaluator::insertLoadMemory(vftChild, reg, sourceMR, TR_RematerializableAddress, cg());
          reg->setMemRef(sourceMR);
          cg()->setImplicitExceptionPoint(instr);
@@ -1924,7 +1925,7 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
          generateRegImmInstruction(MOV4RegImm4, callNode, ramMethodReg, (uint32_t)(uintptrj_t)methodSymbol->getMethodAddress(), cg());
          }
 
-      callInstr = generateHelperCallInstruction(callNode, TR_icallVMprJavaSendNativeStatic, NULL, cg());
+      callInstr = generateHelperCallInstruction(callNode, TR_j2iTransition, NULL, cg());
       cg()->stopUsingRegister(ramMethodReg);
       }
    else if (TR::Compiler->target.is64Bit() && methodSymbol->isJITInternalNative())

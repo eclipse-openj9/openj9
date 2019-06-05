@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2321,6 +2321,8 @@ static U_32 buildFlags(void)
 	 * check in j9bcutil_readClassFileBytes.
 	 */
 	flags |= BCT_JavaMaxMajorVersionShifted;
+	flags |= BCT_ValueTypesEnabled;
+	flags |= BCT_AnyPreviewVersion;
 
 	if(options.options & OPTION_stripDebugAttributes) flags |= CFR_StripDebugAttributes;
 	if(options.options & OPTION_stripDebugLines) flags |= BCT_StripDebugLines;

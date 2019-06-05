@@ -258,7 +258,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 
       *((uint32_t*)p) = offset;
 
-      // With guarded counting recompilations, we need to fix up the method code regardless of wheter it is
+      // With guarded counting recompilations, we need to fix up the method code regardless of whether it is
       // synchronous or asynchronous
       fixUpMethodCode(oldStartPC);
 

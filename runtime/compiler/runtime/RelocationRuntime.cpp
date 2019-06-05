@@ -241,6 +241,12 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       comp->setOption(TR_UseSymbolValidationManager);
       }
 
+   if ((_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_TMDisabled) && !comp->getOption(TR_DisableTM))
+      {
+      setReturnCode(compilationAOTValidateTMFailure);
+      return NULL;
+      }
+
    _exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *)cacheEntry + _aotMethodHeaderEntry->offsetToExceptionTable);
 
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
@@ -468,7 +474,14 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          RELO_LOG(reloLogger(), 6, "                        oldDataStart=%x codeStart=%x oldCodeStart=%x classReloAmount=%x cacheEntry=%x\n", oldDataStart, codeStart, oldCodeStart, classReloAmount(), cacheEntry);
          RELO_LOG(reloLogger(), 6, "                        tempDataStart: %p, _aotMethodHeaderEntry: %p, header offset: %x, binaryReloRecords: %p\n", tempDataStart, _aotMethodHeaderEntry, (UDATA)_aotMethodHeaderEntry-(UDATA)tempDataStart, binaryReloRecords);
 
-         _returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+         try
+            {
+            _returnCode = reloGroup.applyRelocations(this, reloTarget(), newMethodCodeStart() + codeCacheDelta());
+            }
+         catch (...)
+            {
+            _returnCode = compilationAotClassReloFailure;
+            }
 
          RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", _returnCode);
 
@@ -899,7 +912,7 @@ TR_SharedCacheRelocationRuntime::useDFPHardware(TR_FrontEnd *fe)
    bool isPOWERDFP = TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint();
    bool is390DFP =
 #ifdef TR_TARGET_S390
-      TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getS390SupportsDFP();
+      TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
 #else
       false;
 #endif
@@ -914,7 +927,11 @@ TR_SharedCacheRelocationRuntime::useDFPHardware(TR_FrontEnd *fe)
 void
 TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason, char *assumeMessage)
    {
-   TR_ASSERT(false, assumeMessage);
+   if (TR::Options::isAnyVerboseOptionSet())
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "%s\n", assumeMessage);
+      }
+
    if (javaVM()->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
       {
       PORT_ACCESS_FROM_JAVAVM(javaVM());
@@ -925,7 +942,6 @@ TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason
 bool
 TR_SharedCacheRelocationRuntime::generateError(char *assumeMessage)
    {
-   TR_ASSERT(false, assumeMessage);
    incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE, assumeMessage);
    return false;
    }
@@ -964,6 +980,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHead
       defaultMessage = generateError("AOT header validation failed: Concurrent Scavenge feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_SoftwareReadBarrier) != (hdrInCache->featureFlags & TR_FeatureFlag_SoftwareReadBarrier))
       defaultMessage = generateError("AOT header validation failed: Software Read Barrier feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_UsesTM) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesTM))
+      defaultMessage = generateError("AOT header validation failed: TM feature mismatch.");
 
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError("AOT header validation failed: Trailing sanity bit mismatch.");
@@ -1052,13 +1070,13 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEn
          incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
                            "AOT header validation failed: incompatible arraylet size");
          }
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       else if ( hdrInCache->compressedPointerShift != TR::Compiler->om.compressedReferenceShift())
          {
          incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
                            "AOT header validation failed: incompatible compressed pointer shift");
          }
-#endif // J9VM_GC_COMPRESSED_POINTERS
+#endif // OMR_GC_COMPRESSED_POINTERS
       else
          {
          static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig)->aotValidHeader = TR_yes;
@@ -1107,7 +1125,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd 
       aotHeader->processorSignature = TR::Compiler->target.cpu.id();
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(pjavaVM);
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
 #else
       aotHeader->compressedPointerShift = 0;
@@ -1237,7 +1255,7 @@ TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9JavaVM *
    /* Get the class.  Stop immediately if an exception occurs. */
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&constantPool->romConstantPool[cpIndex];
 
-   J9Class *resolvedClass = javaVM()->internalVMFunctions->resolveClassRef(vmThread, constantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+   J9Class *resolvedClass = javaVM()->internalVMFunctions->resolveClassRef(vmThread, constantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
 
    if (resolvedClass == NULL)
       return NULL;
@@ -1293,18 +1311,33 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
       featureFlags |= TR_FeatureFlag_HCREnabled;
 
 #ifdef TR_TARGET_S390
-   if (TR::Compiler->target.cpu.getS390SupportsVectorFacility())
+   if (TR::Compiler->target.cpu.getSupportsVectorFacility())
       featureFlags |= TR_FeatureFlag_SIMDEnabled;
 #endif
 
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      {
       featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
 
-   if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
-      featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
+#ifdef TR_TARGET_S390
+      if (!TR::Compiler->target.cpu.getSupportsGuardedStorageFacility())
+         featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
+#endif
+      }
+
 
    if (fej9->isAsyncCompilation())
       featureFlags |= TR_FeatureFlag_AsyncCompilation;
+
+
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableTM) &&
+       !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableTM))
+      {
+      if (TR::Compiler->target.cpu.supportsTransactionalMemoryInstructions())
+         {
+         featureFlags |= TR_FeatureFlag_UsesTM;
+         }
+      }
 
    return featureFlags;
    }

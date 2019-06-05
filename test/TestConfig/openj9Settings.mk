@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+#  Copyright (c) 2016, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,10 +66,10 @@ else ifneq (,$(findstring linux_x86,$(SPEC)))
 endif
 
 ifndef NATIVE_TEST_LIBS
-	NATIVE_TEST_LIBS=$(JDK_HOME)$(D)..$(D)native-test-libs$(D)
+	NATIVE_TEST_LIBS=$(TEST_JDK_HOME)$(D)..$(D)native-test-libs$(D)
 endif
 
-# if JCL_VESION is current check for default locations for native test libs
+# if JCL_VERSION is current check for default locations for native test libs
 # otherwise, native test libs are under NATIVE_TEST_LIBS
 ifneq (, $(findstring current, $(JCL_VERSION)))
 	ifneq (,$(findstring win,$(SPEC)))
@@ -110,7 +110,7 @@ else
 		endif
 	endif
 	
-	TEST_LIB_PATH_VALUE:=$(Q)$(NATIVE_TEST_LIBS)$(PS)$(VM_SUBDIR_PATH)$(PS)$(J9VM_PATH)$(Q)
+	TEST_LIB_PATH_VALUE:=$(NATIVE_TEST_LIBS)$(PS)$(VM_SUBDIR_PATH)$(PS)$(J9VM_PATH)
 		
 	ifneq (,$(findstring win,$(SPEC)))
 		TEST_LIB_PATH:=PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(PATH)$(Q)
@@ -119,7 +119,7 @@ else
 	else ifneq (,$(findstring zos,$(SPEC)))
 		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
 	else ifneq (,$(findstring osx,$(SPEC)))
-		TEST_LIB_PATH:=DYLD_LIBRARY_PATH=$(TEST_LIB_PATH_VALUE)$(PS)$(DYLD_LIBRARY_PATH)
+		TEST_LIB_PATH:=DYLD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(DYLD_LIBRARY_PATH)$(Q)
 	else
 		TEST_LIB_PATH:=LD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LD_LIBRARY_PATH)$(Q)
 	endif
@@ -157,7 +157,7 @@ endif
 # convert ascii to ebcdic on zos
 #######################################
 TOEBCDIC_CMD= \
-$(ECHO) $(Q)coverting asciii files to ebcdic$(Q); \
+$(ECHO) $(Q)converting ascii files to ebcdic$(Q); \
 find | grep \\.java$ | while read f; do echo $$f; iconv -f iso8859-1 -t ibm-1047 < $$f > $$f.ebcdic; rm $$f; mv $$f.ebcdic $$f; done; \
 find | grep \\.txt$ | while read f; do echo $$f; iconv -f iso8859-1 -t ibm-1047 < $$f > $$f.ebcdic; rm $$f; mv $$f.ebcdic $$f; done; \
 find | grep \\.mf$ | while read f; do echo $$f; iconv -f iso8859-1 -t ibm-1047 < $$f > $$f.ebcdic; rm $$f; mv $$f.ebcdic $$f; done; \

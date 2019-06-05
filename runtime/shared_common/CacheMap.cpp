@@ -216,14 +216,17 @@ SH_CacheMap::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, S
 void
 SH_CacheMap::dontNeedMetadata(J9VMThread* currentThread) 
 {
-	/* Local copies to avoid race condition */
 	Trc_SHR_CM_j9shr_dontNeedMetadata(currentThread);
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
 
+	if (_metadataReleased) {
+		return;
+	}
 	_metadataReleased = true;
-	uintptr_t  min = _minimumAccessedShrCacheMetadata;
-	uintptr_t  max = _maximumAccessedShrCacheMetadata;
-	size_t length = (size_t) (max - min);
-	_ccHead->dontNeedMetadata(currentThread, (const void *) min, length);
+	do {
+		ccToUse->dontNeedMetadata(currentThread);
+		ccToUse = ccToUse->getNext();
+	} while (NULL != ccToUse);
 }
 
 /**
@@ -274,8 +277,6 @@ SH_CacheMap::initialize(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, Bl
 	_growEnabled = false;
 	_isSerialized = false;
 	_isAssertEnabled = true;
-	_minimumAccessedShrCacheMetadata = 0;
-	_maximumAccessedShrCacheMetadata = 0;
 	_metadataReleased = false;
 	
 	/* TODO: Need this function to be able to return pass/fail */
@@ -460,7 +461,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 #if !defined(J9SHR_CACHELET_SUPPORT)
 		if (rc == CC_STARTUP_OK) {
 			/* When J9SHR_CACHELET_SUPPORT is defined there are no J9ROMClasses
-			 * in the 'parent' cache, only in the cachlets. This means it is incorrect
+			 * in the 'parent' cache, only in the cachelets. This means it is incorrect
 			 * to call SH_CacheMap::sanityWalkROMClassSegment() here because it assumes
 			 * to find J9ROMClasses starting at SH_CompositeCacheImpl::getBaseAddress().
 			 *
@@ -485,7 +486,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 
 				/* Two reasons for moving the code to check for full cache from SH_CompositeCacheImpl::startup()
 				 * to SH_CacheMap::startup():
-				 * 	- While marking cache full, last unsused pages are also protected, which ideally should be done
+				 * 	- While marking cache full, last unused pages are also protected, which ideally should be done
 				 * 	  after protecting pages belonging to ROMClass area and metadata area.
 				 * 	- Secondly, when setting cache full flags, the code expects to be holding the write mutex, which is not done in
 				 * 	  SH_CompositeCacheImpl::startup().
@@ -611,7 +612,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 		}
 		/* CMVC 160728:
 		 * Calling 'updateROMSegmentList()' here when J9SHR_CACHELET_SUPPORT is defined caused
-		 * the below assert to fail intermitently in SH_CompositeCacheImpl::countROMSegments().
+		 * the below assert to fail intermittently in SH_CompositeCacheImpl::countROMSegments().
 		 *
 		 * Trc_SHR_Assert_False((segment->baseAddress < getBaseAddress()) ||
 		 *                     (segment->heapTop > getCacheLastEffectiveAddress()));
@@ -659,7 +660,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 	return 0;
 }
 
-/* Assume cc is intialized OK */
+/* Assume cc is initialized OK */
 /* THREADING: Only ever single threaded */
 /* Creates a new ROMClass memory segment and adds it to the avl tree */
 J9MemorySegment* 
@@ -821,7 +822,7 @@ SH_CacheMap::updateROMSegmentListForCache(J9VMThread* currentThread, SH_Composit
 }
 
 /** 
- * Assume cc is intialized OK
+ * Assume cc is initialized OK
  * @retval 1 success
  * @retval 0 failure
  */
@@ -1266,7 +1267,7 @@ SH_CacheMap::getCacheAreaForDataType(J9VMThread* currentThread, UDATA dataType, 
 			}
 		} else {
 			/* Either cachelet is corrupt or there is not enough space to allocate new cachelet.
-			 * In latter case, cache would have alredy been marked full in SH_CompositeCacheImpl::allocate().
+			 * In latter case, cache would have already been marked full in SH_CompositeCacheImpl::allocate().
 			 */
 			return NULL;
 		}
@@ -1417,7 +1418,7 @@ SH_CacheMap::addScopeToCache(J9VMThread* currentThread, const J9UTF8* scope)
 	
 	itemInCache = (ShcItem*)cacheForAllocate->allocateBlock(currentThread, itemPtr, SHC_WORDALIGN, 0);
 	if (itemInCache == NULL) {
-		/* Not enough space in cache to accomodate this item. */
+		/* Not enough space in cache to accommodate this item. */
 		Trc_SHR_CM_addScopeToCache_Exit_Null(currentThread);
 		return NULL;
 	}
@@ -1599,7 +1600,7 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCac
  * @param [in] currentThread the thread calling this function
  * @param [in] sizes Size of the ROMClass, and its parts.
  * @param [in] pieces The results of successfully calling this method.
- * @param [in] classnameLength lenth of the class name
+ * @param [in] classnameLength length of the class name
  * @param [in] classnameData class name data
  * @param [in] cpw classpath wrapper
  * @param [in] partitionInCache partition info
@@ -1663,7 +1664,10 @@ SH_CacheMap::allocateROMClass(J9VMThread* currentThread, const J9RomClassRequire
 	
 	pieces->romClass = (void *) allocateROMClassOnly(currentThread, romclassSizeToUse, classnameLength, classnameData, cpw, partitionInCache, modContextInCache, callerHelperID, modifiedNoContext, newItemInCache, cacheAreaForAllocate);
 
-	if ((NULL != newItemInCache) && _ccHead->isNewCache()) {
+	if ((NULL != newItemInCache)
+		&& (_ccHead->isNewCache()) 
+		&& (false == _metadataReleased)
+	) {
 		/* Update the min/max boundary with the stored metadata entry only when the cache is
 		 * being created by the current VM.
 		 */
@@ -1702,7 +1706,7 @@ SH_CacheMap::allocateROMClass(J9VMThread* currentThread, const J9RomClassRequire
  *
  * @param [in] currentThread the thread calling this function
  * @param [in] sizeToAlloc size in bytes of the new ROMClass to allocate
- * @param [in] classnameLength lenth of the class name
+ * @param [in] classnameLength length of the class name
  * @param [in] classnameData class name data
  * @param [in] cpw classpath wrapper
  * @param [in] partitionInCache partition info
@@ -1890,7 +1894,7 @@ SH_CacheMap::allocateClassDebugData(J9VMThread* currentThread, U_16 classnameLen
 }
 
 /**
- * Roll back uncommited changes made by the last call too 'allocateClassDebugData()'
+ * Roll back uncommitted changes made by the last call too 'allocateClassDebugData()'
  *
  * @param [in] currentThread the thread calling this function
  * @param [in] classnameLength ROMClass class name length
@@ -2319,7 +2323,7 @@ SH_CacheMap::commitMetaDataROMClassIfRequired(J9VMThread* currentThread, Classpa
 	itemInCache = (ShcItem*) cacheAreaForAllocate->allocateBlock(currentThread, itemPtr, SHC_WORDALIGN, wrapperSize);
 
 	if (itemInCache == NULL) {
-		/* Not enough space in cache to accomodate this item. */
+		/* Not enough space in cache to accommodate this item. */
 		Trc_SHR_CM_commitMetaDataROMClassIfRequired_Full_Event(currentThread, (UDATA)J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName), (UDATA)romclass);
 		retval = -1;
 		goto done;
@@ -2328,7 +2332,9 @@ SH_CacheMap::commitMetaDataROMClassIfRequired(J9VMThread* currentThread, Classpa
 	/* Update the min/max boundary with the stored metadata entry only when the cache is
 	 * being created by the current VM.
 	 */
-	if (_ccHead->isNewCache()) {
+	if (_ccHead->isNewCache() 
+		&& (false == _metadataReleased)
+	) {
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 #if defined(LINUX)
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE))
@@ -2633,8 +2639,7 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 #endif
 		) {
 			if (TrcEnabled_Trc_SHR_CM_findROMClass_metadataAccess
-			                   && ((uintptr_t) locateResult.known >= _minimumAccessedShrCacheMetadata)
-			                   && ((uintptr_t) locateResult.known <= _maximumAccessedShrCacheMetadata)
+				&& (isAddressInReleasedMetaDataBounds(currentThread, (UDATA)locateResult.known))
 			) {
 				Trc_SHR_CM_findROMClass_metadataAccess(currentThread, path, (U_8 *) locateResult.known);
 			}
@@ -2830,6 +2835,7 @@ SH_CacheMap::storeROMClassResource(J9VMThread* currentThread, const void* romAdd
 	&& ((void*)J9SHR_RESOURCE_STORE_FULL != result)
 	&& ((void*)J9SHR_RESOURCE_STORE_ERROR != result)
 	&& _ccHead->isNewCache()
+	&& (false == _metadataReleased)
 	) {
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 #if defined(LINUX)
@@ -3076,8 +3082,7 @@ SH_CacheMap::findCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* ro
 #endif
 		) {
 			if (TrcEnabled_Trc_SHR_CM_findCompiledMethod_metadataAccess
-			&& ((uintptr_t) result >= _minimumAccessedShrCacheMetadata)
-			&& ((uintptr_t) result <= _maximumAccessedShrCacheMetadata)
+			&& (isAddressInReleasedMetaDataBounds(currentThread, (UDATA)result))
 			) {
 				J9InternalVMFunctions* vmFunctions = currentThread->javaVM->internalVMFunctions;
 				J9ClassLoader* loader = NULL;
@@ -3119,43 +3124,15 @@ SH_CacheMap::findCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* ro
 void
 SH_CacheMap::updateAccessedShrCacheMetadataBounds(J9VMThread* currentThread, uintptr_t const * metadataAddress)
 {
-	uintptr_t * updateAddress = (uintptr_t *) &_minimumAccessedShrCacheMetadata;
-	uintptr_t currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
-	uintptr_t const newValue = (uintptr_t const) metadataAddress;
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+	bool rc = false;
 
-	if (0 == currentValue) { /* set initial value.  Don't care if someone beats us to this  */
-		Trc_SHR_CM_updateAccessedShrCacheMetadataMinimum(currentThread, metadataAddress);
-		compareAndSwapUDATA(
-				updateAddress,
-				currentValue,
-				newValue
-		);
-	}
+	do {
+		rc = ccToUse->updateAccessedShrCacheMetadataBounds(currentThread, metadataAddress);
+		ccToUse = ccToUse->getNext();
+	} while ((false == rc) && (NULL != ccToUse));
 
-	currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
-	while (newValue < (uintptr_t) currentValue) {
-		Trc_SHR_CM_updateAccessedShrCacheMetadataMinimum(currentThread, metadataAddress);
-
-		compareAndSwapUDATA(
-				updateAddress,
-				currentValue,
-				newValue
-		);
-		currentValue = (uintptr_t) _minimumAccessedShrCacheMetadata;
-	}
-
-	updateAddress = (uintptr_t *) &_maximumAccessedShrCacheMetadata;
-	currentValue = (uintptr_t) _maximumAccessedShrCacheMetadata;
-	while (newValue > (uintptr_t) _maximumAccessedShrCacheMetadata) {
-		Trc_SHR_CM_updateAccessedShrCacheMetadataMaximum(currentThread, metadataAddress);
-
-		compareAndSwapUDATA(
-				updateAddress,
-				currentValue,
-				newValue
-		);
-		currentValue = (uintptr_t) _maximumAccessedShrCacheMetadata;
-	}
+	return;
 }
 
 /**
@@ -3672,7 +3649,7 @@ SH_CacheMap::addByteDataToCache(J9VMThread* currentThread, SH_Manager* localBDM,
 				}
 			}
 			if ((itemInCache = (ShcItem*)(cacheForAllocate->allocateBlock(currentThread, itemPtr, SHC_WORDALIGN, sizeof(ByteDataWrapper)))) == NULL) {
-				/* Not enough space in cache to accomodate this item. */
+				/* Not enough space in cache to accommodate this item. */
 				return NULL;
 			}
 		} else {
@@ -3780,7 +3757,7 @@ SH_CacheMap::addByteDataToCache(J9VMThread* currentThread, SH_Manager* localBDM,
  *   J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE - only allow one store for a given key/type combination
  *      subsequent stores return the existing data regardless of whether it matches the input data
  *   J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE_OVERWRITE - Similar to J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE, only one record of key/dataType combination is allowed in the shared cache.
- *   	subsequent stores overwite the existing data. This flag is ignored if J9SHRDATA_NOT_INDEXED, J9SHRDATA_ALLOCATE_ZEROD_MEMORY or J9SHRDATA_USE_READWRITE presents
+ *   	subsequent stores overwrite the existing data. This flag is ignored if J9SHRDATA_NOT_INDEXED, J9SHRDATA_ALLOCATE_ZEROD_MEMORY or J9SHRDATA_USE_READWRITE presents
  * 
  * @param[in] currentThread  The current thread
  * @param[in] key  The UTF8 key to store the data against
@@ -4849,7 +4826,7 @@ SH_CacheMap::printCacheStats(J9VMThread* currentThread, UDATA showFlags, U_64 ru
 	CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_TITLE, _cacheName);
 
 #if defined(J9SHR_CACHELET_SUPPORT)
-	/* startup all cachlets to get stats */
+	/* startup all cachelets to get stats */
 	cache = _cacheletHead; /* this list currently spans all supercaches */
 	while (cache) {
 		if ( CC_STARTUP_OK != startupCachelet(currentThread, cache) ) {
@@ -4993,7 +4970,7 @@ SH_CacheMap::printCacheStats(J9VMThread* currentThread, UDATA showFlags, U_64 ru
 		}
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2, javacoreData.otherBytes);
 		if ((U_32)-1 == javacoreData.softMaxBytes) {
-			/* similarly to the calculation of cache full percentage, take used debug area into accout */
+			/* similarly to the calculation of cache full percentage, take used debug area into account */
 			CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2, ((javacoreData.otherBytes * 100) / (javacoreData.cacheSize - javacoreData.freeBytes)));
 		} else {
 			/* cache header size is not included in javacoreData.cacheSize, but it is included in softmx as used bytes. To be consistent, subtract cache header size here */ 
@@ -5079,7 +5056,7 @@ void
 SH_CacheMap::printShutdownStats(void)
 {
 	UDATA bytesStored = 0;
-	U_64 bytesRead = (U_64)_bytesRead;		/* U_64 for compatability so that we don't have to change all the nls msgs */
+	U_64 bytesRead = (U_64)_bytesRead;		/* U_64 for compatibility so that we don't have to change all the nls msgs */
 	U_32 softmxUnstoredBytes = 0;
 	U_32 maxAOTUnstoredBytes = 0;
 	U_32 maxJITUnstoredBytes = 0;
@@ -6646,7 +6623,7 @@ SH_CacheMap::startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_
 	}
 
 #if defined(J9SHR_CACHELET_SUPPORT)
-	/* startup all cachlets to get stats */
+	/* startup all cachelets to get stats */
 	while (cache) {
 		IDATA startupcachelet = startupCacheletForStats(currentThread, cache);
 		if ( CC_STARTUP_OK != startupcachelet ) {
@@ -6778,7 +6755,7 @@ SH_CacheMap::isCacheCorruptReported(void)
 }
 
 /**
- * Print a series of bytes as hexadecimal chartacters into a buffer.
+ * Print a series of bytes as hexadecimal characters into a buffer.
  * The data are truncated silently if the buffer is too small.
  * When allocating the buffer, allow 5 characters per byte plus a null character to terminate the string.
  * @param attachedData Data to be printed
@@ -7273,7 +7250,7 @@ SH_CacheMap::tryAdjustMinMaxSizes(J9VMThread* currentThread, bool isJCLCall)
 	return _ccHead->tryAdjustMinMaxSizes(currentThread, isJCLCall);
 }
 
-/* Update the runtime cache full flags accroding to cache full flags in the cache header
+/* Update the runtime cache full flags according to cache full flags in the cache header
  *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
  *
@@ -7398,7 +7375,7 @@ SH_CacheMap::updateLocalHintsData(J9VMThread* currentThread, J9SharedLocalStartu
 	} else if (J9_ARE_ALL_BITS_SET(localHints->localStartupHintFlags, J9SHR_LOCAL_STARTUPHINTS_FLAG_STORE_HEAPSIZES)) {
 		if (J9_ARE_NO_BITS_SET(updatedHintsData.flags, J9SHR_STARTUPHINTS_HEAPSIZES_SET)) {
 			Trc_SHR_CM_updateLocalHintsData_WriteHeapSizes(currentThread, localHints->hintsData.heapSize1, localHints->hintsData.heapSize2);
-			/* heapSize1 and heapSize2 have not been set beofore */
+			/* heapSize1 and heapSize2 have not been set before */
 			updatedHintsData.heapSize1 = localHints->hintsData.heapSize1;
 			updatedHintsData.heapSize2 = localHints->hintsData.heapSize2;
 			updatedHintsData.flags |= J9SHR_STARTUPHINTS_HEAPSIZES_SET;
@@ -7451,5 +7428,28 @@ checkROMClassUTF8SRPs(J9ROMClass *romClass)
 		}
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+}
+
+/**
+ * checks if an address is in the cache metadata area
+ *
+ *	@param [in] currentThread The current JVM thread
+ *	@param [in] address The address to be checked
+ *
+ *	@return true if the address is in cache metadata area, false otherwise.
+ */
+
+bool
+SH_CacheMap::isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA address) const
+{
+	bool rc = false;
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+
+	do {
+		rc = ccToUse->isAddressInReleasedMetaDataBounds(currentThread, address);
+		ccToUse = ccToUse->getNext();
+	} while ((false == rc) && (NULL != ccToUse));
+
+	return rc;
 }
 

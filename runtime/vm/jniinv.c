@@ -275,7 +275,7 @@ jint JNICALL J9_GetCreatedJavaVMs(JavaVM ** vm_buf, jsize bufLen, jsize * nVMs)
 #if defined (LINUXPPC64) || (defined (AIXPPC) && defined (PPC64)) || defined (J9ZOS39064)
 	/* there was a bug in older VMs on these platforms where jsize was defined to
 	 * be 64-bits, rather than the 32-bits required by the JNI spec. Provide backwards
-	 * compatability if the JAVA_JSIZE_COMPAT environment variable is set
+	 * compatibility if the JAVA_JSIZE_COMPAT environment variable is set
 	 */
 	if (getenv("JAVA_JSIZE_COMPAT")) {
 		*(jlong*)nVMs = (jlong)count;
@@ -379,7 +379,7 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 				omrthread_monitor_exit(vm->runtimeFlagsMutex);
 			}
 			/* Do not acquire exclusive here as it may cause deadlocks with
-			 * the other thread shuting down.
+			 * the other thread shutting down.
 			 */
 			return JNI_ERR;
 		}
@@ -480,7 +480,7 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 		omrthread_monitor_enter(vm->runtimeFlagsMutex);
 	}
 
-	/* we only allow shudown code to run once */
+	/* we only allow shutdown code to run once */
 	
 	if(vm->runtimeFlags & J9_RUNTIME_SHUTDOWN_STARTED) {
 		if(vm->runtimeFlagsMutex != NULL) {
@@ -800,7 +800,7 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 		return JNI_EDETACHED;
 	}
 
-	/* Call the hook - if rc changs from JNI_EVERSION, return it.
+	/* Call the hook - if rc changes from JNI_EVERSION, return it.
 	 * Note: the JavaVM parameter must be used in the call instead of the J9JavaVM
 	 * because the JavaVM parameter should be a J9InvocationJavaVM* when GetEnv()
 	 * is called from JVMTI agents.
@@ -1161,7 +1161,7 @@ static UDATA terminateRemainingThreads(J9VMThread* vmThread) {
 
 	Trc_VM_terminateRemainingThreads_Entry(vmThread);
 
-	/* Wait for any zombie threads (java notified of death, but vmThread not freed and threadProc not exitted) to completely terminate */
+	/* Wait for any zombie threads (java notified of death, but vmThread not freed and threadProc not exited) to completely terminate */
 
 	omrthread_monitor_enter(vm->vmThreadListMutex);
 	while (vm->zombieThreadCount != 0) {

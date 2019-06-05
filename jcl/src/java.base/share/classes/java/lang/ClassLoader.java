@@ -1,4 +1,25 @@
 /*[INCLUDE-IF Sidecar16]*/
+/*******************************************************************************
+ * Copyright (c) 1998, 2019 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
 package java.lang;
 
 import java.io.*;
@@ -21,7 +42,6 @@ import java.util.Queue;
 import java.util.Vector;
 import java.util.Collections;
 import java.util.WeakHashMap;
-import java.util.stream.Stream;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
@@ -31,13 +51,9 @@ import java.security.cert.Certificate;
 import java.lang.reflect.Modifier;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import jdk.internal.module.ServicesCatalog;
-/*[IF Java12]*/
-import jdk.internal.access.SharedSecrets;
-/*[ELSE]
-import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
 import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.loader.ClassLoaders;
@@ -45,28 +61,6 @@ import jdk.internal.loader.BootLoader;
 /*[ELSE]
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
-
-/*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
- *
- * This program and the accompanying materials are made available under
- * the terms of the Eclipse Public License 2.0 which accompanies this
- * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
- * or the Apache License, Version 2.0 which accompanies this distribution and
- * is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * This Source Code may also be made available under the following
- * Secondary Licenses when the conditions for such availability set
- * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
- * General Public License, version 2 with the GNU Classpath
- * Exception [1] and GNU General Public License, version 2 with the
- * OpenJDK Assembly Exception [2].
- *
- * [1] https://www.gnu.org/software/classpath/license.html
- * [2] http://openjdk.java.net/legal/assembly-exception.html
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
- *******************************************************************************/
  
 /**
  * ClassLoaders are used to dynamically load, link and install
@@ -116,10 +110,10 @@ public abstract class ClassLoader {
   	private Map<String, Boolean> packageAssertionStatus;
   	private Map<String, Boolean> classAssertionStatus;
   	/*[IF Sidecar19-SE]*/
-  	private final Hashtable<String, NamedPackage> packages = new Hashtable();
+    private final Hashtable<String, NamedPackage> packages = new Hashtable<>();
   	private volatile ConcurrentHashMap<?, ?> classLoaderValueMap;
 	/*[ELSE]
-  	private final Hashtable<String, Package> packages = new Hashtable();
+  	private final Hashtable<String, Package> packages = new Hashtable<>();
 	/*[ENDIF] Sidecar19-SE*/
 	/*[PR CMVC 94437] fix deadlocks */
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
@@ -209,39 +203,37 @@ public abstract class ClassLoader {
 			// ignore
 		}
 
+		/*[IF Java11]*/
+		// This static method call ensures jdk.internal.loader.ClassLoaders.BOOT_LOADER initialization first
+		jdk.internal.loader.ClassLoaders.platformClassLoader();
+		if (bootstrapClassLoader.servicesCatalog != null) {
+			throw new InternalError("bootstrapClassLoader.servicesCatalog is NOT null "); //$NON-NLS-1$
+		}
+		bootstrapClassLoader.servicesCatalog = BootLoader.getServicesCatalog();
+		if (bootstrapClassLoader.classLoaderValueMap != null) {
+			throw new InternalError("bootstrapClassLoader.classLoaderValueMap is NOT null "); //$NON-NLS-1$
+		}
+		bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
+		applicationClassLoader = ClassLoaders.appClassLoader();
+		/*[ELSE] Java11 */
 		ClassLoader sysTemp = null;
 		// Proper initialization requires BootstrapLoader is the first loader instantiated
 		String systemLoaderString = System.internalGetProperties().getProperty("systemClassLoader"); //$NON-NLS-1$
-		if(null == systemLoaderString) {
-			/*[IF Sidecar19-SE]*/
-			// This static method call ensures jdk.internal.loader.ClassLoaders.BOOT_LOADER initialization first
-			jdk.internal.loader.ClassLoaders.platformClassLoader();
-			if (bootstrapClassLoader.servicesCatalog != null) {
-				throw new InternalError("bootstrapClassLoader.servicesCatalog is NOT null "); //$NON-NLS-1$
-			}
-			bootstrapClassLoader.servicesCatalog = BootLoader.getServicesCatalog();
-			if (bootstrapClassLoader.classLoaderValueMap != null) {
-				throw new InternalError("bootstrapClassLoader.classLoaderValueMap is NOT null "); //$NON-NLS-1$
-			}
-			bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
-			applicationClassLoader = ClassLoaders.appClassLoader();
-			/*[ELSE]*/
+		if (null == systemLoaderString) {
 			sysTemp = com.ibm.oti.vm.BootstrapClassLoader.singleton();
-			/*[ENDIF]*/
 		} else {
 			try {
-				sysTemp = (ClassLoader)Class.forName(systemLoaderString,true,null).newInstance();
-			} catch(Throwable x) {
+				sysTemp = (ClassLoader)Class.forName(systemLoaderString, true, null).newInstance();
+			} catch (Throwable x) {
 				x.printStackTrace();
 				System.exit(1);
 			}
 		}
-/*[IF !Sidecar19-SE]*/		
 		bootstrapClassLoader = sysTemp;
 		AbstractClassLoader.setBootstrapClassLoader(bootstrapClassLoader);
 		lazyClassLoaderInit = true;
 		applicationClassLoader = bootstrapClassLoader;
-/*[ENDIF]*/
+		/*[ENDIF] Java11 */
 
 		/* [PR 78889] The creation of this classLoader requires lazy initialization. The internal classLoader struct
 		 * is created in the initAnonClassLoader call. The "new InternalAnonymousClassLoader()" call must be 
@@ -406,11 +398,7 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
 		}
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-OpenJ9]
 		unnamedModule = new Module(this);
-/*[ELSE]*/
-		unnamedModule = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(this);
-/*[ENDIF]*/
 /*[ENDIF]*/
 	} 
 /*[IF Sidecar19-SE]*/	
@@ -424,11 +412,7 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			// Assuming the second classloader initialized is platform classloader
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
 			specialLoaderInited = true;
-/*[IF Sidecar19-SE-OpenJ9]
 			unnamedModule = new Module(this);
-/*[ELSE]*/
-			unnamedModule = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(this);
-/*[ENDIF]*/
 		}
 	}
 	this.classLoaderName = classLoaderName;
@@ -538,6 +522,18 @@ protected final Class<?> defineClass (
 		ProtectionDomain protectionDomain) 
 		throws java.lang.ClassFormatError 
 {
+	return defineClassInternal(className, classRep, offset, length, protectionDomain, false /* allowNullProtectionDomain */);
+}
+
+final Class<?> defineClassInternal(
+		final String className, 
+		final byte[] classRep, 
+		final int offset, 
+		final int length, 
+		ProtectionDomain protectionDomain,
+		boolean allowNullProtectionDomain)
+		throws java.lang.ClassFormatError 
+{
 	Certificate[] certs = null; 
 	if (protectionDomain != null) {
 		final CodeSource cs = protectionDomain.getCodeSource();
@@ -555,7 +551,7 @@ protected final Class<?> defineClass (
 		throw new ArrayIndexOutOfBoundsException();
 	}
 
-	if (protectionDomain == null)	{
+	if ((protectionDomain == null) && !allowNullProtectionDomain) {
 		protectionDomain = getDefaultProtectionDomain();
 	}
 	
@@ -593,13 +589,33 @@ protected final Class<?> defineClass (
 }
 
 /*[IF Sidecar19-SE]*/
- /**
-  * Add a class's package name to this classloader's list of packages, if not already present.
+/**
+ * This class is a function that maps a package name to a newly created
+ * {@code NamedPackage} object for use below in updating the {@code packages} map.
+ */
+private static final class NamedPackageProvider implements java.util.function.Function<String, NamedPackage> {
+
+	private final Class<?> newClass;
+
+	NamedPackageProvider(Class<?> newClass) {
+		super();
+		this.newClass = newClass;
+	}
+
+	@Override
+	public NamedPackage apply(String pkgName) {
+		return new NamedPackage(pkgName, newClass.getModule());
+	}
+
+}
+
+/**
+ * Add a class's package name to this classloader's list of packages, if not already present.
  * @param newClass
  */
 void addPackageToList(Class<?> newClass) {
-	synchronized(packages) {
-		packages.computeIfAbsent(newClass.getPackageName(), pkgName->new NamedPackage(pkgName, newClass.getModule()));
+	synchronized (packages) {
+		packages.computeIfAbsent(newClass.getPackageName(), new NamedPackageProvider(newClass));
 	}
 }
 /*[ENDIF] Sidecar19-SE */
@@ -996,6 +1012,15 @@ static ClassLoader getClassLoader(Class<?> clz) {
 /*[ENDIF]*/
 
 /*[IF Sidecar19-SE]*/
+/**
+ * Return the Platform classloader.
+ *
+ * If a security manager exists and it does not
+ * allow access a SecurityException will be thrown.
+ *
+ * @return the platformClassLoader
+ * @throws SecurityException if access to the platform classloader is denied
+ */
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
 	SecurityManager security = System.getSecurityManager();
@@ -1883,6 +1908,24 @@ static void loadLibraryWithPath(String libName, ClassLoader loader, String libra
 		}
 	}
 	byte[] message = ClassLoader.loadLibraryWithPath(com.ibm.oti.util.Util.getBytes(libName), loader, libraryPath == null ? null : com.ibm.oti.util.Util.getBytes(libraryPath));
+
+	/* As Mac OS X used to be using lib<name>.jnilib Java native library format,
+	 * VM will attempt loading native library using the legacy library extension
+	 * on Mac OS X to support older applications
+	 */
+	if (System.internalGetProperties().getProperty("os.name").equals("Mac OS X")) { //$NON-NLS-1$ //$NON-NLS-2$
+		if ((message != null) && (libraryPath != null)) {
+			String legacyPath = libraryPath.replaceAll("/$", "") + "/lib" + libName + ".jnilib"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+
+			try {
+				byte[] jnilibLoadMessage = ClassLoader.loadLibraryWithPath(com.ibm.oti.util.Util.getBytes(legacyPath), loader, null);
+				if (jnilibLoadMessage == null) {
+					message = null;
+				}
+			} catch (Exception e) { /* Ignore Exception */ }
+		}
+	}
+
 	if (message != null) {
 		String error;
 		try {
@@ -2296,6 +2339,8 @@ ServicesCatalog getServicesCatalog() {
  * 					the module name
  * @param		resName String
  *					the name of the resource to find.
+ *
+ * @throws IOException when an error occurs
  */
 protected URL findResource(String moduleName, String resName) throws IOException {
 	URL result = null;
@@ -2372,4 +2417,3 @@ public final boolean isRegisteredAsParallelCapable() {
 
 /*[ENDIF] Sidecar19-SE*/
 }
-

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,20 +29,20 @@
 /*
  * Define type used to represent the class in the 'clazz' slot of an object's header
  */
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#ifdef OMR_GC_COMPRESSED_POINTERS
 typedef U_32 j9objectclass_t;
-#else /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 typedef UDATA j9objectclass_t;
-#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /*
  * Define type used to represent the lock in the 'monitor' slot of an object's header
  */
-#ifdef J9VM_INTERP_SMALL_MONITOR_SLOT
+#ifdef OMR_GC_COMPRESSED_POINTERS
 typedef U_32 j9objectmonitor_t;
-#else /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 typedef UDATA j9objectmonitor_t;
-#endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /*
  * Define the type system for object pointers.
@@ -67,7 +67,7 @@ typedef struct J9IndexableObject* j9array_t;
  * Object reference fields that point to other objects require a different type from root references.  
  * In concrete terms (compressed pointers), this is the 32 bit representation of a pointer.
  */
-#if defined (J9VM_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 typedef U_32 fj9object_t;
 typedef U_32 fj9array_t;
 #else
@@ -96,7 +96,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #define J9JAVAVM_VMTHREAD(javaVM) (javaVM->internalVMFunctions->currentVMThread(javaVM))
 
 /* Internal macro - Do not use J9_CONVERT_POINTER_FROM_TOKEN__ or J9_CONVERT_POINTER_TO_TOKEN__! */
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(J9VM_OUT_OF_PROCESS)
 #define J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, pointer) ((void *) ((UDATA)(pointer) << dbgReadUDATA((UDATA*)&(javaVM->compressedPointersShift))))
 #define J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, pointer) J9_CONVERT_POINTER_FROM_TOKEN_VM__(J9VMTHREAD_JAVAVM(vmThread),pointer)
@@ -108,12 +108,12 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #define J9_CONVERT_POINTER_TO_TOKEN_VM__(javaVM, pointer) ((fj9object_t) ((UDATA)(pointer) >> javaVM->compressedPointersShift))
 #define J9_CONVERT_POINTER_TO_TOKEN__(vmThread, pointer) J9_CONVERT_POINTER_TO_TOKEN_VM__(J9VMTHREAD_JAVAVM(vmThread),pointer)
 #endif /* J9VM_OUT_OF_PROCESS */
-#else /* J9VM_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
 #define J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, pointer) ((void *) (pointer))
 #define J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, pointer) ((void *) (pointer))
 #define J9_CONVERT_POINTER_TO_TOKEN__(vmThread, pointer) ((fj9object_t)(UDATA)(pointer))
 #define J9_CONVERT_POINTER_TO_TOKEN_VM__(javaVM, pointer) ((fj9object_t)(UDATA)(pointer))
-#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 #if defined(J9VM_OUT_OF_PROCESS)
 #define J9JAVAARRAYDISCONTIGUOUS_EA(vmThread, array, index, elemType) (&(((elemType*)J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, dbgReadPrimitiveType((UDATA)&(((fj9object_t*)((J9IndexableObjectDiscontiguous *)array + 1))[((U_32)index)/(dbgReadUDATA((UDATA*)&(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize))/sizeof(elemType))]), sizeof(fj9object_t))))[((U_32)index)%(dbgReadUDATA((UDATA*)&(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize))/sizeof(elemType))]))
@@ -641,7 +641,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 /*
  * Macros for accessing object header fields
  */
-#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) || !defined (J9VM_ENV_DATA64)
+#if defined (OMR_GC_COMPRESSED_POINTERS) || !defined (J9VM_ENV_DATA64)
 #define J9OBJECT_CLAZZ(vmThread, object) ((void)0, (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 #define J9OBJECT_CLAZZ_VM(javaVM, object) ((void)0, (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD_VM(javaVM, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 #define J9OBJECT_FLAGS_FROM_CLAZZ(vmThread, object) ((void)0, ((UDATA)J9OBJECT_U32_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
@@ -667,7 +667,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #define J9OBJECT_MONITOR_OFFSET(vmThread,object) offsetof(J9Object,monitor)
 #endif
 
-#if defined (J9VM_INTERP_SMALL_MONITOR_SLOT) || !defined (J9VM_ENV_DATA64)
+#if defined (OMR_GC_COMPRESSED_POINTERS) || !defined (J9VM_ENV_DATA64)
 #define J9OBJECT_MONITOR(vmThread, object) ((void)0, (j9objectmonitor_t)J9OBJECT_U32_LOAD(vmThread, object, J9OBJECT_MONITOR_OFFSET(vmThread,object)))
 #define J9OBJECT_SET_MONITOR(vmThread, object, value) ((void)0, J9OBJECT_U32_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value))
 #else
@@ -676,7 +676,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #endif
 
 #if defined( J9VM_THR_LOCK_NURSERY )
-#if defined (J9VM_INTERP_COMPRESSED_OBJECT_HEADER) || !defined (J9VM_ENV_DATA64)
+#if defined (OMR_GC_COMPRESSED_POINTERS) || !defined (J9VM_ENV_DATA64)
 #define TMP_LOCKWORD_OFFSET(object) (dbgReadUDATA((UDATA*)((U_8*)(((UDATA)(dbgReadU32((U_32*)(((U_8*)object) + offsetof(J9Object, clazz))))& ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1)))+ offsetof(J9Class,lockOffset)))))
 #else
 #define TMP_LOCKWORD_OFFSET(object) (dbgReadUDATA((UDATA*)((U_8*)(((UDATA)(dbgReadU64((U_64*)(((U_8*)object) + offsetof(J9Object, clazz))))& ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1)))+ offsetof(J9Class,lockOffset)))))

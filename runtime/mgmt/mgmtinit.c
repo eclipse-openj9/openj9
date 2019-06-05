@@ -128,10 +128,10 @@ Java_sun_management_FileSystemImpl_init0(JNIEnv *env, jclass c)
 }
 
 /*
- * Determines whether the file system addressed by the given absolute path suports security.
+ * Determines whether the file system addressed by the given absolute path supports security.
  *
  * @param path file path
- * @return Returns true if the referenced file system suports security, false otherwise.
+ * @return Returns true if the referenced file system supports security, false otherwise.
  */
 jboolean JNICALL
 Java_sun_management_FileSystemImpl_isSecuritySupported0(JNIEnv *env, jclass c, jstring path)

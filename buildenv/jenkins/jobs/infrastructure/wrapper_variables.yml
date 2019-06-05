@@ -1,0 +1,168 @@
+
+###############################################################################
+# Copyright (c) 2019, 2019 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+
+#================================================================#
+# Specifications for the pipeline job that will be built nightly
+#================================================================#
+Nightly:
+    job_name: "Pipeline-Build-Test-All"
+    job_description: "<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3<p>This job defines the OpenJ9 Nightly Build<p>This job is defined in wrapper_template and wrapper_variables.yml in the openj9 repo, if you wish to change it modify that</p>"
+    build_discarder_logs: 10
+    build_discarder_artifacts: 60
+    parameters:
+        boolean_parameters:
+            Java8: true
+            Java11: true
+            Java12: true
+            Javanext: false
+        string_parameters:
+            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+            TEST_TARGETS: "sanity.functional,extended.functional,sanity.system,extended.system"
+            RESTART_TIMEOUT: "12"
+            TIMEOUT_TIME: "14"
+        choice_parameters:
+            BUILD_IDENTIFIER:
+                - "Nightly"
+                - "Custom"
+            AUTOMATIC_GENERATION:
+                - "true"
+                - "false"
+    triggers:
+        cron: "H 22 * * *"
+#================================================#
+# Specifications for the OMR Acceptance pipeline
+#================================================#
+OMR_Acceptance:
+    job_name: "Pipeline-OMR-Acceptance"
+    job_description: "<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3<p>This job defines the OMR Acceptance Build<p>This job is defined in wrapper_template and wrapper_variables.yml in the openj9 repo, if you wish to change it modify that</p>"
+    quiet_period: 1200
+    extra_git_options:
+        depth: 0
+        reference_repo: "/home/jenkins/openjdk_cache"
+        shallow: false
+        no_tags: false
+        git_timeout: 10
+    build_discarder_logs: 20
+    build_discarder_artifacts: 60
+    parameters:
+        boolean_parameters:
+            Java8: true
+            Java11: true
+            Java12: false
+            PROMOTE_OMR: true
+        string_parameters:
+            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+            TEST_TARGETS: "sanity.functional"
+            RESTART_TIMEOUT: ""
+        choice_parameters:
+            OMR_BRANCH:
+                - "master"
+            BUILD_IDENTIFIER:
+                - "OMR-Acceptance"
+            AUTOMATIC_GENERATION:
+                - "true"
+                - "false"
+
+#===============================================#
+# Specifications for the release build pipeline
+#===============================================#
+Release:
+    job_name: "Pipeline-Release-Build"
+    job_description: "<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3<p>This job defines the OpenJ9 Release Build<p>This job is defined in wrapper_template and wrapper_variables.yml in the openj9 repo, if you wish to change it modify that</p>"
+    parameters:
+        boolean_parameters:
+            Java8: false
+            Java11: false
+            Java12: false
+            Javanext: false
+        string_parameters:
+            OPENJDK8_BRANCH:
+            OPENJDK11_BRANCH:
+            OPENJDK12_BRANCH:
+            OPENJ9_BRANCH:
+            OMR_BRANCH:
+            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+            TEST_TARGETS: "sanity.functional,extended.functional,sanity.system,extended.system"
+        choice_parameters:
+            OPENJDK8_REPO:
+                - "https://github.com/ibmruntimes/openj9-openjdk-jdk8.git"
+            OPENJDK11_REPO:
+                - "https://github.com/ibmruntimes/openj9-openjdk-jdk11.git"
+            OPENJDK12_REPO:
+                - "https://github.com/ibmruntimes/openj9-openjdk-jdk12.git"
+            OPENJDKNEXT_REPO:
+                - "https://github.com/ibmruntimes/openj9-openjdk-jdk.git"
+            OPENJ9_REPO:
+                - "https://github.com/eclipse/openj9.git"
+            OMR_REPO:
+                - "https://github.com/eclipse/openj9-omr.git"
+            BUILD_IDENTIFIER:
+                - "Release"
+                - "Custom"
+            AUTOMATIC_GENERATION:
+                - "true"
+                - "false"
+#========================================#
+# Specifications for Pull Request Builds
+#========================================#
+PullRequest-OpenJ9:
+    job_name: "PullRequest-OpenJ9"
+    job_description: "<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3<p>This job defines the OpenJ9 Pull Requests Build<p>This job is defined in wrapper_template and wrapper_variables.yml in the openj9 repo, if you wish to change it modify that</p>"
+    build_discarder_logs: 20
+    github_project: "https://github.com/eclipse/openj9/"
+    triggers:
+        pull_request_builder:
+            trigger_phrase: .*\bjenkins\s+(compile|test)\b.*
+            cron: "H/5 * * * *"
+            admin_list: "OpenJ9"
+            blacklist: "kenrai123"
+            context: "Pull Request - OpenJ9"
+            triggered_status: "Job Triggered"
+            started_status: "Jobs Running"
+
+PullRequest-OpenJDK:
+    job_name: "PullRequest-OpenJDK"
+    job_description: "<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3<p>This job defines the OpenJDK Pull Requests Build<p>This job is defined in wrapper_template and wrapper_variables.yml in the openj9 repo, if you wish to change it modify that</p>"
+    build_discarder_logs: 20
+    github_project: "https://github.com/ibmruntimes/openj9-openjdk-jdk"
+    triggers:
+        pull_request_builder:
+            trigger_phrase: .*\bjenkins\s+(compile|test)\b.*
+            cron: "H/5 * * * *"
+            admin_list: "Extensions"
+            blacklist: "kenrai123"
+            context: "Pull Request - OpenJDK"
+            triggered_status: "Job Triggered"
+            started_status: "Jobs Running"
+#==============================================#
+# General job specifications for all pipelines
+#==============================================#
+general:
+    parameter_descriptions:
+        TEST_TARGETS: "Use `none` for no testing.\nsanity.functional,extended.functional,sanity.system,extended.system"
+        PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+        RESTART_TIMEOUT: "Time allowed to restart a job"
+        TIMEOUT_TIME: "Overall build timeout"
+    repository_url: "https://github.com/eclipse/openj9.git"
+    repository_branch: "refs/heads/master"
+    pipeline_script_path: "buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-All"

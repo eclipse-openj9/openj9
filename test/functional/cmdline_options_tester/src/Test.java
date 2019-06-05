@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ class Test {
 	static final int CORE_COUNT = Integer.getInteger(CORE_COUNT_PROPERTY, 2).intValue();
 	
 	/**
-	 * The time in millisecodns between capturing core files (if CORE_COUNT > 1)
+	 * The time in milliseconds between capturing core files (if CORE_COUNT > 1)
 	 * may be specified via
 	 *   -Dcmdline.coreintervalms=N
 	 * The default is one minute.
@@ -168,7 +168,7 @@ class Test {
 				exeToDebug = cmdArray[0];
 				proc = Runtime.getRuntime().exec(cmdArray, TestSuite.getEnvironmentVariableList(), userDir);
 			} else {
-				// Use a buffer to build the command line from the _commandExcutable and the _commandArgs
+				// Use a buffer to build the command line from the _commandExecutable and the _commandArgs
 				StringBuilder buffer = new StringBuilder(TestSuite.evaluateVariables(_commandExecutable));
 				for (String arg : _commandArgs) {
 					buffer.append(' ');
@@ -709,7 +709,7 @@ class Test {
 						return;
 					}
 					TestSuite.printErrorMessage("ABRT timed out");
-					/* When ABRT times out, try to kill the process with kill -9 to make sure it doesn's stop the rest */
+					/* When ABRT times out, try to kill the process with kill -9 to make sure it doesn't stop the rest */
 					TestSuite.printErrorMessage("executing kill -9 " + pid);
 					Process procKill9 = Runtime.getRuntime().exec("kill -9 " + pid);
 					procKill9.waitFor();

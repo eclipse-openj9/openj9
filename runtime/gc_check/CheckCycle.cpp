@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -452,8 +452,8 @@ GC_CheckCycle::run(GCCheckInvokedBy invokedBy, UDATA filterFlags)
  * method can identify dead objects by virtue of the fact that their class
  * pointer is unaligned, ie low_tagged.
  * 
- * This is not necessary if the Object Map is avaialable as we can perform the
- * necessary check by calling the memeory manager j9gc_ext_is_liveObject() fucntion
+ * This is not necessary if the Object Map is available as we can perform the
+ * necessary check by calling the memory manager j9gc_ext_is_liveObject() function
  * 
  */
 void

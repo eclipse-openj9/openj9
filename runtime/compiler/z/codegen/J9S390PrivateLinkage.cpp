@@ -24,6 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
@@ -46,7 +47,8 @@
 #include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390J9CallSnippet.hpp"
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
+#include "z/codegen/SystemLinkagezOS.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -74,17 +76,6 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setRegisterFlag(TR::RealRegister::GPR12, Preserved);
    setRegisterFlag(TR::RealRegister::GPR13, Preserved);
 
-   if (TR::Compiler->target.is64Bit())
-      {
-      setRegisterFlag(TR::RealRegister::HPR6, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR7, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR8, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR9, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR10, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR11, Preserved);
-      setRegisterFlag(TR::RealRegister::HPR12, Preserved);
-      }
-
 #if defined(ENABLE_PRESERVED_FPRS)
    setRegisterFlag(TR::RealRegister::FPR8, Preserved);
    setRegisterFlag(TR::RealRegister::FPR9, Preserved);
@@ -107,7 +98,7 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setLongDoubleReturnRegister4  (TR::RealRegister::FPR4 );
    setLongDoubleReturnRegister6  (TR::RealRegister::FPR6 );
 
-   if(codeGen->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13) && TR::Compiler->target.cpu.getS390SupportsVectorFacility() &&
+   if(TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13) && TR::Compiler->target.cpu.getSupportsVectorFacility() &&
      !comp()->getOption(TR_DisableSIMD))
        {
        codeGen->setSupportsVectorRegisters();
@@ -160,9 +151,7 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setOffsetToRegSaveArea (0);
    setOffsetToLongDispSlot(0);
    setOffsetToFirstParm   (0);
-   int32_t numDeps = 29;
-   if (TR::Compiler->target.is32Bit())
-      numDeps += 7; //need to kill HPRs
+   int32_t numDeps = 30;
 
    if (codeGen->getSupportsVectorRegisters())
       numDeps += 32; //need to kill VRFs
@@ -185,13 +174,7 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    TR::RealRegister * mdReal  = getMethodMetaDataRealRegister();
    int32_t icount, ret_count = 0;
 
-   // block all the dedicated registers
-
-   // native stack pointer
-   // On zOS, we can use the system stack pointer on both 31-bit and 64-bit.
-   // 31-bit requires highword facility tracking (z196 or higher).
-   static char * disableFreeJITSSP = feGetEnv("TR_DisableFreeJITSSP");
-
+   // Lock all the dedicated registers
    bool freeingSSPDisabled = true;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -199,9 +182,7 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    if (cg()->supportsJITFreeSystemStackPointer())
       freeingSSPDisabled = false;
 
-   if (freeingSSPDisabled || disableFreeJITSSP != NULL ||
-       (TR::Compiler->target.is32Bit() && !cg()->supportsHighWordFacility()) ||   // Cannot use FreeSSP on 31-bit without highword tracking
-       comp()->getOption(TR_Randomize))                                   // We can generate code for different hardware targets, which are incompatiable.
+   if (freeingSSPDisabled)
       {
       sspReal->setState(TR::RealRegister::Locked);
       sspReal->setAssignedRegister(sspReal);
@@ -213,31 +194,10 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
    spReal->setAssignedRegister(spReal);
    spReal->setHasBeenAssignedInMethod(true);
 
-   TR::RealRegister * tempHigh = toRealRegister(spReal)->getHighWordRegister();
-   tempHigh->setState(TR::RealRegister::Locked);
-   tempHigh->setAssignedRegister(tempHigh);
-   tempHigh->setHasBeenAssignedInMethod(true);
-
    // meta data register
    mdReal->setState(TR::RealRegister::Locked);
    mdReal->setAssignedRegister(mdReal);
    mdReal->setHasBeenAssignedInMethod(true);
-
-   tempHigh = toRealRegister(mdReal)->getHighWordRegister();
-   tempHigh->setState(TR::RealRegister::Locked);
-   tempHigh->setAssignedRegister(tempHigh);
-   tempHigh->setHasBeenAssignedInMethod(true);
-
-   for (icount = TR::RealRegister::FirstHPR; icount <= TR::RealRegister::LastHPR; ++icount)
-      {
-      TR::RealRegister * regReal = cg()->machine()->getRealRegister(icount);
-      if (regReal->getLowWordRegister()->getState() == TR::RealRegister::Locked)
-         {
-         regReal->setState(TR::RealRegister::Locked);
-         regReal->setAssignedRegister(regReal);
-         regReal->setHasBeenAssignedInMethod(true);
-         }
-      }
 
    // set register weight
    for (icount = TR::RealRegister::FirstGPR; icount <= TR::RealRegister::GPR3; icount++)
@@ -864,7 +824,6 @@ TR::S390PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
 void
 TR::S390PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex)
    {
-   // *this    swipeable for debugging purposeso
 
    mapSingleAutomatic(p, p->getRoundedSize(), stackIndex);
    }
@@ -986,10 +945,8 @@ initStg(TR::CodeGenerator * codeGen, TR::Node * node, TR::RealRegister * tmpReg,
 int32_t
 TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum firstUsedReg,
                                                  TR::RealRegister::RegNum lastUsedReg,
-                                                 TR::RealRegister::RegNum firstUsedHighWordReg,
-                                                 TR::RealRegister::RegNum lastUsedHighWordReg,
                                                  int32_t &registerSaveDescription,
-                                                 int32_t &numIntSaved, int32_t &numFloatSaved, int32_t &numHighWordRegSaved)
+                                                 int32_t &numIntSaved, int32_t &numFloatSaved)
    {
    int32_t regSaveSize = 0;
    // set up registerSaveDescription which looks the following
@@ -1018,16 +975,9 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
       }
 #endif
 
-   // HPR6-HPR12 are also preserved on 32-bit
-   if (TR::Compiler->target.is32Bit())
-      {
-      if (!lastUsedHighWordReg  ==  TR::RealRegister::NoReg)
-         numHighWordRegSaved = lastUsedHighWordReg - firstUsedHighWordReg + 1;
-      }
    // calculate stackFramesize
    regSaveSize += numIntSaved * cg()->machine()->getGPRSize() +
-                          numFloatSaved * cg()->machine()->getFPRSize() +
-                          numHighWordRegSaved * 4;
+                          numFloatSaved * cg()->machine()->getFPRSize();
 
 
    int32_t firstLocalOffset = getOffsetToFirstLocal();
@@ -1051,7 +1001,7 @@ TR::S390PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
    if (!cg()->isLiteralPoolOnDemandOn() && firstSnippet != NULL)
       {
       // The immediate operand will be patched when the actual address of the literal pool is known
-      if (!cg()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10) || cg()->anyLitPoolSnippets())
+      if (!TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) || cg()->anyLitPoolSnippets())
          {
          return getLitPoolRealRegister()->getRegisterNumber();
          }
@@ -1071,7 +1021,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    TR::RealRegister * epReg = getEntryPointRealRegister();
    TR::Snippet * firstSnippet = NULL;
    TR::Node * firstNode = comp()->getStartTree()->getNode();
-   int32_t size = 0, argSize = 0, regSaveSize = 0, numIntSaved = 0, numFloatSaved = 0, numHighWordRegSaved =0;
+   int32_t size = 0, argSize = 0, regSaveSize = 0, numIntSaved = 0, numFloatSaved = 0;
    int32_t registerSaveDescription = 0;
    int32_t firstLocalOffset = getOffsetToFirstLocal();
    int32_t i;
@@ -1086,19 +1036,10 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    TR::RealRegister::RegNum lastUsedReg  = getLastSavedRegister(TR::RealRegister::GPR6,
                                                               TR::RealRegister::GPR12);
 
-   // HPR6-HPR12 are also preserved on 32-bit
-   TR::RealRegister::RegNum lastUsedHighWordReg  =  TR::RealRegister::NoReg;
-   TR::RealRegister::RegNum firstUsedHighWordReg =  TR::RealRegister::NoReg;
-   if (TR::Compiler->target.is32Bit())
-      {
-      lastUsedHighWordReg  =  getLastSavedRegister(TR::RealRegister::HPR6, TR::RealRegister::HPR12);
-      firstUsedHighWordReg =  getFirstSavedRegister(TR::RealRegister::HPR6, TR::RealRegister::HPR12);
-      }
    // compute the register save area
    regSaveSize = calculateRegisterSaveSize(firstUsedReg, lastUsedReg,
-                                           firstUsedHighWordReg, lastUsedHighWordReg,
                                            registerSaveDescription,
-                                           numIntSaved, numFloatSaved, numHighWordRegSaved);
+                                           numIntSaved, numFloatSaved);
 
    if (regSaveSize != 0)
       {
@@ -1139,8 +1080,6 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    if (comp()->getOption(TR_TraceCG))
       {
       traceMsg(comp(), "\n regSaveSize = %d localSize = %d argSize = %d firstLocalOffset = %d \n",regSaveSize,localSize,argSize,firstLocalOffset);
-      //traceMsg(comp(), " firstUsedReg = %d lastUsedReg = %d firstUsedHighWordReg = %d lastUsedHighWordReg = %d\n", firstUsedReg, lastUsedReg, firstUsedHighWordReg, lastUsedHighWordReg);
-      //traceMsg(comp(), " numIntSaved = %d numHighWordRegSaved = %d\n", numIntSaved, numHighWordRegSaved);
       traceMsg(comp(), " Framesize = %d \n",size);
       }
 
@@ -1391,7 +1330,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    // Save or move arguments according to the result of register assignment.
    cursor = (TR::Instruction *) saveArguments(cursor, false);
 
-   if (cg()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
       {
       static const bool prefetchStack = feGetEnv("TR_PrefetchStack") != NULL;
 
@@ -1450,7 +1389,6 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
                     !(performTransformation(comp(), "O^O No need to restore RAREG in epilog\n")) ||
                     getRealRegister(getReturnAddressRegister())->getHasBeenAssignedInMethod()                       ||
                     cg()->canExceptByTrap()                                                      ||
-                    getRealRegister(getReturnAddressRegister())->getHighWordRegister()->getHasBeenAssignedInMethod() ||
                     cg()->getExitPointsInMethod()                                                ||
                     bodySymbol->isEHAware()                                                              ||
                     comp()->getOption(TR_FullSpeedDebug);  // CMVC 195232 - FSD can modify RA slot at a GC point.
@@ -1947,7 +1885,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
           * 2. for all virtual calls, resolved or not, this load immediate is used by the VM to find where
           * the method is in the VFT table when doing J2I transitions. We need this negative offset in a register
           * because S390 load address instruction used to find VFT table entires can't handle negative offsets.
-          * (VFT table preceeds the J9Class in memory; as a result of this, all VFT entries are some negative offsets
+          * (VFT table precedes the J9Class in memory; as a result of this, all VFT entries are some negative offsets
           * away from the J9Class)
           *
           *
@@ -2078,7 +2016,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
 
       if (numInterfaceCallCacheSlots == 0 )
          {
-         //Disabled interface call cahcing
+         //Disabled interface call caching
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
 
@@ -2182,7 +2120,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
                                    TR::Compiler->om.generateCompressedObjectHeaders() // Classes are <2GB on CompressedRefs only.
                                    );
 
-            // Load the interface call data snippet pointer to register is requied for non-CLFI / BRCL sequence.
+            // Load the interface call data snippet pointer to register is required for non-CLFI / BRCL sequence.
             if (!useCLFIandBRCL)
                {
                cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
@@ -2666,7 +2604,7 @@ void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register
    //  As java stack is not yet restored , Make sure that no instruction in this function
    // should use stack.
    // If instruction uses literal pool, it must only be to do load, and such instruction's memory reference should be marked MemRefMustNotSpill
-   // so that in case of long disp, we will resue the target reg as a scratch reg
+   // so that in case of long disp, we will reuse the target reg as a scratch reg
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
    intptrj_t aValue = fej9->constAcquireVMAccessOutOfLineMask();
@@ -2735,10 +2673,22 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::CodeGenerator* cg = self()->cg();
    TR::Compilation* comp = self()->comp();
 
-   // Store a 1 into vmthread->inNative
-   generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
-                          generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
-                          1);
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
+      {
+      // Store a 1 into vmthread->inNative
+      generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
+                           generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
+                           1);
+      }
+   else
+      {
+      TR::Register* buffer = cg->allocateRegister();
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, buffer, 1);
+      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), callNode, buffer,
+                            generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg));
+      cg->stopUsingRegister(buffer);
+      }
+
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
    generateSerializationInstruction(cg, callNode, NULL);
@@ -2752,10 +2702,12 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::LabelSymbol * longReleaseRestartLabel = generateLabelSymbol(cg);
 
    TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= MIN_IMMEDIATE_BYTE_VAL && J9_PUBLIC_FLAGS_VM_ACCESS <= MAX_IMMEDIATE_BYTE_VAL, "VM access bit must be immediate");
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, longReleaseSnippetLabel, TR::InstOpCode::COND_BNE);
+
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, TR::InstOpCode::COND_BNE, longReleaseSnippetLabel, false);
+
    cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
                                                                          callNode, longReleaseSnippetLabel,
-                                                                         comp->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp->getJittedMethodSymbol()),
+                                                                         comp->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp->getJittedMethodSymbol()),
                                                                          longReleaseRestartLabel));
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, longReleaseRestartLabel);
@@ -2792,7 +2744,8 @@ TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::LabelSymbol * longAcquireRestartLabel = generateLabelSymbol(cg);
 
    TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= MIN_IMMEDIATE_BYTE_VAL && J9_PUBLIC_FLAGS_VM_ACCESS <= MAX_IMMEDIATE_BYTE_VAL, "VM access bit must be immediate");
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, longAcquireSnippetLabel, TR::InstOpCode::COND_BNE);
+
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, TR::InstOpCode::COND_BNE, longAcquireSnippetLabel, false);
 
    cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
                                                                          callNode, longAcquireSnippetLabel,
@@ -2851,7 +2804,7 @@ TR::J9S390JNILinkage::processJNIReturnValue(TR::Node * callNode,
       }
    else if ((returnType == TR::Int8) && comp()->getSymRefTab()->isReturnTypeBool(callNode->getSymbolReference()))
       {
-      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13))
+      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13))
          {
          generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCode(), callNode, javaReturnRegister, 0);
          generateRIEInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LOCGHI : TR::InstOpCode::LOCHI,
@@ -2883,8 +2836,10 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    TR::SystemLinkage * systemLinkage = (TR::SystemLinkage *) cg()->getLinkage(TR_System);
    TR::LabelSymbol * returnFromJNICallLabel = generateLabelSymbol(cg());
    TR::RegisterDependencyConditions * deps;
-   int32_t numDeps = systemLinkage->getNumberOfDependencyGPRegisters();
-   numDeps += 16; //HPRs need to be spilled
+
+   // Extra dependency for killing volatile high registers (see KillVolHighRegs)
+   int32_t numDeps = systemLinkage->getNumberOfDependencyGPRegisters() + 1;
+
    if (cg()->getSupportsVectorRegisters())
       numDeps += 32; //VRFs need to be spilled
 
@@ -2976,18 +2931,13 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
       jniEnvRegister, methodMetaDataVirtualRegister);
       }
 
-   // JNI dispatch does not allow for any object references to survive in preserved registers
-   // they are saved onto the system stack, which the stack walker has no way of accessing.
-   // Hence, ensure we kill all preserved HPRs (6-12) as well
+   // JNI dispatch does not allow for any object references to survive in preserved registers as they are saved onto
+   // the system stack, which the JVM stack walker has has no awareness of. Hence we need to ensure that all object
+   // references are evicted from preserved registers at the call site.
+   TR::Register* tempReg = cg()->allocateRegister();
 
-   TR::Register *dummyReg = NULL;
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR6), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR7), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR8), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR9), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR10), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR11), codeGen, true, true );
-   killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR12), codeGen, true, true );
+   deps->addPostCondition(tempReg, TR::RealRegister::KillVolHighRegs);
+   cg()->stopUsingRegister(tempReg);
 
    setupRegisterDepForLinkage(callNode, TR_JNIDispatch, deps, killMask, systemLinkage, GlobalRegDeps, hasGlRegDeps, &methodAddressReg, javaLitOffsetReg);
 
@@ -3021,7 +2971,7 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
      auto* literalOffsetMemoryReference = new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen);
 
      // Set up literal offset slot to zero
-     if (codeGen->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+     if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
         {
         generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, literalOffsetMemoryReference, 0);
         }
@@ -3201,7 +3151,7 @@ TR::S390PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Li
         TR::Register *stackRegister = linkage->getStackRegisterForOutgoingArguments(callNode, dependencies);  // delay (possibly) creating this till needed
         storeArgumentOnStack(callNode, TR::InstOpCode::getStoreOpCode(), jniEnvRegister, &stackOffset, stackRegister);
         }
-     if (linkage->isXPLinkLinkageType()) // call specifc
+     if (linkage->isXPLinkLinkageType()) // call specific
         {
         stackOffset += gprSize;
         }
@@ -3220,7 +3170,7 @@ TR::S390PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR:
    TR::Register * javaResultReg;
 
    //In zOS XPLink, return register(GPR3) is not same as privateLinkage (GPR2)
-   // hense we need to add another dependency
+   // hence we need to add another dependency
    if (linkage->getIntegerReturnRegister() != getIntegerReturnRegister())
       {
       javaResultReg =  (resType.isAddress())? cg()->allocateCollectedReferenceRegister() : cg()->allocateRegister();
@@ -3260,12 +3210,10 @@ TR::S390PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    switch (callNode->getOpCodeValue())
       {
       case TR::icall:
-      case TR::iucall:
       case TR::acall:
          returnRegister = dependencies->searchPostConditionRegister(getIntegerReturnRegister());
          break;
       case TR::lcall:
-      case TR::lucall:
             {
             if (TR::Compiler->target.is64Bit())
                {
@@ -3347,12 +3295,10 @@ TR::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    switch (callNode->getOpCodeValue())
       {
       case TR::icalli:
-      case TR::iucalli:
       case TR::acalli:
          returnRegister = dependencies->searchPostConditionRegister(getIntegerReturnRegister());
          break;
       case TR::lcalli:
-      case TR::lucalli:
             {
             if (TR::Compiler->target.is64Bit())
                {
@@ -3409,7 +3355,7 @@ TR::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
 ////////////////////////////////////////////////////////////////////////////////
 // TR::S390PrivateLinkage::mapIncomingParms - maps parameters onto the stack for the given method.
 //   This function iterates over the parameters, mapping them onto the stack, either right
-//   to left, or left to right, depending on S390Linakge properties.
+//   to left, or left to right, depending on S390Linkage properties.
 //   This code was removed from TR::S390PrivateLinkage::mapStack as it is common code that
 //   is now called by TR::S390PrivateLinkage::mapCompactedStack as well.
 ////////////////////////////////////////////////////////////////////////////////
@@ -3548,6 +3494,14 @@ TR::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_Dispa
       }
 
    }
+
+
+TR::RealRegister::RegNum
+TR::S390PrivateLinkage::getSystemStackPointerRegister()
+   {
+   return cg()->getLinkage(TR_System)->getStackPointerRegister();
+   }
+
 
 TR::J9S390JNILinkage::J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    :TR::S390PrivateLinkage(cg, elc, lc)

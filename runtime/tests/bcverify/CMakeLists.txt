@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,8 +37,8 @@ add_library(bcuwhite SHARED
 	${j9vm_BINARY_DIR}/bcverify/ut_j9bcverify.c
 )
 
-# We need to add an explict dependency on the actual tracegen step since CMake
-# doesnt properly track generated file dependencies across directories
+# We need to add an explicit dependency on the actual tracegen step since CMake
+# doesn't properly track generated file dependencies across directories
 add_dependencies(bcuwhite trc_j9bcverify)
 
 target_link_libraries(bcuwhite
@@ -66,4 +66,5 @@ target_include_directories(bcuwhite
 install(
 	TARGETS bcuwhite
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

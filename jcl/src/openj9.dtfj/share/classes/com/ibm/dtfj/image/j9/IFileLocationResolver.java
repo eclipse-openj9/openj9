@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ public interface IFileLocationResolver
 {
 	/**
 	 * Used to lookup files at runtime.  The fullPath is used as a hint for how to find the file and what
-	 * it is called but implementors are free to use whatever RI are necessary to find and return
+	 * it is called but implementers are free to use whatever RI are necessary to find and return
 	 * the adequate file
 	 * 
 	 * @param fullPath The full path to the file

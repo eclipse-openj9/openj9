@@ -32,7 +32,6 @@
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/FrontEnd.hpp"
-#include "codegen/Linkage.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "compile/Compilation.hpp"
@@ -1241,7 +1240,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
           * We don't want to attach the callNode as a child to BCDCHK since it would be an aberration to the
           * definition of a BCDCHK node. BCDCHK node is already a special type of node, and all optimizations expect the
           * call (i2pd) to be inside the first child of BCDCHK. Attaching another call could cause many things to
-          * break as all optimizations such as Value Propogation don't expect it to be there. Attaching the callNode's children
+          * break as all optimizations such as Value Propagation don't expect it to be there. Attaching the callNode's children
           * to BCDCHK would be safe. We would whip up the call with these attached children during codegen
           * for the fallback of the fastpath.
           */
@@ -1270,11 +1269,6 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
          // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
          // correctly compute a new CP to relocate DAA OOL calls.
          bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
-
-         if (errorCheckingNode->getInt())
-            bcdchkNode->setBCDNodeOverflow();
-         else
-            bcdchkNode->resetBCDNodeOverflow();
 
          pdstore = TR::Node::create(op, 2, storeAddressNode, pdshlNode);
          }
@@ -1563,7 +1557,7 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
        * We don't want to attach the callNode as a child to BCDCHK since it would be an aberration to the
        * definition of a BCDCHK node. BCDCHK node is already a special type of node, and all optimizations expect the
        * call (pd2i) to be in its first child. Attaching another call could cause many things to break as all
-       * optimizations such as Value Propogation don't expect it to be there. Attaching the callNode's children
+       * optimizations such as Value Propagation don't expect it to be there. Attaching the callNode's children
        * to BCDCHK would be safe. We would whip up the call with these attached children during codegen
        * for the fallback of the fastpath.
        */
@@ -1676,11 +1670,6 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
 
       // Replacing TT with BCDCHK, so losing one reference.
       callNode->decReferenceCount();
-
-      if (overflow)
-         bcdchk->setBCDNodeOverflow();
-      else
-         bcdchk->resetBCDNodeOverflow();
 
       //create pd2i:
       pd2iNode = callNode;
@@ -1986,15 +1975,6 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
 
       TR::TreeTop * ttPdstore = TR::TreeTop::create(comp(), pdstore);
 
-      if (isCheckOverflow)
-         {
-         bcdchk->setBCDNodeOverflow();
-         }
-      else
-         {
-         bcdchk->resetBCDNodeOverflow();
-         }
-
       // Join treetops:
       TR::TreeTop * nextTT = treeTop->getNextTreeTop();
       TR::TreeTop * prevTT = treeTop->getPrevTreeTop();
@@ -2092,16 +2072,6 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
    // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
    // correctly compute a new CP to relocate DAA OOL calls.
    bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
-
-   if (isCheckOverflow)
-      bcdchkNode->setBCDNodeOverflow();
-   else
-      bcdchkNode->resetBCDNodeOverflow();
-
-   if (isRound)
-      bcdchkNode->setBCDNodeRounding();
-   else
-      bcdchkNode->resetBCDNodeRounding();
 
    TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);
    TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
@@ -2204,7 +2174,6 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
    // Set inlined site index to make sure AOT TR_RelocationRecordConstantPool::computeNewConstantPool() API can
    // correctly compute a new CP to relocate DAA OOL calls.
    bcdchkNode->setInlinedSiteIndex(callNode->getInlinedSiteIndex());
-   bcdchkNode->setBCDNodeOverflow();
 
    //following pdstore
    TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);

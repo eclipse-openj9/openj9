@@ -93,6 +93,9 @@ public class ValueTypeGenerator extends ClassLoader {
 			testWithFieldOnNonValueType(cw, className, fields);
 			testWithFieldOnNull(cw, className, fields);
 			testWithFieldOnNonExistentClass(cw, className, fields);
+			testMonitorEnterOnObject(cw, className, fields);
+			testMonitorExitOnObject(cw, className, fields);
+			testMonitorEnterAndExitWithRefType(cw, className, fields);
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			if (!isVerifiable) {
@@ -174,7 +177,53 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();
 	}
-	
+
+	 /* 
+	  * This function should only be called in the
+	  * TestMonitorEnterOnValueType test and 
+	  * TestMonitorEnterWithRefType test
+	  */
+	private static void testMonitorEnterOnObject(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorEnterOnObject", "(Ljava/lang/Object;)V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitInsn(MONITORENTER);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+	}
+
+	 /* 
+	  * This function should only be called in the
+	  * TestMonitorExitOnValueType test and
+	  * TestMonitorExitWithRefType test
+	  */
+	private static void testMonitorExitOnObject(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorExitOnObject", "(Ljava/lang/Object;)V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitInsn(MONITOREXIT);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+	}
+
+	 /* 
+	  * This function should only be called in the
+	  * TestMonitorEnterAndExitWithRefType test
+	  */
+	private static void testMonitorEnterAndExitWithRefType(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorEnterAndExitWithRefType", "(Ljava/lang/Object;)V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitInsn(DUP);
+		mv.visitInsn(MONITORENTER);
+		mv.visitInsn(MONITOREXIT);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(2,1);
+		mv.visitEnd();
+	}
+
 	private static void makeValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValue", "(" + makeValueSig + ")L" + valueName + ";", null, null);
@@ -266,14 +315,16 @@ public class ValueTypeGenerator extends ClassLoader {
 	
 	private static void makeRef(ClassWriter cw, String className, String makeValueSig, String makeValueGenericSig, String[]fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
+		int makeRefArgsAndLocals = makeMaxLocal + 1; //extra slot is to store the ref being created
+		
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeRef", "(" + makeValueSig + ")L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
-		mv.visitVarInsn(ASTORE, fields.length);
+		mv.visitVarInsn(ASTORE, makeMaxLocal);
 		for (int i = 0, count = 0; i < fields.length; i++) {
-			mv.visitVarInsn(ALOAD, fields.length);
+			mv.visitVarInsn(ALOAD, makeMaxLocal);
 			String nameAndSigValue[] = fields[i].split(":");
 			switch (nameAndSigValue[1]) {
 			case "D":
@@ -305,11 +356,11 @@ public class ValueTypeGenerator extends ClassLoader {
 			}
 			mv.visitFieldInsn(PUTFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
 		}
-		mv.visitVarInsn(ALOAD, fields.length);
+		mv.visitVarInsn(ALOAD, makeMaxLocal);
 		mv.visitInsn(ARETURN);
 		
 		int maxStack = (doubleDetected) ? 3 : 2;
-		mv.visitMaxs(maxStack, makeMaxLocal);
+		mv.visitMaxs(maxStack, makeRefArgsAndLocals);
 		mv.visitEnd();
 	}
 

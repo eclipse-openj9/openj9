@@ -4,7 +4,7 @@ define(`ZZ',`**')
 define(`ZZ',`##')
 ')dnl
 
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made
 ZZ available under the terms of the Eclipse Public License 2.0
@@ -411,7 +411,7 @@ ZZ divL = 3 => rem = -2147483654  (0xFFFF FFFF 7FFF FFFA)
     LHI QotH,-1
     LHI QotL,-12
     SRL QotL,1
-    j     LREMExit  #Just in case sombody adds code after this
+    j     LREMExit  #Just in case somebody adds code after this
 
 ZZ end   Defect 112396
 

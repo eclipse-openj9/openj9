@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 {
 	/* TODO: what happens if setSize == 0? We used to allow the setSize to be 0 so that when the user trying to open
 		an existing semaphore they won't need to specify that. However because semaphore set is not part of Windows API
-		so we are emulating it using seperate name - we need code to find out how large a semaphore set is */
+		so we are emulating it using separate name - we need code to find out how large a semaphore set is */
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	char baseFile[J9SH_MAXPATH], mutexName[J9SH_MAXPATH];
 	j9shsem_handle* shsem_handle;
@@ -251,7 +251,7 @@ j9shsem_deprecated_wait(struct J9PortLibrary *portLibrary, struct j9shsem_handle
 	rc = WaitForSingleObject(handle->semHandles[semset],timeout);
 	
 	switch(rc) {
-	case WAIT_ABANDONED: /* This means someone has crash but hasn't relase the mutex, we are okay with this */
+	case WAIT_ABANDONED: /* This means someone has crashed but hasn't released the mutex, we are okay with this */
 	case WAIT_OBJECT_0:
 		Trc_PRT_shsem_j9shsem_wait_Exit(0);
 		return 0;

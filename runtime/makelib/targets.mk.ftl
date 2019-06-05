@@ -1,4 +1,4 @@
-# Copyright (c) 1998, 2018 IBM Corp. and others
+# Copyright (c) 1998, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,18 +94,10 @@ ifeq ($(UMA_TARGET_TYPE),EXE)
   UMA_EXETARGET:=$(UMA_TARGET_PATH)$(UMA_TARGET_NAME)$(UMA_DOT_EXE)
 endif
 
-ifdef OPENJ9_BUILD
+ifeq ($(OPENJ9_BUILD),true)
 CFLAGS+=-DOPENJ9_BUILD
 CXXFLAGS+=-DOPENJ9_BUILD
 CPPFLAGS+=-DOPENJ9_BUILD
-endif
-
-ifdef UMA_SP_CFLAGS
-CFLAGS += $(UMA_SP_CFLAGS)
-CXXFLAGS += $(UMA_SP_CFLAGS)
-<#if !uma.spec.type.windows>
-CPPFLAGS += $(UMA_SP_CFLAGS)
-</#if>
 endif
 
 # Declare the 'all' target
@@ -164,7 +156,7 @@ CFLAGS+=$(UMA_C_INCLUDES)
 CXXFLAGS+=$(UMA_C_INCLUDES)
 CPPFLAGS+=$(UMA_C_INCLUDES)
 </#if>
-<#if  uma.spec.type.ztpf &&  uma.spec.properties.crossCompilerPath.defined>
+<#if uma.spec.type.ztpf && uma.spec.properties.crossCompilerPath.defined>
 # Put the required z/TPF tools on the path.
 space :=
 space +=
@@ -186,7 +178,7 @@ TPF_FLAGS += -Wno-unused
 TPF_FLAGS += -fno-delete-null-pointer-checks
 </#if>
 
-<#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined  && uma.spec.properties.tpfProj.defined>
+<#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined && uma.spec.properties.tpfProj.defined>
 
 CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -iquote ../include
 CXXFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES)
@@ -199,6 +191,7 @@ CXXFLAGS+=$(UMA_C_INCLUDES)
 CPPFLAGS+=$(UMA_C_INCLUDES)
 
 UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/base/lib)
+UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/base/stdlib)
 UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 
 </#if>
@@ -273,7 +266,7 @@ UMA_DLL_LINK_FLAGS+=-fprofile-arcs -ftest-coverage
 UMA_EXE_PREFIX_FLAGS+=-fprofile-arcs -ftest-coverage
 </#if>
 
-# Add posibility of debug flags
+# Add possibility of debug flags
 CFLAGS+=$(VMDEBUG)
 CXXFLAGS+=$(VMDEBUG)
 <#if uma.spec.type.windows>
@@ -324,7 +317,7 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 # compilation rule for metal-C files.
 %$(UMA_DOT_O): %.mc
 	cp $< $*.c
-	xlc $(MCFLAGS) -qnosearch  -I /usr/include/metal/ -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
+	xlc $(MCFLAGS) -qnosearch -I /usr/include/metal/ -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
 	rm -f $*.c
 	as -mgoff $(UMA_MCASM_INCLUDES) $*.s
 	rm -f $*.s
@@ -355,11 +348,17 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 DDR_SED_COMMAND := \
 	sed -n -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/' -e '/^@./p'
 
+# On z/OS, CFLAGS and CXXFLAGS contain '-Wc,convlit(ISO8859-1)' and '-Wc,list,offset'
+# which are incompatible with the use of '-E' below, trigger numerous warnings.
+# The solution is to use '-Wc,noconvlit' and '-Wc,nolist,nooffset' to negate those options.
+
+DDR_NOLIST := <#if uma.spec.type.zos>-Wc,noconvlit -Wc,nolist,nooffset</#if>
+
 %.i : %.c
-	$(CC) $(CFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
+	$(CC) $(CFLAGS) $(DDR_NOLIST) -E $< | $(DDR_SED_COMMAND) > $@
 
 %.i : %.cpp
-	$(CXX) $(CXXFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
+	$(CXX) $(CXXFLAGS) $(DDR_NOLIST) -E $< | $(DDR_SED_COMMAND) > $@
 
 # just create empty output files
 %.i : %.asm ; touch $@
@@ -397,7 +396,7 @@ DDR_SED_COMMAND := \
 
 </#if>
 <#if !(uma.spec.type.aix || uma.spec.type.zos)>
-# compileation rule for .asm files
+# compilation rule for .asm files
 <#if uma.spec.type.windows>
 %$(UMA_DOT_O): %.asm
 	$(AS) $(ASFLAGS) $<
@@ -483,8 +482,8 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 <#if uma.spec.type.zos>
 #compilation rule for .m4 files
 %$(UMA_DOT_O): %.m4
-	m4 -DJ9ZOS390  -DJ9VM_TIERED_CODE_CACHE $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
-	$(AS) -DJ9ZOS390=1 -Wa,goff -Wa,SYSPARM\(BIT64\) $(UMA_ASM_INCLUDES) -c -o $*.o $*.s
+	m4 -DJ9ZOS390 -DJ9VM_TIERED_CODE_CACHE $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
+	$(AS) -DJ9ZOS390=1 -Wa,goff -Wa,"SYSPARM(BIT64)" $(UMA_ASM_INCLUDES) -c -o $*.o $*.s
 	-mv -f $*.s $*.hold
 </#if>
 

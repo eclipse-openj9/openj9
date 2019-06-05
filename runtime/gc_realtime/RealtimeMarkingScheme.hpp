@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,19 +23,27 @@
 #if !defined(REALTIMEMARKINGSCHEME_HPP_)
 #define REALTIMEMARKINGSCHEME_HPP_
 
-#include "j9.h"
+#include "omr.h"
 
 #include "Base.hpp"
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "MarkMap.hpp"
-#include "RealtimeGC.hpp"
 
 #include "SegregatedMarkingScheme.hpp"
 
-class MM_RealtimeMarkingSchemeRootMarker;
+class MM_RealtimeGC;
 class MM_RealtimeRootScanner;
 class MM_Scheduler;
+
+#define ITEM_IS_ARRAYLET 0x1
+#define IS_ITEM_OBJECT(item) ((item & ITEM_IS_ARRAYLET) == 0x0)
+#define IS_ITEM_ARRAYLET(item) ((item & ITEM_IS_ARRAYLET) == ITEM_IS_ARRAYLET)
+#define ITEM_TO_OBJECT(item) ((omrobjectptr_t)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
+#define ITEM_TO_ARRAYLET(item) ((fomrobject_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
+#define ITEM_TO_UDATAP(item) ((uintptr_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
+#define OBJECT_TO_ITEM(obj) ((uintptr_t) obj)
+#define ARRAYLET_TO_ITEM(arraylet) (((uintptr_t) arraylet) | ITEM_IS_ARRAYLET)
 
 #define REFERENCE_OBJECT_YIELD_CHECK_INTERVAL 200
 #define UNFINALIZED_OBJECT_YIELD_CHECK_INTERVAL 70
@@ -51,8 +59,6 @@ protected:
 private:
 	MM_RealtimeGC *_realtimeGC;  /**< The GC that this markingScheme is associated*/
 	MM_Scheduler *_scheduler;
-	J9JavaVM *_javaVM;  /**< The current JVM*/
-	MM_GCExtensions *_gcExtensions;
 
 	/*
 	 * Function members
@@ -61,7 +67,10 @@ public:
 	static MM_RealtimeMarkingScheme *newInstance(MM_EnvironmentBase *env, MM_RealtimeGC *realtimeGC);
 	void kill(MM_EnvironmentBase *env);
 
-	void markLiveObjects(MM_EnvironmentRealtime *env);
+	void markLiveObjectsInit(MM_EnvironmentBase *env, bool initMarkMap);
+	void markLiveObjectsRoots(MM_EnvironmentBase *env);
+	void markLiveObjectsScan(MM_EnvironmentBase *env);
+	void markLiveObjectsComplete(MM_EnvironmentBase *env);
 
 	MMINLINE bool isScanned(omrobjectptr_t objectPtr)
 	{
@@ -89,7 +98,7 @@ public:
 	}
 
 	MMINLINE bool 
-	markObject(MM_EnvironmentRealtime *env, J9Object *objectPtr, bool leafType = false)
+	markObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr, bool leafType = false)
 	{	
 		if (objectPtr == NULL) {
 			return false;
@@ -108,47 +117,8 @@ public:
 
 		return true;
 	}
-	
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	MMINLINE void markClassOfObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
-	{
-		markClassNoCheck(env, J9GC_J9OBJECT_CLAZZ(objectPtr));
-	}
 
-	MMINLINE bool markClassNoCheck(MM_EnvironmentRealtime *env, J9Class *clazz)
-	{
-		bool result = false;
-		if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassIsAnonymous)) {
-			/*
-			 * If class is anonymous it's classloader will not be rescanned
-			 * so class object should be marked directly
-			 */
-			result = markObject(env, clazz->classObject);
-		} else {
-			result = markObject(env, clazz->classLoader->classLoaderObject);
-		}
-		return result;
-	}
-
-#endif
-	bool markClass(MM_EnvironmentRealtime *env, J9Class *objectPtr);
-	bool incrementalConsumeQueue(MM_EnvironmentRealtime *env, UDATA maxCount);
-	UDATA scanPointerArraylet(MM_EnvironmentRealtime *env, fj9object_t *arraylet);
-	UDATA scanPointerRange(MM_EnvironmentRealtime *env, fj9object_t *startScanPtr, fj9object_t *endScanPtr);
-	UDATA scanObject(MM_EnvironmentRealtime *env, J9Object *objectPtr);
-	UDATA scanMixedObject(MM_EnvironmentRealtime *env, J9Object *objectPtr);
-	UDATA scanPointerArrayObject(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr);
-	UDATA scanReferenceMixedObject(MM_EnvironmentRealtime *env, J9Object *objectPtr);
-#if defined(J9VM_GC_FINALIZATION)
-	void scanUnfinalizedObjects(MM_EnvironmentRealtime *env);
-#endif /* J9VM_GC_FINALIZATION */
-
-	/**
-	 * Wraps the MM_RootScanner::scanOwnableSynchronizerObjects method to disable yielding during the scan
-	 * then yield after scanning.
-	 * @see MM_RootScanner::scanOwnableSynchronizerObjects()
-	 */
-	void scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env);
+	bool incrementalCompleteScan(MM_EnvironmentRealtime *env, uintptr_t maxCount);
 
 	/**
 	 * Create a MM_RealtimeMarkingScheme object
@@ -157,47 +127,17 @@ public:
 		: MM_SegregatedMarkingScheme(env)
 		, _realtimeGC(realtimeGC)
 		, _scheduler(NULL)
-		, _javaVM(NULL)
-		, _gcExtensions(NULL)
 	{
 		_typeId = __FUNCTION__;
 	}
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
 	virtual void tearDown(MM_EnvironmentBase *env);
-private:
-	void markRoots(MM_EnvironmentRealtime *env, MM_RealtimeMarkingSchemeRootMarker *rootScanner);
-	/**
-	 * Called by the root scanner to scan all WeakReference objects discovered by the mark phase,
-	 * clearing and enqueuing them if necessary.
-	 * @param env[in] the current thread
-	 */
-	void scanWeakReferenceObjects(MM_EnvironmentRealtime *env);
-	/**
-	 * Process the list of reference objects recorded in the specified list.
-	 * References with unmarked referents are cleared and optionally enqueued.
-	 * SoftReferences have their ages incremented.
-	 * @param env[in] the current thread
-	 * @param region[in] the region all the objects in the list belong to
-	 * @param headOfList[in] the first object in the linked list
-	 */
-	void processReferenceList(MM_EnvironmentRealtime *env, MM_HeapRegionDescriptorRealtime* region, J9Object* headOfList, MM_ReferenceStats *referenceStats);
 
-	/**
-	 * Called by the root scanner to scan all SoftReference objects discovered by the mark phase,
-	 * clearing and enqueuing them if necessary.
-	 * @param env[in] the current thread
+	/*
+	 * Friends
 	 */
-	void scanSoftReferenceObjects(MM_EnvironmentRealtime *env);
-
-	/**
-	 * Called by the root scanner to scan all PhantomReference objects discovered by the mark phase,
-	 * clearing and enqueuing them if necessary.
-	 * @param env[in] the current thread
-	 */
-	void scanPhantomReferenceObjects(MM_EnvironmentRealtime *env);
-
-	friend class MM_RealtimeMarkingSchemeRootClearer;
+	friend class MM_MetronomeDelegate;
 };
 
 #endif /* REALTIMEMARKINGSCHEME_HPP_ */

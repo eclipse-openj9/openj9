@@ -84,16 +84,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="sun.jdk7.platform_id" value="linux-aarch64"/>
 		<property name="sun.jdk8.platform_id" value="linux-aarch64"/>
 		<property name="svn_stream" value=""/>
-		<property name="uma_make_cmd_ar" value="$(OPENJ9_CC_PREFIX)-ar"/>
-		<property name="uma_make_cmd_as" value="$(OPENJ9_CC_PREFIX)-as"/>
-		<property name="uma_make_cmd_cc" value="$(OPENJ9_CC_PREFIX)-gcc"/>
-		<property name="uma_make_cmd_cpp" value="$(OPENJ9_CC_PREFIX)-cpp -E -P"/>
-		<property name="uma_make_cmd_cxx" value="$(OPENJ9_CC_PREFIX)-g++"/>
+		<property name="uma_make_cmd_ar" value="ar"/>
+		<property name="uma_make_cmd_as" value="as"/>
+		<property name="uma_make_cmd_cc" value="gcc"/>
+		<property name="uma_make_cmd_cpp" value="cpp -E -P"/>
+		<property name="uma_make_cmd_cxx" value="g++"/>
 		<property name="uma_make_cmd_cxx_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_cxx_exe_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_exe_ld" value="$(CC)"/>
-		<property name="uma_make_cmd_ranlib" value="$(OPENJ9_CC_PREFIX)-ranlib"/>
+		<property name="uma_make_cmd_ranlib" value="ranlib"/>
 		<property name="uma_processor" value="aarch64"/>
 		<property name="uma_type" value="unix,linux"/>
 	</properties>

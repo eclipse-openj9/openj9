@@ -112,6 +112,7 @@ hashTableAtPut(J9HashTable * table, void * value, BOOLEAN collisionIsFailure)
 	} else if (collisionIsFailure) {
 		retval = HASHTABLE_ATPUT_COLLISION_FAILURE;
 	} else {
+		Trc_MODULE_hashTableAtPut(table, value, node);
 		retval = HASHTABLE_ATPUT_SUCCESS;
 	}
 
@@ -203,7 +204,7 @@ createPackage(J9VMThread * currentThread, J9Module * fromModule, const char *pac
 			freePackage(currentThread, j9package);
 			return retval;
 		}
-		j9package->exportsHashTable = vmFuncs->hashModuleTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
+		j9package->exportsHashTable = vmFuncs->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 		if (NULL != j9package->exportsHashTable) {
 			retval = j9package;
 		}
@@ -262,7 +263,7 @@ createModule(J9VMThread * currentThread, j9object_t moduleObject, J9ClassLoader 
 	if (NULL != j9mod) {
 		j9mod->moduleName = moduleName;
 
-		j9mod->readAccessHashTable = vmFuncs->hashModuleTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
+		j9mod->readAccessHashTable = vmFuncs->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 
 		if (NULL != j9mod->readAccessHashTable) {
 			j9mod->classLoader = classLoader;
@@ -320,9 +321,9 @@ trcModulesCreationPackage(J9VMThread * currentThread, J9Module * fromModule, con
 
 	if (NULL != moduleNameUTF) {
 		if (0 == strcmp(moduleNameUTF, JAVA_BASE_MODULE)) {
-			Trc_MODULE_creation_package(currentThread, package, "java.base");
+			Trc_MODULE_createPackage(currentThread, package, "java.base", fromModule);
 		} else {
-			Trc_MODULE_creation_package(currentThread, package, moduleNameUTF);
+			Trc_MODULE_createPackage(currentThread, package, moduleNameUTF, fromModule);
 		}
 		if (moduleNameBuf != moduleNameUTF) {
 			j9mem_free_memory(moduleNameUTF);
@@ -342,13 +343,14 @@ addPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, const ch
 	J9Package * j9package = createPackage(currentThread, fromModule, package);
 
 	if (NULL != j9package) {
+		Trc_MODULE_invokeHashTableAtPut(currentThread, "addPackageDefinition", classLoader, classLoader->packageHashTable, &j9package, j9package, "true");
 		retval = (0 == hashTableAtPut(classLoader->packageHashTable, (void*)&j9package, TRUE));
 	}
 
 	if (!retval) {
 		freePackage(currentThread, j9package);
 	} else {
-		if (TrcEnabled_Trc_MODULE_creation_package) {
+		if (TrcEnabled_Trc_MODULE_createPackage) {
 			trcModulesCreationPackage(currentThread, fromModule, package);
 		}
 	}
@@ -423,6 +425,7 @@ addModuleDefinition(J9VMThread * currentThread, J9Module * fromModule, const cha
 		retval = addMulPackageDefinitions(currentThread, fromModule, packages, numPackages);
 		if (ERRCODE_SUCCESS == retval) {
 			BOOLEAN const success = (0 == hashTableAtPut(classLoader->moduleHashTable, (void*)&fromModule, TRUE));
+			Trc_MODULE_invokeHashTableAtPut(currentThread, "addModuleDefinition", classLoader, classLoader->moduleHashTable, &fromModule, fromModule, "true");
 			if (NULL != version) {
 				fromModule->version = J9_JNI_UNWRAP_REFERENCE(version);
 			}
@@ -481,7 +484,7 @@ trcModulesAddModuleExportsToAll(J9VMThread * currentThread, J9Module * fromModul
 	char *fromModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
 		currentThread, fromModule->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != fromModuleNameUTF) {
-		Trc_MODULE_add_module_exports_to_all(currentThread, package, fromModuleNameUTF);
+		Trc_MODULE_addModuleExportsToAll(currentThread, package, fromModuleNameUTF, fromModule);
 		if (fromModuleNameBuf != fromModuleNameUTF) {
 			j9mem_free_memory(fromModuleNameUTF);
 		}
@@ -495,7 +498,7 @@ exportPackageToAll(J9VMThread * currentThread, J9Module * fromModule, const char
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
 		j9package->exportToAll = TRUE;
-		if (TrcEnabled_Trc_MODULE_add_module_exports_to_all) {
+		if (TrcEnabled_Trc_MODULE_addModuleExportsToAll) {
 			trcModulesAddModuleExportsToAll(currentThread, fromModule, package);
 		}
 	}
@@ -512,7 +515,7 @@ trcModulesAddModuleExportsToAllUnnamed(J9VMThread * currentThread, J9Module * fr
 	char *fromModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
 		currentThread, fromModule->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != fromModuleNameUTF) {
-		Trc_MODULE_add_module_exports_to_all_unnamed(currentThread, package, fromModuleNameUTF);
+		Trc_MODULE_addModuleExportsToAllUnnamed(currentThread, package, fromModuleNameUTF, fromModule);
 		if (fromModuleNameBuf != fromModuleNameUTF) {
 			j9mem_free_memory(fromModuleNameUTF);
 		}
@@ -526,7 +529,7 @@ exportPackageToAllUnamed(J9VMThread * currentThread, J9Module * fromModule, cons
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
 		j9package->exportToAllUnnamed = TRUE;
-		if (TrcEnabled_Trc_MODULE_add_module_exports_to_all_unnamed) {
+		if (TrcEnabled_Trc_MODULE_addModuleExportsToAllUnnamed) {
 			trcModulesAddModuleExportsToAllUnnamed(currentThread, fromModule, package);
 		}
 	}
@@ -586,7 +589,7 @@ trcModulesAddModuleExports(J9VMThread *currentThread, J9Module *fromModule, cons
 	char *toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
 		currentThread, toModule->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if ((NULL != fromModuleNameUTF) && (NULL != toModuleNameUTF)) {
-		Trc_MODULE_add_module_exports(currentThread, package, fromModuleNameUTF, toModuleNameUTF);
+		Trc_MODULE_addModuleExports(currentThread, package, fromModuleNameUTF, fromModule, toModuleNameUTF, toModule);
 	}
 	if (fromModuleNameBuf != fromModuleNameUTF) {
 		j9mem_free_memory(fromModuleNameUTF);
@@ -603,6 +606,7 @@ exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const c
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
 		if (isModuleDefined(currentThread, toModule)) {
+			Trc_MODULE_invokeHashTableAtPut(currentThread, "exportPackageToModule(exportsHashTable)", j9package, j9package->exportsHashTable, &toModule, toModule, "false");
 			if (0 == hashTableAtPut(j9package->exportsHashTable, (void*)&toModule, FALSE)) {
 				retval = ERRCODE_SUCCESS;
 				/*
@@ -617,6 +621,7 @@ exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const c
 					toModule->removeExportsHashTable = vm->internalVMFunctions->hashPackageTableNew(vm, INITIAL_INTERNAL_PACKAGE_HASHTABLE_SIZE);
 				}
 				if (NULL != toModule->removeExportsHashTable) {
+					Trc_MODULE_invokeHashTableAtPut(currentThread, "exportPackageToModule(removeExportsHashTable)", toModule, toModule->removeExportsHashTable, &j9package, j9package, "false");
 					if (0 != hashTableAtPut(toModule->removeExportsHashTable, (void*)&j9package, FALSE)) {
 						retval = ERRCODE_HASHTABLE_OPERATION_FAILED;
 					}
@@ -630,7 +635,7 @@ exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const c
 			retval = ERRCODE_MODULE_WASNT_FOUND;
 		}
 	}
-	if (ERRCODE_SUCCESS == retval && TrcEnabled_Trc_MODULE_add_module_exports) {
+	if (ERRCODE_SUCCESS == retval && TrcEnabled_Trc_MODULE_addModuleExports) {
 		trcModulesAddModuleExports(currentThread, fromModule, package, toModule);
 	}
 
@@ -650,6 +655,7 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
 			retval = ERRCODE_SUCCESS;
 		} else if (isModuleDefined(currentThread, toModule)) {
 			BOOLEAN success = FALSE;
+			Trc_MODULE_invokeHashTableAtPut(currentThread, "allowReadAccessToModule(readAccessHashTable)", toModule, toModule->readAccessHashTable, &fromModule, fromModule, "false");
 			if (0 == hashTableAtPut(toModule->readAccessHashTable, (void*)&fromModule, FALSE)) {
 				success = TRUE;
 				/*
@@ -660,9 +666,10 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
 				 * at the same time.
 				 */
 				if (NULL == fromModule->removeAccessHashTable) {
-					fromModule->removeAccessHashTable = vm->internalVMFunctions->hashModuleTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
+					fromModule->removeAccessHashTable = vm->internalVMFunctions->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 				}
 				if (NULL != fromModule->removeAccessHashTable) {
+					Trc_MODULE_invokeHashTableAtPut(currentThread, "allowReadAccessToModule(removeAccessHashTable)", fromModule, fromModule->removeAccessHashTable, &toModule, toModule, "false");
 					if (0 != hashTableAtPut(fromModule->removeAccessHashTable, (void*)&toModule, FALSE)) {
 						success = FALSE;
 					}
@@ -768,7 +775,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 					if (success) {
 						/* For "java.base" module setting of jrt URL and patch paths is already done during startup. Avoid doing it here. */
 						if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-							Trc_MODULE_definition(currentThread, nameUTF);
+							Trc_MODULE_defineModule(currentThread, nameUTF, j9mod);
 							if (classLoader == vm->systemClassLoader) {
 								success = vmFuncs->setBootLoaderModulePatchPaths(vm, j9mod, (const char *)nameUTF);
 								if (FALSE == success) {
@@ -803,7 +810,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 							vmFuncs->allClassesEndDo(&classWalkState);
 							vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
 							TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, currentThread);
-							Trc_MODULE_definition(currentThread, "java.base");
+							Trc_MODULE_defineModule(currentThread, "java.base", j9mod);
 						}
 					} else {
 						throwExceptionHelper(currentThread, rc);
@@ -943,7 +950,7 @@ trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *
 #undef	LOOSE_MODULE
 	}
 	if ((NULL != fromModuleNameUTF) && (NULL != toModuleNameUTF)) {
-		Trc_MODULE_add_reads_module(currentThread, fromModuleNameUTF, toModuleNameUTF);
+		Trc_MODULE_addReadsModule(currentThread, fromModuleNameUTF, j9FromMod, toModuleNameUTF, toModule);
 	}
 	if (fromModuleNameBuf != fromModuleNameUTF) {
 		j9mem_free_memory(fromModuleNameUTF);
@@ -987,7 +994,7 @@ JVM_AddReadsModule(JNIEnv * env, jobject fromModule, jobject toModule)
 				if (ERRCODE_SUCCESS != rc) {
 					throwExceptionHelper(currentThread, rc);
 				} else {
-					if (TrcEnabled_Trc_MODULE_add_reads_module) {
+					if (TrcEnabled_Trc_MODULE_addReadsModule) {
 						trcModulesAddReadsModule(currentThread, toModule, j9FromMod, j9ToMod);
 					}
 				}
@@ -1061,7 +1068,7 @@ trcModulesAddModulePackage(J9VMThread *currentThread, J9Module *j9mod, const cha
 	char *moduleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
 		currentThread, j9mod->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != moduleNameUTF) {
-		Trc_MODULE_add_module_package(currentThread, package, moduleNameUTF);
+		Trc_MODULE_addModulePackage(currentThread, package, moduleNameUTF, j9mod);
 		if (moduleNameBuf != moduleNameUTF) {
 			j9mem_free_memory(moduleNameUTF);
 		}
@@ -1095,7 +1102,7 @@ JVM_AddModulePackage(JNIEnv * env, jobject module, const char *package)
 		if (ERRCODE_SUCCESS != rc) {
 			throwExceptionHelper(currentThread, rc);
 		} else {
-			if (TrcEnabled_Trc_MODULE_add_module_package) {
+			if (TrcEnabled_Trc_MODULE_addModulePackage) {
 				trcModulesAddModulePackage(currentThread, j9mod, package);
 			}
 		}
@@ -1305,7 +1312,7 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module) {
 				if (NULL == J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject)) {
 					J9Module *j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
 					J9VMJAVALANGCLASSLOADER_SET_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject, modObj);
-					Trc_MODULE_set_bootloader_unnamed_module(currentThread);
+					Trc_MODULE_setBootloaderUnnamedModule(currentThread, j9mod);
 				} else {
 					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the bootclassloader");
 				}

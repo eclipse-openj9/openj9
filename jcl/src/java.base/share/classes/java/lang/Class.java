@@ -425,7 +425,7 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 		localTypeOffset = getUnsafe().objectFieldOffset(field);
 		AnnotationVars.annotationTypeOffset = localTypeOffset;
 	}
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF Sidecar19-SE]*/
 	return getUnsafe().compareAndSetObject(localAnnotationVars, localTypeOffset, oldType, newType);
 /*[ELSE]
 	return getUnsafe().compareAndSwapObject(localAnnotationVars, localTypeOffset, oldType, newType);
@@ -2337,6 +2337,18 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 			if (comma) nameBuilder.append(',');
 			nameBuilder.append(t);
 			comma = true;
+/*[IF Java12]*/
+			Type[] types = t.getBounds();
+			if (types.length == 1 && types[0].equals(Object.class)) {
+				// skip in case the only bound is java.lang.Object
+			} else {
+				String prefix = " extends "; //$NON-NLS-1$
+				for (Type type : types) {
+					nameBuilder.append(prefix).append(type.getTypeName());
+					prefix = " & "; //$NON-NLS-1$
+				}
+			}
+/*[ENDIF] Java12 */
 		}
 		nameBuilder.append('>');
 	}
@@ -2991,7 +3003,8 @@ public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
 
 /**
  * Cast this Class to a subclass of the specified Class. 
- * @param <U> cls the Class to cast to
+ * @param <U> the type for casting to
+ * @param cls the Class to cast to
  * @return this Class, cast to a subclass of the specified Class
  * 
  * @throws ClassCastException if this Class is not the same or a subclass
@@ -3692,7 +3705,7 @@ private class MethodInfo {
 	}
 	
 	/**
-	 * Add a method to the list.  newMethod may be discarded if it is masked by an incumnbent method in the list.
+	 * Add a method to the list.  newMethod may be discarded if it is masked by an incumbent method in the list.
 	 * Also, an incumbent method may be removed if newMethod masks it.
 	 * In general, a target class inherits a method from its direct superclass or directly implemented interfaces unless:
 	 * 	- the method is static or private and the declaring class is not the target class 
@@ -3998,7 +4011,7 @@ private ReflectCache acquireReflectCache() {
 		ReflectCache newCache = new ReflectCache(this);
 		do {
 			// Some thread will insert this new cache making it available to all.
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF Sidecar19-SE]*/
 			if (theUnsafe.compareAndSetObject(this, cacheOffset, null, newCache)) {
 /*[ELSE]
 			if (theUnsafe.compareAndSwapObject(this, cacheOffset, null, newCache)) {

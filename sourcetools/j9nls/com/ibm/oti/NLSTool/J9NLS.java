@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ public class J9NLS implements NLSConstants {
 		Vector defaultNLSFiles = (Vector) localeHashtable.get(DEFAULT_LOCALE);
 		StringBuffer buffer = new StringBuffer();
 
-		// Create the output directory if it doesnt exist
+		// Create the output directory if it doesn't exist
 		File outputDir = new File(workingDirectory + fileSeparator + "nls");
 		if (!outputDir.exists()) {
 				dp("Output directory does not exist, creating it");

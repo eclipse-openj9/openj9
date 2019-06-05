@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 #include "z/codegen/S390Recompilation.hpp"
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
@@ -36,7 +37,6 @@
 #include "il/TreeTop_inlines.hpp"
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
 
 // Allocate a machine-specific recompilation processor for this compilation
 //
@@ -127,8 +127,8 @@ TR_S390Recompilation::generatePrePrologue()
    // Associate all generated instructions with the first node
    TR::Node* node = comp->getStartTree()->getNode();
 
-   // Initializing the cursor to NULL ensures instructions will get prepended to the start of the instruction stream
-   TR::Instruction* cursor = NULL;
+   // TODO: We need to modify this API to accept the cursor as an argument
+   TR::Instruction* cursor = cg->getFirstInstruction();
 
    TR::LabelSymbol* vmCallHelperSnippetLabel = generateLabelSymbol(cg);
 
@@ -145,11 +145,7 @@ TR_S390Recompilation::generatePrePrologue()
    if (useSampling())
       {
       TR::LabelSymbol* samplingRecompileMethodSnippetLabel = generateLabelSymbol(cg);
-
-      // Generate the first label by using the placement new operator such that we are guaranteed to call the correct
-      // overload of the constructor which can accept a NULL preceding instruction. If cursor is NULL the generated
-      // label instruction will be prepended to the start of the instruction stream.
-      cursor = new (cg->trHeapMemory()) TR::S390LabelInstruction(TR::InstOpCode::LABEL, node, samplingRecompileMethodSnippetLabel, cursor, cg);
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, samplingRecompileMethodSnippetLabel, cursor);
 
       TR::Instruction* samplingRecompileMethodSnippetLabelInstruction = cursor;
 
@@ -312,7 +308,7 @@ TR_S390Recompilation::generatePrePrologue()
 //-----------------------------------------------------------------------
 /*
  * Generate function prologue to support counting recompilation.  Assume that
-   generatePreProloge has stuck methodInfo address before magic word
+   generatePrePrologue has stuck methodInfo address before magic word
    There are two code gen possibilities: G5 or freeway+.  Freeway allows us to
    use LARL w/ -ve displacement and we can access the methodInfo in preprologue,
    however for simplicity's sake we'll just use the G5 solution.

@@ -59,7 +59,7 @@
 #include "runtime/IProfiler.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 #include "codegen/PicHelpers.hpp"
 #include "control/Recompilation.hpp"
 #endif
@@ -203,7 +203,7 @@ J9::Recompilation::sampleMethod(
       bool newPlanCreated;
       TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
       // the plan needs to be created only when async compilation is possible
-      // Otherwise the compilation will be triggerred on next invocation
+      // Otherwise the compilation will be triggered on next invocation
       if (plan)
          {
          bool queued = false;
@@ -642,7 +642,7 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
       {
       readValues = true;
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
       J9JavaVM *jvm = jitConfig->javaVM;
       if (!jvm)
          return;
@@ -1136,6 +1136,9 @@ JIT_HELPER(_countingRecompileMethod);
 JIT_HELPER(_induceRecompilation);
 JIT_HELPER(_revertToInterpreterGlue);
 
+#elif defined(TR_HOST_ARM64)
+JIT_HELPER(_revertToInterpreterGlue);
+
 #elif defined(TR_HOST_S390)
 
 JIT_HELPER(_countingRecompileMethod);
@@ -1239,6 +1242,9 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_ARMinduceRecompilation,               (void *)_induceRecompilation,     TR_Helper);
    SET(TR_ARMrevertToInterpreterGlue,           (void *)_revertToInterpreterGlue, TR_Helper);
 
+#elif defined(TR_HOST_ARM64)
+   SET(TR_ARM64revertToInterpreterGlue,           (void *)_revertToInterpreterGlue, TR_Helper);
+
 #elif defined(TR_HOST_S390)
    SET(TR_S390samplingRecompileMethod,          (void *)_samplingRecompileMethod,   TR_Helper);
    SET(TR_S390countingRecompileMethod,          (void *)_countingRecompileMethod,   TR_Helper);
@@ -1309,7 +1315,7 @@ void platformUnlock(uint32_t *ptr)
    }
 }
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 uint32_t *getLinkageInfo(void *startPC)
    {
    return (uint32_t *)TR_LinkageInfo::get(startPC);

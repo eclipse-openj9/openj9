@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -353,7 +353,7 @@ public class PointerGenerator {
 	/**
 	 * Sets the class and field cache flags from the optional properties file
 	 * specified at startup by the
-	 * @param strucutre
+	 * @param structure
 	 */
 	private void setCacheStatusFromPropertyFile(StructureDescriptor structure) {
 		String opt = opts.get("-c");
@@ -379,7 +379,7 @@ public class PointerGenerator {
 					throw new IllegalArgumentException(msg);
 				}
 			}
-			// get the caching flags for this strucutre, defaults to no caching if the structure name is not found
+			// get the caching flags for this structure, defaults to no caching if the structure name is not found
 			String values = cacheProperties.getProperty(structure.getName(), "false,false");
 			String[] parts = values.split(",");
 			if (parts.length != 2) {
@@ -685,7 +685,7 @@ public class PointerGenerator {
 	}
 
 	/**
-	 * Quick hack to remove specific generated field implemenations because
+	 * Quick hack to remove specific generated field implementations because
 	 * they will interfere with changes to the implementation made my the user.
 	 *
 	 * You only have to add methods that would be generated but need to be altered

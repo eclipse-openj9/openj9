@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -254,7 +254,7 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          *newPlanCreated = true;
          bodyInfo->getMethodInfo()->incrementNumberOfInvalidations();
 
-         // the following is just for compatib with older implementation
+         // the following is just for compatibility with older implementation
          //bodyInfo->getMethodInfo()->setNextCompileLevel(hotnessLevel, false); // no profiling
          break;
       case TR_MethodEvent::HWPRecompilationTrigger:
@@ -444,7 +444,7 @@ TR::DefaultCompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                {
                // Possible scenario: a long activation method receives a MIL count of 1.
                // The method gets invoked and the count becomes 0 (but the compilation is not
-               // triggerred now, only when the counter would become negative).
+               // triggered now, only when the counter would become negative).
                // The method receives a sample while still being interpreted. We should probably
                // schedule a compilation
                if (logSampling)
@@ -763,7 +763,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
             // The scaling of the threshold can be turned off by having
             // the sampleThresholdVariationAllowance equal to 0
             J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(event->_vmThread, (UDATA)startPC);
-            int32_t codeSize = 0; // TODO elminate the overhead; we already have metadata
+            int32_t codeSize = 0; // TODO eliminate the overhead; we already have metadata
             if (metaData)
                codeSize = compInfo->calculateCodeSize(metaData);
 
@@ -873,7 +873,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
 
                   // secondCriteria looks at hotness over a period of time that is double
                   // than normal (60 samples). This is why we have to increase scaledScorchingThreshold
-                  // by a factor of 2. If we want to become twice as aggressve we need to double
+                  // by a factor of 2. If we want to become twice as aggressive we need to double
                   // scaledScorchingThreshold yet again
                   //
                   bool secondCriteriaScorching = useAggressiveRecompilations &&
@@ -1307,7 +1307,7 @@ void TR::DefaultCompilationStrategy::beforeCodeGen(TR_OptimizationPlan *plan, TR
    // Set up the opt level and counter for the next compilation. This will
    // also decide if there is going to be a next compilation. If there is no
    // next compilation, remove any counters that have been inserted into the code
-   // Ideally, we should have a sigle step after the compilation
+   // Ideally, we should have a single step after the compilation
    if (! recomp->_doNotCompileAgain)
       {
       int32_t level;
@@ -1510,7 +1510,7 @@ TR_OptimizationPlan *TR::ThresholdCompilationStrategy::processEvent(TR_MethodEve
          hotnessLevel = bodyInfo->getHotness();
          plan = TR_OptimizationPlan::alloc(hotnessLevel);
          *newPlanCreated = true;
-         // the following is just for compatib with older implementation
+         // the following is just for compatibility with older implementation
          bodyInfo->getMethodInfo()->setNextCompileLevel(hotnessLevel, false); // no profiling
          break;
       case TR_MethodEvent::JittedMethodSample:

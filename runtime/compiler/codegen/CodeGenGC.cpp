@@ -41,6 +41,7 @@
 #include "codegen/GCStackMap.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"

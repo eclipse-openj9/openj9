@@ -1,0 +1,350 @@
+/*******************************************************************************
+ * Copyright (c) 2019, 2019 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+#include "j9cfg.h"
+#include "jilconsts.inc"
+
+#define J9SP x20
+
+	.globl	_interpreterUnresolvedStaticGlue
+	.globl	_interpreterUnresolvedSpecialGlue
+	.globl	_interpreterUnresolvedDirectVirtualGlue
+	.globl	_interpreterUnresolvedClassGlue
+	.globl	_interpreterUnresolvedClassGlue2
+	.globl	_interpreterUnresolvedStringGlue
+	.globl	_interpreterUnresolvedStaticDataGlue
+	.globl	_interpreterUnresolvedStaticDataStoreGlue
+	.globl	_interpreterUnresolvedInstanceDataGlue
+	.globl	_interpreterUnresolvedInstanceDataStoreGlue
+	.globl	_virtualUnresolvedHelper
+	.globl	_interfaceCallHelper
+	.globl	_interpreterVoidStaticGlue
+	.globl	_interpreterSyncVoidStaticGlue
+	.globl	_interpreterIntStaticGlue
+	.globl	_interpreterSyncIntStaticGlue
+	.globl	_interpreterLongStaticGlue
+	.globl	_interpreterSyncLongStaticGlue
+	.globl	_interpreterFloatStaticGlue
+	.globl	_interpreterSyncFloatStaticGlue
+	.globl	_interpreterDoubleStaticGlue
+	.globl	_interpreterSyncDoubleStaticGlue
+	.globl	_nativeStaticHelper
+
+	.extern	jitResolveClass
+	.extern	jitResolveClassFromStaticField
+	.extern	jitResolveString
+	.extern	jitResolveStaticField
+	.extern	jitResolveStaticFieldSetter
+	.extern	jitResolveField
+	.extern	jitResolveFieldSetter
+	.extern	jitCallCFunction
+	.extern	mcc_reservationAdjustment_unwrapper
+	.extern	mcc_callPointPatching_unwrapper
+	.extern	mcc_lookupHelperTrampoline_unwrapper
+	.extern	flushICache
+
+#define SETVAL(A,B) .set A, B
+#include "runtime/Helpers.inc"
+#undef SETVAL
+
+	.set	clinit_bit,	1
+
+// BL to PicBuilder from every snippet is always the instruction previous to LR
+
+	.set	J9TR_Snippet_CallInstruction,	-4
+
+// Static/special call snippet (and additional fields for unresolved snippet)
+
+	.set	J9TR_SCSnippet_codeCacheReturnAddress,	0
+	.set	J9TR_SCSnippet_method,		8
+	.set	J9TR_SCSnippet_lock,		16
+	.set	J9TR_USCSnippet_CP,		20
+	.set	J9TR_USCSnippet_CPIndex,	28
+
+// Encoding of CPIndex field in USC snippet (helperOffset: 8 bits, cpIndex: 24 bits)
+
+	.set	J9TR_USCSnippet_HelperOffset,	0xFF000000
+	.set	J9TR_USCSnippet_HelperOffsetShift,	24
+
+	.text
+	.align 2
+
+// Rewrite the distance of the specified branch instruction (BL or unconditional B)
+//
+// in:     x0  = address of branch instruction
+//         x1  = target of branch
+//         x2  = helper Index
+//         x30 = return address
+//
+// trash:	x3, x4
+
+L_refreshHelper:
+	sub	x3, x1, x0			// distance = (target - callSite)
+	sbfx	x4, x3, #0, #28
+	cmp	x3, x4
+	bne	L_outOfRange			// distance is out of +/-128MB range
+
+L_rewriteBranch:
+	ldr	w2, [x0]			// fetch branch instruction
+	ubfx	x1, x3, #2, #26			// distance >> 2, masking out sign bits
+	and	w2, w2, #0xFC000000		// mask out branch distance
+	orr	w2, w2, w1			// embed distance
+	str	w2, [x0]			// rewrite branch instruction
+	mov	x1, #4				// 1 instruction to flush
+	b	flushICache
+
+// Get a new (reachable) target address for calling the helper via trampoline
+L_outOfRange:
+	hlt	#0	// Not implemented yet -- Use mcc_lookupHelperTrampoline_unwrapper
+	b	L_rewriteBranch
+
+// Static glue target table is laid out as:
+//
+// 00: 5 helpers
+// 40: 5 sync helpers
+
+	.set	J9TR_staticGlueTableSyncOffset,	40
+
+__staticGlueTable:
+	.dword	_interpreterVoidStaticGlue
+	.dword	_interpreterIntStaticGlue
+	.dword	_interpreterLongStaticGlue
+	.dword	_interpreterFloatStaticGlue
+	.dword	_interpreterDoubleStaticGlue
+	.dword	_interpreterSyncVoidStaticGlue
+	.dword	_interpreterSyncIntStaticGlue
+	.dword	_interpreterSyncLongStaticGlue
+	.dword	_interpreterSyncFloatStaticGlue
+	.dword	_interpreterSyncDoubleStaticGlue
+
+// Handles calls to unresolved call snippets
+//
+// in:     x3  = address of resolve helper function
+//         x30 = snippet
+// out:
+// trash:	x8, x27, x28
+
+L_mergedUnresolvedSpecialStaticGlue:
+	mov	x27, x30					// save snippet address
+	ldr	x0, [x27, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
+	ldr	x1, [x27, #J9TR_USCSnippet_CP]			// get CP
+	ldr	w28, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags (4 bytes)
+	and	x2, x28, #~(J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
+	blr	x3						// call resolve helper
+	str	x0, [x27, #J9TR_SCSnippet_method]		// update snippet with resolved method
+	and	x0, x0, #(~clinit_bit)				// clear the clinit bit in the returned address
+	mov	x2, x0						// save method (x0 trashed by following call)
+	bl	jitMethodIsNative				// is the method native?
+	cbz	x0, L_notNative
+	ldr	x1, const_nativeStaticHelper			// if so, use nativeStaticHelper
+	mov	x2, #TR_ARM64nativeStaticHelper
+	b	L_gotHelper					// and skip to writing the address into the instruction
+L_notNative:
+	ldr	x3, const_staticGlueTable			// get helper table address
+	lsr	x1, x28, #J9TR_USCSnippet_HelperOffsetShift	// get helper offset
+	mov	x0, x2						// recover method
+	bl	jitMethodIsSync					// is method synchronized?
+	lsr	x2, x28, #(J9TR_USCSnippet_HelperOffsetShift+2)	// save helper offset for refreshHelper
+	cbz	x0, L_notSync
+	add	x1, x1, #J9TR_staticGlueTableSyncOffset		// if so, adjust helper offset
+	add	x2, x2, #1
+L_notSync:
+	add	x2, x2, #TR_ARM64interpreterVoidStaticGlue
+	ldr	x1, [x3, x1]					// fetch static glue helper from table
+L_gotHelper:
+	ldr	x0, [x27, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
+	ldr	x3, [x27, #J9TR_SCSnippet_method]
+	tbnz	x3, #1, L_USSGclinitCase			// branch if the LSB (the "clinit" bit) was set in the resolved address
+	ldr	x28, [x27, #J9TR_USCSnippet_CP]			// get CP
+	ldr	x8, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
+	and	x8, x8, #(~J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
+	stp	x1, x2, [J9SP, #-16]!				// save regs
+	str	x8, [J9SP, #-8]!				// push:	CP index
+	str	x28, [J9SP, #-8]!				// 		CP
+	str	x3, [J9SP, #-8]!				// 		method
+	str	x0, [J9SP, #-8]!				//
+								// prepare args for jitCallCFunction:
+	ldr	x0, const_mcc_reservationAdjustment_unwrapper
+	mov	x1, J9SP
+	mov	x2, J9SP
+	bl	jitCallCFunction
+	add	J9SP, J9SP, #32					// restore J9SP
+	ldp	x1, x2, [J9SP], #16				// restore regs
+	add	x0, x27, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
+	mov	x30, x0						// execute the BL after rewriting it
+	b	L_refreshHelper					// update branch instruction to new target
+L_USSGclinitCase:
+	mov	x30, x27					// send helpers expect link register to contain snippet return address
+	br	x1						// in <clinit> case, dispatch method directly without patching
+
+	.align	3
+const_mcc_reservationAdjustment_unwrapper:
+	.dword	mcc_reservationAdjustment_unwrapper
+const_staticGlueTable:
+	.dword	__staticGlueTable
+const_nativeStaticHelper:
+	.dword	_nativeStaticHelper
+
+_interpreterUnresolvedStaticGlue:
+	ldr	x3, const_jitResolveStaticMethod
+	b	L_mergedUnresolvedSpecialStaticGlue
+
+_interpreterUnresolvedSpecialGlue:
+	ldr	x3, const_jitResolveSpecialMethod
+	b	L_mergedUnresolvedSpecialStaticGlue
+
+_interpreterUnresolvedDirectVirtualGlue:
+	ldr	x3, const_jitResolveSpecialMethod
+	b	L_mergedUnresolvedSpecialStaticGlue
+
+	.align	3
+const_jitResolveStaticMethod:
+	.dword	jitResolveStaticMethod
+const_jitResolveSpecialMethod:
+	.dword	jitResolveSpecialMethod
+
+_interpreterUnresolvedClassGlue:
+	hlt	#0	// Not implemented yet
+
+_interpreterUnresolvedClassGlue2:
+	hlt	#0	// Not implemented yet
+
+_interpreterUnresolvedStringGlue:
+	hlt	#0	// Not implemented yet
+
+_interpreterUnresolvedStaticDataGlue:
+	hlt	#0	// Not implemented yet
+
+_interpreterUnresolvedStaticDataStoreGlue:
+	hlt	#0	// Not implemented yet
+
+_interpreterUnresolvedInstanceDataGlue:
+	hlt	#0	// Not implemented yet
+
+_interpreterUnresolvedInstanceDataStoreGlue:
+	hlt	#0	// Not implemented yet
+
+_virtualUnresolvedHelper:
+	hlt	#0	// Not implemented yet
+
+_interfaceCallHelper:
+	hlt	#0	// Not implemented yet
+
+// Handles calls to static call snippets
+//
+// in:    x1  = ptr to snippet data
+//        x30 = return address if not compiled
+//
+// out:   x0  = method
+//        x30 = code cache return address
+//
+// trash: x1, x2
+//
+L_StaticGlueCallFixer:
+	ldr	x0, [x1, #J9TR_SCSnippet_method]		// get method
+	mov	x2, x30						// save static glue return address
+	ldr	x30, [x1, #J9TR_SCSnippet_codeCacheReturnAddress]	// get code cache return address
+	tst	x0, #clinit_bit					// branch if the LSB (the "clinit" bit) was set in the resolved address
+	bne	L_SGCclinitCase
+	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
+	tbz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
+	ret	x2						// if not, return to static glue to call interpreter
+L_StaticGlueCallFixer1:
+	ldr	x28, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
+	sub	x27, x30, #4					// get address of BL instruction (code cache RA points to instruction following BL)
+	str	x28, [J9SP, #-8]!				// push:	method
+	str	x27, [J9SP, #-8]!				// 		addr of BL instr
+	str	x0, [J9SP, #-8]!				// 		addr of the callee (MethodPCStartOffset)
+								// prepare args for jitCallCFunction:
+	ldr	x0, const_mcc_callPointPatching_unwrapper	// addr of mcc_callPointPatching_unwrapper
+	mov	x1, J9SP					// addr of the first arg for patchCallPoint
+	mov	x2, J9SP					// where to put the return value
+	bl	jitCallCFunction
+	add	J9SP, J9SP, #24					// restore J9SP
+	add	x30, x27, #4					// set LR to code cache RA
+	br	x28						// jump to the I->J start address
+L_SGCclinitCase:
+	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
+	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
+	tbz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
+	ret	x2						// if not, return to static glue to call interpreter
+L_SGCclinitCase1:
+	br	x1						// in <clinit> case, dispatch method directly without patching
+const_mcc_callPointPatching_unwrapper:
+	.align	3
+	.dword	mcc_callPointPatching_unwrapper
+
+_interpreterVoidStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStatic0
+
+_interpreterSyncVoidStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticSync0
+
+_interpreterIntStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStatic1
+
+_interpreterSyncIntStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticSync1
+
+_interpreterLongStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticJ
+
+_interpreterSyncLongStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticSyncJ
+
+_interpreterFloatStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticF
+
+_interpreterSyncFloatStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticSyncF
+
+_interpreterDoubleStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticD
+
+_interpreterSyncDoubleStaticGlue:
+	mov	x1, x30
+	bl	L_StaticGlueCallFixer
+	b	icallVMprJavaSendStaticSyncD
+
+_nativeStaticHelper:
+	ldr	x0, [x30, #J9TR_SCSnippet_method]		// get method
+	ldr	x30, [x30, #J9TR_SCSnippet_codeCacheReturnAddress]	// get code cache return address
+	and	x0, x0, #(~clinit_bit)				// clear the "<clinit>" bit
+	b	icallVMprJavaSendNativeStatic			// jump to VM helper

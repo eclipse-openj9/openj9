@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,7 +112,7 @@ MM_VerboseFileLoggingOutput::tearDown(MM_EnvironmentBase *env)
 
 /**
  * Initialize the _tokens field.
- * for backwards compability with Sovereign, alias %p to be the same as %pid
+ * for backwards compatibility with Sovereign, alias %p to be the same as %pid
  */
 bool 
 MM_VerboseFileLoggingOutput::initializeTokens(MM_EnvironmentBase *env)
@@ -269,7 +269,7 @@ MM_VerboseFileLoggingOutput::formatAndOutput(J9VMThread *vmThread, UDATA indent,
 }
 
 /**
- * Generate an expaneded filename based on currentFile.
+ * Generate an expanded filename based on currentFile.
  * The caller is responsible for freeing the returned memory.
  * 
  * @param env the current thread
@@ -339,7 +339,7 @@ MM_VerboseFileLoggingOutput::findInitialFile(MM_EnvironmentBase *env)
 
 /**
  * Opens the file to log output to and prints the header.
- * @return true on sucess, false otherwise
+ * @return true on success, false otherwise
  */
 bool
 MM_VerboseFileLoggingOutput::openFile(MM_EnvironmentBase *env)

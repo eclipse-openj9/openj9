@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ extern const jint test_jint[];
 extern const jlong test_jlong[];
 extern const jfloat test_jfloat[];
 extern const jdouble test_jdouble[];
+extern const jboolean test_jboolean[];
 extern int jniTests;
 
 extern void cFailure_jbyte(J9PortLibrary *portLib, char *functionName, int index, jbyte arg, jbyte expected);
@@ -43,6 +44,7 @@ extern void cFailure_jint(J9PortLibrary *portLib, char *functionName, int index,
 extern void cFailure_jlong(J9PortLibrary *portLib, char *functionName, int index, jlong arg, jlong expected);
 extern void cFailure_jfloat(J9PortLibrary *portLib, char *functionName, int index, jfloat arg, jfloat expected);
 extern void cFailure_jdouble(J9PortLibrary *portLib, char *functionName, int index, jdouble arg, jdouble expected);
+extern void cFailure_jboolean(J9PortLibrary *portLib, char *functionName, int index, jboolean arg, jboolean expected);
 extern J9JavaVM *getJ9JavaVM(JNIEnv * env);
 
 void JNICALL Java_JniArgTests_logRetValError( JNIEnv *p_env, jobject p_this, jstring error_message );
@@ -509,3 +511,8 @@ jlong JNICALL Java_JniArgTests_nativeFDFDFDFDFDFDrJ( JNIEnv *p_env, jobject p_th
 jlong JNICALL Java_JniArgTests_nativeDFDFDFDFDFDFrJ( JNIEnv *p_env, jobject p_this, jdouble arg1, jfloat arg2, jdouble arg3, jfloat arg4, jdouble arg5, jfloat arg6, jdouble arg7, jfloat arg8, jdouble arg9, jfloat arg10, jdouble arg11, jfloat arg12 );
 jlong JNICALL Java_JniArgTests_nativeBBSSIJFDIFDFDFDBBSSIJFDrJ( JNIEnv *p_env, jobject p_this, jbyte arg1, jbyte arg2, jshort arg3, jshort arg4, jint arg5, jlong arg6, jfloat arg7, jdouble arg8, jint arg9, jfloat arg10, jdouble arg11, jfloat arg12, jdouble arg13, jfloat arg14, jdouble arg15, jbyte arg16, jbyte arg17, jshort arg18, jshort arg19, jint arg20, jlong arg21, jfloat arg22, jdouble arg23 );
 
+jboolean JNICALL Java_JniArgTests_nativeIZrZ(JNIEnv *p_env, jobject p_this, jint value, jbooleanArray backChannel);
+jboolean JNICALL Java_JniArgTests_nativeZIZIZIZIZIrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7, jint arg8, jint arg9, jint arg10);
+jboolean JNICALL Java_JniArgTests_nativeIZIZIZIZIZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jboolean arg2, jint arg3, jboolean arg4, jint arg5, jboolean arg6, jint arg7, jboolean arg8, jint arg9, jboolean arg10);
+jboolean JNICALL Java_JniArgTests_nativeZZZZZZZZZZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7, jint arg8, jint arg9, jint arg10);
+jboolean JNICALL Java_JniArgTests_nativeIIIIIZZZZZrZ(JNIEnv *p_env, jobject p_this, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jboolean arg6, jboolean arg7, jboolean arg8, jboolean arg9, jboolean arg10);

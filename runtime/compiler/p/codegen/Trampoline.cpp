@@ -52,13 +52,6 @@ extern "C"
 extern void     ppcCodeSync(uint8_t *, uint32_t);
 #endif
 
-#if defined(AIXPPC)
-extern FILE    *j2Profile;
-extern void     j2Prof_trampolineReport(uint8_t *startP, uint8_t *endP, int32_t num);
-extern int32_t  j2Prof_initialize();
-#endif
-
-
 void * ppcPicTrampInit(TR_FrontEnd *vm, TR::PersistentInfo * persistentInfo)
    {
    void *retVal = 0;
@@ -68,11 +61,6 @@ void * ppcPicTrampInit(TR_FrontEnd *vm, TR::PersistentInfo * persistentInfo)
       __j9_smp_flag = -1;
    else
       __j9_smp_flag = 0;
-#endif
-
-#if defined(AIXPPC)
-   if (TR::Options::getCmdLineOptions()->getOption(TR_CreatePCMaps))
-      j2Prof_initialize();
 #endif
 
 #ifdef TR_TARGET_64BIT

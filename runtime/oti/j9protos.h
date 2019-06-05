@@ -115,8 +115,6 @@ typedef J9RelocationStruct relocateStruct;
 
 #include "jniinv_api.h"
 
-#include "jvmti_api.h"
-
 #include "rasdump_api.h"
 
 #include "rastrace_api.h"
@@ -1070,7 +1068,6 @@ extern J9_CFUNC void  helperInitializeFPU (void);
 #ifndef _J9VMINITIALIZEVM_
 #define _J9VMINITIALIZEVM_
 extern J9_CFUNC void  initializeExecutionModel (J9VMThread *currentThread);
-extern J9_CFUNC void  installJitBytecodes (J9JavaVM *javaVM);
 #endif /* _J9VMINITIALIZEVM_ */
 
 /* J9VMMethodUtils*/

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
  * Copyright (c) 2017, 2019 IBM Corp. and others
  *
@@ -32,6 +32,8 @@ import java.security.ProtectionDomain;
 import java.util.Objects;
 /*[IF Java12]*/
 import java.nio.ByteBuffer;
+import sun.nio.ch.DirectBuffer;
+import jdk.internal.ref.Cleaner;
 /*[ENDIF] Java12 */
 
 public final class Unsafe {
@@ -950,7 +952,7 @@ public final class Unsafe {
 	 * Returns byte offset to start of static class or interface.
 	 * 
 	 * @param field which contains desired class or interface
-	 * @return offset to start of class or iterface
+	 * @return offset to start of class or interface
 	 * 
 	 * @throws NullPointerException if field parameter is null
 	 * @throws IllegalArgumentException if field is not static
@@ -1476,7 +1478,7 @@ public final class Unsafe {
 	 * Returns byte offset to start of static class or interface.
 	 * 
 	 * @param field which contains desired class or interface
-	 * @return offset to start of class or iterface
+	 * @return offset to start of class or interface
 	 * 
 	 * @throws NullPointerException if field parameter is null
 	 * @throws IllegalArgumentException if field is not static
@@ -1778,7 +1780,7 @@ public final class Unsafe {
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value 
 	 * matches the existing value in the object.
-	 * The get operation has memory semantics of getAquire.
+	 * The get operation has memory semantics of getAcquire.
 	 * The set operation has the memory semantics of set.
 	 *
 	 * @param obj object into which to store the value
@@ -3834,7 +3836,7 @@ public final class Unsafe {
 	public final byte getAndSetByte(Object obj, long offset, byte value) {
 		for (;;) {
 			byte byteAtOffset = getByteVolatile(obj, offset);
-			if (weakCompareAndSetByte(obj, offset, byteAtOffset, value)) {
+			if (compareAndSetByte(obj, offset, byteAtOffset, value)) {
 				return byteAtOffset;
 			}
 		}
@@ -3894,7 +3896,7 @@ public final class Unsafe {
 	public final int getAndSetInt(Object obj, long offset, int value) {
 		for (;;) {
 			int intAtOffset = getIntVolatile(obj, offset);
-			if (weakCompareAndSetInt(obj, offset, intAtOffset, value)) {
+			if (compareAndSetInt(obj, offset, intAtOffset, value)) {
 				return intAtOffset;
 			}
 		}
@@ -3954,7 +3956,7 @@ public final class Unsafe {
 	public final long getAndSetLong(Object obj, long offset, long value) {
 		for (;;) {
 			long longAtOffset = getLongVolatile(obj, offset);
-			if (weakCompareAndSetLong(obj, offset, longAtOffset, value)) {
+			if (compareAndSetLong(obj, offset, longAtOffset, value)) {
 				return longAtOffset;
 			}
 		}
@@ -4110,7 +4112,7 @@ public final class Unsafe {
 	public final short getAndSetShort(Object obj, long offset, short value) {
 		for (;;) {
 			short shortAtOffset = getShortVolatile(obj, offset);
-			if (weakCompareAndSetShort(obj, offset, shortAtOffset, value)) {
+			if (compareAndSetShort(obj, offset, shortAtOffset, value)) {
 				return shortAtOffset;
 			}
 		}
@@ -4170,7 +4172,7 @@ public final class Unsafe {
 	public final char getAndSetChar(Object obj, long offset, char value) {
 		for (;;) {
 			char charAtOffset = getCharVolatile(obj, offset);
-			if (weakCompareAndSetChar(obj, offset, charAtOffset, value)) {
+			if (compareAndSetChar(obj, offset, charAtOffset, value)) {
 				return charAtOffset;
 			}
 		}
@@ -4278,7 +4280,7 @@ public final class Unsafe {
 	public final Object getAndSetObject(Object obj, long offset, Object value) {
 		for (;;) {
 			Object objectAtOffset = getObjectVolatile(obj, offset);
-			if (weakCompareAndSetObject(obj, offset, objectAtOffset, value)) {
+			if (compareAndSetObject(obj, offset, objectAtOffset, value)) {
 				return objectAtOffset;
 			}
 		}
@@ -5832,10 +5834,35 @@ public final class Unsafe {
 
 /*[IF Java12]*/
 	/**
-	 * Stub for Java 12 compilation
+	 * If incoming ByteBuffer is an instance of sun.nio.ch.DirectBuffer,
+	 * and it is direct, and not a slice or duplicate,
+	 * if it has a cleaner, it is invoked,
+	 * otherwise an IllegalArgumentException is thrown
+	 * 
+	 * @param bbo a ByteBuffer object
+	 * @throws IllegalArgumentException as per description above
 	 */
-	public void invokeCleaner(ByteBuffer arg) {
-		throw new UnsupportedOperationException("Stub for Java 12 compilation"); //$NON-NLS-1$
+	public void invokeCleaner(ByteBuffer bbo) {
+		if (bbo instanceof DirectBuffer) {
+			if (bbo.isDirect()) {
+				DirectBuffer db = (DirectBuffer)bbo;
+				if (db.attachment() == null) {
+					Cleaner cleaner = db.cleaner();
+					if (cleaner != null) {
+						cleaner.clean();
+					}
+				} else {
+					/*[MSG "K0706", "This DirectBuffer object is a slice or duplicate"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0706")); //$NON-NLS-1$
+				}
+			} else {
+				/*[MSG "K0705", "This DirectBuffer object is not direct"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0705")); //$NON-NLS-1$
+			}
+		} else {
+			/*[MSG "K0704", "A sun.nio.ch.DirectBuffer object is expected"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0704")); //$NON-NLS-1$
+		}
 	}
 /*[ENDIF] Java12 */
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,11 @@
 #define JITINTERFACE_HPP_
 
 #include "j9port.h"
+
+/* TODO: Implement jitVTableIndex() to remove this #include */
+#if defined(J9VM_ARCH_AARCH64)
+#include "assert.h"
+#endif
 
 extern "C" {
 
@@ -114,6 +119,15 @@ typedef struct {
 	U_64 fpr[16];
 } J9JITRegisters;
 
+#elif defined(J9VM_ARCH_AARCH64)
+
+typedef struct {
+	union {
+		UDATA numbered[32];
+	} gpr;
+	U_64 fpr[32];
+} J9JITRegisters;
+
 #else
 #error UNKNOWN PROCESSOR
 #endif
@@ -177,6 +191,9 @@ public:
 			/* Virtual - unsigned offset is in the low 12 bits, assume the sign bit is set (i.e. the offset is always negative) */
 			jitVTableIndex = 0 - (instruction & 0x00000FFF);
 		}
+#elif defined(J9VM_ARCH_AARCH64)
+		/* TODO: Implement this */
+		assert(0);
 #elif defined(J9VM_ARCH_S390)
 		/* The vtable index is always in the register */
 #else
@@ -194,6 +211,8 @@ public:
 		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->lr;
 #elif defined(J9VM_ARCH_ARM)
 		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[14];
+#elif defined(J9VM_ARCH_AARCH64)
+		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[30]; // LR
 #elif defined(J9VM_ARCH_S390)
 		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[14];
 #else
@@ -210,6 +229,8 @@ public:
 		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->lr = (UDATA)returnAddress;
 #elif defined(J9VM_ARCH_ARM)
 		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[14] = (UDATA)returnAddress;
+#elif defined(J9VM_ARCH_AARCH64)
+		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[30] = (UDATA)returnAddress; // LR
 #elif defined(J9VM_ARCH_S390)
 		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[14] = (UDATA)returnAddress;
 #else

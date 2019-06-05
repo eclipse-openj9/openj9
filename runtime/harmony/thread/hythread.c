@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2014 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -210,7 +210,7 @@ hythread_shutdown_library(struct HyThreadLibrary *threadLibrary )
  * @param[in] size Size of the thread library.
  *
  * @return 0 on success, negative return value on failure
- * @note The threadlibrary version must be compatabile with the that which we are compiled against
+ * @note The threadlibrary version must be compatible with the that which we are compiled against
  */
 I_32
 hythread_create_library(struct HyThreadLibrary *threadLibrary, struct HyThreadLibraryVersion *version, UDATA size)
@@ -270,7 +270,7 @@ hythread_startup_library(struct HyThreadLibrary *threadLibrary)
  *
  * @return size of thread library on success, zero on failure
  *
- * @note The thread library version must be compatabile with the that which we are compiled against
+ * @note The thread library version must be compatible with the that which we are compiled against
  */
 UDATA 
 hythread_getSize(struct HyThreadLibraryVersion *version)
@@ -281,7 +281,7 @@ hythread_getSize(struct HyThreadLibraryVersion *version)
 	}
 
 	/* The size of the portLibrary table is determined by the majorVersion number
-	 * and the presence/absense of the HYTHREAD_CAPABILITY_STANDARD capability 
+	 * and the presence/absence of the HYTHREAD_CAPABILITY_STANDARD capability 
 	 */
 	if (0 != (version->capabilities & HYTHREAD_CAPABILITY_STANDARD)) {
 		return sizeof(HyThreadLibrary);
@@ -359,7 +359,7 @@ hythread_isCompatible(struct HyThreadLibraryVersion *expectedVersion)
  * @param[in] threadLibrary The thread library.
  * @param[in] offset The offset of the function to be queried.
  * 
- * @return 1 if the function is overriden, else 0.
+ * @return 1 if the function is overridden, else 0.
  *
  * hythread_isFunctionOverridden(threadLibrary, offsetof(HyThreadLibrary, sem_init));
  */
@@ -389,7 +389,7 @@ hythread_isFunctionOverridden(struct HyThreadLibrary *threadLibrary, UDATA offse
  * @return 0 on success, negative return value on failure
  *
  * @note threadLibrary will be NULL on failure
- * @note The threadlibrary version must be compatabile with the that which we are compiled against
+ * @note The threadlibrary version must be compatible with the that which we are compiled against
  * @note @ref hythread_shutdown_library will deallocate this memory as part of regular shutdown
  */
 I_32

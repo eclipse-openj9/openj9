@@ -35,7 +35,6 @@
 
 #include "j9.h"
 #include "j9comp.h"
-#include "jvmti_api.h"
 #include "jni.h"
 #include "jvmti.h"
 #include "jvmtiInternal.h"
@@ -1177,7 +1176,7 @@ prepareForEvent(J9JVMTIEnv * j9env, J9VMThread * currentThread, J9VMThread * eve
 /**
  * Switch away from the zAAP processor if running there.
  *
- * @param[in] *j9env - pointer the current JVMTI enviroment
+ * @param[in] *j9env - pointer the current JVMTI environment
  * @param[in] *currentThread - current thread
  * @param[in] eventNumber - the event ID
  * @param[in] *javaOffloadOldState - the old offload state of current thread
@@ -1511,9 +1510,11 @@ jvmtiGetLocalInstance(jvmtiEnv* env,
 * @param samplingInterval The sampling interval in bytes.
 * @return jvmtiError Error code returned by JVMTI function
 */
+#if JAVA_SPEC_VERSION >= 11
 jvmtiError JNICALL 
 jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 	jint samplingInterval);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /**
 * @brief
@@ -2509,6 +2510,7 @@ jvmtiSetFieldModificationWatch(jvmtiEnv* env,
 	jclass klass,
 	jfieldID field);
 
+#if JAVA_SPEC_VERSION >= 9
 /* ---------------- jvmtiModules.c ---------------- */
 /**
 * @brief
@@ -2569,10 +2571,11 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 		jobject module,
 		jboolean* is_modifiable_module_ptr);
 
+#endif /* JAVA_SPEC_VERSION >= 9 */
 /* ---------------- suspendhelper.cpp ---------------- */
 /**
 * @brief
-* @param currentThreasd
+* @param currentThread
 * @param thread
 * @param allowNull
 * @param currentThreadSuspended

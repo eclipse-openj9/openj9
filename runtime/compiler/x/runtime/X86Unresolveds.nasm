@@ -36,17 +36,6 @@
       DECLARE_GLOBAL interpreterUnresolvedStaticGlue
       DECLARE_GLOBAL interpreterUnresolvedSpecialGlue
       DECLARE_GLOBAL interpreterStaticAndSpecialGlue
-      DECLARE_GLOBAL updateInterpreterDispatchGlueSite
-      DECLARE_GLOBAL interpreterVoidStaticGlue
-      DECLARE_GLOBAL interpreterSyncVoidStaticGlue
-      DECLARE_GLOBAL interpreterEAXStaticGlue
-      DECLARE_GLOBAL interpreterSyncEAXStaticGlue
-      DECLARE_GLOBAL interpreterEDXEAXStaticGlue
-      DECLARE_GLOBAL interpreterSyncEDXEAXStaticGlue
-      DECLARE_GLOBAL interpreterST0FStaticGlue
-      DECLARE_GLOBAL interpreterSyncST0FStaticGlue
-      DECLARE_GLOBAL interpreterST0DStaticGlue
-      DECLARE_GLOBAL interpreterSyncST0DStaticGlue
 
       DECLARE_GLOBAL interpreterUnresolvedStringGlue
       DECLARE_GLOBAL interpreterUnresolvedMethodTypeGlue
@@ -92,18 +81,6 @@
       ;1179
       DECLARE_EXTERN jitResolvedFieldIsVolatile
 
-      DECLARE_EXTERN icallVMprJavaSendStatic0
-      DECLARE_EXTERN icallVMprJavaSendStatic1
-      DECLARE_EXTERN icallVMprJavaSendStaticJ
-      DECLARE_EXTERN icallVMprJavaSendStaticF
-      DECLARE_EXTERN icallVMprJavaSendStaticD
-      DECLARE_EXTERN icallVMprJavaSendStaticSync0
-      DECLARE_EXTERN icallVMprJavaSendStaticSync1
-      DECLARE_EXTERN icallVMprJavaSendStaticSyncJ
-      DECLARE_EXTERN icallVMprJavaSendStaticSyncF
-      DECLARE_EXTERN icallVMprJavaSendStaticSyncD
-      DECLARE_EXTERN interpretedDispatchGlueDisp32_unwrapper
-
 %ifdef WINDOWS
       DECLARE_EXTERN j9thread_self
       DECLARE_EXTERN j9thread_tls_get
@@ -111,37 +88,6 @@
 %endif
 
       DECLARE_EXTERN memoryFence
-
-
-%macro CheckIfMethodCompiledAndPatch 1 ; args: helperName
-      test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
-      jnz         %1
-      jmp         mergedStaticGlueCallFixer2
-%endmacro
-
-; mergedStaticGlueCallFixer
-;
-; This function is a back-patching routine for interpreter calls to static
-; methods that have recently been compiled. It patches the call site (in the
-; code cache) of an interpreter call snippet, so that future executions will
-; invoke the compiled method instead.
-;
-; NOTES:
-;
-; [1] The RAM method is in EDI on entry. It was loaded by the preceding instruction.
-;
-; [2] This function must appear here so as to require a non-short jump on NTO
-;
-  align 16
-mergedStaticGlueCallFixer2:
-      mov         edi, dword  [edi+J9TR_MethodPCStartOffset]
-      mov         edx, dword  [esp]
-      sub         edi, edx
-      mov         dword  [edx-4], edi
-      add         edi, edx
-      jmp         edi
-retn
-
 
 
 ; interpreterUnresolved{Static|Special}Glue
@@ -154,14 +100,14 @@ retn
 ; (5) call interpreterUnresolved{Static|Special}Glue ; replaced with "mov edi, 0xaabbccdd"
 ; (3) NOP
 ; ---
-; (5) call updateInterpreterDispatchGlueSite ; replaced with "JMP disp32"
-; (2) dw 2-byte glue method helper index
-; (4) dd cpAddr
-; (4) dd cpIndex
+; (5) jmp  interpreterStaticAndSpecialGlue
+; (2) dw   2-byte glue method helper index
+; (4) dd   cpAddr
+; (4) dd   cpIndex
 ;
 ; NOTES:
 ;
-; [1] A POP is not strictly necessary to shapen the stack. The RA could be left on the
+; [1] A POP is not strictly necessary to shape the stack. The RA could be left on the
 ; stack and the new stack shape updated in getJitStaticMethodResolvePushes(). It
 ; was left this way because we have to dork with the RA anyways to get back from
 ; this function which will already cause a return mispredict. Leaving it as is
@@ -186,7 +132,7 @@ interpreterUnresolvedStaticGlue:
       btr         eax, 0
       ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
       xchg        edi, eax
-      ; Skip code patching if the interpreter low-tag the RAM mathod
+      ; Skip code patching if the interpreter low-tag the RAM method
       jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
@@ -200,13 +146,12 @@ interpreterUnresolvedStaticGlue:
       movsd       qword [eax-5], xmm0
       movdqu      xmm0, [esp+8]
       add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
                                                             ; jump to its target directly.
    .skippatching:
       test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
       jnz         j2iTransition
       jmp         dword [edi+J9TR_MethodPCStartOffset]
-      ret
 
 
       align 16
@@ -234,9 +179,8 @@ interpreterUnresolvedSpecialGlue:
       movsd       qword [eax-5], xmm0
       movdqu      xmm0, [esp+8]
       add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
                                                             ; jump to its target directly.
-      ret
 
 
 ; interpreterStaticAndSpecialGlue
@@ -255,6 +199,7 @@ interpreterUnresolvedSpecialGlue:
 ; the interpreter which reads the parameters from the stack. The backspilling has
 ; already occured at this point.
 ;
+      align 16
 interpreterStaticAndSpecialGlue:
       test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
       jnz         j2iTransition
@@ -266,85 +211,8 @@ interpreterStaticAndSpecialGlue:
       jmp         edi
 
 
-; updateInterpreterDispatchGlueSite
-;
-; Now that a resolved RAM method is available, determine the appropriate interpreter
-; dispatch glue code to call and then patch the snippet to jump to it directly.
-;
-; NOTES:
-;
-; [1] The RAM method is in EDI on entry. It was loaded by the preceding instruction.
-;
-      align 16
-updateInterpreterDispatchGlueSite:
-
-      mov         edx, dword [esp]                          ; edx = snippet RA
-
-      sub         esp, 4                                    ; descriptor+8 : return value
-      push        edx                                       ; descriptor+4 : snippet RA
-      push        edi                                       ; descriptor+0 : RAM method
-      lea         edx, [esp+8]
-      push        edx                                       ; p3) EA of return value in TLS area
-      lea         edx, [esp+4]
-      push        edx                                       ; p2) EA parms in TLS area
-      MoveHelper  edx, interpretedDispatchGlueDisp32_unwrapper
-      push        edx                                       ; p1) helper address
-      call        jitCallCFunction
-      add         esp, 8                                    ; tear down descriptor
-      pop         eax                                       ; eax = return value (disp32 to dispatch glue)
-
-      ; Patch the call that brought us here into a JMP to the dispatch glue code.
-      ;
-      push        ebx                                       ; preserve
-      push        ecx                                       ; preserve
-      push        esi                                       ; preserve
-
-      ; Stack shape:
-      ;
-      ; esp+16 : main line code RA
-      ; esp+12 : snippet RA
-      ; esp+8 : ebx
-      ; esp+4 : ecx
-      ; esp+0 : esi
-      ;
-      mov ebx, eax
-      MoveHelper eax, updateInterpreterDispatchGlueSite
-
-      ; Construct the call instruction in edx:eax that should have brought
-      ; us to this helper + the following 3 bytes.
-      ;
-      mov         esi, dword  [esp+12]                      ; snippet RA
-
-      mov         edx, dword  [esi-1]                       ; edx = 3 bytes after the call to helper + high byte of disp32
-      mov         ecx, edx
-      sub         eax, esi                                  ; Expected disp32 for call to helper
-      rol         eax, 8
-      mov         dl, al                                    ; Copy high byte of calculated disp32 to expected word
-      mov         al, 0e8h                                  ; add CALL opcode
-
-      ; Construct the byte sequence in ecx:ebx to jump to the dispatch glue.
-      ;
-      rol         ebx, 8
-      mov         cl, bl
-      mov         bl, 0e9h
-
-      lea         esi, [esi-5]
-
-      ; Attempt to patch the code.
-      ;
-
-      lock cmpxchg8b [esi]
-
-      mov dword  [esp+12], esi                              ; update return address to re-run
-
-      pop         esi                                       ; restore
-      pop         ecx                                       ; restore
-      pop         ebx                                       ; restore
-      ret
-
-
-         align 16
 ;1179
+    align 16
 checkReferenceVolatility:
 
       ; preserve register states
@@ -418,7 +286,7 @@ patchBarrierWithNop:
       ; get the instruction descriptor and find the length of the store instruction
       ;
       mov         edx, dword  [esp + 144]                   ; get instruction descriptor address [esp + 116 + 24 + 4]
-      mov         bl, byte  [edx]                           ; get instruction length from instruciton descriptor
+      mov         bl, byte  [edx]                           ; get instruction length from instruction descriptor
       and         ebx, 0f0h                                 ; mask size of instruction
       shr         ebx, 4                                    ; shift size to last nibble of byte
       lea         ebx, [ebx - eq_MemFenceCallLength32] ; get the delta between the RA in the mainline code and
@@ -474,7 +342,7 @@ doLOCKORESP:
 
 
       ; Loading a long in 32 bit is done with a lock cmpxchng by default.
-      ; We need to swtitch the op bits of the instructions that performs loads for the lock cmpxchng setup
+      ; We need to switch the op bits of the instructions that performs loads for the lock cmpxchng setup
       ; to stores. We also need to patch over the lock cmpxchg with nops.
       ;
 patchLowerLong:
@@ -507,13 +375,13 @@ patchCmpxchgForLongStore:
 patchMainlineInstructionFromCache:
 
       mov         ecx, dword  [esp + 12]                            ; Load low dword of patch instruction in snippet BEFORE volatile resolution
-      mov         ebx, dword  [esp + 16]                            ; Load high dword of patch instruction in snippet BEFORE volatile resoluion
+      mov         ebx, dword  [esp + 16]                            ; Load high dword of patch instruction in snippet BEFORE volatile resolution
 
 
 patchMainlineInstruction:
 
 
-      mov         esi, dword  [esp]                                 ; Restor RA in mainline code.
+      mov         esi, dword  [esp]                                 ; Restore RA in mainline code.
       mov         edx, dword  [esp + 4]                             ; Restore the call instruction (edx:eax) that should have brought
       mov         eax, dword  [esp + 8]                             ; us to this snippet + the following 3 bytes.
 
@@ -532,58 +400,6 @@ restoreRegs:
       pop         ebp
 
 ret
-
-;1179
-
-         align 16
-interpreterVoidStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStatic0
-retn
-
-         align 16
-interpreterSyncVoidStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSync0
-retn
-
-         align 16
-interpreterEAXStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStatic1
-retn
-
-         align 16
-interpreterSyncEAXStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSync1
-retn
-
-         align 16
-interpreterEDXEAXStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticJ
-retn
-
-         align 16
-interpreterSyncEDXEAXStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSyncJ
-retn
-
-         align 16
-interpreterST0FStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticF
-retn
-
-         align 16
-interpreterSyncST0FStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSyncF
-retn
-
-         align 16
-interpreterST0DStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticD
-retn
-
-         align 16
-interpreterSyncST0DStaticGlue:
-         CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSyncD
-retn
 
 
 ; --------------------------------------------------------------------------------
@@ -1113,7 +929,7 @@ retn
       %include "jilconsts.inc"
       %include "X86PicBuilder.inc"
 
-%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
 eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Object
 %else
 eq_offsetof_J9Object_clazz equ   16       ; offset of class pointer in a J9Object
@@ -1126,17 +942,6 @@ segment .text
       DECLARE_GLOBAL interpreterUnresolvedStaticGlue
       DECLARE_GLOBAL interpreterUnresolvedSpecialGlue
       DECLARE_GLOBAL interpreterStaticAndSpecialGlue
-      DECLARE_GLOBAL updateInterpreterDispatchGlueSite
-      DECLARE_GLOBAL interpreterVoidStaticGlue
-      DECLARE_GLOBAL interpreterEAXStaticGlue
-      DECLARE_GLOBAL interpreterRAXStaticGlue
-      DECLARE_GLOBAL interpreterXMM0FStaticGlue
-      DECLARE_GLOBAL interpreterXMM0DStaticGlue
-      DECLARE_GLOBAL interpreterSyncVoidStaticGlue
-      DECLARE_GLOBAL interpreterSyncEAXStaticGlue
-      DECLARE_GLOBAL interpreterSyncRAXStaticGlue
-      DECLARE_GLOBAL interpreterSyncXMM0FStaticGlue
-      DECLARE_GLOBAL interpreterSyncXMM0DStaticGlue
 
       DECLARE_GLOBAL interpreterUnresolvedStringGlue
       DECLARE_GLOBAL interpreterUnresolvedMethodTypeGlue
@@ -1182,26 +987,7 @@ segment .text
       ;1179
       DECLARE_EXTERN jitResolvedFieldIsVolatile
 
-      DECLARE_EXTERN icallVMprJavaSendStatic0
-      DECLARE_EXTERN icallVMprJavaSendStatic1
-      DECLARE_EXTERN icallVMprJavaSendStaticJ
-      DECLARE_EXTERN icallVMprJavaSendStaticF
-      DECLARE_EXTERN icallVMprJavaSendStaticD
-      DECLARE_EXTERN icallVMprJavaSendStaticSync0
-      DECLARE_EXTERN icallVMprJavaSendStaticSync1
-      DECLARE_EXTERN icallVMprJavaSendStaticSyncJ
-      DECLARE_EXTERN icallVMprJavaSendStaticSyncF
-      DECLARE_EXTERN icallVMprJavaSendStaticSyncD
-
-      DECLARE_EXTERN adjustTrampolineInterpretedDispatchGlueDisp32_unwrapper
       DECLARE_EXTERN mcc_callPointPatching_unwrapper
-
-
-%macro CheckIfMethodCompiledAndPatch 1 ; helperName
-      test        byte [rdi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
-      jnz         %1
-      jmp         mergedStaticGlueCallFixer2
-%endmacro
 
 
 ; interpreterUnresolved{Static|Special}Glue
@@ -1212,10 +998,10 @@ segment .text
 ; The unresolved {Static|Special} interpreted dispatch snippet look like:
 ; align 8
 ; (10) call interpreterUnresolved{Static|Special}Glue ; replaced with "mov rdi, 0x0000aabbccddeeff"
-; (5) call updateInterpreterDispatchGlueSite ; replaced with "JMP disp32"
-; (2) dw 2-byte glue method helper index
-; (8) dq cpAddr
-; (4) dd cpIndex
+; (5)  jmp  interpreterStaticAndSpecialGlue
+; (2)  dw   2-byte glue method helper index
+; (8)  dq   cpAddr
+; (4)  dd   cpIndex
 ;
 ; NOTES:
 ;
@@ -1224,7 +1010,7 @@ segment .text
 ; the interpreter which reads the parameters from the stack. The backspilling has
 ; already occured at this point.
 ;
-; [2] A POP is not strictly necessary to shapen the stack. The RA could be left on the
+; [2] A POP is not strictly necessary to shape the stack. The RA could be left on the
 ; stack and the new stack shape updated in getJitStaticMethodResolvePushes(). It
 ; was left this way because we have to dork with the RA anyways to get back from
 ; this function which will already cause a return mispredict. Leaving it as is
@@ -1252,7 +1038,7 @@ interpreterUnresolvedStaticGlue:
       btr         rax, 0
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
       mov         rdi, rax
-      ; Skip code patching if the interpreter low-tag the RAM mathod 
+      ; Skip code patching if the interpreter low-tag the RAM method 
       jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
@@ -1260,14 +1046,13 @@ interpreterUnresolvedStaticGlue:
       shl         rax, 16
       xor         rax, 0bf48h                               ; REX+MOV bytes
       mov         qword [rsi-5], rax                        ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
                                                             ; jump to its target directly.
    .skippatching:
       mov         rcx, qword [rdi+J9TR_MethodPCStartOffset] ; rcx = interpreter entry point of the compiled method
       test        cl, J9TR_MethodNotCompiledBit
       jnz         j2iTransition
       jmp         rcx
-ret
 
 
       align 16
@@ -1292,9 +1077,8 @@ interpreterUnresolvedSpecialGlue:
       shl         rax, 16
       xor         rax, 0bf48h                               ; REX+MOV bytes
       mov         qword [rsi-5], rax                        ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp updateInterpreterDispatchGlueSite",
+      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
                                                             ; jump to its target directly.
-ret
 
 
 ; interpreterStaticAndSpecialGlue
@@ -1333,162 +1117,6 @@ interpreterStaticAndSpecialGlue:
       jmp         rcx                                             ; Dispatch compiled method through the interpreted entry
                                                                   ; point. This is because the linkage registers may not be
                                                                   ; set up any longer.
-ret
-
-
-; updateInterpreterDispatchGlueSite
-;
-; Now that a resolved RAM method is available, determine the appropriate interpreter
-; dispatch glue code to call and then patch the snippet to jump to it directly (or
-; to its trampoline).
-;
-; NOTES:
-;
-; [1] The RAM method is in RDI on entry. It was loaded by the preceding instruction.
-;
-; [2] This runtime code uses the JIT linkage registers as volatile registers and hence
-; does not preserve them. This is because the eventual dispatch path will be through
-; the interpreter which reads the parameters from the stack. The backspilling has
-; already occured at this point.
-;
-      align 16
-updateInterpreterDispatchGlueSite:
-      mov         rcx, qword [rsp]                          ; rcx = snippet RA
-
-      sub         rsp, 8                                    ; descriptor+32: return value
-      push        rcx                                       ; descriptor+24: snippet RA
-      mov         edx, dword  [rcx+10]                      ; 10 = 2 (DW index) + 8 (cpAddr)
-      push        rdx                                       ; descriptor+16: cpIndex
-      mov         rdx, qword  [rcx+2]                       ; 2 = (DW index)
-      push        rdx                                       ; descriptor+8: cpAddr
-      push        rdi                                       ; descriptor+0: RAM method
-      MoveHelper  rax, adjustTrampolineInterpretedDispatchGlueDisp32_unwrapper ; p1) helper address
-      lea         rsi, [rsp]                                ; p2) EA parms in TLS area
-      lea         rdx, [rsp+32]                             ; p3) EA of return value in TLS area
-      call        jitCallCFunction
-      add         rsp, 32                                   ; tear down descriptor
-      pop         rax                                       ; rax = return value (disp32)
-
-      ; Patch the call instruction with a direct jump to the glue code.
-      ; An atomic CMPXCHG is not required to patch this in because all threads
-      ; should be patching the same value and should either see a call to this
-      ; PicBuilder function or a jump to the interpreter dispatch glue.
-      ;
-      lea         rcx, [rcx-5]
-
-      mov         eax, eax                                  ; whack any upper bit sign extension
-      shl         rax, 8
-      mov         al, 0e9h                                  ; add JMP opcode
-
-      mov         rdx, qword [rcx]                          ; load up existing 8-bytes
-      shr         rdx, 40
-      shl         rdx, 40                                   ; isolate upper 24-bits
-      or          rdx, rax                                  ; merge instructions
-
-      mov         qword [rcx], rdx                          ; patch the call instruction
-
-      MEMORY_FENCE
-
-      sub         qword [rsp], 5                            ; re-run the calling instruction
-      ret
-
-ret
-
-
-; mergedStaticGlueCallFixer
-;
-; This function is a back-patching routine for interpreter calls to static
-; methods that have recently been compiled. It patches the call site (in the
-; code cache) of an interpreter call snippet, so that future executions will
-; invoke the compiled method instead.
-;
-; NOTES:
-;
-; [1] The RAM method is in RDI on entry. It was loaded by the preceding instruction.
-;
-; [2] This runtime code uses the JIT linkage registers as volatile registers and hence
-; does not preserve them. This is because the eventual dispatch path will be through
-; the interpreter which reads the parameters from the stack. The backspilling has
-; already occured at this point.
-;
-      align 16
-mergedStaticGlueCallFixer2:
-      mov         rcx, qword [rdi + J9TR_MethodPCStartOffset]     ; rcx = interpreter entry point of the compiled method
-      mov         rsi, qword [rsp]                                ; rsi = RA in mainline code
-      sub         rsi, 5
-      push        0                                               ; descriptor+24: 0
-      push        rcx                                             ; descriptor+16: compiled method PC
-      push        rsi                                             ; descriptor+8: call site
-      push        rdi                                             ; descriptor+0: RAM method
-      MoveHelper  rax, mcc_callPointPatching_unwrapper           ; p1) rax = helper
-      lea         rsi, [rsp]                                      ; p2) rsi = EA of descriptor
-      lea         rdx, [rsp]                                      ; p3) rdx = EA of return value
-      call        jitCallCFunction
-      add         rsp, 32                                         ; tear down descriptor
-      jmp         rcx                                             ; Dispatch compiled method through the interpreted entry
-                                                                  ; point. This is because the linkage registers may not be
-                                                                  ; set up any longer.
-ret
-
-
-; interpreter[Sync]{Void,EAX,RAX,XMM0F,XMM0D}StaticGlue
-;
-; This function checks if the given RAM method in rdi has already been
-; compiled, and if it has not, jumps to the VM helper that interprets
-; methods of the matching return type. If the given method has
-; already been compiled, this function jumps to mergedStaticGlueCallFixer,
-; which patches the call site so that future invocations will call the
-; compiled method directly.
-;
-      align 16
-interpreterVoidStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStatic0
-ret
-
-      align 16
-interpreterSyncVoidStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSync0
-ret
-
-      align 16
-interpreterEAXStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStatic1
-ret
-
-      align 16
-interpreterSyncEAXStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSync1
-ret
-
-      align 16
-interpreterRAXStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticJ
-ret
-
-      align 16
-interpreterSyncRAXStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSyncJ
-ret
-
-      align 16
-interpreterXMM0FStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticF
-ret
-
-      align 16
-interpreterSyncXMM0FStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSyncF
-ret
-
-      align 16
-interpreterXMM0DStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticD
-ret
-
-      align 16
-interpreterSyncXMM0DStaticGlue:
-      CheckIfMethodCompiledAndPatch icallVMprJavaSendStaticSyncD
-ret
 
 
 ; --------------------------------------------------------------------------------
@@ -1691,7 +1319,7 @@ patchOverMfence:
 
 patchWith3ByteNOP:
 
-      mov         ecx, dword  [rax]                   ; load existing double word containg mfence
+      mov         ecx, dword  [rax]                   ; load existing double word containing mfence
       and         ecx, 0ff000000h                     ; insert trailing byte of 3 word nop
       or          ecx, 000001f0fh                     ; load the the first 2 bytes of the 3 word nop
       mov         dword  [rax], ecx                   ; write the nop
@@ -1746,7 +1374,7 @@ findOffset:
       and         rax, rcx
 
 patchWith5ByteNOP:
-      ;cmp word ptr[rax], eq_LORBinaryWord ; make sure we are pathcing over a lock or [esp] ;TEMP
+      ;cmp word ptr[rax], eq_LORBinaryWord ; make sure we are patching over a lock or [esp] ;TEMP
       ;je restoreRegs
 
       mov         ecx,    dword  [rax + 4]            ; load the existing dword with the last byte of the lock and the following 3 bytes

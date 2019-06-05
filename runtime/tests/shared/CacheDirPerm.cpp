@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,7 +93,7 @@ CacheDirPerm::getTempCacheDir(J9JavaVM *vm, I_32 cacheType, bool useDefaultDir, 
 	memset(cacheDir, 0, J9SH_MAXPATH);
 	memset(parentDir, 0, J9SH_MAXPATH);
 	rc = j9shmem_getDir(NULL, flags, baseDir, J9SH_MAXPATH);
-	if (-1 == rc) {
+	if (0 > rc) {
 		ERRPRINTF("Failed to get a temporary directory\n");
 		rc = FAIL;
 		goto _end;

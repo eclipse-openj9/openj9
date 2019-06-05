@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2011 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -499,7 +499,7 @@ public class ObjectFactory {
 	 * @param 	inputStream 		the feature definition input stream
 	 * @return 	the newly loaded feature definition
 	 *
-	 * @throws InvalidFeatureDefinitionException 		thrown if errors are found while parsing the feature definition intput stream
+	 * @throws InvalidFeatureDefinitionException 		thrown if errors are found while parsing the feature definition input stream
 	 */
 	public FeatureDefinition loadFeatureDefinition(InputStream inputStream, String objectId) throws InvalidFeatureDefinitionException {
 		FeatureParser parser = new FeatureParser();
@@ -707,7 +707,7 @@ public class ObjectFactory {
 	}
 
 	/**
-	 * Retrives the set of valid {@link FeatureDefinition} IDs the factory's config directory.
+	 * Retrieves the set of valid {@link FeatureDefinition} IDs the factory's config directory.
 	 *
 	 * @return	the valid feature definition IDs
 	 */
@@ -725,14 +725,14 @@ public class ObjectFactory {
 	}
 
 	/**
-	 * Loads a runtime's build-info, flag defintions as well as all the valid build specs and features
+	 * Loads a runtime's build-info, flag definitions as well as all the valid build specs and features
 	 * contained in this <code>ObjectFactory</code>'s config directory.
 	 *
 	 * Errors found when loading the build-info and flag definitions are considered fatal and will result
 	 * on an {@link InvalidFactoryException} being thrown (even if errors are delayed).  Errors found
 	 * when loading features or build specs will result in that element not being loaded into the factory.
 	 *
-	 * @param delayErrors		delay throwing exeptions unless error is critical (build-info or flags invalid)
+	 * @param delayErrors		delay throwing exceptions unless error is critical (build-info or flags invalid)
 	 * 
 	 * @throws InvalidFactoryException		thrown if errors are found when initializing factory elements
 	 */
@@ -801,7 +801,7 @@ public class ObjectFactory {
 	}
 
 	/**
-	 * Verifies the flag definitons, features, and build specs for validity.  This is to be used
+	 * Verifies the flag definitions, features, and build specs for validity.  This is to be used
 	 * when modifying elements on a object factory that has already been initialized.
 	 *
 	 * @throws 	InvalidFactoryException		thrown if errors are found when verifying factory elements

@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +24,11 @@
 #include "j9cfg.h"
 #include "ModronAssertions.h"
 
-#include "GCExtensions.hpp"
-#include "HeapRegionDescriptorRealtime.hpp"
 #include "ReferenceObjectBufferRealtime.hpp"
+
+#include "GCExtensions.hpp"
+#include "MetronomeDelegate.hpp"
+#include "RealtimeGC.hpp"
 #include "ReferenceObjectList.hpp"
 
 MM_ReferenceObjectBufferRealtime::MM_ReferenceObjectBufferRealtime(UDATA maxObjectCount)
@@ -73,7 +74,7 @@ MM_ReferenceObjectBufferRealtime::flushImpl(MM_EnvironmentBase* env)
 	MM_ReferenceObjectList *referenceObjectList = &extensions->referenceObjectLists[_referenceObjectListIndex];
 	referenceObjectList->addAll(env, _referenceObjectType, _head, _tail);
 	_referenceObjectListIndex += 1;
-	if (MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env) == _referenceObjectListIndex) {
+	if (extensions->realtimeGC->getRealtimeDelegate()->getReferenceObjectListCount(env) == _referenceObjectListIndex) {
 		_referenceObjectListIndex = 0;
 	}
 }

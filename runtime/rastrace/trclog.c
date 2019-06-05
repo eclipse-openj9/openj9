@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ postEventAll(UtEventSem * sem)
 
 /*******************************************************************************
  * name        - initTraceHeader
- * description - Inititializes the trace header.
+ * description - Initializes the trace header.
  * parameters  - void
  * returns     - OMR error code
  ******************************************************************************/
@@ -909,7 +909,7 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 
 		if (UT_GLOBAL(traceInCore)) {
 			/*
-			 *  Incore trace mode so reuse existing buffer, wrapping to the top
+			 *  In core trace mode so reuse existing buffer, wrapping to the top
 			 */
 			trcBuf = oldBuf;
 
@@ -1627,7 +1627,7 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 
 		p += (stringVarLen + 4);
 
-		/* if tracepoint is part of other component - write contaner's name into buffer */
+		/* if tracepoint is part of other component - write container's name into buffer */
 		if (containerModuleVar != NULL){
 			*p++ = '(';
 			memcpy(p, containerModuleVar, containerModuleVarLen);
@@ -1644,7 +1644,7 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 		 *  Handle sequence counter wrap
 		 *
 		 *  It's not a problem if the sequence counter write is aborted/discarded
-		 *  by nodynamic because it applies to the *preceeding* tracepoints and
+		 *  by nodynamic because it applies to the *preceding* tracepoints and
 		 *  they'll have been discarded as well.
 		 */
 		if (lastSequence != (int32_t)(trcBuf->record.sequence>>32)) {

@@ -82,7 +82,7 @@ j9ri_rioff(void)
 /**
  * This is the signalHandler for the real-time RI signal.
  * The real-time signal is sent to the thread if the run-time instrumentation buffer is full,(ENOBUFS == siginfo->si_int ),
- * or if the runtime-instrumentation-halted interrupt occurrs.
+ * or if the runtime-instrumentation-halted interrupt occurs.
  * This is a dummy signalHandler because the JIT polls for buffer full by itself.
  */
 static void
@@ -222,7 +222,7 @@ j9ri_enable(struct J9PortLibrary *portLibrary, struct J9RIParameters *riParams)
 		/*
 		 * ret_code values from RION routine is as follows:
 		 * 0x0  - authorization routine successful.
-		 * 0x1  - RION failure - Not initalized or bad RI control block
+		 * 0x1  - RION failure - Not initialized or bad RI control block
 		 */
 		int32_t ret_code = j9ri_rion();
 		if (0 == ret_code) {
@@ -248,7 +248,7 @@ j9ri_disable(struct J9PortLibrary *portLibrary, struct J9RIParameters *riParams)
 		/*
 		 * ret_code values from RIOFF routine is as follows:
 		 * 0x0  - authorization routine successful.
-		 * 0x1  - RIOFF failure - Not initalized or bad RI control block
+		 * 0x1  - RIOFF failure - Not initialized or bad RI control block
 		 */
 		int32_t ret_code = j9ri_rioff();
 		if (0 == ret_code) {

@@ -59,7 +59,7 @@ public:
    /**
     * \brief
     *    Fold direct load of a reliable static final field. A reliable static final field
-    *    is a field on which midification after initialization is not expected because it's
+    *    is a field on which modification after initialization is not expected because it's
     *    initial value critical to VM functionality and performance.
     *
     *    See J9::TransformUtil::canFoldStaticFinalField for the list of reliable static final
@@ -141,7 +141,7 @@ public:
    static void separateNullCheck(TR::Compilation* comp, TR::TreeTop* tree, bool trace = false);
    /*
     * \brief
-    *    Generate a tree to report modification to a static final field after intialization.
+    *    Generate a tree to report modification to a static final field after initialization.
     *
     * \param node The java/lang/Class object
     *

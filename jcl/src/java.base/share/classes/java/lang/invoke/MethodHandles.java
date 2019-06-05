@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
+import java.lang.reflect.Array;
 /*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
 /*[IF Java12]*/
@@ -1222,7 +1223,7 @@ public class MethodHandles {
 		
 		/**
 		 * Make a MethodHandle to the Reflect method.  If the method is non-static, the receiver argument
-		 * is treated as the intial argument in the MethodType.  
+		 * is treated as the initial argument in the MethodType.  
 		 * <p>
 		 * If m is a virtual method, normal virtual dispatch is used on each invocation.
 		 * <p>
@@ -1326,7 +1327,7 @@ public class MethodHandles {
 
 		/**
 		 * Return a MethodHandle for the reflect constructor. The MethodType has a return type
-		 * of the declared class, and the arguments of the constructor.  The MehtodHnadle
+		 * of the declared class, and the arguments of the constructor.  The MethodHandle
 		 * creates a new object as through by newInstance.  
 		 * <p>
 		 * If the <code>accessible</code> flag is not set, then access checking
@@ -2006,7 +2007,8 @@ public class MethodHandles {
 	 * 
 	 * If a SecurityManager is present, this method requires <code>ReflectPermission("suppressAccessChecks")</code>.
 	 * 
-	 * @param expected the expected type of the underlying member
+	 * @param <T> the type of the underlying member
+	 * @param expected the expected Class of the underlying member
 	 * @param target the direct MethodHandle to be cracked
 	 * @return the underlying member of the <code>target</code> MethodHandle
 	 * @throws SecurityException if the caller does not have the required permission (<code>ReflectPermission("suppressAccessChecks")</code>)
@@ -2414,7 +2416,7 @@ public class MethodHandles {
 	 * and the third will be the item to write into the array
 	 * 
 	 * @param arrayType - the type of the array
-	 * @return a MehtodHandle able to write into the array
+	 * @return a MethodHandle able to write into the array
 	 * @throws IllegalArgumentException - if arrayType is not actually an array
 	 */
 	public static MethodHandle arrayElementSetter(Class<?> arrayType) throws IllegalArgumentException {
@@ -2561,7 +2563,7 @@ public class MethodHandles {
 	 * If <i>handle</i> has a void return, <i>filter</i> must not take any parameters.
 	 * 
 	 * @param handle - the MethodHandle that will have its return value adapted
-	 * @param filter - the MethodHandle that will do the return adaption.
+	 * @param filter - the MethodHandle that will do the return adaptation.
 	 * @return a MethodHandle that will run the filter handle on the result of handle.
 	 * @throws NullPointerException - if handle or filter is null
 	 * @throws IllegalArgumentException - if the return type of <i>handle</i> differs from the type of the only argument to <i>filter</i>
@@ -3451,28 +3453,31 @@ public class MethodHandles {
 		
 		MethodHandle arrayConstructorHandle = null;
 		Class<?> componentType = arrayType.getComponentType();
-		MethodType realArrayType = MethodType.methodType(arrayType, int.class);
-		
+
 		try {
 			/* Directly look up the appropriate helper method for the given primitive type */
 			if (componentType.isPrimitive()) {
+				MethodType realArrayType = MethodType.methodType(arrayType, int.class);
 				String typeName = componentType.getCanonicalName();
 				arrayConstructorHandle = Lookup.internalPrivilegedLookup.findStatic(MethodHandles.class, typeName + "ArrayConstructor", realArrayType); //$NON-NLS-1$
 			} else {
-				/* Look up the "Object[]" case and convert the corresponding handle to the one with the correct MethodType */
-				MethodType objectArrayType = MethodType.methodType(Object[].class, int.class);
-				arrayConstructorHandle = Lookup.internalPrivilegedLookup.findStatic(MethodHandles.class, "objectArrayConstructor", objectArrayType); //$NON-NLS-1$
-				if (Object[].class != arrayType) {
-					arrayConstructorHandle = arrayConstructorHandle.cloneWithNewType(realArrayType);
-				}
+				/* The target handle wraps up Array.newInstance() to create an array with the given type.
+				 * Meanwhile, the handle has to be converted to ensure its return type remains consistent 
+				 * with the passed-in array type so as to match Reference Implementation.
+				 */
+				MethodType realArrayType = MethodType.methodType(Object.class, Class.class, int.class);
+				arrayConstructorHandle = Lookup.internalPrivilegedLookup.findStatic(Array.class, "newInstance", realArrayType); //$NON-NLS-1$
+				arrayConstructorHandle = arrayConstructorHandle.cloneWithNewType(realArrayType.changeReturnType(arrayType)).bindTo(componentType);
 			}
 		} catch(IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError("The method retrieved by lookup doesn't exit or it fails in the access checking", e); //$NON-NLS-1$
+		} catch(ClassCastException e) {
+			throw new IllegalArgumentException(e.getMessage());
 		}
 		
 		return arrayConstructorHandle;
 	}
-	
+
 	private static boolean[] booleanArrayConstructor(int arraySize) {
 		return new boolean[arraySize];
 	}
@@ -3503,10 +3508,6 @@ public class MethodHandles {
 	
 	private static double[] doubleArrayConstructor(int arraySize) {
 		return new double[arraySize];
-	}
-	
-	private static Object[] objectArrayConstructor(int arraySize) {
-		return new Object[arraySize];
 	}
 	
 	/**

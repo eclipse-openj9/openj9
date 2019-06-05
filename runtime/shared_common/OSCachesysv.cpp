@@ -69,7 +69,7 @@
  * @param [in]  piconfig Pointer to a configuration structure
  * @param [in]  numLocks The number of locks to be initialized
  * @param [in]  createFlag Indicates whether cache is to be opened or created.
- * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existsing cache
+ * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existing cache
  * \args J9SH_OSCACHE_OPEXIST Open an existing cache only, failed if it doesn't exist.
  * @param [in]  verboseFlags Verbose flags
  * @param [in]  openMode Mode to open the cache in. One of the following flags:
@@ -127,7 +127,7 @@ SH_OSCachesysv::initialize(J9PortLibrary* portLib, char* memForConstructor, UDAT
  * @param [in]  piconfig Pointer to a configuration structure
  * @param [in]  numLocks The number of locks to be initialized
  * @param [in]  createFlag Indicates whether cache is to be opened or created.
- * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existsing cache
+ * \args J9SH_OSCACHE_CREATE Create the cache if it does not exists, otherwise open existing cache
  * \args J9SH_OSCACHE_OPEXIST Open an existing cache only, failed if it doesn't exist.
  * @param [in]  verboseFlags Verbose flags
  * @param [in]  openMode Mode to open the cache in. One of the following flags:
@@ -948,7 +948,7 @@ SH_OSCachesysv::initializeHeader(const char* cacheDirName, J9PortShcVersion* ver
  *
  * @param [in] expectedVersionData  If not NULL, function checks the version data of the cache against the values in this struct
  * 
- * @return The address of the memory mapped area for the caller's process - This is not guranteed to be the same
+ * @return The address of the memory mapped area for the caller's process - This is not guaranteed to be the same
  * for two different process.
  *
  */
@@ -1204,9 +1204,9 @@ SH_OSCachesysv::acquireWriteLock(UDATA lockID)
 		I_32 myerror = j9error_last_error_number();
 		if ( ((I_32)(myerror | 0xFFFF0000)) != J9PORT_ERROR_SYSV_IPC_ERRNO_EINTR) {
 #if !defined(WIN32)
-			OSC_ERR_TRACE2(J9NLS_SHRC_CC_SYSV_AQUIRE_LOCK_FAILED_ENTER_MUTEX, j9shsem_deprecated_getid(_semhandle), myerror);
+			OSC_ERR_TRACE2(J9NLS_SHRC_CC_SYSV_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, j9shsem_deprecated_getid(_semhandle), myerror);
 #else
-			OSC_ERR_TRACE1(J9NLS_SHRC_CC_AQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
+			OSC_ERR_TRACE1(J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
 #endif
 			Trc_SHR_OSC_enterMutex_Exit3(myerror);
 			Trc_SHR_Assert_ShouldNeverHappen();
@@ -1690,7 +1690,7 @@ SH_OSCachesysv::getHeaderSize(void)
  * @param [in] ctrlDirName  Cache directory
  * @param [in] groupPerm  Group permissions to open the cache directory
  * @param [in] cacheNameWithVGen current cache name
- * @param [out] cacheInfo stucture to be populated with cache statistics
+ * @param [out] cacheInfo structure to be populated with cache statistics
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
  * @return 0 on success
  */
@@ -1766,7 +1766,7 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
  * @param [in] ctrlDirName  Cache directory
  * @param [in] groupPerm  Group permissions to open the cache directory
  * @param [in] cacheNameWithVGen current cache name
- * @param [out] cacheInfo stucture to be populated with cache statistics
+ * @param [out] cacheInfo structure to be populated with cache statistics
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
  *
  * @return 0 on success
@@ -1968,7 +1968,7 @@ SH_OSCachesysv::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescripto
 
 /**
  * This method performs additional checks to catch scenarios that are not handled by permission and/or mode settings provided by operating system,
- * to avoid any unintended access to sempahore set.
+ * to avoid any unintended access to semaphore set.
  *
  * @param[in] lastErrorInfo	Pointer to store last portable error code and/or message
  *
@@ -2156,7 +2156,7 @@ SH_OSCachesysv::checkSharedMemoryAccess(LastErrorInfo *lastErrorInfo)
 						Trc_SHR_OSC_Sysv_checkSharedMemoryAccess_GroupAccessRequired(shmid);
 
 						if (statBuf.perm.isGroupWriteable) {
-							/* The shared memory has group read-write permission set, so this process can use it if 'groupAcccess' option is specified. */
+							/* The shared memory has group read-write permission set, so this process can use it if 'groupAccess' option is specified. */
 							shmAccess = J9SH_SHM_ACCESS_GROUP_ACCESS_REQUIRED;
 						} else {
 							/* The shared memory does not have group write permission set, so this process can use it in readonly mode. */
@@ -2667,7 +2667,7 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_OSC_Sysv_restoreFromSnapshot_getCacheDirFailed();
-		OSC_ERR_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
+		/* NLS message has been printed out inside SH_OSCache::getCacheDir() if verbose flag is not 0 */
 		rc = -1;
 		goto done;
 	}

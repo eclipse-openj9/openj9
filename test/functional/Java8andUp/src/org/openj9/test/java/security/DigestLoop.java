@@ -39,7 +39,6 @@ public final class DigestLoop extends Thread {
 
     static byte[] data;
     static MessageDigest md;
-    static java.security.Provider javaProvider;
     static Logger logger = Logger.getLogger(DigestLoop.class);
 
     @Test
@@ -49,14 +48,13 @@ public final class DigestLoop extends Thread {
         r.nextBytes(data);
 
         try {
-            javaProvider = java.security.Security.getProvider("SUN");
-            md = MessageDigest.getInstance(alg, javaProvider);
+            md = MessageDigest.getInstance(alg);
             logger.info("Using Provider " + md.getProvider().getName());
             logger.info("Payload size: " + data.length + " bytes");
         } catch (Exception e) {
             logger.debug(e);
         }
-        int num_threads=20;
+        int num_threads = 20;
 
         for (int i = 0 ; i < num_threads ; i++) {
             (new DigestLoop()).start();

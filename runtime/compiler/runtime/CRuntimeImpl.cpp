@@ -113,7 +113,7 @@ void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int
          TR_VerboseLog::writeLineLocked(TR_Vlog_OSRD, "%X   %d mappings", (int)vmThreadArg, numberOfMappings);
 
       //if there are any symbols sharing slots at this OSR point
-      //SD: With a high probability, this condition is true when the above condition (numSymsThtaShareSlot > 0)
+      //SD: With a high probability, this condition is true when the above condition (numSymsThatShareSlot > 0)
       // is true. So it might be safe to remove the following if statement.
       if (numberOfMappings > 0) // this is a condition that depends on the whole compilation
          {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,9 +95,12 @@
 #define J9_JIT_DATA_CACHE_SIZE (8 * 1024 * 1024)
 #endif /* J9VM_ARCH_X86 && !J9VM_ENV_DATA64 */
 
-#if defined(J9ZOS390) && defined(J9VM_GC_COMPRESSED_POINTERS)
-#define J9_OS_STACK_SIZE (384 * 1024)
-#else /* J9ZOS390 && J9VM_GC_COMPRESSED_POINTERS */
+#if defined(J9ZOS390) && defined(J9VM_ENV_DATA64)
+/* Use a 1MB OS stack on z/OS 64-bit as this is what the OS
+ * allocates anyway, using IARV64 GETSTOR to allocate a segment.
+ */
+#define J9_OS_STACK_SIZE (1024 * 1024)
+#else /* J9ZOS390 && J9VM_ENV_DATA64 */
 #define J9_OS_STACK_SIZE (256 * 1024)
 #endif
 

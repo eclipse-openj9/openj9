@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,9 +92,9 @@ public class FDE {
 //			System.err.printf("Reading %d bytes of initial instructions\n", callFrameInstructions.length);
 			cfiStream.read(callFrameInstructions, 0, callFrameInstructions.length);
 //			System.err.printf("Call frame instructions: %s\n", byteArrayToHexString(callFrameInstructions));
-			// Advance to finish on a word boundry.
+			// Advance to finish on a word boundary.
 			int remainder = (int)(cfiStream.getStreamPosition() % this.unwind.process.bytesPerPointer());
-//			System.err.printf("Skipping %d bytes to end on word boundry\n", remainder);
+//			System.err.printf("Skipping %d bytes to end on word boundary\n", remainder);
 			cfiStream.read(new byte[remainder], 0, remainder); // TODO shouldn't need to skip but printing 0 nicely
 			// confirms we ended up in the right place.
 		}

@@ -306,7 +306,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::treeSimplification                                                    },
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
    { OMR::cheapGlobalValuePropagationGroup                                      },
-   { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlinging might expose opportunities for dataAccessAccelerator
+   { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlining might expose opportunities for dataAccessAccelerator
    { OMR::globalCopyPropagation,                       OMR::IfVoluntaryOSR          },
    { OMR::lastLoopVersionerGroup,                      OMR::IfLoops                  },
    { OMR::globalDeadStoreElimination,                  OMR::IfEnabledAndLoops},
@@ -495,7 +495,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::stripMiningGroup,                      OMR::IfLoops     }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops     }, // tail-duplication in loops
    { OMR::blockSplitter,                         OMR::IfNews      }, // treeSimplification + blockSplitter + VP => opportunity for EA
-   { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must preceed escape analysis
+   { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must precede escape analysis
    { OMR::veryExpensiveGlobalValuePropagationGroup           },
    { OMR::dataAccessAccelerator                              }, //always run after GVP
    { OMR::osrGuardRemoval,                       OMR::IfEnabled }, // run after calls/monents/asyncchecks have been removed
@@ -782,8 +782,6 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_VarHandleTransformer::create, OMR::varHandleTransformer);
    _opts[OMR::unsafeFastPath] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_UnsafeFastPath::create, OMR::unsafeFastPath);
-   _opts[OMR::trivialStoreSinking] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialSinkStores::create, OMR::trivialStoreSinking);
    _opts[OMR::idiomRecognition] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_CISCTransformer::create, OMR::idiomRecognition);
    _opts[OMR::loopAliasRefiner] =

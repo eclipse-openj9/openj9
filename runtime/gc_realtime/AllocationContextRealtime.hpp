@@ -1,5 +1,6 @@
+
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +29,6 @@
 #if !defined(ALLOCATIONCONTEXTREALTIME_HPP_)
 #define ALLOCATIONCONTEXTREALTIME_HPP_
 
-#include "omrthread.h"
-#include "j9comp.h"
-
 #include "AllocationContext.hpp"
 #include "AllocationContextSegregated.hpp"
 
@@ -51,7 +49,7 @@ private:
 public:
 	static MM_AllocationContextRealtime *newInstance(MM_EnvironmentBase *env, MM_GlobalAllocationManagerSegregated *gam, MM_RegionPoolSegregated *regionPool);
 
-	virtual UDATA *allocateLarge(MM_EnvironmentBase *env, UDATA sizeInBytesRequired);
+	virtual uintptr_t *allocateLarge(MM_EnvironmentBase *env, uintptr_t sizeInBytesRequired);
 
 protected:
 	MM_AllocationContextRealtime(MM_EnvironmentBase *env, MM_GlobalAllocationManagerSegregated *gam, MM_RegionPoolSegregated *regionPool)
@@ -61,8 +59,8 @@ protected:
 	}
 
 	virtual bool shouldPreMarkSmallCells(MM_EnvironmentBase *env);
-	virtual bool trySweepAndAllocateRegionFromSmallSizeClass(MM_EnvironmentBase *env, UDATA sizeClass, UDATA *sweepCount, U_64 *sweepStartTime);
-	virtual void signalSmallRegionDepleted(MM_EnvironmentBase *env, UDATA sizeClass);
+	virtual bool trySweepAndAllocateRegionFromSmallSizeClass(MM_EnvironmentBase *env, uintptr_t sizeClass, uintptr_t *sweepCount, U_64 *sweepStartTime);
+	virtual void signalSmallRegionDepleted(MM_EnvironmentBase *env, uintptr_t sizeClass);
 
 private:
 	bool initialize(MM_EnvironmentBase *env);
