@@ -4430,6 +4430,20 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
          }
       auto methodInfo = methodCacheEntry.methodInfo;
       uint32_t vTableSlot = methodCacheEntry.vTableSlot;
+
+
+      // Re-add validation record
+      if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())
+         {
+         if(!owningMethod->addValidationRecordForCachedResolvedMethod(key, method))
+            {
+            // Could not add a validation record
+            *resolvedMethod = NULL;
+            if (unresolvedInCP)
+               *unresolvedInCP = true;
+            return true;
+            }
+         }
       // Create resolved method from cached method info
       if (key.type != TR_ResolvedMethodType::VirtualFromOffset)
          {
@@ -4452,20 +4466,8 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
          
       if (*resolvedMethod)
          {
-         if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())
-            {
-            auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(*resolvedMethod);
-            if(!serverMethod->addValidationRecordForCachedResolvedMethod(key))
-               {
-               // Could not add a validation record
-               *resolvedMethod = NULL;
-               if (unresolvedInCP) *unresolvedInCP = true;
-               }
-            }
-         else
-            {
-            if (unresolvedInCP) *unresolvedInCP = false;
-            }
+         if (unresolvedInCP)
+            *unresolvedInCP = false;
          return true;
          }
       else
