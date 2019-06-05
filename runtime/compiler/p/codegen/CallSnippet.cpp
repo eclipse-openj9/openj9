@@ -38,11 +38,6 @@
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
-#if defined(AIXPPC)
-extern FILE *j2Profile;
-extern void  j2Prof_thunkReport(uint8_t *startP, uint8_t *endP, uint8_t *sig);
-#endif
-
 uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
    {
    int32_t        intArgNum=0, floatArgNum=0, offset;
@@ -965,30 +960,6 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
    // patch size of thunk
    *(int32_t *)thunk = sizeThunk;
 
-#if defined(AIXPPC)
-   if (j2Profile != NULL) {
-      char         sigbuffer[1024], *signature;
-      TR_Method *amethod;
-      int32_t      len;
-
-      amethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-      if (amethod == NULL)
-         {
-         signature = NULL;
-         }
-      else
-         {
-         len = amethod->signatureLength();
-         if (len >= 1024)
-            len = 1023;
-         memcpy(sigbuffer, amethod->signatureChars(), len);
-         sigbuffer[len] = '\0';
-         signature = sigbuffer;
-         }
-      j2Prof_thunkReport(returnValue, buffer, (uint8_t *)signature);
-      }
-#endif
-
    ppcCodeSync(thunk, codeSize);
 
    return(returnValue);
@@ -1105,30 +1076,6 @@ TR_J2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode,
    // bcctr
    *(int32_t *)buffer = 0x4e800420;
    buffer += 4;
-
-#if defined(AIXPPC)
-   if (j2Profile != NULL) {
-      char         sigbuffer[1024], *signature;
-      TR_Method *amethod;
-      int32_t      len;
-
-      amethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-      if (amethod == NULL)
-         {
-         signature = NULL;
-         }
-      else
-         {
-         len = amethod->signatureLength();
-         if (len >= 1024)
-            len = 1023;
-         memcpy(sigbuffer, amethod->signatureChars(), len);
-         sigbuffer[len] = '\0';
-         signature = sigbuffer;
-         }
-      j2Prof_thunkReport(thunk->entryPoint(), buffer, (uint8_t *)signature);
-      }
-#endif
 
    ppcCodeSync(thunk->entryPoint(), codeSize);
 

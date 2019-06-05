@@ -3709,7 +3709,6 @@ typedef struct J9JITConfig {
 #define J9JIT_CODE_CACHE_FULL  0x40000000
 #define J9JIT_COMPILE_CLINIT  0x400000
 #define J9JIT_JVMPI_INLINE_ALLOCATION_OFF  32
-#define J9JIT_J2PROF  0x100
 
 typedef struct J9AOTConfig {
 	IDATA  ( *entryPoint)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
