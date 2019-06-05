@@ -31,6 +31,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/IdiomRecognition.cpp \
     compiler/optimizer/IdiomRecognitionUtils.cpp \
     compiler/optimizer/IdiomTransformations.cpp \
+    compiler/optimizer/J9CFGSimplifier.cpp \
     compiler/optimizer/J9LocalCSE.cpp \
     compiler/optimizer/J9OptimizationManager.cpp \
     compiler/optimizer/J9Optimizer.cpp \
@@ -157,7 +158,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/BackwardUnionBitVectorAnalysis.cpp \
     omr/compiler/optimizer/BitVectorAnalysis.cpp \
     omr/compiler/optimizer/CatchBlockRemover.cpp \
-    omr/compiler/optimizer/CFGSimplifier.cpp \
+    omr/compiler/optimizer/OMRCFGSimplifier.cpp \
     omr/compiler/optimizer/CompactLocals.cpp \
     omr/compiler/optimizer/CopyPropagation.cpp \
     omr/compiler/optimizer/DataFlowAnalysis.cpp \
