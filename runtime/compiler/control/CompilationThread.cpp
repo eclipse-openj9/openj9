@@ -1171,7 +1171,7 @@ void TR::CompilationInfo::releaseCompilationLock()
    {
    if (useSeparateCompilationThread() && _compilationMonitor)
       {
-      debugPrint("\t\texternal user releasing compilatoin monitor\n");
+      debugPrint("\t\texternal user releasing compilation monitor\n");
       releaseCompMonitor(0);
       }
    }
