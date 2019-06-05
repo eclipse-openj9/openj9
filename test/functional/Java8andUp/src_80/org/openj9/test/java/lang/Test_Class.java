@@ -881,7 +881,7 @@ public class Test_Class {
 			}
 			AssertJUnit.assertTrue("Found private Constructor", false);
 		} catch (NoSuchMethodException e) {
-			AssertJUnit.assertTrue("Exception during getConstructoy test", false);
+			AssertJUnit.assertTrue("Exception during getConstructor test", false);
 		}
 	}
 
