@@ -42,7 +42,7 @@ import com.ibm.j9ddr.tools.store.StructureMismatchError;
 public class J9DDRStructureStoreTest {
 
 	@Test(expected = IllegalArgumentException.class) 
-	public void nullConstuctor() {
+	public void nullConstructor() {
 		try {
 			new J9DDRStructureStore(null, null);
 		} catch (IOException e) {
