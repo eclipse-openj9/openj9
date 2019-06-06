@@ -899,6 +899,7 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>nonapplicable</aot>
 	</test>
 
 	<test>

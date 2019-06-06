@@ -47,5 +47,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 </playlist>

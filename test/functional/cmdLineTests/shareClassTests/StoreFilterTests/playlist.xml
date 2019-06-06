@@ -44,6 +44,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_StoreFilterTests_unix</testCaseName>
@@ -65,5 +66,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 </playlist>

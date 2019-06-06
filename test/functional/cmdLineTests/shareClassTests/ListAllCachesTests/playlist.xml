@@ -44,9 +44,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
-	<testCaseName>testSCCMLExpireAndListALLCaches</testCaseName>
+		<testCaseName>testSCCMLExpireAndListALLCaches</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 		</variations>
@@ -65,5 +66,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+
 	</test>
 </playlist>
