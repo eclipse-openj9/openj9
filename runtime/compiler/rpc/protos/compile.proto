@@ -51,6 +51,7 @@ enum J9ServerMessageType
    mirrorResolvedJ9Method = 1;
    get_params_to_construct_TR_j9method = 2;
    getUnloadedClassRanges = 3;
+   versionIncompatible = 4;
 
    // For TR_ResolvedJ9JITaaSServerMethod methods
    ResolvedMethod_isJNINative = 100;

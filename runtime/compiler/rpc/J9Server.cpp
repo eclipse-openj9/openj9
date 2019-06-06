@@ -57,6 +57,28 @@ J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    {
    initStream(connfd, ssl);
    _numConnectionsOpened++;
+   uint32_t clientVersion = std::get<0>(read<uint32_t>());
+   if (!checkClientVersion(clientVersion))
+      {
+      write(J9ServerMessageType::compatibilityCheck, false);
+      throw JITaaS::VersionIncompatible("client-server version incompatible");
+      }
+   else
+      {
+      write(J9ServerMessageType::compatibilityCheck, true);
+      }
+   }
+
+bool
+J9ServerStream::checkClientVersion(uint32_t version) const
+   {
+   bool result = ((version & 0xFFFFFF00) == (MAJOR_NUMBER << 24 | MINOR_NUMBER << 8));
+   if (!result)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "version check failed %d %d", clientMajorNumber, clientMinorNumber);
+      }
+   return result;
    }
 
 // J9Stream destructor is used instead
@@ -313,8 +335,17 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
             }
          }
 
-      J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, bio, timeoutMs);
-      compiler->compile(stream);
+      J9ServerStream *stream = NULL;
+      try 
+         {
+         stream = new (PERSISTENT_NEW) J9ServerStream(connfd, bio, timeoutMs);
+         compiler->compile(stream);
+         }
+      catch (const JITaaS::VersionIncompatible &e)
+         {
+         stream->~J9ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         }
       }
 
    // TODO This will never be called - if the server actually shuts down properly then we should do this

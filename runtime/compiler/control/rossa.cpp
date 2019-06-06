@@ -204,6 +204,7 @@ char *compilationErrorNames[]={
    "compilationAOTNoSupportForAOTFailure", //51
    "compilationStreamFailure", //52
    "compilationStreamLostMessage", // 53
+   "compilationVersionIncompatible", // 54
    "compilationMaxError"
 };
 

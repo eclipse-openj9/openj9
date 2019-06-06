@@ -26,6 +26,10 @@
 #include "rpc/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
 
+static const uint8_t MAJOR_NUMBER = 0;
+static const uint16_t MINOR_NUMBER = 1;
+static const uint8_t PATCH_NUMBER = 0;
+
 namespace JITaaS
 {
 using namespace google::protobuf::io;

@@ -2070,6 +2070,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationRecoverableTrampolineFailure:
             case compilationIllegalCodeCacheSwitch:
             case compilationRecoverableCodeCacheError:
+            case compilationVersionIncompatible:
                tryCompilingAgain = true;
                break;
             case compilationExcessiveComplexity:
@@ -10834,6 +10835,13 @@ TR::CompilationInfoPerThreadBase::processException(
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamFailure;
+      }
+   catch (const JITaaS::VersionIncompatible &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS VersionIncompatible: %s", e.what());
+      _methodBeingCompiled->_compErrCode = compilationVersionIncompatible;  
+      // Try again with local compilations if server and client are incompatible
       }
    catch (const JITaaS::ServerCompFailure &e)
       {

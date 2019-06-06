@@ -82,6 +82,7 @@ public:
 
    static void markServerUnreachable(J9JITConfig *jitConfig);
    static bool isServerReachable(J9JITConfig *jitConfig, TR::PersistentInfo *info);
+   static bool isVersionCompatible();
 
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;

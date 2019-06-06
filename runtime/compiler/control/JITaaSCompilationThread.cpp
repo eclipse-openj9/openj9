@@ -2378,6 +2378,18 @@ remoteCompile(
       
          compiler->failCompilation<std::bad_alloc>(e.what());
          }
+      catch (const JITaaS::VersionIncompatible &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+
+         client->~J9ClientStream();
+         TR_Memory::jitPersistentFree(client);
+
+         // need to somehow mark server as incompatible
+
+         compiler->failCompilation<JITaaS::VersionIncompatible>(e.what());
+         }
       }
    else
       {

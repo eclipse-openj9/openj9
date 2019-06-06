@@ -73,6 +73,7 @@ public:
       {
       return _clientId;
       }
+   static bool checkClientVersion(uint32_t version) const;
 
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;

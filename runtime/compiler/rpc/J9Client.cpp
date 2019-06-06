@@ -249,6 +249,11 @@ J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
    initStream(connfd, ssl);
+   if (!isVersionCompatible())
+      {
+      throw JITaaS::VersionIncompatible("client-server version incompatible");
+      }
+   // when server rejects, abort and switch to local compilation
    _numConnectionsOpened++;
    }
 
@@ -271,6 +276,16 @@ void
 J9ClientStream::shutdown()
    {
    // destructor is used instead
+   }
+
+bool
+J9ClientStream::isVersionCompatible()
+   {
+   uint32_t VERSION = MAJOR_NUMBER << 24 | MINOR_NUMBER << 8 | PATCH_NUMBER;
+   write(VERSION);
+   auto response = read();
+   TR_ASSERT(response == J9ServerMessageType::compatibilityCheck, "expected to receive a compatibilityCheck message");
+   return getRecvData<bool>();
    }
 
 void

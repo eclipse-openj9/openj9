@@ -45,6 +45,12 @@ private:
    std::string _message;
    };
 
+class VersionIncompatible: public virtual std::exception
+   {
+public:
+   virtual const char* what() const throw() { return "Version incompatible"; }
+   }
+
 class StreamCancel: public virtual std::exception
    {
 public:
