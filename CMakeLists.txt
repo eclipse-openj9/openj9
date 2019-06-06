@@ -24,6 +24,11 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
 project(openj9)
 
+# if no build type has been set, default to release with debug info
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "")
+endif()
+
 if(NOT $ENV{BOOT_JDK} STREQUAL "")
     set(JAVA_HOME $ENV{BOOT_JDK})
 
