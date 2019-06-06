@@ -214,6 +214,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_zos</testCaseName>
@@ -239,6 +240,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_aix</testCaseName>
@@ -264,6 +266,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_win</testCaseName>
@@ -288,6 +291,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_linux_SE80</testCaseName>
@@ -312,6 +316,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_zos_SE80</testCaseName>
@@ -336,6 +341,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_aix_SE80</testCaseName>
@@ -360,6 +366,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>shrtest_win_SE80</testCaseName>
@@ -383,6 +390,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>thrstatetest</testCaseName>

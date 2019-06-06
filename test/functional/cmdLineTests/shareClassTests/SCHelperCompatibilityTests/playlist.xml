@@ -46,6 +46,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatibilityTests_unix</testCaseName>
@@ -70,5 +71,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 </playlist>
