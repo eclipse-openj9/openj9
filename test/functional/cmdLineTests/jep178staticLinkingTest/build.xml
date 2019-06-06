@@ -48,7 +48,7 @@
 		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<classpath>
-				<pathelement location="${JAVA_BIN}/../../lib/tools.jar" /><!-- tools.jar is only used for Java8 compiler-->
+				<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" /><!-- tools.jar is only used for Java8 compiler-->
 			</classpath>
 		</javac>
 	</target>
