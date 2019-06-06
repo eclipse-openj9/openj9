@@ -79,10 +79,12 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 {
 	UDATA superClassSize, totalSize, temp, shapeSlots;
 	UDATA *shape;
+
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME(ramClass->romClass);
+
 #ifdef J9VM_GC_LEAF_BITS
 	UDATA leafTemp;
 	UDATA *leafShape;
-	J9UTF8 *className = J9ROMCLASS_CLASSNAME(ramClass->romClass);
 	UDATA isString = J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), "java/lang/String");
 #endif
 
@@ -163,8 +165,20 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 	{
 		while (walkResult->field) {
 			UDATA slotOffset = walkResult->offset / (objectSlotSize * slotsPerShapeElement);
+			J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(walkResult->field);
+			U_8 *fieldSigBytes = J9UTF8_DATA(fieldSig);
+			U_16 fieldSigLength = J9UTF8_LENGTH(fieldSig);
+
+			/* If the field is self referencing then store the offset to it (at most 2). Self referencing fields are to be scanned with priority during GC */
+			if (((ramClass->selfReferencingField1 == 0) || (ramClass->selfReferencingField2 == 0)) && J9UTF8_DATA_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), fieldSigBytes + 1, fieldSigLength - 2)) {
+				if (ramClass->selfReferencingField1 == 0) {
+					ramClass->selfReferencingField1 = walkResult->offset + J9_OBJECT_HEADER_SIZE;
+				} else {
+					ramClass->selfReferencingField2 = walkResult->offset + J9_OBJECT_HEADER_SIZE;
+				}
+			}
+
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-			U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(walkResult->field));
 			if ('Q' == *fieldSigBytes) {
 				J9Class *fieldClass = walkResult->flattenedClass;
 				if ((NULL != fieldClass) && J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {

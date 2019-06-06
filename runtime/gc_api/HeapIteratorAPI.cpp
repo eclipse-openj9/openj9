@@ -399,6 +399,7 @@ j9mm_iterate_object_slots(
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(javaVM->omrVM);
 	
 	switch(extensions->objectModel.getScanType(objectPtr)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:

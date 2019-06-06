@@ -1785,6 +1785,7 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 				case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 					Assert_MM_true(GC_ObjectModel::REF_STATE_REMEMBERED != J9GC_J9VMJAVALANGREFERENCE_STATE(env, object));
 					/* fall through */
+				case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
 				case GC_ObjectModel::SCAN_CLASS_OBJECT:
