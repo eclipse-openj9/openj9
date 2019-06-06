@@ -24,14 +24,6 @@
  *******************************************************************************/
  -->
 <configurationreg version="3.0">
-	<!-- AUTOMATED TEST METADATA -->
-	<automatedtests project="J9 JCL Automated Tests v2">
-		<classpathentry kind="src" path="/J9 JCL Test Harness"/>
-		<classpathentry kind="src" path="/JUnit_3.8.2"/>
-		<classpathentry kind="lib" path="/J9 JCL Automated Tests v2/src/com/ibm/resources/j9ts_boothclasspath.jar"/>
-		<source path="src"/>
-	</automatedtests>
-
 	<!-- GLOBAL PARAMETERS FOR ALL CONFIGURATIONS, CAN BE OVERWRITTEN IN CONFIGURATION ELEMENT IF IT IS REQUIRED-->
 	<globalParameters>
 		<parameter name="outputPathPrefix" value="pConfig "/>
