@@ -66,6 +66,15 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     * @return created linkage object
     */
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
+
+   /**
+    * @brief Encode a BL instruction to the specified symbol
+    * @param[in] symRef : target symbol
+    * @param[in] cursor : instruction cursor
+    * @param[in] node : node
+    * @return Endoded BL instruction
+    */
+   uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node);
    };
 
 }

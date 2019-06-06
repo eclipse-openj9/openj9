@@ -33,7 +33,6 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
-#include "runtime/CodeCacheManager.hpp"
 
 static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {
@@ -170,28 +169,6 @@ static int32_t instructionCountForArguments(TR::Node *callNode, TR::CodeGenerato
    return count;
    }
 
-static uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, TR::CodeGenerator *cg)
-   {
-   uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
-
-   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
-      {
-      target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
-
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
-                      "Target address is out of range");
-      }
-
-   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(
-                             cursor,
-                             (uint8_t *)symRef,
-                             TR_HelperAddress, cg),
-                             __FILE__, __LINE__, node);
-
-   uintptr_t distance = target - (uintptr_t)cursor;
-   return TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x3ffffff); /* imm26 */
-   }
-
 TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
    {
    TR::Compilation * comp = cg()->comp();
@@ -253,7 +230,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
 
    // bl glueRef
-   *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, callNode, cg());
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode);
    cursor += 4;
 
    // Store the code cache RA
@@ -386,7 +363,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
-   *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, getNode(), cg());
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, getNode());
    cursor += 4;
 
    // Store the code cache RA
@@ -428,7 +405,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
-   *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, getNode(), cg());
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, getNode());
    cursor += 4;
 
    // Store the code cache RA
