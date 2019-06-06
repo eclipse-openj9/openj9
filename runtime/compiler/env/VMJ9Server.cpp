@@ -352,12 +352,82 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
       {
       if (sigSame)
          {
-         // if name and signature comparison is inconclusive, make a remote call 
-         stream->write(JITaaS::J9ServerMessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
-         result = std::get<0>(stream->read<bool>());
+         // if name and signature comparison is inconclusive, check cache or make a remote call
+         auto *resolvedMethod1 = static_cast<TR_ResolvedJ9Method *>(method1);
+         auto *resolvedMethod2 = static_cast<TR_ResolvedJ9Method *>(method2);
+         J9Class *ramClass1 = resolvedMethod1->constantPoolHdr();
+         J9Class *ramClass2 = resolvedMethod2->constantPoolHdr();
+         UDATA field1 = 0, field2 = 0;
+         J9Class *declaringClass1 = NULL, *declaringClass2 = NULL;
+
+         bool needRemoteCall = true;
+         bool cached = getCachedField(ramClass1, cpIndex1, &declaringClass1, &field1);
+         cached &= getCachedField(ramClass2, cpIndex2, &declaringClass2, &field2);
+         if (cached)
+            {
+            needRemoteCall = false;
+            result = declaringClass1 == declaringClass2 && field1 == field2;
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+            // validate cached result
+            needRemoteCall = true;
+#endif
+            }
+         if (needRemoteCall)
+            {
+            stream->write(JITaaS::J9ServerMessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
+            auto recv = stream->read<J9Class *, J9Class *, UDATA, UDATA>();
+            declaringClass1 = std::get<0>(recv);
+            declaringClass2 = std::get<1>(recv);
+            field1 = std::get<2>(recv);
+            field2 = std::get<3>(recv);
+            bool remoteResult = false;
+            if (declaringClass1 && declaringClass2 && field1 && field2)
+               {
+               remoteResult = (declaringClass1 == declaringClass2) && (field1 == field2);
+               cacheField(ramClass1, cpIndex1, declaringClass1, field1);
+               cacheField(ramClass2, cpIndex2, declaringClass2, field2);
+               }
+            TR_ASSERT(!cached || result == remoteResult, "JIT fields are not same");
+            result = remoteResult;
+            }
          }
       }
    return result;
+   }
+
+bool
+TR_J9ServerVM::getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field)
+   {
+   OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+   auto it = _compInfoPT->getClientData()->getROMClassMap().find(ramClass);
+   if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+      {
+      auto &jitFieldsCache = it->second._jitFieldsCache;
+      if (!jitFieldsCache)
+         return false;
+      auto cacheIt = jitFieldsCache->find(cpIndex);
+      if (cacheIt != jitFieldsCache->end())
+         {
+         *declaringClass = cacheIt->second.first;
+         *field = cacheIt->second.second;
+         return true;
+         }
+      }
+   return false;
+   }
+
+void
+TR_J9ServerVM::cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field)
+   {
+   OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+   auto it = _compInfoPT->getClientData()->getROMClassMap().find(ramClass);
+   if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+      {
+      auto &jitFieldsCache = it->second._jitFieldsCache;
+      if (!jitFieldsCache)
+         jitFieldsCache = new (PERSISTENT_NEW) TR_JitFieldsCache(TR_JitFieldsCache::allocator_type(TR::Compiler->persistentAllocator()));
+      jitFieldsCache->insert({cpIndex, std::make_pair(declaringClass, field)});
+      }
    }
 
 bool
