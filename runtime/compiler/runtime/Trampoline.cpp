@@ -930,7 +930,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
             }
          else
             {
-            *((uint32_t*)currentTramp+1) = (uint32_t)entryAddress;
+            *((uint64_t*)currentTramp+1) = (uint64_t)entryAddress;
             }
          }
 
