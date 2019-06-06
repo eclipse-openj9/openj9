@@ -1109,6 +1109,14 @@ TR_J9ServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz)
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
+uintptrj_t
+TR_J9ServerVM::getClassFlagsValue(TR_OpaqueClassBlock *clazz)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::ClassEnv_classFlagsValue, clazz);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
 TR_OpaqueMethodBlock *
 TR_J9ServerVM::getMethodFromName(char *className, char *methodName, char *signature)
    {
@@ -2147,6 +2155,27 @@ TR_J9SharedCacheServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * class
 
    if (validated)
       return classDepthFlags;
+   else
+      return 0;
+   }
+
+uintptrj_t
+TR_J9SharedCacheServerVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   uintptrj_t classFlags = TR_J9ServerVM::getClassFlagsValue(classPointer);
+   
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+
+   if (validated)
+      return classFlags;
    else
       return 0;
    }

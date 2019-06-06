@@ -4396,7 +4396,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       // Initialize the monitor field
       //
       int32_t lwInitialValue = 0;
-      if (TR::Compiler->cls.classFlagsValue(ramClass) & J9ClassReservableLockWordInit)
+      if (TR::Compiler->cls.classFlagReservableWorldInitValue(ramClass))
          lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
 
       if (!TR::Compiler->target.is64Bit() || generateCompressedLockWord())
@@ -6624,6 +6624,12 @@ TR_J9VMBase::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classDepthAndFlags);
    }
 
+uintptrj_t
+TR_J9VMBase::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
+   {
+   return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
+   }
+
 #define LOOKUP_OPTION_JNI 1024
 #define LOOKUP_OPTION_NO_CLIMB 32
 #define LOOKUP_OPTION_NO_THROW 8192
@@ -8842,6 +8848,27 @@ TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointe
 
    if (validated)
       return classDepthFlags;
+   else
+      return 0;
+   }
+
+uintptrj_t
+TR_J9SharedCacheVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   uintptrj_t classFlags = TR_J9VM::getClassFlagsValue(classPointer);
+   
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+   
+   if (validated)
+      return classFlags;
    else
       return 0;
    }

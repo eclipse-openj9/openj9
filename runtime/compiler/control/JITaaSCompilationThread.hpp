@@ -110,6 +110,7 @@ class ClientSessionData
       TR_FieldAttributesCache *_staticAttributesCacheAOT;
       J9ConstantPool *_constantPool;
       TR_JitFieldsCache *_jitFieldsCache;
+      uintptrj_t classFlags;
       };
 
    struct J9MethodInfo
@@ -397,10 +398,23 @@ class JITaaSHelpers
       CLASSINFO_TOTAL_INSTANCE_SIZE,
       CLASSINFO_CLASS_OF_STATIC_CACHE,
       CLASSINFO_REMOTE_ROM_CLASS,
+      CLASSINFO_CLASS_FLAGS,
       };
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.
-   using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<uint8_t>, bool, uintptrj_t , bool, uint32_t, TR_OpaqueClassBlock *, void *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, uintptrj_t, J9ROMClass *, uintptrj_t>;
+   using ClassInfoTuple = std::tuple
+      <
+      std::string, J9Method *,                                       // 0: string                  1: methodsOfClass
+      TR_OpaqueClassBlock *, int32_t,                                // 2: baseComponentClass      3: numDimensions
+      TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4: parentClass             5: tmpInterfaces
+      std::vector<uint8_t>, bool,                                    // 6: methodTracingInfo       7: classHasFinalFields
+      uintptrj_t, bool,                                              // 8: classDepthAndFlags      9: classInitialized
+      uint32_t, TR_OpaqueClassBlock *,                               // 10: byteOffsetToLockword   11: leafComponentClass
+      void *, TR_OpaqueClassBlock *,                                 // 12: classLoader            13: hostClass
+      TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: componentClass         15: arrayClass
+      uintptrj_t, J9ROMClass *,                                      // 16: totalInstanceSize      17: remoteRomClass
+      uintptrj_t, uintptrj_t                                         // 18: _constantPool          19: classFlags
+      >;
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);

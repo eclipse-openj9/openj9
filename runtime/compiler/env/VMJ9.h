@@ -260,6 +260,7 @@ public:
    virtual bool isGetImplInliningSupported();
 
    virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
+   virtual uintptrj_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
@@ -1167,6 +1168,7 @@ public:
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
    virtual bool               hasFinalizer(TR_OpaqueClassBlock * classPointer);
    virtual uintptrj_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
+   virtual uintptrj_t         getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
    virtual bool               isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
