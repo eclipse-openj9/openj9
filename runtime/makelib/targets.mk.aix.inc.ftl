@@ -146,9 +146,7 @@ UMA_EXE_LINK_POSTFLAGS += -lc_r -lm -lpthreads
 
 ifdef UMA_IS_C_PLUS_PLUS
   UMA_DLL_LINK_POSTFLAGS += -lC_r -lC
-  UMA_EXE_LINK_POSTFLAGS := -lC_r -lC
-else
-  UMA_EXE_LINK_POSTFLAGS :=
+  UMA_EXE_LINK_POSTFLAGS += -lC_r -lC
 endif
 
 $(patsubst %.s,%.o,$(filter %.s,$(UMA_FILES_TO_PREPROCESS))) : %$(UMA_DOT_O) : %.s
