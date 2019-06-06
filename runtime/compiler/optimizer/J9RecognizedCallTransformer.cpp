@@ -103,7 +103,13 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 
    treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
    }
-
+   
+void J9::RecognizedCallTransformer::process_java_lang_StrictMath_sqrt(TR::TreeTop* treetop, TR::Node* node)
+   {
+      anchorNode(node->getFirstChild(), treetop);
+      TR::Node::recreate(node, TR::dsqrt);
+      TR::TransformUtil::removeTree(comp(), treetop);
+   }
 /*
 Transform an Unsafe atomic call to diamonds with equivalent semantics
 
@@ -420,6 +426,12 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          break;
       case TR::java_lang_StringUTF16_toBytes:
          process_java_lang_StringUTF16_toBytes(treetop, node);
+         break;
+      case TR::java_lang_StrictMath_sqrt:
+         process_java_lang_StrictMath_sqrt(treetop, node);
+         break;
+      case TR::java_lang_Math_sqrt:
+         processIntrinsicFunction(treetop, node, TR::dsqrt);
          break;
       default:
          break;
