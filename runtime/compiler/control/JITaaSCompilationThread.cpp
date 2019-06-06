@@ -3229,6 +3229,11 @@ ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byt
       IPTable_t *iProfilerMap = it->second._IPData;
       if (!iProfilerMap)
          {
+         // Check and update if method is compiled when collecting profiling data
+         bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
+         if(isCompiled)
+            it->second._isCompiledWhenProfiling = true;
+
          // allocate a new iProfiler map
          iProfilerMap = new (PERSISTENT_NEW) IPTable_t(IPTable_t::allocator_type(TR::Compiler->persistentAllocator()));
          if (iProfilerMap)
@@ -3608,7 +3613,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    for (uint32_t i = 0; i < numMethods; i++)
       {
       clientSessionData->getJ9MethodMap().insert({&methods[i], 
-            {romMethod, NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz} });
+            {romMethod, NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz, false}});
       romMethod = nextROMMethod(romMethod);
       }
    }
