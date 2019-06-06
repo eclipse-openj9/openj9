@@ -47,6 +47,7 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_SCURLHelperTests_90</testCaseName>
@@ -72,5 +73,6 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 </playlist>

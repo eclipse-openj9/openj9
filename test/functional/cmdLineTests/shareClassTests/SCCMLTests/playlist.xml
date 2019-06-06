@@ -50,6 +50,7 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests1_openj9</testCaseName>
@@ -78,6 +79,7 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests2</testCaseName>
@@ -103,6 +105,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests3</testCaseName>
@@ -143,6 +146,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests4</testCaseName>
@@ -169,6 +173,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests5</testCaseName>
@@ -195,6 +200,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests6</testCaseName>
@@ -218,6 +224,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSnapshot</testCaseName>
@@ -240,6 +247,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSoftmx</testCaseName>
@@ -266,6 +274,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLAotMethodOperation</testCaseName>
@@ -288,6 +297,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLModularity</testCaseName>
@@ -316,6 +326,7 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>ShareClassesCMLOpenJ9</testCaseName>
@@ -352,5 +363,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
+		<aot>explicit</aot>
 	</test>
 </playlist>
