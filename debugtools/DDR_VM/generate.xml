@@ -196,16 +196,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 		<!-- CMVC 198819: Zombie fields in DDR kept alive by out of date build specs -->
 		<if>
-			<or>
-				<equals arg1="${build.type}" arg2="developer" />
-				<equals arg1="${build.type}" arg2="customized" />
-				<equals arg1="${build.type}" arg2="acceptance" />
-				<equals arg1="${build.type}" arg2="codecoverage" />
-				<equals arg1="${build.type}" arg2="service" />
-			</or>
+			<and>
+				<available file="${WORKSPACE}/debugtools/DDR_Artifacts/specs/${VM_VERSION}" type="dir" />
+				<or>
+					<equals arg1="${build.type}" arg2="acceptance" />
+					<equals arg1="${build.type}" arg2="codecoverage" />
+					<equals arg1="${build.type}" arg2="customized" />
+					<equals arg1="${build.type}" arg2="developer" />
+					<equals arg1="${build.type}" arg2="service" />
+				</or>
+			</and>
 			<then>
-				<echo> copy spec superset to: ${WORKSPACE}/../build/supersets </echo>
-				<echo> from: ${WORKSPACE}/debugtools/DDR_Artifacts/specs/${VM_VERSION} </echo>
+				<echo>Copy spec superset to: ${WORKSPACE}/../build/supersets</echo>
+				<echo> from: ${WORKSPACE}/debugtools/DDR_Artifacts/specs/${VM_VERSION}</echo>
 				<copy todir="${WORKSPACE}/../build/supersets" verbose="true">
 					<fileset dir="${WORKSPACE}/debugtools/DDR_Artifacts/specs/${VM_VERSION}" />
 				</copy>
@@ -438,11 +441,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<echo>Generating Stubs in ${DDR_VM}</echo>
 				<echo />
 
-				<echo>com.ibm.j9ddr.tools.StructureStubGenerator -o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME}  -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}</echo>
+				<echo>com.ibm.j9ddr.tools.StructureStubGenerator -o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME} -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}</echo>
 				<echo>classpath: ${DDR_AUTOBLOB_LIB}</echo>
 				<echo>classpath: ${java.class.path}</echo>
 				<java classname="com.ibm.j9ddr.tools.StructureStubGenerator">
-					<arg line="-o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME}  -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}" />
+					<arg line="-o ${DDR_VM}/src -p ${PACKAGE_NAME_PREFIX}@{vmnbr}${STUBS_NAME} -f ${superset.dir}/../@{vmnbr} -s ${SUPERSET_NAME}" />
 					<classpath>
 						<pathelement location="${DDR_AUTOBLOB_LIB}" />
 						<pathelement path="${java.class.path}" />
@@ -481,8 +484,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 						<echo>Adding blob fragments for [@{vmnbr} stream] to ${output.dir}/libs/j9ddr.jar</echo>
 						<jar update="true" destfile="${output.dir}/libs/j9ddr.jar">
 							<fileset dir="${output.dir}">
-								<include name="fragments/@{vmnbr}/*.dat"/>
-								<include name="fragments/fragments.properties"/>
+								<include name="fragments/@{vmnbr}/*.dat" />
+								<include name="fragments/fragments.properties" />
 							</fileset>
 						</jar>
 						<copy file="${output.dir}/libs/j9ddr.jar" todir="${target.dir}/libs" verbose="true" />
@@ -491,8 +494,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 						<echo>Adding blob fragments for [@{vmnbr} stream] to ${output.dir}/libs/java9_j9ddr.jar</echo>
 						<jar update="true" destfile="${output.dir}/libs/java9_j9ddr.jar">
 							<fileset dir="${output.dir}">
-								<include name="fragments/@{vmnbr}/*.dat"/>
-								<include name="fragments/fragments.properties"/>
+								<include name="fragments/@{vmnbr}/*.dat" />
+								<include name="fragments/fragments.properties" />
 							</fileset>
 						</jar>
 						<copy file="${output.dir}/libs/java9_j9ddr.jar" todir="${target.dir}/libs" verbose="true" />
@@ -547,7 +550,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</sequential>
 		</for>
 
-		<copy file="${superset.dir}/superset.base.dat"  tofile="${J9_ROOT}/workspace/debugtools/DDR_Artifacts/supersets/${VM_VERSION}/superset.ibuild.dat" verbose="true" overwrite="true" failonerror="true" />
+		<copy file="${superset.dir}/superset.base.dat" tofile="${J9_ROOT}/workspace/debugtools/DDR_Artifacts/supersets/${VM_VERSION}/superset.ibuild.dat" verbose="true" overwrite="true" failonerror="true" />
 	</target>
 
 	<target name="stage_ddr_jar">
