@@ -708,6 +708,7 @@ class TR_EscapeAnalysis : public TR::Optimization
 
    friend class TR_FlowSensitiveEscapeAnalysis;
    friend class TR_LocalFlushElimination;
+   friend struct FieldInfo;
    };
 
 //class Candidate;
