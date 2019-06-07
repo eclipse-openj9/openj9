@@ -27,9 +27,13 @@ test_output_*
 
 # misc auto generated files
 autoGen.mk
+autoGen.mk.tkgj
 TestConfig/dependencies.mk
+TestConfig/dependencies.mk.tkgj
 TestConfig/utils.mk
+TestConfig/utils.mk.tkgj
 TestConfig/count.mk
+TestConfig/count.mk.tkgj
 TestConfig/specToPlat.mk
 TestConfig/*.log
 TestConfig/*.tap

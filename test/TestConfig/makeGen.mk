@@ -64,6 +64,8 @@ autoconfig:
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
+	$(TEST_JDK_HOME)$(D)bin$(D)javac TestKitGen.java; \
+	$(TEST_JDK_HOME)$(D)bin$(D)java TestKitGen --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) $(OPTS); \
 	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) $(OPTS); \
 	cd $(CURRENT_DIR);
 

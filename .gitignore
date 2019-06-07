@@ -35,8 +35,11 @@ com.ibm.jvmti.tests
 /.cproject
 
 # Visual Studio
-/.vs
-/.vscode/
+**/.vs/
+**/.vscode/
+**/.settings/
+**/.classpath
+**/.project
 
 # IntelliJ CLion
 /.idea

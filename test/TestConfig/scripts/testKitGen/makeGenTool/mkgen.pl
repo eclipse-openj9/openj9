@@ -22,6 +22,7 @@
 
 use constant DEBUG => 0;
 use Data::Dumper;
+use Digest::MD5;
 use feature 'say';
 use strict;
 use warnings;
@@ -729,6 +730,8 @@ sub writeTargets {
 	}
 
 	close $fhOut;
+
+	assertChecksumOnGeneratedFiles($makeFile, $makeFile . ".tkgj");
 }
 
 # return an array of invalid specs
@@ -887,6 +890,8 @@ sub dependGen {
 
 	close $fhOut;
 	print "\nGenerated $dependmk\n";
+
+	assertChecksumOnGeneratedFiles($dependmkpath, $dependmkpath . ".tkgj");
 }
 
 sub utilsGen {
@@ -907,6 +912,8 @@ sub utilsGen {
 
 	close $fhOut;
 	print "\nGenerated $utilsmk\n";
+
+	assertChecksumOnGeneratedFiles($utilsmkpath, $utilsmkpath . ".tkgj");
 }
 
 sub countGen {
@@ -916,7 +923,7 @@ sub countGen {
 
 	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
 	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
-	foreach my $lgtKey (keys %targetCount) {
+	foreach my $lgtKey (sort keys %targetCount) {
 		print $fhOut "ifeq (\$(GROUPTARGET),$lgtKey)\n";
 		print $fhOut "\tTOTALCOUNT := $targetCount{$lgtKey}\n";
 		print $fhOut "endif\n\n";
@@ -924,7 +931,28 @@ sub countGen {
 
 	close $fhOut;
 	print "\nGenerated $countmk\n";
+
+	assertChecksumOnGeneratedFiles($countmkpath, $countmkpath . ".tkgj");
 }
 
+sub assertChecksumOnGeneratedFiles {
+	( my $perlGeneratedFile, my $javaGeneratedFile ) = @_;
+
+	open( my $perlfh, '<', $perlGeneratedFile ) or die "Cannot open file $perlGeneratedFile for checksum validation";
+	open( my $javafh, '<', $javaGeneratedFile ) or die "Cannot open file $javaGeneratedFile for checksum validation";
+
+	binmode ($perlfh);
+	binmode ($javafh);
+
+	my $perlMD5 = Digest::MD5->new->addfile($perlfh)->hexdigest;
+	my $javaMD5 = Digest::MD5->new->addfile($javafh)->hexdigest;
+	
+	if ( $perlMD5 ne $javaMD5 ) {
+		die "Incorrect checksum for the two generated files:\n    $perlGeneratedFile\n    $javaGeneratedFile"
+	}
+
+	close $perlfh;
+	close $javafh;
+}
 
 1;
