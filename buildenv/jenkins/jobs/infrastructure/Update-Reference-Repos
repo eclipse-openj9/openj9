@@ -95,7 +95,6 @@ def refresh(node, cacheDir, repos, isKnownOs) {
         sh "rm -fr ${cacheDir}"
     }
 
-    sh "mkdir -p ${cacheDir}"
     dir("${cacheDir}") {
         stage("${node} - Config") {
             sh "git init --bare"
@@ -111,6 +110,9 @@ def refresh(node, cacheDir, repos, isKnownOs) {
             } else {
                 sh "git fetch --all"
             }
+        }
+        stage("${node} - GC Repo") {
+            sh "git gc --aggressive --prune=all"
         }
     }
 }
