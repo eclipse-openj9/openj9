@@ -2270,6 +2270,7 @@ J9::Options::setupJITaaSOptions()
       self()->setOption(TR_DisableEDO); // JITaaS limitation, EDO counters are not relocatable yet
       self()->setOption(TR_DisableKnownObjectTable);
       self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
+      self()->setOption(TR_DisableDecimalFormatPeephole);// JITaas decimalFormatPeephole, 
 
       if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
