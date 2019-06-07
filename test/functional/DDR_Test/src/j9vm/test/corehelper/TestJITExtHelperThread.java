@@ -21,24 +21,51 @@
  *******************************************************************************/
 package j9vm.test.corehelper;
 
+public class TestJITExtHelperThread {
+	boolean isWaiting = false;
+	Thread jittedThread = null;
 
- public class CoreGen {
+	public void configureJittedHelperThread() {
+		jittedThread = new Thread() {
+			public void run() {
+				waitForDump();
+			}
+		};
 
- 	public static void main(String[] args) {
-		SimpleThread st = new SimpleThread();
+		jittedThread.start();
 
-		/* Fork a thread for TestJITExt that is guaranteed to have a JIT frame
-		 * at the top of the stack. Fix until  https://github.com/eclipse/openj9/issues/5966 
-		 * is resolved.
-		 */
-		Compiler.compileClass(j9vm.test.corehelper.TestJITExtHelperThread.class);
-		TestJITExtHelperThread tjet = new TestJITExtHelperThread();
+		/* wait to start core dump until thread is in a waiting state */
+		synchronized(this) {
+			while(!isWaiting) {
+				try {
+					wait(0,0);
+				} catch (InterruptedException e) {}
+			}
+		}
+	}
 
-		tjet.configureJittedHelperThread();
+	void waitForDump() {
+		synchronized(this) {
+			/* signal to main thread that it is safe to start the core dump */
+			isWaiting = true;
+			notifyAll();
 
-		st.configureObj();
-		st.configureValidJavaThreads();
+			while (isWaiting) {
+				try {
+					wait(0, 0);
+				} catch (InterruptedException e) {}
+			}
+		}
+	}
 
-		tjet.endJittedHelperThread();
+	public void endJittedHelperThread() {
+		synchronized(this) {
+			isWaiting = false;
+			notifyAll();
+		}
+
+		try {
+			jittedThread.join();
+		} catch(InterruptedException e) {}
 	}
 }
