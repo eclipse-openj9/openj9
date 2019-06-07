@@ -24,7 +24,6 @@
 #define J9_CLIENT_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <openssl/ssl.h>
 #include "compile/CompilationTypes.hpp"
 #include "rpc/StreamTypes.hpp"
 #include "rpc/ProtobufTypeConvert.hpp"
@@ -32,8 +31,11 @@
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
 #include "rpc/J9Stream.hpp"
 
+#if defined(JITAAS_ENABLE_SSL)
+#include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
+#endif
 
 namespace JITaaS
 {
@@ -86,7 +88,9 @@ public:
 private:
    uint32_t _timeout;
 
+#if defined(JITAAS_ENABLE_SSL)
    static SSL_CTX *_sslCtx;
+#endif
    };
 
 }

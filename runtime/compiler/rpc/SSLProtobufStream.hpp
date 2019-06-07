@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 #ifndef SSL_PROTOBUF_STREAM_HPP
 #define SSL_PROTOBUF_STREAM_HPP
 
+#if defined(JITAAS_ENABLE_SSL)
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -85,4 +86,5 @@ private:
    BIO *_ssl;
    };
 
+#endif // JITAAS_ENABLE_SSL
 #endif // SSL_PROTOBUF_STREAM_HPP

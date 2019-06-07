@@ -32,20 +32,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
-#include <openssl/err.h>
 #include "J9Server.hpp"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "env/j9method.h"
 #include "rpc/SSLProtobufStream.hpp"
-
+#if defined(JITAAS_ENABLE_SSL)
+#include <openssl/err.h>
+#endif
 
 namespace JITaaS
 {
 int J9ServerStream::_numConnectionsOpened = 0;
 int J9ServerStream::_numConnectionsClosed = 0;
 
+#if defined(JITAAS_ENABLE_SSL)
 J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    : J9Stream(),
    _msTimeout(timeout)
@@ -53,6 +55,15 @@ J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
+#else // JITAAS_ENABLE_SSL
+J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
+   : J9Stream(),
+   _msTimeout(timeout)
+   {
+   initStream(connfd);
+   _numConnectionsOpened++;
+   }
+#endif
 
 // J9Stream destructor is used instead
 // cancel is unnecessary as errors will either throw or be indicated by the statusCode
@@ -84,6 +95,7 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
       }
    }
 
+#if defined(JITAAS_ENABLE_SSL)
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    {
    SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
@@ -219,17 +231,19 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
                                                      connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
    return true;
    }
-
+#endif
 
 void
 J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
+#if defined(JITAAS_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
    if (J9Stream::useSSL(info))
       {
       J9Stream::initSSL();
       sslCtx = createSSLContext(info);
       }
+#endif
 
    uint32_t port = info->getJITaaSServerPort();
    uint32_t timeoutMs = info->getJITaaSTimeout();
@@ -294,20 +308,25 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error accepting connection: errno=%d", errno);
          continue;
          }
-
+#if defined(JITAAS_ENABLE_SSL)
       BIO *bio = NULL;
       if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
          continue;
 
       J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, bio, timeoutMs);
+#else
+      J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, timeoutMs);
+#endif
       compiler->compile(stream);
       }
 
    // TODO This will never be called - if the server actually shuts down properly then we should do this
+#if defined(JITAAS_ENABLE_SSL)
    if (sslCtx)
       {
       SSL_CTX_free(sslCtx);
       EVP_cleanup();
       }
+#endif
    }
 }
