@@ -30,29 +30,40 @@
 #include "j9comp.h"
 #include "j9protos.h"
 
+
 class JVMImage
 {
-public:
-	JVMImage(J9JavaVM *javaVM);
+private:
+	JVMImage(J9JavaVM *vm);
 	~JVMImage();
-	static JVMImage* getJVMImage();
-	void allocateImageMemory(UDATA size);
+
+	bool initializeMonitor();
+public:
+	static JVMImage* createInstance(J9JavaVM *vm);
+	static JVMImage* getInstance();
+
+	void allocateImageMemory(J9JavaVM *vm, UDATA size);
 	void reallocateImageMemory(UDATA size);
 	void* subAllocateMemory(uintptr_t byteAmount);
 	void freeSubAllocatedMemory(void *memStart);
-	OMRPortLibrary* getPortLibrary() { return &_portLibrary; }
 
+	void readImageFromFile();
+	void storeImageInFile();
+
+	OMRPortLibrary* getPortLibrary() { return &_portLibrary; }
+public:
+	static const UDATA INITIAL_IMAGE_SIZE;
 private:
-	UDATA _memoryStart;
-	UDATA _size;
-	static JVMImage* _jvmImage;
-	J9Heap* _heap;
+	static JVMImage *_jvmInstance;
+
+	J9Heap *_heap;
+	UDATA _currentImageSize;
 	bool _isImageAllocated;
+
 	OMRPortLibrary _portLibrary;
 	omrthread_monitor_t _jvmImageMonitor;
 
-	bool initializeMonitor();
+	char *_dumpFileName;
 };
 
 #endif /* JVMIMAGE_H_ */
-
