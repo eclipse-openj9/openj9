@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool enableAESInHardwareTransformations();
 
    void insertPrefetchIfNecessary(TR::Node *node, TR::Register *targetRegister);
+
+   int32_t getInternalPtrMapBit() { return 18;}
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    bool suppressInliningOfCryptoMethod(TR::RecognizedMethod method);
