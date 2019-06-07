@@ -23,7 +23,7 @@
 #ifndef J9_SERVER_H
 #define J9_SERVER_H
 
-#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h> 
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "rpc/J9Stream.hpp"
 #include "env/CHTable.hpp"
@@ -57,16 +57,46 @@ public:
       _sMsg.set_type(type);
       writeBlocking(_sMsg);
       }
+
    template <typename ...T>
    std::tuple<T...> read()
       {
       readBlocking(_cMsg);
-      if (!_cMsg.status())
-         throw StreamCancel();
+      if (_cMsg.type() == J9ServerMessageType::compilationAbort)
+         throw StreamCancel(_cMsg.type());
+      // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
+      if (_cMsg.type() != _sMsg.type())
+         throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
+         
       return getArgs<T...>(_cMsg.mutable_data());
       }
 
-   void cancel();
+   template <typename... T>
+   std::tuple<T...> readCompileRequest()
+      {
+      readBlocking(_cMsg);
+      if (_cMsg.type() == JITaaS::J9ServerMessageType::clientTerminate)
+         {
+         uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
+         throw JITaaS::StreamCancel(_cMsg.type(), clientId);
+         }
+      if (_cMsg.version() != 0 && _cMsg.version() != getJITaaSVersion())
+         {
+         throw StreamVersionIncompatible(getJITaaSVersion(), _cMsg.version());
+         }
+      if (_cMsg.type() != JITaaS::J9ServerMessageType::compilationRequest)
+         {
+         throw JITaaS::StreamMessageTypeMismatch(JITaaS::J9ServerMessageType::compilationRequest, _cMsg.type());
+         }
+      return getArgs<T...>(_cMsg.mutable_data());
+      }
+   
+   template <typename... T>
+   std::tuple<T...> getRecvData()
+      {
+      return getArgs<T...>(_cMsg.mutable_data());
+      }
+
    void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", CHTableCommitData chTableData = {},
                           std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = {},
                           std::string logFileStr = "", std::string symbolToIdStr = "",

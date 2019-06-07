@@ -2074,6 +2074,8 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationRecoverableTrampolineFailure:
             case compilationIllegalCodeCacheSwitch:
             case compilationRecoverableCodeCacheError:
+            case compilationStreamMessageTypeMismatch:
+            case compilationStreamVersionIncompatible:
                tryCompilingAgain = true;
                break;
             case compilationExcessiveComplexity:
@@ -3411,29 +3413,14 @@ void TR::CompilationInfo::stopCompilationThreads()
       {
       try
          {
-         getSequencingMonitor()->enter();
-         uint32_t seqNo = getCompReqSeqNo();
-         incCompReqSeqNo();
-         getSequencingMonitor()->exit();
-         JITaaSHelpers::ClassInfoTuple classTuple;
-         std::vector<TR_OpaqueClassBlock*> unloadedClasses;
-         std::string optionsStr;
-         std::string recompMethodInfoStr;
-         std::string detailsStr;
-         J9Class *clazz = NULL;
-         J9Method *ramMethod = NULL;
-         uint32_t romMethodOffset = 0;
          JITaaS::J9ClientStream client(getPersistentInfo());
-         bool useAotCompilation = false;
-         client.buildCompileRequest(getPersistentInfo()->getJITaaSId(), romMethodOffset,
-                     ramMethod, clazz, cold, detailsStr, J9::EMPTY, unloadedClasses,
-                     classTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
+         client.writeError(JITaaS::J9ServerMessageType::clientTerminate, getPersistentInfo()->getJITaaSId());
          }
       catch (const JITaaS::StreamFailure &e)
          {
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure (server died before the termination message send): %s", e.what());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure (server unreachable before the termination message was sent): %s", e.what());
          }
       }
    }
@@ -6781,16 +6768,17 @@ bool isMethodIneligibleForAot(J9Method *method)
 bool
 TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry)
    {
-      bool doLocalComp = false;
-      static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
-      // As a heuristic, cold compilations should be performed locally because
-      // they are supposed to be cheap with respect to memory and CPU.
-      //
-      if (entry->_optimizationPlan->getOptLevel() <= cold &&
-         (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
-         doLocalComp = true;
+   bool doLocalComp = false;
+   static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+   // As a heuristic, cold compilations should be performed locally because
+   // they are supposed to be cheap with respect to memory and CPU.
+   //
+   if (entry->_optimizationPlan->getOptLevel() <= cold &&
+      (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations) || 
+      !JITaaS::J9ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)))
+      doLocalComp = true;
 
-      return doLocalComp;
+   return doLocalComp;
    }
 
 /**
@@ -10860,6 +10848,12 @@ TR::CompilationInfoPerThreadBase::processException(
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamFailure;
+      }
+   catch (const JITaaS::StreamVersionIncompatible &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamVersionIncompatible: %s", e.what());
+      _methodBeingCompiled->_compErrCode = compilationStreamVersionIncompatible;
       }
    catch (const JITaaS::ServerCompFailure &e)
       {

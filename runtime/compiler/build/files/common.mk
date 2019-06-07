@@ -381,6 +381,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/j9methodServer.cpp \
     compiler/rpc/J9Server.cpp \
     compiler/rpc/J9Client.cpp \
+    compiler/rpc/J9Stream.cpp \
     compiler/rpc/ProtobufTypeConvert.cpp \
     compiler/control/JITaaSCompilationThread.cpp \
     compiler/env/JITaaSPersistentCHTable.cpp \

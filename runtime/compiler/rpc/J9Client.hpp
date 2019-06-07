@@ -27,7 +27,6 @@
 #include "compile/CompilationTypes.hpp"
 #include "rpc/StreamTypes.hpp"
 #include "rpc/ProtobufTypeConvert.hpp"
-#include "j9.h"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
 #include "rpc/J9Stream.hpp"
 
@@ -39,6 +38,12 @@ class SSLInputStream;
 
 namespace JITaaS
 {
+enum VersionCheckStatus
+   {
+   NOT_DONE = 0,
+   PASSED = 1,
+   };
+
 class J9ClientStream : J9Stream
    {
 public:
@@ -53,20 +58,29 @@ public:
    template <typename... T>
    void buildCompileRequest(T... args)
       {
-      write(args...);
+      if (getVersionCheckStatus() == NOT_DONE)
+         {
+         _cMsg.set_version(getJITaaSVersion());
+         write(J9ServerMessageType::compilationRequest, args...);
+         _cMsg.clear_version();
+         }
+      else // getVersionCheckStatus() == PASSED
+         {
+         _cMsg.clear_version(); // the compatibility check is done. We clear the version to save message size.
+         write(J9ServerMessageType::compilationRequest, args...);
+         }
       }
 
    Status waitForFinish();
 
    template <typename ...T>
-   void write(T... args)
+   void write(J9ServerMessageType type, T... args)
       {
-      _cMsg.set_status(true);
+      _cMsg.set_type(type);
       setArgs<T...>(_cMsg.mutable_data(), args...);
+
       writeBlocking(_cMsg);
       }
-
-   void writeError();
 
    J9ServerMessageType read()
       {
@@ -82,11 +96,58 @@ public:
 
    void shutdown();
 
+   template <typename ...T>
+   void writeError(J9ServerMessageType type, T... args)
+      {
+      _cMsg.set_type(type);
+      if (type == J9ServerMessageType::compilationAbort)
+         _cMsg.mutable_data()->clear_data();
+      else
+         setArgs<T...>(_cMsg.mutable_data(), args...);
+      writeBlocking(_cMsg);
+      }
+
+   VersionCheckStatus getVersionCheckStatus()
+      {
+      return _versionCheckStatus;
+      }
+
+   void setVersionCheckStatus()
+      {
+      _versionCheckStatus = PASSED;
+      }
+
+   static void incrementIncompatibilityCount(OMRPortLibrary *portLibrary)
+      {
+      OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
+      _incompatibilityCount += 1;
+      _incompatibleStartTime = omrtime_current_time_millis();
+      }
+
+   static bool isServerCompatible(OMRPortLibrary *portLibrary)
+      {
+      OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
+      uint64_t current_time = omrtime_current_time_millis();
+      // the client periodically checks whether the server is compatible or not
+      // the retry interval is defined by RETRY_COMPATIBILITY_INTERVAL
+      // we set _incompatibilityCount to 0 when it's time to retry for compatibility check
+      // otherwise, check if we exceed the number of incompatible connections
+      if ((current_time - _incompatibleStartTime) > RETRY_COMPATIBILITY_INTERVAL)
+         _incompatibilityCount = 0;
+
+      return _incompatibilityCount < INCOMPATIBILITY_COUNT_LIMIT;
+      }
+
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
 
 private:
    uint32_t _timeout;
+   VersionCheckStatus _versionCheckStatus;
+   static int _incompatibilityCount;
+   static uint64_t _incompatibleStartTime;
+   static const uint64_t RETRY_COMPATIBILITY_INTERVAL;
+   static const int INCOMPATIBILITY_COUNT_LIMIT;
 
 #if defined(JITAAS_ENABLE_SSL)
    static SSL_CTX *_sslCtx;

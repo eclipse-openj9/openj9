@@ -66,13 +66,8 @@ J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
 #endif
 
 // J9Stream destructor is used instead
-// cancel is unnecessary as errors will either throw or be indicated by the statusCode
 void
 J9ServerStream::finish()
-   {
-   }
-void
-J9ServerStream::cancel()
    {
    }
 

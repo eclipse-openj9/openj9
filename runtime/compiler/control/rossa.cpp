@@ -205,11 +205,12 @@ char *compilationErrorNames[]={
    "compilationAOTValidateTMFailure", //52
    "compilationStreamFailure", //53
    "compilationStreamLostMessage", // 54
+   "compilationStreamMessageTypeMismatch", // 55
+   "compilationStreamVersionIncompatible", // 56
    "compilationMaxError"
 };
 
 int32_t aggressiveOption = 0;
-
 
 // Tells the sampler thread whether it is being interrupted to resume it or to
 // shut it down.
@@ -1603,6 +1604,8 @@ onLoadInternal(
    
    if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
+      JITaaS::J9Stream::initVersion();
+
       // Allocate the hashtable that holds information about clients
       compInfo->setClientSessionHT(ClientSessionHT::allocate());
 
@@ -1631,6 +1634,7 @@ onLoadInternal(
 
       // Try to initialize SSL
       JITaaS::J9ClientStream::static_init(compInfo->getPersistentInfo());
+      JITaaS::J9Stream::initVersion();
       }
 
 #if defined(TR_HOST_S390)
