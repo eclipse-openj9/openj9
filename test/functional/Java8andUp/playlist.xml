@@ -822,6 +822,7 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>nonapplicable</aot>
 	</test>
 
 	<test>
