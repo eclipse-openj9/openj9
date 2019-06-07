@@ -58,9 +58,9 @@
       const char *fieldStr;   // "<field>"
       uint16_t fieldLen;
       const char *sigStr;    // "<signature>"
-      uint16_t totalLen;      // should be compatible with TR_ResolvedMethod->fieldName()
+      uint16_t sigLen;
       };
-   #define r(id, c, f, s)   id, c, sizeof(c)-1, f, sizeof(f)-1, s, (sizeof(c)-1)+(sizeof(f)-1)+(sizeof(s)-1) + 3
+   #define r(id, c, f, s)   id, c, sizeof(c)-1, f, sizeof(f)-1, s, sizeof(s)-1
 
    /*
     * These recognized fields start with 'c' (like "com/...") as class name.
@@ -187,20 +187,22 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
    const char minClassPrefix = 'c';
    const char maxClassPrefix = 'j';
 
-   int32_t  totalLen;
-   char    *fieldName;
+   TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+
    // $assertionDisabled fields are always foldable based on the Javadoc (setClassAssertionStatus
    // "This method has no effect if the named class has already been initialized. 
    // (Once a class is initialized, its assertion status cannot change.)"
    // So check if the field is final and check if it is this special field
    if (isStatic)
       {
-      TR_OpaqueClassBlock *clazz = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+      int32_t  totalLen;
+      char    *fieldName;
       fieldName = owningMethod->staticName(cpIndex, totalLen, comp->trMemory());  // totalLen = strlen("<class>" + "<field>" + "<sig>") + 3
       static char *assertionsDisabledStr = "$assertionsDisabled Z"; 
       //string will be of the form "<class>.$assertionsDisabled Z"
-      if (totalLen >= 22
-          && comp->fej9()->isClassInitialized(clazz)
+      if (declaringClass
+          && totalLen >= 22
+          && comp->fej9()->isClassInitialized(declaringClass)
           && strncmp(&(fieldName[totalLen - 22]), assertionsDisabledStr, 21) == 0)
          {
          traceMsg(comp, "Matched $assertionsDisabled Z\n");
@@ -213,8 +215,10 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
     */
    int32_t  classLen;
    char    *className; // Note: not Null-terminated!
-   className = owningMethod->classNameOfFieldOrStatic(cpIndex, classLen);  // classLen = strlen("<class>");
-
+   if (declaringClass)
+      className = comp->fej9()->getClassNameChars(declaringClass, classLen);
+   else
+      className = owningMethod->classNameOfFieldOrStatic(cpIndex, classLen);  // classLen = strlen("<class>");
 
    if (!className ||
        className[0] < minClassPrefix ||
@@ -231,28 +235,31 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
       }
 
    F       *recognizedFieldName = recognizedFieldPrefix->fieldInfo;
-   if (!isStatic)
-      fieldName = owningMethod->fieldName(cpIndex, totalLen, comp->trMemory());  // totalLen = strlen("<class>" + "<field>" + "<sig>") + 3
    int32_t i;
    F       *knownField;
 
+   int32_t fieldLen;
+   char* fieldName = isStatic ? owningMethod->staticNameChars(cpIndex, fieldLen) : owningMethod->fieldNameChars(cpIndex, fieldLen);
+
+   int32_t sigLen;
+   char* fieldSig = isStatic ? owningMethod->staticSignatureChars(cpIndex, sigLen) : owningMethod->fieldSignatureChars(cpIndex, sigLen);
 
    for (i=0, knownField = &recognizedFieldName[i];
         knownField->id != TR::Symbol::UnknownField;
         knownField = &recognizedFieldName[++i])
       {
-      if (/* string length test must come first */
-          totalLen == knownField->totalLen &&
-          fieldName[knownField->classLen-1] == knownField->classStr[knownField->classLen-1] &&
-          strncmp(&fieldName[knownField->classLen+1], knownField->fieldStr, knownField->fieldLen) == 0 &&
-          strncmp(fieldName, knownField->classStr, knownField->classLen) == 0)
+      if (classLen ==knownField->classLen &&
+          fieldLen == knownField->fieldLen &&
+          sigLen == knownField->sigLen &&
+          strncmp(knownField->fieldStr, fieldName, fieldLen) == 0 &&
+          strncmp(knownField->classStr, className, classLen) == 0)
          {
          // TODO (Filip): This is a workaround for Java 829 performance as we switched to using a byte[] backing array in String*. Remove this workaround once obsolete.
          if (knownField->id != TR::Symbol::Java_lang_String_value &&
              knownField->id != TR::Symbol::Java_lang_StringBuffer_value &&
              knownField->id != TR::Symbol::Java_lang_StringBuilder_value)
             {
-            TR_ASSERT(strncmp(&fieldName[knownField->classLen+1 + knownField->fieldLen+1], knownField->sigStr, (knownField->totalLen-3) - knownField->classLen - knownField->fieldLen) == 0, "Signature is altered unexpectly!");
+            TR_ASSERT(strncmp(knownField->sigStr, fieldSig, sigLen) == 0, "Signature is altered unexpectly!");
             }
 
          return knownField->id;
