@@ -4248,6 +4248,13 @@ void* image_mem_allocate_memory(struct OMRPortLibrary* portLibrary, uintptr_t by
 */
 void image_mem_free_memory(struct OMRPortLibrary* portLibrary, void* memoryPointer);
 
+/*
+* Creates and allocates the jvm image and its heap
+*
+* @param vm[in] the default port library
+*/
+void create_and_allocate_jvm_image(J9JavaVM *vm);
+
 /* ------------------- callin.cpp ----------------- */
 
 /**
