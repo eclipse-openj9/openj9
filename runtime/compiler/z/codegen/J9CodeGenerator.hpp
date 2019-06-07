@@ -128,6 +128,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    TR_OpaquePseudoRegister * evaluateOPRNode(TR::Node* node);
    TR_PseudoRegister * evaluateBCDNode(TR::Node * node);
 
+   // J9
+   int32_t getInternalPtrMapBit() { return 31;}
 
    // --------------------------------------------------------------------------
    // Storage references
