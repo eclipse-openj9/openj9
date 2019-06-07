@@ -4716,6 +4716,30 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
             {
             setRecognizedMethodInfo(TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod);
             }
+         else if (classNameLen == strlen(JSR292_StaticFieldGetterHandle)
+                  && !strncmp(className, JSR292_StaticFieldGetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_StaticFieldGetterHandle_invokeExact);
+            }
+         else if (classNameLen == strlen(JSR292_StaticFieldSetterHandle)
+                  && !strncmp(className, JSR292_StaticFieldSetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_StaticFieldSetterHandle_invokeExact);
+            }
+         else if (classNameLen == strlen(JSR292_FieldGetterHandle)
+                  && !strncmp(className, JSR292_FieldGetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_FieldGetterHandle_invokeExact);
+            }
+         else if (classNameLen == strlen(JSR292_FieldSetterHandle)
+                  && !strncmp(className, JSR292_FieldSetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_FieldSetterHandle_invokeExact);
+            }
          }
       }
    #if defined(TR_HOST_X86)
@@ -6924,7 +6948,8 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
    bool isColdOrReducedWarm = (comp->getMethodHotness() < warm) || (comp->getMethodHotness() == warm && comp->getOption(TR_NoOptServer));
 
    //Instance fields in MethodHandle thunks should be resolved at compile time
-   bool doRuntimeResolveForEarlyCompilation = isUnresolvedInCP && isColdOrReducedWarm && !comp->ilGenRequest().details().isMethodHandleThunk();
+   bool isMethodHandleThunk = comp->ilGenRequest().details().isMethodHandleThunk() || this->isArchetypeSpecimen();
+   bool doRuntimeResolveForEarlyCompilation = isUnresolvedInCP && isColdOrReducedWarm && !isMethodHandleThunk;
 
    IDATA offset;
    J9ROMFieldShape *fieldShape;
@@ -6950,7 +6975,7 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
    if (offset >= 0 &&
        !dontResolveJITField &&
        (!(_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) || // TODO: Probably more useful not to mark JSR292-related fields as unresolved
-         comp->ilGenRequest().details().isMethodHandleThunk() || // cmvc 195373
+         isMethodHandleThunk || // cmvc 195373
         !performTransformation(comp, "Setting as unresolved field attributes cpIndex=%d\n",cpIndex)))
       {
       resolved = true;
@@ -6993,7 +7018,8 @@ TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void
        *unresolvedInCP = isUnresolvedInCP;
 
    bool isColdOrReducedWarm = (comp->getMethodHotness() < warm) || (comp->getMethodHotness() == warm && comp->getOption(TR_NoOptServer));
-   bool doRuntimeResolveForEarlyCompilation = isUnresolvedInCP && isColdOrReducedWarm;
+   bool isMethodHandleThunk = comp->ilGenRequest().details().isMethodHandleThunk() || this->isArchetypeSpecimen();
+   bool doRuntimeResolveForEarlyCompilation = isUnresolvedInCP && isColdOrReducedWarm && !isMethodHandleThunk;
 
    void *backingStorage;
    J9ROMFieldShape *fieldShape;
@@ -7019,7 +7045,7 @@ TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void
    if (backingStorage &&
        !dontResolveJITStaticField &&
        (!(_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) ||
-         comp->ilGenRequest().details().isMethodHandleThunk() || // cmvc 195373
+        isMethodHandleThunk || // cmvc 195373
         !performTransformation(comp, "Setting as unresolved static attributes cpIndex=%d\n",cpIndex)))
       {
       resolved = true;

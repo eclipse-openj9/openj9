@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,14 +61,20 @@ public class TestJITExt extends DDRExtTesterBase {
 			if (stackAddress != null && j9vmthreadAddress != null) {
 				// Got a stack address and a j9vmthread address, now run !stackslots
 				stackslotsOutput = exec(Constants.STACKSLOTS_CMD, new String[] {stackAddress});
-				if (stackslotsOutput.contains("JIT frame")) {
-					break; // Found a thread stack containing a JIT frame, we are done
+				if (stackslotsOutput.contains("TestJITExtHelperThread")) {
+					if (stackslotsOutput.contains("JIT frame")) {
+						break; // Found a thread stack containing a JIT frame, we are done
+					} else {
+						log.info("JIT frame was not found: test may be run in a mode that prevents jitting");
+						return;
+					}
 				}
 			}
 		}
 
 		if (stackslotsOutput == null) {
-			fail("TestJITExt failed. Unable to find a threads contained a JIT frame. Cannot proceed with JIT extension tests");
+			fail("TestJITExt failed. Unable to find a threads contained a JIT frame " 
+				+ " and using the TestJITExtHelperThread class. Cannot proceed with JIT extension tests");
 			return;
 		}
 		
