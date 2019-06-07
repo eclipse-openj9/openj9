@@ -57,6 +57,7 @@
 		<types>
 			<type>native</type>
 		</types>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_SE80</testCaseName>
@@ -206,6 +207,7 @@
 		<types>
 			<type>native</type>
 		</types>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold_SE80</testCaseName>
@@ -491,5 +493,6 @@
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 </playlist>
