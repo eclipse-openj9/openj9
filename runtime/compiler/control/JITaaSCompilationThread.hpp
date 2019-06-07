@@ -37,6 +37,7 @@ using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>
 using IPTableHeapEntry = UnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using IPTableHeap_t = UnorderedMap<J9Method *, IPTableHeapEntry *>;
 using ResolvedMirrorMethodsPersistIP_t = Vector<TR_ResolvedJ9Method *>;
+using ClassOfStatic_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_OpaqueClassBlock *>;
 
 struct ClassLoaderStringPair
    {
@@ -60,6 +61,14 @@ namespace std
       result_type operator()(argument_type const& clsPair) const noexcept
          {
          return std::hash<void*>()((void*)(clsPair._classLoader)) ^ std::hash<std::string>()(clsPair._className);
+         }
+      };
+
+   template<typename T, typename Q> struct hash<std::pair<T, Q>>
+      {
+      std::size_t operator()(const std::pair<T, Q> &key) const noexcept
+         {
+         return std::hash<T>()(key.first) ^ std::hash<Q>()(key.second);
          }
       };
    }
@@ -310,6 +319,9 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       void cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod);
       ResolvedMirrorMethodsPersistIP_t *getCachedResolvedMirrorMethodsPersistIPInfo() { return _resolvedMirrorMethodsPersistIPInfo; }
 
+      void cacheNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);
+      bool getCachedNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);
+
       void clearPerCompilationCaches();
 
    private:
@@ -373,6 +385,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       IPTableHeap_t *_methodIPDataPerComp;
       TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
       ResolvedMirrorMethodsPersistIP_t *_resolvedMirrorMethodsPersistIPInfo; //list of mirrors of resolved methods for persisting IProfiler info
+      ClassOfStatic_t *_classOfStaticMap;
    };
 }
 

@@ -198,7 +198,7 @@ TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassFor
    if (cpIndex < 0)
       return NULL;
 
-   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+   auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
       auto &classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
@@ -213,6 +213,10 @@ TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassFor
          return it->second;
       }
 
+   // check per-compilation cache, which can only contain NULL values
+   if (compInfoPT->getCachedNullClassOfStatic((TR_OpaqueClassBlock *) _ramClass, cpIndex))
+      return NULL;
+
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_classOfStatic, _remoteMirror, cpIndex, returnClassForAOT);
    TR_OpaqueClassBlock *classOfStatic = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
    if (classOfStatic)
@@ -223,6 +227,12 @@ TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassFor
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
       auto classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
       classOfStaticCache->insert({cpIndex, classOfStatic});
+      }
+   else
+      {
+      // cache NULL in a per-compilation cache, even if it becomes initialized during
+      // current compilation, shouldn't have much of an effect on performance.
+      compInfoPT->cacheNullClassOfStatic((TR_OpaqueClassBlock *) _ramClass, cpIndex);
       }
    return classOfStatic;
    }
