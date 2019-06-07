@@ -4716,6 +4716,30 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
             {
             setRecognizedMethodInfo(TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod);
             }
+         else if (classNameLen == strlen(JSR292_StaticFieldGetterHandle)
+                  && !strncmp(className, JSR292_StaticFieldGetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_StaticFieldGetterHandle_invokeExact);
+            }
+         else if (classNameLen == strlen(JSR292_StaticFieldSetterHandle)
+                  && !strncmp(className, JSR292_StaticFieldSetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_StaticFieldSetterHandle_invokeExact);
+            }
+         else if (classNameLen == strlen(JSR292_FieldGetterHandle)
+                  && !strncmp(className, JSR292_FieldGetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_FieldGetterHandle_invokeExact);
+            }
+         else if (classNameLen == strlen(JSR292_FieldSetterHandle)
+                  && !strncmp(className, JSR292_FieldSetterHandle, classNameLen))
+            {
+            if (nameLen > 27 && !strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_FieldSetterHandle_invokeExact);
+            }
          }
       }
    #if defined(TR_HOST_X86)
