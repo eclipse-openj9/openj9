@@ -2444,23 +2444,13 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
          break;
       }
 
-   // Certain JSR292 methods are also ignored here as they are internal to the JIT and therefore cannot be
-   // redefined
-   TR::RecognizedMethod mandatoryRM = callee->convertToMethod()->getMandatoryRecognizedMethod();
-   if (mandatoryRM == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress)
-      return true;
-
-   // VarHandle operation methods are also ignored here as they are implementation detail and are not expected to be redefined.
-   if (TR_J9MethodBase::isVarHandleOperationMethod(mandatoryRM))
-      return true;
-
-   // Check if the class of the method is internal to our VM
+   // Skip HCR guard for non-public methods in java/lang/invoke package. These methods
+   // are related to implementation details of MethodHandle and VarHandle
    int32_t length = callee->classNameLength();
    char* className = callee->classNameChars();
-
-   if (length == 29 && !strncmp(className, "java/lang/invoke/DirectHandle", length))
-      return true;
-   else if (length == 32 && !strncmp(className, "java/lang/invoke/PrimitiveHandle", length))
+   if (length > 17
+       && !strncmp("java/lang/invoke/", className, 17)
+       && !callee->isPublic())
       return true;
 
    return false;
