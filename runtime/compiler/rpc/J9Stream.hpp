@@ -32,6 +32,19 @@ using namespace google::protobuf::io;
 
 class J9Stream
    {
+public:
+   static bool useSSL(TR::PersistentInfo *info)
+      {
+      return (info->getJITaaSSslKeys().size() || info->getJITaaSSslCerts().size() || info->getJITaaSSslRootCerts().size());
+      }
+
+   static void initSSL()
+      {
+      SSL_load_error_strings();
+      SSL_library_init();
+      OpenSSL_add_ssl_algorithms();
+      }
+
 protected:
    J9Stream()
       : _inputStream(NULL),
