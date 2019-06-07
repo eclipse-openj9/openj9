@@ -26,20 +26,32 @@
 #ifndef JVMIMAGE_HPP_
 #define JVMIMAGE_HPP_
 
-#include "j9_types.h"
+#include "j9.h"
+#include "j9comp.h"
+#include "j9protos.h"
 
 class JVMImage
 {
 public:
-	JVMImage();
+	JVMImage(J9JavaVM *javaVM);
 	~JVMImage();
+	static JVMImage* getJVMImage();
 	void allocateImageMemory(UDATA size);
-	void subAllocateMemory(uintptr_t size);
-	void freeSubAllocatedMemory();
+	void reallocateImageMemory(UDATA size);
+	void* subAllocateMemory(uintptr_t byteAmount);
+	void freeSubAllocatedMemory(void *memStart);
+	OMRPortLibrary* getPortLibrary() { return &_portLibrary; }
 
 private:
 	UDATA _memoryStart;
 	UDATA _size;
+	static JVMImage* _jvmImage;
+	J9Heap* _heap;
+	bool _isImageAllocated;
+	OMRPortLibrary _portLibrary;
+	omrthread_monitor_t _jvmImageMonitor;
+
+	bool initializeMonitor();
 };
 
 #endif /* JVMIMAGE_H_ */
