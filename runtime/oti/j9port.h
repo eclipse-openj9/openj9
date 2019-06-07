@@ -43,6 +43,10 @@
 #include <unistd.h>
 #endif
 
+#if defined(LINUX) && !defined(J9ZTPF)
+#include <pthread.h>
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
+
 /**
  * @name Port library access
  * @anchor PortAccess
