@@ -349,6 +349,9 @@ public:
    // Java, likely Z
    bool supportsTrapsInTMRegion() { return true; }
 
+   // J9	
+   int32_t getInternalPtrMapBit() { return 31;}
+
    // --------------------------------------------------------------------------
    // GPU
    //
