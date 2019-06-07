@@ -2584,13 +2584,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public Stream<String> lines() {
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
-			/*[IF Java12]*/
+			/*[IF Java12 & !Java13]*/
 			return StringLatin1.lines(value, 0, 0);
 			/*[ELSE]*/
 			return StringLatin1.lines(value);
 			/*[ENDIF] Java12*/
 		} else {
-			/*[IF Java12]*/
+			/*[IF Java12 & !Java13]*/
 			return StringUTF16.lines(value, 0, 0);
 			/*[ELSE]*/
 			return StringUTF16.lines(value);

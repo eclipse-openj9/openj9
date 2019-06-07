@@ -24,14 +24,6 @@
  *******************************************************************************/
  -->
 <configurationreg version="3.0">
-	<!-- AUTOMATED TEST METADATA -->
-	<automatedtests project="J9 JCL Automated Tests v2">
-		<classpathentry kind="src" path="/J9 JCL Test Harness"/>
-		<classpathentry kind="src" path="/JUnit_3.8.2"/>
-		<classpathentry kind="lib" path="/J9 JCL Automated Tests v2/src/com/ibm/resources/j9ts_boothclasspath.jar"/>
-		<source path="src"/>
-	</automatedtests>
-
 	<!-- GLOBAL PARAMETERS FOR ALL CONFIGURATIONS, CAN BE OVERWRITTEN IN CONFIGURATION ELEMENT IF IT IS REQUIRED-->
 	<globalParameters>
 		<parameter name="outputPathPrefix" value="pConfig "/>
@@ -185,7 +177,7 @@
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava12.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava13.jar"/>
 		<source path="src"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
@@ -240,7 +232,7 @@
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava12.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava13.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190Panama.jar"/>
 		<source path="src"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
