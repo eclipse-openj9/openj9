@@ -31,11 +31,14 @@ JVMImage::JVMImage(J9JavaVM *javaVM) :
 	_isImageAllocated(false),
 	_dumpFileName(NULL)
 {
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	_portLibrary = (OMRPortLibrary *) j9mem_allocate_memory(sizeof(OMRPortLibrary), OMRMEM_CATEGORY_PORT_LIBRARY);
+
 	OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
-	memset(&_portLibrary, 0, sizeof(OMRPortLibrary));
-	memcpy(&_portLibrary, privateOmrPortLibrary, sizeof(OMRPortLibrary));
-	_portLibrary.mem_allocate_memory = image_mem_allocate_memory;
-	_portLibrary.mem_free_memory = image_mem_free_memory;
+	memset(_portLibrary, 0, sizeof(OMRPortLibrary));
+	memcpy(_portLibrary, privateOmrPortLibrary, sizeof(OMRPortLibrary));
+	_portLibrary->mem_allocate_memory = image_mem_allocate_memory;
+	_portLibrary->mem_free_memory = image_mem_free_memory;
 }
 
 JVMImage::~JVMImage()
@@ -105,11 +108,11 @@ JVMImage::subAllocateMemory(uintptr_t byteAmount)
 {
 	omrthread_monitor_enter(_jvmImageMonitor);
 
-	void *memStart = _portLibrary.heap_allocate(&_portLibrary, _heap, byteAmount);	
+	void *memStart = _portLibrary->heap_allocate(_portLibrary, _heap, byteAmount);	
 	// image memory is not large enough and needs to be reallocated
 	if (memStart == NULL) {
 		reallocateImageMemory(_currentImageSize * 2 + byteAmount);
-		memStart = _portLibrary.heap_allocate(&_portLibrary, _heap, byteAmount);
+		memStart = _portLibrary->heap_allocate(_portLibrary, _heap, byteAmount);
 	}
 
 	omrthread_monitor_exit(_jvmImageMonitor);
@@ -122,7 +125,7 @@ JVMImage::freeSubAllocatedMemory(void* address)
 {
 	omrthread_monitor_enter(_jvmImageMonitor);
 
-	_portLibrary.heap_free(&_portLibrary, _heap, address);
+	_portLibrary->heap_free(_portLibrary, _heap, address);
 
 	omrthread_monitor_exit(_jvmImageMonitor);
 }
@@ -198,4 +201,4 @@ image_mem_free_memory(struct OMRPortLibrary* portLibrary, void* memoryPointer)
 {
 	JVMImage *jvmImage = JVMImage::getInstance();
 	jvmImage->freeSubAllocatedMemory(memoryPointer);
-}
+} 

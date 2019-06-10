@@ -73,6 +73,7 @@ add_library(j9vm SHARED
 	jnimisc.cpp
 	jnireflect.cpp
 	jvmfree.c
+	JVMImage.cpp
 	jvminit.c
 	jvminitcommon.c
 	jvmrisup.c

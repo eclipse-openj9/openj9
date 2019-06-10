@@ -48,7 +48,7 @@ public:
 	void readImageFromFile();
 	void storeImageInFile();
 
-	OMRPortLibrary* getPortLibrary() { return &_portLibrary; }
+	OMRPortLibrary* getPortLibrary() { return _portLibrary; }
 public:
 	static const UDATA INITIAL_IMAGE_SIZE;
 protected:
@@ -60,7 +60,7 @@ private:
 	UDATA _currentImageSize;
 	bool _isImageAllocated;
 
-	OMRPortLibrary _portLibrary;
+	OMRPortLibrary *_portLibrary;
 	omrthread_monitor_t _jvmImageMonitor;
 
 	char *_dumpFileName;
