@@ -141,6 +141,8 @@ typedef J9RelocationStruct relocateStruct;
 
 #include "simplepool_api.h"
 
+#include "jvmimage_api.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
