@@ -1482,7 +1482,7 @@ fieldIndexTableNew(J9JavaVM* vm, J9PortLibrary *portLib)
 	J9HashTable *result = NULL;
 #if !defined (J9VM_OUT_OF_PROCESS)
 	const IDATA initialSize = 64;
-	J9HookInterface ** vmHooks = getVMHookInterface(vm);
+	J9HookInterface ** vmHooks = J9_VM_FUNCTION_VIA_JAVAVM(vm, getVMHookInterface)(vm);
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	(*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, hookFieldTablePurge, OMR_GET_CALLSITE(), vm);
