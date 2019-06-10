@@ -453,6 +453,9 @@ enum INIT_STAGE {
 #define VMOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
 #define VMOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
 
+#define VMOPT_XXTRANSPARENT_HUGEPAGE "-XX:+TransparentHugePage"
+#define VMOPT_XXNOTRANSPARENT_HUGEPAGE "-XX:-TransparentHugePage"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"
