@@ -38,7 +38,7 @@ extern "C" {
 *
 * returns pointer to allocated memory on success, NULL on failure 
 */
-void* img_mem_allocate_mem(uintptr_t size);
+void* img_mem_allocate_mem(uintptr_t byteAmount);
 
 /*
 * Allocate memory in heap image
