@@ -22,6 +22,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "compile/Compilation.hpp"
 
 
 J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Compilation *comp) :
@@ -129,3 +130,18 @@ J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Co
 
    }
 
+TR::KnownObjectTable::Index
+J9::ResolvedMethodSymbol::getKnownObjectIndexForParm(int32_t ordinal)
+   {
+   TR::KnownObjectTable::Index index = TR::KnownObjectTable::UNKNOWN;
+   if (ordinal == 0)
+      {
+      if (self()->getResolvedMethod()->convertToMethod()->isArchetypeSpecimen())
+         {
+         TR::KnownObjectTable *knot = self()->comp()->getOrCreateKnownObjectTable();
+         if (knot)
+            index = knot->getExistingIndexAt(self()->getResolvedMethod()->getMethodHandleLocation());
+         }
+      }
+   return index;
+   }
