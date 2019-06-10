@@ -76,7 +76,8 @@ J9::CodeGenerator::CodeGenerator() :
    _uncommonedNodes(self()->comp()->trMemory(), stackAlloc),
    _liveMonitors(NULL),
    _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
-   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator()))
+   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
+   _dummyTempStorageRefNode(NULL)
    {
    }
 
