@@ -4226,35 +4226,6 @@ attachVMToOMR(J9JavaVM *vm);
 void
 detachVMFromOMR(J9JavaVM *vm);
 
-/* ------------------- JVMImage.cpp ----------------- */
-
-/*
-* Allocate memory in heap image
-* 
-* @param portLibrary[in] the default port library
-* @param byteAmount[in] size to allocate
-* @param callSite[in] location memory alloc is called from
-* @param category[in] category of memory alloc
-*
-* returns pointer to allocated memory on success, NULL on failure 
-*/
-void* image_mem_allocate_memory(struct OMRPortLibrary* portLibrary, uintptr_t byteAmount, const char* callSite, uint32_t category);
-
-/*
-* Free memory in heap image
-*
-* @param portLibrary[in] the default port library
-* @param memoryPointer[in] pointer to address for free
-*/
-void image_mem_free_memory(struct OMRPortLibrary* portLibrary, void* memoryPointer);
-
-/*
-* Creates and allocates the jvm image and its heap
-*
-* @param vm[in] the default port library
-*/
-void create_and_allocate_jvm_image(J9JavaVM *vm);
-
 /* ------------------- callin.cpp ----------------- */
 
 /**
