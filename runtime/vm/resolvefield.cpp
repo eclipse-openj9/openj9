@@ -224,19 +224,21 @@ findFieldInClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fie
 		while (!found && (result->field != NULL)) {
 			/* compare name and sig */
 			J9UTF8* thisName = J9ROMFIELDSHAPE_NAME(result->field);
-			if (J9UTF8_DATA_EQUALS(fieldName, fieldNameLength, J9UTF8_DATA(thisName), J9UTF8_LENGTH(thisName))) {
-				J9UTF8* thisSig = J9ROMFIELDSHAPE_SIGNATURE(result->field);
-				if (J9UTF8_DATA_EQUALS(signature, signatureLength, J9UTF8_DATA(thisSig), J9UTF8_LENGTH(thisSig))) {
-					if( offsetOrAddress != NULL ) {
-						/* if we are returning a static field, convert the offset to the actual address of the static */
-						if (result->field->modifiers & J9AccStatic) {
-							result->offset += (UDATA) clazz->ramStatics;
-						}
-						*offsetOrAddress = result->offset;
+			J9UTF8* thisSig = J9ROMFIELDSHAPE_SIGNATURE(result->field);
+			if ((fieldNameLength == J9UTF8_LENGTH(thisName)) 
+			&& (signatureLength == J9UTF8_LENGTH(thisSig))
+			&& (0 == memcmp(fieldName, J9UTF8_DATA(thisName), fieldNameLength))
+			&& (0 == memcmp(signature, J9UTF8_DATA(thisSig), signatureLength))
+			) {
+				if (offsetOrAddress != NULL) {
+					/* if we are returning a static field, convert the offset to the actual address of the static */
+					if (result->field->modifiers & J9AccStatic) {
+						result->offset += (UDATA) clazz->ramStatics;
 					}
-					shape = result->field;
-					found = 1;
+					*offsetOrAddress = result->offset;
 				}
+				shape = result->field;
+				found = 1;
 			}
 			if (!found) {
 				result = fieldOffsetsNextDo(&state);
@@ -1478,11 +1480,10 @@ J9HashTable *
 fieldIndexTableNew(J9JavaVM* vm, J9PortLibrary *portLib) 
 {
 	J9HashTable *result = NULL;
-#if	!defined (J9VM_OUT_OF_PROCESS)
+#if !defined (J9VM_OUT_OF_PROCESS)
 	const IDATA initialSize = 64;
-	J9HookInterface ** vmHooks;
-	
-	vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
+	J9HookInterface ** vmHooks = getVMHookInterface(vm);
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	(*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, hookFieldTablePurge, OMR_GET_CALLSITE(), vm);
 #endif
@@ -1503,7 +1504,7 @@ fieldIndexTableNew(J9JavaVM* vm, J9PortLibrary *portLib)
 void
 fieldIndexTableFree(J9JavaVM* vm)
 {
-#if	!defined (J9VM_OUT_OF_PROCESS)
+#if !defined (J9VM_OUT_OF_PROCESS)
 	if (vm->fieldIndexTable != NULL) {
 		hookFieldTablePurge(NULL, 0, NULL, vm);
 		hashTableFree(vm->fieldIndexTable);
@@ -1520,7 +1521,7 @@ fieldIndexTableFree(J9JavaVM* vm)
  * @returns new entry
  * @exceptions none
  */
-#if	!defined (J9VM_OUT_OF_PROCESS)
+#if !defined (J9VM_OUT_OF_PROCESS)
 static fieldIndexTableEntry*
 fieldIndexTableAdd(J9JavaVM* vm, J9Class *ramClass, J9FieldTable *table)
 {	
