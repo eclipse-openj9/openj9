@@ -1348,7 +1348,12 @@ J9::SymbolReferenceTable::addParameters(TR::ResolvedMethodSymbol * methodSymbol)
    ListIterator<TR::ParameterSymbol> parms(&methodSymbol->getParameterList());
    for (TR::ParameterSymbol * p = parms.getFirst(); p; p = parms.getNext())
       {
-      TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), p, index, p->getSlot());
+      TR::KnownObjectTable::Index knownObjectIndex = methodSymbol->getKnownObjectIndexForParm(p->getOrdinal());
+      TR::SymbolReference *symRef = NULL;
+      if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+         symRef = new (trHeapMemory()) TR::SymbolReference(self(), p, index, p->getSlot());
+      else
+         symRef = createTempSymRefWithKnownObject(p, index, p->getSlot(), knownObjectIndex);
       methodSymbol->setParmSymRef(p->getSlot(), symRef);
       if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(p->getSlot(), methodSymbol, trMemory()))
          methodSymbol->getAutoSymRefs(p->getSlot()).add(symRef);
@@ -2133,7 +2138,8 @@ TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
       TR::ResolvedMethodSymbol *owningMethodSymbol,
       int32_t slot,
-      TR::DataType type)
+      TR::DataType type,
+      TR::KnownObjectTable::Index knownObjectIndex)
    {
    TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,slot);
 
@@ -2143,7 +2149,12 @@ J9::SymbolReferenceTable::createParameterSymbol(
       sym->setGCMapIndex(-slot + parameterSlots - sym->getNumberOfSlots());
       }
 
-   TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   TR::SymbolReference *symRef = NULL;
+   if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+      symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   else
+      symRef = createTempSymRefWithKnownObject(sym,  owningMethodSymbol->getResolvedMethodIndex(), slot, knownObjectIndex);
+
    owningMethodSymbol->setParmSymRef(slot, symRef);
    if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(slot, owningMethodSymbol, trMemory()))
       owningMethodSymbol->getAutoSymRefs(slot).add(symRef);
