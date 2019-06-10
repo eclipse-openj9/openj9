@@ -33,12 +33,10 @@
 
 class JVMImage
 {
-private:
+public:
 	JVMImage(J9JavaVM *vm);
 	~JVMImage();
 
-	bool initializeMonitor();
-public:
 	static JVMImage* createInstance(J9JavaVM *vm);
 	static JVMImage* getInstance();
 
@@ -53,6 +51,8 @@ public:
 	OMRPortLibrary* getPortLibrary() { return &_portLibrary; }
 public:
 	static const UDATA INITIAL_IMAGE_SIZE;
+protected:
+	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }
 private:
 	static JVMImage *_jvmInstance;
 
@@ -64,6 +64,8 @@ private:
 	omrthread_monitor_t _jvmImageMonitor;
 
 	char *_dumpFileName;
+
+	bool initializeMonitor();
 };
 
 #endif /* JVMIMAGE_H_ */
