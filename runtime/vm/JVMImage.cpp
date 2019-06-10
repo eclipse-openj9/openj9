@@ -197,7 +197,7 @@ image_mem_allocate_memory(struct OMRPortLibrary* portLibrary, uintptr_t byteAmou
 }
 
 extern "C" void *
-img_mem_allocate_mem(uintptr_t byteAmount)
+mem_allocate_memory(uintptr_t byteAmount)
 {
     JVMImage *jvmImage = JVMImage::getInstance();
     return image_mem_allocate_memory(jvmImage->getPortLibrary(), byteAmount, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES);
@@ -211,7 +211,7 @@ image_mem_free_memory(struct OMRPortLibrary* portLibrary, void* memoryPointer)
 }
 
 extern "C" void
-img_mem_free_mem(void* memoryPointer)
+mem_free_memory(void* memoryPointer)
 {
     JVMImage *jvmImage = JVMImage::getInstance();
     image_mem_free_memory(jvmImage->getPortLibrary(), memoryPointer);
