@@ -38,7 +38,7 @@ extern "C" {
 *
 * returns pointer to allocated memory on success, NULL on failure 
 */
-void* img_mem_allocate_mem(uintptr_t byteAmount);
+void* mem_allocate_memory(uintptr_t byteAmount);
 
 /*
 * Allocate memory in heap image
@@ -57,7 +57,7 @@ void* image_mem_allocate_memory(struct OMRPortLibrary* portLibrary, uintptr_t by
 *
 * @param memoryPointer[in] pointer to address for free
 */
-void img_mem_free_mem(void* memoryPointer);
+void mem_free_memory(void* memoryPointer);
 
 /*
 * Free memory in heap image
