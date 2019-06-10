@@ -253,10 +253,13 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     * \param type
     *    TR::DataType of the parameter.
     *
+    * \param knownObjectIndex
+    *    known object index is needed if the parameter is a known object, like the receiver of a customer thunk
+    *
     * \return
     *    The created TR::ParameterSymbol
     */
-   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type);
+   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type, TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN);
 
    void initShadowSymbol(TR_ResolvedMethod *, TR::SymbolReference *, bool, TR::DataType, uint32_t, bool);
 
@@ -265,6 +268,13 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    bool isFieldTypeBool(TR::SymbolReference *symRef);
    bool isStaticTypeBool(TR::SymbolReference *symRef);
    bool isReturnTypeBool(TR::SymbolReference *symRef);
+
+   /*
+    * Creates symbol references for parameters in @param owningMethodSymbol
+    * and add them to the current symbol reference table which is usually different
+    * from the global symbol reference table. This API is used for peeking and
+    * optimizations where a local symbol reference table is needed.
+    */
    void addParameters(TR::ResolvedMethodSymbol * owningMethodSymbol);
 
    // NO LONGER NEEDED?  Disabled since inception (2009)
