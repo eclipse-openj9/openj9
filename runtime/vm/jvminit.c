@@ -1819,10 +1819,12 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			argIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNOTRANSPARENT_HUGEPAGE, NULL);
 			argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXTRANSPARENT_HUGEPAGE, NULL);
 			{
-				/* last instance of +/- TransparentHugepage found on the command line wins */
-				if (argIndex2 > argIndex) {
+				/* Last instance of +/- TransparentHugepage found on the command line wins
+				 * Default to -XX:+TransparentHugepage for performance reasons
+				 */
+				if (argIndex2 >= argIndex) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
-				} else if (argIndex > argIndex2) {
+				} else {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
 				}
 			}
