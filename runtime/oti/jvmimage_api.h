@@ -34,6 +34,15 @@ extern "C" {
 /*
 * Allocate memory in heap image
 * 
+* @param size[in] size to allocate
+*
+* returns pointer to allocated memory on success, NULL on failure 
+*/
+void* img_mem_allocate_mem(uintptr_t size);
+
+/*
+* Allocate memory in heap image
+* 
 * @param portLibrary[in] the default port library
 * @param byteAmount[in] size to allocate
 * @param callSite[in] location memory alloc is called from
@@ -42,6 +51,13 @@ extern "C" {
 * returns pointer to allocated memory on success, NULL on failure 
 */
 void* image_mem_allocate_memory(struct OMRPortLibrary* portLibrary, uintptr_t byteAmount, const char* callSite, uint32_t category);
+
+/*
+* Free memory in heap image
+*
+* @param memoryPointer[in] pointer to address for free
+*/
+void img_mem_free_mem(void* memoryPointer);
 
 /*
 * Free memory in heap image
