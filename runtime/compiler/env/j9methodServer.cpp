@@ -1122,7 +1122,6 @@ TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeF
       }
    else
       {
-      TR_ASSERT(false, "isUnresolvedString should have already been fetched through querying stringConstant");
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex, optimizeForAOT);
       return std::get<0>(_stream->read<bool>());
       }
