@@ -42,7 +42,6 @@ JVMImage::JVMImage(J9JavaVM *javaVM) :
 
 JVMImage::~JVMImage()
 {
-    delete _jvmInstance;
 }
 
 //should be called once the image memory is allocated
@@ -58,10 +57,13 @@ JVMImage::initializeMonitor()
 JVMImage *
 JVMImage::createInstance(J9JavaVM *vm)
 {
+    PORT_ACCESS_FROM_JAVAVM(vm);
+    
+    _jvmInstance = (JVMImage *)j9mem_allocate_memory(sizeof(JVMImage), J9MEM_CATEGORY_CLASSES);
     if (_jvmInstance != NULL) {
-        _jvmInstance = new JVMImage(vm);
+        new(_jvmInstance) JVMImage(vm);   
     }
-
+    
     return _jvmInstance;
 }
 
