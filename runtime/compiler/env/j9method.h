@@ -112,6 +112,7 @@ public:
    bool                          isBigDecimalConvertersMethod( TR::Compilation * comp = NULL);
 
    static bool                   isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm);
+   static bool                   isUnsafeGetPutBoolean(TR::RecognizedMethod rm);
    static bool                   isUnsafePut(TR::RecognizedMethod rm);
    static bool                   isVolatileUnsafe(TR::RecognizedMethod rm);
    static TR::DataType           unsafeDataTypeForArray(TR::RecognizedMethod rm);

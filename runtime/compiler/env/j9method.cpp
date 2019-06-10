@@ -5705,6 +5705,23 @@ TR_J9MethodBase::isVolatileUnsafe(TR::RecognizedMethod rm)
    return false;
    }
 
+bool
+TR_J9MethodBase::isUnsafeGetPutBoolean(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+         return true;
+      default:
+         break;
+      }
+
+   return false;
+   }
+
 // Might need to add more unsafe put methods to this list
 bool
 TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
