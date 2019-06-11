@@ -445,16 +445,6 @@ def get_date() {
 }
 
 /*
-* Sets variables for a test job on a given platform.
-* Note that JAVA_BIN is set separately within buildenv/jenkins/common/test
-*/
-def set_test_variables() {
-    set_release()
-    set_jdk_folder()
-    TEST_DEPENDENCIES_JOB_NAME = VARIABLES.test_dependencies_job_name
-}
-
-/*
 * Set TESTS_TARGETS, indicating the level of testing.
 */
 def set_test_targets() {
@@ -599,15 +589,6 @@ def set_job_variables(job_type) {
             set_artifactory_config()
             add_pr_to_description()
             break
-        case "pullRequest":
-            // set the node the pull request job would run on
-            set_node('build')
-            // set variables for a pull request job that builds an SDK
-            set_build_variables()
-            set_sdk_variables()
-            set_test_variables()
-            set_artifactory_config()
-            break
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
@@ -648,27 +629,6 @@ def validate_arguments(ARGS) {
             // exported as environment variables and it will overwrite the
             // make SPEC variable set in the configure phase in build.build() method
             SPEC = params.get(arg)
-
-            // TEMPORARILY MAP old spec names to new spec names for PR builds.
-            // This can be removed in #2836.
-            def REVERSE_SPEC_MAP = [
-                    'aix_ppc-64_cmprssptrs' : 'ppc64_aix',
-                    'linux_ppc-64_cmprssptrs_le' : 'ppc64le_linux',
-                    'linux_390-64_cmprssptrs' : 's390x_linux',
-                    'zos_390-64_cmprssptrs' : 's390x_zos',
-                    'linux_x86-64_cmprssptrs' : 'x86-64_linux',
-                    'linux_x86-64' : 'x86-64_linux_xl',
-                    'linux_x86-64_cmprssptrs_cmake' : 'x86-64_linux_cm',
-                    'win_x86' : 'x86-32_windows',
-                    'win_x86-64_cmprssptrs' : 'x86-64_windows',
-                    'osx_x86-64': 'x86-64_mac_xl',
-                    'osx_x86-64_cmprssptrs' : 'x86-64_mac']
-
-            if (REVERSE_SPEC_MAP.keySet().contains(SPEC)) {
-                echo "Converting SPEC:'${SPEC}'..."
-                SPEC = REVERSE_SPEC_MAP[SPEC]
-                echo "to SPEC:'${SPEC}'"
-            }
         }
     }
 }
