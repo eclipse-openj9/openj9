@@ -56,6 +56,7 @@ public:
    
    static TR::Node *transformIndirectLoad(TR::Compilation *, TR::Node *node);
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
+
    /**
     * \brief
     *    Fold direct load of a reliable static final field. A reliable static final field
@@ -74,6 +75,7 @@ public:
     * \return
     *    True if the field has been folded
     */
+
    static bool foldReliableStaticFinalField(TR::Compilation *, TR::Node *node);
    /**
     * \brief
@@ -92,6 +94,34 @@ public:
     *    True if the field has been folded
     */
    static bool foldStaticFinalFieldAssumingProtection(TR::Compilation *, TR::Node *node);
+
+   /** \brief
+    *     Try to fold var handle static final field with protection
+    *
+    *  \param opt
+    *     The current optimization object.
+    *
+    *  \param currentTree
+    *     The tree with the load of static final field.
+    *
+    *  \param node
+    *     The node which is a load of a static final field.
+    */
+   static bool attemptVarHandleStaticFinalFieldFolding(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node);
+
+   /** \brief
+    *     Try to fold generic static final field with protection
+    *
+    *  \param opt
+    *     The current optimization object.
+    *
+    *  \param currentTree
+    *     The tree with the load of static final field.
+    *
+    *  \param node
+    *     The node which is a load of a static final field.
+    */
+   static bool attemptGenericStaticFinalFieldFolding(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node);
 
    /**
     * \brief
@@ -165,6 +195,23 @@ protected:
     */
    static bool foldStaticFinalFieldImpl(TR::Compilation *, TR::Node *node);
 
+   /** \brief
+    *     Try to fold static final field with protection
+    *
+    *  \param opt
+    *     The current optimization object.
+    *
+    *  \param currentTree
+    *     The tree with the load of static final field.
+    *
+    *  \param node
+    *     The node which is a load of a static final field.
+    *
+    *  \param varHandleOnly
+    *     True if only folding varHandle static final fields.
+    *     Faslse if folding all static final fileds.
+    */
+   static bool attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node, bool varHandleOnly);
    };
 
 }
