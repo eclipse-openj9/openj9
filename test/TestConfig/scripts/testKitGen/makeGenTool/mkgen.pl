@@ -948,6 +948,15 @@ sub assertChecksumOnGeneratedFiles {
 	my $javaMD5 = Digest::MD5->new->addfile($javafh)->hexdigest;
 	
 	if ( $perlMD5 ne $javaMD5 ) {
+		close $perlfh;
+		close $javafh;
+
+		open( my $perlfhForDump, '<', $perlGeneratedFile ) or die "Cannot open file $perlGeneratedFile for checksum validation";
+		open( my $javafhForDump, '<', $javaGeneratedFile ) or die "Cannot open file $javaGeneratedFile for checksum validation";
+		print "Printing contents of $perlGeneratedFile:\n";
+		print <$perlfhForDump>;
+		print "Printing contents of $javaGeneratedFile:\n";
+		print <$javafhForDump>;
 		die "Incorrect checksum for the two generated files:\n    $perlGeneratedFile\n    $javaGeneratedFile"
 	}
 
