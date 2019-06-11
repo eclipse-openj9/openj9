@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,10 @@
 ################################################################################
 
 # Various config options we apply to OMR
-set(OMR_DDR OFF CACHE INTERNAL "")
+
+# Default to OMR_DDR=OFF, but the set(CACHE) command is ignored if the variable already exists in the cache
+# (unless 'FORCE' is specified, or type is 'INTERNAL') eg. because it was set on the command line with a '-D'
+set(OMR_DDR OFF CACHE BOOL "")
 set(OMR_EXAMPLE OFF CACHE INTERNAL "")
 set(OMR_FVTEST OFF CACHE INTERNAL "")
 set(OMR_GC ON CACHE INTERNAL "")

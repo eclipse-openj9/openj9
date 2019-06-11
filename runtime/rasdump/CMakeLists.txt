@@ -68,9 +68,13 @@ omr_add_exports(j9dmp
 	J9VMDllMain
 )
 
+# Note we only want to grab the rasdump headers
+# Parsing the debug info causes build errors
+target_enable_ddr(j9dmp GLOB_HEADERS NO_DEBUG_INFO)
+ddr_set_add_targets(j9ddr j9dmp)
+
 install(
 	TARGETS j9dmp
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
-

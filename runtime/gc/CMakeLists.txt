@@ -86,7 +86,8 @@ omr_add_exports(j9gc
 	J9VMDllMain
 )
 
-target_enable_ddr(j9gc j9ddr)
+target_enable_ddr(j9gc)
+ddr_set_add_targets(j9ddr j9gc)
 
 install(
 	TARGETS j9gc
