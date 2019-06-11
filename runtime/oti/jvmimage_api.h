@@ -70,9 +70,19 @@ void image_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPoint
 /*
 * Creates and allocates the jvm image and its' heap
 *
-* @param vm[in] the default port library
+* @param vm[in] the java vm 
+*
+* @return 0 on fail, 1 on success
 */
-void create_and_allocate_jvm_image(J9JavaVM *vm);
+UDATA initializeJVMImage(J9JavaVM *vm);
+
+/*
+* Shut down sequence of JVMImage
+* Frees memory of heap variables and jvmimage instance
+*
+* @param vm[in] the java vm 
+*/
+void shutdownJVMImage(J9JavaVM *vm);
 
 #ifdef __cplusplus
 }
