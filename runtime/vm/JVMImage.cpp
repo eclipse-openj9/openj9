@@ -187,7 +187,7 @@ create_and_allocate_jvm_image(J9JavaVM *vm)
 }
 
 extern "C" void *
-image_mem_allocate_memory(struct OMRPortLibrary* portLibrary, uintptr_t byteAmount, const char* callSite, uint32_t category)
+image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category)
 {
 	void *pointer = NULL;
 	
@@ -204,14 +204,14 @@ mem_allocate_memory(uintptr_t byteAmount)
 }
 
 extern "C" void
-image_mem_free_memory(struct OMRPortLibrary* portLibrary, void* memoryPointer)
+image_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 {
 	JVMImage *jvmImage = JVMImage::getInstance();
 	jvmImage->freeSubAllocatedMemory(memoryPointer);
 }
 
 extern "C" void
-mem_free_memory(void* memoryPointer)
+mem_free_memory(void *memoryPointer)
 {
     JVMImage *jvmImage = JVMImage::getInstance();
     image_mem_free_memory(jvmImage->getPortLibrary(), memoryPointer);
