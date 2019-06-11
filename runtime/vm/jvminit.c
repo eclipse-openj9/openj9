@@ -2085,8 +2085,11 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 
 			if (NULL == (vm->jniWeakGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
-
-			create_and_allocate_jvm_image(vm);
+			
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_RAMSTATE_WARM_RUN | J9_EXTENDED_RUNTIME2_RAMSTATE_COLD_RUN)
+				&& 0 == initializeJVMImage(vm)) {
+				goto _error;
+			}
 
 			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;

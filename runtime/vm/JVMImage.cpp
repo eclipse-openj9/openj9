@@ -26,10 +26,11 @@ JVMImage *JVMImage::_jvmInstance = NULL;
 const UDATA JVMImage::INITIAL_IMAGE_SIZE = 1024;
 
 JVMImage::JVMImage(J9JavaVM *javaVM) :
-	_heap(NULL),
+	_vm(javaVM),
+	_heapBase(NULL),
+    _heap(NULL),
 	_currentImageSize(0),
-	_isImageAllocated(false),
-	_dumpFileName(NULL)
+	_isImageAllocated(false)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	_portLibrary = (OMRPortLibrary *) j9mem_allocate_memory(sizeof(OMRPortLibrary), OMRMEM_CATEGORY_PORT_LIBRARY);
@@ -39,13 +40,20 @@ JVMImage::JVMImage(J9JavaVM *javaVM) :
 	memcpy(_portLibrary, privateOmrPortLibrary, sizeof(OMRPortLibrary));
 	_portLibrary->mem_allocate_memory = image_mem_allocate_memory;
 	_portLibrary->mem_free_memory = image_mem_free_memory;
+
+	_dumpFileName = javaVM->ramStateFilePath;
+	_isWarmRun = J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_RAMSTATE_WARM_RUN);
 }
 
 JVMImage::~JVMImage()
 {
+	PORT_ACCESS_FROM_JAVAVM(_vm);
+
+	j9mem_free_memory((void*)_heapBase);
+	j9mem_free_memory((void*)_portLibrary);
+	_jvmInstance = NULL;
 }
 
-//should be called once the image memory is allocated
 bool
 JVMImage::initializeMonitor()
 {
@@ -53,6 +61,12 @@ JVMImage::initializeMonitor()
 		return false;
 	}
 	return true;
+}
+
+void
+JVMImage::destroyMonitor()
+{
+	omrthread_monitor_destroy(_jvmImageMonitor);
 }
 
 JVMImage *
@@ -74,27 +88,25 @@ JVMImage::getInstance()
 	return _jvmInstance;
 }
 
-void
-JVMImage::allocateImageMemory(J9JavaVM *vm, UDATA size)
+void * 
+JVMImage::allocateImageMemory(UDATA size)
 {
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	PORT_ACCESS_FROM_JAVAVM(_vm);
 
-	J9Heap *allocPtr = (J9Heap*)j9mem_allocate_memory(size, J9MEM_CATEGORY_CLASSES);
-	if (allocPtr == NULL) {
-		// Memory allocation failed
-		return;
+	_heapBase = j9mem_allocate_memory(size, J9MEM_CATEGORY_CLASSES);
+	if (_heapBase == NULL) {
+		return NULL;
 	}
 
-	_heap = j9heap_create(allocPtr, size, 0);
+	_heap = j9heap_create((J9Heap*)_heapBase, size, 0);
 	if (_heap == NULL) {
-		// Heap creation failed
-		j9mem_free_memory((void *) allocPtr);
-		return;
+		return NULL;
 	}
 
 	_currentImageSize = size;
 	_isImageAllocated = true;
-	initializeMonitor();
+
+	return _heap;
 }
 
 void
@@ -130,30 +142,33 @@ JVMImage::freeSubAllocatedMemory(void* address)
 	omrthread_monitor_exit(_jvmImageMonitor);
 }
 
-void
+bool
 JVMImage::readImageFromFile()
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(getPortLibrary());
 
 	// TODO: The size will need to be very large or dynamically based on whatever is written to the dump
-	char imageBuffer[JVMImage::INITIAL_IMAGE_SIZE];
-	memset(imageBuffer, 0, sizeof(imageBuffer));
+	// TODO: Fetch the initial size of the jvm image
+    char imageBuffer[JVMImage::INITIAL_IMAGE_SIZE];
+    memset(imageBuffer, 0, sizeof(imageBuffer));
 
 	intptr_t fileDescriptor = omrfile_open(_dumpFileName, EsOpenRead, 0444);
 	if (fileDescriptor == -1) {
-		// Failure to open file
+		return false;
 	}
 
 	intptr_t bytesRead = omrfile_read(fileDescriptor, imageBuffer, sizeof(imageBuffer));
 	if (bytesRead == -1) {
-		// Failure to read the image
+		return false;
 	}
 
 	if (omrfile_close(fileDescriptor) != 0) {
-		// Failure to close
+		return false;
 	}
 
 	// TODO: Finally load the JVMImage using the data we read from the image
+
+	return true;
 }
 
 void
@@ -179,11 +194,40 @@ JVMImage::storeImageInFile()
 	}
 }
 
-extern "C" void
-create_and_allocate_jvm_image(J9JavaVM *vm)
+extern "C" UDATA
+initializeJVMImage(J9JavaVM *vm)
 {
-	JVMImage *jvmImage = JVMImage::createInstance(vm);
-	jvmImage->allocateImageMemory(vm, JVMImage::INITIAL_IMAGE_SIZE);
+    JVMImage *jvmImage = JVMImage::createInstance(vm);
+	
+	if (jvmImage->isWarmRun()
+		&& jvmImage->allocateImageMemory(JVMImage::INITIAL_IMAGE_SIZE) == NULL
+		&& jvmImage->readImageFromFile() == 0) {
+		goto _error;
+	}
+
+	if (jvmImage->initializeMonitor() == 0) {
+		goto _error;
+	}
+
+	return 1;
+
+_error:
+	shutdownJVMImage(vm);
+	return 0;
+}
+
+extern "C" void
+shutdownJVMImage(J9JavaVM *vm)
+{
+	JVMImage *jvmImage = JVMImage::getInstance();
+
+	if (jvmImage != NULL) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		jvmImage->destroyMonitor();
+		jvmImage->~JVMImage();
+		j9mem_free_memory(jvmImage);
+	}
 }
 
 extern "C" void *
