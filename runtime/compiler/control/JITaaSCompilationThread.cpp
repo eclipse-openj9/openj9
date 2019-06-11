@@ -1665,7 +1665,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_isUnresolvedString:
          {
-         TR_ASSERT(false, "ResolvedMethod_isUnresolvedString is combined into ResolvedMethod_stringConstant");
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
