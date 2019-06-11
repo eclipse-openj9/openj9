@@ -56,6 +56,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/SignExtendLoads.cpp \
     compiler/optimizer/SPMDParallelizer.cpp \
     compiler/optimizer/SPMDPreCheck.cpp \
+    compiler/optimizer/StaticFinalFieldFolding.cpp \
     compiler/optimizer/StringBuilderTransformer.cpp \
     compiler/optimizer/StringPeepholes.cpp \
     compiler/optimizer/UnsafeFastPath.cpp \

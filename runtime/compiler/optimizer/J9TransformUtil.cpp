@@ -40,6 +40,7 @@
 #include "j9.h"
 #include "optimizer/OMROptimization_inlines.hpp"
 #include "optimizer/Structure.hpp"
+#include "optimizer/HCRGuardAnalysis.hpp"
 
 /**
  * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
@@ -897,6 +898,19 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
    return NULL;
    }
 
+/** \brief
+ *     Entry point for folding whitelist'd static final fields.
+ *     These typically belong to fundamental system/bootstrap classes.
+ *
+ *  \param comp
+ *     The compilation object.
+ *
+ *  \param node
+ *     The node which is a load of a static final field.
+ *
+ *  \return
+ *    True if the field is folded.
+*/
 bool
 J9::TransformUtil::foldReliableStaticFinalField(TR::Compilation *comp, TR::Node *node)
    {
@@ -933,6 +947,20 @@ J9::TransformUtil::foldStaticFinalFieldAssumingProtection(TR::Compilation *comp,
    return false;
    }
 
+/** \brief
+ *     Compile time query that answers if a direct load for static can be folded by compiler.
+ *
+ *  \param comp
+ *     The compilation object.
+ *
+ *  \param node
+ *     The node which is a load of a static final field.
+ *
+ *  \return
+ *    True TR_yes if the field is whitelisted and can be folded.
+ *    True TR_maybe if the field is a generic static final and can be folded with protection.
+ *    True TR_no if the field is cannot be folded due to being unresolved, already been written post initialization, or owning class uninitialized, etc.
+ */
 TR_YesNoMaybe
 J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node)
    {
@@ -967,6 +995,267 @@ J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node
       return TR_yes;
 
    return TR_maybe;
+   }
+
+static bool isTakenSideOfAVirtualGuard(TR::Compilation* comp, TR::Block* block)
+   {
+   // First block can never be taken side
+   if (block == comp->getStartTree()->getEnclosingBlock())
+      return false;
+
+   for (auto edge = block->getPredecessors().begin(), end = block->getPredecessors().end(); edge != end; ++edge)
+      {
+      TR::Block *pred = toBlock((*edge)->getFrom());
+      TR::Node* predLastRealNode = pred->getLastRealTreeTop()->getNode();
+
+      if (predLastRealNode
+          && predLastRealNode->isTheVirtualGuardForAGuardedInlinedCall()
+          && predLastRealNode->getBranchDestination()->getEnclosingBlock() == block)
+         return true;
+
+      }
+
+   return false;
+   }
+
+static bool skipFinalFieldFoldingInBlock(TR::Compilation* comp, TR::Block* block)
+   {
+   if (block->isCold()
+       || block->isOSRCatchBlock()
+       || block->isOSRCodeBlock()
+       || isTakenSideOfAVirtualGuard(comp, block))
+      return true;
+
+   return false;
+   }
+
+// This is a place holder for when we may want to run HCR guard analysis.
+// Currently the analysis is skipped due to concern of added computation/footprint cost at compile-time.
+static TR_HCRGuardAnalysis* runHCRGuardAnalysisIfPossible()
+   {
+   return NULL;
+   }
+
+// Do not add fear point in a frame that doesn't support OSR
+static bool cannotAttemptOSRDuring(TR::Compilation* comp, int32_t callerIndex)
+   {
+   TR::ResolvedMethodSymbol *method = callerIndex == -1 ?
+      comp->getJittedMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex);
+
+   return method->cannotAttemptOSRDuring(callerIndex, comp, false);
+   }
+
+static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt)
+   {
+   TR::Compilation* comp = opt->comp();
+   if (opt->trace())
+      {
+      traceMsg(comp, "Checking if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
+      }
+
+   int32_t callerIndex = tt->getNode()->getByteCodeInfo().getCallerIndex();
+   if (!cannotAttemptOSRDuring(comp, callerIndex) && !comp->isOSRProhibitedOverRangeOfTrees())
+      {
+      if (opt->trace())
+         {
+         traceMsg(comp, "Safe to add fear point because there is no OSR prohibition\n");
+         }
+      return TR_yes;
+      }
+
+   // Look for an OSR point dominating tt in block
+   TR::Block* block = tt->getEnclosingBlock();
+   TR::TreeTop* firstTT = block->getEntry();
+   while (tt != firstTT)
+      {
+      if (comp->isPotentialOSRPoint(tt->getNode()))
+         {
+         TR_YesNoMaybe result = comp->isPotentialOSRPointWithSupport(tt) ? TR_yes : TR_no;
+         if (opt->trace())
+            {
+            traceMsg(comp, "Found %s potential OSR point n%dn, %s to add fear point\n",
+                     result == TR_yes ? "supported" : "unsupported",
+                     tt->getNode()->getGlobalIndex(),
+                     result == TR_yes ? "Safe" : "Not safe");
+            }
+
+         return result;
+         }
+      tt = tt->getPrevTreeTop();
+      }
+
+   TR_HCRGuardAnalysis* guardAnalysis = runHCRGuardAnalysisIfPossible();
+   if (guardAnalysis)
+      {
+      TR_YesNoMaybe result = guardAnalysis->_blockAnalysisInfo[block->getNumber()]->isEmpty() ? TR_yes : TR_no;
+      if (opt->trace())
+         {
+         traceMsg(comp, "%s to add fear point based on HCRGuardAnalysis\n", result == TR_yes ? "Safe" : "Not safe");
+         }
+
+      return result;
+      }
+
+   if (opt->trace())
+      {
+      traceMsg(comp, "Cannot determine if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
+      }
+   return TR_maybe;
+   }
+
+static bool isVarHandleFolding(TR::Compilation* comp, TR_OpaqueClassBlock* declaringClass, char* fieldSignature, int32_t fieldSigLength)
+   {
+   if (comp->getMethodSymbol()->hasMethodHandleInvokes()
+       && !TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
+      {
+      if (fieldSigLength == 28 && !strncmp(fieldSignature, "Ljava/lang/invoke/VarHandle;", 28))
+         return true;
+      }
+
+   return false;
+   }
+
+/** \brief
+ *     Try to fold var handle static final field with protection
+ *
+ *  \param opt
+ *     The current optimization object.
+ *
+ *  \param currentTree
+ *     The tree with the load of static final field.
+ *
+ *  \param node
+ *     The node which is a load of a static final field.
+ */
+bool J9::TransformUtil::attemptVarHandleStaticFinalFieldFolding(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node)
+   {
+   return J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(opt, currentTree, node, true);
+   }
+
+/** \brief
+ *     Try to fold generic static final field with protection
+ *
+ *  \param opt
+ *     The current optimization object.
+ *
+ *  \param currentTree
+ *     The tree with the load of static final field.
+ *
+ *  \param node
+ *     The node which is a load of a static final field.
+ */
+bool J9::TransformUtil::attemptGenericStaticFinalFieldFolding(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node)
+   {
+   return J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(opt, currentTree, node, false);
+   }
+
+/** \brief
+ *     Try to fold static final field with protection
+ *
+ *  \param opt
+ *     The current optimization object.
+ *
+ *  \param currentTree
+ *     The tree with the load of static final field.
+ *
+ *  \param node
+ *     The node which is a load of a static final field.
+ *
+ *  \param varHandleOnly
+ *     True if only folding varHandle static final fields.
+ *     Faslse if folding all static final fileds.
+ */
+bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node, bool varHandleOnly)
+   {
+   TR::Compilation* comp = opt->comp();
+   // first attempt folding reliable fields
+   if (J9::TransformUtil::foldReliableStaticFinalField(comp, node))
+      {
+      if (opt->trace())
+         traceMsg(comp, "SFFF fold reliable at node %p\n", node);
+      return true;
+      }
+
+   // try folding regular static final fields
+   TR::SymbolReference* symRef = node->getSymbolReference();
+   if (symRef->hasKnownObjectIndex())
+      {
+      return false;
+      }
+
+   if (comp->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+      {
+      return false;
+      }
+
+   if (!comp->supportsInduceOSR()
+       || !comp->isOSRTransitionTarget(TR::postExecutionOSR)
+       || comp->getOSRMode() != TR::voluntaryOSR)
+      {
+      return false;
+      }
+
+   if (skipFinalFieldFoldingInBlock(comp, currentTree->getEnclosingBlock())
+       || J9::TransformUtil::canFoldStaticFinalField(comp, node) != TR_maybe
+       || safeToAddFearPointAt(opt, currentTree) != TR_yes)
+      {
+      return false;
+      }
+
+   int32_t cpIndex = symRef->getCPIndex();
+   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, cpIndex);
+   int32_t fieldNameLen;
+   char* fieldName = symRef->getOwningMethod(comp)->fieldName(cpIndex, fieldNameLen, comp->trMemory(), stackAlloc);
+   int32_t fieldSigLength;
+   char* fieldSignature = symRef->getOwningMethod(comp)->staticSignatureChars(cpIndex, fieldSigLength);
+
+   if (opt->trace())
+      {
+      traceMsg(comp,
+              "Looking at static final field n%dn %.*s declared in class %p\n",
+              node->getGlobalIndex(), fieldNameLen, fieldName, declaringClass);
+      }
+   if (!varHandleOnly || isVarHandleFolding(comp, declaringClass, fieldSignature, fieldSigLength))
+      {
+      if (J9::TransformUtil::foldStaticFinalFieldAssumingProtection(comp, node))
+         {
+         // Add class to assumption table
+         comp->addClassForStaticFinalFieldModification(declaringClass);
+         // Insert osrFearPointHelper call
+         TR::TreeTop* helperTree = TR::TreeTop::create(comp, TR::Node::create(node, TR::treetop, 1, TR::Node::createOSRFearPointHelperCall(node)));
+         currentTree->insertBefore(helperTree);
+
+         if (opt->trace())
+            {
+            traceMsg(comp,
+                    "Static final field n%dn is folded with OSRFearPointHelper call tree n%dn  helper tree n%dn\n",
+                    node->getGlobalIndex(), currentTree->getNode()->getGlobalIndex(), helperTree->getNode()->getGlobalIndex());
+            }
+
+         TR::DebugCounter::prependDebugCounter(comp,
+                                            TR::DebugCounter::debugCounterName(comp,
+                                                                               "staticFinalFieldFolding/success/(field %.*s)/(%s %s)",
+                                                                               fieldNameLen,
+                                                                               fieldName,
+                                                                               comp->signature(),
+                                                                               comp->getHotnessName(comp->getMethodHotness())),
+                                                                               currentTree->getNextTreeTop());
+         return true;
+         }
+      }
+   else
+      {
+      TR::DebugCounter::prependDebugCounter(comp,
+                                            TR::DebugCounter::debugCounterName(comp,
+                                                                               "staticFinalFieldFolding/notFolded/(field %.*s)/(%s %s)",
+                                                                               fieldNameLen,
+                                                                               fieldName,
+                                                                               comp->signature(),
+                                                                               comp->getHotnessName(comp->getMethodHotness())),
+                                                                               currentTree->getNextTreeTop());
+      }
+
+   return false;
    }
 
 /*
