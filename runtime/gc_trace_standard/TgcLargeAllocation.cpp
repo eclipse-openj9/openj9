@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -627,6 +627,7 @@ tgcLargeAllocationInitialize(J9JavaVM *javaVM)
 
 			J9HookInterface** privateHooks = J9_HOOK_INTERFACE(extensions->privateHookInterface);
 			(*privateHooks)->J9HookRegisterWithCallSite(privateHooks, J9HOOK_MM_PRIVATE_CONCURRENT_HALTED, tgcHookVerifyHaltedInConcurrentGC, OMR_GET_CALLSITE(), NULL);
+			(*privateHooks)->J9HookRegisterWithCallSite(privateHooks, J9HOOK_MM_PRIVATE_COMPACT_START, tgcHookFreeMemoryGlobalPrintStats, OMR_GET_CALLSITE(), NULL);
 		}
 	}
 	return result;
