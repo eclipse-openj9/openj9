@@ -4282,7 +4282,7 @@ bool TR_J9VMBase::isFinalFieldPointingAtJ9Class(TR::SymbolReference *symRef, TR:
 
 // }}}  (end of predicates)
 
-static bool foldFinalFieldsIn(char *className, int32_t classNameLength, TR::Compilation *comp)
+static bool foldFinalFieldsIn(const char *className, int32_t classNameLength, TR::Compilation *comp)
    {
    TR::SimpleRegex *classRegex = comp->getOptions()->getClassesWithFoldableFinalFields();
    if (classRegex)
@@ -4329,8 +4329,6 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
          }
       else switch (fieldRef->getSymbol()->getRecognizedField())
          {
-         case TR::Symbol::Java_lang_invoke_MethodHandle_rawModifiers: // JTC 83328: Delete once VM changes promote.  Moved to PrimitiveHandle
-         case TR::Symbol::Java_lang_invoke_MethodHandle_defc:         // JTC 83328: Delete once VM changes promote.  Moved to PrimitiveHandle
          case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
          case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
          case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
@@ -4348,12 +4346,24 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
             // ourselves to fold instance fields only in classes classes where
             // this is known to be safe.
 
-            J9Class *fieldClass = (J9Class*)fieldRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, fieldRef->getCPIndex());
-            if (!fieldClass)
-               return false;
-
+            const char* name;
             int32_t len;
-            char * name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
+
+            // Get class name for fabricated java field
+            if (fieldRef->getCPIndex() < 0 &&
+               fieldRef->getSymbol()->getRecognizedField() != TR::Symbol::UnknownField)
+               {
+               name = fieldRef->getSymbol()->owningClassNameCharsForRecognizedField(len);
+               }
+            else
+               {
+               TR_OpaqueClassBlock *fieldClass = fieldRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, fieldRef->getCPIndex());
+               if (!fieldClass)
+                  return false;
+
+               name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
+               }
+
             return foldFinalFieldsIn(name, len, comp);
             }
          }
