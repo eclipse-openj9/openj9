@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,8 @@
 #define J9SH_DESTROY_FAILED_CURRENT_GEN_SNAPSHOT 	J9SH_DESTROY_FAILED_CURRENT_GEN_CACHE
 #define J9SH_DESTROY_FAILED_OLDER_GEN_SNAPSHOT		J9SH_DESTROY_FAILED_OLDER_GEN_CACHE
 
+#define J9SH_DESTROY_TOP_LAYER_ONLY (J9SH_LAYER_NUM_MAX_VALUE + 1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,9 +51,9 @@ extern "C" {
 IDATA j9shr_iterateSharedCaches(J9JavaVM *vm, const char *ctrlDirName, UDATA groupPerm, BOOLEAN useCommandLineValue, IDATA (*callback)(J9JavaVM *vm, J9SharedCacheInfo *event_data, void *user_data), void *user_data);
 IDATA j9shr_destroySharedCache(J9JavaVM *vm, const char *ctrlDirName, const char *name, U_32 cacheType, BOOLEAN useCommandLineValue);
 
-IDATA j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* cacheName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData, BOOLEAN isReset);
+IDATA j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* cacheName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData, BOOLEAN isReset, I_8 layerStart, I_8 layerEnd);
 
-IDATA j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* cacheName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData);
+IDATA j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* cacheName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData, I_8 layerStart, I_8 layerEnd);
 
 IDATA j9shr_destroy_all_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, UDATA verboseFlags);
 
@@ -61,7 +63,7 @@ IDATA j9shr_destroy_all_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDAT
 
 IDATA j9shr_destroy_expire_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, UDATA verboseFlags, UDATA minutes);
 
-IDATA j9shr_stat_cache(struct J9JavaVM* vm, const char* cacheDirName, UDATA verboseFlags, const char* name, J9PortShcVersion* versionData, UDATA generation);
+IDATA j9shr_stat_cache(struct J9JavaVM* vm, const char* cacheDirName, UDATA verboseFlags, const char* name, J9PortShcVersion* versionData, UDATA generation, I_8 layer);
 
 IDATA j9shr_report_utility_incompatible(struct J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, UDATA verboseFlags, const char* name, const char* utility);
 

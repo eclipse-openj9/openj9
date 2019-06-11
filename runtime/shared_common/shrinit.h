@@ -98,6 +98,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_NAME_EQUALS "name="
 #define OPTION_DESTROY "destroy"
 #define OPTION_DESTROYALL "destroyAll"
+#define OPTION_DESTROYALLLAYERS "destroyAllLayers"
 #define OPTION_EXPIRE_EQUALS "expire="
 #define OPTION_LISTALLCACHES "listAllCaches"
 #define OPTION_HELP "help"
@@ -258,6 +259,7 @@ typedef struct J9SharedClassesOptions {
 #define RESULT_DO_ADJUST_MINJITDATA_EQUALS 47
 #define RESULT_DO_ADJUST_MAXJITDATA_EQUALS 48
 #define RESULT_DO_BOOTCLASSESONLY 49
+#define RESULT_DO_DESTROYALLLAYERS 50
 
 
 #define PARSE_TYPE_EXACT 1

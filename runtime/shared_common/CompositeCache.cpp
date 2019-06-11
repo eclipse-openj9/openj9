@@ -176,12 +176,12 @@ SH_CompositeCacheImpl::SH_SharedCacheHeaderInit::init(BlockPtr data, U_32 len, I
  * @return A pointer to the new instance
  */
 SH_CompositeCacheImpl*
-SH_CompositeCacheImpl::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats)
+SH_CompositeCacheImpl::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer)
 {
 	SH_CompositeCacheImpl* newCC = (SH_CompositeCacheImpl*)memForConstructor;
 
 	new(newCC) SH_CompositeCacheImpl();
-	newCC->initializeWithCommonInfo(vm, sharedClassConfig, ((BlockPtr)memForConstructor + sizeof(SH_CompositeCacheImpl)), cacheName, cacheTypeRequired, startupForStats);
+	newCC->initializeWithCommonInfo(vm, sharedClassConfig, ((BlockPtr)memForConstructor + sizeof(SH_CompositeCacheImpl)), cacheName, cacheTypeRequired, startupForStats, layer);
 
 	return newCC;
 }
@@ -348,7 +348,7 @@ SH_CompositeCacheImpl::getFreeBlockBytes(void)
 }
 
 void
-SH_CompositeCacheImpl::initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats)
+SH_CompositeCacheImpl::initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer)
 {
 	const char * ctrlDirName = NULL;
 	BlockPtr memToUse = (BlockPtr)memForConstructor;
@@ -358,23 +358,23 @@ SH_CompositeCacheImpl::initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfi
 		ctrlDirName = sharedClassConfig->ctrlDirName;
 	}
 
-	Trc_SHR_CC_initializeWithCommonInfo_Entry1(memForConstructor, ctrlDirName, cacheName, cacheTypeRequired);
+	Trc_SHR_CC_initializeWithCommonInfo_Entry2(memForConstructor, ctrlDirName, cacheName, cacheTypeRequired, layer);
 
 	_commonCCInfo = (J9ShrCompositeCacheCommonInfo *)memToUse;
 	initCommonCCInfoHelper();
 
 	memToUse += sizeof(J9ShrCompositeCacheCommonInfo);
-	initialize(vm, memToUse, sharedClassConfig, cacheName, cacheTypeRequired, startupForStats);
+	initialize(vm, memToUse, sharedClassConfig, cacheName, cacheTypeRequired, startupForStats, layer);
 
 	Trc_SHR_CC_initializeWithCommonInfo_Exit();
 }
 
 void
-SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9SharedClassConfig* sharedClassConfig, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats)
+SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9SharedClassConfig* sharedClassConfig, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer)
 {
 	J9PortShcVersion versionData;
 
-	Trc_SHR_CC_initialize_Entry1(memForConstructor, sharedClassConfig, cacheName, cacheTypeRequired, UnitTest::unitTest);
+	Trc_SHR_CC_initialize_Entry2(memForConstructor, sharedClassConfig, cacheName, cacheTypeRequired, layer, UnitTest::unitTest);
 
 	commonInit(vm);
 	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
@@ -401,9 +401,9 @@ SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9Sh
 		_osPageSize = 0;
 	} else {
 		if ((sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_CREATE_OLD_GEN) != 0) {
-			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen()-1, &versionData);
+			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen()-1, &versionData, layer);
 		} else {
-			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen(), &versionData);
+			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen(), &versionData, layer);
 		}
 		_newHdrPtr = (SH_SharedCacheHeaderInit*)((BlockPtr)memForConstructor + SH_OSCache::getRequiredConstrBytes());
 		_debugData = (ClassDebugDataProvider *)((BlockPtr)memForConstructor + SH_OSCache::getRequiredConstrBytes() + sizeof(SH_CompositeCacheImpl::SH_SharedCacheHeaderInit));

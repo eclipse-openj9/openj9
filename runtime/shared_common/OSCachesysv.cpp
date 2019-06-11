@@ -84,7 +84,7 @@ SH_OSCachesysv::SH_OSCachesysv(J9PortLibrary* portLibrary, J9JavaVM* vm, const c
 		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitializer* i)
 {
 	Trc_SHR_OSC_Constructor_Entry(cacheName, piconfig->sharedClassCacheSize, createFlag);
-	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN);
+	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN, OSCACHE_CURRENT_LAYER_LAYER);
 	startup(vm, cachedirname, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, i, SHR_STARTUP_REASON_NORMAL);
 	Trc_SHR_OSC_Constructor_Exit(cacheName);
 }
@@ -95,11 +95,12 @@ SH_OSCachesysv::SH_OSCachesysv(J9PortLibrary* portLibrary, J9JavaVM* vm, const c
  * @param [in]  portLib  The Port library
  * @param [in]  memForConstructor  Pointer to the memory to build the OSCachemmap into
  * @param [in]  generation  The generation of this cache
+ * @param [in]  layer The layer number of this cache
  */
 void
-SH_OSCachesysv::initialize(J9PortLibrary* portLib, char* memForConstructor, UDATA generation)
+SH_OSCachesysv::initialize(J9PortLibrary* portLib, char* memForConstructor, UDATA generation, I_8 layer)
 {
-	commonInit(portLib, generation);
+	commonInit(portLib, generation, layer);
 	_attach_count = 0;
 	_shmhandle = NULL;
 	_semhandle = NULL;
@@ -201,7 +202,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 		OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ALLOC_FAILED);
 		return false;
 	}
-	getCacheVersionAndGen(PORTLIB, vm, _semFileName, semLength, cacheName, versionData, _activeGeneration, false);
+	getCacheVersionAndGen(PORTLIB, vm, _semFileName, semLength, cacheName, versionData, _activeGeneration, false, _layer);
 #endif
 	
 	while(retryCount>0) {
@@ -1793,7 +1794,7 @@ SH_OSCachesysv::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA group
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
 		if ((SHR_STATS_REASON_ITERATE == reason) || (SHR_STATS_REASON_LIST == reason)) {
-			cache = (SH_OSCachesysv *) SH_OSCache::newInstance(PORTLIB, &cacheStruct, cacheInfo->name, cacheInfo->generation, &versionData);
+			cache = (SH_OSCachesysv *) SH_OSCache::newInstance(PORTLIB, &cacheStruct, cacheInfo->name, cacheInfo->generation, &versionData, getLayerFromName(cacheNameWithVGen));
 
 			if (!cache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheInfo->name, &piconfig, SH_CompositeCacheImpl::getNumRequiredOSLocks(), J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, J9OSCACHE_OPEN_MODE_TRY_READONLY_ON_FAIL, vm->sharedCacheAPI->storageKeyTesting, &versionData, NULL, reason)) {
 				goto done;
@@ -2672,7 +2673,7 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 		goto done;
 	}
 
-	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false);
+	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false, _layer);
 	/* No check for the return value of getCachePathName() as it always returns 0 */
 	SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
 
@@ -2751,7 +2752,7 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 
 			piconfig->sharedClassCacheSize = (UDATA)fileSize;
 			versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
-			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, true);
+			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, true, _layer);
 			if (1 == SH_OSCache::statCache(PORTLIB, cacheDirName, nameWithVGen, false)) {
 #if !defined(WIN32)
 				J9PortShmemStatistic statbuf;

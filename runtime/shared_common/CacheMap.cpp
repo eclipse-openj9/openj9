@@ -288,7 +288,7 @@ SH_CacheMap::initialize(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, Bl
 
 	_managers = SH_Managers::newInstance(vm, (SH_Managers *)allocPtr);
 
-	_ccHead = _cc = SH_CompositeCacheImpl::newInstance(vm, sharedClassConfig, (SH_CompositeCacheImpl*)(allocPtr += SH_Managers::getRequiredConstrBytes()), cacheName, cacheTypeRequired, startupForStats);
+	_ccHead = _cc = SH_CompositeCacheImpl::newInstance(vm, sharedClassConfig, (SH_CompositeCacheImpl*)(allocPtr += SH_Managers::getRequiredConstrBytes()), cacheName, cacheTypeRequired, startupForStats, OSCACHE_CURRENT_LAYER_LAYER);
 
 	_tsm = SH_TimestampManagerImpl::newInstance(vm, (SH_TimestampManagerImpl*)(allocPtr += SH_CompositeCacheImpl::getRequiredConstrBytesWithCommonInfo(false, startupForStats)), sharedClassConfig);
 
