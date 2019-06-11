@@ -154,8 +154,8 @@ static bool isJavaField(TR::SymbolReference *symRef, TR::Compilation *comp)
    TR::Symbol *symbol = symRef->getSymbol();
    if (symbol->isShadow() &&
        (symRef->getCPIndex() >= 0 ||
-        // java/lang/invoke/VarHandle.handleTable can be fabricated by VarHandleTransformer, thus does not have a valid cp index
-        symbol->getRecognizedField() == TR::Symbol::Java_lang_invoke_VarHandle_handleTable))
+        // recognized fields are java fields
+        symbol->getRecognizedField() != TR::Symbol::UnknownField))
       return true;
 
    return false;
@@ -191,24 +191,10 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
       {
       switch (symbol->getRecognizedField())
          {
+         case TR::Symbol::Java_lang_invoke_BruteArgumentMoverHandle_extra:
+         case TR::Symbol::Java_lang_invoke_MethodType_arguments:
          case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
          case TR::Symbol::Java_lang_String_value:
-            return true;
-         default:
-            break;
-         }
-      }
-   return false;
-   }
-
-static bool isFabricatedVarHandleField(TR::SymbolReference *symRef, TR::Compilation *comp)
-   {
-   TR::Symbol *symbol = symRef->getSymbol();
-   if (symbol->isShadow() && symRef->getCPIndex() < 0)
-      {
-      switch (symbol->getRecognizedField())
-         {
-         case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
             return true;
          default:
             break;
@@ -236,8 +222,15 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
 
       TR_OpaqueClassBlock *objectClass = fej9->getObjectClass((uintptrj_t)curStruct);
       TR_OpaqueClassBlock *fieldClass = NULL;
-      if (isFabricatedVarHandleField(field, comp))
-         fieldClass = fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", strlen("java/lang/invoke/VarHandle"));
+      // Fabriated fields don't have valid cp index
+      if (field->getCPIndex() < 0 &&
+          field->getSymbol()->getRecognizedField() != TR::Symbol::UnknownField)
+         {
+         const char* className;
+         int32_t length;
+         className = field->getSymbol()->owningClassNameCharsForRecognizedField(length);
+         fieldClass = fej9->getClassFromSignature(className, length, field->getOwningMethod(comp));
+         }
       else
          fieldClass = field->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(comp, field->getCPIndex());
 
@@ -417,7 +410,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
    return NULL;
    }
 
-bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp)
+bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp)
    {
    TR::SimpleRegex *classRegex = comp->getOptions()->getClassesWithFoldableFinalFields();
    if (classRegex)

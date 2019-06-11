@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,11 +126,7 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
 
       if (len == 29 && !strncmp("java/lang/invoke/DirectHandle", className, 29))
          {
-#if defined(J9VMJAVALANGINVOKEPRIMITIVEHANDLE_VMSLOT) // JTC 83328: Delete once VM changes promote
          J9Method *j9method  = (J9Method*)J9VMJAVALANGINVOKEPRIMITIVEHANDLE_VMSLOT(j9fe->vmThread(), (J9Object*)(*ref));
-#else
-         J9Method *j9method  = (J9Method*)J9VMJAVALANGINVOKEMETHODHANDLE_VMSLOT(j9fe->vmThread(), (J9Object*)(*ref));
-#endif
          J9UTF8   *className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(j9method)->romClass);
          J9UTF8   *methName  = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
          int32_t offs = simpleNameOffset(utf8Data(className), J9UTF8_LENGTH(className));
