@@ -254,6 +254,17 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		}
 		goto _exit;
 	}
+
+	if(try_scan(scan_start, "concurrentScavengeAllocDeviationBoost=")) {
+		UDATA value;
+		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentScavengeAllocDeviationBoost=")) {
+			goto _error;
+		}
+
+		extensions->concurrentScavengerAllocDeviationBoost = value / (float)10.0;
+		goto _exit;
+	}
+
 	if(try_scan(scan_start, "concurrentScavengeBackground=")) {
 		if(!scan_udata_helper(javaVM, scan_start, &extensions->concurrentScavengerBackgroundThreads, "concurrentScavengeBackground=")) {
 			goto _error;

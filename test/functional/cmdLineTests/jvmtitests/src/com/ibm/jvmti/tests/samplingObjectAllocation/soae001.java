@@ -25,7 +25,7 @@ public class soae001 {
 	private final static int DEFAULT_SAMPLING_RATE = 512 * 1024; /* 512 KB */
 	
 	private native static void reset();	/* reset native internal counters */
-	private native static int enable();	/* enable event JVMTI_EVENT_SAMPLED_OBJECT_ALLOC */
+	private native static int enable(Thread thread);	/* enable event JVMTI_EVENT_SAMPLED_OBJECT_ALLOC */
 	private native static int disable();	/* disable event JVMTI_EVENT_SAMPLED_OBJECT_ALLOC */
 	private native static int check();	/* check how many times the event callback was invoked */
 	
@@ -34,7 +34,7 @@ public class soae001 {
 		int jvmtiResult = 0;
 
 		reset();
-		jvmtiResult = enable();
+		jvmtiResult = enable(null);
 		if (0 != jvmtiResult) {
 			System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.enable() failed with: " + jvmtiResult);
 		} else {
@@ -46,16 +46,12 @@ public class soae001 {
 			if (samplingResult < 1) {
 				System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.check() failed, expected 1+ but got: " + samplingResult);
 			} else {
-				jvmtiResult = disable();
+				jvmtiResult = enable(Thread.currentThread());
 				if (0 != jvmtiResult) {
-					System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.disable() failed with: " + jvmtiResult);
-				} else {
-					reset();
-					bytes = new byte[DEFAULT_SAMPLING_RATE];
-					System.out.println("Allocated another byte array with size " + bytes.length);
-					samplingResult = check();
-					if (0 != samplingResult) {
-						System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.check() failed, expected 0 but got: " + samplingResult);
+					System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.enable(thread) failed as expected with: " + jvmtiResult);
+					jvmtiResult = disable();
+					if (0 != jvmtiResult) {
+						System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.disable() failed with: " + jvmtiResult);
 					} else {
 						result = true;
 					}
