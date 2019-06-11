@@ -103,12 +103,26 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 
    treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
    }
-   
+
 void J9::RecognizedCallTransformer::process_java_lang_StrictMath_sqrt(TR::TreeTop* treetop, TR::Node* node)
    {
-      anchorNode(node->getFirstChild(), treetop);
+   if (!node->getSymbol()->castToResolvedMethodSymbol()->canReplaceWithHWInstr())
+      {
+      TR::Node* dumpNode = node->getChild(0);
+      TR::Node* valueNode = node->getChild(1);
+
+      anchorNode(dumpNode, treetop);
+      prepareToReplaceNode(node);
+
+      TR::Node::recreateWithoutProperties(node, TR::dsqrt, 1, valueNode, getSymRefTab()->findOrCreateNewArraySymbolRef(node->getSymbolReference()->getOwningMethodSymbol(comp())));
+      TR::TransformUtil::removeTree(comp(), treetop);
+      }
+
+   else
+      {
       TR::Node::recreate(node, TR::dsqrt);
       TR::TransformUtil::removeTree(comp(), treetop);
+      }
    }
 /*
 Transform an Unsafe atomic call to diamonds with equivalent semantics
@@ -373,6 +387,10 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          return !comp()->getOption(TR_DisableMaxMinOptimization);
       case TR::java_lang_StringUTF16_toBytes:
          return !comp()->compileRelocatableCode();
+      case TR::java_lang_StrictMath_sqrt:
+         return true;
+      case TR::java_lang_Math_sqrt:
+         return true;
       default:
          return false;
       }
