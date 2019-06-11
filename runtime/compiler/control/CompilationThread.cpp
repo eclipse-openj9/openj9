@@ -9694,6 +9694,16 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             jitMarkMethodReadyForDLT(vmThread, dltDetails.getMethod());
             }
          }
+      else if (entry && entry->_stream)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+                  "compThreadID=%d has failed to compile a DLT method", entry->_compInfoPT->getCompThreadId());
+            }
+         int8_t compErrCode = entry->_compInfoPT->_methodBeingCompiled->_compErrCode;
+         entry->_stream->finishCompilation(compErrCode);
+         }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
            (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
