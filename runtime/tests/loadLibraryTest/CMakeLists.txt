@@ -32,5 +32,5 @@ target_link_libraries(loadLibraryTest
 omr_add_exports(loadLibraryTest
     JNI_OnLoad
     JNI_OnUnload
-    Java_org_openj9_test_loadLibrary_TestLoadLegacyLibrary_fooImpl
+    Java_j9vm_test_loadLibrary_TestLoadLegacyLibrary_fooImpl
 )

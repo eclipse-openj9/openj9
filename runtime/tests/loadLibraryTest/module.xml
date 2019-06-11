@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<exports group="all">
 		<export name="JNI_OnLoad"/>
 		<export name="JNI_OnUnload"/>
-		<export name="Java_org_openj9_test_loadLibrary_TestLoadLegacyLibrary_fooImpl"/>
+		<export name="Java_j9vm_test_loadLibrary_TestLoadLegacyLibrary_fooImpl"/>
 	</exports>
 	<artifact type="shared" name="loadLibraryTest" appendrelease="false">
 		<phase>core quick j2se</phase>

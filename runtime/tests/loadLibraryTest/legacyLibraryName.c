@@ -47,17 +47,16 @@ void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 }
 
 /**
- * @brief Provide an implementation for the class TestLoadLegacyLibrary's native instance method 
- * fooImpl.
+ * @brief Provide an implementation for the class TestLoadLegacyLibrary's native method fooImpl.
  * Package:     org.openj9.test.loadLibrary
  * Class:       TestLoadLegacyLibrary
  * Method:      fooImpl
- * @param[in] env The JNI env.
- * @param[in] instance The this pointer.
+ * @param[in]   env The JNI env.
+ * @param[in]   instance The this pointer.
+ * @return      Always return value "true"
  */
-void JNICALL
-Java_org_openj9_test_loadLibrary_TestLoadLegacyLibrary_fooImpl(JNIEnv *env, jobject this)
+jboolean JNICALL
+Java_j9vm_test_loadLibrary_TestLoadLegacyLibrary_fooImpl(JNIEnv *env, jobject this)
 {
-    printf("Successfully reached native method in .jnilib library");
-    return;
+    return JNI_TRUE;
 }

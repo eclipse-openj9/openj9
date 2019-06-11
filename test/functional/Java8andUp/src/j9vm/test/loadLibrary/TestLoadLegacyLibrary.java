@@ -19,15 +19,20 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.loadLibrary;
+package j9vm.test.loadLibrary;
 
+import org.testng.annotations.Test;
+import org.testng.Assert;
+
+@Test(groups = { "level.sanity" })
 public class TestLoadLegacyLibrary {
 
 	private static native boolean fooImpl();
 
-	public static void main() throws Exception {
-		System.loadLibrary("loadLibraryTest");
+	@Test
+	public static void test_load_legacy_library() throws Exception {
+		System.loadLibrary("loadLibraryTest"); //$NON-NLS-1$
 
-		fooImpl();
+		Assert.assertTrue(fooImpl(), "Native Method fooImpl failed to return expected result"); //$NON-NLS-1$
 	}
 }
