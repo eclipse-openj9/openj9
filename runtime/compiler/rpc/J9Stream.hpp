@@ -33,6 +33,7 @@ using namespace google::protobuf::io;
 class J9Stream
    {
 public:
+#if defined(JITAAS_ENABLE_SSL)
    static bool useSSL(TR::PersistentInfo *info)
       {
       return (info->getJITaaSSslKeys().size() || info->getJITaaSSslCerts().size() || info->getJITaaSSslRootCerts().size());
@@ -44,23 +45,31 @@ public:
       SSL_library_init();
       OpenSSL_add_ssl_algorithms();
       }
+#endif
 
 protected:
    J9Stream()
       : _inputStream(NULL),
       _outputStream(NULL),
+#if defined(JITAAS_ENABLE_SSL)
       _ssl(NULL),
       _sslInputStream(NULL),
       _sslOutputStream(NULL),
+#endif
       _connfd(-1)
       {
       // set everything to NULL, in case the child stream fails to call initStream
       // which initializes these variables
       }
 
+#if defined(JITAAS_ENABLE_SSL)
    void initStream(int connfd, BIO *ssl)
-      {
+#else
+   void initStream(int connfd)
+#endif
+   {
       _connfd = connfd;
+#if defined(JITAAS_ENABLE_SSL)
       _ssl = ssl;
       if (_ssl)
          {
@@ -70,6 +79,7 @@ protected:
          _outputStream = new (PERSISTENT_NEW) CopyingOutputStreamAdaptor(_sslOutputStream);
          }
       else
+#endif
          {
          _inputStream = new (PERSISTENT_NEW) FileInputStream(_connfd);
          _outputStream = new (PERSISTENT_NEW) FileOutputStream(_connfd);
@@ -88,6 +98,7 @@ protected:
          _outputStream->~ZeroCopyOutputStream();
          TR_Memory::jitPersistentFree(_outputStream);
          }
+#if defined(JITAAS_ENABLE_SSL)
       if (_ssl)
          {
          _sslInputStream->~SSLInputStream();
@@ -96,6 +107,7 @@ protected:
          TR_Memory::jitPersistentFree(_sslOutputStream);
          BIO_free_all(_ssl);
          }
+#endif
       if (_connfd != -1)
          {
          close(_connfd);
@@ -131,20 +143,26 @@ protected:
             throw JITaaS::StreamFailure("JITaaS I/O error: writing to stream");
          // codedOutputStream must be dropped before calling flush
          }
+#if defined(JITAAS_ENABLE_SSL)
       if (_ssl ? !((CopyingOutputStreamAdaptor*)_outputStream)->Flush()
                : !((FileOutputStream*)_outputStream)->Flush())
+#else
+      if (!((FileOutputStream*)_outputStream)->Flush())
+#endif
          throw JITaaS::StreamFailure("JITaaS I/O error: flushing stream");
       }
 
    int _connfd; // connection file descriptor
-   BIO *_ssl; // SSL connection, null if not using SSL
 
    // re-usable message objects
    J9ServerMessage _sMsg;
    J9ClientMessage _cMsg;
 
+#if defined(JITAAS_ENABLE_SSL)
+   BIO *_ssl; // SSL connection, null if not using SSL
    SSLInputStream *_sslInputStream;
    SSLOutputStream *_sslOutputStream;
+#endif
    ZeroCopyInputStream *_inputStream;
    ZeroCopyOutputStream *_outputStream;
    };

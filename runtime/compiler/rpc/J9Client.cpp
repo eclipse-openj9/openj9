@@ -35,7 +35,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
+#if defined(JITAAS_ENABLE_SSL)
 #include <openssl/err.h>
+#endif
 
 namespace JITaaS
 {
@@ -47,6 +49,7 @@ int J9ClientStream::_numConnectionsClosed = 0;
 // This is called during startup from rossa.cpp
 void J9ClientStream::static_init(TR::PersistentInfo *info)
    {
+#if defined(JITAAS_ENABLE_SSL)
    if (!J9Stream::useSSL(info))
       return;
 
@@ -115,9 +118,12 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
+#endif
    }
 
+#if defined(JITAAS_ENABLE_SSL)
 SSL_CTX *J9ClientStream::_sslCtx;
+#endif
 
 int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
    {
@@ -178,6 +184,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    return sockfd;
    }
 
+#if defined(JITAAS_ENABLE_SSL)
 BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    {
    if (!ctx)
@@ -251,6 +258,16 @@ J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
+#else // JITAAS_ENABLE_SSL
+J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
+   : J9Stream(),
+   _timeout(info->getJITaaSTimeout())
+   {
+   int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
+   initStream(connfd);
+   _numConnectionsOpened++;
+   }
+#endif
 
 Status
 J9ClientStream::waitForFinish()

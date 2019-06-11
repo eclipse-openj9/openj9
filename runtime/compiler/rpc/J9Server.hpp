@@ -24,13 +24,15 @@
 #define J9_SERVER_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <openssl/ssl.h>
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "rpc/J9Stream.hpp"
 #include "env/CHTable.hpp"
 
+#if defined(JITAAS_ENABLE_SSL)
+#include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
+#endif
 class TR_ResolvedJ9Method;
 
 namespace JITaaS
@@ -38,7 +40,11 @@ namespace JITaaS
 class J9ServerStream : J9Stream
    {
 public:
+#if defined(JITAAS_ENABLE_SSL)
    J9ServerStream(int connfd, BIO *ssl, uint32_t timeout);
+#else
+   J9ServerStream(int connfd, uint32_t timeout);
+#endif
    virtual ~J9ServerStream() 
       {
       _numConnectionsClosed++;
