@@ -3242,6 +3242,12 @@ TR_J9ByteCodeIlGenerator::genAsyncCheck()
 void
 TR_J9ByteCodeIlGenerator::genCheckCast()
    {
+   if (_methodSymbol->safeToSkipCheckCasts())
+      {
+      pop();
+      return;
+      }
+
    TR::Node *node = genNodeAndPopChildren(TR::checkcast, 2, symRefTab()->findOrCreateCheckCastSymbolRef(_methodSymbol));
    genTreeTop(node);
    push(node->getFirstChild()); // The object reference
