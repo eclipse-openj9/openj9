@@ -527,7 +527,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedVirtualMethod:
       case TR_InlinedInterfaceMethod:
-      case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
@@ -538,6 +537,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             flags = inlinedMethodIsSpecial;
          if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
             flags = inlinedMethodIsVirtual;
+
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 

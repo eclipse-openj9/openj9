@@ -221,7 +221,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
       case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedVirtualMethod:
       case TR_InlinedInterfaceMethod:
-      case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
 

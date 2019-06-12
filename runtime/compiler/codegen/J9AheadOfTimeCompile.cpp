@@ -988,7 +988,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
          case TR_InlinedAbstractMethodWithNopGuard:
-         case TR_InlinedHCRMethod:
             cursor++;        // unused field
             if (is64BitTarget)
                {

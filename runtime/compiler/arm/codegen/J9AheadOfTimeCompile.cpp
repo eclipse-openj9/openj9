@@ -379,7 +379,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
       case TR_InlinedVirtualMethod:
       case TR_InlinedInterfaceMethod:
-      case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
