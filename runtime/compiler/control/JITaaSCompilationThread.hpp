@@ -152,6 +152,9 @@ class ClientSessionData
       bool _elgibleForPersistIprofileInfo;
       TR_OpaqueClassBlock *_arrayTypeClasses[8];
       bool _reportByteCodeInfoAtCatchBlock;
+      MM_GCReadBarrierType _readBarrierType;
+      MM_GCWriteBarrierType _writeBarrierType;
+      bool _compressObjectReferences;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)

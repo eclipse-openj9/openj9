@@ -115,17 +115,17 @@ public:
    /**
    * @brief Returns the read barrier type of VM's GC
    */
-   MM_GCReadBarrierType  readBarrierType()  { return _readBarrierType;  }
+   MM_GCReadBarrierType  readBarrierType();
 
    /**
    * @brief Returns the write barrier type of VM's GC
    */
-   MM_GCWriteBarrierType writeBarrierType() { return _writeBarrierType; }
+   MM_GCWriteBarrierType writeBarrierType();
 
    /**
    * @brief Returns whether or not object references are compressed
    */
-   bool compressObjectReferences() { return _compressObjectReferences; }
+   bool compressObjectReferences();
 
 private:
 
