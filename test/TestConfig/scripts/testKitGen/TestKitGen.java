@@ -577,7 +577,21 @@ public class TestKitGen {
         f.write(headerComments + "\n");
         f.write("D=/\n\n");
         f.write("ifndef TEST_ROOT\n");
-        f.write("\tTEST_ROOT := " + options.get("output") + "\n");
+
+        // TODO: This needs to be removed before final delivery. It is used so we can
+        // get byte-for-byte identical files to what the perl version generates.
+        // The paths on Windows are generated using cygwin and instead of being
+        // "C:\Users\bla" on the perl version they're "/cygdrive/c/Users/bla". The
+        // following block of code translates from the former to the latter on Windows.
+        if (options.get("graphSpecs").contains("win")) {
+            String projectRootDir = options.get("output").replace("C:", "/cygdrive/c")
+                    .replace("c:", "/cygdrive/c").replace('\\', '/');
+
+            f.write("\tTEST_ROOT := " + projectRootDir + "\n");
+        } else {
+            f.write("\tTEST_ROOT := " + options.get("output") + "\n");
+        }
+
         f.write("endif\n\n");
         f.write("SUBDIRS = " + String.join(" ", subdirsHavePlaylist) + "\n\n");
         f.write("include $(TEST_ROOT)$(D)TestConfig$(D)" + settings + "\n\n");
