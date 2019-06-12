@@ -3584,13 +3584,62 @@ TR_J9ByteCodeIlGenerator::genIfTwoOperand(TR::ILOpCodes nodeop)
 int32_t
 TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
    {
-   _methodSymbol->setHasBranches(true);
    int32_t branchBC = _bcIndex + next2BytesSigned();
    int32_t fallThruBC = _bcIndex + 3;
 
    TR::Node * second = pop();
    TR::Node * first = pop();
 
+   TR::DataType type = first->getDataType();
+   if (branchBC > _bcIndex &&
+       first->getOpCode().isLoadConst() &&
+       second->getOpCode().isLoadConst() &&
+       type != TR::Address &&
+       type != TR::Float &&
+       type != TR::Double)
+      {
+      int64_t v1 = first->getConstValue();
+      int64_t v2 = second->getConstValue();
+      bool branchTaken;
+      TR_ComparisonTypes compareType = TR::ILOpCode::getCompareType(nodeop);
+      bool isUnsignedCompare = TR::ILOpCode(nodeop).isUnsignedCompare();
+      switch (compareType)
+         {
+         case TR_cmpEQ:
+            branchTaken = v1 == v2;
+            break;
+         case TR_cmpNE:
+            branchTaken = v1 != v2;
+            break;
+         case TR_cmpLT:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 < (uint64_t)v2 : v1 < v2;
+            break;
+         case TR_cmpLE:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 <= (uint64_t)v2 : v1 <= v2;
+            break;
+         case TR_cmpGT:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 > (uint64_t)v2 : v1 > v2;
+            break;
+         case TR_cmpGE:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 >= (uint64_t)v2 : v1 >= v2;
+            break;
+         }
+
+      if (_blocksToInline)
+         {
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "Not folding the if because of partial inlining\n");
+         }
+      else
+         {
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "%s\n", branchTaken ? "taking the branch" : "fall through");
+
+         return branchTaken ? branchBC : fallThruBC;
+         }
+      }
+
+   _methodSymbol->setHasBranches(true);
    handlePendingPushSaveSideEffects(first);
    handlePendingPushSaveSideEffects(second);
 
