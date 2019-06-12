@@ -383,16 +383,13 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
-         if (relocation->getTargetKind() == TR_InlinedHCRMethod)
-            {
-            // Setup flags field with type of method that needs to be validated at relocation time
-            if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
-               flags = inlinedMethodIsStatic;
-            if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
-               flags = inlinedMethodIsSpecial;
-            if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
-               flags = inlinedMethodIsVirtual;
-            }
+         // Setup flags field with type of method that needs to be validated at relocation time
+         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
+            flags = inlinedMethodIsStatic;
+         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
+            flags = inlinedMethodIsSpecial;
+         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
+            flags = inlinedMethodIsVirtual;
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
