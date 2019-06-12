@@ -1459,7 +1459,7 @@ TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resol
       if (comp->getOption(TR_DisableDFP) ||
           (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-          || TR::Compiler->target.cpu.getS390SupportsDFP()
+          || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
             ) ||
              !TR_J9MethodBase::isBigDecimalMethod(j9method)))
