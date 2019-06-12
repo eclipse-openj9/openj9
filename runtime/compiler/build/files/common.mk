@@ -374,7 +374,10 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheConfig.cpp \
     omr/compiler/runtime/OMRCodeCacheManager.cpp \
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
-    omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
+    omr/compiler/runtime/OMRRuntimeAssumptions.cpp
+
+ifneq ($(JITSERVER_SUPPORT),)
+JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/Listener.cpp \
     compiler/runtime/StatisticsThread.cpp \
     compiler/env/VMJ9Server.cpp \
@@ -388,10 +391,13 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/JITaaSCHTable.cpp \
     compiler/runtime/JITaaSIProfiler.cpp \
     compiler/runtime/CompileService.cpp
+endif
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
 include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH).mk
 -include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH)-extra.mk
 -include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH)-extra.mk
+ifneq ($(JITSERVER_SUPPORT),)
 include $(JIT_MAKE_DIR)/files/net.mk
+endif

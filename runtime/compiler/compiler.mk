@@ -37,6 +37,10 @@ ifeq ($(SPEC),linux_arm)
     $(warning ARM SPEC detected)
 endif
 
+ifeq ($(PLATFORM),amd64-linux64-gcc)
+    export JITSERVER_SUPPORT=1
+endif
+
 ifeq ($(PLATFORM),amd64-linux64-clang)
     # Luckily we can just use the default path for Clang :)
 endif
@@ -50,7 +54,12 @@ ifeq ($(PLATFORM),ppc64-linux64-clang)
     endif
 endif
 
+ifeq ($(PLATFORM),s390-zos-vacpp)
+    export JITSERVER_SUPPORT=1
+endif
 ifeq ($(PLATFORM),s390-zos64-vacpp)
+    export JITSERVER_SUPPORT=1
+
     ifeq (default,$(origin CC))
         export CC=/usr/lpp/cbclib/xlc/bin/xlc
     endif
@@ -93,20 +102,33 @@ endif
 #
 # "all" should be the first target to appear so it's the default
 #
+ifneq ($(JITSERVER_SUPPORT),)
 .PHONY: all clean cleanobjs cleandeps cleandll proto
 all: proto ; @echo SUCCESS - All files are up-to-date
+else
+.PHONY: all clean cleanobjs cleandeps cleandll
+all: ; @echo SUCCESS - All files are up-to-date
+endif
 clean: ; @echo SUCCESS - All files are cleaned
 cleanobjs: ; @echo SUCCESS - All objects are cleaned
 cleandeps: ; @echo SUCCESS - All dependencies are cleaned
 cleandll: ; @echo SUCCESS - All shared libraries are cleaned
+ifneq ($(JITSERVER_SUPPORT),)
 proto: ; @echo SUCCESS - All proto files are recompiled
+endif
 
 # Handy macro to check to make sure variables are set
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 
 # Verify SDK pointer for non-cleaning targets
-ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
-    $(call REQUIRE_VARS,J9SRC)
+ifneq ($(JITSERVER_SUPPORT),)
+    ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
+        $(call REQUIRE_VARS,J9SRC)
+    endif
+else
+    ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
+        $(call REQUIRE_VARS,J9SRC)
+    endif
 endif
 
 #
