@@ -558,6 +558,9 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             {
             vmInfo._arrayTypeClasses[i] = fe->getClassFromNewArrayTypeNonNull(i + 4);
             }
+         vmInfo._readBarrierType = TR::Compiler->om.readBarrierType();
+         vmInfo._writeBarrierType = TR::Compiler->om.writeBarrierType();
+         vmInfo._compressObjectReferences = TR::Compiler->om.compressObjectReferences();
          client->write(vmInfo);
          }
          break;

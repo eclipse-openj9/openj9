@@ -612,3 +612,36 @@ J9::ObjectModel::arrayletLeafLogSize()
       }
    return _arrayLetLeafLogSize;
    }
+
+MM_GCReadBarrierType
+J9::ObjectModel::readBarrierType()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_readBarrierType;
+      }
+   return _readBarrierType;
+   }
+
+MM_GCWriteBarrierType
+J9::ObjectModel::writeBarrierType()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_writeBarrierType;
+      }
+   return _writeBarrierType;
+   }
+
+bool
+J9::ObjectModel::compressObjectReferences()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_compressObjectReferences;
+      }
+   return _compressObjectReferences;
+   }
