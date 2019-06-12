@@ -477,7 +477,7 @@ public class TestKitGen {
                     // is set to AOT
                     NodeList aot = currentElement.getElementsByTagName("aot");
 
-                    if (aot.getLength() > 0) {
+                    if (aot.getLength() > 0 && options.get("testFlag").contains("AOT")) {
                         removeTest |= aot.item(0).getTextContent().trim().equals("nonapplicable");
                     }
 
