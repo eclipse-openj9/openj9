@@ -388,9 +388,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_StringUTF16_toBytes:
          return !comp()->compileRelocatableCode();
       case TR::java_lang_StrictMath_sqrt:
-         return true;
       case TR::java_lang_Math_sqrt:
-         return true;
+         return TR::Compiler->target.cpu.isZ();
       default:
          return false;
       }
