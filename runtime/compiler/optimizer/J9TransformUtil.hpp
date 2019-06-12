@@ -179,6 +179,17 @@ public:
     */
    static TR::TreeTop* generateReportFinalFieldModificationCallTree(TR::Compilation *comp, TR::Node *node);
 
+   /*
+    * \brief
+    *    Truncate boolean for Unsafe get/put APIs.
+    *    The boolean loaded or written by Unsafe APIs can only have value zero or one. The spec rules on
+    *    Unsafe behavior regarding boolean is to check `(0 != value)`.
+    *
+    *   \param comp  The compilation Object
+    *   \param tree  The tree containing Unsafe call that reads/writes a boolean
+    *
+    */
+   static void truncateBooleanForUnsafeGetPut(TR::Compilation *comp, TR::TreeTop* tree);
 protected:
    /**
     * \brief

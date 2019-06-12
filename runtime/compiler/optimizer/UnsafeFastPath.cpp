@@ -717,6 +717,12 @@ int32_t TR_UnsafeFastPath::perform()
 
          if (type != TR::NoType && performTransformation(comp(), "%s Found unsafe/JITHelpers calls, turning node [" POINTER_PRINTF_FORMAT "] into a load/store\n", optDetailString(), node))
             {
+
+            if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeMethod))
+               {
+               TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), tt);
+               }
+
             TR::SymbolReference * unsafeSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, isStatic, isVolatile);
 
             // some helpers are special - we know they are accessing an array and we know the kind of that array

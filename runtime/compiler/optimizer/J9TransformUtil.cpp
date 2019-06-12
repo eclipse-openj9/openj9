@@ -36,6 +36,7 @@
 #include "il/SymbolReference.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/j9method.h"
 #include "ras/DebugCounter.hpp"
 #include "j9.h"
 #include "optimizer/OMROptimization_inlines.hpp"
@@ -2216,4 +2217,29 @@ J9::TransformUtil::generateReportFinalFieldModificationCallTree(TR::Compilation 
    TR::Node *callNode = TR::Node::createWithSymRef(node, TR::call, 1, j9class, symRef);
    TR::TreeTop *tt = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, callNode));
    return tt;
+   }
+
+void
+J9::TransformUtil::truncateBooleanForUnsafeGetPut(TR::Compilation *comp, TR::TreeTop* tree)
+   {
+   TR::Node* unsafeCall = tree->getNode()->getFirstChild();
+   TR::RecognizedMethod rm = unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+   TR_ASSERT(TR_J9MethodBase::isUnsafeGetPutBoolean(rm), "Not unsafe get/put boolean method");
+
+   if (TR_J9MethodBase::isUnsafePut(rm))
+      {
+      int32_t valueChildIndex = unsafeCall->getFirstArgumentIndex() + 3;
+      TR::Node* value = unsafeCall->getChild(valueChildIndex);
+      TR::Node* truncatedValue = TR::Node::create(unsafeCall, TR::icmpne, 2, value, TR::Node::iconst(unsafeCall, 0));
+      unsafeCall->setAndIncChild(valueChildIndex, truncatedValue);
+      value->recursivelyDecReferenceCount();
+      dumpOptDetails(comp, "Truncate the boolean value of unsafe put %p n%dn, resulting in %p n%dn\n", unsafeCall, unsafeCall->getGlobalIndex(), truncatedValue, truncatedValue->getGlobalIndex());
+      }
+   else
+      {
+      // Insert a tree to truncate the result
+      TR::Node* truncatedReturn = TR::Node::create(unsafeCall, TR::icmpne, 2, unsafeCall, TR::Node::iconst(unsafeCall, 0));
+      tree->insertAfter(TR::TreeTop::create(comp, TR::Node::create(unsafeCall, TR::treetop, 1, truncatedReturn)));
+      dumpOptDetails(comp, "Truncate the return of unsafe get %p n%dn, resulting in %p n%dn\n", unsafeCall, unsafeCall->getGlobalIndex(), truncatedReturn, truncatedReturn->getGlobalIndex());
+      }
    }
