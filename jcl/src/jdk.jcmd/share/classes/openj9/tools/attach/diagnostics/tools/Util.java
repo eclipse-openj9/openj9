@@ -21,28 +21,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package openj9.tools.attach.diagnostics.base;
+package openj9.tools.attach.diagnostics.tools;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Container for information about a JVM's threads
+ * Common functions for diagnostic tools
  *
  */
-public interface DiagnosticsInfo {
-	String OPENJ9_DIAGNOSTICS_PREFIX = "openj9_diagnostics."; //$NON-NLS-1$
-	String JAVA_INFO = OPENJ9_DIAGNOSTICS_PREFIX + "java_info"; //$NON-NLS-1$
+public class Util {
+	
 	/**
-	 * Use for commands which return a single string
+	 * Read the text from an input stream, split it into separate strings at line breaks,
+	 * remove blank lines, and strip leading and trailing whitespace.
+	 * @param inStream text input stream
+	 * @return contents of inStream as a list of strings
 	 */
-	String DIAGNOSTICS_STRING_RESULT = OPENJ9_DIAGNOSTICS_PREFIX + "string_result"; //$NON-NLS-1$
+	public static List<String> inStreamToStringList(InputStream inStream) {
+		List<String> stdinList;
+		try (BufferedReader jpsOutReader = new BufferedReader(new InputStreamReader(inStream))) {
+			stdinList = jpsOutReader
+					.lines()
+					.map(s -> s.trim())
+					.filter(s -> !s.isEmpty())
+					.collect(Collectors.toList());
+		} catch (IOException e) {
+			stdinList = Collections.emptyList();
+		}
+		return stdinList;
+	}
 
-	@Override
-	String toString();
-
-	/**
-	 * Print the information about the remote Java VM.
-	 * 
-	 * @return contents of system property "java.vm.info"
-	 */
-	String getJavaInfo();
 
 }
