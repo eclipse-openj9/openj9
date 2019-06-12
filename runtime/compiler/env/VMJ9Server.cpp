@@ -470,9 +470,10 @@ TR_J9ServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
 bool
 TR_J9ServerVM::classHasBeenReplaced(TR_OpaqueClassBlock *clazz)
    {
+   uintptrj_t classDepthAndFlags = 0;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_classHasBeenReplaced, clazz);
-   return std::get<0>(stream->read<bool>());
+   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   return ((classDepthAndFlags & J9AccClassHotSwappedOut) != 0);
    }
 
 bool
@@ -510,6 +511,7 @@ TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & lengt
    return classNameChars;
    }
 */
+
 uintptrj_t
 TR_J9ServerVM::getOverflowSafeAllocSize()
    {
