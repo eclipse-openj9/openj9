@@ -51,6 +51,7 @@ JIT_PRODUCT_SOURCE_FILES+= \
     compiler/aarch64/codegen/J9ARM64Snippet.cpp \
     compiler/aarch64/codegen/J9AheadOfTimeCompile.cpp \
     compiler/aarch64/codegen/J9CodeGenerator.cpp \
+    compiler/aarch64/codegen/J9MemoryReference.cpp \
     compiler/aarch64/codegen/J9TreeEvaluator.cpp \
     compiler/aarch64/codegen/J9UnresolvedDataSnippet.cpp \
     compiler/aarch64/codegen/StackCheckFailureSnippet.cpp \
