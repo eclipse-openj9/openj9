@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package com.ibm.tools.attach.attacher;
-
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -23,19 +21,23 @@ package com.ibm.tools.attach.attacher;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+package com.ibm.tools.attach.attacher;
+
+import static com.ibm.oti.util.Msg.getString;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
-import com.sun.tools.attach.spi.AttachProvider;
+
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.AttachmentConnection;
 import com.ibm.tools.attach.target.Command;
@@ -45,12 +47,16 @@ import com.ibm.tools.attach.target.IPC;
 import com.ibm.tools.attach.target.Reply;
 import com.ibm.tools.attach.target.Response;
 import com.ibm.tools.attach.target.TargetDirectory;
-import com.sun.tools.attach.AttachOperationFailedException;
-import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.AttachOperationFailedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+import com.sun.tools.attach.spi.AttachProvider;
 
-import static com.ibm.oti.util.Msg.getString;
+import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * Handles the initiator end of an attachment to a target VM
@@ -274,6 +280,19 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	public Properties getThreadInfo() throws IOException {
 		IPC.logMessage("enter getThreadInfo"); //$NON-NLS-1$
 		AttachmentConnection.streamSend(commandStream, Command.GET_THREAD_GROUP_INFO);
+		return IPC.receiveProperties(responseStream, true);
+	}
+
+	/**
+	 * Execute a diagnostic command on a target VM.
+	 * 
+	 * @param diagnosticCommand name of command to execute
+	 * @return properties object containing serialized result
+	 * @throws IOException in case of a communication error
+	 */
+	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
+		IPC.logMessage("enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
+		AttachmentConnection.streamSend(commandStream, Command.ATTACH_DIAGNOSTICS_PREFIX + diagnosticCommand);
 		return IPC.receiveProperties(responseStream, true);
 	}
 
@@ -554,6 +573,41 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		}
 		return result;
 
+	}
+	
+	/**
+	 * Generate a text description of a target JVM's heap, including the number and
+	 * sizes of instances of each class.
+	 * 
+	 * @param opts String options: "-live" for live object only, or "-all" for all
+	 *             objects. Default is "live".
+	 * @return byte stream containing the UTF-8 text of the formatted output
+	 */
+	public InputStream heapHisto(Object... opts) {
+		String responseString = null;
+		IPC.logMessage("heapHisto called"); //$NON-NLS-1$
+		boolean live = true;
+		for (Object opt : opts) {
+			IPC.logMessage("heapHisto option: ", opt.toString()); //$NON-NLS-1$
+			if ("-live".equals(opt)) { //$NON-NLS-1$
+				live = true;
+			} else if ("-all".equals(opt)) { //$NON-NLS-1$
+				live = false;
+			} else {
+				responseString = "unrecognized option: " + opt.toString(); //$NON-NLS-1$
+			}
+		}
+		if (null == responseString) {
+			String cmd = DiagnosticUtils.makeHeapHistoCommand(live);
+			try {
+				DiagnosticProperties props = new DiagnosticProperties(executeDiagnosticCommand(cmd));
+				responseString = props.printStringResult();
+			} catch (IOException e) {
+				responseString = "Error executing heapHisto command: " + e.toString(); //$NON-NLS-1$
+			}
+		}
+		IPC.logMessage("heapHisto result: ", responseString); //$NON-NLS-1$
+		return new ByteArrayInputStream(responseString.getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**

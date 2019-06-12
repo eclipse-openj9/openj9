@@ -695,6 +695,7 @@ Java_com_ibm_oti_vm_VM_setDaemonThreadImpl (JNIEnv *env, jobject recv, jobject a
 void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
+jstring JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
 
 /* J9SourceJclCommonInit*/
 jint computeFullVersionString (J9JavaVM* vm);

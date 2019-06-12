@@ -23,38 +23,43 @@
 
 package openj9.tools.attach.diagnostics.tools;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
+import java.util.Properties;
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.IPC;
-
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticsInfo;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
- * JStack 
- * A tool for listing thread information about another Java process
+ * JMap A tool for listing heap information about another Java process
  *
  */
-public class Jstack {
+public class Jmap {
 
 	private static List<String> vmids;
-	private static boolean printProperties;
-	private static boolean printSynchronizers;
+	private static boolean histo;
+	private static boolean live;
+	@SuppressWarnings("nls")
+	private static String HELPTEXT = "jmap: obtain heap information about a Java process%n"
+			+ " Usage:%n"
+			+ "    jmap <option>* <vmid>%n"
+			+ "        <vmid>: Attach API VM ID as shown in jps or other Attach API-based tools%n"
+			+ "        <vmid>s are read from stdin if none are supplied as arguments%n"
+			+ "    -histo: print statistics about classes on the heap, including number of objects and aggregate size%n"
+			+ "    -histo:live : Print only live objects%n"
+			+ "    -J: supply arguments to the Java VM running jmap%n"
+			+ "NOTE: this utility may significantly affect the performance of the target VM.%n"
+			+ "At least one option must be selected.%n";
+
 	/**
 	 * Print a list of Java processes and information about them.
+	 * 
 	 * @param args Arguments to the application
 	 */
 	public static void main(String[] args) {
-		PrintStream out = System.out;
 
 		if (!parseArguments(args)) {
 			System.exit(1);
@@ -62,8 +67,7 @@ public class Jstack {
 		AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
 
 		String myId = AttachHandler.getVmId();
-		out.println(LocalDateTime.now());
-		for (String vmid: vmids) {
+		for (String vmid : vmids) {
 			if (vmid.equals(myId)) {
 				continue;
 			}
@@ -71,19 +75,17 @@ public class Jstack {
 			if (vmid.matches("\\d+")) { //$NON-NLS-1$
 				long pid = Long.parseLong(vmid);
 				if (!IPC.processExists(pid)) {
+					System.out.println("No such process: " + vmid); //$NON-NLS-1$
 					continue;
 				}
 			}
 			try {
+				if (vmids.size() > 1) {
+					System.out.printf("Virtual machine: %s%n", vmid); //$NON-NLS-1$
+				}
 				diagProvider.attach(vmid);
-				DiagnosticsInfo groupInfo = diagProvider.getThreadGroupInfo(printSynchronizers);
-				out.printf("Virtual machine: %s JVM information %s%n", vmid, groupInfo.getJavaInfo()); //$NON-NLS-1$
-				out.println(groupInfo.toString());
-				if (printProperties) {
-					out.println("System properties:"); //$NON-NLS-1$
-					out.println(diagProvider.getSystemProperties());
-					out.println("Agent properties:"); //$NON-NLS-1$
-					out.println(diagProvider.getAgentProperties());
+				if (histo) {
+					runAndPrintCommand(diagProvider, DiagnosticUtils.makeHeapHistoCommand(live));
 				}
 			} catch (Exception e) {
 				System.err.printf("Error getting data from %s", vmid); //$NON-NLS-1$
@@ -110,40 +112,44 @@ public class Jstack {
 		}
 	}
 
+	private static void runAndPrintCommand(AttacherDiagnosticsProvider diagProvider, String cmd) throws IOException {
+		Properties props = diagProvider.executeDiagnosticCommand(cmd);
+		DiagnosticProperties.dumpPropertiesIfDebug("jmap result:", props); //$NON-NLS-1$
+		String responseString = new DiagnosticProperties(props).printStringResult();
+		System.out.print(responseString);
+	}
+
 	@SuppressWarnings("nls")
 	private static boolean parseArguments(String[] args) {
-		boolean okay = true;
-		printProperties = DiagnosticProperties.isDebug;
-		printSynchronizers = false;
-		final String HELPTEXT = "jstack: listing thread information about another Java process%n"
-				+ " Usage:%n"
-				+ "    jstack <vmid>*%n"
-				+ "        <vmid>: Attach API VM ID as shown in jps or other Attach API-based tools%n"
-				+ "        <vmid>s are read from stdin if none are supplied as arguments%n"
-				+ "    -p: print the target's system and agent properties%n"
-				+ "    -l: Long format. Print the thread's ownable synchronizers%n"
-				+ "    -J: supply arguments to the Java VM running jstack%n"
-				;
 		vmids = new ArrayList<>();
-		for (String a: args) {
+		histo = false;
+		live = false;
+		int optionsSelected = 0;
+		String errorMessage = null;
+		vmids = new ArrayList<>();
+		for (String a : args) {
 			if (!a.startsWith("-")) {
 				vmids.add(a);
-			} else if (a.equals("-p")) {
-				printProperties = true;
-			} else if (a.equals("-l")) {
-				printSynchronizers = true;
+			} else if (a.startsWith("-histo")) {
+				histo = true;
+				optionsSelected += 1;
+				if (a.endsWith(":live")) {
+					live = true;
+				}
 			} else {
-				System.err.printf(HELPTEXT);
-				okay = false;
+				errorMessage = "unrecognized option " + a;
 				break;
 			}
 		}
-
-		if (okay && vmids.isEmpty()) {
+		if (1 != optionsSelected) {
+			errorMessage = "exactly one option must be selected";
+		}
+		if (null != errorMessage) {
+			System.err.printf("%s%n" + HELPTEXT, errorMessage); //$NON-NLS-1$
+		} else if (vmids.isEmpty()) {
 			/* grab the VMIDs from stdin. */
 			vmids = Util.inStreamToStringList(System.in);
 		}
-		return okay;
+		return (null == errorMessage) && !vmids.isEmpty();
 	}
 }
-
