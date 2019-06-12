@@ -96,6 +96,12 @@
 		</classes>
 	</test>
 	
+	<test name="TestJmap">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJmap"/>
+		</classes>
+	</test>
+	
 	<test name="TestFileLocking">
 		<classes>
 			<class name="org.openj9.test.fileLock.TestFileLocking"/>

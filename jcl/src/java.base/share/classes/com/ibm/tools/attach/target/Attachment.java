@@ -38,6 +38,7 @@ import java.util.Properties;
 
 import java.util.ServiceLoader;
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 import openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider;
 /*[IF Sidecar19-SE]*/
 import jdk.internal.vm.VMSupport;
@@ -227,7 +228,7 @@ final class Attachment extends Thread implements Response {
 				try {
 					replyWithProperties(getDiagnosticsProvider().getThreadGroupInfo());
 				} catch (Exception e) {
-					replyWithProperties(makeExceptionProperties(e));
+					replyWithProperties(DiagnosticProperties.makeExceptionProperties(e));
 				}
 			} else if (cmd.startsWith(Command.GET_SYSTEM_PROPERTIES)) {
 				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
@@ -270,6 +271,13 @@ final class Attachment extends Thread implements Response {
 				} else {
 					AttachmentConnection.streamSend(respStream, Response.ERROR + " " + attachError); //$NON-NLS-1$
 				}
+			} else if (cmd.startsWith(Command.ATTACH_DIAGNOSTICS_PREFIX)) {
+				try {
+					String diagnosticCommand = cmd.substring(Command.ATTACH_DIAGNOSTICS_PREFIX.length());
+					replyWithProperties(DiagnosticUtils.executeDiagnosticCommand(diagnosticCommand));
+				} catch (Exception e) {
+					replyWithProperties(DiagnosticProperties.makeExceptionProperties(e));
+				}
 			} else {
 				AttachmentConnection.streamSend(respStream, Response.ERROR
 						+ " command invalid: " + cmd); //$NON-NLS-1$
@@ -288,17 +296,6 @@ final class Attachment extends Thread implements Response {
 			return true;
 		}
 		return false;
-	}
-
-	private static Properties makeExceptionProperties(Exception e) {
-		Properties props = new Properties();
-		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(true));
-		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, e.getClass().getName());
-		String msg = e.getMessage();
-		if (null != msg) {
-			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
-		}
-		return props;
 	}
 
 	private void replyWithProperties(DiagnosticProperties props) throws IOException {

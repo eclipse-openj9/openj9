@@ -52,6 +52,7 @@ abstract class AttachApiTest {
 	private ArrayList<String> vmArgs;
 	/* command for runCommand() */
 	protected String commandName;
+	protected static final String CHILD_PROCESS_DID_NOT_LAUNCH = "Child process did not launch"; //$NON-NLS-1$
 
 	protected void logExceptionInfoAndFail(Exception e) {
 		logStackTrace(e);
