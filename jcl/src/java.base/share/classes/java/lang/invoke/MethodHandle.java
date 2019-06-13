@@ -872,6 +872,31 @@ public abstract class MethodHandle
 		return MethodHandles.insertArguments(this, 0, value);
 	}
 
+
+	/**
+	 * Check if a permutation is unnecessary
+	 * <p>
+	 * Comparing {@code permuteType} and {@code this.type} is not sufficent to determine if permutation
+	 * is needed. If two arguments have the same type, swapping them won't change the method type. we
+	 * have to check if the permute is identity permute.
+	 *
+	 * @param permuteType Type of the MethodHandle after the permutation
+	 * @param permute The permutation array
+	 * @return a boolean indicating if the permutation is unnecessary
+	 */
+	boolean isUnnecessaryPermute(MethodType permuteType, int... permute) {
+		if (!this.type.equals(permuteType)) {
+			return false;
+		}
+
+		for (int i = 0; i < permute.length; i++) {
+			if (permute[i] != i) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 	/**
 	 * Create an interception point to allow PermuteHandle to merge 
 	 * permute(permute(originalHandle, ...), ...).
@@ -882,6 +907,10 @@ public abstract class MethodHandle
 	 * </ul> 
 	 */
 	MethodHandle permuteArguments(MethodType permuteType, int... permute) {
+		if (isUnnecessaryPermute(permuteType, permute)) {
+			return this;
+		}
+
 		MethodHandle result = new PermuteHandle(permuteType, this, permute);
 		if (true) {
 			result = new BruteArgumentMoverHandle(permuteType, this, permute, EMPTY_CLASS_ARRAY, result);
