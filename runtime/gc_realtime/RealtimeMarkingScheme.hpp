@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,15 +35,6 @@
 class MM_RealtimeGC;
 class MM_RealtimeRootScanner;
 class MM_Scheduler;
-
-#define ITEM_IS_ARRAYLET 0x1
-#define IS_ITEM_OBJECT(item) ((item & ITEM_IS_ARRAYLET) == 0x0)
-#define IS_ITEM_ARRAYLET(item) ((item & ITEM_IS_ARRAYLET) == ITEM_IS_ARRAYLET)
-#define ITEM_TO_OBJECT(item) ((omrobjectptr_t)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
-#define ITEM_TO_ARRAYLET(item) ((fomrobject_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
-#define ITEM_TO_UDATAP(item) ((uintptr_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
-#define OBJECT_TO_ITEM(obj) ((uintptr_t) obj)
-#define ARRAYLET_TO_ITEM(arraylet) (((uintptr_t) arraylet) | ITEM_IS_ARRAYLET)
 
 #define REFERENCE_OBJECT_YIELD_CHECK_INTERVAL 200
 #define UNFINALIZED_OBJECT_YIELD_CHECK_INTERVAL 70
@@ -119,6 +110,8 @@ public:
 	}
 
 	bool incrementalCompleteScan(MM_EnvironmentRealtime *env, uintptr_t maxCount);
+	uintptr_t scanObject(MM_EnvironmentRealtime *env, uintptr_t item, GC_ObjectScannerState *objectScannerState);
+	uintptr_t setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags);
 
 	/**
 	 * Create a MM_RealtimeMarkingScheme object

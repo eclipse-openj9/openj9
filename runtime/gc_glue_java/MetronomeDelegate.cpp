@@ -145,8 +145,7 @@ MM_MetronomeDelegate::mergeGCStats(MM_EnvironmentRealtime *env)
 uintptr_t
 MM_MetronomeDelegate::getSplitArraysProcessed(MM_EnvironmentRealtime *env)
 {
-	GC_Environment *gcEnv = env->getGCEnvironment();
-	return gcEnv->_markJavaStats.splitArraysProcessed;
+	return env->_markStats._splitArraysProcessed;
 }
 
 bool

@@ -44,11 +44,6 @@ MM_MarkJavaStats::clear()
 
 	_monitorReferenceCleared = 0;
 	_monitorReferenceCandidates = 0;
-
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	splitArraysProcessed = 0;
-	splitArraysAmount = 0;
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 };
 
 void
@@ -69,10 +64,4 @@ MM_MarkJavaStats::merge(MM_MarkJavaStats* statsToMerge)
 
 	_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
 	_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
-
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	/* It may not ever be useful to merge these stats, but do it anyways */
-	splitArraysProcessed += statsToMerge->splitArraysProcessed;
-	splitArraysAmount += statsToMerge->splitArraysAmount;
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 };

@@ -36,6 +36,13 @@
 #include "ReferenceObjectScanner.hpp"
 #include "PointerArrayObjectScanner.hpp"
 
+#define ITEM_IS_ARRAYLET 0x1
+#define IS_ITEM_ARRAYLET(item) ((item & ITEM_IS_ARRAYLET) == ITEM_IS_ARRAYLET)
+#define ITEM_TO_OBJECT(item) ((omrobjectptr_t)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
+#define ITEM_TO_ARRAYLET(item) ((fomrobject_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
+#define OBJECT_TO_ITEM(obj) ((uintptr_t) obj)
+#define ARRAYLET_TO_ITEM(arraylet) (((uintptr_t) arraylet) | ITEM_IS_ARRAYLET)
+
 class GC_ObjectScanner;
 class MM_EnvironmentBase;
 class MM_HeapRegionDescriptorStandard;
@@ -64,12 +71,14 @@ protected:
 public:
 
 /* Methods */
+	uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags);
+
 
 private:
 	MMINLINE void clearReference(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, bool isReferenceCleared, bool referentMustBeCleared);
 	MMINLINE bool getReferenceStatus(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, bool *referentMustBeMarked, bool *isReferenceCleared);
 	fomrobject_t *setupReferenceObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason);
-	uintptr_t setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *slotsToDo);
+	uintptr_t setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags);
 
 protected:
 
@@ -134,8 +143,13 @@ public:
 		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 		{
 			uintptr_t slotsToDo = 0;
-			uintptr_t startIndex = setupPointerArrayScanner(env, objectPtr, reason, sizeToDo, &slotsToDo);
-			objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, scannerSpace, GC_ObjectScanner::indexableObject, slotsToDo, startIndex);
+			uintptr_t flags = 0;
+			fomrobject_t *basePtr = 0;
+			uintptr_t sizeInElementsToDo = 0;
+			uintptr_t startIndex = setupPointerArrayScanner(env, objectPtr, reason, sizeToDo, &sizeInElementsToDo, &basePtr, &flags);
+			if (slotsToDo > 0) {
+				objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, basePtr, scannerSpace, flags, sizeInElementsToDo, startIndex);
+			}
 			break;
 		}
 		case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
@@ -160,6 +174,7 @@ public:
 		default:
 			Assert_MM_unreachable();
 		}
+
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		if (isDynamicClassUnloadingEnabled()) {

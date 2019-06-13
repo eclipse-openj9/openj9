@@ -182,16 +182,10 @@ MM_RealtimeMarkingScheme::incrementalCompleteScan(MM_EnvironmentRealtime *env, u
 	uintptr_t item;
 	uintptr_t count = 0, countSinceLastYieldCheck = 0;
 	uintptr_t scannedPointersSumSinceLastYieldCheck = 0;
+	GC_ObjectScannerState objectScannerState;
   
 	while(0 != (item = (uintptr_t)env->getWorkStack()->pop(env))) {
-		uintptr_t scannedPointers;
-		if (IS_ITEM_ARRAYLET(item)) {
-			fomrobject_t *arraylet = ITEM_TO_ARRAYLET(item);
-			scannedPointers = _realtimeGC->getRealtimeDelegate()->scanPointerArraylet(env, arraylet);
-		} else {
-			omrobjectptr_t objectPtr = ITEM_TO_OBJECT(item);
-			scannedPointers = _realtimeGC->getRealtimeDelegate()->scanObject(env, objectPtr);
-		}
+		uintptr_t scannedPointers = scanObject(env, item, &objectScannerState);
 
 		countSinceLastYieldCheck += 1;
 		scannedPointersSumSinceLastYieldCheck += scannedPointers;
@@ -213,5 +207,103 @@ MM_RealtimeMarkingScheme::incrementalCompleteScan(MM_EnvironmentRealtime *env, u
 	} else {
 		return true;
 	}
+}
+
+uintptr_t
+MM_RealtimeMarkingScheme::scanObject(MM_EnvironmentRealtime *env, uintptr_t item, GC_ObjectScannerState *objectScannerState)
+{
+	uintptr_t scannedPointers = 0;
+	uintptr_t sizeToDo = UDATA_MAX;
+	GC_ObjectScanner *objectScanner = NULL;
+	omrobjectptr_t objectPtr = ITEM_TO_OBJECT(item);
+	if (IS_ITEM_ARRAYLET((uintptr_t)item)) {
+		uintptr_t referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
+		uintptr_t sizeInElements = env->getOmrVM()->_arrayletLeafSize / referenceSize;
+		sizeToDo = env->getOmrVM()->_arrayletLeafSize;
+		objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, ITEM_TO_ARRAYLET(item), objectScannerState, GC_ObjectScanner::indexableObjectNoSplit, sizeInElements);
+	} else {
+		objectScanner = _delegate.getObjectScanner(env, objectPtr, objectScannerState, SCAN_REASON_PACKET, &sizeToDo);
+	}
+	if (NULL != objectScanner) {
+		bool isLeafSlot = false;
+		GC_SlotObject *slotObject;
+#if defined(OMR_GC_LEAF_BITS)
+		while (NULL != (slotObject = objectScanner->getNextSlot(&isLeafSlot))) {
+#else /* OMR_GC_LEAF_BITS */
+		while (NULL != (slotObject = objectScanner->getNextSlot())) {
+#endif /* OMR_GC_LEAF_BITS */
+			fixupForwardedSlot(slotObject);
+			inlineMarkObjectNoCheck(env, slotObject->readReferenceFromSlot(), isLeafSlot);
+			scannedPointers += 1;
+		}
+	}
+
+	env->incScannedObjects();
+
+	return scannedPointers;
+}
+
+uintptr_t
+MM_RealtimeMarkingScheme::setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags)
+{
+	uintptr_t startIndex = 0;
+	MM_RealtimeGC *realtimeGC = _extensions->realtimeGC;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+	if(realtimeGC->getRealtimeDelegate()->isDynamicClassUnloadingEnabled()) {
+		realtimeGC->getRealtimeDelegate()->markClassOfObject(MM_EnvironmentRealtime::getEnvironment(env), (J9Object *)objectPtr);
+	}
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+
+
+	bool isContiguous = _extensions->indexableObjectModel.isInlineContiguousArraylet((J9IndexableObject*)objectPtr);
+
+	/* Very small arrays cannot be set as scanned (no scanned bit in Mark Map reserved for them) */
+	bool canSetAsScanned = (isContiguous
+			&& (_extensions->minArraySizeToSetAsScanned <= _extensions->indexableObjectModel.arrayletSize((J9IndexableObject*)objectPtr, 0)));
+
+	if (canSetAsScanned && realtimeGC->getMarkingScheme()->isScanned((J9Object *)objectPtr)) {
+		/* Already scanned by ref array copy optimization */
+		return 0;
+	}
+
+	/* If NUA is enabled, separate path for contiguous arrays */
+	uintptr_t sizeInElements = _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)objectPtr);
+	bool const compressed = env->compressObjectReferences();
+	uintptr_t referenceSize = compressed ? sizeof(uint32_t) : sizeof(uintptr_t);
+	fomrobject_t *startPtr = 0;
+
+	if (isContiguous || (0 == sizeInElements)) {
+		fj9object_t *startScanPtr = (fj9object_t *)_extensions->indexableObjectModel.getDataPointerForContiguous((J9IndexableObject*)objectPtr);
+		startPtr = startScanPtr;
+	} else {
+		sizeInElements = 0;
+		fj9object_t *arrayoid = _extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject*)objectPtr);
+		uintptr_t numArraylets = _extensions->indexableObjectModel.numArraylets((J9IndexableObject*)objectPtr);
+		for (uintptr_t i = 0; i < numArraylets; i++) {
+			uintptr_t arrayletSize = _extensions->indexableObjectModel.arrayletSize((J9IndexableObject*)objectPtr, i);
+			/* need to check leaf pointer because this can be a partially allocated arraylet (not all leafs are allocated) */
+			GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoid, i, compressed));
+			fj9object_t *startScanPtr = (fj9object_t*) (slotObject.readReferenceFromSlot());
+			if (NULL != startScanPtr) {
+				if (i == (numArraylets - 1)) {
+					if (canSetAsScanned) {
+						realtimeGC->getMarkingScheme()->setScanAtomic((J9Object *)objectPtr);
+					}
+					startPtr = startScanPtr;
+					sizeInElements = arrayletSize / referenceSize;
+				} else {
+					env->getWorkStack()->push(env, (void *)ARRAYLET_TO_ITEM(startScanPtr));
+				}
+			}
+
+		}
+	}
+
+	*sizeInElementsToDo = sizeInElements;
+	*sizeToDo = sizeInElements * referenceSize;
+	*basePtr = startPtr;
+	*flags = GC_ObjectScanner::indexableObjectNoSplit;
+
+	return startIndex;
 }
 
