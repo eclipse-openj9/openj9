@@ -34,6 +34,7 @@ j9jit_files(
 	optimizer/IdiomTransformations.cpp
 	optimizer/InlinerTempForJ9.cpp
 	optimizer/InterProceduralAnalyzer.cpp
+	optimizer/J9CFGSimplifier.cpp
 	optimizer/J9EstimateCodeSize.cpp
 	optimizer/J9Inliner.cpp
 	optimizer/J9LocalCSE.cpp
