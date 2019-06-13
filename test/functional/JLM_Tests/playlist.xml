@@ -55,6 +55,7 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 
 	<test>
@@ -89,6 +90,7 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 
 	<test>
@@ -114,6 +116,7 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 
 	<test>
@@ -140,6 +143,7 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 
 	<test>
@@ -165,6 +169,7 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 
 	<test>
@@ -191,6 +196,7 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>explicit</aot>
 	</test>
 
 	<test>
