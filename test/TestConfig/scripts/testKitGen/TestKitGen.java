@@ -181,8 +181,6 @@ public class TestKitGen {
             f.mkdir();
         }
 
-        HashMap<String, Integer> targetCount = new HashMap<String, Integer>();
-
         // Initialize counting map targetCount
         targetCount.put("all", 0);
 
