@@ -31,6 +31,7 @@
 #include "BaseNonVirtual.hpp"
 #include "EnvironmentRealtime.hpp"
 #include "GCExtensions.hpp"
+#include "MetronomeArrayObjectScanner.hpp"
 #include "RealtimeAccessBarrier.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "ReferenceObjectBuffer.hpp"
@@ -205,35 +206,6 @@ public:
 		return scanPointerRange(env, startScanPtr, endScanPtr);
 	}
 
-	MMINLINE uintptr_t
-	scanObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr)
-	{
-		UDATA pointersScanned = 0;
-		switch(_extensions->objectModel.getScanType(objectPtr)) {
-		case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
-		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
-		case GC_ObjectModel::SCAN_MIXED_OBJECT:
-		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
-		case GC_ObjectModel::SCAN_CLASS_OBJECT:
-		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
-			pointersScanned = scanMixedObject(env, objectPtr);
-			break;
-		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
-			pointersScanned = scanPointerArrayObject(env, (J9IndexableObject *)objectPtr);
-			break;
-		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
-			pointersScanned = scanReferenceMixedObject(env, objectPtr);
-			break;
-		case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
-		   pointersScanned = 0;
-		   break;
-		default:
-			Assert_MM_unreachable();
-		}
-		
-		return pointersScanned;
-	}
-
 	MMINLINE UDATA
 	scanPointerRange(MM_EnvironmentRealtime *env, fj9object_t *startScanPtr, fj9object_t *endScanPtr)
 	{
@@ -252,248 +224,40 @@ public:
 		return pointerField;
 	}
 
-	MMINLINE UDATA
-	scanMixedObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
+	MMINLINE GC_ObjectScanner *
+	getObjectScanner(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
-		/* Object slots */
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+		/* object class must have proper eye catcher */
+		Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
 
-		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
-		UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
-		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-		UDATA *descriptionPtr;
-		UDATA descriptionBits;
-		UDATA descriptionIndex;
-#if defined(J9VM_GC_LEAF_BITS)
-		UDATA *leafPtr;
-		UDATA leafBits;
-#endif /* J9VM_GC_LEAF_BITS */
-		
+		GC_ObjectScanner *objectScanner = NULL;
+		switch(_extensions->objectModel.getScanType(objectPtr)) {
+		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
+		{
+			J9IndexableObject *indexablePtr = (J9IndexableObject *)objectPtr;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(isDynamicClassUnloadingEnabled()) {
-			markClassOfObject(env, objectPtr);
-		}
+			if(isDynamicClassUnloadingEnabled()) {
+				markClassOfObject(env, (J9Object *)indexablePtr);
+			}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-		descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
-#if defined(J9VM_GC_LEAF_BITS)
-		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
-#endif /* J9VM_GC_LEAF_BITS */
+			bool isContiguous = _extensions->indexableObjectModel.isInlineContiguousArraylet(indexablePtr);
+			/* Very small arrays cannot be set as scanned (no scanned bit in Mark Map reserved for them) */
+			bool canSetAsScanned = (isContiguous
+					&& (_extensions->minArraySizeToSetAsScanned <= _extensions->indexableObjectModel.arrayletSize(indexablePtr, 0)));
 
-		if(((UDATA)descriptionPtr) & 1) {
-			descriptionBits = ((UDATA)descriptionPtr) >> 1;
-#if defined(J9VM_GC_LEAF_BITS)
-			leafBits = ((UDATA)leafPtr) >> 1;
-#endif /* J9VM_GC_LEAF_BITS */
-		} else {
-			descriptionBits = *descriptionPtr++;
-#if defined(J9VM_GC_LEAF_BITS)
-			leafBits = *leafPtr++;
-#endif /* J9VM_GC_LEAF_BITS */
-		}
-		descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-
-		UDATA pointerFields = 0;
-		while(scanPtr < endScanPtr) {
-			/* Determine if the slot should be processed */
-			if(descriptionBits & 1) {
-				pointerFields++;
-				GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
-#if defined(J9VM_GC_LEAF_BITS)
-				_markingScheme->markObject(env, slotObject.readReferenceFromSlot(), 1 == (leafBits & 1));
-#else /* J9VM_GC_LEAF_BITS */
-				_markingScheme->markObject(env, slotObject.readReferenceFromSlot(), false);
-#endif /* J9VM_GC_LEAF_BITS */
-			}
-			descriptionBits >>= 1;
-#if defined(J9VM_GC_LEAF_BITS)
-			leafBits >>= 1;
-#endif /* J9VM_GC_LEAF_BITS */
-			if(descriptionIndex-- == 0) {
-				descriptionBits = *descriptionPtr++;
-#if defined(J9VM_GC_LEAF_BITS)
-				leafBits = *leafPtr++;
-#endif /* J9VM_GC_LEAF_BITS */
-				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-			}
-			scanPtr += 1;
-		}
-
-		env->addScannedBytes(objectSize);
-		env->addScannedPointerFields(pointerFields);
-		env->incScannedObjects();
-
-		return pointerFields;
-	}
-
-	MMINLINE UDATA
-	scanPointerArrayObject(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr)
-	{
-		UDATA pointerFields = 0;
-		
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(isDynamicClassUnloadingEnabled()) {
-			markClassOfObject(env, (J9Object *)objectPtr);
-		}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
-		bool isContiguous = _extensions->indexableObjectModel.isInlineContiguousArraylet(objectPtr);
-
-		/* Very small arrays cannot be set as scanned (no scanned bit in Mark Map reserved for them) */
-		bool canSetAsScanned = (isContiguous
-				&& (_extensions->minArraySizeToSetAsScanned <= _extensions->indexableObjectModel.arrayletSize(objectPtr, 0)));
-
-		if (canSetAsScanned && _markingScheme->isScanned((J9Object *)objectPtr)) {
 			/* Already scanned by ref array copy optimization */
-			return pointerFields;
-		}
-
-		/* if NUA is enabled, separate path for contiguous arrays */
-		UDATA sizeInElements = _extensions->indexableObjectModel.getSizeInElements(objectPtr);
-		if (isContiguous || (0 == sizeInElements)) {
-			fj9object_t *startScanPtr = (fj9object_t *)_extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
-			fj9object_t *endScanPtr = startScanPtr + sizeInElements;
-			pointerFields += scanPointerRange(env, startScanPtr, endScanPtr);
-		} else {
-			fj9object_t *arrayoid = _extensions->indexableObjectModel.getArrayoidPointer(objectPtr);
-			UDATA numArraylets = _extensions->indexableObjectModel.numArraylets(objectPtr);
-			for (UDATA i=0; i<numArraylets; i++) {
-				UDATA arrayletSize = _extensions->indexableObjectModel.arrayletSize(objectPtr, i);
-				/* need to check leaf pointer because this can be a partially allocated arraylet (not all leafs are allocated) */
-				GC_SlotObject slotObject(_javaVM->omrVM, &arrayoid[i]);
-				fj9object_t *startScanPtr = (fj9object_t*) (slotObject.readReferenceFromSlot());
-				if (NULL != startScanPtr) {
-					fj9object_t *endScanPtr = startScanPtr + arrayletSize / sizeof(fj9object_t);
-					if (i == (numArraylets - 1)) {
-						pointerFields += scanPointerRange(env, startScanPtr, endScanPtr);
-						if (canSetAsScanned) {
-							_markingScheme->setScanAtomic((J9Object *)objectPtr);
-						}
-					} else {
-						env->getWorkStack()->push(env, (void *)ARRAYLET_TO_ITEM(startScanPtr));
-					}
-				}
+			if (!canSetAsScanned || !_markingScheme->isScanned((J9Object *)indexablePtr)) {
+				objectScanner = GC_MetronomeArrayObjectScanner::newInstance(env, objectPtr, scannerSpace, GC_ObjectScanner::indexableObject);
 			}
-		}
-
-		/* check for yield if we've actually scanned a leaf */
-		if (0 != pointerFields) {
-			_scheduler->condYieldFromGC(env);
-		}
-
-		env->incScannedObjects();
-
-		return pointerFields;
-	}
-
-	MMINLINE UDATA
-	scanReferenceMixedObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
-	{
-		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
-		UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
-		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-		UDATA *descriptionPtr;
-		UDATA descriptionBits;
-		UDATA descriptionIndex;
-#if defined(J9VM_GC_LEAF_BITS)
-		UDATA *leafPtr;
-		UDATA leafBits;
-#endif /* J9VM_GC_LEAF_BITS */
-		
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(isDynamicClassUnloadingEnabled()) {
-			markClassOfObject(env, objectPtr);
-		}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-		
-		descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
-#if defined(J9VM_GC_LEAF_BITS)
-		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
-#endif /* J9VM_GC_LEAF_BITS */
-
-		if(((UDATA)descriptionPtr) & 1) {
-			descriptionBits = ((UDATA)descriptionPtr) >> 1;
-#if defined(J9VM_GC_LEAF_BITS)
-			leafBits = ((UDATA)leafPtr) >> 1;
-#endif /* J9VM_GC_LEAF_BITS */
-		} else {
-			descriptionBits = *descriptionPtr++;
-#if defined(J9VM_GC_LEAF_BITS)
-			leafBits = *leafPtr++;
-#endif /* J9VM_GC_LEAF_BITS */
-		}
-		descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-
-		I_32 referenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr);
-		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
-		UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-		bool isReferenceCleared = (GC_ObjectModel::REF_STATE_CLEARED == referenceState) || (GC_ObjectModel::REF_STATE_ENQUEUED == referenceState);
-		bool referentMustBeMarked = isReferenceCleared;
-		bool referentMustBeCleared = false;
-
-		switch (referenceObjectType) {
-		case J9AccClassReferenceWeak:
-			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
 			break;
-		case J9AccClassReferenceSoft:
-			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_soft));
-			referentMustBeMarked = referentMustBeMarked || (
-				((0 == (referenceObjectOptions & MM_CycleState::references_soft_as_weak))
-				&& ((UDATA)J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr) < _extensions->getDynamicMaxSoftReferenceAge())));
-			break;
-		case J9AccClassReferencePhantom:
-			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_phantom));
-			break;
+		}
 		default:
-			Assert_MM_unreachable();
+			objectScanner = _markingScheme->_delegate.getObjectScanner(env, objectPtr, scannerSpace, SCAN_REASON_PACKET, sizeToDo);
 		}
 
-		GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
-
-		if (referentMustBeCleared) {
-			/* Discovering this object at this stage in the GC indicates that it is being resurrected. Clear its referent slot. */
-			referentPtr.writeReferenceToSlot(NULL);
-			/* record that the reference has been cleared if it's not already in the cleared or enqueued state */
-			if (!isReferenceCleared) {
-				J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr) = GC_ObjectModel::REF_STATE_CLEARED;
-			}
-		} else {
-			/* we don't need to process cleared or enqueued references */
-			if (!isReferenceCleared) {
-				env->getGCEnvironment()->_referenceObjectBuffer->add(env, objectPtr);
-			}
-		}
-		
-		UDATA pointerFields = 0;
-		while(scanPtr < endScanPtr) {
-			/* Determine if the slot should be processed */
-			if((descriptionBits & 1) && ((scanPtr != referentPtr.readAddressFromSlot()) || referentMustBeMarked)) {
-				pointerFields++;
-				GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
-#if defined(J9VM_GC_LEAF_BITS)
-				_markingScheme->markObject(env, slotObject.readReferenceFromSlot(), 1 == (leafBits & 1));
-#else /* J9VM_GC_LEAF_BITS */
-				_markingScheme->markObject(env, slotObject.readReferenceFromSlot(), false);
-#endif /* J9VM_GC_LEAF_BITS */
-			}
-			descriptionBits >>= 1;
-#if defined(J9VM_GC_LEAF_BITS)
-			leafBits >>= 1;
-#endif /* J9VM_GC_LEAF_BITS */
-			if(descriptionIndex-- == 0) {
-				descriptionBits = *descriptionPtr++;
-#if defined(J9VM_GC_LEAF_BITS)
-				leafBits = *leafPtr++;
-#endif /* J9VM_GC_LEAF_BITS */
-				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-			}
-			scanPtr++;
-		}
-		
-		env->addScannedBytes(objectSize);
-		env->addScannedPointerFields(pointerFields);
-		env->incScannedObjects();
-		
-		return pointerFields;
+		return objectScanner;
 	}
 
 #if defined(J9VM_GC_FINALIZATION)

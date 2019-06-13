@@ -184,14 +184,7 @@ MM_RealtimeMarkingScheme::incrementalCompleteScan(MM_EnvironmentRealtime *env, u
 	uintptr_t scannedPointersSumSinceLastYieldCheck = 0;
   
 	while(0 != (item = (uintptr_t)env->getWorkStack()->pop(env))) {
-		uintptr_t scannedPointers;
-		if (IS_ITEM_ARRAYLET(item)) {
-			fomrobject_t *arraylet = ITEM_TO_ARRAYLET(item);
-			scannedPointers = _realtimeGC->getRealtimeDelegate()->scanPointerArraylet(env, arraylet);
-		} else {
-			omrobjectptr_t objectPtr = ITEM_TO_OBJECT(item);
-			scannedPointers = _realtimeGC->getRealtimeDelegate()->scanObject(env, objectPtr);
-		}
+		uintptr_t scannedPointers = scanObject(env, item);
 
 		countSinceLastYieldCheck += 1;
 		scannedPointersSumSinceLastYieldCheck += scannedPointers;
@@ -213,5 +206,44 @@ MM_RealtimeMarkingScheme::incrementalCompleteScan(MM_EnvironmentRealtime *env, u
 	} else {
 		return true;
 	}
+}
+
+uintptr_t
+MM_RealtimeMarkingScheme::scanObject(MM_EnvironmentRealtime *env, uintptr_t item)
+{
+	uintptr_t scannedPointers = 0;
+	if (IS_ITEM_ARRAYLET(item)) {
+		fomrobject_t *arraylet = ITEM_TO_ARRAYLET(item);
+		scannedPointers = _realtimeGC->getRealtimeDelegate()->scanPointerArraylet(env, arraylet);
+	} else {
+		omrobjectptr_t objectPtr = ITEM_TO_OBJECT(item);
+		uintptr_t sizeToDo = UDATA_MAX;
+		GC_ObjectScannerState objectScannerState;
+		GC_ObjectScanner *objectScanner = _realtimeGC->getRealtimeDelegate()->getObjectScanner(env, objectPtr, &objectScannerState, SCAN_REASON_PACKET, &sizeToDo);
+		bool itemIsArrayoid = _extensions->objectModel.getScanType(objectPtr) == GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT;
+		if (NULL != objectScanner) {
+			bool isLeafSlot = false;
+			GC_SlotObject *slotObject;
+#if defined(OMR_GC_LEAF_BITS)
+			while (NULL != (slotObject = objectScanner->getNextSlot(&isLeafSlot))) {
+#else /* OMR_GC_LEAF_BITS */
+			while (NULL != (slotObject = objectScanner->getNextSlot())) {
+#endif /* OMR_GC_LEAF_BITS */
+				fixupForwardedSlot(slotObject);
+
+				/* Arrayoids slots contain arraylets. */
+				if (itemIsArrayoid) {
+					inlineMarkObjectNoCheck(env, (omrobjectptr_t)ARRAYLET_TO_ITEM(slotObject->readReferenceFromSlot()), isLeafSlot);
+				} else {
+					inlineMarkObjectNoCheck(env, slotObject->readReferenceFromSlot(), isLeafSlot);
+				}
+				scannedPointers += 1;
+			}
+		}
+		env->addScannedBytes(sizeToDo);
+		env->addScannedPointerFields(scannedPointers);
+		env->incScannedObjects();
+	}
+	return scannedPointers;
 }
 
