@@ -232,6 +232,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>nonapplicable</aot>
 	</test>
 
 	<!-- jit.test.hw tests start here -->
