@@ -3671,6 +3671,8 @@ typedef struct J9JITConfig {
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
+	U_8* (*codeCacheWarmAlloc)(void *codeCache);
+	U_8* (*codeCacheColdAlloc)(void *codeCache);
 } J9JITConfig;
 
 #define J9JIT_GROW_CACHES  0x100000
