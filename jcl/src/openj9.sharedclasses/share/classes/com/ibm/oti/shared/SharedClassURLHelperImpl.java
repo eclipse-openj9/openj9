@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,8 @@ package com.ibm.oti.shared;
  *******************************************************************************/
 
 import java.net.URL;
+import java.util.Set;
+import java.util.HashSet;
 
 import com.ibm.oti.util.Msg;
 
@@ -38,6 +40,9 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 	/* Not public - should only be created by factory */
 	private boolean minimizeUpdateChecks;
 	
+	/* Used to keep track of new jar files */
+	private Set<String> jarFileNameCache = null;
+	
 	/*[PR VMDESIGN 1080] set to "true" in builds in which VMDESIGN 1080 is finished. */
 	// This field is examined using the CDS adaptor
 	public static final boolean MINIMIZE_ENABLED = true;
@@ -47,12 +52,40 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 		initializeShareableClassloader(loader);
 	}
 	
-	private static native void init(); 
+	private static native void init();
+	
+	/* The passed-in URL path contains a jar file */
+	private boolean newJarFileCheck(URL convertedJarPath) {
+		String protocol = convertedJarPath.getProtocol();
+		String jarFile = convertedJarPath.getFile();
+		boolean isJarType = false;
+		
+		if (protocol.equalsIgnoreCase("jar")) { //$NON-NLS-1$
+			isJarType = true;
+		} else if (protocol.equalsIgnoreCase("file")) { //$NON-NLS-1$
+			if (jarFile.endsWith(".jar") || jarFile.endsWith(".zip") //$NON-NLS-1$ //$NON-NLS-2$
+			|| jarFile.contains("!/") || jarFile.contains("!\\") //$NON-NLS-1$ //$NON-NLS-2$
+			) {
+				isJarType = true;
+			}
+		}
+		
+		if (null == jarFileNameCache) {
+			jarFileNameCache = new HashSet<>();
+		}
+		
+		if (isJarType && !jarFileNameCache.contains(jarFile)) {
+			jarFileNameCache.add(jarFile);
+			return true;
+		}
+		
+		return false;
+	}
 
 	private native boolean findSharedClassImpl3(int loaderId, String partition, String className, ClassLoader loader, URL url, 
-			boolean doFind, boolean doStore, byte[] romClassCookie, boolean minUpdateChecks);
+			boolean doFind, boolean doStore, byte[] romClassCookie, boolean newJarFile, boolean minUpdateChecks);
 
-	private native boolean storeSharedClassImpl3(int idloaderId, String partition, ClassLoader loader, URL url, Class<?> clazz, boolean minUpdateChecks, byte[] flags);
+	private native boolean storeSharedClassImpl3(int idloaderId, String partition, ClassLoader loader, URL url, Class<?> clazz, boolean newJarFile, boolean minUpdateChecks, byte[] flags);
 	
 	static {
 		init();
@@ -109,8 +142,10 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 		if (!validateURL(convertedPath, false)) {
 			return null;
 		}
+		
 		byte[] romClassCookie = new byte[ROMCLASS_COOKIE_SIZE];
-		boolean found = findSharedClassImpl3(this.id, partition, className, loader, convertedPath, doFind, doStore, romClassCookie, minimizeUpdateChecks);
+		boolean newJarFile = minimizeUpdateChecks ? false : newJarFileCheck(convertedPath);
+		boolean found = findSharedClassImpl3(this.id, partition, className, loader, convertedPath, doFind, doStore, romClassCookie, newJarFile, minimizeUpdateChecks);
 		if (!found) {
 			return null;
 		}
@@ -142,12 +177,14 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 		if (!validateURL(convertedPath, false)) {
 			return false;
 		}
+		
 		ClassLoader actualLoader = getClassLoader();
 		if (!validateClassLoader(actualLoader, clazz)) {
 			/* Attempt to call storeSharedClass with class defined by a different classloader */
 			return false;
 		}
-		return storeSharedClassImpl3(this.id, partition, actualLoader, convertedPath, clazz, minimizeUpdateChecks, nativeFlags);
+		boolean newJarFile = minimizeUpdateChecks ? false : newJarFileCheck(convertedPath);
+		return storeSharedClassImpl3(this.id, partition, actualLoader, convertedPath, clazz, newJarFile, minimizeUpdateChecks, nativeFlags);
 	}
 
 	@Override
