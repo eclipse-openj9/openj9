@@ -3639,7 +3639,6 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
          case TR_InlinedSpecialMethodWithNopGuard:
          case TR_InlinedVirtualMethodWithNopGuard:
          case TR_InlinedInterfaceMethodWithNopGuard:
-         case TR_InlinedHCRMethod:
             {
             TR_RelocationRecordValidateMethod *record = (TR_RelocationRecordValidateMethod *) reloRecord;
             _dbgPrintf("0x%-16x  0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool, record->cpIndex, record->destinationAddress, record->romClassOffsetInSharedCache);
