@@ -218,14 +218,9 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_InlinedStaticMethodWithNopGuard:
-      case TR_InlinedSpecialMethodWithNopGuard:
-      case TR_InlinedVirtualMethodWithNopGuard:
       case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedVirtualMethod:
-      case TR_InlinedInterfaceMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
-      case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
 
@@ -360,7 +355,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
       case TR_JNISpecialTargetAddress:
       case TR_VirtualRamMethodConst:
-      case TR_SpecialRamMethodConst:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();

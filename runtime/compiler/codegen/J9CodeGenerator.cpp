@@ -2738,7 +2738,6 @@ J9::CodeGenerator::processRelocations()
             case TR_InlinedVirtualMethodWithNopGuard:
             case TR_InlinedInterfaceMethodWithNopGuard:
             case TR_InlinedAbstractMethodWithNopGuard:
-            case TR_InlinedHCRMethod:
             case TR_ProfiledClassGuardRelocation:
             case TR_ProfiledMethodGuardRelocation:
             case TR_ProfiledInlinedMethodRelocation:
