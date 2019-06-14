@@ -10034,7 +10034,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                   return inlineCompareAndSwapNative(node, (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, true, cg);
                else
                   {
-                  inlineCompareAndSwapObjectNative(node, cg);
+                  inlineCompareAndSwapObjectNative(node, cg);  
                   return true;
                   }
                }
