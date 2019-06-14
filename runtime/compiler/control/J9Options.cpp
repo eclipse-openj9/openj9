@@ -274,6 +274,17 @@ enum TR_XlpCodeCacheOptions
    XLPCC_PARSING_ERROR
    };
 
+// Helper structure to parse -XX:JITaaSServer / -XX:JITaaSClient options and env vars
+struct TR_JTIaaSCommonOptions
+   {
+   bool hasAddrOption = false;
+   bool hasSSLKeyOption = false;
+   bool hasSSLCertOption = false;
+   bool hasSSLRootCertsOption = false;
+   bool hasPortOption = false;
+   bool hasTimeoutOption = false;
+   };
+
 // Returns large page flag type string for error handling.
 char *
 getLargePageTypeString(UDATA pageFlags)
@@ -1101,7 +1112,7 @@ static std::string readFileToString(char *fileName)
    return fileStr;
    }
 
-static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::CompilationInfo *compInfo, char **unRecognizedOptions)
+static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::CompilationInfo *compInfo, char **unRecognizedOptions, struct TR_JTIaaSCommonOptions & optionsSet)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
@@ -1112,7 +1123,10 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
       std::string key = readFileToString(fileName);
       j9mem_free_memory(fileName);
       if (!key.empty())
+         {
          compInfo->getPersistentInfo()->addJITaaSSslKey(key);
+         optionsSet.hasSSLKeyOption = true;
+         }
       }
    else if (try_scan(options, "sslCert="))
       {
@@ -1120,7 +1134,10 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
       std::string cert = readFileToString(fileName);
       j9mem_free_memory(fileName);
       if (!cert.empty())
+         {
          compInfo->getPersistentInfo()->addJITaaSSslCert(cert);
+         optionsSet.hasSSLCertOption = true;
+         }
       }
    else if (try_scan(options, "sslRootCerts="))
       {
@@ -1128,11 +1145,18 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
       std::string cert = readFileToString(fileName);
       j9mem_free_memory(fileName);
       compInfo->getPersistentInfo()->setJITaaSSslRootCerts(cert);
+      optionsSet.hasSSLRootCertsOption = true;
       }
    else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "port=", &port))
+      {
       compInfo->getPersistentInfo()->setJITaaSServerPort(port);
+      optionsSet.hasPortOption = true;
+      }
    else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeout))
+      {
       compInfo->getPersistentInfo()->setJITaaSTimeout(timeout);
+      optionsSet.hasTimeoutOption = true;
+      }
    else // option not known
       {
       if (*unRecognizedOptions != *options)
@@ -1144,6 +1168,52 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
          return false;
       }
    return true;
+   }
+
+// This function checks for env vars related to JITaaS and sets options accordingly.
+// The argument optionSet specifies which JITaaS options have been already specified using command line options
+static void JITaaSParseEnvVarCommon(TR::CompilationInfo *compInfo, const struct TR_JTIaaSCommonOptions & optionsSet)
+   {
+   if (!optionsSet.hasAddrOption)
+      {
+      char* address = feGetEnv("TR_JITaaSServerAddress");
+      if (address != NULL)
+         compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
+      }
+   if (!optionsSet.hasSSLKeyOption)
+      {
+      char* fileName = feGetEnv("TR_JITaaSsslKey");
+      std::string key = readFileToString(fileName);
+      if (!key.empty())
+         compInfo->getPersistentInfo()->addJITaaSSslKey(key);
+      }
+   if (!optionsSet.hasSSLCertOption)
+      {
+      char* fileName = feGetEnv("TR_JITaaSsslCert");
+      std::string cert = readFileToString(fileName);
+      if (!cert.empty())
+         compInfo->getPersistentInfo()->addJITaaSSslCert(cert);
+      }
+   if (!optionsSet.hasSSLRootCertsOption)
+      {
+      char* fileName = feGetEnv("TR_JITaaSsslRootCerts");
+      std::string cert = readFileToString(fileName);
+      compInfo->getPersistentInfo()->setJITaaSSslRootCerts(cert);
+      }
+   if (!optionsSet.hasPortOption)
+      {
+      uint32_t* port = (uint32_t*) feGetEnv("TR_JITaaSPort");
+      if (port != NULL)
+         compInfo->getPersistentInfo()->setJITaaSServerPort(*port);
+      }
+   if (!optionsSet.hasTimeoutOption)
+      {
+      uint32_t* timeout = (uint32_t*) feGetEnv("TR_JITaaSTimeout");
+      if (timeout != NULL)
+         compInfo->getPersistentInfo()->setJITaaSTimeout(*timeout);
+      }
+   // add more env var parsings here
+   return;
    }
 
 bool
@@ -2029,9 +2099,12 @@ J9::Options::fePreProcess(void * base)
       }
 
    // Check for option -XX:JITaaSClient and/or -XX:JITaaSServer
+   // also check for environment variable TR_JITaaSServerMode and/or TR_JITaaSClientMode
+   // if both command line option and enviroment variable exist, command line option takes precedence
    static bool JITaaSAlreadyParsed = false;
    if (!JITaaSAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
       {
+      struct TR_JTIaaSCommonOptions optionsSet;
       JITaaSAlreadyParsed = true;
       char *xxJITaaSClientOption = "-XX:JITaaSClient";
       char *xxJITaaSServerOption = "-XX:JITaaSServer";
@@ -2041,55 +2114,73 @@ J9::Options::fePreProcess(void * base)
       if (xxJITaaSClientArgIndex >= 0 || xxJITaaSServerArgIndex >= 0)
          {
          if (xxJITaaSClientArgIndex > xxJITaaSServerArgIndex)   // client mode
-            {
             compInfo->getPersistentInfo()->setJITaaSMode(CLIENT_MODE);
-
-            // parse -XX:JITaaSClient:server=<address/hostname>,port=<number> option if provided
-            char *xxJITaaSClientOptionWithArgs = "-XX:JITaaSClient:"; // tail colon indicates server and port are provided
-            xxJITaaSClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSClientOptionWithArgs, 0);
-            if (xxJITaaSClientArgIndex >= 0)
-               {
-               // retrieve whole option part, i.e., server=<address/hostname>,port=<number>
-               char *options = NULL;
-               GET_OPTION_OPTION(xxJITaaSClientArgIndex, ':', ':', &options);
-
-               char *scanLimit = options + strlen(options);
-               char delimiter = ',';
-               char *unRecognizedOptions = NULL;
-               while (options < scanLimit)
-                  {
-                  if (try_scan(&options, "server=")) // parse server=<address/hostname> option
-                     {
-                     char *address = scan_to_delim(PORTLIB, &options, delimiter);
-                     compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
-                     j9mem_free_memory(address);
-                     }
-                  else if (!JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions))
-                     break;
-                  }
-               }
-            }
-         else                                               // server mode
-            {
+         else                                                  // server mode
             compInfo->getPersistentInfo()->setJITaaSMode(SERVER_MODE);
-
-            // parse -XX:JITaaSServer:port=<number> option if provided
-            char *xxJITaaSServerOptionWithArgs = "-XX:JITaaSServer:"; // tail colon indicates options are provided
-            xxJITaaSServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSServerOptionWithArgs, 0);
-            if (xxJITaaSServerArgIndex >= 0)
+         }
+      // If no option is specified, check for env var TR_JITaaSServerMode, TR_JITaaSClientMode
+      else
+         {
+         char *envVarServerMode = feGetEnv("TR_JITaaSServerMode");
+         char *envVarClientMode = feGetEnv("TR_JITaaSClientMode");
+         if (envVarServerMode != NULL && *(envVarServerMode) == '1' && envVarClientMode != NULL && *(envVarClientMode) == '1')
+            {
+            compInfo->getPersistentInfo()->setJITaaSMode(NONJITaaS_MODE);
+            j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE, "TR_JITaaSServerMode' and 'TR_JITaaSClientMode");
+            }
+         else if (envVarServerMode != NULL && *(envVarServerMode) == '1')
+            compInfo->getPersistentInfo()->setJITaaSMode(SERVER_MODE);
+         else if (envVarClientMode != NULL && *(envVarClientMode) == '1')
+            compInfo->getPersistentInfo()->setJITaaSMode(CLIENT_MODE);
+         }
+      // Parse rest of the options and/or env var
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         {
+         // parse option -XX:JITaaSClient:server=<address/hostname>,port=<number> if provided
+         char *xxJITaaSClientOptionWithArgs = "-XX:JITaaSClient:"; // tail colon indicates server and port are provided
+         xxJITaaSClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSClientOptionWithArgs, 0);
+         if (xxJITaaSClientArgIndex >= 0)
+            {
+            // retrieve whole option part, i.e., server=<address/hostname>,port=<number>
+            char *options = NULL;
+            GET_OPTION_OPTION(xxJITaaSClientArgIndex, ':', ':', &options);
+            char *scanLimit = options + strlen(options);
+            char delimiter = ',';
+            char *unRecognizedOptions = NULL;
+            while (options < scanLimit)
                {
-               // retrieve whole option part, i.e., port=<number>
-               char *options = NULL;
-               GET_OPTION_OPTION(xxJITaaSServerArgIndex, ':', ':', &options);
-
-               char *scanLimit = options + strlen(options);
-               char delimiter = ',';
-               char *unRecognizedOptions = NULL;
-               while (options < scanLimit && JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions));
+               if (try_scan(&options, "server=")) // parse server=<address/hostname> option
+                  {
+                  optionsSet.hasAddrOption = true;
+                  char *address = scan_to_delim(PORTLIB, &options, delimiter);
+                  compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
+                  j9mem_free_memory(address);
+                  }
+               else if (!JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions, optionsSet))
+                  break;
                }
             }
+         // JITaaSParseEnvVarCommon(compInfo, optionsSet);
          }
-      if (compInfo->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE)
+      else if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         {
+         // parse -XX:JITaaSServer:port=<number> option if provided
+         char *xxJITaaSServerOptionWithArgs = "-XX:JITaaSServer:"; // tail colon indicates options are provided
+         xxJITaaSServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSServerOptionWithArgs, 0);
+         if (xxJITaaSServerArgIndex >= 0)
+            {
+            // retrieve whole option part, i.e., port=<number>
+            char *options = NULL;
+            GET_OPTION_OPTION(xxJITaaSServerArgIndex, ':', ':', &options);
+            char *scanLimit = options + strlen(options);
+            char delimiter = ',';
+            char *unRecognizedOptions = NULL;
+            while (options < scanLimit && JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions, optionsSet));
+            }
+         optionsSet.hasAddrOption = true; // since we don't need address in server mode
+         // JITaaSParseEnvVarCommon(compInfo, optionsSet);
+         }
+      else if (compInfo->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE)
          {
          // generate a random identifier for this JITaaS instance.
          // TODO: prevent collisions with some kind of atomic registration algo!
@@ -2270,7 +2361,7 @@ J9::Options::setupJITaaSOptions()
       self()->setOption(TR_DisableEDO); // JITaaS limitation, EDO counters are not relocatable yet
       self()->setOption(TR_DisableKnownObjectTable);
       self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
-      self()->setOption(TR_DisableDecimalFormatPeephole);// JITaas decimalFormatPeephole, 
+      self()->setOption(TR_DisableDecimalFormatPeephole);// JITaas decimalFormatPeephole
 
       if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
