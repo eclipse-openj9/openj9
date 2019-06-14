@@ -27,6 +27,7 @@
  */
 
 #include <errno.h>
+#include <string.h>
 #include <sys/__wlm.h>
 
 #include "atoe.h"
@@ -37,11 +38,8 @@
 #include "ut_j9prt.h"
 
 /* Forward declarations. */
-static int32_t
-computeCpuTime(struct J9PortLibrary *portLibrary, int64_t *cpuTime);
-
-static int32_t
-getProcessorSpeed(struct J9PortLibrary *portLibrary, int64_t *cpuSpeed);
+static int32_t computeCpuTime(struct J9PortLibrary *portLibrary, int64_t *cpuTime);
+static int32_t getProcessorSpeed(struct J9PortLibrary *portLibrary, int64_t *cpuSpeed);
 
 intptr_t
 retrieveZGuestMemoryStats(struct J9PortLibrary *portLibrary, struct J9GuestMemoryUsage *gmUsage)
