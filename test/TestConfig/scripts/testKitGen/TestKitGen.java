@@ -459,9 +459,14 @@ public class TestKitGen {
                             break;
                         } else {
                             try {
-                                if (Integer.parseInt(subset) <= Integer.parseInt(options.get("jdkVersion"))) {
-                                    isValidSubset = true;
-                                    break;
+                                Pattern pattern = Pattern.compile("^(.*)\\+$");
+                                Matcher matcher = pattern.matcher(subset);
+
+                                if (matcher.matches()) {
+                                    if (Integer.parseInt(matcher.group(1)) <= Integer.parseInt(options.get("jdkVersion"))) {
+                                        isValidSubset = true;
+                                        break;
+                                    }
                                 }
                             } catch (NumberFormatException e) {
                                 // Nothing to do
