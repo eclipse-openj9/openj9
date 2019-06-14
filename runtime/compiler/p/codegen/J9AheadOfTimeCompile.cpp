@@ -193,7 +193,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
       case TR_JNISpecialTargetAddress:
       case TR_VirtualRamMethodConst:
-      case TR_SpecialRamMethodConst:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
@@ -525,14 +524,9 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_InlinedStaticMethodWithNopGuard:
-      case TR_InlinedSpecialMethodWithNopGuard:
-      case TR_InlinedVirtualMethodWithNopGuard:
       case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedVirtualMethod:
-      case TR_InlinedInterfaceMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
-      case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
@@ -543,6 +537,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             flags = inlinedMethodIsSpecial;
          if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
             flags = inlinedMethodIsVirtual;
+
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
