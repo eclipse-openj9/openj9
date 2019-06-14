@@ -40,6 +40,8 @@ IDATA j9shr_sharedClassesFinishInitialization(J9JavaVM *vm);
 void j9shr_guaranteed_exit(J9JavaVM *vm, BOOLEAN exitForDebug);
 void j9shr_shutdown(J9JavaVM *vm);
 IDATA j9shr_print_stats(J9JavaVM *vm, UDATA parseResult, U_64 runtimeFlags, UDATA printStatsOptions);
+void j9shr_updateClasspathOpenState(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, UDATA entryIndex, UDATA entryCount, BOOLEAN isOpen);
+
 void hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
 void hookSerializeSharedCache(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
 void hookStoreSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
@@ -183,6 +185,8 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_ADJUST_MAXAOT_EQUALS "adjustmaxaot="
 #define OPTION_ADJUST_MINJITDATA_EQUALS "adjustminjitdata="
 #define OPTION_ADJUST_MAXJITDATA_EQUALS "adjustmaxjitdata="
+#define OPTION_NO_URL_TIMESTAMP_CHECK "noCheckURLTimestamps"
+#define OPTION_URL_TIMESTAMP_CHECK "checkURLTimestamps"
 
 /* public options for printallstats= and printstats=  */
 #define SUB_OPTION_PRINTSTATS_ALL "all"

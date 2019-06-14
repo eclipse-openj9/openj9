@@ -211,6 +211,7 @@
 	<export name="Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl2" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl2" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3" />
