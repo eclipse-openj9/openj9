@@ -87,7 +87,8 @@ TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/opensource/include)
 TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/noship/include)
 TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
 
-TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unused-but-set-variable -Wno-write-strings
+TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unused-but-set-variable -Wno-write-strings -fno-delete-null-pointer-checks -fno-tree-dse -fno-lifetime-dse -fno-optimize-strlen
+ 
 
 #
 # First setup C and C++ compilers.
