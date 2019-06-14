@@ -972,7 +972,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                (uint16_t) handler, (uint32_t) type);
          }
 
-      TR::CFG cfg(comp(), calltarget->_calleeSymbol);
+      TR::CFG cfg(comp(), calltarget->_calleeSymbol, comp()->trMemory()->currentStackRegion());
       cfg.setStartAndEnd(new (comp()->trStackMemory()) TR::Block(
             TR::TreeTop::create(comp(), TR::Node::createOnStack(NULL,
                   TR::BBStart, 0)), TR::TreeTop::create(comp(),
@@ -1045,7 +1045,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                debugTrace(tracer(),"adding a fallthrough edge between block %p %d and %p %d", currentBlock, currentBlock->getNumber(), newBlock, newBlock->getNumber());
                debugTrace(tracer(),"joining nodes between blocks %p %d and %p %d", currentBlock, currentBlock->getNumber(), newBlock, newBlock->getNumber());
                currentBlock->getExit()->join(newBlock->getEntry());
-               cfg.addEdge(currentBlock, newBlock, stackAlloc);
+               cfg.addEdge(currentBlock, newBlock);
                } 
             else 
                {
@@ -1111,20 +1111,20 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   setupLastTreeTop(currentBlock, bc, i, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), calltarget->_calleeMethod, comp());
                   cfg.addEdge(currentBlock, getBlock(comp(), blocks,
                         calltarget->_calleeMethod, i + bci.relativeBranch(),
-                        cfg), stackAlloc);
+                        cfg));
                   addFallThruEdge = true;
                   break;
                   }
                case J9BCgoto:
                case J9BCgotow:
                   setupLastTreeTop(currentBlock, bc, i, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), stackAlloc);
+                  cfg.addEdge(currentBlock, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg));
                   addFallThruEdge = false;
                   break;
                case J9BCgenericReturn:
                case J9BCathrow:
                   setupLastTreeTop(currentBlock, bc, i, cfg.getEnd()->asBlock(), calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, cfg.getEnd(), stackAlloc);
+                  cfg.addEdge(currentBlock, cfg.getEnd());
                   addFallThruEdge = false;
                   break;
                case J9BCtableswitch:
@@ -1135,13 +1135,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                               index), cfg);
                   setupLastTreeTop(currentBlock, bc, i, defaultBlock,
                         calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, defaultBlock, stackAlloc);
+                  cfg.addEdge(currentBlock, defaultBlock);
                   int32_t low = bci.nextSwitchValue(index);
                   int32_t high = bci.nextSwitchValue(index) - low + 1;
                   for (int32_t j = 0; j < high; ++j)
                      cfg.addEdge(currentBlock, getBlock(comp(), blocks,
                            calltarget->_calleeMethod, i + bci.nextSwitchValue(
-                                 index), cfg), stackAlloc);
+                                 index), cfg));
                   addFallThruEdge = false;
                   break;
                   }
@@ -1153,14 +1153,14 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                               index), cfg);
                   setupLastTreeTop(currentBlock, bc, i, defaultBlock,
                         calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, defaultBlock, stackAlloc);
+                  cfg.addEdge(currentBlock, defaultBlock);
                   int32_t tableSize = bci.nextSwitchValue(index);
                   for (int32_t j = 0; j < tableSize; ++j)
                      {
                      index += 4; // match value
                      cfg.addEdge(currentBlock, getBlock(comp(), blocks,
                            calltarget->_calleeMethod, i + bci.nextSwitchValue(
-                                 index), cfg), stackAlloc);
+                                 index), cfg));
                      }
                   addFallThruEdge = false;
                   break;
@@ -1182,7 +1182,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
          for (int32_t j = handlerInfo->_startIndex; j <= handlerInfo->_endIndex; ++j)
             if (blocks[j])
-               cfg.addExceptionEdge(blocks[j], blocks[handlerInfo->_handlerIndex], stackAlloc);
+               cfg.addExceptionEdge(blocks[j], blocks[handlerInfo->_handlerIndex]);
          }
 
       // Adjust call frequency for unknown or direct calls, for which we don't get profiling information
