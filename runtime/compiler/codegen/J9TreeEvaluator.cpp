@@ -713,6 +713,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
    //
    if (objectNode->isNull())
       {
+      if (instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcastAndNULLCHK)
+            sequences[i++] = NullTest;
       sequences[i++] = isInstanceOf ? GoToFalse : GoToTrue;
       }
    // Cast class is unresolved, not a lot of room to be fancy here.
