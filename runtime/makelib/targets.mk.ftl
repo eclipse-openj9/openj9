@@ -160,7 +160,7 @@ CPPFLAGS+=$(UMA_C_INCLUDES)
 # Put the required z/TPF tools on the path.
 space :=
 space +=
-PATH := $(subst $(space),:,$(foreach d,$(TPF_ROOT),$d/linux/bin)):/opt/gcc/java46/bin:<#noparse>$(PATH)</#noparse>
+PATH := $(subst $(space),:,$(foreach d,$(TPF_ROOT),$d/linux/bin)):<#noparse>$(PATH)</#noparse>
 
 TPF_INCLUDES := $(foreach d,$(TPF_ROOT),-I$d/base/a2e/headers)
 TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/base/include)
@@ -175,12 +175,13 @@ TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
 TPF_FLAGS := -D_GNU_SOURCE -DIBM_ATOE -D_TPF_SOURCE -DZTPF_POSIX_SOCKET -DJ9ZTPF
 TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-write-strings
 TPF_FLAGS += -Wno-unused
-TPF_FLAGS += -fno-delete-null-pointer-checks
+TPF_FLAGS += -fno-delete-null-pointer-checks -fno-tree-dse -fno-lifetime-dse -fno-optimize-strlen
+TPF_C_FLAGS := -std=gnu90
 </#if>
 
 <#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined && uma.spec.properties.tpfProj.defined>
 
-CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -iquote ../include
+CFLAGS += $(TPF_FLAGS) $(TPF_C_FLAGS) $(TPF_INCLUDES) -iquote ../include
 CXXFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES)
 CPPFLAGS+= -I$(UMA_PATH_TO_ROOT)oti
 
