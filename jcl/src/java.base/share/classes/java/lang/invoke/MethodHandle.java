@@ -960,6 +960,150 @@ public abstract class MethodHandle
 	private static final int BSM_TYPE_ARGUMENT_INDEX = 2;
 	private static final int BSM_OPTIONAL_ARGUMENTS_START_INDEX = 3;
 	
+	/**
+	 * Gets class object from RAM class address
+	 * @param j9class RAM class address
+	 * @return class object
+	 * @throws Throwable any throwable will be handled by the caller
+	 */
+	private static final Class<?> getClassFromJ9Class(long j9class) throws Throwable {
+		Class<?> classObject = null;
+		if (JITHELPERS.is32Bit()) {
+			classObject = JITHELPERS.getClassFromJ9Class32((int)j9class);
+		} else {
+			classObject = JITHELPERS.getClassFromJ9Class64(j9class);
+		}
+		Objects.requireNonNull(classObject);
+		return classObject;
+	}
+
+	/**
+	 * Retrieve a static argument of the bootstrap method at argIndex from constant pool
+	 * @param access
+	 * @param internalRamClass
+	 * @param classObject RAM class object
+	 * @param bsm bootstrap method
+	 * @param bsmArgs starting address of bootstrap arguments in the RAM class call site
+	 * @param bsmTypeArgCount number of bootstrap arguments
+	 * @param argIndex index of bsm argument starting from zero. Argument should be in addition to the first three 
+	 * 	mandatory arguments (3+): MethodHandles.Lookup, String, MethodType
+	 * @return additional argument from the constant pool
+	 * @throws Throwable any throwable will be handled by the caller
+	 */
+	private static final Object getAdditionalBsmArg(VMLangAccess access, Object internalRamClass, Class<?> classObject, MethodHandle bsm, long bsmArgs, int bsmTypeArgCount, int argIndex) throws Throwable {
+		/* Check if we need to treat the last parameter specially when handling primitives.
+		 * The type of the varargs array will determine how primitive ints from the constantpool
+		 * get boxed: {Boolean, Byte, Short, Character or Integer}.
+		 */ 
+		boolean treatLastArgAsVarargs = bsm.isVarargsCollector();
+
+		/* internalRamClass is not a j.l.Class object but the ConstantPool natives know how to
+		* get the internal constantPool from the j9class
+		*/
+		ConstantPool cp = access.getConstantPool(internalRamClass);
+
+		int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + argIndex;
+		short index = UNSAFE.getShort(bsmArgs + (argIndex * BSM_ARGUMENT_SIZE));
+		int cpType = getCPTypeAt(internalRamClass, index);
+		Object cpEntry = null;
+		switch (cpType) {
+		case 1:
+			cpEntry = cp.getClassAt(index);
+			if (cpEntry == null) {
+				throw throwNoClassDefFoundError(classObject, index);
+			}
+			break;
+		case 2:
+			cpEntry = cp.getStringAt(index);
+			break;
+		case 3: {
+			int cpValue = cp.getIntAt(index);
+			Class<?> argClass = null;
+			if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
+				argClass = bsm.type.lastParameterType().getComponentType(); /* varargs component type */
+			} else {
+				/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
+				* If the number of static arguments is greater than the number of argument slots in the bsm
+				* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
+				*/
+				if (staticArgIndex < bsmTypeArgCount) {
+					argClass = bsm.type.parameterType(staticArgIndex);
+				}
+			}
+			if (argClass == Short.TYPE) {
+				cpEntry = (short) cpValue;
+			} else if (argClass == Boolean.TYPE) {
+				cpEntry = cpValue == 0 ? Boolean.FALSE : Boolean.TRUE;
+			} else if (argClass == Byte.TYPE) {
+				cpEntry = (byte) cpValue;
+			} else if (argClass == Character.TYPE) {
+				cpEntry = (char) cpValue;
+			} else {
+				cpEntry = cpValue;
+			}
+			break;
+		}
+		case 4:
+			cpEntry = cp.getFloatAt(index);
+			break;
+		case 5:
+			cpEntry = cp.getLongAt(index);
+			break;
+		case 6:
+			cpEntry = cp.getDoubleAt(index);
+			break;
+		case 13:
+			cpEntry = getCPMethodTypeAt(internalRamClass, index);
+			break;
+		case 14:
+			cpEntry = getCPMethodHandleAt(internalRamClass, index);
+			break;
+/*[IF Java11]*/
+		case 17:
+			cpEntry = getCPConstantDynamicAt(internalRamClass, index);
+			break;
+/*[ENDIF] Java11*/
+		default:
+			// Do nothing. The null check below will throw the appropriate exception.
+		}
+		
+		cpEntry.getClass();	// Implicit NPE
+		return cpEntry;
+	}
+
+	/**
+	 * Invoke bootstrap method with its static arguments
+	 * @param bsm
+	 * @param staticArgs
+	 * @return result of bsm invocation
+	 * @throws Throwable any throwable will be handled by the caller
+	 */
+	private static final Object invokeBsm(MethodHandle bsm, Object[] staticArgs) throws Throwable {
+		Object result = null;
+		/* Take advantage of the per-MH asType cache */
+		switch(staticArgs.length) {
+		case 3:
+			result = bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2]);
+			break;
+		case 4:
+			result = bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3]);
+			break;
+		case 5:
+			result = bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4]);
+			break;
+		case 6:
+			result = bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4], staticArgs[5]);
+			break;
+		case 7:
+			result = bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4], staticArgs[5], staticArgs[6]);
+			break;
+		default:
+			result = bsm.invokeWithArguments(staticArgs);
+			break;
+		}
+		return result;
+	}
+
 /*[IF Java11]*/
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
@@ -970,20 +1114,12 @@ public abstract class MethodHandle
 	@SuppressWarnings("unused")
 	private static final Object resolveConstantDynamic(long j9class, String name, String fieldDescriptor, long bsmData) throws Throwable {
 		Object result = null;
-		Class<?> typeClass = null;
 
 		VMLangAccess access = VM.getVMLangAccess();
 		Object internalRamClass = access.createInternalRamClass(j9class);
-		Class<?> classObject = null;
-		if (JITHELPERS.is32Bit()) {
-			classObject = JITHELPERS.getClassFromJ9Class32((int)j9class);
-		} else {
-			classObject = JITHELPERS.getClassFromJ9Class64(j9class);
-		}
+		Class<?> classObject = getClassFromJ9Class(j9class);
 
-		Objects.requireNonNull(classObject);
-
-		typeClass = fromFieldDescriptorString(fieldDescriptor, access.getClassloader(classObject));
+		Class<?> typeClass = fromFieldDescriptorString(fieldDescriptor, access.getClassloader(classObject));
 
 		int bsmIndex = UNSAFE.getShort(bsmData);
 		int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
@@ -1000,17 +1136,6 @@ public abstract class MethodHandle
 		staticArgs[BSM_TYPE_ARGUMENT_INDEX] = typeClass;
 
 		/* Static optional arguments */
-		/* internalRamClass is not a j.l.Class object but the ConstantPool natives know how to
-		 * get the internal constantPool from the j9class
-		 */
-		ConstantPool cp = access.getConstantPool(internalRamClass);
-
-		/* Check if we need to treat the last parameter specially when handling primitives.
-		 * The type of the varargs array will determine how primitive ints from the constantpool
-		 * get boxed: {Boolean, Byte, Short, Character or Integer}.
-		 */
-		boolean treatLastArgAsVarargs = bsm.isVarargsCollector();
-		Class<?> varargsComponentType = bsm.type.lastParameterType().getComponentType();
 		int bsmTypeArgCount = bsm.type.parameterCount();
 
 		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
@@ -1023,71 +1148,7 @@ public abstract class MethodHandle
 		}
 
 		for (int i = 0; i < bsmArgCount; i++) {
-			int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
-			short index = UNSAFE.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
-			int cpType = getCPTypeAt(internalRamClass, index);
-			Object cpEntry = null;
-			switch (cpType) {
-			case 1:
-				cpEntry = cp.getClassAt(index);
-				if (cpEntry == null) {
-					throw throwNoClassDefFoundError(classObject, index);
-				}
-				break;
-			case 2:
-				cpEntry = cp.getStringAt(index);
-				break;
-			case 3: {
-				int cpValue = cp.getIntAt(index);
-				Class<?> argClass = null;
-				if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
-					argClass = varargsComponentType;
-				} else {
-					/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
-					* If the number of static arguments is greater than the number of argument slots in the bsm
-					* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
-					*/
-					if (staticArgIndex < bsmTypeArgCount) {
-						argClass = bsm.type.parameterType(staticArgIndex);
-					}
-				}
-				if (argClass == Short.TYPE) {
-					cpEntry = (short) cpValue;
-				} else if (argClass == Boolean.TYPE) {
-					cpEntry = cpValue == 0 ? Boolean.FALSE : Boolean.TRUE;
-				} else if (argClass == Byte.TYPE) {
-					cpEntry = (byte) cpValue;
-				} else if (argClass == Character.TYPE) {
-					cpEntry = (char) cpValue;
-				} else {
-					cpEntry = cpValue;
-				}
-				break;
-			}
-			case 4:
-				cpEntry = cp.getFloatAt(index);
-				break;
-			case 5:
-				cpEntry = cp.getLongAt(index);
-				break;
-			case 6:
-				cpEntry = cp.getDoubleAt(index);
-				break;
-			case 13:
-				cpEntry = getCPMethodTypeAt(internalRamClass, index);
-				break;
-			case 14:
-				cpEntry = getCPMethodHandleAt(internalRamClass, index);
-				break;
-			case 17:
-				cpEntry = getCPConstantDynamicAt(internalRamClass, index);
-				break;
-			default:
-				// Do nothing. The null check below will throw the appropriate exception.
-			}
-
-			cpEntry.getClass();	// Implicit NPE
-			staticArgs[staticArgIndex] = cpEntry;
+			staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 		}
 
 		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
@@ -1096,29 +1157,8 @@ public abstract class MethodHandle
 		 * Exceptions thrown before invocation should be passed through unwrapped.
 		 */
 		try {
-			/* Take advantage of the per-MH asType cache */
-			switch(staticArgs.length) {
-			case 3:
-				result = (Object) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2]);
-				break;
-			case 4:
-				result = (Object) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3]);
-				break;
-			case 5:
-				result = (Object) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4]);
-				break;
-			case 6:
-				result = (Object) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4], staticArgs[5]);
-				break;
-			case 7:
-				result = (Object) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4], staticArgs[5], staticArgs[6]);
-				break;
-			default:
-				result = (Object) bsm.invokeWithArguments(staticArgs);
-				break;
-			}
-
-			// result validation
+			result = (Object)invokeBsm(bsm, staticArgs);
+			/* result validation */
 			result = MethodHandles.identity(typeClass).invoke(result);
 		} catch(Throwable e) {
 			if (e instanceof Error) {
@@ -1144,14 +1184,7 @@ public abstract class MethodHandle
 /*[ENDIF]*/
 			VMLangAccess access = VM.getVMLangAccess();
 			Object internalRamClass = access.createInternalRamClass(j9class);
-			Class<?> classObject = null;
-			if (JITHELPERS.is32Bit()) {
-				classObject = JITHELPERS.getClassFromJ9Class32((int)j9class);
-			} else {
-				classObject = JITHELPERS.getClassFromJ9Class64(j9class);
-			}
-			
-			Objects.requireNonNull(classObject);
+			Class<?> classObject = getClassFromJ9Class(j9class);
 			
 			type = MethodType.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
 			final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject, false);
@@ -1177,87 +1210,9 @@ public abstract class MethodHandle
 			staticArgs[BSM_TYPE_ARGUMENT_INDEX] = type;
 		
 			/* Static optional arguments */
-			/* internalRamClass is not a j.l.Class object but the ConstantPool natives know how to
-			 * get the internal constantPool from the j9class
-			 */
-			ConstantPool cp = access.getConstantPool(internalRamClass);
-
-			/* Check if we need to treat the last parameter specially when handling primitives.
-			 * The type of the varargs array will determine how primitive ints from the constantpool
-			 * get boxed: {Boolean, Byte, Short, Character or Integer}.
-			 */ 
-			boolean treatLastArgAsVarargs = bsm.isVarargsCollector();
-			Class<?> varargsComponentType = bsm.type.lastParameterType().getComponentType();
 			int bsmTypeArgCount = bsm.type.parameterCount();
-
 			for (int i = 0; i < bsmArgCount; i++) {
-				int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
-				short index = UNSAFE.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
-				int cpType = getCPTypeAt(internalRamClass, index);
-				Object cpEntry = null;
-				switch (cpType) {
-				case 1:
-					cpEntry = cp.getClassAt(index);
-					if (cpEntry == null) {
-						throw throwNoClassDefFoundError(classObject, index);
-					}
-					break;
-				case 2:
-					cpEntry = cp.getStringAt(index);
-					break;
-				case 3: {
-					int cpValue = cp.getIntAt(index);
-					Class<?> argClass = null;
-					if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
-						argClass = varargsComponentType;
-					} else {
-						/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
-						* If the number of static arguments is greater than the number of argument slots in the bsm
-						* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
-						*/
-						if (staticArgIndex < bsmTypeArgCount) {
-							argClass = bsm.type.parameterType(staticArgIndex);
-						}
-					}
-					if (argClass == Short.TYPE) {
-						cpEntry = (short) cpValue;
-					} else if (argClass == Boolean.TYPE) {
-						cpEntry = cpValue == 0 ? Boolean.FALSE : Boolean.TRUE;
-					} else if (argClass == Byte.TYPE) {
-						cpEntry = (byte) cpValue;
-					} else if (argClass == Character.TYPE) {
-						cpEntry = (char) cpValue;
-					} else {
-						cpEntry = cpValue;
-					}
-					break;
-				}
-				case 4:
-					cpEntry = cp.getFloatAt(index);
-					break;
-				case 5:
-					cpEntry = cp.getLongAt(index);
-					break;
-				case 6:
-					cpEntry = cp.getDoubleAt(index);
-					break;
-				case 13:
-					cpEntry = getCPMethodTypeAt(internalRamClass, index);
-					break;
-				case 14:
-					cpEntry = getCPMethodHandleAt(internalRamClass, index);
-					break;
-/*[IF Java11]*/
-				case 17:
-					cpEntry = getCPConstantDynamicAt(internalRamClass, index);
-					break;
-/*[ENDIF] Java11*/
-				default:
-					// Do nothing. The null check below will throw the appropriate exception.
-				}
-				
-				cpEntry.getClass();	// Implicit NPE
-				staticArgs[staticArgIndex] = cpEntry;
+				staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 			}
 
 /*[IF Java11]*/
@@ -1268,29 +1223,7 @@ public abstract class MethodHandle
 		 */
 		try {
 /*[ENDIF]*/
-			/* Take advantage of the per-MH asType cache */
-			CallSite cs = null;
-			switch(staticArgs.length) {
-			case 3:
-				cs = (CallSite) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2]);
-				break;
-			case 4:
-				cs = (CallSite) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3]);
-				break;
-			case 5:
-				cs = (CallSite) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4]);
-				break;
-			case 6:
-				cs = (CallSite) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4], staticArgs[5]);
-				break;
-			case 7:
-				cs = (CallSite) bsm.invoke(staticArgs[0], staticArgs[1], staticArgs[2], staticArgs[3], staticArgs[4], staticArgs[5], staticArgs[6]);
-				break;
-			default:
-				cs = (java.lang.invoke.CallSite) bsm.invokeWithArguments(staticArgs);
-				break;
-			}
-			
+			CallSite cs = (CallSite)invokeBsm(bsm, staticArgs);
 			if (cs != null) {
 				MethodType callsiteType = cs.type();
 				if (callsiteType != type) {
