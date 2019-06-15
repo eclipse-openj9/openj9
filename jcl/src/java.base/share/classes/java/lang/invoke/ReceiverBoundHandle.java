@@ -121,7 +121,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	 */
 	/*[ENDIF]*/
 	final void nullCheckReceiverIfNonStatic(){
-		if ((receiver == null) && !Modifier.isStatic(final_modifiers)) {
+		if (!isStatic && (receiver == null)) {
 			receiver.getClass(); // Deliberate NPE
 		}
 	}
