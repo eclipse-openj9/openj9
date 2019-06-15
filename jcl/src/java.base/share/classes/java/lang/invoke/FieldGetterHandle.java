@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ final class FieldGetterHandle extends FieldHandle {
 	// {{{ JIT support
 	@FrameIteratorSkip
 	private final int    invokeExact_thunkArchetype_I(Object receiver, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getIntVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
 			return UNSAFE.getInt        (receiver, vmSlot + HEADER_SIZE);
@@ -63,7 +63,7 @@ final class FieldGetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final long   invokeExact_thunkArchetype_J(Object receiver, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getLongVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
 			return UNSAFE.getLong        (receiver, vmSlot + HEADER_SIZE);
@@ -71,7 +71,7 @@ final class FieldGetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final float  invokeExact_thunkArchetype_F(Object receiver, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getFloatVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
 			return UNSAFE.getFloat        (receiver, vmSlot + HEADER_SIZE);
@@ -79,7 +79,7 @@ final class FieldGetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(Object receiver, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getDoubleVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
 			return UNSAFE.getDouble        (receiver, vmSlot + HEADER_SIZE);
@@ -87,7 +87,7 @@ final class FieldGetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(Object receiver, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getObjectVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
 			return UNSAFE.getObject        (receiver, vmSlot + HEADER_SIZE);

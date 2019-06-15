@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(int    newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putIntVolatile(defc, vmSlot, newValue);
 		else
 			UNSAFE.putInt        (defc, vmSlot, newValue);
@@ -64,7 +64,7 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(long   newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putLongVolatile(defc, vmSlot, newValue);
 		else
 			UNSAFE.putLong        (defc, vmSlot, newValue);
@@ -73,7 +73,7 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(float  newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putFloatVolatile(defc, vmSlot, newValue);
 		else
 			UNSAFE.putFloat        (defc, vmSlot, newValue);
@@ -82,7 +82,7 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(double newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putDoubleVolatile(defc, vmSlot, newValue);
 		else
 			UNSAFE.putDouble        (defc, vmSlot, newValue);
@@ -91,7 +91,7 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putObjectVolatile(defc, vmSlot, newValue);
 		else
 			UNSAFE.putObject        (defc, vmSlot, newValue);
