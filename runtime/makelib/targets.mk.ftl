@@ -364,6 +364,7 @@ DDR_NOLIST := <#if uma.spec.type.zos>-Wc,noconvlit -Wc,nolist,nooffset</#if>
 # just create empty output files
 %.i : %.asm ; touch $@
 %.i : %.m4  ; touch $@
+%.i : %.mc  ; touch $@
 %.i : %.s   ; touch $@
 
 <#if uma.spec.type.windows>
