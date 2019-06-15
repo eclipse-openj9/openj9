@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ final class StaticFieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final int    invokeExact_thunkArchetype_I(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getIntVolatile(defc, vmSlot);
 		else
 			return UNSAFE.getInt        (defc, vmSlot);
@@ -64,7 +64,7 @@ final class StaticFieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final long   invokeExact_thunkArchetype_J(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getLongVolatile(defc, vmSlot);
 		else
 			return UNSAFE.getLong        (defc, vmSlot);
@@ -73,7 +73,7 @@ final class StaticFieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final float  invokeExact_thunkArchetype_F(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getFloatVolatile(defc, vmSlot);
 		else
 			return UNSAFE.getFloat        (defc, vmSlot);
@@ -82,7 +82,7 @@ final class StaticFieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getDoubleVolatile(defc, vmSlot);
 		else
 			return UNSAFE.getDouble        (defc, vmSlot);
@@ -91,7 +91,7 @@ final class StaticFieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			return UNSAFE.getObjectVolatile(defc, vmSlot);
 		else
 			return UNSAFE.getObject        (defc, vmSlot);

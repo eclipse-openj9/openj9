@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ final class FieldSetterHandle extends FieldHandle {
 	// {{{ JIT support
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, int    newValue, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putIntVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
 		else
 			UNSAFE.putInt        (receiver, vmSlot + HEADER_SIZE, newValue);
@@ -65,7 +65,7 @@ final class FieldSetterHandle extends FieldHandle {
 	
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, long   newValue, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putLongVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
 		else
 			UNSAFE.putLong        (receiver, vmSlot + HEADER_SIZE, newValue);
@@ -73,7 +73,7 @@ final class FieldSetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, float  newValue, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putFloatVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
 		else
 			UNSAFE.putFloat        (receiver, vmSlot + HEADER_SIZE, newValue);
@@ -81,7 +81,7 @@ final class FieldSetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, double newValue, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putDoubleVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
 		else
 			UNSAFE.putDouble        (receiver, vmSlot + HEADER_SIZE, newValue);
@@ -89,7 +89,7 @@ final class FieldSetterHandle extends FieldHandle {
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, Object newValue, int argPlaceholder) {
-		if (Modifier.isVolatile(final_modifiers))
+		if (isVolatile)
 			UNSAFE.putObjectVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
 		else
 			UNSAFE.putObject        (receiver, vmSlot + HEADER_SIZE, newValue);
