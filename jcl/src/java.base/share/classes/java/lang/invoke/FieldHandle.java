@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,14 +34,14 @@ import java.lang.reflect.Modifier;
 /*[ENDIF]*/
 abstract class FieldHandle extends PrimitiveHandle {
 	final Class<?> fieldClass;
-	final int final_modifiers;
+	final boolean isVolatile;
 	
 	FieldHandle(MethodType type, Class<?> referenceClass, String fieldName, Class<?> fieldClass, byte kind, Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException { 	
 		super(type, referenceClass, fieldName, kind, null);
 		this.fieldClass = fieldClass;
 		/* modifiers is set inside the native */
 		this.defc = finishFieldInitialization(accessClass);
-		final_modifiers = rawModifiers;
+		isVolatile = Modifier.isVolatile(rawModifiers);
 		assert(isVMSlotCorrectlyTagged());
 	}
 	
@@ -54,14 +54,14 @@ abstract class FieldHandle extends PrimitiveHandle {
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
-		final_modifiers = rawModifiers;
+		isVolatile = Modifier.isVolatile(rawModifiers);
 		assert(isVMSlotCorrectlyTagged());
 	}
 	
 	FieldHandle(FieldHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 		this.fieldClass = originalHandle.fieldClass;
-		final_modifiers = rawModifiers;
+		this.isVolatile = originalHandle.isVolatile;
 		assert(isVMSlotCorrectlyTagged());
 	}
 
