@@ -2914,16 +2914,13 @@ outOfProcessCompilationEnd(
    auto compInfoPT = ((TR::CompilationInfoPerThreadRemote*)(entry->_compInfoPT));
 
    TR::CodeCache *codeCache = comp->cg()->getCodeCache();
-#if 0
-   OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*) (comp->getOptimizationPlan()->_mandatoryCodeAddress);
-#else
+
    J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
    TR_ASSERT(aotMethodHeader, "The header must have been set");
    TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
 
    U_8 *codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
    OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*)codeStart;
-#endif
 
    TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
    TR_ASSERT(dataCache, "A dataCache must be reserved for JITaaS compilations\n");
