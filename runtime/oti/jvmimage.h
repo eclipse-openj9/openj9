@@ -25,4 +25,10 @@
 
 #define OMRPORT_FROM_IMAGE JVMImage::getInstance()->getPortLibrary();
 
+struct JVMImageHeader
+{
+	UDATA imageSize;
+	uintptr_t heapAddress;
+};
+
 #endif
