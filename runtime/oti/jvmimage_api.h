@@ -36,7 +36,7 @@ extern "C" {
 * 
 * @param size[in] size to allocate
 *
-* returns pointer to allocated memory on success, NULL on failure 
+* @return pointer to allocated memory on success, NULL on failure 
 */
 void* mem_allocate_memory(uintptr_t byteAmount);
 
@@ -48,7 +48,7 @@ void* mem_allocate_memory(uintptr_t byteAmount);
 * @param callSite[in] location memory alloc is called from
 * @param category[in] category of memory alloc
 *
-* returns pointer to allocated memory on success, NULL on failure 
+* @return pointer to allocated memory on success, NULL on failure 
 */
 void* image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category);
 
@@ -75,6 +75,35 @@ void image_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPoint
 * @return 0 on fail, 1 on success
 */
 UDATA initializeJVMImage(J9JavaVM *vm);
+
+/*
+* Registers class loader in table
+*
+* @param classLoader[in] J9ClassLoader to register
+*/
+void registerClassLoader(J9ClassLoader *classLoader);
+
+/*
+* Registers class segment in table
+*
+* @param clazz[in] J9Class to register
+*/
+void registerClassSegment(J9Class *clazz);
+
+/*
+* Registers class path entry in table
+*
+* @param cpEntry[in] J9ClassPathEntry to register
+*/
+void registerCPEntry(J9ClassPathEntry *cpEntry);
+
+/*
+* Returns the port library used by the image
+* Do not use directly but through macro defined in jvmimage.h
+*
+* @return pointer to port library of image on success, NULL on failure
+*/
+OMRPortLibrary* getImagePortLibrary();
 
 /*
 * Shut down sequence of JVMImage

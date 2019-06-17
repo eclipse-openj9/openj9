@@ -23,7 +23,39 @@
 #ifndef jvmimage_h
 #define jvmimage_h
 
-#define OMRPORT_FROM_IMAGE JVMImage::getInstance()->getPortLibrary();
+#define IS_WARM_RUN(javaVM) J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_RAMSTATE_WARM_RUN)
+#define IS_COLD_RUN(javaVM) J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_RAMSTATE_COLD_RUN)
+#define OMRPORT_FROM_IMAGE() getImagePortLibrary()
+
+#define INITIAL_CLASSLOADER_TABLE_SIZE 3
+#define INITIAL_CLASS_TABLE_SIZE 10
+#define INITIAL_CLASSPATH_TABLE_SIZE 10
+
+enum ImageRC {
+	IMAGE_OK = BCT_ERR_NO_ERROR,
+	IMAGE_ERROR = BCT_ERR_GENERIC_ERROR,
+};
+
+/* forward struct declarations */
+struct ImageTableHeader;
+struct JVMImageData;
+
+//allows us to dump this struct into file and reload easier
+//allocated space for image data is longer than sizeof(JVMImageData)
+typedef struct JVMImageData {
+	UDATA imageSize;
+	J9WSRP classLoaderTable;
+	J9WSRP classSegmentTable;
+	J9WSRP classPathEntryTable;
+} JVMImageData;
+
+//table allows us to walk through different stored structures
+typedef struct ImageTableHeader {
+	J9WSRP tableHead;
+	J9WSRP tableTail; //tail needed for O(1) append
+	UDATA tableSize;
+	UDATA currentSize;
+} ImageTableHeader;
 
 struct JVMImageHeader
 {

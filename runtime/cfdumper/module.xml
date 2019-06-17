@@ -40,6 +40,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<vpaths>
 			<vpath pattern="ut_j9vm.c" path="../vm" augmentObjects="true" type="relativepath"/>
 			<vpath pattern="stringhelpers.cpp" path="../vm" augmentObjects="true" type="relativepath"/>
+			<vpath pattern="JVMImage.cpp" path="../vm" augmentObjects="true" type="relativepath"/>
 			<vpath pattern="KeyHashTable.c" path="../vm" augmentObjects="true" type="relativepath"/>
 			<vpath pattern="ModularityHashTables.c" path="../vm" augmentObjects="true" type="relativepath"/>
 			<vpath pattern="dllsup.c" path="../vm" augmentObjects="true" type="relativepath"/>

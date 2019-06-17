@@ -193,6 +193,9 @@ allocateClassLoader(J9JavaVM *javaVM)
 			freeClassLoader(classLoader, javaVM, NULL, TRUE);
 			classLoader = NULL;
 		} else {
+			if (IS_COLD_RUN(javaVM)) {
+				registerClassLoader(classLoader);
+			}
 			TRIGGER_J9HOOK_VM_CLASS_LOADER_CREATED(javaVM->hookInterface, javaVM, classLoader);
 		}
 	}

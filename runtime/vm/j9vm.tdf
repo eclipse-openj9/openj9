@@ -784,3 +784,7 @@ TraceEntry=Trc_VM_ReadImageFromFile_Entry NoEnv Overhead=1 Level=1 Template="Hea
 TraceExit=Trc_VM_ReadImageFromFile_Exit NoEnv Overhead=1 Level=1 Template="JVMImage Read Successful"
 TraceEntry=Trc_VM_WriteImageToFile_Entry NoEnv Overhead=1 Level=1 Template="Heap = %p. File being written to = %s"
 TraceExit=Trc_VM_WriteImageToFile_Exit NoEnv Overhead=1 Level=1 Template="JVMImage Write Successful"
+TraceEntry=Trc_VM_SubAllocateImageMemory_Entry NoEnv Overhead=1 Level=1 Template="JVMImage instance = %p. JVMImage Data = % p. Byte amount = %d."
+TraceExit=Trc_VM_SubAllocateImageMemory_Exit NoEnv Overhead=1 Level=1 Template="Memory allocated = %p."
+TraceEntry=Trc_VM_RegisterInTable_Entry NoEnv Overhead=1 Level=1 Template="Table = %p. Current size of table is %d. Last element in table is %d. Entry to be added is %d."
+TraceExit=Trc_VM_RegisterInTable_Exit NoEnv Overhead=1 Level=1 Template="Table = %p. Current size of table is %d. Last element in table is %d."

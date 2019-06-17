@@ -2091,11 +2091,23 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				goto _error;
 			}
 
-			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
-				goto _error;
+			//TODO: Load if Warm run
+			if (IS_COLD_RUN(vm)) {
+				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_IMAGE()))))
+					goto _error;
 
-			if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
-				goto _error;
+				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_IMAGE()))))
+					goto _error;
+			}
+			else {
+				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+					goto _error;
+
+				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+					goto _error;
+			}
+			
+
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
 				vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package),sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
 				if (NULL == vm->modularityPool) {

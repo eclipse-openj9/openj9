@@ -123,14 +123,18 @@ hashModuleNameTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, moduleNameHashFn, moduleNameHashEqualFn, NULL, javaVM);
+	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
+	if (IS_COLD_RUN(javaVM)) {
+		privatePortLibrary = OMRPORT_FROM_IMAGE();
+	}
+	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, moduleNameHashFn, moduleNameHashEqualFn, NULL, javaVM);
 }
 
 J9HashTable *
 hashModulePointerTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
-
+	
 	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, modulePointerHashFn, modulePointerHashEqualFn, NULL, javaVM);
 }
 
@@ -139,7 +143,11 @@ hashPackageTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, packageHashFn, packageHashEqualFn, NULL, javaVM);
+	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
+	if (IS_COLD_RUN(javaVM)) {
+		privatePortLibrary = OMRPORT_FROM_IMAGE();
+	}
+	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, packageHashFn, packageHashEqualFn, NULL, javaVM);
 }
 
 J9HashTable *

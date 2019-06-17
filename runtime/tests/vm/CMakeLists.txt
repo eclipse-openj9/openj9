@@ -28,6 +28,7 @@ add_executable(vmtest
 
 	#TODO this should maybe be refactored?
 	${j9vm_SOURCE_DIR}/vm/description.c
+	${j9vm_SOURCE_DIR}/vm/JVMImage.cpp
 	${j9vm_SOURCE_DIR}/vm/KeyHashTable.c
 	${j9vm_SOURCE_DIR}/vm/ModularityHashTables.c
 	${j9vm_SOURCE_DIR}/vm/resolvefield.cpp
