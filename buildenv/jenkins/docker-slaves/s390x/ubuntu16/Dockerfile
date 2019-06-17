@@ -168,6 +168,9 @@ RUN mkdir /var/run/sshd \
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
+# Expose SSH port
+EXPOSE 22
+
 # Setup a reference repository cache for faster clones in the container
 RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
@@ -180,5 +183,7 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git fetch --all \
   && git gc --aggressive --prune=all
 
-# Expose SSH port and run SSH
-EXPOSE 22
+# Adding bash profile so ${USER} max user processes will be unlimited
+RUN echo >> /home/${USER}/.bashrc \
+  && echo "# Change max user processes in ${USER}" >> /home/${USER}/.bashrc \
+  && echo "ulimit -u unlimited" >> /home/${USER}/.bashrc
