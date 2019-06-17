@@ -83,7 +83,7 @@ TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
    intptr_t distance = (intptr_t)(getReStartLabel()->getCodeLocation()) - (intptr_t)cursor;
    if (constantIsSignedImm28(distance))
       {
-      *(int32_t *)cursor = 0x14000000 | ((distance >> 2) & 0x3ffffff); // imm26
+      *(int32_t *)cursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b) | ((distance >> 2) & 0x3ffffff); // imm26
       }
    else
       {

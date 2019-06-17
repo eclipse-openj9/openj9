@@ -22,6 +22,7 @@
 
 #include "codegen/CallSnippet.hpp"
 #include "codegen/ARM64AOTRelocation.hpp"
+#include "codegen/ARM64Instruction.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Linkage.hpp"
@@ -486,21 +487,28 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
+   TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
+
    // movz x15, low 16 bits
-   *(int32_t *)buffer = 0xD280000F | ((dispatcher & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #16
-   *(int32_t *)buffer = 0xF2A0000F | (((dispatcher >> 16) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5) | (((dispatcher >> 16) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #32
-   *(int32_t *)buffer = 0xF2C0000F | (((dispatcher >> 32) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5) | (((dispatcher >> 32) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #48
-   *(int32_t *)buffer = 0xF2E0000F | (((dispatcher >> 48) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5) | (((dispatcher >> 48) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // br x15
-   *(int32_t *)buffer = 0xD61F01E0;
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::br);
+   x15reg->setRegisterFieldRN((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
 
    *((int32_t *)thunk + 1) = buffer - returnValue;  // patch offset for AOT relocation
    *(int32_t *)thunk = buffer - returnValue;        // patch size of thunk
@@ -515,7 +523,7 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
    {
    int32_t codeSize = 4 * (instructionCountForArguments(callNode, cg) + 5); // 5 instructions for branch
-   intptr_t dispatcher;
+   uintptr_t dispatcher;
    TR::Compilation *comp = cg->comp();
    TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
    TR_J2IThunk *thunk = TR_J2IThunk::allocate(codeSize, signature, cg, thunkTable);
@@ -551,21 +559,28 @@ TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
+   TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
+
    // movz x15, low 16 bits
-   *(int32_t *)buffer = 0xD280000F | (((UDATA)dispatcher & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #16
-   *(int32_t *)buffer = 0xF2A0000F | ((((UDATA)dispatcher >> 16) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5) | (((dispatcher >> 16) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #32
-   *(int32_t *)buffer = 0xF2C0000F | ((((UDATA)dispatcher >> 32) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5) | (((dispatcher >> 32) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #48
-   *(int32_t *)buffer = 0xF2E0000F | ((((UDATA)dispatcher >> 48) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5) | (((dispatcher >> 48) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // br x15
-   *(int32_t *)buffer = 0xD61F01E0;
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::br);
+   x15reg->setRegisterFieldRN((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
 
 #ifdef TR_HOST_ARM64
    arm64CodeSync(thunk->entryPoint(), codeSize);
