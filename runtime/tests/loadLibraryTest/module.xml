@@ -35,4 +35,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9include"/>
 		</includes>
 	</artifact>
+
+	<artifact type="target" name="rename_loadLibraryTest">
+		<dependencies>
+			<dependency name="loadLibraryTest"/>
+		</dependencies>
+		<commands>
+			<command line="mv $(UMA_PATH_TO_ROOT)libloadLibraryTest.dylib $(UMA_PATH_TO_ROOT)libloadLibraryTest.jnilib" type="all">
+				<include-if condition="spec.osx.*"/>
+			</command>
+			<command line="$(RM) $(UMA_PATH_TO_ROOT)libloadLibraryTest.jnilib" type="clean">
+				<include-if condition="spec.osx.*"/>
+			</command>
+		</commands>
+	</artifact>
 </module>
