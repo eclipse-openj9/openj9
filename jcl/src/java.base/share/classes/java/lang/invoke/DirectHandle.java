@@ -117,7 +117,7 @@ class DirectHandle extends PrimitiveHandle {
 	}
 
 	final void nullCheckIfRequired(Object receiver) throws NullPointerException {
-		if (!isStatic && (receiver == null)) {
+		if (!isStatic) {
 			receiver.getClass(); // Deliberate NPE
 		}
 	}
