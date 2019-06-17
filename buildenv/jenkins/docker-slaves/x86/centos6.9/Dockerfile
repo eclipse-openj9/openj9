@@ -321,9 +321,7 @@ RUN mkdir -p /var/run/sshd \
   && service sshd start \
   && service sshd stop
 
-# Adding bash profile so jenkins max user processes will be unlimited
-RUN echo >> /home/jenkins/.bashrc \
-  && echo "# Change max user processes in jenkins" >> /home/jenkins/.bashrc \
-  && echo "ulimit -u unlimited" >> /home/jenkins/.bashrc
-
-CMD ["/usr/sbin/sshd","-D"]
+# Adding bash profile so ${USER} max user processes will be unlimited
+RUN echo >> /home/${USER}/.bashrc \
+  && echo "# Change max user processes in ${USER}" >> /home/${USER}/.bashrc \
+  && echo "ulimit -u unlimited" >> /home/${USER}/.bashrc
