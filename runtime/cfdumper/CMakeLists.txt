@@ -29,6 +29,7 @@ add_executable(cfdump
 
 	${j9vm_BINARY_DIR}/vm/ut_j9vm.c
 	${j9vm_SOURCE_DIR}/vm/stringhelpers.cpp
+	${j9vm_SOURCE_DIR}/vm/JVMImage.cpp
 	${j9vm_SOURCE_DIR}/vm/KeyHashTable.c
 	${j9vm_SOURCE_DIR}/vm/ModularityHashTables.c
 	${j9vm_SOURCE_DIR}/vm/dllsup.c

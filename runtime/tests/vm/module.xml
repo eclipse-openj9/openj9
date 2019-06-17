@@ -45,6 +45,7 @@
 		</makefilestubs>
 		<vpaths>
 			<vpath path="j9vm" pattern="description.c" augmentObjects="true"/>
+			<vpath path="j9vm" pattern="JVMImage.cpp" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="KeyHashTable.c" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="ModularityHashTables.c" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="resolvefield.cpp" augmentObjects="true"/>

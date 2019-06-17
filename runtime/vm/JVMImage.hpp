@@ -33,7 +33,6 @@
 
 #include <sys/mman.h>
 
-
 class JVMImage
 {
 public:
@@ -43,37 +42,52 @@ public:
 	static JVMImage* createInstance(J9JavaVM *javaVM);
 	static JVMImage* getInstance();
 
-	void* allocateImageMemory(UDATA size);
-	void reallocateImageMemory(UDATA size);
+	ImageRC setupWarmRun();
+	ImageRC setupColdRun();
+
 	void* subAllocateMemory(uintptr_t byteAmount);
-	void freeSubAllocatedMemory(void *memStart);
+	void* reallocateMemory(void *address, uintptr_t byteAmount); //TODO: Extension functions for heap (not used currently)
+	void freeSubAllocatedMemory(void *memStart); //TODO: Extension functions for heap (not used currently)
 
-	bool readImageFromFile();
-	bool writeImageToFile();
+	void registerEntryInTable(ImageTableHeader *table, UDATA entry);
 
-	bool initializeMonitor();
 	void destroyMonitor();
 
 	OMRPortLibrary* getPortLibrary() { return _portLibrary; }
-	bool isWarmRun() { return _isWarmRun; }
+	ImageTableHeader* getClassLoaderTable() { return WSRP_GET(_jvmImageData->classLoaderTable, ImageTableHeader*); }
+	ImageTableHeader* getClassSegmentTable() { return WSRP_GET(_jvmImageData->classSegmentTable, ImageTableHeader*); }
+	ImageTableHeader* getClassPathEntryTable() { return WSRP_GET(_jvmImageData->classPathEntryTable, ImageTableHeader*); }
 protected:
 	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }
-public:
+public
+	static const UDATA INITIAL_HEAP_SIZE;
 	static const UDATA INITIAL_IMAGE_SIZE;
 private:
 	static JVMImage *_jvmInstance;
-	J9JavaVM* _vm;
+	
+	J9JavaVM *_vm;
 
-	void* _heapBase;
+	JVMImageData *_jvmImageData;
 	J9Heap *_heap;
-	UDATA _currentImageSize;
-	bool _isImageAllocated;
 
 	OMRPortLibrary *_portLibrary;
 	omrthread_monitor_t _jvmImageMonitor;
 
 	char *_dumpFileName;
 	bool _isWarmRun;
+
+	bool initializeMonitor();
+
+	void* allocateImageMemory(UDATA size);
+	void* reallocateImageMemory(UDATA size);
+	void* initializeHeap();
+
+	bool allocateImageTableHeaders();
+	void* allocateTable(ImageTableHeader *table, uintptr_t tableSize);
+	void* reallocateTable(ImageTableHeader *table, uintptr_t tableSize);
+
+	bool readImageFromFile();
+	bool writeImageToFile();
 };
 
 #endif /* JVMIMAGE_H_ */
