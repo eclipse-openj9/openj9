@@ -103,7 +103,7 @@ void registerCPEntry(J9ClassPathEntry *cpEntry);
 *
 * @return pointer to port library of image on success, NULL on failure
 */
-OMRPortLibrary* getImagePortLibrary();
+OMRPortLibrary* getImagePortLibrary(void);
 
 /*
 * Shut down sequence of JVMImage
