@@ -1200,17 +1200,6 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
 // max number of cache slots used by checkcat/instanceof
 #define NUM_PICS 3
 
-static inline TR::Instruction *
-genNullTest(TR::CodeGenerator * cg, TR::Node * node, TR::Register * tgtReg, TR::Register * srcReg, TR::Instruction * cursor)
-   {
-   TR::Instruction * iRet;
-
-   static_assert(NULLVALUE == 0, "NULLVALUE is assumed to be zero here");
-   iRet = generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, tgtReg, srcReg, cursor);
-
-   return iRet;
-   }
-
 static TR::Instruction *
 genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
    TR::Register * objClassReg, TR::Register * castClassReg,
@@ -2443,18 +2432,58 @@ J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node * node, TR::CodeGenerator * c
       }
    }
 
-static void
-generateNullChkSnippet(
-      TR::Node *node,
-      TR::CodeGenerator *cg)
+/** \brief
+ *     Generates null test of \p objectReg for instanceof or checkcast[AndNULLCHK] \p node. In case a NULLCHK is
+ *     required this function will generate the sequence which throws the appropriate exception.
+ *
+ *  \param node
+ *     The instanceof, checkcast, or checkcastAndNULLCHK node.
+ *
+ *  \param cg
+ *     The code generator used to generate the instructions.
+ *
+ *  \param objectReg
+ *     The object to null test.
+ *
+ *  \return
+ *     \c true if a boolean condition code is set and the callee is expected to act on it; \c false otherwise, meaning
+ *     a NULLCHK was performed and if \p objectReg was null an exception throwing fallback path will be taken.
+ */
+static bool
+genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Register* objectReg)
    {
-   TR::Compilation *comp = cg->comp();
-   TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg);
-   TR::S390BranchInstruction * brInstr = (TR::S390BranchInstruction*) generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, snippetLabel);
-   brInstr->setExceptBranchOp();
+   if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+      {
+      if (cg->getHasResumableTrapHandler())
+         {
+         TR::Instruction* compareAndTrapInsturction = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmTrapOpCode(), node, objectReg, 0, TR::InstOpCode::COND_BE);
+         compareAndTrapInsturction->setExceptBranchOp();
+         compareAndTrapInsturction->setNeedsGCMap(0x0000FFFF);
+         }
+      else
+         {
+         generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, objectReg, objectReg);
 
-   TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol());
-   cg->addSnippet(new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, symRef));
+         TR::Compilation* comp = cg->comp();
+         TR::LabelSymbol* snippetLabel = generateLabelSymbol(cg);
+         TR::Node* nullChkInfo = comp->findNullChkInfo(node);
+
+         TR::Instruction* branchInstruction = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, nullChkInfo, snippetLabel);
+         branchInstruction->setExceptBranchOp();
+         branchInstruction->setNeedsGCMap(0x0000FFFF);
+
+         TR::SymbolReference* symRef = comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol());
+         cg->addSnippet(new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, nullChkInfo, snippetLabel, symRef));
+         }
+
+      return false;
+      }
+   else
+      {
+      generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, objectReg, objectReg);
+
+      return true;
+      }
    }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -2464,6 +2493,11 @@ TR::Register *
 J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
+
+   // TODO: This is not the place to make such such checks. If we really want to optimize for space or disable inlining
+   // of instanceof/checkcast we should still go through the else path to the common infrastructure and it should just
+   // generate a call to the helper (along with any null tests if needed for checkcastAndNULLCHK). This should be
+   // handled at the common level.
    if (comp->getOption(TR_OptimizeForSpace) || comp->getOption(TR_DisableInlineCheckCast))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -2474,11 +2508,8 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
       // Do null check if needed
       if (needsNullTest && isCheckcastAndNullChk)
          {
-         TR::Register * objReg = cg->evaluate(objNode);
-         generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, objReg, objReg);
-         // find the bytecodeInfo of the compacted NULLCHK
-         TR::Node *nullChkInfo = comp->findNullChkInfo(node);
-         generateNullChkSnippet(nullChkInfo, cg);
+         TR::Register* objectReg = cg->evaluate(objNode);
+         genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
          }
 
       // call helper to do checkcast
@@ -2562,8 +2593,9 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
                if (comp->getOption(TR_TraceCG))
                   traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
                TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
-               bool isNullTestImplicit = genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
-               if (!isNullTestImplicit)
+               const bool isCCSet = genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
+
+               if (isCCSet)
                   {
                   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
                   }
@@ -5868,45 +5900,6 @@ static bool graDepsConflictWithInstanceOfDeps(TR::Node * depNode, TR::Node * nod
    }
 
 /** \brief
- *     Generates null test of \p objectReg for instanceof or checkcast \p node.
- *
- *  \param node
- *     The instanceof, checkcast, or checkcastAndNULLCHK node.
- *
- *  \param cg
- *     The code generator used to generate the instructions.
- *
- *  \param objectReg
- *     The object which to null test.
- *
- *  \return
- *     <c>true</c> if the null test will implicitly raise an exception; false otherwise.
- *
- *  \details
- *     Note that if this function returns <c>false</c> the appropriate null test condition code will be set and the
- *     callee is responsible for generating the branch instruction to act on the condition code.
- */
-static
-bool genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Register* objectReg)
-   {
-   const bool isNullTestImplicit = node->getOpCodeValue() == TR::checkcastAndNULLCHK && cg->getHasResumableTrapHandler();
-
-   if (isNullTestImplicit)
-      {
-      TR::Instruction* compareAndTrapInsturction = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmTrapOpCode(), node, objectReg, 0, TR::InstOpCode::COND_BE);
-      compareAndTrapInsturction->setExceptBranchOp();
-      compareAndTrapInsturction->setNeedsGCMap(0x0000FFFF);
-      }
-   else
-      {
-      genNullTest(cg, node, objectReg, objectReg, NULL);
-      }
-
-      return isNullTestImplicit;
-   }
-
-
-/** \brief
  *     Generates a dynamicCache test with helper call for instanceOf/ifInstanceOf node
  *
  *  \details
@@ -6260,10 +6253,11 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             if (comp->getOption(TR_TraceCG))
                traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
             TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
-            bool isNullTestImplicit = genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
-            if (!isNullTestImplicit)
+            const bool isCCSet = genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
+
+            if (isCCSet)
                {
-               //If object is Null, and initialResult is true, go to oppositeResultLabel else goto done Label
+               // If object is Null, and initialResult is true, go to oppositeResultLabel else goto done Label
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, falseLabel);
                }
             }
@@ -9066,9 +9060,9 @@ static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel);
 
-   genNullTest(cg, node, thisClassReg, thisClassReg, NULL);
+   generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, thisClassReg, thisClassReg);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, outlinedCallLabel);
-   genNullTest(cg, node, checkClassReg, checkClassReg, NULL);
+   generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, checkClassReg, checkClassReg);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, outlinedCallLabel);
 
    generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, objClassReg,
