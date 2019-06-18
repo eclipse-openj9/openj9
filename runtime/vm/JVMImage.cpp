@@ -22,13 +22,15 @@
 
 #include "JVMImage.hpp"
 
+#include <sys/mman.h>
+
 JVMImage *JVMImage::_jvmInstance = NULL;
-const UDATA JVMImage::INITIAL_HEAP_SIZE = 1024 * 1024; //TODO: reallocation will fail so initial heap size is large (Should be 8 byte aligned)
-const UDATA JVMImage::INITIAL_IMAGE_SIZE = sizeof(JVMImageData) + JVMImage::INITIAL_HEAP_SIZE;
+const UDATA JVMImage::INITIAL_HEAP_SIZE = 1024 * 1024; /* TODO: reallocation will fail so initial heap size is large (Should be 8 byte aligned) */
+const UDATA JVMImage::INITIAL_IMAGE_SIZE = sizeof(JVMImageHeader) + JVMImage::INITIAL_HEAP_SIZE;
 
 JVMImage::JVMImage(J9JavaVM *javaVM) :
 	_vm(javaVM),
-	_jvmImageData(NULL),
+	_jvmImageHeader(NULL),
 	_heap(NULL)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
@@ -48,13 +50,13 @@ JVMImage::~JVMImage()
 {
 	PORT_ACCESS_FROM_JAVAVM(_vm);
 
-	j9mem_free_memory((void*)_jvmImageData);
+	j9mem_free_memory((void*)_jvmImageHeader);
 	j9mem_free_memory((void*)_portLibrary);
 	_jvmInstance = NULL;
 }
 
 bool
-JVMImage::initializeMonitor()
+JVMImage::initializeMonitor(void)
 {
 	if (omrthread_monitor_init_with_name(&_jvmImageMonitor, 0, "JVM Image Heap Monitor") != 0) {
 		return false;
@@ -64,7 +66,7 @@ JVMImage::initializeMonitor()
 }
 
 void
-JVMImage::destroyMonitor()
+JVMImage::destroyMonitor(void)
 {
 	omrthread_monitor_destroy(_jvmImageMonitor);
 }
@@ -75,7 +77,7 @@ JVMImage::createInstance(J9JavaVM *vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	_jvmInstance = (JVMImage *)j9mem_allocate_memory(sizeof(JVMImage), J9MEM_CATEGORY_CLASSES);
-	if (_jvmInstance != NULL) {
+	if (NULL != _jvmInstance) {
 		new(_jvmInstance) JVMImage(vm);   
 	}
 
@@ -83,14 +85,14 @@ JVMImage::createInstance(J9JavaVM *vm)
 }
 
 JVMImage *
-JVMImage::getInstance()
+JVMImage::getInstance(void)
 {
 	return _jvmInstance;
 }
 
-//TODO: This will be expanded once warm run set up is finished
+/* TODO: This will be expanded once warm run set up is finished */
 ImageRC
-JVMImage::setupWarmRun()
+JVMImage::setupWarmRun(void)
 {
 	if (!readImageFromFile()) {
 		return IMAGE_ERROR;
@@ -100,13 +102,13 @@ JVMImage::setupWarmRun()
 }
 
 ImageRC
-JVMImage::setupColdRun()
+JVMImage::setupColdRun(void)
 {
-	if (allocateImageMemory(INITIAL_IMAGE_SIZE) == NULL) {
+	if (NULL == allocateImageMemory(INITIAL_IMAGE_SIZE)) {
 		return IMAGE_ERROR;
 	}
 
-	if (initializeHeap() == NULL) {
+	if (NULL == initializeHeap()) {
 		return IMAGE_ERROR;
 	}
 
@@ -118,9 +120,9 @@ JVMImage::setupColdRun()
 		return IMAGE_ERROR;
 	}
 
-	if (allocateTable(getClassLoaderTable(), INITIAL_CLASSLOADER_TABLE_SIZE) == NULL
-		|| allocateTable(getClassSegmentTable(), INITIAL_CLASS_TABLE_SIZE) == NULL
-		|| allocateTable(getClassPathEntryTable(), INITIAL_CLASSPATH_TABLE_SIZE) == NULL) {
+	if ((NULL == allocateTable(getClassLoaderTable(), INITIAL_CLASSLOADER_TABLE_SIZE))
+		|| (NULL == allocateTable(getClassSegmentTable(), INITIAL_CLASS_TABLE_SIZE))
+		|| (NULL == allocateTable(getClassPathEntryTable(), INITIAL_CLASSPATH_TABLE_SIZE))) {
 		return IMAGE_ERROR;
 	}
 
@@ -132,17 +134,17 @@ JVMImage::allocateImageMemory(UDATA size)
 {
 	PORT_ACCESS_FROM_JAVAVM(_vm);
 
-	_jvmImageData = (JVMImageData *)j9mem_allocate_memory(size, J9MEM_CATEGORY_CLASSES); //TODO: change category
-	if (_jvmImageData == NULL) {
+	_jvmImageHeader = (JVMImageHeader *)j9mem_allocate_memory(size, J9MEM_CATEGORY_CLASSES); //TODO: change category
+	if (NULL == _jvmImageHeader) {
 		return NULL;
 	}
 
-	_jvmImageData->imageSize = size;
+	_jvmImageHeader->imageSize = size;
 
-	return _jvmImageData;
+	return _jvmImageHeader;
 }
 
-//TODO: Currently reallocating image memory is broken since all references to memory inside of heap will fail (i.e. vm->classLoadingPool)
+/* TODO: Currently reallocating image memory is broken since all references to memory inside of heap will fail (i.e. vm->classLoadingPool) */
 void *
 JVMImage::reallocateImageMemory(UDATA size)
 {
@@ -150,28 +152,31 @@ JVMImage::reallocateImageMemory(UDATA size)
 }
 
 void * 
-JVMImage::initializeHeap()
+JVMImage::initializeHeap(void)
 {
 	PORT_ACCESS_FROM_JAVAVM(_vm);
 	
-	_heap = j9heap_create((J9Heap *)(_jvmImageData + 1), JVMImage::INITIAL_HEAP_SIZE, 0);
-	if (_heap == NULL) {
+	_heap = j9heap_create((J9Heap *)(_jvmImageHeader + 1), JVMImage::INITIAL_HEAP_SIZE, 0);
+	if (NULL == _heap) {
 		return NULL;
 	}
+
+	_jvmImageHeader->heapAddress = (uintptr_t)_heap;
 
 	return _heap;
 }
 
 bool
-JVMImage::allocateImageTableHeaders()
+JVMImage::allocateImageTableHeaders(void)
 {
-	WSRP_SET(_jvmImageData->classLoaderTable, subAllocateMemory(sizeof(ImageTableHeader)));
-	WSRP_SET(_jvmImageData->classSegmentTable, subAllocateMemory(sizeof(ImageTableHeader)));
-	WSRP_SET(_jvmImageData->classPathEntryTable, subAllocateMemory(sizeof(ImageTableHeader)));
+	WSRP_SET(_jvmImageHeader->classLoaderTable, subAllocateMemory(sizeof(ImageTableHeader)));
+	WSRP_SET(_jvmImageHeader->classSegmentTable, subAllocateMemory(sizeof(ImageTableHeader)));
+	WSRP_SET(_jvmImageHeader->classPathEntryTable, subAllocateMemory(sizeof(ImageTableHeader)));
 
-	if (_jvmImageData->classLoaderTable == 0
-		|| _jvmImageData->classSegmentTable == 0
-		|| _jvmImageData->classPathEntryTable == 0) {
+	if ((0 == _jvmImageHeader->classLoaderTable)
+		|| (0 == _jvmImageHeader->classSegmentTable)
+		|| (0 == _jvmImageHeader->classPathEntryTable)
+	) {
 		return false;
 	}
 
@@ -182,7 +187,7 @@ void *
 JVMImage::allocateTable(ImageTableHeader *table, uintptr_t tableSize)
 {
 	void *firstSlot = subAllocateMemory(tableSize * sizeof(UDATA));
-	if (firstSlot == NULL) {
+	if (NULL == firstSlot) {
 		return NULL;
 	}
 
@@ -199,7 +204,7 @@ JVMImage::reallocateTable(ImageTableHeader *table, uintptr_t tableSize)
 {
 	UDATA *firstSlot = WSRP_GET(table->tableHead, UDATA*);
 	firstSlot = (UDATA *)reallocateMemory((void *)firstSlot, tableSize * sizeof(UDATA));
-	if (firstSlot == NULL) {
+	if (NULL == firstSlot) {
 		return NULL;
 	}
 
@@ -213,14 +218,14 @@ JVMImage::reallocateTable(ImageTableHeader *table, uintptr_t tableSize)
 void *
 JVMImage::subAllocateMemory(uintptr_t byteAmount)
 {
-	Trc_VM_SubAllocateImageMemory_Entry(_jvmInstance, _jvmImageData, byteAmount);
+	Trc_VM_SubAllocateImageMemory_Entry(_jvmInstance, _jvmImageHeader, byteAmount);
 
 	omrthread_monitor_enter(_jvmImageMonitor);
 
 	void *memStart = _portLibrary->heap_allocate(_portLibrary, _heap, byteAmount);	
-	// image memory is not large enough and needs to be reallocated
-	if (memStart == NULL) {
-		reallocateImageMemory(_jvmImageData->imageSize * 2 + byteAmount);
+	/* image memory is not large enough and needs to be reallocated */
+	if (NULL == memStart) {
+		reallocateImageMemory(_jvmImageHeader->imageSize * 2 + byteAmount);
 		memStart = _portLibrary->heap_allocate(_portLibrary, _heap, byteAmount);
 	}
 
@@ -237,9 +242,9 @@ JVMImage::reallocateMemory(void *address, uintptr_t byteAmount)
 	omrthread_monitor_enter(_jvmImageMonitor);
 
 	void *memStart = _portLibrary->heap_reallocate(_portLibrary, _heap, address, byteAmount);
-	// image memory is not large enough and needs to be reallocated
-	if (memStart == NULL) {
-		reallocateImageMemory(_jvmImageData->imageSize * 2 + byteAmount);
+	/* image memory is not large enough and needs to be reallocated */
+	if (NULL == memStart) {
+		reallocateImageMemory(_jvmImageHeader->imageSize * 2 + byteAmount);
 		memStart = _portLibrary->heap_reallocate(_portLibrary, _heap, address, byteAmount);
 	}
 
@@ -263,15 +268,15 @@ JVMImage::registerEntryInTable(ImageTableHeader *table, UDATA entry)
 {
 	Trc_VM_RegisterInTable_Entry(table, table->currentSize, *(WSRP_GET(table->tableTail, UDATA*)), entry);
 
-	// table is not large enough and needs to be reallocated
+	/* table is not large enough and needs to be reallocated */
 	if (table->currentSize >= table->tableSize) {
-		reallocateTable(table, table->tableSize * 2); //TODO: Introduce error handling for table reallocation
+		reallocateTable(table, table->tableSize * 2); /*TODO: Introduce error handling for table reallocation */
 	}
 
 	UDATA *tail = WSRP_GET(table->tableTail, UDATA*);
 
-	// initial state of every table
-	if (table->currentSize != 0) {
+	/* initial state of every table */
+	if (0 != table->currentSize) {
 		tail += 1;
 		WSRP_SET(table->tableTail, tail);
 	}
@@ -283,28 +288,29 @@ JVMImage::registerEntryInTable(ImageTableHeader *table, UDATA entry)
 }
 
 bool
-JVMImage::readImageFromFile()
+JVMImage::readImageFromFile(void)
 {
 	Trc_VM_ReadImageFromFile_Entry(_heap, _dumpFileName);
 
 	OMRPORT_ACCESS_FROM_OMRPORT(getPortLibrary());
 
 	intptr_t fileDescriptor = omrfile_open(_dumpFileName, EsOpenRead, 0444);
-	if (fileDescriptor == -1) {
+	if (-1 == fileDescriptor) {
 		return false;
 	}
 
-	// Read image header then mmap the rest of the image (heap) into memory
-	JVMImageHeader imageHeader;
-	omrfile_read(fileDescriptor, &imageHeader, sizeof(JVMImageHeader));
+	/* Read image header then mmap the rest of the image (heap) into memory */
+	omrfile_read(fileDescriptor, (void *)_jvmImageHeader, sizeof(JVMImageHeader));
 	uint64_t fileSize = omrfile_flength(fileDescriptor);
-	if (fileSize != sizeof(JVMImageHeader) + imageHeader.imageSize) {
+	if (_jvmImageHeader->imageSize != fileSize) {
 		return false;
 	}
 
-	// Mmap our file into virtual memory
-	JVMImageHeader *block = (JVMImageHeader*)mmap((void*)imageHeader.heapAddress, sizeof(JVMImageHeader) + imageHeader.imageSize, PROT_READ, MAP_PRIVATE, fileDescriptor, 0);
-	_heap = (J9Heap*)(block + 1);
+	_jvmImageHeader = (JVMImageHeader *)mmap(
+		(void *)_jvmImageHeader->heapAddress,
+		_jvmImageHeader->imageSize,
+		PROT_READ, MAP_PRIVATE, fileDescriptor, 0);
+	_heap = (J9Heap *)(_jvmImageHeader + 1);
 
 	omrfile_close(fileDescriptor);
 
@@ -314,7 +320,7 @@ JVMImage::readImageFromFile()
 }
 
 bool
-JVMImage::writeImageToFile()
+JVMImage::writeImageToFile(void)
 {
 	Trc_VM_WriteImageToFile_Entry(_heap, _dumpFileName);
 
@@ -323,17 +329,12 @@ JVMImage::writeImageToFile()
 	omrthread_monitor_enter(_jvmImageMonitor);
 
 	intptr_t fileDescriptor = omrfile_open(_dumpFileName, EsOpenCreate | EsOpenWrite | EsOpenTruncate, 0666);
-	if (fileDescriptor == -1) {
+	if (-1 == fileDescriptor) {
 		return false;
 	}
 
-	// Write header followed by the heap
-	JVMImageHeader imageHeader;
-	imageHeader.imageSize = _currentImageSize;
-	imageHeader.heapAddress = (uintptr_t)_heap;
-	
-	if (omrfile_write(fileDescriptor, (void *)&imageHeader, sizeof(JVMImageHeader)) != sizeof(JVMImageHeader)
-		|| omrfile_write(fileDescriptor, (void *)_heap, _currentImageSize) != (intptr_t)_currentImageSize) {
+	/* Write header followed by the heap */
+	if ((intptr_t)_jvmImageHeader->imageSize != omrfile_write(fileDescriptor, (void *)_jvmImageHeader, _jvmImageHeader->imageSize)) {
 		return false;
 	}
 
@@ -350,17 +351,17 @@ extern "C" UDATA
 initializeJVMImage(J9JavaVM *vm)
 {
 	JVMImage *jvmImage = JVMImage::createInstance(vm);
-	if (jvmImage == NULL) {
+	if (NULL == jvmImage) {
 		goto _error;
 	}
 
 	if (IS_COLD_RUN(vm)
-		&& jvmImage->setupColdRun() == IMAGE_ERROR) {
+		&& (IMAGE_ERROR == jvmImage->setupColdRun())) {
 		goto _error;
 	}
 
 	if(IS_WARM_RUN(vm)
-		&& jvmImage->setupWarmRun() == IMAGE_ERROR) {
+		&& (IMAGE_ERROR == jvmImage->setupWarmRun())) {
 		goto _error;
 	}
 
@@ -402,11 +403,11 @@ registerCPEntry(J9ClassPathEntry *cpEntry)
 }
 
 extern "C" OMRPortLibrary *
-getImagePortLibrary()
+getImagePortLibrary(void)
 {
 	JVMImage *jvmImage = JVMImage::getInstance();
 
-	if (jvmImage == NULL) {
+	if (NULL == jvmImage) {
 		return NULL;
 	}
 
@@ -418,7 +419,7 @@ shutdownJVMImage(J9JavaVM *vm)
 {
 	JVMImage *jvmImage = JVMImage::getInstance();
 
-	if (jvmImage != NULL) {
+	if (NULL != jvmImage) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		jvmImage->destroyMonitor();
@@ -440,8 +441,8 @@ image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmou
 extern "C" void *
 mem_allocate_memory(uintptr_t byteAmount)
 {
-    JVMImage *jvmImage = JVMImage::getInstance();
-    return image_mem_allocate_memory(jvmImage->getPortLibrary(), byteAmount, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES);
+	JVMImage *jvmImage = JVMImage::getInstance();
+	return image_mem_allocate_memory(jvmImage->getPortLibrary(), byteAmount, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES);
 }
 
 extern "C" void
@@ -454,6 +455,6 @@ image_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 extern "C" void
 mem_free_memory(void *memoryPointer)
 {
-    JVMImage *jvmImage = JVMImage::getInstance();
-    image_mem_free_memory(jvmImage->getPortLibrary(), memoryPointer);
+	JVMImage *jvmImage = JVMImage::getInstance();
+	image_mem_free_memory(jvmImage->getPortLibrary(), memoryPointer);
 }

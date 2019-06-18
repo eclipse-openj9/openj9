@@ -34,33 +34,31 @@
 enum ImageRC {
 	IMAGE_OK = BCT_ERR_NO_ERROR,
 	IMAGE_ERROR = BCT_ERR_GENERIC_ERROR,
+	Image_EnsureWideEnum = 0x1000000 /* force 4-byte enum */
 };
 
 /* forward struct declarations */
 struct ImageTableHeader;
-struct JVMImageData;
+struct JVMImageHeader;
 
-//allows us to dump this struct into file and reload easier
-//allocated space for image data is longer than sizeof(JVMImageData)
-typedef struct JVMImageData {
-	UDATA imageSize;
+/*
+ * allows us to dump this struct into file and reload easier
+ * allocated space for image data is longer than sizeof(JVMImageHeader)
+ */
+typedef struct JVMImageHeader {
+	UDATA imageSize; /* image size in bytes */
+	uintptr_t heapAddress;
 	J9WSRP classLoaderTable;
 	J9WSRP classSegmentTable;
 	J9WSRP classPathEntryTable;
-} JVMImageData;
+} JVMImageHeader;
 
-//table allows us to walk through different stored structures
+/* table allows us to walk through different stored structures */
 typedef struct ImageTableHeader {
 	J9WSRP tableHead;
-	J9WSRP tableTail; //tail needed for O(1) append
-	UDATA tableSize;
-	UDATA currentSize;
+	J9WSRP tableTail; /* tail needed for O(1) append */
+	UDATA tableSize; /* table size in bytes */
+	UDATA currentSize; /* current size in bytes */
 } ImageTableHeader;
-
-struct JVMImageHeader
-{
-	UDATA imageSize;
-	uintptr_t heapAddress;
-};
 
 #endif

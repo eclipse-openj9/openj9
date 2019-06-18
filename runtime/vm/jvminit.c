@@ -1763,12 +1763,11 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				IDATA restoreStateIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XRESTORERAMSTATE, NULL);
 				IDATA saveStateIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XSAVERAMSTATE, NULL);
 				char *optionValue = NULL;
-				// If both restore (warm run) and save (cold run) are specified save state takes precedence
+				/* If both restore (warm run) and save (cold run) are specified save state takes precedence */
 				if (saveStateIndex >= 0) {
 					GET_OPTION_VALUE(saveStateIndex, '=', &optionValue);
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_COLD_RUN;
-				}
-				else if (restoreStateIndex >= 0) {
+				} else if (restoreStateIndex >= 0) {
 					GET_OPTION_VALUE(restoreStateIndex, '=', &optionValue);
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_WARM_RUN;
 				}
@@ -2091,20 +2090,21 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				goto _error;
 			}
 
-			//TODO: Load if Warm run
+			/* TODO: Load if Warm run */
 			if (IS_COLD_RUN(vm)) {
-				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_IMAGE()))))
+				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_IMAGE())))) {
 					goto _error;
-
-				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_IMAGE()))))
+				}
+				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_IMAGE())))) {
 					goto _error;
-			}
-			else {
-				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+				}
+			} else {
+				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary)))) {
 					goto _error;
-
-				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+				}
+				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary)))) {
 					goto _error;
+				}
 			}
 			
 

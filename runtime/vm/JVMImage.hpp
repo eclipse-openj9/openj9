@@ -31,43 +31,17 @@
 #include "j9protos.h"
 #include "ut_j9vm.h"
 
-#include <sys/mman.h>
-
 class JVMImage
 {
-public:
-	JVMImage(J9JavaVM *vm);
-	~JVMImage();
-
-	static JVMImage* createInstance(J9JavaVM *javaVM);
-	static JVMImage* getInstance();
-
-	ImageRC setupWarmRun();
-	ImageRC setupColdRun();
-
-	void* subAllocateMemory(uintptr_t byteAmount);
-	void* reallocateMemory(void *address, uintptr_t byteAmount); //TODO: Extension functions for heap (not used currently)
-	void freeSubAllocatedMemory(void *memStart); //TODO: Extension functions for heap (not used currently)
-
-	void registerEntryInTable(ImageTableHeader *table, UDATA entry);
-
-	void destroyMonitor();
-
-	OMRPortLibrary* getPortLibrary() { return _portLibrary; }
-	ImageTableHeader* getClassLoaderTable() { return WSRP_GET(_jvmImageData->classLoaderTable, ImageTableHeader*); }
-	ImageTableHeader* getClassSegmentTable() { return WSRP_GET(_jvmImageData->classSegmentTable, ImageTableHeader*); }
-	ImageTableHeader* getClassPathEntryTable() { return WSRP_GET(_jvmImageData->classPathEntryTable, ImageTableHeader*); }
-protected:
-	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }
-public
-	static const UDATA INITIAL_HEAP_SIZE;
-	static const UDATA INITIAL_IMAGE_SIZE;
+	/*
+	 * Data Members
+	 */
 private:
 	static JVMImage *_jvmInstance;
 	
 	J9JavaVM *_vm;
 
-	JVMImageData *_jvmImageData;
+	JVMImageHeader *_jvmImageHeader;
 	J9Heap *_heap;
 
 	OMRPortLibrary *_portLibrary;
@@ -76,18 +50,51 @@ private:
 	char *_dumpFileName;
 	bool _isWarmRun;
 
-	bool initializeMonitor();
+	bool initializeMonitor(void);
 
 	void* allocateImageMemory(UDATA size);
 	void* reallocateImageMemory(UDATA size);
-	void* initializeHeap();
+	void* initializeHeap(void);
 
-	bool allocateImageTableHeaders();
+	bool allocateImageTableHeaders(void);
 	void* allocateTable(ImageTableHeader *table, uintptr_t tableSize);
 	void* reallocateTable(ImageTableHeader *table, uintptr_t tableSize);
 
-	bool readImageFromFile();
-	bool writeImageToFile();
+	bool readImageFromFile(void);
+	bool writeImageToFile(void);
+protected:
+public:
+	static const UDATA INITIAL_HEAP_SIZE;
+	static const UDATA INITIAL_IMAGE_SIZE;
+	
+	/*
+	 * Function Members
+	 */
+private:
+protected:
+	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }
+public:
+	JVMImage(J9JavaVM *vm);
+	~JVMImage();
+
+	static JVMImage* createInstance(J9JavaVM *javaVM);
+	static JVMImage* getInstance(void);
+
+	ImageRC setupWarmRun(void);
+	ImageRC setupColdRun(void);
+
+	void* subAllocateMemory(uintptr_t byteAmount);
+	void* reallocateMemory(void *address, uintptr_t byteAmount); /* TODO: Extension functions for heap (not used currently) */
+	void freeSubAllocatedMemory(void *memStart); /* TODO: Extension functions for heap (not used currently) */
+
+	void registerEntryInTable(ImageTableHeader *table, UDATA entry);
+
+	void destroyMonitor(void);
+
+	OMRPortLibrary* getPortLibrary(void) { return _portLibrary; }
+	ImageTableHeader* getClassLoaderTable(void) { return WSRP_GET(_jvmImageHeader->classLoaderTable, ImageTableHeader*); }
+	ImageTableHeader* getClassSegmentTable(void) { return WSRP_GET(_jvmImageHeader->classSegmentTable, ImageTableHeader*); }
+	ImageTableHeader* getClassPathEntryTable(void) { return WSRP_GET(_jvmImageHeader->classPathEntryTable, ImageTableHeader*); }
 };
 
 #endif /* JVMIMAGE_H_ */
