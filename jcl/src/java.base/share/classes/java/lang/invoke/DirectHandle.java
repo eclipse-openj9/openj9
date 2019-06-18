@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ import java.lang.reflect.Modifier;
  * The vmSlot will hold a J9Method address.
  */
 class DirectHandle extends PrimitiveHandle {
-	final int final_modifiers;
+	final boolean isStatic;
 	final boolean originIsFindVirtual;
 	
 	DirectHandle(Class<?> referenceClass, String methodName, MethodType type, byte kind, Class<?> specialCaller) throws NoSuchMethodException, IllegalAccessException {
@@ -52,7 +52,7 @@ class DirectHandle extends PrimitiveHandle {
 		this.defc = finishMethodInitialization(specialCaller, type);
 		/* Kind should have been changed from KIND_VIRTUAL in finishMethodInitialization */
 		assert (this.kind != KIND_VIRTUAL);
-		final_modifiers = rawModifiers;
+		isStatic = Modifier.isStatic(rawModifiers);
 		this.originIsFindVirtual = originIsFindVirtual;
 	}
 	
@@ -69,7 +69,7 @@ class DirectHandle extends PrimitiveHandle {
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
-		final_modifiers = rawModifiers;
+		isStatic = Modifier.isStatic(rawModifiers);
 		this.originIsFindVirtual = originIsFindVirtual;
 	}
 	
@@ -86,13 +86,13 @@ class DirectHandle extends PrimitiveHandle {
 		addHandleToClassCache();
 		this.vmSlot = other.vmSlot;
 		this.defc = other.defc;
-		final_modifiers = rawModifiers;
+		isStatic = Modifier.isStatic(other.rawModifiers);
 		this.originIsFindVirtual = other.directHandleOriginatedInFindVirtual();
 	}
 	
 	DirectHandle(DirectHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
-		final_modifiers = rawModifiers;
+		isStatic = originalHandle.isStatic;
 		this.originIsFindVirtual = originalHandle.originIsFindVirtual;
 		addHandleToClassCache();
 		// Reassigning the vmSlot because an HCR may have occurred since it was assigned in super()
@@ -117,7 +117,7 @@ class DirectHandle extends PrimitiveHandle {
 	}
 
 	final void nullCheckIfRequired(Object receiver) throws NullPointerException {
-		if ((receiver == null) && !Modifier.isStatic(final_modifiers)) {
+		if (!isStatic) {
 			receiver.getClass(); // Deliberate NPE
 		}
 	}
