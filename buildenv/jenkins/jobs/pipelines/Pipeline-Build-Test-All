@@ -75,7 +75,7 @@
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
  */
 
-CURRENT_RELEASES = ['8', '11', '12', 'next']
+CURRENT_RELEASES = ['8', '11', '12', '13', 'next']
 
 SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
