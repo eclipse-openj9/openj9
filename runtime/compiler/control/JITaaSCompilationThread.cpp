@@ -552,7 +552,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._cacheStartAddress = fe->sharedCache() ? fe->sharedCache()->getCacheStartAddress() : 0;
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
          vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
-         vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : NULL;
+         vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : false;
          vmInfo._reportByteCodeInfoAtCatchBlock = comp->getOptions()->getReportByteCodeInfoAtCatchBlock();
          for (int32_t i = 0; i <= 7; i++)
             {
@@ -2710,7 +2710,7 @@ remoteCompile(
                "Client successfully loaded method %s @ %s following compilation request. [metaData=%p, startPC=%p]",
                compiler->signature(),
                compiler->getHotnessName(),
-               metaData, (metaData) ? metaData->startPC : NULL
+               metaData, (metaData) ? (void *)metaData->startPC : NULL
                );
             }
          }

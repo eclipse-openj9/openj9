@@ -2266,7 +2266,7 @@ TR_MarkHotField::markHotField(J9Class * clazz, bool rootClass)
       if (rootClass)
          {
          int32_t len; char * s = _symRef->getOwningMethod(_comp)->fieldName(_symRef->getCPIndex(), len, _comp->trMemory());
-         printf("hot field %*s with bitValue=%x and slotIndex=%d found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
+         printf("hot field %*s with bitValue=%lx and slotIndex=%lu found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
          }
 
       J9ROMClass* romClass = TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)clazz);
@@ -4477,7 +4477,7 @@ TR_J9VMBase::printAdditionalInfoOnAssertionFailure(TR::Compilation *comp)
    {
    char *c = (char *)comp->trMemory()->allocateHeapMemory(20);
 
-   sprintf(c, "VMState: %#010x", vmThread()->omrVMThread->vmState);
+   sprintf(c, "VMState: %#010lx", vmThread()->omrVMThread->vmState);
 
    return c;
    }

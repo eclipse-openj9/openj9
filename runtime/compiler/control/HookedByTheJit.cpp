@@ -599,7 +599,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       J9UTF8 * name      = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
       J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
       int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", className->length, utf8Data(className), name->length, utf8Data(name), signature->length, utf8Data(signature));
-      printf("Initial: Signature %s Count %d isLoopy %d isAOT %d is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
+      printf("Initial: Signature %s Count %d isLoopy %d isAOT %lu is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
             TR::Options::sharedClassCache() ? jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod) : 0,
             TR::Options::sharedClassCache() ? compInfo->isRomClassForMethodInSharedCache(method, jitConfig->javaVM) : 0,containsInfo) ; fflush(stdout);
       }
@@ -1504,7 +1504,7 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
 
    if (jitConfig->gcTraceThreshold && jitConfig->gcCount == jitConfig->gcTraceThreshold)
       {
-      printf("\n<jit: enabling stack tracing at gc %d>", jitConfig->gcCount);
+      printf("\n<jit: enabling stack tracing at gc %lu>", jitConfig->gcCount);
       TR::Options::getCmdLineOptions()->setVerboseOption(TR_VerboseGc);
       }
    jitReclaimMarkedAssumptions(false);
@@ -2391,7 +2391,7 @@ static void jitHookThreadEnd(J9HookInterface * * hookInterface, UDATA eventNum, 
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_CountWriteBarriersRT))
       {
-      fprintf(stderr,"Thread %p: Executed %d barriers, %d went to slow path\n", vmThread, vmThread->debugEventData6, vmThread->debugEventData7);
+      fprintf(stderr,"Thread %p: Executed %lu barriers, %lu went to slow path\n", vmThread, vmThread->debugEventData6, vmThread->debugEventData7);
       }
    return;
    }
@@ -3436,7 +3436,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                      {
                      if (traceIt)
                         {
-                        printf("For submethod %p,signature compare fails after bc walk bc !=genericReturn at i(%d)+2\n",i);
+                        printf("For submethod %p,signature compare fails after bc walk bc !=genericReturn at i(%d)+2\n", subMethod, i);
                         fflush(stdout);
                         }
                      matches=false;
@@ -3495,7 +3495,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
 
             if (traceIt)
                {
-               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %d methodmodifiersaresafe = %d\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)),methodModifiersAreSafe);
+               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %ld methodmodifiersaresafe = %d\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)),methodModifiersAreSafe);
                fflush(stdout);
                }
 

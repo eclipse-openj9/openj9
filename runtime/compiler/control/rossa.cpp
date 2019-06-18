@@ -1399,7 +1399,7 @@ onLoadInternal(
       }
    if (!TR_DataCacheManager::initialize(jitConfig))
       {
-      printf("{JIT: fatal error, failed to allocate %d Kb data cache}\n", jitConfig->dataCacheKB);
+      printf("{JIT: fatal error, failed to allocate %lu Kb data cache}\n", jitConfig->dataCacheKB);
       return -1;
       }
 
