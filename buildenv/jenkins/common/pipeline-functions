@@ -692,6 +692,6 @@ def strip_cmake_specs(spec) {
     // Since cmake is a method for how the SDK is built,
     // from a test perspective it is the same sdk. Therefore
     // we will reuse the same test jobs as the non-cmake specs.
-    return spec - 'cm'
+    return spec - '_cm'
 }
 return this
