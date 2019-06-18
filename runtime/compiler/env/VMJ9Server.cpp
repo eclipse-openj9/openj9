@@ -479,9 +479,16 @@ TR_J9ServerVM::classHasBeenReplaced(TR_OpaqueClassBlock *clazz)
 bool
 TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
    {
+   uintptrj_t classDepthAndFlags = 0;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_classHasBeenExtended, clazz);
-   return std::get<0>(stream->read<bool>());
+   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   if((classDepthAndFlags & J9AccClassHasBeenOverridden) != 0)
+      return true;
+   else
+      {
+      stream->write(JITaaS::J9ServerMessageType::VM_classHasBeenExtended, clazz);
+      return std::get<0>(stream->read<bool>());
+      }
    }
 
 bool
