@@ -95,38 +95,19 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define JIT_INFO "%s%s"
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-	switch(J2SE_VERSION(vm) & J2SE_VERSION_MASK) {
-	case J2SE_18:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
-			j2se_version_info = "1.8.0";
-		} else {
-			j2se_version_info = "1.8.?";
-		}
-		break;
-	case J2SE_V11:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
-			j2se_version_info = "11";
-		} else {
-			j2se_version_info = "11.?";
-		}
-		break;
-	case J2SE_V12:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {
-			j2se_version_info = "12";
-		} else {
-			j2se_version_info = "12.?";
-		}
-		break;
-	case J2SE_V13:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V13) {
-			j2se_version_info = "13";
-		} else {
-			j2se_version_info = "13.?";
-		}
-		break;
-	default:
-		j2se_version_info = "?.?.?";
+#if JAVA_SPEC_VERSION == 8
+	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
+		j2se_version_info = "1.8.0";
+	} else {
+		j2se_version_info = "1.8.?";
 	}
+#else /* JAVA_SPEC_VERSION == 8 */
+	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_CURRENT_VERSION) {
+		j2se_version_info = JAVA_SPEC_VERSION_STRING;
+	} else {
+		j2se_version_info = JAVA_SPEC_VERSION_STRING ".?";
+	}
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 	osname = j9sysinfo_get_OS_type();
 	osarch = j9sysinfo_get_CPU_architecture();
