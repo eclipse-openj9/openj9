@@ -2494,7 +2494,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
       int32_t maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
       traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
-      InstanceOfOrCheckCastProfiledClasses profiledClassesList[maxProfiledClasses];
+      InstanceOfOrCheckCastProfiledClasses* profiledClassesList = (InstanceOfOrCheckCastProfiledClasses*)alloca(maxProfiledClasses * sizeof(InstanceOfOrCheckCastProfiledClasses));
       InstanceOfOrCheckCastSequences sequences[InstanceOfOrCheckCastMaxSequences];
 
       // We use this information to decide if we want to do SuperClassTest inline or not
@@ -6134,7 +6134,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
    TR_OpaqueClassBlock           *compileTimeGuessClass;
    int32_t maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
    traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
-   InstanceOfOrCheckCastProfiledClasses profiledClassesList[maxProfiledClasses];
+   InstanceOfOrCheckCastProfiledClasses* profiledClassesList = (InstanceOfOrCheckCastProfiledClasses*)alloca(maxProfiledClasses * sizeof(InstanceOfOrCheckCastProfiledClasses));
 
    TR::Node                      *objectNode = node->getFirstChild();
    TR::Node                      *castClassNode = node->getSecondChild();
