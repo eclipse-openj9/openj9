@@ -3714,6 +3714,7 @@ JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream,
    return romClassFromString(std::get<0>(*classInfoTuple), trMemory->trPersistentMemory());
    }
 
+// Return true if able to get data from cache, return false otherwise
 bool
 JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType, void *data)
    {
@@ -3748,9 +3749,10 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
       {
       JITaaSHelpers::getROMClassData(it->second, dataType, data);
       }
-   return true;
+   return false;
    }
 
+// Return true if able to get data from cache, return false otherwise
 bool
 JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
    {
@@ -3788,7 +3790,7 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
       JITaaSHelpers::getROMClassData(it->second, dataType1, data1);
       JITaaSHelpers::getROMClassData(it->second, dataType2, data2);
       }
-   return true;
+   return false;
    }
 
 void
