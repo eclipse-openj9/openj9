@@ -289,15 +289,6 @@ x86-64_linux_cm:
       11: 'source /opt/rh/devtoolset-7/enable'
       12: 'source /opt/rh/devtoolset-7/enable'
       next: 'source /opt/rh/devtoolset-7/enable'
-  excluded_tests:
-    8:
-      <<: *defaultTests
-    11:
-      <<: *defaultTests
-    12:
-      <<: *defaultTests
-    next:
-      <<: *defaultTests
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
