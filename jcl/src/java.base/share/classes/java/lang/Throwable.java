@@ -354,9 +354,7 @@ private void printStackTraceHelper(Appendable appendable) {
  * @return		String
  *				a printable representation for the receiver.
  */
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 public String toString () {
 	/*[PR 102230] Should call getLocalizedMessage() */
 	String msg = getLocalizedMessage();

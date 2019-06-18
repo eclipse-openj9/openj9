@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -909,10 +909,7 @@ private final boolean suspendHelper() {
  *
  * @return		a printable representation for the receiver.
  */
- 
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 public String toString() {
 	return getClass().getName() + "[name=" + this.getName() + ",maxpri=" + this.getMaxPriority() + "]" ;  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 }
@@ -945,4 +942,3 @@ public void uncaughtException(Thread t, Throwable e) {
 	}
 }
 }
-
