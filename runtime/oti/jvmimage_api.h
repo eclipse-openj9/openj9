@@ -98,6 +98,27 @@ void registerClassSegment(J9Class *clazz);
 void registerCPEntry(J9ClassPathEntry *cpEntry);
 
 /*
+* Deregisters class loader from table
+*
+* @param classLoader[in] J9ClassLoader to register
+*/
+void deregisterClassLoader(J9ClassLoader *classLoader);
+
+/*
+* Deregisters class segment from table
+*
+* @param clazz[in] J9Class to register
+*/
+void deregisterClassSegment(J9Class *clazz);
+
+/*
+* Deregisters class path entry from table
+*
+* @param cpEntry[in] J9ClassPathEntry to register
+*/
+void deregisterCPEntry(J9ClassPathEntry *cpEntry);
+
+/*
 * Returns the port library used by the image
 * Do not use directly but through macro defined in jvmimage.h
 *

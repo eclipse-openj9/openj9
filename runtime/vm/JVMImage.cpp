@@ -287,6 +287,49 @@ JVMImage::registerEntryInTable(ImageTableHeader *table, UDATA entry)
 	Trc_VM_RegisterInTable_Exit(table, table->currentSize, *(WSRP_GET(table->tableTail, UDATA*)));
 }
 
+void
+JVMImage::deregisterEntryInTable(ImageTableHeader *table, UDATA entry)
+{
+	Trc_VM_DeregisterInTable_Entry(table, table->currentSize, *(WSRP_GET(table->tableTail, UDATA*)), entry);
+
+	UDATA *tail = WSRP_GET(table->tableTail, UDATA*);
+	UDATA *temp = findEntryInTable(table, entry);
+
+	if (NULL != temp) {
+		while (temp != tail) {
+			*temp = *(temp + 1);
+			temp += 1;
+		}
+		*temp = 0;
+
+		/*tail should point to first element when empty*/
+		if (table->currentSize != 1) {
+			tail -= 1;
+		}
+		table->currentSize -= 1;
+	}
+	
+	WSRP_SET(table->tableTail, tail);
+
+	Trc_VM_DeregisterInTable_Exit(table, table->currentSize, *(WSRP_GET(table->tableTail, UDATA*)));
+}
+
+UDATA * 
+JVMImage::findEntryInTable(ImageTableHeader *table, UDATA entry)
+{
+	UDATA *tail = WSRP_GET(table->tableTail, UDATA*);
+	UDATA *head = WSRP_GET(table->tableHead, UDATA*);
+
+	while (tail >= head) {
+		if (*tail == entry) {
+			return tail;
+		}
+		tail -= 1;
+	}
+
+	return NULL;
+}
+
 bool
 JVMImage::readImageFromFile(void)
 {
@@ -400,6 +443,36 @@ registerCPEntry(J9ClassPathEntry *cpEntry)
 	Assert_VM_notNull(jvmImage);
 	
 	jvmImage->registerEntryInTable(jvmImage->getClassPathEntryTable(), (UDATA)cpEntry);
+}
+
+extern "C" void
+deregisterClassLoader(J9ClassLoader *classLoader)
+{
+	JVMImage *jvmImage = JVMImage::getInstance();
+
+	Assert_VM_notNull(jvmImage);
+
+	jvmImage->deregisterEntryInTable(jvmImage->getClassLoaderTable(), (UDATA)classLoader);
+}
+
+extern "C" void
+deregisterClassSegment(J9Class *clazz)
+{
+	JVMImage *jvmImage = JVMImage::getInstance();
+
+	Assert_VM_notNull(jvmImage);
+
+	jvmImage->deregisterEntryInTable(jvmImage->getClassSegmentTable(), (UDATA)clazz);
+}
+
+extern "C" void
+deregisterCPEntry(J9ClassPathEntry *cpEntry)
+{
+	JVMImage *jvmImage = JVMImage::getInstance();
+
+	Assert_VM_notNull(jvmImage);
+
+	jvmImage->deregisterEntryInTable(jvmImage->getClassPathEntryTable(), (UDATA)cpEntry);
 }
 
 extern "C" OMRPortLibrary *

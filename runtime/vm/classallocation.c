@@ -412,6 +412,9 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	threadList = classLoader->gcThreadNotification;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
+	if (IS_COLD_RUN(javaVM)) {
+		deregisterClassLoader(classLoader);
+	}
 	pool_removeElement(javaVM->classLoaderBlocks, classLoader);
 
 #ifdef J9VM_GC_DYNAMIC_CLASS_UNLOADING
