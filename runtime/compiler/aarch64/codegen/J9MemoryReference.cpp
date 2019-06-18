@@ -46,7 +46,7 @@ J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *currentInstr
          snippet->setAddressOfDataReference(cursor);
          snippet->setMemoryReference(self());
          cg->addRelocation(new (cg->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, snippet->getSnippetLabel()));
-         *wcursor = 0x14000000; // b snippetLabel
+         *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b); // b snippetLabel
          wcursor++;
          cursor += ARM64_INSTRUCTION_LENGTH;
 
@@ -55,19 +55,19 @@ J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *currentInstr
          // in PicBuilder.spp
 
          // movk x9, #0, LSL #16
-         *wcursor = 0xF2800000;
+         *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5);
          x9reg->setRegisterFieldRD(wcursor);
          wcursor++;
          cursor += ARM64_INSTRUCTION_LENGTH;
 
          // movk x9, #0, LSL #32
-         *wcursor = 0xF2C00000;
+         *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5);
          x9reg->setRegisterFieldRD(wcursor);
          wcursor++;
          cursor += ARM64_INSTRUCTION_LENGTH;
 
          // movk x9, #0, LSL #48
-         *wcursor = 0xF2E00000;
+         *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5);
          x9reg->setRegisterFieldRD(wcursor);
          wcursor++;
          cursor += ARM64_INSTRUCTION_LENGTH;
