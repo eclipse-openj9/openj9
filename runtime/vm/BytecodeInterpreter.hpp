@@ -6430,7 +6430,7 @@ retry:
 						_sp += (slotsToPop - 1);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 						if (flags & J9FieldFlagFlattened) {
-							J9FlattenedClassCache *cache = J9OBJECT_CLAZZ(_currentThread, objectref)->flattenedClassCache + valueOffset;
+							J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(J9OBJECT_CLAZZ(_currentThread, objectref), valueOffset);
 							J9Class *flattenedFieldClass = cache->clazz;
 							j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, flattenedFieldClass, false, false);
 
@@ -6575,7 +6575,7 @@ resolve:
 				}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (flags & J9FieldFlagFlattened) {
-					J9FlattenedClassCache *cache = J9OBJECT_CLAZZ(_currentThread, objectref)->flattenedClassCache + valueOffset;
+					J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(J9OBJECT_CLAZZ(_currentThread, objectref), valueOffset);
 
 					_objectAccessBarrier.copyObjectFields(_currentThread,
 										cache->clazz,
@@ -8388,7 +8388,7 @@ retry:
 				_sp += 2;
 			} else if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagObject)) {
 				if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagFlattened)) {
-					J9FlattenedClassCache *cache = objectRefClass->flattenedClassCache + valueOffset;
+					J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(objectRefClass, valueOffset);
 					_objectAccessBarrier.copyObjectFields(_currentThread,
 										cache->clazz,
 										*(j9object_t*)_sp,

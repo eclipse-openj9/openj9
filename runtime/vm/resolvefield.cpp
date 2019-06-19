@@ -615,13 +615,13 @@ J9Class *
 findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength)
 {
 	/* first field indicates the number of classes in the cache */
-	UDATA length = flattenedClassCache->offset;
+	UDATA length = flattenedClassCache->numberOfEntries;
 	J9Class *clazz = NULL;
 
-	for (UDATA i = 1; i <= length; i++) {
-		J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(flattenedClassCache[i].clazz->romClass);
+	for (UDATA i = 0; i < length; i++) {
+		J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz->romClass);
 		if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
-			clazz = flattenedClassCache[i].clazz;
+			clazz = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz;
 			break;
 		}
 	}
@@ -634,19 +634,17 @@ UDATA
 findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
 {
 	/* first field indicates the number of classes in the cache */
-	UDATA length = flattenedClassCache->offset;
+	UDATA length = flattenedClassCache->numberOfEntries;
 	UDATA index = 0;
 
-	for (UDATA i = 1; i <= length; i++) {
-		if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMNAMEANDSIGNATURE_NAME(flattenedClassCache[i].nameAndSignature))
-			&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMNAMEANDSIGNATURE_SIGNATURE(flattenedClassCache[i].nameAndSignature))
+	for (UDATA i = 0; i < length; i++) {
+		if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMNAMEANDSIGNATURE_NAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->nameAndSignature))
+			&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMNAMEANDSIGNATURE_SIGNATURE(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->nameAndSignature))
 		) {
 			index = i;
 			break;
 		}
 	}
-
-	Assert_VM_true(index != 0);
 	return index;
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
