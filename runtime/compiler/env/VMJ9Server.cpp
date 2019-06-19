@@ -626,9 +626,10 @@ TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
 void *
 TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    {
+   J9Method *methodsOfClass = NULL;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getMethods, clazz);
-   return std::get<0>(stream->read<void *>());
+   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_METHODS_OF_CLASS, (void *) &methodsOfClass); 
+   return methodsOfClass;
    }
 
 void

@@ -416,6 +416,7 @@ class JITaaSHelpers
       CLASSINFO_CLASS_OF_STATIC_CACHE,
       CLASSINFO_REMOTE_ROM_CLASS,
       CLASSINFO_CLASS_FLAGS,
+      CLASSINFO_METHODS_OF_CLASS,
       };
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.

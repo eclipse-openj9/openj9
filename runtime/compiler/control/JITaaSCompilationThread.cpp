@@ -3878,6 +3878,11 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
          *(uintptrj_t *)data = classInfo.classFlags;
          }
          break;
+      case CLASSINFO_METHODS_OF_CLASS :
+         {
+         *(J9Method **)data = classInfo.methodsOfClass;
+         }
+         break;
       default :
          {
          TR_ASSERT(0, "Class Info not supported %u \n", dataType);
