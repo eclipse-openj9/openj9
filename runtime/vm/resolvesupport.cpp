@@ -2031,6 +2031,7 @@ retry:
 
 		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
 		for (U_32 i = 0; i < bsmIndex; i++) {
+			/* increment by size of bsm data plus header */
 			bsmData += (bsmData[1] + 2);
 		}
 
@@ -2087,8 +2088,9 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 		return methodHandle;
 	}
 
-	/* Walk bsmData */
+	/* Walk bsmData - skip all bootstrap methods before bsmIndex */
 	for (i = 0; i < bsmIndex; i++) {
+		/* increment by size of bsm data plus header */
 		bsmData += bsmData[1] + 2;
 	}
 

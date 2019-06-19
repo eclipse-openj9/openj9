@@ -2106,7 +2106,7 @@ enum jvmtiError
 verifyNewClasses (J9VMThread * currentThread, jint class_count, J9JVMTIClassPair * classPairs);
 
 jvmtiError
-fixMethodEquivalences(J9VMThread * currentThread, 
+fixMethodEquivalencesAndCallSites(J9VMThread * currentThread, 
 	J9HashTable * classPairs,
 	J9JVMTIHCRJitEventData * eventData,
 	BOOLEAN fastHCR, J9HashTable ** methodEquivalences,
