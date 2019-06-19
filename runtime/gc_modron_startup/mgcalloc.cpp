@@ -126,6 +126,10 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 		}
 	}
 
+	if ((NULL != objectPtr) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassContainsUnflattenedFlattenables)) {
+		vmThread->javaVM->internalVMFunctions->defaultValueWithUnflattenedFlattenables(vmThread, clazz, objectPtr);
+	}
+
 	return objectPtr;
 }
 
@@ -461,6 +465,10 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 			}
 #endif /* defined(J9VM_GC_REALTIME) */
 		}
+	}
+
+	if ((NULL != objectPtr) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassContainsUnflattenedFlattenables)) {
+		vmThread->javaVM->internalVMFunctions->defaultValueWithUnflattenedFlattenables(vmThread, clazz, objectPtr);
 	}
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)

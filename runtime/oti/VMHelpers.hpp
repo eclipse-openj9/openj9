@@ -733,34 +733,6 @@ done:
 	}
 
 	/**
-	 * Perform a non-instrumentable allocation of a non-indexable class.
-	 * If inline allocation fails, the out of line allocator will be called.
-	 * This function assumes that the stack and live values are in a valid state for GC.
-	 *
-	 * If allocation fails, a heap OutOfMemory error is set pending on the thread.
-	 *
-	 * @param currentThread[in] the current J9VMThread
-	 * @param objectAllocate[in] instance of MM_ObjectAllocationAPI created on the current thread
-	 * @param j9clazz[in] the non-indexable J9Class to instantiate
-	 * @param initializeSlots[in] whether or not to initialize the slots (default true)
-	 * @param memoryBarrier[in] whether or not to issue a write barrier (default true)
-	 *
-	 * @returns the new object, or NULL if allocation failed
-	 */
-	static VMINLINE j9object_t
-	allocateObject(J9VMThread *currentThread, MM_ObjectAllocationAPI *objectAllocate, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
-	{
-		j9object_t instance = objectAllocate->inlineAllocateObject(currentThread, clazz, initializeSlots, memoryBarrier);
-		if (NULL == instance) {
-			instance = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, clazz, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (J9_UNEXPECTED(NULL == instance)) {
-				setHeapOutOfMemoryError(currentThread);
-			}
-		}
-		return instance;
-	}
-
-	/**
 	 * Perform a non-instrumentable allocation of an indexable class.
 	 * If inline allocation fails, the out of line allocator will be called.
 	 * This function assumes that the stack and live values are in a valid state for GC.
