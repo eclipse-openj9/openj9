@@ -698,8 +698,9 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LOAD_AGENT_MODULE)
 		&& (NULL != vm->modulesPathEntry->extraInfo))
 	{
+		const char *module = NULL;
 		Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread);
-		const char *module = vm->jimageIntf->jimagePackageToModule(
+		module = vm->jimageIntf->jimagePackageToModule(
 				vm->jimageIntf, (UDATA) vm->modulesPathEntry->extraInfo,
 				"jdk/internal/agent");
 		if (NULL != module) {
