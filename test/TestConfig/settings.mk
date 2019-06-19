@@ -212,10 +212,11 @@ ifndef UNIQUEID
 endif
 TESTOUTPUT := $(TEST_ROOT)$(D)TestConfig$(D)test_output_$(UNIQUEID)
 ifeq ($(TEST_ITERATIONS), 1)
-	REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
+	REPORTDIR_NQ = $(TESTOUTPUT)$(D)$@
 else
-	REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@_ITER_$$itercnt$(Q)
+	REPORTDIR_NQ = $(TESTOUTPUT)$(D)$@_ITER_$$itercnt
 endif
+REPORTDIR = $(Q)$(REPORTDIR_NQ)$(Q)
 
 #######################################
 # TEST_STATUS
