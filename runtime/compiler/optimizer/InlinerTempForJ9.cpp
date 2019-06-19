@@ -26,6 +26,7 @@
 #include "optimizer/J9EstimateCodeSize.hpp"
 
 #include "env/KnownObjectTable.hpp"
+#include "compile/InlineBlock.hpp"
 #include "compile/OSRData.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
