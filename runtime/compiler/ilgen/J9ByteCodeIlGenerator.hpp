@@ -37,6 +37,7 @@
 #include "infra/Stack.hpp"
 #include "env/VMJ9.h"
 
+class TR_InlineBlocks;
 class TR_PersistentClassInfo;
 class TR_BitVector;
 namespace TR { class IlGeneratorMethodDetails; }

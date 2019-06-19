@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
+#include "compile/InlineBlock.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
