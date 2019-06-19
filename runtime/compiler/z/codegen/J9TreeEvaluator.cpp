@@ -2422,9 +2422,6 @@ J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node * node, TR::CodeGenerator * c
       }
    else
       {
-      static bool newinstanceOf = (feGetEnv("TR_oldInstanceOf")) == NULL;
-      // We have support for new C helper functions with new instanceOf evaluator so by default we are calling it.
-
       static bool initialResult = feGetEnv("TR_instanceOfInitialValue") != NULL;
       traceMsg(comp,"Initial result = %d\n",initialResult);
       // Complementing Initial Result to True if the floag is not passed.
@@ -6463,7 +6460,6 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
 TR::Register *
 J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   static bool newIfInstanceOf = (feGetEnv("TR_oldInstanceOf")) == NULL;
    TR::Node * graDepNode = NULL;
    TR::ILOpCodes opCode = node->getOpCodeValue();
    TR::Node * instanceOfNode = node->getFirstChild();
