@@ -52,6 +52,21 @@
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 
+namespace J9
+{
+enum NonUserMethod
+   {
+   unknownNonUserMethod,
+   nonUser_java_util_HashMap_rehash,
+   nonUser_java_util_HashMap_analyzeMap,
+   nonUser_java_util_HashMap_calculateCapacity,
+   nonUser_java_util_HashMap_findNullKeyEntry,
+
+   numNonUserMethods
+   };
+}
+
+
 J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation *c) :
    OMR::SymbolReferenceTableConnector(sizeHint, c),
      _immutableInfo(c->trMemory()),
@@ -1172,7 +1187,7 @@ J9::SymbolReferenceTable::findOrCreateClassStaticsSymbol(TR::ResolvedMethodSymbo
       sym->setNotCollected();
    // cpIndex for resolved Class statics symbol is unused. Furthermore having a cpIndex here might create illusion for cases where we
    // care about cpIndex and also as Two or more (resolved) static field references belonging to same class will
-   // share the same information (inlined call site index, cpIndex) , using a cpIndex for these cases will 
+   // share the same information (inlined call site index, cpIndex) , using a cpIndex for these cases will
    // need further changes to prevent any sharing hence it is set to -1 for static resolved fields.
    // For more detailed information take a look at PR#4322 in eclipse/openj9 repo
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
@@ -1840,13 +1855,13 @@ J9::SymbolReferenceTable::userFieldMethodId(TR::MethodSymbol *methodSymbol)
       {
       TR::RecognizedMethod method = methodSymbol->getRecognizedMethod();
       if (method == TR::java_util_HashMap_rehash)
-         return nonUser_java_util_HashMap_rehash - 1;
+         return J9::nonUser_java_util_HashMap_rehash - 1;
       else if (method == TR::java_util_HashMap_analyzeMap)
-         return nonUser_java_util_HashMap_analyzeMap - 1;
+         return J9::nonUser_java_util_HashMap_analyzeMap - 1;
       else if (method == TR::java_util_HashMap_calculateCapacity)
-         return nonUser_java_util_HashMap_calculateCapacity - 1;
+         return J9::nonUser_java_util_HashMap_calculateCapacity - 1;
       else if (method == TR::java_util_HashMap_findNullKeyEntry)
-         return nonUser_java_util_HashMap_findNullKeyEntry - 1;
+         return J9::nonUser_java_util_HashMap_findNullKeyEntry - 1;
       }
    return -1;
    }
