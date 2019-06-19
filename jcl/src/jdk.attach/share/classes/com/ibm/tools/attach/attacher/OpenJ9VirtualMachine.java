@@ -272,18 +272,6 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	}
 
 	/**
-	 * Request thread information, including stack traces, from a target VM.
-	 * 
-	 * @return properties object containing serialized thread information
-	 * @throws IOException in case of a communication error
-	 */
-	public Properties getThreadInfo() throws IOException {
-		IPC.logMessage("enter getThreadInfo"); //$NON-NLS-1$
-		AttachmentConnection.streamSend(commandStream, Command.GET_THREAD_GROUP_INFO);
-		return IPC.receiveProperties(responseStream, true);
-	}
-
-	/**
 	 * Execute a diagnostic command on a target VM.
 	 * 
 	 * @param diagnosticCommand name of command to execute

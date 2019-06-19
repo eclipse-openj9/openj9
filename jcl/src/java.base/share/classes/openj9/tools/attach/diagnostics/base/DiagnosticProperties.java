@@ -38,6 +38,15 @@ import com.ibm.tools.attach.target.IPC;
 public class DiagnosticProperties {
 	private final Properties baseProperties;
 
+	/**
+	 * Master prefix for property keys
+	 */
+	public static final String OPENJ9_DIAGNOSTICS_PREFIX = "openj9_diagnostics."; //$NON-NLS-1$
+	/**
+	 * Use for commands which return a single string
+	 */
+	public static final String DIAGNOSTICS_STRING_RESULT = OPENJ9_DIAGNOSTICS_PREFIX + "string_result"; //$NON-NLS-1$
+
 	private static final String JAVA_LANG_STRING = "java.lang.String"; //$NON-NLS-1$
 
 	/**
@@ -249,7 +258,7 @@ public class DiagnosticProperties {
 	 * @param props Properties object to dump
 	 */
 	public static void dumpPropertiesIfDebug(String msg, final Properties props) {
-		if (DiagnosticProperties.isDebug) {
+		if (isDebug) {
 			if (null != msg) {
 				System.err.println(msg);
 			}
@@ -294,7 +303,7 @@ public class DiagnosticProperties {
 					buffWriter.println(msg);
 				}
 			} else {
-				buffWriter.println(getString(DiagnosticsInfo.DIAGNOSTICS_STRING_RESULT));
+				buffWriter.println(getString(DIAGNOSTICS_STRING_RESULT));
 			}
 		} catch (IOException e) {
 			buff = new StringWriter();
@@ -309,11 +318,11 @@ public class DiagnosticProperties {
 	 * Create a properties file to hold a single string.
 	 * 
 	 * @param text text of the string
-	 * @return properties file containing the string, plus success indication
+	 * @return DiagnosticProperties object
 	 */
 	public static DiagnosticProperties makeStringResult(String text) {
 		DiagnosticProperties props = makeCommandSucceeded();
-		props.put(DiagnosticsInfo.DIAGNOSTICS_STRING_RESULT, text);
+		props.put(DIAGNOSTICS_STRING_RESULT, text);
 		return props;
 	}
 
@@ -327,10 +336,20 @@ public class DiagnosticProperties {
 	}
 
 	/**
-	 * @return Properties file indicating success
+	 * Report successful execution of a command
+	 * @return DiagnosticProperties object
 	 */
 	public static DiagnosticProperties makeCommandSucceeded() {
 		return makeStatusProperties(false, null); // $NON-NLS-1$
+	}
+
+	/**
+	 * Report an error in the command
+	 * @param message error message
+	 * @return DiagnosticProperties object
+	 */
+	public static DiagnosticProperties makeErrorProperties(String message) {
+		return makeStatusProperties(true, message); // $NON-NLS-1$
 	}
 
 	/**
@@ -355,7 +374,7 @@ public class DiagnosticProperties {
 	 * 
 	 * @param error true if the command failed
 	 * @param msg   status message
-	 * @return properties file encoding the status and message
+	 * @return DiagnosticProperties object
 	 */
 	public static DiagnosticProperties makeStatusProperties(boolean error, String msg) {
 		DiagnosticProperties props = new DiagnosticProperties();

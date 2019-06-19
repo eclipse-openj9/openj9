@@ -315,4 +315,6 @@
 	<export name="Java_com_ibm_virtualization_management_internal_GuestOS_retrieveMemoryUsageImpl"/>
 	
 	<export name="Java_com_ibm_jvm_Stats_getStats" />
+	<export name="Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl" />
+	
 </exports>

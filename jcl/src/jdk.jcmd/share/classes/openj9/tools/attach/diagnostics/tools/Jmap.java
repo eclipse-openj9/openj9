@@ -26,7 +26,7 @@ package openj9.tools.attach.diagnostics.tools;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.IPC;
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
@@ -85,7 +85,7 @@ public class Jmap {
 				}
 				diagProvider.attach(vmid);
 				if (histo) {
-					runAndPrintCommand(diagProvider, DiagnosticUtils.makeHeapHistoCommand(live));
+					Util.runCommandAndPrintResult(diagProvider, DiagnosticUtils.makeHeapHistoCommand(live), "jmap"); //$NON-NLS-1$
 				}
 			} catch (Exception e) {
 				System.err.printf("Error getting data from %s", vmid); //$NON-NLS-1$
@@ -110,13 +110,6 @@ public class Jmap {
 				}
 			}
 		}
-	}
-
-	private static void runAndPrintCommand(AttacherDiagnosticsProvider diagProvider, String cmd) throws IOException {
-		Properties props = diagProvider.executeDiagnosticCommand(cmd);
-		DiagnosticProperties.dumpPropertiesIfDebug("jmap result:", props); //$NON-NLS-1$
-		String responseString = new DiagnosticProperties(props).printStringResult();
-		System.out.print(responseString);
 	}
 
 	@SuppressWarnings("nls")

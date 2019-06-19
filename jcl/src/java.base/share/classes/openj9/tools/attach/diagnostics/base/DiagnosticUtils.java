@@ -23,13 +23,19 @@
 
 package openj9.tools.attach.diagnostics.base;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
 import com.ibm.oti.vm.VM;
 import com.ibm.tools.attach.target.IPC;
+
+import openj9.management.internal.LockInfoBase;
+import openj9.management.internal.ThreadInfoBase;
 
 /**
  * Common methods for the diagnostics tools
@@ -40,6 +46,11 @@ public class DiagnosticUtils {
 	/**
 	 * Command strings for executeDiagnosticCommand()
 	 */
+
+	/**
+	 * Run Get the stack traces and other thread information.
+	 */
+	public static final String DIAGNOSTICS_THREAD_PRINT = "Thread.print"; //$NON-NLS-1$
 
 	/**
 	 * Run System.gc();
@@ -65,6 +76,7 @@ public class DiagnosticUtils {
 	 * Report only live heap objects.
 	 */
 	public static final String LIVE_OPTION = "live"; //$NON-NLS-1$
+	private static final String THREAD_LOCKED_SYNCHRONIZERS_OPTION = "-l"; //$NON-NLS-1$
 
 	private static final Map<String, Function<String, DiagnosticProperties>> commandTable;
 
@@ -79,6 +91,19 @@ public class DiagnosticUtils {
 		if (liveObjects) {
 			cmd = DIAGNOSTICS_GC_CLASS_HISTOGRAM + DIAGNOSTICS_OPTION_SEPARATOR + LIVE_OPTION;
 		}
+		return cmd;
+	}
+
+	/**
+	 * Create the command to run the Thread.print command
+	 * 
+	 * @param lockedSynchronizers print the locked ownable synchronizers
+	 * @return formatted string
+	 */
+	public static String makeThreadPrintCommand(boolean lockedSynchronizers) {
+		String cmd = lockedSynchronizers
+				? DIAGNOSTICS_THREAD_PRINT + DIAGNOSTICS_OPTION_SEPARATOR + THREAD_LOCKED_SYNCHRONIZERS_OPTION
+				: DIAGNOSTICS_THREAD_PRINT;
 		return cmd;
 	}
 
@@ -120,6 +145,55 @@ public class DiagnosticUtils {
 		}
 		return DiagnosticProperties.makeStringResult(result);
 	}
+	
+	private static DiagnosticProperties getThreadInfo(String diagnosticCommand) {
+		DiagnosticProperties result = null;
+		boolean okay = true;
+		boolean addSynchronizers = false;
+		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		/* only one option ("-l[=<BOOLEAN>]") is allowed, so the diagnosticCommand can comprise at most
+		 * the base command and one option, with an optional value */
+		if (parts.length > 2) {
+			okay = false;
+		} else if (parts.length == 2) {
+			String option = parts[1];
+			if (option.startsWith(THREAD_LOCKED_SYNCHRONIZERS_OPTION)) {
+				if ((THREAD_LOCKED_SYNCHRONIZERS_OPTION.length() == option.length()) /* exact match */
+						|| option.toLowerCase().equals(THREAD_LOCKED_SYNCHRONIZERS_OPTION + "=true")) { //$NON-NLS-1$
+					addSynchronizers = true;
+				}
+			} else {
+				okay = false;
+			}
+		}
+		if (!okay) {
+			result = DiagnosticProperties.makeErrorProperties("Command not recognized: " + diagnosticCommand); //$NON-NLS-1$
+		} else {
+			StringWriter buffer = new StringWriter(2000);
+			PrintWriter bufferPrinter = new PrintWriter(buffer);
+			bufferPrinter.println(System.getProperty("java.vm.info")); //$NON-NLS-1$
+			bufferPrinter.println();
+			ThreadInfoBase[] threadInfoBases = dumpAllThreadsImpl(true, addSynchronizers, Integer.MAX_VALUE);
+			for (ThreadInfoBase currentThreadInfoBase : threadInfoBases) {
+				bufferPrinter.print(currentThreadInfoBase.toString());
+				if (addSynchronizers) {
+					LockInfoBase[] lockedSynchronizers = currentThreadInfoBase.getLockedSynchronizers();
+					bufferPrinter.printf("%n\tLocked ownable synchronizers: %d%n", //$NON-NLS-1$
+							Integer.valueOf(lockedSynchronizers.length));
+					for (LockInfoBase currentLockedSynchronizer : lockedSynchronizers) {
+						bufferPrinter.printf("\t- %s%n", currentLockedSynchronizer.toString()); //$NON-NLS-1$
+					}
+				}
+				bufferPrinter.println();
+			}
+			bufferPrinter.flush();
+			result = DiagnosticProperties.makeStringResult(buffer.toString());
+		}
+		return result;
+	}
+
+	private static native ThreadInfoBase[] dumpAllThreadsImpl(boolean lockedMonitors,
+			boolean lockedSynchronizers, int maxDepth);
 
 	private static DiagnosticProperties runGC() {
 		VM.globalGC();
@@ -128,9 +202,9 @@ public class DiagnosticUtils {
 
 	static {
 		commandTable = new HashMap<>();
-		commandTable.put(openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_CLASS_HISTOGRAM,
-				s -> getHeapStatistics(s));
-		commandTable.put(openj9.tools.attach.diagnostics.base.DiagnosticUtils.DIAGNOSTICS_GC_RUN, s -> runGC());
+		commandTable.put(DIAGNOSTICS_GC_CLASS_HISTOGRAM, DiagnosticUtils::getHeapStatistics);
+		commandTable.put(DIAGNOSTICS_GC_RUN, s -> runGC());
+		commandTable.put(DIAGNOSTICS_THREAD_PRINT, DiagnosticUtils::getThreadInfo);
 	}
 
 }
