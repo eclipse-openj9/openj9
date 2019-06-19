@@ -22,7 +22,6 @@
  *******************************************************************************/
 package java.lang.management;
 
-import java.lang.Thread.State;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
@@ -34,7 +33,10 @@ import com.ibm.java.lang.management.internal.ManagementAccessControl;
 import com.ibm.java.lang.management.internal.MonitorInfoUtil;
 import com.ibm.java.lang.management.internal.StackTraceElementUtil;
 import com.ibm.java.lang.management.internal.ThreadInfoUtil;
-import com.ibm.oti.util.Util;
+
+import openj9.management.internal.LockInfoBase;
+import openj9.management.internal.MonitorInfoBase;
+import openj9.management.internal.ThreadInfoBase;
 
 /**
  * Information about a snapshot of the state of a thread.
@@ -43,56 +45,22 @@ import com.ibm.oti.util.Util;
  */
 public class ThreadInfo {
 
+	private static final MonitorInfo[] EMPTY_MONITORINFO_ARRAY = new MonitorInfo[0];
+
 	/* Set up access to ThreadInfo shared secret.*/
 	static {
 		ManagementAccessControl.setThreadInfoAccess(new ThreadInfoAccessImpl());
 	}
-
-	private long threadId;
-
-	private long nativeTId;
-
-	private String threadName;
-
-	private Thread.State threadState;
-
-	private boolean suspended;
-
-	private boolean inNative;
-
-	private long blockedCount;
-
-	private long blockedTime;
-
-	private long waitedCount;
-
-	private long waitedTime;
-
-	private String lockName;
-
-	private long lockOwnerId = -1;
-
-	private String lockOwnerName;
-
-	private StackTraceElement[] stackTraces = new StackTraceElement[0];
-
-	private LockInfo lockInfo;
-
-	private LockInfo[] lockedSynchronizers = new LockInfo[0];
-
-	private MonitorInfo[] lockedMonitors = new MonitorInfo[0];
-
-	private String TOSTRING_VALUE;
-
-	/*[IF Sidecar19-SE]*/
-	private boolean daemon;
-
-	private int priority;
-	/*[ENDIF]*/
 	
 	/**
-	 * Creates a new <code>ThreadInfo</code> instance.
-	 * 
+	 * Container for the actual data.
+	 */
+	private final ThreadInfoBase baseInfo;
+	private static final LockInfo[] EMPTY_LOCKINFO_ARRAY = new LockInfo[0];
+
+	
+	/**
+	 * Used by from().
 	 * @param threadIdVal
 	 * @param threadNameVal
 	 * @param threadStateVal
@@ -121,117 +89,40 @@ public class ThreadInfo {
 			long lockOwnerIdVal, String lockOwnerNameVal,
 			StackTraceElement[] stackTraceVal, LockInfo lockInfo,
 			MonitorInfo[] lockedMonitors, LockInfo[] lockedSynchronizers
-			/*[IF Sidecar19-SE]*/
+/*[IF Sidecar19-SE]*/
 			, boolean daemon, int priority
-			/*[ENDIF]*/
+/*[ENDIF]*/
 	) {
-		this.threadId = threadIdVal;
-		this.threadName = threadNameVal;
-		this.threadState = threadStateVal;
-		this.suspended = suspendedVal;
-		this.inNative = inNativeVal;
-		this.blockedCount = blockedCountVal;
-		this.blockedTime = blockedTimeVal;
-		this.waitedCount = waitedCountVal;
-		this.waitedTime = waitedTimeVal;
-		this.lockName = lockNameVal;
-		this.lockOwnerId = lockOwnerIdVal;
-		this.lockOwnerName = lockOwnerNameVal;
-		this.stackTraces = stackTraceVal;
-		this.lockInfo = lockInfo;
-		this.lockedMonitors = lockedMonitors;
-		this.lockedSynchronizers = lockedSynchronizers;
-		/*[IF Sidecar19-SE]*/
-		this.daemon = daemon;
-		this.priority = priority;
-		/*[ENDIF]*/
+		MonitorInfoBase[] monInfoBases = null;
+		if (null != lockedMonitors) {
+			monInfoBases = Arrays.stream(lockedMonitors)
+					.map(MonitorInfo::getBaseInfo).toArray(MonitorInfoBase[]::new);
+		}
+		
+		LockInfoBase[] lockedSyncs = null;
+		if (null != lockedSynchronizers) {
+			lockedSyncs = Arrays.stream(lockedSynchronizers)
+					.map(LockInfo::getBaseInfo).toArray(LockInfoBase[]::new);
+		}
+		LockInfoBase lckInfo = null;
+		if (null != lockInfo) {
+			lckInfo = lockInfo.getBaseInfo();
+		}
+		baseInfo = new ThreadInfoBase(threadIdVal, threadNameVal, threadStateVal, suspendedVal, inNativeVal,
+				blockedCountVal, blockedTimeVal, waitedCountVal, waitedTimeVal, lockNameVal, lockOwnerIdVal,
+				lockOwnerNameVal, stackTraceVal, lckInfo, monInfoBases, lockedSyncs
+/*[IF Sidecar19-SE]*/
+				, daemon, priority
+/*[ENDIF]*/
+				);
 	}
 
 	/**
-	 * @param thread
-	 * @param state
-	 * @param isSuspended
-	 * @param isInNative
-	 * @param blockedCount
-	 * @param blockedTime
-	 * @param waitedCount
-	 * @param waitedTime
-	 * @param stackTrace
-	 * @param blockingMonitor
-	 * @param lockOwner
+	 * Constructor for use via reflection from ThreadMXBeanImpl.
+	 * @param base data for the object
 	 */
-	private ThreadInfo(Thread thread, long nativeId, int state, boolean isSuspended,
-			boolean isInNative, long blockedCount, long blockedTime,
-			long waitedCount, long waitedTime, StackTraceElement[] stackTrace,
-			Object blockingMonitor, Thread lockOwner) {
-		this.threadId = thread.getId();
-		this.nativeTId = nativeId;
-		this.threadName = thread.getName();
-		/*[IF Sidecar19-SE]*/
-		this.daemon = thread.isDaemon();
-		this.priority = thread.getPriority();
-		/*[ENDIF]*/
-
-		// Use the supplied state int to index into the array returned
-		// by values() which should be all thread states in the order
-		// they have been declared. Doing this rather than just issuing a
-		// call to thread.getState() because the Thread state may have
-		// changed after the VM issued the call to this method.
-		this.threadState = Thread.State.values()[state];
-		this.suspended = isSuspended;
-		this.inNative = isInNative;
-		this.blockedCount = blockedCount;
-		this.blockedTime = blockedTime;
-		this.waitedCount = waitedCount;
-		this.waitedTime = waitedTime;
-
-		if (lockOwner != null) {
-			this.lockOwnerId = lockOwner.getId();
-			this.lockOwnerName = lockOwner.getName();
-		}
-
-		this.stackTraces = stackTrace;
-		if (blockingMonitor != null) {
-			this.lockName = blockingMonitor.getClass().getName()
-					+ '@'
-					+ Integer.toHexString(System
-							.identityHashCode(blockingMonitor));
-		}
-	}
-
-	/**
-	 * @param thread
-	 * @param state
-	 * @param isSuspended
-	 * @param isInNative
-	 * @param blockedCount
-	 * @param blockedTime
-	 * @param waitedCount
-	 * @param waitedTime
-	 * @param stackTrace
-	 * @param blockingObject 
-	 * @param blockingObjectOwner 
-	 * @param lockedMonitors
-	 * @param lockedSynchronizers
-	 */
-	private ThreadInfo(Thread thread, long nativeId, int state, boolean isSuspended,
-			boolean isInNative, long blockedCount, long blockedTime,
-			long waitedCount, long waitedTime, StackTraceElement[] stackTrace,
-			Object blockingObject, Thread blockingObjectOwner,
-			MonitorInfo[] lockedMonitors, LockInfo[] lockedSynchronizers) {
-		this(thread,nativeId,state,isSuspended,isInNative,blockedCount,blockedTime,waitedCount,waitedTime,stackTrace,blockingObject,blockingObjectOwner);
-
-		this.lockedMonitors = lockedMonitors;
-		this.lockedSynchronizers = lockedSynchronizers;
-
-		if (blockingObject != null) {
-			this.lockInfo = new LockInfo(blockingObject.getClass().getName(),
-					System.identityHashCode(blockingObject));
-		}
-
-		if (this.lockInfo != null) {
-			this.lockName = this.lockInfo.toString();
-		}
+	private ThreadInfo(ThreadInfoBase base) {
+		baseInfo = base;
 	}
 
 	/**
@@ -243,7 +134,7 @@ public class ThreadInfo {
 	 *         a monitor.
 	 */
 	public long getBlockedCount() {
-		return this.blockedCount;
+		return baseInfo.getBlockedCount();
 	}
 
 	/**
@@ -265,7 +156,7 @@ public class ThreadInfo {
 	 * @see ThreadMXBean#isThreadContentionMonitoringEnabled()
 	 */
 	public long getBlockedTime() {
-		return this.blockedTime;
+		return baseInfo.getBlockedTime();
 	}
 
 	/**
@@ -286,7 +177,7 @@ public class ThreadInfo {
 	 * @see System#identityHashCode(java.lang.Object)
 	 */
 	public String getLockName() {
-		return this.lockName;
+		return baseInfo.getLockName();
 	}
 
 	/**
@@ -301,7 +192,7 @@ public class ThreadInfo {
 	 *         is no other thread holding the monitor, returns a <code>-1</code>.
 	 */
 	public long getLockOwnerId() {
-		return this.lockOwnerId;
+		return baseInfo.getLockOwnerId();
 	}
 
 	/**
@@ -317,7 +208,7 @@ public class ThreadInfo {
 	 *         reference.
 	 */
 	public String getLockOwnerName() {
-		return lockOwnerName;
+		return baseInfo.getLockOwnerName();
 	}
 
 	/**
@@ -329,7 +220,8 @@ public class ThreadInfo {
 	 *         thread is currently blocked, else <code>null</code>.
 	 */
 	public LockInfo getLockInfo() {
-		return this.lockInfo;
+		LockInfoBase li = baseInfo.getBlockingLockInfo();
+		return (null == li) ? null : new LockInfo(li);
 	}
 
 	/**
@@ -340,7 +232,7 @@ public class ThreadInfo {
 	 *         <code>ThreadInfo</code>.
 	 */
 	long getNativeThreadId() {
-		return this.nativeTId;
+		return baseInfo.getNativeTId();
 	}
 
 	/**
@@ -359,7 +251,7 @@ public class ThreadInfo {
 	 *         <code>ThreadInfo</code>.
 	 */
 	public StackTraceElement[] getStackTrace() {
-		return this.stackTraces.clone();
+		return baseInfo.getStackTrace().clone();
 	}
 
 	/**
@@ -370,7 +262,7 @@ public class ThreadInfo {
 	 *         <code>ThreadInfo</code>.
 	 */
 	public long getThreadId() {
-		return this.threadId;
+		return baseInfo.getThreadId();
 	}
 
 	/**
@@ -381,7 +273,7 @@ public class ThreadInfo {
 	 *         <code>ThreadInfo</code>.
 	 */
 	public String getThreadName() {
-		return this.threadName;
+		return baseInfo.getThreadName();
 	}
 
 	/**
@@ -393,7 +285,7 @@ public class ThreadInfo {
 	 * @see Thread#getState()
 	 */
 	public Thread.State getThreadState() {
-		return this.threadState;
+		return baseInfo.getThreadState();
 	}
 
 	/**
@@ -405,7 +297,7 @@ public class ThreadInfo {
 	 *         &quot;wait&quot; or &quot;timed wait&quot; state.
 	 */
 	public long getWaitedCount() {
-		return this.waitedCount;
+		return baseInfo.getWaitedCount();
 	}
 
 	/**
@@ -427,7 +319,7 @@ public class ThreadInfo {
 	 * @see ThreadMXBean#isThreadContentionMonitoringEnabled()
 	 */
 	public long getWaitedTime() {
-		return this.waitedTime;
+		return baseInfo.getWaitedTime();
 	}
 
 	/**
@@ -439,7 +331,7 @@ public class ThreadInfo {
 	 *         then <code>true</code>, otherwise <code>false</code>.
 	 */
 	public boolean isInNative() {
-		return this.inNative;
+		return baseInfo.isInNative();
 	}
 
 	/**
@@ -450,7 +342,7 @@ public class ThreadInfo {
 	 *         <code>true</code>, otherwise <code>false</code>.
 	 */
 	public boolean isSuspended() {
-		return this.suspended;
+		return baseInfo.isSuspended();
 	}
 
 	/**
@@ -465,7 +357,13 @@ public class ThreadInfo {
 	 *         length of zero.
 	 */
 	public MonitorInfo[] getLockedMonitors() {
-		return this.lockedMonitors;
+		MonitorInfo lockedMons[] = null;
+		MonitorInfoBase[] lockedMonBases = baseInfo.getLockedMonitors();
+		if (null != lockedMonBases) {
+			lockedMons = Arrays.stream(lockedMonBases)
+					.map(MonitorInfo::new).toArray(MonitorInfo[]::new);
+		}
+		return lockedMons;
 	}
 
 	/**
@@ -482,7 +380,11 @@ public class ThreadInfo {
 	 *         have a length of zero.
 	 */
 	public LockInfo[] getLockedSynchronizers() {
-		return this.lockedSynchronizers;
+		LockInfo lockedSyncs[] = null;
+		LockInfoBase[] lockedSyncBases = baseInfo.getLockedSynchronizers();
+		lockedSyncs = Arrays.stream(lockedSyncBases)
+				.map(LockInfo::new).toArray(LockInfo[]::new);
+		return lockedSyncs;
 	}
 
 	/**
@@ -653,9 +555,7 @@ public class ThreadInfo {
 			CompositeData[] lockedSynchronizersDataVal = (CompositeData[]) cd.get("lockedSynchronizers"); //$NON-NLS-1$
 			result = LockInfoUtil.fromArray(lockedSynchronizersDataVal);
 		} catch (InvalidKeyException e) {
-			// create the recommended default for lockedSynchronizers,
-			// an empty array of LockInfo
-			result = new LockInfo[0];
+			result = EMPTY_LOCKINFO_ARRAY;
 		}
 		return result;
 	}
@@ -675,9 +575,7 @@ public class ThreadInfo {
 			CompositeData[] lockedMonitorsDataVal = (CompositeData[]) cd.get("lockedMonitors"); //$NON-NLS-1$
 			result = MonitorInfoUtil.fromArray(lockedMonitorsDataVal);
 		} catch (InvalidKeyException e) {
-			// create the recommended default for lockedMonitors,
-			// an empty array of MonitorInfo
-			result = new MonitorInfo[0];
+			result = EMPTY_MONITORINFO_ARRAY;
 		}
 		return result;
 	}
@@ -734,7 +632,7 @@ public class ThreadInfo {
 	 * @return <code>true</code> if this thread is a daemon thread, otherwise <code>false</code> .
 	 */
 	public boolean isDaemon() {
-		return daemon;
+		return baseInfo.isDaemon();
 	}
 	
 	/**
@@ -743,59 +641,17 @@ public class ThreadInfo {
 	 * @return The priority of the thread represented by this <code>ThreadInfo</code>.
 	 */
 	public int getPriority() {
-		return priority;
+		return baseInfo.getPriority();
 	}
 	
 	/*[ENDIF]*/
 	
 	/**
-	 * Returns a text description of this thread info.
-	 * 
-	 * @return a text description of this thread info.
+	 * @return a text description of this thread.
 	 */
 	@Override
 	public String toString() {
-		// Since ThreadInfos are immutable the string value need only be
-		// calculated the one time
-		final String ls = System.lineSeparator();
-		if (TOSTRING_VALUE == null) {
-			StringBuilder result = new StringBuilder();
-/*[IF Java11]*/
-			result.append(String.format("\"%s\" prio=%d Id=%d %s",  //$NON-NLS-1$
-					threadName, Integer.valueOf(priority), Long.valueOf(threadId), threadState));
-/*[ELSE]*/
-			result.append(String.format("\"%s\" Id=%d %s",  //$NON-NLS-1$
-					threadName, Long.valueOf(threadId), threadState));
-/*[ENDIF]*/
-			if (State.BLOCKED == threadState) {
-				result.append(String.format(" on %s owned by \"%s\" Id=%d",  //$NON-NLS-1$
-						lockName, lockOwnerName, Long.valueOf(lockOwnerId)));
-			}
-			result.append(ls);
-			if (stackTraces != null && stackTraces.length > 0) {
-				MonitorInfo[] lockList = getLockedMonitors();
-				MonitorInfo[] lockArray = new MonitorInfo[stackTraces.length];
-				for (MonitorInfo mi: lockList) {
-					int lockDepth = mi.getLockedStackDepth();
-					lockArray[lockDepth] = mi;
-				}
-				int stackDepth = 0;
-				for (StackTraceElement element : stackTraces) {
-					result.append("\tat "); //$NON-NLS-1$
-					Util.printStackTraceElement(element,
-							null, result, true);
-					result.append(ls);
-					if (null != lockArray[stackDepth]) {
-						MonitorInfo mi = lockArray[stackDepth];
-						result.append(String.format("\t- locked %s%n",  //$NON-NLS-1$
-								mi.toString()));
-					}
-					++stackDepth;
-				}
-			}
-			TOSTRING_VALUE = result.toString();
-		}
-		return TOSTRING_VALUE;
+		return baseInfo.toString();
 	}
 
 	/**
@@ -803,116 +659,11 @@ public class ThreadInfo {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
+		boolean result = (this == obj);
+		if (!result && (null != obj) && (obj instanceof ThreadInfo)) {
+			result = baseInfo.equals(((ThreadInfo) obj).baseInfo);
 		}
-
-		if (!(obj instanceof ThreadInfo)) {
-			return false;
-		}
-
-		if (this == obj) {
-			return true;
-		}
-
-		// Safe to cast if the instanceof test above was passed.
-		ThreadInfo ti = (ThreadInfo) obj;
-		if (!(ti.getBlockedCount() == this.getBlockedCount())) {
-			return false;
-		}
-
-		if (!(ti.getBlockedTime() == this.getBlockedTime())) {
-			return false;
-		}
-
-		// It is possible that the lock name is null
-		if ((ti.getLockName() != null) && (this.getLockName() != null)) {
-			// Both non-null values. Can string compare...
-			if (!(ti.getLockName().equals(this.getLockName()))) {
-				return false;
-			}
-		} else {
-			// One or both are null. Only succeed if both are null
-			if (ti.getLockName() != this.getLockName()) {
-				return false;
-			}
-		}
-
-		if (!(ti.getLockOwnerId() == this.getLockOwnerId())) {
-			return false;
-		}
-
-		// It is possible that the lock owner name is null
-		if ((ti.getLockOwnerName() != null)
-				&& (this.getLockOwnerName() != null)) {
-			// Both non-null values. Can string compare...
-			if (!(ti.getLockOwnerName().equals(this.getLockOwnerName()))) {
-				return false;
-			}
-		} else {
-			// One or both are null. Only succeed if both are null
-			if (ti.getLockOwnerName() != this.getLockOwnerName()) {
-				return false;
-			}
-		}
-
-		// It is possible that the lock info is null
-		if ((ti.getLockInfo() != null) && (this.getLockInfo() != null)) {
-			// Both non-null values. Can compare string representations...
-			if (!(ti.getLockInfo().toString().equals(this.getLockInfo()
-					.toString()))) {
-				return false;
-			}
-		} else {
-			// One or both are null. Only succeed if both are null
-			if (ti.getLockInfo() != this.getLockInfo()) {
-				return false;
-			}
-		}
-
-		if (!(Arrays.equals(ti.getStackTrace(), this.getStackTrace()))) {
-			return false;
-		}
-
-		if (!(ti.getThreadId() == this.getThreadId())) {
-			return false;
-		}
-
-		if (!(ti.getThreadName().equals(this.getThreadName()))) {
-			return false;
-		}
-
-		if (!(ti.getThreadState().equals(this.getThreadState()))) {
-			return false;
-		}
-
-		if (!(ti.getWaitedCount() == this.getWaitedCount())) {
-			return false;
-		}
-
-		if (!(ti.getWaitedTime() == this.getWaitedTime())) {
-			return false;
-		}
-
-		if (!(ti.isInNative() == this.isInNative())) {
-			return false;
-		}
-
-		if (!(ti.isSuspended() == this.isSuspended())) {
-			return false;
-		}
-
-		/*[IF Sidecar19-SE]*/
-		if (!(ti.isDaemon() == this.isDaemon())) {
-			return false;
-		}
-
-		if (!(ti.getPriority() == this.getPriority())) {
-			return false;
-		}
-		/*[ENDIF]*/
-		
-		return true;
+		return result;
 	}
 
 	/**
@@ -920,24 +671,7 @@ public class ThreadInfo {
 	 */
 	@Override
 	public int hashCode() {
-		return (Long.toString(this.getBlockedCount())
-				+ this.getBlockedTime()
-				+ getLockName()
-				+ this.getLockOwnerId()
-				+ getLockOwnerName()
-				+ this.getStackTrace().length
-				+ this.getThreadId()
-				+ getThreadName()
-				+ getThreadState()
-				+ this.getWaitedCount()
-				+ this.getWaitedTime()
-				+ this.isInNative()
-				+ this.isSuspended()
-				/*[IF Sidecar19-SE]*/
-				+ this.isDaemon()
-				+ this.getPriority()
-				/*[ENDIF]*/
-		).hashCode();
+		return baseInfo.hashCode();
 	}
 
 	/**
@@ -962,14 +696,12 @@ public class ThreadInfo {
 			StringTokenizer strTok = new StringTokenizer(lockString, "@"); //$NON-NLS-1$
 			if (strTok.countTokens() == 2) {
 				try {
-					// TODO : can the recovered values be sanity checked?
 					result = new LockInfo(strTok.nextToken(), Integer.parseInt(strTok.nextToken(), 16));
 				} catch (NumberFormatException e) {
 					// ignore and move on - the lockString is not in the correct format
 				}
 			}
 		}
-
 		return result;
 	}
 
