@@ -185,7 +185,7 @@ J9::CodeGenerator::createStackAtlas()
          parmCursor->setGCMapIndex(slotIndex);
 
          if (parmCursor->getLinkageRegisterIndex()<0 ||
-             parmCursor->getAllocatedIndex()<0 ||
+             parmCursor->getAssignedGlobalRegisterIndex()<0 ||
              _bodyLinkage->hasToBeOnStack(parmCursor))
             {
             parameterMap->setBit(slotIndex);

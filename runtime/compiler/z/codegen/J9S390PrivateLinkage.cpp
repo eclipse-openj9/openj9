@@ -851,7 +851,7 @@ TR::S390PrivateLinkage::hasToBeOnStack(TR::ParameterSymbol * parm)
    //      2. the address of the parameter is taken (JNI calls)
    //             (You can't get an address of the parameter if it is stored in a register -
    //              hence, parameter needs to be saved it onto the stack).
-   bool result = (  parm->getAllocatedIndex() >= 0 &&                        // is using global RA
+   bool result = (  parm->getAssignedGlobalRegisterIndex() >= 0 &&   // is using global RA
             (  (  parm->getLinkageRegisterIndex() == 0 &&            // is first parameter (this pointer)
                   parm->isCollectedReference() &&                    // is object reference
                   !bodySymbol->isStatic() &&                         // is virtual
