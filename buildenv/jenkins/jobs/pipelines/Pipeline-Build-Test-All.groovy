@@ -225,6 +225,7 @@ try {
                         stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
                     }
 
+                    COUNT = 0
                     BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
                         if (VARIABLES."${SPEC}") {
                             SDK_VERSIONS.each { SDK_VERSION ->
@@ -257,16 +258,32 @@ try {
                                     ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
                                 }
 
+                                COUNT += 1
                                 builds["${job_name}"] = {
-                                    if (AUTOMATIC_GENERATION != 'false') {
-                                        node(SETUP_LABEL) {
-                                            unstash 'DSL'
-                                            variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
+                                    try {
+                                        builds["${job_name}"] = {
+                                            if (AUTOMATIC_GENERATION != 'false') {
+                                                node(SETUP_LABEL) {
+                                                    unstash 'DSL'
+                                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
+                                                }
+                                            }
+                                            build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION)
                                         }
+                                    } finally {
+                                        COUNT -= 1
                                     }
-                                    build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION)
                                 }
                             }
+                        }
+                    }
+                    // Add build monitor branch
+                    builds["Monitoring"] = {
+                        while (COUNT > 0){
+                            echo "COUNT:${COUNT}"
+                            sleep time: 5, unit: 'MINUTES'
+                            echo "Generating badge table..."
+                            add_summary_badges()
                         }
                     }
                 } finally {
@@ -323,13 +340,17 @@ try {
         }
     }
 } finally {
+    add_summary_badges()
+}
+
+def add_summary_badges() {
     // add summary badge
     table = get_summary_table(BUILD_IDENTIFIER)
     if (table) {
+        manager.removeSummaries()
         manager.createSummary("plugin.png").appendText(table)
     }
 }
-
 
 def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION) {
     stage ("${JOB_NAME}") {
