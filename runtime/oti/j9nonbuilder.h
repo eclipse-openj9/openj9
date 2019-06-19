@@ -5376,6 +5376,7 @@ typedef struct J9JavaVM {
 	jmethodID addOpens;
 	jmethodID addUses;
 	jmethodID addProvides;
+	UDATA addModulesCount;
 	UDATA safePointState;
 	UDATA safePointResponseCount;
 	struct J9VMRuntimeStateListener vmRuntimeStateListener;
