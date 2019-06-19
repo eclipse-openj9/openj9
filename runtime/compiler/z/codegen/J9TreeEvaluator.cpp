@@ -2453,9 +2453,9 @@ genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Regi
       {
       if (cg->getHasResumableTrapHandler())
          {
-         TR::Instruction* compareAndTrapInsturction = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmTrapOpCode(), node, objectReg, 0, TR::InstOpCode::COND_BE);
-         compareAndTrapInsturction->setExceptBranchOp();
-         compareAndTrapInsturction->setNeedsGCMap(0x0000FFFF);
+         TR::Instruction* compareAndTrapInstruction = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmTrapOpCode(), node, objectReg, 0, TR::InstOpCode::COND_BE);
+         compareAndTrapInstruction->setExceptBranchOp();
+         compareAndTrapInstruction->setNeedsGCMap(0x0000FFFF);
          }
       else
          {
