@@ -75,19 +75,39 @@ timestamps {
     }
 
     try {
-        if (params.AUTOMATIC_GENERATION != 'false'){
-            node(SETUP_LABEL) {
-                unstash 'DSL'
-                variableFile.create_job(BUILD_NAME, SDK_VERSION, SPEC, 'build', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
+        COUNT = 1
+        parallel {
+            stage("Build") {
+                try {
+                    if (params.AUTOMATIC_GENERATION != 'false'){
+                        node(SETUP_LABEL) {
+                            unstash 'DSL'
+                            variableFile.create_job(BUILD_NAME, SDK_VERSION, SPEC, 'build', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
+                        }
+                    }
+                    jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_NAME, CUSTOM_DESCRIPTION)
+                } finally {
+                    COUNT = 0
+                }
+            }
+            stage("Monitoring") {
+                while (COUNT > 0) {
+                    build_monitor()
+                }
             }
         }
-        jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_NAME, CUSTOM_DESCRIPTION)
     } finally {
-        //display the build status of the downstream jobs
-        def downstreamBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, buildFile.get_downstream_job_names(SPEC, SDK_VERSION, BUILD_IDENTIFIER).values())
+        build_monitor()
         add_badges(downstreamBuilds)
-        add_summary_badge(downstreamBuilds)
     }
+}
+
+def build_monitor() {
+    sleep time: 5, unit: 'MINUTES'
+    echo "Generating badge table..."
+    //display the build status of the downstream jobs
+    downstreamBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, buildFile.get_downstream_job_names(SPEC, SDK_VERSION, BUILD_IDENTIFIER).values())
+    add_summary_badge(downstreamBuilds)
 }
 
 /*
