@@ -21,7 +21,6 @@
  *******************************************************************************/
 
 #include <string.h>
-#include <math.h>
 #include "j9protos.h"
 #include "j9port.h"
 #include "vm_internal.h"
@@ -50,7 +49,7 @@ UDATA addSystemProperty(J9JavaVM * vm, const char* propName,  const char* propVa
 static char * getOptionArg(J9JavaVM *vm, IDATA argIndex, UDATA optionNameLen);
 static UDATA addPropertyForOptionWithPathArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName);
 static UDATA addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDATA optionNameLen, const char *propName);
-static UDATA addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen);
+static UDATA addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen, UDATA *propertyCount);
 static UDATA addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName);
 static UDATA addModularitySystemProperties(J9JavaVM * vm);
 
@@ -352,11 +351,13 @@ _end:
  * @param [in] optionNameLen length of the modularity command line option
  * @param [in] basePropName base name to be used for the property to be set
  * @param [in] basePropNameLen length of the base name
+ * @param [out] propertyCount pointer to a variable to receive
+ * 			the number of extra properties created.  May be null
  *
  * @return returns J9SYSPROP_ERROR_NONE on success, any other J9SYSPROP_ERROR code on failure
  */
 static UDATA
-addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen)
+addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen, UDATA *propertyCount)
 {
 	IDATA argIndex = -1;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
@@ -394,8 +395,11 @@ addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA 
 
 			argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH_USING_EQUALS, optionName, NULL, argIndex);
 			index += 1;
-			indexLen = (IDATA)floor(log10((double)index) + 1); /* get number of digits in 'index' */
+			indexLen = j9str_printf(PORTLIB, NULL, 0, "%zu", index); /* get number of digits in 'index' */
 		} while (argIndex >= 0);
+		if (NULL != propertyCount) {
+			*propertyCount = index;
+		}
 	}
 
 _end:
@@ -428,7 +432,7 @@ addModularitySystemProperties(J9JavaVM * vm)
 	}
 
 	/* Find all --add-modules options */
-	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_MODULES, LITERAL_STRLEN(VMOPT_ADD_MODULES), SYSPROP_JDK_MODULE_ADDMODS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDMODS));
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_MODULES, LITERAL_STRLEN(VMOPT_ADD_MODULES), SYSPROP_JDK_MODULE_ADDMODS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDMODS), &(vm->addModulesCount));
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto _end;
 	}
@@ -440,25 +444,25 @@ addModularitySystemProperties(J9JavaVM * vm)
 	}
 
 	/* Find all --add-reads options */
-	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_READS, LITERAL_STRLEN(VMOPT_ADD_READS), SYSPROP_JDK_MODULE_ADDREADS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDREADS));
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_READS, LITERAL_STRLEN(VMOPT_ADD_READS), SYSPROP_JDK_MODULE_ADDREADS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDREADS), NULL);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto _end;
 	}
 
 	/* Find all --add-exports options */
-	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_EXPORTS, LITERAL_STRLEN(VMOPT_ADD_EXPORTS), SYSPROP_JDK_MODULE_ADDEXPORTS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDEXPORTS));
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_EXPORTS, LITERAL_STRLEN(VMOPT_ADD_EXPORTS), SYSPROP_JDK_MODULE_ADDEXPORTS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDEXPORTS), NULL);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto _end;
 	}
 
 	/* Find all --add-opens options */
-	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_OPENS, LITERAL_STRLEN(VMOPT_ADD_OPENS), SYSPROP_JDK_MODULE_ADDOPENS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDOPENS));
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_OPENS, LITERAL_STRLEN(VMOPT_ADD_OPENS), SYSPROP_JDK_MODULE_ADDOPENS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDOPENS), NULL);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto _end;
 	}
 
 	/* Find all --patch-module options */
-	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_PATCH_MODULE, LITERAL_STRLEN(VMOPT_PATCH_MODULE), SYSPROP_JDK_MODULE_PATCH, LITERAL_STRLEN(SYSPROP_JDK_MODULE_PATCH));
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_PATCH_MODULE, LITERAL_STRLEN(VMOPT_PATCH_MODULE), SYSPROP_JDK_MODULE_PATCH, LITERAL_STRLEN(SYSPROP_JDK_MODULE_PATCH), NULL);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto _end;
 	} else {
@@ -522,6 +526,7 @@ _end:
 	return rc;
 }
 
+#define COM_SUN_MANAGEMENT "com.sun.management"
 /**
  * Initializes the system properties container in the supplied vm.
  * @param vm
@@ -540,6 +545,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	const char* propValue = NULL;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
 	const char *specificationVersion = NULL;
+	BOOLEAN addManagementModule = FALSE;
 
 	if (omrthread_monitor_init(&(vm->systemPropertiesMutex), 0) != 0) {
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
@@ -860,7 +866,14 @@ initializeSystemProperties(J9JavaVM * vm)
 				}
 			}
 			if (j2seVersion >= J2SE_V11) {
-				if ('\0' != propValue[0]) {
+				/* defining any system property starting with "com.sun.management" should
+				 * cause the jdk.management.agent module to be loaded. This occurs in
+				 * jclcinit.c:initializeRequiredClasses().
+				 */
+				if (!addManagementModule && (0 == strncmp(propNameCopy, COM_SUN_MANAGEMENT, strlen(COM_SUN_MANAGEMENT)))) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_LOAD_AGENT_MODULE;
+					addManagementModule = TRUE;
+				} else if ('\0' != propValue[0]) {
 					/* Support for java.endorsed.dirs and java.ext.dirs is disabled in Java 9+. */
 					if (0 == strncmp(JAVA_ENDORSED_DIRS, propNameCopy, sizeof(JAVA_ENDORSED_DIRS))) {
 						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED, optionString + 2);
@@ -963,6 +976,8 @@ fail:
 #endif /* defined(LINUX) */
 	return rc;
 }
+#undef COM_SUN_MANAGEMENT
+
 
 
 void
