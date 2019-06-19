@@ -2579,7 +2579,7 @@ fail:
 			 *
 			 *              + AccClassHasBeenOverridden (set during internal class load hook, not inherited)
 			 *             + AccClassOwnableSynchronizer (set during internal class load hook and inherited)
-			 *            + AccClassHasJDBCNatives (set during native method binding, not inherited)
+			 *            + AccClassSelfReferencing (set while calculating class description, inherited)
 			 *           + AccClassGCSpecial (set during internal class load hook and inherited)
 			 *
 			 *         + AccClassIsContended (from romClass->extraModifiers and inherited)
@@ -2612,7 +2612,7 @@ fail:
 			 *
 			 *                        + J9ClassLargestAlignmentConstraintDouble
 			 *                       + J9ClassIsExemptFromValidation (inherited)
-			 *                      + Unused
+			 *                      + J9AccClassHasJDBCNatives (set during native method binding, not inherited)
 			 *                     + Unused
 			 *
 			 *                   + Unused
@@ -2673,7 +2673,7 @@ fail:
 				}
 				/* fill in class depth */
 				tempClassDepthAndFlags |= superclass->classDepthAndFlags;
-				tempClassDepthAndFlags &= ~(J9AccClassHotSwappedOut | J9AccClassHasBeenOverridden | J9AccClassHasJDBCNatives | J9AccClassRAMArray | (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift));
+				tempClassDepthAndFlags &= ~(J9AccClassHotSwappedOut | J9AccClassHasBeenOverridden | J9AccClassRAMArray | (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift));
 				tempClassDepthAndFlags++;
 				
 #if defined(J9VM_GC_FINALIZATION)
