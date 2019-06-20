@@ -26,6 +26,7 @@
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -2602,7 +2603,7 @@ J9::Node::isArrayCopyCall()
       }
    else
       {
-      TR_Method *method = self()->getSymbol()->castToMethodSymbol()->getMethod();
+      TR::Method *method = self()->getSymbol()->castToMethodSymbol()->getMethod();
 
       // Method may be unresolved but we would still like to transform arraycopy calls so pattern match the signature as well
       if (method != NULL &&

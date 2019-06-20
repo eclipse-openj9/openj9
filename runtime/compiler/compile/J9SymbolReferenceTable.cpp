@@ -503,7 +503,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
 
    // Check _methodsBySignature to see if we've already created a symref for this one
    //
-   TR_Method *originalMethod = originalSymbol->getMethod();
+   TR::Method *originalMethod = originalSymbol->getMethod();
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
@@ -1338,7 +1338,7 @@ J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
 bool
 J9::SymbolReferenceTable::isReturnTypeBool(TR::SymbolReference *symRef)
    {
-   TR_Method *method = symRef->getSymbol()->castToResolvedMethodSymbol()->getMethod();
+   TR::Method *method = symRef->getSymbol()->castToResolvedMethodSymbol()->getMethod();
    char *methodSignature = method->signatureChars();
    const int32_t len = method->signatureLength();
    dumpOptDetails(comp(), "got method signature as %.*s\n", len, methodSignature);

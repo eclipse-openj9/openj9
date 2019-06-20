@@ -5307,7 +5307,7 @@ bool TR::CoarseningInterProceduralAnalyzer::analyzeNode(TR::Node *node, vcount_t
              else if (symRef->getSymbol()->getMethodSymbol())
                 {
                 TR::MethodSymbol *methodSymbol = symRef->getSymbol()->getMethodSymbol();
-                TR_Method * originalMethod = methodSymbol->getMethod();
+                TR::Method * originalMethod = methodSymbol->getMethod();
                 if (originalMethod)
                    {
                    classnameLength = originalMethod->classNameLength();

@@ -24,6 +24,7 @@
 #include "optimizer/VPBCDConstraint.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -182,7 +183,7 @@ void
 J9::ValuePropagation::transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop* callTree, int32_t result, bool isGlobal, bool inPlace)
    {
     TR::Node * callNode = callTree->getNode()->getFirstChild();
-    TR_Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+    TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
     const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
     if (inPlace)
        {
@@ -928,7 +929,7 @@ J9::ValuePropagation::doDelayedTransformations()
       TR::TreeTop *callTree = it->_tree;
       int32_t result = it->_result;
       TR::Node * callNode = callTree->getNode()->getFirstChild();
-      TR_Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+      TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
       const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
 
       if (!performTransformation(comp(), "%sTransforming call %s on node %p on tree %p to iconst %d\n", OPT_DETAILS, signature, callNode, callTree, result))
@@ -1274,7 +1275,7 @@ static void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *n
         {
         //FIXME: add me to the list of calls to be inlined
         //
-        TR_Method *method = optimizedCloneSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+        TR::Method *method = optimizedCloneSymRef->getSymbol()->castToMethodSymbol()->getMethod();
         TR::Node *helpersCallNode = TR::Node::createWithSymRef(node, method->directCallOpCode(), 0, getHelpersSymRef);
         TR::TreeTop *helpersCallTT = TR::TreeTop::create(vp->comp(), TR::Node::create(TR::treetop, 1, helpersCallNode));
         vp->_curTree->insertBefore(helpersCallTT);
