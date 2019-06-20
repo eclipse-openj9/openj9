@@ -131,7 +131,7 @@ def config(remoteName, remoteUrl) {
 */
 def get_openjdk_repos(openJdkMap, useDefault) {
     def repos = []
-    def releases = ['8', '11', '12']
+    def releases = ['8', '11', '12', '13']
 
     // iterate over VARIABLES.openjdk map and fetch the repository URL
     openJdkMap.entrySet().each { mapEntry ->
