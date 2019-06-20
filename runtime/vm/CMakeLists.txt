@@ -129,7 +129,7 @@ add_library(j9vm SHARED
 if(OMR_ARCH_X86)
 	j9vm_gen_asm(xcinterp.m4)
 
-	if(OMR_OS_LINUX AND OMR_ENV_DATA64)
+	if((OMR_OS_LINUX OR OMR_OS_OSX) AND OMR_ENV_DATA64)
 		j9vm_gen_asm(
 			xa64/stackswap.m4
 			xa64/unsafeHelper.m4
