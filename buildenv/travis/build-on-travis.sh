@@ -59,7 +59,7 @@ if test "x$RUN_LINT" = "xyes"; then
   # so we run cmake and build the targets we need
   mkdir $CMAKE_BUILD_DIR
   cd $CMAKE_BUILD_DIR
-  cmake -C $J9SRC/cmake/caches/linux_x86-64_cmprssptrs.cmake ..
+  cmake -C $J9SRC/cmake/caches/linux_x86-64_cmprssptrs.cmake -DBOOT_JDK="$JAVA_HOME" ..
   make -j $MAKE_JOBS run_cptool omrgc_hookgen j9vm_hookgen j9jit_tracegen j9vm_nlsgen j9vm_m4gen
 
   # Now we can build the linter plugin
