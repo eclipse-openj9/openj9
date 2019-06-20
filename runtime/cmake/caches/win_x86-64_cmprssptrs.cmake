@@ -20,16 +20,5 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-set(J9VM_ENV_HAS_FPU OFF CACHE INTERNAL "")
-set(OMR_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "")
-set(J9VM_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "")
-set(J9VM_INTERP_USE_UNSAFE_HELPER OFF CACHE BOOL "")
-set(J9VM_MODULE_GDB OFF CACHE BOOL "")
-set(J9VM_MODULE_GDB_PLUGIN OFF CACHE BOOL "")
-set(J9VM_MODULE_THRTRACE ON CACHE BOOL "")
-set(J9VM_MODULE_WINDBG ON CACHE BOOL "")
-set(OMR_THR_YIELD_ALG OFF CACHE BOOL "")
-#J9VM_OPT_ICBUILDER_SUPPORT
-#OPT_NATIVE_CHARACTER_CONVERTER
-
-include(${CMAKE_CURRENT_LIST_DIR}/linux_x86-64_cmprssptrs.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/cmprssptrs.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/win_x86-64.cmake")
