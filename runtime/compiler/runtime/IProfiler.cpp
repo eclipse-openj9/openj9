@@ -2598,11 +2598,11 @@ TR_IProfiler::outputStats()
    TR::Options *options = TR::Options::getCmdLineOptions();
    if (options && !options->getOption(TR_DisableIProfilerThread))
       {
-      fprintf(stderr, "IProfiler: Number of buffers to be processed           =%llu\n", _numRequests);
-      fprintf(stderr, "IProfiler: Number of buffers discarded                 =%llu\n", _numRequestsSkipped);
-      fprintf(stderr, "IProfiler: Number of buffers handed to iprofiler thread=%llu\n", _numRequestsHandedToIProfilerThread);
+      fprintf(stderr, "IProfiler: Number of buffers to be processed           =%lu\n", _numRequests);
+      fprintf(stderr, "IProfiler: Number of buffers discarded                 =%lu\n", _numRequestsSkipped);
+      fprintf(stderr, "IProfiler: Number of buffers handed to iprofiler thread=%lu\n", _numRequestsHandedToIProfilerThread);
       }
-   fprintf(stderr, "IProfiler: Number of records processed=%llu\n", _iprofilerNumRecords);
+   fprintf(stderr, "IProfiler: Number of records processed=%lu\n", _iprofilerNumRecords);
    fprintf(stderr, "IProfiler: Number of hashtable entries=%u\n", countEntries());
    checkMethodHashTable();
    }
@@ -2805,7 +2805,7 @@ TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp, bool)
          {
          int32_t len;
          const char * s = _csInfo.getClazz(i) ? comp->fej9()->getClassNameChars((TR_OpaqueClassBlock*)_csInfo.getClazz(i), len) : "0";
-         fprintf(stderr,"[%p] slot %d, class %p %s, weight %d : ", this, i, _csInfo.getClazz(i), s, _csInfo._weight[i]);
+         fprintf(stderr,"[%p] slot %d, class %p %s, weight %d : ", this, i, (void *)_csInfo.getClazz(i), s, _csInfo._weight[i]);
          fflush(stderr);
          }
       sumWeight += _csInfo._weight[i];
@@ -2887,7 +2887,7 @@ TR_IPBCDataCallGraph::printWeights(TR::Compilation *comp)
       int32_t len;
       const char * s = _csInfo.getClazz(i) ? comp->fej9()->getClassNameChars((TR_OpaqueClassBlock*)_csInfo.getClazz(i), len) : "0";
 
-      fprintf(stderr, "%p %s %d\n", _csInfo.getClazz(i), s, _csInfo._weight[i]);
+      fprintf(stderr, "%p %s %d\n", (void *)_csInfo.getClazz(i), s, _csInfo._weight[i]);
       }
    fprintf(stderr, "%d\n", _csInfo._residueWeight);
    }
@@ -3379,7 +3379,7 @@ void TR_IProfiler::setupEntriesInHashTable(TR_IProfiler *ip)
          if (pc == 0 ||
                pc == 0xffffffff)
             {
-            printf("invalid pc for entry %p %p\n", entry, pc);fflush(stdout);
+            printf("invalid pc for entry %p %p\n", entry, (void *)pc);fflush(stdout);
             prevEntry = entry;
             entry = entry->getNext();
             continue;
@@ -3437,7 +3437,7 @@ void TR_IProfiler::copyDataFromEntry(TR_IPBytecodeHashTableEntry *oldEntry, TR_I
             {
             for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
                {
-               printf("got clazz %p weight %d\n", oldCSInfo->getClazz(i), oldCSInfo->_weight[i]);
+               printf("got clazz %p weight %d\n", (void *)oldCSInfo->getClazz(i), oldCSInfo->_weight[i]);
                newCSInfo->setClazz(i, oldCSInfo->getClazz(i));
                newCSInfo->_weight[i] = oldCSInfo->_weight[i];
                }
@@ -3484,7 +3484,7 @@ void TR_IProfiler::checkMethodHashTable()
                 J9UTF8_LENGTH(signatureUTF8), J9UTF8_DATA(signatureUTF8), method);fflush(fout);
 #endif
          int32_t count = 0;
-         fprintf(fout,"\t has %d callers and %d -bytecode long:\n", 0, J9_BYTECODE_END_FROM_ROM_METHOD(getOriginalROMMethod(method))-J9_BYTECODE_START_FROM_ROM_METHOD(getOriginalROMMethod(method)));fflush(fout);
+         fprintf(fout,"\t has %d callers and %ld -bytecode long:\n", 0, J9_BYTECODE_END_FROM_ROM_METHOD(getOriginalROMMethod(method))-J9_BYTECODE_START_FROM_ROM_METHOD(getOriginalROMMethod(method)));fflush(fout);
          uint32_t i=0;
 
          for (TR_IPMethodData* it = &entry->_caller; it; it = it->next)
@@ -4310,11 +4310,11 @@ void printCsInfo(CallSiteProfileInfo& csInfo, TR::Compilation* comp, void* tag =
       if (comp)
          {
          char *clazzSig = TR::Compiler->cls.classSignature(comp, (TR_OpaqueClassBlock*)csInfo.getClazz(i), comp->trMemory());
-         fprintf(fout, "%p CLASS %d %p %s WEIGHT %d\n", tag, i, csInfo.getClazz(i), clazzSig, csInfo._weight[i]);
+         fprintf(fout, "%p CLASS %d %p %s WEIGHT %d\n", tag, i, (void *)csInfo.getClazz(i), clazzSig, csInfo._weight[i]);
          }
       else
          {
-         fprintf(fout, "%p CLASS %d %p WEIGHT %d\n", tag, i, csInfo.getClazz(i), csInfo._weight[i]);
+         fprintf(fout, "%p CLASS %d %p WEIGHT %d\n", tag, i, (void *)csInfo.getClazz(i), csInfo._weight[i]);
          }
       fflush(fout);
       }
@@ -4599,7 +4599,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
          U_8* pc = (U_8*)ipbcCGData->getPC();
 
          size_t bcOffset = pc - (U_8*)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
-         fprintf(stderr, "\tOffset %u\t", bcOffset);
+         fprintf(stderr, "\tOffset %lu\t", bcOffset);
          switch (*pc)
             {
             case JBinvokestatic:     fprintf(stderr, "JBinvokestatic\n"); break;
@@ -4618,7 +4618,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
                {
                int32_t len;
                const char * s = fe->getClassNameChars((TR_OpaqueClassBlock*)cgData->getClazz(j), len);
-               fprintf(stderr, "\t\tW:%4u\tM:%p\t%.*s\n", cgData->_weight[j], cgData->getClazz(j), len, s);
+               fprintf(stderr, "\t\tW:%4u\tM:%p\t%.*s\n", cgData->_weight[j], (void *)cgData->getClazz(j), len, s);
                }
             }
          fprintf(stderr, "\t\tW:%4u\n", cgData->_residueWeight);
