@@ -8911,59 +8911,6 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-static bool
-inlineMathSQRT(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR::Node * firstChild = node->getFirstChild();
-   TR::Register * targetRegister = NULL;
-   static char * nosupportSQRT = feGetEnv("TR_NOINLINESQRT");
-
-   if (NULL != nosupportSQRT)
-      {
-      return false;
-      }
-
-
-   // Calculate it for ourselves
-   if (firstChild->getOpCode().isLoadConst())
-      {
-      union { double valD; int64_t valI; } result;
-      targetRegister = cg->allocateRegister(TR_FPR);
-      result.valD = sqrt(firstChild->getDouble());
-      TR::S390ConstantDataSnippet * cds = cg->findOrCreate8ByteConstant(node, result.valI);
-      generateRXInstruction(cg, TR::InstOpCode::LD, node, targetRegister, generateS390MemoryReference(cds, cg, 0, node));
-      }
-   else
-      {
-      TR::Register * opRegister = NULL;
-
-      //See whether to use SQDB or SQDBR depending on how many times it is referenced
-      if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCodeValue() == TR::dloadi)
-         {
-         targetRegister = cg->allocateRegister(TR_FPR);
-         generateRXEInstruction(cg, TR::InstOpCode::SQDB, node, targetRegister, generateS390MemoryReference(firstChild, cg), 0);
-         }
-      else
-         {
-         opRegister = cg->evaluate(firstChild);
-
-         if (cg->canClobberNodesRegister(firstChild))
-            {
-            targetRegister = opRegister;
-            }
-         else
-            {
-            targetRegister = cg->allocateRegister(TR_FPR);
-            }
-         generateRRInstruction(cg, TR::InstOpCode::SQDBR, node, targetRegister, opRegister);
-         }
-      }
-
-   node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-   return true;
-   }
-
 static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
    {
    static char *disable = feGetEnv("TR_disableInlineIsAssignableFrom");
@@ -9131,12 +9078,6 @@ J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::
       {
       switch (methodSymbol->getRecognizedMethod())
          {
-         case TR::java_lang_StrictMath_sqrt:
-         case TR::java_lang_Math_sqrt:
-            {
-            callWasInlined = inlineMathSQRT(node, cg);
-            break;
-            }
          case TR::java_lang_Class_isAssignableFrom:
             {
             callWasInlined = inlineIsAssignableFrom(node, cg);
