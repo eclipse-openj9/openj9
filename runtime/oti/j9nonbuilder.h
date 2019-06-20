@@ -1711,11 +1711,36 @@ typedef struct J9ModuleExtraInfo {
 	UDATA patchPathCount;
 } J9ModuleExtraInfo;
 
-typedef struct J9FlattenedClassCache {
+/*             Structure of Flattened Class Cache              */
+/*                                                             *
+ *    Default Value   |   Number of Entries   |                *
+ *____________________|_______________________|________________* 
+ *                    |                       |                *
+ *      clazz 0       |   Name & Signature 0  |     offset 0   *
+ *____________________|_______________________|________________* 
+ *                    |                       |                *
+ *      clazz 1       |   Name & Signature 1  |     offset 1   *
+ *____________________|_______________________|________________* 
+ *         .          |           .           |        .       *
+ *         .          |           .           |        .       *
+ *         .          |           .           |        .       *
+ *____________________|_______________________|________________* 
+ *                    |                       |                *
+ *      clazz N       |   Name & Signature N  |     offset N   * 
+ ***************************************************************/
+typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;
 	struct J9ROMNameAndSignature* nameAndSignature;
 	UDATA offset;
+} J9FlattenedClassCacheEntry;
+
+typedef struct J9FlattenedClassCache {
+	j9object_t defaultValue;
+	UDATA numberOfEntries;
 } J9FlattenedClassCache;
+
+#define J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, index) (((J9FlattenedClassCacheEntry *)((flattenedClassCache) + 1)) + (index))
+#define J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index) J9_VM_FCC_ENTRY_FROM_FCC((clazz)->flattenedClassCache, index)
 
 struct J9TranslationBufferSet;
 typedef struct J9VerboseStruct {

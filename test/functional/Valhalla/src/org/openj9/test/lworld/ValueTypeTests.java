@@ -1245,6 +1245,26 @@ public class ValueTypeTests {
 		Object megaObjectRef = createAssorted(makeMegaObjectRef, megaFields);
 		checkFieldAccessMHOfAssortedType(megaGetterAndSetter, megaObjectRef, megaFields, false);
 	}
+	
+	/*
+	 * Create large number of value types and instantiate them 
+	 * 
+	 * value Point2D {
+	 * 	int x;
+	 * 	int y;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateLargeNumberOfPoint2D() throws Throwable {
+		String fields[] = {"x:I", "y:I"};
+		String className = "Point2D";
+		for(int valueIndex = 0; valueIndex < 200000; valueIndex++){
+			className =  "Point2D" + valueIndex;		
+			point2DClass = ValueTypeGenerator.generateValueClass(className, fields);
+			/* findStatic will trigger class resolution */
+			makePoint2D = lookup.findStatic(point2DClass, "makeValue", MethodType.methodType(point2DClass, int.class, int.class));
+		}
+	}
 
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {

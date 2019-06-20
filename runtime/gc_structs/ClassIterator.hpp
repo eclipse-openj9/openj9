@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "MethodTypesIterator.hpp"
+#include "ValueTypesIterator.hpp"
 
 /**
  * State constants representing the current stage of the iteration process
@@ -51,6 +52,7 @@ enum {
 	classiterator_state_callsites,
 	classiterator_state_methodtypes,
 	classiterator_state_varhandlemethodtypes,
+	classiterator_state_valuetypes,
 	classiterator_state_end
 };
 
@@ -72,6 +74,7 @@ protected:
 	GC_CallSitesIterator _callSitesIterator;
 	GC_MethodTypesIterator _methodTypesIterator;
 	GC_MethodTypesIterator _varHandlesMethodTypesIterator;
+	GC_ValueTypesIterator _valueTypesIterator;
 	const bool _shouldScanClassObject; /**< Boolean needed for balanced GC to prevent ClassObject from being scanned twice  */
 
 public:
@@ -84,6 +87,7 @@ public:
 		, _callSitesIterator(clazz)
 		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
+		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(shouldScanClassObject)
 	{}
 
@@ -96,6 +100,7 @@ public:
 		, _callSitesIterator(clazz)
 		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
+		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(true)
 	{}
 
