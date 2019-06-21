@@ -38,7 +38,7 @@ extern "C" {
 *
 * @return pointer to allocated memory on success, NULL on failure 
 */
-void* mem_allocate_memory(uintptr_t byteAmount);
+void* mem_allocate_memory(J9JavaVM *javaVM, uintptr_t byteAmount);
 
 /*
 * Allocate memory in heap image
@@ -55,9 +55,10 @@ void* image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t by
 /*
 * Free memory in heap image
 *
+* @param javaVM[in] the java vm
 * @param memoryPointer[in] pointer to address for free
 */
-void mem_free_memory(void *memoryPointer);
+void mem_free_memory(J9JavaVM *javaVM, void *memoryPointer);
 
 /*
 * Free memory in heap image
@@ -70,67 +71,65 @@ void image_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPoint
 /*
 * Creates and allocates the jvm image and its' heap
 *
-* @param vm[in] the java vm 
+* @param javaVM[in] the java vm 
 *
 * @return 0 on fail, 1 on success
 */
-UDATA initializeJVMImage(J9JavaVM *vm);
+UDATA initializeJVMImage(J9JavaVM *javaVM);
 
 /*
 * Registers class loader in table
 *
+* @param javaVM[in] the java vm
 * @param classLoader[in] J9ClassLoader to register
 */
-void registerClassLoader(J9ClassLoader *classLoader);
+void registerClassLoader(J9JavaVM *javaVM, J9ClassLoader *classLoader);
 
 /*
 * Registers class segment in table
 *
+* @param javaVM[in] the java vm
 * @param clazz[in] J9Class to register
 */
-void registerClassSegment(J9Class *clazz);
+void registerClassSegment(J9JavaVM *javaVM, J9Class *clazz);
 
 /*
 * Registers class path entry in table
 *
+* @param javaVM[in] the java vm
 * @param cpEntry[in] J9ClassPathEntry to register
 */
-void registerCPEntry(J9ClassPathEntry *cpEntry);
+void registerCPEntry(J9JavaVM *javaVM, J9ClassPathEntry *cpEntry);
 
 /*
 * Deregisters class loader from table
 *
+* @param javaVM[in] the java vm
 * @param classLoader[in] J9ClassLoader to register
 */
-void deregisterClassLoader(J9ClassLoader *classLoader);
+void deregisterClassLoader(J9JavaVM *javaVM, J9ClassLoader *classLoader);
 
 /*
 * Deregisters class segment from table
 *
+* @param javaVM[in] the java vm
 * @param clazz[in] J9Class to register
 */
-void deregisterClassSegment(J9Class *clazz);
+void deregisterClassSegment(J9JavaVM *javaVM, J9Class *clazz);
 
 /*
 * Deregisters class path entry from table
 *
+* @param javaVM[in] the java vm
 * @param cpEntry[in] J9ClassPathEntry to register
 */
-void deregisterCPEntry(J9ClassPathEntry *cpEntry);
-
-/*
-* Returns the port library used by the image
-* Do not use directly but through macro defined in jvmimage.h
-*
-* @return pointer to port library of image on success, NULL on failure
-*/
-OMRPortLibrary* getImagePortLibrary(void);
+void deregisterCPEntry(J9JavaVM *javaVM, J9ClassPathEntry *cpEntry);
 
 /*
 * Shut down sequence of JVMImage
 * Frees memory of heap variables and jvmimage instance
 *
-* @param vm[in] the java vm 
+* @param javaVM[in] the java vm 
 */
 void shutdownJVMImage(J9JavaVM *vm);
 

@@ -271,7 +271,7 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 
 	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 	if (IS_COLD_RUN(javaVM)) {
-		privatePortLibrary = OMRPORT_FROM_IMAGE();
+		privatePortLibrary = IMAGEPORT_FROM_JAVAVM(javaVM);
 	}
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(KeyHashTableClassEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
 }
@@ -552,7 +552,7 @@ hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize)
 
 	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 	if (IS_COLD_RUN(javaVM)) {
-		privatePortLibrary = OMRPORT_FROM_IMAGE();
+		privatePortLibrary = IMAGEPORT_FROM_JAVAVM(javaVM);
 	}
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(J9ClassLocation), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classLocationHashFn, classLocationHashEqualFn, NULL, javaVM);
 }
