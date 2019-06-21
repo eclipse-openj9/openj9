@@ -31,10 +31,10 @@ class TR_J9MethodFieldAttributes
    {
 public:
    TR_J9MethodFieldAttributes() :
-      TR_J9MethodFieldAttributes(NULL, TR::NoType, false, false, false, false, false)
+      TR_J9MethodFieldAttributes(0, TR::NoType, false, false, false, false, false)
       {}
 
-   TR_J9MethodFieldAttributes(void *fieldOffsetOrAddress,
+   TR_J9MethodFieldAttributes(uintptr_t fieldOffsetOrAddress,
                               TR::DataType type,
                               bool volatileP,
                               bool isFinal,
@@ -66,13 +66,13 @@ public:
    void setMethodFieldAttributesResult(uint32_t *fieldOffset, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
       {
       setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
-      if (fieldOffset) *fieldOffset = (uint32_t) *( (uint32_t *) &_fieldOffsetOrAddress);
+      if (fieldOffset) *fieldOffset = static_cast<uint32_t>(_fieldOffsetOrAddress);
       }
 
    void setMethodFieldAttributesResult(void **address, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
       {
       setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
-      if (address) *address = _fieldOffsetOrAddress;
+      if (address) *address = reinterpret_cast<void *>(_fieldOffsetOrAddress);
       }
 
    bool isUnresolvedInCP() const { return _unresolvedInCP; }
@@ -88,7 +88,7 @@ private:
       if (result) *result = _result;
       }
 
-   void *_fieldOffsetOrAddress; // stores uint32_t for non-static attributes
+   uintptr_t _fieldOffsetOrAddress; // Stores a uint32_t representing an offset for non-static fields, or an address for static fields.
    TR::DataType _type; 
    bool _volatileP;
    bool _isFinal;
