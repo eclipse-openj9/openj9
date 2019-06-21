@@ -69,8 +69,7 @@ J9::CodeGenerator::createStackAtlas()
    TR::Compilation *comp = self()->comp();
    TR::ResolvedMethodSymbol * methodSymbol = comp->getMethodSymbol();
 
-   bool doLocalsCompaction = (self()->getLocalsIG() && self()->getSupportsCompactedLocals()) ? true : false;
-   bool mimicInterpreterFrameShape = comp->getOption(TR_MimicInterpreterFrameShape);
+   const bool doLocalsCompaction = self()->getLocalsIG() && self()->getSupportsCompactedLocals();
 
    // From hereon, any stack memory allocations will expire / die when the function returns
    //
@@ -100,7 +99,7 @@ J9::CodeGenerator::createStackAtlas()
    //
    // Both quantities must be positive values or 0.
    //
-   if (mimicInterpreterFrameShape)
+   if (comp->getOption(TR_MimicInterpreterFrameShape))
       {
       firstMappedParmOffsetInBytes = 0;
       numParmSlots = methodSymbol->getNumParameterSlots();
@@ -169,12 +168,12 @@ J9::CodeGenerator::createStackAtlas()
    parameterIterator.reset();
    for (parmCursor = parameterIterator.getFirst(); parmCursor; parmCursor = parameterIterator.getNext())
       {
-      if (mimicInterpreterFrameShape || comp->getOption(TR_FullSpeedDebug))
+      if (comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_FullSpeedDebug))
          {
          parmCursor->setParmHasToBeOnStack();
          }
 
-      if ((parmCursor->isReferencedParameter() || mimicInterpreterFrameShape || comp->getOption(TR_FullSpeedDebug)) &&
+      if ((parmCursor->isReferencedParameter() || comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_FullSpeedDebug)) &&
           parmCursor->isCollectedReference())
          {
          parmOffsetInBytes = parmCursor->getParameterOffset();
@@ -216,7 +215,7 @@ J9::CodeGenerator::createStackAtlas()
    TR::AutomaticSymbol * localCursor;
 
    int32_t numberOfPendingPushSlots = 0;
-   if (mimicInterpreterFrameShape)
+   if (comp->getOption(TR_MimicInterpreterFrameShape))
       {
       for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
          {
@@ -268,7 +267,7 @@ J9::CodeGenerator::createStackAtlas()
          }
       }
 
-   // Iniialize colour mapping
+   // Iniialize colour mapping for locals compaction
    //
    int32_t *colourToGCIndexMap = 0;
 
@@ -417,7 +416,7 @@ J9::CodeGenerator::createStackAtlas()
 
    // Reset the bits for non-reference objects
    //
-   if (mimicInterpreterFrameShape)
+   if (comp->getOption(TR_MimicInterpreterFrameShape))
       {
       for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
          {
