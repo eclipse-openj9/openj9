@@ -770,7 +770,6 @@ public:
    virtual void restoreCompilationPhase(int32_t phase);
 
    virtual void reportPrexInvalidation(void * startPC);
-   virtual void traceAssumeFailure(int32_t line, const char * file);
 
    virtual bool compilationShouldBeInterrupted( TR::Compilation *, TR_CallingContext);
    bool checkForExclusiveAcquireAccessRequest( TR::Compilation *);
