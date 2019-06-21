@@ -22,6 +22,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -2204,7 +2205,7 @@ bool TR_J9ByteCodeIlGenerator::replaceMethods(TR::TreeTop *tt, TR::Node *node)
    {
    if (!node->getOpCode().isCall() || !node->getOpCode().hasSymbolReference()) return true;
    if (node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isHelper()) return true;
-   TR_Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
    //I use heapAlloc because this function is called many times for a small set of methods.
    const char* nodeName = method->signature(trMemory(), heapAlloc);
    for (int i = 0; i < _numDecFormatRenames; i++)

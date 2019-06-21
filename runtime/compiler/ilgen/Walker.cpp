@@ -23,6 +23,7 @@
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -3894,7 +3895,7 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
       return;
       }
 
-   TR_Method *callee = methodSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *callee = methodSymRef->getSymbol()->castToMethodSymbol()->getMethod();
    if (callee->isConstructor())
       {
       if (trace)
@@ -4170,7 +4171,7 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
          }
       if (comp()->getOptions()->getVerboseOption(TR_VerboseMethodHandleDetails))
          {
-         TR_Method *callee = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+         TR::Method *callee = callNode->getSymbol()->castToMethodSymbol()->getMethod();
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "Call to invokeExact%.*s from %s", callee->signatureLength(), callee->signatureChars(), comp()->signature());
          }
       }
@@ -4216,7 +4217,7 @@ TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 2");
 
    TR::SymbolReference * invokeGenericSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-   TR_Method *invokeGeneric = invokeGenericSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *invokeGeneric = invokeGenericSymRef->getSymbol()->castToMethodSymbol()->getMethod();
    TR::SymbolReference *invokeExactOriginal = symRefTab()->methodSymRefFromName(_methodSymbol,
       JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual, invokeGenericSymRef->getCPIndex());
    TR::SymbolReference *invokeExactSymRef = symRefTab()->methodSymRefWithSignature(
@@ -4308,7 +4309,7 @@ static int32_t numOpsNonStandardLengths[] =
 TR::Node *
 TR_J9ByteCodeIlGenerator::getReceiverFor(TR::SymbolReference *symRef)
    {
-   TR_Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
    int32_t receiverDepth = method->numberOfExplicitParameters(); // look past all the explicit arguments
    return _stack->element(_stack->topIndex() - receiverDepth);
    }
@@ -4331,7 +4332,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
    bool isStatic     = symbol->isStatic();
    bool isDirectCall = indirectCallFirstChild == NULL;
 
-   TR_Method * calledMethod = symbol->getMethod();
+   TR::Method * calledMethod = symbol->getMethod();
    int32_t numArgs = calledMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
 
    TR::ILOpCodes opcode = TR::BadILOp;
@@ -4560,7 +4561,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
       // Get the type of prefetch
       PrefetchType prefetchType = NoPrefetch;
-      TR_Method *method = symbol->castToMethodSymbol()->getMethod();
+      TR::Method *method = symbol->castToMethodSymbol()->getMethod();
       if (method->nameLength() == 15 && !strncmp(method->nameChars(), "_TR_Release_All", 15))
          {
          prefetchType = ReleaseAll;

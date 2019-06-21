@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "compile/Method.hpp"
 #include "optimizer/CFGSimplifier.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -40,7 +41,7 @@ bool J9::CFGSimplifier::simplifyIfPatterns(bool needToDuplicateTree)
    return OMR::CFGSimplifier::simplifyIfPatterns(needToDuplicateTree)
           || simplifyResolvedRequireNonNull(needToDuplicateTree)
           || simplifyUnresolvedRequireNonNull(needToDuplicateTree)
-          ; 
+          ;
    }
 
 // Look for pattern of the form:
@@ -90,7 +91,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
 
    if (trace())
       traceMsg(comp(), "   Found an ifacmp[eq/ne] n%dn\n", compareNode->getGlobalIndex());
-  
+
    if (compareNode->getSecondChild()->getOpCodeValue() != TR::aconst
        || compareNode->getSecondChild()->getAddress() != 0)
       return false;
@@ -102,7 +103,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
    if (trace())
       traceMsg(comp(), "  Matched nullBlock %d\n", nullBlock->getNumber());
 
-   TR::TreeTop *nullBlockCursor = nullBlock->getEntry()->getNextTreeTop(); 
+   TR::TreeTop *nullBlockCursor = nullBlock->getEntry()->getNextTreeTop();
 
    if (nullBlockCursor->getNode()->getOpCodeValue() != TR::ResolveCHK
        || nullBlockCursor->getNode()->getFirstChild()->getOpCodeValue() != TR::loadaddr)
@@ -137,7 +138,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
        || nullBlockCursor->getNode()->getFirstChild()->getFirstChild() != exceptionNode)
       return false;
 
-   TR::Node *initCall = nullBlockCursor->getNode()->getFirstChild(); 
+   TR::Node *initCall = nullBlockCursor->getNode()->getFirstChild();
 
    if (trace())
       traceMsg(comp(), "   Matched call node %d\n", initCall->getGlobalIndex());
@@ -145,7 +146,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
    if (!initCall->getSymbolReference()->isUnresolved())
       return false;
 
-   TR_Method *calleeMethod = initCall->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *calleeMethod = initCall->getSymbol()->castToMethodSymbol()->getMethod();
    if (trace())
       traceMsg(comp(), "   Matched calleeMethod %s %s %s\n", calleeMethod->classNameChars(), calleeMethod->nameChars(), calleeMethod->signatureChars());
    if (strncmp(calleeMethod->nameChars(), "<init>", 6) != 0
@@ -284,7 +285,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
    TR::Node *exceptionNode = nullBlockCursor->getNode()->getFirstChild();
    TR::Node *loadaddr = nullBlockCursor->getNode()->getFirstChild()->getFirstChild();
    // check for java/lang/NullPointerException as the loadaddr
-   TR_OpaqueClassBlock *NPEclazz = comp()->fej9()->getSystemClassFromClassName("java/lang/NullPointerException", strlen("java/lang/NullPointerException")); 
+   TR_OpaqueClassBlock *NPEclazz = comp()->fej9()->getSystemClassFromClassName("java/lang/NullPointerException", strlen("java/lang/NullPointerException"));
    if (loadaddr->getSymbolReference()->isUnresolved()
        || loadaddr->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress() != NPEclazz)
       return false;
@@ -323,7 +324,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
 
    if (trace())
       traceMsg(comp(), "   Matched exceptionNode call\n");
-   
+
    nullBlockCursor = nullBlockCursor->getNextTreeTop();
    if ((nullBlockCursor->getNode()->getOpCodeValue() != TR::treetop
         && nullBlockCursor->getNode()->getOpCodeValue() != TR::NULLCHK)

@@ -33,6 +33,7 @@
 #include "codegen/Relocation.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/MethodToBeCompiled.hpp"
@@ -3802,7 +3803,7 @@ TR_DebugExt::dxGetSignature(J9UTF8 *className, J9UTF8 *name, J9UTF8 *signature)
 const char *
 TR_DebugExt::getMethodName(TR::SymbolReference * symRef)
    {
-   TR_Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
    TR_J9MethodBase *localMethod = (TR_J9MethodBase *) dxMallocAndRead(sizeof(TR_J9MethodBase), (void*)method);
    //TR_J9MethodBase *localMethod = (TR_J9MethodBase *)symRef->getSymbol()->castToMethodSymbol()->getMethod();
 

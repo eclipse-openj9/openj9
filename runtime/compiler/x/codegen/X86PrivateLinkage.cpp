@@ -31,6 +31,7 @@
 #include "codegen/RegisterPair.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "env/CHTable.hpp"
@@ -1173,7 +1174,7 @@ TR::X86CallSite::X86CallSite(TR::Node *callNode, TR::Linkage *calleeLinkage)
       // Find the class pointer to the interface class if it is already loaded.
       // This is needed by both static PICs
       //
-      TR_Method *interfaceMethod = getMethodSymbol()->getMethod();
+      TR::Method *interfaceMethod = getMethodSymbol()->getMethod();
       int32_t len = interfaceMethod->classNameLength();
       char * s = classNameToSignature(interfaceMethod->classNameChars(), len, comp());
       _interfaceClassOfMethod = fej9->getClassFromSignature(s, len, getSymbolReference()->getOwningMethod(comp()));
@@ -1730,7 +1731,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    if (getProperties().getNeedsThunksForIndirectCalls())
       {
       TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
-      TR_Method       *method       = methodSymbol->getMethod();
+      TR::Method       *method       = methodSymbol->getMethod();
       if (methodSymbol->isComputed())
          {
          switch (method->getMandatoryRecognizedMethod())

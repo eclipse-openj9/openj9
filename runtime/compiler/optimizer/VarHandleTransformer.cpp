@@ -26,6 +26,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -180,7 +181,7 @@ int32_t TR_VarHandleTransformer::perform()
          TR::TreeTop *callTree = tt;
          TR::SymbolReference *symRef = node->getSymbolReference();
          OMR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
-         TR_Method * method = symbol->getMethod();
+         TR::Method * method = symbol->getMethod();
          TR::RecognizedMethod varHandleAccessMethod = getVarHandleAccessMethod(node);
 
          if (varHandleAccessMethod != TR::unknownMethod)

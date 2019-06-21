@@ -23,6 +23,7 @@
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -827,7 +828,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      }
                   else
                      {
-                     TR_Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+                     TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                      heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                      }
                   }
@@ -849,7 +850,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             resolvedMethod = calltarget->_calleeMethod->getResolvedSpecialMethod(comp(), (bc == J9BCinvokespecialsplit)?cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
             bool isIndirectCall = false;
             bool isInterface = false;
-            TR_Method *interfaceMethod = 0;
+            TR::Method *interfaceMethod = 0;
             TR::TreeTop *callNodeTreeTop = 0;
             TR::Node *parent = 0;
             TR::Node *callNode = 0;
@@ -866,7 +867,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                       {
                       if (bc == J9BCinvokespecialsplit)
                          cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
-                      TR_Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+                      TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                       heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                       }
                    }
@@ -885,7 +886,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             resolvedMethod = calltarget->_calleeMethod->getResolvedStaticMethod(comp(), (bc == J9BCinvokestaticsplit)?cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
             bool isIndirectCall = false;
             bool isInterface = false;
-            TR_Method *interfaceMethod = 0;
+            TR::Method *interfaceMethod = 0;
             TR::TreeTop *callNodeTreeTop = 0;
             TR::Node *parent = 0;
             TR::Node *callNode = 0;
@@ -902,7 +903,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                       {
                       if (bc == J9BCinvokestaticsplit)
                          cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
-                      TR_Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+                      TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                       heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                       }
                    }
@@ -1388,7 +1389,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   resolvedMethod == NULL
                   || (!resolvedMethod->isFinal() && !resolvedMethod->isPrivate());
                bool isInterface = false;
-               TR_Method *interfaceMethod = 0;
+               TR::Method *interfaceMethod = 0;
                TR::TreeTop *callNodeTreeTop = 0;
                TR::Node *parent = 0;
                TR::Node *callNode = 0;
@@ -1403,7 +1404,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                          heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(resolvedMethod));
                       else
                          {
-                         TR_Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+                         TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                          heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                          }
                       }
@@ -1519,7 +1520,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                resolvedMethod = calltarget->_calleeMethod->getResolvedSpecialMethod(comp(), (bc == J9BCinvokespecialsplit)?cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
                bool isIndirectCall = false;
                bool isInterface = false;
-               TR_Method *interfaceMethod = 0;
+               TR::Method *interfaceMethod = 0;
                TR::TreeTop *callNodeTreeTop = 0;
                TR::Node *parent = 0;
                TR::Node *callNode = 0;
@@ -1534,7 +1535,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                          {
                          if (bc == J9BCinvokespecialsplit)
                             cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
-                         TR_Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+                         TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                          heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                          }
                       }
@@ -1585,7 +1586,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                resolvedMethod = calltarget->_calleeMethod->getResolvedStaticMethod(comp(), (bc == J9BCinvokestaticsplit)?cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
                bool isIndirectCall = false;
                bool isInterface = false;
-               TR_Method *interfaceMethod = 0;
+               TR::Method *interfaceMethod = 0;
                TR::TreeTop *callNodeTreeTop = 0;
                TR::Node *parent = 0;
                TR::Node *callNode = 0;
@@ -1602,7 +1603,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                          {
                          if (bc == J9BCinvokestaticsplit)
                             cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
-                         TR_Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+                         TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                          heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                          }
                       }
@@ -1658,7 +1659,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      && !resolvedMethod->convertToMethod()->isFinalInObject();
                   }
 
-               TR_Method * interfaceMethod = NULL;
+               TR::Method * interfaceMethod = NULL;
                if (isInterface)
                   interfaceMethod = comp()->fej9()->createMethod( comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
 

@@ -27,6 +27,7 @@
 
 #include "env/KnownObjectTable.hpp"
 #include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/OSRData.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
@@ -5071,7 +5072,7 @@ static TR_PrexArgument *stronger(TR_PrexArgument *left, TR_PrexArgument *right, 
       return right;
    }
 
-static void populateClassNameSignature(TR_Method* m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
+static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
    {
    int32_t len = m->classNameLength();
    char* cs = classNameToSignature(m->classNameChars(), len, TR::comp());
@@ -5082,7 +5083,7 @@ static void populateClassNameSignature(TR_Method* m, TR_ResolvedMethod* caller, 
    sl = m->signatureLength();
    }
 
-static char* classSignature (TR_Method* m, TR::Compilation* comp) //tracer helper
+static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer helper
    {
    int32_t len = m->classNameLength();
    return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
@@ -5116,7 +5117,7 @@ TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, T
 
 
          populateClassNameSignature (callsite->_initialCalleeMethod ?
-               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR_Method
+               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR::Method
                callsite->_interfaceMethod,
             methodSymbol->getResolvedMethod(),
             callSiteClass,
