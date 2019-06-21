@@ -696,7 +696,7 @@ void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstri
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
 jstring JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
-jobjectArray Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
+jobjectArray JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth);
 
 /* J9SourceJclCommonInit*/
