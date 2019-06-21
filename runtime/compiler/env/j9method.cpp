@@ -34,6 +34,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "compile/AOTClassInfo.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -201,7 +202,7 @@ TR_J9VMBase::offsetOfMethodIsBreakpointedBit()
    return J9_STARTPC_METHOD_BREAKPOINTED;
    }
 
-TR_Method *
+TR::Method *
 TR_J9VMBase::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {
    return new (trMemory->trHeapMemory()) TR_J9Method(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset);
@@ -1435,7 +1436,7 @@ TR_ResolvedRelocatableJ9Method::fieldOrStaticNameChars(I_32 cpIndex, int32_t & l
    return ""; // TODO: Implement me
    }
 
-TR_Method *   TR_ResolvedRelocatableJ9Method::convertToMethod()              { return this; }
+TR::Method *   TR_ResolvedRelocatableJ9Method::convertToMethod()              { return this; }
 
 bool TR_ResolvedRelocatableJ9Method::isStatic()            { return methodModifiers() & J9AccStatic ? true : false; }
 bool TR_ResolvedRelocatableJ9Method::isNative()            { return methodModifiers() & J9AccNative ? true : false; }
@@ -4617,7 +4618,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
                   }
          }
 
-      if (TR_Method::getMandatoryRecognizedMethod() == TR::unknownMethod)
+      if (TR::Method::getMandatoryRecognizedMethod() == TR::unknownMethod)
          {
          // Cases where multiple method names all map to the same RecognizedMethod
          //
@@ -5049,7 +5050,7 @@ TR_ResolvedJ9Method::romClassPtr()
    return constantPoolHdr()->romClass;
    }
 
-TR_Method * TR_ResolvedJ9Method::convertToMethod()                { return this; }
+TR::Method * TR_ResolvedJ9Method::convertToMethod()                { return this; }
 uint32_t      TR_ResolvedJ9Method::numberOfParameters()           { return TR_J9Method::numberOfExplicitParameters() + (isStatic()? 0 : 1); }
 uint32_t      TR_ResolvedJ9Method::numberOfExplicitParameters()   { return TR_J9Method::numberOfExplicitParameters(); }
 TR::DataType     TR_ResolvedJ9Method::parmType(uint32_t n)           { return TR_J9Method::parmType(n); }
