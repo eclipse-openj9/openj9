@@ -50,9 +50,6 @@ pipelineJob("$JOB_NAME") {
                         refspec('$SCM_REFSPEC')
                     }
                     branch('$SCM_BRANCH')
-                    extensions {
-                        cleanBeforeCheckout()
-                    }
                 }
             }
             scriptPath(pipelineScript)
