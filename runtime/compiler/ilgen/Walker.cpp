@@ -4192,18 +4192,32 @@ TR_J9ByteCodeIlGenerator::genILGenMacroInvokeExact(TR::SymbolReference *invokeEx
    return callNode;
    }
 
-void
-TR_J9ByteCodeIlGenerator::genHandleTypeCheck()
+TR::Node*
+TR_J9ByteCodeIlGenerator::genHandleTypeCheck(TR::Node* handle, TR::Node* expectedType)
    {
-   TR::Node *expectedType = pop();
-   TR::SymbolReference *getTypeSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_getType, JSR292_getTypeSig, TR::MethodSymbol::Special); // TODO:JSR292: Too bad I can't do a more general lookup and let it optimize itself.  Virtual call doesn't seem to work
-   genInvokeDirect(getTypeSymRef);
-   TR::Node *handleType = pop();
+   uint32_t typeOffset = fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/MethodHandle;", "type", "Ljava/lang/invoke/MethodType;", method());
+   TR::SymbolReference *typeSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(_methodSymbol,
+                                                                                         TR::Symbol::Java_lang_invoke_MethodHandle_type,
+                                                                                         TR::Address,
+                                                                                         typeOffset,
+                                                                                         false,
+                                                                                         false,
+                                                                                         true,
+                                                                                         "java/lang/invoke/MethodHandle.type Ljava/lang/invoke/MethodType;");
 
-   genTreeTop(TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1,
-      TR::Node::create(TR::acmpeq, 2, expectedType, handleType),
-      symRefTab()->findOrCreateMethodTypeCheckSymbolRef(_methodSymbol)));
-   }
+   TR::Node *handleType = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(TR::Address), 1, 1, handle, typeSymRef);
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Inserted indirect load of MethodHandle.type n%dn %p\n", handleType->getGlobalIndex(), handleType);
+      }
+
+    // Generate zerochk
+    TR::Node* zerochkNode = TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1,
+                                                       TR::Node::create(TR::acmpeq, 2, expectedType, handleType),
+                                                       symRefTab()->findOrCreateMethodTypeCheckSymbolRef(_methodSymbol));
+    return zerochkNode;
+    }
 
 TR::Node *
 TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
@@ -5786,7 +5800,11 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
       case TR::java_lang_invoke_ILGenMacros_typeCheck:
          {
          if (!comp()->compileRelocatableCode())
-            genHandleTypeCheck();
+            {
+            TR::Node* expectedType = pop();
+            TR::Node* handle = pop();
+            genTreeTop(genHandleTypeCheck(handle, expectedType));
+            }
          return true;
          }
       case TR::java_lang_invoke_ILGenMacros_arrayElements:
