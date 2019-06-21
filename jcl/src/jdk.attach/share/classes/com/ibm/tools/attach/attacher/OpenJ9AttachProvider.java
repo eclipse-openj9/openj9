@@ -25,17 +25,22 @@ package com.ibm.tools.attach.attacher;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.AttachPermission;
-import com.sun.tools.attach.VirtualMachineDescriptor;
-import com.sun.tools.attach.spi.AttachProvider;
+
 import com.ibm.tools.attach.target.Advertisement;
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.CommonDirectory;
 import com.ibm.tools.attach.target.IPC;
 import com.ibm.tools.attach.target.TargetDirectory;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.AttachPermission;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+import com.sun.tools.attach.spi.AttachProvider;
 
 /**
  * Concrete subclass of the class that lists the available target VMs
@@ -81,13 +86,30 @@ public class OpenJ9AttachProvider extends AttachProvider {
 		}
 
 		OpenJ9VirtualMachine vm = new OpenJ9VirtualMachine(this, descriptor.id());
-		vm.attachTarget();
+		PrivilegedExceptionAction<Object> action = () -> {vm.attachTarget(); return null;};
+		try {
+			AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof AttachNotSupportedException) {
+				throw (AttachNotSupportedException) cause;
+			} else if (cause instanceof IOException) {
+				throw (IOException) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		}
 		return vm;
 	}
 
 	@Override
 	public List<VirtualMachineDescriptor> listVirtualMachines() {
 
+		PrivilegedAction<List<VirtualMachineDescriptor>> action = () -> listVirtualMachinesImp();
+		return AccessController.doPrivileged(action);
+	}
+
+	private List<VirtualMachineDescriptor> listVirtualMachinesImp() {
 		AttachHandler.waitForAttachApiInitialization(); /* ignore result: we can list targets if API is disabled */
 		/* Figure out where the IPC metadata lives and validate */
 		File commonDir = CommonDirectory.getCommonDirFileObject();
