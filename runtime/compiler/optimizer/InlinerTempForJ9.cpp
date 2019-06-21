@@ -26,6 +26,8 @@
 #include "optimizer/J9EstimateCodeSize.hpp"
 
 #include "env/KnownObjectTable.hpp"
+#include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/OSRData.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
@@ -2444,23 +2446,13 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
          break;
       }
 
-   // Certain JSR292 methods are also ignored here as they are internal to the JIT and therefore cannot be
-   // redefined
-   TR::RecognizedMethod mandatoryRM = callee->convertToMethod()->getMandatoryRecognizedMethod();
-   if (mandatoryRM == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress)
-      return true;
-
-   // VarHandle operation methods are also ignored here as they are implementation detail and are not expected to be redefined.
-   if (TR_J9MethodBase::isVarHandleOperationMethod(mandatoryRM))
-      return true;
-
-   // Check if the class of the method is internal to our VM
+   // Skip HCR guard for non-public methods in java/lang/invoke package. These methods
+   // are related to implementation details of MethodHandle and VarHandle
    int32_t length = callee->classNameLength();
    char* className = callee->classNameChars();
-
-   if (length == 29 && !strncmp(className, "java/lang/invoke/DirectHandle", length))
-      return true;
-   else if (length == 32 && !strncmp(className, "java/lang/invoke/PrimitiveHandle", length))
+   if (length > 17
+       && !strncmp("java/lang/invoke/", className, 17)
+       && !callee->isPublic())
       return true;
 
    return false;
@@ -5070,7 +5062,7 @@ static TR_PrexArgument *stronger(TR_PrexArgument *left, TR_PrexArgument *right, 
       return right;
    }
 
-static void populateClassNameSignature(TR_Method* m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
+static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
    {
    int32_t len = m->classNameLength();
    char* cs = classNameToSignature(m->classNameChars(), len, TR::comp());
@@ -5081,7 +5073,7 @@ static void populateClassNameSignature(TR_Method* m, TR_ResolvedMethod* caller, 
    sl = m->signatureLength();
    }
 
-static char* classSignature (TR_Method* m, TR::Compilation* comp) //tracer helper
+static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer helper
    {
    int32_t len = m->classNameLength();
    return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
@@ -5115,7 +5107,7 @@ TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, T
 
 
          populateClassNameSignature (callsite->_initialCalleeMethod ?
-               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR_Method
+               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR::Method
                callsite->_interfaceMethod,
             methodSymbol->getResolvedMethod(),
             callSiteClass,

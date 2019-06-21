@@ -61,6 +61,7 @@
 #include "codegen/Snippet.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/OptionsUtil.hpp"
@@ -2771,7 +2772,7 @@ TR_J9VMBase::isQueuedForVeryHotOrScorching(TR_ResolvedMethod *calleeMethod, TR::
    }
 
 bool
-TR_J9VMBase::maybeHighlyPolymorphic(TR::Compilation *comp, TR_ResolvedMethod *caller, int32_t cpIndex, TR_Method *callee, TR_OpaqueClassBlock * receiverClass)
+TR_J9VMBase::maybeHighlyPolymorphic(TR::Compilation *comp, TR_ResolvedMethod *caller, int32_t cpIndex, TR::Method *callee, TR_OpaqueClassBlock * receiverClass)
    {
    //if (method->isInterface())
      {
@@ -4665,13 +4666,13 @@ J9JITConfig * getJ9JitConfigFromFE(void * fe)
    }
 
 void *
-TR_J9VMBase::setJ2IThunk(TR_Method *method, void *thunkptr, TR::Compilation *comp)
+TR_J9VMBase::setJ2IThunk(TR::Method *method, void *thunkptr, TR::Compilation *comp)
    {
    return setJ2IThunk(method->signatureChars(), method->signatureLength(), thunkptr, comp);
    }
 
 void *
-TR_J9VMBase::getJ2IThunk(TR_Method *method, TR::Compilation *comp)
+TR_J9VMBase::getJ2IThunk(TR::Method *method, TR::Compilation *comp)
    {
    return getJ2IThunk(method->signatureChars(), method->signatureLength(), comp);
    }
@@ -4785,7 +4786,7 @@ TR_J9VMBase::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
    TR_ASSERT(callNode->getOpCode().isCall(), "needsInvokeExactJ2IThunk expects call node; found %s", callNode->getOpCode().getName());
 
    TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
-   TR_Method       *method       = methodSymbol->getMethod();
+   TR::Method       *method       = methodSymbol->getMethod();
    if (  methodSymbol->isComputed()
       && (  method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))
@@ -7418,7 +7419,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          TR::MethodSymbol *sym = callNode->getSymbol()->castToMethodSymbol();
          sym->setVMInternalNative(false);
          sym->setInterpreted(false);
-         TR_Method *method = sym->getMethod();
+         TR::Method *method = sym->getMethod();
 
          TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
@@ -7998,7 +7999,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                // first get the helpers object
                // acall getHelpers
                //
-               TR_Method *method = getHelpersSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+               TR::Method *method = getHelpersSymRef->getSymbol()->castToMethodSymbol()->getMethod();
                TR::Node *helpersCallNode = TR::Node::createWithSymRef(callNode, method->directCallOpCode(), 0, getHelpersSymRef);
                TR::TreeTop *helpersCallTT = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, helpersCallNode));
                callNodeTreeTop->insertBefore(helpersCallTT);

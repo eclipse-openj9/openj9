@@ -37,6 +37,7 @@
 #include "infra/Stack.hpp"
 #include "env/VMJ9.h"
 
+class TR_InlineBlocks;
 class TR_PersistentClassInfo;
 class TR_BitVector;
 namespace TR { class IlGeneratorMethodDetails; }
@@ -123,8 +124,7 @@ private:
    TR::Node *    genInvokeHandle(int32_t cpIndex);
    TR::Node *    genInvokeHandleGeneric(int32_t cpIndex);
 
-   void         genHandleTypeCheck();
-   void         genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType) { push(handle); push(expectedType); genHandleTypeCheck(); }
+   TR::Node *    genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType);
 
    TR::Node *    genInvokeHandle(TR::SymbolReference *invokeExactSymRef, TR::Node *invokedynamicReceiver = NULL);
    TR::Node *    genILGenMacroInvokeExact(TR::SymbolReference *invokeExactSymRef);

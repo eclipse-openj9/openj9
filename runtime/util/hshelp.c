@@ -71,6 +71,9 @@ static UDATA areClassRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, 
 static UDATA areFieldRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2);
 static UDATA areNameAndSigsIdentical(J9ROMNameAndSignature * nas1, J9ROMNameAndSignature * nas2);
 static UDATA areSingleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2);
+static UDATA areMethodsEquivalentPropagateCallSites(J9ROMMethod * method1, J9Class * ramClass1, J9ROMMethod * method2, J9Class * ramClass2);
+static UDATA areMethodsEquivalentSub(J9ROMMethod * method1, J9ROMClass * romClass1, J9Class * ramClass1, J9ROMMethod * method2, J9ROMClass * romClass2, J9Class * ramClass2);
+static UDATA areCallSiteDataMethodsEquivalent(J9ROMClass* romClass1, UDATA callSiteIndex1, J9ROMClass* romClass2, UDATA callSiteIndes2);
 static UDATA areDoubleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2);
 static void fixClassSlot(J9VMThread* currentThread, J9Class** classSlot, J9HashTable *classPairs);
 static void fixJNIFieldIDs(J9VMThread * currentThread, J9Class * originalClass, J9Class * replacementClass);
@@ -482,6 +485,185 @@ areSingleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, 
 	return utfsAreIdentical(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) ref1), J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) ref2));
 }
 
+/*
+ * Helper methods for areCallSiteDataMethodsEquivalent
+ */
+
+/* ROM call site data header size (16 bits of method handle address + additional argument count) */
+#define CALL_SITE_HEADER_OFFSET 2
+
+static UDATA
+isMethodHandleAField(UDATA cpType) 
+{
+	return (cpType == MH_REF_GETFIELD) || (cpType == MH_REF_GETSTATIC) || (cpType == MH_REF_PUTSTATIC) || (cpType == MH_REF_PUTFIELD);
+}
+
+static U_16*
+findBSMDataAtIndex(U_16* bsmData, U_16 bsmIndex) 
+{
+	U_16 i = 0;
+	for (i = 0; i < bsmIndex; i++) {
+		/* increment by size of bsm data plus header */
+		bsmData += (bsmData[1] + CALL_SITE_HEADER_OFFSET);
+	}
+	return bsmData;
+}
+
+static U_32
+iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData) 
+{
+	if (sigIndex >= sigLength) return sigIndex;
+
+	/* check for object */
+	if ('L' == sigData[sigIndex]) {
+		while ((sigIndex < sigLength) && (';' != sigData[sigIndex])) {
+			sigIndex += 1;
+		}
+	}
+	/* for an object this will move past the ;, for a primitive this will move past the argument */
+	sigIndex += 1;
+	return sigIndex;
+}
+
+/**
+ * Verify callsite equivalence. 
+ * 
+ * Structure of CallSiteData structure in ROM class (also see romclasswalk.c):
+ * 
+ * romClass->callSiteData : {
+ * 	SRP callSiteNAS[romClass->callSiteCount]; // structures describing the resolved callsite. Note: SRP is 32 bits
+ * 	U_16 callSiteBSMIndex[romClass->callSiteCount]; // map from callSiteIndex value to bootStrapMethodData index
+ * 	{
+ * 		U_16 bootStrapMethodHandleRef; // (header) index of the bsm's MethodHandle in the constant pool.
+ *		U_16 argumentCount; // (header) number of bsm arguments in addition to the required three (MethodHandles.Lookup, String, MethodType).
+ *		U_16 argument[argumentCount]; // The additional BSM arguments, these are constant pool indices.
+ * 	} bootStrapMethodData[romClass->bsmCount];
+ * }
+ * 
+ */
+static UDATA
+areCallSiteDataMethodsEquivalent(J9ROMClass* romClass1, UDATA callSiteIndex1, J9ROMClass* romClass2, UDATA callSiteIndex2)
+{
+	J9ROMConstantPoolItem *romCP1 = J9_ROM_CP_FROM_ROM_CLASS(romClass1);
+	J9ROMConstantPoolItem *romCP2 = J9_ROM_CP_FROM_ROM_CLASS(romClass2);
+	J9SRP *callSiteData1 = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass1);
+	J9SRP *callSiteData2 = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass2);
+	/* get call site name and signature */
+	J9ROMNameAndSignature* nas1 = SRP_PTR_GET(callSiteData1 + callSiteIndex1, J9ROMNameAndSignature*);
+	J9ROMNameAndSignature* nas2 = SRP_PTR_GET(callSiteData2 + callSiteIndex2, J9ROMNameAndSignature*);
+	/* get call site BSM index */
+	U_16 *bsmIndices1 = (U_16 *) (callSiteData1 + romClass1->callSiteCount);
+	U_16 *bsmIndices2 = (U_16 *) (callSiteData2 + romClass2->callSiteCount);
+	U_16 bsmIndex1 = bsmIndices1[callSiteIndex1];
+	U_16 bsmIndex2 = bsmIndices2[callSiteIndex2];
+	/* get top of bsm data */
+	U_16 *bsmData1 = findBSMDataAtIndex(bsmIndices1 + romClass1->callSiteCount, bsmIndex1);
+	U_16 *bsmData2 = findBSMDataAtIndex(bsmIndices2 + romClass2->callSiteCount, bsmIndex2);
+	/* additional arg variables */
+	U_16 additionalArgCount1 = bsmData1[1];
+	U_16 additionalArgCount2 = bsmData2[1];
+	/* BSM MethodHandle reference */
+	J9ROMMethodHandleRef *mhRef1 = (J9ROMMethodHandleRef*) &romCP1[bsmData1[0]];
+	J9ROMMethodHandleRef *mhRef2 = (J9ROMMethodHandleRef*) &romCP2[bsmData2[0]];
+	U_32 bsmHandleTypeAndCpType1 = mhRef1->handleTypeAndCpType;
+	U_32 bsmHandleTypeAndCpType2 = mhRef2->handleTypeAndCpType;
+	U_32 bsmCpTypeIndex1 = bsmHandleTypeAndCpType1 & J9DescriptionCpTypeMask;
+	U_32 bsmCpTypeIndex2 = bsmHandleTypeAndCpType2 & J9DescriptionCpTypeMask;
+	UDATA bsmCpType1 = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass1), bsmCpTypeIndex1);
+	UDATA bsmCpType2 = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass2), bsmCpTypeIndex2);
+	/* additional helpers */
+	J9ROMMethodRef* bsmMethod = NULL;
+	J9ROMNameAndSignature *bsmNAS = NULL;
+	J9UTF8 *bsmSig = NULL;
+	U_8* sigData = NULL;
+	U_32 sigIndex = 0;
+	U_32 sigLength = 0;
+	U_16 i = 0;
+
+	/* compare method name and signature */
+	if (!areNameAndSigsIdentical(nas1, nas2)) {
+		return FALSE;
+	}
+
+	/* compare number of additional arguments */
+	if (additionalArgCount1 != additionalArgCount2) {
+		return FALSE;
+	}
+
+	/* verify that bsm MethodHandles are the same:
+	 * step 1) verify that the handle types and cp types match
+	 * step 2) verify that the method references are the same (at this point we know they are
+	 * both method references)
+	 */
+	if (bsmHandleTypeAndCpType1 != bsmHandleTypeAndCpType2) {
+		return FALSE;
+	}
+
+	/* Before continuing verify that the bsm MethodHandle refers to a Method and not a Field. The method
+	 * signature will be used to determine
+	 * whether the additional arguments are double or single slot which is impossible with a field.
+	 * The indy call will fail at a later point. It is only necessary to check one because from the previous
+	 * check both bsm1 and bsm2 are of the same type.
+	 */
+	if (isMethodHandleAField(bsmCpType1)) {
+		return FALSE;
+	}
+
+	if (!areMethodRefsIdentical(romCP1, mhRef1->methodOrFieldRefIndex, romCP2, mhRef2->methodOrFieldRefIndex)) {
+		return FALSE;
+	}
+
+	/* Compare additional argument types. We know that both call site entries have the same number of additional arguments.
+	 * Each argument represents an index into the constant pool to be compared. If there are no additional arguments
+	 * just skip this step.
+	 */
+	if (0 == additionalArgCount1) {
+		return TRUE;
+	}
+
+	bsmMethod = (J9ROMMethodRef *) &romCP1[mhRef1->methodOrFieldRefIndex];
+	bsmNAS = J9ROMMETHODREF_NAMEANDSIGNATURE(bsmMethod);
+	bsmSig = J9ROMNAMEANDSIGNATURE_SIGNATURE(bsmNAS);
+	sigData = J9UTF8_DATA(bsmSig);
+	sigLength = J9UTF8_LENGTH(bsmSig);
+
+	/* Iterate past the first three arguments which are mandatory (MethodHandle.Lookup, String, MethodType) */
+	sigIndex += 1; /* move past first char '(' */
+
+	for (i = 0; i < 3; i++) {
+		sigIndex = iterateToNextArgument(sigIndex, sigLength, sigData);
+	}
+
+	/* compare additional arguments */
+	for (i = 0; i < additionalArgCount1; i++) {
+		if (sigIndex >= sigLength) {
+			return FALSE;
+		}
+
+		if (('D' == sigData[sigIndex]) || ('J' == sigData[sigIndex])) {
+			if (!areDoubleSlotConstantRefsIdentical
+				(romCP1, bsmData1[i + CALL_SITE_HEADER_OFFSET], romCP2, bsmData2[i + CALL_SITE_HEADER_OFFSET])
+			) {
+				return FALSE;
+			}
+		} else {
+			if (!areSingleSlotConstantRefsIdentical
+				(romCP1, bsmData1[i + CALL_SITE_HEADER_OFFSET], romCP2, bsmData2[i + CALL_SITE_HEADER_OFFSET])
+			) {
+				return FALSE;
+			}
+		}
+
+		sigIndex = iterateToNextArgument(sigIndex, sigLength, sigData);
+	}
+
+	/* verify that each argument was checked */
+	if (i != additionalArgCount1) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 static UDATA
 areDoubleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2)
@@ -492,8 +674,55 @@ areDoubleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, 
 	return (ref1->slot1 == ref2->slot1) && (ref1->slot2 == ref2->slot2);
 }
 
+/**
+ * Compares two methods bytecode by bytecode to determine equivalence.
+ * 
+ * @param method1 first method to compare
+ * @param romClass1 ROM class associated with method1
+ * @param method2 second method to compare
+ * @param romClass2 ROM class associated with method2
+ * @return true if equivalent, false otherwise
+ */
 UDATA
 areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod * method2, J9ROMClass * romClass2)
+{
+	return areMethodsEquivalentSub(method1, romClass1, NULL, method2, romClass2, NULL);
+}
+
+/**
+ * Compares two methods bytecode by bytecode to determine equivalence.
+ * For invokedynamic if the referenced callsite was resolved in method1
+ * the resolved MethodHandle will be copied to the RAM class callsite table
+ * in method2.
+ *
+ * @param method1 first method to compare
+ * param ramClass1 RAM class associated with method1
+ * @param method2 second method to compare
+ * @param ramClass2 RAM class associated with method2
+ * @return true if equivalent, false otherwise
+ */
+static UDATA
+areMethodsEquivalentPropagateCallSites(J9ROMMethod * method1, J9Class *ramClass1, J9ROMMethod * method2, J9Class *ramClass2) 
+{
+	return areMethodsEquivalentSub(method1, ramClass1->romClass, ramClass1, method2, ramClass2->romClass, ramClass2);
+}
+
+/**
+ * Compares two methods bytecode by bytecode to determine equivalence. If invoke
+ * dynamic callsites are determined to be equivalent and RAM classes are not null, resolved
+ * callsites will be propagated from ramClass1 to ramClass2. It is assumed that callsites will
+ * be propagated from 1 (original) to 2 (new).
+ * 
+ * @param method1 first method to compare
+ * @param romClass1 ROM class associated with method1
+ * @param ramClass1 RAM class associated with method1, must be provided to propagate callsites
+ * @param method2 second method to compare
+ * @param romClass2 ROM class associated with method2
+ * @param ramClass2 RAM class associated with method2, must be provided to propagate callsites
+ * @return true if equivalent, false otherwise
+ */
+static UDATA
+areMethodsEquivalentSub(J9ROMMethod * method1, J9ROMClass * romClass1, J9Class * ramClass1, J9ROMMethod * method2, J9ROMClass * romClass2, J9Class * ramClass2)
 {
 	U_8 * bytecodes1;
 	J9ROMConstantPoolItem * romCP1;
@@ -524,7 +753,7 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
 	/* For a native or an abstract method, there are no bytecodes.
 	 * A native method has a method signature in place of bytecodes.
 	 * Method signature is derived from the method descriptor.
-	 * As the method descriptor has already been compared by the caller fixMethodEquivalences(),
+	 * As the method descriptor has already been compared by the caller fixMethodEquivalencesAndCallSites(),
 	 * there is no need to compare native method signature.
 	 */
 	if (J9_ARE_NO_BITS_SET(J9AccNative | J9AccAbstract, method1->modifiers)) {
@@ -657,6 +886,25 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
 					}
 
 					bytecodeSize = (tempIndex + (4 * numEntries)) - index;
+					break;
+				}
+				case JBinvokedynamic: {
+					U_16 callSiteIndex1 = NEXT_U16(bytecodes1);
+					U_16 callSiteIndex2 = NEXT_U16(bytecodes2);
+					if (!areCallSiteDataMethodsEquivalent(romClass1, callSiteIndex1, romClass2, callSiteIndex2)) {
+						return FALSE;
+					}
+
+					/* if RAM classes are not provided do not attempt to propagate resolved callsite */
+					if ((NULL != ramClass1) && (NULL != ramClass2)) {
+						/* propagate call site data */
+						if (NULL != ramClass1->callSites[callSiteIndex1]) {
+							/* callsite resolution exists */
+							ramClass2->callSites[callSiteIndex2] = ramClass1->callSites[callSiteIndex1];
+						}
+					}
+
+					alreadyCompared += 2;
 					break;
 				}
 			}
@@ -1077,12 +1325,12 @@ preallocMethodHashTable(J9VMThread * currentThread, UDATA methodCount, J9HashTab
  *
  *
  * @param currentThread     Current Thread
- * @param class_count       Number of redefined classes
- * @param specifiedClasses  An array of Replacement classes
  * @param classPairs        A hashtable of Replacement classes (includes specifiedClasses) and their subclasses
+ * @param methodPairs		A hashtable mapping old and new method pairs
+ * @param fastHCR			true for fastHCR, else false
+ * @param methodEquivalence	A hashtable of equivalent method pairs
  * @return
  *
- *	Fix vtables for all replaced classes.
  */
 void
 fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs, J9HashTable *methodPairs,
@@ -1194,7 +1442,6 @@ fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs,
 
 	Trc_hshelp_fixVTables_forNormalRedefine_Exit(currentThread);
 }
-
 
 /**
  * \brief  Fix static references
@@ -3359,7 +3606,7 @@ notifyGCOfClassReplacement(J9VMThread * currentThread, J9HashTable * classPairs,
 }
 
 jvmtiError
-fixMethodEquivalences(J9VMThread * currentThread,
+fixMethodEquivalencesAndCallSites(J9VMThread * currentThread,
 	J9HashTable * classPairs,
 	J9JVMTIHCRJitEventData * eventData,
 	BOOLEAN fastHCR, J9HashTable **methodEquivalences,
@@ -3424,7 +3671,6 @@ fixMethodEquivalences(J9VMThread * currentThread,
 #endif
 			}
 
-
 		} else {
 			U_32 oldMethodIndex;
 			J9ROMClass *originalROMClass = originalRAMClass->romClass;
@@ -3445,7 +3691,8 @@ fixMethodEquivalences(J9VMThread * currentThread,
 					newROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(newMethod);
 
 					if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMClass, replacementROMClass, oldROMMethod, newROMMethod)) {
-						equivalent = areMethodsEquivalent(oldROMMethod, originalROMClass, newROMMethod, replacementROMClass);
+						equivalent = areMethodsEquivalentPropagateCallSites
+							(oldROMMethod, originalRAMClass, newROMMethod, replacementRAMClass);
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 						if (addJitEventData) {
 							jitEventAddMethod(currentThread, eventData, oldMethod, newMethod, equivalent);

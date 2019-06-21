@@ -22,6 +22,7 @@
 
 #include "ilgen/ClassLookahead.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compiler/il/OMRTreeTop_inlines.hpp"
 #include "env/ClassTableCriticalSection.hpp"
@@ -258,7 +259,7 @@ static bool isCalledByNonConstructorMethodsInClass(TR_ResolvedMethod *calleeMeth
                 node->getFirstChild()->getOpCode().isCall() &&
                 !node->getFirstChild()->getOpCode().isIndirect())
                {
-               TR_Method *calleeMethod1 = node->getFirstChild()->getSymbol()->getMethodSymbol()->getMethod();
+               TR::Method *calleeMethod1 = node->getFirstChild()->getSymbol()->getMethodSymbol()->getMethod();
                if (calleeMethod1 &&
                    calleeMethod1->nameLength() == calleeMethod->nameLength() &&
                    calleeMethod1->signatureLength() == calleeMethod->signatureLength() &&
@@ -828,7 +829,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
 
    if (node->getOpCode().isCall())
       {
-      TR_Method *calleeMethod = node->getSymbol()->castToMethodSymbol()->getMethod();
+      TR::Method *calleeMethod = node->getSymbol()->castToMethodSymbol()->getMethod();
       if (calleeMethod != NULL && !strncmp(calleeMethod->classNameChars(), "java/lang/reflect", 17))
          return false;
       }

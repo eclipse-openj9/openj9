@@ -32,16 +32,8 @@ timeout(time: 10, unit: 'HOURS') {
         node(SETUP_LABEL) {
             try{
                 checkout scm
-
                 variableFile = load 'buildenv/jenkins/common/variables-functions'
-
-                // identify the pipeline type: build or pull request and initialize required variables
-                if (params.ghprbPullId) {
-                    variableFile.set_job_variables('pullRequest')
-                } else {
-                    variableFile.set_job_variables('build')
-                }
-
+                variableFile.set_job_variables('build')
                 buildFile = load 'buildenv/jenkins/common/build'
             } finally {
                 // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
@@ -51,25 +43,7 @@ timeout(time: 10, unit: 'HOURS') {
     }
     stage ('Queue') {
         node("${NODE}") {
-            if (!run_tests()) {
-                // build or pull request compile only pipeline: compile, archive,
-                // clean up
-                buildFile.build_all()
-            } else {
-                checkout scm
-                testFile = load 'buildenv/jenkins/common/test'
-                cleanWs()
-                buildFile.build_pr()
-                testFile.test_all()
-            }
+            buildFile.build_all()
         }
     }
-}
-
-/*
-* Returns true if TEST_TARGET Jenkins build parameter is set to any value
-* except 'none', otherwise returns false.
-*/
-def run_tests() {
-    return (params.TEST_TARGET && (params.TEST_TARGET != 'none'))
 }

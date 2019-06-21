@@ -33,6 +33,7 @@
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "il/Block.hpp"
 #include "optimizer/SequentialStoreSimplifier.hpp"
 #include "env/VMJ9.h"
@@ -58,7 +59,7 @@ J9::CodeGenPhase::getNumPhases()
    return static_cast<int>(TR::CodeGenPhase::LastJ9Phase);
    }
 
-void 
+void
 J9::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
    {
    cg->fixUpProfiledInterfaceGuardTest();
@@ -104,7 +105,7 @@ J9::CodeGenPhase::performInsertEpilogueYieldPointsPhase(TR::CodeGenerator * cg, 
    //
    if ((comp->getCurrentMethod()->maxBytecodeIndex() >= BYTECODESIZE_THRESHOLD_FOR_ASYNCCHECKS) &&
        !comp->mayHaveLoops() &&
-       comp->getCurrentMethod()->convertToMethod()->methodType() == TR_Method::J9 &&  // FIXME: enable for ruby and python
+       comp->getCurrentMethod()->convertToMethod()->methodType() == TR::Method::J9 &&  // FIXME: enable for ruby and python
        comp->getOSRMode() != TR::involuntaryOSR)
       {
       cg->insertEpilogueYieldPoints();

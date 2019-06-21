@@ -627,3 +627,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJIMAGE Noenv Over
 TraceException=Trc_JCL_stringConversionFailed Overhead=1 Level=1 Template="JCL: string conversion of %s failed with error %d"
 
 TraceException=Trc_JCL_heapStatisticsOOM Overhead=1 Level=1 Template="JCL: memory allocation failed creating heap statistics"
+
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Overhead=1 Level=3 Template="initializeRequiredClasses: Adding jdk.management.agent as root module"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=jdk.management.agent"
+TraceException=Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory Overhead=1 Level=1 Template="initializeRequiredClasses: Could not allocate propNameBuffer"

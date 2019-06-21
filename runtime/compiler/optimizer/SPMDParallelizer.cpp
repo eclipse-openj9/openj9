@@ -31,6 +31,7 @@
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -302,7 +303,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
    TR::SymbolReference *piv = pSPMDInfo->getInductionVariableSymRef();
    bool trace = comp->trace(OMR::SPMDKernelParallelization);
 
-   // SIMD_TODO: check first child if node is TR::TreeTop 
+   // SIMD_TODO: check first child if node is TR::TreeTop
 
    if (trace)
       {
@@ -581,10 +582,10 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
          }
       }
    else if (scalarOp.isBranch() || node->getOpCodeValue()==TR::BBEnd ||
-            node->getOpCodeValue()==TR::BBStart || node->getOpCodeValue()==TR::asynccheck || 
+            node->getOpCodeValue()==TR::BBStart || node->getOpCodeValue()==TR::asynccheck ||
             (node->getOpCodeValue()==TR::compressedRefs && node->getFirstChild()->getOpCode().isLoad()))
       {
-      //Compressed ref treetops with a load can be ignored due to the load 
+      //Compressed ref treetops with a load can be ignored due to the load
       // either being present under another tree top in the loop, which
       // will be processed, or not used at all. Stores under a compressed ref
       // tree top, will need to be handled differently
@@ -912,8 +913,8 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
          return true;
          }
 
-      if (scalarOp.isNeg() || 
-          scalarOp.getOpCodeValue() == TR::l2d) 
+      if (scalarOp.isNeg() ||
+          scalarOp.getOpCodeValue() == TR::l2d)
          {
          if (isCheckMode)
             return true;
@@ -945,7 +946,7 @@ bool TR_SPMDKernelParallelizer::autoSIMDReductionSupported(TR::Compilation *comp
    //float and double not currently supported.
    static bool enableFPAutoSIMDReduction = feGetEnv("TR_enableFPAutoSIMDReduction") ? true : false;
 
-   if (!enableFPAutoSIMDReduction 
+   if (!enableFPAutoSIMDReduction
        && !_fpreductionAnnotation
        && (node->getDataType() == TR::Float || node->getDataType() == TR::Double))
       {
@@ -1002,7 +1003,7 @@ bool TR_SPMDKernelParallelizer::isReduction(TR::Compilation *comp, TR_RegionStru
    TR::ILOpCode opCode = node->getOpCode();
 
    if (opCode.isConversion() && node->getFirstChild()->getOpCode().isLoadVar()) {
-      node = node->getFirstChild(); 
+      node = node->getFirstChild();
       opCode = node->getOpCode();
    }
 
@@ -1090,7 +1091,7 @@ bool TR_SPMDKernelParallelizer::noReductionVar(TR::Compilation *comp, TR_RegionS
    TR::ILOpCode opCode = node->getOpCode();
 
    if (opCode.isConversion() && node->getFirstChild()->getOpCode().isLoadVar()) {
-      node = node->getFirstChild(); 
+      node = node->getFirstChild();
       opCode = node->getOpCode();
    }
 
@@ -2706,7 +2707,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExits(List<TR::Block>* exitBlocks
    for (exitBlock = si.getCurrent(); exitBlock; exitBlock = si.getNext())
       {
       TR::TreeTop *insertionPoint = exitBlock->getEntry();
-      
+
       TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
       helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
@@ -2737,7 +2738,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExitInRegionExits(List<TR::Block>
    {
    List<TR::CFGEdge> exitEdges(comp()->trMemory());
 
-   TR::CFG *cfg = comp()->getFlowGraph(); 
+   TR::CFG *cfg = comp()->getFlowGraph();
    TR_BitVector *blocksInsideLoop = new (trStackMemory()) TR_BitVector(cfg->getNextNodeNumber(), trMemory(), stackAlloc);
 
    TR::Block *blockInLoop = 0;
@@ -3271,7 +3272,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
          exitBlocks.add(kernelExitBlock);
 
          insertGPURegionEntry(hoistRegionInvariantBlock, gpuScope->_scopeSymRef, gpuPtxCount, gpuScope->getScopeType());
-         insertGPURegionExits(&exitBlocks, gpuScope->_scopeSymRef, gpuPtxCount, liveSymRef, gpuScope->getExitLocationsList()); 
+         insertGPURegionExits(&exitBlocks, gpuScope->_scopeSymRef, gpuPtxCount, liveSymRef, gpuScope->getExitLocationsList());
 
          insertGPUTemporariesLivenessCode(gpuScope->getExitLocationsList(), liveSymRef, true);
          break;
@@ -3303,7 +3304,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
             }
          else
             {
-            scopeSymRef = gpuScope->_scopeSymRef;      
+            scopeSymRef = gpuScope->_scopeSymRef;
             liveSymRef  = gpuScope->_liveSymRef;
             insertGPUTemporariesLivenessCode(gpuScope->getExitLocationsList(), liveSymRef, false);
             }
@@ -3517,7 +3518,7 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
             return false;
             }
 
-         TR_Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
+         TR::Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
          const char * signature = method->signature(comp()->trMemory(), stackAlloc);
 
          traceMsg(comp(), "signature: %s\n", signature ? signature : "NULL");
@@ -3969,7 +3970,7 @@ int TR_SPMDKernelParallelizer::symbolicEvaluateTree(TR::Node *node)
          if (node->getOpCodeValue() == TR::lconst || node->getOpCodeValue() == TR::iconst) return node->getInt();
          return 0; //else
       case 1:
-         // only ilop that will do this is TR::i2l 
+         // only ilop that will do this is TR::i2l
          return symbolicEvaluateTree(node->getFirstChild());
       case 2:
          c1 = symbolicEvaluateTree(node->getFirstChild());
@@ -3978,8 +3979,8 @@ int TR_SPMDKernelParallelizer::symbolicEvaluateTree(TR::Node *node)
 
    switch(node->getOpCodeValue()) // support either add, sub or mul
       {
-      case TR::imul: 
-      case TR::lmul: 
+      case TR::imul:
+      case TR::lmul:
          return (c1*c2);
       case TR::iadd:
       case TR::ladd:
@@ -3997,7 +3998,7 @@ TR::Node* TR_SPMDKernelParallelizer::findSingleLoopVariant(TR::Node *node, TR_Re
    TR::Node* node1 = NULL;
    TR::Node* node2 = NULL;
    if (node->getNumChildren() >= 1) node1 = findSingleLoopVariant(node->getFirstChild(), loop, sign, constantsOnly);
-   if (node->getNumChildren() == 2) 
+   if (node->getNumChildren() == 2)
       {
       *sign = (*sign)^(node->getOpCode().isSub());
       node2 = findSingleLoopVariant(node->getSecondChild(), loop, sign, constantsOnly);
@@ -4009,8 +4010,8 @@ TR::Node* TR_SPMDKernelParallelizer::findSingleLoopVariant(TR::Node *node, TR_Re
       *constantsOnly = 1;
       }
 
-   if (node->getNumChildren() == 0 && !loop->isExprInvariant(node)) return node; 
-   if (node->getNumChildren() == 0 && loop->isExprInvariant(node)) return NULL; 
+   if (node->getNumChildren() == 0 && !loop->isExprInvariant(node)) return node;
+   if (node->getNumChildren() == 0 && loop->isExprInvariant(node)) return NULL;
    if (node1 != NULL && node2 != NULL) return NULL;
    if (node1 == NULL && node2 == NULL) return NULL;
    if (node1 != NULL && node2 == NULL) return node1;
@@ -4031,9 +4032,9 @@ bool TR_SPMDKernelParallelizer::checkConstantDistanceDependence(TR_RegionStructu
       {
       return false;
       }
- 
-   TR::Node* invariantNodedefs; 
-   TR::Node* invariantNodeuses; 
+
+   TR::Node* invariantNodedefs;
+   TR::Node* invariantNodeuses;
    int sign1 = 0;
    int sign2 = 0;
    int constantsOnly1 = 0;
@@ -4044,8 +4045,8 @@ bool TR_SPMDKernelParallelizer::checkConstantDistanceDependence(TR_RegionStructu
    // and ensure the signs on the loop variant nodes is correct
    invariantNodedefs = findSingleLoopVariant(node1->getFirstChild()->getSecondChild(), loop, &sign1, &constantsOnly1);
    invariantNodeuses = findSingleLoopVariant(node2->getFirstChild()->getSecondChild(), loop, &sign2, &constantsOnly2);
-   if (!areNodesEquivalent(comp,invariantNodedefs,invariantNodeuses) && 
-       sign1 == sign2) 
+   if (!areNodesEquivalent(comp,invariantNodedefs,invariantNodeuses) &&
+       sign1 == sign2)
       {
       return false;
       }
@@ -4067,7 +4068,7 @@ bool TR_SPMDKernelParallelizer::checkConstantDistanceDependence(TR_RegionStructu
 
       if (type == 0 && (distance >= VECTOR_SIZE || distance <= 0))
          { // permissable flow dependence
-         return true; 
+         return true;
          }
       if (type == 1 && (distance >= 0 || distance <= -VECTOR_SIZE))
          { // permissable output dependence
@@ -4118,12 +4119,12 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
                }
 
             if (checkConstantDistanceDependence(loop,defs[dc],defs[dc2],comp,1))
-               { 
+               {
                continue;
                }
 
             traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: def %p and def %p are dependent\n", defs[dc], defs[dc2]);
-            traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: will not vectorize\n"); 
+            traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: will not vectorize\n");
             return false;
             }
          }
@@ -4141,14 +4142,14 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
                {
                continue;
                }
-            
+
             if (checkConstantDistanceDependence(loop,defs[dc],uses[uc],comp,0))
-               { 
+               {
                continue;
                }
 
             traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: def %p and use %p are dependent\n", defs[dc], uses[uc]);
-            traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: will not vectorize\n"); 
+            traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: will not vectorize\n");
             return false;
             }
          }
