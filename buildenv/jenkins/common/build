@@ -348,8 +348,6 @@ def add_node_to_description() {
 }
 
 def build_all() {
-
-    // Typically called by Build jobs and Compile only PRs
     timeout(time: 6, unit: 'HOURS') {
         try {
             // Cleanup in case an old build left anything behind
@@ -362,16 +360,6 @@ def build_all() {
             // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
             cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
         }
-    }
-}
-
-def build_pr() {
-
-    // Called by PR Compile & Test jobs
-    // Does not cleanup as it is expected testing will occur, followed by cleanup
-    timeout(time: 6, unit: 'HOURS') {
-        get_source()
-        build()
     }
 }
 
