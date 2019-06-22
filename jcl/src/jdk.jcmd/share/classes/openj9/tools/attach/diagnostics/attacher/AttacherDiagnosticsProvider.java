@@ -34,8 +34,6 @@ import com.ibm.tools.attach.target.IPC;
 import com.sun.tools.attach.AttachNotSupportedException;
 
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticsInfo;
-import openj9.tools.attach.diagnostics.info.ThreadGroupInfo;
 
 /**
  * This class allows a Attach API attacher to query a target JVM about
@@ -47,23 +45,6 @@ public class AttacherDiagnosticsProvider {
 
 	private OpenJ9VirtualMachine vm;
 
-	/**
-	 * Acquire the stacks of all running threads in the current VM and encode them
-	 * into a set of properties.
-	 * 
-	 * @param printSynchronizers indicate if ownable synchronizers should be printed
-	 * @return properties object
-	 * @throws IOException on communication error
-	 */
-	public DiagnosticsInfo getThreadGroupInfo(boolean printSynchronizers) throws IOException {
-		IPC.logMessage("enter getRemoteThreadGroupInfo"); //$NON-NLS-1$
-		checkAttached();
-		Properties threadInfo = vm.getThreadInfo();
-		DiagnosticProperties.dumpPropertiesIfDebug("Properties from target:", threadInfo); //$NON-NLS-1$
-		ThreadGroupInfo info = new ThreadGroupInfo(threadInfo, printSynchronizers);
-		IPC.logMessage("exit getRemoteThreadGroupInfo"); //$NON-NLS-1$
-		return info;
-	}
 
 	/**
 	 * Request thread information, including stack traces, from a target VM.

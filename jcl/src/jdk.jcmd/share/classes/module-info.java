@@ -24,8 +24,6 @@
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
 module jdk.jcmd {
-  exports openj9.tools.attach.diagnostics.info;
-  provides openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider with openj9.tools.attach.diagnostics.target.TargetDiagnosticsProviderImpl;
   requires java.base;
   requires java.management;
   requires jdk.attach;
