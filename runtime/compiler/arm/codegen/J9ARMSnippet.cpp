@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,6 @@
  *******************************************************************************/
 
 #include "j9.h"
-#ifdef J9VM_TASUKI_LOCKS_SINGLE_SLOT
 
 #include "arm/codegen/J9ARMSnippet.hpp"
 
@@ -220,11 +219,6 @@ TR::ARMMonitorExitSnippet::ARMMonitorExitSnippet(
 
 uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
    {
-
-//#if !defined(J9VM_TASUKI_LOCKS_SINGLE_SLOT)
-//   TR_ASSERT(0, "Tasuki double slot lock exit snippet not implemented");
-//#endif
-
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
 
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
@@ -515,5 +509,3 @@ int32_t TR::ARMMonitorExitSnippet::setEstimatedCodeLocation(int32_t estimatedSni
    getSnippetLabel()->setEstimatedCodeLocation(estimatedSnippetStart+len);
    return(estimatedSnippetStart);
    }
-
-#endif

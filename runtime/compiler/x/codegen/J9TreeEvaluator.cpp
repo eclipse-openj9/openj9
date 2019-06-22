@@ -5522,9 +5522,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
 
    if (!node->isReadMonitor() && !reservingLock)
       {
-#ifdef J9VM_TASUKI_LOCKS_DOUBLE_SLOT
-      TR_ASSERT(TR::Compiler->target.is32Bit(), "This code-piece should never be reached");
-#endif
       if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
          generateMemImmInstruction(XRSMemImm4(gen64BitInstr),
             node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);

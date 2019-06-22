@@ -5516,9 +5516,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
          lockSize = 4;
          }
       generateTrg1MemInstruction(cg, opCode, node, monitorReg, new (cg->trHeapMemory()) TR::MemoryReference(baseReg, moffset, lockSize, cg));
-#if defined(J9VM_TASUKI_LOCKS_SINGLE_SLOT)
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, ctempReg, 0);
-#endif
       generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmp, node, condReg, monitorReg, metaReg);
 
       if (TR::Compiler->target.cpu.id() >= TR_PPCgp)

@@ -25,9 +25,6 @@
 
 #include "j9cfg.h"
 
-/* The following define specifies what type of locks are used by this VM */
-#define J9VM_TASUKI_LOCKS_SINGLE_SLOT
-
 /* The following define specifies whether or not an instruction to sample the CPU timestamp is supported */
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER)
 #define J9VM_CPU_TIMESTAMP_SUPPORT
