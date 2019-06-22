@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,7 +246,7 @@ checkArrayCrc(JNIEnv * env, const char *acquireFunction, const char *releaseFunc
 	length = J9INDEXABLEOBJECT_SIZE(vmThread, arrayPtr);
 	length <<= ((J9ROMArrayClass*)(J9OBJECT_CLAZZ(vmThread, arrayPtr)->romClass))->arrayShape & 0x0000FFFF;
 
-	isContiguousArray = J9ISCONTIGUOUSARRAY(vm, arrayPtr);
+	isContiguousArray = J9ISCONTIGUOUSARRAY(vmThread, arrayPtr);
 	if (isContiguousArray) {
 		U_8* arrayData = (U_8*)TMP_J9JAVACONTIGUOUSARRAYOFBYTE_EA(vmThread, arrayPtr, 0); 
 		isCopy = arrayData != memory;

@@ -49,6 +49,9 @@ class MM_CollectionStatisticsVLHGC;
 class MM_InterRegionRememberedSet : public MM_BaseVirtual
 {
 private:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 public:
 	MM_HeapRegionManager *_heapRegionManager;				/**< cached pointer to heap region manager */
@@ -184,6 +187,24 @@ private:
 	
 protected:
 public:
+
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool
+	compressObjectReferences()
+	{
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* OMR_GC_FULL_POINTERS */
+		return true;
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+		return false;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+	}
 
 	/**
 	 *	Setup for partial collect
@@ -379,12 +400,10 @@ public:
 	MMINLINE MM_RememberedSetCard
 	convertRememberedSetCardFromHeapAddress(void* address)
 	{
-		MM_RememberedSetCard card = 0;
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		card = (MM_RememberedSetCard)((UDATA)address >> CARD_SIZE_SHIFT);
-#else
-		card = (MM_RememberedSetCard) address;	
-#endif
+		MM_RememberedSetCard card = (MM_RememberedSetCard)(UDATA)address;
+		if (compressObjectReferences()) {
+			card = (MM_RememberedSetCard)((UDATA)address >> CARD_SIZE_SHIFT);
+		}
 		return card;
 	}
 
@@ -396,12 +415,10 @@ public:
 	MMINLINE void *
 	convertHeapAddressFromRememberedSetCard(MM_RememberedSetCard card)
 	{
-		void *address = NULL;
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		address = (void *)((UDATA)card << CARD_SIZE_SHIFT);
-#else
-		address = (void *) card;
-#endif
+		void *address = (void *)(UDATA)card;
+		if (compressObjectReferences()) {
+			address = (void *)((UDATA)card << CARD_SIZE_SHIFT);
+		}
 		return address;
 	}
 	
@@ -413,12 +430,13 @@ public:
 	 */
 	MMINLINE Card *rememberedSetCardToCardAddr(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
 	{
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		Card *virtualStart = _cardTable->getCardTableVirtualStart();
-		return virtualStart + card;
-#else
-		return _cardTable->heapAddrToCardAddr(env, (void *) card);
-#endif
+		Card *result = NULL;
+		if (compressObjectReferences()) {
+			result = _cardTable->getCardTableVirtualStart() + card;
+		} else {
+			result = _cardTable->heapAddrToCardAddr(env, (void*)(uintptr_t)card);
+		}
+		return result;
 	}
 	
 	/**

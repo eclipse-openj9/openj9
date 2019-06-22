@@ -51,7 +51,11 @@ private:
 	static const uintptr_t _objectHeaderSlotOffset = 0;
 	static const uintptr_t _objectHeaderSlotFlagsShift = 0;
 
-	const fomrobject_t _delegateHeaderSlotFlagsMask;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+
+	const uintptr_t _delegateHeaderSlotFlagsMask;
 
 	GC_ArrayObjectModel *_arrayObjectModel;
 	GC_MixedObjectModel *_mixedObjectModel;
@@ -65,6 +69,35 @@ public:
 private:
 protected:
 public:
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool
+	compressObjectReferences()
+	{
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* OMR_GC_FULL_POINTERS */
+		return true;
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+		return false;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+	}
+
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	/**
+	 * Set the compress object references flag.
+	 */
+	MMINLINE void
+	setCompressObjectReferences(bool compress)
+	{
+		_compressObjectReferences = compress;
+	}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+
 	/**
 	 * Set the array object model.
 	 */
@@ -133,7 +166,7 @@ public:
 	}
 
 	/**
-	 * Get the fomrobjectptr_t offset of the slot containing the object header.
+	 * Get the offset of the slot containing the object header.
 	 */
 	MMINLINE uintptr_t
 	getObjectHeaderSlotOffset()
@@ -255,8 +288,13 @@ public:
 	MMINLINE uintptr_t
 	getObjectSizeInBytesWithHeader(omrobjectptr_t objectPtr)
 	{
-		uintptr_t flags = ((*((fomrobject_t *)objectPtr)) >> getObjectHeaderSlotFlagsShift()) & _delegateHeaderSlotFlagsMask;
-		bool hasBeenMoved = OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS == (flags & OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS);
+		uintptr_t flags = 0;
+		if (compressObjectReferences()) {
+			flags = *(uint32_t*)objectPtr;
+		} else {
+			flags = *(uintptr_t*)objectPtr;
+		}
+		bool hasBeenMoved = J9_ARE_ANY_BITS_SET((flags >> getObjectHeaderSlotFlagsShift()) & _delegateHeaderSlotFlagsMask, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS);
 		return getObjectSizeInBytesWithHeader(objectPtr, hasBeenMoved);
 	}
 
@@ -373,9 +411,10 @@ public:
 	 * Constructor receives a copy of OMR's object flags mask, normalized to low order byte. Delegate
 	 * realigns it for internal use.
 	 */
-	GC_ObjectModelDelegate(fomrobject_t omrHeaderSlotFlagsMask)
+	GC_ObjectModelDelegate(uintptr_t omrHeaderSlotFlagsMask)
 		: _delegateHeaderSlotFlagsMask(omrHeaderSlotFlagsMask << _objectHeaderSlotFlagsShift)
 	{}
+
 };
 
 #endif /* OBJECTMODELDELEGATE_HPP_ */

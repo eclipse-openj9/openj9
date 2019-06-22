@@ -57,7 +57,7 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	const UDATA minimumSpineSize = 0;
 #else
 	/* the spine always contains a single pointer to the data */
-	const UDATA minimumSpineSize = sizeof(fj9object_t);
+	const UDATA minimumSpineSize = compressObjectReferences() ? sizeof(U_32) : sizeof(UDATA);
 #endif
 	UDATA minimumSpineSizeAfterGrowing = minimumSpineSize;
 	if (extensions->isVLHGC()) {
@@ -69,7 +69,7 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	}
 
 	/* CMVC 135307 : when checking for InlineContiguous layout, perform subtraction as adding to dataSizeInBytes could trigger overflow. */
-	if ((largestDesirableSpine == UDATA_MAX) || (dataSizeInBytes <= (largestDesirableSpine - minimumSpineSizeAfterGrowing - sizeof(J9IndexableObjectContiguous)))) {
+	if ((largestDesirableSpine == UDATA_MAX) || (dataSizeInBytes <= (largestDesirableSpine - minimumSpineSizeAfterGrowing - contiguousHeaderSize()))) {
 		layout = InlineContiguous;
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if(0 == dataSizeInBytes) {

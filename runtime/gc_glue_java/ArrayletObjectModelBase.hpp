@@ -43,6 +43,9 @@ class GC_ArrayletObjectModelBase
 * Data members
 */
 private:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 protected:
 	OMR_VM *_omrVM; 	/**< used so that we can pull the arrayletLeafSize and arrayletLeafLogSize for arraylet sizing calculations */
 	void * _arrayletRangeBase; /**< The base heap range of where discontiguous arraylets are allowed. */
@@ -77,6 +80,24 @@ protected:
 	getSpineSizeWithoutHeader(ArrayLayout layout, UDATA numberArraylets, UDATA dataSize, bool alignData);
 
 public:
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool
+	compressObjectReferences()
+	{
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* OMR_GC_FULL_POINTERS */
+		return true;
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+		return false;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+	}
+
 	/**
 	 * Returns the size of an indexable object in elements.
 	 * @param arrayPtr Pointer to the indexable object whose size is required
@@ -131,23 +152,25 @@ public:
 	{
 		bool needAlignment = false;
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		/* Compressed pointers require that each leaf starts at 8 aligned address.
-		 * Otherwise compressed leaf pointers will not work with shift value of 3.
-		 */
-		needAlignment = true;
-#else
-		/* The alignment padding is only required when the size of the spine pointers are
-		 * not 8 byte aligned.  For example, on a 64-bit non-compressed platform, a single
-		 * spine pointer would be 8 byte aligned, whereas on a 32-bit platform, a single
-		 * spine pointer would not be 8 byte aligned, and would require additional padding.
-		 */
-		if (sizeof(fj9object_t) < sizeof(double)) {
-			if (OBJECT_HEADER_SHAPE_DOUBLES == J9GC_CLASS_SHAPE(clazz)) {
-				needAlignment = true;
+		if (compressObjectReferences()) {
+			/* Compressed pointers require that each leaf starts at an appropriately-aligned address
+			 * (based on the compressed shift value). If this is not done, compressed leaf pointers
+			 * would be unable to reach all of the heap.
+			 */
+			needAlignment = true;
+		} else {
+			/* The alignment padding is only required when the size of the spine pointers are
+			 * not 8 byte aligned.  For example, on a 64-bit non-compressed platform, a single
+			 * spine pointer would be 8 byte aligned, whereas on a 32-bit platform, a single
+			 * spine pointer would not be 8 byte aligned, and would require additional padding.
+			 */
+			if (sizeof(fj9object_t) < sizeof(double)) {
+				if (OBJECT_HEADER_SHAPE_DOUBLES == J9GC_CLASS_SHAPE(clazz)) {
+					needAlignment = true;
+				}
 			}
 		}
-#endif
+
 		return needAlignment;
 	}
 
