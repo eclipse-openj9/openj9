@@ -71,7 +71,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	}
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	isContiguousClassBytes = J9ISCONTIGUOUSARRAY(vm, *(J9IndexableObject **)classRep);
+	isContiguousClassBytes = J9ISCONTIGUOUSARRAY(currentThread, *(J9IndexableObject **)classRep);
 	if (!isContiguousClassBytes) {
 		vmFuncs->internalExitVMToJNI(currentThread);
 		/* Make a "flat" copy of classRep */

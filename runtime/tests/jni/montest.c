@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,7 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 
 	J9VMThread* vmThread = (J9VMThread*)env;
 	j9object_t obj;
-	j9objectmonitor_t lock;
+	UDATA lock;
 	j9objectmonitor_t* lockEA;
 	jclass errorClazz;
 
@@ -81,7 +81,11 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 		return;
 	}
 
-	lock = *lockEA;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		lock = *(U_32*)lockEA;
+	} else {
+		lock = *(UDATA*)lockEA;
+	}
 
 	if (lock != 0) {
 		vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);		
@@ -92,8 +96,12 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 		return;
 	}
 
-	*lockEA = (j9objectmonitor_t)(UDATA)vmThread | OBJECT_HEADER_LOCK_RESERVED;
-
+	lock = (UDATA)vmThread | OBJECT_HEADER_LOCK_RESERVED;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		*(U_32*)lockEA = (U_32)lock;
+	} else {
+		*(UDATA*)lockEA = lock;
+	}
 	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 #endif

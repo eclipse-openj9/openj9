@@ -2302,7 +2302,7 @@ int BinaryHeapDumpWriter::getObjectHashCode(j9object_t object) {
 #if defined(J9VM_OPT_NEW_OBJECT_HASH)
 	/* Sniff hash code without growing of objects
 	 */
-	UDATA objectFlags = TMP_J9OBJECT_FLAGS(object);
+	UDATA objectFlags = J9OBJECT_FLAGS_FROM_CLAZZ_VM(_VirtualMachine, object);
 	UDATA hashed = objectFlags & (OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS | OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS);
 
 	int hashCode = 0;

@@ -243,26 +243,28 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		/* see if we are to force disable shifting in compressed refs */
-		if (try_scan(&scan_start, "noShiftingCompression")) {
-			extensions->shouldAllowShiftingCompression = false;
-			continue;
-		}
-
-		/* see if we are forcing shifting to a specific value */
-		if (try_scan(&scan_start, "forcedShiftingCompressionAmount=")) {
-			extensions->shouldForceSpecifiedShiftingCompression = true;
-			if(!scan_udata_helper(vm, &scan_start, &(extensions->forcedShiftingCompressionAmount), "forcedShiftingCompressionAmount=")) {
-				returnValue = JNI_EINVAL;
-				break;
+		if (extensions->compressObjectReferences()) {
+			/* see if we are to force disable shifting in compressed refs */
+			if (try_scan(&scan_start, "noShiftingCompression")) {
+				extensions->shouldAllowShiftingCompression = false;
+				continue;
 			}
 
-			if (extensions->forcedShiftingCompressionAmount > LOW_MEMORY_HEAP_CEILING_SHIFT) {
-				returnValue = JNI_EINVAL;
-				break;
+			/* see if we are forcing shifting to a specific value */
+			if (try_scan(&scan_start, "forcedShiftingCompressionAmount=")) {
+				extensions->shouldForceSpecifiedShiftingCompression = true;
+				if(!scan_udata_helper(vm, &scan_start, &(extensions->forcedShiftingCompressionAmount), "forcedShiftingCompressionAmount=")) {
+					returnValue = JNI_EINVAL;
+					break;
+				}
+	
+				if (extensions->forcedShiftingCompressionAmount > LOW_MEMORY_HEAP_CEILING_SHIFT) {
+					returnValue = JNI_EINVAL;
+					break;
+				}
+	
+				continue;
 			}
-
-			continue;
 		}
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 

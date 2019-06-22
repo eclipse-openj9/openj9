@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -574,11 +573,15 @@ public:
 		 * pointer if another thread copied the object underneath us). In non-compressed, this field should still be readable
 		 * out of the heap.
 		 */
+		 uint32_t size = 0;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		uint32_t size = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
-		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+		if (compressObjectReferences()) {
+			size = forwardedHeader->getPreservedOverlap();
+		} else
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		{
+			size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+		}
 
 #if defined(OMR_GC_HYBRID_ARRAYLETS)
 		if (0 == size) {
@@ -602,11 +605,15 @@ public:
 	{
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
+		 uint32_t size = 0;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		uint32_t size = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
-		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */		
+		if (compressObjectReferences()) {
+			size = forwardedHeader->getPreservedOverlap();
+		} else
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		{
+			size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+		}
 		
 		if (0 != size) {
 			return layout;
@@ -717,7 +724,11 @@ public:
 	{
 		uintptr_t classBits = (uintptr_t)clazz;
 		uintptr_t flagsBits = flags & (uintptr_t)OMR_OBJECT_METADATA_FLAGS_MASK;
-		*(getObjectHeaderSlotAddress(objectPtr)) = (fomrobject_t)(classBits | flagsBits);
+		if (compressObjectReferences()) {
+			*((uint32_t*)getObjectHeaderSlotAddress(objectPtr)) = (uint32_t)(classBits | flagsBits);
+		} else {
+			*((uintptr_t*)getObjectHeaderSlotAddress(objectPtr)) = (classBits | flagsBits);
+		}
 	}
 
 	/**

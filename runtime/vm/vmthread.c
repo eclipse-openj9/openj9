@@ -1754,7 +1754,7 @@ createCachedOutOfMemoryError(J9VMThread * currentThread, j9object_t threadObject
 		currentThread, jlOutOfMemoryError, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (outOfMemoryError != NULL) {
 		J9Class * arrayClass;
-		J9IndexableObject *walkback;
+		j9object_t walkback;
 
 #ifdef J9VM_ENV_DATA64
 		arrayClass = vm->longArrayClass;
@@ -1762,7 +1762,7 @@ createCachedOutOfMemoryError(J9VMThread * currentThread, j9object_t threadObject
 		arrayClass = vm->intArrayClass;
 #endif
 		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, outOfMemoryError);
-		walkback = (J9IndexableObject *)gcFuncs->J9AllocateIndexableObject(
+		walkback = gcFuncs->J9AllocateIndexableObject(
 			currentThread, arrayClass, 32, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		outOfMemoryError = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 		if (walkback == NULL) {

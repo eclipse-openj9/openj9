@@ -2824,11 +2824,17 @@ typedef struct J9Object {
 #define OBJECT_HEADER_MONITOR_ENTER_INTERRUPTED  1
 #define OBJECT_HEADER_ILLEGAL_MONITOR_STATE  2
 
-#define J9OBJECT_MONITOR_EA(vmThread, object) ((j9objectmonitor_t*)((U_8 *)(object)+(J9OBJECT_CLAZZ(vmThread, object))->lockOffset))
-
 typedef struct J9NonIndexableObject {
 	j9objectclass_t clazz;
 } J9NonIndexableObject;
+
+typedef struct J9NonIndexableObjectCompressed {
+	U_32 clazz;
+} J9NonIndexableObjectCompressed;
+
+typedef struct J9NonIndexableObjectFull {
+	UDATA clazz;
+} J9NonIndexableObjectFull;
 
 typedef struct J9IndexableObject {
 	j9objectclass_t clazz;
@@ -2842,6 +2848,19 @@ typedef struct J9IndexableObjectContiguous {
 #endif /* J9VM_ENV_DATA64 && !OMR_GC_COMPRESSED_POINTERS */
 } J9IndexableObjectContiguous;
 
+typedef struct J9IndexableObjectContiguousCompressed {
+	U_32 clazz;
+	U_32 size;
+} J9IndexableObjectContiguousCompressed;
+
+typedef struct J9IndexableObjectContiguousFull {
+	UDATA clazz;
+	U_32 size;
+#if defined(J9VM_ENV_DATA64)
+	U_32 padding;
+#endif /* J9VM_ENV_DATA64 */
+} J9IndexableObjectContiguousFull;
+
 typedef struct J9IndexableObjectDiscontiguous {
 	j9objectclass_t clazz;
 	U_32 mustBeZero;
@@ -2850,6 +2869,22 @@ typedef struct J9IndexableObjectDiscontiguous {
 	U_32 padding;
 #endif /* OMR_GC_COMPRESSED_POINTERS || !J9VM_ENV_DATA64 */
 } J9IndexableObjectDiscontiguous;
+
+typedef struct J9IndexableObjectDiscontiguousCompressed {
+	U_32 clazz;
+	U_32 mustBeZero;
+	U_32 size;
+	U_32 padding;
+} J9IndexableObjectDiscontiguousCompressed;
+
+typedef struct J9IndexableObjectDiscontiguousFull {
+	UDATA clazz;
+	U_32 mustBeZero;
+	U_32 size;
+#if !defined(J9VM_ENV_DATA64)
+	U_32 padding;
+#endif /* !J9VM_ENV_DATA64 */
+} J9IndexableObjectDiscontiguousFull;
 
 typedef struct J9InitializerMethods {
 	void* initialStaticMethod;
@@ -5005,6 +5040,10 @@ typedef struct J9VMThread {
 #else /* OMR_GC_COMPRESSED_POINTERS */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) FALSE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+#define J9VMTHREAD_REFERENCE_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(U_32) : sizeof(UDATA))
+#define J9VMTHREAD_MIXED_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9NonIndexableObjectCompressed) : sizeof(J9NonIndexableObjectFull))
+#define J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
+#define J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
 
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
@@ -5455,6 +5494,10 @@ typedef struct J9JavaVM {
 #else /* OMR_GC_COMPRESSED_POINTERS */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) FALSE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+#define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
+#define J9JAVAVM_MIXED_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9NonIndexableObjectCompressed) : sizeof(J9NonIndexableObjectFull))
+#define J9JAVAVM_CONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
+#define J9JAVAVM_DISCONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
 
 /* Data block for JIT instance field watch reporting */
 
