@@ -648,7 +648,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #define J9OBJECT_SET_MONITOR(vmThread, object, value) \
 	do { \
 		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) { \
-			J9OBJECT_U32_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value); \
+			J9OBJECT_U32_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), (U_32)(value)); \
 		} else { \
 			J9OBJECT_UDATA_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value); \
 		} \
