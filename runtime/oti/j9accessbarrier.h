@@ -646,9 +646,13 @@ typedef struct J9IndexableObject* mm_j9array_t;
 		: (j9objectmonitor_t)J9OBJECT_UDATA_LOAD(vmThread, object, J9OBJECT_MONITOR_OFFSET(vmThread,object)))
 
 #define J9OBJECT_SET_MONITOR(vmThread, object, value) \
-	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-		? J9OBJECT_U32_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value) \
-		: J9OBJECT_UDATA_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value))
+	do { \
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) { \
+			J9OBJECT_U32_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value); \
+		} else { \
+			J9OBJECT_UDATA_STORE(vmThread, object,J9OBJECT_MONITOR_OFFSET(vmThread,object), value); \
+		} \
+	} while(0)
 
 #define J9INDEXABLEOBJECTCONTIGUOUS_SIZE(vmThread, object) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
