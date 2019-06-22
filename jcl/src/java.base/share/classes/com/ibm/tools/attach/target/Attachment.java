@@ -39,7 +39,6 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
-import openj9.tools.attach.diagnostics.spi.TargetDiagnosticsProvider;
 /*[IF Sidecar19-SE]*/
 import jdk.internal.vm.VMSupport;
 /*[ELSE] Sidecar19-SE
@@ -64,7 +63,6 @@ final class Attachment extends Thread implements Response {
 	private String attachError;
 	private final AttachHandler handler;
 	private final String key;
-	private TargetDiagnosticsProvider diagProvider;
 	private static final String START_REMOTE_MANAGEMENT_AGENT = "startRemoteManagementAgent"; //$NON-NLS-1$
 	private static final String START_LOCAL_MANAGEMENT_AGENT = "startLocalManagementAgent"; //$NON-NLS-1$
 
@@ -131,7 +129,6 @@ final class Attachment extends Thread implements Response {
 		portNumber = rc.getPortNumber();
 		this.key = rc.getKey();
 		this.handler = attachHandler;
-		diagProvider = null;
 		setDaemon(true);
 	}
 
@@ -224,12 +221,6 @@ final class Attachment extends Thread implements Response {
 					AttachmentConnection.streamSend(respStream, Response.ERROR
 							+ " " + attachError); //$NON-NLS-1$
 				}
-			} else if (cmd.startsWith(Command.GET_THREAD_GROUP_INFO)) {
-				try {
-					replyWithProperties(getDiagnosticsProvider().getThreadGroupInfo());
-				} catch (Exception e) {
-					replyWithProperties(DiagnosticProperties.makeExceptionProperties(e));
-				}
 			} else if (cmd.startsWith(Command.GET_SYSTEM_PROPERTIES)) {
 				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
 				String argumentString = String.join(" ", com.ibm.oti.vm.VM.getVMArgs()); //$NON-NLS-1$
@@ -306,18 +297,6 @@ final class Attachment extends Thread implements Response {
 		IPC.sendProperties(props, responseStream);
 	}
 	
-	private TargetDiagnosticsProvider getDiagnosticsProvider() {
-		if (diagProvider == null) {
-			for (TargetDiagnosticsProvider p: ServiceLoader.load(TargetDiagnosticsProvider.class)) {
-				if (null != p) {
-					diagProvider = p;
-					break;
-				}
-			}
-		}
-		return diagProvider;
-	}
-
 	/**
 	 * close socket and other cleanup
 	 */

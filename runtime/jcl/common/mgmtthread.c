@@ -656,7 +656,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoIm
 }
 
 jobjectArray JNICALL
-Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
+Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
@@ -765,6 +765,16 @@ dumpAll_failWithExclusive:
 	return NULL;
 }
 
+/* This is an alias for the private native method DiagnosticUtils.dumpAllThreadsImpl() */
+jobjectArray JNICALL
+Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl
+(JNIEnv *env, jobject beanInstance,
+	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth)
+{
+	return Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(
+			env, beanInstance, getLockedMonitors, getLockedSynchronizers,
+			maxDepth);
+}
 
 /**
  * Allocate and populate an array of ThreadInfo for a given array of threadIDs

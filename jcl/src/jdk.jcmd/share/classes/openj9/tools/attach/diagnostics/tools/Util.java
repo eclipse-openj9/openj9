@@ -29,7 +29,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
+
+import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
+import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 
 /**
  * Common functions for diagnostic tools
@@ -57,5 +61,12 @@ public class Util {
 		return stdinList;
 	}
 
+	static void runCommandAndPrintResult(AttacherDiagnosticsProvider diagProvider, String cmd, String commandName)
+			throws IOException {
+		Properties props = diagProvider.executeDiagnosticCommand(cmd);
+		DiagnosticProperties.dumpPropertiesIfDebug(commandName + " result:", props); //$NON-NLS-1$
+		String responseString = new DiagnosticProperties(props).printStringResult();
+		System.out.print(responseString);
+	}
 
 }
