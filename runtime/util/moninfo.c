@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,8 @@
 #include "omrthread.h"
 #include "util_internal.h"
 #include "ut_j9vmutil.h"
-#ifdef J9VM_THR_LOCK_NURSERY
-#include "lockNurseryUtil.h"
-#endif
+#include "j9protos.h"
+#include "j9consts.h"
 #include "monhelp.h"
 
 

@@ -515,10 +515,12 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		extensions->objectModel.setObjectClassAndFlags(objectPtr, forwardedClass, forwardedFlags);
 
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
-		 * as well or it may be already reversed - such fixup will be completed at in a later pass.
-		 */
-		originalForwardedHeader->restoreDestroyedOverlap();
+		if (compressObjectReferences()) {
+			/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
+			 * as well or it may be already reversed - such fixup will be completed at in a later pass.
+			 */
+			originalForwardedHeader->restoreDestroyedOverlap();
+		}
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 		MM_ObjectAccessBarrier* barrier = extensions->accessBarrier;
@@ -672,8 +674,10 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		vmThread->readBarrierRangeCheckBase = (UDATA)base;
 		vmThread->readBarrierRangeCheckTop = (UDATA)top - 1;
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-		vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
-		vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
+		if (compressObjectReferences()) {
+			vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
+			vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
+		}
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
 		if (_extensions->isConcurrentScavengerHWSupported()) {
@@ -711,6 +715,7 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		vmThread->readBarrierRangeCheckBase = UDATA_MAX;
 		vmThread->readBarrierRangeCheckTop = 0;
 #ifdef OMR_GC_COMPRESSED_POINTERS
+		/* No need for a runtime check here - it would just waste cycles */
 		vmThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
 		vmThread->readBarrierRangeCheckTopCompressed = 0;
 #endif

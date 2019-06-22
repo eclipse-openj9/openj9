@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -44,6 +43,9 @@ class GC_MixedObjectModel
 * Data members
 */
 private:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 protected:
 public:
 
@@ -53,6 +55,24 @@ public:
 private:
 protected:
 public:
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool
+	compressObjectReferences()
+	{
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* OMR_GC_FULL_POINTERS */
+		return true;
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+		return false;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+	}
+
 	/**
 	 * Returns the size of a class, in bytes, excluding the header.
 	 * @param clazzPtr Pointer to the class whose size is required
@@ -83,7 +103,7 @@ public:
 	MMINLINE UDATA
 	getSizeInBytesWithHeader(J9Object *objectPtr)
 	{
-		return getSizeInBytesWithoutHeader(objectPtr) + sizeof(J9Object);
+		return getSizeInBytesWithoutHeader(objectPtr) + getHeaderSize(objectPtr);
 	}
 	
 	/**
@@ -105,7 +125,7 @@ public:
 	MMINLINE UDATA
 	getHeaderSize(J9Object *objectPtr)
 	{
-		return sizeof(J9Object);
+		return compressObjectReferences() ? sizeof(J9NonIndexableObjectCompressed) : sizeof(J9NonIndexableObjectFull);
 	}
 
 	/**

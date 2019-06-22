@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,17 +47,29 @@ j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index) 
 VMINLINE static j9object_t
 j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index)
 {
-	fj9object_t *loadAddress = J9JAVAARRAY_EA(vmThread, array, index, fj9object_t);
-	J9OBJECT__PRE_OBJECT_LOAD_ADDRESS(vmThread, array, loadAddress);
-	return (j9object_t)J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, *loadAddress);
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		U_32 *loadAddress = J9JAVAARRAY_EA(vmThread, array, index, U_32);
+		J9OBJECT__PRE_OBJECT_LOAD_ADDRESS(vmThread, array, loadAddress);
+		return (j9object_t)J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, *loadAddress);
+	} else {
+		UDATA *loadAddress = J9JAVAARRAY_EA(vmThread, array, index, UDATA);
+		J9OBJECT__PRE_OBJECT_LOAD_ADDRESS(vmThread, array, loadAddress);
+		return (j9object_t)*loadAddress;
+	}
 }
 
 VMINLINE static j9object_t
 j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index)
 {
-	fj9object_t *loadAddress = J9JAVAARRAY_EA_VM(vm, array, index, fj9object_t);
-	J9OBJECT__PRE_OBJECT_LOAD_ADDRESS_VM(vm, array, loadAddress);
-	return (j9object_t)J9_CONVERT_POINTER_FROM_TOKEN_VM__(vm, *loadAddress);
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		U_32 *loadAddress = J9JAVAARRAY_EA_VM(vm, array, index, U_32);
+		J9OBJECT__PRE_OBJECT_LOAD_ADDRESS_VM(vm, array, loadAddress);
+		return (j9object_t)J9_CONVERT_POINTER_FROM_TOKEN_VM__(vm, *loadAddress);
+	} else {
+		UDATA *loadAddress = J9JAVAARRAY_EA_VM(vm, array, index, UDATA);
+		J9OBJECT__PRE_OBJECT_LOAD_ADDRESS_VM(vm, array, loadAddress);
+		return (j9object_t)*loadAddress;	
+	}
 }
 
 #endif /* J9ACCESSBARRIERHELPERS_H */

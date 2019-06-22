@@ -302,9 +302,9 @@ public:
 	 * does not have an inline lockword.
 	 */
 	VMINLINE j9objectmonitor_t *
-	getLockwordAddress(J9Object *object)
+	getLockwordAddress(J9VMThread *currentThread, J9Object *object)
 	{
-		J9Class *clazz = TMP_J9OBJECT_CLAZZ(object);
+		J9Class *clazz = J9OBJECT_CLAZZ(currentThread, object);
 		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 			return NULL;
 		}
@@ -335,7 +335,7 @@ public:
 #if defined(J9VM_THR_LOCK_NURSERY)
 		if (copyLockword) {
 			/* zero lockword, if present */
-			j9objectmonitor_t *lockwordAddress = getLockwordAddress(copy);
+			j9objectmonitor_t *lockwordAddress = getLockwordAddress(currentThread, copy);
 			if (NULL != lockwordAddress) {
 				*lockwordAddress = 0;
 			}
@@ -401,7 +401,7 @@ public:
 		
 #if defined(J9VM_THR_LOCK_NURSERY)
 			/* zero lockword, if present */
-			j9objectmonitor_t *lockwordAddress = getLockwordAddress(destObject);
+			j9objectmonitor_t *lockwordAddress = getLockwordAddress(vmThread, destObject);
 			if (NULL != lockwordAddress) {
 				*lockwordAddress = 0;
 			}

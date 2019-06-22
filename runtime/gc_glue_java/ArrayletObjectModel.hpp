@@ -76,6 +76,26 @@ public:
 	}
 
 	/**
+	 * Get the header size for contiguous arrays
+	 * @return header size
+	 */
+	MMINLINE UDATA
+	contiguousHeaderSize()
+	{
+		return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
+	}
+
+	/**
+	 * Get the header size for discontiguous arrays
+	 * @return header size
+	 */
+	MMINLINE UDATA
+	discontiguousHeaderSize()
+	{
+		return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
+	}
+
+	/**
 	 * Get the spine size for the given indexable object
 	 * @param objPtr Pointer to an array object
 	 * @return The total size in bytes of objPtr's array spine;
@@ -270,12 +290,12 @@ public:
 	getHeaderSize(J9Class *clazzPtr, ArrayLayout layout)
 	{
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
-		UDATA headerSize = sizeof(J9IndexableObjectContiguous);
+		UDATA headerSize = contiguousHeaderSize();
 		if (layout != InlineContiguous) {
-			headerSize = sizeof(J9IndexableObjectDiscontiguous);
+			headerSize = discontiguousHeaderSize();
 		}
 #else
-		UDATA headerSize = sizeof(J9IndexableObjectDiscontiguous);
+		UDATA headerSize = discontiguousHeaderSize();
 #endif
 		return headerSize;
 	}
@@ -315,6 +335,19 @@ public:
 	}
 
 	/**
+	 * Get the size from the header for the given indexable object
+	 * @param objPtr Pointer to an array object
+	 * @return the size
+	 */
+	MMINLINE UDATA
+	getArraySize(J9IndexableObject *objPtr)
+	{
+		return compressObjectReferences()
+			? ((J9IndexableObjectContiguousCompressed*)objPtr)->size
+			: ((J9IndexableObjectContiguousFull*)objPtr)->size;
+	}
+
+	/**
 	 * Get the layout for the given indexable object
 	 * @param objPtr Pointer to an array object
 	 * @return the ArrayLayout for objectPtr
@@ -325,7 +358,7 @@ public:
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* Trivial check for InlineContiguous. */
-		if (0 != ((J9IndexableObjectContiguous*)objPtr)->size) {
+		if (0 != getArraySize(objPtr)) {
 			return GC_ArrayletObjectModel::InlineContiguous;
 		}
 #endif /* J9VM_GC_HYBRID_ARRAYLETS */
@@ -771,13 +804,22 @@ public:
 	getHeaderSize(J9IndexableObject *arrayPtr)
 	{
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
-		UDATA size = ((J9IndexableObjectContiguous *)arrayPtr)->size;
-		UDATA headerSize = sizeof(J9IndexableObjectContiguous);
-		if (0 == size) {
-			headerSize = sizeof(J9IndexableObjectDiscontiguous);
+		UDATA headerSize = 0;
+		if (compressObjectReferences()) {
+			UDATA size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
+			headerSize = sizeof(J9IndexableObjectContiguousCompressed);
+			if (0 == size) {
+				headerSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
+			}
+		} else {
+			UDATA size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
+			headerSize = sizeof(J9IndexableObjectContiguousFull);
+			if (0 == size) {
+				headerSize = sizeof(J9IndexableObjectDiscontiguousFull);
+			}
 		}
 #else
-		UDATA headerSize = sizeof(J9IndexableObjectDiscontiguous);
+		UDATA headerSize = discontiguousHeaderSize();
 #endif
 		return headerSize;
 	}
@@ -790,7 +832,7 @@ public:
 	MMINLINE fj9object_t *
 	getArrayoidPointer(J9IndexableObject *arrayPtr)
 	{
-		return (fj9object_t *)((UDATA)arrayPtr + sizeof(J9IndexableObjectDiscontiguous));
+		return (fj9object_t *)((UDATA)arrayPtr + (compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull)));
 	}
 
 	/**
@@ -802,7 +844,7 @@ public:
 	getDataPointerForContiguous(J9IndexableObject *arrayPtr)
 	{
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
-		return (void *)((UDATA)arrayPtr + sizeof(J9IndexableObjectContiguous));
+		return (void *)((UDATA)arrayPtr + contiguousHeaderSize());
 #else /* J9VM_GC_HYBRID_ARRAYLETS */
 		fj9object_t* arrayoidPointer = getArrayoidPointer(arrayPtr);
 		fj9object_t firstArrayletLeaf = arrayoidPointer[0];
