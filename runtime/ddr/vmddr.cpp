@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,17 @@ VM_DdrDebugLink(J9JITDataCacheHeader)
 VM_DdrDebugLink(J9JITFrame)
 VM_DdrDebugLink(J9JITHashTable)
 VM_DdrDebugLink(J9JITStackAtlas)
+VM_DdrDebugLink(J9Object)
 VM_DdrDebugLink(J9NonIndexableObject)
+VM_DdrDebugLink(J9NonIndexableObjectCompressed)
+VM_DdrDebugLink(J9NonIndexableObjectFull)
+VM_DdrDebugLink(J9IndexableObject)
+VM_DdrDebugLink(J9IndexableObjectContiguous)
+VM_DdrDebugLink(J9IndexableObjectContiguousCompressed)
+VM_DdrDebugLink(J9IndexableObjectContiguousFull)
+VM_DdrDebugLink(J9IndexableObjectDiscontiguous)
+VM_DdrDebugLink(J9IndexableObjectDiscontiguousCompressed)
+VM_DdrDebugLink(J9IndexableObjectDiscontiguousFull)
 VM_DdrDebugLink(J9OSRFrame)
 VM_DdrDebugLink(J9RAMMethodRef)
 VM_DdrDebugLink(J9RASdumpQueue)
