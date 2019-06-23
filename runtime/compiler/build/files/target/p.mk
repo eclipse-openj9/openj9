@@ -25,6 +25,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/GenerateInstructions.cpp \
     omr/compiler/p/codegen/OMRCodeGenerator.cpp \
     omr/compiler/p/codegen/OMRConstantDataSnippet.cpp \
+    omr/compiler/p/codegen/OMRInstOpCode.cpp \
     omr/compiler/p/codegen/OMRInstruction.cpp \
     omr/compiler/p/codegen/OMRLinkage.cpp \
     omr/compiler/p/codegen/OMRMachine.cpp \
