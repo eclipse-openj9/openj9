@@ -13423,15 +13423,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
          }
 
-      case TR::java_lang_Math_sqrt:
-      case TR::java_lang_StrictMath_sqrt:
-         if (methodSymbol->getResolvedMethodSymbol()->canReplaceWithHWInstr())
-            {
-            resultReg = inlineDoublePrecisionFP(node, TR::InstOpCode::fsqrt, cg);
-            return true;
-            }
-         break;
-
       case TR::java_lang_Math_ceil:
       case TR::java_lang_StrictMath_ceil:
          if (methodSymbol->getResolvedMethodSymbol()->canReplaceWithHWInstr())
