@@ -1062,7 +1062,19 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE, *scan_start);
 		goto _error;
 	}
-	
+#if defined(J9VM_GC_VLHGC)
+#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
+	if (try_scan(scan_start, "concurrentCopyForward")) {
+		extensions->_isConcurrentCopyForward = true;
+		goto _exit;
+	}
+	if (try_scan(scan_start, "noConcurrentCopyForward")) {
+		extensions->_isConcurrentCopyForward = false;
+		goto _exit;
+	}
+#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+#endif /* defined(J9VM_GC_VLHGC) */
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (try_scan(scan_start, "scanCacheSize=")) {
 		/* Read in restricted scan cache size */
