@@ -86,27 +86,27 @@ public class OpenJ9AttachProvider extends AttachProvider {
 		}
 
 		OpenJ9VirtualMachine vm = new OpenJ9VirtualMachine(this, descriptor.id());
-		PrivilegedExceptionAction<Object> action = () -> {vm.attachTarget(); return null;};
-		try {
-			AccessController.doPrivileged(action);
-		} catch (PrivilegedActionException e) {
-			Throwable cause = e.getCause();
-			if (cause instanceof AttachNotSupportedException) {
-				throw (AttachNotSupportedException) cause;
-			} else if (cause instanceof IOException) {
-				throw (IOException) cause;
-			} else {
-				throw new RuntimeException(cause);
-			}
-		}
+		vm.attachTarget();
 		return vm;
 	}
 
 	@Override
 	public List<VirtualMachineDescriptor> listVirtualMachines() {
-
-		PrivilegedAction<List<VirtualMachineDescriptor>> action = () -> listVirtualMachinesImp();
-		return AccessController.doPrivileged(action);
+		List<VirtualMachineDescriptor> ret = null;
+		PrivilegedExceptionAction<List<VirtualMachineDescriptor>> action = () -> listVirtualMachinesImp();
+		try {
+			ret = AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else if (cause instanceof Error) {
+				throw (Error) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		}
+		return ret;
 	}
 
 	private List<VirtualMachineDescriptor> listVirtualMachinesImp() {
