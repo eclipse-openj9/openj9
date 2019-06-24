@@ -562,16 +562,12 @@ typedef struct J9IndexableObject* mm_j9array_t;
 #define J9MONITORTABLE_OBJECT_LOAD(vmThread, objectSlot) \
 		((J9_GC_READ_BARRIER_TYPE_NONE == (vmThread)->javaVM->gcReadBarrierType) ? \
 		(*(j9object_t *)(objectSlot)) : \
-		((J9_GC_READ_BARRIER_TYPE_RANGE_CHECK == (vmThread)->javaVM->gcReadBarrierType) ? \
-		((j9object_t)J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_monitorTableReadObject((vmThread), (j9object_t *)(objectSlot))) : \
-		((j9object_t)J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_monitorTableReadObject((vmThread), (j9object_t *)(objectSlot)))))
+		((j9object_t)J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_monitorTableReadObject((vmThread), (j9object_t *)(objectSlot))))
 
 #define J9MONITORTABLE_OBJECT_LOAD_VM(javaVM, objectSlot) \
 		((J9_GC_READ_BARRIER_TYPE_NONE == (javaVM)->gcReadBarrierType) ? \
 		(*(j9object_t *)(objectSlot)) : \
-		((J9_GC_READ_BARRIER_TYPE_RANGE_CHECK == (javaVM)->gcReadBarrierType) ? \
-		((j9object_t)(javaVM)->memoryManagerFunctions->j9gc_objaccess_monitorTableReadObjectVM(javaVM, (j9object_t *)(objectSlot))) : \
-		((j9object_t)(javaVM)->memoryManagerFunctions->j9gc_objaccess_monitorTableReadObjectVM(javaVM, (j9object_t *)(objectSlot)))))
+		((j9object_t)(javaVM)->memoryManagerFunctions->j9gc_objaccess_monitorTableReadObjectVM(javaVM, (j9object_t *)(objectSlot))))
 
 #endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
 
