@@ -208,7 +208,6 @@ enum INIT_STAGE {
 #define VMOPT_XJCL_COLON "-Xjcl:"
 #define VMOPT_XFUTURE "-Xfuture"
 #define VMOPT_ALL "all"
-#define VMOPT_XVERIFY_ALL "-Xverify:" VMOPT_ALL
 #define VMOPT_XSIGQUITTOFILE "-XsigquitToFile"
 #define VMOPT_XDEBUG "-Xdebug"
 #define VMOPT_XNOAGENT "-Xnoagent"
