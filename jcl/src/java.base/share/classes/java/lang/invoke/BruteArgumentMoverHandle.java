@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -278,6 +278,10 @@ final class BruteArgumentMoverHandle extends ArgumentMoverHandle {
 	}
 
 	final MethodHandle permuteArguments(MethodType permuteType, int... outerPermute) throws NullPointerException, IllegalArgumentException {
+		if (isUnnecessaryPermute(permuteType, outerPermute)) {
+			return this;
+		}
+
 		return new BruteArgumentMoverHandle(
 			permuteType,
 			next,
