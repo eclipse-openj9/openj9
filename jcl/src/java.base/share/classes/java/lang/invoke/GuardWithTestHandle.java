@@ -42,7 +42,18 @@ final class GuardWithTestHandle extends MethodHandle {
 		this.falseTarget = originalHandle.falseTarget;
 	}
 
-	public static GuardWithTestHandle get(MethodHandle guard, MethodHandle trueTarget, MethodHandle falseTarget) {
+	public static MethodHandle get(MethodHandle guard, MethodHandle trueTarget, MethodHandle falseTarget) {
+		/* Constant boolean is implemented with ConstantIntHandle, if `guard` handle is a ConstantIntHandle,
+		we can evaluate the if statement now and return the target handle*/
+		if (guard instanceof ConstantIntHandle) {
+			ConstantIntHandle constantHandle = (ConstantIntHandle)guard;
+			if (constantHandle.value != 0) {
+				return trueTarget;
+			} else {
+				return falseTarget;
+			}
+		}
+
 		return new GuardWithTestHandle(guard, trueTarget, falseTarget);
 	}
 

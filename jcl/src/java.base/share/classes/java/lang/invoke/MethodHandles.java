@@ -737,10 +737,13 @@ public class MethodHandles {
 					 */
 					/*[ENDIF]*/
 					handle = new DirectHandle(clazz, methodName, type, MethodHandle.KIND_VIRTUAL, clazz, true);
-					int handleModifiers = handle.getModifiers();
-					/* Static check is performed by native code */
-					if (!Modifier.isPrivate(handleModifiers) && !Modifier.isFinal(handleModifiers)) {
-						handle = new VirtualHandle((DirectHandle) handle);
+					/* If the class is final, then there are no subclasses and the DirectHandle is sufficient */
+					if (!Modifier.isFinal(clazz.getModifiers())) {
+						int handleModifiers = handle.getModifiers();
+						/* Static check is performed by native code */
+						if (!Modifier.isPrivate(handleModifiers) && !Modifier.isFinal(handleModifiers)) {
+							handle = new VirtualHandle((DirectHandle) handle);
+						}
 					}
 				}
 				handle = convertToVarargsIfRequired(handle);
@@ -3186,6 +3189,7 @@ public class MethodHandles {
 			/*[MSG "K039c", "Invalid parameters"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K039c")); //$NON-NLS-1$
 		}
+
 		
 		MethodType permuteType = originalType.insertParameterTypes(location, valueTypes);
 		/* Build equivalent permute array */
