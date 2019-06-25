@@ -335,12 +335,7 @@ static const struct { \
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #if defined(OPENJ9_BUILD)
-/* Disable the sharedclasses by default feature due to performance regressions
- * found prior to the 0.12.0 release.  Enabling the cache for bootstrap classes
- * only interacts poorly with the JIT's logic to disable the iprofiler if a 
- * warm cache is detected.  See https://github.com/eclipse/openj9/issues/4222
- */
-#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
+#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) TRUE
 #else /* defined(OPENJ9_BUILD) */
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
 #endif /* defined(OPENJ9_BUILD) */
