@@ -90,11 +90,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	 */
 	/*[ENDIF]*/
 	MethodHandle permuteArguments(MethodType permuteType, int... permute) throws NullPointerException, IllegalArgumentException {
-		MethodHandle result = new PermuteHandle(permuteType, this, permute);
-		if (true) {
-			result = combinableVersion.permuteArguments(permuteType, permute);
-		}
-		return result;
+		return combinableVersion.permuteArguments(permuteType, permute);
 	}
 
 	MethodHandle insertArguments(MethodHandle equivalent, MethodHandle unboxingHandle, int location, Object... values) {
