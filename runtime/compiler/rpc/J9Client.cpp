@@ -44,6 +44,10 @@ namespace JITaaS
 
 int J9ClientStream::_numConnectionsOpened = 0;
 int J9ClientStream::_numConnectionsClosed = 0;
+int J9ClientStream::_incompatibilityCount = 0;
+uint64_t J9ClientStream::_incompatibleStartTime = 0;
+const uint64_t J9ClientStream::RETRY_COMPATIBILITY_INTERVAL = 10000; //ms
+const int J9ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
@@ -250,8 +254,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    }
 
 J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
-   : J9Stream(),
-   _timeout(info->getJITaaSTimeout())
+   : J9Stream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
@@ -260,8 +263,7 @@ J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
    }
 #else // JITAAS_ENABLE_SSL
 J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
-   : J9Stream(),
-   _timeout(info->getJITaaSTimeout())
+   : J9Stream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    initStream(connfd);
@@ -274,14 +276,6 @@ J9ClientStream::waitForFinish()
    {
    // any error would have thrown earlier
    return Status::OK;
-   }
-
-void
-J9ClientStream::writeError()
-   {
-   _cMsg.set_status(false);
-   _cMsg.mutable_data()->clear_data();
-   writeBlocking(_cMsg);
    }
 
 void

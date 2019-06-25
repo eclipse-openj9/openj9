@@ -326,6 +326,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       bool getCachedNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);
 
       void clearPerCompilationCaches();
+      void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo* compInfo, J9VMThread* compThread);
 
    private:
       /* Template method for allocating a cache of type T on the heap.

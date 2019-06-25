@@ -51,6 +51,9 @@ enum J9ServerMessageType
    mirrorResolvedJ9Method = 1;
    get_params_to_construct_TR_j9method = 2;
    getUnloadedClassRanges = 3;
+   compilationRequest = 4; // type used when client sends remote compilation requests
+   compilationAbort = 5; // type used when client informs the server to abort the remote compilation
+   clientTerminate = 6; // type used when client process is about to terminate
 
    // For TR_ResolvedJ9JITaaSServerMethod methods
    ResolvedMethod_isJNINative = 100;
@@ -300,8 +303,9 @@ message J9ServerMessage
 
 message J9ClientMessage
    {
-   bool status = 1;
+   J9ServerMessageType type = 1;
    AnyData data = 2;
+   uint64 version = 3;
    }
 
 service J9CompileService

@@ -569,11 +569,11 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
          intptrj_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
          TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
          // send the information to the server
-         client->write(buffer, true, usePersistentCache);
+         client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);
          }
       else if (!numEntries && !abort)// Empty IProfiler data for this method
          {
-         client->write(std::string(), true, usePersistentCache);
+         client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache);
          }
 
       // release any entry that has been locked by us

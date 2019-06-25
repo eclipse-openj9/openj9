@@ -48,7 +48,25 @@ private:
 class StreamCancel: public virtual std::exception
    {
 public:
-   virtual const char* what() const throw() { return "compilation canceled by client"; }
+   StreamCancel(J9ServerMessageType type, uint64_t clientId=0) : _type(type), _clientId(clientId) { }
+   virtual const char* what() const throw()
+      {
+      if (_type == J9ServerMessageType::clientTerminate)
+         return "Client session terminated at client's request";
+      else
+         return "Compilation cancelled by client";
+      }
+   J9ServerMessageType getType() const
+      {
+      return _type;
+      }
+   uint64_t getClientId() const
+      {
+      return _clientId;
+      }
+private:
+   J9ServerMessageType _type;
+   uint64_t _clientId;
    };
 
 class StreamOOO : public virtual std::exception
@@ -61,6 +79,37 @@ class StreamTypeMismatch: public virtual StreamFailure
    {
 public:
    StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Type mismatch: %s", message.c_str()); }
+   };
+
+class StreamMessageTypeMismatch: public virtual std::exception
+   {
+public:
+   StreamMessageTypeMismatch(J9ServerMessageType serverType, J9ServerMessageType clientType)
+      {
+      _message = "server expected mesasge type " + std::to_string(serverType) + " received " + std::to_string(clientType);
+      }
+   virtual const char* what() const throw() 
+      {
+      return _message.c_str();
+      }
+private:
+   std::string _message;
+   };
+
+class StreamVersionIncompatible: public virtual std::exception
+   {
+public:
+   StreamVersionIncompatible() : _message("server incompatible") { }
+   StreamVersionIncompatible(uint64_t serverVersion, uint64_t clientVersion)
+      {
+      _message = "server expected version " + std::to_string(serverVersion) + " received " + std::to_string(clientVersion);
+      }
+   virtual const char* what() const throw()
+      {
+      return _message.c_str();
+      }
+private:
+   std::string _message;
    };
 
 class StreamArityMismatch: public virtual StreamFailure

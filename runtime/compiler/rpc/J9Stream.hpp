@@ -25,9 +25,17 @@
 
 #include "rpc/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
+#include "env/CompilerEnv.hpp"
+#include "control/Options.hpp"
 
 namespace JITaaS
 {
+enum JITaaSCompatibilityFlags
+   {
+   JITaaSCompressedRef = 0x00000001,
+   };
+// list of features that client and server must match in order for remote compilations to work
+
 using namespace google::protobuf::io;
 
 class J9Stream
@@ -46,6 +54,19 @@ public:
       OpenSSL_add_ssl_algorithms();
       }
 #endif
+
+   static void initVersion()
+      {
+      if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
+         {
+         CONFIGURATION_FLAGS |= JITaaSCompressedRef;
+         }
+      }
+
+   static uint64_t getJITaaSVersion()
+      {
+      return ((uint64_t) CONFIGURATION_FLAGS << 32) | MAJOR_NUMBER << 24 | MINOR_NUMBER << 8;
+      }
 
 protected:
    J9Stream()
@@ -165,7 +186,13 @@ protected:
 #endif
    ZeroCopyInputStream *_inputStream;
    ZeroCopyOutputStream *_outputStream;
+
+   static const uint8_t MAJOR_NUMBER = 0;
+   static const uint16_t MINOR_NUMBER = 1;
+   static const uint8_t PATCH_NUMBER = 0;
+   static uint32_t CONFIGURATION_FLAGS;
    };
+
 };
 
 #endif
