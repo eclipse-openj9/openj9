@@ -486,6 +486,8 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 	if ((J9VM_DEBUG_ATTRIBUTE_RECORD_ALL == (vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_RECORD_ALL))
 			&& classCouldPossiblyBeShared(vmThread, loadData)) {
 		/* Shared Classes has requested that all debug information be kept and the class will be shared. */
+	} else if (0 != (vm->runtimeFlags & J9_RUNTIME_XFUTURE)) {
+		/* Don't strip debug information with Xfuture */
 	} else {
 		/* either the class is not going to be shared  -or- shared classes does not require the debug information to be maintained */
 		UDATA stripFlags = 0;
