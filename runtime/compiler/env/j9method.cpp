@@ -3935,6 +3935,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 
    static X CollectHandleMethods[] =
       {
+      {x(TR::java_lang_invoke_CollectHandle_allocateArray,                 "allocateArray",               "(Ljava/lang/invoke/CollectHandle;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToPassThrough,          "numArgsToPassThrough",        "()I")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I")},
       {x(TR::java_lang_invoke_CollectHandle_collectionStart,     	       "collectionStart",             "()I")},
@@ -7522,6 +7523,40 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
    switch (rm)
       {
+      case TR::java_lang_invoke_CollectHandle_allocateArray:
+         {
+         TR::Node* methodHandleNode = top();
+
+         if (methodHandleNode->getOpCode().hasSymbolReference() &&
+             methodHandleNode->getSymbolReference()->hasKnownObjectIndex())
+            {
+            pop();
+            TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+            uintptrj_t methodHandle = *knot->getPointerLocation(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
+            int32_t collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
+            loadConstant(TR::iconst, collectArraySize);
+
+            uintptrj_t arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
+               methodHandle,
+               "next",             "Ljava/lang/invoke/MethodHandle;"),
+               "type",             "Ljava/lang/invoke/MethodType;"),
+               "arguments",        "[Ljava/lang/Class;");
+            int32_t collectPosition = fej9->getInt32Field(methodHandle, "collectPosition");
+            TR_OpaqueClassBlock* componentClazz = fej9->getComponentClassFromArrayClass(fej9->getClassFromJavaLangClass(fej9->getReferenceElement(arguments, collectPosition)));
+            if (fej9->isPrimitiveClass(componentClazz))
+               {
+               TR_arrayTypeCode typeIndex = fej9->getPrimitiveArrayTypeCode(componentClazz);
+               genNewArray(typeIndex);
+               }
+            else
+               {
+               loadClassObject(componentClazz);
+               genANewArray();
+               }
+            return true;
+            }
+         return false;
+         }
       case TR::java_lang_invoke_CollectHandle_numArgsToPassThrough:
       case TR::java_lang_invoke_CollectHandle_numArgsToCollect:
       case TR::java_lang_invoke_CollectHandle_collectionStart:
