@@ -2714,6 +2714,11 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		}
 	}
 
+#if defined(J9AARCH64)
+	// temporary change until the JIT becomes available
+	xint = TRUE;
+#endif
+
 	if (xint) {
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "-Xint set\n");
 	}
