@@ -80,9 +80,10 @@ TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
    cursor += ARM64_INSTRUCTION_LENGTH;
 
    // b restartLabel
-   intptr_t distance = (intptr_t)(getReStartLabel()->getCodeLocation()) - (intptr_t)cursor;
-   if (constantIsSignedImm28(distance))
+   intptr_t destination = (intptr_t)getReStartLabel()->getCodeLocation();
+   if (!cg()->directCallRequiresTrampoline(destination, (intptr_t)cursor))
       {
+      intptr_t distance = destination - (intptr_t)cursor;
       *(int32_t *)cursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b) | ((distance >> 2) & 0x3ffffff); // imm26
       }
    else
