@@ -61,20 +61,20 @@ public:
       if (getVersionCheckStatus() == NOT_DONE)
          {
          _cMsg.set_version(getJITaaSVersion());
-         write(J9ServerMessageType::compilationRequest, args...);
+         write(MessageType::compilationRequest, args...);
          _cMsg.clear_version();
          }
       else // getVersionCheckStatus() == PASSED
          {
          _cMsg.clear_version(); // the compatibility check is done. We clear the version to save message size.
-         write(J9ServerMessageType::compilationRequest, args...);
+         write(MessageType::compilationRequest, args...);
          }
       }
 
    Status waitForFinish();
 
    template <typename ...T>
-   void write(J9ServerMessageType type, T... args)
+   void write(MessageType type, T... args)
       {
       _cMsg.set_type(type);
       setArgs<T...>(_cMsg.mutable_data(), args...);
@@ -82,7 +82,7 @@ public:
       writeBlocking(_cMsg);
       }
 
-   J9ServerMessageType read()
+   MessageType read()
       {
       readBlocking(_sMsg);
       return _sMsg.type();
@@ -97,10 +97,10 @@ public:
    void shutdown();
 
    template <typename ...T>
-   void writeError(J9ServerMessageType type, T... args)
+   void writeError(MessageType type, T... args)
       {
       _cMsg.set_type(type);
-      if (type == J9ServerMessageType::compilationAbort)
+      if (type == MessageType::compilationAbort)
          _cMsg.mutable_data()->clear_data();
       else
          setArgs<T...>(_cMsg.mutable_data(), args...);

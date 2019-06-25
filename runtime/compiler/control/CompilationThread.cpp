@@ -1389,7 +1389,7 @@ TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
             return getMethodBytecodeSize(it->second._romMethod);
             }
          }
-      stream->write(JITaaS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
+      stream->write(JITaaS::MessageType::CompInfo_getMethodBytecodeSize, method);
       return std::get<0>(stream->read<uint32_t>());
       }
    return getMethodBytecodeSize(J9_ROM_METHOD_FROM_RAM_METHOD(method));
@@ -1415,7 +1415,7 @@ TR::CompilationInfo::isJSR292(J9Method *j9method) // Check to see if the J9AccMe
             return isJSR292(it->second._romMethod);
             }
          }
-      stream->write(JITaaS::J9ServerMessageType::CompInfo_isJSR292, j9method);
+      stream->write(JITaaS::MessageType::CompInfo_isJSR292, j9method);
       return std::get<0>(stream->read<bool>());
       }
    return isJSR292(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
@@ -3414,7 +3414,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       try
          {
          JITaaS::J9ClientStream client(getPersistentInfo());
-         client.writeError(JITaaS::J9ServerMessageType::clientTerminate, getPersistentInfo()->getJITaaSId());
+         client.writeError(JITaaS::MessageType::clientTerminate, getPersistentInfo()->getJITaaSId());
          }
       catch (const JITaaS::StreamFailure &e)
          {

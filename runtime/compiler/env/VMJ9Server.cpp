@@ -37,7 +37,7 @@ void
 TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getResolvedMethodsAndMirror, classPointer);
+   stream->write(JITaaS::MessageType::VM_getResolvedMethodsAndMirror, classPointer);
    auto recv = stream->read<J9Method *, std::vector<TR_ResolvedJ9JITaaSServerMethodInfo>>();
    auto methodsInClass = std::get<0>(recv);
    auto &methodsInfo = std::get<1>(recv);
@@ -57,7 +57,7 @@ bool
 TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isClassLibraryMethod, method, vettedForAOT);
+   stream->write(JITaaS::MessageType::VM_isClassLibraryMethod, method, vettedForAOT);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -65,7 +65,7 @@ bool
 TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isClassLibraryClass, clazz);
+   stream->write(JITaaS::MessageType::VM_isClassLibraryClass, clazz);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -148,7 +148,7 @@ bool
 TR_J9ServerVM::isInterfaceClass(TR_OpaqueClassBlock *clazzPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isInterfaceClass, clazzPointer);
+   stream->write(JITaaS::MessageType::VM_isInterfaceClass, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -156,7 +156,7 @@ bool
 TR_J9ServerVM::isClassFinal(TR_OpaqueClassBlock *clazzPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isClassFinal, clazzPointer);
+   stream->write(JITaaS::MessageType::VM_isClassFinal, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -164,7 +164,7 @@ bool
 TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isAbstractClass, clazzPointer);
+   stream->write(JITaaS::MessageType::VM_isAbstractClass, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
 */
@@ -184,7 +184,7 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    }
    // classname not found; ask the client and cache the answer
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getSystemClassFromClassName, className, isVettedForAOT);
+   stream->write(JITaaS::MessageType::VM_getSystemClassFromClassName, className, isVettedForAOT);
    TR_OpaqueClassBlock * clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    if (clazz)
       {
@@ -213,7 +213,7 @@ TR_J9ServerVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
       }
 
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isMethodTracingEnabled, method);
+   stream->write(JITaaS::MessageType::VM_isMethodTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -241,7 +241,7 @@ TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
       {
       // If value is not cached, fetch it from client and cache it
       JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-      stream->write(JITaaS::J9ServerMessageType::VM_getClassClassPointer, objectClassPointer);
+      stream->write(JITaaS::MessageType::VM_getClassClassPointer, objectClassPointer);
       javaLangClass = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
       _compInfoPT->getClientData()->setJavaLangClassPtr(javaLangClass); // cache value for later
       }
@@ -320,7 +320,7 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueM
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    std::string str(sig, length);
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromSignature, str, method, isVettedForAOT);
+   stream->write(JITaaS::MessageType::VM_getClassFromSignature, str, method, isVettedForAOT);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
@@ -374,7 +374,7 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
             }
          if (needRemoteCall)
             {
-            stream->write(JITaaS::J9ServerMessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
+            stream->write(JITaaS::MessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
             auto recv = stream->read<J9Class *, J9Class *, UDATA, UDATA>();
             declaringClass1 = std::get<0>(recv);
             declaringClass2 = std::get<1>(recv);
@@ -451,7 +451,7 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
       if (sigSame)
          {
          // if name and signature comparison is inconclusive, make a remote call 
-         stream->write(JITaaS::J9ServerMessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
+         stream->write(JITaaS::MessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
          result = std::get<0>(stream->read<bool>());
          }
       }
@@ -495,7 +495,7 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
       else
          {
          //Flag not set, check with client as cache data may be outdated
-         stream->write(JITaaS::J9ServerMessageType::VM_classHasBeenExtended, clazz);
+         stream->write(JITaaS::MessageType::VM_classHasBeenExtended, clazz);
          return std::get<0>(stream->read<bool>());
          }
       }
@@ -511,7 +511,7 @@ TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto mirror = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method)->getRemoteMirror();
-   stream->write(JITaaS::J9ServerMessageType::VM_compiledAsDLTBefore, static_cast<TR_ResolvedMethod *>(mirror));
+   stream->write(JITaaS::MessageType::VM_compiledAsDLTBefore, static_cast<TR_ResolvedMethod *>(mirror));
    return std::get<0>(stream->read<bool>());
 #else
    return 0;
@@ -524,7 +524,7 @@ char *
 TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & length)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassNameChars, ramClass);
+   stream->write(JITaaS::MessageType::VM_getClassNameChars, ramClass);
    const std::string className = std::get<0>(stream->read<std::string>());
    char * classNameChars = (char*) _compInfoPT->getCompilation()->trMemory()->allocateMemory(className.length(), heapAlloc);
    memcpy(classNameChars, &className[0], className.length());
@@ -545,7 +545,7 @@ bool
 TR_J9ServerVM::isThunkArchetype(J9Method * method)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isThunkArchetype, method);
+   stream->write(JITaaS::MessageType::VM_isThunkArchetype, method);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -561,7 +561,7 @@ int32_t
 TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_printTruncatedSignature, method);
+   stream->write(JITaaS::MessageType::VM_printTruncatedSignature, method);
    auto recv = stream->read<std::string, std::string, std::string>();
    const std::string classNameStr = std::get<0>(recv);
    const std::string nameStr = std::get<1>(recv);
@@ -577,7 +577,7 @@ bool
 TR_J9ServerVM::isPrimitiveClass(TR_OpaqueClassBlock * clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isPrimitiveClass, clazz);
+   stream->write(JITaaS::MessageType::VM_isPrimitiveClass, clazz);
    return std::get<0>(stream->read<bool>());
    }
 */
@@ -591,7 +591,7 @@ TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
    if (!isClassInitialized)
       {
       JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-      stream->write(JITaaS::J9ServerMessageType::VM_isClassInitialized, clazz);
+      stream->write(JITaaS::MessageType::VM_isClassInitialized, clazz);
       isClassInitialized = std::get<0>(stream->read<bool>());
       if (isClassInitialized)
          {
@@ -619,7 +619,7 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
          }
       }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getOSRFrameSizeInBytes, method);
+   stream->write(JITaaS::MessageType::VM_getOSRFrameSizeInBytes, method);
    return std::get<0>(stream->read<UDATA>());
    }
 
@@ -640,7 +640,7 @@ bool
 TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isString1, clazz);
+   stream->write(JITaaS::MessageType::VM_isString1, clazz);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -664,7 +664,7 @@ TR_J9ServerVM::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * cl
 TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getNumMethods, clazz);
+   stream->write(JITaaS::MessageType::VM_getNumMethods, clazz);
    return std::get<0>(stream->read<uint32_t>());
    }
 
@@ -672,7 +672,7 @@ uint32_t
 TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getNumInnerClasses, clazz);
+   stream->write(JITaaS::MessageType::VM_getNumInnerClasses, clazz);
    return std::get<0>(stream->read<uint32_t>());
    }*/
 bool
@@ -706,7 +706,7 @@ TR_OpaqueClassBlock *
 TR_J9ServerVM::getObjectClass(uintptrj_t objectPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getObjectClass, objectPointer);
+   stream->write(JITaaS::MessageType::VM_getObjectClass, objectPointer);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
@@ -714,7 +714,7 @@ uintptrj_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getStaticReferenceFieldAtAddress, fieldAddress);
+   stream->write(JITaaS::MessageType::VM_getStaticReferenceFieldAtAddress, fieldAddress);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -722,7 +722,7 @@ bool
 TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_stackWalkerMaySkipFrames, method, clazz);
+   stream->write(JITaaS::MessageType::VM_stackWalkerMaySkipFrames, method, clazz);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -744,7 +744,7 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
    // so we just get it out of the compilation.
    TR_Memory *trMemory = _compInfoPT->getCompilation()->trMemory();
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassNameSignatureFromMethod, (J9Method*) aMethod);
+   stream->write(JITaaS::MessageType::VM_getClassNameSignatureFromMethod, (J9Method*) aMethod);
    auto recv = stream->read<std::string, std::string, std::string>();
    const std::string str_className = std::get<0>(recv);
    const std::string str_name = std::get<1>(recv);
@@ -774,7 +774,7 @@ intptrj_t
 TR_J9ServerVM::getStringUTF8Length(uintptrj_t objectPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getStringUTF8Length, objectPointer);
+   stream->write(JITaaS::MessageType::VM_getStringUTF8Length, objectPointer);
    return std::get<0>(stream->read<intptrj_t>());
    }
 /*
@@ -789,7 +789,7 @@ bool
 TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_classInitIsFinished, clazz);
+   stream->write(JITaaS::MessageType::VM_classInitIsFinished, clazz);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -797,7 +797,7 @@ int32_t
 TR_J9ServerVM::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getNewArrayTypeFromClass, clazz);
+   stream->write(JITaaS::MessageType::VM_getNewArrayTypeFromClass, clazz);
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -805,7 +805,7 @@ TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromNewArrayType(int32_t arrayType)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromNewArrayType, arrayType);
+   stream->write(JITaaS::MessageType::VM_getClassFromNewArrayType, arrayType);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
@@ -829,7 +829,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
   if (!isClassInitialized)
      {
      JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-     stream->write(JITaaS::J9ServerMessageType::VM_isClassInitialized, clazz);
+     stream->write(JITaaS::MessageType::VM_isClassInitialized, clazz);
      isClassInitialized = std::get<0>(stream->read<bool>());
      if (isClassInitialized)
         {
@@ -856,7 +856,7 @@ TR_J9ServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentCla
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)componentClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ARRAY_CLASS, (void *)&arrayClass);
    if (!arrayClass)
       {
-      stream->write(JITaaS::J9ServerMessageType::VM_getArrayClassFromComponentClass, componentClass);
+      stream->write(JITaaS::MessageType::VM_getArrayClassFromComponentClass, componentClass);
       arrayClass = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
       if (arrayClass)
          {
@@ -876,7 +876,7 @@ J9Class *
 TR_J9ServerVM::matchRAMclassFromROMclass(J9ROMClass *clazz, TR::Compilation *comp)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_matchRAMclassFromROMclass, clazz);
+   stream->write(JITaaS::MessageType::VM_matchRAMclassFromROMclass, clazz);
    return std::get<0>(stream->read<J9Class *>());
    }
 
@@ -898,7 +898,7 @@ uintptrj_t
 TR_J9ServerVM::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getReferenceFieldAtAddress, fieldAddress);
+   stream->write(JITaaS::MessageType::VM_getReferenceFieldAtAddress, fieldAddress);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -906,7 +906,7 @@ uintptrj_t
 TR_J9ServerVM::getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getVolatileReferenceFieldAt, objectPointer, fieldOffset);
+   stream->write(JITaaS::MessageType::VM_getVolatileReferenceFieldAt, objectPointer, fieldOffset);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -914,7 +914,7 @@ int32_t
 TR_J9ServerVM::getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getInt32FieldAt, objectPointer, fieldOffset);
+   stream->write(JITaaS::MessageType::VM_getInt32FieldAt, objectPointer, fieldOffset);
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -922,7 +922,7 @@ int64_t
 TR_J9ServerVM::getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getInt64FieldAt, objectPointer, fieldOffset);
+   stream->write(JITaaS::MessageType::VM_getInt64FieldAt, objectPointer, fieldOffset);
    return std::get<0>(stream->read<int64_t>());
    }
 
@@ -930,7 +930,7 @@ void
 TR_J9ServerVM::setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t newValue)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_setInt64FieldAt, objectPointer, fieldOffset, newValue);
+   stream->write(JITaaS::MessageType::VM_setInt64FieldAt, objectPointer, fieldOffset, newValue);
    stream->read<JITaaS::Void>();
    }
 
@@ -938,7 +938,7 @@ bool
 TR_J9ServerVM::compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_compareAndSwapInt64FieldAt, objectPointer, fieldOffset, oldValue, newValue);
+   stream->write(JITaaS::MessageType::VM_compareAndSwapInt64FieldAt, objectPointer, fieldOffset, oldValue, newValue);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -946,7 +946,7 @@ intptrj_t
 TR_J9ServerVM::getArrayLengthInElements(uintptrj_t objectPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getArrayLengthInElements, objectPointer);
+   stream->write(JITaaS::MessageType::VM_getArrayLengthInElements, objectPointer);
    return std::get<0>(stream->read<intptrj_t>());
    }
 
@@ -954,7 +954,7 @@ TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromJavaLangClass(uintptrj_t objectPointer)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromJavaLangClass, objectPointer);
+   stream->write(JITaaS::MessageType::VM_getClassFromJavaLangClass, objectPointer);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
@@ -962,7 +962,7 @@ UDATA
 TR_J9ServerVM::getOffsetOfClassFromJavaLangClassField()
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getOffsetOfClassFromJavaLangClassField, JITaaS::Void());
+   stream->write(JITaaS::MessageType::VM_getOffsetOfClassFromJavaLangClassField, JITaaS::Void());
    return std::get<0>(stream->read<UDATA>());
    }
 
@@ -970,7 +970,7 @@ uintptrj_t
 TR_J9ServerVM::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getConstantPoolFromMethod, method);
+   stream->write(JITaaS::MessageType::VM_getConstantPoolFromMethod, method);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -978,7 +978,7 @@ uintptrj_t
 TR_J9ServerVM::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getConstantPoolFromClass, clazz);
+   stream->write(JITaaS::MessageType::VM_getConstantPoolFromClass, clazz);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -994,7 +994,7 @@ UDATA
 TR_J9ServerVM::getIdentityHashSaltPolicy()
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getIdentityHashSaltPolicy, JITaaS::Void());
+   stream->write(JITaaS::MessageType::VM_getIdentityHashSaltPolicy, JITaaS::Void());
    return std::get<0>(stream->read<UDATA>());
    }
 
@@ -1002,7 +1002,7 @@ UDATA
 TR_J9ServerVM::getOffsetOfJLThreadJ9Thread()
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getOffsetOfJLThreadJ9Thread, JITaaS::Void());
+   stream->write(JITaaS::MessageType::VM_getOffsetOfJLThreadJ9Thread, JITaaS::Void());
    return std::get<0>(stream->read<UDATA>());
    }
 
@@ -1010,7 +1010,7 @@ bool
 TR_J9ServerVM::scanReferenceSlotsInClassForOffset(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, int32_t offset)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_scanReferenceSlotsInClassForOffset, clazz, offset);
+   stream->write(JITaaS::MessageType::VM_scanReferenceSlotsInClassForOffset, clazz, offset);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -1018,7 +1018,7 @@ int32_t
 TR_J9ServerVM::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_findFirstHotFieldTenuredClassOffset, clazz);
+   stream->write(JITaaS::MessageType::VM_findFirstHotFieldTenuredClassOffset, clazz);
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -1026,7 +1026,7 @@ TR_OpaqueMethodBlock *
 TR_J9ServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve);
+   stream->write(JITaaS::MessageType::VM_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve);
    return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
    }
 
@@ -1101,7 +1101,7 @@ uint32_t
 TR_J9ServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock *clazz, char *fieldName, uint32_t fieldLen, char *sig, uint32_t sigLen, UDATA options)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getInstanceFieldOffset, clazz, std::string(fieldName, fieldLen), std::string(sig, sigLen), options);
+   stream->write(JITaaS::MessageType::VM_getInstanceFieldOffset, clazz, std::string(fieldName, fieldLen), std::string(sig, sigLen), options);
    return std::get<0>(stream->read<uint32_t>());
    }
 
@@ -1109,7 +1109,7 @@ int32_t
 TR_J9ServerVM::getJavaLangClassHashCode(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, bool &hashCodeComputed)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getJavaLangClassHashCode, clazz);
+   stream->write(JITaaS::MessageType::VM_getJavaLangClassHashCode, clazz);
    auto recv = stream->read<int32_t, bool>();
    hashCodeComputed = std::get<1>(recv);
    return std::get<0>(recv);
@@ -1129,7 +1129,7 @@ uintptrj_t
 TR_J9ServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassDepthAndFlagsValue, clazz);
+   stream->write(JITaaS::MessageType::VM_getClassDepthAndFlagsValue, clazz);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -1137,7 +1137,7 @@ uintptrj_t
 TR_J9ServerVM::getClassFlagsValue(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::ClassEnv_classFlagsValue, clazz);
+   stream->write(JITaaS::MessageType::ClassEnv_classFlagsValue, clazz);
    return std::get<0>(stream->read<uintptrj_t>());
    }
 
@@ -1145,7 +1145,7 @@ TR_OpaqueMethodBlock *
 TR_J9ServerVM::getMethodFromName(char *className, char *methodName, char *signature)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getMethodFromName, std::string(className, strlen(className)),
+   stream->write(JITaaS::MessageType::VM_getMethodFromName, std::string(className, strlen(className)),
          std::string(methodName, strlen(methodName)), std::string(signature, strlen(signature)));
    return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
    }
@@ -1154,7 +1154,7 @@ TR_OpaqueMethodBlock *
 TR_J9ServerVM::getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getMethodFromClass, methodClass, std::string(methodName, strlen(methodName)),
+   stream->write(JITaaS::MessageType::VM_getMethodFromClass, methodClass, std::string(methodName, strlen(methodName)),
          std::string(signature, strlen(signature)), callingClass);
    return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
    }
@@ -1163,7 +1163,7 @@ bool
 TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isClassVisible, sourceClass, destClass);
+   stream->write(JITaaS::MessageType::VM_isClassVisible, sourceClass, destClass);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -1173,7 +1173,7 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
    TR_J9VMBase::setJ2IThunk(signatureChars, signatureLength, thunkptr, comp);
    std::string signature(signatureChars, signatureLength);
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_setJ2IThunk, thunkptr, signature);
+   stream->write(JITaaS::MessageType::VM_setJ2IThunk, thunkptr, signature);
    stream->read<JITaaS::Void>();
    return thunkptr;
    }
@@ -1182,7 +1182,7 @@ void
 TR_J9ServerVM::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+   stream->write(JITaaS::MessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
    stream->read<JITaaS::Void>();
    }
 
@@ -1190,7 +1190,7 @@ int32_t *
 TR_J9ServerVM::getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getReferenceSlotsInClass, clazz);
+   stream->write(JITaaS::MessageType::VM_getReferenceSlotsInClass, clazz);
    std::string slotsStr = std::get<0>(stream->read<std::string>());
    if (slotsStr == "")
       return NULL;
@@ -1205,7 +1205,7 @@ uint32_t
 TR_J9ServerVM::getMethodSize(TR_OpaqueMethodBlock *method)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getMethodSize, method);
+   stream->write(JITaaS::MessageType::VM_getMethodSize, method);
    return std::get<0>(stream->read<uint32_t>());
    }
 
@@ -1213,7 +1213,7 @@ void *
 TR_J9ServerVM::addressOfFirstClassStatic(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_addressOfFirstClassStatic, clazz);
+   stream->write(JITaaS::MessageType::VM_addressOfFirstClassStatic, clazz);
    return std::get<0>(stream->read<void *>());
    }
 
@@ -1221,7 +1221,7 @@ void *
 TR_J9ServerVM::getStaticFieldAddress(TR_OpaqueClassBlock *clazz, unsigned char *fieldName, uint32_t fieldLen, unsigned char *sig, uint32_t sigLen)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getStaticFieldAddress, clazz, std::string(reinterpret_cast<char*>(fieldName), fieldLen), std::string(reinterpret_cast<char*>(sig), sigLen));
+   stream->write(JITaaS::MessageType::VM_getStaticFieldAddress, clazz, std::string(reinterpret_cast<char*>(fieldName), fieldLen), std::string(reinterpret_cast<char*>(sig), sigLen));
    return std::get<0>(stream->read<void *>());
    }
 
@@ -1229,7 +1229,7 @@ int32_t
 TR_J9ServerVM::getInterpreterVTableSlot(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getInterpreterVTableSlot, method, clazz);
+   stream->write(JITaaS::MessageType::VM_getInterpreterVTableSlot, method, clazz);
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -1237,7 +1237,7 @@ void
 TR_J9ServerVM::revertToInterpreted(TR_OpaqueMethodBlock *method)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_revertToInterpreted, method);
+   stream->write(JITaaS::MessageType::VM_revertToInterpreted, method);
    stream->read<JITaaS::Void>();
    }
 
@@ -1245,7 +1245,7 @@ void *
 TR_J9ServerVM::getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *clazz)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getLocationOfClassLoaderObjectPointer, clazz);
+   stream->write(JITaaS::MessageType::VM_getLocationOfClassLoaderObjectPointer, clazz);
    return std::get<0>(stream->read<void *>());
    }
 
@@ -1272,7 +1272,7 @@ TR_J9ServerVM::getClassFromMethodBlock(TR_OpaqueMethodBlock *method)
       }
 
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromMethodBlock, method);
+   stream->write(JITaaS::MessageType::VM_getClassFromMethodBlock, method);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
@@ -1280,7 +1280,7 @@ U_8 *
 TR_J9ServerVM::fetchMethodExtendedFlagsPointer(J9Method *method)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_fetchMethodExtendedFlagsPointer, method);
+   stream->write(JITaaS::MessageType::VM_fetchMethodExtendedFlagsPointer, method);
    return std::get<0>(stream->read<U_8 *>());
    }
 
@@ -1288,7 +1288,7 @@ void *
 TR_J9ServerVM::getStaticHookAddress(int32_t event)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getStaticHookAddress, event);
+   stream->write(JITaaS::MessageType::VM_getStaticHookAddress, event);
    return std::get<0>(stream->read<void *>());
    }
 
@@ -1296,7 +1296,7 @@ bool
 TR_J9ServerVM::stringEquals(TR::Compilation *comp, uintptrj_t* stringLocation1, uintptrj_t*stringLocation2, int32_t& result)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_stringEquals, stringLocation1, stringLocation2);
+   stream->write(JITaaS::MessageType::VM_stringEquals, stringLocation1, stringLocation2);
    auto recv = stream->read<int32_t, bool>();
    result = std::get<0>(recv);
    return std::get<1>(recv);
@@ -1306,7 +1306,7 @@ bool
 TR_J9ServerVM::getStringHashCode(TR::Compilation *comp, uintptrj_t* stringLocation, int32_t& result)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getStringHashCode, stringLocation);
+   stream->write(JITaaS::MessageType::VM_getStringHashCode, stringLocation);
    auto recv = stream->read<int32_t, bool>();
    result = std::get<0>(recv);
    return std::get<1>(recv);
@@ -1316,7 +1316,7 @@ int32_t
 TR_J9ServerVM::getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getLineNumberForMethodAndByteCodeIndex, method, bcIndex);
+   stream->write(JITaaS::MessageType::VM_getLineNumberForMethodAndByteCodeIndex, method, bcIndex);
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -1324,7 +1324,7 @@ TR_OpaqueMethodBlock *
 TR_J9ServerVM::getObjectNewInstanceImplMethod()
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getObjectNewInstanceImplMethod, JITaaS::Void());
+   stream->write(JITaaS::MessageType::VM_getObjectNewInstanceImplMethod, JITaaS::Void());
    return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
    }
 
@@ -1332,7 +1332,7 @@ uintptrj_t
 TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getBytecodePC, method);
+   stream->write(JITaaS::MessageType::VM_getBytecodePC, method);
    uintptrj_t methodStart = std::get<0>(stream->read<uintptrj_t>());
    return methodStart + (uintptrj_t)(bcInfo.getByteCodeIndex());
    }
@@ -1352,7 +1352,7 @@ TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    {
    TR_J9VMBase::setInvokeExactJ2IThunk(thunkptr, comp);
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_setInvokeExactJ2IThunk, thunkptr);
+   stream->write(JITaaS::MessageType::VM_setInvokeExactJ2IThunk, thunkptr);
    stream->read<JITaaS::Void>();
    }
 
@@ -1378,7 +1378,7 @@ TR_ResolvedMethod *
 TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_createMethodHandleArchetypeSpecimen, methodHandleLocation);
+   stream->write(JITaaS::MessageType::VM_createMethodHandleArchetypeSpecimen, methodHandleLocation);
    auto recv = stream->read<TR_OpaqueMethodBlock*, std::string>();
    TR_OpaqueMethodBlock *archetype = std::get<0>(recv);
    std::string thunkableSignature = std::get<1>(recv);
@@ -1395,7 +1395,7 @@ bool
 TR_J9ServerVM::getArrayLengthOfStaticAddress(void *ptr, int32_t &length)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getArrayLengthOfStaticAddress, ptr);
+   stream->write(JITaaS::MessageType::VM_getArrayLengthOfStaticAddress, ptr);
    auto recv = stream->read<bool, int32_t>();
    length = std::get<1>(recv);
    return std::get<0>(recv);
@@ -1405,7 +1405,7 @@ intptrj_t
 TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getVFTEntry, clazz, offset);
+   stream->write(JITaaS::MessageType::VM_getVFTEntry, clazz, offset);
    return std::get<0>(stream->read<intptrj_t>());
    }
 
@@ -1422,7 +1422,7 @@ TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *klass)
       // otherwise, do it remote
       TR_ASSERT(_compInfoPT, "must have either compInfoPT or Compiler");
       JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-      stream->write(JITaaS::J9ServerMessageType::VM_isClassArray, klass);
+      stream->write(JITaaS::MessageType::VM_isClassArray, klass);
       return std::get<0>(stream->read<bool>());
       }
    }
@@ -1474,7 +1474,7 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
             // getComponentFromArrayClass multiple times, or getLeafComponentTypeFromArrayClass.
             // each call requires a remote message, faster and easier to call instanceOfOrCheckCast on the client
             JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-            stream->write(JITaaS::J9ServerMessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+            stream->write(JITaaS::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
             return std::get<0>(stream->read<bool>());
             }
          // instance class is cached, and all of the checks failed, cast is invalid
@@ -1484,7 +1484,7 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
 
    // instance class is not cached, make a remote call
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+   stream->write(JITaaS::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -1492,7 +1492,7 @@ bool
 TR_J9ServerVM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_transformJlrMethodInvoke, callerMethod, callerClass);
+   stream->write(JITaaS::MessageType::VM_transformJlrMethodInvoke, callerMethod, callerClass);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -1539,7 +1539,7 @@ TR_J9ServerVM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType a
 
    // value at the static address is not cached, ask the client
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_dereferenceStaticAddress, staticAddress, addressType);
+   stream->write(JITaaS::MessageType::VM_dereferenceStaticAddress, staticAddress, addressType);
    auto data =  std::get<0>(stream->read<TR_StaticFinalData>());
    // cache the result
    OMR::CriticalSection dereferenceStaticFinalAddress(_compInfoPT->getClientData()->getStaticMapMonitor());
@@ -1561,7 +1561,7 @@ TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
       }
 
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromCP, cp);
+   stream->write(JITaaS::MessageType::VM_getClassFromCP, cp);
    TR_OpaqueClassBlock * clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    if (clazz)
       {
@@ -1613,7 +1613,7 @@ J9ROMMethod *
 TR_J9ServerVM::getROMMethodFromRAMMethod(J9Method *ramMethod)
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getROMMethodFromRAMMethod, ramMethod);
+   stream->write(JITaaS::MessageType::VM_getROMMethodFromRAMMethod, ramMethod);
    return std::get<0>(stream->read<J9ROMMethod *>());
    }
 

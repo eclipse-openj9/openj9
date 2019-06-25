@@ -54,7 +54,7 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
    if (!romMethod)
       {
       auto stream = TR::CompilationInfo::getStream();
-      stream->write(JITaaS::J9ServerMessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
+      stream->write(JITaaS::MessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
       J9Class *clazz = (J9Class*) std::get<0>(stream->read<TR_OpaqueClassBlock *>());
       TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
          {

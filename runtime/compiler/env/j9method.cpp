@@ -705,7 +705,7 @@ TR_J9MethodBase::isBigDecimalMethod(J9Method * j9Method)
    */
    if (auto stream = TR::compInfoPT->getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isBigDecimalMethod, j9Method);
+      stream->write(JITaaS::MessageType::ResolvedMethod_isBigDecimalMethod, j9Method);
       return std::get<0>(stream->read<bool>());
       }
    return isBigDecimalMethod(J9_ROM_METHOD_FROM_RAM_METHOD(j9Method), J9_CLASS_FROM_METHOD(j9Method)->romClass);
@@ -765,7 +765,7 @@ TR_J9MethodBase::isBigDecimalConvertersMethod(J9Method * j9Method)
    {
    if (auto stream = TR::compInfoPT->getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isBigDecimalConvertersMethod, j9Method);
+      stream->write(JITaaS::MessageType::ResolvedMethod_isBigDecimalConvertersMethod, j9Method);
       return std::get<0>(stream->read<bool>());
       }
    return isBigDecimalConvertersMethod(J9_ROM_METHOD_FROM_RAM_METHOD(j9Method), J9_CLASS_FROM_METHOD(j9Method)->romClass);
@@ -2303,7 +2303,7 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClaz
 
    TR_J9ServerVM *fej9 = (TR_J9ServerVM *)fe;
    JITaaS::J9ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
+   stream->write(JITaaS::MessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
    const auto recv = stream->read<std::string, std::string, std::string>();
    const std::string str_className = std::get<0>(recv);
    const std::string str_name = std::get<1>(recv);
@@ -7515,7 +7515,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeCollectHandleNumArgsToCollect,
+            stream->write(JITaaS::MessageType::runFEMacro_invokeCollectHandleNumArgsToCollect,
                           thunkDetails->getHandleRef(), getCollectPosition);
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             collectArraySize = std::get<0>(recv);
@@ -7572,7 +7572,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeExplicitCastHandleConvertArgs, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeExplicitCastHandleConvertArgs, thunkDetails->getHandleRef());
             auto recv = stream->read<std::string>();
             std::string methodDescriptorString = std::get<0>(recv);
             methodDescriptorLength = methodDescriptorString.length();
@@ -7671,7 +7671,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
                if (auto stream = TR::CompilationInfo::getStream())
                   {
-                  stream->write(JITaaS::J9ServerMessageType::runFEMacro_targetTypeL, thunkDetails->getHandleRef(), argIndex);
+                  stream->write(JITaaS::MessageType::runFEMacro_targetTypeL, thunkDetails->getHandleRef(), argIndex);
                   auto recv = stream->read<TR_OpaqueClassBlock*>();
                   parmClass = std::get<0>(recv);
                   }
@@ -7746,10 +7746,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
             receiverHandle = std::get<0>(stream->read<uintptrj_t>());
             methodHandle = returnFromArchetype ? receiverHandle : walkReferenceChain(methodHandleExpression, receiverHandle);
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, methodHandle);
+            stream->write(JITaaS::MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, methodHandle);
             auto recv = stream->read<std::string>();
             std::string methodDescriptorString = std::get<0>(recv);
             methodDescriptorLength = methodDescriptorString.length();
@@ -7854,7 +7854,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs, thunkDetails->getHandleRef());
             std::string methodDescString = std::get<0>(stream->read<std::string>());
             methodDescriptorLength = methodDescString.size();
             nextHandleSignature = (char*)alloca(methodDescriptorLength+1);
@@ -7895,7 +7895,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokePermuteHandlePermuteArgs, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokePermuteHandlePermuteArgs, thunkDetails->getHandleRef());
 
             // Do the client-side operations
             auto recv = stream->read<int32_t, std::vector<int32_t>>();
@@ -8042,7 +8042,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs, thunkDetails->getHandleRef());
             numGuardArgs = std::get<0>(stream->read<int32_t>());
             }
          else
@@ -8075,7 +8075,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeInsertHandle, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeInsertHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             insertionIndex = std::get<0>(recv);
             numArguments = std::get<1>(recv);
@@ -8128,7 +8128,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeDirectHandleDirectCall, thunkDetails->getHandleRef(), isInterface, isVirtual);
+            stream->write(JITaaS::MessageType::runFEMacro_invokeDirectHandleDirectCall, thunkDetails->getHandleRef(), isInterface, isVirtual);
             auto recv = stream->read<TR_OpaqueMethodBlock*, int64_t>();
             j9method = std::get<0>(recv);
             vmSlot = std::get<1>(recv);
@@ -8281,7 +8281,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeSpreadHandleArrayArg, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeSpreadHandleArrayArg, thunkDetails->getHandleRef());
             auto recv = stream->read<J9ArrayClass *, int32_t, UDATA, J9Class *, std::string, bool>();
             arrayJ9Class = std::get<0>(recv);
             spreadPosition = std::get<1>(recv);
@@ -8383,7 +8383,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray;
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeSpreadHandle, thunkDetails->getHandleRef(), getSpreadPos);
+            stream->write(JITaaS::MessageType::runFEMacro_invokeSpreadHandle, thunkDetails->getHandleRef(), getSpreadPos);
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             numArguments = std::get<0>(recv);
             numNextArguments = std::get<1>(recv);
@@ -8435,7 +8435,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<std::vector<int32_t>, int32_t, int32_t>();
 
             std::vector<int32_t> indices = std::get<0>(recv);
@@ -8535,7 +8535,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeFoldHandle2, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeFoldHandle2, thunkDetails->getHandleRef());
             foldPosition = std::get<0>(stream->read<int32_t>());
             }
          else
@@ -8614,7 +8614,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeFinallyHandle, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeFinallyHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, std::string>();
             numArgsPassToFinallyTarget = std::get<0>(recv);
             std::string methodDescriptorString = std::get<1>(recv);
@@ -8690,7 +8690,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle2, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeFilterArgumentsHandle2, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             numArguments = std::get<0>(recv);
             startPos = std::get<1>(recv);
@@ -8746,7 +8746,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, std::string, std::vector<uintptrj_t>>();
             startPos = std::get<0>(recv);
             std::string nextSigStr = std::get<1>(recv);
@@ -8887,7 +8887,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeCatchHandle, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_invokeCatchHandle, thunkDetails->getHandleRef());
             numCatchArguments = std::get<0>(stream->read<int32_t>());
             }
          else
@@ -8915,11 +8915,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
             uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
             uintptrj_t methodHandle     = walkReferenceChain(pop(), receiverHandle);
 
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeILGenMacros, methodHandle);
+            stream->write(JITaaS::MessageType::runFEMacro_invokeILGenMacros, methodHandle);
             parameterCount = std::get<0>(stream->read<int32_t>());
             }
          else
@@ -8947,7 +8947,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
             uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
             uintptrj_t array            = walkReferenceChain(pop(), receiverHandle);
             arrayLength = (int32_t)fej9->getArrayLengthInElements(array);
@@ -8981,7 +8981,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JITaaS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            stream->write(JITaaS::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
             uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
             uintptrj_t baseObject       = walkReferenceChain(baseObjectNode, receiverHandle);
             TR_ASSERT(fieldSym->getDataType() == TR::Int32, "ILGenMacros.getField expecting int field; found load of %s", comp()->getDebug()->getName(symRef));

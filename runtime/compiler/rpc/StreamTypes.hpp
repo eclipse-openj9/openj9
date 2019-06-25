@@ -48,15 +48,15 @@ private:
 class StreamCancel: public virtual std::exception
    {
 public:
-   StreamCancel(J9ServerMessageType type, uint64_t clientId=0) : _type(type), _clientId(clientId) { }
+   StreamCancel(MessageType type, uint64_t clientId=0) : _type(type), _clientId(clientId) { }
    virtual const char* what() const throw()
       {
-      if (_type == J9ServerMessageType::clientTerminate)
+      if (_type == MessageType::clientTerminate)
          return "Client session terminated at client's request";
       else
          return "Compilation cancelled by client";
       }
-   J9ServerMessageType getType() const
+   MessageType getType() const
       {
       return _type;
       }
@@ -65,7 +65,7 @@ public:
       return _clientId;
       }
 private:
-   J9ServerMessageType _type;
+   MessageType _type;
    uint64_t _clientId;
    };
 
@@ -84,7 +84,7 @@ public:
 class StreamMessageTypeMismatch: public virtual std::exception
    {
 public:
-   StreamMessageTypeMismatch(J9ServerMessageType serverType, J9ServerMessageType clientType)
+   StreamMessageTypeMismatch(MessageType serverType, MessageType clientType)
       {
       _message = "server expected mesasge type " + std::to_string(serverType) + " received " + std::to_string(clientType);
       }

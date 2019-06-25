@@ -454,7 +454,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_isCompiled, method);
+         stream->write(JITaaS::MessageType::CompInfo_isCompiled, method);
          return std::get<0>(stream->read<bool>());
          }
       return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
@@ -463,7 +463,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_isJNINative, method);
+         stream->write(JITaaS::MessageType::CompInfo_isJNINative, method);
          return std::get<0>(stream->read<bool>());
          }
       // Note: This query is only concerned with the method to be compiled
@@ -475,7 +475,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_getInvocationCount, method);
+         stream->write(JITaaS::MessageType::CompInfo_getInvocationCount, method);
          return std::get<0>(stream->read<int32_t>());
          }
       if (((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
@@ -489,7 +489,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
+         stream->write(JITaaS::MessageType::CompInfo_getJ9MethodExtra, method);
          return (intptrj_t) std::get<0>(stream->read<uint64_t>());
          }
       return (intptrj_t)method->extra;
@@ -506,7 +506,7 @@ public:
    static void * getJ9MethodStartPC(J9Method *method) {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_getJ9MethodStartPC, method);
+         stream->write(JITaaS::MessageType::CompInfo_getJ9MethodStartPC, method);
          return std::get<0>(stream->read<void*>());
          }
       else
@@ -518,7 +518,7 @@ public:
    static void setJ9MethodExtra(J9Method *method, intptrj_t newValue) {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
+         stream->write(JITaaS::MessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
          std::get<0>(stream->read<JITaaS::Void>());
          }
       else
@@ -547,7 +547,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
+         stream->write(JITaaS::MessageType::CompInfo_setInvocationCount, method, newCount);
          return std::get<0>(stream->read<bool>());
          }
       newCount = (newCount << 1) | 1;
@@ -558,7 +558,7 @@ public:
    static bool setInvocationCount(J9Method *method, int32_t oldCount, int32_t newCount){
       if (auto stream = getStream())
          {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_setInvocationCountAtomic, method, oldCount, newCount);
+         stream->write(JITaaS::MessageType::CompInfo_setInvocationCountAtomic, method, oldCount, newCount);
          return std::get<0>(stream->read<bool>());
          }
       newCount = (newCount << 1) | 1;

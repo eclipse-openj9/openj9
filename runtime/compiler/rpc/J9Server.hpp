@@ -51,7 +51,7 @@ public:
       }
 
    template <typename ...T>
-   void write(J9ServerMessageType type, T... args)
+   void write(MessageType type, T... args)
       {
       setArgs<T...>(_sMsg.mutable_data(), args...);
       _sMsg.set_type(type);
@@ -62,7 +62,7 @@ public:
    std::tuple<T...> read()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == J9ServerMessageType::compilationAbort)
+      if (_cMsg.type() == MessageType::compilationAbort)
          throw StreamCancel(_cMsg.type());
       // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
       if (_cMsg.type() != _sMsg.type())
@@ -75,7 +75,7 @@ public:
    std::tuple<T...> readCompileRequest()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == JITaaS::J9ServerMessageType::clientTerminate)
+      if (_cMsg.type() == JITaaS::MessageType::clientTerminate)
          {
          uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
          throw JITaaS::StreamCancel(_cMsg.type(), clientId);
@@ -84,9 +84,9 @@ public:
          {
          throw StreamVersionIncompatible(getJITaaSVersion(), _cMsg.version());
          }
-      if (_cMsg.type() != JITaaS::J9ServerMessageType::compilationRequest)
+      if (_cMsg.type() != JITaaS::MessageType::compilationRequest)
          {
-         throw JITaaS::StreamMessageTypeMismatch(JITaaS::J9ServerMessageType::compilationRequest, _cMsg.type());
+         throw JITaaS::StreamMessageTypeMismatch(JITaaS::MessageType::compilationRequest, _cMsg.type());
          }
       return getArgs<T...>(_cMsg.mutable_data());
       }

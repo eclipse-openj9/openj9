@@ -45,7 +45,7 @@ message AnyData
    repeated Any data = 1;
    }
 
-enum J9ServerMessageType
+enum MessageType
    {
    compilationCode = 0;
    mirrorResolvedJ9Method = 1;
@@ -297,13 +297,13 @@ enum J9ServerMessageType
 
 message J9ServerMessage
    {
-   J9ServerMessageType type = 1;
+   MessageType type = 1;
    AnyData data = 2;
    }
 
 message J9ClientMessage
    {
-   J9ServerMessageType type = 1;
+   MessageType type = 1;
    AnyData data = 2;
    uint64 version = 3;
    }

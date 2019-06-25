@@ -58,7 +58,7 @@ TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
       }
 
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITaaS::J9ServerMessageType::CHTable_getAllClassInfo, JITaaS::Void());
+   stream->write(JITaaS::MessageType::CHTable_getAllClassInfo, JITaaS::Void());
    std::string rawData = std::get<0>(stream->read<std::string>());
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
       {
