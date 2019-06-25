@@ -88,7 +88,7 @@ J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classFlagsValue, classPointer);
+      stream->write(JITaaS::MessageType::ClassEnv_classFlagsValue, classPointer);
       return std::get<0>(stream->read<uintptrj_t>());
       }
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
@@ -103,7 +103,7 @@ J9::ClassEnv::classFlagReservableWorldInitValue(TR_OpaqueClassBlock * classPoint
       uintptrj_t classFlags = 0;
       JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)classPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
 #ifdef DEBUG
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classFlagsValue, classPointer);
+      stream->write(JITaaS::MessageType::ClassEnv_classFlagsValue, classPointer);
       uintptrj_t classFlagsRemote = std::get<0>(stream->read<uintptrj_t>());
       // check that class flags from remote call is equal to the cached ones
       classFlags = classFlags & J9ClassReservableLockWordInit;
@@ -158,7 +158,7 @@ J9::ClassEnv::superClassesOf(TR_OpaqueClassBlock * clazz)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_superClassesOf, clazz);
+      stream->write(JITaaS::MessageType::ClassEnv_superClassesOf, clazz);
       return std::get<0>(stream->read<J9Class **>());
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->superclasses;
@@ -169,7 +169,7 @@ J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_indexedSuperClassOf, clazz, index);
+      stream->write(JITaaS::MessageType::ClassEnv_indexedSuperClassOf, clazz, index);
       J9Class *j9clazz = std::get<0>(stream->read<J9Class *>());
       return TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz);
       }
@@ -181,7 +181,7 @@ J9::ClassEnv::iTableOf(TR_OpaqueClassBlock * clazz)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_iTableOf, clazz);
+      stream->write(JITaaS::MessageType::ClassEnv_iTableOf, clazz);
       return std::get<0>(stream->read<J9ITable*>());
       }
    return (J9ITable*) convertClassOffsetToClassPtr(clazz)->iTable;
@@ -192,7 +192,7 @@ J9::ClassEnv::iTableNext(J9ITable *current)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_iTableNext, current);
+      stream->write(JITaaS::MessageType::ClassEnv_iTableNext, current);
       return std::get<0>(stream->read<J9ITable*>());
       }
    return current->next;
@@ -203,7 +203,7 @@ J9::ClassEnv::iTableRomClass(J9ITable *current)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_iTableRomClass, current);
+      stream->write(JITaaS::MessageType::ClassEnv_iTableRomClass, current);
       return std::get<0>(stream->read<J9ROMClass*>());
       }
    return current->interfaceClass->romClass;
@@ -216,7 +216,7 @@ J9::ClassEnv::getITable(TR_OpaqueClassBlock *clazz)
       {
       // this normally shouldn't be called from the server,
       // because it will have a cached table
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_getITable, clazz);
+      stream->write(JITaaS::MessageType::ClassEnv_getITable, clazz);
       return std::get<0>(stream->read<std::vector<TR_OpaqueClassBlock *>>());
       }
    std::vector<TR_OpaqueClassBlock *> iTableSerialization;
@@ -309,7 +309,7 @@ J9::ClassEnv::classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * 
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classHasIllegalStaticFinalFieldModification, clazzPointer);
+      stream->write(JITaaS::MessageType::ClassEnv_classHasIllegalStaticFinalFieldModification, clazzPointer);
       return std::get<0>(stream->read<bool>());
       }
    J9Class* j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer);
@@ -478,7 +478,7 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
    auto stream = TR::CompilationInfo::getStream();
    if (stream && comp->isOutOfProcessCompilation())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_getROMClassRefName, clazz, cpIndex);
+      stream->write(JITaaS::MessageType::ClassEnv_getROMClassRefName, clazz, cpIndex);
       auto classRefNameStr = std::get<0>(stream->read<std::string>());
       classRefLen = classRefNameStr.length();
       uint8_t *classRefName = (uint8_t *) comp->trMemory()->allocateHeapMemory(classRefLen);

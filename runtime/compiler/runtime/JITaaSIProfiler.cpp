@@ -147,7 +147,7 @@ TR_JITaaSIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t buc
       {
       return NULL;
       }
-   stream->write(JITaaS::J9ServerMessageType::IProfiler_searchForMethodSample, omb);
+   stream->write(JITaaS::MessageType::IProfiler_searchForMethodSample, omb);
    const std::string entryStr = std::get<0>(stream->read<std::string>());
    if (entryStr.empty())
       {
@@ -203,7 +203,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          // sanity check
          // Ask the client again and see if the two sources of information match
          auto stream = TR::CompilationInfo::getStream();
-         stream->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)1);
+         stream->write(JITaaS::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)1);
          auto recv = stream->read<std::string, bool, bool>();
          const std::string ipdata = std::get<0>(recv);
          bool wholeMethod = std::get<1>(recv); // indicates whether the client has sent info for entire method
@@ -239,7 +239,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    // Now ask the client
    //
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)(_useCaching ? 0 : 1));
+   stream->write(JITaaS::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)(_useCaching ? 0 : 1));
    auto recv = stream->read<std::string, bool, bool>();
    const std::string ipdata = std::get<0>(recv);
    bool wholeMethod = std::get<1>(recv); // indicates whether the client sent info for entire method
@@ -373,7 +373,7 @@ int32_t
 TR_JITaaSIProfiler::getMaxCallCount()
    {
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITaaS::J9ServerMessageType::IProfiler_getMaxCallCount, JITaaS::Void());
+   stream->write(JITaaS::MessageType::IProfiler_getMaxCallCount, JITaaS::Void());
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -569,11 +569,11 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
          intptrj_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
          TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
          // send the information to the server
-         client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);
+         client->write(JITaaS::MessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);
          }
       else if (!numEntries && !abort)// Empty IProfiler data for this method
          {
-         client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache);
+         client->write(JITaaS::MessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache);
          }
 
       // release any entry that has been locked by us
@@ -767,7 +767,7 @@ TR_JITaaSIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
    if (sendRemoteMessage)
       {
       auto stream = TR::CompilationInfo::getStream();
-      stream->write(JITaaS::J9ServerMessageType::IProfiler_setCallCount, method, bcIndex, count);
+      stream->write(JITaaS::MessageType::IProfiler_setCallCount, method, bcIndex, count);
       stream->read<JITaaS::Void>();
       }
    }

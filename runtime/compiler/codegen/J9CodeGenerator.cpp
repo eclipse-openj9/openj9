@@ -1088,7 +1088,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
             if (auto stream = TR::CompilationInfo::getStream())
                {
-               stream->write(JITaaS::J9ServerMessageType::CHTable_clearReservable, classPointer);
+               stream->write(JITaaS::MessageType::CHTable_clearReservable, classPointer);
                // No response necessary - we can continue concurrently
                }
             }

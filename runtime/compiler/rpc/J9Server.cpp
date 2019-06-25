@@ -79,7 +79,7 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
    {
    try
       {
-      write(J9ServerMessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
+      write(MessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
             classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr, resolvedMethodsForPersistIprofileInfo);
       finish();
       }

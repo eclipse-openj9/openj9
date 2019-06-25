@@ -46,7 +46,7 @@
 
 extern TR::Monitor *assumptionTableMutex;
 
-uint32_t serverMsgTypeCount[JITaaS::J9ServerMessageType_ARRAYSIZE] = {};
+uint32_t serverMsgTypeCount[JITaaS::MessageType_ARRAYSIZE] = {};
 
 // TODO: this method is copied from runtime/jit_vm/ctsupport.c,
 // in the future it's probably better to make that method publicly accessible
@@ -199,11 +199,11 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
             auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
             uintptrj_t methodStartAddress = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
             entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
-            client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, entryBytes, false, usePersistentCache);
+            client->write(JITaaS::MessageType::IProfiler_profilingSample, entryBytes, false, usePersistentCache);
             }
          else
             {
-            client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache);
+            client->write(JITaaS::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache);
             }
          // unlock the entry
          if (auto callGraphEntry = entry->asIPBCDataCallGraph())
@@ -212,14 +212,14 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
          }
       else // no valid info for specified bytecode index
          {
-         client->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache);
+         client->write(JITaaS::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache);
          }
       }
    }
 
 bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
    {
-   using JITaaS::J9ServerMessageType;
+   using JITaaS::MessageType;
    TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
    J9VMThread *vmThread = compInfoPT->getCompilationThread();
    TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
@@ -242,8 +242,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
    // If JVM has unloaded classes inform the server to abort this compilation
    if (compInfoPT->compilationShouldBeInterrupted())
       {
-      if (response != J9ServerMessageType::compilationCode)
-         client->writeError(JITaaS::J9ServerMessageType::compilationAbort, 0 /* placeholder */); // inform the server if compilation is not yet complete
+      if (response != MessageType::compilationCode)
+         client->writeError(JITaaS::MessageType::compilationAbort, 0 /* placeholder */); // inform the server if compilation is not yet complete
 
       if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
@@ -264,11 +264,11 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
    bool done = false;
    switch (response)
       {
-      case J9ServerMessageType::compilationCode:
+      case MessageType::compilationCode:
          done = true;
          break;
 
-      case J9ServerMessageType::getUnloadedClassRanges:
+      case MessageType::getUnloadedClassRanges:
          {
          auto unloadedClasses = comp->getPersistentInfo()->getUnloadedClassAddresses();
          std::vector<TR_AddressRange> ranges(unloadedClasses->getNumberOfRanges());
@@ -280,26 +280,26 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
          }
 
-      case J9ServerMessageType::VM_isClassLibraryClass:
+      case MessageType::VM_isClassLibraryClass:
          {
          bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
          client->write(response, rv);
          }
          break;
-      case J9ServerMessageType::VM_isClassLibraryMethod:
+      case MessageType::VM_isClassLibraryMethod:
          {
          auto tup = client->getRecvData<TR_OpaqueMethodBlock*, bool>();
          bool rv = fe->isClassLibraryMethod(std::get<0>(tup), std::get<1>(tup));
          client->write(response, rv);
          }
          break;
-      case J9ServerMessageType::VM_getSuperClass:
+      case MessageType::VM_getSuperClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getSuperClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_isInstanceOf:
+      case MessageType::VM_isInstanceOf:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, bool, bool, bool>();
          TR_OpaqueClassBlock *a = std::get<0>(recv);
@@ -310,7 +310,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->isInstanceOf(a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT));
          }
          break;
-      case J9ServerMessageType::VM_getSystemClassFromClassName:
+      case MessageType::VM_getSystemClassFromClassName:
          {
          auto recv = client->getRecvData<std::string, bool>();
          const std::string name = std::get<0>(recv);
@@ -318,25 +318,25 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
          }
          break;
-      case J9ServerMessageType::VM_isMethodTracingEnabled:
+      case MessageType::VM_isMethodTracingEnabled:
          {
          auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          client->write(response, fe->isMethodTracingEnabled(method));
          }
          break;
-      case J9ServerMessageType::VM_getClassClassPointer:
+      case MessageType::VM_getClassClassPointer:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
          client->write(response, fe->getClassClassPointer(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassOfMethod:
+      case MessageType::VM_getClassOfMethod:
          {
          auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock*>());
          client->write(response, fe->getClassOfMethod(method));
          }
          break;
-      case J9ServerMessageType::VM_getBaseComponentClass:
+      case MessageType::VM_getBaseComponentClass:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock*, int32_t>();
          auto clazz = std::get<0>(recv);
@@ -345,13 +345,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, outClass, numDims);
          };
          break;
-      case J9ServerMessageType::VM_getLeafComponentClassFromArrayClass:
+      case MessageType::VM_getLeafComponentClassFromArrayClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
          client->write(response, fe->getLeafComponentClassFromArrayClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromSignature:
+      case MessageType::VM_getClassFromSignature:
          {
          auto recv = client->getRecvData<std::string, TR_OpaqueMethodBlock *, bool>();
          std::string sig = std::get<0>(recv);
@@ -361,7 +361,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, clazz);
          }
          break;
-      case J9ServerMessageType::VM_jitFieldsAreSame:
+      case MessageType::VM_jitFieldsAreSame:
          {
          auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t, int32_t>();
          TR_ResolvedMethod *method1 = std::get<0>(recv);
@@ -429,7 +429,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, declaringClass1, declaringClass2, f1, f2);
          };
          break;
-      case J9ServerMessageType::VM_jitStaticsAreSame:
+      case MessageType::VM_jitStaticsAreSame:
          {
          auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t>();
          TR_ResolvedMethod *method1 = std::get<0>(recv);
@@ -439,37 +439,37 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->jitStaticsAreSame(method1, cpIndex1, method2, cpIndex2));
          };
          break;
-      case J9ServerMessageType::VM_compiledAsDLTBefore:
+      case MessageType::VM_compiledAsDLTBefore:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_ResolvedMethod *>());
          client->write(response, fe->compiledAsDLTBefore(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getComponentClassFromArrayClass:
+      case MessageType::VM_getComponentClassFromArrayClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getComponentClassFromArrayClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_classHasBeenReplaced:
+      case MessageType::VM_classHasBeenReplaced:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->classHasBeenReplaced(clazz));
          }
          break;
-      case J9ServerMessageType::VM_classHasBeenExtended:
+      case MessageType::VM_classHasBeenExtended:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->classHasBeenExtended(clazz));
          }
          break;
-      case J9ServerMessageType::VM_isThunkArchetype:
+      case MessageType::VM_isThunkArchetype:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, fe->isThunkArchetype(method));
          }
          break;
-      case J9ServerMessageType::VM_printTruncatedSignature:
+      case MessageType::VM_printTruncatedSignature:
          {
          J9Method *method = (J9Method *) std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          J9UTF8 * className;
@@ -482,43 +482,43 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, classNameStr, nameStr, signatureStr);
          }
          break;
-      case J9ServerMessageType::VM_getStaticHookAddress:
+      case MessageType::VM_getStaticHookAddress:
          {
          int32_t event = std::get<0>(client->getRecvData<int32_t>());
          client->write(response, fe->getStaticHookAddress(event));
          }
          break;
-      case J9ServerMessageType::VM_isClassInitialized:
+      case MessageType::VM_isClassInitialized:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->isClassInitialized(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getOSRFrameSizeInBytes:
+      case MessageType::VM_getOSRFrameSizeInBytes:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          client->write(response, fe->getOSRFrameSizeInBytes(method));
          }
          break;
-      case J9ServerMessageType::VM_getByteOffsetToLockword:
+      case MessageType::VM_getByteOffsetToLockword:
          {
          TR_OpaqueClassBlock * clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getByteOffsetToLockword(clazz));
          }
          break;
-      case J9ServerMessageType::VM_isString1:
+      case MessageType::VM_isString1:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->isString(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getMethods:
+      case MessageType::VM_getMethods:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getMethods(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getResolvedMethodsAndMirror:
+      case MessageType::VM_getResolvedMethodsAndMirror:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          uint32_t numMethods = fe->getNumMethods(clazz);
@@ -536,7 +536,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, methods, methodsInfo);
          }
          break;
-      case J9ServerMessageType::VM_getVMInfo:
+      case MessageType::VM_getVMInfo:
          {
          ClientSessionData::VMInfo vmInfo = {};
          vmInfo._systemClassLoader = fe->getSystemClassLoader();
@@ -564,13 +564,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, vmInfo);
          }
          break;
-      case J9ServerMessageType::VM_isPrimitiveArray:
+      case MessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->isPrimitiveArray(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getAllocationSize:
+      case MessageType::VM_getAllocationSize:
          {
          auto recv = client->getRecvData<TR::StaticSymbol *, TR_OpaqueClassBlock *>();
          TR::StaticSymbol *classSym = std::get<0>(recv);
@@ -578,21 +578,21 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getAllocationSize(classSym, clazz));
          }
          break;
-      case J9ServerMessageType::VM_getObjectClass:
+      case MessageType::VM_getObjectClass:
          {
          TR::VMAccessCriticalSection getObjectClass(fe);
          uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(response, fe->getObjectClass(objectPointer));
          }
          break;
-      case J9ServerMessageType::VM_getStaticReferenceFieldAtAddress:
+      case MessageType::VM_getStaticReferenceFieldAtAddress:
          {
          TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);
          uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(response, fe->getStaticReferenceFieldAtAddress(fieldAddress));
          }
          break;
-      case J9ServerMessageType::VM_stackWalkerMaySkipFrames:
+      case MessageType::VM_stackWalkerMaySkipFrames:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
          TR_OpaqueMethodBlock *method = std::get<0>(recv);
@@ -600,13 +600,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->stackWalkerMaySkipFrames(method, clazz));
          }
          break;
-      case J9ServerMessageType::VM_hasFinalFieldsInClass:
+      case MessageType::VM_hasFinalFieldsInClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->hasFinalFieldsInClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassNameSignatureFromMethod:
+      case MessageType::VM_getClassNameSignatureFromMethod:
          {
          auto recv = client->getRecvData<J9Method*>();
          J9Method *method = std::get<0>(recv);
@@ -618,13 +618,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, classNameStr, nameStr, signatureStr);
          }
          break;
-      case J9ServerMessageType::VM_getHostClass:
+      case MessageType::VM_getHostClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getHostClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getStringUTF8Length:
+      case MessageType::VM_getStringUTF8Length:
          {
          uintptrj_t string = std::get<0>(client->getRecvData<uintptrj_t>());
             {
@@ -633,56 +633,56 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             }
          }
          break;
-      case J9ServerMessageType::VM_classInitIsFinished:
+      case MessageType::VM_classInitIsFinished:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->classInitIsFinished(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getNewArrayTypeFromClass:
+      case MessageType::VM_getNewArrayTypeFromClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getNewArrayTypeFromClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromNewArrayType:
+      case MessageType::VM_getClassFromNewArrayType:
          {
          int32_t index = std::get<0>(client->getRecvData<int32_t>());
          client->write(response, fe->getClassFromNewArrayType(index));
          }
          break;
-      case J9ServerMessageType::VM_isCloneable:
+      case MessageType::VM_isCloneable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->isCloneable(clazz));
          }
          break;
-      case J9ServerMessageType::VM_canAllocateInlineClass:
+      case MessageType::VM_canAllocateInlineClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->canAllocateInlineClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getArrayClassFromComponentClass:
+      case MessageType::VM_getArrayClassFromComponentClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getArrayClassFromComponentClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_matchRAMclassFromROMclass:
+      case MessageType::VM_matchRAMclassFromROMclass:
          {
          J9ROMClass *clazz = std::get<0>(client->getRecvData<J9ROMClass *>());
          client->write(response, fe->matchRAMclassFromROMclass(clazz, comp));
          }
          break;
-      case J9ServerMessageType::VM_getReferenceFieldAtAddress:
+      case MessageType::VM_getReferenceFieldAtAddress:
          {
          TR::VMAccessCriticalSection getReferenceFieldAtAddress(fe);
          uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(response, fe->getReferenceFieldAtAddress(fieldAddress));
          }
          break;
-      case J9ServerMessageType::VM_getVolatileReferenceFieldAt:
+      case MessageType::VM_getVolatileReferenceFieldAt:
          {
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
@@ -690,7 +690,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getVolatileReferenceFieldAt(objectPointer, fieldOffset));
          }
          break;
-      case J9ServerMessageType::VM_getInt32FieldAt:
+      case MessageType::VM_getInt32FieldAt:
          {
          if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
             {
@@ -705,7 +705,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getInt32FieldAt(objectPointer, fieldOffset));
          }
          break;
-      case J9ServerMessageType::VM_getInt64FieldAt:
+      case MessageType::VM_getInt64FieldAt:
          {
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
@@ -713,7 +713,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getInt64FieldAt(objectPointer, fieldOffset));
          }
          break;
-      case J9ServerMessageType::VM_setInt64FieldAt:
+      case MessageType::VM_setInt64FieldAt:
          {
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t, int64_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
@@ -723,7 +723,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::VM_compareAndSwapInt64FieldAt:
+      case MessageType::VM_compareAndSwapInt64FieldAt:
          {
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t, int64_t, int64_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
@@ -733,7 +733,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->compareAndSwapInt64FieldAt(objectPointer, fieldOffset, oldValue, newValue));
          }
          break;
-      case J9ServerMessageType::VM_getArrayLengthInElements:
+      case MessageType::VM_getArrayLengthInElements:
          {
          if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
             {
@@ -746,43 +746,43 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getArrayLengthInElements(objectPointer));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromJavaLangClass:
+      case MessageType::VM_getClassFromJavaLangClass:
          {
          uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(response, fe->getClassFromJavaLangClass(objectPointer));
          }
          break;
-      case J9ServerMessageType::VM_getOffsetOfClassFromJavaLangClassField:
+      case MessageType::VM_getOffsetOfClassFromJavaLangClassField:
          {
          client->getRecvData<JITaaS::Void>();
          client->write(response, fe->getOffsetOfClassFromJavaLangClassField());
          }
          break;
-      case J9ServerMessageType::VM_getConstantPoolFromMethod:
+      case MessageType::VM_getConstantPoolFromMethod:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          client->write(response, fe->getConstantPoolFromMethod(method));
          }
          break;
-      case J9ServerMessageType::VM_getConstantPoolFromClass:
+      case MessageType::VM_getConstantPoolFromClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getConstantPoolFromClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getIdentityHashSaltPolicy:
+      case MessageType::VM_getIdentityHashSaltPolicy:
          {
          client->getRecvData<JITaaS::Void>();
          client->write(response, fe->getIdentityHashSaltPolicy());
          }
          break;
-      case J9ServerMessageType::VM_getOffsetOfJLThreadJ9Thread:
+      case MessageType::VM_getOffsetOfJLThreadJ9Thread:
          {
          client->getRecvData<JITaaS::Void>();
          client->write(response, fe->getOffsetOfJLThreadJ9Thread());
          }
          break;
-      case J9ServerMessageType::VM_scanReferenceSlotsInClassForOffset:
+      case MessageType::VM_scanReferenceSlotsInClassForOffset:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
@@ -790,13 +790,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->scanReferenceSlotsInClassForOffset(comp, clazz, offset));
          }
          break;
-      case J9ServerMessageType::VM_findFirstHotFieldTenuredClassOffset:
+      case MessageType::VM_findFirstHotFieldTenuredClassOffset:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->findFirstHotFieldTenuredClassOffset(comp, clazz));
          }
          break;
-      case J9ServerMessageType::VM_getResolvedVirtualMethod:
+      case MessageType::VM_getResolvedVirtualMethod:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, I_32, bool>();
          auto clazz = std::get<0>(recv);
@@ -805,7 +805,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getResolvedVirtualMethod(clazz, offset, ignoreRTResolve));
          }
          break;
-      case J9ServerMessageType::VM_setJ2IThunk:
+      case MessageType::VM_setJ2IThunk:
          {
          auto recv = client->getRecvData<void*, std::string>();
          void *thunk = std::get<0>(recv);
@@ -814,7 +814,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::VM_setInvokeExactJ2IThunk:
+      case MessageType::VM_setInvokeExactJ2IThunk:
          {
          auto recv = client->getRecvData<void*>();
          void *thunk = std::get<0>(recv);
@@ -822,7 +822,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::VM_sameClassLoaders:
+      case MessageType::VM_sameClassLoaders:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
          TR_OpaqueClassBlock *class1 = std::get<0>(recv);
@@ -830,7 +830,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->sameClassLoaders(class1, class2));
          }
          break;
-      case J9ServerMessageType::VM_isUnloadAssumptionRequired:
+      case MessageType::VM_isUnloadAssumptionRequired:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_ResolvedMethod *>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
@@ -838,7 +838,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->isUnloadAssumptionRequired(clazz, method));
          }
          break;
-      case J9ServerMessageType::VM_getInstanceFieldOffset:
+      case MessageType::VM_getInstanceFieldOffset:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, UDATA>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
@@ -849,7 +849,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                   const_cast<char*>(sig.c_str()), sig.length(), options));
          }
          break;
-      case J9ServerMessageType::VM_getJavaLangClassHashCode:
+      case MessageType::VM_getJavaLangClassHashCode:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          bool hashCodeComputed = false;
@@ -857,19 +857,19 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, hashCode, hashCodeComputed);
          }
          break;
-      case J9ServerMessageType::VM_hasFinalizer:
+      case MessageType::VM_hasFinalizer:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->hasFinalizer(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassDepthAndFlagsValue:
+      case MessageType::VM_getClassDepthAndFlagsValue:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getClassDepthAndFlagsValue(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getMethodFromName:
+      case MessageType::VM_getMethodFromName:
          {
          auto recv = client->getRecvData<std::string, std::string, std::string>();
          std::string className = std::get<0>(recv);
@@ -879,7 +879,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                   const_cast<char*>(methodName.c_str()), const_cast<char*>(signature.c_str())));
          }
          break;
-      case J9ServerMessageType::VM_getMethodFromClass:
+      case MessageType::VM_getMethodFromClass:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, TR_OpaqueClassBlock *>();
          TR_OpaqueClassBlock *methodClass = std::get<0>(recv);
@@ -890,7 +890,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                   const_cast<char*>(signature.c_str()), callingClass));
          }
          break;
-      case J9ServerMessageType::VM_createMethodHandleArchetypeSpecimen:
+      case MessageType::VM_createMethodHandleArchetypeSpecimen:
          {
          auto recv = client->getRecvData<uintptrj_t*>();
          uintptrj_t *methodHandleLocation = std::get<0>(recv);
@@ -910,7 +910,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             }
          }
          break;
-      case J9ServerMessageType::VM_isClassVisible:
+      case MessageType::VM_isClassVisible:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
          TR_OpaqueClassBlock *sourceClass = std::get<0>(recv);
@@ -918,7 +918,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->isClassVisible(sourceClass, destClass));
          }
          break;
-      case J9ServerMessageType::VM_markClassForTenuredAlignment:
+      case MessageType::VM_markClassForTenuredAlignment:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
@@ -927,7 +927,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::VM_getReferenceSlotsInClass:
+      case MessageType::VM_getReferenceSlotsInClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          int32_t *start = fe->getReferenceSlotsInClass(comp, clazz);
@@ -943,19 +943,19 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             }
          }
          break;
-      case J9ServerMessageType::VM_getMethodSize:
+      case MessageType::VM_getMethodSize:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          client->write(response, fe->getMethodSize(method));
          }
          break;
-      case J9ServerMessageType::VM_addressOfFirstClassStatic:
+      case MessageType::VM_addressOfFirstClassStatic:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->addressOfFirstClassStatic(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getStaticFieldAddress:
+      case MessageType::VM_getStaticFieldAddress:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
@@ -968,7 +968,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                   sigName.length()));
          }
          break;
-      case J9ServerMessageType::VM_getInterpreterVTableSlot:
+      case MessageType::VM_getInterpreterVTableSlot:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
          TR_OpaqueMethodBlock *method = std::get<0>(recv);
@@ -976,38 +976,38 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getInterpreterVTableSlot(method, clazz));
          }
          break;
-      case J9ServerMessageType::VM_revertToInterpreted:
+      case MessageType::VM_revertToInterpreted:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          fe->revertToInterpreted(method);
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::VM_getLocationOfClassLoaderObjectPointer:
+      case MessageType::VM_getLocationOfClassLoaderObjectPointer:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->getLocationOfClassLoaderObjectPointer(clazz));
          }
          break;
-      case J9ServerMessageType::VM_isOwnableSyncClass:
+      case MessageType::VM_isOwnableSyncClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->isOwnableSyncClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromMethodBlock:
+      case MessageType::VM_getClassFromMethodBlock:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          client->write(response, fe->getClassFromMethodBlock(method));
          }
          break;
-      case J9ServerMessageType::VM_fetchMethodExtendedFlagsPointer:
+      case MessageType::VM_fetchMethodExtendedFlagsPointer:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, fe->fetchMethodExtendedFlagsPointer(method));
          }
          break;
-      case J9ServerMessageType::VM_stringEquals:
+      case MessageType::VM_stringEquals:
          {
          auto recv = client->getRecvData<uintptrj_t *, uintptrj_t *>();
          uintptrj_t *stringLocation1 = std::get<0>(recv);
@@ -1017,7 +1017,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, result, isEqual);
          }
          break;
-      case J9ServerMessageType::VM_getStringHashCode:
+      case MessageType::VM_getStringHashCode:
          {
          uintptrj_t *stringLocation = std::get<0>(client->getRecvData<uintptrj_t *>());
          int32_t result;
@@ -1025,7 +1025,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, result, isGet);
          }
          break;
-      case J9ServerMessageType::VM_getLineNumberForMethodAndByteCodeIndex:
+      case MessageType::VM_getLineNumberForMethodAndByteCodeIndex:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock *, int32_t>();
          TR_OpaqueMethodBlock *method = std::get<0>(recv);
@@ -1033,31 +1033,31 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getLineNumberForMethodAndByteCodeIndex(method, bcIndex));
          }
          break;
-      case J9ServerMessageType::VM_getObjectNewInstanceImplMethod:
+      case MessageType::VM_getObjectNewInstanceImplMethod:
          {
          client->getRecvData<JITaaS::Void>();
          client->write(response, fe->getObjectNewInstanceImplMethod());
          }
          break;
-      case J9ServerMessageType::VM_getBytecodePC:
+      case MessageType::VM_getBytecodePC:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          client->write(response, TR::Compiler->mtd.bytecodeStart(method));
          }
          break;
-      case J9ServerMessageType::VM_isClassLoadedBySystemClassLoader:
+      case MessageType::VM_isClassLoadedBySystemClassLoader:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->isClassLoadedBySystemClassLoader(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getVFTEntry:
+      case MessageType::VM_getVFTEntry:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
          client->write(response, fe->getVFTEntry(std::get<0>(recv), std::get<1>(recv)));
          }
          break;
-      case J9ServerMessageType::VM_getArrayLengthOfStaticAddress:
+      case MessageType::VM_getArrayLengthOfStaticAddress:
          {
          auto recv = client->getRecvData<void*>();
          void *ptr = std::get<0>(recv);
@@ -1066,14 +1066,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ok, length);
          }
          break;
-      case J9ServerMessageType::VM_isClassArray:
+      case MessageType::VM_isClassArray:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock*>();
          auto clazz = std::get<0>(recv);
          client->write(response, fe->isClassArray(clazz));
          }
          break;
-      case J9ServerMessageType::VM_instanceOfOrCheckCast:
+      case MessageType::VM_instanceOfOrCheckCast:
          {
          auto recv = client->getRecvData<J9Class*, J9Class*>();
          auto clazz1 = std::get<0>(recv);
@@ -1081,7 +1081,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->instanceOfOrCheckCast(clazz1, clazz2));
          }
          break;
-      case J9ServerMessageType::VM_transformJlrMethodInvoke:
+      case MessageType::VM_transformJlrMethodInvoke:
          {
          auto recv = client->getRecvData<J9Method*, J9Class*>();
          auto method = std::get<0>(recv);
@@ -1089,14 +1089,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->transformJlrMethodInvoke(method, clazz));
          }
          break;
-      case J9ServerMessageType::VM_isAnonymousClass:
+      case MessageType::VM_isAnonymousClass:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
          client->write(response, fe->isAnonymousClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_dereferenceStaticAddress:
+      case MessageType::VM_dereferenceStaticAddress:
          {
          auto recv = client->getRecvData<void *, TR::DataType>();
          void *address = std::get<0>(recv);
@@ -1104,19 +1104,19 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->dereferenceStaticFinalAddress(address, addressType));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromCP:
+      case MessageType::VM_getClassFromCP:
          {
          auto recv = client->getRecvData<J9ConstantPool *>();
          client->write(response, fe->getClassFromCP(std::get<0>(recv)));
          }
          break;
-      case J9ServerMessageType::VM_getROMMethodFromRAMMethod:
+      case MessageType::VM_getROMMethodFromRAMMethod:
          {
          auto recv = client->getRecvData<J9Method *>();
          client->write(response, fe->getROMMethodFromRAMMethod(std::get<0>(recv)));
          }
          break;
-      case J9ServerMessageType::mirrorResolvedJ9Method:
+      case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
          // easily done on the client side.
@@ -1132,25 +1132,25 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, methodInfo);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods:
+      case MessageType::ResolvedMethod_getRemoteROMClassAndMethods:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
          client->write(response, JITaaSHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isJNINative:
+      case MessageType::ResolvedMethod_isJNINative:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, method->isJNINative());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isInterpreted:
+      case MessageType::ResolvedMethod_isInterpreted:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, method->isInterpreted());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_staticAttributes:
+      case MessageType::ResolvedMethod_staticAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1165,7 +1165,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, attrs);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getClassFromConstantPool:
+      case MessageType::ResolvedMethod_getClassFromConstantPool:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1174,7 +1174,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->getClassFromConstantPool(comp, cpIndex, returnClassForAOT));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic:
+      case MessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1182,7 +1182,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->getDeclaringClassFromFieldOrStatic(comp, cpIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_classOfStatic:
+      case MessageType::ResolvedMethod_classOfStatic:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1191,7 +1191,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->classOfStatic(cpIndex, returnClassForAOT));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_fieldAttributes:
+      case MessageType::ResolvedMethod_fieldAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1206,7 +1206,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, attrs);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror:
+      case MessageType::ResolvedMethod_getResolvedStaticMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto *method = std::get<0>(recv);
@@ -1228,7 +1228,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ramMethod, methodInfo, unresolvedInCP);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror:
+      case MessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1249,7 +1249,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ramMethod, methodInfo);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod:
+      case MessageType::ResolvedMethod_classCPIndexOfMethod:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1257,13 +1257,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->classCPIndexOfMethod(cpIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod:
+      case MessageType::ResolvedMethod_startAddressForJittedMethod:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, method->startAddressForJittedMethod());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror:
+      case MessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror:
          {
          // 1. resolve method
          auto recv = client->getRecvData<TR_ResolvedMethod *, J9RAMConstantPoolItem *, I_32>();
@@ -1311,7 +1311,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             }
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethod:
+      case MessageType::ResolvedMethod_getResolvedVirtualMethod:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, I_32, bool, TR_ResolvedJ9Method *>();
          auto clazz = std::get<0>(recv);
@@ -1325,13 +1325,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ramMethod, methodInfo);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden:
+      case MessageType::ResolvedMethod_virtualMethodIsOverridden:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, method->virtualMethodIsOverridden());
          }
          break;
-      case J9ServerMessageType::get_params_to_construct_TR_j9method:
+      case MessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();
          J9Class * aClazz = std::get<0>(recv);
@@ -1350,7 +1350,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, classNameStr, nameStr, signatureStr);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_setRecognizedMethodInfo:
+      case MessageType::ResolvedMethod_setRecognizedMethodInfo:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, TR::RecognizedMethod>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1359,7 +1359,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_localName:
+      case MessageType::ResolvedMethod_localName:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, U_32, U_32>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1373,7 +1373,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             client->write(response, std::string());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_jniNativeMethodProperties:
+      case MessageType::ResolvedMethod_jniNativeMethodProperties:
          {
          auto ramMethod = std::get<0>(client->getRecvData<J9Method*>());
          uintptrj_t jniProperties;
@@ -1381,7 +1381,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, jniProperties, jniTargetAddress);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_2:
+      case MessageType::ResolvedMethod_getResolvedInterfaceMethod_2:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
          auto mirror = std::get<0>(recv);
@@ -1391,7 +1391,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, clazz, pITableIndex);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3:
+      case MessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, I_32, TR_ResolvedJ9Method *>();
          auto method = std::get<0>(recv);
@@ -1409,7 +1409,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, resolved, ramMethod, methodInfo);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodOffset:
+      case MessageType::ResolvedMethod_getResolvedInterfaceMethodOffset:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, TR_OpaqueClassBlock*, I_32>();
          auto mirror = std::get<0>(recv);
@@ -1419,7 +1419,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, offset);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror:
+      case MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto mirror = std::get<0>(recv);
@@ -1437,19 +1437,19 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, j9method, methodInfo);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod:
+      case MessageType::ResolvedMethod_startAddressForJNIMethod:
          {
          TR_ResolvedJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, ramMethod->startAddressForJNIMethod(comp));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod:
+      case MessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod:
          {
          TR_ResolvedJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, ramMethod->startAddressForInterpreterOfJittedMethod());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP:
+      case MessageType::ResolvedMethod_getUnresolvedStaticMethodInCP:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          TR_ResolvedJ9Method *method= std::get<0>(recv);
@@ -1457,7 +1457,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->getUnresolvedStaticMethodInCP(cpIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getUnresolvedSpecialMethodInCP:
+      case MessageType::ResolvedMethod_getUnresolvedSpecialMethodInCP:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          TR_ResolvedJ9Method *method= std::get<0>(recv);
@@ -1465,7 +1465,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->getUnresolvedSpecialMethodInCP(cpIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getUnresolvedFieldInCP:
+      case MessageType::ResolvedMethod_getUnresolvedFieldInCP:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          TR_ResolvedJ9Method *method= std::get<0>(recv);
@@ -1473,7 +1473,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, method->getUnresolvedFieldInCP(cpIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getRemoteROMString:
+      case MessageType::ResolvedMethod_getRemoteROMString:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, size_t, std::string>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1492,7 +1492,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, std::string(data, len));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_fieldOrStaticName:
+      case MessageType::ResolvedMethod_fieldOrStaticName:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1504,13 +1504,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, std::string(s, len));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isSubjectToPhaseChange:
+      case MessageType::ResolvedMethod_isSubjectToPhaseChange:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, method->isSubjectToPhaseChange(comp));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedHandleMethod:
+      case MessageType::ResolvedMethod_getResolvedHandleMethod:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
          auto mirror = std::get<0>(recv);
@@ -1537,7 +1537,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
 #if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
-      case J9ServerMessageType::ResolvedMethod_methodTypeTableEntryAddress:
+      case MessageType::ResolvedMethod_methodTypeTableEntryAddress:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
          auto mirror = std::get<0>(recv);
@@ -1545,7 +1545,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, mirror->methodTypeTableEntryAddress(cpIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isUnresolvedMethodTypeTableEntry:
+      case MessageType::ResolvedMethod_isUnresolvedMethodTypeTableEntry:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
          auto mirror = std::get<0>(recv);
@@ -1554,7 +1554,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
 #endif
-      case J9ServerMessageType::ResolvedMethod_isUnresolvedCallSiteTableEntry:
+      case MessageType::ResolvedMethod_isUnresolvedCallSiteTableEntry:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
          auto mirror = std::get<0>(recv);
@@ -1562,7 +1562,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, mirror->isUnresolvedCallSiteTableEntry(callSiteIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_callSiteTableEntryAddress:
+      case MessageType::ResolvedMethod_callSiteTableEntryAddress:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
          auto mirror = std::get<0>(recv);
@@ -1570,7 +1570,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, mirror->callSiteTableEntryAddress(callSiteIndex));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedDynamicMethod:
+      case MessageType::ResolvedMethod_getResolvedDynamicMethod:
          {
          auto recv = client->getRecvData<int32_t, J9Class *>();
          int32_t callSiteIndex = std::get<0>(recv);
@@ -1587,37 +1587,37 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, dummyInvokeExact, std::string(utf8Data(signature), J9UTF8_LENGTH(signature)), unresolvedInCP);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR:
+      case MessageType::ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR:
          {
          auto mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method*>());
          client->write(response, mirror->shouldFailSetRecognizedMethodInfoBecauseOfHCR());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isSameMethod:
+      case MessageType::ResolvedMethod_isSameMethod:
          {
          auto recv = client->getRecvData<uintptrj_t*, uintptrj_t*>();
          client->write(response, *std::get<0>(recv) == *std::get<1>(recv));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isBigDecimalMethod:
+      case MessageType::ResolvedMethod_isBigDecimalMethod:
          {
          J9Method *j9method = std::get<0>(client->getRecvData<J9Method*>());
          client->write(response, TR_J9MethodBase::isBigDecimalMethod(j9method));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isBigDecimalConvertersMethod:
+      case MessageType::ResolvedMethod_isBigDecimalConvertersMethod:
          {
          J9Method *j9method = std::get<0>(client->getRecvData<J9Method*>());
          client->write(response, TR_J9MethodBase::isBigDecimalConvertersMethod(j9method));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isInlineable:
+      case MessageType::ResolvedMethod_isInlineable:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, mirror->isInlineable(comp));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_setWarmCallGraphTooBig:
+      case MessageType::ResolvedMethod_setWarmCallGraphTooBig:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
          TR_ResolvedJ9Method *mirror = std::get<0>(recv);
@@ -1626,26 +1626,26 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_setVirtualMethodIsOverridden:
+      case MessageType::ResolvedMethod_setVirtualMethodIsOverridden:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          mirror->setVirtualMethodIsOverridden();
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_addressContainingIsOverriddenBit:
+      case MessageType::ResolvedMethod_addressContainingIsOverriddenBit:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, mirror->addressContainingIsOverriddenBit());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_methodIsNotzAAPEligible:
+      case MessageType::ResolvedMethod_methodIsNotzAAPEligible:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(response, mirror->methodIsNotzAAPEligible());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_setClassForNewInstance:
+      case MessageType::ResolvedMethod_setClassForNewInstance:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, J9Class*>();
          TR_ResolvedJ9Method *mirror = std::get<0>(recv);
@@ -1654,7 +1654,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getJittedBodyInfo:
+      case MessageType::ResolvedMethod_getJittedBodyInfo:
          {
          auto mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          void *startPC = mirror->startAddressForInterpreterOfJittedMethod();
@@ -1666,7 +1666,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                           std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_isUnresolvedString:
+      case MessageType::ResolvedMethod_isUnresolvedString:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
          auto mirror = std::get<0>(recv);
@@ -1675,7 +1675,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, mirror->isUnresolvedString(cpIndex, optimizeForAOT));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_stringConstant:
+      case MessageType::ResolvedMethod_stringConstant:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          auto mirror = std::get<0>(recv);
@@ -1685,7 +1685,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                        mirror->isUnresolvedString(cpIndex, false));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getMultipleResolvedMethods:
+      case MessageType::ResolvedMethod_getMultipleResolvedMethods:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, std::vector<TR_ResolvedMethodType>, std::vector<int32_t>>();
          auto owningMethod = std::get<0>(recv);
@@ -1750,7 +1750,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ramMethods, vTableOffsets, methodInfos);
          }
          break;
-      case J9ServerMessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
+      case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();
          auto mirror = std::get<0>(recv);
@@ -1781,7 +1781,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, methodInfo, isRomClassForMethodInSC, sameLoaders, sameClass);
          }
          break;
-      case J9ServerMessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary:
+      case MessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary:
          {
          auto recv = client->getRecvData<J9Method *, J9ConstantPool *, int32_t, bool, J9Class *>();
          auto ramMethod = std::get<0>(recv);
@@ -1801,7 +1801,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, clazz, definingClass, classChain);
          }
          break;
-      case J9ServerMessageType::ResolvedRelocatableMethod_getFieldType:
+      case MessageType::ResolvedRelocatableMethod_getFieldType:
          {
          auto recv = client->getRecvData<int32_t, TR_ResolvedJ9Method *>();
          auto cpIndex = std::get<0>(recv);
@@ -1810,7 +1810,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ltype);
          }
          break;
-      case J9ServerMessageType::ResolvedRelocatableMethod_fieldAttributes:
+      case MessageType::ResolvedRelocatableMethod_fieldAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1830,7 +1830,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, attrs, definingClass);
          }
          break;
-      case J9ServerMessageType::ResolvedRelocatableMethod_staticAttributes:
+      case MessageType::ResolvedRelocatableMethod_staticAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1850,25 +1850,25 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
 
-      case J9ServerMessageType::CompInfo_isCompiled:
+      case MessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, TR::CompilationInfo::isCompiled(method));
          }
          break;
-      case J9ServerMessageType::CompInfo_getJ9MethodExtra:
+      case MessageType::CompInfo_getJ9MethodExtra:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, (uint64_t) TR::CompilationInfo::getJ9MethodExtra(method));
          }
          break;
-      case J9ServerMessageType::CompInfo_getInvocationCount:
+      case MessageType::CompInfo_getInvocationCount:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, TR::CompilationInfo::getInvocationCount(method));
          }
          break;
-      case J9ServerMessageType::CompInfo_setInvocationCount:
+      case MessageType::CompInfo_setInvocationCount:
          {
          auto recv = client->getRecvData<J9Method *, int32_t>();
          J9Method *method = std::get<0>(recv);
@@ -1876,7 +1876,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, TR::CompilationInfo::setInvocationCount(method, count));
          }
          break;
-      case J9ServerMessageType::CompInfo_setInvocationCountAtomic:
+      case MessageType::CompInfo_setInvocationCountAtomic:
          {
          auto recv = client->getRecvData<J9Method *, int32_t, int32_t>();
          J9Method *method = std::get<0>(recv);
@@ -1885,25 +1885,25 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, TR::CompilationInfo::setInvocationCount(method, oldCount, newCount));
          }
          break;
-      case J9ServerMessageType::CompInfo_isJNINative:
+      case MessageType::CompInfo_isJNINative:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, TR::CompilationInfo::isJNINative(method));
          }
          break;
-      case J9ServerMessageType::CompInfo_isJSR292:
+      case MessageType::CompInfo_isJSR292:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, TR::CompilationInfo::isJSR292(method));
          }
          break;
-      case J9ServerMessageType::CompInfo_getMethodBytecodeSize:
+      case MessageType::CompInfo_getMethodBytecodeSize:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, TR::CompilationInfo::getMethodBytecodeSize(method));
          }
          break;
-      case J9ServerMessageType::CompInfo_setJ9MethodExtra:
+      case MessageType::CompInfo_setJ9MethodExtra:
          {
          auto recv = client->getRecvData<J9Method *, uint64_t>();
          J9Method *method = std::get<0>(recv);
@@ -1912,7 +1912,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::CompInfo_isClassSpecial:
+      case MessageType::CompInfo_isClassSpecial:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
          bool val = clazz->classDepthAndFlags & (J9AccClassReferenceWeak      |
@@ -1922,62 +1922,62 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, val);
          }
          break;
-      case J9ServerMessageType::CompInfo_getJ9MethodStartPC:
+      case MessageType::CompInfo_getJ9MethodStartPC:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
          client->write(response, TR::CompilationInfo::getJ9MethodStartPC(method));
          }
          break;
 
-      case J9ServerMessageType::ClassEnv_classFlagsValue:
+      case MessageType::ClassEnv_classFlagsValue:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.classFlagsValue(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_classDepthOf:
+      case MessageType::ClassEnv_classDepthOf:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.classDepthOf(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_classInstanceSize:
+      case MessageType::ClassEnv_classInstanceSize:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.classInstanceSize(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_superClassesOf:
+      case MessageType::ClassEnv_superClassesOf:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.superClassesOf(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_iTableOf:
+      case MessageType::ClassEnv_iTableOf:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.iTableOf(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_iTableNext:
+      case MessageType::ClassEnv_iTableNext:
          {
          auto clazz = std::get<0>(client->getRecvData<J9ITable *>());
          client->write(response, TR::Compiler->cls.iTableNext(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_iTableRomClass:
+      case MessageType::ClassEnv_iTableRomClass:
          {
          auto clazz = std::get<0>(client->getRecvData<J9ITable *>());
          client->write(response, TR::Compiler->cls.iTableRomClass(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_getITable:
+      case MessageType::ClassEnv_getITable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.getITable(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_indexedSuperClassOf:
+      case MessageType::ClassEnv_indexedSuperClassOf:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, size_t>();
          auto clazz = std::get<0>(recv);
@@ -1985,13 +1985,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, TR::Compiler->cls.superClassesOf(clazz)[index]);
          }
          break;
-      case J9ServerMessageType::ClassEnv_classHasIllegalStaticFinalFieldModification:
+      case MessageType::ClassEnv_classHasIllegalStaticFinalFieldModification:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_getROMClassRefName:
+      case MessageType::ClassEnv_getROMClassRefName:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
          auto clazz = std::get<0>(recv);
@@ -2001,14 +2001,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, std::string((char *) classRefName, classRefLen));
          }
          break;
-      case J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache:
+      case MessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          uintptrj_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          client->write(response, classChainOffsetInSharedCache);
          }
          break;
-      case J9ServerMessageType::SharedCache_rememberClass:
+      case MessageType::SharedCache_rememberClass:
          {
          auto recv = client->getRecvData<J9Class *, bool>();
          auto clazz = std::get<0>(recv);
@@ -2016,7 +2016,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->sharedCache()->rememberClass(clazz, create));
          }
          break;
-      case J9ServerMessageType::SharedCache_addHint:
+      case MessageType::SharedCache_addHint:
          {
          auto recv = client->getRecvData<J9Method *, TR_SharedCacheHint>();
          auto method = std::get<0>(recv);
@@ -2026,7 +2026,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::SharedCache_storeSharedData:
+      case MessageType::SharedCache_storeSharedData:
          {
          auto recv = client->getRecvData<std::string, J9SharedDataDescriptor, std::string>();
          auto key = std::get<0>(recv);
@@ -2037,14 +2037,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, ptr);
          }
          break;
-      case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
+      case MessageType::runFEMacro_derefUintptrjPtr:
          {
          TR::VMAccessCriticalSection deref(fe);
          compInfoPT->updateLastLocalGCCounter();
          client->write(response, *std::get<0>(client->getRecvData<uintptrj_t*>()));
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
+      case MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
          {
          auto recv = client->getRecvData<uintptrj_t>();
          TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
@@ -2067,7 +2067,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, std::string(methodDescriptor, methodDescriptorLength));
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeCollectHandleNumArgsToCollect:
+      case MessageType::runFEMacro_invokeCollectHandleNumArgsToCollect:
          {
          auto recv = client->getRecvData<uintptrj_t*, bool>();
          uintptrj_t methodHandle = *std::get<0>(recv);
@@ -2084,7 +2084,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, collectArraySize, numArguments, collectionStart);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs:
+      case MessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs:
          {
          auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeGuardWithTestHandleNumGuardArgs(fe);
@@ -2096,7 +2096,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, numGuardArgs);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeExplicitCastHandleConvertArgs:
+      case MessageType::runFEMacro_invokeExplicitCastHandleConvertArgs:
          {
          auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeExplicitCastHandleConvertArgs(fe);
@@ -2112,7 +2112,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, std::string(methodDescriptor, methodDescriptorLength));
          }
          break;
-      case J9ServerMessageType::runFEMacro_targetTypeL:
+      case MessageType::runFEMacro_targetTypeL:
          {
          auto recv = client->getRecvData<uintptrj_t*, int32_t>();
          int32_t argIndex = std::get<1>(recv);
@@ -2129,7 +2129,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, parmClass);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeDirectHandleDirectCall:
+      case MessageType::runFEMacro_invokeDirectHandleDirectCall:
          {
          auto recv = client->getRecvData<uintptrj_t*, bool, bool>();
          TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
@@ -2158,7 +2158,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, j9method, vmSlot);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeSpreadHandleArrayArg:
+      case MessageType::runFEMacro_invokeSpreadHandleArrayArg:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fe);
@@ -2178,7 +2178,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, arrayJ9Class, spreadPosition, arity, leafClass, std::string(leafClassNameChars, leafClassNameLength), isPrimitive);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeSpreadHandle:
+      case MessageType::runFEMacro_invokeSpreadHandle:
          {
          auto recv = client->getRecvData<uintptrj_t*, bool>();
          uintptrj_t methodHandle = *std::get<0>(recv);
@@ -2197,7 +2197,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, numArguments, numNextArguments, spreadStart);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeInsertHandle:
+      case MessageType::runFEMacro_invokeInsertHandle:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeInsertHandle(fe);
@@ -2210,7 +2210,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, insertionIndex, numArguments, numValues);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeFoldHandle:
+      case MessageType::runFEMacro_invokeFoldHandle:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
@@ -2236,7 +2236,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, indices, foldPosition, numArgs);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeFoldHandle2:
+      case MessageType::runFEMacro_invokeFoldHandle2:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
@@ -2244,7 +2244,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, foldPosition);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeFinallyHandle:
+      case MessageType::runFEMacro_invokeFinallyHandle:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFinallyHandle(fe);
@@ -2260,7 +2260,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, numArgsPassToFinallyTarget, std::string(methodDescriptor, methodDescriptorLength));
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle:
+      case MessageType::runFEMacro_invokeFilterArgumentsHandle:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fe);
@@ -2287,7 +2287,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, startPos, nextSignatureString, filtersList);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle2:
+      case MessageType::runFEMacro_invokeFilterArgumentsHandle2:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);
@@ -2299,7 +2299,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, numArguments, startPos, numFilters);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeCatchHandle:
+      case MessageType::runFEMacro_invokeCatchHandle:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeCatchHandle(fe);
@@ -2312,7 +2312,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, numCatchArguments);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs:
+      case MessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeArgumentMoverHandlePermuteArgs(fe);
@@ -2327,7 +2327,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, std::string(nextHandleSignature, methodDescriptorLength));
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokePermuteHandlePermuteArgs:
+      case MessageType::runFEMacro_invokePermuteHandlePermuteArgs:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fe);
@@ -2341,7 +2341,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, permuteLength, argIndices);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeILGenMacros:
+      case MessageType::runFEMacro_invokeILGenMacros:
          {
          if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
             {
@@ -2361,7 +2361,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
 
-      case J9ServerMessageType::CHTable_getAllClassInfo:
+      case MessageType::CHTable_getAllClassInfo:
          {
          client->getRecvData<JITaaS::Void>();
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
@@ -2375,7 +2375,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, encoded);
          }
          break;
-      case J9ServerMessageType::CHTable_getClassInfoUpdates:
+      case MessageType::CHTable_getClassInfoUpdates:
          {
          client->getRecvData<JITaaS::Void>();
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
@@ -2383,7 +2383,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, encoded.first, encoded.second);
          }
          break;
-      case J9ServerMessageType::CHTable_clearReservable:
+      case MessageType::CHTable_clearReservable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
@@ -2391,7 +2391,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          info->setReservable(false);
          }
          break;
-      case J9ServerMessageType::IProfiler_searchForMethodSample:
+      case MessageType::IProfiler_searchForMethodSample:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock*>();
          auto method = std::get<0>(recv);
@@ -2399,18 +2399,18 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, iProfiler->serializeIProfilerMethodEntry(method));
          }
          break;
-      case J9ServerMessageType::IProfiler_profilingSample:
+      case MessageType::IProfiler_profilingSample:
          {
          handler_IProfiler_profilingSample(client, fe, comp);
          }
          break;
-      case J9ServerMessageType::IProfiler_getMaxCallCount:
+      case MessageType::IProfiler_getMaxCallCount:
          {
          TR_IProfiler *iProfiler = fe->getIProfiler();
          client->write(response, iProfiler->getMaxCallCount());
          }
          break;
-      case J9ServerMessageType::IProfiler_setCallCount:
+      case MessageType::IProfiler_setCallCount:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t, int32_t>();
          auto method = std::get<0>(recv);
@@ -2421,14 +2421,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(response, JITaaS::Void());
          }
          break;
-      case J9ServerMessageType::Recompilation_getExistingMethodInfo:
+      case MessageType::Recompilation_getExistingMethodInfo:
          {
          auto recomp = comp->getRecompilationInfo();
          auto methodInfo = recomp->getMethodInfo();
          client->write(response, *methodInfo);
          }
          break;
-      case J9ServerMessageType::Recompilation_getJittedBodyInfoFromPC:
+      case MessageType::Recompilation_getJittedBodyInfoFromPC:
          {
          void *startPC = std::get<0>(client->getRecvData<void *>());
          auto bodyInfo = J9::Recompilation::getJittedBodyInfoFromPC(startPC);
@@ -2568,7 +2568,7 @@ remoteCompile(
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
 
-         client->writeError(JITaaS::J9ServerMessageType::compilationAbort, 0 /* placeholder */);
+         client->writeError(JITaaS::MessageType::compilationAbort, 0 /* placeholder */);
          // We want to break the connection when the compilation failed midway
          // as a way to inform the server that this compilation has failed and it should abort
          client->~J9ClientStream();
@@ -2972,8 +2972,8 @@ void printJITaaSMsgStats(J9JITConfig *jitConfig)
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITaaS Server Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called TypeName\n");
-   const ::google::protobuf::EnumDescriptor *descriptor = JITaaS::J9ServerMessageType_descriptor();
-   for (int i = 0; i < JITaaS::J9ServerMessageType_ARRAYSIZE; ++i)
+   const ::google::protobuf::EnumDescriptor *descriptor = JITaaS::MessageType_descriptor();
+   for (int i = 0; i < JITaaS::MessageType_ARRAYSIZE; ++i)
       {
       if (serverMsgTypeCount[i] > 0)
          j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, serverMsgTypeCount[i], descriptor->FindValueByNumber(i)->name().c_str());
@@ -3085,7 +3085,7 @@ ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const 
    bool updateUnloadedClasses = true;
    if (_requestUnloadedClasses)
       {
-      stream->write(JITaaS::J9ServerMessageType::getUnloadedClassRanges, JITaaS::Void());
+      stream->write(JITaaS::MessageType::getUnloadedClassRanges, JITaaS::Void());
 
       auto response = stream->read<std::vector<TR_AddressRange>, int32_t>();
       auto unloadedClassRanges = std::get<0>(response);
@@ -3337,7 +3337,7 @@ ClientSessionData::getOrCacheVMInfo(JITaaS::J9ServerStream *stream)
    {
    if (!_vmInfo)
       {
-      stream->write(JITaaS::J9ServerMessageType::VM_getVMInfo, JITaaS::Void());
+      stream->write(JITaaS::MessageType::VM_getVMInfo, JITaaS::Void());
       _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(stream->read<VMInfo>()));
       }
    return _vmInfo;
@@ -3702,7 +3702,7 @@ JITaaSHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentM
 J9ROMClass *
 JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple)
    {
-   stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   stream->write(JITaaS::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    const auto &recv = stream->read<ClassInfoTuple>();
    *classInfoTuple = std::get<0>(recv);
    return romClassFromString(std::get<0>(*classInfoTuple), trMemory->trPersistentMemory());
@@ -3727,7 +3727,7 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
          return true;
          }
       }
-   stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   stream->write(JITaaS::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    const auto &recv = stream->read<ClassInfoTuple>();
    classInfoTuple = std::get<0>(recv);
 
@@ -3766,7 +3766,7 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
          return true;
          }
       }
-   stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   stream->write(JITaaS::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    const auto &recv = stream->read<ClassInfoTuple>();
    classInfoTuple = std::get<0>(recv);
 
@@ -4167,7 +4167,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (!initialized)
          {
          // Process the CHTable updates in order
-         stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
+         stream->write(JITaaS::MessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
          auto recv = stream->read<std::string, std::string>();
          const std::string &chtableUnloads = std::get<0>(recv);
          const std::string &chtableMods = std::get<1>(recv);
@@ -4302,7 +4302,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
-      if (e.getType() == JITaaS::J9ServerMessageType::clientTerminate)
+      if (e.getType() == JITaaS::MessageType::clientTerminate)
          {
          deleteClientSessionData(e.getClientId(), compInfo, compThread);
          }
