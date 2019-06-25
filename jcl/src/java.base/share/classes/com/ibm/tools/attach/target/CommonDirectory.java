@@ -277,11 +277,6 @@ public abstract class CommonDirectory {
 		return IPC.notifyVm(getCommonDirFileObject().getAbsolutePath(), MASTER_NOTIFIER, numberOfTargets, global);
 	}
 
-	// TODO remove when IBM SDK updated
-	public static int notifyVm(int numberOfTargets) {		
-		return notifyVm(numberOfTargets, true);
-	}
-	
 	/**
 	 * Open the semaphore, decrement it without blocking to it, and close it
 	 * @param numberOfTargets number of times to decrement to the semaphore
@@ -290,11 +285,6 @@ public abstract class CommonDirectory {
 	 */
 	public static int cancelNotify(int numberOfTargets, boolean global) {
 		return IPC.cancelNotify(getCommonDirPath(), MASTER_NOTIFIER, numberOfTargets, global);
-	}
-
-	// TODO remove when IBM SDK updated
-	public static int cancelNotify(int numberOfTargets) {
-		return cancelNotify(numberOfTargets, true);
 	}
 
 	/**
