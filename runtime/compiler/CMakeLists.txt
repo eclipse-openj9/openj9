@@ -20,6 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+include(CheckCXXCompilerFlag)
 # This CMakeLists is included by the VM CMake lists, and works after composition
 # has occurred.
 #
@@ -47,6 +48,10 @@ if(OMR_ARCH_X86)
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
 	)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
+endif()
+
+if(OMR_TOOLCONFIG STREQUAL "gnu")
+	check_cxx_compiler_flag("-static-libstdc++" ALLOWS_STATIC_LIBCPP)
 endif()
 
 # On windows exceptions are controlled via a the preprocessor define _HAS_EXCEPTIONS
@@ -334,6 +339,12 @@ if(OMR_OS_LINUX)
 	target_link_libraries(j9jit PRIVATE m)
 elseif(OMR_OS_WINDOWS)
 	target_sources(j9jit PRIVATE build/scripts/j9jit.def)
+endif()
+if((OMR_TOOLCONFIG STREQUAL "gnu") AND ALLOWS_STATIC_LIBCPP)
+	# We assume that if the compiler allows -static-libstdc++
+	# it will also allow -static-libgcc
+	set_property(TARGET j9jit APPEND_STRING PROPERTY
+		LINK_FLAGS " -static-libgcc -static-libstdc++")
 endif()
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
 
