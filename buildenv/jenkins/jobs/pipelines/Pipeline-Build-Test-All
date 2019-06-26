@@ -191,6 +191,11 @@ try {
                     def BUILD_NODES = get_node_labels(BUILD_NODE_LABELS, BUILD_SPECS.keySet())
                     def TEST_NODES = get_node_labels(TEST_NODE_LABELS, BUILD_SPECS.keySet())
 
+                    // Stash DSL file so we can quickly load it on master
+                    if (AUTOMATIC_GENERATION != 'false') {
+                        stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
+                    }
+
                     BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
                         if (VARIABLES."${SPEC}") {
                             SDK_VERSIONS.each { SDK_VERSION ->
@@ -223,11 +228,15 @@ try {
                                     ADOPTOPENJDK_BRANCH = ADOPTOPENJDK_MAP.get(SDK_VERSION).get('branch')
                                 }
 
-                                if (AUTOMATIC_GENERATION != 'false'){
-                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
+                                builds["${job_name}"] = {
+                                    if (AUTOMATIC_GENERATION != 'false') {
+                                        node('master') {
+                                            unstash 'DSL'
+                                            variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
+                                        }
+                                    }
+                                    build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION)
                                 }
-
-                                builds["${job_name}"] = { build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION) }
                             }
                         }
                     }
