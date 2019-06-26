@@ -251,8 +251,6 @@ int32_t J9::Options::_jProfilingEnablementSampleThreshold = 10000;
 
 bool J9::Options::_aggressiveLockReservation = false;
 
-uintptr_t J9::Options::_mandatoryCodeCacheAddress = 0;
-
 uint32_t J9::Options::_compilationSequenceNumber = 0;
 
 //************************************************************************
@@ -884,8 +882,6 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_lowerBoundNumProcForScaling, 0, "F%d", NOT_IN_SUBSET},
    {"lowVirtualMemoryMBThreshold=","M<nnn>\tThreshold when we declare we are running low on virtual memory. Use 0 to disable the feature",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_lowVirtualMemoryMBThreshold, 0, "F%d", NOT_IN_SUBSET},
-   {"mandatoryCodeCacheAddress=", "M<nnn>\tforce the allocation of code cache repository at specified address. Use hexa without 0x",
-        TR::Options::setStaticHexadecimal, (uintptr_t)&TR::Options::_mandatoryCodeCacheAddress, 0, "F%x", NOT_IN_SUBSET },
    {"maxCheckcastProfiledClassTests=", "R<nnn>\tnumber inlined profiled classes for profiledclass test in checkcast/instanceof",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_maxCheckcastProfiledClassTests, 0, "%d", NOT_IN_SUBSET},
    {"maxOnsiteCacheSlotForInstanceOf=", "R<nnn>\tnumber of onsite cache slots for instanceOf",

@@ -302,8 +302,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _aggressiveLockReservation;
 
-   static uintptr_t _mandatoryCodeCacheAddress;
-
    static uint32_t _compilationSequenceNumber;
 
    static void  printPID();
