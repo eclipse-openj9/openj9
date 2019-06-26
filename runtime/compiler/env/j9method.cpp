@@ -7578,6 +7578,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          //
          char *targetSig = methodDescriptor+1; // skip parenthesis
          int firstArgSlot = _methodSymbol->isStatic()? 0 : 1;
+         traceMsg(comp(), "sourceSig %s targetSig %.*s\n", sourceSig, methodDescriptorLength, methodDescriptor);
+
          for (
             int32_t argIndex = 0;
             sourceSig[0] != ')';
@@ -7642,30 +7644,43 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             if (targetType[0] == 'L')
                {
                uintptrj_t methodHandle;
-               uintptrj_t arguments;
-               TR_OpaqueClassBlock *parmClass;
+               uintptrj_t sourceArguments;
+               TR_OpaqueClassBlock *sourceParmClass;
+               uintptrj_t targetArguments;
+               TR_OpaqueClassBlock *targetParmClass;
 
                   {
                   TR::VMAccessCriticalSection targetTypeL(fej9);
                   // We've already loaded the handle once, but must reload it because we released VM access in between.
                   methodHandle = *thunkDetails->getHandleRef();
-                  arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
+                  targetArguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
                      methodHandle,
                      "next",             "Ljava/lang/invoke/MethodHandle;"),
                      "type",             "Ljava/lang/invoke/MethodType;"),
                      "arguments",        "[Ljava/lang/Class;");
-                  parmClass = (TR_OpaqueClassBlock*)(intptrj_t)fej9->getInt64Field(fej9->getReferenceElement(arguments, argIndex),
+                  targetParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fej9->getInt64Field(fej9->getReferenceElement(targetArguments, argIndex),
+                                                                                   "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
+                  // Load callsite type and check if two types are compatible
+                  sourceArguments = fej9->getReferenceField(fej9->getReferenceField(
+                     methodHandle,
+                     "type",             "Ljava/lang/invoke/MethodType;"),
+                     "arguments",        "[Ljava/lang/Class;");
+                  sourceParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fej9->getInt64Field(fej9->getReferenceElement(sourceArguments, argIndex),
                                                                                    "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
                   }
 
-               if (fej9->isInterfaceClass(parmClass) && isExplicit)
+               if (fej9->isInterfaceClass(targetParmClass) && isExplicit)
                   {
                   // explicitCastArguments specifies that we must not checkcast interfaces
+                  }
+               else if (sourceParmClass == targetParmClass || fej9->isInstanceOf(sourceParmClass, targetParmClass, false /*objectTypeIsFixed*/, true /*castTypeIsFixed*/) == TR_yes)
+                  {
+                  traceMsg(comp(), "source type and target type are compatible, omit checkcast for arg %d\n", argIndex);
                   }
                else
                   {
                   push(argValue);
-                  loadClassObject(parmClass);
+                  loadClassObject(targetParmClass);
                   genCheckCast();
                   pop();
                   }
