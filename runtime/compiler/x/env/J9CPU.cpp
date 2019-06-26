@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,8 @@
 #include "env/VMJ9.h"
 #include "x/runtime/X86Runtime.hpp"
 #include "env/JitConfig.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 
 // This is a workaround to avoid J9_PROJECT_SPECIFIC macros in x/env/OMRCPU.cpp
 // Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
@@ -75,6 +77,11 @@ CPU::hasPopulationCountInstruction()
 TR_ProcessorFeatureFlags
 CPU::getProcessorFeatureFlags()
    {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorFeatureFlags;
+      }
    TR_ProcessorFeatureFlags processorFeatureFlags = { {self()->getX86ProcessorFeatureFlags(), self()->getX86ProcessorFeatureFlags2(), self()->getX86ProcessorFeatureFlags8()} };
    return processorFeatureFlags;
    }
@@ -89,6 +96,39 @@ CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags proc
          return false;
       }
    return true;
+   }
+
+uint32_t
+CPU::getX86ProcessorFeatureFlags()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorFeatureFlags.featureFlags[0];
+      }
+   return self()->queryX86TargetCPUID()->_featureFlags;
+   }
+
+uint32_t
+CPU::getX86ProcessorFeatureFlags2()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorFeatureFlags.featureFlags[1];
+      }
+   return self()->queryX86TargetCPUID()->_featureFlags2;
+   }
+
+uint32_t
+CPU::getX86ProcessorFeatureFlags8()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorFeatureFlags.featureFlags[2];
+      }
+   return self()->queryX86TargetCPUID()->_featureFlags8;
    }
 
 }

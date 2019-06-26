@@ -28,6 +28,7 @@
 #include "rpc/J9Client.hpp"
 #include "env/PersistentCollections.hpp"
 #include "env/j9methodServer.hpp"
+#include "env/J9CPU.hpp"
 
 class TR_PersistentClassInfo;
 class TR_IPBytecodeHashTableEntry;
@@ -155,6 +156,7 @@ class ClientSessionData
       MM_GCReadBarrierType _readBarrierType;
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
+      TR_ProcessorFeatureFlags _processorFeatureFlags;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
