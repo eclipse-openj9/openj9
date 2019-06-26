@@ -26,6 +26,8 @@ package openj9.tools.attach.diagnostics.base;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Comparator;
 import java.util.Properties;
 import com.ibm.tools.attach.target.IPC;
@@ -57,8 +59,15 @@ public class DiagnosticProperties {
 	/**
 	 * For development use only
 	 */
-	public static boolean isDebug = Boolean.getBoolean(DEBUG_PROPERTY);
+	public static boolean isDebug;
 
+	static {
+		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+			isDebug = Boolean.getBoolean(DEBUG_PROPERTY);
+			return null;
+		});
+	}
+	
 	/**
 	 * @param props Properties object received from the target.
 	 */
