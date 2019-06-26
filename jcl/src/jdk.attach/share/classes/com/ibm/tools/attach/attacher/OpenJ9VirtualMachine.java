@@ -33,6 +33,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -70,15 +74,12 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 * Allow enough for ~100 40-character lines.
 	 */
 	private static final int ATTACH_CONNECTED_MESSAGE_LENGTH_LIMIT = 4000;
-	/*[PR Jazz 35291 Remove socket timeout after attachment established]*/
-	static final String COM_IBM_TOOLS_ATTACH_TIMEOUT = "com.ibm.tools.attach.timeout"; //$NON-NLS-1$
-	static final String COM_IBM_TOOLS_COMMAND_TIMEOUT = "com.ibm.tools.attach.command_timeout"; //$NON-NLS-1$
 	/* The units for timeouts are milliseconds, Set to 0 for no timeout. */	
 	private static final int DEFAULT_ATTACH_TIMEOUT = 120000;	/* should be ~2* the TCP timeout, i.e. /proc/sys/net/ipv4/tcp_fin_timeout on Linux */
 	private static final int DEFAULT_COMMAND_TIMEOUT = 0;
 
-	private static int MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger(COM_IBM_TOOLS_ATTACH_TIMEOUT, DEFAULT_ATTACH_TIMEOUT).intValue();
-	private static int COMMAND_TIMEOUT = Integer.getInteger(COM_IBM_TOOLS_COMMAND_TIMEOUT, DEFAULT_COMMAND_TIMEOUT).intValue();
+	private static int MAXIMUM_ATTACH_TIMEOUT;
+	private static int COMMAND_TIMEOUT;
 	
 	private static final String INSTRUMENT_LIBRARY = "instrument"; //$NON-NLS-1$
 	private OutputStream commandStream;
@@ -91,6 +92,15 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	private FileLock[] targetLocks;
 	private ServerSocket targetServer;
 	private Socket targetSocket;
+	
+	static {
+		PrivilegedAction<Object> action = () -> {
+			MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.timeout", DEFAULT_ATTACH_TIMEOUT).intValue(); //$NON-NLS-1$
+			COMMAND_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.command_timeout", DEFAULT_COMMAND_TIMEOUT).intValue(); //$NON-NLS-1$
+			return null;
+		};
+		AccessController.doPrivileged(action);
+	}
 
 	/**
 	 * @param provider
@@ -117,6 +127,26 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 *             if the descriptor is null the target does not respond.
 	 */
 	void attachTarget() throws IOException, AttachNotSupportedException {
+		PrivilegedExceptionAction<Object> action = () -> {attachTargetImpl(); return null;};
+		try {
+			AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof AttachNotSupportedException) {
+				throw (AttachNotSupportedException) cause;
+			} else if (cause instanceof IOException) {
+				throw (IOException) cause;
+			} else if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else if (cause instanceof Error) {
+				throw (Error) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		}
+	}
+
+	private void attachTargetImpl() throws AttachNotSupportedException, IOException {
 		if (null == descriptor) {
 			/*[MSG "K0531", "target not found"]*/
 			throw new AttachNotSupportedException(getString("K0531")); //$NON-NLS-1$
@@ -365,24 +395,26 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	}
 
 	/**
-	 * parse the status value from the end of the response string: this will be a numeric string at the end of the string.
+	 * parse the status value from the end of the response string: this will be a
+	 * numeric string at the end of the string.
+	 * 
 	 * @param response
-	 * @return Integer value of status, or null if the string does not end in a number
+	 * @return Integer value of status, or null if the string does not end in a
+	 *         number
 	 */
 	private static Integer getStatusValue(String response) {
-		Pattern rvPattern = Pattern.compile("(-?\\d+)\\s*$");  //$NON-NLS-1$
+		Pattern rvPattern = Pattern.compile("(-?\\d+)\\s*$"); //$NON-NLS-1$
 		Matcher rvMatcher = rvPattern.matcher(response);
+		Integer ret = null;
 		if (rvMatcher.find()) {
 			String status = rvMatcher.group(1);
 			try {
-				return Integer.getInteger(status);
+				ret = Integer.valueOf(status);
 			} catch (NumberFormatException e) {
 				IPC.logMessage("Error parsing response", response); //$NON-NLS-1$
-				return null;
 			}
-		} else {
-			return null;
 		}
+		return ret;
 	}
 
 
@@ -567,11 +599,30 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 * Generate a text description of a target JVM's heap, including the number and
 	 * sizes of instances of each class.
 	 * 
-	 * @param opts String options: "-live" for live object only, or "-all" for all
-	 *             objects. Default is "live".
+	 * @param opts
+	 *            String options: "-live" for live object only, or "-all" for all
+	 *            objects. Default is "live".
 	 * @return byte stream containing the UTF-8 text of the formatted output
 	 */
 	public InputStream heapHisto(Object... opts) {
+		InputStream ret = null;
+		PrivilegedExceptionAction<InputStream> action = () -> heapHistoImpl(opts);
+		try {
+			ret = AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else if (cause instanceof Error) {
+				throw (Error) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		}
+		return ret;
+	}
+
+	private InputStream heapHistoImpl(Object... opts) {
 		String responseString = null;
 		IPC.logMessage("heapHisto called"); //$NON-NLS-1$
 		boolean live = true;
