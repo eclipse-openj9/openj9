@@ -1055,7 +1055,17 @@ obj:;
 	VMINLINE j9object_t
 	allocateIndexableObject(REGISTER_ARGS_LIST, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
-		j9object_t instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		j9object_t instance = NULL;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
+			instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, (U_32)size, initializeSlots, memoryBarrier, sizeCheck);
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size, initializeSlots, memoryBarrier, sizeCheck);
+		}
+
 		if (NULL == instance) {
 			updateVMStruct(REGISTER_ARGS);
 			instance = _vm->memoryManagerFunctions->J9AllocateIndexableObject(_currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
@@ -3095,7 +3105,16 @@ done:
 		}
 		if (flags & J9AccClassArray) {
 			U_32 size = J9INDEXABLEOBJECT_SIZE(_currentThread, original);
-			copy = _objectAllocate.inlineAllocateIndexableObject(_currentThread, objectClass, size, false, false, false);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_IS_J9CLASS_FLATTENED(objectClass)) {
+				copy = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, objectClass, size, false, false, false);
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			{
+				copy = _objectAllocate.inlineAllocateIndexableObject(_currentThread, objectClass, size, false, false, false);
+			}
+
 			if (NULL == copy) {
 				pushObjectInSpecialFrame(REGISTER_ARGS, original);
 				updateVMStruct(REGISTER_ARGS);
@@ -7469,7 +7488,16 @@ retry:
 		if (J9_EXPECTED(NULL != resolvedClass)) {
 			J9Class *arrayClass = resolvedClass->arrayClass;
 			if (J9_EXPECTED(NULL != arrayClass)) {
-				j9object_t instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size);
+				j9object_t instance = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
+					instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, (U_32)size);
+				} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+				{
+					instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size);
+				}
+
 				if (NULL == instance) {
 					updateVMStruct(REGISTER_ARGS);
 					instance = _vm->memoryManagerFunctions->J9AllocateIndexableObject(_currentThread, arrayClass, (U_32)size, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
