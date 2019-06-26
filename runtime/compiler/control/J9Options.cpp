@@ -1849,6 +1849,14 @@ J9::Options::fePreProcess(void * base)
       {
       self()->setOption(TR_InlineVeryLargeCompiledMethods);
       }
+
+   static bool enableZ15 = feGetEnv("TR_EnableZ15") != NULL;
+
+   if (!enableZ15)
+      {
+      // Disable zNext support until it has been gone through several rounds of functional stress testing
+      self()->setOption(TR_DisableZ15);
+      }
 #endif
 
    // On big machines we can afford to spend more time compiling
