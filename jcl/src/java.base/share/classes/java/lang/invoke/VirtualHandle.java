@@ -45,6 +45,9 @@ final class VirtualHandle extends IndirectHandle {
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
+		if (vmSlot == 0) {
+			throw new InternalError("vmSlot should not be null in VirtualHandle");
+		}
 	}
 	
 	VirtualHandle(DirectHandle nonVirtualHandle) throws IllegalAccessException {
@@ -56,10 +59,16 @@ final class VirtualHandle extends IndirectHandle {
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
+		if (vmSlot == 0) {
+			throw new InternalError("vmSlot should not be null in VirtualHandle");
+		}
 	}
 	
 	VirtualHandle(VirtualHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
+		if (vmSlot == 0) {
+			throw new InternalError("vmSlot should not be null in VirtualHandle");
+		}
 	}
 
 	/// {{{ JIT support
