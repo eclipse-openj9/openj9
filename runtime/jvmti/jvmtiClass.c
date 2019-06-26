@@ -2623,7 +2623,7 @@ jvmtiGetConstantPool_addMethodHandle(jvmtiGcp_translation *translation, UDATA cp
 		return JVMTI_ERROR_OUT_OF_MEMORY;
 	}
 
-	translation->totalSize += 5;
+	translation->totalSize += 4;
 	translation->cp[*sunCpIndex] = htEntry;
 	(*sunCpIndex)++;
 
