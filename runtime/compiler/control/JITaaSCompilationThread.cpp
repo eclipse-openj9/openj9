@@ -271,7 +271,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case MessageType::getUnloadedClassRanges:
          {
          auto unloadedClasses = comp->getPersistentInfo()->getUnloadedClassAddresses();
-         std::vector<TR_AddressRange> ranges(unloadedClasses->getNumberOfRanges());
+         std::vector<TR_AddressRange> ranges;
+         ranges.reserve(unloadedClasses->getNumberOfRanges());
             {
             OMR::CriticalSection getAddressSetRanges(assumptionTableMutex);
             unloadedClasses->getRanges(ranges);
