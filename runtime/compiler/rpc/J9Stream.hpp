@@ -175,7 +175,7 @@ protected:
 
    int _connfd; // connection file descriptor
 
-   // re-usable message objects
+   // reusable message objects
    J9ServerMessage _sMsg;
    J9ClientMessage _cMsg;
 

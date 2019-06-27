@@ -94,8 +94,6 @@ public:
       return getArgs<T...>(_sMsg.mutable_data());
       }
 
-   void shutdown();
-
    template <typename ...T>
    void writeError(MessageType type, T... args)
       {

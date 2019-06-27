@@ -65,12 +65,6 @@ J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
    }
 #endif
 
-// J9Stream destructor is used instead
-void
-J9ServerStream::finish()
-   {
-   }
-
 void
 J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
                                  std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
@@ -81,7 +75,6 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
       {
       write(MessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
             classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr, resolvedMethodsForPersistIprofileInfo);
-      finish();
       }
    catch (std::exception &e)
       {

@@ -277,11 +277,4 @@ J9ClientStream::waitForFinish()
    // any error would have thrown earlier
    return Status::OK;
    }
-
-void
-J9ClientStream::shutdown()
-   {
-   // destructor is used instead
-   }
-
 };

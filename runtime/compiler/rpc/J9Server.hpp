@@ -114,8 +114,6 @@ public:
    static int _numConnectionsClosed;
 
 private:
-   void finish();
-
    uint32_t _msTimeout;
    uint64_t _clientId;
    };
@@ -137,10 +135,6 @@ public:
       }
 
    void buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info);
-
-private:
-   void serve(J9BaseCompileDispatcher *compiler, uint32_t timeout);
-   bool waitOnQueue();
    };
 
 }
