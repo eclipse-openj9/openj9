@@ -62,6 +62,7 @@
 #include "j9protos.h"
 #include "jni.h"
 #include "j9port.h"
+#include "jvmimageport.h"
 #include "omrthread.h"
 #include "j9consts.h"
 #include "j9dump.h"
@@ -2092,10 +2093,10 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 
 			/* TODO: Load if Warm run */
 			if (IS_COLD_RUN(vm)) {
-				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(IMAGEPORT_FROM_JAVAVM(vm))))) {
+				if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(IMAGE_OMRPORT_FROM_JAVAVM(vm))))) {
 					goto _error;
 				}
-				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(IMAGEPORT_FROM_JAVAVM(vm))))) {
+				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(IMAGE_OMRPORT_FROM_JAVAVM(vm))))) {
 					goto _error;
 				}
 			} else {

@@ -34,15 +34,6 @@ extern "C" {
 /*
 * Allocate memory in heap image
 * 
-* @param size[in] size to allocate
-*
-* @return pointer to allocated memory on success, NULL on failure 
-*/
-void* mem_allocate_memory(J9JavaVM *javaVM, uintptr_t byteAmount);
-
-/*
-* Allocate memory in heap image
-* 
 * @param portLibrary[in] the default port library
 * @param byteAmount[in] size to allocate
 * @param callSite[in] location memory alloc is called from
@@ -51,14 +42,6 @@ void* mem_allocate_memory(J9JavaVM *javaVM, uintptr_t byteAmount);
 * @return pointer to allocated memory on success, NULL on failure 
 */
 void* image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category);
-
-/*
-* Free memory in heap image
-*
-* @param javaVM[in] the java vm
-* @param memoryPointer[in] pointer to address for free
-*/
-void mem_free_memory(J9JavaVM *javaVM, void *memoryPointer);
 
 /*
 * Free memory in heap image

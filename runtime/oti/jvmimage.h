@@ -26,13 +26,6 @@
 #define IS_WARM_RUN(javaVM) J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_RAMSTATE_WARM_RUN)
 #define IS_COLD_RUN(javaVM) J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_RAMSTATE_COLD_RUN)
 
-#define JVMIMAGEPORT_FROM_PORT(_portLibrary) ((JVMImagePortLibrary *)(_portLibrary))
-#define JVMIMAGEPORT_FROM_JAVAVM(javaVM) ((JVMImagePortLibrary *)(javaVM->jvmImagePortLibrary))
-#define IMAGEPORT_FROM_JAVAVM(javaVM) ((OMRPortLibrary *)(javaVM->jvmImagePortLibrary))
-
-#define IMAGE_ACCESS_FROM_PORT(_portLibrary) JVMImage *jvmImage = (JVMImage *)(JVMIMAGEPORT_FROM_PORT(_portLibrary)->jvmImage)
-#define IMAGE_ACCESS_FROM_JAVAVM(javaVM) JVMImage *jvmImage = (JVMImage *)(JVMIMAGEPORT_FROM_JAVAVM(javaVM)->jvmImage)
-
 #define INITIAL_CLASSLOADER_TABLE_SIZE 3
 #define INITIAL_CLASS_TABLE_SIZE 10
 #define INITIAL_CLASSPATH_TABLE_SIZE 10
@@ -44,18 +37,8 @@ enum ImageRC {
 };
 
 /* forward struct declarations */
-struct JVMImagePortLibrary;
 struct ImageTableHeader;
 struct JVMImageHeader;
-
-/*
-* OMR port library wrapper 
-* JVMImage instance to access image functions
-*/
-typedef struct JVMImagePortLibrary {
-	OMRPortLibrary portLibrary;
-	void *jvmImage;
-} JVMImagePortLibrary;
 
 /*
  * allows us to dump this struct into file and reload easier

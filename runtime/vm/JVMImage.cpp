@@ -204,7 +204,7 @@ JVMImage::subAllocateMemory(uintptr_t byteAmount)
 
 	omrthread_monitor_enter(_jvmImageMonitor);
 
-	OMRPortLibrary *portLibrary = IMAGEPORT_FROM_JAVAVM(_vm);
+	OMRPortLibrary *portLibrary = IMAGE_OMRPORT_FROM_JAVAVM(_vm);
 	void *memStart = portLibrary->heap_allocate(portLibrary, _heap, byteAmount);	
 	/* image memory is not large enough and needs to be reallocated */
 	if (NULL == memStart) {
@@ -224,7 +224,7 @@ JVMImage::reallocateMemory(void *address, uintptr_t byteAmount)
 {
 	omrthread_monitor_enter(_jvmImageMonitor);
 
-	OMRPortLibrary *portLibrary = IMAGEPORT_FROM_JAVAVM(_vm);
+	OMRPortLibrary *portLibrary = IMAGE_OMRPORT_FROM_JAVAVM(_vm);
 	void *memStart = portLibrary->heap_reallocate(portLibrary, _heap, address, byteAmount);
 	/* image memory is not large enough and needs to be reallocated */
 	if (NULL == memStart) {
@@ -242,7 +242,7 @@ JVMImage::freeSubAllocatedMemory(void *address)
 {
 	omrthread_monitor_enter(_jvmImageMonitor);
 
-	OMRPortLibrary *portLibrary = IMAGEPORT_FROM_JAVAVM(_vm);
+	OMRPortLibrary *portLibrary = IMAGE_OMRPORT_FROM_JAVAVM(_vm);
 	portLibrary->heap_free(portLibrary, _heap, address);
 
 	omrthread_monitor_exit(_jvmImageMonitor);
@@ -320,7 +320,7 @@ JVMImage::readImageFromFile(void)
 {
 	Trc_VM_ReadImageFromFile_Entry(_heap, _dumpFileName);
 
-	OMRPortLibrary *portLibrary = IMAGEPORT_FROM_JAVAVM(_vm);
+	OMRPortLibrary *portLibrary = IMAGE_OMRPORT_FROM_JAVAVM(_vm);
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
 	intptr_t fileDescriptor = omrfile_open(_dumpFileName, EsOpenRead, 0444);
@@ -353,7 +353,7 @@ JVMImage::writeImageToFile(void)
 {
 	Trc_VM_WriteImageToFile_Entry(_heap, _dumpFileName);
 
-	OMRPortLibrary *portLibrary = IMAGEPORT_FROM_JAVAVM(_vm);
+	OMRPortLibrary *portLibrary = IMAGE_OMRPORT_FROM_JAVAVM(_vm);
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
 	omrthread_monitor_enter(_jvmImageMonitor);
@@ -505,22 +505,10 @@ image_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmou
 	return pointer;
 }
 
-extern "C" void *
-mem_allocate_memory(J9JavaVM *javaVM, uintptr_t byteAmount)
-{
-	return image_mem_allocate_memory(IMAGEPORT_FROM_JAVAVM(javaVM), byteAmount, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES);
-}
-
 extern "C" void
 image_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 {
 	IMAGE_ACCESS_FROM_PORT(portLibrary);
 
 	jvmImage->freeSubAllocatedMemory(memoryPointer);
-}
-
-extern "C" void
-mem_free_memory(J9JavaVM *javaVM, void *memoryPointer)
-{
-	image_mem_free_memory(IMAGEPORT_FROM_JAVAVM(javaVM), memoryPointer);
 }

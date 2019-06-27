@@ -27,6 +27,7 @@
 #define JVMIMAGE_HPP_
 
 #include "j9.h"
+#include "jvmimageport.h"
 #include "j9comp.h"
 #include "j9protos.h"
 #include "ut_j9vm.h"

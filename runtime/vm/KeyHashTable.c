@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include "j9.h"
+#include "jvmimageport.h"
 #include "j9consts.h"
 #include "j9protos.h"
 #include "vm_internal.h"
@@ -271,7 +272,7 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 
 	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 	if (IS_COLD_RUN(javaVM)) {
-		privatePortLibrary = IMAGEPORT_FROM_JAVAVM(javaVM);
+		privatePortLibrary = IMAGE_OMRPORT_FROM_JAVAVM(javaVM);
 	}
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(KeyHashTableClassEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
 }
@@ -552,7 +553,7 @@ hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize)
 
 	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(javaVM->portLibrary);
 	if (IS_COLD_RUN(javaVM)) {
-		privatePortLibrary = IMAGEPORT_FROM_JAVAVM(javaVM);
+		privatePortLibrary = IMAGE_OMRPORT_FROM_JAVAVM(javaVM);
 	}
 	return hashTableNew(privatePortLibrary, J9_GET_CALLSITE(), initialSize, sizeof(J9ClassLocation), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classLocationHashFn, classLocationHashEqualFn, NULL, javaVM);
 }
