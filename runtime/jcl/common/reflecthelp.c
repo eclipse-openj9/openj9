@@ -303,7 +303,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 	if (NULL != executableID) {
 		PORT_ACCESS_FROM_VMC(vmThread);
 		J9Method *ramMethod = executableID->method;
-		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+		J9ROMMethod * romMethod = getOriginalROMMethod(ramMethod);
 		U_8 numberOfParameters = computeArgCount(romMethod);
 		J9MethodParametersData * parametersData = getMethodParametersFromROMMethod(romMethod);
 		U_8 index = 0;

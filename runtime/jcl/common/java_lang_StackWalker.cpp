@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2017, 2019 IBM Corp. and others
  *
@@ -164,7 +163,7 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 		if (NULL == frame) {
 			vmFuncs->setHeapOutOfMemoryError(vmThread);
 		} else {
-			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+			J9ROMMethod *romMethod = getOriginalROMMethod(walkState->method);
 			J9Class *ramClass = J9_CLASS_FROM_METHOD(walkState->method);
 			J9ROMClass *romClass = ramClass->romClass;
 			J9ClassLoader* classLoader = ramClass->classLoader;
@@ -176,7 +175,7 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 
 			/* set the class object if requested */
 			if (J9_ARE_ANY_BITS_SET((UDATA) walkState->userData1, RETAIN_CLASS_REFERENCE)) {
-				j9object_t classObject =J9VM_J9CLASS_TO_HEAPCLASS(ramClass);
+				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(ramClass);
 				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_DECLARINGCLASS(vmThread, frame, classObject);
 			}
 
