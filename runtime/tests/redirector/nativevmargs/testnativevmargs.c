@@ -84,6 +84,14 @@ int main(int argc, char **argv)
 	}
 	fflush(stdout);
 
+#if defined(J9ZOS390)
+	iconv_init();
+	/* Translate EBCDIC argv strings to ascii */
+	for (i = 0; i < argc; i++) {
+		argv[i] = e2a_string(argv[i]);
+	}
+#endif /* defined(J9ZOS390) */
+
 	jvmPath = argv[1];
 	optionCount = argc - 2;
 
@@ -173,6 +181,12 @@ fail:
 	if (NULL != args) {
 		free(args);
 	}
+
+#if defined(J9ZOS390)
+	for (i = 0; i < argc; i++) {
+		free(argv[i]);
+	}
+#endif /* defined(J9ZOS390) */
 
 	fprintf(stdout, "[MSG] Test nativevmargs concluded with code: %d\n", rc);
 	fflush(stdout);
