@@ -42,16 +42,16 @@
 namespace JITaaS
 {
 
-int J9ClientStream::_numConnectionsOpened = 0;
-int J9ClientStream::_numConnectionsClosed = 0;
-int J9ClientStream::_incompatibilityCount = 0;
-uint64_t J9ClientStream::_incompatibleStartTime = 0;
-const uint64_t J9ClientStream::RETRY_COMPATIBILITY_INTERVAL = 10000; //ms
-const int J9ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
+int ClientStream::_numConnectionsOpened = 0;
+int ClientStream::_numConnectionsClosed = 0;
+int ClientStream::_incompatibilityCount = 0;
+uint64_t ClientStream::_incompatibleStartTime = 0;
+const uint64_t ClientStream::RETRY_COMPATIBILITY_INTERVAL = 10000; //ms
+const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
-void J9ClientStream::static_init(TR::PersistentInfo *info)
+void ClientStream::static_init(TR::PersistentInfo *info)
    {
 #if defined(JITAAS_ENABLE_SSL)
    if (!J9Stream::useSSL(info))
@@ -126,7 +126,7 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
    }
 
 #if defined(JITAAS_ENABLE_SSL)
-SSL_CTX *J9ClientStream::_sslCtx;
+SSL_CTX *ClientStream::_sslCtx;
 #endif
 
 int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
@@ -253,7 +253,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    return bio;
    }
 
-J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
+ClientStream::ClientStream(TR::PersistentInfo *info)
    : J9Stream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
@@ -262,7 +262,7 @@ J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
    _numConnectionsOpened++;
    }
 #else // JITAAS_ENABLE_SSL
-J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
+ClientStream::ClientStream(TR::PersistentInfo *info)
    : J9Stream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());

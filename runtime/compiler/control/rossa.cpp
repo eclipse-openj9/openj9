@@ -1633,7 +1633,7 @@ onLoadInternal(
          PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
 
       // Try to initialize SSL
-      JITaaS::J9ClientStream::static_init(compInfo->getPersistentInfo());
+      JITaaS::ClientStream::static_init(compInfo->getPersistentInfo());
       JITaaS::J9Stream::initVersion();
       }
 

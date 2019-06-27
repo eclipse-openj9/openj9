@@ -43,11 +43,11 @@
 
 namespace JITaaS
 {
-int J9ServerStream::_numConnectionsOpened = 0;
-int J9ServerStream::_numConnectionsClosed = 0;
+int ServerStream::_numConnectionsOpened = 0;
+int ServerStream::_numConnectionsClosed = 0;
 
 #if defined(JITAAS_ENABLE_SSL)
-J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
+ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    : J9Stream(),
    _msTimeout(timeout)
    {
@@ -55,7 +55,7 @@ J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    _numConnectionsOpened++;
    }
 #else // JITAAS_ENABLE_SSL
-J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
+ServerStream::ServerStream(int connfd, uint32_t timeout)
    : J9Stream(),
    _msTimeout(timeout)
    {
@@ -66,7 +66,7 @@ J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
 
 
 void
-J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
+ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
                                  std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
                                  std::string logFileStr, std::string symbolToIdStr,
                                  std::vector<TR_ResolvedJ9Method*> resolvedMethodsForPersistIprofileInfo)
@@ -301,9 +301,9 @@ serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentIn
       if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
          continue;
 
-      J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, bio, timeoutMs);
+      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, bio, timeoutMs);
 #else
-      J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, timeoutMs);
+      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, timeoutMs);
 #endif
       compiler->compile(stream);
       }

@@ -540,7 +540,7 @@ TR_JITaaSClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries,
 
 // Code executed at the client to serialize IProfiler info for an entire method
 bool
-TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::J9ClientStream *client, bool usePersistentCache)
+TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::ClientStream *client, bool usePersistentCache)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
    uint32_t numEntries = 0;

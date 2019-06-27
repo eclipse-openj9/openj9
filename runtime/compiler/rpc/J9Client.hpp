@@ -44,13 +44,13 @@ enum VersionCheckStatus
    PASSED = 1,
    };
 
-class J9ClientStream : J9Stream
+class ClientStream : J9Stream
    {
 public:
    static void static_init(TR::PersistentInfo *info);
 
-   J9ClientStream(TR::PersistentInfo *info);
-   virtual ~J9ClientStream()
+   ClientStream(TR::PersistentInfo *info);
+   virtual ~ClientStream()
       {
       _numConnectionsClosed++;
       }

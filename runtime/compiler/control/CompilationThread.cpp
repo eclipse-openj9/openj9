@@ -1369,7 +1369,7 @@ TR::CompilationInfo::getMethodBytecodeSize(const J9ROMMethod * romMethod)
    return (romMethod->bytecodeSizeHigh << 16) + romMethod->bytecodeSizeLow;
    }
 
-JITaaS::J9ServerStream *
+JITaaS::ServerStream *
 TR::CompilationInfo::getStream()
    {
    return (TR::compInfoPT) ? TR::compInfoPT->getStream() : NULL;
@@ -3278,13 +3278,13 @@ void TR::CompilationInfo::stopCompilationThreads()
       {
       if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
-         fprintf(stderr, "Number of connections opened = %u\n", JITaaS::J9ServerStream::_numConnectionsOpened);
-         fprintf(stderr, "Number of connections closed = %u\n", JITaaS::J9ServerStream::_numConnectionsClosed);
+         fprintf(stderr, "Number of connections opened = %u\n", JITaaS::ServerStream::_numConnectionsOpened);
+         fprintf(stderr, "Number of connections closed = %u\n", JITaaS::ServerStream::_numConnectionsClosed);
          }
       else if (getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
          {
-         fprintf(stderr, "Number of connections opened = %u\n", JITaaS::J9ClientStream::_numConnectionsOpened);
-         fprintf(stderr, "Number of connections closed = %u\n", JITaaS::J9ClientStream::_numConnectionsClosed);
+         fprintf(stderr, "Number of connections opened = %u\n", JITaaS::ClientStream::_numConnectionsOpened);
+         fprintf(stderr, "Number of connections closed = %u\n", JITaaS::ClientStream::_numConnectionsClosed);
          }
       }
 
@@ -3413,7 +3413,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       {
       try
          {
-         JITaaS::J9ClientStream client(getPersistentInfo());
+         JITaaS::ClientStream client(getPersistentInfo());
          client.writeError(JITaaS::MessageType::clientTerminate, getPersistentInfo()->getJITaaSId());
          }
       catch (const JITaaS::StreamFailure &e)
@@ -3654,7 +3654,7 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
    return 0;
    }
 
-JITaaS::J9ServerStream *
+JITaaS::ServerStream *
 TR::CompilationInfoPerThread::getStream()
    {
    return (_methodBeingCompiled) ? _methodBeingCompiled->_stream : NULL;
@@ -3958,10 +3958,10 @@ TR::CompilationInfoPerThread::processEntries()
    static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
    if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !enableJITaaSPerCompConn)
       {
-      JITaaS::J9ClientStream *client = getClientStream();
+      JITaaS::ClientStream *client = getClientStream();
       if (client)
          {
-         client->~J9ClientStream();
+         client->~ClientStream();
          TR_Memory::jitPersistentFree(client);
          setClientStream(NULL);
          }
@@ -6775,7 +6775,7 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    //
    if (entry->_optimizationPlan->getOptLevel() <= cold &&
       (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations) || 
-      !JITaaS::J9ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)))
+      !JITaaS::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)))
       doLocalComp = true;
 
    return doLocalComp;
@@ -12488,7 +12488,7 @@ TR::CompilationInfoPerThread::updateLastLocalGCCounter()
 // entry is queued we do not know any details about the compilation request.
 // The method needs to be executed with compilation monitor in hand
 TR_MethodToBeCompiled *
-TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITaaS::J9ServerStream *stream)
+TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITaaS::ServerStream *stream)
    {
    TR_MethodToBeCompiled *entry = getCompilationQueueEntry(); // allocate a new entry
    if (entry)

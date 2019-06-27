@@ -37,15 +37,15 @@ class TR_ResolvedJ9Method;
 
 namespace JITaaS
 {
-class J9ServerStream : J9Stream
+class ServerStream : J9Stream
    {
 public:
 #if defined(JITAAS_ENABLE_SSL)
-   J9ServerStream(int connfd, BIO *ssl, uint32_t timeout);
+   ServerStream(int connfd, BIO *ssl, uint32_t timeout);
 #else
-   J9ServerStream(int connfd, uint32_t timeout);
+   ServerStream(int connfd, uint32_t timeout);
 #endif
-   virtual ~J9ServerStream() 
+   virtual ~ServerStream() 
       {
       _numConnectionsClosed++;
       }
@@ -126,7 +126,7 @@ private:
 class BaseCompileDispatcher
    {
 public:
-   virtual void compile(J9ServerStream *stream) = 0;
+   virtual void compile(ServerStream *stream) = 0;
    };
 
 

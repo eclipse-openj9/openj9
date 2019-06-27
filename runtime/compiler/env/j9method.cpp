@@ -2302,7 +2302,7 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClaz
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
    TR_J9ServerVM *fej9 = (TR_J9ServerVM *)fe;
-   JITaaS::J9ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
+   JITaaS::ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::MessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
    const auto recv = stream->read<std::string, std::string, std::string>();
    const std::string str_className = std::get<0>(recv);

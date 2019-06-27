@@ -39,7 +39,7 @@
 
 namespace TR { class CompilationInfoPerThreadBase; }
 class TR_OptimizationPlan;
-namespace JITaaS { class J9ServerStream; }
+namespace JITaaS { class ServerStream; }
 namespace TR { class Monitor; }
 struct J9JITConfig;
 struct J9VMThread;
@@ -123,7 +123,7 @@ struct TR_MethodToBeCompiled
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
    bool                   _remoteCompReq; // comp request should be sent remotely to JITaaS server
-   JITaaS::J9ServerStream  *_stream; // a non-NULL field denotes an out-of-process compilation request
+   JITaaS::ServerStream  *_stream; // a non-NULL field denotes an out-of-process compilation request
    char                  *_clientOptions;
    size_t                _clientOptionsSize;
    TR_Hotness            _origOptLevel; // used to cache original optLevel when transforming a remote sync compilation to a local cheap one
