@@ -112,6 +112,7 @@
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019a_getValue"/>
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019b_redefineClass"/>
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019b_getValue"/>
+		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc020_redefineClass"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilities"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyLiveCapabilities"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc002_verifyCapabilityRetention"/>
