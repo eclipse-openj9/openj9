@@ -54,10 +54,10 @@ const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 void ClientStream::static_init(TR::PersistentInfo *info)
    {
 #if defined(JITAAS_ENABLE_SSL)
-   if (!J9Stream::useSSL(info))
+   if (!CommunicationStream::useSSL(info))
       return;
 
-   J9Stream::initSSL();
+   CommunicationStream::initSSL();
 
    SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
    if (!ctx)
@@ -254,7 +254,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    }
 
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : J9Stream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
+   : CommunicationStream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
@@ -263,7 +263,7 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
    }
 #else // JITAAS_ENABLE_SSL
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : J9Stream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
+   : CommunicationStream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    initStream(connfd);

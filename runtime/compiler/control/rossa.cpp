@@ -1604,7 +1604,7 @@ onLoadInternal(
    
    if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
-      JITaaS::J9Stream::initVersion();
+      JITaaS::CommunicationStream::initVersion();
 
       // Allocate the hashtable that holds information about clients
       compInfo->setClientSessionHT(ClientSessionHT::allocate());
@@ -1634,7 +1634,7 @@ onLoadInternal(
 
       // Try to initialize SSL
       JITaaS::ClientStream::static_init(compInfo->getPersistentInfo());
-      JITaaS::J9Stream::initVersion();
+      JITaaS::CommunicationStream::initVersion();
       }
 
 #if defined(TR_HOST_S390)

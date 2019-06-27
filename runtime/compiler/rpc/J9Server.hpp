@@ -37,7 +37,7 @@ class TR_ResolvedJ9Method;
 
 namespace JITaaS
 {
-class ServerStream : J9Stream
+class ServerStream : CommunicationStream
    {
 public:
 #if defined(JITAAS_ENABLE_SSL)

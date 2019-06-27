@@ -27,9 +27,9 @@
 
 namespace JITaaS
 {
-uint32_t J9Stream::CONFIGURATION_FLAGS = 0;
+uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
 
-void J9Stream::initVersion()
+void CommunicationStream::initVersion()
    {
    if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
       {

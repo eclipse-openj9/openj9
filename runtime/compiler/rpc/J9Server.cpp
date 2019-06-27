@@ -48,7 +48,7 @@ int ServerStream::_numConnectionsClosed = 0;
 
 #if defined(JITAAS_ENABLE_SSL)
 ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
-   : J9Stream(),
+   : CommunicationStream(),
    _msTimeout(timeout)
    {
    initStream(connfd, ssl);
@@ -56,7 +56,7 @@ ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    }
 #else // JITAAS_ENABLE_SSL
 ServerStream::ServerStream(int connfd, uint32_t timeout)
-   : J9Stream(),
+   : CommunicationStream(),
    _msTimeout(timeout)
    {
    initStream(connfd);
@@ -226,9 +226,9 @@ serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentIn
    {
 #if defined(JITAAS_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
-   if (J9Stream::useSSL(info))
+   if (CommunicationStream::useSSL(info))
       {
-      J9Stream::initSSL();
+      CommunicationStream::initSSL();
       sslCtx = createSSLContext(info);
       }
 #endif

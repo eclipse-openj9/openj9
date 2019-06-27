@@ -39,7 +39,7 @@ enum JITaaSCompatibilityFlags
 
 using namespace google::protobuf::io;
 
-class J9Stream
+class CommunicationStream
    {
 public:
 #if defined(JITAAS_ENABLE_SSL)
@@ -65,7 +65,7 @@ public:
       }
 
 protected:
-   J9Stream()
+   CommunicationStream()
       : _inputStream(NULL),
       _outputStream(NULL),
 #if defined(JITAAS_ENABLE_SSL)
@@ -103,7 +103,7 @@ protected:
          }
       }
 
-   virtual ~J9Stream()
+   virtual ~CommunicationStream()
       {
       if (_inputStream)
          {

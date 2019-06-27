@@ -44,7 +44,7 @@ enum VersionCheckStatus
    PASSED = 1,
    };
 
-class ClientStream : J9Stream
+class ClientStream : CommunicationStream
    {
 public:
    static void static_init(TR::PersistentInfo *info);
