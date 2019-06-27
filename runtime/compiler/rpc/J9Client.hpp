@@ -71,8 +71,6 @@ public:
          }
       }
 
-   Status waitForFinish();
-
    template <typename ...T>
    void write(MessageType type, T... args)
       {
@@ -93,8 +91,6 @@ public:
       {
       return getArgs<T...>(_sMsg.mutable_data());
       }
-
-   void shutdown();
 
    template <typename ...T>
    void writeError(MessageType type, T... args)

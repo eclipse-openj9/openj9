@@ -97,7 +97,8 @@ public:
       return getArgs<T...>(_cMsg.mutable_data());
       }
 
-   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", CHTableCommitData chTableData = {},
+   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", 
+                          CHTableCommitData chTableData = {},
                           std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = {},
                           std::string logFileStr = "", std::string symbolToIdStr = "",
                           std::vector<TR_ResolvedJ9Method*> = {});
@@ -114,34 +115,22 @@ public:
    static int _numConnectionsClosed;
 
 private:
-   void finish();
-
    uint32_t _msTimeout;
    uint64_t _clientId;
    };
 
-//
-// Inherited class is starting point for the received compilation request
-//
-class J9BaseCompileDispatcher
+
+// Abstract class defining the interface for the compilation handler
+// Typically, an user would derive this class and provide an implementation for "compile()"
+// An instance of the derived class needs to be passed to serveRemoteCompilationRequests which internally calls "compile()"
+class BaseCompileDispatcher
    {
 public:
    virtual void compile(J9ServerStream *stream) = 0;
    };
 
-class J9CompileServer
-   {
-public:
-   ~J9CompileServer()
-      {
-      }
 
-   void buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info);
-
-private:
-   void serve(J9BaseCompileDispatcher *compiler, uint32_t timeout);
-   bool waitOnQueue();
-   };
+void serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info);
 
 }
 

@@ -2540,7 +2540,6 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
    std::string svmSymbolToIdStr;
-   JITaaS::Status status;
    std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
    try
       {
@@ -2594,8 +2593,6 @@ remoteCompile(
       if (statusCode == compilationStreamVersionIncompatible)
          throw JITaaS::StreamVersionIncompatible();
       client->setVersionCheckStatus();
-      
-      status = client->waitForFinish();
       }
    catch (const JITaaS::StreamFailure &e)
       {
@@ -2615,7 +2612,7 @@ remoteCompile(
       }
 
    TR_MethodMetaData *metaData = NULL;
-   if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
+   if (statusCode == compilationOK || statusCode == compilationNotNeeded)
       {
       try
          {
@@ -2729,7 +2726,7 @@ remoteCompile(
    else
       {
       compInfoPT->getMethodBeingCompiled()->_compErrCode = statusCode;
-      compiler->failCompilation<JITaaS::ServerCompFailure>("JITaaS compilation failed.");
+      compiler->failCompilation<JITaaS::ServerCompilationFailure>("JITaaS compilation failed.");
       }
 
    if (enableJITaaSPerCompConn && client)

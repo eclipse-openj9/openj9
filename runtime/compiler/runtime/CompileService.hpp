@@ -50,16 +50,15 @@ private:
    };
 
 
-class J9CompileDispatcher : public JITaaS::J9BaseCompileDispatcher
+class J9CompileDispatcher : public JITaaS::BaseCompileDispatcher
 {
 public:
-   J9CompileDispatcher(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
+   J9CompileDispatcher(J9JITConfig *jitConfig) : _jitConfig(jitConfig) { }
 
    void compile(JITaaS::J9ServerStream *stream) override;
 
 private:
    J9JITConfig *_jitConfig;
-   J9VMThread *_vmThread;
 };
 
 

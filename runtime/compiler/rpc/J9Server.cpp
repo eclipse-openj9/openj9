@@ -36,7 +36,6 @@
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
-#include "env/j9method.h"
 #include "rpc/SSLProtobufStream.hpp"
 #if defined(JITAAS_ENABLE_SSL)
 #include <openssl/err.h>
@@ -65,11 +64,6 @@ J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
    }
 #endif
 
-// J9Stream destructor is used instead
-void
-J9ServerStream::finish()
-   {
-   }
 
 void
 J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
@@ -81,7 +75,6 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
       {
       write(MessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
             classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr, resolvedMethodsForPersistIprofileInfo);
-      finish();
       }
    catch (std::exception &e)
       {
@@ -229,7 +222,7 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
 #endif
 
 void
-J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
+serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
 #if defined(JITAAS_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;

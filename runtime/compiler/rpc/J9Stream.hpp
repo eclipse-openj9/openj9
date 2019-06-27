@@ -23,10 +23,11 @@
 #ifndef J9_STREAM_HPP
 #define J9_STREAM_HPP
 
+#include <google/protobuf/io/zero_copy_stream_impl.h> // for ZeroCopyInputStream
+#include "rpc/ProtobufTypeConvert.hpp"
 #include "rpc/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
-#include "env/CompilerEnv.hpp"
-#include "control/Options.hpp"
+
 
 namespace JITaaS
 {
@@ -55,13 +56,8 @@ public:
       }
 #endif
 
-   static void initVersion()
-      {
-      if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
-         {
-         CONFIGURATION_FLAGS |= JITaaSCompressedRef;
-         }
-      }
+   static void initVersion();
+  
 
    static uint64_t getJITaaSVersion()
       {

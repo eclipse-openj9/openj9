@@ -10855,7 +10855,7 @@ TR::CompilationInfoPerThreadBase::processException(
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamVersionIncompatible: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamVersionIncompatible;
       }
-   catch (const JITaaS::ServerCompFailure &e)
+   catch (const JITaaS::ServerCompilationFailure &e)
       {
       // no need to set error code here because error code is set
       // in remoteCompile when the compilation failed

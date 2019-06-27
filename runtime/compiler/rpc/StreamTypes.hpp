@@ -29,17 +29,11 @@
 
 namespace JITaaS
 {
-struct Status
-   {
-   const static Status OK;
-   bool ok() { return true; }
-   };
-
 class StreamFailure: public virtual std::exception
    {
 public:
    StreamFailure() : _message("Generic stream failure") { }
-   StreamFailure(std::string message) : _message(message) { }
+   StreamFailure(const std::string &message) : _message(message) { }
    virtual const char* what() const throw() { return _message.c_str(); }
 private:
    std::string _message;
@@ -78,7 +72,7 @@ class StreamOOO : public virtual std::exception
 class StreamTypeMismatch: public virtual StreamFailure
    {
 public:
-   StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Type mismatch: %s", message.c_str()); }
+   StreamTypeMismatch(const std::string &message) : StreamFailure(message) { TR_ASSERT(false, "Type mismatch: %s", message.c_str()); }
    };
 
 class StreamMessageTypeMismatch: public virtual std::exception
@@ -99,7 +93,7 @@ private:
 class StreamVersionIncompatible: public virtual std::exception
    {
 public:
-   StreamVersionIncompatible() : _message("server incompatible") { }
+   StreamVersionIncompatible() : _message("client/server incompatibility detected") { }
    StreamVersionIncompatible(uint64_t serverVersion, uint64_t clientVersion)
       {
       _message = "server expected version " + std::to_string(serverVersion) + " received " + std::to_string(clientVersion);
@@ -115,14 +109,14 @@ private:
 class StreamArityMismatch: public virtual StreamFailure
    {
 public:
-   StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "Arity mismatch: %s", message.c_str()); }
+   StreamArityMismatch(const std::string &message) : StreamFailure(message) { TR_ASSERT(false, "Arity mismatch: %s", message.c_str()); }
    };
 
-class ServerCompFailure: public virtual std::exception
+class ServerCompilationFailure: public virtual std::exception
    {
 public:
-   ServerCompFailure() : _message("Generic JITaaS server compilation failure") { }
-   ServerCompFailure(std::string message) : _message(message) { }
+   ServerCompilationFailure() : _message("Generic JITaaS server compilation failure") { }
+   ServerCompilationFailure(const std::string &message) : _message(message) { }
    virtual const char* what() const throw() { return _message.c_str(); }
 private:
    std::string _message;
