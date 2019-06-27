@@ -266,6 +266,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/codegen/MonitorState.cpp \
     compiler/compile/J9AliasBuilder.cpp \
     compiler/compile/J9Compilation.cpp \
+    compiler/compile/J9Method.cpp \
     compiler/compile/J9SymbolReferenceTable.cpp \
     compiler/control/CompilationController.cpp \
     compiler/control/CompilationThread.cpp \
