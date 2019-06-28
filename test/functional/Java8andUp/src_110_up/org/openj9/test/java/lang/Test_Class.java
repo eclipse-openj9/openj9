@@ -72,6 +72,8 @@ import org.openj9.test.java.lang.specimens.SuperDuper;
 
 import org.openj9.test.jdk.internal.InternalAccessor;
 
+import org.openj9.test.util.VersionCheck;
+
 /**
  *
  * @requiredClass org.openj9.test.support.resource.Support_Resources
@@ -83,6 +85,7 @@ import org.openj9.test.jdk.internal.InternalAccessor;
 public class Test_Class {
 
 	private static final Logger logger = Logger.getLogger(Test_Class.class);
+	private static final int javaVersion = VersionCheck.major();
 
 	static class StaticMember$Class {
 		class Member2$A {
@@ -2191,7 +2194,7 @@ private String anno2String(Annotation annotation){
 	return annotation.toString();
 }
 
-private String[] AnnoExpectedValues = {
+private static String[] AnnoExpectedValues = {
 	/* 00 */ "null",
 	/* 01 */ "@org.openj9.test.java.lang.Test_Class$ContainerContainerAnn(value={@org.openj9.test.java.lang.Test_Class$ContainerAnn(value={@org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"Nested-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"Nested-2\")}), @org.openj9.test.java.lang.Test_Class$ContainerAnn(value={@org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"Nested-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"Nested-4\")})})",
 	/* 02 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn(value={@org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"GrandParent-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"GrandParent-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(value=\"GrandParent-5\")})",
@@ -2241,11 +2244,65 @@ private String[] AnnoExpectedValues = {
 
 };
 
+private static String[] AnnoExpectedValues14 = {
+		/* 00 */ "null",
+		/* 01 */ "@org.openj9.test.java.lang.Test_Class$ContainerContainerAnn({@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-2\")}), @org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-4\")})})",
+		/* 02 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParent-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParent-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParent-5\")})",
+		/* 03 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn4(\"GrandParent-2\")",
+		/* 04 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn5(\"GrandParent-4\")",
+		/* 05 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn6(\"GrandParent-6\")",
+		/* 06 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-2\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-4\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-5\")})",
+		/* 07 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn2(\"Parent-7\")",
+		/* 08 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn(\"Parent-6\")",
+		/* 09 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-2\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-4\")})",
+		/* 10 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn3(\"Child-5\")",
+		/* 11 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn4(\"GrandParentNR-1\")",
+		/* 12 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn5(\"GrandParentNR-2\")",
+		/* 13 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParentNR-3\")",
+		/* 14 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn6(\"GrandParentNR-4\")",
+		/* 15 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn3(\"GrandParentNR-5\")",
+		/* 16 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"ParentNR-1\")",
+		/* 17 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn2(\"ParentNR-2\")",
+		/* 18 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn(\"ParentNR-3\")",
+		/* 19 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn3(\"ChildNR-1\")",
+		/* 20 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"ChildNR-2\")",
+		/* 21 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn(\"GrandParentR-1\")",
+		/* 22 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParentR-2\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParentR-3\")})",
+		/* 23 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn2(\"GrandParentR-4\")",
+		/* 24 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"ParentR-1\")",
+		/* 25 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn3(\"ParentR-2\")",
+		/* 26 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn4(\"ParentR-3\")",
+		/* 27 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn(\"ChildR-1\")",
+		/* 28 */ "@org.openj9.test.java.lang.Test_Class$RetroAnn5(\"ChildR-2\")",
+		/* 29 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"ChildR-3\")",
+		/* 30 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-1\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-2\")})",
+		/* 31 */ "@org.openj9.test.java.lang.Test_Class$ContainerAnn({@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-3\"), @org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Nested-4\")})",
+		/* 32 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParent-1\")",
+		/* 33 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParent-3\")",
+		/* 34 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParent-5\")",
+		/* 35 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-1\")",
+		/* 36 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-2\")",
+		/* 37 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-3\")",
+		/* 38 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-4\")",
+		/* 39 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Parent-5\")",
+		/* 40 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-1\")",
+		/* 41 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-2\")",
+		/* 42 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-3\")",
+		/* 43 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"Child-4\")",
+		/* 44 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParentR-2\")",
+		/* 45 */ "@org.openj9.test.java.lang.Test_Class$RepeatableAnn(\"GrandParentR-3\")",
+
+	};
+
 private void innerTest_getAnnotations(Class clazz, boolean isDeclared, int ... expected) {
 	Annotation[] ann = (isDeclared) ? clazz.getDeclaredAnnotations() : clazz.getAnnotations();
 	AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect length of annotation list. Expected: " + expected.length + " Actual: " + ann.length, ann.length == expected.length);
 	for (int i = 0; i < expected.length; i++) {
-		AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect value in annotation list. Position: " + i + ", Expected value: " + AnnoExpectedValues[expected[i]] + ", Actual Value: " + anno2String(ann[i]), anno2String(ann[i]).equals(AnnoExpectedValues[expected[i]]));
+		if (javaVersion >= 14) {
+			AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect value in annotation list. Position: " + i + ", Expected value: " + AnnoExpectedValues14[expected[i]] + ", Actual Value: " + anno2String(ann[i]), anno2String(ann[i]).equals(AnnoExpectedValues14[expected[i]]));
+		} else {
+			AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect value in annotation list. Position: " + i + ", Expected value: " + AnnoExpectedValues[expected[i]] + ", Actual Value: " + anno2String(ann[i]), anno2String(ann[i]).equals(AnnoExpectedValues[expected[i]]));
+		}
 	}
 }
 
@@ -2283,7 +2340,11 @@ public void test_getDeclaredAnnotations() {
 
 private void innerTest_getAnnotation(Class clazz, Class annoClazz, boolean isDeclared, int expected) {
 	Annotation ann = (isDeclared) ? clazz.getDeclaredAnnotation(annoClazz) : clazz.getAnnotation(annoClazz);
-	AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect value for: " + annoClazz.getSimpleName() + ". Expected value: " + AnnoExpectedValues[expected] + ", Actual Value: " + anno2String(ann), anno2String(ann).equals(AnnoExpectedValues[expected]));
+	if (javaVersion >= 14) {
+		AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect value for: " + annoClazz.getSimpleName() + ". Expected value: " + AnnoExpectedValues14[expected] + ", Actual Value: " + anno2String(ann), anno2String(ann).equals(AnnoExpectedValues14[expected]));
+	} else {
+		AssertJUnit.assertTrue(clazz.getSimpleName() + ", Incorrect value for: " + annoClazz.getSimpleName() + ". Expected value: " + AnnoExpectedValues[expected] + ", Actual Value: " + anno2String(ann), anno2String(ann).equals(AnnoExpectedValues[expected]));
+	}
 }
 
 private void innerTest_getAnnotationNPE(Class clazz, boolean isDeclared, boolean isByType) {
@@ -2358,7 +2419,11 @@ private <A extends Annotation> void innerTest_getAnnotationsByType(Class clazz, 
 	Annotation[] ann = (isDeclared) ? clazz.getDeclaredAnnotationsByType(annoClazz) : clazz.getAnnotationsByType(annoClazz);
 	AssertJUnit.assertTrue( clazz.getSimpleName() + ", Incorrect length of annotation list. Expected: " + expected.length + " Actual: " + ann.length, ann.length == expected.length);
 	for (int i = 0; i < expected.length; i++) {
-		AssertJUnit.assertTrue( clazz.getSimpleName() + ", Incorrect value in annotation list. Position: " + i + ", Expected value: " + AnnoExpectedValues[expected[i]] + ", Actual Value: " + anno2String(ann[i]), anno2String(ann[i]).equals(AnnoExpectedValues[expected[i]]));
+		if (javaVersion >= 14) {
+			AssertJUnit.assertTrue( clazz.getSimpleName() + ", Incorrect value in annotation list. Position: " + i + ", Expected value: " + AnnoExpectedValues14[expected[i]] + ", Actual Value: " + anno2String(ann[i]), anno2String(ann[i]).equals(AnnoExpectedValues14[expected[i]]));
+		} else {
+			AssertJUnit.assertTrue( clazz.getSimpleName() + ", Incorrect value in annotation list. Position: " + i + ", Expected value: " + AnnoExpectedValues[expected[i]] + ", Actual Value: " + anno2String(ann[i]), anno2String(ann[i]).equals(AnnoExpectedValues[expected[i]]));
+		}
 	}
 }
 
