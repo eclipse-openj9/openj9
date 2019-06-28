@@ -34,6 +34,7 @@
 #include "jbcmap.h"
 #include "ut_j9bcu.h"
 #include "util_api.h"
+#include "j9protos.h"
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define VALUE_TYPES_MAJOR_VERSION 55
@@ -1126,7 +1127,11 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 						if (codeAttribute->maxLocals <= index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTableIndexOutOfBounds(
 									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
-							_buildResult = GenericError;
+							/* throw error */
+							PORT_ACCESS_FROM_PORT(_context->portLibrary());
+							_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
+							buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, J9NLS_CFR_LVT_INDEX_OUTOFRANGE__ID, GenericErrorCustom, index);
+							_buildResult = GenericErrorCustom;
 							break;
 						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable) {
 							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable = localVariableTable;
@@ -1158,20 +1163,71 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 				J9CfrAttributeLocalVariableTypeTable *localVariableTypeTable = (J9CfrAttributeLocalVariableTypeTable *) attribute;
 				if (0 != localVariableTypeTable->localVariableTypeTableLength) {
 					for (U_16 localVariableTypeTableIndex = 0; localVariableTypeTableIndex < localVariableTypeTable->localVariableTypeTableLength; ++localVariableTypeTableIndex) {
-						U_16 index = localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex].index;
-						if (codeAttribute->maxLocals <= index) {
+						UDATA entryFound = FALSE;
+						J9CfrLocalVariableTypeTableEntry lvttEntry = localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex];
+						if (codeAttribute->maxLocals <= lvttEntry.index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTypeTableIndexOutOfBounds(
-									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
-							_buildResult = GenericError;
+									lvttEntry.index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
+							/* throw error */
+							PORT_ACCESS_FROM_PORT(_context->portLibrary());
+							_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
+							buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, J9NLS_CFR_LVTT_INDEX_OUTOFRANGE__ID, GenericErrorCustom, lvttEntry.index);
+							_buildResult = GenericErrorCustom;
 							break;
-						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable) {
-							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable = localVariableTypeTable;
-						} else if (localVariableTypeTable != _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable) {
+						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTypeTable) {
+							_methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTypeTable = localVariableTypeTable;
+						} else if (localVariableTypeTable != _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTypeTable) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_DuplicateLocalVariableTypeTable(
-									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), localVariableTypeTable, _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable);
+									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), localVariableTypeTable, _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTypeTable);
 							_buildResult = GenericError;
 							break;
 						}
+
+						/* Verify that a matching entry exists in a LocalVariableTable entry. */
+						if  (NULL != _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTable) {
+							/* Check to see if an entry at the lvtt index has been recorded. This should be the common case.
+							 * Otherwise we will need to check each of the code attributes attribute table entries. */
+							J9CfrLocalVariableTableEntry* lvtEntries = _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTable->localVariableTable;
+							U_16 lvtLength = _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTable->localVariableTableLength;
+							for (U_16 localVariableTableIndex = 0;  localVariableTableIndex < lvtLength; localVariableTableIndex++) {
+								if ((lvttEntry.index == lvtEntries[localVariableTableIndex].index)
+									&& (lvttEntry.startPC == lvtEntries[localVariableTableIndex].startPC)
+									&& (lvttEntry.length == lvtEntries[localVariableTableIndex].length)
+									&& (lvttEntry.nameIndex == lvtEntries[localVariableTableIndex].nameIndex)
+								) {
+										entryFound = TRUE;
+										break;
+								}
+							}
+						} else {
+							/* There may be more than one LocalVariableTable in the code attribute's attribute table. Check each attribute in the code's attribute
+							* table to find the match. Start at the current attributeIndex since any lvt entries prior would already be recorded. */
+							for (U_16 codeAttributeIndex = attributeIndex; codeAttributeIndex < attributesCount; ++codeAttributeIndex) {
+								J9CfrAttribute *codeAttrib = codeAttribute->attributes[codeAttributeIndex];
+								if(CFR_ATTRIBUTE_LocalVariableTable == codeAttrib->tag) {
+									for(U_16 localVariableTableIndex = 0; localVariableTableIndex < ((J9CfrAttributeLocalVariableTable*)codeAttrib)->localVariableTableLength; localVariableTableIndex++) {
+										J9CfrLocalVariableTableEntry lvtEntry = ((J9CfrAttributeLocalVariableTable*)codeAttrib)->localVariableTable[localVariableTableIndex];
+										if ((lvttEntry.startPC == lvtEntry.startPC)
+											&& (lvttEntry.length == lvtEntry.length)
+											&& (lvttEntry.nameIndex == lvtEntry.nameIndex)
+											&& (lvttEntry.index == lvtEntry.index)
+										) {
+											entryFound = TRUE;
+											break;
+										}
+									}
+								}
+							}
+						}
+						if (!entryFound) {
+							/* throw error */
+							PORT_ACCESS_FROM_PORT(_context->portLibrary());
+							_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
+							buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, J9NLS_CFR_LVTT_DOESNT_HAVE_LVT__ID, GenericErrorCustom, lvttEntry.index);
+							_buildResult = GenericErrorCustom;
+							break;
+						}
+
 						markConstantUTF8AsReferenced(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex].signatureIndex);
 					}
 				}
